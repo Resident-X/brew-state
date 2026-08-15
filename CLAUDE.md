@@ -86,6 +86,7 @@ or against that.
 - **Blind review before every PR, including pure graph-authoring** (Rule 7). Launch a fresh-context
   agent that reads the slice/criteria/journeys and the diff cold, and present its
   ISSUE / PASS / SUGGESTION findings before fixing anything. This is non-negotiable.
+
 ## Known engine gaps
 
 - **`allocated-to` is unusable.** The schema declares `valid_targets: [component]` and states twice
