@@ -1,4 +1,4 @@
-# Coffee — a model-based controller for a dual-thermoblock espresso machine
+# Baristate — a model-based controller for a dual-thermoblock espresso machine
 
 Replacing the factory control board in a Sunbeam EM7000 with a controller that actually models the machine: state estimation, a forward horizon, flow and pressure profiling, and a hardware safety chain with no firmware anywhere in it.
 

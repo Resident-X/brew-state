@@ -45,18 +45,18 @@ tasks:
         echo "skills synced verbatim from {{.STAIRCASE_REF}} (invoke via ./engine/staircase)"
 
   sc:seed-schema:
-    desc: Seed .staircase/schema.yaml from STAIRCASE_REF ONCE (skipped if present — schema becomes Coffee-owned after seeding)
+    desc: Seed .staircase/schema.yaml from STAIRCASE_REF ONCE (skipped if present — schema becomes Baristate-owned after seeding)
     cmds:
       - |
         set -euo pipefail
         if [ -f .staircase/schema.yaml ]; then
-          echo ".staircase/schema.yaml exists — leaving Coffee-owned copy untouched"; exit 0
+          echo ".staircase/schema.yaml exists — leaving Baristate-owned copy untouched"; exit 0
         fi
         tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
         git clone --depth 1 --branch {{.STAIRCASE_REF}} --filter=blob:none --sparse {{.STAIRCASE_REPO}} "$tmp"
         git -C "$tmp" sparse-checkout set --skip-checks .staircase/schema.yaml
         mkdir -p .staircase && cp "$tmp/.staircase/schema.yaml" .staircase/schema.yaml
-        echo "schema.yaml seeded (now coffee-owned; evolve it additively here)"
+        echo "schema.yaml seeded (now Baristate-owned; evolve it additively here)"
 
   sc:embed:
     desc: Link the shared machine-global embedder cache so `query --mode semantic|hybrid` works (else it degrades to lexical)
