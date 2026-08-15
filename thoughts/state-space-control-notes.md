@@ -1,3 +1,17 @@
+> **Status: historical working notes. Not authoritative. Superseded in part by `specs/`.**
+>
+> These are the notes the project started from. Everything here that states *what must be
+> true* has been migrated into the requirement graph, which is the authoritative source —
+> where this file and `specs/` disagree, `specs/` wins.
+>
+> What has **not** yet been migrated is the reasoning behind specific technical choices:
+> the energy calculations, the tooling recommendations, the model-error estimates, and the
+> decision not to re-plumb for preheat. Those belong in decision nodes that do not exist
+> yet. This file is retained as their source and should be deleted once they are authored.
+>
+> Read this for *why*, never for *what*. Several passages describe options that were
+> considered and rejected, and nothing here is marked to distinguish them.
+
 # State-Space / MPC Control — Design Notes
 
 Sunbeam EM7000 retrofit (dual thermoblock: steam + coffee), custom STM32-class
