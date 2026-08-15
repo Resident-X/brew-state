@@ -1,0 +1,40 @@
+id: JRN-MAINTAIN-MACHINE-001
+type: requirement
+category: journey
+title: Operator keeps the machine in serviceable condition
+status: active
+priority: must
+version: 1
+text: |
+  The journey nobody looks forward to. Scale and residue build up invisibly, change the machine's behaviour before they break anything, and the machine is the only party in a position to notice.
+
+  ## Main success scenario
+
+  1. The machine recognises from its own use that attention is due, and says so.
+  2. The operator sets aside what the routine needs and starts it.
+  3. The machine works through the routine itself, telling the operator what it needs and when.
+  4. The machine returns to service, and records what was done to it.
+  5. The operator gets the machine back in the condition it had when it was new.
+
+  ## Extensions
+
+  1a. Nobody acts on the notice. The machine keeps serving and keeps saying so, because refusing to make coffee over housekeeping is worse than the condition it is warning about.
+
+  2a. The routine needs something the operator does not have to hand. The machine says so before it starts rather than stranding the machine part way through.
+
+  3a. The operator interrupts the routine, or power is lost during it. The machine ends up somewhere the operator can act on, and can say what was and was not completed.
+
+  3b. The routine cannot continue for a reason the machine detects. It stops and reports, rather than working through a sequence that is no longer doing what it was meant to.
+
+  4a. The operator wants to know what condition the machine is in. The machine can account for what has been done to it and what it has done since.
+rationale: |
+  Placed as its own journey rather than folded into drift correction, because the two answer different failures. Drift correction adjusts the machine's description of itself to match a plant that has changed; upkeep changes the plant back. A machine that only corrected its model for scale would track its own decline faithfully all the way to failure.
+
+  Silent on what the routines are, what they use, and how often they are due. Those depend on water, on use and on the machine, and fixing them here would put one household's conditions into a requirement meant to travel.
+
+  The notice is deliberately not a refusal. Withholding coffee over housekeeping is the behaviour that trains an operator to defeat the notice, and a defeated notice protects nothing.
+
+  Requires the machine to judge from its own use rather than from a calendar, because use is the thing that actually causes the condition, and elapsed time is only a proxy for it.
+links:
+  - target: PER-OPERATOR-001.C6
+    type: derives-from

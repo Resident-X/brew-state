@@ -1,0 +1,14 @@
+id: REQ-UNATTENDED-READINESS-001.C1
+type: criterion
+title: Readiness that has been reached and not used ends without the operator acting
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An operator who walks away has already stopped thinking about the machine, and a state that needs them to come back and end it is a state that does not end.
+
+  The machine is the only party still present.
+links:
+  - target: REQ-UNATTENDED-READINESS-001
+    type: criterion-of

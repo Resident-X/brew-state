@@ -1,0 +1,14 @@
+id: REQ-WATER-SUPPLY-001.C2
+type: criterion
+title: Water availability is judged from an observation of the supply rather than from an account of what has been drawn
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An account of what has been drawn survives the supply changing behind the machine's back, and it is wrong in the one direction that matters.
+
+  The supply is observable; there is no reason to reason about it instead.
+links:
+  - target: REQ-WATER-SUPPLY-001
+    type: criterion-of

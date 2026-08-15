@@ -1,10 +1,10 @@
 id: REQ-SAFETY-CHAIN-001.C4
 type: criterion
-title: A device downstream of all resettable protection prevents restoration once it has operated
+title: Once the non-restoring protection has operated, no resettable element can return power to the load
 status: active
-version: 1
+version: 2
 measurement_type: binary
-verification: inspection
+verification: test
 text: |
   Resettable protection can weld or drift, and anything that closes again after cooling gives a failing machine repeated attempts at the same hazard.
 

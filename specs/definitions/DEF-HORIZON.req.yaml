@@ -1,0 +1,11 @@
+id: DEF-HORIZON
+type: definition
+title: horizon
+status: active
+version: 1
+text: |
+  The horizon is how far ahead the controller works out the consequences of what it is about to do, before it does any of it. It chooses an action by evaluating a run of future actions against a prediction of how the machine will respond, commits only the first, and repeats.
+
+  It is what makes a commanded profile worth more than a description of the operator's intent. Demand the machine scheduled is demand it can see coming, so the profile becomes an input to the prediction rather than a disturbance discovered on arrival.
+
+  A property of the control law rather than of the machine. How far ahead is worth looking depends on how fast the machine responds, which is something commissioning establishes.

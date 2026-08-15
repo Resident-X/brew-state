@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-CYCLES-001.C7
+type: criterion
+title: What a routine will require of the operator is stated before the routine starts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A routine that discovers half way through that it needed something is a routine left half way through, with the machine occupied and the operator sent away to find it.
+
+  What a routine will ask of the operator is knowable before it starts.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

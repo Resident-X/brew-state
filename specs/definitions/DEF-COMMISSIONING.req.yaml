@@ -2,8 +2,10 @@ id: DEF-COMMISSIONING
 type: definition
 title: commissioning
 status: active
-version: 1
+version: 2
 text: |
   Commissioning is the bench-driven process by which a newly built machine is characterised, its plant model established and validated, and that model committed to it for the first time.
 
-  It differs from on-device correction in scope: commissioning establishes the model's structure as well as its parameters, and has a person present to judge whether the result is trustworthy. On-device correction adjusts parameters only, unattended, within a structure commissioning already validated.
+  It differs from on-device correction in scope: commissioning establishes the model's parameters and judges whether the structure the machine was built with actually fits it, with a person present to decide whether the result is trustworthy. On-device correction adjusts parameters only, unattended, within that same structure.
+
+  Neither changes the structure. Structure is fixed when the machine's software is built, so a machine needing a different one needs a different build rather than a different commissioning.

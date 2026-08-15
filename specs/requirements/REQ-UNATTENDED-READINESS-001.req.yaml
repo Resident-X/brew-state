@@ -1,0 +1,20 @@
+id: REQ-UNATTENDED-READINESS-001
+type: requirement
+category: functional
+title: Readiness held without use ends on its own
+status: active
+priority: must
+version: 1
+text: |
+  Readiness that was reached and then not used costs energy for as long as it is held, and holds a heated machine in a room nobody is in.
+
+  The scheduled case already has to end unattended. Ordinary local readiness is the state the machine spends most of its life in and has never been given the same treatment.
+rationale: |
+  Authored because the asymmetry with scheduled readiness was accidental rather than reasoned. A remotely or schedule-reached readiness period ends by itself; a locally reached one did not, and no node gave a reason for the difference.
+
+  Makes the period an operator setting rather than a fixed property, because how long is worth holding depends entirely on how the machine is used and no single figure serves both a household and a busy morning.
+
+  Requires ending readiness to reach the same state as a machine that was never switched on, so that there is one resting state to reason about rather than two that differ in ways nobody has enumerated.
+links:
+  - target: PER-OPERATOR-001.C7
+    type: derives-from

@@ -1,0 +1,25 @@
+id: DEC-PROFILE-COMMANDS-FLOW
+type: decision
+title: A delivery profile commands flow, and pressure is capped mechanically
+status: active
+version: 1
+decided_by: david
+rationale: |
+  Context: A profile commands a course of targets, and the graph deliberately did not say which physical quantity those targets are in. Flow and pressure are not independent — they are coupled through the coffee itself, and through a puck whose resistance changes with grind, dose, distribution and age. Only one of them can be commanded; the other is whatever the machine and the coffee produce in response.
+
+  Trade-offs: Commanding flow matches what the pump can actually be asked to do, leaves pressure to be capped mechanically at a value chosen once, and makes the coupling the controller must handle a single one. Commanding pressure is closer to how espresso is traditionally described and to what a gauge shows, but it makes flow the free variable, which is the quantity the endpoint and the thermal feedforward both need to be predictable — a pressure-held shot delivers an amount nobody chose. Commanding pump duty directly and profiling neither is simplest and abandons the capability: duty is not a quantity anyone can reason about in the cup, and its relationship to both flow and pressure moves with every variable in the puck.
+
+  Reversibility: Reversible in the control law without touching the requirement layer, which states the course and its end condition without naming a quantity. What would not reverse cheaply is the hardware: a mechanical pressure cap sized for a commanded-flow machine is not the same component as the pressure regulation a pressure-commanded machine would want, and the sensing needed to close a pressure loop to the same standard is a different specification again.
+
+  Consequences: Pressure is still measured, on both paths, and is not made redundant by being capped. When the cap opens, delivered flow stops tracking commanded flow, and pressure is what distinguishes that from a blockage, a failing pump or a grind that has moved — a distinction the profile-departure criterion requires the machine to report rather than absorb. The mechanical cap is a working-pressure device and discharges nothing: relief that acts on the pressure itself, without power, while a sensor is lying and while nothing has recognised a hazard, remains a separate requirement covering both heated masses.
+options_considered:
+  - option: Command flow and cap pressure mechanically
+    reason_rejected: ""
+  - option: Command pressure and let flow follow
+    reason_rejected: Makes the delivered amount the free variable, which is the quantity the endpoint and the thermal feedforward both need to be predictable
+  - option: Command pump duty directly and profile neither
+    reason_rejected: Duty is not a quantity anyone can reason about in the cup, and its relation to both flow and pressure moves with every variable in the puck
+chosen: Command flow and cap pressure mechanically
+links:
+  - target: REQ-DELIVERY-PROFILE-001.C1
+    type: addresses

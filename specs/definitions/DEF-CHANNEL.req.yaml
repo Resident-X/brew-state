@@ -1,0 +1,9 @@
+id: DEF-CHANNEL
+type: definition
+title: channel
+status: active
+version: 1
+text: |
+  A channel is one path between a physical quantity and the controller. For sensing, that runs from the quantity to a value the controller can act on; for actuation, from a command to its effect and to whatever observes that effect.
+
+  Channels are the unit in which sensing and actuation are reasoned about throughout this graph. Accuracy, plausibility, liveness, confirmation and what is worth spending are all decided per channel rather than per instrument, because two channels carrying the same quantity can sit at different distances from a limit and warrant different answers.

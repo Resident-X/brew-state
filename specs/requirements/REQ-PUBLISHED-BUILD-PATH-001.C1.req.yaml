@@ -1,0 +1,14 @@
+id: REQ-PUBLISHED-BUILD-PATH-001.C1
+type: criterion
+title: The sequence from a clean checkout to a working machine is written down as steps rather than left implied
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A reader who has to infer the order from the material is reconstructing something the author already knows, and will get it wrong in ways the author cannot predict.
+
+  Implied procedure is the form documentation takes when nobody has tried to follow it.
+links:
+  - target: REQ-PUBLISHED-BUILD-PATH-001
+    type: criterion-of

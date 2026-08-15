@@ -1,0 +1,14 @@
+id: PER-OPERATOR-001.C6
+type: criterion
+title: The operator can keep the machine in condition without a bench or a technician
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Scale and residue accumulate whether or not anyone attends to them, and both change what the machine does well before they stop it working.
+
+  A machine that needs a technician to stay in condition is a machine that gets neglected instead.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

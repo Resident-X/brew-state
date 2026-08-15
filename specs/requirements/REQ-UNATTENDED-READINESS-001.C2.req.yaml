@@ -1,0 +1,14 @@
+id: REQ-UNATTENDED-READINESS-001.C2
+type: criterion
+title: How long readiness is held before it ends is an operator setting rather than a fixed property
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A household and a busy morning want different answers, and a figure chosen by the designer is wrong for one of them.
+
+  Setting it is not the same as defeating it: the setting has a range, and holding readiness indefinitely is a choice the operator makes rather than the default they inherit.
+links:
+  - target: REQ-UNATTENDED-READINESS-001
+    type: criterion-of

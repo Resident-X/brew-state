@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C7
+type: criterion
+title: History is discarded in a stated order once the bound on it is reached
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Storage on this machine is finite and records accumulate for as long as it is used, so something is discarded whether or not anyone decided what.
+
+  What is kept and what is lost is stated rather than left to whatever the storage does when it fills.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

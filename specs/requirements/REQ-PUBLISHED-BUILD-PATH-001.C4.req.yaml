@@ -1,0 +1,14 @@
+id: REQ-PUBLISHED-BUILD-PATH-001.C4
+type: criterion
+title: The sequence has been followed to a working result by someone other than its author
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  An author cannot test their own material for the knowledge they did not know they were assuming, and every gap in it is invisible from where they are standing.
+
+  Documentation is verified by use. Until someone else has reached the end, the claim that the path exists is untested.
+links:
+  - target: REQ-PUBLISHED-BUILD-PATH-001
+    type: criterion-of

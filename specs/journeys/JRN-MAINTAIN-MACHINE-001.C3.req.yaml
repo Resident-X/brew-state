@@ -1,0 +1,14 @@
+id: JRN-MAINTAIN-MACHINE-001.C3
+type: criterion
+title: A routine interrupted before it finishes leaves the machine in a state the operator can act on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Routines get interrupted, by the operator changing their mind and by the power going off. Neither is unusual enough to treat as a fault.
+
+  What the operator needs afterwards is to know where the machine stands and what remains undone.
+links:
+  - target: JRN-MAINTAIN-MACHINE-001
+    type: criterion-of

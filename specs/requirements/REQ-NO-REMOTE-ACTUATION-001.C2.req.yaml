@@ -1,8 +1,8 @@
 id: REQ-NO-REMOTE-ACTUATION-001.C2
 type: criterion
-title: Outward monitoring interfaces carry state and history only
+title: Outward monitoring interfaces accept nothing that causes a delivery
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |

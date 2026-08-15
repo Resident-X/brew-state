@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C5
+type: criterion
+title: A record carries the targets a delivery was given alongside what it achieved, so the two can be compared without a second source
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A record of what happened cannot by itself say whether it was what was wanted. The same trace is a success against one profile and a failure against another.
+
+  Holding both is what makes a record diagnostic rather than merely historical.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

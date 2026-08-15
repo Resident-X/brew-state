@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-CYCLES-001.C4
+type: criterion
+title: An upkeep routine that cannot continue stops and reports rather than working through the remainder
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A sequence that has stopped doing what it was meant to do achieves nothing by running to the end of itself, and it consumes water, power and the operator's confidence on the way.
+
+  What it could not do is more useful to the operator than the fact that it finished.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

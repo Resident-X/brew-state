@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-CYCLES-001.C1
+type: criterion
+title: An upkeep routine drives a defined sequence rather than leaving the operator to improvise one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A routine described only as instructions in a manual is executed differently every time and by every person, which is the opposite of what it exists to guarantee.
+
+  The machine holds the sequence and runs it.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

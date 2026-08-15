@@ -4,23 +4,21 @@ category: interface
 title: The machine exposes its state and accepts its commands through one defined surface
 status: active
 priority: must
-version: 1
+version: 2
 text: |
-  The display is one consumer of the machine's state, not the owner of it. The bench tooling, a replacement panel and any external system all need the same facts, and building those facts into the display makes each of them a rewrite.
+  An operator-facing consumer is one consumer of the machine's state, not the owner of it. The bench tooling, a replacement panel and any external system all need the same facts, and building those facts into the display makes each of them a rewrite.
 
   The machine also has to keep working when a consumer does not.
 rationale: |
-  Separates the interface surface from any particular consumer because the display is both the component most likely to be replaced and the one most likely to fail in a wet, hot environment. A design that assumes it makes replacement a rewrite and failure an outage.
+  Separates the interface surface from any particular consumer because the operator-facing consumer is both the part most likely to be replaced and the one most likely to fail in a wet, hot environment. A design that assumes it makes replacement a rewrite and failure an outage.
 
-  Requires consumers to be unable to affect delivery, which is the criterion that turns this from an architecture preference into a safety-relevant property. A hung display stalling an extraction, or a shot waiting on something outside the machine, converts a convenience into a failure mode.
+  Requires consumers to be unable to affect delivery, which is the criterion that turns this from an architecture preference into a safety-relevant property. A hung consumer stalling an extraction, or a shot waiting on something outside the machine, converts a convenience into a failure mode.
 
-  Silent on the transport, the encoding and the number of consumers. All are decisions, and the parts list currently carries an unresolved display choice that this must not pre-empt.
+  Silent on the transport, the encoding and the number of consumers. All are decisions, and the choice of operator-facing consumer is not yet made, which this must not pre-empt.
 links:
   - target: JRN-OPERATE-INTERFACE-001.C1
     type: derives-from
   - target: JRN-OPERATE-INTERFACE-001.C2
     type: derives-from
   - target: JRN-OPERATE-INTERFACE-001.C5
-    type: derives-from
-  - target: REQ-EXTENSIBILITY-001.C2
     type: derives-from

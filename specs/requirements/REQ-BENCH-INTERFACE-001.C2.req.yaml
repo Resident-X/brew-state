@@ -1,8 +1,8 @@
 id: REQ-BENCH-INTERFACE-001.C2
 type: criterion
-title: Streamed telemetry is timestamped by the machine's own clock
+title: Streamed telemetry is timed by the machine rather than by whatever receives it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |

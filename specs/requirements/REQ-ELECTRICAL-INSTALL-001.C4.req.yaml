@@ -2,9 +2,9 @@ id: REQ-ELECTRICAL-INSTALL-001.C4
 type: criterion
 title: Switching devices stay within their rated temperature in the assembled enclosure
 status: active
-version: 1
+version: 2
 measurement_type: threshold
-verification: analysis
+verification: test
 text: |
   Devices switching several amps continuously dissipate real power, and a rating quoted for free air does not describe a sealed box in a hot kitchen.
 

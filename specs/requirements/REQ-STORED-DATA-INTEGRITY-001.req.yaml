@@ -4,7 +4,7 @@ category: functional
 title: Stored parameters and configuration are verified intact before they are used
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Everything the machine carries between power cycles can be damaged: the plant model's parameters, the declared supply budget, the operator's recipes. Damage that leaves values looking reasonable is the case that matters, because damage that leaves them absurd is already caught by plausibility checks elsewhere.
 
@@ -16,9 +16,7 @@ rationale: |
 
   Silent on how integrity is established. Several approaches are adequate and the choice has cost and complexity consequences that belong in a decision.
 links:
-  - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C1
+  - target: JRN-SERVE-GROUP-001.C5
     type: derives-from
   - target: REQ-MODEL-COMMIT-001.C3
-    type: derives-from
-  - target: JRN-SERVE-GROUP-001.C5
     type: derives-from

@@ -1,0 +1,14 @@
+id: REQ-MACHINE-CONFIGURATION-001.C4
+type: criterion
+title: Any dependence of actuation on the supply waveform is valid at the declared frequency
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A scheme tied to the shape of the incoming supply behaves differently on a supply of a different frequency, and it does so silently, changing the control period rather than failing.
+
+  A scheme with no such dependence satisfies this without doing anything, which is the point of stating it as a dependence rather than as a method.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

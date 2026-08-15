@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-PROFILE-001.C4
+type: criterion
+title: Departure from the profile during a delivery is reported rather than absorbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine that quietly does its best when it cannot follow the command produces a drink nobody can reproduce, and a record that gives no account of why.
+
+  Following the profile and reporting the shortfall are different obligations, and the second one survives the first becoming impossible.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

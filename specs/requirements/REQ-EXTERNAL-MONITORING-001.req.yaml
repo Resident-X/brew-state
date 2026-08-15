@@ -4,23 +4,23 @@ category: interface
 title: External systems can observe the machine and its history without affecting it
 status: active
 priority: should
-version: 1
+version: 2
 text: |
   Home automation and similar systems are natural consumers of a machine that already publishes its state, and monitoring is nearly free once the interface surface exists. What they want is trends: how consistent recent drinks were, how long the machine sits at temperature, how the prediction error is moving.
 
-  Observation only. Read-only does not mean harmless, though, because a consumer can still take resources the machine needs.
+  Observation, together with requests that bring the machine to readiness and nothing that causes a delivery. Read-only does not mean harmless, though, because a consumer can still take resources the machine needs.
 rationale: |
-  Deliberately observation-only. Every safety argument in this graph assumes a person standing in front of the machine, and a remote request quietly removes that assumption: asking for heat in an empty house is a different act from pressing a button beside a cup. Rather than restating every safety property under a remote-actuation assumption, the surface simply does not offer command, which is a far cheaper thing to verify.
+  Bounded to observation and readiness. Every safety argument in this graph assumes a person standing in front of the machine, and a remote request that produced a delivery would quietly remove that assumption: water into a cup nobody is holding is a different act from pressing a button beside one. Reaching readiness is not, because it is the state the machine already holds whenever it is switched on and left alone, under the same setpoints and the same protective chain. Rather than restating every safety property under a remote-delivery assumption, the surface simply does not offer delivery, which is a far cheaper thing to verify.
 
-  The non-interference criterion is the substance here. A read-only consumer that polls aggressively can still delay a control update, and a machine that logs whatever is asked of it can still be made to exhaust its storage. Read-only bounds what a consumer can intend, not what it can cost.
+  The non-interference criterion is the substance here. A read-only consumer that polls aggressively can still delay a control update, and a machine that logs whatever is asked of it can still be made to exhaust its storage. Bounding what a consumer may intend does not bound what it can cost.
 
   History rather than instantaneous state, because monitoring is about trends. A surface offering only the current value forces every consumer to build its own history, and they will each build a different one.
 
   Priority is should. The machine is not wrong without it, and the interface requirement it builds on is already a must, so the capability stays reachable whenever it is wanted.
 links:
+  - target: DEC-NO-REMOTE-ACTUATION
+    type: justified-by
   - target: REQ-MACHINE-INTERFACE-001.C1
     type: derives-from
   - target: REQ-MACHINE-INTERFACE-001.C4
     type: derives-from
-  - target: DEC-NO-REMOTE-ACTUATION
-    type: justified-by

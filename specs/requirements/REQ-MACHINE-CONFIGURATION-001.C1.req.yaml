@@ -1,0 +1,14 @@
+id: REQ-MACHINE-CONFIGURATION-001.C1
+type: criterion
+title: The supply the machine is built for is declared rather than inferred from its behaviour
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Voltage, frequency and the rating of the protecting circuit set what the machine may draw and how its loads may be driven, and a machine has no way to discover any of them for itself.
+
+  Left undeclared they are inherited from wherever the design happened to be written.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

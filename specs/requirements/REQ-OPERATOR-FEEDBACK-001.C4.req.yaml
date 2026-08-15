@@ -1,14 +1,14 @@
 id: REQ-OPERATOR-FEEDBACK-001.C4
 type: criterion
-title: Reporting a shortfall never substitutes for preventing one that could have been prevented
+title: Refusing rather than reporting applies only to a quality shortfall the machine can establish before the delivery starts
 status: active
-version: 1
+version: 2
 measurement_type: binary
-verification: analysis
+verification: test
 text: |
-  The two are not interchangeable responses to the same situation. Anything detectable before delivery starts is refused rather than reported afterwards.
+  The machine can fall short in ways that are not interchangeable. A drink it can establish beforehand that it cannot make to standard is refused, because a report arriving afterwards arrives when the coffee is already gone.
 
-  This requirement covers only what could not be prevented once delivery was under way.
+  A shortfall discovered once the delivery is under way is completed and reported instead, since abandoning a drink half made costs the coffee as well as the time. A drink that will merely take longer is always delivered and the wait reported, because refusing that would turn the machine reaching its own limit into a failure to serve.
 links:
   - target: REQ-OPERATOR-FEEDBACK-001
     type: criterion-of

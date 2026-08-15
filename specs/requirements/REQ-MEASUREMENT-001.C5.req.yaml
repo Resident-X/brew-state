@@ -2,8 +2,8 @@ id: REQ-MEASUREMENT-001.C5
 type: criterion
 title: Water movement through the machine is measured, not inferred
 status: active
-version: 1
-measurement_type: binary
+version: 2
+measurement_type: rate
 verification: test
 text: |
   Flow is the dominant disturbance on a flow-through heated mass and the machine's main source of advance notice, and several behaviours depend on observing it: acting before its effect appears, and confirming that a commanded pump actually moved water.

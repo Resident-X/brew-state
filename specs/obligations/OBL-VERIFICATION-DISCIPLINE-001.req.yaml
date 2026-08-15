@@ -6,9 +6,9 @@ status: active
 priority: must
 authority: internal
 managed: true
-version: 1
+version: 2
 text: |
-  This is a one-person project building a control system that will run unattended for years next to two kilowatts of heating. There is no second reviewer, no QA pass and no operations team, so verification is the only thing standing between a mistake and a machine that acts on it.
+  This is a one-person project building a control system that will run unattended for years next to kilowatt-scale heating. There is no second reviewer, no QA pass and no operations team, so verification is the only thing standing between a mistake and a machine that acts on it.
 
   The obligation is not that tests exist. It is that they would fail. A suite that passes on broken code is worse than none, because it converts an absence of checking into a false report of safety.
 rationale: |

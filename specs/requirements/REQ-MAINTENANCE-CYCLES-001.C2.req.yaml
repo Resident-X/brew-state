@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-CYCLES-001.C2
+type: criterion
+title: What upkeep is due is judged from what the machine has done since it was last attended to
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A calendar interval is wrong in both directions: it nags a machine that has been idle and lets a busy one go far past due.
+
+  What the machine can count is its own use, which is also what causes the condition.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

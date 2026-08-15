@@ -1,0 +1,14 @@
+id: PER-BUILDER-001.C5
+type: criterion
+title: The machine can gain a sensor or an output without the design being reopened
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Additions are certain rather than hypothetical: a group warmer, a second probe, a weight endpoint. Each is small on its own.
+
+  What makes them expensive is not the addition but everything that has to be reopened to accommodate it.
+links:
+  - target: PER-BUILDER-001
+    type: criterion-of

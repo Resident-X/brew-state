@@ -1,8 +1,8 @@
 id: REQ-PREENERGISATION-VERIFICATION-001.C3
 type: criterion
-title: Timing behaviour is verified rather than only computed results
+title: Timing behaviour is verified before energisation, not only computed results
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |

@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C7
+type: criterion
+title: A firmware image is verified before the machine will run it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Stored parameters are checked before use, and the firmware that does the checking is not covered by that.
+
+  An image accepted without being verified is an image the machine will run whatever arrived, and what arrived is the thing in charge of every protective behaviour firmware is responsible for.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

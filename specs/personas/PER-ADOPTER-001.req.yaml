@@ -4,7 +4,7 @@ category: persona-goal
 title: Adopter rebuilds this on their own machine without starting over
 status: active
 priority: should
-version: 1
+version: 2
 text: |
   Someone who found this published, owns a different espresso machine, lives under a different supply, and wants the same control over their coffee. They are not a collaborator and cannot ask questions: what is written is what they get.
 
@@ -16,4 +16,4 @@ rationale: |
 
   The criteria deliberately promise two different things to two kinds of adopter. Machines of the same architecture differ only in their numbers and can be supported by supplying parameters. Machines of a different architecture differ in their equations, and no parameter set reaches them; what transfers there is the method, the tooling and the safety architecture, which is a smaller promise and a truthful one.
 
-  The distinguishability criterion is the one that matters for safety rather than convenience. Supply voltage, mains frequency, protection trip points and this machine's own thermal behaviour all read as universal facts when written by someone for whom they never change, and an adopter who inherits an unmarked local assumption inherits a design that does not fit their machine.
+  Distinguishing local from general is the part that matters for safety rather than convenience, and it is owned by the maintainability obligation at must rather than restated here at should. Supply voltage, mains frequency, protection trip points and this machine's own thermal behaviour all read as universal facts when written by someone for whom they never change, and an adopter who inherits an unmarked local assumption inherits a design that does not fit their machine.

@@ -2,11 +2,11 @@ id: PER-OPERATOR-001.C4
 type: criterion
 title: Drink quality holds across a back-to-back sequence
 status: active
-version: 1
+version: 2
 measurement_type: threshold
 verification: test
 text: |
-  Sequence is a different stressor from repetition and is not covered by it. A machine can be perfectly reproducible when rested and still degrade steadily under continuous draw, because each drink removes energy from the machine faster than the machine replaces it.
+  Sequence is a different stressor from repetition and is not covered by it. A machine can be perfectly reproducible when rested and still degrade steadily under continuous use, because each drink removes energy from the machine faster than the machine replaces it.
 
   The last drink in a run has to match the first closely enough that the guest served last is not served worse than the guest served first.
 links:

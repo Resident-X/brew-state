@@ -1,0 +1,14 @@
+id: PER-OPERATOR-001.C7
+type: criterion
+title: The machine does not sit holding heat and drawing power when nobody is using it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine at readiness is holding heat and drawing power for a drink nobody has asked for, and readiness is the state it occupies for most of its life.
+
+  Nothing about being ready implies being ready forever.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

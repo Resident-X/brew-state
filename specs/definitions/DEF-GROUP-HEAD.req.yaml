@@ -1,0 +1,9 @@
+id: DEF-GROUP-HEAD
+type: definition
+title: group head
+status: active
+version: 1
+text: |
+  The group head is where water enters the coffee.
+
+  It is the last point the machine controls before extraction begins, which is why the temperature that matters to the drink is the one here rather than the one in the heated mass upstream. The two differ, and the difference moves with flow.

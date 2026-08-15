@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C8
+type: criterion
+title: A firmware update that fails leaves a machine that still starts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Updates are interrupted by power loss, by the link dropping and by an image that turns out to be wrong, and none of those is unusual enough to leave the machine unable to start.
+
+  What the operator needs after a failed update is a machine that still comes up and still says what happened.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

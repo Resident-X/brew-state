@@ -3,8 +3,8 @@ type: requirement
 category: constraint
 title: Plant parameters are data and plant structure is a replaceable seam
 status: active
-priority: must
-version: 1
+priority: should
+version: 2
 text: |
   Two machines of the same architecture differ only in their numbers. Two machines of different architectures differ in their equations, and no set of numbers bridges that.
 
@@ -15,6 +15,8 @@ rationale: |
   The final criterion exists to stop the seam becoming a claim. Making a structure cheap to add is not the same as supporting it, and the verification obligation cannot be satisfied for hardware nobody can test against. A structure that exists in the source but has never met the machine it describes is published as exactly that.
 
   Deliberately not a plugin system, a model description language or a machine profile abstraction. Each is a project in its own right, none can be validated against machines the author does not own, and all of them would displace the work this project actually exists to do.
+
+  Priority is should because the seam exists for adopters, and the project's own machine comes first. That applies to the seam itself. Parameters being data rather than code is relied on at must priority by drift correction, model commit and stored-data integrity, none of which is buildable if a parameter change means a rebuild — so that criterion is not optional in practice even though this node is.
 links:
   - target: PER-ADOPTER-001.C2
     type: derives-from

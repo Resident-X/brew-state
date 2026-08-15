@@ -1,0 +1,14 @@
+id: REQ-OPERATOR-FEEDBACK-001.C5
+type: criterion
+title: Progress and outcome are carried by something that does not require the operator's eyes
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Texturing milk and watching an extraction both occupy the operator's eyes, and those are exactly the periods when the machine has most to say.
+
+  A machine that can only be understood by looking at it is silent when it matters.
+links:
+  - target: REQ-OPERATOR-FEEDBACK-001
+    type: criterion-of

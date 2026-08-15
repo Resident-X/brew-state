@@ -1,0 +1,14 @@
+id: REQ-MACHINE-CONFIGURATION-001.C5
+type: criterion
+title: The declaration states which of its values were measured on this machine and which were taken on trust
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The values are not one kind of fact. Some are read off the machine, some measured at the bench, and some taken from a document that may describe a variant.
+
+  An adopter deciding whether a value carries across to their machine needs to know which kind it is, and so does anyone revisiting the design later.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

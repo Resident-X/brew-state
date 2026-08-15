@@ -1,0 +1,14 @@
+id: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C6
+type: criterion
+title: A statement that depends on a declared local value names the declaration rather than restating the value
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A figure copied into several nodes is a figure that will disagree with itself the first time one of them is revised, and a reader has no way to tell which copy was updated.
+
+  Naming the declaration keeps one answer in one place, and makes an adopter's substitution a single edit rather than a search.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001
+    type: criterion-of

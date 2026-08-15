@@ -4,7 +4,7 @@ category: interface
 title: The machine tells the operator when it could not deliver what was asked
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Not every shortfall can be prevented once delivery is under way, but every one can be admitted. Silence converts a known-bad drink into an unexplained inconsistency and sends the operator looking for the cause in their own technique.
 
@@ -12,8 +12,12 @@ text: |
 rationale: |
   Separated from the record requirement because the two serve different people at different times. The record is for the builder, later, in detail. This is for the operator, now, in the two seconds before they decide whether to serve the drink.
 
-  Bounded to shortfalls that could not be prevented. A machine that warns where it could have refused has moved the judgement onto the person least equipped to make it, and this requirement must not be readable as licence to do that.
+  Bounded by what the machine could have established beforehand, and by which kind of shortfall it is. A quality shortfall knowable before the delivery starts is refused rather than reported, because a machine that warns where it could have refused has moved the judgement onto the person least equipped to make it. A quality shortfall discovered once the delivery is under way is completed and reported, because abandoning it costs the coffee as well as the time. A shortfall in time is reported and never refused, because refusing it converts the machine reaching its own limit into a failure to serve.
 links:
+  - target: JRN-OPERATE-INTERFACE-001.C3
+    type: derives-from
+  - target: JRN-OPERATE-INTERFACE-001.C4
+    type: derives-from
   - target: JRN-PULL-SHOT-001.C3
     type: derives-from
   - target: JRN-SERVE-GROUP-001.C4

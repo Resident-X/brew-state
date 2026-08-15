@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-CYCLES-001.C5
+type: criterion
+title: An upkeep routine is recorded as part of what the machine has done
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine that cannot say when it was last attended to cannot judge what is due next, and neither can the person asking it.
+
+  Upkeep belongs in the same account as deliveries, because both are things the machine did and both bear on its condition.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

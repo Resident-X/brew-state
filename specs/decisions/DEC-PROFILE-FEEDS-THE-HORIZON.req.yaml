@@ -1,0 +1,25 @@
+id: DEC-PROFILE-FEEDS-THE-HORIZON
+type: decision
+title: A commanded profile is the horizon model's known future input
+status: active
+version: 1
+decided_by: david
+rationale: |
+  Context: The graph already requires the controller to act on known demand before its effect appears, and flow through the coffee side is the largest disturbance it faces. Until deliveries were commanded as profiles, that demand was something the machine observed as it arrived and reacted to. A profile changes what is knowable: the machine issued the command, so the disturbance is not estimated, it is scheduled.
+
+  Trade-offs: Holding a single setpoint and treating flow purely as a measured disturbance is the simplest arrangement and throws away the one piece of future information the machine actually possesses, forcing the estimator to discover demand the controller itself created. Commanding profiles while leaving the thermal controller reactive delivers everything the operator sees and none of the control benefit, which on a low thermal mass block is where the error actually comes from: the block has little stored energy, so the temperature dip from incoming flow arrives faster than a reactive loop can answer it. Feeding the profile forward into the horizon costs the coupling between two parts of the design that could otherwise be built independently, and buys the ability to raise duty before the water arrives rather than after.
+
+  Reversibility: Reversible by ignoring the profile in the controller and leaving it as an operator-facing description only. Nothing else in the graph depends on the coupling. The cost of reversal is accepting the temperature dip a reactive loop cannot answer in time, which surfaces as shot-to-shot variation rather than as a failure, so the regression would be easy to miss and hard to attribute.
+
+  Consequences: The profile is an input to the controller rather than only a description of what the operator wanted. A delivery whose profile is refused for being beyond the machine is refused on the same evidence the horizon uses, so the refusal and the control are answering the same question. This is also why profile departure has to be reported: the horizon's confidence rests on the profile being followed, and a machine quietly deviating from it is a machine whose predictions have quietly stopped meaning anything.
+options_considered:
+  - option: Feed the commanded profile forward into the horizon model
+    reason_rejected: ""
+  - option: Hold a single setpoint and treat flow only as a measured disturbance
+    reason_rejected: Discards the one piece of future information the machine has, and makes the estimator discover demand the controller itself commanded
+  - option: Command profiles but leave the thermal controller reactive
+    reason_rejected: Delivers what the operator sees and none of the control benefit, on a block whose stored energy is too small for a reactive loop to answer the dip in time
+chosen: Feed the commanded profile forward into the horizon model
+links:
+  - target: REQ-DELIVERY-PROFILE-001.C1
+    type: addresses

@@ -1,7 +1,7 @@
 id: PER-ADOPTER-001.C1
 type: criterion
 title: What is specific to the reference machine is distinguishable from what is general
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

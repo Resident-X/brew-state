@@ -1,0 +1,14 @@
+id: JRN-MAINTAIN-MACHINE-001.C4
+type: criterion
+title: The operator can establish the machine's condition without dismantling it
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Condition that can only be assessed by taking the machine apart is condition nobody assesses.
+
+  The machine already holds what it has done and what has been done to it.
+links:
+  - target: JRN-MAINTAIN-MACHINE-001
+    type: criterion-of

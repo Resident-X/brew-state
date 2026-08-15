@@ -2,11 +2,11 @@ id: REQ-ACTUATION-CONFIRMATION-001.C2
 type: criterion
 title: The confirmation available for each output, and the time it takes, is established rather than assumed
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  A channel confirmable within a mains cycle and one confirmable only through a thermal response some seconds later need different fault timings.
+  A channel confirmable promptly and electrically, and one confirmable only through a thermal response well afterwards, need different fault timings.
 
   One figure applied across both is necessarily wrong for one of them, and wrong in the direction of either nuisance faults or a long blind window.
 links:

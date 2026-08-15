@@ -1,14 +1,14 @@
 id: OBL-REALTIME-DISCIPLINE-001.C3
 type: criterion
-title: Interrupt priority and handler ordering are assigned deliberately
+title: Ordering between concurrent activities is chosen deliberately wherever correctness depends on it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Timing that depends on the ordering between handlers is correct only if that ordering was chosen, and a default ordering that happens to work is a correctness argument nobody made.
+  Timing that depends on the ordering between concurrent activities is correct only if that ordering was chosen and written down, and an ordering that happens to work is a correctness argument nobody made.
 
-  It is also the argument that silently stops holding when a handler is added.
+  It is also the argument that silently stops holding when another activity is added.
 links:
   - target: OBL-REALTIME-DISCIPLINE-001
     type: criterion-of

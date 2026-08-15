@@ -4,7 +4,7 @@ category: constraint
 title: The install keeps mains separated, contained and serviceable
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The retrofit puts a hobbyist-built assembly in a wet, hot, thermally cycling environment and asks it to switch several kilowatts for years. The install is where that either holds or does not.
 
@@ -16,13 +16,15 @@ rationale: |
 
   Serviceability is included because a build that must be partly dismantled to reach a routine service point will eventually be reassembled wrong, and the reassembly is what defeats the isolation. This is a safety criterion wearing maintenance clothes.
 
-  Silent on enclosure material, ingress rating, wire gauge, gland type and layout. All are decisions with cost and availability consequences, and the current parts list is a sanity check rather than a commitment.
+  Silent on enclosure material, ingress rating, wire gauge, gland type and layout. All are decisions with cost and availability consequences, and no bill of materials has been committed to yet.
 links:
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
-    type: derives-from
-  - target: PER-BUILDER-001.C4
     type: derives-from
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
     type: derives-from
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C8
+    type: derives-from
+  - target: PER-BUILDER-001.C4
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C9
     type: derives-from

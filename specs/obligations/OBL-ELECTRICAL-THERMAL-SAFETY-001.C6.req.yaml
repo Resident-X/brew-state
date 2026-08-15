@@ -2,9 +2,9 @@ id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
 type: criterion
 title: Mains-referenced parts are isolated from anything a person or a low-voltage circuit can reach
 status: active
-version: 1
+version: 2
 measurement_type: binary
-verification: inspection
+verification: test
 text: |
   The controller, its sensing and the operator's controls all sit at low voltage while the loads they command sit at mains. A single insulation or clearance failure bridging the two reaches the operator's hands and every low-voltage device at once.
 

@@ -1,0 +1,14 @@
+id: REQ-WATER-SUPPLY-001.C1
+type: criterion
+title: A delivery is refused before it starts when the water supply cannot complete it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Everything needed to know this is available before anything is committed, and the cost of checking is nothing against the cost of a drink abandoned half made.
+
+  Refusal here is an ordinary outcome rather than a fault.
+links:
+  - target: REQ-WATER-SUPPLY-001
+    type: criterion-of

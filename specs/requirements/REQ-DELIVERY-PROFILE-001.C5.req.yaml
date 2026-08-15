@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-PROFILE-001.C5
+type: criterion
+title: An end condition is expressed in a quantity the machine measures as the delivery proceeds
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An end condition the machine cannot evaluate while the delivery is running is not an end condition, and something else will stop the delivery instead.
+
+  This is what keeps the endpoint reachable without fixing which quantity it is measured in.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

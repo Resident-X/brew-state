@@ -1,0 +1,9 @@
+id: DEF-PROFILE
+type: definition
+title: profile
+status: active
+version: 1
+text: |
+  A profile is the sequence of targets a delivery follows over its course, in place of a single value held from start to finish. It states what the machine aims for at each stage of a delivery and the condition on which that delivery ends.
+
+  Distinct from a description of a machine. A profile belongs to a drink and is chosen by the operator; what describes the machine itself is its plant model.

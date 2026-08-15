@@ -1,0 +1,16 @@
+id: REQ-DELIVERY-PROFILE-001.C3
+type: criterion
+title: A profile the machine can never deliver is refused before the delivery begins
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  What a profile asks for can be compared against what the machine is capable of before anything is committed, and a delivery abandoned part way has already consumed the coffee and the operator's time.
+
+  A profile the machine cannot follow yet, because a preceding demand left a shared mass elsewhere, is deferred until conditions are restored rather than refused. Refusing that case would deny a drink whose two halves both need the same heated mass, which the machine is required to serve.
+
+  Refusal names what could not be met, so the operator can change the profile rather than guess at it.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

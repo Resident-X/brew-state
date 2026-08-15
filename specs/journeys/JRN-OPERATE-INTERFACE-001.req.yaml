@@ -4,7 +4,7 @@ category: journey
 title: Operator sets up, starts and judges a drink through the interface
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Everything the operator knows about the machine arrives through the interface, and everything they ask of it goes out the same way. It is the whole of their relationship with a machine whose internals are deliberately closed to them.
 
@@ -35,7 +35,7 @@ rationale: |
 
   The not-looking-at-the-screen extension is the one that shapes the design. An interface that only communicates visually communicates nothing during the moments the operator is texturing milk or watching an extraction, which is most of the time that matters.
 
-  Deliberately silent on what the interface physically is. A screen, a panel of lights, a phone or something not yet chosen all satisfy this journey, and the parts list currently carries an unresolved display choice that this must not pre-empt.
+  Deliberately silent on what the interface physically is. A screen, a panel of lights, a phone or something not yet chosen all satisfy this journey, and the choice of operator-facing consumer is not yet made, which this must not pre-empt.
 links:
   - target: PER-OPERATOR-001.C1
     type: derives-from

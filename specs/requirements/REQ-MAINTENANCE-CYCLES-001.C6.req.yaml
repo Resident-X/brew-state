@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-CYCLES-001.C6
+type: criterion
+title: Upkeep that has become due is raised by the machine rather than waiting to be asked
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Condition changes gradually, and from the cup it reads as the operator's technique slipping rather than the machine's condition changing.
+
+  The machine holds the evidence and is the only party positioned to raise it, so raising it cannot wait to be asked.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

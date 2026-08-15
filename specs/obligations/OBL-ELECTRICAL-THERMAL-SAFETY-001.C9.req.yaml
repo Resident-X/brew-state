@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C9
+type: criterion
+title: The wiring authority the installation answers to is named
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  An obligation whose authority is named only as the local rules cannot be checked by the person it exists for, and the rules differ materially between jurisdictions on earthing, isolation and circuit rating.
+
+  Naming it is what turns an external authority from a gesture into something an adopter can hold the installation against.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

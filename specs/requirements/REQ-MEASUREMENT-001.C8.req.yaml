@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C8
+type: criterion
+title: Pressure in the steam path is measured rather than inferred from temperature
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Steam pressure and the temperature of the heated mass track each other only while nothing is being drawn. Once steam leaves, they diverge, and that divergence is the condition the operator is judging.
+
+  An inferred value is furthest from the truth at the moment it matters most.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

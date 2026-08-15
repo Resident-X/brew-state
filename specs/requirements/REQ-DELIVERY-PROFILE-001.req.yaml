@@ -1,0 +1,26 @@
+id: REQ-DELIVERY-PROFILE-001
+type: requirement
+category: functional
+title: A delivery follows a commanded course of targets from start to end
+status: active
+priority: must
+version: 1
+text: |
+  A delivery is commanded as a course rather than as one value held until something stops it. What the machine aims for early in a delivery and what it aims for late are different problems, and that difference is the lever an operator reaches for when chasing a result.
+
+  This governs deliveries the machine brings to an end. A draw the operator opens and closes is bounded by the operator, and nothing here overrides that.
+
+  Commanding a course also changes what the controller knows. Demand that was previously estimated as it arrived becomes demand that was scheduled, and the machine can act on it before its effect appears.
+rationale: |
+  Silent on which physical quantity a profile commands. The candidate quantities are coupled through the coffee itself and only one of them can be commanded independently; which one this machine works with carries cost and hardware consequences and is recorded as a decision rather than fixed here.
+
+  Requires the end condition to belong to the profile rather than to sit somewhere else. A course with no stated end is not a complete command, and it leaves the machine to invent one at the moment it can least justify the choice.
+
+  Requires refusal before starting rather than failure part way through, on the principle the brew temperature requirement already applies. A delivery abandoned half way has consumed the coffee and the operator's time; one refused at the outset has consumed neither.
+
+  Requires departure to be reported rather than absorbed, because a machine that quietly does its best produces a drink nobody can reproduce and a record that cannot explain itself.
+links:
+  - target: JRN-PULL-SHOT-001.C5
+    type: derives-from
+  - target: JRN-PULL-SHOT-001.C6
+    type: derives-from

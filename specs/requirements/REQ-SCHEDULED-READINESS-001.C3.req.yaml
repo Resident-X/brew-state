@@ -1,7 +1,7 @@
 id: REQ-SCHEDULED-READINESS-001.C3
 type: criterion
 title: An unused readiness period ends without intervention
-status: active
+status: deprecated
 version: 1
 measurement_type: threshold
 verification: test

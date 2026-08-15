@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-CYCLES-001.C8
+type: criterion
+title: A routine interrupted before it finishes leaves its state discoverable without opening the machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Routines are interrupted, by the operator changing their mind and by power going away, and neither is unusual enough to treat as a fault.
+
+  What the operator needs afterwards is to know where the machine stands and what remains undone, without opening it.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

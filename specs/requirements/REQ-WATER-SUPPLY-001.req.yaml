@@ -1,0 +1,20 @@
+id: REQ-WATER-SUPPLY-001
+type: requirement
+category: functional
+title: A delivery is not begun without the water to complete it
+status: active
+priority: must
+version: 1
+text: |
+  A delivery started without the water to finish it wastes the coffee, strands the operator mid-drink, and feeds heat forward for flow that will never arrive.
+
+  The machine can tell before it starts. Discovering it afterwards is a fault; declining beforehand is not.
+rationale: |
+  Separate from the actuation-fault requirement deliberately. That one catches commanded flow that does not arrive, which is the reactive case and remains necessary because a supply can be emptied, blocked or airlocked mid-delivery. This one is the case the machine could have known about and did not check.
+
+  Requires the judgement to rest on a measurement rather than on what the machine believes was last put in, because a belief about the supply survives it changing behind the machine's back and is wrong in exactly the direction that matters.
+
+  Requires the refusal to name water as the reason. A machine that declines without saying why sends the operator looking at the coffee, the grind and the machine's temperature before they think to look at the water.
+links:
+  - target: JRN-PULL-SHOT-001.C2
+    type: derives-from

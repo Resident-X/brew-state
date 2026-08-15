@@ -1,0 +1,14 @@
+id: REQ-MACHINE-CONFIGURATION-001.C3
+type: criterion
+title: The machine's own thermal and hydraulic characteristics are declared as measured rather than adopted from datasheets
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A figure quoted for a component in free air does not describe that component assembled into this machine, and the difference is the margin the design spends.
+
+  This is the same standard the measurement requirements already hold sensing to.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

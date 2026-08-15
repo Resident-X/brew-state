@@ -4,7 +4,7 @@ category: functional
 title: Control behaviour is verified against a plant model before anything is energised
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Two distinct classes of error have to be caught before hardware is involved: a control law that is wrong, and a correct control law implemented wrongly on the target. They have different fixes and are far cheaper to separate than to untangle after the fact.
 
@@ -19,4 +19,6 @@ links:
   - target: JRN-COMMISSION-PLANT-001.C1
     type: derives-from
   - target: JRN-COMMISSION-PLANT-001.C2
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C5
     type: derives-from

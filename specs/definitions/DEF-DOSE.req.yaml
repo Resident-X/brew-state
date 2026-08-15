@@ -1,0 +1,9 @@
+id: DEF-DOSE
+type: definition
+title: dose
+status: active
+version: 1
+text: |
+  A dose is the quantity of ground coffee placed in the basket for one extraction.
+
+  It is fixed by the operator before the delivery begins, and the machine has no way to observe it. That is why a dose is recorded as part of a recipe rather than commanded as part of a profile, and why a record reproduces a drink only together with what the operator did.

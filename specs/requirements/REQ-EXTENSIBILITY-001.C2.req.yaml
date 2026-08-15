@@ -1,14 +1,14 @@
 id: REQ-EXTENSIBILITY-001.C2
 type: criterion
-title: A new output is covered by actuation confirmation and fault response without those being reopened
+title: A new output that acts on the process is covered by actuation confirmation and fault response without those being reopened
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
   Confirmation and fault handling written per-output leave every addition either uncovered or requiring the same work again.
 
-  An output added without confirmation is a silent gap, since nothing reports the absence of a check that was never written.
+  An output acting on the process added without confirmation is a silent gap, since nothing reports the absence of a check that was never written. An output that only informs is covered where the interface surface is defined instead.
 links:
   - target: REQ-EXTENSIBILITY-001
     type: criterion-of

@@ -1,8 +1,8 @@
 id: REQ-MODEL-STRUCTURE-SEAM-001.C3
 type: criterion
-title: Exactly one plant structure is present in any built artefact
+title: A machine cannot run a plant structure other than the one it was built for
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |

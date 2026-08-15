@@ -1,0 +1,14 @@
+id: JRN-PULL-SHOT-001.C5
+type: criterion
+title: A shot ends at the point its recipe specifies without the operator having to judge it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A shot the operator has to watch and stop by hand is a shot that depends on their attention being available, and the guest served fourth gets whatever attention is left.
+
+  Stopping it by hand stays available. What this asks is that it not be required.
+links:
+  - target: JRN-PULL-SHOT-001
+    type: criterion-of

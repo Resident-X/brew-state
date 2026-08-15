@@ -1,0 +1,14 @@
+id: REQ-MACHINE-INTERFACE-001.C7
+type: criterion
+title: The surface marks each quantity it reports as measured or estimated
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The machine reports quantities it senses and quantities its model infers, and the two carry different weight for anything deciding how far to trust them.
+
+  The mark is carried by the surface rather than necessarily shown to an operator; what a consumer presents is its own choice, and a consumer that has no use for the distinction is free to ignore it. Presenting an inferred value as a measured one is how a plausible model failure becomes an unnoticed one.
+links:
+  - target: REQ-MACHINE-INTERFACE-001
+    type: criterion-of

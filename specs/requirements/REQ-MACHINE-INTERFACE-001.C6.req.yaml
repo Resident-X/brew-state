@@ -1,0 +1,14 @@
+id: REQ-MACHINE-INTERFACE-001.C6
+type: criterion
+title: An indication whose state cannot be established shows nothing rather than something
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An indicator that is neither confirmed nor established at power-on presents a stale or arbitrary value with exactly the confidence of a correct one, and a reader has no way to tell which they are looking at.
+
+  Establishing it costs a moment at startup. Not establishing it costs the operator's trust in every reading afterwards.
+links:
+  - target: REQ-MACHINE-INTERFACE-001
+    type: criterion-of

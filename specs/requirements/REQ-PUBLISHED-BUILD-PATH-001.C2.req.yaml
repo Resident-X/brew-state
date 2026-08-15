@@ -1,0 +1,14 @@
+id: REQ-PUBLISHED-BUILD-PATH-001.C2
+type: criterion
+title: Every tool the sequence depends on can be obtained by a reader who is not the author
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A step that depends on something only the author can run is a step only the author can take, and naming the tool does not change that.
+
+  This covers what a reader needs to build, to flash and to check the result, not merely to read.
+links:
+  - target: REQ-PUBLISHED-BUILD-PATH-001
+    type: criterion-of

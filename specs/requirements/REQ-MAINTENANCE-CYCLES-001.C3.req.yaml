@@ -1,0 +1,16 @@
+id: REQ-MAINTENANCE-CYCLES-001.C3
+type: criterion
+title: A delivery the operator commands is refused while an upkeep routine holds the machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A routine assumes the machine to itself. A drink taken during one spoils the routine and is made under conditions nobody would have chosen.
+
+  The routine's own pumping is not refused by this; a routine sends water out of the machine like any other delivery, and the water it needs is checked before it starts on the same terms.
+
+  Refusal states which of the two is happening, so the operator is not left wondering why the machine will not respond.
+links:
+  - target: REQ-MAINTENANCE-CYCLES-001
+    type: criterion-of

@@ -2,11 +2,11 @@ id: REQ-MACHINE-INTERFACE-001.C3
 type: criterion
 title: The surface does not depend on any particular display or consumer
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  The display is the component most likely to be replaced and the one most exposed to water and heat.
+  The operator-facing consumer is the part most likely to be replaced and the one most exposed to water and heat.
 
   A surface shaped around it has to be reworked when it changes, which is the outcome the separation exists to avoid.
 links:

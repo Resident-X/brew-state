@@ -1,0 +1,24 @@
+id: REQ-PUBLISHED-BUILD-PATH-001
+type: requirement
+category: functional
+title: The published material carries a followed path from checkout to a working machine
+status: active
+priority: should
+version: 1
+text: |
+  Someone who found this published cannot ask a question. Whatever stands between a clean checkout and a machine that makes coffee has to be written down, because the alternative is not a slower reader but a stopped one.
+
+  The material can be complete and still not carry them, which is why this is stated as reaching a result rather than as having documented one.
+rationale: |
+  Authored because the reachability promise had nothing beneath it. The persona criterion asserting it and the obligation criterion requiring the procedure to be documented were both childless, which made the graph's most outward-facing commitment the one nothing implemented.
+
+  Requires the tools to be obtainable rather than merely named. A sequence that depends on something only the author can run is a sequence only the author can follow, and naming it does not change that.
+
+  Requires the sequence to have been followed by someone else. Documentation is verified by use, and an author cannot test their own material for the knowledge they did not know they were assuming. This is the criterion that costs something, and it is the only one that actually establishes the promise.
+
+  Silent on the form the material takes and on how many steps it has. What matters is that the path exists, is followed rather than asserted, and ends somewhere a reader can tell they have arrived.
+links:
+  - target: PER-ADOPTER-001.C5
+    type: derives-from
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C2
+    type: derives-from

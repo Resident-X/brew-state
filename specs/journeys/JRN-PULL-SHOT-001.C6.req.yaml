@@ -1,0 +1,14 @@
+id: JRN-PULL-SHOT-001.C6
+type: criterion
+title: The operator can vary how a shot is delivered over its course, not only its final size
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Extraction is not one condition held for a fixed time. What happens in the first seconds and what happens at the end are different problems, and an operator chasing a result needs to change one without disturbing the other.
+
+  A machine offering only a final size offers one lever for a process with several.
+links:
+  - target: JRN-PULL-SHOT-001
+    type: criterion-of

@@ -1,0 +1,27 @@
+id: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+type: decision
+title: Plant structure is selected when the software is built rather than at run time
+status: active
+version: 1
+decided_by: david
+rationale: |
+  Context: The adopter promise requires that a machine of the same architecture be supported by supplying parameters, and that a machine of a different architecture not be silently mis-served. Those are different machines with different equations, not the same equations with different numbers: a heat exchanger's group temperature depends on time since the last shot, which has no representation in a thermoblock's state vector at any parameter values. Something has to decide which set of equations a given machine runs, and when that decision is taken.
+
+  Trade-offs: Selecting at build time costs a rebuild to change structure, and gives up the idea of one binary serving every machine. In exchange there is no dispatch in the control path, no unused structure occupying storage on a part chosen for its price, and controlling one architecture with another's dynamics becomes unreachable rather than merely unlikely. Selecting at run time from configuration buys the single binary and pays for it in all three, and it converts a wrong entry in a configuration file into a machine running the wrong physics. An interpreted model description language is a project in its own right, cannot be verified against machines the author does not own, and would put an interpreter inside the path the real-time obligation has to bound. Fixing the structure permanently with no seam is cheapest today and forecloses the adopter promise outright, since a second machine would then mean a fork.
+
+  Reversibility: Cheap to reverse while only one structure exists, and progressively less so afterwards. Moving to run-time selection later means introducing dispatch into the path the real-time obligation bounds and re-verifying timing against it, and every structure then ships in every machine. The cost grows with each structure added, because reversal means re-verifying all of them together rather than one at a time.
+
+  Consequences: Commissioning can establish parameters and judge whether the structure the machine was built with fits it, but cannot change that structure. A machine needing a different one needs a different build. This is recorded in the commissioning definition so the two do not drift apart again.
+options_considered:
+  - option: Select the structure at build time
+    reason_rejected: ""
+  - option: Select the structure at run time from configuration
+    reason_rejected: Every supported structure ships in every machine, costing dispatch in the control path and storage on a part chosen for its price, and it makes running one architecture with another's dynamics a reachable state rather than an impossible one
+  - option: Interpret a model description language at run time
+    reason_rejected: A project in its own right, unverifiable against machines the author does not own, and it places an interpreter inside the path the real-time obligation must bound
+  - option: Fix one structure permanently with no seam at all
+    reason_rejected: Cheapest today and forecloses the adopter promise outright, since a second machine would mean a fork rather than a build
+chosen: Select the structure at build time
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
+    type: addresses

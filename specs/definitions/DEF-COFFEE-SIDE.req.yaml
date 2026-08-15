@@ -1,0 +1,9 @@
+id: DEF-COFFEE-SIDE
+type: definition
+title: coffee side
+status: active
+version: 1
+text: |
+  The coffee side is the heated mass that serves espresso and hot water, together with whatever moves, routes and senses water for it.
+
+  It is named as a side because it is the resource two of the three drink modes contend for. Which heated mass serves which mode, and how far the sides are independent of one another, are properties of the machine recorded in the configuration declaration rather than parts of the term.

@@ -1,8 +1,8 @@
 id: JRN-SERVE-LONG-BLACK-001.C3
 type: criterion
-title: The machine resolves contention between its own draws without involving the operator
+title: The machine resolves contention between its own deliveries without involving the operator
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: demonstration
 text: |

@@ -1,7 +1,7 @@
 id: PER-ADOPTER-001.C4
 type: criterion
 title: Local supply, frequency and protection limits are declared rather than inherited
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

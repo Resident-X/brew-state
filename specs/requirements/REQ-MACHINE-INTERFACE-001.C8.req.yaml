@@ -1,0 +1,14 @@
+id: REQ-MACHINE-INTERFACE-001.C8
+type: criterion
+title: A value the machine cannot honour is refused where it is entered
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A value accepted and then quietly clamped, ignored or failed later leaves the operator believing they asked for something they did not get, and looking for the discrepancy in the drink.
+
+  Refusal happens where the value is entered, while the person who chose it is still there to choose again.
+links:
+  - target: REQ-MACHINE-INTERFACE-001
+    type: criterion-of

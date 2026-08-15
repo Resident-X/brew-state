@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-PROFILE-001.C2
+type: criterion
+title: A profile states the condition on which its delivery ends
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An endpoint that lives outside the profile can disagree with it, and a delivery with no stated end has to be stopped by whatever notices first.
+
+  This is what makes a profile a complete command rather than a preference the machine consults.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

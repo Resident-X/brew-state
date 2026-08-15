@@ -1,0 +1,14 @@
+id: REQ-MACHINE-CONFIGURATION-001.C2
+type: criterion
+title: The trip points of the protective devices the design relies on are declared
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The margin between what the controller commands and where protection acts is the margin the whole thermal design is built inside, and it cannot be reasoned about while one end of it is unstated.
+
+  A device substituted for one with a different trip point changes that margin without changing anything the graph would notice.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

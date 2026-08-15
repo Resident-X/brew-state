@@ -1,0 +1,14 @@
+id: REQ-UNATTENDED-READINESS-001.C3
+type: criterion
+title: Ending readiness reaches the same resting state as every other route to rest
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Two resting states that differ in ways nobody has written down are two states nobody can reason about, and the difference shows up as behaviour on the next power-on.
+
+  One resting state, reached by every route that leads to rest.
+links:
+  - target: REQ-UNATTENDED-READINESS-001
+    type: criterion-of

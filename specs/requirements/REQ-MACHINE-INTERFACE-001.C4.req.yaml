@@ -2,13 +2,13 @@ id: REQ-MACHINE-INTERFACE-001.C4
 type: criterion
 title: A consumer that stops responding does not affect delivery
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  The interface observes the machine's behaviour rather than participating in it, and a hung display must not stall an extraction.
+  The interface observes the machine's behaviour rather than participating in it, and a consumer that has stopped responding must not stall an extraction.
 
-  Nothing in a delivery waits on anything outside the machine.
+  No consumer of this surface sits in the path of a delivery. Sensing the machine relies on to do its job is not a consumer.
 links:
   - target: REQ-MACHINE-INTERFACE-001
     type: criterion-of

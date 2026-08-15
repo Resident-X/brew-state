@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C6
+type: criterion
+title: A record resolves how a delivery progressed, not only how it ended
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An outcome says a shot ran long. The course says whether it choked early or ran away at the end, and those call for opposite corrections.
+
+  Timing is relative to the delivery's own start, which the machine can establish without knowing what time it is.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

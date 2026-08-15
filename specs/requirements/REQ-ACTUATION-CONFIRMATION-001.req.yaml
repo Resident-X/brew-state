@@ -1,20 +1,22 @@
 id: REQ-ACTUATION-CONFIRMATION-001
 type: requirement
 category: functional
-title: Every commanded output is confirmed against an independent observation
+title: Every output that acts on the process is confirmed against an independent observation
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The controller commands heaters, pumps and valves, and can observe what followed through sensing that does not depend on the command having been believed. Confirmation is the comparison between the two.
 
-  Outputs differ in what is observable about them. Some can be confirmed within a mains cycle; others only through a thermal or hydraulic effect, which is slower and far less specific about what actually failed.
+  Outputs differ in what is observable about them. Some can be confirmed promptly and electrically; others only through a thermal or hydraulic effect, which is slower and far less specific about what actually failed.
 rationale: |
   Requires the observation to be independent of the command path, because a confirmation derived from the same signal that issued the command establishes only that the controller still holds its own intention.
 
   Distinguishes fast direct confirmation from slow effect-based confirmation rather than demanding one mechanism everywhere. Which channels get direct sensing is a cost and hardware decision, and confirming a switching device electrically needs sensing that measuring temperature does not. This requirement is where that need is asserted, so it is visible to whoever assembles the parts rather than discovered when confirmation turns out to be unbuildable.
 
   The ambiguity criterion is deliberate and is the opposite of what a diagnostic system is usually asked for. Effect-based confirmation genuinely cannot separate a failed switch from a failed load from a failed sensor, and reporting a specific cause the observation does not support sends the builder to the wrong place with confidence.
+
+  Scoped to outputs acting on the process rather than to every commanded output. An output that only informs a person cannot be observed independently at all, and a failure to drive one costs the operator information rather than releasing energy. Those outputs are governed where the interface surface is defined, and requiring confirmation of them here would demand something unbuildable while escalating a cosmetic fault to the response reserved for a hazard.
 links:
   - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C1
     type: derives-from

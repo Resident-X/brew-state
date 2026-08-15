@@ -4,7 +4,7 @@ category: constraint
 title: Adding a sensor or an output does not require reworking cross-cutting behaviour
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The machine will gain things. A group head warmer, a second temperature probe, a weight endpoint, an extra valve. Each is a small addition on its own and each touches the same handful of behaviours: the supply budget, actuation confirmation, fault response, estimation, and the safety argument.
 
@@ -18,5 +18,5 @@ rationale: |
 links:
   - target: PER-BUILDER-001.C4
     type: derives-from
-  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+  - target: PER-BUILDER-001.C5
     type: derives-from

@@ -1,0 +1,14 @@
+id: REQ-WATER-SUPPLY-001.C3
+type: criterion
+title: A refusal for want of water says so rather than reporting a general inability
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An operator told only that the machine will not deliver will check the coffee, the grind and the temperature before they think to look at the water.
+
+  The machine already knows which it is.
+links:
+  - target: REQ-WATER-SUPPLY-001
+    type: criterion-of

@@ -1,0 +1,9 @@
+id: DEF-DUTY
+type: definition
+title: duty
+status: active
+version: 1
+text: |
+  Duty is the proportion of the available time a load spends energised, as distinct from the power it draws while it is on.
+
+  A load that can only be fully on or fully off delivers everything in between by spending part of each window on. The supply budget is therefore spent in duty rather than in power alone, and on this machine full duty is the normal condition rather than an edge case.

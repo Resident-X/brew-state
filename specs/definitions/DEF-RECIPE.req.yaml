@@ -1,0 +1,9 @@
+id: DEF-RECIPE
+type: definition
+title: recipe
+status: active
+version: 1
+text: |
+  A recipe is everything the operator fixes about a drink so that repeating it reproduces the drink. It includes the profile the delivery follows, and the profile carries the condition on which the delivery ends.
+
+  Parts of a recipe lie outside the machine's control, among them the grind and the dose. The machine records those rather than commanding them, which is why a record reproduces a drink only together with what the operator did.

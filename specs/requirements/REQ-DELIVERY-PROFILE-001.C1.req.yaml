@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-PROFILE-001.C1
+type: criterion
+title: A delivery the machine ends is commanded by a profile rather than by a single value held throughout
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A single setpoint describes only a machine that is trying to hold still. A delivery is a transient from beginning to end, and the target that suits its start rarely suits its finish.
+
+  The profile is the command, not an adjustment applied to one.
+links:
+  - target: REQ-DELIVERY-PROFILE-001
+    type: criterion-of

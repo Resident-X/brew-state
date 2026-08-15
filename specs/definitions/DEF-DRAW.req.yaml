@@ -2,8 +2,10 @@ id: DEF-DRAW
 type: definition
 title: draw
 status: active
-version: 1
+version: 2
 text: |
   A draw is a single continuous demand placed on the machine by the operator, lasting from when they open a path until they close it.
 
-  Its duration is set by the operator rather than by the machine, which distinguishes it from a dosed or metered delivery. Steaming a jug of milk and dispensing hot water are both draws; the machine cannot know in advance when either will end.
+  Its duration is set by the operator rather than by the machine, which distinguishes it from a delivery the machine ends itself at a point its profile specifies. Steaming a jug of milk and dispensing hot water are both draws; the machine cannot know in advance when either will end. An espresso pulled to a profile is not a draw, because the machine ends it.
+
+  Unrelated to the electrical sense of the word. Where this graph speaks of mains draw or supply draw it means current, which has nothing to do with this term.

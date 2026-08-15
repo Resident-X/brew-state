@@ -1,0 +1,14 @@
+id: REQ-OPERATOR-FEEDBACK-001.C6
+type: criterion
+title: A fault report persists across power cycling until a person acknowledges it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A report that clears itself clears while the operator is turned away, and the machine then appears to have behaved normally. The next person to see it has no way to know it did not.
+
+  Acknowledgement is what establishes that a person actually saw it, which is why it has to be an act rather than the passage of time.
+links:
+  - target: REQ-OPERATOR-FEEDBACK-001
+    type: criterion-of

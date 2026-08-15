@@ -1,0 +1,26 @@
+id: REQ-MACHINE-CONFIGURATION-001
+type: requirement
+category: constraint
+title: The machine's local configuration is declared in one place the requirements point at
+status: active
+priority: must
+version: 1
+text: |
+  The requirements in this graph hold for any machine of this shape. What they have actually been checked against is one machine, on one supply, protected by one set of devices, and none of that is visible in the requirements themselves.
+
+  The declaration is where those values live, so an adopter substitutes one document rather than auditing a graph for numbers that were never marked.
+rationale: |
+  Separated from the requirements that depend on it so the dependency runs one way. A requirement that carries its own local value cannot be reused without editing it, and an adopter editing requirements is an adopter maintaining a fork.
+
+  Requires provenance alongside the values because they are not all the same kind of fact. Some are read off the machine, some are measured on the bench, and some are taken from a document that may describe a variant. An adopter deciding whether a value transfers to their machine needs to know which kind they are looking at, and so does anyone revisiting the design later.
+
+  Requires the machine's own characteristics to be established by measurement rather than adopted from datasheets, on the same grounds the measurement requirements already apply: a figure quoted for a component in free air does not describe that component assembled into this machine.
+
+  Silent on the form the declaration takes. What matters is that one place holds the values and that statements depending on them point at it.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C3
+    type: derives-from
+  - target: PER-ADOPTER-001.C2
+    type: derives-from
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C6
+    type: derives-from

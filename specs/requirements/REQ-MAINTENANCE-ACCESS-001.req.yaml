@@ -4,15 +4,23 @@ category: functional
 title: The machine is reconfigured and updated without being opened, behind a deliberate local act
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Adjusting a parameter should not mean opening the machine. A build that must be dismantled to be tuned gets tuned rarely and reassembled carelessly, and the reassembly is what breaks the separation the install depends on.
 
   What is being permitted here changes what the machine will do next time, not what it is doing now. That is why it is gated locally rather than withheld entirely.
+rationale: |
+  Separates configuration from firmware because they are different risks wearing the same shape. Configuration changes what the machine does within limits the firmware still enforces; replacing the firmware replaces the enforcer. A gate adequate for the first is not adequate for the second, which is why the firmware path additionally requires a physical control software cannot assert.
+
+  Requires the window to close on its own rather than on being told to. A maintenance state left open is a maintenance state nobody remembers is open, and the person who opened it has by then gone back to making coffee.
+
+  Requires the connection to carry no physical authority and no ingress path, which are two consequences of the same choice. A port reachable from outside the machine is reachable by anyone, so it cannot itself be the physical control the firmware gate depends on; and a penetration through the enclosure is a route for water and steam as well as data, on a machine that produces both by design.
+
+  Silent on how the connection is made and on what verifies an image. Both are decisions with cost consequences, and neither is a property this requirement should fix.
 links:
-  - target: REQ-ELECTRICAL-INSTALL-001.C5
-    type: derives-from
-  - target: PER-BUILDER-001.C3
-    type: derives-from
   - target: DEC-REMOTE-MAINTENANCE-LOCAL-GATE
     type: justified-by
+  - target: PER-BUILDER-001.C3
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C5
+    type: derives-from

@@ -1,0 +1,14 @@
+id: REQ-ELECTRICAL-INSTALL-001.C8
+type: criterion
+title: Precision sensing holds its stated accuracy while the switched loads are operating
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Kilowatt-level switching shares an enclosure with sensing whose resolution is fine enough that switching noise is not negligible. Interference that appears only under load is invisible on a quiet bench.
+
+  The accuracy claimed elsewhere in this graph is claimed under the conditions the machine actually runs in, with the switched loads operating.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

@@ -1,0 +1,11 @@
+id: DEF-RESTING-STATE
+type: definition
+title: resting state
+status: active
+version: 1
+text: |
+  The resting state is what the machine occupies when it is powered but neither delivering nor holding itself ready: nothing heating toward a target, nothing commanded, nothing in progress.
+
+  It is reached by ordinary routes — switching on and not asking for anything, finishing a drink, readiness ending unused. It is one of the ways the machine is in a safe state, and the ordinary one: arriving here is not evidence that anything went wrong, and the machine leaves it as soon as it is asked for something. A safe state arrived at through a fault latches instead until a person acts.
+
+  Readiness is not rest. A machine holding readiness is working to stay at a temperature, which is why readiness ending returns it here.

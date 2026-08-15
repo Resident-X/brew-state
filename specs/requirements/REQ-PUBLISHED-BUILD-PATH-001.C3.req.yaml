@@ -1,0 +1,14 @@
+id: REQ-PUBLISHED-BUILD-PATH-001.C3
+type: criterion
+title: The sequence identifies the values a reader must supply for their own machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The material is written to hold for machines other than the one it was built against, which means a reader arrives needing to substitute things.
+
+  Being told which those are, and where they belong, is the difference between substitution and an audit.
+links:
+  - target: REQ-PUBLISHED-BUILD-PATH-001
+    type: criterion-of

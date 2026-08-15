@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C8
+type: criterion
+title: What the machine accumulates about itself survives the discarding of the records it came from
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  What is due since the machine was last attended to, and how far its model has moved since commissioning, are answers it must still be able to give after the oldest records are gone.
+
+  An accumulated count is small and does not grow with use. The records it was derived from do, which is why the two cannot share a retention rule.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

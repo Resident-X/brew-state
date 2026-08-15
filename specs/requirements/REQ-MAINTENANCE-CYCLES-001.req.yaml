@@ -1,0 +1,28 @@
+id: REQ-MAINTENANCE-CYCLES-001
+type: requirement
+category: functional
+title: The machine runs its own upkeep routines as a distinct operating mode
+status: active
+priority: must
+version: 1
+text: |
+  An upkeep routine drives pumps and heaters through a sequence no delivery ever produces, for longer than any delivery lasts, and with nobody watching the outcome in a cup.
+
+  It is an operating mode of the machine rather than something done to the machine while it waits.
+rationale: |
+  Deliberately does not restate the protective chain or the supply budget. Both are already absolute and neither admits an exception for this mode; repeating them here would create a second statement of the same rule that can drift from the first.
+
+  Judges what is due from what the machine has done rather than from elapsed calendar time, because the machine can count deliveries and the water through them without knowing the date, and use is what causes the condition in the first place.
+
+  Silent on what the routines consist of, what goes into them and how often they are due. Water hardness, use and the machine itself all move those, and fixing them here would write one household's conditions into a requirement intended to travel.
+
+  Requires refusal of deliveries during a routine rather than interleaving. A routine assumes it has the machine to itself, and a drink taken part way through both spoils the routine and produces a drink made under conditions nobody would choose.
+links:
+  - target: JRN-MAINTAIN-MACHINE-001.C1
+    type: derives-from
+  - target: JRN-MAINTAIN-MACHINE-001.C2
+    type: derives-from
+  - target: JRN-MAINTAIN-MACHINE-001.C3
+    type: derives-from
+  - target: JRN-MAINTAIN-MACHINE-001.C4
+    type: derives-from

@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C7
+type: criterion
+title: Pressure in the brew path is measured rather than inferred from pump drive
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  What determines an extraction is the pressure the coffee actually sees, and pump drive is related to that only through a coupling that shifts with grind, dose and wear.
+
+  A value derived from what was commanded confirms the command rather than the condition.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of
