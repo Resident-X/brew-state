@@ -1,0 +1,19 @@
+id: PER-ADOPTER-001
+type: requirement
+category: persona-goal
+title: Adopter rebuilds this on their own machine without starting over
+status: active
+priority: should
+version: 1
+text: |
+  Someone who found this published, owns a different espresso machine, lives under a different supply, and wants the same control over their coffee. They are not a collaborator and cannot ask questions: what is written is what they get.
+
+  They are as capable as the Builder and have the same lack of a laboratory. What they lack is the years of context the author has about this particular machine, and every assumption left unmarked is one they will inherit without noticing.
+
+  Their machine may be the same shape as the reference or a different one entirely. Those two cases deserve different promises, and the honest thing is to say which they are in.
+rationale: |
+  Authored at should rather than must because the project's own machine comes first, and an adopter goal that outranked the builder's would distort the work. It is recorded as a persona rather than left to the maintainability obligation because portability decisions need a stakeholder to be traded against, and an obligation with no persona behind it is a rule nobody owns.
+
+  The criteria deliberately promise two different things to two kinds of adopter. Machines of the same architecture differ only in their numbers and can be supported by supplying parameters. Machines of a different architecture differ in their equations, and no parameter set reaches them; what transfers there is the method, the tooling and the safety architecture, which is a smaller promise and a truthful one.
+
+  The distinguishability criterion is the one that matters for safety rather than convenience. Supply voltage, mains frequency, protection trip points and this machine's own thermal behaviour all read as universal facts when written by someone for whom they never change, and an adopter who inherits an unmarked local assumption inherits a design that does not fit their machine.

@@ -1,0 +1,14 @@
+id: PER-OPERATOR-001.C3
+type: criterion
+title: Different drink types can be served within one session
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Guests want what they want, and a machine that can only produce the drink its owner habitually makes is a machine that cannot host.
+
+  Moving between a milk-based drink and a black one within a single session means the machine changes operating mode without a lengthy reconfiguration, without a purge ritual the operator has to remember, and without either mode leaving the machine in a state that spoils the drink that follows it.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

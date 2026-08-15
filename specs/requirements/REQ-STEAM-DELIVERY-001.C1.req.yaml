@@ -1,0 +1,14 @@
+id: REQ-STEAM-DELIVERY-001.C1
+type: criterion
+title: Steam properties stay within band for the whole draw regardless of its duration
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The operator decides when the milk is done. A machine that holds quality for a fixed window and then falls away has moved that decision to itself, and taken it at the worst moment.
+
+  The bound is the operator's draw, not any interval the machine finds convenient.
+links:
+  - target: REQ-STEAM-DELIVERY-001
+    type: criterion-of

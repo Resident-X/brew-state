@@ -1,0 +1,14 @@
+id: REQ-BREW-TEMP-001.C3
+type: criterion
+title: A target that cannot be reached at all is refused; one that cannot be reached yet is deferred
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Two outcomes are available here and they are not the same. A target the machine cannot reach at all is refused, because nothing about waiting changes it. A target it cannot reach yet, because a preceding demand left the shared mass elsewhere, is deferred until conditions are restored and then delivered.
+
+  Refusing the second case would make a machine that cannot serve a drink whose two halves both need the same heated mass, which is a drink it is explicitly required to serve.
+links:
+  - target: REQ-BREW-TEMP-001
+    type: criterion-of

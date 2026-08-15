@@ -1,0 +1,14 @@
+id: REQ-ROBUST-CONTROL-001.C3
+type: criterion
+title: Commanded margin accounts for model error as well as sensing error
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  A margin sized only for what the sensor might be wrong by is consumed by what the model is wrong by, and the model error is the larger of the two.
+
+  Where the margin protects a hardware trip point, exhausting it is the event the margin existed to prevent.
+links:
+  - target: REQ-ROBUST-CONTROL-001
+    type: criterion-of

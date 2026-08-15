@@ -1,0 +1,14 @@
+id: JRN-CORRECT-DRIFT-001.C5
+type: criterion
+title: The machine can account for how its description has changed since commissioning
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An unattended mechanism that rewrites the machine's understanding of itself over years is only trustworthy if it can be inspected afterwards. Without that, a builder investigating a machine that has slowly become strange has no way to tell correction from cause.
+
+  This is what makes the autonomy acceptable rather than merely convenient. A builder who can see what moved and when can leave it running; one who cannot will turn it off.
+links:
+  - target: JRN-CORRECT-DRIFT-001
+    type: criterion-of

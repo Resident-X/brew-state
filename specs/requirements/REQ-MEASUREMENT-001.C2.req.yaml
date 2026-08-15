@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C2
+type: criterion
+title: Measurement resolution and update rate suffice for the control law to act within the disturbance timescale
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  A measurement that is accurate but slow, or fine but infrequent, gives the controller a picture of a machine that has already moved on.
+
+  The timescale is set by the disturbances the machine actually sees, which on a low-mass system are fast relative to the thermal masses involved.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C1
+type: criterion
+title: Every unit of code carries automated verification appropriate to what it does
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  What is appropriate varies by the unit and by the language it is written in, so this is not a demand that everything be tested the same way.
+
+  It is a demand that nothing be exempt by default, and that the choice of how a unit is verified be made rather than skipped.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

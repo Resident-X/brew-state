@@ -1,0 +1,14 @@
+id: REQ-SEQUENCE-CONSISTENCY-001.C2
+type: criterion
+title: Demand that is known in advance is acted on before its effect appears
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The machine commands most of its own disturbances and can observe the rest at onset. Waiting for the resulting error before responding discards that notice entirely.
+
+  On a low-mass system the error appears faster than a purely reactive response can remove it, so this is a correctness requirement rather than a refinement.
+links:
+  - target: REQ-SEQUENCE-CONSISTENCY-001
+    type: criterion-of

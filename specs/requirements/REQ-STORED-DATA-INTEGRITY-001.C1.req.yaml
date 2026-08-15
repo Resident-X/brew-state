@@ -1,0 +1,14 @@
+id: REQ-STORED-DATA-INTEGRITY-001.C1
+type: criterion
+title: Stored data is verified intact before it is acted on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Corruption leaving values within plausible ranges passes every check made on the values themselves, so detecting alteration requires evidence independent of whether the numbers look reasonable.
+
+  Verification happens before use rather than opportunistically, since the first use is where the damage takes effect.
+links:
+  - target: REQ-STORED-DATA-INTEGRITY-001
+    type: criterion-of

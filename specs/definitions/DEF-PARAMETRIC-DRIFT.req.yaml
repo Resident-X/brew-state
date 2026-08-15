@@ -1,0 +1,9 @@
+id: DEF-PARAMETRIC-DRIFT
+type: definition
+title: parametric drift
+status: active
+version: 1
+text: |
+  Parametric drift is slow movement in the plant model's parameter values while its structure remains correct, arising from fouling, sensor ageing and mechanical wear.
+
+  It is correctable on the machine because the description is still the right shape and only its numbers have moved. It is distinguished from structural error, where the model is wrong about which quantities influence which, and which no adjustment of parameters can repair.

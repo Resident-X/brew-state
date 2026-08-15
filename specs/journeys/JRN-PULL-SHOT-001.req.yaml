@@ -1,0 +1,37 @@
+id: JRN-PULL-SHOT-001
+type: requirement
+category: journey
+title: Operator pulls an espresso shot
+status: active
+priority: must
+version: 1
+text: |
+  The single most repeated interaction with the machine, and the one against which every claim about consistency is ultimately judged. The operator is reproducing a drink they have made before and expects the machine to reproduce it with them.
+
+  ## Main success scenario
+
+  1. The operator selects the espresso recipe they used last time.
+  2. The machine reports that it is ready to brew.
+  3. The operator starts the shot.
+  4. The machine delivers water to the group at the temperature the recipe calls for and holds it there for the whole extraction.
+  5. The machine ends the shot at the recipe's endpoint.
+  6. The operator receives a shot they cannot distinguish from the last one made the same way.
+
+  ## Extensions
+
+  2a. The machine is not ready. The machine tells the operator, and refuses to begin a shot it would have to deliver off-temperature.
+
+  4a. The delivered temperature drifts away from target partway through the extraction. The machine corrects within the shot rather than after it, and afterwards tells the operator that it had to.
+
+  4b. The machine cannot hold the target for the whole extraction. The machine completes the shot and tells the operator the result is not trustworthy, rather than serving an off-specification shot as though it were normal.
+
+  5a. The operator ends the shot early by hand. The machine records the endpoint that actually occurred, so the operator can reproduce this shot rather than the one they originally asked for.
+rationale: |
+  Separated from the group-service journey even though a shot is a step within it, because the two stress the machine along different axes. This journey is about a single extraction being right; the group journey is about the machine still being right on the fourth one. Collapsing them would hide the fact that a machine can pass one and fail the other.
+
+  The extensions carry most of the weight here. A machine that delivers a good shot when everything goes well is not the interesting claim — every espresso machine does that. The claims worth making are about what happens when it cannot: that it refuses rather than serves off-target, and that it tells the operator when a shot was not what they asked for. An operator who cannot trust the machine to report its own failures has to taste-test every shot, which defeats the consistency goal entirely.
+
+  The recorded-endpoint extension exists because reproducibility is a property of the record, not only of the control. A shot the operator stopped by hand is still a shot they may want again.
+links:
+  - target: PER-OPERATOR-001.C1
+    type: derives-from

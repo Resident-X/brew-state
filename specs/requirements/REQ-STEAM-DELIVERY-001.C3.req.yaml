@@ -1,0 +1,14 @@
+id: REQ-STEAM-DELIVERY-001.C3
+type: criterion
+title: Delivered quantity reduces before delivered quality does when demand exceeds capacity
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Both failures are available at the limit, and they are not equivalent to the person holding the jug.
+
+  Less steam is something the operator can feel and work with. Wet steam is a ruined jug they discover afterwards.
+links:
+  - target: REQ-STEAM-DELIVERY-001
+    type: criterion-of

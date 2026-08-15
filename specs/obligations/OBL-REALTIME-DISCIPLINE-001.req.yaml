@@ -1,0 +1,19 @@
+id: OBL-REALTIME-DISCIPLINE-001
+type: requirement
+category: obligation
+title: Work in the control path completes within a bounded and known time
+status: active
+priority: must
+authority: internal
+managed: true
+version: 1
+text: |
+  Actuation on this machine is tied to the mains waveform, and the control law shares a processor with flow counting, watchdog servicing and two sensor channels on one bus. Whether that works is a question about worst cases, not typical ones.
+
+  A late answer and a wrong answer have the same effect on the machine. Timing is therefore a correctness property here rather than a performance concern.
+rationale: |
+  Authority is internal. This is the project's own commitment about how it builds, and it is the obligation the design notes' choice of a bare hardware abstraction over a higher-level framework has to answer to. Without it, that choice is a preference with a plausible story rather than a decision serving a stated requirement.
+
+  Worst case rather than typical is the whole point. Typical duration is easy to measure and says nothing about the case that matters, which is the one where every handler fires at once and the bus is busy.
+
+  Requiring measurement on the target rather than reasoning about source reflects that the interesting costs here are not visible in the code: bus contention, handler nesting, memory access patterns and toolchain output all move the answer.

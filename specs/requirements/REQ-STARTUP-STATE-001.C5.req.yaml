@@ -1,0 +1,14 @@
+id: REQ-STARTUP-STATE-001.C5
+type: criterion
+title: The operator is told the machine restarted rather than left to infer it
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  An operator who does not know the machine restarted will attribute the resulting behaviour to something else, most likely their own technique.
+
+  The notification is unmissable rather than available on request.
+links:
+  - target: REQ-STARTUP-STATE-001
+    type: criterion-of

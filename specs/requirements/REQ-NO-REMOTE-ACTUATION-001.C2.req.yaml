@@ -1,0 +1,14 @@
+id: REQ-NO-REMOTE-ACTUATION-001.C2
+type: criterion
+title: Outward monitoring interfaces carry state and history only
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Actuation is what is withheld, not communication. Configuration and firmware maintenance reach the machine by a separate path with its own local gate, because neither releases energy at the moment of the request.
+
+  The separation is a property of what the surface offers rather than of how a consumer chooses to behave, so it holds against a consumer that is hostile, broken, or simply wrong.
+links:
+  - target: REQ-NO-REMOTE-ACTUATION-001
+    type: criterion-of

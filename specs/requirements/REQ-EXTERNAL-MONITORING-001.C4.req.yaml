@@ -1,0 +1,14 @@
+id: REQ-EXTERNAL-MONITORING-001.C4
+type: criterion
+title: The machine's delivery behaviour is identical when no external system is present
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An integration that becomes load-bearing turns a convenience into a dependency, and most people rebuilding this will never connect anything.
+
+  The machine's own delivery behaviour, its quality and its safety are identical whether or not anything external is present. Readiness reached on external request is the one exception, and it changes when the machine heats rather than how it behaves once heated.
+links:
+  - target: REQ-EXTERNAL-MONITORING-001
+    type: criterion-of

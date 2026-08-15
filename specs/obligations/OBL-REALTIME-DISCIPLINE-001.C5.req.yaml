@@ -1,0 +1,14 @@
+id: OBL-REALTIME-DISCIPLINE-001.C5
+type: criterion
+title: State shared between concurrent contexts has a defined access ordering
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Two contexts touching the same peripheral or the same variable without an established ordering produce faults that appear rarely and cannot be reproduced on demand.
+
+  On a machine that runs for years, rarely is often enough.
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001
+    type: criterion-of

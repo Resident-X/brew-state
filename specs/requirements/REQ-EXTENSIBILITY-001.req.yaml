@@ -1,0 +1,22 @@
+id: REQ-EXTENSIBILITY-001
+type: requirement
+category: constraint
+title: Adding a sensor or an output does not require reworking cross-cutting behaviour
+status: active
+priority: must
+version: 1
+text: |
+  The machine will gain things. A group head warmer, a second temperature probe, a weight endpoint, an extra valve. Each is a small addition on its own and each touches the same handful of behaviours: the supply budget, actuation confirmation, fault response, estimation, and the safety argument.
+
+  If those behaviours enumerate what they know about, every addition reopens all of them. That is the cost this constrains.
+rationale: |
+  Authored separately from the hardware headroom constraint because they address different foreclosures. Headroom is about the board still having somewhere to plug the thing in; this is about the software not having to be rebuilt once it is plugged in. A build can easily satisfy one and fail the other.
+
+  The model-order criterion comes directly from an open question in the design notes: the assumed state count per loop cannot be confirmed until real response data exists. A design that fixes the number of states makes that discovery expensive at exactly the moment it is made.
+
+  The safety criterion is included because extension is the normal route by which a safety argument quietly stops covering the machine it was written for. An added load is an added hazard, and scoping protection to what existed at design time is how that goes unnoticed.
+links:
+  - target: PER-BUILDER-001.C4
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: derives-from

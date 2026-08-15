@@ -1,0 +1,21 @@
+id: PER-BUILDER-001
+type: requirement
+category: persona-goal
+title: Builder identifies, tunes and maintains the machine with hobbyist means
+status: active
+priority: must
+version: 1
+text: |
+  The person who designs, builds, commissions and maintains the retrofit. The same human as the Operator wearing a different hat: here they are inside the machine rather than standing in front of it, working from a bench with a PC, a serial link, a multimeter and freely available software.
+
+  What they do not have is a laboratory. No calibrated reference bath, no thermal imaging, no signal generator, no paid simulation licence, and no second machine to destroy while learning. Every technique this project depends on has to survive that constraint, because a method they cannot actually execute is a method the project does not have, however sound it looks on paper.
+
+  They also personally carry the consequences of their own mistakes. A control law that is wrong in a way they cannot detect before mains power is applied is a hazard to them, in their own kitchen. The ability to be wrong safely and cheaply therefore matters to them as much as the ability to be right.
+
+  Their horizon is long. This machine is meant to keep working for years without the bench coming back out, so anything that demands periodic expert attention will instead simply be neglected, and the machine will drift out of calibration in silence.
+rationale: |
+  Recorded as a persona rather than as a set of project constraints because these are goals held by an identifiable stakeholder with a stake in the outcome, not rules imposed from outside. The Builder can trade among them; the safety obligation is what they cannot trade against.
+
+  The absence of laboratory equipment is stated as part of the persona rather than left implicit, because it is the single fact that most shapes the technical approach. It is what forces a grey-box identification strategy over direct measurement, what makes layered simulation worth building before hardware exists, and what rules out any verification argument resting on instruments this stakeholder will never own.
+
+  Cost appears here as a goal rather than as a budget figure. The specific number will move; what will not move is that the project has to stay cheaper than buying the machine it aims to outperform, since that is the whole reason it exists. The rule for where precision spending is justified is deliberately left to a constraint requirement deriving from the cost criterion, so that hardware choices can be checked against a stated rule rather than against a stakeholder's preference.

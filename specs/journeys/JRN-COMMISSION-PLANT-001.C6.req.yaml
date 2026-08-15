@@ -1,0 +1,14 @@
+id: JRN-COMMISSION-PLANT-001.C6
+type: criterion
+title: A committed description survives power cycling
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Commissioning is expensive in the builder's time and in the machine's wear, and a description that has to be re-established after every power interruption is one that will end up being skipped.
+
+  What must persist is only the description that was arrived at, not the data it came from. The record of the sequence is the builder's to keep or discard; the conclusion is the machine's to hold onto.
+links:
+  - target: JRN-COMMISSION-PLANT-001
+    type: criterion-of

@@ -1,0 +1,22 @@
+id: REQ-SENSOR-LIVENESS-001
+type: requirement
+category: functional
+title: A sensor that has stopped responding is detected despite reading plausibly
+status: active
+priority: must
+version: 1
+text: |
+  A frozen sensor reports a value inside every plausibility bound and satisfies every range check that could be made of it. Nothing about the reading itself reveals that the channel is dead.
+
+  The only evidence available is that it fails to move when the machine is doing something the plant model says must move it.
+rationale: |
+  Complements rather than duplicates the plausibility criterion on the measurement requirement. That one catches readings that are physically impossible; this one catches readings that are entirely possible and no longer connected to reality. They are different failures and neither check finds the other's.
+
+  Judged against commanded activity rather than elapsed time, because an unchanging reading on an idle machine at equilibrium is correct behaviour and flagging it would produce nuisance faults during exactly the periods the machine spends most of its life in.
+
+  The ambiguity criterion mirrors the one on actuation confirmation, for the same reason: a frozen probe and a load that is not responding present identically, and naming one of them without evidence sends the builder to the wrong place.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C3
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C3
+    type: derives-from

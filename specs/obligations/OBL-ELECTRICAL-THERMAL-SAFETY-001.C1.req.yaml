@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C1
+type: criterion
+title: Over-temperature cutoff acts with no firmware in the path
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The failure this catches is a switching device that has failed closed while the controller is otherwise healthy and entirely unaware. The controller commands the element off, the element stays on, and every software-side check agrees that all is well, because from the controller's point of view it is.
+
+  Nothing that executes as code can be relied on to interrupt that, since the code has already been told the truth and drawn the wrong conclusion from it. The cutoff must therefore respond to the actual temperature of the mass at risk rather than to any value that has been reported, inferred, or passed through the controller, and must remove power without consulting anything capable of sharing the controller's mistaken belief.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

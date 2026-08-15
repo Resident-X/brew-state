@@ -1,0 +1,14 @@
+id: REQ-MACHINE-INTERFACE-001.C5
+type: criterion
+title: Adding a consumer requires no change to the machine's behaviour
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A surface that must be extended for each new consumer is not a surface, and each extension is an opportunity to change behaviour the existing consumers depend on.
+
+  This is the interface half of the extensibility constraint.
+links:
+  - target: REQ-MACHINE-INTERFACE-001
+    type: criterion-of

@@ -1,0 +1,20 @@
+id: REQ-STATE-ESTIMATION-001
+type: requirement
+category: functional
+title: The controller estimates the states it cannot measure and reports its own error
+status: active
+priority: must
+version: 1
+text: |
+  The quantities the control law needs are not all quantities anything can sense. Sensors sit where they can physically go, which is not where the interesting temperatures are, and a low-mass flow-through system puts real dynamics between the two.
+
+  The same estimator that reconstructs those states also produces the comparison between what was predicted and what was observed. That comparison is the input to drift detection, and it comes for free.
+rationale: |
+  Bundles estimation and error reporting into one requirement because they are one mechanism. Any estimator that predicts measurements in order to correct itself already computes the residual that drift detection needs, and separating them into different requirements would invite them being built twice.
+
+  Silent on estimator structure, model order and update strategy. The notes assume a low-order model per loop, but whether that is sufficient is not knowable before real response data exists, and this requirement must not depend on the answer.
+links:
+  - target: JRN-PULL-SHOT-001.C1
+    type: derives-from
+  - target: JRN-CORRECT-DRIFT-001.C1
+    type: derives-from

@@ -1,0 +1,14 @@
+id: JRN-PULL-SHOT-001.C4
+type: criterion
+title: A delivered shot can be reproduced from what the machine recorded of it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Reproducibility is a property of the record as much as of the control. If the machine holds target beautifully but cannot say afterwards what target it held, what it was asked for, and where the shot actually ended, the operator cannot ask for the same thing again.
+
+  This covers shots that did not go to plan, including those the operator ended by hand. Those are precisely the ones worth being able to repeat, because they are the ones the operator judged by taste rather than by recipe.
+links:
+  - target: JRN-PULL-SHOT-001
+    type: criterion-of

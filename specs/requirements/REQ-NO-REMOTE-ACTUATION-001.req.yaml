@@ -1,0 +1,16 @@
+id: REQ-NO-REMOTE-ACTUATION-001
+type: requirement
+category: constraint
+title: The machine delivers only for a person present at it
+status: active
+priority: must
+version: 1
+text: |
+  The machine delivers only for a person at it. Anything reaching the machine from elsewhere may observe it and may ask it to become ready, and may not cause it to deliver.
+
+  This holds for interfaces that exist today and for any added later, which is the point of stating it as a constraint rather than as a property of the one interface currently contemplated. Configuration and firmware maintenance are a separate path with their own local gate.
+links:
+  - target: DEC-NO-REMOTE-ACTUATION
+    type: justified-by
+  - target: REQ-MACHINE-INTERFACE-001.C2
+    type: derives-from

@@ -1,0 +1,14 @@
+id: OBL-CONTROL-DESIGN-DISCIPLINE-001.C4
+type: criterion
+title: Constraint margin widens in proportion to the stated model uncertainty
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  A constraint respected exactly under the nominal model is violated under a model wrong in the unhelpful direction.
+
+  Where the constraint is a protection trip point or the supply budget, that violation is precisely the event the constraint existed to prevent.
+links:
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001
+    type: criterion-of

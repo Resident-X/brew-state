@@ -1,0 +1,14 @@
+id: REQ-BREW-TEMP-001.C5
+type: criterion
+title: The controller acts on the thermal state it is actually in rather than assuming a rested machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Assuming a rested start is correct exactly once per session and wrong every time after. It is also the assumption that fails silently, because the resulting error looks like ordinary tracking lag.
+
+  The requirement is that the starting state is established and used, not that any particular means establishes it.
+links:
+  - target: REQ-BREW-TEMP-001
+    type: criterion-of

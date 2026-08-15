@@ -1,0 +1,14 @@
+id: REQ-STEAM-DELIVERY-001.C2
+type: criterion
+title: Delivery is prevented until the steam side can sustain it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Water carried into the jug cannot be undone, so this has to be prevented rather than detected. The operator is committed to the pour before the consequence is visible.
+
+  An unready state the operator can act on by accident is not sufficiently prevented.
+links:
+  - target: REQ-STEAM-DELIVERY-001
+    type: criterion-of

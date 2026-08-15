@@ -1,0 +1,14 @@
+id: REQ-EXTENSIBILITY-001.C1
+type: criterion
+title: A new load enters the supply budget without the arbitration being rewritten
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  An added load draws power that has to be arbitrated alongside the existing ones, and arbitration that enumerates the loads it knows about must be reopened each time.
+
+  The budget is a property of the set of loads rather than of any particular list of them.
+links:
+  - target: REQ-EXTENSIBILITY-001
+    type: criterion-of

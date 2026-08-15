@@ -1,0 +1,14 @@
+id: REQ-SEQUENCE-CONSISTENCY-001.C3
+type: criterion
+title: Measurable demand is treated as known rather than as unexplained disturbance
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Flow through the machine is observable as it happens. A controller that sees only its consequence in temperature is working from a lagged, filtered version of information it already had.
+
+  This constrains what the controller is required to make use of, not how it does so.
+links:
+  - target: REQ-SEQUENCE-CONSISTENCY-001
+    type: criterion-of

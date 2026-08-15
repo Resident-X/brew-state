@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C6
+type: criterion
+title: The maintenance connection carries no physical authority and no ingress path
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A penetration through the enclosure is a route for water and steam as much as for data, and this machine produces both by design.
+
+  Being externally reachable, the connection point cannot serve as the physical control the firmware gate requires: anyone can touch it, which is the opposite of what that gate establishes.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

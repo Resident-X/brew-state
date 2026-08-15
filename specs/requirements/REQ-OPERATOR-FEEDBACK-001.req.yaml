@@ -1,0 +1,20 @@
+id: REQ-OPERATOR-FEEDBACK-001
+type: requirement
+category: interface
+title: The machine tells the operator when it could not deliver what was asked
+status: active
+priority: must
+version: 1
+text: |
+  Not every shortfall can be prevented once delivery is under way, but every one can be admitted. Silence converts a known-bad drink into an unexplained inconsistency and sends the operator looking for the cause in their own technique.
+
+  The operator has no model of the machine's internals. What reaches them has to be the consequence for the drink.
+rationale: |
+  Separated from the record requirement because the two serve different people at different times. The record is for the builder, later, in detail. This is for the operator, now, in the two seconds before they decide whether to serve the drink.
+
+  Bounded to shortfalls that could not be prevented. A machine that warns where it could have refused has moved the judgement onto the person least equipped to make it, and this requirement must not be readable as licence to do that.
+links:
+  - target: JRN-PULL-SHOT-001.C3
+    type: derives-from
+  - target: JRN-SERVE-GROUP-001.C4
+    type: derives-from

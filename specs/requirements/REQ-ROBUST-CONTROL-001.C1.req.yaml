@@ -1,0 +1,14 @@
+id: REQ-ROBUST-CONTROL-001.C1
+type: criterion
+title: Stability holds across the declared range of model error, not only at nominal
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Tuning against nominal parameters and checking against the same parameters demonstrates internal consistency and nothing about the machine.
+
+  The range includes the direction that is least convenient, which is the one a fit will not warn about.
+links:
+  - target: REQ-ROBUST-CONTROL-001
+    type: criterion-of

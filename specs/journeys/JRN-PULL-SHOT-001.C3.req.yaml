@@ -1,0 +1,14 @@
+id: JRN-PULL-SHOT-001.C3
+type: criterion
+title: A shot the machine could not hold on target is reported as such
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Not every departure from target can be prevented once an extraction is under way, but every one of them can be admitted afterwards. Silence here is the failure that matters, because it converts a known-bad shot into an unexplained inconsistency and sends the operator looking for the cause in their grind or their dose.
+
+  The report has to reach the operator in a form they will actually see while the drink is still in front of them, not only in a record they would have to go looking for.
+links:
+  - target: JRN-PULL-SHOT-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-STATE-ESTIMATION-001.C4
+type: criterion
+title: Estimator output is available at the rate the control law consumes it
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  An estimate that arrives late is a different quantity from the one the control law asked for, and using it as though it were current introduces a lag the controller cannot see.
+
+  The rate is set by the control law's needs, not by what the estimator finds convenient.
+links:
+  - target: REQ-STATE-ESTIMATION-001
+    type: criterion-of

@@ -1,0 +1,20 @@
+id: REQ-MODEL-COMMIT-001
+type: requirement
+category: functional
+title: A model is validated against withheld data before the machine controls against it
+status: active
+priority: must
+version: 1
+text: |
+  Fitting quality against the data a model was derived from says almost nothing about whether it predicts anything, and can be made arbitrarily good by a model with enough freedom and no meaning.
+
+  The builder has no colleague to catch that and every incentive to believe a result they have worked for.
+rationale: |
+  Requires validation against withheld data rather than any goodness-of-fit measure, because the two answer different questions and only one of them is the question being asked. This is the difference between a model and a curve.
+
+  Retaining the predecessor exists because a model can validate on the bench and still behave worse in service. Without a way back, discovering that means recommissioning, which is expensive enough that the builder will instead live with the worse model.
+links:
+  - target: JRN-COMMISSION-PLANT-001.C5
+    type: derives-from
+  - target: JRN-COMMISSION-PLANT-001.C6
+    type: derives-from

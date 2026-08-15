@@ -1,0 +1,9 @@
+id: DEF-STRUCTURAL-ERROR
+type: definition
+title: structural error
+status: active
+version: 1
+text: |
+  Structural error is a plant model that is wrong in shape: it omits a quantity that matters, or connects quantities in a way the machine does not.
+
+  No adjustment of parameter values corrects it, and attempting to do so drives the parameters away from physical meaning while chasing a residual they cannot reach. Its signature is a prediction error that persists after on-device correction has converged.

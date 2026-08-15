@@ -1,0 +1,22 @@
+id: REQ-FAULT-RESPONSE-001
+type: requirement
+category: functional
+title: A detected fault takes the machine to a safe state and keeps it there
+status: active
+priority: must
+version: 1
+text: |
+  Detecting a fault is only half of it. What makes detection worth building is that the machine acts on it immediately, without waiting to understand it, and stays stopped afterwards.
+
+  The response has to be verifiable on its own terms. A firmware fault path exercised by letting the hardware chain act has demonstrated the hardware chain and nothing else.
+rationale: |
+  Requires the response to precede diagnosis. Faults in this class are ambiguous by nature, and time spent identifying which element failed is time the machine spends in the faulted state doing whatever the fault made it do.
+
+  Refuses automatic resumption because these faults are intermittent as often as they are permanent. A marginal connection or a partially welded contact will appear to clear, and a machine that resumes on its own reading is a machine that retries a hazard until one of the attempts succeeds.
+
+  Requires independent verification of the firmware path because the two layers are easy to conflate on the bench. If the hardware chain acts first during a test, the firmware response was never observed, and a firmware path that has never been observed is not known to exist.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C5
+    type: derives-from
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C6
+    type: derives-from

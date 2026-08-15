@@ -1,0 +1,20 @@
+id: REQ-HOT-WATER-001
+type: requirement
+category: functional
+title: Hot water is delivered at temperature, with rate yielding to temperature
+status: active
+priority: must
+version: 1
+text: |
+  Hot water is the heaviest sustained demand on the coffee side. It asks for a large volume at temperature with no opportunity to recover partway, unlike an extraction which is small, brief and bounded.
+
+  It also contends with brewing for the same heated mass. That contention is the machine's to resolve and the operator's to never notice.
+rationale: |
+  Names the direction of the trade explicitly because a machine that simply passes water through as fast as it can heat it makes the opposite trade by default, and does so silently. Water below temperature cannot be fixed downstream and drags the finished drink with it.
+
+  The requirement is deliberately silent on which heated mass serves hot water. The current arrangement makes it the coffee side, but that is a property of the machine rather than something this requirement should depend on.
+links:
+  - target: JRN-SERVE-LONG-BLACK-001.C1
+    type: derives-from
+  - target: JRN-SERVE-LONG-BLACK-001.C3
+    type: derives-from

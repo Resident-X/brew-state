@@ -1,0 +1,14 @@
+id: REQ-NO-REMOTE-ACTUATION-001.C1
+type: criterion
+title: No interface accepts a command to deliver from anywhere but the machine itself
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A capability that is not offered cannot be misused, cannot be authenticated wrongly and cannot fail open, which is why this is stated as absence rather than as a control on access.
+
+  It covers every interface the machine has or gains, not only those contemplated when it was written.
+links:
+  - target: REQ-NO-REMOTE-ACTUATION-001
+    type: criterion-of

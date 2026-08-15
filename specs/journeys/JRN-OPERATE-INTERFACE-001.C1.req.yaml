@@ -1,0 +1,14 @@
+id: JRN-OPERATE-INTERFACE-001.C1
+type: criterion
+title: The machine's readiness is visible without the operator asking for it
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Readiness that must be requested will be assumed instead, and the assumption is made at the moment the operator is committing a dose.
+
+  This covers not only whether the machine is ready but how long until it is, since a wait the operator can plan around is different from one they discover.
+links:
+  - target: JRN-OPERATE-INTERFACE-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C3
+type: criterion
+title: Sustained mains draw stays within the rating of the supplying circuit
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Both heaters running together approach the limit of an ordinary domestic circuit, and the machine has no way to know what it has been plugged into unless it is told.
+
+  Exceeding the supply is not a graceful degradation. It trips the protection covering everything else on that circuit, or, in the worse case where the protection is inadequate or defeated, it does not trip at all and the fault shows up in the wiring instead. The available budget is therefore something the controller plans within ahead of time, never a limit it discovers by reaching it.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

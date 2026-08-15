@@ -1,0 +1,14 @@
+id: REQ-HARDWARE-HEADROOM-001.C1
+type: criterion
+title: Sensing channels can be added without replacing the controller
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Replacement is the failure this prevents, since it discards the build as well as the part and takes the machine out of service to do it.
+
+  The headroom is for channels of the kinds already anticipated, not for arbitrary future expansion.
+links:
+  - target: REQ-HARDWARE-HEADROOM-001
+    type: criterion-of

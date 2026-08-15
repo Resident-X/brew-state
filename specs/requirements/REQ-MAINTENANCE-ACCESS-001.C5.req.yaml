@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C5
+type: criterion
+title: A maintenance connection can be made without opening the machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Dismantling to adjust guarantees infrequent maintenance and careless reassembly, and careless reassembly is what defeats the mains-to-low-voltage separation.
+
+  The connection point is reachable in normal service, with the machine assembled as it is used.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

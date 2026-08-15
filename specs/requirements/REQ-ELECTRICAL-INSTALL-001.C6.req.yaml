@@ -1,0 +1,14 @@
+id: REQ-ELECTRICAL-INSTALL-001.C6
+type: criterion
+title: Touchable conductive parts remain connected to the machine's protective arrangement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The retrofit moves mains wiring into a new enclosure and disturbs whatever arrangement the original manufacturer relied on. Continuity that survived the original build does not survive being rebuilt by hand.
+
+  This covers parts the retrofit introduces and parts it inherits, and it is established by measurement on the finished machine rather than by having intended it.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

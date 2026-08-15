@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C6
+type: criterion
+title: Flow measurement resolves the smallest quantity a delivery is judged by
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A measurement too coarse to distinguish one delivery from the next cannot support the consistency the machine is judged on, however accurate it is in aggregate.
+
+  The bound comes from the smallest difference between drinks that the operator would notice, not from what the sensing conveniently provides.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

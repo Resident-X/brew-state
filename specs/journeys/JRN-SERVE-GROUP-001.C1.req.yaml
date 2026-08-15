@@ -1,0 +1,14 @@
+id: JRN-SERVE-GROUP-001.C1
+type: criterion
+title: Every drink in a run meets the standard set by the first
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A run draws energy out of the machine faster than the machine puts it back, so the natural behaviour of an uncorrected machine is a slow slide across the sequence. Each drink is acceptable against the one before it and the last is plainly worse than the first.
+
+  The guest served last is not served worse than the guest served first. It is a comparison across the run rather than a check on any individual drink.
+links:
+  - target: JRN-SERVE-GROUP-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-SAFETY-CHAIN-001.C4
+type: criterion
+title: A device downstream of all resettable protection prevents restoration once it has operated
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Resettable protection can weld or drift, and anything that closes again after cooling gives a failing machine repeated attempts at the same hazard.
+
+  Once it operates the machine stays off until a person intervenes, which forces someone to find out why.
+links:
+  - target: REQ-SAFETY-CHAIN-001
+    type: criterion-of

@@ -1,0 +1,42 @@
+id: JRN-SERVE-GROUP-001
+type: requirement
+category: journey
+title: Operator serves several drinks to a group
+status: active
+priority: must
+version: 1
+text: |
+  The journey that makes this project hard. Serving several people means drinks of mixed types in quick succession, which is where sequence, contention and the supply limit all arrive at once. It is also where the operator's goals press directly against what the machine is permitted to draw.
+
+  ## Main success scenario
+
+  1. The operator begins a run of drinks for several people, of mixed types.
+  2. The machine sustains a pace that keeps the operator working rather than waiting.
+  3. The machine holds every drink in the run to the standard set by the first.
+  4. The machine stays within the supply it has been told it has, throughout the run.
+  5. The operator serves the group drinks that are all still hot.
+
+  ## Extensions
+
+  2a. Two demands need the machine's heated masses at the same time. The machine arbitrates between them, choosing what to slow, and never resolves the contention by exceeding the supply.
+
+  2b. Sustaining the pace would take the machine beyond its supply. The machine slows the run. It does not exceed the supply in order to keep up, whatever the operator has asked for.
+
+  3a. The machine cannot hold the standard at the pace requested. The machine slows and tells the operator why, rather than absorbing the shortfall into the quality of the drinks.
+
+  4a. Nobody has told the machine what supply is available. The machine assumes the most restrictive case it might be connected to, rather than the most convenient.
+
+  5a. The operator abandons the run partway through. The machine returns to a resting state on its own, without leaving anything energised in anticipation of a drink that is no longer coming.
+rationale: |
+  This journey is where the conflict recorded between PER-OPERATOR-001 and the safety obligation gets resolved, and the resolution is written into it explicitly rather than left to be discovered during implementation. Pace yields to the supply limit, every time, without exception and without asking. The operator's throughput goal is pursued as hard as the obligation permits and never one step further.
+
+  Stating it here rather than only at the obligation matters because this is the journey in which someone would be tempted to breach it. Nobody exceeds a supply limit while making a single drink; they exceed it while trying to keep four people happy. A rule that is only recorded where it is never tested is a rule that will be broken where it is.
+
+  The undeclared-supply extension exists because the safety obligation is unmeasurable until the machine knows what circuit it is on, and that is currently an open question. Defaulting to the most restrictive case makes the unknown safe rather than merely unresolved, and means the graph does not depend on an answer nobody has yet.
+
+  Deliberately silent on how arbitration is performed, on whether the demands are genuinely concurrent or interleaved, and on where the supply figure comes from. Those are control-strategy and configuration decisions that must justify themselves against this journey, not assumptions built into it.
+links:
+  - target: PER-OPERATOR-001.C4
+    type: derives-from
+  - target: PER-OPERATOR-001.C5
+    type: derives-from

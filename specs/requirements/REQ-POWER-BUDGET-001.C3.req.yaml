@@ -1,0 +1,14 @@
+id: REQ-POWER-BUDGET-001.C3
+type: criterion
+title: Concurrent demands exceeding the budget are allocated by a defined precedence
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Something has to decide which demand yields. Leaving it to arrival order gives behaviour that cannot be predicted before it happens or explained after it.
+
+  The precedence must be stated and consistent. What that precedence is remains open.
+links:
+  - target: REQ-POWER-BUDGET-001
+    type: criterion-of

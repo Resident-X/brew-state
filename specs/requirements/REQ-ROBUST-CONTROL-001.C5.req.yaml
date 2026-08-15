@@ -1,0 +1,14 @@
+id: REQ-ROBUST-CONTROL-001.C5
+type: criterion
+title: Safety, refusal and budget behaviour survive an arbitrarily wrong model
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  These are the properties that must not depend on identification having succeeded, because identification is the thing most likely to be wrong on a first build.
+
+  Setpoint tracking may legitimately degrade with model error. The separation is stated so a failed fit has a known blast radius rather than an unknown one.
+links:
+  - target: REQ-ROBUST-CONTROL-001
+    type: criterion-of

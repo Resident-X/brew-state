@@ -1,0 +1,14 @@
+id: REQ-STATE-ESTIMATION-001.C2
+type: criterion
+title: A running comparison between predicted and observed measurements is produced
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  This is the signal drift detection consumes, and any estimator that corrects itself against measurements computes it already.
+
+  Requiring it here means it exists as an output rather than as an internal value that a later requirement has to reach inside for.
+links:
+  - target: REQ-STATE-ESTIMATION-001
+    type: criterion-of

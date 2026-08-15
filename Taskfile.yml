@@ -1,0 +1,91 @@
+version: "3"
+
+# Coffe uses the Staircase requirement graph. The engine binary, the
+# /staircase-* skills, and the type schema all come from the (private)
+# Resident-X/staircase repo — this Taskfile owns fetching and refreshing
+# them so Coffe needs no local checkout of Staircase.
+#
+# Pin STAIRCASE_REF to a tag/commit for reproducibility; `main` tracks HEAD.
+
+vars:
+  STAIRCASE_MODULE: github.com/Resident-X/staircase/engine/cmd/staircase
+  STAIRCASE_REPO: git@github.com:Resident-X/staircase.git
+  STAIRCASE_REF: main
+  SPECS_DIR: specs
+
+tasks:
+  sc:install:
+    desc: Install/update the staircase binary into THIS repo (engine/staircase) via `go install` — repo-local GOBIN, never on global PATH (private module → GOPRIVATE + SSH rewrite applied inline)
+    env:
+      # Repo-local install: GOBIN puts the binary at ./engine/staircase, mirroring
+      # the dogfooding layout the skills expect. It is NOT on global PATH, so the
+      # staircase dev repo can never accidentally use this (possibly stale) copy —
+      # it keeps building its own ./engine/staircase from source.
+      GOBIN: "{{.ROOT_DIR}}/engine"
+      # Private module: bypass the public proxy/sumdb and fetch over SSH.
+      # Set inline so this works without mutating global git/go config.
+      GOPRIVATE: github.com/Resident-X/*
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: url.git@github.com:.insteadOf
+      GIT_CONFIG_VALUE_0: https://github.com/
+    cmds:
+      - go install {{.STAIRCASE_MODULE}}@{{.STAIRCASE_REF}}
+      - ./engine/staircase --version || true
+
+  sc:sync-skills:
+    desc: Refresh .claude/skills from STAIRCASE_REF (verbatim — skills call ./engine/staircase, which this repo provides locally, so no rewrite is needed)
+    cmds:
+      - |
+        set -euo pipefail
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        git clone --depth 1 --branch {{.STAIRCASE_REF}} --filter=blob:none --sparse {{.STAIRCASE_REPO}} "$tmp"
+        git -C "$tmp" sparse-checkout set .claude/skills
+        rm -rf .claude/skills && mkdir -p .claude
+        cp -R "$tmp/.claude/skills" .claude/skills
+        echo "skills synced verbatim from {{.STAIRCASE_REF}} (invoke via ./engine/staircase)"
+
+  sc:seed-schema:
+    desc: Seed .staircase/schema.yaml from STAIRCASE_REF ONCE (skipped if present — schema becomes Coffee-owned after seeding)
+    cmds:
+      - |
+        set -euo pipefail
+        if [ -f .staircase/schema.yaml ]; then
+          echo ".staircase/schema.yaml exists — leaving Coffee-owned copy untouched"; exit 0
+        fi
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        git clone --depth 1 --branch {{.STAIRCASE_REF}} --filter=blob:none --sparse {{.STAIRCASE_REPO}} "$tmp"
+        git -C "$tmp" sparse-checkout set --skip-checks .staircase/schema.yaml
+        mkdir -p .staircase && cp "$tmp/.staircase/schema.yaml" .staircase/schema.yaml
+        echo "schema.yaml seeded (now coffee-owned; evolve it additively here)"
+
+  sc:embed:
+    desc: Link the shared machine-global embedder cache so `query --mode semantic|hybrid` works (else it degrades to lexical)
+    cmds:
+      - |
+        set -euo pipefail
+        cache="${STAIRCASE_MODEL_CACHE:-$HOME/.cache/staircase/models}"
+        if [ ! -d "$cache/potion-retrieval-32M" ]; then
+          echo "no embedder at $cache/potion-retrieval-32M — provision it (task sc:download-embed-model in the staircase repo) or drop the embedder block from .staircase/config.yaml"; exit 1
+        fi
+        ln -sfn "$cache" .staircase/models
+        echo "linked .staircase/models -> $cache"
+
+  sc:index:
+    desc: (Re)build the graph index from specs/ after manual edits or a git pull
+    cmds:
+      - ./engine/staircase build ./{{.SPECS_DIR}}
+
+  sc:init:
+    desc: One-shot bootstrap — install binary, sync skills, seed schema, link embedder, build index
+    cmds:
+      - task: sc:install
+      - task: sc:sync-skills
+      - task: sc:seed-schema
+      - task: sc:embed
+      - task: sc:index
+
+  sc:update:
+    desc: Update the binary + skills to STAIRCASE_REF (leaves your graph and schema untouched)
+    cmds:
+      - task: sc:install
+      - task: sc:sync-skills

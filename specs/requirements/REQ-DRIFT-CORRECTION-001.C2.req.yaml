@@ -1,0 +1,14 @@
+id: REQ-DRIFT-CORRECTION-001.C2
+type: criterion
+title: Parameter adjustment is bounded to physically plausible values
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An unattended fit with unbounded freedom will find values that reduce the residual and mean nothing, and the resulting description predicts nothing outside the data that produced it.
+
+  Bounds come from what the parameters physically are, which is known independently of any fit.
+links:
+  - target: REQ-DRIFT-CORRECTION-001
+    type: criterion-of

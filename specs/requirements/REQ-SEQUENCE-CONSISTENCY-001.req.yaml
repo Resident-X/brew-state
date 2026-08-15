@@ -1,0 +1,20 @@
+id: REQ-SEQUENCE-CONSISTENCY-001
+type: requirement
+category: functional
+title: Delivery holds to standard across a continuous run of drinks
+status: active
+priority: must
+version: 1
+text: |
+  A run of drinks removes energy from the machine faster than it is replaced. The natural behaviour of an uncorrected machine is a slow slide across the sequence, where each drink is acceptable next to the one before and the last is plainly worse than the first.
+
+  The machine has advance notice of most of what disturbs it. Flow through the machine is measurable as it happens, and demands are commanded rather than arriving unannounced.
+rationale: |
+  Separates known demand from genuine disturbance because the two deserve different treatment and conflating them throws away the machine's main advantage. Most of what perturbs this machine is either commanded by the controller itself or observable at its onset, and treating that as an unexplained disturbance to be corrected after the fact gives up the timing margin that makes tight control possible on a low-mass system.
+
+  Silent on how advance notice is used. Feeding it forward into the control law is the obvious approach, but the requirement is about acting before the effect appears, not about any particular structure for doing so.
+links:
+  - target: JRN-SERVE-GROUP-001.C1
+    type: derives-from
+  - target: JRN-PULL-SHOT-001.C1
+    type: derives-from

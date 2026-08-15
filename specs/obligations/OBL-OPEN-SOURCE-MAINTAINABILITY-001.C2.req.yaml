@@ -1,0 +1,14 @@
+id: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C2
+type: criterion
+title: The procedure for rebuilding on a different machine is documented rather than implied
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Adapting this means re-identifying the plant, redeclaring the supply limits and re-checking protection margins against different hardware.
+
+  A reader left to infer that sequence from the requirement graph will either get the order wrong or abandon it.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001
+    type: criterion-of

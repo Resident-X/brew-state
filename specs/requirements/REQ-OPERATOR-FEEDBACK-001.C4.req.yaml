@@ -1,0 +1,14 @@
+id: REQ-OPERATOR-FEEDBACK-001.C4
+type: criterion
+title: Reporting a shortfall never substitutes for preventing one that could have been prevented
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The two are not interchangeable responses to the same situation. Anything detectable before delivery starts is refused rather than reported afterwards.
+
+  This requirement covers only what could not be prevented once delivery was under way.
+links:
+  - target: REQ-OPERATOR-FEEDBACK-001
+    type: criterion-of

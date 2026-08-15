@@ -1,0 +1,14 @@
+id: REQ-ELECTRICAL-INSTALL-001.C1
+type: criterion
+title: Mains and low-voltage wiring are physically separated throughout the enclosure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Shared routing leaves insulation as the only thing between the two, and insulation is what fails under vibration, heat and age.
+
+  Separation covers runs, terminations and the paths taken between them, not merely the point where each ends.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

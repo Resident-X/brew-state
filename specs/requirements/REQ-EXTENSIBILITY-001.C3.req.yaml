@@ -1,0 +1,14 @@
+id: REQ-EXTENSIBILITY-001.C3
+type: criterion
+title: A new sensor becomes available to estimation and to plausibility and liveness checking without those being reopened
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The checks that make a measurement trustworthy are the same for every channel, and rewriting them per sensor guarantees they diverge.
+
+  A channel added without them is worse than no channel, because the control law will use it.
+links:
+  - target: REQ-EXTENSIBILITY-001
+    type: criterion-of

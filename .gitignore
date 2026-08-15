@@ -1,0 +1,11 @@
+# Staircase derived indexes (rebuilt from specs/ via `task sc:index`)
+.staircase/*.db
+# External embedder model asset (machine-global cache, wired by `task sc:embed`)
+.staircase/models
+# staircase binary — installed repo-locally via `task sc:install` (go install from source)
+/engine/
+# macOS
+.DS_Store
+
+# Transient apply lock
+specs/.staircase-apply.lock

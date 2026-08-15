@@ -1,0 +1,18 @@
+id: REQ-HARDWARE-HEADROOM-001
+type: requirement
+category: constraint
+title: Hardware selection preserves headroom for capability added later
+status: active
+priority: must
+version: 1
+text: |
+  Controller selection happens once, early, on the least information the project will ever have, and reversing it means rebuying and rebuilding. Capability that is easy to add later is capability that does not have to be decided now.
+
+  This is not a commitment to build anything in particular. It is a constraint on foreclosing.
+rationale: |
+  Authored as a separate constraint rather than folded into the cost requirement because the two pull opposite ways at the moment of choosing, and the tension is the point. Cost discipline argues for the cheapest part that meets today's need; this argues for the one that does not have to be bought twice.
+
+  Generalised beyond any single deferred capability. Weight-based endpoint control is the immediate case, but the same argument covers direct group-head instrumentation, which the design notes also leave open.
+links:
+  - target: PER-BUILDER-001.C4
+    type: derives-from

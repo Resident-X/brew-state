@@ -1,0 +1,14 @@
+id: OBL-CONTROLLER-FAULT-RESPONSE-001.C2
+type: criterion
+title: An actuation occurring without being commanded is detected
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An output stuck on with a healthy controller is the most dangerous failure in this class, because every software-side check agrees the machine is idle while the mass keeps heating.
+
+  This detection does not follow from the previous one. Being able to confirm an output came on does not imply noticing one that never went off.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001
+    type: criterion-of

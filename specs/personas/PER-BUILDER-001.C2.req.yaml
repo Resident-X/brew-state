@@ -1,0 +1,14 @@
+id: PER-BUILDER-001.C2
+type: criterion
+title: Machine behaviour can be verified before mains power is connected
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The first execution of a new control law should not be against the full heating load and a vessel under pressure. Errors in the control design and errors in its implementation are different failures with different fixes, and both are enormously cheaper to find away from the hardware than on it.
+
+  The builder needs confidence in the behaviour, including its timing behaviour, while nothing energised is in the loop. Timing matters as much as arithmetic here: a control law that is correct but misses its deadlines is as dangerous as one that computes the wrong answer, and no amount of reasoning about the source recovers that.
+links:
+  - target: PER-BUILDER-001
+    type: criterion-of

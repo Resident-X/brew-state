@@ -1,0 +1,14 @@
+id: OBL-CONTROLLER-FAULT-RESPONSE-001.C5
+type: criterion
+title: A detected actuation fault takes the machine to a safe state
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Detection without response is a log entry, and a log entry does not remove power from anything.
+
+  The machine stops, removes what it can remove, and does not resume on its own judgement that the fault has passed.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001
+    type: criterion-of

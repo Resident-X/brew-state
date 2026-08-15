@@ -1,0 +1,14 @@
+id: JRN-SERVE-GROUP-001.C4
+type: criterion
+title: A pace the machine cannot sustain at standard is reported rather than absorbed into quality
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Faced with a demand it cannot meet, the machine can give up time or give up quality, and the two failures look very different to the operator. Lost time is visible immediately and can be planned around. Lost quality is invisible until someone tastes it, by which point the run is over.
+
+  The machine gives up time and says so. An operator who knows the machine is at its limit can decide to wait, change what they are making, or accept it; an operator who is not told cannot decide anything.
+links:
+  - target: JRN-SERVE-GROUP-001
+    type: criterion-of

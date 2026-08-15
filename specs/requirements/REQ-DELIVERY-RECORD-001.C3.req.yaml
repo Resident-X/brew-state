@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C3
+type: criterion
+title: Parameter changes the machine made to itself are recorded against the deliveries around them
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A builder investigating a machine that has slowly become strange has to separate correction from cause, and parameter movements recorded in isolation cannot answer that.
+
+  The ordering relative to deliveries is the part that carries the information.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

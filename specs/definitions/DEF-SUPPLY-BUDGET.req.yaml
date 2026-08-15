@@ -1,0 +1,9 @@
+id: DEF-SUPPLY-BUDGET
+type: definition
+title: supply budget
+status: active
+version: 1
+text: |
+  The supply budget is the maximum sustained electrical draw the machine is permitted to command, taken from the rating of the circuit it is connected to.
+
+  It is a declared figure rather than a measured or discovered one: the machine cannot determine what it has been plugged into and must be told. Where no figure has been declared, the most restrictive value the machine supports stands in its place.

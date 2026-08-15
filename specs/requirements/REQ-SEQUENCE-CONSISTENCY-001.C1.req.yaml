@@ -1,0 +1,14 @@
+id: REQ-SEQUENCE-CONSISTENCY-001.C1
+type: criterion
+title: The final drink in a continuous run meets the same delivery band as the first
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  This is a comparison across the run rather than a check on any single drink, and a machine can pass every individual check while failing this.
+
+  The run ends when the operator stops, not at any count the machine finds comfortable.
+links:
+  - target: REQ-SEQUENCE-CONSISTENCY-001
+    type: criterion-of

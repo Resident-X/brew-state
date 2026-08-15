@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C5
+type: criterion
+title: Over-pressure is relieved without any electrical dependency
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Pressure can rise from a blocked outlet or a jammed valve while every electrical device in the machine behaves exactly as commanded, so an electrical cutoff does not address this hazard at all. Removing heat does not remove pressure that is already present.
+
+  Relief must therefore act on the pressure itself, and must stay effective while the machine is unpowered, while a sensor is lying about what it reads, and while nothing anywhere in the system has recognised that a hazard exists.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

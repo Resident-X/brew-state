@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C1
+type: criterion
+title: Confirmation comes from an observation independent of the command path
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A signal derived from where the command was issued establishes only that the controller still holds its own intention, which was never in doubt.
+
+  Independence is what makes the observation evidence rather than an echo.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

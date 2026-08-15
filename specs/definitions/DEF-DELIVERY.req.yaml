@@ -1,0 +1,9 @@
+id: DEF-DELIVERY
+type: definition
+title: delivery
+status: active
+version: 1
+text: |
+  A delivery is any occasion on which the machine sends water or steam out of itself in response to a command, whatever the drink it is destined for.
+
+  The term covers extraction, steam and hot water uniformly, so that requirements about records, confirmation and reporting need not enumerate the modes. A delivery has a command, an outcome, and an endpoint at which it stops.

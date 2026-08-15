@@ -1,0 +1,14 @@
+id: REQ-PREENERGISATION-VERIFICATION-001.C2
+type: criterion
+title: The implementation is exercised against the same plant model as the design it came from
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Comparing the implementation against a differently-derived reference confounds porting error with modelling difference, which is the confusion this criterion exists to prevent.
+
+  A divergence between the two is then attributable to the port alone.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001
+    type: criterion-of

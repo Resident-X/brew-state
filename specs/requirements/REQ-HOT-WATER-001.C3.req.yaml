@@ -1,0 +1,14 @@
+id: REQ-HOT-WATER-001.C3
+type: criterion
+title: A demand following a hot water draw is served from an accounted-for thermal state
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A hot water draw leaves the shared heated mass a long way from where an extraction needs it. Serving the next demand without accounting for that produces an error the controller cannot see.
+
+  This applies to whatever follows, not only to espresso.
+links:
+  - target: REQ-HOT-WATER-001
+    type: criterion-of

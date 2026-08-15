@@ -1,0 +1,14 @@
+id: REQ-OPERATOR-FEEDBACK-001.C3
+type: criterion
+title: Shortfalls reach the operator as consequences for the drink rather than as internal state
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Raw internal values are not actionable by someone with no model of the machine, and presenting them transfers an interpretation problem rather than solving it.
+
+  What the operator needs is whether this drink is trustworthy and what to do about it.
+links:
+  - target: REQ-OPERATOR-FEEDBACK-001
+    type: criterion-of

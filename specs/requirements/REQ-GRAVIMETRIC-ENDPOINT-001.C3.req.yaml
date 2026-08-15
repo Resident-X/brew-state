@@ -1,0 +1,14 @@
+id: REQ-GRAVIMETRIC-ENDPOINT-001.C3
+type: criterion
+title: The weight endpoint accounts for what is still in flight when delivery stops
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Liquid between the outlet and the cup arrives after the command to stop, so an endpoint judged on weight at the moment of stopping overshoots by that amount on every drink.
+
+  Predictable overshoot is correctable and unaccounted overshoot is not, which is the whole difference between a useful weight endpoint and a biased one.
+links:
+  - target: REQ-GRAVIMETRIC-ENDPOINT-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C4
+type: criterion
+title: Where confirmation is only available through effect, the resulting ambiguity is preserved rather than resolved by assumption
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A thermal response that fails to arrive implicates the switch, the load and the sensor equally, and nothing in the observation distinguishes them.
+
+  Naming a specific cause the evidence does not support is worse than reporting the ambiguity, because it sends the builder somewhere confidently wrong.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

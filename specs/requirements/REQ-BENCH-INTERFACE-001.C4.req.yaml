@@ -1,0 +1,14 @@
+id: REQ-BENCH-INTERFACE-001.C4
+type: criterion
+title: A routine cannot exceed bounds the machine enforces independently of the bench
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Scripts written at the bench command whatever they were told to command, and a typed figure an order of magnitude out is an ordinary mistake rather than an exotic one.
+
+  This bound sits above the protective chain rather than instead of it. Relying on protection to catch scripting errors means operating against it by routine.
+links:
+  - target: REQ-BENCH-INTERFACE-001
+    type: criterion-of

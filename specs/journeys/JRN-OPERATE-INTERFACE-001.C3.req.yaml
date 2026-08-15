@@ -1,0 +1,14 @@
+id: JRN-OPERATE-INTERFACE-001.C3
+type: criterion
+title: Progress and outcome reach an operator who is not looking at the interface
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Texturing milk and watching an extraction both occupy the operator's eyes, and those are the periods during which the machine has most to say.
+
+  An interface that communicates only to someone facing it is silent exactly when it matters.
+links:
+  - target: JRN-OPERATE-INTERFACE-001
+    type: criterion-of

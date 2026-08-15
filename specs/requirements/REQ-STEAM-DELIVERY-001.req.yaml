@@ -1,0 +1,22 @@
+id: REQ-STEAM-DELIVERY-001
+type: requirement
+category: functional
+title: Steam delivery holds its character for as long as it is drawn
+status: active
+priority: must
+version: 1
+text: |
+  The steam side serves one purpose, which makes it simpler than the coffee side, but it is disturbed harder. Opening the valve is a large step change that the controller cannot anticipate from the demand itself, and the operator is working continuously against whatever comes out.
+
+  Capacity here is bounded by physics the controller does not get to negotiate with. What the controller decides is not whether the bound exists but how the operator meets it.
+rationale: |
+  Asserts that quantity yields before quality, which is the substantive choice in this requirement. Faced with demand beyond capacity a machine can thin the steam or slow it, and only one of those leaves the operator able to finish the jug. Thinning is also the failure that ruins milk irreversibly.
+
+  Silent on how steam readiness is determined and on what physical quantity is regulated. Pressure and temperature are related through saturation until the valve opens and diverge sharply afterwards, and which one the controller works with is a decision with real trade-offs.
+links:
+  - target: JRN-STEAM-JUG-001.C1
+    type: derives-from
+  - target: JRN-STEAM-JUG-001.C2
+    type: derives-from
+  - target: JRN-STEAM-JUG-001.C3
+    type: derives-from

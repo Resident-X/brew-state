@@ -1,0 +1,43 @@
+id: JRN-OPERATE-INTERFACE-001
+type: requirement
+category: journey
+title: Operator sets up, starts and judges a drink through the interface
+status: active
+priority: must
+version: 1
+text: |
+  Everything the operator knows about the machine arrives through the interface, and everything they ask of it goes out the same way. It is the whole of their relationship with a machine whose internals are deliberately closed to them.
+
+  Their hands and eyes are mostly on the cup and the jug, not on the screen.
+
+  ## Main success scenario
+
+  1. The operator selects what they want to make.
+  2. The machine shows whether it can make that now, and if not, how long until it can.
+  3. The operator adjusts the recipe if they want something different from last time.
+  4. The operator starts the drink and follows progress against what they asked for.
+  5. The machine shows the outcome as delivery ends.
+  6. The operator repeats it, adjusts it, or moves to the next drink.
+
+  ## Extensions
+
+  2a. The machine cannot make the selection at all. The machine says so and why, rather than offering it and failing partway through.
+
+  3a. The operator enters a value the machine cannot honour. The machine refuses it where it was entered, rather than accepting it and missing it during delivery.
+
+  4a. The operator is watching the cup rather than the screen. The machine conveys progress and outcome without requiring them to be looking at it.
+
+  5a. Delivery was interrupted or faulted. The machine shows what happened and what state it is now in, and holds that message until the operator acknowledges it.
+
+  6a. The operator wants a drink they made earlier. The machine offers it from what it recorded rather than asking them to remember it.
+rationale: |
+  Authored as its own journey rather than folded into the drink-making journeys because the interface is a distinct surface with its own failure modes, and because those journeys are deliberately silent about how the operator learns anything. Keeping it separate also keeps the drink journeys portable to a machine with a completely different panel.
+
+  The not-looking-at-the-screen extension is the one that shapes the design. An interface that only communicates visually communicates nothing during the moments the operator is texturing milk or watching an extraction, which is most of the time that matters.
+
+  Deliberately silent on what the interface physically is. A screen, a panel of lights, a phone or something not yet chosen all satisfy this journey, and the parts list currently carries an unresolved display choice that this must not pre-empt.
+links:
+  - target: PER-OPERATOR-001.C1
+    type: derives-from
+  - target: PER-OPERATOR-001.C3
+    type: derives-from

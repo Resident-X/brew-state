@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C1
+type: criterion
+title: A delivered drink can be reproduced from its record alone
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The record carries what was commanded, what was actually delivered, and where delivery ended.
+
+  A record of the target without the outcome cannot reproduce a drink that missed it, and those are the drinks most worth repeating or avoiding.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

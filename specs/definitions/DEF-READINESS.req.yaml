@@ -1,0 +1,9 @@
+id: DEF-READINESS
+type: definition
+title: readiness
+status: active
+version: 1
+text: |
+  Readiness is the condition in which the machine could begin a delivery immediately if one were asked for, having reached and settled at the state that delivery requires.
+
+  It is a per-purpose condition rather than a single machine state: being ready to brew, to steam and to dispense hot water are different conditions with different settling behaviour, and a machine may be in one and not another. Reaching readiness moves no water and produces no drink, which is what distinguishes it from a delivery.

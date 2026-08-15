@@ -1,0 +1,14 @@
+id: REQ-MODEL-COMMIT-001.C4
+type: criterion
+title: The previous model remains recoverable after a new one is committed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A model that validates on the bench can still behave worse in service, and that is only discoverable by running it.
+
+  Without a way back the discovery costs a full recommissioning, so the builder keeps the worse model instead.
+links:
+  - target: REQ-MODEL-COMMIT-001
+    type: criterion-of

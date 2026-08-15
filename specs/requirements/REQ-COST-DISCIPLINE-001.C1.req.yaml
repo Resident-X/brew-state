@@ -1,0 +1,14 @@
+id: REQ-COST-DISCIPLINE-001.C1
+type: criterion
+title: Reused and commodity parts are the default for every channel
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Parts already in the machine cost nothing and are known to survive the environment they are in, which is more than a datasheet establishes.
+
+  The default holds until displaced by a specific argument, rather than applying only where nothing better was noticed.
+links:
+  - target: REQ-COST-DISCIPLINE-001
+    type: criterion-of

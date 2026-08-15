@@ -1,0 +1,30 @@
+id: REQ-ROBUST-CONTROL-001
+type: requirement
+category: functional
+title: The controller holds its guarantees across the declared range of model error
+status: active
+priority: must
+version: 1
+text: |
+  The plant model will be wrong, and the useful question is not by how much but what still holds when it is. A controller correct only at nominal parameters is not a design.
+
+  This is where the obligation on control-design discipline becomes behaviour of the shipped machine rather than a standard the project works to.
+rationale: |
+  Authored because the control-design obligation had nothing deriving from it. Every other obligation carrying product behaviour has requirements beneath it; this one carried the design notes' central conclusion and reached the machine through nothing at all.
+
+  Separates what must survive an arbitrarily wrong model from what may degrade with it. Refusing what cannot be delivered, reaching a safe state and respecting the supply budget belong in the first group; tracking a setpoint tightly belongs in the second. Without the split an identification failure threatens every property at once and nobody can say which ones still hold.
+
+  Carries model error into the commanded margin the way the measurement requirement already carries sensing error. Model error is the larger of the two and, before this, the only one nothing accounted for.
+
+  Silent on the control law family, on how uncertainty is represented, and on how margin is computed. All are decisions with real alternatives.
+links:
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001.C1
+    type: derives-from
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001.C2
+    type: derives-from
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001.C3
+    type: derives-from
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001.C4
+    type: derives-from
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001.C5
+    type: derives-from

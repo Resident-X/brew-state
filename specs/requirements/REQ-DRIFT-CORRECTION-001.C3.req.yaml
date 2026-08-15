@@ -1,0 +1,12 @@
+id: REQ-DRIFT-CORRECTION-001.C3
+type: criterion
+title: An adjustment is kept only after it is shown to reduce the prediction error
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Convergence is not improvement. Without an explicit check the machine cannot tell a genuine correction from a plausible-looking one, and unattended it will never be told.
+links:
+  - target: REQ-DRIFT-CORRECTION-001
+    type: criterion-of

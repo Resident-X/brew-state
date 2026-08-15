@@ -1,0 +1,14 @@
+id: PER-BUILDER-001.C1
+type: criterion
+title: The real plant can be characterised well enough to design the controller
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Design starts from a model, and the model has to describe this machine rather than a generic one. Nameplate ratings, assumed thermal masses and textbook heat-transfer coefficients are not a sufficient basis for a predictive controller, because the parameters that dominate the response are precisely the ones that cannot be looked up anywhere.
+
+  The builder therefore needs to arrive at a description of the real hardware trustworthy enough to design against, using software that costs nothing and instruments they already own. That description must also be honest about its own uncertainty, so the design can carry margin for whatever it got wrong instead of assuming it got everything right.
+links:
+  - target: PER-BUILDER-001
+    type: criterion-of

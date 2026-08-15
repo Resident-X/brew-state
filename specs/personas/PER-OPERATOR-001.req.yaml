@@ -1,0 +1,24 @@
+id: PER-OPERATOR-001
+type: requirement
+category: persona-goal
+title: Operator serves consistent drinks on demand, including for guests
+status: active
+priority: must
+version: 1
+text: |
+  The person who makes and serves the coffee. They interact with the machine only through its physical controls, and never touch firmware, calibration routines, or a connected PC. The internals are opaque to them by choice, and the retrofit succeeds only to the extent that it lets them stay that way.
+
+  They judge the machine on two things: what ends up in the cup, and how the serving session felt. A drink that tastes different from the last one is a fault regardless of what any telemetry says about it. A session in which they were left waiting, or in which the fourth drink was worse than the first, is also a fault, even when every individual drink would have been acceptable on its own.
+
+  Crucially they are often not the only person drinking. Hosting means producing the drink the guest actually wants rather than the one the machine finds easy, and producing several of them close enough together that the first is still hot when the last is poured. A machine that makes one excellent drink for its owner and then needs several minutes to recover has not solved their problem.
+
+  This is the same human as the Builder persona wearing a different hat. What differs is the stance: here they are the user of a finished appliance, with no privileged knowledge of it and no appetite for acquiring any.
+rationale: |
+  Split from the Builder persona even though both are the same human, because the two stances generate genuinely different requirement subtrees and collapsing them muddies every chain beneath. Plant identification, verification tooling and on-device recalibration exist to serve the person who builds and maintains the machine; nothing about them traces sensibly to a goal about drinking coffee. Keeping the stances separate lets each subtree derive from a goal it actually serves.
+
+  Hosting is treated as a first-class goal rather than an incidental extra. It is what introduces sequence and concurrency into the problem, and those are the two dimensions that make the control design hard. A machine judged only on a single rested shot would not need predictive control, power arbitration, or feedforward from flow at all.
+
+  The throughput criterion is deliberately expressed as a social bound rather than a number. The acceptable wait is a property of the serving situation and not of the hardware, and fixing a figure here would import an implementation-side tunable into a stakeholder goal that has no business carrying one.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: conflicts-with

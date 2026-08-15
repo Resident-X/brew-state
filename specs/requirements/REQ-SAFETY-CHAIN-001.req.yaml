@@ -1,0 +1,26 @@
+id: REQ-SAFETY-CHAIN-001
+type: requirement
+category: functional
+title: Protection acts on the machine without passing through the controller
+status: active
+priority: must
+version: 1
+text: |
+  The protective chain is the part of the machine that has to work when everything else has failed. Its whole value comes from owing nothing to the controller, the firmware, or any state either of them holds.
+
+  This is the requirement-level statement of the safety obligation for the parts of the chain that are built rather than assumed. Scope covers the control system and the electrical install.
+rationale: |
+  Expressed as properties of the chain rather than as a list of devices, so that the physical realisation stays a decision. Which devices provide each property, how they are arranged, and which are reused from the machine are all choices with cost and availability consequences that belong in decisions justified against this requirement.
+
+  The bypass criterion is separate and deliberately absolute. A chain with a documented test mode, a maintenance override or a configuration flag that relaxes it is not a chain that holds when firmware fails, because firmware failure includes firmware setting that flag.
+
+  Holding power available only while the controller proves it is running inverts the usual default. Aliveness is earned continuously rather than granted at power-on, so every way of failing quietly produces the same outcome as failing loudly.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C1
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C2
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C4
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C5
+    type: derives-from

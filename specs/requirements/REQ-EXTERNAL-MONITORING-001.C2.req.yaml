@@ -1,0 +1,14 @@
+id: REQ-EXTERNAL-MONITORING-001.C2
+type: criterion
+title: Historical and aggregate data is available, not only instantaneous state
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Monitoring is about trends: consistency across recent drinks, time spent at temperature, movement in the prediction error.
+
+  A surface offering only the current value forces every consumer to build its own history, and each will build a different one.
+links:
+  - target: REQ-EXTERNAL-MONITORING-001
+    type: criterion-of

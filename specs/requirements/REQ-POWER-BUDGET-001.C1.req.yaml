@@ -1,0 +1,14 @@
+id: REQ-POWER-BUDGET-001.C1
+type: criterion
+title: Commanded draw stays within the supply budget over any window the supplying protection responds to
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Enforcement at every instant would forbid the duty sharing the machine's own modulation depends on, since two loads can share a budget by taking turns rather than by each drawing half. Enforcement averaged over an unbounded window would permit sustained overdraw between averages.
+
+  The window that matters is the one the supply's own protection integrates over. Transitions are where this is lost: as one demand ends and another begins, two loops can each believe they have headroom within the same window.
+links:
+  - target: REQ-POWER-BUDGET-001
+    type: criterion-of

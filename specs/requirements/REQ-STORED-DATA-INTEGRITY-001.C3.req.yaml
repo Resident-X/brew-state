@@ -1,0 +1,14 @@
+id: REQ-STORED-DATA-INTEGRITY-001.C3
+type: criterion
+title: A supply budget failing verification resolves to the most restrictive supported value
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Corruption must not reach a more permissive figure than was ever declared, or a single damaged value becomes a permission escalation on the constraint protecting the building's wiring.
+
+  This matches the undeclared case, so damage and absence produce the same conservative outcome.
+links:
+  - target: REQ-STORED-DATA-INTEGRITY-001
+    type: criterion-of

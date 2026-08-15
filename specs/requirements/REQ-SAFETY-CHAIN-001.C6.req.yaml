@@ -1,0 +1,14 @@
+id: REQ-SAFETY-CHAIN-001.C6
+type: criterion
+title: No firmware state or configuration can disable, delay or bypass any element of the chain
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A chain with an override is a chain that holds until firmware sets the override, and firmware failure includes setting it.
+
+  This admits no exception for test modes, commissioning or maintenance. Characterisation in particular runs with the chain fully active.
+links:
+  - target: REQ-SAFETY-CHAIN-001
+    type: criterion-of

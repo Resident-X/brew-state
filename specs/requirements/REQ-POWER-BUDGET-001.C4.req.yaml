@@ -1,0 +1,14 @@
+id: REQ-POWER-BUDGET-001.C4
+type: criterion
+title: An undeclared supply budget resolves to the most restrictive supported value
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The machine cannot discover what it is plugged into, and the cost of assuming generously falls on the building's wiring.
+
+  Absence of information is treated as the restrictive case rather than as permission, so a later declaration can only relax.
+links:
+  - target: REQ-POWER-BUDGET-001
+    type: criterion-of

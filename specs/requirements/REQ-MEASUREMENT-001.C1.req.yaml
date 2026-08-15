@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C1
+type: criterion
+title: Absolute temperature error on the brew channel stays within the margin between commanded target and protection trip point
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Error here is not a quality problem but a safety-margin one: it consumes the gap that keeps the machine out of its own protection.
+
+  Absolute error is the quantity that matters. A consistently offset channel is repeatable and still fails this.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

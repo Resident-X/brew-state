@@ -1,0 +1,14 @@
+id: REQ-COST-DISCIPLINE-001.C4
+type: criterion
+title: The cost of a channel's failure is weighed rather than the cost of its part
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A cheap part on a channel whose failure is recoverable is a good trade, and the same part on a channel whose failure is a hazard is not.
+
+  This is what makes clone-quality risk acceptable in some places and unacceptable in others.
+links:
+  - target: REQ-COST-DISCIPLINE-001
+    type: criterion-of

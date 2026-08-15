@@ -1,0 +1,14 @@
+id: REQ-HOT-WATER-001.C2
+type: criterion
+title: Delivery rate reduces rather than delivered temperature when both cannot be met
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  At the limit the machine can give up time or give up temperature, and only one of those is recoverable by the operator waiting a moment longer.
+
+  Stating the direction matters because the opposite trade is what a machine does by default when nothing decides otherwise.
+links:
+  - target: REQ-HOT-WATER-001
+    type: criterion-of

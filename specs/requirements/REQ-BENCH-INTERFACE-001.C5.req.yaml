@@ -1,0 +1,14 @@
+id: REQ-BENCH-INTERFACE-001.C5
+type: criterion
+title: The interface remains available in normal operation rather than only in a test build
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A path that exists only in a build nobody is running will not be present when a machine misbehaves in service, which is when it is most wanted.
+
+  It is also how live behaviour gets compared against the model the machine is controlling against.
+links:
+  - target: REQ-BENCH-INTERFACE-001
+    type: criterion-of

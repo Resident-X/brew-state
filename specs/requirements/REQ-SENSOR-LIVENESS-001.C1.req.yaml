@@ -1,0 +1,14 @@
+id: REQ-SENSOR-LIVENESS-001.C1
+type: criterion
+title: A reading that fails to change when the plant model requires it to is treated as a fault
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Range checks and plausibility bounds pass on a frozen channel, since the last good value it is stuck at was by definition a good value.
+
+  Movement under conditions that compel movement is the only available evidence that the channel is still connected to anything.
+links:
+  - target: REQ-SENSOR-LIVENESS-001
+    type: criterion-of

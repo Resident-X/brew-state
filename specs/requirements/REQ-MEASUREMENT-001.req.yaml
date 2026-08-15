@@ -1,0 +1,20 @@
+id: REQ-MEASUREMENT-001
+type: requirement
+category: constraint
+title: Measurement is accurate enough to hold target against the protection margin
+status: active
+priority: must
+version: 1
+text: |
+  The coffee side runs close to its protection trip point. The gap between the temperature the controller is aiming for and the temperature at which hardware protection removes power is small, and measurement error eats directly into it.
+
+  This makes absolute accuracy a requirement on that channel, not just repeatability. A channel that is consistently wrong by a known amount is fine for repeatability and fatal here.
+rationale: |
+  Distinguishes absolute accuracy from repeatability because the two are not interchangeable and only one of them is threatened by the protection margin. A sensor that reads consistently high is perfectly repeatable and will command the machine into its own protection.
+
+  Stated as a constraint on the measurement channel rather than as a choice of sensing technology. Which sensor type, interface and compensation scheme meet it is a decision with cost consequences, and it is exactly the decision the cost-discipline requirement expects to be argued channel by channel.
+
+  Silent on numbers. The margin depends on the protection device actually fitted and on the commanded target, neither of which belongs in a requirement.
+links:
+  - target: JRN-PULL-SHOT-001.C1
+    type: derives-from

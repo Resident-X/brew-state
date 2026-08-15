@@ -1,0 +1,14 @@
+id: PER-ADOPTER-001.C4
+type: criterion
+title: Local supply, frequency and protection limits are declared rather than inherited
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An adopter on a different supply inherits a power budget, a switching scheme and a protection margin that were all computed for somewhere else.
+
+  Declaring them is what makes the inherited design theirs rather than a copy of a machine in another country.
+links:
+  - target: PER-ADOPTER-001
+    type: criterion-of

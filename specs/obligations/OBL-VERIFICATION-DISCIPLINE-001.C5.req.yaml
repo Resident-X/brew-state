@@ -1,0 +1,14 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C5
+type: criterion
+title: Timing and concurrency behaviour is verified rather than only computed results
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Code that produces the right answer after its deadline has failed, and on a machine whose actuation is tied to the mains waveform the two failures are indistinguishable in their effect.
+
+  Reasoning about source establishes neither ordering nor latency.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

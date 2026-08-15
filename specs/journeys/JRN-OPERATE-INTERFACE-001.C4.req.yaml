@@ -1,0 +1,14 @@
+id: JRN-OPERATE-INTERFACE-001.C4
+type: criterion
+title: A fault or interruption message persists until the operator acknowledges it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A message that clears itself will clear while the operator is turned away, and the machine will then appear to have behaved normally.
+
+  Acknowledgement is what establishes that a person actually saw it.
+links:
+  - target: JRN-OPERATE-INTERFACE-001
+    type: criterion-of

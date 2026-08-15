@@ -1,0 +1,14 @@
+id: PER-ADOPTER-001.C5
+type: criterion
+title: A working machine is reachable from the published material without contacting the author
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The author may be unavailable, uninterested or gone, and a project reachable only through them is not published in any useful sense.
+
+  The test is whether the sequence from checkout to working machine is written down rather than known.
+links:
+  - target: PER-ADOPTER-001
+    type: criterion-of

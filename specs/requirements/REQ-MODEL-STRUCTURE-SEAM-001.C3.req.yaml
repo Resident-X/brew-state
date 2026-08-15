@@ -1,0 +1,14 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001.C3
+type: criterion
+title: Exactly one plant structure is present in any built artefact
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Selection at build time costs no dispatch and carries no structure the machine will never use, which matters on a target with bounded storage.
+
+  It also makes controlling a machine with the wrong dynamics unreachable rather than merely unlikely, and that fault has no obvious symptom until the machine is well outside its intended region.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: OBL-CONTROL-DESIGN-DISCIPLINE-001.C5
+type: criterion
+title: The design separates behaviour that depends on the model from behaviour that must not
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Refusing what cannot be delivered, reaching a safe state and respecting the supply budget should survive an arbitrarily wrong model. Tracking a setpoint tightly legitimately does not.
+
+  Without the separation an identification failure threatens every property equally, and nobody can say which ones still hold.
+links:
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001
+    type: criterion-of

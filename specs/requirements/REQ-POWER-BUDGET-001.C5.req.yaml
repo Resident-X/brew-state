@@ -1,0 +1,14 @@
+id: REQ-POWER-BUDGET-001.C5
+type: criterion
+title: Allocation between competing demands happens without operator input
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The operator asked for drinks, not for a scheduling decision, and has no basis on which to make one.
+
+  They may experience the outcome as timing. They may not be asked the question.
+links:
+  - target: REQ-POWER-BUDGET-001
+    type: criterion-of

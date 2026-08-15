@@ -1,0 +1,14 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001.C2
+type: criterion
+title: The plant structure sits behind a named interface that its consumers share
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The control law, the estimator and the fault detection all need the model, and each reaching into it separately means a second structure has to satisfy three different shapes.
+
+  One interface means adding a structure is implementing it rather than negotiating with everything that uses it.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001
+    type: criterion-of

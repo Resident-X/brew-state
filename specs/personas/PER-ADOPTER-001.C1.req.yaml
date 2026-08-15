@@ -1,0 +1,14 @@
+id: PER-ADOPTER-001.C1
+type: criterion
+title: What is specific to the reference machine is distinguishable from what is general
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Local facts read as universal ones when written by someone for whom they never change, and nothing in the text marks the difference unless somebody marks it.
+
+  An adopter who inherits an unmarked local assumption gets a design that does not fit their machine and no signal that it does not.
+links:
+  - target: PER-ADOPTER-001
+    type: criterion-of

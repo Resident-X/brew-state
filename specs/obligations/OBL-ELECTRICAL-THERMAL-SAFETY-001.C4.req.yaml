@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C4
+type: criterion
+title: A last-resort cutoff exists that cannot restore itself
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Protection that restores itself can weld, drift out of calibration, or be defeated by the very fault that called on it. Anything that closes again once it has cooled hands a failing machine repeated attempts at the same hazard, and a machine that keeps getting another attempt will eventually succeed at hurting someone.
+
+  The last line must therefore stay open once it has acted, so that its operation forces a person to find out why before the machine runs again. It must also be positioned so that nothing else in the system, including the protection it backs up, can keep delivering power to the load once it has operated.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

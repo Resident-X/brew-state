@@ -1,0 +1,14 @@
+id: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C1
+type: criterion
+title: A clean checkout builds without undocumented local state
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  State living only on the author's machine is invisible to the author, since everything works for them.
+
+  The test is a checkout with nothing else assumed present, which is the only configuration a new reader can reproduce.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001
+    type: criterion-of

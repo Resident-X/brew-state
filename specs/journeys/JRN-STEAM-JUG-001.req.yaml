@@ -1,0 +1,37 @@
+id: JRN-STEAM-JUG-001
+type: requirement
+category: journey
+title: Operator steams a jug of milk
+status: active
+priority: must
+version: 1
+text: |
+  Texturing milk is the one interaction where the operator is working continuously against the machine's output rather than waiting for it. Their hands and attention are committed for the duration, and they have no capacity to compensate for a supply that changes underneath them.
+
+  ## Main success scenario
+
+  1. The operator asks the machine for steam.
+  2. The machine reports that steam is available.
+  3. The operator opens the steam valve and begins texturing the milk.
+  4. The machine holds the character of the steam steady while the operator works, without the operator managing it or thinking about it.
+  5. The operator closes the valve when the milk is textured.
+  6. The machine returns itself to a state from which the next drink can begin.
+
+  ## Extensions
+
+  3a. The operator opens the valve before the machine is ready. The machine does not deliver wet steam into the jug; it withholds delivery or makes the state unmistakable to the operator.
+
+  4a. The operator's demand exceeds what the machine can sustain. The machine degrades predictably and gradually, so the operator can feel it happening and adapt, rather than collapsing abruptly into water carry-over.
+
+  4b. The operator takes longer over the jug than expected. The machine sustains steam character for as long as the operator draws, rather than for a fixed window after the valve opens.
+
+  5a. The operator closes the valve and immediately wants to brew. The machine hands off to the group-service journey, which owns what happens when demands overlap.
+rationale: |
+  Framed around the duration of the draw rather than around the availability of steam, because availability is the easy half. A machine can present excellent steam for the first few seconds and still be useless for texturing, and the difference is invisible in any measurement taken at the moment the valve opens.
+
+  Graceful degradation is asserted rather than prevention of degradation, because prevention cannot be promised. The machine's capacity to make steam is bounded by physics the control system does not get to negotiate with. What the control system does get to decide is whether the operator meets that bound as a gradual firming they can work with, or as a sudden failure mid-pour. The first is a machine with limits; the second is a machine that betrays you.
+
+  Handing overlapping demand to the group journey keeps the boundary clean. This journey concerns one jug in isolation; contention between steaming and any other demand is a property of serving several drinks and belongs where that is being reasoned about.
+links:
+  - target: PER-OPERATOR-001.C2
+    type: derives-from

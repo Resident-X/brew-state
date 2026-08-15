@@ -1,0 +1,12 @@
+id: REQ-BREW-TEMP-001.C4
+type: criterion
+title: Brew temperature after a hot water draw matches brew temperature from rest
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A hot water draw is the heaviest demand the coffee side sees, and it leaves the machine in a materially different state from rest. An extraction that follows without accounting for that will not match one that does not.
+links:
+  - target: REQ-BREW-TEMP-001
+    type: criterion-of

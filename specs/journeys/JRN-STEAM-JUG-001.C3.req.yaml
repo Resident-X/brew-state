@@ -1,0 +1,14 @@
+id: JRN-STEAM-JUG-001.C3
+type: criterion
+title: Demand beyond what the machine can sustain degrades gradually rather than abruptly
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Every machine has a ceiling, and hitting it is not itself a fault. The fault is hitting it without warning, at the moment the operator has least capacity to respond.
+
+  Gradual degradation gives the operator something to work with: they can feel the supply firming up and finish the jug or back off. An abrupt collapse gives them a ruined jug and no explanation, and teaches them to distrust the machine well below its actual limit.
+links:
+  - target: JRN-STEAM-JUG-001
+    type: criterion-of

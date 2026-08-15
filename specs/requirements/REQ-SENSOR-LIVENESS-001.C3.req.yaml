@@ -1,0 +1,14 @@
+id: REQ-SENSOR-LIVENESS-001.C3
+type: criterion
+title: A stuck sensor and an unresponsive load are reported as indistinguishable when they are
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Both produce a reading that does not move when it should, and the observation alone does not separate them.
+
+  Naming one without evidence is worse than reporting the ambiguity, because it sends the builder confidently to the wrong component.
+links:
+  - target: REQ-SENSOR-LIVENESS-001
+    type: criterion-of

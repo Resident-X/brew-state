@@ -1,0 +1,14 @@
+id: JRN-CORRECT-DRIFT-001.C4
+type: criterion
+title: A discrepancy surviving a settled correction is reported as beyond parametric repair
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A residual that persists after the adjustment has converged is evidence about the shape of the description rather than about its values, and no amount of further adjustment will resolve it. Continuing to tune against it drives the description away from physical meaning in pursuit of a residual it cannot reach.
+
+  The machine stops, keeps what it can still justify, and hands the problem to the builder, because this is the case where the bench genuinely is required.
+links:
+  - target: JRN-CORRECT-DRIFT-001
+    type: criterion-of

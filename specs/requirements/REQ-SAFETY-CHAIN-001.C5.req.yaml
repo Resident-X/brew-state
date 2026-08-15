@@ -1,0 +1,14 @@
+id: REQ-SAFETY-CHAIN-001.C5
+type: criterion
+title: Pressure relief operates without power, sensing or command
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Pressure can rise while every electrical device behaves exactly as commanded, so nothing electrical addresses this hazard, and removing heat does not remove pressure already present.
+
+  Relief acts on the pressure itself and stays effective with the machine unpowered and nothing aware a hazard exists.
+links:
+  - target: REQ-SAFETY-CHAIN-001
+    type: criterion-of

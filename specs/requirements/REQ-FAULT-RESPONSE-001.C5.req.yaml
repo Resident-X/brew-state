@@ -1,0 +1,14 @@
+id: REQ-FAULT-RESPONSE-001.C5
+type: criterion
+title: The firmware fault path is verifiable independently of the hardware chain
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A test in which the hardware chain acts first has demonstrated the hardware chain and left the firmware path unobserved.
+
+  Each layer is exercised on its own, or neither is known to work and the defence in depth is one layer deep.
+links:
+  - target: REQ-FAULT-RESPONSE-001
+    type: criterion-of

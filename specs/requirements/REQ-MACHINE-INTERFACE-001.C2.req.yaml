@@ -1,0 +1,14 @@
+id: REQ-MACHINE-INTERFACE-001.C2
+type: criterion
+title: Every command the machine accepts is available through that surface
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A command reachable only from one consumer makes that consumer mandatory, which is the coupling this requirement exists to prevent.
+
+  It also means the bench tooling and the panel can exercise identical paths, so one verifies the other.
+links:
+  - target: REQ-MACHINE-INTERFACE-001
+    type: criterion-of

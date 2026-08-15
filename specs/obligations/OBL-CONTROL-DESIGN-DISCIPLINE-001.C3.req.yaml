@@ -1,0 +1,14 @@
+id: OBL-CONTROL-DESIGN-DISCIPLINE-001.C3
+type: criterion
+title: Actuator saturation is a designed behaviour rather than an edge case
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Full duty is the normal operating condition on this machine rather than an exception, so the design spends much of its life against the limit.
+
+  Accumulating action against a limit that cannot be exceeded is the standard route to an overshoot that arrives after the disturbance has passed.
+links:
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001
+    type: criterion-of

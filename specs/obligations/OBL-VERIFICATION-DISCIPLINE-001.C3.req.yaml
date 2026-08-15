@@ -1,0 +1,14 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C3
+type: criterion
+title: Every acceptance criterion has verification that would fail if the criterion were violated
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Verification can be thorough by volume and still leave a criterion unexercised, which is the failure a requirement-driven project exists to prevent.
+
+  The mapping runs from criterion to verification rather than the reverse, so that a criterion with nothing pointing at it is visible.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: JRN-SERVE-GROUP-001.C2
+type: criterion
+title: Pace yields to the supply limit whenever both cannot be met
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  This is the resolution of the recorded conflict between what the operator wants and what the machine is permitted to draw, and it resolves in one direction only.
+
+  The machine slows. It does not borrow against the supply, briefly overshoot, or treat the limit as an average to be met on balance. An operator asking for more is not an authorisation, because the limit does not belong to the operator to give away.
+links:
+  - target: JRN-SERVE-GROUP-001
+    type: criterion-of

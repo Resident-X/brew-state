@@ -1,0 +1,14 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C2
+type: criterion
+title: A test earns its place by being capable of failing on a plausible defect
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A test that passes equally on working and broken code reports only that the code ran, which was never the question.
+
+  The standard is a plausible future change: if no realistic mistake would make the test fail, it is not verifying anything.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

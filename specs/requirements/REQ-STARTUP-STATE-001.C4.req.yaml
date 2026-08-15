@@ -1,0 +1,14 @@
+id: REQ-STARTUP-STATE-001.C4
+type: criterion
+title: An interrupted delivery is recorded as interrupted rather than as completed or absent
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Recorded as completed it corrupts the operator's reference for repeating the drink; recorded as absent it leaves an unexplained gap when the builder reconstructs a sequence later.
+
+  The interruption is itself the fact worth keeping.
+links:
+  - target: REQ-STARTUP-STATE-001
+    type: criterion-of

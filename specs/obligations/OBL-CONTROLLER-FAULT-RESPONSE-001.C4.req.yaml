@@ -1,0 +1,14 @@
+id: OBL-CONTROLLER-FAULT-RESPONSE-001.C4
+type: criterion
+title: A response exceeding what the model allows is treated as a fault
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Runaway presents as the machine doing more than it was asked, which a controller aiming at a setpoint will not necessarily resist once its actuator is no longer under its control.
+
+  Disagreement with the model is bounded in both directions: too little response and too much are both faults.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001
+    type: criterion-of

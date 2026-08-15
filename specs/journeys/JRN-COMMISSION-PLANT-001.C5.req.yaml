@@ -1,0 +1,14 @@
+id: JRN-COMMISSION-PLANT-001.C5
+type: criterion
+title: A description that fails against withheld data is reported as untrustworthy rather than adopted
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Fitting quality against the data used to derive a description says almost nothing about whether that description will predict anything, and it can be made arbitrarily good by a description with enough freedom and no meaning.
+
+  The check that carries weight is against data the fit never saw. When that check fails the builder is told plainly, because they have no colleague to catch the mistake and every incentive to believe a result they have worked for.
+links:
+  - target: JRN-COMMISSION-PLANT-001
+    type: criterion-of

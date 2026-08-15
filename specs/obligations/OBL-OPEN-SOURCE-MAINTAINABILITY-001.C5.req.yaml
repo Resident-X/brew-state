@@ -1,0 +1,14 @@
+id: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C5
+type: criterion
+title: The published graph and the code it describes stay consistent
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A graph that has drifted from its code is worse than none, because it is authoritative in appearance and wrong in content.
+
+  A reader has no independent way to detect the drift, so they will trust it.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001
+    type: criterion-of

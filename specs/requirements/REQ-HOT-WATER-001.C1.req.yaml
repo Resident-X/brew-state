@@ -1,0 +1,14 @@
+id: REQ-HOT-WATER-001.C1
+type: criterion
+title: Dispensed water leaves the machine within the drinking-temperature band
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Water below band cannot be corrected once it is in the cup, and it is the larger part of the finished drink by volume.
+
+  The band applies across the whole dispense, not to its average. Water that starts hot and finishes cool fails this.
+links:
+  - target: REQ-HOT-WATER-001
+    type: criterion-of

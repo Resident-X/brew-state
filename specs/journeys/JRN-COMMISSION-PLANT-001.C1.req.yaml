@@ -1,0 +1,14 @@
+id: JRN-COMMISSION-PLANT-001.C1
+type: criterion
+title: Control behaviour including its timing is verified before anything is energised
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Two distinct classes of error have to be caught here, and only one of them is visible by reading the code. A control law can compute the right answer and still miss the moment it was needed, and on a machine where actuation is tied to the mains waveform a late answer and a wrong answer have the same consequence.
+
+  Verification therefore has to exercise the behaviour in time, not merely establish that the arithmetic is right. Nothing carrying real power is present while this happens.
+links:
+  - target: JRN-COMMISSION-PLANT-001
+    type: criterion-of

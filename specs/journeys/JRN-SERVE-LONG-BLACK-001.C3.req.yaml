@@ -1,0 +1,14 @@
+id: JRN-SERVE-LONG-BLACK-001.C3
+type: criterion
+title: The machine resolves contention between its own draws without involving the operator
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The operator asked for a drink, not for a scheduling decision. Exposing the contention to them, whether as a choice to make or as an unexplained wait, transfers a problem they cannot reason about onto the person least able to solve it.
+
+  The machine may take longer than it would for a simpler drink. What it may not do is make the operator responsible for understanding why.
+links:
+  - target: JRN-SERVE-LONG-BLACK-001
+    type: criterion-of

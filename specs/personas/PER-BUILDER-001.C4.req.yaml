@@ -1,0 +1,14 @@
+id: PER-BUILDER-001.C4
+type: criterion
+title: Total build cost stays within a hobbyist budget
+status: active
+version: 1
+measurement_type: threshold
+verification: inspection
+text: |
+  Cost here is a boundary rather than a preference to be traded away whenever a better part appears. The project only makes sense because it is cheaper than buying the machine it sets out to beat, so a build that drifts toward commercial pricing has failed on its own terms even if it performs beautifully.
+
+  Parts already present in the machine and commodity parts drawn from general-purpose ecosystems are the default. Departing from that default is permitted but never free: it requires a reason specific to the channel in question rather than a general preference for better components.
+links:
+  - target: PER-BUILDER-001
+    type: criterion-of

@@ -1,0 +1,9 @@
+id: DEF-RUN
+type: definition
+title: run
+status: active
+version: 1
+text: |
+  A run is a sequence of drinks made close enough together that the machine does not fully recover between them.
+
+  The distinguishing property is thermal rather than numerical: what makes a sequence a run is that each drink starts from a state the previous one left behind. Two drinks an hour apart are not a run; four in five minutes are.

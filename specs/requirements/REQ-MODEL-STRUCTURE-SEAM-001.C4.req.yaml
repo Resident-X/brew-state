@@ -1,0 +1,14 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001.C4
+type: criterion
+title: Adding a structure requires no change to existing structures or to their consumers
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A seam that has to be renegotiated for each addition is not a seam, and every renegotiation risks changing behaviour the existing machines depend on.
+
+  This is what makes future architectures cheap rather than merely possible.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001
+    type: criterion-of

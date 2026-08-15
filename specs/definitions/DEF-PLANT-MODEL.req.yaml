@@ -1,0 +1,9 @@
+id: DEF-PLANT-MODEL
+type: definition
+title: plant model
+status: active
+version: 1
+text: |
+  A plant model is the machine's quantitative description of its own physical behaviour: how its temperatures respond to the power it applies and to the water drawn through it.
+
+  The same object is referred to as the machine's description of itself in journey-level prose. It consists of a structure, which says which quantities influence which, and parameters, which say by how much. Commissioning establishes both; on-device correction adjusts only the parameters.

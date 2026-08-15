@@ -1,0 +1,14 @@
+id: REQ-ELECTRICAL-INSTALL-001.C7
+type: criterion
+title: The upstream protection the build relies on is declared, and the wiring is rated for it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Every conductor the retrofit adds is protected by something the project did not install and cannot inspect. Leaving that unstated means nobody can check whether the wiring chosen actually suits it.
+
+  Declaring it also makes the assumption portable: a reader on a different supply sees a figure to replace rather than a silence to inherit.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

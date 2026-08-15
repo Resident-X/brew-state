@@ -1,0 +1,740 @@
+# Staircase v3 Type Schema
+#
+# Six node types: requirement, deliverable, criterion, evidence, decision, definition
+# Two chains: Requirements (timeless WHAT) and Delivery (temporal WHEN)
+# Attestation (evidence) is the only bridge between chains
+#
+# Authority: docs/v3/model/00-overview.md
+#
+# IMPORTANT: Types, link types, and statuses are validated at runtime
+# against this schema. They are NOT hardcoded enums. The parser and
+# graph engine treat them as strings validated against this file.
+# New types/link types/statuses/categories are added here — existing
+# entries are never removed (deprecated entries preserved for tolerant reading).
+
+# ============================================================
+# Node types
+# ============================================================
+
+types:
+
+  # ----------------------------------------------------------
+  # Requirement — timeless assertion (WHAT must be true)
+  # ----------------------------------------------------------
+  requirement:
+    chain: requirement
+    hosts_criteria: true
+    description: "What must be true — timeless assertion about the system"
+    categories: [functional, journey, interface, obligation, persona-goal, strategic, constraint]
+    fields:
+      title: { type: string, required: true }
+      category: { type: enum, values: $categories, required: true }
+      status: { type: enum, values: $statuses, required: true }
+      priority: { type: enum, values: [must, should, could, wont], required: true }
+
+      # Obligation fields — distinguish who authored and who controls the text
+      authority: { type: enum, values: [external, internal] }
+      managed: { type: boolean, default: true }
+
+      # Standard fields
+      version: { type: integer, default: 1 }
+      text: { type: text }
+      rationale: { type: text }
+      attributes: { type: object, additional_properties: true }
+      links: { type: list, item_type: object }
+      _meta: { type: object, additional_properties: true }
+
+      # Deprecated — v1/v2 inline criteria. Use criterion nodes with criterion-of links.
+      acceptance_criteria: { type: list, item_type: string, deprecated: true }
+
+    allowed_link_types: [derives-from, depends-on, justified-by, allocated-to, conflicts-with, supersedes, uses-term]
+
+  # ----------------------------------------------------------
+  # Deliverable — temporal commitment (WHAT must be produced, WHEN)
+  # ----------------------------------------------------------
+  deliverable:
+    chain: delivery
+    hosts_criteria: true
+    description: "What must be produced — temporal commitment with lifecycle and sequencing"
+    categories: [roadmap, milestone, epic, task, solution]
+    fields:
+      title: { type: string, required: true }
+      category: { type: enum, values: $categories, required: true }
+      status: { type: enum, values: $statuses, required: true }
+
+      # Optional — deliverable ordering comes from roadmap phases and depends-on links
+      priority: { type: enum, values: [must, should, could, wont] }
+
+      # Optional temporal metadata per DEC-TEMPORAL-METADATA-OPTIONAL /
+      # REQ-TEMPORAL-METADATA-001. Permitted on categories
+      # {roadmap, milestone, epic, task}; forbidden on {solution} and
+      # on all criterion / requirement nodes. target_date is an RFC 3339
+      # instant parsed by the engine and indexed for deadline queries;
+      # target_label is a free-form vocabulary string preserved verbatim
+      # and never parsed. Ancestor-containment (derives-from) and
+      # predecessor-ordering (depends-on) validations apply between dated
+      # deliverables per REQ-TEMPORAL-METADATA-001.C5 / .C6.
+      target_date: { type: string, format: datetime }
+      target_label: { type: string }
+
+      # Standard fields
+      version: { type: integer, default: 1 }
+      text: { type: text }
+      rationale: { type: text }
+      attributes: { type: object, additional_properties: true }
+      links: { type: list, item_type: object }
+      _meta: { type: object, additional_properties: true }
+
+      # Seal-as-node-state per DEC-SEAL-AS-NODE-STATE and
+      # REQ-SEAL-NODE-STATE-001. seal_state is the substrate-closed
+      # lifecycle position (open by default; sealed under deliberate
+      # attestor act; superseded when a successor replaces). seal_outcome
+      # is the closure reason drawn from the project's seal_outcomes
+      # declaration (top-level, parallel to statuses / categories);
+      # meaningful only when seal_state == sealed.
+      seal_state: { type: enum, values: [open, sealed, superseded] }
+      seal_outcome: { type: enum, values: $seal_outcomes }
+
+      # Hierarchy level per DEC-DELIVERABLE-UNIFIED and
+      # REQ-DELIVERABLE-SCHEMA-001.C1. Validates against the
+      # `deliverable_hierarchy:` top-level declaration. The engine
+      # treats the value as opaque label data — no operational
+      # behaviour (WSJF scoring, sealing, attestation requirement)
+      # gates on the level label. Inadmissible on
+      # solution-categorised deliverables (solutions are terminal
+      # leaves). Required on non-solution deliverables; pre-existing
+      # rows surface a validator warning until Phase 7 population
+      # converges.
+      level: { type: enum, values: $deliverable_hierarchy }
+
+    # Category-conditional admissibility rules for temporal fields.
+    # Engine validator rejects target_date / target_label on deliverables
+    # whose category is not in the permitted set per
+    # REQ-TEMPORAL-METADATA-001.C3. Validator likewise rejects these
+    # fields on any criterion or requirement node (enforced at the
+    # criterion / requirement type definitions — they simply do not
+    # declare the fields, so they are caught by the normal unknown-field
+    # rule when set).
+    #
+    # `level:` is forbidden on solution-categorised deliverables per
+    # DEC-DELIVERABLE-UNIFIED (solutions are terminal leaves and do
+    # not participate in the hierarchy). The validator pass also
+    # enforces this — declaring it in the admission matrix is
+    # belt-and-braces for the soft-typing field-bag path.
+    category_field_admission:
+      target_date:
+        permitted_categories: [roadmap, milestone, epic, task]
+      target_label:
+        permitted_categories: [roadmap, milestone, epic, task]
+      level:
+        permitted_categories: [roadmap, milestone, epic, task]
+
+    allowed_link_types: [derives-from, targets, depends-on, justified-by, allocated-to, conflicts-with, supersedes, uses-term]
+
+  # ----------------------------------------------------------
+  # Criterion — testable condition on a requirement or deliverable
+  # ----------------------------------------------------------
+  criterion:
+    chain: alongside
+    hosts_criteria: false
+    description: "Acceptance criterion — testable predicate, contract boundary between levels"
+    fields:
+      title: { type: string, required: true }
+      status: { type: enum, values: $statuses, required: true }
+      text: { type: text, required: true }
+
+      # Measurement guidance — describes what kind of evidence to expect, NOT engine-evaluated.
+      # The engine treats all criteria identically: active positive evidence = satisfied,
+      # active negative = violated, no active or expired = unknown. The measurement_type
+      # tells humans and AI what kind of connector/verification to set up. Evidence lifecycle
+      # (staleness, refresh cadence) is handled by valid_until on the evidence node.
+      measurement_type: { type: enum, values: [binary, threshold, rate, periodic] }
+
+      # Suggested verification method (governance sets the actual minimum)
+      verification: { type: enum, values: [test, demonstration, analysis, inspection] }
+
+      # Cross-cutting applicability predicate over component attributes
+      scope: { type: string }
+
+      # Closure mechanism per DEC-DELIVERABLE-UNIFIED and
+      # REQ-DELIVERABLE-SCHEMA-001.C2 / .C3. Substrate-closed enum
+      # — the value set is baked at the engine layer because
+      # downstream dispatch (lint family's Layer 2 children-shape
+      # check, build-order tree walk's NextAction classification,
+      # parent-attestation queue surfacing) all hard-code on these
+      # three values.
+      #
+      # Required on every newly-authored criterion whose parent is
+      # a non-solution deliverable; inadmissible on criteria whose
+      # parent is a solution-categorised deliverable or a
+      # requirement (type-driven dispatch per .C3). The mutation
+      # preview guard enforces these contracts at write time
+      # before computing proposed state; the validator pass
+      # surfaces pre-existing missing values as warnings under the
+      # two-population enforcement policy of .C4.
+      closes_by: { type: enum, values: [cascade, attestation, direct_evidence] }
+
+      version: { type: integer, default: 1 }
+      attributes: { type: object, additional_properties: true }
+      links: { type: list, item_type: object }
+      _meta: { type: object, additional_properties: true }
+
+    allowed_link_types: [criterion-of, supersedes, uses-term]
+
+  # ----------------------------------------------------------
+  # Evidence — structured claim referencing an external artifact
+  # ----------------------------------------------------------
+  # Each evidence node makes one claim about one criterion.
+  # Multiple evidence nodes may reference the same external artifact
+  # (e.g., different criteria verified by the same test report).
+  evidence:
+    chain: alongside
+    hosts_criteria: false
+    description: "Proof of verification — one claim about one criterion, referencing an external artifact"
+
+    # Evidence categories define required attribute schemas per evidence type.
+    # Solo devs never see this. Regulated programs define strict categories.
+    # Example:
+    #   structural-coverage:
+    #     required_attributes: [coverage_type, coverage_percentage, tool_used]
+    #   penetration-test:
+    #     required_attributes: [scope, methodology, tester_certification]
+    #   ci-test:
+    #     required_attributes: [pipeline_ref, commit_sha]
+    categories: {}
+
+    fields:
+      title: { type: string, required: true }
+      status: { type: enum, values: [active, resolved, expired, superseded], required: true }
+      text: { type: text }
+
+      # Core evidence properties
+      result: { type: enum, values: [pass, fail], required: true }
+      method: { type: enum, values: [test, demonstration, analysis, inspection, federated], required: true }
+      observed_at: { type: string, format: datetime, required: true }
+      observation_window: { type: string }
+      valid_until: { type: string }
+
+      # Artifact reference — typed discriminated union per DEC-EVIDENCE-ARTIFACT-SHAPE.
+      # `external` carries a URI/path with optional pinned version; `composition`
+      # carries a citation list of prior evidence IDs; `inline` carries no nested
+      # fields and requires the parent node's `text` to be non-empty.
+      # Bare-scalar legacy values synthesise to `{kind: external, reference: <scalar>}`
+      # via `legacy_scalar_synthesis`. Cascade-comparison consumers walk
+      # `comparison_field.precedence` first-non-empty-wins for the historical
+      # supersession-trigger string.
+      artifact:
+        type: discriminated_union
+        discriminator: kind
+        variants:
+          external:
+            required: [reference]
+            fields:
+              reference:        { type: string }
+              artifact_version: { type: string }
+              verifier:         { type: string }
+              retrieval_at:     { type: string, format: datetime }
+          composition:
+            required: [cites]
+            fields:
+              cites: { type: list, item_type: string }
+          inline:
+            required_parent_field: text
+        legacy_scalar_synthesis:
+          variant: external
+          slot: reference
+        comparison_field:
+          precedence: [artifact_version, reference]
+
+      # Supersession forward reference — the distinct, additive, NON-DEPRECATING
+      # record a superseding evidence submission carries to name the prior
+      # evidence it replaces and why (DEC-EVIDENCE-SUPERSESSION-FORWARD-REF).
+      # Shape: { prior_evidence_id: <EVD id>, reason: <free text> }. Deliberately
+      # NOT the `supersedes` link (DEF-SUPERSEDES deprecates its target, which is
+      # false for evidence — the prior stays active and governing per
+      # DEC-EVIDENCE-IMMUTABLE-APPEND-ONLY). Superseded/active currency is a
+      # computed view (engine/satisfy), never read off this field.
+      supersession: { type: object }
+
+      # Attestor identity — who made the claim (human, service account, AI agent)
+      attested_by: { type: string }
+
+      # Resolution — for negative evidence that has been addressed
+      resolution: { type: text }
+      resolved_by: { type: string }
+
+      # Federation metadata — present when method: federated
+      source_instance: { type: string }
+      source_criterion: { type: string }
+
+      attributes: { type: object, additional_properties: true }
+      links: { type: list, item_type: object }
+      _meta: { type: object, additional_properties: true }
+
+    allowed_link_types: [satisfies, scoped-to]
+
+  # ----------------------------------------------------------
+  # Decision — rationale for choices (WHY)
+  # ----------------------------------------------------------
+  # Alongside the traceability chain, not in it. Decisions are subjective —
+  # you can observe whether justified requirements are satisfied, but you
+  # can't compute whether the decision was correct.
+  decision:
+    chain: alongside
+    hosts_criteria: false
+    description: "Rationale for choices — WHY the graph looks the way it does"
+    # Personas are NOT a decision category. Personas (human and non-human stakeholders)
+    # are represented as `requirement` nodes with `category: persona-goal`, per
+    # docs/v3/model/11-resolved-concepts.md § Persona dissolved. Removed from this list
+    # 2026-04-08 as part of model integration plan Phase 0b cleanup.
+    categories: [strategic, operational, tactical, assumption, risk, bootstrap]
+    fields:
+      title: { type: string, required: true }
+      status: { type: enum, values: $statuses, required: true }
+      category: { type: enum, values: $categories }
+      text: { type: text }
+      rationale: { type: text }
+
+      # Decision record fields
+      options_considered: { type: list, item_type: object, required_keys: [option, reason_rejected] }
+      chosen: { type: string }
+      decided_by: { type: string }
+      decided_on: { type: date }
+
+      # Assumption tracking (category: assumption)
+      validation_horizon: { type: string }
+
+      # Risk fields (category: risk)
+      # risk_level is the coarse headline rating; likelihood/impact are the
+      # finer-grained inputs a formal scheme combines via a risk matrix.
+      # owner is distinct from decided_by — the persona accountable for the
+      # ongoing response, not just the person who recorded the decision.
+      # next_review drives periodic reassessment cadence.
+      # residual_likelihood / residual_impact deliberately NOT included —
+      # deferred to a separate model decision (see docs/v3/model/06-decisions.md
+      # § Residual rating is deferred).
+      risk_level: { type: enum, values: [low, medium, high, critical] }
+      likelihood: { type: enum, values: [rare, unlikely, possible, likely, almost_certain] }
+      impact: { type: enum, values: [negligible, minor, moderate, major, severe] }
+      owner: { type: string }
+      next_review: { type: date }
+      mitigation: { type: string }
+      mitigation_milestone: { type: string }
+      expires: { type: string }
+
+      attributes: { type: object, additional_properties: true }
+      links: { type: list, item_type: object }
+      _meta: { type: object, additional_properties: true }
+
+    allowed_link_types: [addresses, supersedes, uses-term]
+
+  # ----------------------------------------------------------
+  # Definition — vocabulary anchor (alongside, not in chains)
+  # ----------------------------------------------------------
+  # Definitions sit alongside the traceability chains, not in them.
+  # They do not host criteria and are not chain-boundary participants.
+  # Authoring discipline: `uses-term` is written from the consumer node
+  # (requirement, deliverable, criterion, decision) pointing at the DEF-*
+  # target; definitions never carry outgoing `uses-term` links.
+  definition:
+    chain: alongside
+    hosts_criteria: false
+    description: "Vocabulary anchor — precise definition of a domain term, addressable through structural links"
+    fields:
+      title: { type: string, required: true }
+      text: { type: text, required: true }
+      status: { type: enum, values: $statuses, required: true }
+      synonyms: { type: list, item_type: string }
+      canonical_form: { type: string }
+      version: { type: integer, default: 1 }
+      rationale: { type: text }
+      attributes: { type: object, additional_properties: true }
+      links: { type: list, item_type: object }
+      _meta: { type: object, additional_properties: true }
+
+    # `defines-term-for` is the inverse of `uses-term` and is not authored
+    # as an outgoing link from a definition node; it is listed here so the
+    # definition type's allowed_link_types is explicit. Inverse names are
+    # projection labels carried on the forward link type's `inverse:` field
+    # (see link_types below): each relationship is declared once, and the
+    # inverse is a reverse-reading label that need not be its own link-type
+    # entry. `uses-term` ↔ `defines-term-for` is a reciprocal pair (both
+    # ends declared); most inverse names are projection-only labels with no
+    # entry of their own. Per DEC-INVERSE-LINK-PROJECTION.
+    allowed_link_types: [uses-term, defines-term-for, disambiguates, supersedes]
+
+
+# ============================================================
+# Link types
+# ============================================================
+#
+# v3 changes from v2:
+#   - Five node types (deliverable added) with chain boundary enforcement
+#   - `satisfies` replaces `evidences`
+#   - `targets` added (deliverable → requirement criterion)
+#   - Formal source/target constraints and cardinality on all link types
+#   - component targets are external IDs, not graph nodes
+
+link_types:
+
+  # --- Traceability chain (structural, in cascade) ---
+
+  derives-from:
+    description: "Spec or temporal decomposition — child traces to parent criterion"
+    valid_sources: [requirement, deliverable]
+    valid_targets: [criterion]
+    cardinality: many:many
+    constraints:
+      - "requirement → requirement criterion (within requirement chain)"
+      - "deliverable → deliverable criterion (within delivery chain)"
+      - "chain boundary is absolute — no cross-chain derives-from"
+    inverse: derived-from-by
+
+  criterion-of:
+    description: "Criterion belongs to exactly one parent requirement or deliverable"
+    valid_sources: [criterion]
+    valid_targets: [requirement, deliverable]
+    cardinality: many:1
+    constraints:
+      - "Each criterion has exactly one parent (tree, not DAG)"
+    inverse: has-criterion
+
+  satisfies:
+    description: "Evidence makes one claim about one criterion"
+    valid_sources: [evidence]
+    valid_targets: [criterion]
+    cardinality: many:1
+    constraints:
+      - "Each evidence node targets exactly one criterion"
+      - "Multiple evidence nodes may reference the same external artifact"
+    inverse: satisfied-by
+
+  # --- Rationale (alongside cascade, not in it) ---
+
+  justified-by:
+    description: "Requirement or deliverable justified by a decision"
+    valid_sources: [requirement, deliverable]
+    valid_targets: [decision]
+    cardinality: many:many
+    inverse: justifies
+
+  addresses:
+    description: "Decision addresses a criterion or another decision"
+    valid_sources: [decision]
+    valid_targets: [criterion, decision]
+    cardinality: many:many
+    inverse: addressed-by
+
+  # --- Planning ---
+
+  targets:
+    description: "Deliverable intends to address a requirement criterion (planning intent before evidence)"
+    valid_sources: [deliverable]
+    valid_targets: [criterion]
+    cardinality: many:many
+    constraints:
+      - "Targets requirement criteria only (not deliverable criteria)"
+    inverse: targeted-by
+
+  depends-on:
+    description: "Sequencing dependency — target must be satisfied or complete before source"
+    valid_sources: [requirement, deliverable]
+    valid_targets: [requirement, deliverable]
+    cardinality: many:many
+    inverse: depended-on-by
+
+  # --- Component allocation (orthogonal — targets are external IDs, not graph nodes) ---
+
+  allocated-to:
+    description: "Requirement or deliverable allocated to a component (external ID)"
+    valid_sources: [requirement, deliverable]
+    valid_targets: [component]
+    cardinality: many:many
+    inverse: allocated-by
+
+  scoped-to:
+    description: "Evidence scoped to a specific component (external ID)"
+    valid_sources: [evidence]
+    valid_targets: [component]
+    cardinality: many:1
+    inverse: scoped-by
+
+  # --- Evolution ---
+
+  supersedes:
+    description: "This node replaces the target — target leaves the current graph"
+    valid_sources: [requirement, deliverable, decision, criterion, definition]
+    valid_targets: [requirement, deliverable, decision, criterion, definition]
+    cardinality: 1:1
+    constraints:
+      - "Source and target must be the same node type"
+    inverse: superseded-by
+
+  conflicts-with:
+    description: "Symmetric conflict between nodes"
+    valid_sources: [requirement, deliverable]
+    valid_targets: [requirement, deliverable]
+    cardinality: many:many
+    symmetric: true
+
+  # --- Vocabulary links (alongside, not in chains) ---
+
+  uses-term:
+    description: "Consumer node depends on a defined term — reverse traversal returns the audit surface for term changes"
+    valid_sources: [requirement, deliverable, criterion, decision]
+    valid_targets: [definition]
+    cardinality: many:many
+    inverse: defines-term-for
+
+  defines-term-for:
+    description: "Definition is the authoritative source for a term used by the consumer — inverse of uses-term; projected in read output, not authored as outgoing link"
+    valid_sources: [definition]
+    valid_targets: [requirement, deliverable, criterion, decision]
+    cardinality: many:many
+    inverse: uses-term
+
+  disambiguates:
+    description: "Polysemy disambiguation — this definition addresses a lexical-surface collision with the target definition; directional so authoring-discipline rules can flag asymmetric polysemy pairs"
+    valid_sources: [definition]
+    valid_targets: [definition]
+    cardinality: many:many
+
+  # --- Deprecated link types (tolerant import, converted on read) ---
+
+  evidences:
+    description: "DEPRECATED v2 — converted to 'satisfies' on import"
+    deprecated: true
+    migrates_to: satisfies
+
+  complies-with:
+    description: "DEPRECATED v1 — converted to 'derives-from' on import"
+    deprecated: true
+    migrates_to: derives-from
+
+
+# ============================================================
+# Universal fields
+# ============================================================
+#
+# Optional fields admissible on every node type, regardless of category
+# or profile. Engine-known by name and type; no profile binding required;
+# no existing node is forced to set them. Per DEC-SCHEMA-VOCABULARY-WITH-PROFILES
+# and graph-uplift-plan/concept.md §2 (universal-required core +
+# universal-optional fields).
+
+universal_fields:
+
+  # Applicability predicate — narrows the set of nodes a constraint
+  # applies to. Per concept.md §11; engine evaluates lazily, lifted
+  # from the criterion-only `scope` field. Inheritance is conjunctive
+  # narrowing (child must imply parent).
+  applicability: { type: string }
+
+  # Last-validated-at timestamp — generalises decision-only
+  # `validation_horizon`. RFC 3339 instant. Distinct from `version`
+  # (substantive change) and `_meta.content_hash` (any change).
+  # Useful for assumption decisions and bounded-staleness queries.
+  last_validated_at: { type: string, format: datetime }
+
+
+# ============================================================
+# Recognised vocabulary
+# ============================================================
+#
+# Engine-known field names + types whose per-type applicability and
+# required-vs-optional binding is decided by profile YAML, not by the
+# canonical schema. Without an active profile, these fields are
+# admissible on any node and never required — round-tripped via the
+# Node.Extensions tolerant-reader path. Per DEC-SCHEMA-VOCABULARY-WITH-PROFILES
+# and graph-uplift-plan/concept.md §2.
+#
+# Field placement is intentionally NOT per-type: pre-binding a field to
+# a specific node type forecloses on profile decisions before profiles
+# exist. A DO-178C profile binds verification_level to criteria; an
+# ISO 26262 profile may bind safety_classification to requirements;
+# the schema's role is to publish the typed field surface, not to
+# encode any one profile's bindings.
+#
+# Profile-aware validation (which type is forced to carry which field,
+# what enum values a field accepts under a given standard) is
+# `SOL-VALIDATE-AS-PROFILE-SIMULATION`. The first reference profile
+# binding these fields ships in `SOL-PROFILE-FIRST-PROFILE`.
+
+recognised_vocabulary:
+
+  # Standards-side — typically bound to requirement or criterion nodes
+  # by avionics / functional-safety / regulatory profiles. The first
+  # four are the generic classification fields; the standard-specific
+  # fields below let a profile bind the native field where a project
+  # prefers the standard's own vocabulary (e.g. DO-178C dal_level over
+  # the generic verification_level). Profiles choose which to require.
+  derived:                { type: boolean }   # system-derived vs stakeholder-sourced
+  verification_level:     { type: string }    # DO-178C DAL A/B/C/D, ISO 26262 ASIL A/B/C/D, etc.
+  safety_classification:  { type: string }    # SIL / ASIL / DAL classification label
+  stability:              { type: string }    # stable / volatile / negotiable, etc.
+  dal_level:              { type: string }    # DO-178C: DAL A-E
+  asil_level:             { type: string }    # ISO 26262: ASIL A-D + QM
+  fha_reference:          { type: string }    # MIL-STD-882 / FHA: hazard reference
+  tailoring_rationale:    { type: string }    # ECSS-E-ST-10: tailoring note
+
+  # Delivery-side — typically bound to deliverable nodes by agile /
+  # programme-management profiles. target_date and target_label
+  # remain declared on deliverable directly with category admission;
+  # profile-aware reuse on requirement-chain nodes is a profile binding.
+  #
+  # closure is the structural open-endedness axis per
+  # DEC-DELIVERABLE-CONTINUOUS-CLOSURE: a deliverable declaring
+  # `closure: continuous` is a standing lane whose state is only ever
+  # the rolled-up state of the work it holds, so seal-readiness excludes
+  # it from seal-ready actions and seal-pending counts. Absence means
+  # `terminal` (unchanged seal semantics). It is orthogonal to the
+  # maintenance `role` marker (role says what a lane is for; closure says
+  # how it ends) and to the criterion-level `closes_by` mechanism axis.
+  # Declared as an enum here so the write-layer validator refuses any
+  # out-of-vocabulary value at authoring rather than tolerating it at read.
+  closure:        { type: enum, values: [terminal, continuous] }
+  story_points:   { type: integer }
+  sprint:         { type: string }
+  owner:          { type: string }
+  epic_link:      { type: string }   # Jira / Linear: parent epic reference
+  priority_label: { type: string }   # Jira / Linear / ADO: native priority label
+  issue_key:      { type: string }   # Jira: PROJ-NNN issue key
+  pi_objective:   { type: string }   # SAFe: PI objective reference
+  team_name:      { type: string }   # SAFe: ART / team assignment
+
+  # Attestation-side — typically bound to evidence nodes by CI /
+  # build-provenance profiles. Free-form strings here; profile binds
+  # whether they are required and any enum values.
+  commit_sha:         { type: string }
+  pipeline_run_id:    { type: string }
+  tool_invocation:    { type: string }
+  attestation_format: { type: string }
+  builder_id:         { type: string }   # SLSA: builder identity URI
+  build_type:         { type: string }   # SLSA: build type URI
+  predicate_type:     { type: string }   # in-toto: predicate type URI
+  ssdf_practice_id:   { type: string }   # NIST SSDF: practice ID (PS.1, etc.)
+  attestation_level:  { type: string }   # SLSA build / source level label
+
+
+# ============================================================
+# Statuses
+# ============================================================
+#
+# Graph-membership lifecycle — binary: in the current graph or not.
+#   active     = in the current graph (load-bearing)
+#   deprecated = removed from current graph (preserved in event history)
+#
+# Approval is an event tracked in the event log (or git history),
+# not a status value. See DEC-STATUS-LIFECYCLE.
+#
+# Draft was removed — the proposal mechanism (git branches in bootstrap,
+# event-log branches in steady state) handles "proposed but not yet
+# accepted." See DEC-PROPOSAL-AS-BRANCH, DEC-STATUS-LIFECYCLE.
+#
+# Evidence has its own lifecycle defined on the evidence node type:
+#   active, resolved, expired, superseded
+
+statuses:
+  - active
+  - deprecated
+
+status_transitions:
+  active: [deprecated]
+  deprecated: []
+
+
+# ============================================================
+# Seal outcomes
+# ============================================================
+#
+# Project-declared closure-reason vocabulary for the deliverable
+# `seal_outcome` field, per DEC-SEAL-AS-NODE-STATE and
+# REQ-SEAL-NODE-STATE-001. Engines that load this schema validate
+# any `seal_outcome` value against this list. The substrate bakes
+# no outcome values — closure vocabulary is domain-specific. A
+# project with no `seal_outcomes` declaration cannot seal any
+# deliverable until the schema declares the vocabulary it uses.
+#
+# Engine state-machine branches hard-code only on `seal_state`
+# (open / sealed / superseded). `seal_outcome` is opaque label data
+# the engine validates, stores, and surfaces but never branches on.
+
+seal_outcomes:
+  - complete    # every contributing input shipped (forward path: maps from seal-event outcome `delivered`)
+  - wont_do     # scope removed without delivery
+  - waived      # incomplete but accepted under risk (forward path: maps from seal-event outcome `risk-accepted`)
+  - deprecated  # superseded by a successor deliverable
+
+
+# ============================================================
+# Actor types
+# ============================================================
+#
+# Project-declared vocabulary for the mutation envelope's `actor.type`
+# discriminator, per DEC-MUTATION-ACTOR-IDENTITY and
+# REQ-MUTATION-ACTOR-001. Engines that load this schema validate any
+# `actor.type` against this list. The substrate bakes no actor-type
+# values — the discriminator is opaque label data the engine validates,
+# stores, and propagates onto every event but never branches on.
+#
+# A schema that omits this block falls back to the engine's baseline
+# vocabulary (schema.BaselineActorTypes) so mutations still validate; a
+# declared block replaces the baseline, the additive profile-plugin
+# extension path the decision names. This declaration mirrors the
+# baseline so the vocabulary is visible and dogfooded.
+
+actor_types:
+  - explicit         # caller named the actor directly (CLI --actor)
+  - system-fallback  # --actor absent, operating-system user substituted with a stderr warning
+  - workflow         # in-process workflow consumer wrote the intent
+  - config-resolved  # --actor absent, project config declared the default actor (no warning)
+  - service-account  # non-human integration (CI, AI agent, connector)
+
+
+# ============================================================
+# Deliverable hierarchy
+# ============================================================
+#
+# Project-declared hierarchy levels for the unified deliverable
+# type, per DEC-DELIVERABLE-UNIFIED and REQ-DELIVERABLE-SCHEMA-001.C1.
+# Position in the sequence determines depth; each entry carries
+# the `id` the deliverable's `level:` field validates against and
+# a human-readable `label` for UI and authoring guidance.
+#
+# The engine treats entries as opaque labels — no operational
+# behaviour gates on level value, mirroring the
+# DEC-CATEGORIES-AS-VIEWS invariant onto the level field.
+# Solutions are NOT in the hierarchy: they are a distinct terminal
+# leaf (today carried as `category: solution` on `type: deliverable`;
+# Phase 7 promotes solution to its own type).
+
+deliverable_hierarchy:
+  - id: roadmap
+    label: Roadmap
+  - id: epic
+    label: Epic
+  - id: task
+    label: Task
+
+
+# ============================================================
+# Hierarchy
+# ============================================================
+#
+# Depth is computed from derives-from traversal, not stored.
+# There is no level field — depth is a graph property.
+
+hierarchy:
+  enforce_decomposition: false
+  require_verification_method: false
+  require_rationale: true
+
+
+# ============================================================
+# System-managed metadata
+# ============================================================
+
+_meta:
+  content_hash:
+    description: "SHA-256 of substantive fields — used for change detection"
+    computed: true

@@ -1,0 +1,9 @@
+id: DEF-ACTUATION-CONFIRMATION
+type: definition
+title: actuation confirmation
+status: active
+version: 1
+text: |
+  Actuation confirmation is the comparison between what the controller commanded an output to do and an independent observation of what that output actually did.
+
+  Independence from the command path is what makes the observation evidence: a signal derived from where the command was issued establishes only that the controller still holds its intention. Confirmation may be electrical and fast, or inferred from a physical effect and slower and less specific about what failed.

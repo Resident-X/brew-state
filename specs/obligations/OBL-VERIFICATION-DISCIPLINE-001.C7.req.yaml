@@ -1,0 +1,14 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C7
+type: criterion
+title: Verification runs to completion without the machine present
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A suite requiring hardware runs rarely, runs late, and stops running entirely while the machine is dismantled, which is when most defects are introduced.
+
+  Hardware-in-the-loop checking is additional to this rather than a substitute for it.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

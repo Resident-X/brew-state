@@ -1,0 +1,14 @@
+id: REQ-EXTENSIBILITY-001.C5
+type: criterion
+title: An extension does not weaken any safety property
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Extension is the usual route by which a safety argument stops covering the machine it was written for, because the argument was scoped to what existed when it was made.
+
+  Protection, isolation and fault response cover what is added, or the addition does not proceed.
+links:
+  - target: REQ-EXTENSIBILITY-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: JRN-PULL-SHOT-001.C1
+type: criterion
+title: Brew temperature at the group holds to target for the whole extraction
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Extraction is sensitive to temperature throughout, not only at the moment water first meets the grounds, so an average that lands on target while the trajectory wanders is not the same as holding target.
+
+  What matters is the temperature the coffee actually sees, which is not necessarily the temperature the machine finds easiest to measure. The assertion is about the water arriving at the group, and it holds from the first drop to the last.
+links:
+  - target: JRN-PULL-SHOT-001
+    type: criterion-of

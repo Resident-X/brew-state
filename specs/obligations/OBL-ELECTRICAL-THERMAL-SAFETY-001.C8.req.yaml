@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C8
+type: criterion
+title: Fault current in the machine's wiring is interrupted by protection the build declares
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The protective chain interrupts on temperature. A short or an insulation breakdown is not a thermal event and none of it responds.
+
+  What interrupts that fault is upstream of the machine and outside the project's control, which is exactly why it must be declared rather than assumed: a build that never states what it relies on has not established that anything is there.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

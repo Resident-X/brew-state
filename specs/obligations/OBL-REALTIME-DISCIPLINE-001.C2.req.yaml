@@ -1,0 +1,14 @@
+id: OBL-REALTIME-DISCIPLINE-001.C2
+type: criterion
+title: Deadline overrun has defined behaviour rather than undefined consequence
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Overruns occur on real hardware regardless of how carefully the analysis was done, so the question is not whether but what happens next.
+
+  What distinguishes a robust design is that the response was chosen in advance rather than emerging from whatever code happened to be running.
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-SCHEDULED-READINESS-001.C3
+type: criterion
+title: An unused readiness period ends without intervention
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A machine heated for someone who never arrives would otherwise hold temperature indefinitely, unattended, for no purpose.
+
+  It returns to rest after a bounded time rather than waiting to be told nobody is coming.
+links:
+  - target: REQ-SCHEDULED-READINESS-001
+    type: criterion-of

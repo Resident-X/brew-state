@@ -1,0 +1,14 @@
+id: OBL-REALTIME-DISCIPLINE-001.C4
+type: criterion
+title: Work with unbounded duration does not occur where latency is bounded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Allocation, blocking transfers and unbounded iteration all have worst cases far above their typical cost.
+
+  Any of them inside a deadline path makes the deadline conditional on the input, which means conditional on luck.
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001
+    type: criterion-of

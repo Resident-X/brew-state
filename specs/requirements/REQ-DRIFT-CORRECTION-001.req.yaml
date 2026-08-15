@@ -1,0 +1,26 @@
+id: REQ-DRIFT-CORRECTION-001
+type: requirement
+category: functional
+title: The machine corrects its own parametric drift and refuses what it cannot justify
+status: active
+priority: must
+version: 1
+text: |
+  The parameters fitted at commissioning stop being right. Masses foul, sensors age, and the machine's real behaviour moves away from the description it is controlling against.
+
+  This runs unattended for years with nobody to check a bad result, so the machine's willingness to reject its own correction is the only safeguard that exists.
+rationale: |
+  Scoped to parametric drift and explicitly not to structural error. Small movements in the machine's characteristics are correctable on-device; a description that is wrong in shape is not, and continuing to tune against it drives the parameters away from physical meaning chasing a residual they cannot reach.
+
+  Refusal is treated as a normal outcome rather than an error path, because unattended operation gives the machine no second opinion. Falling back to the last trusted parameters is always available and costs only the drift that was going to be corrected.
+
+  Confirm-before-keep exists because an adjustment that converges is not the same as an adjustment that helped.
+links:
+  - target: JRN-CORRECT-DRIFT-001.C1
+    type: derives-from
+  - target: JRN-CORRECT-DRIFT-001.C2
+    type: derives-from
+  - target: JRN-CORRECT-DRIFT-001.C3
+    type: derives-from
+  - target: JRN-CORRECT-DRIFT-001.C4
+    type: derives-from

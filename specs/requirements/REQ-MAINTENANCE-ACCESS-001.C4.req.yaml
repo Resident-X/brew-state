@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C4
+type: criterion
+title: No change takes effect during a delivery already in progress
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A parameter altered mid-extraction produces a drink made half to one recipe and half to another, which is unreproducible and unattributable.
+
+  Changes apply from the next delivery, and the operator is told which delivery they will first affect.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

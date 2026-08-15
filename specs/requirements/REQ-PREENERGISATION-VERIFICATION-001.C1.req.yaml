@@ -1,0 +1,14 @@
+id: REQ-PREENERGISATION-VERIFICATION-001.C1
+type: criterion
+title: The control law is exercised against a plant model before hardware exists
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Choosing the control law and validating its implementation are separate activities, and the first is far cheaper when a candidate can be evaluated without a build.
+
+  The model need only be good enough to expose design error, which is a weaker requirement than the one commissioning places on it.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001
+    type: criterion-of

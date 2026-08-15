@@ -1,0 +1,35 @@
+id: JRN-SERVE-LONG-BLACK-001
+type: requirement
+category: journey
+title: Operator serves a long black
+status: active
+priority: must
+version: 1
+text: |
+  The drink that proves the machine can host. It is also the drink that exposes contention, because the hot water and the espresso are both drawn through the same heated mass, and neither the operator nor the guest should ever have to know that.
+
+  ## Main success scenario
+
+  1. The operator asks the machine for a long black.
+  2. The machine dispenses hot water into the cup at drinking temperature.
+  3. The machine prepares and delivers the espresso.
+  4. The operator serves a drink at the right temperature, with the espresso sitting correctly on the water.
+
+  ## Extensions
+
+  2a. The machine cannot deliver water at drinking temperature as quickly as asked. The machine slows the delivery rather than delivering cooler water, and the operator waits a little longer for a drink that is right.
+
+  2b. The hot water draw and the espresso contend for the same heated mass. The machine sequences them so that neither is delivered off-temperature, and the operator is never asked to arbitrate or to wait without explanation.
+
+  3a. The espresso follows immediately behind a hot water draw that has taken the heated mass away from brewing conditions. The machine restores brewing conditions before extracting rather than extracting on whatever it has.
+
+  4a. Another drink is already queued behind this one. The machine hands off to the group-service journey, which owns pace and contention across a run.
+rationale: |
+  Authored as its own journey rather than as an extension of the espresso journey because hot water is a distinct operating mode with a distinct and heavier demand, and folding it into another scenario would conceal that. The contention it creates only becomes visible when the two draws are described as separate things competing for the same resource.
+
+  That contention is the substance of this journey. Hot water and espresso are drawn through the same heated mass, and hot water is by some margin the more demanding of the two: it asks for a large volume at temperature rather than a small one, with no opportunity to recover between. An espresso extracted immediately after a hot water draw is being extracted from a machine that has just been worked hard, and saying so here is what forces the requirement layer to deal with it.
+
+  Deliberately silent on which heated mass, on how the sequencing is achieved, and on whether the two draws could ever overlap. Those are consequences of the physical arrangement and of the control strategy, and both belong in decisions justified against this journey rather than in the journey itself. What this journey asserts is only that the operator gets a correct drink and is never made responsible for the contention.
+links:
+  - target: PER-OPERATOR-001.C3
+    type: derives-from

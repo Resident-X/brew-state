@@ -1,0 +1,14 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001.C1
+type: criterion
+title: Plant parameters are data rather than code
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Adopting a machine of the same architecture is then measurement work rather than development work, which is the difference between an afternoon and a project.
+
+  It also means the machine's own on-device correction and a bench-driven recommissioning write to the same place.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001
+    type: criterion-of

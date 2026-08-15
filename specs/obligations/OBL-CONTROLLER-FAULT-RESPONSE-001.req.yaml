@@ -1,0 +1,21 @@
+id: OBL-CONTROLLER-FAULT-RESPONSE-001
+type: requirement
+category: obligation
+title: The controller detects and responds to its own actuation faults
+status: active
+priority: must
+authority: internal
+managed: true
+version: 1
+text: |
+  The hardware protective chain is a last resort and operates at limits well beyond normal running. Between a fault occurring and that chain acting, the machine can spend a long time doing something wrong: heating a mass that is already hot, failing to heat at all, or holding an output on that was commanded off.
+
+  The controller knows what it commanded and can observe what followed. Where the two disagree something has failed, and the machine should stop rather than continue on an assumption it can already see is false.
+
+  This is defence in depth. It runs in firmware and therefore cannot be trusted the way the hardware chain is trusted, which is exactly why it is recorded separately from it.
+rationale: |
+  Authority is internal because nothing outside the project requires this. Wiring rules and the circuit rating drive the hardware chain; this obligation is the project's own decision about how much time it is willing to spend relying on a last resort. The distinction is real: an external obligation is not negotiable, while this one was chosen and could be argued with on its merits.
+
+  Kept separate from the firmware-independent safety obligation rather than folded into it. That obligation's entire claim is that it holds with the controller hung, crashed or commanding nonsense, and mixing firmware-dependent criteria into it would blur the property that makes it trustworthy.
+
+  The precedence criterion exists because the characteristic failure of an obligation like this one is that it becomes an excuse. A project that detects faults in firmware is tempted to economise on hardware protection, which trades a mechanism that always works for one that works while the software is healthy.

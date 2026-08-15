@@ -1,0 +1,14 @@
+id: REQ-DRIFT-CORRECTION-001.C6
+type: criterion
+title: A prediction error surviving a converged correction is raised as a structural problem
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A residual that persists after the adjustment settles is evidence about the shape of the description rather than its values, and further tuning cannot resolve it.
+
+  The machine stops, keeps what it can still justify, and says so. This is the case where the bench genuinely is required.
+links:
+  - target: REQ-DRIFT-CORRECTION-001
+    type: criterion-of

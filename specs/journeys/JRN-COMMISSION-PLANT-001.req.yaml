@@ -1,0 +1,45 @@
+id: JRN-COMMISSION-PLANT-001
+type: requirement
+category: journey
+title: Builder commissions the machine and establishes its description
+status: active
+priority: must
+version: 1
+text: |
+  The journey that has to happen before any of the operator journeys can. The builder is establishing what this particular machine actually does, and doing it in an order that keeps every mistake cheap and survivable.
+
+  ## Main success scenario
+
+  1. The builder assembles the retrofit with the machine's protective chain in place and independent of anything the builder has written.
+  2. The builder verifies the control behaviour, including its timing behaviour, with nothing energised in the loop.
+  3. The builder runs the machine through a characterisation sequence from the bench.
+  4. The machine records what it was asked to do and what happened, timed by its own clock rather than by the clock of whatever is recording it.
+  5. The builder fits a description of the machine to the recorded response and checks it against data deliberately held back from the fit.
+  6. The builder commits the resulting description to the machine, and the machine keeps it across power cycles.
+
+  ## Extensions
+
+  2a. Verification fails. The builder energises nothing, and the machine does not proceed to characterisation on the strength of an argument that it will probably be fine.
+
+  3a. The characterisation sequence asks the machine for something unsafe. The protective chain acts regardless of what the sequence intended, because the sequence has no authority over it and no ability to suspend it.
+
+  3b. The bench stops responding partway through the sequence. The machine ends the sequence and returns itself to a resting state without waiting to be told.
+
+  5a. The fitted description does not predict the held-back data. The builder is told the description is not trustworthy, and does not commit it to the machine on the strength of how well it fitted the data it was derived from.
+
+  6a. A later commissioning pass produces a different description. The machine keeps enough of the previous one to fall back to if the new one turns out to be worse in service.
+rationale: |
+  Ordered so that the cheapest failures are found first and the expensive ones become unreachable. Verification precedes energisation, characterisation precedes commitment, and validation against withheld data precedes trusting the result. Each step is a gate rather than a stage, and the ordering is the substance of the journey rather than incidental to it.
+
+  The protective chain is asserted as active throughout characterisation rather than suspended for it, because commissioning is precisely when the machine is being deliberately pushed toward its limits by software that has never run before. A safety argument that holds in normal operation and is relaxed for testing protects the machine only when it was never in danger.
+
+  Machine-side timing of the record is called out explicitly because it is a correctness property, not a convenience. A description fitted to responses timed by whatever was recording them inherits that recorder's delays and jitter as though they were properties of the machine, and the resulting time constants will be wrong in a way nothing downstream can detect or undo.
+
+  Validation against withheld data is asserted rather than goodness of fit, because a description can fit the data it was derived from arbitrarily well and still describe nothing. This is the difference between a model and a curve, and the builder has no colleague to catch the confusion for them.
+
+  Deliberately silent on what excites the machine, what fits the description, what form the description takes, and where it is stored. Those are all decisions, and each has real alternatives that this journey does not get to foreclose.
+links:
+  - target: PER-BUILDER-001.C1
+    type: derives-from
+  - target: PER-BUILDER-001.C2
+    type: derives-from

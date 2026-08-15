@@ -1,0 +1,14 @@
+id: PER-ADOPTER-001.C3
+type: criterion
+title: A machine of a different architecture can reuse the method, the tooling and the safety architecture
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Different architectures differ in their equations, and no parameter set reaches across that gap, so promising otherwise would be a lie an adopter discovers late.
+
+  What does transfer is substantial: how to characterise a machine, what to build to do it, and how to keep it safe while you do.
+links:
+  - target: PER-ADOPTER-001
+    type: criterion-of

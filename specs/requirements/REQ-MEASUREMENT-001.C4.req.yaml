@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C4
+type: criterion
+title: Sensing error is carried explicitly in the margin the controller commands within
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Treating the measured value as exact and the margin as generous is how a thin margin gets consumed by accident.
+
+  The controller commands within a target that already accounts for how wrong its measurement may be, rather than discovering the error when protection operates.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

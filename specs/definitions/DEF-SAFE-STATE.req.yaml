@@ -1,0 +1,9 @@
+id: DEF-SAFE-STATE
+type: definition
+title: safe state
+status: active
+version: 1
+text: |
+  A safe state is a condition in which the machine is not heating, not pumping, and not holding any output energised.
+
+  It is defined by what is absent rather than by any positive action, so that it remains reachable when the controller has stopped functioning. Whether the machine may leave it on its own depends on why it arrived: after a fault it latches until a person acts, whereas at rest it is simply the state the machine occupies when nothing is being asked of it.

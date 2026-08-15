@@ -1,0 +1,30 @@
+id: DEC-NO-REMOTE-ACTUATION
+type: decision
+title: Remote interfaces are limited to observation and readiness, never delivery
+status: active
+version: 1
+decided_by: david
+rationale: |
+  Context: Every safety criterion in this graph was written assuming a person is standing at the machine. The obligations talk about an operator who can see a message, notice a smell, or pull the plug, and none of them says so explicitly because it never needed saying. A remote request removes that assumption silently, across the whole safety argument at once, without any individual criterion appearing to change. The machine is roughly two and a quarter kilowatts of heating attached to near-boiling water in a domestic kitchen.
+
+  The line was first drawn between actuation and observation, and that turned out to be the wrong axis. The distinction that carries the risk is between delivery and readiness. A delivery moves water into a cup or a jug that somebody has to be holding; reaching readiness heats the machine to a state it already holds all day whenever it is switched on locally, under the same setpoints and the same protective chain, moving nothing. Scheduled warm-up is a standard feature on prosumer machines for exactly this reason.
+
+  Trade-offs: Full remote command including delivery buys the ability to have a drink waiting, and costs the re-derivation of every safety property under an unattended assumption — several of which do not survive it, since reporting a shortfall to an operator who is not there is not a mitigation. Bounded remote command with presence detection preserves the assumption but makes presence detection a safety-critical function with its own hardware, verification and failure analysis, whose failure mode is granting delivery to an empty house. Withholding all remote actuation including warm-up is simple to state and verify, but it treats reaching a routine thermal state as equivalent to dispensing into a cup nobody is holding, and it removes the one remote capability with real value on other hardware. Permitting readiness and withholding delivery costs almost nothing to verify, because the withheld capability is simply not offered.
+
+  The reference machine barely benefits. Its thermoblock reaches temperature in well under a minute, so scheduled warm-up saves no meaningful wait. The capability exists for adopters running boiler-based hardware, where warm-up is fifteen to twenty-five minutes and the value is real.
+
+  Reversibility: Cheap to tighten, expensive to loosen. Withdrawing remote readiness later is a configuration change, since the capability is required to be disableable. Adding remote delivery later means re-deriving the safety argument under an unattended assumption and probably adding presence hardware — substantial, but not foreclosed. Removing delivery once consumers have been built against it is the expensive direction, which is the asymmetry that argues for starting closed.
+
+  Consequences: The interface surface exposes state and history outward, accepts requests that bring the machine to readiness, and accepts nothing that causes a delivery. Downstream interface work need not carry authorisation or rate limiting for delivery, because delivery is not reachable. Future extensions adding network capability inherit this boundary rather than deciding it again. Configuration and firmware maintenance are a separate question, answered by their own decision, and are gated locally rather than by this boundary.
+options_considered:
+  - option: Remote readiness permitted, remote delivery withheld
+    reason_rejected: ""
+  - option: Full remote command including delivery
+    reason_rejected: Every safety property in the graph assumes a person beside the machine, and several do not survive an unattended assumption - reporting a shortfall to an operator who is not there is not a mitigation.
+  - option: Bounded remote command with presence detection
+    reason_rejected: Presence detection becomes a safety-critical function needing its own hardware, verification and failure analysis, and its failure mode is granting delivery to an empty house.
+  - option: All remote actuation withheld, including warm-up
+    reason_rejected: Treats reaching a thermal state the machine holds all day under local operation as equivalent to dispensing into a cup nobody is holding, and removes the one remote capability with real value on boiler-based hardware.
+  - option: Remote command gated by a hardware arming switch
+    reason_rejected: Makes remote use conditional on someone having already been at the machine, removing the value while keeping the implementation cost.
+chosen: Remote readiness permitted, remote delivery withheld

@@ -1,0 +1,14 @@
+id: REQ-NO-REMOTE-ACTUATION-001.C3
+type: criterion
+title: An added interface inherits the constraint rather than deciding it again
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Extension is the normal route by which a constraint like this quietly stops holding, because whoever adds the interface was not present for the reasoning.
+
+  The constraint applies to the machine rather than to any interface, so a new one is covered by default and would need this node superseded to escape it.
+links:
+  - target: REQ-NO-REMOTE-ACTUATION-001
+    type: criterion-of

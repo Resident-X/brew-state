@@ -1,0 +1,14 @@
+id: REQ-COST-DISCIPLINE-001.C3
+type: criterion
+title: A channel with wide margin is not upgraded because another channel was
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Symmetry across channels is not a reason to spend, and matching parts is a convenience rather than a requirement.
+
+  Where two channels sit at different distances from a limit, different parts are the correct outcome rather than an inconsistency to be tidied away.
+links:
+  - target: REQ-COST-DISCIPLINE-001
+    type: criterion-of

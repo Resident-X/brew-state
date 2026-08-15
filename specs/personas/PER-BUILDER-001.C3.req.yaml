@@ -1,0 +1,14 @@
+id: PER-BUILDER-001.C3
+type: criterion
+title: Calibration drift can be detected and corrected in service without a PC
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine that needs the bench brought back out every season is a machine that will quietly go out of calibration instead, because the maintenance will not happen. Thermal masses foul, sensors age, and the parameters that were right at commissioning slowly stop being right.
+
+  Both halves of this have to live in the machine: noticing that the model no longer describes reality, and doing something about it without a human deciding when. Correction that cannot be justified must be refused rather than accepted, since an unattended fit that converges on nonsense is worse than no correction at all.
+links:
+  - target: PER-BUILDER-001
+    type: criterion-of

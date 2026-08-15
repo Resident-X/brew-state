@@ -1,0 +1,14 @@
+id: REQ-SAFETY-CHAIN-001.C1
+type: criterion
+title: Each heated mass has a cutoff responding to its own temperature that removes power without controller involvement
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The fault this covers is a switching device failed closed while the controller is healthy and unaware, commanding off against an element that stays on.
+
+  Per-mass rather than machine-wide, because the masses run at different temperatures and a single threshold covering both is either useless on one or nuisance-tripping on the other.
+links:
+  - target: REQ-SAFETY-CHAIN-001
+    type: criterion-of

@@ -1,0 +1,20 @@
+id: REQ-BENCH-INTERFACE-001
+type: requirement
+category: interface
+title: A bench interface drives characterisation and streams the machine's own record
+status: active
+priority: must
+version: 1
+text: |
+  Characterisation has to drive the machine in ways normal operation never would, and route around the control law rather than through it. A response shaped by the controller being characterised does not describe the machine.
+
+  This is a permanent interface, not a commissioning build. The same path serves live comparison against the model and diagnosis of a machine misbehaving in service.
+rationale: |
+  Requires a firmware-side bound on what a routine may command, separate from and additional to the protective chain. The bench is a general-purpose computer running scripts written under time pressure, and the protective chain is a last resort rather than a routine limit; relying on it to catch ordinary scripting errors means operating against it deliberately.
+
+  Kept permanent rather than test-only because a diagnostic path that exists only in a build nobody is running will not be there when it is needed, and because the model-versus-reality comparison it enables has no natural end date.
+links:
+  - target: JRN-COMMISSION-PLANT-001.C3
+    type: derives-from
+  - target: JRN-COMMISSION-PLANT-001.C4
+    type: derives-from

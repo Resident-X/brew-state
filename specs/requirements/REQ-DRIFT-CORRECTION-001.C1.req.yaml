@@ -1,0 +1,14 @@
+id: REQ-DRIFT-CORRECTION-001.C1
+type: criterion
+title: A persistent bias in the prediction error is distinguished from transient excursions
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Every draw produces a momentary divergence and none of them mean the machine has changed. Drift shows up as accumulated bias, not as any single large departure.
+
+  Getting this wrong is costly both ways: reacting to noise degrades a correct description, and waiting for certainty means months of controlling against one already known to be doubtful.
+links:
+  - target: REQ-DRIFT-CORRECTION-001
+    type: criterion-of

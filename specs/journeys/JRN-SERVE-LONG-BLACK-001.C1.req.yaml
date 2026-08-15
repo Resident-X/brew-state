@@ -1,0 +1,14 @@
+id: JRN-SERVE-LONG-BLACK-001.C1
+type: criterion
+title: Dispensed hot water reaches the cup at drinking temperature
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Water delivered below temperature cannot be fixed downstream, and it drags the finished drink down with it however good the espresso on top turns out to be.
+
+  Where temperature and delivery rate cannot both be met, temperature wins and the operator waits. This is the opposite of the trade a machine makes when it simply passes water through as fast as it can heat it.
+links:
+  - target: JRN-SERVE-LONG-BLACK-001
+    type: criterion-of

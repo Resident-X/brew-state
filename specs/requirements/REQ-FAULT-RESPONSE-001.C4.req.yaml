@@ -1,0 +1,14 @@
+id: REQ-FAULT-RESPONSE-001.C4
+type: criterion
+title: The fault and what was observed reach the operator and are retained for the builder
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The operator needs to know the machine has stopped and why it will not restart; the builder needs the observation that triggered it, months later.
+
+  These are different audiences at different times, served from one record.
+links:
+  - target: REQ-FAULT-RESPONSE-001
+    type: criterion-of

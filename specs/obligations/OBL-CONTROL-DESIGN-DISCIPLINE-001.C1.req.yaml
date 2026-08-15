@@ -1,0 +1,14 @@
+id: OBL-CONTROL-DESIGN-DISCIPLINE-001.C1
+type: criterion
+title: Stability is argued across a stated range of model error rather than at the nominal model
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  A controller tuned against nominal parameters and checked against those same parameters has demonstrated internal consistency and nothing else.
+
+  The claim that matters is what happens across the range the identification could plausibly be wrong by, including the direction that is least convenient.
+links:
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001
+    type: criterion-of

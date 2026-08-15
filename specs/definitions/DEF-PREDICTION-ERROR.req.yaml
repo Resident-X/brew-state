@@ -1,0 +1,9 @@
+id: DEF-PREDICTION-ERROR
+type: definition
+title: prediction error
+status: active
+version: 1
+text: |
+  Prediction error is the running difference between what the plant model expected a sensor to read and what it actually read.
+
+  It is produced continuously as a by-product of state estimation rather than computed for any single purpose, and the same signal serves both drift detection over months and fault detection over seconds. What distinguishes those uses is the threshold and the timescale applied to it, not the quantity itself.

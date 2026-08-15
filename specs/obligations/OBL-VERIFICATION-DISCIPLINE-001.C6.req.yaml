@@ -1,0 +1,14 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C6
+type: criterion
+title: Peripheral behaviour is exercised as the hardware behaves rather than as a simplified stand-in
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A stand-in written from the same understanding that produced the code reproduces that understanding's mistakes, so the two agree and both are wrong.
+
+  This is what makes verification of register-level interaction, interrupt priority and shared bus timing meaningful rather than circular.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

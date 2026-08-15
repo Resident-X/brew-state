@@ -1,0 +1,14 @@
+id: REQ-GRAVIMETRIC-ENDPOINT-001.C1
+type: criterion
+title: Delivery ends on a measured weight when weight is selected as the endpoint
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The endpoint is a choice, and selecting it is the operator's rather than the machine's.
+
+  What is weighed is what reaches the cup, which is not the same as what left the machine.
+links:
+  - target: REQ-GRAVIMETRIC-ENDPOINT-001
+    type: criterion-of

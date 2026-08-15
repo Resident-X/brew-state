@@ -1,0 +1,19 @@
+id: OBL-OPEN-SOURCE-MAINTAINABILITY-001
+type: requirement
+category: obligation
+title: Someone else can rebuild this from what is published
+status: active
+priority: must
+authority: internal
+managed: true
+version: 1
+text: |
+  This work is published for people who own a different machine, in a different country, on a different supply. What is obvious to its author is not available to them.
+
+  Publishing readable material is not the same as publishing reusable material. The difference is whether a reader can get from the repository to a working machine without asking anyone.
+rationale: |
+  Authority is internal. Nothing compels the project to be reusable; this is a decision about what publishing is for, and it is worth recording as an obligation because it constrains ordinary work continuously rather than being achievable at the end.
+
+  Identifying local assumptions as local is the criterion that matters most for safety rather than convenience. Supply voltage, mains frequency, wiring rules and protection trip points all read as universal facts when written by someone for whom they are constant, and a reader on a different supply who adopts them unchanged inherits a design that does not fit their machine.
+
+  Graph-code consistency is included because a published requirement graph that has drifted from its code is worse than no graph: it is authoritative in appearance and wrong in content, and a reader has no way to detect the drift.

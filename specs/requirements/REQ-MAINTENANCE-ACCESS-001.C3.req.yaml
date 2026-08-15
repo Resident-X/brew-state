@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C3
+type: criterion
+title: The maintenance window closes without being closed
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A mode entered and forgotten is a mode the machine is left in indefinitely, and the person who opened it has by then walked away.
+
+  It ends on elapsed time, on a delivery beginning, or on power cycling, whichever comes first.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

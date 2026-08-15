@@ -1,0 +1,14 @@
+id: REQ-SENSOR-LIVENESS-001.C2
+type: criterion
+title: Liveness is judged against commanded activity rather than elapsed time alone
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An unchanging reading on an idle machine at equilibrium is correct, and the machine spends most of its life in exactly that condition.
+
+  The check has meaning only while something is happening that the model says will move the value.
+links:
+  - target: REQ-SENSOR-LIVENESS-001
+    type: criterion-of

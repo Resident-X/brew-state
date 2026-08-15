@@ -1,0 +1,14 @@
+id: OBL-REALTIME-DISCIPLINE-001.C1
+type: criterion
+title: Every path that must meet a deadline has a known worst-case duration
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A path whose worst case is unknown has not been shown to meet anything, whatever its typical measurement says.
+
+  The case of interest is the coincidence of everything happening at once, which is rare enough to survive casual testing and common enough to occur in service.
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-ROBUST-CONTROL-001.C4
+type: criterion
+title: Behaviour at the actuator limit is designed rather than incidental
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Full duty is this machine's ordinary condition rather than an exception, so the limit is where it spends much of its working life.
+
+  What matters is that the controller's accumulated intent does not outlive the limit and arrive as an overshoot after the disturbance has passed.
+links:
+  - target: REQ-ROBUST-CONTROL-001
+    type: criterion-of

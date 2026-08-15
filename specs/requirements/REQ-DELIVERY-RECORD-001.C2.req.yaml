@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C2
+type: criterion
+title: Records persist across power cycling
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A record lost at power-off answers neither the operator asking for yesterday's drink again nor the builder asking what changed last year.
+
+  What must persist is bounded: the machine is not required to retain every drink indefinitely, only not to lose them on power interruption.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

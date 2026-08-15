@@ -1,0 +1,9 @@
+id: DEF-THERMOBLOCK
+type: definition
+title: thermoblock
+status: active
+version: 1
+text: |
+  A thermoblock is a metal casting with a heating element embedded in it and a water channel passing through it, which heats water as the water flows past rather than holding a heated reservoir.
+
+  It differs from a boiler in having no stored volume of hot water or steam. Its thermal capacity is that of the metal alone, which makes it quicker to reach temperature and far more sensitive to the disturbance a draw imposes, since energy removed by flowing water is not being drawn from a reserve. This machine has two, operating independently.

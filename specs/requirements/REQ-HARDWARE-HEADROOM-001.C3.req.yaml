@@ -1,0 +1,14 @@
+id: REQ-HARDWARE-HEADROOM-001.C3
+type: criterion
+title: A deferred capability does not require re-selecting parts already bought
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Something whose later addition forces a rebuild has been cancelled rather than deferred, whatever the plan records.
+
+  This is what makes deferral honest: the capability stays genuinely reachable rather than nominally so.
+links:
+  - target: REQ-HARDWARE-HEADROOM-001
+    type: criterion-of

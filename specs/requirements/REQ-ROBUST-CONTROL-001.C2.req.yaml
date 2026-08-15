@@ -1,0 +1,14 @@
+id: REQ-ROBUST-CONTROL-001.C2
+type: criterion
+title: The model error the design assumes is declared and carried with the model
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Margin held against an unstated uncertainty cannot be checked by anyone, including its author later, and cannot be revisited when identification lands better or worse than expected.
+
+  Declaring it alongside the parameters means a recommissioned machine carries its own figure rather than inheriting one.
+links:
+  - target: REQ-ROBUST-CONTROL-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-STEAM-DELIVERY-001.C4
+type: criterion
+title: The steam side returns to a ready state after a draw without operator action
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Readiness that requires the operator to do something is readiness that will not be there when the next drink starts, and it puts recovery on the person least able to manage it.
+
+  Recovery begins when the draw ends, not when the operator next asks.
+links:
+  - target: REQ-STEAM-DELIVERY-001
+    type: criterion-of

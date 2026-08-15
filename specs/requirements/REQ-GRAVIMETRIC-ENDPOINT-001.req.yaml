@@ -1,0 +1,20 @@
+id: REQ-GRAVIMETRIC-ENDPOINT-001
+type: requirement
+category: functional
+title: Delivery can end on measured weight rather than on time or volume
+status: active
+priority: could
+version: 1
+text: |
+  Weight targets what actually varies between drinks more directly than time or volume do, which makes it a better lever on consistency. It is not the only lever, and the machine is not wrong without it.
+
+  Priority reflects that. This is a genuine capability rather than a correctness requirement, and its place in the schedule is a delivery decision.
+rationale: |
+  Priority set to could rather than must because the machine is not wrong without it: shot-to-shot consistency is reachable through thermal control and a volumetric or timed endpoint. Recording it as could rather than leaving it unrecorded keeps it in the graph, where a deferred capability is required to live.
+
+  The distinct requirement about not foreclosing it is a must and is authored separately, because the decision it constrains — which controller to buy — happens now regardless of when or whether this is built.
+
+  The in-flight criterion is included because a weight endpoint that ignores it is systematically wrong on every drink, which would make the capability worse than the volumetric endpoint it replaces.
+links:
+  - target: PER-OPERATOR-001.C1
+    type: derives-from

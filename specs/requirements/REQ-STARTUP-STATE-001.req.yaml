@@ -1,0 +1,22 @@
+id: REQ-STARTUP-STATE-001
+type: requirement
+category: functional
+title: The machine establishes a known state at power-on and does not resume interrupted work
+status: active
+priority: must
+version: 1
+text: |
+  Power can return at any point, including partway through a delivery. What the machine believed a moment before the interruption is not evidence about what is true after it: the operator has moved, the cup may be gone, and the thermal state has changed unobserved.
+
+  Coming up in a known state is cheap. Coming up in an assumed one is how a machine energises into a situation nobody is watching.
+rationale: |
+  Refuses automatic resumption rather than making it configurable, because the appeal of resuming is strongest exactly when it is least safe. A brief dropout mid-shot leaves stored intent that looks perfectly valid and describes a world that no longer exists.
+
+  Distinguishes a brief interruption from a cold start because the two leave materially different thermal states, and getting it wrong costs either the operator's time or the drink. The distinction is drawn from what the machine can observe about itself at power-on rather than from any record of how long it was off, since a machine without a running clock cannot know that.
+
+  Requires the interruption to be recorded as such. An interrupted delivery recorded as completed corrupts the operator's reference for repeating it, and recorded as absent leaves an unexplained gap when the builder later reconstructs what happened.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C5
+    type: derives-from
+  - target: JRN-PULL-SHOT-001.C2
+    type: derives-from

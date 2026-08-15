@@ -1,0 +1,14 @@
+id: REQ-EXTERNAL-MONITORING-001.C3
+type: criterion
+title: An external consumer cannot degrade the machine's own operation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Read-only bounds what a consumer can intend, not what it can cost. A consumer polling aggressively can still delay a control update, and a machine that records whatever is asked of it can be made to exhaust its storage.
+
+  A consumer that behaves badly is one that will exist.
+links:
+  - target: REQ-EXTERNAL-MONITORING-001
+    type: criterion-of

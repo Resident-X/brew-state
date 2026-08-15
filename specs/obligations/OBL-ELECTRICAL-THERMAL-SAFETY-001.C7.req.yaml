@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
+type: criterion
+title: A single insulation failure cannot make a touchable part live
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The retrofit rewires a machine whose chassis and fittings a person contacts constantly, while filling it, cleaning it and working around it. Water is present at every one of those contacts.
+
+  One failure is the design case: insulation chafes, a conductor works loose, a terminal wets. The property required is that no single such failure puts mains potential anywhere a person can reach, and it holds for the parts the retrofit introduces as much as those it inherits.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

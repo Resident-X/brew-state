@@ -1,0 +1,14 @@
+id: REQ-STARTUP-STATE-001.C3
+type: criterion
+title: A restart onto a warm machine is distinguished from a cold start
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Treating a warm machine as cold wastes the operator's time; treating a cold machine as warm serves a bad drink and may not be noticed until it is tasted.
+
+  The distinction comes from what the machine can observe about itself at power-on, not from knowing how long it was off.
+links:
+  - target: REQ-STARTUP-STATE-001
+    type: criterion-of

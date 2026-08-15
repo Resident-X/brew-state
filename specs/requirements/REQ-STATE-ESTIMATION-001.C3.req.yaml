@@ -1,0 +1,14 @@
+id: REQ-STATE-ESTIMATION-001.C3
+type: criterion
+title: Estimates stay bounded and usable when a measurement is briefly lost or implausible
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A sensor that drops out or reads impossibly is a routine event, not an exceptional one. An estimator that diverges when it happens takes the control law with it.
+
+  Briefly is the scope here. A permanently failed sensor is a different problem with a different answer.
+links:
+  - target: REQ-STATE-ESTIMATION-001
+    type: criterion-of

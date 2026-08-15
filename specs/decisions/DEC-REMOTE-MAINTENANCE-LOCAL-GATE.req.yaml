@@ -1,0 +1,28 @@
+id: DEC-REMOTE-MAINTENANCE-LOCAL-GATE
+type: decision
+title: Remote configuration and update are permitted behind a local act, with firmware gated physically
+status: active
+version: 1
+decided_by: david
+rationale: |
+  Context: The no-remote-actuation decision withholds the ability to make the machine do something. It says nothing about changing what the machine would do next time, and read literally it risked forbidding that too. Configuration and firmware maintenance release no energy at the moment of the request, which puts them in a different risk class from actuation. The practical alternative is disassembling the machine to adjust a parameter, and a build that must be opened to be tuned will be tuned rarely and reassembled carelessly — and careless reassembly is what breaks the mains-to-low-voltage separation the install requirement exists to protect.
+
+  Trade-offs: A single maintenance mode covering configuration and firmware alike is simplest to build and explain, but a firmware defect able to enter that mode could accept a firmware push, and firmware replacement is the one change that removes every other software safeguard at once. Requiring a physical control for both closes the question completely and costs the ability to adjust a brew parameter without walking to the machine, which is most of the value on offer. Allowing configuration with no gate at all rests entirely on configuration validation being airtight, so any validation gap becomes a remote change to what the machine does next. Forbidding remote maintenance entirely is consistent with the actuation decision but produces the disassembly problem above. The chosen split matches the gate to what each change can reach: configuration is bounded by limits the firmware still enforces, so a software gate suffices; firmware replaces the enforcer, so it needs a gate software cannot assert.
+
+  The asymmetry with the actuation decision is deliberate. A hardware arming switch was rejected there because requiring presence destroys the value of remote start entirely — the point was a hot machine on arrival. Here presence costs nothing, because the person deciding to update the machine was going to be at it anyway; what they wanted to avoid was opening it, not visiting it.
+
+  Reversibility: Straightforward in both directions. Tightening later means adding a physical gate to the configuration path, which is additive. Loosening means removing the physical firmware gate, which is a decision to supersede rather than a rebuild. The externally accessible connection point is the least reversible part, since it is a hole in the enclosure.
+
+  Consequences: Downstream interface work carries a maintenance path distinct from both the operator interface and the read-only monitoring surface, with its own gate. The physical firmware control is deliberately not the external connection point: that port sits on the outside of the machine where anyone can reach it, so it carries no physical authority. The enclosure gains a penetration, which the install requirement's ingress and isolation criteria continue to govern rather than being relaxed for it.
+options_considered:
+  - option: Local act for configuration, additional physical control for firmware
+    reason_rejected: ""
+  - option: One maintenance mode covering configuration and firmware alike
+    reason_rejected: A firmware defect able to enter the mode could accept a firmware push, and firmware replacement is the one change that removes every other software safeguard at once.
+  - option: Physical control required for both
+    reason_rejected: Closes the question completely but costs the ability to adjust a brew parameter without walking to the machine, which is most of the value on offer.
+  - option: Configuration remote with no gate, firmware behind a local act
+    reason_rejected: Rests entirely on configuration validation being airtight, so any validation gap becomes a remote change to what the machine does next.
+  - option: No remote maintenance at all
+    reason_rejected: Consistent with the actuation decision but means opening the machine to change a parameter, which guarantees infrequent maintenance and careless reassembly.
+chosen: Local act for configuration, additional physical control for firmware

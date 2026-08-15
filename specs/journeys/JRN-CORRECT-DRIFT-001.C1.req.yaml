@@ -1,0 +1,14 @@
+id: JRN-CORRECT-DRIFT-001.C1
+type: criterion
+title: A persistent discrepancy between expectation and observation is distinguished from a transient one
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Every draw the machine serves produces a momentary divergence between what it expected and what it saw, and none of those mean the machine has changed. Drift announces itself as a bias that accumulates rather than as any single large departure.
+
+  Getting this distinction wrong is costly in both directions: reacting to transients degrades a description that was correct, while waiting for certainty means the machine spends months serving drinks against a description it already had reason to doubt.
+links:
+  - target: JRN-CORRECT-DRIFT-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-PREENERGISATION-VERIFICATION-001.C4
+type: criterion
+title: Failed verification blocks energisation
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The gate has no value if it can be passed by judging that the failure is probably unimportant, and a builder who has spent a weekend on a build is poorly placed to make that call.
+
+  Blocking is the assertion. Proceeding requires the verification to pass, not to be reconsidered.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001
+    type: criterion-of

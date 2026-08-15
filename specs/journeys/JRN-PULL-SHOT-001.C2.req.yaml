@@ -1,0 +1,14 @@
+id: JRN-PULL-SHOT-001.C2
+type: criterion
+title: The machine refuses to begin a shot it cannot deliver on target
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Refusing is a better outcome than serving, because a bad shot costs the operator a dose, a wait, and their confidence in every subsequent shot. The operator cannot tell by looking that the machine was not ready.
+
+  This is a refusal rather than a warning. A machine that permits the shot while advising against it has moved the judgement onto the person least equipped to make it.
+links:
+  - target: JRN-PULL-SHOT-001
+    type: criterion-of

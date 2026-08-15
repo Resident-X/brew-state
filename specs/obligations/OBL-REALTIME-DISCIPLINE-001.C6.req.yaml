@@ -1,0 +1,14 @@
+id: OBL-REALTIME-DISCIPLINE-001.C6
+type: criterion
+title: Timing claims are established by measurement on the target rather than by reasoning about source
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Bus contention, handler nesting, memory access patterns and toolchain output all move the answer, and none of them is visible in the code being reasoned about.
+
+  The claim is about the machine that will run, not the program that was written.
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001
+    type: criterion-of

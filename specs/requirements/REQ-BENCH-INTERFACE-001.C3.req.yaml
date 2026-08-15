@@ -1,0 +1,14 @@
+id: REQ-BENCH-INTERFACE-001.C3
+type: criterion
+title: A routine ends and the machine returns to rest when the bench stops responding
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A routine that continues after the far end has stopped listening leaves the machine driving itself hard unobserved.
+
+  Ending it is the machine's own act on losing contact, since the case that matters is precisely the one where the bench can no longer ask for anything.
+links:
+  - target: REQ-BENCH-INTERFACE-001
+    type: criterion-of

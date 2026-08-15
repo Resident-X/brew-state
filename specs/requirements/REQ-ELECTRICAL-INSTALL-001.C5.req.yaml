@@ -1,0 +1,14 @@
+id: REQ-ELECTRICAL-INSTALL-001.C5
+type: criterion
+title: Routine service is possible without defeating any of the above
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A build that must be partly dismantled to reach a service point will eventually be reassembled wrong, and the reassembly is what breaks the separation.
+
+  Access is arranged deliberately rather than achieved by removing whatever is in the way.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-DRIFT-CORRECTION-001.C4
+type: criterion
+title: A rejected adjustment leaves the previously trusted parameters in force
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The last description the machine had reason to trust was by definition working. Returning to it is always safe and always available.
+
+  The failure mode this prevents is a machine left in a partially-applied state that was never validated as a whole.
+links:
+  - target: REQ-DRIFT-CORRECTION-001
+    type: criterion-of

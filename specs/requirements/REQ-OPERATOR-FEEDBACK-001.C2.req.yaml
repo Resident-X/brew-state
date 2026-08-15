@@ -1,0 +1,14 @@
+id: REQ-OPERATOR-FEEDBACK-001.C2
+type: criterion
+title: The report distinguishes a machine that fell short from a delivery the operator changed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An operator who ended a shot early and a machine that could not hold target leave similar traces and call for opposite responses.
+
+  Conflating them sends the operator to adjust their technique against a machine fault, or to chase a fault that was their own choice.
+links:
+  - target: REQ-OPERATOR-FEEDBACK-001
+    type: criterion-of

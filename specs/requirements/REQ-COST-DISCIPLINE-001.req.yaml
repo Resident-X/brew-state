@@ -1,0 +1,18 @@
+id: REQ-COST-DISCIPLINE-001
+type: requirement
+category: constraint
+title: Precision is bought only where the margin is thin
+status: active
+priority: must
+version: 1
+text: |
+  The project exists because it is cheaper than buying the machine it aims to outperform, so cost is a boundary rather than a preference to trade away when a better part appears.
+
+  Spending is decided channel by channel. Two channels measuring the same quantity can warrant different parts when they sit at different distances from a limit.
+rationale: |
+  Written as a rule that hardware choices are checked against rather than as a budget figure, because the figure will move and the rule will not. It also makes the reasoning auditable: a choice either names what about its channel makes the cheaper option inadequate, or it does not.
+
+  The consequence-weighting criterion captures what makes clone-quality parts acceptable in some places and not others. Risk tolerance follows the cost of the failure, not the cost of the part.
+links:
+  - target: PER-BUILDER-001.C4
+    type: derives-from

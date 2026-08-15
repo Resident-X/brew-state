@@ -1,0 +1,14 @@
+id: REQ-SEQUENCE-CONSISTENCY-001.C4
+type: criterion
+title: Recovery between drinks does not depend on the operator pausing
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine that recovers only when left alone converts its thermal limits into the operator's waiting time, which is the failure the hosting goal exists to prevent.
+
+  Recovery begins when a demand ends and continues through whatever the operator does next.
+links:
+  - target: REQ-SEQUENCE-CONSISTENCY-001
+    type: criterion-of

@@ -1,0 +1,40 @@
+id: JRN-CORRECT-DRIFT-001
+type: requirement
+category: journey
+title: Machine detects and corrects its own drift in service
+status: active
+priority: must
+version: 1
+text: |
+  The journey that runs for years without anyone starting it. The machine's description of itself was true at commissioning and slowly stops being true, and the whole point is that nobody has to notice.
+
+  ## Main success scenario
+
+  1. The machine compares what it expected to observe against what it actually observed, continuously, as part of running normally.
+  2. The machine recognises that the discrepancy has become persistent rather than momentary.
+  3. The machine adjusts its description of itself to account for the change.
+  4. The machine confirms the adjustment actually reduced the discrepancy before keeping it.
+  5. The machine carries on serving drinks, with no bench, no connected computer and no person involved at any point.
+
+  ## Extensions
+
+  2a. The discrepancy is a transient. The machine leaves its description alone, because reacting to noise degrades a description that was correct.
+
+  3a. The adjustment fails to settle, or settles somewhere physically implausible. The machine rejects it and continues on the last description it had reason to trust.
+
+  4a. The discrepancy persists even after the adjustment has settled. The machine reports that this is beyond what it can correct on its own, because a residual that survives correction indicates the description is wrong in shape rather than merely out of date.
+
+  5a. The builder asks what has changed since commissioning. The machine can account for how its description has moved and when.
+rationale: |
+  Scoped to parametric drift and explicitly not to structural error, because the two need entirely different responses and conflating them produces a machine that quietly fits nonsense. Small movements in the machine's own characteristics are what this journey corrects. A description that is wrong in shape is a problem for the builder and the bench, and the machine's job in that case is to say so rather than to keep adjusting until the residual is buried.
+
+  Refusal is treated as a first-class outcome rather than an error path. This runs unattended for years with nobody to sanity-check a bad result, so the machine's willingness to reject its own correction is the only thing standing between it and slowly optimising itself into a description that fits recent noise and predicts nothing. Keeping the last trusted description is always available and always safe.
+
+  The confirm-before-keep step exists because an adjustment that settles is not the same as an adjustment that helped. Without it the machine has no way to distinguish a genuine correction from a plausible-looking one, and unattended operation gives it no second opinion.
+
+  Accountability to the builder is included because trust in an unattended mechanism depends on being able to audit it after the fact. A machine that silently rewrote itself over three years, however correctly, is one the builder will end up distrusting and disabling.
+
+  Deliberately silent on what computes the discrepancy, how the adjustment is performed, and whether detection and correction share a mechanism. There are several defensible arrangements and this journey has no business choosing among them.
+links:
+  - target: PER-BUILDER-001.C3
+    type: derives-from

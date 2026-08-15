@@ -1,0 +1,14 @@
+id: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C3
+type: criterion
+title: Assumptions specific to this machine or this jurisdiction are identified as such
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Supply voltage, mains frequency, wiring rules, protection trip points and this machine's own thermal characteristics are all local, and all read as universal when written by someone for whom they never change.
+
+  A reader on a different supply who adopts an unmarked local assumption inherits a design that does not fit their machine.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001
+    type: criterion-of

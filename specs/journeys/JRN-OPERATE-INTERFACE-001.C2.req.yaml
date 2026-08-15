@@ -1,0 +1,14 @@
+id: JRN-OPERATE-INTERFACE-001.C2
+type: criterion
+title: A value the machine cannot honour is refused where it is entered
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Accepting a value and missing it during delivery costs the operator a drink and teaches them the machine's numbers are aspirational.
+
+  Refusal at entry is also the only point at which the operator still has the context to choose something else.
+links:
+  - target: JRN-OPERATE-INTERFACE-001
+    type: criterion-of

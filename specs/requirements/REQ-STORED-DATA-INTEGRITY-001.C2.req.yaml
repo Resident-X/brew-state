@@ -1,0 +1,14 @@
+id: REQ-STORED-DATA-INTEGRITY-001.C2
+type: criterion
+title: Data failing verification is treated as absent rather than as approximate
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A partially damaged plant model is not a slightly worse model, it is an unknown one, and controlling against it is not a degraded version of controlling against the real one.
+
+  The fallback is whatever the machine does with no stored value at all.
+links:
+  - target: REQ-STORED-DATA-INTEGRITY-001
+    type: criterion-of

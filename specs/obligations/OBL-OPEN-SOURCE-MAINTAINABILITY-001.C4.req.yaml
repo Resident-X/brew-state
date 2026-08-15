@@ -1,0 +1,14 @@
+id: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C4
+type: criterion
+title: Published material carries no dependency on tooling a reader cannot obtain
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A method resting on a paid licence or a private tool is not available to the audience this is published for, whatever its technical merit.
+
+  This mirrors the constraint the builder already works under and extends it to everyone downstream.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001
+    type: criterion-of

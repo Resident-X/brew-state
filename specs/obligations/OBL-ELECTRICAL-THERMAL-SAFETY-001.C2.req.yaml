@@ -1,0 +1,14 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C2
+type: criterion
+title: A hung controller de-energises the machine rather than holding heaters energised
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The default state of an unattended system must be off, which means aliveness has to be something the controller continually earns rather than something it is granted once at power-on and keeps by inertia.
+
+  A crash, a lockup inside an interrupt handler, and a loop that has stopped making progress all present identically from outside the controller, and all must produce the same outcome. An output that remains energised merely because nothing actively dropped it is itself the failure mode, so the safe state cannot be reached by the controller electing to reach it.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
+    type: criterion-of

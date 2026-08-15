@@ -1,0 +1,14 @@
+id: JRN-CORRECT-DRIFT-001.C3
+type: criterion
+title: Correction completes with no bench, no connected computer and no person involved
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  A correction that needs any of those three will not happen. The machine will simply run out of calibration until something breaks or the drinks get bad enough to notice, which is the outcome this journey exists to prevent.
+
+  Autonomy is the assertion, not merely automation. Nothing may wait on a person deciding that now is the time.
+links:
+  - target: JRN-CORRECT-DRIFT-001
+    type: criterion-of

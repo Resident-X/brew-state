@@ -1,0 +1,14 @@
+id: JRN-STEAM-JUG-001.C2
+type: criterion
+title: Steam is withheld or made unmistakably unready rather than delivered wet
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Water carried over with the steam ruins the milk and cannot be undone once it is in the jug, so this failure is not recoverable by the operator noticing it afterwards.
+
+  An indicator the operator has to remember to check is not sufficient here. They are already committed to the pour by the time the consequence appears, so the machine must make the unready state impossible to act on by accident.
+links:
+  - target: JRN-STEAM-JUG-001
+    type: criterion-of

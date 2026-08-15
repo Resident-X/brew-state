@@ -1,0 +1,14 @@
+id: REQ-BREW-TEMP-001.C1
+type: criterion
+title: Water arriving at the group tracks the commanded temperature for the whole extraction
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  An average on target with a wandering trajectory extracts differently from a flat one, so tracking is asserted across the extraction rather than at any single instant.
+
+  The band applies from first drop to last. Early transients are not exempt on the grounds that the shot has only just started.
+links:
+  - target: REQ-BREW-TEMP-001
+    type: criterion-of

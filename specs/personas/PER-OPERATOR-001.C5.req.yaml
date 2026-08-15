@@ -1,0 +1,14 @@
+id: PER-OPERATOR-001.C5
+type: criterion
+title: The wait between consecutive drinks stays short enough to serve a group
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Recovery time is what separates a machine that makes good drinks from one that can host. Where the operator has to idle between drinks waiting for the machine to catch up, the practical ceiling on group size ends up set by patience rather than by capability.
+
+  The bound is a social one rather than a thermal one: short enough that the person waiting does not register that they are waiting, and short enough that drinks poured for the same table are still drunk together.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

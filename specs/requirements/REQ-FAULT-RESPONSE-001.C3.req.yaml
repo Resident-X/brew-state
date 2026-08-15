@@ -1,0 +1,14 @@
+id: REQ-FAULT-RESPONSE-001.C3
+type: criterion
+title: Reaching the safe state does not depend on the fault being correctly diagnosed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The response is identical whether the switch, the load or the sensor failed, so waiting to tell them apart buys nothing and costs time in the faulted state.
+
+  Stopping comes first and diagnosis afterwards, from the record.
+links:
+  - target: REQ-FAULT-RESPONSE-001
+    type: criterion-of

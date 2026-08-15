@@ -1,0 +1,14 @@
+id: REQ-POWER-BUDGET-001.C2
+type: criterion
+title: The budget constrains what is commanded rather than limiting what is measured
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A controller that responds to measured overdraw has already committed the overdraw. The protection it depends on protects the building, not the machine, and tripping it is a failure whether or not the machine recovers.
+
+  The budget is an input to the decision, not a check on its outcome.
+links:
+  - target: REQ-POWER-BUDGET-001
+    type: criterion-of

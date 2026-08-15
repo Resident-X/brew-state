@@ -1,0 +1,9 @@
+id: DEF-PROTECTIVE-CHAIN
+type: definition
+title: protective chain
+status: active
+version: 1
+text: |
+  The protective chain refers to the set of protective devices that remove power from the machine without any software in the path, and that cannot be disabled, delayed or bypassed by anything the controller does.
+
+  Its defining property is independence from firmware, which is what allows it to be trusted in the case where the firmware has failed. Firmware-side fault detection is a separate and additional layer that does not form part of it.

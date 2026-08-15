@@ -1,0 +1,24 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001
+type: requirement
+category: constraint
+title: Plant parameters are data and plant structure is a replaceable seam
+status: active
+priority: must
+version: 1
+text: |
+  Two machines of the same architecture differ only in their numbers. Two machines of different architectures differ in their equations, and no set of numbers bridges that.
+
+  The split follows: parameters are data the machine carries, structure is code behind a named interface. A second structure is added by implementing that interface, not by editing everything that consumes it.
+rationale: |
+  Selection happens when the artefact is built rather than while it runs, which is both cheaper and safer on this target. Cheaper because no dispatch cost is paid and no unused structure occupies storage. Safer because a binary that could choose its dynamics at runtime could choose wrongly, and controlling a thermoblock with boiler dynamics is a fault with no obvious symptom until the machine is well outside where it should be.
+
+  The final criterion exists to stop the seam becoming a claim. Making a structure cheap to add is not the same as supporting it, and the verification obligation cannot be satisfied for hardware nobody can test against. A structure that exists in the source but has never met the machine it describes is published as exactly that.
+
+  Deliberately not a plugin system, a model description language or a machine profile abstraction. Each is a project in its own right, none can be validated against machines the author does not own, and all of them would displace the work this project actually exists to do.
+links:
+  - target: PER-ADOPTER-001.C2
+    type: derives-from
+  - target: PER-ADOPTER-001.C3
+    type: derives-from
+  - target: REQ-EXTENSIBILITY-001.C4
+    type: derives-from

@@ -1,0 +1,14 @@
+id: PER-OPERATOR-001.C2
+type: criterion
+title: Steam stays dry and stable for the duration of a whole jug
+status: active
+version: 1
+measurement_type: threshold
+verification: demonstration
+text: |
+  Texturing milk is a continuous manual operation rather than a dosed one. The operator is judging the vortex and the sound as it happens and cannot compensate for a supply that changes underneath them partway through the pour.
+
+  Sputtering, water carried over with the steam, or a pressure droop toward the end of the jug all force them to rush the pour or abandon it. What matters is the character of the whole draw, not the peak available in the first seconds after the valve opens.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-DRIFT-CORRECTION-001.C5
+type: criterion
+title: Correction completes with no external device attached
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  A correction requiring a bench or a connected computer will not happen, and the machine will run out of calibration until something breaks or the drinks get bad enough to notice.
+
+  Autonomy is the assertion. Nothing waits on a person deciding that now is the time.
+links:
+  - target: REQ-DRIFT-CORRECTION-001
+    type: criterion-of

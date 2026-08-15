@@ -1,0 +1,14 @@
+id: REQ-SAFETY-CHAIN-001.C3
+type: criterion
+title: Loss of the controller's proof of life removes power without further action
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The interval between the controller stopping and power being removed is bounded and short enough that the machine cannot reach a hazardous state within it.
+
+  No intervention, no acknowledgement, no operator involvement. It happens because nothing prevented it.
+links:
+  - target: REQ-SAFETY-CHAIN-001
+    type: criterion-of

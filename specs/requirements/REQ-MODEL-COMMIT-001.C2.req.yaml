@@ -1,0 +1,14 @@
+id: REQ-MODEL-COMMIT-001.C2
+type: criterion
+title: A model failing validation is refused rather than adopted with a caveat
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A caveat recorded at commissioning is not present at the moment the machine controls against the model, and the builder who wrote it will not be either.
+
+  Refusal is the outcome. A model that did not validate does not become the one in force.
+links:
+  - target: REQ-MODEL-COMMIT-001
+    type: criterion-of

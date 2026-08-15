@@ -1,0 +1,23 @@
+id: OBL-ELECTRICAL-THERMAL-SAFETY-001
+type: requirement
+category: obligation
+title: The retrofit stays safe independently of its firmware
+status: active
+priority: must
+authority: external
+managed: false
+version: 1
+text: |
+  The retrofit puts a hobbyist-built controller in charge of roughly two and a quarter kilowatts of mains heating and near-boiling water, in a domestic kitchen, in a machine people stand directly in front of.
+
+  The authority behind this obligation is external. Domestic wiring rules and the rating of the circuit the machine is plugged into are not project preferences, and they do not bend because a persona would prefer faster service. Neither does the physics of a heating element that has been left energised.
+
+  The governing assumption is that the firmware will fail. This is a one-person hobby project running a control law of some sophistication on hardware that has never carried it before, and assuming otherwise is not engineering. Everything asserted here must therefore hold with the controller hung, crashed, mid-reflash, or confidently commanding the wrong thing.
+
+  This obligation sits above both personas and overrides them wherever they conflict. It is expected to conflict: serving a group quickly is precisely the behaviour that pushes hardest against the supply limit. The conflict resolves in favour of this node every time, and the job of the control design is to get as close to the personas' goals as the obligation permits, never to trade against it.
+rationale: |
+  Recorded as an obligation with external authority rather than as a project constraint because its source is outside the project's control. Wiring rules, the supplying circuit's rating, and the behaviour of an energised heating element are facts the project must conform to; they are not positions it argued its way into and cannot argue its way out of.
+
+  Separated from the persona layer deliberately. Nothing here traces to a stakeholder wanting better coffee, and expressing it as a persona goal would wrongly imply it is negotiable against other goals held by the same person. The safety chain exists for the case where every persona goal has already been abandoned.
+
+  Scoped to hold independently of firmware because the firmware is the least trustworthy element in the system. It is bespoke, unproven, written by one person, and carries a control law complex enough that its failure modes are not fully enumerable in advance. A safety argument that depends on it is an argument that assumes away the most likely fault.

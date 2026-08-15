@@ -1,0 +1,14 @@
+id: REQ-SCHEDULED-READINESS-001.C1
+type: criterion
+title: Readiness can be reached on a schedule or on request with nobody present
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The machine heats and holds, which is what it does whenever it is switched on and left alone, so the unattended state is not a new one.
+
+  What is new is that nobody chose it at the moment it began, which is why the remaining criteria bound it.
+links:
+  - target: REQ-SCHEDULED-READINESS-001
+    type: criterion-of

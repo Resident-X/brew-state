@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C3
+type: criterion
+title: A reading outside physically plausible bounds is rejected rather than acted on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A disconnected, shorted or noise-corrupted channel produces values that are arithmetically valid and physically impossible, and a controller that acts on them will command something extreme.
+
+  Rejection is required, not filtering. An impossible value averaged with plausible ones is still corrupting the result.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

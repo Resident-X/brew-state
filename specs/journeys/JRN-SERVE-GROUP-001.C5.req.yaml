@@ -1,0 +1,14 @@
+id: JRN-SERVE-GROUP-001.C5
+type: criterion
+title: An undeclared supply limit is treated as the most restrictive case
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The machine cannot discover what it is plugged into by looking, and the consequence of assuming generously is borne by the building's wiring rather than by the machine.
+
+  Absence of information is therefore treated as the restrictive case rather than as permission. This makes the machine safe while the question is still open, and it means someone declaring the real figure can only ever relax the constraint, never tighten it by surprise.
+links:
+  - target: JRN-SERVE-GROUP-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-HARDWARE-HEADROOM-001.C2
+type: criterion
+title: Spare capacity exists on the interfaces in use, not only in unused connector count
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A free pin is not free capability when the bus it would join is saturated or the timing resource it needs is already committed.
+
+  Headroom is a property of the interfaces and their loading, which is what an inspection has to look at.
+links:
+  - target: REQ-HARDWARE-HEADROOM-001
+    type: criterion-of

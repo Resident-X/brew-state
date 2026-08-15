@@ -1,0 +1,14 @@
+id: REQ-EXTENSIBILITY-001.C4
+type: criterion
+title: The plant model can gain a state without the rest of the machine being rebuilt
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Model order cannot be confirmed before real response data exists, and the current assumption of a low order may prove insufficient on first identification.
+
+  A design that fixes the state count makes that discovery expensive precisely when it is made.
+links:
+  - target: REQ-EXTENSIBILITY-001
+    type: criterion-of

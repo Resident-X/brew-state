@@ -1,0 +1,14 @@
+id: PER-ADOPTER-001.C2
+type: criterion
+title: A machine of the same architecture is supported by supplying parameters rather than by changing code
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Machines of the same shape differ in their numbers rather than their equations, so the work of adopting one should be measurement rather than development.
+
+  This is the larger of the two promises and applies only where the architecture genuinely matches.
+links:
+  - target: PER-ADOPTER-001
+    type: criterion-of

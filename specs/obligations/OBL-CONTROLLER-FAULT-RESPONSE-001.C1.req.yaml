@@ -1,0 +1,14 @@
+id: OBL-CONTROLLER-FAULT-RESPONSE-001.C1
+type: criterion
+title: A commanded actuation that cannot be confirmed is treated as a fault
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Commanding an output and assuming it took effect is an assumption the machine is in a position to check.
+
+  Absence of confirmation is a fault in its own right, distinct from confirmation that the output is in the wrong state. The two have different causes and the machine cannot always tell them apart.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-COST-DISCIPLINE-001.C2
+type: criterion
+title: A departure from the default is justified against the specific channel it applies to
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A general preference for better components applies everywhere and therefore constrains nothing, which makes it indistinguishable from having no rule.
+
+  The justification has to name what about that channel makes the cheaper option inadequate.
+links:
+  - target: REQ-COST-DISCIPLINE-001
+    type: criterion-of

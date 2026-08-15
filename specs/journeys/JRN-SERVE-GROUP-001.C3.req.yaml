@@ -1,0 +1,14 @@
+id: JRN-SERVE-GROUP-001.C3
+type: criterion
+title: The machine arbitrates contention between simultaneous demands without operator direction
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  When two parts of the machine want capacity at once, something has to decide which gets it. Leaving that to emerge from whichever demand happened to arrive first produces behaviour that is neither predictable nor defensible.
+
+  The decision is the machine's to make and its consequences are the machine's to own. The operator experiences the outcome as timing, never as a question they are asked.
+links:
+  - target: JRN-SERVE-GROUP-001
+    type: criterion-of

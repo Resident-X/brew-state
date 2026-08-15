@@ -1,0 +1,19 @@
+id: OBL-CONTROL-DESIGN-DISCIPLINE-001
+type: requirement
+category: obligation
+title: The control design carries explicit margin for what the model got wrong
+status: active
+priority: must
+authority: internal
+managed: true
+version: 1
+text: |
+  The plant model will be wrong. A realistic first identification recovers the response shape to within some tens of percent, and the parameters that dominate behaviour are exactly the ones that cannot be measured directly.
+
+  A design that is correct only when the model is correct is not a design. The useful question is not how close the model gets but how wrong it can be before the machine stops being safe or stops working.
+rationale: |
+  Authority is internal. This is the project's own standard for what constitutes a finished control design, and it captures the design notes' central conclusion: that robustness margin matters more than model fidelity, and that the goal is not matching simulated and real traces but tolerating the gap between them.
+
+  Saturation is called out because this machine spends much of its working life at full heater duty. On a system where the actuator limit is the normal operating point rather than an exception, treating saturation as an edge case guarantees the classic integral-windup overshoot.
+
+  The final criterion exists because an identification failure should not threaten everything at once. Some properties must survive an arbitrarily wrong model, and separating those from the ones that legitimately depend on it is what makes the design's failure modes predictable.

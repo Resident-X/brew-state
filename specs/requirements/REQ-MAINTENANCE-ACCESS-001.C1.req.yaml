@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C1
+type: criterion
+title: A configuration change is accepted only after a deliberate local act
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The act establishes that a person is at the machine and intends the change, which is the property the actuation constraint protects and this one borrows.
+
+  It is deliberate rather than incidental: nothing an operator does while making a drink may open the path.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

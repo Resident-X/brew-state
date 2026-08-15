@@ -1,0 +1,28 @@
+id: REQ-ELECTRICAL-INSTALL-001
+type: requirement
+category: constraint
+title: The install keeps mains separated, contained and serviceable
+status: active
+priority: must
+version: 1
+text: |
+  The retrofit puts a hobbyist-built assembly in a wet, hot, thermally cycling environment and asks it to switch several kilowatts for years. The install is where that either holds or does not.
+
+  Scope is the control system and its electrical installation. The machine's fluid path is out of scope.
+rationale: |
+  Derived from the isolation obligation rather than from the cost persona, because segregation is a safety property and hanging it off a budget goal would misrepresent why it is non-negotiable. The cost link is retained as a second parent since the install is also where a hobbyist build most easily becomes expensive by being done twice.
+
+  The thermal criterion is stated against the assembled condition rather than against any device's quoted rating, because ratings are quoted in free air and this assembly is a sealed box in a hot kitchen. A part chosen on its datasheet figure and installed in an enclosure is operating outside the conditions that figure describes.
+
+  Serviceability is included because a build that must be partly dismantled to reach a routine service point will eventually be reassembled wrong, and the reassembly is what defeats the isolation. This is a safety criterion wearing maintenance clothes.
+
+  Silent on enclosure material, ingress rating, wire gauge, gland type and layout. All are decisions with cost and availability consequences, and the current parts list is a sanity check rather than a commitment.
+links:
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: derives-from
+  - target: PER-BUILDER-001.C4
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C8
+    type: derives-from

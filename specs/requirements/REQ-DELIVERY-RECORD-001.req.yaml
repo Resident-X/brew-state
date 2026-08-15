@@ -1,0 +1,20 @@
+id: REQ-DELIVERY-RECORD-001
+type: requirement
+category: functional
+title: The machine records what was asked of it and what it delivered
+status: active
+priority: must
+version: 1
+text: |
+  Reproducibility is a property of the record as much as of the control. A machine that holds target well but cannot say afterwards what it was asked for, what it achieved and where delivery ended leaves the operator unable to ask for the same thing again.
+
+  The same record serves the builder years later, when the question is whether the machine's own corrections explain a change in its behaviour.
+rationale: |
+  Covers both the operator's reproducibility need and the builder's audit need with one requirement, because they are the same record read at different times and building them separately would produce two partial ones.
+
+  The non-gating criterion exists because storage is finite and writes fail. A machine that refuses to serve when it cannot record has turned a diagnostic aid into a failure mode, which is a strictly worse outcome than losing the record.
+links:
+  - target: JRN-PULL-SHOT-001.C4
+    type: derives-from
+  - target: JRN-CORRECT-DRIFT-001.C5
+    type: derives-from

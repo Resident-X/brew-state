@@ -1,0 +1,14 @@
+id: OBL-CONTROLLER-FAULT-RESPONSE-001.C3
+type: criterion
+title: A response absent within the time the model predicts is treated as a fault
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The model already predicts how the machine should respond to what was commanded, so the expected time is available rather than needing to be guessed.
+
+  A response that does not arrive means the command, the switch, the load or the sensor has failed and the machine cannot tell which. That ambiguity is a reason to stop, not a reason to continue.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001
+    type: criterion-of

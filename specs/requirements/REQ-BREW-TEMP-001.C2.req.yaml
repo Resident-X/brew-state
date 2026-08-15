@@ -1,0 +1,14 @@
+id: REQ-BREW-TEMP-001.C2
+type: criterion
+title: The controlled variable is the temperature the water reaches the coffee at
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  What gets regulated determines what ends up correct. Regulating a more convenient variable and assuming the interesting one follows introduces an error that is invisible to the controller and unrecoverable downstream.
+
+  This constrains the control objective, not the sensing arrangement. How the value is obtained is open.
+links:
+  - target: REQ-BREW-TEMP-001
+    type: criterion-of

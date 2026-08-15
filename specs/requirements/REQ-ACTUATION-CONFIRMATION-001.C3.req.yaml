@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C3
+type: criterion
+title: Confirmation covers an output being off as well as on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Detecting that a command to energise took effect says nothing about an output that failed to de-energise, and the second is the more dangerous of the two.
+
+  Both directions are confirmed, and the off case is not inferred from the absence of an on command.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

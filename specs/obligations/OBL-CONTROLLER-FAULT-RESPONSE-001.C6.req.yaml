@@ -1,0 +1,14 @@
+id: OBL-CONTROLLER-FAULT-RESPONSE-001.C6
+type: criterion
+title: Fault detection never justifies relaxing the hardware protective chain
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Firmware-side detection works while the firmware is healthy, and the hardware chain exists precisely for when it is not.
+
+  Trading one against the other exchanges a mechanism that always works for one that usually does, which is the characteristic way a defence-in-depth argument gets spent.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001
+    type: criterion-of

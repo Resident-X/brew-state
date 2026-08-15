@@ -1,0 +1,14 @@
+id: REQ-STARTUP-STATE-001.C1
+type: criterion
+title: The machine reaches a safe state at power-on before anything is energised
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The starting position is not heating and not pumping, arrived at by default rather than by decision.
+
+  This holds regardless of what was happening when power was lost, and regardless of what any stored state says was in progress.
+links:
+  - target: REQ-STARTUP-STATE-001
+    type: criterion-of

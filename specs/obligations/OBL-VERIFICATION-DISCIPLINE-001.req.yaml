@@ -1,0 +1,21 @@
+id: OBL-VERIFICATION-DISCIPLINE-001
+type: requirement
+category: obligation
+title: Every unit of work is verified by something that would fail if it were wrong
+status: active
+priority: must
+authority: internal
+managed: true
+version: 1
+text: |
+  This is a one-person project building a control system that will run unattended for years next to two kilowatts of heating. There is no second reviewer, no QA pass and no operations team, so verification is the only thing standing between a mistake and a machine that acts on it.
+
+  The obligation is not that tests exist. It is that they would fail. A suite that passes on broken code is worse than none, because it converts an absence of checking into a false report of safety.
+rationale: |
+  Authority is internal. Nothing outside the project mandates this; it is the project's own judgement about what a single builder needs in order to trust work they cannot get a second opinion on.
+
+  Stated as a property of the tests rather than as a list of test kinds, because which kinds make sense varies by what is being built and by the language it is built in. What does not vary is that a test earns its place by being capable of failing.
+
+  The criterion tying tests to acceptance criteria is what connects this obligation to the rest of the graph. Without it, verification can be thorough and still leave a requirement unexercised, which is the failure mode a requirement-driven project is specifically supposed to avoid.
+
+  Requiring verification to run without the machine present is a practical constraint rather than a purist one. Tests that need hardware run rarely and stop running entirely while the machine is in pieces, which is exactly the period when most defects are introduced.

@@ -1,0 +1,14 @@
+id: REQ-ELECTRICAL-INSTALL-001.C3
+type: criterion
+title: Mains-referenced parts are unreachable without deliberate disassembly
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The operator cleans this machine, refills it and works around it daily, with no knowledge of what is behind any panel.
+
+  Everything a person contacts in normal use and routine cleaning sits at low voltage, and reaching anything else requires tools and intent.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

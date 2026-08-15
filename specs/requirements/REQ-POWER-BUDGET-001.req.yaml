@@ -1,0 +1,26 @@
+id: REQ-POWER-BUDGET-001
+type: requirement
+category: constraint
+title: Total electrical draw is planned within a declared supply budget
+status: active
+priority: must
+version: 1
+text: |
+  The two heated masses together can ask for more than an ordinary domestic circuit provides. Nothing in the machine prevents that on its own, so the constraint has to live in what the controller is willing to command.
+
+  This is the only coupling between two otherwise independent control loops, and it is what turns them into one problem.
+rationale: |
+  Requires the budget to be a constraint on what is commanded rather than a limit discovered by measurement, which is the load-bearing distinction. A controller that reacts to measured overdraw has already exceeded the budget by the time it responds, and the protection it tripped belongs to the rest of the building.
+
+  Precedence is required to be defined rather than emergent. Allocation by arrival order produces behaviour that cannot be predicted, cannot be explained to the operator, and cannot be argued to be safe.
+
+  Defaulting an undeclared budget to the most restrictive supported value makes the open question about the actual circuit rating safe rather than merely unresolved. A later declaration can only ever relax the constraint.
+links:
+  - target: JRN-SERVE-GROUP-001.C2
+    type: derives-from
+  - target: JRN-SERVE-GROUP-001.C3
+    type: derives-from
+  - target: JRN-SERVE-GROUP-001.C5
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C3
+    type: derives-from

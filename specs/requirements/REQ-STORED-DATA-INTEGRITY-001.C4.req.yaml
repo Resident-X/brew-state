@@ -1,0 +1,14 @@
+id: REQ-STORED-DATA-INTEGRITY-001.C4
+type: criterion
+title: A verification failure is reported rather than silently repaired
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Falling back to a default changes how the machine behaves, and an operator not told will experience it as the machine inexplicably performing differently.
+
+  The builder needs the same fact later, because repeated corruption points at hardware rather than at bad luck.
+links:
+  - target: REQ-STORED-DATA-INTEGRITY-001
+    type: criterion-of

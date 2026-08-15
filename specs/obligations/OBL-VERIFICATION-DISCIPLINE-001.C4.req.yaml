@@ -1,0 +1,14 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C4
+type: criterion
+title: Verification exercises the artefact that will run rather than a re-implementation of it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A model of the code and the code differ precisely where porting and toolchain errors live, and those are invisible to any test that reasons about the source instead of running the output.
+
+  This matters most for anything crossing from design tooling to the target.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

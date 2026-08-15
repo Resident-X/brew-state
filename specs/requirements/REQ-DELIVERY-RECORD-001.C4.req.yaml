@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C4
+type: criterion
+title: Recording never gates delivery
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Storage exhaustion and write failure are expected conditions on a machine that runs for years, not exceptional ones.
+
+  When recording cannot proceed the drink is still served and the loss is reported, rather than the machine refusing to work.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

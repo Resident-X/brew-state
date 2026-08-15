@@ -1,0 +1,14 @@
+id: REQ-OPERATOR-FEEDBACK-001.C1
+type: criterion
+title: A delivery that missed its target is surfaced while the drink is still in front of the operator
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Reports the operator has to go looking for do not change what they do next, and by the time one is found the drink has been served or discarded.
+
+  Timing is as much the requirement here as content.
+links:
+  - target: REQ-OPERATOR-FEEDBACK-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: JRN-CORRECT-DRIFT-001.C2
+type: criterion
+title: An adjustment the machine cannot justify is refused in favour of the last trusted description
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Nothing here has a person in the loop, so the machine's own scepticism is the only check that exists. An adjustment that fails to settle, or that settles on values the machine's own physical understanding says are impossible, is a result to discard rather than a result to adopt cautiously.
+
+  Falling back is always available and always safe. The last description the machine had reason to trust is by definition one that was working, and returning to it costs nothing but the drift it was going to correct.
+links:
+  - target: JRN-CORRECT-DRIFT-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: JRN-OPERATE-INTERFACE-001.C5
+type: criterion
+title: A previously delivered drink can be selected from what the machine recorded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Reproducibility only reaches the operator if the record is something they can act on rather than something the builder can read later.
+
+  This includes drinks that did not go to plan, which are the ones most worth deliberately repeating or avoiding.
+links:
+  - target: JRN-OPERATE-INTERFACE-001
+    type: criterion-of

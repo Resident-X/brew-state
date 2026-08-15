@@ -1,0 +1,14 @@
+id: REQ-MAINTENANCE-ACCESS-001.C2
+type: criterion
+title: Firmware replacement additionally requires a physical control that software cannot assert
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Configuration is bounded by limits the firmware still enforces, whereas firmware replacement replaces the thing doing the enforcing, so the two do not warrant the same gate.
+
+  A defect able to enter the software gate must not be able to reach the firmware path on its own.
+links:
+  - target: REQ-MAINTENANCE-ACCESS-001
+    type: criterion-of

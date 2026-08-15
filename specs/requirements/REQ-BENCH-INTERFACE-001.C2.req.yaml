@@ -1,0 +1,14 @@
+id: REQ-BENCH-INTERFACE-001.C2
+type: criterion
+title: Streamed telemetry is timestamped by the machine's own clock
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Timing applied where data arrives folds transport delay and jitter into the record and makes them indistinguishable from the machine's dynamics.
+
+  The resulting error is silent and systematic: nothing downstream can detect that the description fits the recording path rather than the machine.
+links:
+  - target: REQ-BENCH-INTERFACE-001
+    type: criterion-of

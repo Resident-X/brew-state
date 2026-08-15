@@ -1,0 +1,14 @@
+id: JRN-COMMISSION-PLANT-001.C3
+type: criterion
+title: A characterisation sequence that loses contact with the bench ends in a resting state unaided
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A sequence that continues after the far end has stopped listening is a machine driving itself hard with nobody watching, which is the worst configuration this project can produce.
+
+  Ending the sequence has to be something the machine does on its own initiative on losing contact, rather than something the bench requests as it goes, because the case that matters is precisely the one where the bench can no longer request anything.
+links:
+  - target: JRN-COMMISSION-PLANT-001
+    type: criterion-of

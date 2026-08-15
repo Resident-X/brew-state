@@ -1,0 +1,14 @@
+id: JRN-STEAM-JUG-001.C1
+type: criterion
+title: Steam character holds steady for the whole of the operator's draw
+status: active
+version: 1
+measurement_type: threshold
+verification: demonstration
+text: |
+  The operator judges texture continuously by sound and by the movement of the milk, and adapts their technique to what the machine is giving them. A supply that changes partway through invalidates the adaptation they have already made.
+
+  The assertion is bounded by the operator's draw rather than by any fixed interval, because the operator decides when the milk is done and the machine does not get to decide it for them by running out.
+links:
+  - target: JRN-STEAM-JUG-001
+    type: criterion-of

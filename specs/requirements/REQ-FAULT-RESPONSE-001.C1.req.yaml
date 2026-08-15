@@ -1,0 +1,14 @@
+id: REQ-FAULT-RESPONSE-001.C1
+type: criterion
+title: A detected actuation fault removes power from the affected load and anything depending on it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Removing the load alone can leave a pump running dry or a valve holding a path open into a mass that is no longer controlled.
+
+  The scope of what is de-energised follows the dependency rather than the fault's location.
+links:
+  - target: REQ-FAULT-RESPONSE-001
+    type: criterion-of

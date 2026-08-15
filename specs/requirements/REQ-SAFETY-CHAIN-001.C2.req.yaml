@@ -1,0 +1,14 @@
+id: REQ-SAFETY-CHAIN-001.C2
+type: criterion
+title: Power to the heaters is available only while the controller is demonstrably running
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The default is inverted: a controller that has stopped cannot take an action, so anything requiring it to act in order to reach the safe state fails in exactly the case it was built for.
+
+  What counts as demonstrating it is running must not be satisfiable by a controller that has stopped making progress.
+links:
+  - target: REQ-SAFETY-CHAIN-001
+    type: criterion-of

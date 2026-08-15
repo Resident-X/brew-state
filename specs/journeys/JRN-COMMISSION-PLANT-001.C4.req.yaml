@@ -1,0 +1,14 @@
+id: JRN-COMMISSION-PLANT-001.C4
+type: criterion
+title: The recorded response is timed by the machine rather than by whatever records it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Time constants recovered from the response are only as good as the timestamps attached to it. Timing taken where the data arrives folds transport delay and jitter into the record and makes them indistinguishable from the machine's own dynamics.
+
+  The resulting error is silent, systematic, and unrecoverable downstream. Nothing later in the pipeline can detect that the description it was given describes the recording path rather than the machine.
+links:
+  - target: JRN-COMMISSION-PLANT-001
+    type: criterion-of

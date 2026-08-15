@@ -1,0 +1,14 @@
+id: PER-OPERATOR-001.C1
+type: criterion
+title: A repeated recipe lands the same in the cup
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Reproducibility is the floor the entire project stands on. A controller that is accurate but not repeatable is worth less to this stakeholder than a crude one that is, because they tune by taste and cannot tune against a moving target.
+
+  The operator sets a drink up the same way on two separate occasions and gets a result they cannot tell apart. This holds whether the second occasion follows a long idle or arrives mid-session, since the operator has no way to know which thermal regime the machine is in and should never have to think about it.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

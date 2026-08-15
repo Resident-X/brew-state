@@ -1,0 +1,18 @@
+id: REQ-MAINTENANCE-ACCESS-001
+type: requirement
+category: functional
+title: The machine is reconfigured and updated without being opened, behind a deliberate local act
+status: active
+priority: must
+version: 1
+text: |
+  Adjusting a parameter should not mean opening the machine. A build that must be dismantled to be tuned gets tuned rarely and reassembled carelessly, and the reassembly is what breaks the separation the install depends on.
+
+  What is being permitted here changes what the machine will do next time, not what it is doing now. That is why it is gated locally rather than withheld entirely.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001.C5
+    type: derives-from
+  - target: PER-BUILDER-001.C3
+    type: derives-from
+  - target: DEC-REMOTE-MAINTENANCE-LOCAL-GATE
+    type: justified-by

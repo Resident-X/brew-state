@@ -1,0 +1,14 @@
+id: REQ-EXTERNAL-MONITORING-001.C1
+type: criterion
+title: External access offers no means to cause a delivery
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Delivery is what is withheld from anything not at the machine. Granting it alongside observation would make every reader able to dispense into a cup nobody is holding.
+
+  Bringing the machine to readiness is not withheld by this criterion and is governed separately: it moves nothing and produces no drink. The restriction is a property of what the surface offers rather than of how a consumer chooses to behave.
+links:
+  - target: REQ-EXTERNAL-MONITORING-001
+    type: criterion-of

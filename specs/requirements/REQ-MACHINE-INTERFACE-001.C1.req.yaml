@@ -1,0 +1,14 @@
+id: REQ-MACHINE-INTERFACE-001.C1
+type: criterion
+title: The machine's observable state is available through a single defined surface
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Multiple surfaces diverge, and the divergence shows up as two consumers disagreeing about what the machine is doing.
+
+  One surface also means a new consumer needs no new work inside the machine.
+links:
+  - target: REQ-MACHINE-INTERFACE-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C5
+type: criterion
+title: Commanded flow that does not arrive is a fault, and heat fed forward for it is withdrawn
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Commanding flow and receiving none is the case the machine is least able to survive quietly, because heat is already being applied in anticipation of cooling that never arrives. An empty tank, an airlock or a blockage all present this way.
+
+  The confirmation is that pumping produced movement, not merely that the pump was energised. A pump running dry is energised and confirmed by any electrical check while delivering nothing and damaging itself.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

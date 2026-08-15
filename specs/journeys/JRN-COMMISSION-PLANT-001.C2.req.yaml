@@ -1,0 +1,14 @@
+id: JRN-COMMISSION-PLANT-001.C2
+type: criterion
+title: The protective chain stays fully active throughout characterisation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Characterisation deliberately drives the machine toward regions of its behaviour that normal operation avoids, under the command of software that has never run before and has not yet been validated against anything.
+
+  No part of the sequence may relax, bypass or defer the protection, and the protection must be incapable of being relaxed by the sequence even if the sequence asks.
+links:
+  - target: JRN-COMMISSION-PLANT-001
+    type: criterion-of

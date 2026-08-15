@@ -1,0 +1,14 @@
+id: REQ-GRAVIMETRIC-ENDPOINT-001.C2
+type: criterion
+title: Weight measurement failure falls back to an endpoint that does not need it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine that cannot finish a drink because an optional sensor failed has converted a capability into a dependency, which is a worse outcome than never having had it.
+
+  The fallback is the endpoint the machine would have used without the capability, and the substitution is reported.
+links:
+  - target: REQ-GRAVIMETRIC-ENDPOINT-001
+    type: criterion-of

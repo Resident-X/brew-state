@@ -1,0 +1,14 @@
+id: REQ-MODEL-COMMIT-001.C1
+type: criterion
+title: Model quality is judged against data withheld from the fit
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Data used to derive a model cannot test it, and a model with enough free parameters will fit that data arbitrarily well while predicting nothing.
+
+  The withheld data must be representative of operation rather than a convenient tail of the same run.
+links:
+  - target: REQ-MODEL-COMMIT-001
+    type: criterion-of

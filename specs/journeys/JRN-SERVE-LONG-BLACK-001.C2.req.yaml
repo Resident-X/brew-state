@@ -1,0 +1,12 @@
+id: JRN-SERVE-LONG-BLACK-001.C2
+type: criterion
+title: An espresso following a hot water draw is delivered at the same brew temperature as one that is not
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  This is the criterion the shared heated mass actually threatens. A hot water draw leaves the machine in a materially different thermal state from a machine at rest, and an extraction that begins in that state without accounting for it will not match one that did not.
+links:
+  - target: JRN-SERVE-LONG-BLACK-001
+    type: criterion-of

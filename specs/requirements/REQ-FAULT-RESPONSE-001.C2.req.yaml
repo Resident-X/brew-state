@@ -1,0 +1,14 @@
+id: REQ-FAULT-RESPONSE-001.C2
+type: criterion
+title: The machine does not resume on its own assessment that a fault has cleared
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Intermittent faults appear to clear on their own, and the appearance is indistinguishable from an actual repair.
+
+  Resumption requires a person, which also guarantees someone finds out the fault happened.
+links:
+  - target: REQ-FAULT-RESPONSE-001
+    type: criterion-of

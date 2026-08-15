@@ -1,0 +1,14 @@
+id: REQ-BENCH-INTERFACE-001.C1
+type: criterion
+title: Actuators can be commanded directly, bypassing the control law
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A response shaped by the controller under characterisation describes the closed loop rather than the machine, and the parameters recovered from it are not the ones the design needs.
+
+  Direct command is what makes the recovered description attributable to the hardware.
+links:
+  - target: REQ-BENCH-INTERFACE-001
+    type: criterion-of

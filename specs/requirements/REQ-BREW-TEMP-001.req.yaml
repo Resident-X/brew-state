@@ -1,0 +1,22 @@
+id: REQ-BREW-TEMP-001
+type: requirement
+category: functional
+title: Brew water reaches the group at the commanded temperature and stays there
+status: active
+priority: must
+version: 1
+text: |
+  Temperature at the group is the variable the drink is actually sensitive to, and the one this requirement is about. Everything else in the coffee path exists to put water there at the right temperature.
+
+  The coffee side is the constrained side of this machine. It serves both espresso and hot water, and it operates close enough to its protection trip point that the margin for error is thin. Regulation here has to be good in absolute terms, not merely repeatable, and it has to work from whatever thermal state the previous demand left behind.
+rationale: |
+  Written against the temperature the water reaches the coffee at rather than against any particular measurement point, because the two are not the same and the difference is the whole problem. Where the machine senses, and whether the group is instrumented directly or the value is inferred, are decisions with real alternatives that this requirement must not foreclose.
+
+  The starting-state criteria exist because a machine that regulates well from rest and poorly after a preceding draw fails exactly where the operator's goals bite. A controller that assumes it starts rested is wrong on every drink after the first.
+links:
+  - target: JRN-PULL-SHOT-001.C1
+    type: derives-from
+  - target: JRN-PULL-SHOT-001.C2
+    type: derives-from
+  - target: JRN-SERVE-LONG-BLACK-001.C2
+    type: derives-from

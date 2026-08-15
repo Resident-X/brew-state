@@ -1,0 +1,14 @@
+id: REQ-STATE-ESTIMATION-001.C1
+type: criterion
+title: States the control law needs but no sensor provides are reconstructed from those that are measured
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Sensor placement is constrained by what the machine physically allows, and the resulting gap between what is measured and what matters is not small on a flow-through system.
+
+  The control law works from reconstructed states rather than from raw measurements standing in for them.
+links:
+  - target: REQ-STATE-ESTIMATION-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: OBL-CONTROL-DESIGN-DISCIPLINE-001.C2
+type: criterion
+title: The model uncertainty the design assumes is stated rather than implicit
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Margin carried against an unstated uncertainty cannot be checked by anyone, including its author later.
+
+  It also cannot be revisited when identification turns out better or worse than expected, which is the point at which the margin should move.
+links:
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001
+    type: criterion-of

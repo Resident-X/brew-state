@@ -1,0 +1,14 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001.C5
+type: criterion
+title: A structure is published as supported only where it has been verified against real hardware
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Cheap to add is not the same as supported, and the verification obligation cannot be met for machines nobody can test against.
+
+  An unverified structure is published as unverified, so an adopter knows they are the first to run it.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001
+    type: criterion-of

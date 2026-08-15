@@ -1,0 +1,14 @@
+id: REQ-PREENERGISATION-VERIFICATION-001.C3
+type: criterion
+title: Timing behaviour is verified rather than only computed results
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A control law that is arithmetically correct and misses its deadlines fails the same way as one that computes the wrong answer, and reasoning about source establishes neither.
+
+  This covers the machine's response to events it does not control the arrival of.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001
+    type: criterion-of
