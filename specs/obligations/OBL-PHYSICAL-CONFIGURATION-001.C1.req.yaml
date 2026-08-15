@@ -1,0 +1,14 @@
+id: OBL-PHYSICAL-CONFIGURATION-001.C1
+type: criterion
+title: A component a requirement depends on is identifiable, and what depends on it is discoverable
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A part chosen without recording what needed it becomes a part nobody can safely substitute, because the reason it was there is gone.
+
+  The question that must be answerable is not what is fitted but what breaks if this changes, and that question is asked at the moment of substitution rather than at leisure.
+links:
+  - target: OBL-PHYSICAL-CONFIGURATION-001
+    type: criterion-of

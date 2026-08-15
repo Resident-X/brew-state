@@ -1,0 +1,14 @@
+id: OBL-PHYSICAL-CONFIGURATION-001.C4
+type: criterion
+title: Divergence between what was designed and what was built is recorded as it happens
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Substitutions are made at the bench under availability pressure and are the least likely thing to be written up afterwards.
+
+  A recorded configuration that has quietly become aspirational is worse than none, because it will be trusted by someone who was not there.
+links:
+  - target: OBL-PHYSICAL-CONFIGURATION-001
+    type: criterion-of

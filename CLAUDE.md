@@ -86,3 +86,11 @@ or against that.
 - **Blind review before every PR, including pure graph-authoring** (Rule 7). Launch a fresh-context
   agent that reads the slice/criteria/journeys and the diff cold, and present its
   ISSUE / PASS / SUGGESTION findings before fixing anything. This is non-negotiable.
+## Known engine gaps
+
+- **`allocated-to` is unusable.** The schema declares `valid_targets: [component]` and states twice
+  that "component targets are external IDs, not graph nodes" — but there is no `component` node type,
+  and the write-layer validator rejects any such link as `dangling link: target "X" does not exist`.
+  So requirement-to-physical-component allocation, the mechanism `OBL-PHYSICAL-CONFIGURATION-001`
+  would naturally use, cannot currently be wired. No workaround: pointing at a definition or
+  requirement node fails the `valid_targets` check instead.

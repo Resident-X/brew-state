@@ -1,0 +1,21 @@
+id: OBL-PHYSICAL-CONFIGURATION-001
+type: requirement
+category: obligation
+title: The machine's physical configuration is known rather than remembered
+status: active
+priority: must
+authority: internal
+managed: true
+version: 1
+text: |
+  Much of what this machine will be made of is inherited from a machine of unknown history, and the parts that matter most are among them. The protective chain in particular is largely reused: thermostats bonded to castings, a one-shot device of unknown age, conductors that have been hot and wet for years.
+
+  A configuration held in memory diverges from the machine the first time a part is substituted at the bench, and it diverges silently. That silence matters most in the one case it must not: a substituted protective device changes the safety argument without changing anything anyone wrote down.
+rationale: |
+  Authority is internal. Nothing outside the project requires this; it is the project's own judgement that a safety argument resting on parts nobody tracked is not an argument.
+
+  Framed as configuration control rather than as bill-of-materials management, because the risk is not that a list goes stale but that the machine stops matching what was reasoned about. A maintained list is one way to hold that correspondence and not obviously the best one — the engine's allocation link answers the question a list cannot, which is what depends on this part.
+
+  Deliberately minimal. This is not a demand for revision-controlled part numbering or a product data management system: both cost more than this project is worth and neither addresses the failure above. Five things earn their place, and the fifth is the test of the other four — if a substitution can be made without anything surfacing what relied on the original, the record was decorative.
+
+  The reuse criterion is the one specific to this project rather than general good practice. A part bought new arrives in a known state. A part inherited from a machine of unknown age and duty has no known state at all, and several inherited parts are protective devices whose characteristic failure is to fail closed while appearing entirely intact.

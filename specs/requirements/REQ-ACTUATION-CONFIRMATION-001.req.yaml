@@ -12,7 +12,7 @@ text: |
 rationale: |
   Requires the observation to be independent of the command path, because a confirmation derived from the same signal that issued the command establishes only that the controller still holds its own intention.
 
-  Distinguishes fast direct confirmation from slow effect-based confirmation rather than demanding one mechanism everywhere. Which channels get direct sensing is a cost and hardware decision, and it is worth recording that the current parts list contains no current sensing of any kind. This requirement exists partly to make that gap visible before parts are bought rather than after.
+  Distinguishes fast direct confirmation from slow effect-based confirmation rather than demanding one mechanism everywhere. Which channels get direct sensing is a cost and hardware decision, and confirming a switching device electrically needs sensing that measuring temperature does not. This requirement is where that need is asserted, so it is visible to whoever assembles the parts rather than discovered when confirmation turns out to be unbuildable.
 
   The ambiguity criterion is deliberate and is the opposite of what a diagnostic system is usually asked for. Effect-based confirmation genuinely cannot separate a failed switch from a failed load from a failed sensor, and reporting a specific cause the observation does not support sends the builder to the wrong place with confidence.
 links:

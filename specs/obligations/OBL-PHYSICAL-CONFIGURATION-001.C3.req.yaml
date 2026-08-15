@@ -1,0 +1,14 @@
+id: OBL-PHYSICAL-CONFIGURATION-001.C3
+type: criterion
+title: A reused part's condition is established before anything relies on it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A part inherited from a machine of unknown age and duty arrives in an unknown state, and several of the inherited ones are protective devices whose characteristic failure is to fail closed while appearing intact.
+
+  Presence is not evidence of function. Assuming otherwise is the failure this prevents, and it is the assumption a builder under time pressure makes most readily.
+links:
+  - target: OBL-PHYSICAL-CONFIGURATION-001
+    type: criterion-of

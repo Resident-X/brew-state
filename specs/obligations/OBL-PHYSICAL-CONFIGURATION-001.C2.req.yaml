@@ -1,0 +1,14 @@
+id: OBL-PHYSICAL-CONFIGURATION-001.C2
+type: criterion
+title: Components whose failure bears on safety are distinguished from those whose failure does not
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Spending discipline permits cheap parts where consequence is low, which is only safe while the distinction is recorded rather than remembered by whoever made it.
+
+  The safety-relevant set is small and stable, which is what makes marking it cheap and forgetting it expensive.
+links:
+  - target: OBL-PHYSICAL-CONFIGURATION-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: OBL-PHYSICAL-CONFIGURATION-001.C5
+type: criterion
+title: Substituting a component surfaces what depended on it
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The value of recording configuration is not the record itself but the question it answers at the moment of change.
+
+  If a part can be swapped without anything raising what relied on the original, the record is decorative and the other criteria have bought nothing.
+links:
+  - target: OBL-PHYSICAL-CONFIGURATION-001
+    type: criterion-of
