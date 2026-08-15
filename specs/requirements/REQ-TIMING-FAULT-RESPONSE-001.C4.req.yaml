@@ -1,0 +1,14 @@
+id: REQ-TIMING-FAULT-RESPONSE-001.C4
+type: criterion
+title: State shared between concurrent activities is never observed part-updated
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A value read half way through being written is wrong in a way that does not reproduce, does not correlate with anything the builder can see, and survives every attempt to find it by retrying.
+
+  Stated as what an observer sees rather than as how it is arranged, because the arrangement is a decision and this is the property it has to deliver.
+links:
+  - target: REQ-TIMING-FAULT-RESPONSE-001
+    type: criterion-of

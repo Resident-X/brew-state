@@ -1,0 +1,14 @@
+id: REQ-TIMING-FAULT-RESPONSE-001.C1
+type: criterion
+title: A missed deadline is detected rather than passing unnoticed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Defined behaviour on overrun is unreachable if the machine cannot tell an overrun happened. Undefined is what it gets by default.
+
+  Detection is separate from response, and it is the half that can be built before anyone decides what the response should be.
+links:
+  - target: REQ-TIMING-FAULT-RESPONSE-001
+    type: criterion-of

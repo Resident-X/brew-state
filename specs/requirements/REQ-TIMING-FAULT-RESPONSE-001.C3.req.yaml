@@ -1,0 +1,14 @@
+id: REQ-TIMING-FAULT-RESPONSE-001.C3
+type: criterion
+title: Persistent overrun is treated as a fault rather than absorbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A single overrun on real hardware is not evidence of anything. A machine that keeps missing the same deadline is not doing the job it was built to do, and saying nothing about it is how that becomes normal.
+
+  The distinction is the same one drift correction draws between a transient and a bias.
+links:
+  - target: REQ-TIMING-FAULT-RESPONSE-001
+    type: criterion-of

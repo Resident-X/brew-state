@@ -18,7 +18,9 @@ rationale: |
 
   Silent on the form the material takes and on how many steps it has. What matters is that the path exists, is followed rather than asserted, and ends somewhere a reader can tell they have arrived.
 links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C2
+    type: derives-from
   - target: PER-ADOPTER-001.C5
     type: derives-from
-  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C2
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C4
     type: derives-from

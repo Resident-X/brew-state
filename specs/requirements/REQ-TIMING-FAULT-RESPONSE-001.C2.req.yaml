@@ -1,0 +1,14 @@
+id: REQ-TIMING-FAULT-RESPONSE-001.C2
+type: criterion
+title: A missed deadline has a defined effect on the delivery in progress
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The effect belongs to the design rather than to whatever the code happens to do next, and it differs by which deadline was missed and what depended on it.
+
+  What this forbids is the case where nobody decided, and the machine's behaviour is whatever falls out.
+links:
+  - target: REQ-TIMING-FAULT-RESPONSE-001
+    type: criterion-of
