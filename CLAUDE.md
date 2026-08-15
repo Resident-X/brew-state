@@ -44,9 +44,22 @@ or against that.
   one at a time.
 - `authority:` and `managed:` have **no CLI flags**. Setting them needs the direct-file-edit escape
   hatch; `validate` accepts them but `show` does not project them.
+- Authoring through the engine **inserts into the index itself** — no reindex step is owed. Run
+  `task sc:index` only after using the direct-file-edit escape hatch, to pick the change back up.
+- To edit one sentence inside a long `text:`/`rationale:`, pull the current field out with
+  `show --format json`, substitute, and write it back with `--text-file`/`--rationale-file`. The
+  engine stays the writer and the version/event trail stays intact; hand-editing the file to avoid
+  retyping the field is the escape hatch, not the shortcut.
 
 ## Using the engine CLI
 
+- **Read the graph through the engine, never by reading the files.** `show <id>` projects a node
+  together with its criteria and the inline meaning of each enumerated value; `query "<terms>"`
+  searches every node at once; `trace <id>` walks the chain up and down; `links <id> --direction
+  inbound|outbound --type <t>` lists edges. Reaching for `grep`/`sed`/`cat` over `specs/**.req.yaml`
+  returns raw YAML stripped of those projections, silently misses nodes whose wording differs from
+  the search term, and takes several calls to do what one `query` does. The **only** legitimate
+  direct read is when you need a field `show` does not project (`authority:`, `managed:`).
 - **`staircase capabilities --format json` is the map.** Every command, flag, persistent flag, the
   tier registry, and consumer projection levels. Run it when you don't already know the surface —
   guessing flags and retrying is slower than reading it once.
@@ -86,8 +99,24 @@ or against that.
 - **Blind review before every PR, including pure graph-authoring** (Rule 7). Launch a fresh-context
   agent that reads the slice/criteria/journeys and the diff cold, and present its
   ISSUE / PASS / SUGGESTION findings before fixing anything. This is non-negotiable.
+- **Three failure patterns this graph has actually produced**, worth looking for by name in any
+  review: *amending without propagating* (a decision is revised and its consequences are not chased
+  through the nodes that depended on it); *wrong axis* (the distinction is drawn where the component
+  sits rather than where the consequence lands — electrical contention drawn where the issue was
+  thermal, preventable-vs-unpreventable drawn where the issue was quality-vs-time); and
+  *assumed, not required* (something load-bearing is stated as fact in prose across several nodes
+  and asserted by no criterion — flow sensing, mains-synchronous actuation and the reference machine
+  itself all reached that state).
 
 ## Known engine gaps
+
+- **Deprecation is one-way through the CLI.** `author deprecate` sets `status: deprecated`, and
+  there is no `author restore`/`--status` to put a node back. Reversing a mistaken deprecation
+  needs the direct-file-edit escape hatch followed by `task sc:index`. Deprecating the wrong node
+  is therefore worth a check first: **resolve criterion IDs with `show <PARENT>.Cn` individually**,
+  never by reading titles out of a glob or a directory listing — file order is not `.C1..Cn` order,
+  and a mis-mapped ID retires the wrong criterion silently. `validate` will not catch it, because a
+  live requirement deriving from a deprecated criterion is not a dangling link.
 
 - **`allocated-to` is unusable.** The schema declares `valid_targets: [component]` and states twice
   that "component targets are external IDs, not graph nodes" — but there is no `component` node type,
