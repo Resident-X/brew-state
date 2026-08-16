@@ -31,12 +31,12 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 |---|---|---|
 | Coffee thermoblock element | 1000 W | Circuit diagram, service manual p.24 — read at source |
 | Steam thermoblock element | 1000 W | Circuit diagram, service manual p.24 — read at source |
-| Steam pump | 22 W | Service manual parts list |
-| Coffee pump | **not established** | Stated in neither document. Measure |
+| Steam pump | 22 W (JYPC-4) | Service manual parts list |
+| Coffee pump | 48 W (Ulka EP5) | Manufacturer spec sheet for the fitted type |
 | Mains fuse (control supply) | 5 A | Circuit diagram |
 | **Total installed heating** | **2000 W** | Sum of the two elements |
 
-Both elements together draw roughly **8.3 A at 240 V** — inside a 10 A supply, with about 300 W of headroom for pumps and electronics. Concurrent brew and steam is therefore *available* on this supply. It would not be at 120 V, where the same 2000 W is over 16 A.
+Both elements together draw roughly **8.3 A at 240 V**. With both pumps running as well the worst case is about **2.07 kW, or 8.6 A**, inside a 10 A supply with roughly 330 W of headroom. Concurrent brew and steam is therefore *available* on this supply. It would not be at 120 V, where the same 2000 W is over 16 A.
 
 ## Protection
 
@@ -46,10 +46,20 @@ Both elements together draw roughly **8.3 A at 240 V** — inside a 10 A supply,
 | Steam thermochamber thermostat | 200 °C ±5 (180–200 °C) | Parts list |
 | Pump thermostat | 110 °C | Parts list |
 | Thermal fuse | Fitted; **rating not established** | Only its mounting bracket is itemised. Establish by inspection |
-| Over-pressure relief | Espresso pump "fitted with a pressure relief system"; **setting not established** | Instruction manual. Establish the setting |
+| Over-pressure relief, coffee side | A `RELIEF ADAPTER BRASS` is fitted to the coffee thermoblock; **setting and function not established** | Service manual parts list. Establish what it is and at what pressure it acts |
+| Over-pressure relief, espresso pump | Instruction manual claims the pump is "fitted with a pressure relief system"; **device, location and setting not established** | Instruction manual, in marketing prose rather than a specification. May be internal to the pump, in which case it protects the pump and nothing else, and it leaves with the pump if the pump is substituted |
+| Over-pressure relief, steam side | **None documented anywhere** | Neither document lists a relief part for the steam thermochamber. Its 200 °C thermostat is an over-temperature device and does not discharge a pressure obligation |
 | Resettable vs one-shot | **Not established** for any of the three thermostats | Establish |
 
 **Margin note.** The coffee block's commanded target sits below its 110 °C thermostat, and the ±3 °C tolerance means the worst-case margin is a few degrees. That margin is what `REQ-MEASUREMENT-001.C1` is written against, and it is the reason absolute accuracy matters more than repeatability on this channel.
+
+**Pressure note — the open one.** `OBL-ELECTRICAL-THERMAL-SAFETY-001.C5` requires relief that acts on the pressure itself, works unpowered, and holds while a sensor is lying and while nothing has recognised a hazard. Nothing above establishes that any fitted device meets it, and the steam side has no documented relief at all.
+
+Three things follow. A relief internal to the pump protects the pump, not the heated masses, and leaves with the pump if the pump is substituted. A working-pressure cap — an OPV of the kind `DEC-PROFILE-COMMANDS-FLOW` relies on — is not a safety device and does not discharge this obligation. And a thermostat is an over-temperature device; the obligation separates pressure from temperature deliberately, because a blocked outlet raises pressure while every electrical part behaves exactly as commanded.
+
+This is the largest unevidenced safety claim in the project. It is not resolvable from either manufacturer document and needs the machine opened.
+
+**On substitution.** The pumps in particular are expected to change as the design settles. `OBL-PHYSICAL-CONFIGURATION-001` is the obligation that applies: a substituted component silently changes the safety case its predecessor was part of, and the pump relief above is exactly that hazard in miniature.
 
 ## Already fitted
 
