@@ -2,7 +2,7 @@ id: EVD-SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C1-TEST
 type: evidence
 title: Every structure carries a declared support status, and the build fails when one does not (SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C1)
 status: active
-version: 1
+version: 2
 result: pass
 method: test
 observed_at: "2026-08-16T22:31:56Z"
@@ -10,8 +10,10 @@ valid_until: until-superseded
 artifact:
   kind: external
   reference: firmware/tools/tests/test_plant_checks.py::StructureCarriesAStatus, ::DocumentationSaysWhatTheSourcesSay
-text: |-
-  check_support_status.py runs inside every pio build and from task fw:check, over every structure under src/plant rather than the one the build selected. Both structures declare PLANT_STRUCTURE_SUPPORT_STATUS in their own headers and are documented in firmware/README.md. StructureCarriesAStatus covers the declaration side: a structure with no status, a status outside the vocabulary, two statuses, a commented-out status, a status the preprocessor discards, a structure nothing compiles, and the vacuous cases (no structures, no plant root, no vocabulary header, a vocabulary declaring no status type) which return a distinct exit status rather than success. DocumentationSaysWhatTheSourcesSay covers the shared-documentation side: a structure missing from the table, a documented status disagreeing with the header, two rows for one structure, a row for a structure that is not there, and documentation with no status table at all. Removing the status from the thermoblock header was confirmed to stop a real pio run -e native build.
+text: |
+  check_support_status.py runs inside every pio build and from task fw:check, over every structure under src/plant rather than the one the build selected. Both structures declare PLANT_STRUCTURE_SUPPORT_STATUS in their own headers and are documented in firmware/README.md. StructureCarriesAStatus covers the declaration side: a structure with no status, a status outside the vocabulary, two statuses, a commented-out status, a status the preprocessor discards, a structure nothing compiles, and the vacuous cases (no structures, no plant root, no vocabulary header, a vocabulary declaring no status type) which return a distinct exit status rather than success. DocumentationSaysWhatTheSourcesSay covers the shared-documentation side: a structure missing from the table, a documented status disagreeing with the header, two rows for one structure, a row for a structure that is not there, and documentation with no status table at all.
+
+  Those drive the check against synthetic subjects. The mutation harness drives the wired check against the real sources end to end, which is what catches a check that is correct in isolation and mis-wired in the build: the structure-carries-no-support-status mutation removes the status from the structure describing the reference machine's architecture, and the documented-status-drifts-from-the-sources mutation publishes a status in the README table that the header does not claim. Both are caught by the support status check, and the check is confirmed passing before each is introduced.
 links:
   - target: SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C1
     type: satisfies

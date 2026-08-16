@@ -71,6 +71,14 @@ VOCABULARY_HEADER = [
     sys.executable, "tools/check_plant_header.py", "include/plant_types.h",
     "--plant-root", "src/plant", "--include-dir", "include", "--vocabulary-only",
 ]
+SUPPORT_HEADER = [
+    sys.executable, "tools/check_plant_header.py", "include/plant_support.h",
+    "--plant-root", "src/plant", "--include-dir", "include", "--vocabulary-only",
+]
+SUPPORT_STATUS = [
+    sys.executable, "tools/check_support_status.py",
+    "--plant-root", "src/plant", "--include-dir", "include", "--documentation", "README.md",
+]
 ANALYSIS = [
     sys.executable, "tools/check_sanitizers.py", "--project", ".", "--env", "native",
     "--executable", ".pio/build/native/program",
@@ -84,6 +92,8 @@ LABELS = {
     tuple(ENCAPSULATION): "the encapsulation check",
     tuple(SEAM_HEADER): "the seam header check",
     tuple(VOCABULARY_HEADER): "the vocabulary header check",
+    tuple(SUPPORT_HEADER): "the support vocabulary header check",
+    tuple(SUPPORT_STATUS): "the support status check",
     tuple(ANALYSIS): "the host tier's analysis check",
 }
 
@@ -190,6 +200,52 @@ MUTATIONS = (
         "find": "#endif /* PLANT_TYPES_H */",
         "replace": "static inline float plant_scale(float x) { return x * 2.0f; }\n#endif /* PLANT_TYPES_H */",
         "command": VOCABULARY_HEADER,
+    },
+    {
+        "name": "structure-carries-no-support-status",
+        "why": "the structure describing the reference machine's architecture reaches the seam "
+               "without saying whether hardware has verified it",
+        "file": "src/plant/thermoblock/plant_structure.h",
+        "find": "#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED\n",
+        "replace": "",
+        "command": SUPPORT_STATUS,
+    },
+    {
+        "name": "verification-claimed-without-a-citation",
+        "why": "the status most likely to be set optimistically is set optimistically -- "
+               "verified, with nothing cited and nothing on a bench",
+        "file": "src/plant/thermoblock/plant_structure.h",
+        "find": "#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED",
+        "replace": "#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_HARDWARE_VERIFIED",
+        "command": SUPPORT_STATUS,
+    },
+    {
+        "name": "support-vocabulary-grows-a-distinction",
+        "why": "the vocabulary gains a term for how thoroughly a structure was verified, which "
+               "is evidence nobody has and a line drawn somewhere other than where the "
+               "requirement draws it",
+        "file": "include/plant_support.h",
+        "find": "    PLANT_SUPPORT_HARDWARE_VERIFIED\n",
+        "replace": "    PLANT_SUPPORT_PARTIALLY_VERIFIED,\n    PLANT_SUPPORT_HARDWARE_VERIFIED\n",
+        "command": SUPPORT_STATUS,
+    },
+    {
+        "name": "documented-status-drifts-from-the-sources",
+        "why": "the table an adopter chooses a structure from publishes a status the structure's "
+               "own header does not claim, which is the half that gets believed",
+        "file": "README.md",
+        "find": "| `thermoblock` | `PLANT_SUPPORT_UNVERIFIED` | — |",
+        "replace": "| `thermoblock` | `PLANT_SUPPORT_HARDWARE_VERIFIED` | ran it, seemed fine |",
+        "command": SUPPORT_STATUS,
+    },
+    {
+        "name": "support-vocabulary-header-names-a-structure",
+        "why": "the header every structure includes for the status vocabulary reaches into one "
+               "structure, which would put those equations behind every consumer of the seam",
+        "file": "include/plant_support.h",
+        "find": "#endif /* PLANT_SUPPORT_H */",
+        "replace": '#include "thermoblock/plant_structure.h"\n#endif /* PLANT_SUPPORT_H */',
+        "command": SUPPORT_HEADER,
     },
     {
         "name": "strict-warnings-narrowed",

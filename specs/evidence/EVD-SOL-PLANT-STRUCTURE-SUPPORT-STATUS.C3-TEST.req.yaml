@@ -2,7 +2,7 @@ id: EVD-SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C3-TEST
 type: evidence
 title: A verified status is refused unless evidence of hardware verification is cited (SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C3)
 status: active
-version: 1
+version: 2
 result: pass
 method: test
 observed_at: "2026-08-16T22:31:56Z"
@@ -10,8 +10,10 @@ valid_until: until-superseded
 artifact:
   kind: external
   reference: firmware/tools/tests/test_plant_checks.py::VerificationCostsACitation
-text: |-
+text: |
   A structure claiming the verified value must also define PLANT_STRUCTURE_SUPPORT_EVIDENCE as text identifying what was run against what. VerificationCostsACitation exercises the claim with a citation (passes, including one split across lines), with no citation macro at all, with an empty citation, with a placeholder citation held to the same floor as an empty cell in the documentation table, and with a citation that is not string text — each refused with a message naming the line and what is missing. A citation on a structure not claiming verification is refused too, since it reads as a claim the structure is not making. The documentation side is held to the same floor: a row documenting verification with nothing an adopter can read is refused. Judging whether a cited verification was competently done is a review question and is deliberately not attempted.
+
+  The verification-claimed-without-a-citation mutation makes the claim on the real structure describing the reference machine's architecture — verified, with nothing cited and nothing on a bench — and is caught by the wired check. That is the optimistic setting this criterion exists to make expensive, demonstrated on the artefact it would actually be made on rather than on a synthetic one.
 links:
   - target: SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C3
     type: satisfies
