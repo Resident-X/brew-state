@@ -56,6 +56,12 @@ bool plant_model_step(plant_model_t *model, double seconds);
 """
 
 
+def write(path: str, content: str) -> None:
+    """Write one synthetic file, creating nothing around it."""
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(content)
+
+
 def structure_header(prefix: str) -> str:
     """A synthetic structure header owning names prefixed with `prefix`."""
     return f"""
@@ -886,6 +892,373 @@ class PlantSourcesUnderTheHostTiersAnalysis(unittest.TestCase):
         os.makedirs(os.path.join(project, "src"))
         problems = check_sanitizers.analysis_problems([], project, "native")
         self.assertTrue(any("no subject" in problem for problem in problems), problems)
+
+# --- check_support_status ---------------------------------------------------
+
+
+SUPPORT_VOCABULARY = """
+#ifndef PLANT_SUPPORT_H
+#define PLANT_SUPPORT_H
+typedef enum {
+    PLANT_SUPPORT_UNVERIFIED = 0,
+    PLANT_SUPPORT_HARDWARE_VERIFIED
+} plant_support_status_t;
+#endif
+"""
+
+
+class SupportTree:
+    """A temporary tree of structures, a vocabulary, and a documented table."""
+
+    def __init__(self, structures: tuple[str, ...] = ("alpha", "beta")):
+        self.root = tempfile.TemporaryDirectory()
+        self.include = os.path.join(self.root.name, "include")
+        self.plant = os.path.join(self.root.name, "src", "plant")
+        self.documentation = os.path.join(self.root.name, "README.md")
+        os.makedirs(self.include)
+        os.makedirs(self.plant)
+        write(os.path.join(self.include, "plant_types.h"), NEUTRAL_TYPES)
+        write(os.path.join(self.include, "plant_model.h"), NEUTRAL_MODEL)
+        write(os.path.join(self.include, "plant_support.h"), SUPPORT_VOCABULARY)
+        for name in structures:
+            self.structure(name, "PLANT_SUPPORT_UNVERIFIED")
+        self.document({name: "PLANT_SUPPORT_UNVERIFIED" for name in structures})
+
+    def structure(self, name: str, status: str | None, evidence: str | None = None) -> str:
+        """Write one structure, optionally declaring a status and a citation."""
+        directory = os.path.join(self.plant, name)
+        os.makedirs(directory, exist_ok=True)
+        body = structure_header(name).replace(
+            '#include "plant_types.h"', '#include "plant_support.h"\n#include "plant_types.h"'
+        )
+        declarations = ""
+        if status is not None:
+            declarations += f"#define PLANT_STRUCTURE_SUPPORT_STATUS {status}\n"
+        if evidence is not None:
+            declarations += f"#define PLANT_STRUCTURE_SUPPORT_EVIDENCE {evidence}\n"
+        path = os.path.join(directory, "plant_structure.h")
+        write(path, body.replace('#include "plant_types.h"\n', f'#include "plant_types.h"\n{declarations}'))
+        return path
+
+    def document(self, rows: dict, evidence: dict | None = None) -> None:
+        """Write the documentation an adopter reads, with a status table in it."""
+        evidence = evidence or {}
+        lines = [
+            "# Firmware",
+            "",
+            "| Path | What it holds |",
+            "| --- | --- |",
+            "| `src/plant/` | The structures. |",
+            "",
+            "| Structure | Support status | Evidence |",
+            "| --- | --- | --- |",
+        ]
+        for name, status in rows.items():
+            lines.append(f"| `{name}` | `{status}` | {evidence.get(name, '—')} |")
+        write(self.documentation, "\n".join(lines) + "\n")
+
+    def cleanup(self) -> None:
+        self.root.cleanup()
+
+
+class SupportTreeCase(unittest.TestCase):
+    """A tree of structures, a vocabulary and a documented table, and the check."""
+
+    def setUp(self):
+        self.tree = SupportTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def check(self, **overrides):
+        return run_check(
+            "check_support_status.py",
+            "--plant-root",
+            overrides.get("plant_root", self.tree.plant),
+            "--include-dir",
+            self.tree.include,
+            "--documentation",
+            overrides.get("documentation", self.tree.documentation),
+        )
+
+
+class StructureCarriesAStatus(SupportTreeCase):
+    """SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C1: no structure reaches the seam unanswered."""
+
+    def test_every_structure_carrying_a_declared_status_passes(self):
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_structure_carrying_no_status_fails_and_names_it(self):
+        self.tree.structure("beta", None)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("beta", result.stderr)
+        self.assertIn("PLANT_STRUCTURE_SUPPORT_STATUS", result.stderr)
+
+    def test_a_status_outside_the_vocabulary_fails(self):
+        self.tree.structure("beta", "PLANT_SUPPORT_PROBABLY_FINE")
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_UNVERIFIED"}
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_SUPPORT_PROBABLY_FINE", result.stderr)
+        self.assertIn("not one of the declared values", result.stderr)
+
+    def test_a_structure_claiming_two_statuses_is_reported_rather_than_resolved(self):
+        path = os.path.join(self.tree.plant, "beta", "plant_structure.h")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_HARDWARE_VERIFIED\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("2 times", result.stderr)
+
+    def test_a_commented_out_status_is_not_a_status(self):
+        # The one that would otherwise let a structure look answered to a
+        # reader skimming the header and to nothing else.
+        self.tree.structure("beta", None)
+        path = os.path.join(self.tree.plant, "beta", "plant_structure.h")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("/* #define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED */\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("defines no PLANT_STRUCTURE_SUPPORT_STATUS", result.stderr)
+
+    def test_a_structure_nothing_compiles_still_has_to_answer(self):
+        # The check runs over the tree rather than over the structure a build
+        # selected, so the structure nobody builds is not the one that escapes.
+        self.tree.structure("gamma", None)
+        self.tree.document(
+            {
+                "alpha": "PLANT_SUPPORT_UNVERIFIED",
+                "beta": "PLANT_SUPPORT_UNVERIFIED",
+                "gamma": "PLANT_SUPPORT_UNVERIFIED",
+            }
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("gamma", result.stderr)
+
+    def test_a_status_carrying_a_trailing_comment_is_still_that_status(self):
+        # The headers here are dense with explanation, so a note beside the
+        # declaration is the natural way to write one. Reading the value off
+        # the uncommented source is what keeps that from reading as a claim of
+        # something outside the vocabulary.
+        self.tree.structure("beta", "PLANT_SUPPORT_UNVERIFIED /* nothing on a bench yet */")
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_status_the_preprocessor_discards_is_not_a_status(self):
+        self.tree.structure("beta", None)
+        path = os.path.join(self.tree.plant, "beta", "plant_structure.h")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(
+                "#if 0\n#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED\n#endif\n"
+            )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("defines no PLANT_STRUCTURE_SUPPORT_STATUS", result.stderr)
+
+    def test_a_status_in_the_compiled_branch_of_a_conditional_still_counts(self):
+        # The other side of the same handling: skipping a disabled branch must
+        # not skip the branch that survives it.
+        self.tree.structure("beta", None)
+        path = os.path.join(self.tree.plant, "beta", "plant_structure.h")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(
+                "#if 0\n#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_HARDWARE_VERIFIED\n"
+                "#else\n#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED\n#endif\n"
+            )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_no_structures_fails_rather_than_passing_vacuously(self):
+        empty = tempfile.TemporaryDirectory()
+        self.addCleanup(empty.cleanup)
+        result = self.check(plant_root=empty.name)
+        self.assertEqual(2, result.returncode)
+        self.assertIn("nothing", result.stderr)
+
+    def test_a_missing_plant_root_is_the_same_answer_as_an_empty_one(self):
+        result = self.check(plant_root=os.path.join(self.tree.root.name, "nowhere"))
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no plant root", result.stderr)
+
+    def test_a_missing_vocabulary_is_an_error_not_a_pass(self):
+        os.remove(os.path.join(self.tree.include, "plant_support.h"))
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no vocabulary header", result.stderr)
+
+    def test_a_vocabulary_declaring_no_status_type_is_an_error(self):
+        write(os.path.join(self.tree.include, "plant_support.h"), "#define NOTHING 1\n")
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("declares no plant_support_status_t", result.stderr)
+
+
+class VocabularyDrawsTheVerificationLine(SupportTreeCase):
+    """SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C2: verified or not, and no other distinction."""
+
+    def test_a_vocabulary_that_has_grown_a_third_distinction_fails(self):
+        write(
+            os.path.join(self.tree.include, "plant_support.h"),
+            SUPPORT_VOCABULARY.replace(
+                "    PLANT_SUPPORT_HARDWARE_VERIFIED",
+                "    PLANT_SUPPORT_PARTIALLY_VERIFIED,\n    PLANT_SUPPORT_HARDWARE_VERIFIED",
+            ),
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_SUPPORT_PARTIALLY_VERIFIED", result.stderr)
+        self.assertIn("beyond whether hardware has verified", result.stderr)
+
+    def test_a_vocabulary_missing_the_verified_value_fails(self):
+        write(
+            os.path.join(self.tree.include, "plant_support.h"),
+            SUPPORT_VOCABULARY.replace(",\n    PLANT_SUPPORT_HARDWARE_VERIFIED", ""),
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_SUPPORT_HARDWARE_VERIFIED", result.stderr)
+
+
+class VerificationCostsACitation(SupportTreeCase):
+    """SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C3: the claimable value costs evidence."""
+
+    def test_verification_claimed_with_a_citation_passes(self):
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"run against a Gaggia Classic, 2026-01"')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "Gaggia Classic, 2026-01"},
+        )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_verification_claimed_with_nothing_cited_fails(self):
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED")
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "trust me"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("defines no PLANT_STRUCTURE_SUPPORT_EVIDENCE", result.stderr)
+
+    def test_verification_claimed_with_an_empty_citation_fails(self):
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '""')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "somewhere"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+    def test_a_placeholder_citation_is_refused_on_the_same_floor_as_the_table(self):
+        # A dash in the table and a question mark in the header are the same
+        # non-answer, so they meet the same floor. Whether a real citation is
+        # a good one is a review question, not this check's.
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"?"')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "somewhere"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+    def test_a_citation_that_is_not_text_is_reported_as_unreadable(self):
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", "BENCH_LOG_2026")
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "a bench log"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("not text this check or an adopter can read", result.stderr)
+
+    def test_a_citation_split_over_several_lines_is_read_whole(self):
+        self.tree.structure(
+            "beta",
+            "PLANT_SUPPORT_HARDWARE_VERIFIED",
+            '"run against a Gaggia Classic, " \\\n    "2026-01"',
+        )
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "Gaggia Classic, 2026-01"},
+        )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_citation_on_a_structure_claiming_no_verification_is_refused(self):
+        self.tree.structure("beta", "PLANT_SUPPORT_UNVERIFIED", '"ran it once, seemed fine"')
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("reads as verification the structure is not claiming", result.stderr)
+
+
+class DocumentationSaysWhatTheSourcesSay(SupportTreeCase):
+    """SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C1: the status an adopter reads is the one claimed."""
+
+    def test_a_structure_absent_from_the_documentation_fails(self):
+        self.tree.document({"alpha": "PLANT_SUPPORT_UNVERIFIED"})
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no row for the 'beta' structure", result.stderr)
+
+    def test_documentation_disagreeing_with_the_source_fails(self):
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "a bench, once"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("documents the 'beta' structure as PLANT_SUPPORT_HARDWARE_VERIFIED", result.stderr)
+
+    def test_documentation_of_a_structure_that_is_not_there_fails(self):
+        self.tree.document(
+            {
+                "alpha": "PLANT_SUPPORT_UNVERIFIED",
+                "beta": "PLANT_SUPPORT_UNVERIFIED",
+                "ghost": "PLANT_SUPPORT_HARDWARE_VERIFIED",
+            },
+            evidence={"ghost": "a machine nobody has"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("the tree has no such structure", result.stderr)
+
+    def test_two_rows_for_one_structure_are_reported_rather_than_resolved(self):
+        # The sources refuse two status claims outright; collapsing two
+        # documented rows to whichever came last would publish one of them and
+        # bury the other, in the half an adopter actually reads.
+        with open(self.tree.documentation, "a", encoding="utf-8") as handle:
+            handle.write("| `beta` | `PLANT_SUPPORT_HARDWARE_VERIFIED` | a bench, allegedly |\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("documents the 'beta' structure 2 times", result.stderr)
+
+    def test_documentation_carrying_no_status_table_fails(self):
+        write(self.tree.documentation, "# Firmware\n\nNothing about support here.\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("documents no structure's support status", result.stderr)
+
+    def test_documented_verification_citing_nothing_fails(self):
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"run against a Gaggia Classic"')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "—"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("cites nothing an adopter can read", result.stderr)
+
+    def test_missing_documentation_is_an_error_not_a_pass(self):
+        result = self.check(documentation=os.path.join(self.tree.root.name, "nowhere.md"))
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no documentation", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,7 +18,17 @@
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
 
+#include "plant_support.h"
 #include "plant_types.h"
+
+/*
+ * Unverified, and unverifiable: there is no hardware this structure could be
+ * run against, because it describes none. It carries the status anyway, because
+ * every structure answers the same question in the same words -- a structure
+ * exempted from answering is a hole an arriving structure would fit through,
+ * and "this one is different" is what every unverified structure would say.
+ */
+#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED
 
 /* The one coefficient this structure reads. It means nothing. */
 typedef struct {

@@ -126,7 +126,9 @@ tasks:
       # The plant-model seam.
       - python3 tools/check_plant_header.py include/plant_model.h --plant-root src/plant --include-dir include
       - python3 tools/check_plant_header.py include/plant_types.h --plant-root src/plant --include-dir include --vocabulary-only
+      - python3 tools/check_plant_header.py include/plant_support.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_plant_encapsulation.py src test --plant-root src/plant --include-dir include
+      - python3 tools/check_support_status.py --plant-root src/plant --include-dir include --documentation README.md
       - python3 tools/check_direct_calls.py .pio/build/native/program --header include/plant_model.h --objects .pio/build/native/src/app/native
       - python3 tools/check_structure_exclusive.py .pio/build/native/program --structure thermoblock --plant-root src/plant --include-dir include
       - python3 tools/check_structure_exclusive.py .pio/build/native_fixture/program --structure fixture --plant-root src/plant --include-dir include

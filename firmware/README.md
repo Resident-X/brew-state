@@ -47,6 +47,38 @@ question that needs a real machine. What is established here is that the numbers
 are replaceable, the equations are replaceable, and neither is reachable except
 through the seam.
 
+## How far a structure has been verified
+
+Cheap to add is not the same as supported. Every structure here compiles, links
+and passes the seam's tests without any of that establishing that its equations
+describe the machine they claim — that is settled on a bench, and nowhere else.
+So each structure declares how far it has been taken, in its own header, and
+`check_support_status.py` fails the build on a structure that declares nothing,
+declares something outside the vocabulary, or claims verification with nothing
+cited behind it. The vocabulary is declared once, in `include/plant_support.h`.
+
+| Structure | Support status | Evidence |
+| --- | --- | --- |
+| `thermoblock` | `PLANT_SUPPORT_UNVERIFIED` | — |
+| `fixture` | `PLANT_SUPPORT_UNVERIFIED` | — |
+
+The line is drawn at verification against real hardware and at nothing else. In
+particular it is **not** drawn at whose machine a structure describes: the
+`thermoblock` structure describes the architecture this project's own machine is
+built on, and that is a statement about what its equations are for rather than
+evidence that anyone has run them against one. Nobody has. There is no machine
+on the bench yet, so every structure in the tree is unverified and says so in the
+same words — which is what lets an adopter comparing two of them compare like
+with like, rather than reading the author's structure as the tested one.
+
+A structure becomes `PLANT_SUPPORT_HARDWARE_VERIFIED` by being run against
+hardware of its architecture and citing what was run, in
+`PLANT_STRUCTURE_SUPPORT_EVIDENCE` and in the table above. Support status is the
+field most likely to be set optimistically, because setting it costs nothing at
+the moment of writing and its consequences land on somebody else's machine much
+later. Requiring the citation is what makes the optimistic setting the one that
+fails a check rather than the one that ships.
+
 ## Layout
 
 | Path | What it holds |
@@ -54,6 +86,7 @@ through the seam.
 | `include/hw_interface.h` | The hardware seam. Free functions, no vendor type, compiles freestanding. |
 | `include/plant_model.h` | The plant-model seam. Free functions, no structure named, no equation. |
 | `include/plant_types.h` | The vocabulary the plant seam is expressed in: quantities, actuation, parameter faults. |
+| `include/plant_support.h` | The one place the support-status vocabulary is declared. Names no structure. |
 | `src/control/` | The control logic. Reaches hardware only through the seam. Identical in both builds. |
 | `src/hw/sim/` | The simulated implementation, and the controls tests use to stand readings up. |
 | `src/hw/stm32/` | The STM32 HAL-backed implementation. Naming vendor symbols is its job. |
@@ -132,7 +165,7 @@ Set `PIO=/path/to/pio` if PlatformIO lives somewhere other than
 ## What the checks enforce
 
 Each is a standalone script, so the same check runs from the build and from the
-task runner. Five of them also run automatically inside every `pio run`.
+task runner. Six of them also run automatically inside every `pio run`.
 
 | Check | What it fails on |
 | --- | --- |
@@ -141,12 +174,13 @@ task runner. Five of them also run automatically inside every `pio run`.
 | `check_sanitizers.py` | A source of this project's own reaches the host artefact without the sanitizers or without the strict warning settings, or the executable links no sanitizer runtime — failures that otherwise pass silently. |
 | `check_direct_calls.py` | A seam call in the linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
-| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the other would let the uninspected one clear itself. Runs inside every build. |
+| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h` and `plant_support.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one. |
 | `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, or naming two — builds anyway, or leaves an artefact behind. |
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
+| `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 
 The plant model's invariants are additionally exercised across the range each
 coefficient declares admissible, rather than at the one nominal value. The

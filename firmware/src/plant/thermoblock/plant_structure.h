@@ -19,7 +19,17 @@
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
 
+#include "plant_support.h"
 #include "plant_types.h"
+
+/*
+ * Nothing has been on the bench. These equations describe the architecture the
+ * project's own machine is built on, which is a claim about what they are for
+ * and not a claim that they have been checked against it -- no instrumented run
+ * against that machine, or any other of the architecture, has happened.
+ * Whoever makes one is the first.
+ */
+#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED
 
 /*
  * Every coefficient this structure uses. There is no number in the equations

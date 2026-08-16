@@ -81,6 +81,32 @@ CHECKS = (
         "--include-dir",
         include_dir,
     ],
+    # And so does the vocabulary the support status is drawn from. Every
+    # structure header includes it, so a structure name reaching it would reach
+    # every consumer of the seam, and the claim that it names none is the
+    # toolchain's to establish rather than a reader's to take on trust.
+    [
+        os.path.join(tools_dir, "check_plant_header.py"),
+        os.path.join(include_dir, "plant_support.h"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+        "--vocabulary-only",
+    ],
+    # Every structure in the tree says whether hardware has verified it, and
+    # the documentation says the same thing its sources do. Over the whole
+    # tree rather than the selected structure: one nobody compiles is exactly
+    # the one that would otherwise sit there unanswered.
+    [
+        os.path.join(tools_dir, "check_support_status.py"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+        "--documentation",
+        os.path.join(project_dir, "README.md"),
+    ],
     # A build that compiles the plant model names exactly one structure.
     [
         os.path.join(tools_dir, "check_structure_selection.py"),
