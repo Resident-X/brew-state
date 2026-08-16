@@ -47,6 +47,7 @@ REQUIRED_COMPILE_FLAGS = (
     "-Werror",
     "-Wconversion",
     "-Wshadow",
+    "-Wdouble-promotion",
 )
 
 
@@ -71,8 +72,14 @@ def compile_commands(project: str, environment: str, pio: str) -> list[dict]:
         return json.load(handle)
 
 
-def runtime_linked(executable: str) -> bool:
-    """Whether the executable pulls in a sanitizer runtime."""
+def runtime_linked(executable: str) -> bool | None:
+    """Whether the executable pulls in a sanitizer runtime.
+
+    None means no tool on this host could look. That is reported as a problem
+    alongside the others rather than raised, because raising here discards
+    every finding already collected -- a host missing an inspector would hide
+    a genuine uninstrumented translation unit behind its own diagnostic.
+    """
     inspected = False
     for command in (["otool", "-L", executable], ["ldd", executable], ["nm", executable]):
         try:
@@ -86,10 +93,7 @@ def runtime_linked(executable: str) -> bool:
         if "asan" in result.stdout or "ubsan" in result.stdout:
             return True
     if not inspected:
-        raise SystemExit(
-            "check_sanitizers: no tool on this host could inspect "
-            f"{executable} for a sanitizer runtime"
-        )
+        return None
     return False
 
 
@@ -133,7 +137,10 @@ def analysis_problems(database: list[dict], project: str, environment: str) -> l
 def check(project: str, environment: str, executable: str, pio: str) -> list[str]:
     problems = analysis_problems(compile_commands(project, environment, pio), project, environment)
 
-    if not runtime_linked(executable):
+    linked = runtime_linked(executable)
+    if linked is None:
+        problems.append(f"{executable}: no tool on this host could inspect it for a sanitizer runtime")
+    elif not linked:
         problems.append(f"{executable}: links no sanitizer runtime")
 
     return problems

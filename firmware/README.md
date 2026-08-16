@@ -108,10 +108,10 @@ task runner. Five of them also run automatically inside every `pio run`.
 | --- | --- |
 | `check_header_neutral.py` | The seam header names a vendor symbol, or does not compile standalone against a freestanding compiler with no vendor include path. Runs inside every build. |
 | `check_encapsulation.py` | A file under `src/control` reaches a HAL function, a CMSIS symbol, a peripheral instance, a device header, an include the check cannot resolve, a peripheral address, or assembly. Runs inside every build. |
-| `check_sanitizers.py` | The host build links the sanitizer runtime while the control logic is not actually compiled under it — a failure that otherwise passes silently. |
+| `check_sanitizers.py` | A source of this project's own reaches the host artefact without the sanitizers or without the strict warning settings, or the executable links no sanitizer runtime — failures that otherwise pass silently. |
 | `check_direct_calls.py` | A seam call in the linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
-| `check_plant_header.py` | The plant seam header names a structure, reaches into a structure's record, carries a function definition, declares nothing, or fails to compile standalone against *every* structure in turn. Runs inside every build. |
+| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the other would let the uninspected one clear itself. Runs inside every build. |
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one. |

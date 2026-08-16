@@ -15,6 +15,7 @@
 #include "plant_model.h"
 
 #include <errno.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -79,9 +80,15 @@ static void report(plant_parameter_error_t *error, plant_parameter_fault_t fault
  * would only produce a value the record cannot hold.
  *
  * `representable` is false when the token names a real number this type cannot
- * carry -- too large, or so small it would arrive as zero. Either is refused
- * rather than rounded: a coefficient silently delivered as zero, or as
+ * carry at all -- one that arrives as zero, or as infinity. Either is refused
+ * rather than delivered: a coefficient silently turned into zero, or into
  * infinity, is not the coefficient the description asked for.
+ *
+ * The test is on what arrived, not on ERANGE alone. A result too small to be
+ * held with full precision but still perfectly usable -- anything below the
+ * smallest normal value -- also raises ERANGE, and refusing on the flag by
+ * itself would reject values sitting well inside the range their own structure
+ * declares admissible.
  */
 static bool parse_value(const char *begin, const char *end, float *value, bool *representable)
 {
@@ -102,7 +109,10 @@ static bool parse_value(const char *begin, const char *end, float *value, bool *
     if (stopped != text + length) {
         return false;
     }
-    if (errno == ERANGE) {
+    if (errno == ERANGE && (parsed == 0.0f || isinf(parsed))) {
+        /* Written out even though this is a refusal, so the caller can report
+         * what arrived rather than a value it never saw. */
+        *value = parsed;
         *representable = false;
         return false;
     }
@@ -209,6 +219,13 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
                    representable ? PLANT_PARAMETER_MALFORMED : PLANT_PARAMETER_OUT_OF_RANGE,
                    line_number, name_begin, name_length);
             if (!representable) {
+                /*
+                 * The value is reported as it arrived, which is the zero or the
+                 * infinity that makes it unusable, rather than as the number
+                 * the description spelled -- that number is precisely what this
+                 * type cannot hold.
+                 */
+                error->value = value;
                 error->minimum = specs[index].minimum;
                 error->maximum = specs[index].maximum;
             }

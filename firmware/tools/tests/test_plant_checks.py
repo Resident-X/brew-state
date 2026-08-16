@@ -480,6 +480,59 @@ class PlantHeaderCheck(unittest.TestCase):
         result = self.check()
         self.assertEqual(0, result.returncode, result.stderr)
 
+
+    def check_vocabulary_only(self):
+        return run_check(
+            "check_plant_header.py",
+            self.header,
+            "--plant-root",
+            self.tree.plant,
+            "--include-dir",
+            self.tree.include,
+            "--vocabulary-only",
+        )
+
+    def test_vocabulary_only_accepts_a_header_that_declares_no_operation(self):
+        # This is the one condition the flag exists to drop.
+        self.rewrite(
+            '#ifndef PLANT_MODEL_H\n#define PLANT_MODEL_H\n#include "plant_types.h"\n'
+            '#include "plant_structure.h"\n#endif\n'
+        )
+        self.assertEqual(1, self.check().returncode)
+        result = self.check_vocabulary_only()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_vocabulary_only_still_refuses_a_function_definition(self):
+        # Widening the flag to skip this too would restore the hole it closed:
+        # an equation could then live in the header nothing inspects.
+        self.rewrite(
+            '#ifndef PLANT_MODEL_H\n#define PLANT_MODEL_H\n#include "plant_types.h"\n'
+            '#include "plant_structure.h"\n'
+            "static float square(float x) { return x * x; }\n#endif\n"
+        )
+        result = self.check_vocabulary_only()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("function definition", result.stderr)
+
+    def test_vocabulary_only_still_refuses_reaching_into_a_structure(self):
+        self.rewrite(
+            '#ifndef PLANT_MODEL_H\n#define PLANT_MODEL_H\n#include "plant_types.h"\n'
+            '#include "plant_structure.h"\n'
+            "#define PLANT_FIRST(p) ((p)->alpha_coefficient)\n#endif\n"
+        )
+        result = self.check_vocabulary_only()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha_coefficient", result.stderr)
+
+    def test_vocabulary_only_still_refuses_a_named_structure(self):
+        self.rewrite(
+            '#ifndef PLANT_MODEL_H\n#define PLANT_MODEL_H\n#include "plant_types.h"\n'
+            '#include "alpha/plant_structure.h"\n#endif\n'
+        )
+        result = self.check_vocabulary_only()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("names a structure", result.stderr)
+
     def test_one_structure_is_not_enough_to_establish_neutrality(self):
         single = SyntheticTree(structures=("alpha",))
         self.addCleanup(single.cleanup)
@@ -709,8 +762,6 @@ class SelectionRefusedCheck(unittest.TestCase):
         self.assertIn("left an artefact behind", result.stderr)
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 # --- The plant seam's share of the checks it did not have to reimplement -----
@@ -835,3 +886,6 @@ class PlantSourcesUnderTheHostTiersAnalysis(unittest.TestCase):
         os.makedirs(os.path.join(project, "src"))
         problems = check_sanitizers.analysis_problems([], project, "native")
         self.assertTrue(any("no subject" in problem for problem in problems), problems)
+
+if __name__ == "__main__":
+    unittest.main()

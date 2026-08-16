@@ -176,6 +176,25 @@ static double signature_of(const char *text, size_t length, const plant_actuatio
     return signature(&model, actuation, steps);
 }
 
+/*
+ * A description in which every coefficient is an admissible placeholder except
+ * the one at `index`, which is written out verbatim. Used to drive a single
+ * coefficient's value through the parser without disturbing the others.
+ */
+static size_t describe_with(size_t index, const char *token, char *out, size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written = snprintf(out + used, capacity - used, "%s = %s\n", NOMINAL[i].name,
+                                     i == index ? token : "1.0");
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
 /* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: the structure runs on the host
  * -- a model instance initialises and advances over a sequence of steps to
  * completion. */
@@ -309,7 +328,7 @@ static void test_an_actuation_beyond_full_scale_is_refused_and_changes_nothing(v
 static void test_an_uninitialised_instance_and_a_zero_step_are_refused(void)
 {
     plant_model_t model;
-    double value = 0.0;
+    float value = 0.0f;
 
     memset(&model, 0, sizeof(model));
     TEST_ASSERT_FALSE(plant_model_step(&model, &HEATING, STEP_MS));
@@ -434,7 +453,7 @@ static void test_a_coefficient_outside_its_range_is_refused_with_the_range(void)
     TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
     TEST_ASSERT_EQUAL_STRING("brew.heater_power_w", fault.parameter);
     TEST_ASSERT_EQUAL_UINT32(3u, fault.line);
-    TEST_ASSERT_TRUE(fault.value == NOMINAL[2].value * 1000.0);
+    TEST_ASSERT_TRUE(fault.value == (float)(NOMINAL[2].value * 1000.0));
     TEST_ASSERT_TRUE(fault.maximum < fault.value);
 }
 
@@ -451,21 +470,49 @@ static void test_a_not_a_number_is_refused_rather_than_run(void)
         char text[DESCRIPTION_MAX];
         plant_parameters_t loaded;
         plant_parameter_error_t fault;
-        size_t used = 0u;
-
-        for (size_t c = 0u; c < COEFFICIENT_COUNT; c++) {
-            const int written =
-                snprintf(text + used, sizeof(text) - used, "%s = %s\n", NOMINAL[c].name,
-                         c == 1u ? spellings[i] : "1.0");
-            TEST_ASSERT_TRUE(written > 0);
-            used += (size_t)written;
-        }
+        const size_t used = describe_with(1u, spellings[i], text, sizeof(text));
 
         memset(&fault, 0, sizeof(fault));
         TEST_ASSERT_FALSE(plant_parameters_load(text, used, &loaded, &fault));
         TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
         TEST_ASSERT_EQUAL_STRING(NOMINAL[1].name, fault.parameter);
     }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a value the type cannot hold at
+ * all is refused rather than delivered as the zero or the infinity it collapsed
+ * to. A coefficient quietly turned into zero is not the coefficient the
+ * description asked for, and nothing downstream could tell the difference. */
+static void test_a_value_that_collapses_to_zero_is_refused(void)
+{
+    /* brew.loss_w_per_k admits zero, so an underflow would otherwise be taken
+     * for a legitimate reading of this description rather than a refusal. */
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    const size_t used = describe_with(3u, "1e-60", text, sizeof(text));
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[3].name, fault.parameter);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a value inside the range its
+ * structure declares is accepted even when holding it costs precision. The
+ * refusal above is about what the type cannot carry at all, not about what it
+ * carries approximately -- confusing the two would reject values the structure
+ * itself calls admissible. */
+static void test_a_value_below_full_precision_is_still_accepted(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    const size_t used = describe_with(3u, "1e-38", text, sizeof(text));
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
 }
 
 /* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a description that cannot be
@@ -556,6 +603,8 @@ int main(void)
     RUN_TEST(test_omitting_any_single_coefficient_is_refused);
     RUN_TEST(test_a_coefficient_outside_its_range_is_refused_with_the_range);
     RUN_TEST(test_a_not_a_number_is_refused_rather_than_run);
+    RUN_TEST(test_a_value_that_collapses_to_zero_is_refused);
+    RUN_TEST(test_a_value_below_full_precision_is_still_accepted);
     RUN_TEST(test_an_unparsable_description_is_refused_at_its_line);
     RUN_TEST(test_a_refusal_leaves_the_record_untouched);
     RUN_TEST(test_an_empty_description_is_refused);

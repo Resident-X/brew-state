@@ -194,7 +194,9 @@ static void exercise_plant(const char *parameter_path)
         float value = 0.0f;
         expect(plant_model_quantity(&model, (plant_quantity_t)quantity, &value),
                "a quantity the model exposes could not be read");
-        (void)printf("plant quantity %d = %.6f\n", quantity, value);
+        /* The cast is explicit because a variadic argument is promoted
+         * whatever the source says, and the build refuses a silent one. */
+        (void)printf("plant quantity %d = %.6f\n", quantity, (double)value);
     }
 
     float unused = 0.0f;
