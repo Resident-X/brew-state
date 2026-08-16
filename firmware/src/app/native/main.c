@@ -191,13 +191,13 @@ static void exercise_plant(const char *parameter_path)
     expect(!plant_model_step(&model, &heating, 0u), "a zero-length step was accepted");
 
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
-        double value = 0.0;
+        float value = 0.0f;
         expect(plant_model_quantity(&model, (plant_quantity_t)quantity, &value),
                "a quantity the model exposes could not be read");
         (void)printf("plant quantity %d = %.6f\n", quantity, value);
     }
 
-    double unused = 0.0;
+    float unused = 0.0f;
     expect(!plant_model_quantity(&model, PLANT_QUANTITY_COUNT, &unused),
            "a quantity outside the enumerated ones was answered");
 

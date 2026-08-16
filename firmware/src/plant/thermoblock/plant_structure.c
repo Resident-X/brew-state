@@ -12,8 +12,8 @@
 #include <string.h>
 
 /* Milliseconds to seconds, and parts per thousand to a fraction of full scale. */
-#define MILLIS_PER_SECOND 1000.0
-#define PERMILLE_FULL_SCALE 1000.0
+#define MILLIS_PER_SECOND 1000.0f
+#define PERMILLE_FULL_SCALE 1000.0f
 
 /*
  * The admissible ranges are the ones outside which these equations stop
@@ -24,25 +24,25 @@
  * being an espresso machine and starts being a data-entry error.
  */
 static const plant_parameter_spec_t SPECS[] = {
-    {"ambient_temperature_c", -40.0, 60.0, offsetof(plant_parameters_t, ambient_temperature_c)},
+    {"ambient_temperature_c", -40.0f, 60.0f, offsetof(plant_parameters_t, ambient_temperature_c)},
 
-    {"brew.thermal_mass_j_per_k", 1.0, 100000.0,
+    {"brew.thermal_mass_j_per_k", 1.0f, 100000.0f,
      offsetof(plant_parameters_t, brew_thermal_mass_j_per_k)},
-    {"brew.heater_power_w", 0.0, 10000.0, offsetof(plant_parameters_t, brew_heater_power_w)},
-    {"brew.loss_w_per_k", 0.0, 1000.0, offsetof(plant_parameters_t, brew_loss_w_per_k)},
+    {"brew.heater_power_w", 0.0f, 10000.0f, offsetof(plant_parameters_t, brew_heater_power_w)},
+    {"brew.loss_w_per_k", 0.0f, 1000.0f, offsetof(plant_parameters_t, brew_loss_w_per_k)},
 
-    {"steam.thermal_mass_j_per_k", 1.0, 100000.0,
+    {"steam.thermal_mass_j_per_k", 1.0f, 100000.0f,
      offsetof(plant_parameters_t, steam_thermal_mass_j_per_k)},
-    {"steam.heater_power_w", 0.0, 10000.0, offsetof(plant_parameters_t, steam_heater_power_w)},
-    {"steam.loss_w_per_k", 0.0, 1000.0, offsetof(plant_parameters_t, steam_loss_w_per_k)},
+    {"steam.heater_power_w", 0.0f, 10000.0f, offsetof(plant_parameters_t, steam_heater_power_w)},
+    {"steam.loss_w_per_k", 0.0f, 1000.0f, offsetof(plant_parameters_t, steam_loss_w_per_k)},
 
-    {"pump.pressure_bar", 0.0, 30.0, offsetof(plant_parameters_t, pump_pressure_bar)},
-    {"brew.pressure_time_constant_s", 0.001, 100.0,
+    {"pump.pressure_bar", 0.0f, 30.0f, offsetof(plant_parameters_t, pump_pressure_bar)},
+    {"brew.pressure_time_constant_s", 0.001f, 100.0f,
      offsetof(plant_parameters_t, brew_pressure_time_constant_s)},
 
-    {"steam.saturation_temperature_c", 0.0, 300.0,
+    {"steam.saturation_temperature_c", 0.0f, 300.0f,
      offsetof(plant_parameters_t, steam_saturation_temperature_c)},
-    {"steam.pressure_bar_per_k", 0.0, 10.0,
+    {"steam.pressure_bar_per_k", 0.0f, 10.0f,
      offsetof(plant_parameters_t, steam_pressure_bar_per_k)},
 };
 
@@ -55,17 +55,17 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
 }
 
 /* One mass's temperature after `seconds` of heating at `duty` and losing to ambient. */
-static double advanced_temperature(double temperature_c, double ambient_c, double heater_power_w,
-                                   double duty, double loss_w_per_k, double thermal_mass_j_per_k,
-                                   double seconds)
+static float advanced_temperature(float temperature_c, float ambient_c, float heater_power_w,
+                                   float duty, float loss_w_per_k, float thermal_mass_j_per_k,
+                                   float seconds)
 {
-    const double delivered_w = heater_power_w * duty;
-    const double lost_w = loss_w_per_k * (temperature_c - ambient_c);
+    const float delivered_w = heater_power_w * duty;
+    const float lost_w = loss_w_per_k * (temperature_c - ambient_c);
     return temperature_c + ((delivered_w - lost_w) * seconds) / thermal_mass_j_per_k;
 }
 
 void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuation_t *actuation,
-                                      double seconds)
+                                      float seconds)
 {
     if (model == NULL || actuation == NULL) {
         return;
@@ -85,7 +85,7 @@ void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuatio
 }
 
 void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,
-                                   double seconds)
+                                   float seconds)
 {
     if (model == NULL || actuation == NULL) {
         return;
@@ -93,14 +93,14 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
 
     const plant_parameters_t *p = &model->coefficients;
 
-    const double commanded_bar =
+    const float commanded_bar =
         p->pump_pressure_bar * (actuation->pump_permille / PERMILLE_FULL_SCALE);
     model->brew_pressure_bar += ((commanded_bar - model->brew_pressure_bar) * seconds) /
                                 p->brew_pressure_time_constant_s;
 
-    const double above_saturation_k = model->steam_temperature_c - p->steam_saturation_temperature_c;
+    const float above_saturation_k = model->steam_temperature_c - p->steam_saturation_temperature_c;
     model->steam_pressure_bar =
-        above_saturation_k > 0.0 ? p->steam_pressure_bar_per_k * above_saturation_k : 0.0;
+        above_saturation_k > 0.0f ? p->steam_pressure_bar_per_k * above_saturation_k : 0.0f;
 }
 
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
@@ -120,8 +120,8 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
      */
     model->brew_temperature_c = parameters->ambient_temperature_c;
     model->steam_temperature_c = parameters->ambient_temperature_c;
-    model->brew_pressure_bar = 0.0;
-    model->steam_pressure_bar = 0.0;
+    model->brew_pressure_bar = 0.0f;
+    model->steam_pressure_bar = 0.0f;
     model->initialised = true;
     return true;
 }
@@ -138,7 +138,7 @@ bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
         return false;
     }
 
-    const double seconds = interval_millis / MILLIS_PER_SECOND;
+    const float seconds = interval_millis / MILLIS_PER_SECOND;
 
     /*
      * Temperatures first, then pressures: steam pressure follows the steam
@@ -149,7 +149,7 @@ bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
     return true;
 }
 
-bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity, double *value)
+bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity, float *value)
 {
     if (model == NULL || value == NULL || !model->initialised) {
         return false;

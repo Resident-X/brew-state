@@ -10,6 +10,20 @@
  * this vocabulary to declare its parameter table, while plant_model.h needs
  * the structure's types to declare its operations. Splitting the two is what
  * keeps that from being a cycle.
+ *
+ * Quantities and coefficients are single precision. That is the width every
+ * controller this machine might reasonably be built on handles natively, so it
+ * leaves the choice of part open; double precision would either require a part
+ * that has a double-precision unit or be emulated in software on one that does
+ * not, and narrowing the field of parts is the opposite of what is wanted this
+ * early. It costs nothing that matters: the measurement is a twelve- to
+ * fifteen-bit conversion, and a plant model is judged against a first
+ * identification that recovers the response shape to within tens of percent.
+ * Single precision carries far more significant figures than either.
+ *
+ * Nothing here fixes the arithmetic of anything built on top. A later
+ * estimator whose conditioning needs care answers that with a method chosen for
+ * numerical stability, not by widening this interface.
  */
 #ifndef PLANT_TYPES_H
 #define PLANT_TYPES_H
@@ -57,8 +71,8 @@ typedef struct {
  */
 typedef struct {
     const char *name;
-    double minimum;
-    double maximum;
+    float minimum;
+    float maximum;
     size_t offset;
 } plant_parameter_spec_t;
 
@@ -88,9 +102,9 @@ typedef struct {
     plant_parameter_fault_t fault;
     uint32_t line;
     char parameter[PLANT_PARAMETER_NAME_MAX];
-    double value;
-    double minimum;
-    double maximum;
+    float value;
+    float minimum;
+    float maximum;
 } plant_parameter_error_t;
 
 #endif /* PLANT_TYPES_H */

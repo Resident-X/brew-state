@@ -77,6 +77,6 @@ bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
  * null, or when the quantity is not one of the enumerated ones.
  */
 bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
-                          double *value);
+                          float *value);
 
 #endif /* PLANT_MODEL_H */

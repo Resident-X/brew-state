@@ -11,11 +11,11 @@
 #include <stddef.h>
 #include <string.h>
 
-#define MILLIS_PER_SECOND 1000.0
-#define PERMILLE_FULL_SCALE 1000.0
+#define MILLIS_PER_SECOND 1000.0f
+#define PERMILLE_FULL_SCALE 1000.0f
 
 static const plant_parameter_spec_t SPECS[] = {
-    {"fixture.gain", -1000.0, 1000.0, offsetof(plant_parameters_t, fixture_gain)},
+    {"fixture.gain", -1000.0f, 1000.0f, offsetof(plant_parameters_t, fixture_gain)},
 };
 
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
@@ -26,7 +26,7 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
-void fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation, double seconds)
+void fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation, float seconds)
 {
     if (model == NULL || actuation == NULL) {
         return;
@@ -43,7 +43,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     }
     memset(model, 0, sizeof(*model));
     model->coefficients = *parameters;
-    model->accumulated = 0.0;
+    model->accumulated = 0.0f;
     model->initialised = true;
     return true;
 }
@@ -64,7 +64,7 @@ bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
     return true;
 }
 
-bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity, double *value)
+bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity, float *value)
 {
     if (model == NULL || value == NULL || !model->initialised) {
         return false;

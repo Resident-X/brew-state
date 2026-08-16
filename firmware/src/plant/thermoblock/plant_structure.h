@@ -28,21 +28,21 @@
  * a machine.
  */
 typedef struct {
-    double ambient_temperature_c;
+    float ambient_temperature_c;
 
-    double brew_thermal_mass_j_per_k;
-    double brew_heater_power_w;
-    double brew_loss_w_per_k;
+    float brew_thermal_mass_j_per_k;
+    float brew_heater_power_w;
+    float brew_loss_w_per_k;
 
-    double steam_thermal_mass_j_per_k;
-    double steam_heater_power_w;
-    double steam_loss_w_per_k;
+    float steam_thermal_mass_j_per_k;
+    float steam_heater_power_w;
+    float steam_loss_w_per_k;
 
-    double pump_pressure_bar;
-    double brew_pressure_time_constant_s;
+    float pump_pressure_bar;
+    float brew_pressure_time_constant_s;
 
-    double steam_saturation_temperature_c;
-    double steam_pressure_bar_per_k;
+    float steam_saturation_temperature_c;
+    float steam_pressure_bar_per_k;
 } plant_parameters_t;
 
 /*
@@ -54,10 +54,10 @@ typedef struct {
     bool initialised;
     plant_parameters_t coefficients;
 
-    double brew_temperature_c;
-    double steam_temperature_c;
-    double brew_pressure_bar;
-    double steam_pressure_bar;
+    float brew_temperature_c;
+    float steam_temperature_c;
+    float brew_pressure_bar;
+    float steam_pressure_bar;
 } plant_model_t;
 
 /*
@@ -74,7 +74,7 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
  */
 void thermoblock_advance_temperatures(plant_model_t *model,
                                       const plant_actuation_t *actuation,
-                                      double seconds);
+                                      float seconds);
 
 /*
  * Advance both pressures over `seconds` under the given actuation. Brew
@@ -84,6 +84,6 @@ void thermoblock_advance_temperatures(plant_model_t *model,
  */
 void thermoblock_advance_pressures(plant_model_t *model,
                                    const plant_actuation_t *actuation,
-                                   double seconds);
+                                   float seconds);
 
 #endif /* PLANT_STRUCTURE_H */

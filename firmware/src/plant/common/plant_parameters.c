@@ -14,12 +14,13 @@
  */
 #include "plant_model.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
 /*
  * The longest value token a line may carry. It is well beyond the digits a
- * double distinguishes, so a token this long is a description that needs
+ * float distinguishes, so a token this long is a description that needs
  * looking at rather than a value to round; refusing it early keeps the copy
  * that terminates the token bounded.
  */
@@ -54,9 +55,9 @@ static void report(plant_parameter_error_t *error, plant_parameter_fault_t fault
 {
     error->fault = fault;
     error->line = line;
-    error->value = 0.0;
-    error->minimum = 0.0;
-    error->maximum = 0.0;
+    error->value = 0.0f;
+    error->minimum = 0.0f;
+    error->maximum = 0.0f;
 
     size_t copied = name_length;
     if (copied > PLANT_PARAMETER_NAME_MAX - 1u) {
@@ -71,9 +72,21 @@ static void report(plant_parameter_error_t *error, plant_parameter_fault_t fault
 /*
  * Parse a value token that is not terminated in place. The whole token must be
  * consumed: `1.0x` and `1.0 2.0` are refusals, not the number they start with.
+ *
+ * strtof rather than strtod, so that reading a description costs the target no
+ * double-precision arithmetic and drags in none of the library that emulates
+ * it. The model's quantities are single precision throughout, and a wider parse
+ * would only produce a value the record cannot hold.
+ *
+ * `representable` is false when the token names a real number this type cannot
+ * carry -- too large, or so small it would arrive as zero. Either is refused
+ * rather than rounded: a coefficient silently delivered as zero, or as
+ * infinity, is not the coefficient the description asked for.
  */
-static bool parse_value(const char *begin, const char *end, double *value)
+static bool parse_value(const char *begin, const char *end, float *value, bool *representable)
 {
+    *representable = true;
+
     const size_t length = (size_t)(end - begin);
     if (length == 0u || length >= VALUE_TEXT_MAX) {
         return false;
@@ -84,8 +97,13 @@ static bool parse_value(const char *begin, const char *end, double *value)
     text[length] = '\0';
 
     char *stopped = NULL;
-    const double parsed = strtod(text, &stopped);
+    errno = 0;
+    const float parsed = strtof(text, &stopped);
     if (stopped != text + length) {
+        return false;
+    }
+    if (errno == ERANGE) {
+        *representable = false;
         return false;
     }
 
@@ -179,9 +197,21 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
             return false;
         }
 
-        double value = 0.0;
-        if (!parse_value(value_begin, value_end, &value)) {
-            report(error, PLANT_PARAMETER_MALFORMED, line_number, name_begin, name_length);
+        float value = 0.0f;
+        bool representable = true;
+        if (!parse_value(value_begin, value_end, &value, &representable)) {
+            /*
+             * A token that is a number the type cannot hold is out of range
+             * rather than unreadable -- the description is legible, the value
+             * is not one this model can carry.
+             */
+            report(error,
+                   representable ? PLANT_PARAMETER_MALFORMED : PLANT_PARAMETER_OUT_OF_RANGE,
+                   line_number, name_begin, name_length);
+            if (!representable) {
+                error->minimum = specs[index].minimum;
+                error->maximum = specs[index].maximum;
+            }
             return false;
         }
 
@@ -201,7 +231,7 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
             return false;
         }
 
-        double *field = (double *)(void *)((char *)&staging + specs[index].offset);
+        float *field = (float *)(void *)((char *)&staging + specs[index].offset);
         *field = value;
         supplied |= bit;
     }

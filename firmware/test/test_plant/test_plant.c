@@ -85,9 +85,9 @@ static size_t valid_length;
 
 /*
  * Write a description of the nominal coefficients, with the one at
- * `scaled_index` multiplied by `factor`. Values are written to seventeen
- * significant figures, which round-trips a double exactly, so a difference in
- * an outcome is a difference in the coefficient rather than in its spelling.
+ * `scaled_index` multiplied by `factor`. Values are written to nine significant
+ * figures, which round-trips a single-precision value exactly, so a difference
+ * in an outcome is a difference in the coefficient rather than in its spelling.
  */
 static size_t describe(char *out, size_t capacity, size_t scaled_index, double factor)
 {
@@ -96,7 +96,7 @@ static size_t describe(char *out, size_t capacity, size_t scaled_index, double f
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
         const double value = (i == scaled_index) ? NOMINAL[i].value * factor : NOMINAL[i].value;
         const int written =
-            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
+            snprintf(out + used, capacity - used, "%s = %.9g\n", NOMINAL[i].name, value);
         TEST_ASSERT_TRUE(written > 0);
         used += (size_t)written;
         TEST_ASSERT_TRUE(used < capacity);
@@ -116,7 +116,7 @@ void setUp(void)
 void tearDown(void) {}
 
 /* Read every quantity the model exposes into `out`. */
-static void read_all(const plant_model_t *model, double out[PLANT_QUANTITY_COUNT])
+static void read_all(const plant_model_t *model, float out[PLANT_QUANTITY_COUNT])
 {
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
         TEST_ASSERT_TRUE(plant_model_quantity(model, (plant_quantity_t)quantity, &out[quantity]));
@@ -125,7 +125,7 @@ static void read_all(const plant_model_t *model, double out[PLANT_QUANTITY_COUNT
 
 /* Run `steps` steps under one actuation and leave the quantities in `out`. */
 static void run(plant_model_t *model, const plant_actuation_t *actuation, int steps,
-                double out[PLANT_QUANTITY_COUNT])
+                float out[PLANT_QUANTITY_COUNT])
 {
     for (int i = 0; i < steps; i++) {
         TEST_ASSERT_TRUE(plant_model_step(model, actuation, STEP_MS));
@@ -140,13 +140,19 @@ static void run(plant_model_t *model, const plant_actuation_t *actuation, int st
  * to the path without mattering to where the path ends: a time constant
  * changes how fast a pressure settles and not what it settles at, so comparing
  * final values alone would report it as unused.
+ *
+ * The accumulator is deliberately wider than the quantities it sums. It is a
+ * comparison device rather than part of the model, and summing thousands of
+ * single-precision values into a single-precision total would lose the small
+ * differences this exists to detect -- which would quietly blind the check that
+ * every coefficient reaches the equations.
  */
 static double signature(plant_model_t *model, const plant_actuation_t *actuation, int steps)
 {
     double total = 0.0;
 
     for (int i = 0; i < steps; i++) {
-        double quantities[PLANT_QUANTITY_COUNT];
+        float quantities[PLANT_QUANTITY_COUNT];
         TEST_ASSERT_TRUE(plant_model_step(model, actuation, STEP_MS));
         read_all(model, quantities);
         for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
@@ -176,7 +182,7 @@ static double signature_of(const char *text, size_t length, const plant_actuatio
 static void test_the_model_advances_over_a_sequence_of_steps(void)
 {
     plant_model_t model;
-    double quantities[PLANT_QUANTITY_COUNT];
+    float quantities[PLANT_QUANTITY_COUNT];
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     run(&model, &WORKING, TRAJECTORY_STEPS, quantities);
@@ -188,8 +194,8 @@ static void test_the_model_advances_over_a_sequence_of_steps(void)
 static void test_a_step_at_rest_changes_nothing(void)
 {
     plant_model_t model;
-    double before[PLANT_QUANTITY_COUNT];
-    double after[PLANT_QUANTITY_COUNT];
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     read_all(&model, before);
@@ -205,8 +211,8 @@ static void test_a_step_at_rest_changes_nothing(void)
 static void test_many_steps_at_rest_change_nothing(void)
 {
     plant_model_t model;
-    double before[PLANT_QUANTITY_COUNT];
-    double after[PLANT_QUANTITY_COUNT];
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     read_all(&model, before);
@@ -224,8 +230,8 @@ static void test_rest_stays_at_rest_at_a_different_ambient(void)
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
     plant_model_t model;
-    double before[PLANT_QUANTITY_COUNT];
-    double after[PLANT_QUANTITY_COUNT];
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
 
     /* Scale ambient alone; every other coefficient stays where it was. */
     const size_t length = describe(text, sizeof(text), 0u, 1.9);
@@ -244,8 +250,8 @@ static void test_rest_stays_at_rest_at_a_different_ambient(void)
 static void test_heat_raises_the_temperatures_and_lowers_nothing(void)
 {
     plant_model_t model;
-    double before[PLANT_QUANTITY_COUNT];
-    double after[PLANT_QUANTITY_COUNT];
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     read_all(&model, before);
@@ -269,8 +275,8 @@ static void test_the_same_inputs_reproduce_the_same_trajectory(void)
 {
     plant_model_t first;
     plant_model_t second;
-    double one[PLANT_QUANTITY_COUNT];
-    double two[PLANT_QUANTITY_COUNT];
+    float one[PLANT_QUANTITY_COUNT];
+    float two[PLANT_QUANTITY_COUNT];
 
     TEST_ASSERT_TRUE(plant_model_init(&first, &parameters));
     TEST_ASSERT_TRUE(plant_model_init(&second, &parameters));
@@ -286,8 +292,8 @@ static void test_the_same_inputs_reproduce_the_same_trajectory(void)
 static void test_an_actuation_beyond_full_scale_is_refused_and_changes_nothing(void)
 {
     plant_model_t model;
-    double before[PLANT_QUANTITY_COUNT];
-    double after[PLANT_QUANTITY_COUNT];
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
     const plant_actuation_t over_scale = {PLANT_ACTUATION_FULL_SCALE + 1u, 0u, 0u};
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
@@ -505,8 +511,8 @@ static void test_a_refusal_leaves_the_record_untouched(void)
     plant_parameter_error_t fault;
     plant_model_t before_model;
     plant_model_t after_model;
-    double before[PLANT_QUANTITY_COUNT];
-    double after[PLANT_QUANTITY_COUNT];
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
 
     TEST_ASSERT_TRUE(plant_model_init(&before_model, &record));
     run(&before_model, &WORKING, SHORT_STEPS, before);
