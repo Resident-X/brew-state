@@ -1,8 +1,10 @@
 # Firmware
 
-The control logic and the hardware seam that separates it from the target.
+The control logic, the hardware seam that separates it from the target, and the
+plant-model seam that separates the equations of the machine from everything
+that uses them.
 
-## Why the seam exists
+## Why the hardware seam exists
 
 The control logic has to be exercised before any hardware exists, and the
 analysis that catches memory errors and undefined behaviour runs on a host
@@ -16,17 +18,53 @@ Which implementation a build gets follows from which environment is built. It is
 not a run-time choice, and no source file under `src/control` differs between the
 two builds. That is what keeps an indirect call out of the control path.
 
+## Why the plant-model seam exists
+
+Two machines of the same architecture differ only in their numbers. Two machines
+of different architectures differ in their equations, and no set of numbers
+bridges that. So the split is drawn there: parameters are data the machine
+carries, and structure is code behind a named interface. Adopting a machine of
+the same architecture is then measurement work rather than development work, and
+supporting a different architecture is implementing `include/plant_model.h`
+rather than negotiating with everything that consumes the model.
+
+Which structure a build gets follows from which directory under `src/plant/` it
+compiles and puts on the include path — again a build-time fact, decided by
+`DEC-MODEL-STRUCTURE-AT-BUILD-TIME` rather than by anything read while the
+software runs. A build compiling the plant model must name exactly one; naming
+none or naming two stops the build rather than letting a default or the linker
+choose. Controlling a machine with another architecture's dynamics has no
+obvious symptom until the machine is well outside where it should be, so it is
+made unreachable rather than merely unlikely.
+
+The `fixture` structure describes no machine. It exists because the checks that
+keep one structure out of another's artefact, and that refuse a two-structure
+build, both pass unconditionally with only one structure in the tree — and a
+check that cannot fail is not a check.
+
+Whether the `thermoblock` structure's equations describe any real machine is a
+question that needs a real machine. What is established here is that the numbers
+are replaceable, the equations are replaceable, and neither is reachable except
+through the seam.
+
 ## Layout
 
 | Path | What it holds |
 | --- | --- |
-| `include/hw_interface.h` | The seam. Free functions, no vendor type, compiles freestanding. |
+| `include/hw_interface.h` | The hardware seam. Free functions, no vendor type, compiles freestanding. |
+| `include/plant_model.h` | The plant-model seam. Free functions, no structure named, no equation. |
+| `include/plant_types.h` | The vocabulary the plant seam is expressed in: quantities, actuation, parameter faults. |
 | `src/control/` | The control logic. Reaches hardware only through the seam. Identical in both builds. |
 | `src/hw/sim/` | The simulated implementation, and the controls tests use to stand readings up. |
 | `src/hw/stm32/` | The STM32 HAL-backed implementation. Naming vendor symbols is its job. |
-| `src/app/native/` | Host entry point: drives the control path, including its error paths, and exits. |
+| `src/plant/common/` | Reads a parameter record from a description. One parser, every structure. Not a structure itself. |
+| `src/plant/thermoblock/` | The machine-describing structure: two heated masses, pump-driven brew pressure, steam pressure above saturation. |
+| `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
+| `params/` | Parameter descriptions. Read at run time; the build compiles none of them in. |
+| `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
 | `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |
+| `test/test_plant/` | The plant model exercised through the seam, naming no structure symbol. |
 | `tools/` | The checks that make the seam's properties build failures rather than review notes. |
 
 The control logic behind the seam is a minimal path that reads a sensor,
@@ -52,10 +90,10 @@ after that both build offline.
 Everything runs from the repository root through the task runner:
 
 ```sh
-task fw:verify     # build both environments, run every check, run the tests, run the host build
-task fw:build      # both environments only
+task fw:verify     # build every environment, run every check, run the tests, run the host builds
+task fw:build      # the environments only
 task fw:check      # the build-time checks only
-task fw:test       # the control-logic tests and the tests covering the checks
+task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
 ```
 
 Set `PIO=/path/to/pio` if PlatformIO lives somewhere other than
@@ -64,7 +102,7 @@ Set `PIO=/path/to/pio` if PlatformIO lives somewhere other than
 ## What the checks enforce
 
 Each is a standalone script, so the same check runs from the build and from the
-task runner. Two of them also run automatically inside every `pio run`.
+task runner. Five of them also run automatically inside every `pio run`.
 
 | Check | What it fails on |
 | --- | --- |
@@ -73,13 +111,34 @@ task runner. Two of them also run automatically inside every `pio run`.
 | `check_sanitizers.py` | The host build links the sanitizer runtime while the control logic is not actually compiled under it — a failure that otherwise passes silently. |
 | `check_direct_calls.py` | A seam call in the linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
+| `check_plant_header.py` | The plant seam header names a structure, reaches into a structure's record, carries a function definition, declares nothing, or fails to compile standalone against *every* structure in turn. Runs inside every build. |
+| `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
+| `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
+| `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one. |
+| `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, or naming two — builds anyway, or leaves an artefact behind. |
+| `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
 
 Each check fails rather than passes when it cannot find what it is meant to
 inspect. A check that inspects nothing must not report success. The
-encapsulation check applies the same rule to file kinds: it inspects every file
-under `src/control` except a listed set it knows a build never compiles, so a
+encapsulation checks apply the same rule to file kinds: they inspect every file
+under their subject except a listed set they know a build never compiles, so a
 C++ or assembly source dropped into a directory the build filter takes
-wholesale cannot walk past it.
+wholesale cannot walk past them.
+
+The plant checks carry that further, because several of them can only fail if
+there is something to fail against. `check_plant_header.py` refuses a tree with
+fewer than two structures, since compiling against one cannot distinguish a
+neutral header from one written for that structure.
+`check_structure_exclusive.py` refuses a tree with fewer than two, and refuses
+one where two structures declare the same names — in either case there is
+nothing to exclude, and it would pass whatever the artefact contained.
+`check_structure_selection.py` treats a source filter it could not resolve as an
+error rather than as "this build compiles no plant source".
+
+What a structure owns is read out of the structures themselves rather than
+listed in the tools: `structure_symbols.py` derives each structure's fields and
+declarations from its own header, so a structure that gains a coefficient does
+not need a check to be updated to keep covering it.
 
 ## The nominated STM32 family
 

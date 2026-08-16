@@ -1,0 +1,459 @@
+/*
+ * The plant model exercised through the plant-model seam.
+ *
+ * Everything here reaches the model through plant_model.h and nothing names a
+ * structure symbol, so these tests would link unchanged against a different
+ * structure. What they assert about the trajectory is fixed independently of
+ * what the structure says about itself: that rest stays at rest, that heat
+ * raises temperatures, and that the same inputs give the same outputs. Whether
+ * the trajectory matches a real machine is a question for a real machine.
+ *
+ * The parameter names below are the thermoblock structure's, which is the
+ * structure this environment builds. They are text in a description rather
+ * than symbols in the source: the seam is not reached around by knowing what a
+ * coefficient is called.
+ */
+#include <string.h>
+
+#include <unity.h>
+
+#include "plant_model.h"
+
+static const char VALID_DESCRIPTION[] =
+    "# a description with a comment and a blank line in it\n"
+    "\n"
+    "ambient_temperature_c = 20.0\n"
+    "brew.thermal_mass_j_per_k = 420.0\n"
+    "brew.heater_power_w = 1200.0\n"
+    "brew.loss_w_per_k = 1.5\n"
+    "steam.thermal_mass_j_per_k = 900.0\n"
+    "steam.heater_power_w = 1400.0\n"
+    "steam.loss_w_per_k = 2.2\n"
+    "pump.pressure_bar = 9.0\n"
+    "brew.pressure_time_constant_s = 0.8\n"
+    "steam.saturation_temperature_c = 100.0\n"
+    "steam.pressure_bar_per_k = 0.035\n";
+
+/* The same description with one coefficient changed and nothing else. */
+static const char VARIANT_DESCRIPTION[] =
+    "ambient_temperature_c = 20.0\n"
+    "brew.thermal_mass_j_per_k = 420.0\n"
+    "brew.heater_power_w = 1600.0\n"
+    "brew.loss_w_per_k = 1.5\n"
+    "steam.thermal_mass_j_per_k = 900.0\n"
+    "steam.heater_power_w = 1400.0\n"
+    "steam.loss_w_per_k = 2.2\n"
+    "pump.pressure_bar = 9.0\n"
+    "brew.pressure_time_constant_s = 0.8\n"
+    "steam.saturation_temperature_c = 100.0\n"
+    "steam.pressure_bar_per_k = 0.035\n";
+
+#define STEP_MS 100u
+#define TRAJECTORY_STEPS 40
+
+static const plant_actuation_t AT_REST = {0u, 0u, 0u};
+static const plant_actuation_t HEATING = {PLANT_ACTUATION_FULL_SCALE, PLANT_ACTUATION_FULL_SCALE,
+                                          0u};
+
+static plant_parameters_t parameters;
+static plant_parameter_error_t error;
+
+void setUp(void)
+{
+    memset(&parameters, 0, sizeof(parameters));
+    memset(&error, 0, sizeof(error));
+    TEST_ASSERT_TRUE(plant_parameters_load(VALID_DESCRIPTION, strlen(VALID_DESCRIPTION),
+                                           &parameters, &error));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, error.fault);
+}
+
+void tearDown(void) {}
+
+/* Read every quantity the model exposes into `out`. */
+static void read_all(const plant_model_t *model, double out[PLANT_QUANTITY_COUNT])
+{
+    for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        TEST_ASSERT_TRUE(plant_model_quantity(model, (plant_quantity_t)quantity, &out[quantity]));
+    }
+}
+
+/* Run `steps` steps under one actuation and leave the quantities in `out`. */
+static void run(plant_model_t *model, const plant_actuation_t *actuation, int steps,
+                double out[PLANT_QUANTITY_COUNT])
+{
+    for (int i = 0; i < steps; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(model, actuation, STEP_MS));
+    }
+    read_all(model, out);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: the structure runs on the host
+ * -- a model instance initialises and advances over a sequence of steps to
+ * completion. */
+static void test_the_model_advances_over_a_sequence_of_steps(void)
+{
+    plant_model_t model;
+    double quantities[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    run(&model, &HEATING, TRAJECTORY_STEPS, quantities);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: a step taken with no actuation
+ * and no external influence leaves every quantity the model exposes
+ * unchanged. */
+static void test_a_step_at_rest_changes_nothing(void)
+{
+    plant_model_t model;
+    double before[PLANT_QUANTITY_COUNT];
+    double after[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    read_all(&model, before);
+    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+    read_all(&model, after);
+
+    TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: many steps at rest change
+ * nothing either -- a source or sink too small to see in one step would
+ * accumulate over forty. */
+static void test_many_steps_at_rest_change_nothing(void)
+{
+    plant_model_t model;
+    double before[PLANT_QUANTITY_COUNT];
+    double after[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    read_all(&model, before);
+    run(&model, &AT_REST, TRAJECTORY_STEPS, after);
+
+    TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: a step taken with heat applied
+ * raises the temperature quantities and lowers none of them. */
+static void test_heat_raises_the_temperatures_and_lowers_nothing(void)
+{
+    plant_model_t model;
+    double before[PLANT_QUANTITY_COUNT];
+    double after[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    read_all(&model, before);
+    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEP_MS));
+    read_all(&model, after);
+
+    TEST_ASSERT_TRUE(after[PLANT_QUANTITY_BREW_TEMPERATURE_C] >
+                     before[PLANT_QUANTITY_BREW_TEMPERATURE_C]);
+    TEST_ASSERT_TRUE(after[PLANT_QUANTITY_STEAM_TEMPERATURE_C] >
+                     before[PLANT_QUANTITY_STEAM_TEMPERATURE_C]);
+
+    for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        TEST_ASSERT_TRUE(after[quantity] >= before[quantity]);
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: the same step sequence run
+ * twice from the same initial state and inputs reproduces the same trajectory
+ * exactly. */
+static void test_the_same_inputs_reproduce_the_same_trajectory(void)
+{
+    plant_model_t first;
+    plant_model_t second;
+    double one[PLANT_QUANTITY_COUNT];
+    double two[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&first, &parameters));
+    TEST_ASSERT_TRUE(plant_model_init(&second, &parameters));
+    run(&first, &HEATING, TRAJECTORY_STEPS, one);
+    run(&second, &HEATING, TRAJECTORY_STEPS, two);
+
+    TEST_ASSERT_EQUAL_MEMORY(one, two, sizeof(one));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: a step is refused rather than
+ * clamped when an actuation channel is beyond full scale, and refusing changes
+ * nothing. */
+static void test_an_actuation_beyond_full_scale_is_refused_and_changes_nothing(void)
+{
+    plant_model_t model;
+    double before[PLANT_QUANTITY_COUNT];
+    double after[PLANT_QUANTITY_COUNT];
+    const plant_actuation_t over_scale = {PLANT_ACTUATION_FULL_SCALE + 1u, 0u, 0u};
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    read_all(&model, before);
+    TEST_ASSERT_FALSE(plant_model_step(&model, &over_scale, STEP_MS));
+    read_all(&model, after);
+
+    TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: an uninitialised instance is
+ * not usable, and a zero-length step is refused. */
+static void test_an_uninitialised_instance_and_a_zero_step_are_refused(void)
+{
+    plant_model_t model;
+    double value = 0.0;
+
+    memset(&model, 0, sizeof(model));
+    TEST_ASSERT_FALSE(plant_model_step(&model, &HEATING, STEP_MS));
+    TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &value));
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_FALSE(plant_model_step(&model, &HEATING, 0u));
+    TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_COUNT, &value));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3: the equations read their
+ * coefficients from the record, so two descriptions differing in a single
+ * coefficient give two different trajectories from the same code. */
+static void test_one_changed_coefficient_changes_the_trajectory(void)
+{
+    plant_parameters_t variant;
+    plant_parameter_error_t variant_error;
+    plant_model_t nominal_model;
+    plant_model_t variant_model;
+    double nominal[PLANT_QUANTITY_COUNT];
+    double changed[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_parameters_load(VARIANT_DESCRIPTION, strlen(VARIANT_DESCRIPTION),
+                                           &variant, &variant_error));
+
+    TEST_ASSERT_TRUE(plant_model_init(&nominal_model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_init(&variant_model, &variant));
+    run(&nominal_model, &HEATING, TRAJECTORY_STEPS, nominal);
+    run(&variant_model, &HEATING, TRAJECTORY_STEPS, changed);
+
+    TEST_ASSERT_TRUE(nominal[PLANT_QUANTITY_BREW_TEMPERATURE_C] !=
+                     changed[PLANT_QUANTITY_BREW_TEMPERATURE_C]);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3: a description carrying comments
+ * and blank lines is read the same as one without them, so the artefact a
+ * machine ships with can be commented. */
+static void test_comments_and_blank_lines_do_not_change_what_is_read(void)
+{
+    plant_parameters_t bare;
+    plant_parameter_error_t bare_error;
+    plant_model_t commented_model;
+    plant_model_t bare_model;
+    double commented[PLANT_QUANTITY_COUNT];
+    double plain[PLANT_QUANTITY_COUNT];
+
+    static const char without_comments[] =
+        "ambient_temperature_c = 20.0\n"
+        "brew.thermal_mass_j_per_k = 420.0\n"
+        "brew.heater_power_w = 1200.0\n"
+        "brew.loss_w_per_k = 1.5\n"
+        "steam.thermal_mass_j_per_k = 900.0\n"
+        "steam.heater_power_w = 1400.0\n"
+        "steam.loss_w_per_k = 2.2\n"
+        "pump.pressure_bar = 9.0\n"
+        "brew.pressure_time_constant_s = 0.8\n"
+        "steam.saturation_temperature_c = 100.0\n"
+        "steam.pressure_bar_per_k = 0.035";
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(without_comments, strlen(without_comments), &bare, &bare_error));
+
+    TEST_ASSERT_TRUE(plant_model_init(&commented_model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_init(&bare_model, &bare));
+    run(&commented_model, &HEATING, TRAJECTORY_STEPS, commented);
+    run(&bare_model, &HEATING, TRAJECTORY_STEPS, plain);
+
+    TEST_ASSERT_EQUAL_MEMORY(commented, plain, sizeof(commented));
+}
+
+/* Everything but the named line of the valid description, so one omission can
+ * be tested without writing out eleven near-identical descriptions. */
+static size_t description_without(const char *omitted, char *out, size_t capacity)
+{
+    const char *cursor = VALID_DESCRIPTION;
+    size_t used = 0u;
+
+    while (*cursor != '\0') {
+        const char *newline = strchr(cursor, '\n');
+        const size_t length = (newline != NULL) ? (size_t)(newline - cursor) + 1u : strlen(cursor);
+        if (strncmp(cursor, omitted, strlen(omitted)) != 0) {
+            TEST_ASSERT_TRUE(used + length < capacity);
+            memcpy(out + used, cursor, length);
+            used += length;
+        }
+        cursor += length;
+    }
+    out[used] = '\0';
+    return used;
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a description omitting a
+ * coefficient the structure requires is refused, the missing one is named, and
+ * nothing is assumed for it. */
+static void test_a_missing_coefficient_is_refused_and_named(void)
+{
+    char reduced[sizeof(VALID_DESCRIPTION)];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    const size_t length = description_without("brew.heater_power_w", reduced, sizeof(reduced));
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(reduced, length, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("brew.heater_power_w", fault.parameter);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: every coefficient the structure
+ * requires is required -- omitting any one of them is a refusal, not just the
+ * one that happens to be tested. */
+static void test_omitting_any_single_coefficient_is_refused(void)
+{
+    static const char *const names[] = {
+        "ambient_temperature_c",
+        "brew.thermal_mass_j_per_k",
+        "brew.heater_power_w",
+        "brew.loss_w_per_k",
+        "steam.thermal_mass_j_per_k",
+        "steam.heater_power_w",
+        "steam.loss_w_per_k",
+        "pump.pressure_bar",
+        "brew.pressure_time_constant_s",
+        "steam.saturation_temperature_c",
+        "steam.pressure_bar_per_k",
+    };
+
+    for (size_t i = 0u; i < sizeof(names) / sizeof(names[0]); i++) {
+        char reduced[sizeof(VALID_DESCRIPTION)];
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        const size_t length = description_without(names[i], reduced, sizeof(reduced));
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE(plant_parameters_load(reduced, length, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
+        TEST_ASSERT_EQUAL_STRING(names[i], fault.parameter);
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a coefficient outside the range
+ * the structure declares is refused, and the refusal carries the range so the
+ * report is actionable. */
+static void test_a_coefficient_outside_its_range_is_refused_with_the_range(void)
+{
+    static const char too_large[] =
+        "ambient_temperature_c = 20.0\n"
+        "brew.thermal_mass_j_per_k = 420.0\n"
+        "brew.heater_power_w = 999999.0\n"
+        "brew.loss_w_per_k = 1.5\n"
+        "steam.thermal_mass_j_per_k = 900.0\n"
+        "steam.heater_power_w = 1400.0\n"
+        "steam.loss_w_per_k = 2.2\n"
+        "pump.pressure_bar = 9.0\n"
+        "brew.pressure_time_constant_s = 0.8\n"
+        "steam.saturation_temperature_c = 100.0\n"
+        "steam.pressure_bar_per_k = 0.035\n";
+
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(too_large, strlen(too_large), &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("brew.heater_power_w", fault.parameter);
+    TEST_ASSERT_EQUAL_UINT32(3u, fault.line);
+    TEST_ASSERT_TRUE(fault.value == 999999.0);
+    TEST_ASSERT_TRUE(fault.maximum < fault.value);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a description that cannot be
+ * parsed at all is refused, and the fault points at the line. */
+static void test_an_unparsable_description_is_refused_at_its_line(void)
+{
+    static const struct {
+        const char *text;
+        plant_parameter_fault_t fault;
+        uint32_t line;
+    } cases[] = {
+        {"ambient_temperature_c = 20.0\nthis line has no separator\n", PLANT_PARAMETER_MALFORMED,
+         2u},
+        {"ambient_temperature_c = not-a-number\n", PLANT_PARAMETER_MALFORMED, 1u},
+        {"ambient_temperature_c = 20.0 30.0\n", PLANT_PARAMETER_MALFORMED, 1u},
+        {" = 20.0\n", PLANT_PARAMETER_MALFORMED, 1u},
+        {"ambient_temperature_c =\n", PLANT_PARAMETER_MALFORMED, 1u},
+        {"not_a_coefficient = 1.0\n", PLANT_PARAMETER_UNKNOWN, 1u},
+        {"ambient_temperature_c = 20.0\nambient_temperature_c = 21.0\n", PLANT_PARAMETER_DUPLICATE,
+         2u},
+    };
+
+    for (size_t i = 0u; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE(
+            plant_parameters_load(cases[i].text, strlen(cases[i].text), &loaded, &fault));
+        TEST_ASSERT_EQUAL(cases[i].fault, fault.fault);
+        TEST_ASSERT_EQUAL_UINT32(cases[i].line, fault.line);
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a refused description
+ * substitutes no value -- the record it was refused into is left exactly as it
+ * was, rather than half filled in. */
+static void test_a_refusal_leaves_the_record_untouched(void)
+{
+    static const char partial[] = "ambient_temperature_c = 45.0\n";
+
+    plant_parameters_t record = parameters;
+    plant_parameter_error_t fault;
+    plant_model_t before_model;
+    plant_model_t after_model;
+    double before[PLANT_QUANTITY_COUNT];
+    double after[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&before_model, &record));
+    run(&before_model, &HEATING, TRAJECTORY_STEPS, before);
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(partial, strlen(partial), &record, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
+
+    TEST_ASSERT_TRUE(plant_model_init(&after_model, &record));
+    run(&after_model, &HEATING, TRAJECTORY_STEPS, after);
+
+    TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: an empty description is a
+ * refusal rather than a record of defaults. */
+static void test_an_empty_description_is_refused(void)
+{
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load("", 0u, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
+}
+
+int main(void)
+{
+    UNITY_BEGIN();
+    RUN_TEST(test_the_model_advances_over_a_sequence_of_steps);
+    RUN_TEST(test_a_step_at_rest_changes_nothing);
+    RUN_TEST(test_many_steps_at_rest_change_nothing);
+    RUN_TEST(test_heat_raises_the_temperatures_and_lowers_nothing);
+    RUN_TEST(test_the_same_inputs_reproduce_the_same_trajectory);
+    RUN_TEST(test_an_actuation_beyond_full_scale_is_refused_and_changes_nothing);
+    RUN_TEST(test_an_uninitialised_instance_and_a_zero_step_are_refused);
+    RUN_TEST(test_one_changed_coefficient_changes_the_trajectory);
+    RUN_TEST(test_comments_and_blank_lines_do_not_change_what_is_read);
+    RUN_TEST(test_a_missing_coefficient_is_refused_and_named);
+    RUN_TEST(test_omitting_any_single_coefficient_is_refused);
+    RUN_TEST(test_a_coefficient_outside_its_range_is_refused_with_the_range);
+    RUN_TEST(test_an_unparsable_description_is_refused_at_its_line);
+    RUN_TEST(test_a_refusal_leaves_the_record_untouched);
+    RUN_TEST(test_an_empty_description_is_refused);
+    return UNITY_END();
+}

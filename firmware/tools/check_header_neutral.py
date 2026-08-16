@@ -21,69 +21,14 @@ from __future__ import annotations
 
 import argparse
 import os
-import subprocess
 import sys
-import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Compiling a header on its own is a property both seams' headers claim, so the
+# implementation lives beside them rather than in either check.
+from freestanding import compiles_freestanding  # noqa: E402
 from vendor_symbols import find_violations  # noqa: E402
-
-
-def compiles_freestanding(header: str, compiler: str) -> tuple[bool, str]:
-    """Compile a translation unit whose only content is this header.
-
-    The include path is deliberately limited to the header's own directory, so
-    a header that quietly relies on a vendor include path fails here rather
-    than passing because the surrounding build supplied one.
-    """
-    with tempfile.TemporaryDirectory() as scratch:
-        unit = os.path.join(scratch, "standalone.c")
-        with open(unit, "w", encoding="utf-8") as handle:
-            handle.write(f'#include "{os.path.abspath(header)}"\n')
-
-        result = subprocess.run(
-            [
-                compiler,
-                "-std=c11",
-                "-ffreestanding",
-                "-fsyntax-only",
-                "-Wall",
-                "-Wextra",
-                "-Werror",
-                "-nostdinc",
-                "-I",
-                _freestanding_include_dir(compiler),
-                "-I",
-                os.path.dirname(os.path.abspath(header)),
-                unit,
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        return result.returncode == 0, (result.stderr or result.stdout).strip()
-
-
-def _freestanding_include_dir(compiler: str) -> str:
-    """The compiler's own header directory, which carries the freestanding set.
-
-    C requires stdbool.h, stdint.h and stddef.h to be available in a
-    freestanding environment, and the compiler -- not the C library -- supplies
-    them. Pointing at that directory alone, with -nostdinc excluding everything
-    else, is what makes "no vendor include path present" a real condition
-    rather than an assertion.
-    """
-    result = subprocess.run(
-        [compiler, "-print-file-name=include"], capture_output=True, text=True, check=False
-    )
-    path = result.stdout.strip()
-    if result.returncode != 0 or not path or not os.path.isdir(path):
-        raise SystemExit(
-            f"check_header_neutral: {compiler} did not report a usable freestanding "
-            "include directory"
-        )
-    return path
 
 
 def main(argv: list[str]) -> int:

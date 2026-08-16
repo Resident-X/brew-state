@@ -236,7 +236,10 @@ def main(argv: list[str]) -> int:
             print(f"  {problem}", file=sys.stderr)
         return 1
 
-    print("check_direct_calls: every seam operation the control logic uses is a direct call")
+    print(
+        f"check_direct_calls: every operation the callers of {args.header} use is a "
+        "direct call"
+    )
     return 0
 
 

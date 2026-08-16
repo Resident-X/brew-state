@@ -1,0 +1,7 @@
+# The fixture structure's single coefficient.
+#
+# The fixture describes no machine and this number means nothing. It exists so
+# that an artefact built against the fixture can be run at all, which is what
+# lets the exclusivity check compare two real artefacts rather than one.
+
+fixture.gain = 2.5

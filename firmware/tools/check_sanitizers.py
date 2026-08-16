@@ -132,7 +132,10 @@ def main(argv: list[str]) -> int:
             print(f"  {problem}", file=sys.stderr)
         return 1
 
-    print(f"check_sanitizers: '{args.env}' compiles and links the control logic under analysis")
+    print(
+        f"check_sanitizers: '{args.env}' compiles every source of this project's own and "
+        "links under analysis"
+    )
     return 0
 
 

@@ -1,0 +1,24 @@
+# A parameter description for the thermoblock structure.
+#
+# These values describe no machine. They are admissible and plausible for the
+# architecture, which is all this slice needs of them: what is established here
+# is that the numbers are supplied rather than compiled in, not that any
+# particular number is right. The reference machine's measured values, and the
+# origin recorded against each of them, are a separate piece of work -- until
+# that lands, nothing here should be quoted as a property of a real machine.
+
+ambient_temperature_c = 20.0
+
+brew.thermal_mass_j_per_k = 420.0
+brew.heater_power_w = 1200.0
+brew.loss_w_per_k = 1.5
+
+steam.thermal_mass_j_per_k = 900.0
+steam.heater_power_w = 1400.0
+steam.loss_w_per_k = 2.2
+
+pump.pressure_bar = 9.0
+brew.pressure_time_constant_s = 0.8
+
+steam.saturation_temperature_c = 100.0
+steam.pressure_bar_per_k = 0.035
