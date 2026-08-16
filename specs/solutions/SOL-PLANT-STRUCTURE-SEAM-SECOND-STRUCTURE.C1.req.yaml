@@ -1,0 +1,12 @@
+id: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C1
+type: criterion
+title: A second machine-describing structure of a different architecture runs on the host through the seam
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A structure directory under `firmware/src/plant/` describes a single heated vessel serving both the brew path and the steam path, defines its own state and parameter types, and implements every operation the seam declares. It answers all four quantities the seam enumerates from its own states, so both temperature quantities follow one heater, and it declares the narrower set of actuation channels it responds to — satisfying a contract the seam already carries rather than introducing one. Two parameter descriptions ship with it under `firmware/params/`, differing in a single coefficient, because the check that a structure's coefficients are read rather than compiled in cannot conclude anything from one description; both state explicitly that they describe no real machine, which is what exempts them from recording an origin against each value. The host build compiles the structure, initialises an instance from one of those descriptions and advances it over a sequence of steps to completion, and a suite of its own under `firmware/test/` asserts properties fixed independently of what the structure says about itself: a step with no actuation and no external influence leaves every exposed quantity unchanged, a step with heat applied to a channel it answers raises the temperature quantities and lowers none, and the same sequence run twice from the same initial state reproduces the same trajectory exactly. Whether the trajectory resembles a real machine of this architecture is out of scope and cannot be settled without one to measure; so is the seam's behaviour on a channel this structure does not answer, which the contract it complies with already fixes.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7
+type: criterion
+title: The structures and the control logic behave identically after the vocabulary is unified
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The structure describing the reference machine declares the whole of the shared channel set, and its trajectories are identical before and after this change: the same step sequence from the same initial state under the same parameter description reproduces the same values, exactly rather than within a tolerance, since nothing here touches an equation. The control logic's use of the hardware seam is unchanged in the same way — the levels it drives on each channel, and the readings it takes, are the same before and after the vocabulary is unified, which a test pins against the simulated implementation. The values compared against are recorded from the build as it stands before this change and carried in the test as expected values; regenerating them from the build afterwards would compare the change with itself and pass unconditionally. A change that quietly moved either would be worse than the gap it closes and would be invisible, because nothing else about it goes near the physics or the control law. Structures that declare fewer channels than the set carries are covered by the criteria above and are out of scope here.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+    type: criterion-of

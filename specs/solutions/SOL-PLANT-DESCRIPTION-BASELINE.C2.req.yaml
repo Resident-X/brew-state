@@ -1,0 +1,14 @@
+id: SOL-PLANT-DESCRIPTION-BASELINE.C2
+type: criterion
+title: Every value in the reference description carries the origin of that value
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The origin is recorded against the value in the same file under `firmware/params/`, so a value cannot be copied, edited or moved without the account of where it came from travelling with it, and it gives enough detail to be reproduced or challenged: the document and page a figure was read from, the geometry it was derived from, the comparable machine it was estimated from, or the bench measurement that established it. Carrying it there is a change to the grammar `firmware/src/plant/common/plant_parameters.c` parses. A check run as part of the build fails when a coefficient the structure requires appears with no origin, reports which coefficient was at fault, and fails rather than passes when it finds no description to inspect.
+
+  A parameter description that states explicitly that it describes no real machine is exempt, and carrying that statement is what earns the exemption. The exemption follows what a description claims, not which structure it belongs to: a structure that does describe a machine may still ship descriptions that claim nothing about one — for showing that a linked artefact runs different numbers, or for exercising a refusal — and those need no origins because they assert nothing an origin could support. Judging whether a recorded origin is truthful is a review question and out of scope for the check.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE
+    type: criterion-of

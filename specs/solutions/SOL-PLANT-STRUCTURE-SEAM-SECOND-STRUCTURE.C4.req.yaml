@@ -1,0 +1,18 @@
+id: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C4
+type: criterion
+title: An artefact built for the new structure carries none of the other structures' symbols
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Inspecting the linked host executable built for the new structure finds its symbols and none
+  belonging to any other structure in the source tree, and the artefacts built for the existing
+  structures still carry none belonging to it — so exclusivity is a property of every pair in
+  the tree rather than of the one pair that existed when the check was written, which is the
+  thing a third structure is able to falsify and a second was not. How a call through the seam
+  is dispatched is a separate property and out of scope here, as is what the artefact occupies
+  on the target: this inspects what an artefact contains.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+    type: criterion-of

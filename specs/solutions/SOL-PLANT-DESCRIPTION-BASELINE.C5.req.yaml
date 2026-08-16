@@ -1,0 +1,12 @@
+id: SOL-PLANT-DESCRIPTION-BASELINE.C5
+type: criterion
+title: The host build and the model's tests run against the reference description
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The description under `firmware/params/` carrying the reference machine's figures is the one the host artefact and the plant model's own tests are exercised against — the environments in `firmware/platformio.ini` that build against the machine-describing structure — so the numbers the rest of this phase reasons against are the ones with origins recorded rather than figures chosen to be plausible. The descriptions that remain in the tree for other purposes — the fixture structure's, and the second description that shows one linked artefact running different numbers — each state explicitly that they describe no real machine, which is both what keeps them from being mistaken for this one and what exempts them from carrying an origin per value. Parameter descriptions belonging to other machine architectures are out of scope; this covers the reference machine's own.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE
+    type: criterion-of

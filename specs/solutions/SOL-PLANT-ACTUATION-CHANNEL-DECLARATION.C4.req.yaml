@@ -1,0 +1,12 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C4
+type: criterion
+title: A non-zero command on an unanswered channel is refused and the model does not advance
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The refusal is total: no state changes, no quantity moves, and the level is neither clamped to zero nor applied to a channel the structure does answer, so a caller must read a refusal as "the model did not move" rather than as "the model advanced with the command adjusted" — the same reading `firmware/include/plant_model.h` already requires of its other refusals. The fixture structure under `firmware/src/plant/fixture/` carries a declaration deliberately narrower than the shared channel set and is the subject a test drives this against, because the structure describing the reference machine answers every channel and cannot trigger the refusal; a refusal nothing can trigger passes unconditionally and is not a check. What a control law does when it is refused is out of scope and belongs to the loop that consumes the model.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+    type: criterion-of

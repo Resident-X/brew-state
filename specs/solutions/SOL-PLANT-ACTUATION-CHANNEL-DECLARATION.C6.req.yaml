@@ -1,0 +1,12 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C6
+type: criterion
+title: A zero level on an unanswered channel advances the model normally
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Commanding nothing of an actuator that is not part of an architecture is not an error, and treating it as one would leave a caller that zeroes every channel it does not use unable to take a step at all — which is the ordinary shape of a control law that drives a subset of the machine. A test steps the narrowly-declared structure twice from the same initial state under the same parameter description: once with zero on the channels it does not answer, once with those channels left alone, and it fails if the two trajectories differ in any quantity or if either step is refused. Comparing against a different structure's trajectory would prove nothing, since two structures integrate different states. Whether a caller ought to zero unused channels or leave them alone is a question for the loop and out of scope.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+    type: criterion-of

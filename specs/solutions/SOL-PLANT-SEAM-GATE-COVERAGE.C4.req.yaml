@@ -1,0 +1,12 @@
+id: SOL-PLANT-SEAM-GATE-COVERAGE.C4
+type: criterion
+title: A gate that finds nothing to cover fails rather than passes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A gate that discovers nothing fails rather than passes: zero structures discovered, zero artefacts, zero parameter descriptions or zero environments matched stops the build with a message saying which gate found nothing, because a gate covering an empty set reports success in exactly the way a gate nobody ran does — which is the failure this whole change removes, arriving by a different door. A test drives each converted gate against a tree with nothing for it to find and fails if any reports success. Whether the emptiness arose from a mistake in the tree or a mistake in the gate is out of scope; the gate is not required to diagnose which, only to refuse to claim a guarantee it did not check.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE
+    type: criterion-of

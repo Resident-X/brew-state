@@ -1,0 +1,29 @@
+id: SOL-PLANT-STRUCTURE-SUPPORT-STATUS
+type: deliverable
+category: solution
+title: Every plant structure carries a support status drawn on the hardware-verification line
+status: active
+version: 1
+text: |
+  Every structure behind the plant-model seam carries a support status, drawn from one vocabulary declared in one place, and the vocabulary draws its line where the requirement draws it: whether hardware has verified the structure. Not whose machine it describes. Those are different questions, and the second is the one the tree answers today — `firmware/src/plant/thermoblock/plant_structure.h` says its equations describe the project's own machine and `firmware/src/plant/fixture/plant_structure.h` says its own describe none, while neither says whether anything has ever been run against real hardware. Nothing has. There is no machine on the bench yet, so every structure in the tree is unverified, and the honest state is that all of them say so in the same words.
+
+  That matters most for the structure that describes the reference machine, because it is the one an adopter is most likely to trust. A structure labelled as describing the author's own machine reads as the tested one; a structure labelled unverified beside it reads as the risky one. Both are unverified. The label has to say which question it answers or it answers the wrong one convincingly.
+
+  The status is where an adopter meets the structure before running it — with the structure's own sources and in the shared firmware documentation — rather than in a commit message or a graph node they will never see, and a check fails the build when a structure carries none, so a structure added later cannot arrive without answering. Verified is claimable only against cited evidence that the structure was run on hardware of that architecture, which is what stops the status decaying into an assertion someone felt confident enough to write.
+
+  Out of scope: verifying any structure against hardware, which needs a machine and belongs to the hardware track; the description of what a structure represents and the origins of its values, which are a different claim about a different artefact; the actuation channels a structure answers, which is a separate declaration with a separate purpose; and any status vocabulary richer than the distinction the requirement draws — partial verification, verified-on-a-variant and the rest are refinements nothing here can evidence.
+rationale: |
+  The requirement conditions published support on verification against real hardware. The tree conditions its published claims on whose machine a structure describes. Those coincide only when the machine the author owns has actually been measured, which it has not, so the tree currently tells an adopter that one structure describes a real espresso machine and another describes nothing — and lets them conclude the first was checked.
+
+  Drawing the status on the verification axis makes every structure unverified today, which looks like a weaker claim and is a truer one. It also makes the status a thing that can change: a structure becomes verified when someone runs it against hardware and says so with evidence, rather than by having been written by whoever owns the repository.
+
+  Requiring cited evidence for a verified status is what keeps the vocabulary from collapsing back. Support status is the field most likely to be set optimistically, because setting it costs nothing at the moment of writing and its consequences land on somebody else's machine much later. Tying the claimable end of the vocabulary to evidence makes the optimistic setting the one that fails a check rather than the one that ships.
+
+  This is separated from the slice that adds a second structure for the axis that separated the channel contract from it. Applying a status vocabulary to the structures already in the tree edits them; that slice exists to demonstrate that adding a structure edits nothing already there. Sequenced before it, an arriving structure states its status under a vocabulary that already exists, and states it in its own files only.
+
+  The vocabulary is deliberately as small as the requirement's own distinction. Richer gradations — verified on one machine of the architecture, verified partially, verified against a variant — describe evidence nobody has, and a vocabulary with terms nothing can populate invites populating them anyway.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS.C10
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C5
+    type: targets

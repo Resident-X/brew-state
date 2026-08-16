@@ -1,0 +1,12 @@
+id: SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C3
+type: criterion
+title: A verified status is claimable only against cited evidence of hardware verification
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A structure may carry the verified value only where evidence that it was run against hardware of its architecture is cited alongside it, and the check that reads the status fails a verified claim with no citation — which is the case that would otherwise be set from confidence rather than from a bench. The citation identifies what was run and against what, in enough detail to be challenged; judging whether the cited verification was competently done is a review question and out of scope, as is the form the evidence takes.
+links:
+  - target: SOL-PLANT-STRUCTURE-SUPPORT-STATUS
+    type: criterion-of

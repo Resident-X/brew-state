@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C10
+type: criterion
+title: A structure carries a support status that says whether hardware has verified it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The line the requirement draws is verification, not authorship. With no machine on the bench yet nothing in the tree has been verified against hardware, so a structure labelled by whose machine it describes lets an adopter read the author's own as the tested one — which is the misreading this prevents, and the one that costs them rather than us.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

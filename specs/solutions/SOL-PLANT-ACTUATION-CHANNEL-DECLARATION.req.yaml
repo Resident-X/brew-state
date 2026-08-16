@@ -1,0 +1,39 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+type: deliverable
+category: solution
+title: Each plant structure declares the actuation channels it answers
+status: active
+version: 1
+text: |
+  The machine's actuation channels become one enumerated set, declared once and spoken by both seams. Today the same three channels exist twice and unjoined: `firmware/include/hw_interface.h` enumerates them as `hw_output_channel_t` with a terminating count, and `firmware/include/plant_types.h` carries them again as three named fields of `plant_actuation_t`, the two held in step by a comment and by nothing else. The enumerated form is the authority, because it is the one a channel can be named from — a refusal cannot report which channel had nowhere to land when the only handle on a channel is a struct member that no value identifies. The set is lifted into a vocabulary-only header that both seams include, on the same reasoning that already split `firmware/include/plant_types.h` out of `firmware/include/plant_model.h`: a vocabulary neither seam owns is what keeps two seams that share it from depending on each other. The plant's actuation becomes levels indexed by that set rather than three named fields, and the hardware seam's channel type becomes a name for the shared set rather than a second copy of it.
+
+  On that vocabulary, every structure behind the plant-model seam states which channels it responds to, and the seam carries that statement as part of what a structure supplies rather than as a comment a reader has to find. The vocabulary belongs to the machine, not to any one structure, so a structure of a given architecture will not answer every channel in it — and until the structure says which, nothing can tell an actuator a structure has no authority over from one it is failing to move.
+
+  A step commanded with a non-zero level on a channel the structure does not answer is refused: the instance does not advance, nothing is clamped or silently zeroed, and the refusal names the channel, so a caller has something actionable rather than a bare failure. A zero level on an unanswered channel is not a fault, because commanding nothing of an actuator that is not there is not an error, and treating it as one would make a caller that zeroes every channel it does not use unable to take a step at all.
+
+  Both structures already behind the seam gain declarations as part of this change, and the fixture structure's is deliberately narrower than the vocabulary — it describes no machine and is free to describe one that answers fewer channels, which is what gives the refusal a subject to fail against before any second machine-describing architecture exists. The structure that describes the reference machine answers every channel, and neither its trajectories nor the control logic's use of the hardware seam change as the vocabulary is unified and the declarations arrive.
+
+  Out of scope: what a control law does when a step is refused, which belongs to the loop that consumes the model; any channel the machine does not have, since this states what a structure answers rather than enlarging what there is to answer; the sensor vocabulary, which is a separate list with a separate consumer and is not touched; the quantities a structure exposes, which are declared elsewhere; and adding a further structure behind the seam, which is a separate piece of work this one precedes. This change adds no source outside the memory and undefined-behaviour analysis and the strict warning settings this project applies to its own sources — the seams and the structures it touches are inside them already — so no enlargement of that subject is claimed here.
+rationale: |
+  That the actuation vocabulary belongs to the machine rather than to any structure was true from the moment the seams were drawn, and it was asserted by nothing. It sat in prose across two headers while no criterion required anything of it — the failure pattern where something load-bearing is stated as fact and tested nowhere. Worse, it was not even expressed once: the channels exist in two shapes in two headers, agreeing because a comment says they do. Two lists that must agree eventually do not, and this pair has no check between them at all.
+
+  The enumerated form wins because addressability is the whole point. A structure has to say which channels it answers, a refusal has to say which channel it refused, and a check has to say which channel a declaration named that the machine does not have. None of those sentences can be written about a struct member; all of them are ordinary about an enumerated value with a count. The named fields read more pleasantly at a call site, which is why they were written that way, and that convenience is what has to give.
+
+  Lifting the set into a header neither seam owns rather than making one seam include the other keeps the two seams independent. The plant model must build with no hardware seam present — that is what the host tier rests on — and the control logic must build with no plant model present. A shared vocabulary header is the same shape the plant seam already uses internally, where the types were split out precisely so the structure's header and the seam's header would not form a cycle.
+
+  The gap this closes becomes a defect the moment a structure answers fewer channels than the vocabulary carries. A control law commands a channel, nothing moves, and no refusal says which of the two possible reasons applies — the actuator is not part of this architecture, or the actuator is there and the command did not work. Those need opposite responses, and the difference between them is exactly what silence destroys. Charging the absent response to the plant is the quiet version: the model looks like a plant that responds sluggishly to one input, and the estimator and the loops built on it inherit that as physics.
+
+  This is a change to seams that have already shipped, made deliberately here rather than discovered later by the first loop that hits it. It is separated from the work that adds a second structure because the two make opposite claims about existing code: this one edits the structures and headers already there, and that one demonstrates that adding a structure edits none of them. One slice cannot honestly make both claims.
+
+  The fixture structure carries a narrowed declaration for the same reason it exists at all. A refusal that nothing can trigger passes unconditionally, which is indistinguishable from not having one, and the machine-describing structure answers every channel and so cannot trigger it. The fixture describes no machine and is free to describe one with fewer actuators; giving it that shape costs nothing and turns the refusal into a check that can fail.
+
+  Requiring the existing behaviour to be bit-identical afterwards is the other half. A vocabulary change and a contract change to two shipped seams that quietly altered the trajectories the rest of the phase reasons against, or the levels the control logic drives, would be worse than the gap being fixed and would be invisible, because nothing else about this change goes near the equations or the control law.
+links:
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: DEL-SIM-SEAMS-HARNESS.C11
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C6
+    type: targets

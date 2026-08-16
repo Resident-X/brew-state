@@ -1,0 +1,16 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001.C6
+type: criterion
+title: A command on an actuation channel a structure does not answer is observable rather than silently absorbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The vocabulary of actuation belongs to the machine rather than to any one structure, so a structure that describes a particular architecture will not answer every channel that vocabulary carries. Which of them it does answer is therefore something the structure states, not something a caller works out by watching what moves.
+
+  A command on a channel the structure does not answer is refused or reported, so a caller can tell a command that acted from one that had nowhere to land. Without that, an unanswered channel is indistinguishable from an actuator that is present and ineffective, and a controller told nothing will keep commanding it and charge the absent response to the plant — a fault whose symptoms all point somewhere else.
+
+  Silent on how a structure states what it answers, and on what a caller does with the answer. A caller that ignores a refusal is a defect in the caller, not in the seam.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001
+    type: criterion-of

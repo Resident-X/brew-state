@@ -4,7 +4,7 @@ category: constraint
 title: Plant parameters are data and plant structure is a replaceable seam
 status: active
 priority: should
-version: 2
+version: 3
 text: |
   Two machines of the same architecture differ only in their numbers. Two machines of different architectures differ in their equations, and no set of numbers bridges that.
 
@@ -12,7 +12,9 @@ text: |
 rationale: |
   Selection happens when the artefact is built rather than while it runs, which is both cheaper and safer on this target. Cheaper because no dispatch cost is paid and no unused structure occupies storage. Safer because a binary that could choose its dynamics at runtime could choose wrongly, and controlling a thermoblock with boiler dynamics is a fault with no obvious symptom until the machine is well outside where it should be.
 
-  The final criterion exists to stop the seam becoming a claim. Making a structure cheap to add is not the same as supporting it, and the verification obligation cannot be satisfied for hardware nobody can test against. A structure that exists in the source but has never met the machine it describes is published as exactly that.
+  One criterion exists to stop the seam becoming a claim. Making a structure cheap to add is not the same as supporting it, and the verification obligation cannot be satisfied for hardware nobody can test against. A structure that exists in the source but has never met the machine it describes is published as exactly that.
+
+  Ownership of the actuation vocabulary is drawn on the same axis as ownership of the quantities: both belong to the machine, not to a structure. That is what lets a structure of a different architecture leave a channel unanswered instead of forcing every machine to have every actuator the vocabulary can name. The cost of drawing it there is that an unanswered channel looks exactly like an ineffective one from outside, so a controller cannot separate an actuator it has no authority over from one it is failing to move. Requiring a structure to say which channels it answers, and requiring the unanswered case to be visible, is what stops that cost landing on the control law as a mystery.
 
   Deliberately not a plugin system, a model description language or a machine profile abstraction. Each is a project in its own right, none can be validated against machines the author does not own, and all of them would displace the work this project actually exists to do.
 

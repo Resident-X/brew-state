@@ -1,0 +1,12 @@
+id: SOL-PLANT-SEAM-GATE-COVERAGE.C2
+type: criterion
+title: The analysis gate covers every environment that produces a host artefact
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The gate that verifies the analysis covers every environment `firmware/platformio.ini` declares that produces a host artefact, discovered rather than named on its command line, so the machine-describing environment, the fixture environment and the test environment are all verified to compile this project's sources under the sanitizers with a finding made fatal rather than printed. All three carry them today by inheritance from the shared base configuration; what this establishes is that something checks, so an environment added later cannot drop them unnoticed. The configurations required not to build — the one naming no structure and the one naming two — are excluded by name with the reason recorded, since demanding a clean analysed build of a configuration that must not build would contradict the criteria requiring it to stop. Whether an artefact is executed once built is a separate obligation with its own criterion. The strict warning settings are likewise a separate obligation with a different boundary and are out of scope here, as is the target build, which compiles no plant structure and belongs to a different tier, and as are thread and leak analysis.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE
+    type: criterion-of

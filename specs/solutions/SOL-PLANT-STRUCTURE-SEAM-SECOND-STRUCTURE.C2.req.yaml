@@ -1,0 +1,18 @@
+id: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C2
+type: criterion
+title: Adding the structure changes no existing structure and no consumer of the model
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The change-set that introduces it touches its own directory under `firmware/src/plant/`, its own two parameter descriptions under `firmware/params/`, its own test suite under `firmware/test/`, four environment entries in `firmware/platformio.ini`, two lines and one further argument in `firmware/Taskfile.yml`, and the documentation that says what it is. It touches no file under an existing structure's directory, neither seam header, not the shared parameter loader, not the check tools, not any gate invocation that discovers its subjects, no existing test suite, and no translation unit that consumes the model.
+
+  Each of those entries is a subject something names by design, and each carries its reason. Three of the four environment entries are new — one that builds the structure, one that runs its tests, and one deliberately misconfigured configuration naming it alongside an existing structure, which is what gives the refusal of a two-structure build something to refuse for this structure rather than only for the pair that existed before. The fourth is an edit to the test environment that already exists, and it is the one place this change reaches into something standing: a test environment runs every suite in the tree unless it is told which are its own, so both test environments gain the key that confines them. Without it the existing environment would run this structure's suite against the structure it was not written for, and the descriptions those suites build carry coefficient names belonging to one structure that the other's loader would refuse. That edit adds no behaviour and removes none; it records which suites belong to which environment, which nothing had needed to say while there was one.
+
+  The task-file entries are the build line that produces its artefact and the invocation running the parameters-as-data check over its two descriptions; the further argument adds the new misconfigured configuration to the check that a build naming two structures is refused. The build line is named because a forgotten entry there yields no artefact and the discovered gates stop with an error rather than passing over it. The parameters-as-data check names its subjects because it needs a pair of descriptions differing in one coefficient before it can conclude anything. The refusal check names the configurations required to fail because a build that must not succeed cannot be discovered from among builds that must — nothing distinguishes them but intent. The test environment costs no task-file line, because the task that runs the tests discovers the environments it runs.
+
+  This is what adding a structure costs, stated rather than exempted. The property that survives it is the one the adopter promise rests on and the one that stops holding quietly the first time a structure is added by editing the one already there: no existing structure, seam, test suite or consumer is edited, and the single existing entry that is touched selects suites rather than changing what any of them do. This architecture exercises the actuation vocabulary and the mapping from the seam's quantities onto a structure's own states; whether the seam's set of quantities is sufficient for an architecture it cannot express is a different question and out of scope, since answering it would change the seam rather than add behind it.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+    type: criterion-of

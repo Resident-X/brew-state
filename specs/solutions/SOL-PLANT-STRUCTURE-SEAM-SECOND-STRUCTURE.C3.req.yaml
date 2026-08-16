@@ -1,0 +1,14 @@
+id: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C3
+type: criterion
+title: The seam's build checks take up the new structure without being edited
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The check tools under `firmware/tools/` are not edited to admit the new structure, and neither is any gate invocation that discovers its subjects: the exclusivity check, the check that calls through a seam are direct, the encapsulation check, the gate verifying the analysis, the task running the host artefacts and the task running the tests all take the enlarged set up with nothing hand-maintained changed. The properties they enforce hold across that enlarged set rather than only the pair they were written against — exclusivity across every pair of structures, the encapsulation check treating the new structure's own names as owned by it and failing a consumer outside the structure directories that names them, the new environment's artefact both verified instrumented and actually run, and this structure's own tests run because its test environment exists rather than because a line was written for it.
+
+  That the test task needs no line does not mean the tests cost nothing: confining each test environment to its own suites is a configuration entry, counted against what adding a structure touches rather than here. The guarantee that a build naming this structure alongside an existing one stops rather than letting the linker choose is bought in the same way — it is driven, the deliberately misconfigured configuration this structure adds being built and required to yield no artefact with a test failing if it does, but the check providing it names the configurations it refuses. It and the parameters-as-data check are out of scope for this criterion for that reason: they take the new structure up because something named it, not unchanged. Whether the tools would discover a structure that departs from the layout they read is out of scope too; that layout is the seam's own convention and this does not change it.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+    type: criterion-of

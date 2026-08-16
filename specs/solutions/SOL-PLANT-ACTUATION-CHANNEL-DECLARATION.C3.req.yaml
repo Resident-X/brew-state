@@ -1,0 +1,12 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3
+type: criterion
+title: Every structure behind the seam declares which actuation channels it answers
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Both structures under `firmware/src/plant/` gain a declaration in this change, not only whichever one motivated it, and a check run as part of the build fails when a structure in the source tree supplies none — so a structure added later cannot reach the seam without answering the question, and the check fails rather than passes when it finds no structure to inspect. A declaration naming a channel outside the shared set is refused as well, since a structure claiming to answer something that cannot be commanded is a defect that would otherwise sit unnoticed. Whether a structure's declaration is honest — that it really does move what it says it moves — cannot be settled without the machine and is out of scope.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+    type: criterion-of

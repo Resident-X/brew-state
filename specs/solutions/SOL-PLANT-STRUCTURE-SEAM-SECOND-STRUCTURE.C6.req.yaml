@@ -1,0 +1,12 @@
+id: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C6
+type: criterion
+title: The new structure is published as unverified against hardware
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The new structure states its support status in the vocabulary the seam already carries, and the value it states is unverified, because no machine of this architecture has been run against it and nobody on this project has one. The statement sits with the structure's own sources and its parameter description, where an adopter meets it before running it rather than after, and it needs no change to any structure already in the tree — those carry their own statuses under the same vocabulary, established before this work and left exactly as they are. Whether the status could ever be verified is out of scope here; that needs a machine of this architecture and belongs to whoever has one.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+    type: criterion-of

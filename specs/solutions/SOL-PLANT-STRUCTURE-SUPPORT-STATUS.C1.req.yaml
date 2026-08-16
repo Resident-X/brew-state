@@ -1,0 +1,12 @@
+id: SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C1
+type: criterion
+title: Every structure behind the seam carries a support status from one declared vocabulary
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The status is part of what a structure supplies, sits with the structure's own sources under `firmware/src/plant/` and in the shared firmware documentation an adopter reads before choosing one, and a check run as part of the build fails when a structure in the tree carries none — so a structure added later cannot reach the seam without stating it, and the check fails rather than passes when it finds no structure to inspect. A status outside the declared vocabulary fails the same check. Where a status is surfaced to an operator at run time, if anywhere, is out of scope: this is a claim made to whoever builds the firmware, not to whoever drinks the coffee.
+links:
+  - target: SOL-PLANT-STRUCTURE-SUPPORT-STATUS
+    type: criterion-of

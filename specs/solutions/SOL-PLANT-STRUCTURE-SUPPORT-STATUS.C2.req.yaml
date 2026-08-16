@@ -1,0 +1,12 @@
+id: SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C2
+type: criterion
+title: The status vocabulary draws its line at whether hardware has verified the structure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The vocabulary distinguishes a structure that has been run against hardware of the architecture it describes from one that has not, and it distinguishes nothing else — in particular not whose machine the structure describes, which is a different question the structure's own documentation already answers and which this status must not be read as answering. Every structure in the tree carries the unverified value while no machine has been on the bench, including the one describing the reference machine, so an adopter comparing two structures is comparing like with like. Richer gradations of verification are out of scope; they describe evidence nobody has.
+links:
+  - target: SOL-PLANT-STRUCTURE-SUPPORT-STATUS
+    type: criterion-of

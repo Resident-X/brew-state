@@ -1,0 +1,12 @@
+id: SOL-PLANT-DESCRIPTION-BASELINE.C1
+type: criterion
+title: The plant description states the quantities it represents and the relations between them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Beside the values under `firmware/params/`, and read with them, sits a statement naming for every quantity the plant-model seam exposes and every state `firmware/src/plant/thermoblock/` integrates the physical thing it stands for and the unit it is carried in, together with the relations that link them — which coefficient enters which relation, and which quantity is answered from which state. It also names what the description deliberately leaves out, because a quantity it omits is one the design cannot reason about and a reader has no other way to tell an omission from an oversight. Whether those relations match the machine's measured behaviour is out of scope and cannot be settled until the machine is on the bench; what is settled here is that the description says what it claims rather than listing bare numbers.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE
+    type: criterion-of

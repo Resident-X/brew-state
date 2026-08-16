@@ -1,0 +1,39 @@
+id: SOL-PLANT-DESCRIPTION-BASELINE
+type: deliverable
+category: solution
+title: The reference machine's plant description and the origin recorded against each value
+status: active
+version: 1
+text: |
+  The reference machine's plant description is populated behind the plant-model seam: the coefficients `firmware/src/plant/thermoblock/` requires, carrying the reference machine's own figures rather than numbers chosen to be plausible, and against every one of them the origin of that figure. The origin sits beside the value in the same artefact under `firmware/params/`, so a value cannot be copied, edited or moved without the account of where it came from travelling with it, and it says where the figure came from in enough detail to be reproduced or challenged — the document and page a figure was read from, the geometry it was derived from, the comparable machine it was estimated from, or the bench measurement that established it.
+
+  Carrying the origin beside the value is a change to the parameter grammar, and therefore to the shared loader in `firmware/src/plant/common/plant_parameters.c`, which is the one piece of already-delivered code this slice edits. That loader today accepts blank lines, comment lines and `name = value` lines and refuses everything else; it gains the ability to carry an origin against a value, and it keeps every refusal it already makes. That last part is not incidental — the loader is what stands between an incomplete description and a model quietly running on defaults, and its refusals are the subject of closed criteria that nothing else in this slice would notice being weakened.
+
+  Each origin declares its kind from a vocabulary the description declares in one place, and the kinds separate a figure read or derived from a document, a figure estimated from a comparable machine, and a figure measured on this machine. That is the distinction the whole artefact exists to preserve: as it ships nothing here has been measured, and during commissioning the description becomes a mixture, with measured values displacing estimates one at a time while the rest stand. A check run in the build fails a coefficient with no origin, fails an origin whose kind is not one of the declared ones, and fails rather than passes when it finds no description to inspect.
+
+  The obligation to carry origins follows what a description claims rather than which structure it belongs to. A description that states explicitly that it describes no real machine is exempt and earns the exemption by carrying that statement — which covers the fixture structure's description, the second description that exists to show one linked artefact running different numbers, and any description shipped with a structure whose architecture nobody here has measured. A description that claims nothing needs no provenance for the claim.
+
+  Alongside the values sits a statement of what the description represents: for every quantity the seam exposes and every state the structure integrates, the physical thing it stands for and the unit it is carried in, the relations that link them, and what the description deliberately leaves out. A list of numbers cannot be checked against a machine and cannot be extended without guessing what its author meant, and a quantity the description omits is one the design cannot reason about.
+
+  The description is a live artefact rather than a document beside the code. It loads into the structure it describes with no coefficient missing and none outside the admissible range the structure declares, it advances a model instance to completion, and it is the description the host artefact and the model's own tests are run against — so the numbers the rest of this phase reasons against are the ones with origins recorded, not a placeholder that describes no machine.
+
+  Out of scope: measuring anything on the bench, which needs the machine and belongs to the hardware track; the assumed error on the description, which is required elsewhere and deliberately not restated here; the procedure by which a commissioned measurement later displaces an estimate; the reference machine's supply, protective devices and mechanical configuration, which are a separate local declaration answering a different requirement; and any change to what the loader does beyond carrying origins — the ranges it enforces, the faults it reports and the structures it serves are untouched. Whether the recorded values resemble the machine's measured behaviour cannot be settled here and is not claimed.
+rationale: |
+  The seam shipped with numbers that were admissible and plausible and described nothing, which was the honest thing to ship with a seam whose point was separability. Everything after it reasons against the description rather than against the seam — the estimator reconstructs the states it defines, both loops are demonstrated against it, the dominance ranking analyses it, and procurement is decided by that ranking — so leaving plausible numbers in place would let four pieces of work draw conclusions from figures nothing produced.
+
+  The origin is recorded per value rather than per description because a description is a mixture from the outset and stays one throughout commissioning. A machine part-way through characterisation holds measured values beside the estimates not yet displaced, and a per-description provenance note is exactly wrong at that point: it can only be true of the file on the day it was written. Recording per value is also what makes displacement deliberate — a measurement replaces an estimate and says so, rather than a number quietly changing.
+
+  Origin and value are kept in one artefact rather than in a table beside it because two artefacts that must agree eventually do not. The failure is silent and asymmetric: an estimate that has lost its provenance is trusted like the measurement it resembles, which is the more dangerous of the two, and nothing about a bare number reveals that its account has drifted.
+
+  The check exists because a discipline that depends on remembering is not a discipline. Provenance conventions decay at exactly the moment they matter most — under time pressure, adding one more coefficient — and the failure leaves no trace at the point of use. Declaring the vocabulary of origin kinds in one place is the same reasoning applied to the kinds themselves: a new kind should be a deliberate addition rather than a new word someone typed, because the estimated-versus-measured distinction is only as sharp as the vocabulary that carries it.
+
+  Running the host build and the model's tests against this description rather than a placeholder closes the loop that would otherwise leave the artefact ornamental. A description nothing executes drifts from the structure it describes the first time a coefficient is added, and drifts silently, because nothing loads it. Making it the description in use turns that drift into a failing load on the day it happens.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS.C8
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C2
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C3
+    type: targets

@@ -1,0 +1,12 @@
+id: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C5
+type: criterion
+title: The new structure is compiled under the host tier's analysis and warning settings
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The build environment this structure adds is inside the analysis gate rather than beside it: the gate covers every environment in `firmware/platformio.ini` that compiles sources under `firmware/src/`, so the new one is compiled under the same memory and undefined-behaviour analysis and the same strict warning settings this project applies to its own sources, treating a conversion, a shadowed name, a widening promotion or any other warning as a failure, and exercising the structure through the host artefact reports no finding. Arriving outside them is how a new structure quietly enlarges the subject while narrowing the analysis, and the gate's coverage is what makes that unreachable rather than merely unlikely. Third-party sources keep the relaxed settings they already have, and thread and leak analysis stay out of scope for this tier.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+    type: criterion-of

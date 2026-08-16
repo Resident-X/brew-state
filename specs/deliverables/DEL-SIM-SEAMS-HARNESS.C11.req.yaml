@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C11
+type: criterion
+title: A command on an actuation channel a structure does not answer is visible to its caller
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The actuation vocabulary is the machine's rather than any structure's, so a second architecture is the first thing in this phase that leaves a channel unanswered. Until this holds, a control law can command a channel nothing responds to and read the absent response as the plant's behaviour, which is a fault whose symptoms all point at the plant.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C5
+type: criterion
+title: A refused command reports which channel had nowhere to land
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The refusal identifies the offending channel by its value in the shared set, so a caller can act on it and a person reading a log can tell it from the other reasons a step is already refused — a null argument, a zero interval, a level beyond full scale. Where more than one fault applies to the same command, the reported one is fixed rather than left to the order the implementation happens to check in, and a test pins it: a level that is both beyond full scale and on an unanswered channel reports the same fault every time. The report reaches the caller without changing what the step operation returns to a caller that only tests the boolean, so the existing consumers that assert on it keep compiling and keep passing — the same shape the parameter loader already uses, where a bare false is accompanied by a record saying why. Whether more than one offending channel is enumerated or only the first is out of scope; what is required is that a caller can name a channel to look at.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+    type: criterion-of

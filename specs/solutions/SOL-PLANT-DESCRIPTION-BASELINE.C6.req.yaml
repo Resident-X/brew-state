@@ -1,0 +1,12 @@
+id: SOL-PLANT-DESCRIPTION-BASELINE.C6
+type: criterion
+title: Every refusal the parameter loader already makes survives the grammar extension
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Extending the parameter grammar in `firmware/src/plant/common/plant_parameters.c` to carry an origin against each value leaves every refusal the loader already makes intact: a description omitting a coefficient the structure requires, carrying one outside its declared admissible range, naming a coefficient the structure does not have, giving one twice, or malformed at the line level is still refused, still names the coefficient at fault, still leaves no usable record, and still substitutes no default. The tests that pinned those refusals run unchanged against the extended grammar rather than being adjusted to suit it, and an origin annotation that is itself malformed is refused on the same terms rather than being ignored as though it were a comment. A grammar extension that quietly relaxed a refusal would be the worst outcome available here, because the loader is what stands between an incomplete description and a model that runs on defaults, and it would be invisible from anything else this slice asserts. The faults the origin grammar newly introduces are out of scope here and are covered by the criteria that require origins in the first place; so is any change to the ranges the loader enforces or the structures it serves, neither of which this slice touches.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE
+    type: criterion-of

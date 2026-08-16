@@ -1,0 +1,14 @@
+id: SOL-PLANT-SEAM-GATE-COVERAGE.C5
+type: criterion
+title: Every host artefact is executed under the analysis, not only built under it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A sanitizer reports nothing until the code runs, so an environment verified to compile and link instrumented and then never executed has been checked for the wrong thing — and both the epic criterion this tier answers to and the closed criterion that established the analysis turn on it running, not on it being configured. The set here is its own rather than the one the sanitizer criterion covers: it is the environments whose artefact links this project's own host entry point and therefore takes a parameter description as its argument, which is what the task that runs the host artefacts can execute at all. The task discovers them and runs each against a description its own structure ships, rather than naming artefact and description pairs by hand, so an environment added later cannot be built, verified instrumented, and silently never run.
+
+  The test environment is outside that set by the definition rather than by a name on a list: it omits the host entry point from its source filter and lets the test runner supply the entry point instead, so its artefact takes no description argument and there is nothing for the run task to hand it. It is executed all the same, by the task that runs the tests, under the same sanitizers — so no artefact goes built-but-never-run, which is the thing this criterion exists to prevent. Which entry paths an artefact exercises when it runs is unchanged and out of scope, as is what a finding means once one occurs: a finding already aborts the run rather than printing and continuing.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE
+    type: criterion-of

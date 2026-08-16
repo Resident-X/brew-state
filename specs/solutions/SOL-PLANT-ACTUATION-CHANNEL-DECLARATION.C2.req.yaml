@@ -1,0 +1,12 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C2
+type: criterion
+title: The plant-model seam carries each structure's statement of the channels it answers
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A structure's declaration is part of what it supplies through `firmware/include/plant_model.h`, alongside the parameter table it already supplies, so a consumer reaches it the same way it reaches everything else about the model — through the shared header rather than by including a structure's own or by reading a comment. The declaration is expressed over the shared channel set and nothing in the seam's vocabulary is widened to carry it. How a structure spells its declaration internally is its own business and out of scope, as is any consumer's use of it: this establishes that the statement is reachable, not what a caller does with it.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+    type: criterion-of

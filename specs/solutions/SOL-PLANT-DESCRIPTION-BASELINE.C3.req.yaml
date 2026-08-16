@@ -1,0 +1,20 @@
+id: SOL-PLANT-DESCRIPTION-BASELINE.C3
+type: criterion
+title: An estimated value in the reference description is distinguishable from a measured one
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Each origin declares its kind from a vocabulary the description declares in one place, and
+  the kinds separate a figure read or derived from a document, a figure estimated from a
+  comparable machine, and a figure measured on this machine. The check fails a value whose
+  origin kind is not one of the declared ones, so a further kind is added deliberately rather
+  than by someone typing a new word, and a test drives a description that mislabels a kind to
+  show the check refuses it. As it ships nothing here is measured, because the machine has not
+  been on the bench — the distinction has to survive the mixture that commissioning produces,
+  not just the state the description is in today. The procedure by which a measurement later
+  displaces an estimate is out of scope and belongs to the commissioning work.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE
+    type: criterion-of

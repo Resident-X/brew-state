@@ -1,0 +1,12 @@
+id: SOL-PLANT-DESCRIPTION-BASELINE.C4
+type: criterion
+title: The reference description is admissible to the structure it describes and advances a model instance
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Loading it into `firmware/src/plant/thermoblock/` populates a parameter record with no coefficient missing, none outside the range that structure declares admissible for it, and no line refused, and a model instance initialised from that record advances over a sequence of steps to completion and answers every quantity the seam enumerates. This is what catches the description drifting from the code on the day the structure's coefficient set changes, which is otherwise silent because nothing else reads it. Whether the resulting trajectory resembles the real machine is out of scope until the machine is measured.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE
+    type: criterion-of

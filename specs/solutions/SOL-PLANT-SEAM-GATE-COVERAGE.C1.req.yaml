@@ -1,0 +1,14 @@
+id: SOL-PLANT-SEAM-GATE-COVERAGE.C1
+type: criterion
+title: Every per-structure gate covers every structure without being given its name
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Within the check task in `firmware/Taskfile.yml`, the gates whose subject is a structure — that a structure's symbols are absent from every other structure's artefact, and that calls through a seam resolve directly in a structure's artefact — are each invoked once over what they discover under `firmware/src/plant/`, and no structure's name appears in those invocations. Adding a structure adds no line to them, and forgetting to add one cannot leave a structure unchecked. What each check concludes is unchanged; this covers how it is reached.
+
+  Gates that name their subjects because the names are the content of the check keep them and are out of scope: the two plant-header checks, since one header is a seam and the other a vocabulary and the obligations differ; the check comparing the control logic across two builds, since that pair is what it compares; the check that a misconfigured build is refused, since a forgotten name there fails loudly rather than quietly; and the check that parameters are read as data, which needs two descriptions differing in a single coefficient before it can conclude anything, one run being unable to show that a coefficient is not compiled in. Discovering that last one per structure would demand a second description from every structure, which is a claim about what a structure must ship rather than about how a gate is invoked, and it is not made here.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE
+    type: criterion-of

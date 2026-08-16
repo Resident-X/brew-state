@@ -1,0 +1,14 @@
+id: SOL-PLANT-SEAM-GATE-COVERAGE.C3
+type: criterion
+title: Strict warning settings are required wherever the build can scope flags to this project's sources alone
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The discriminator is not whether this project's sources are compiled in an environment — they are, in every host environment — but whether the build can apply flags to them without also applying them to sources that are not this project's. Where it can, the gate requires the settings that make a conversion, a shadowed name or a widening promotion a failure rather than a note. Where it cannot, the environment is exempt and the exemption is read from the reason recorded beside it rather than assumed: the test environment compiles the test runner's generated support file through the same path as this project's sources and so drops the settings deliberately, with `firmware/platformio.ini` recording both that decision and the fact that the same translation units are compiled strictly by the machine-describing environment, so nothing goes unchecked by it.
+
+  The target build is out of scope here exactly as it is for the sanitizers, even though it does scope flags to this project's sources and so would otherwise fall inside this rule. It belongs to a different tier, its warning policy was chosen against the target toolchain rather than the host one, and widening it under cover of a host-tier gate would change what the target build accepts for reasons that have nothing to do with the target. Re-imposing the settings on an environment that has recorded why it cannot carry them is out of scope too — that would overturn the decision rather than enforce it — as is relaxing any environment that carries them today.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: SOL-PLANT-SEAM-GATE-COVERAGE.C6
+type: criterion
+title: The test task discovers the environments it runs rather than being given a list
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The set is defined by a property `firmware/platformio.ini` already carries: an environment that declares this project's sources are compiled into the test runner alongside the tests is one the test runner can be pointed at, and it is marked as such on exactly one environment today. The task that runs the tests discovers those environments and runs each of them, so a structure's tests run because they exist rather than because somebody remembered a line.
+
+  That matters more here than for the task that builds the artefacts. A build carries exactly one structure, so each structure shipping tests brings a test environment of its own; and a forgotten entry in the test task is silent in a way a forgotten build entry is not — a missing artefact stops the discovered gates with an error, whereas tests that were never run leave nothing behind to notice. A test adds a test environment to the tree and fails if the task does not run it, and a task that discovers no test environment at all stops with an error rather than reporting success, on the same terms as every other gate here: covering an empty set reports success in exactly the way running nothing does.
+
+  Which tests an environment contains and what they assert are unchanged and out of scope. So is the suite covering the check tools themselves, which is not a build environment at all and is named because it is one fixed thing rather than a set that grows with the tree.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE
+    type: criterion-of

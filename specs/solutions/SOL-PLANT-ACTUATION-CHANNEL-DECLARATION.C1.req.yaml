@@ -1,0 +1,12 @@
+id: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C1
+type: criterion
+title: The machine's actuation channels are one enumerated set both seams speak
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The channels are enumerated once, in a vocabulary-only header that both `firmware/include/hw_interface.h` and `firmware/include/plant_types.h` include and neither owns, with a terminating count so the set can be iterated and a channel can be named by value. The plant seam's actuation type carries levels indexed by that set rather than three separately named fields, and the hardware seam's output-channel type becomes a name for the shared set rather than a second copy of it, so no list of channels exists anywhere that another list has to be kept in step with by hand. The full-scale constant the two seams currently define separately moves with them, since a level means nothing without it. The new header is itself a subject of the vocabulary check that already runs over the seams' headers, on the same terms as the one it is split from — a vocabulary header nothing inspects clears itself, and this one is about to become the single authority for a set two seams depend on. The sensor vocabulary is a separate list with a separate consumer and is deliberately not touched; enlarging the actuation set with a channel the machine does not have is out of scope, this being a change of shape rather than of content.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+    type: criterion-of
