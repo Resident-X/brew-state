@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4-TEST
+type: evidence
+title: An incomplete or inadmissible parameter record is refused (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c
+text: |-
+  Omitting any one of the eleven coefficients is refused with that coefficient named. A value outside the declared range is refused with the range and the line. A value that compares false to both bounds -- a not-a-number, which is what a calibration tool that divided by zero emits -- is refused rather than initialising a model whose every quantity reads NaN. Seven malformed, unknown and duplicate cases are refused at the right line. A refusal leaves the caller's record exactly as it was, shown behaviourally by an unchanged trajectory rather than by inspecting the record.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4
+    type: satisfies

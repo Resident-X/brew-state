@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3-TEST
+type: evidence
+title: Every coefficient the structure uses arrives in the parameter record (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_every_coefficient_reaches_the_equations
+text: |-
+  Each of the thermoblock's eleven coefficients is perturbed alone and required to change the trajectory, compared over every quantity at every step rather than at the endpoint -- a time constant changes how fast a pressure settles, not what it settles at. Confirmed to fail on four separate mutations hard-coding a coefficient into the equations. At the artefact level, check_parameters_are_data.py runs one unchanged host executable against two descriptions differing in a single coefficient and requires two trajectories, hashing the executable either side so a rebuild between the runs cannot be mistaken for the property.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3
+    type: satisfies

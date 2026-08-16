@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C5-ANALYSIS
+type: evidence
+title: A direct plant-structure reference from a model consumer fails the build (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C5)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_plant_encapsulation.py
+text: |-
+  The check runs inside every pio run over firmware/src and firmware/test, exempting only the structures themselves, and fails with file, line and symbol. What a structure owns is derived from its own header rather than listed, so a structure gaining a coefficient does not need the check updated. Confirmed to catch a field access and a structure-header include in a real consumer. It refuses to run at all when there are no structures, no owned names, or no consumer sources, and refuses when a structure field shares a name with the seam's own vocabulary -- a collision that would otherwise be reachable from every consumer undetected.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C5
+    type: satisfies

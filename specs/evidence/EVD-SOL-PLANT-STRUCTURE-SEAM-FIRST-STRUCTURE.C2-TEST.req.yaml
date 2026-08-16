@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2-TEST
+type: evidence
+title: One concrete plant structure runs on the host through the seam (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c
+text: |-
+  Eight tests in test_plant.c reach the model only through plant_model.h and name no structure symbol. A step at rest changes nothing after one step and after 1200; rest also holds at an ambient no other test uses, so the property cannot rest on one temperature being written into the equations. Heat raises both temperature quantities and lowers none. The same inputs reproduce the same trajectory, compared bitwise. An out-of-scale actuation is refused and changes nothing, and an uninitialised instance is unusable.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2
+    type: satisfies

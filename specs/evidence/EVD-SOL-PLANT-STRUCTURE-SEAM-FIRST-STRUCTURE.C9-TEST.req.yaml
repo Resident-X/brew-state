@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C9-TEST
+type: evidence
+title: The structures and the parameter loader are under the host tier's analysis (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_sanitizers.py
+text: |-
+  Every source under firmware/src, including the structures and the parameter loader, is required to compile with the address and undefined-behaviour sanitizers, with the flag that makes a finding abort rather than print and continue, and with the strict warning settings that make a conversion or a shadowed name a failure. Dropping any one of the five is reported. A build compiling no source of this project's own is a failure, so enlarging the subject cannot narrow the analysis. Both host artefacts are then exercised through the model under those sanitizers and report nothing.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C9
+    type: satisfies

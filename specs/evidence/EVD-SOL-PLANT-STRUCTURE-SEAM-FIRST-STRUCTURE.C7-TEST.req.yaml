@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7-TEST
+type: evidence
+title: A build naming no structure, or more than one, fails rather than choosing (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_selection_refused.py
+text: |-
+  check_structure_selection.py runs before anything is compiled in every environment, reading the filter that environment actually resolved to. check_selection_refused.py then drives the two deliberately misconfigured environments for real and requires each to stop, to leave no artefact, and to stop for the selection reason specifically rather than for a compile error. A filter the caller could not resolve is an error rather than reading as a build that compiles no plant source.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7
+    type: satisfies

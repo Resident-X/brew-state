@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C8-ANALYSIS
+type: evidence
+title: Calls through the plant-model interface are direct calls (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C8)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_direct_calls.py
+text: |-
+  The hardware seam's check is reused unchanged against include/plant_model.h and the consumer objects, disassembling the linked host executable. It fails both when a call through the seam is indirect and when an interface operation the consumers reference is reached by no direct call at all. Confirmed by mutation: routing an operation through a volatile function pointer -- which is how a structure would come to be bound while the program runs -- is caught.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C8
+    type: satisfies

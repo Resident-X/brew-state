@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C6-ANALYSIS
+type: evidence
+title: The linked artefact carries only the structure it was built for (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C6)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_structure_exclusive.py
+text: |-
+  Both host artefacts are inspected: the one built for thermoblock carries that structure's unique symbols and none of the fixture's, and the fixture build reverses it. Only symbols unique to a structure are used, since the operations every structure implements are named identically by all of them and cannot tell two artefacts apart. A tree with fewer than two structures, or one where two structures declare the same names, is refused rather than passed -- those are the states in which the check would pass whatever the artefact contained.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C6
+    type: satisfies

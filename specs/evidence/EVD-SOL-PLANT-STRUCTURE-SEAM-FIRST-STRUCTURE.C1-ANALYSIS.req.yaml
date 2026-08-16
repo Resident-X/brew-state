@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C1-ANALYSIS
+type: evidence
+title: The plant-model seam header is structure-neutral (SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C1)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-16T10:04:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_plant_header.py
+text: |-
+  check_plant_header.py passes on include/plant_model.h and, under --vocabulary-only, on include/plant_types.h. Both run inside every pio run. Each is required to name no structure, to reach into no structure's record, to carry no function definition, to name no vendor symbol, and to compile standalone against a freestanding compiler with each structure's directory in turn -- which is what a header naming a quantity only one structure has would fail. Both are inspected against a vocabulary that excludes the header itself, so neither can clear itself of what it does. Confirmed to fail on a planted macro reaching a thermoblock coefficient from each header in turn.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C1
+    type: satisfies
