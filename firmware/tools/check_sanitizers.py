@@ -7,13 +7,24 @@ analysis stage looks like it passed. That failure is silent, so it is checked
 for directly rather than assumed from the presence of a flag in the
 configuration.
 
-Two conditions are required together, because either alone can hold while the
-control logic goes unanalysed:
+Two conditions are required together, because either alone can hold while this
+project's sources go unanalysed:
 
-  * every control translation unit is compiled with the sanitizer flags, and
-    with the flag that makes an undefined-behaviour finding abort rather than
-    print and continue, and
+  * every translation unit of this project's own is compiled with the sanitizer
+    flags, with the flag that makes an undefined-behaviour finding abort rather
+    than print and continue, and with the strict warning settings that make a
+    conversion or a shadowed name a failure rather than a note, and
   * the linked executable actually links a sanitizer runtime.
+
+The warning settings are required here rather than left to the build file for
+the same reason the sanitizer flags are: dropping one from the configuration is
+invisible, and the build stays green while the analysis has quietly narrowed.
+Enlarging the subject -- adding a directory of sources -- must not be able to
+narrow it either, which is what the "no translation unit inspected" condition
+below is for.
+
+Third-party sources keep the relaxed settings they already have: this looks
+only at sources under the project's own src/ directory.
 
 Usage: check_sanitizers.py --project <dir> --env native --executable <path>
 """
@@ -27,7 +38,16 @@ import shlex
 import subprocess
 import sys
 
-REQUIRED_COMPILE_FLAGS = ("-fsanitize=address,undefined", "-fno-sanitize-recover=all")
+#: The analysis every source of this project's own reaches the host artefact
+#: under. The sanitizer pair catches what the code does when it runs; the
+#: warning settings catch what the compiler can see without running it.
+REQUIRED_COMPILE_FLAGS = (
+    "-fsanitize=address,undefined",
+    "-fno-sanitize-recover=all",
+    "-Werror",
+    "-Wconversion",
+    "-Wshadow",
+)
 
 
 def compile_commands(project: str, environment: str, pio: str) -> list[dict]:
@@ -73,14 +93,19 @@ def runtime_linked(executable: str) -> bool:
     return False
 
 
-def check(project: str, environment: str, executable: str, pio: str) -> list[str]:
+def analysis_problems(database: list[dict], project: str, environment: str) -> list[str]:
+    """Every source of this project's own that is not under the full analysis.
+
+    Separate from obtaining the compilation database so that the judgement can
+    be exercised against a database standing in for a build, rather than only
+    against whatever the host happens to compile today.
+    """
     problems: list[str] = []
 
     # Every source this project compiles into the host build, not only the
-    # control logic: an implementation of the seam that is not instrumented is
+    # control logic: an implementation of a seam that is not instrumented is
     # a hole in the same analysis.
     source_directory = os.path.realpath(os.path.join(project, "src"))
-    database = compile_commands(project, environment, pio)
 
     inspected = 0
     for entry in database:
@@ -93,7 +118,7 @@ def check(project: str, environment: str, executable: str, pio: str) -> list[str
         if missing:
             problems.append(
                 f"{os.path.relpath(source, project)}: compiled without {', '.join(missing)} "
-                "-- this translation unit is not under analysis"
+                "-- this translation unit is not under the analysis the rest of them are"
             )
 
     if inspected == 0:
@@ -101,6 +126,12 @@ def check(project: str, environment: str, executable: str, pio: str) -> list[str
             f"no project translation unit is compiled in '{environment}', so the "
             "analysis stage has no subject"
         )
+
+    return problems
+
+
+def check(project: str, environment: str, executable: str, pio: str) -> list[str]:
+    problems = analysis_problems(compile_commands(project, environment, pio), project, environment)
 
     if not runtime_linked(executable):
         problems.append(f"{executable}: links no sanitizer runtime")

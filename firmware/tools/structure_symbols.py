@@ -46,6 +46,8 @@ STRUCTURE_HEADER = "plant_structure.h"
 NEUTRAL_HEADERS = ("plant_model.h", "plant_types.h")
 
 _IDENTIFIER = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
+#: The declared name of one field: the identifier a member declaration ends on.
+_FIELD = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[[^\]]*\])?\s*;")
 _MEMBER_ACCESS = re.compile(r"(?:\.|->)\s*([A-Za-z_][A-Za-z0-9_]*)\b")
 _DEFINE = re.compile(r"^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)", re.MULTILINE)
 _TYPEDEF_TAIL = re.compile(r"\}\s*([A-Za-z_][A-Za-z0-9_]*)\s*;")
@@ -161,6 +163,24 @@ def owned_names(header_source: str, neutral: frozenset[str]) -> tuple[frozenset[
     declarations -= _KEYWORDS | neutral
     members -= _KEYWORDS | neutral | declarations
     return frozenset(declarations), frozenset(members)
+
+
+def shadowed_members(header_source: str, neutral: frozenset[str]) -> frozenset[str]:
+    """Record fields the seam's own vocabulary already carries a name for.
+
+    Such a field is owned by nobody. It is dropped from the structure's members
+    to keep a consumer's local variable of the same name from being reported,
+    and the cost is that reaching that one field goes undetected in every
+    consumer at once. That is a narrowing nothing would otherwise announce, so
+    it is refused here: a structure names its fields, and naming one after the
+    interface's own vocabulary is the structure's to fix.
+    """
+    cleaned = strip_comments_and_strings(header_source)
+    fields: set[str] = set()
+    for begin, end in _record_regions(cleaned):
+        for match in _FIELD.finditer(cleaned, begin, end):
+            fields.add(match.group(1))
+    return frozenset(field for field in fields if field in neutral and field not in _KEYWORDS)
 
 
 def supplied_types(header_source: str) -> frozenset[str]:

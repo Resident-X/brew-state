@@ -33,6 +33,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from check_encapsulation import collect_sources  # noqa: E402
+import structure_symbols  # noqa: E402
 from structure_symbols import discover, find_violations  # noqa: E402
 from vendor_symbols import Violation  # noqa: E402
 
@@ -83,6 +84,23 @@ def main(argv: list[str]) -> int:
             "would pass without having anything to detect",
             file=sys.stderr,
         )
+        return 2
+
+    neutral = structure_symbols.neutral_names(args.include_dir)
+    shadowed: list[str] = []
+    for structure in structures:
+        with open(structure.header, "r", encoding="utf-8") as handle:
+            for field in sorted(structure_symbols.shadowed_members(handle.read(), neutral)):
+                shadowed.append(f"{structure.name}: '{field}'")
+    if shadowed:
+        print(
+            "check_plant_encapsulation: these fields share a name with the seam's own "
+            "vocabulary, so reaching them would go undetected in every consumer",
+            file=sys.stderr,
+        )
+        for entry in shadowed:
+            print(f"  {entry}", file=sys.stderr)
+        print("  rename the field; the interface's vocabulary is not the structure's", file=sys.stderr)
         return 2
 
     owned = sum(len(s.members) + len(s.declarations) for s in structures)

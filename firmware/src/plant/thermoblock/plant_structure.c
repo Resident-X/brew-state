@@ -71,7 +71,7 @@ void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuatio
         return;
     }
 
-    const plant_parameters_t *p = &model->parameters;
+    const plant_parameters_t *p = &model->coefficients;
 
     model->brew_temperature_c = advanced_temperature(
         model->brew_temperature_c, p->ambient_temperature_c, p->brew_heater_power_w,
@@ -91,7 +91,7 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
         return;
     }
 
-    const plant_parameters_t *p = &model->parameters;
+    const plant_parameters_t *p = &model->coefficients;
 
     const double commanded_bar =
         p->pump_pressure_bar * (actuation->pump_permille / PERMILLE_FULL_SCALE);
@@ -110,7 +110,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     }
 
     memset(model, 0, sizeof(*model));
-    model->parameters = *parameters;
+    model->coefficients = *parameters;
 
     /*
      * The machine starts where it has been sitting: both masses at ambient,

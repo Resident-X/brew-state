@@ -15,6 +15,7 @@ change to the machine-describing structure does not break these tests.
 
 from __future__ import annotations
 
+
 import os
 import stat
 import subprocess
@@ -66,7 +67,7 @@ typedef struct {{
 }} plant_parameters_t;
 typedef struct {{
     bool ready_flag;
-    plant_parameters_t parameters;
+    plant_parameters_t coefficients;
     double {prefix}_state;
 }} plant_model_t;
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
@@ -156,7 +157,12 @@ class StructureSymbolDetection(unittest.TestCase):
         # name them, so they belong to the interface rather than the structure.
         self.assertNotIn("plant_parameters_t", declarations | members)
         self.assertNotIn("plant_model_t", declarations | members)
-        self.assertNotIn("parameters", members)
+        # A field named after the seam's own vocabulary is excluded too. That
+        # exclusion is what the encapsulation check refuses outright, since it
+        # would blind the check for that field in every consumer at once.
+        shadowing = structure_header("alpha").replace("double alpha_state;", "double minimum;")
+        _, shadowed = owned_names(shadowing, neutral)
+        self.assertNotIn("minimum", shadowed)
 
     def test_a_member_access_is_a_violation(self):
         source = "void f(void) { extern double x; x = record.alpha_coefficient; }\n"
@@ -297,6 +303,33 @@ class PlantEncapsulationCheck(unittest.TestCase):
     def test_a_missing_path_is_an_error_not_a_pass(self):
         result = self.check(os.path.join(self.tree.root.name, "nowhere"))
         self.assertEqual(2, result.returncode)
+
+    def test_a_field_named_after_the_seams_vocabulary_is_refused(self):
+        # `offset` is a field of the seam's own parameter-spec type, so a
+        # structure field of that name is dropped from the structure's members
+        # to protect consumers' locals -- and reaching it then goes undetected
+        # everywhere at once. The structure has to rename it instead.
+        path = os.path.join(self.tree.plant, "alpha", "plant_structure.h")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(structure_header("alpha").replace("double alpha_state;", "double offset;"))
+        self.tree.consumer("main.c", "int main(void) { return 0; }\n")
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("share a name with the seam's own vocabulary", result.stderr)
+        self.assertIn("offset", result.stderr)
+
+    def test_a_field_reached_through_that_shadowing_would_otherwise_be_invisible(self):
+        # The same subject, showing what the guard above is buying: without it
+        # the check reports the consumer clean while it reads the field.
+        path = os.path.join(self.tree.plant, "alpha", "plant_structure.h")
+        source = structure_header("alpha").replace("double alpha_state;", "double offset;")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(source)
+        structures = discover(self.tree.plant, self.tree.include)
+        reaching = "double g(void) { return model->offset; }\n"
+        self.assertEqual([], structure_symbols.find_violations("c.c", reaching, structures))
+        neutral = structure_symbols.neutral_names(self.tree.include)
+        self.assertIn("offset", structure_symbols.shadowed_members(source, neutral))
 
 
 # --- check_structure_selection ----------------------------------------------
@@ -678,3 +711,127 @@ class SelectionRefusedCheck(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# --- The plant seam's share of the checks it did not have to reimplement -----
+
+
+class PlantSeamDirectCalls(unittest.TestCase):
+    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C8: calls through the plant seam are direct.
+
+    The check itself is the hardware seam's and is not reimplemented here. What
+    is established is that it applies to *this* seam: that its declarations are
+    read out of plant_model.h, that a direct call through them passes, and that
+    routing one through a function pointer -- which is how a structure would
+    come to be bound while the program runs -- fails.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.compiler = os.environ.get("CC", "clang")
+        if subprocess.run([cls.compiler, "--version"], capture_output=True, check=False).returncode:
+            raise unittest.SkipTest(f"{cls.compiler} is not available on this host")
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.header = os.path.join(self.dir.name, "plant_model.h")
+        with open(self.header, "w", encoding="utf-8") as handle:
+            handle.write(
+                "#ifndef PLANT_MODEL_H\n#define PLANT_MODEL_H\n"
+                "int plant_model_step(int millis);\n"
+                "#endif\n"
+            )
+
+    def build(self, body: str) -> tuple[str, str]:
+        """Link a consumer against a separate implementation of the seam.
+
+        The consuming translation unit must *reference* the operation rather
+        than define it -- an object that defines what it calls is not reaching
+        through a seam at all, and the check says so rather than passing.
+        """
+        consumer = os.path.join(self.dir.name, "consumer.c")
+        implementation = os.path.join(self.dir.name, "implementation.c")
+        obj = os.path.join(self.dir.name, "consumer.o")
+        binary = os.path.join(self.dir.name, "program")
+
+        with open(consumer, "w", encoding="utf-8") as handle:
+            handle.write('#include "plant_model.h"\n' + body)
+        with open(implementation, "w", encoding="utf-8") as handle:
+            handle.write('#include "plant_model.h"\nint plant_model_step(int m) { return m; }\n')
+
+        subprocess.run(
+            [self.compiler, "-O0", "-c", "-o", obj, "-I", self.dir.name, consumer], check=True
+        )
+        subprocess.run(
+            [self.compiler, "-O0", "-o", binary, "-I", self.dir.name, consumer, implementation],
+            check=True,
+        )
+        return binary, obj
+
+    def check(self, binary: str, obj: str):
+        return run_check("check_direct_calls.py", binary, "--header", self.header, "--objects", obj)
+
+    def test_a_direct_call_through_the_plant_seam_passes(self):
+        binary, obj = self.build("int main(void) { return plant_model_step(1) - 1; }\n")
+        result = self.check(binary, obj)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_binding_the_structure_through_a_pointer_fails(self):
+        binary, obj = self.build(
+            "static int (*volatile dispatch)(int) = plant_model_step;\n"
+            "int main(void) { return dispatch(1) - 1; }\n"
+        )
+        result = self.check(binary, obj)
+        self.assertEqual(1, result.returncode)
+
+
+class PlantSourcesUnderTheHostTiersAnalysis(unittest.TestCase):
+    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C9: the new sources are under the same analysis.
+
+    The criterion asks for two things of every source of this project's own:
+    the memory and undefined-behaviour analysis, and the strict warning
+    settings that make a conversion or a shadowed name a failure. Requiring
+    only the first would let the second be dropped from the build file with
+    everything still green, so both are asserted here against the check's own
+    contract, and the enlargement guard is asserted alongside them -- adding a
+    directory of sources must not be able to narrow what is analysed.
+    """
+
+    def test_the_required_flags_cover_analysis_and_the_strict_warnings(self):
+        sys.path.insert(0, TOOLS)
+        import check_sanitizers
+
+        required = set(check_sanitizers.REQUIRED_COMPILE_FLAGS)
+        self.assertIn("-fsanitize=address,undefined", required)
+        self.assertIn("-fno-sanitize-recover=all", required)
+        self.assertIn("-Werror", required)
+        self.assertIn("-Wconversion", required)
+        self.assertIn("-Wshadow", required)
+
+    def test_a_source_missing_any_required_flag_is_reported(self):
+        import check_sanitizers
+
+        project = tempfile.mkdtemp()
+        source_dir = os.path.join(project, "src", "plant", "thermoblock")
+        os.makedirs(source_dir)
+        source = os.path.join(source_dir, "plant_structure.c")
+        with open(source, "w", encoding="utf-8") as handle:
+            handle.write("int x;\n")
+
+        for dropped in check_sanitizers.REQUIRED_COMPILE_FLAGS:
+            kept = [f for f in check_sanitizers.REQUIRED_COMPILE_FLAGS if f != dropped]
+            database = [{"directory": project, "file": source, "arguments": ["cc", *kept, source]}]
+            problems = check_sanitizers.analysis_problems(database, project, "native")
+            self.assertTrue(
+                any(dropped in problem for problem in problems),
+                f"dropping {dropped} was not reported: {problems}",
+            )
+
+    def test_a_build_compiling_no_project_source_has_no_subject(self):
+        import check_sanitizers
+
+        project = tempfile.mkdtemp()
+        os.makedirs(os.path.join(project, "src"))
+        problems = check_sanitizers.analysis_problems([], project, "native")
+        self.assertTrue(any("no subject" in problem for problem in problems), problems)

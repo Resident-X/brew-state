@@ -32,7 +32,7 @@ void fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation
         return;
     }
     model->accumulated +=
-        model->parameters.fixture_gain * (actuation->brew_heater_permille / PERMILLE_FULL_SCALE) *
+        model->coefficients.fixture_gain * (actuation->brew_heater_permille / PERMILLE_FULL_SCALE) *
         seconds;
 }
 
@@ -42,7 +42,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
         return false;
     }
     memset(model, 0, sizeof(*model));
-    model->parameters = *parameters;
+    model->coefficients = *parameters;
     model->accumulated = 0.0;
     model->initialised = true;
     return true;

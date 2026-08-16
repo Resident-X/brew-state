@@ -28,7 +28,7 @@ typedef struct {
 /* One accumulator, and the record it was initialised from. */
 typedef struct {
     bool initialised;
-    plant_parameters_t parameters;
+    plant_parameters_t coefficients;
     double accumulated;
 } plant_model_t;
 

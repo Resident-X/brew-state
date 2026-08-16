@@ -57,6 +57,18 @@ CHECKS = (
         "--include-dir",
         include_dir,
     ],
+    # And so does the vocabulary it is expressed in. Inspecting only the header
+    # that declares the operations would let this one clear itself of anything
+    # it did, since the neutral vocabulary is read out of both.
+    [
+        os.path.join(tools_dir, "check_plant_header.py"),
+        os.path.join(include_dir, "plant_types.h"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+        "--vocabulary-only",
+    ],
     # Nothing outside the structures reaches a structure's own symbols. The
     # tests are inspected alongside the sources: a test that reaches around the
     # seam is a test that would not survive a second structure either.

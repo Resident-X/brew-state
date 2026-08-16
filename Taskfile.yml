@@ -125,12 +125,13 @@ tasks:
       - python3 tools/check_control_identical.py --project . --env native --env stm32
       # The plant-model seam.
       - python3 tools/check_plant_header.py include/plant_model.h --plant-root src/plant --include-dir include
+      - python3 tools/check_plant_header.py include/plant_types.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_plant_encapsulation.py src test --plant-root src/plant --include-dir include
       - python3 tools/check_direct_calls.py .pio/build/native/program --header include/plant_model.h --objects .pio/build/native/src/app/native
       - python3 tools/check_structure_exclusive.py .pio/build/native/program --structure thermoblock --plant-root src/plant --include-dir include
       - python3 tools/check_structure_exclusive.py .pio/build/native_fixture/program --structure fixture --plant-root src/plant --include-dir include
       - python3 tools/check_parameters_are_data.py .pio/build/native/program --params params/thermoblock-nominal.params --params params/thermoblock-variant.params
-      - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures
+      - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --pio {{.PIO}}
       # The analysis the host tier runs everything of ours under.
       - python3 tools/check_sanitizers.py --project . --env native --executable .pio/build/native/program
 

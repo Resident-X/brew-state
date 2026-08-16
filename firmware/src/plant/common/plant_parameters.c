@@ -18,9 +18,10 @@
 #include <string.h>
 
 /*
- * The longest value token a line may carry. Anything longer is not a number
- * this parser will accept, so refusing it early costs nothing and keeps the
- * copy that terminates the token bounded.
+ * The longest value token a line may carry. It is well beyond the digits a
+ * double distinguishes, so a token this long is a description that needs
+ * looking at rather than a value to round; refusing it early keeps the copy
+ * that terminates the token bounded.
  */
 #define VALUE_TEXT_MAX 64
 
@@ -184,7 +185,15 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
             return false;
         }
 
-        if (value < specs[index].minimum || value > specs[index].maximum) {
+        /*
+         * Stated as "is it inside the range" rather than "is it outside", so
+         * that a value which compares false to both bounds is refused. A
+         * not-a-number reaching here is what a calibration tool that divided
+         * by zero emits, and every comparison against it is false: written the
+         * other way round it would pass the guard, initialise a model, and
+         * turn every quantity the model exposes into a quiet NaN.
+         */
+        if (!(value >= specs[index].minimum && value <= specs[index].maximum)) {
             report(error, PLANT_PARAMETER_OUT_OF_RANGE, line_number, name_begin, name_length);
             error->value = value;
             error->minimum = specs[index].minimum;

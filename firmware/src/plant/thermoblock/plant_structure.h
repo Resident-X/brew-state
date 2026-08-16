@@ -52,7 +52,7 @@ typedef struct {
  */
 typedef struct {
     bool initialised;
-    plant_parameters_t parameters;
+    plant_parameters_t coefficients;
 
     double brew_temperature_c;
     double steam_temperature_c;

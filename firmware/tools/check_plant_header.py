@@ -26,7 +26,16 @@ field only the thermoblock structure has still compiles against the thermoblock
 structure; it is compiling against every structure that makes neutrality
 something the toolchain establishes rather than something a reader asserts.
 
-Usage: check_plant_header.py <header> --plant-root <dir> [--cc clang]
+Both of the seam's own headers are subjects. plant_model.h declares the
+operations; plant_types.h carries the vocabulary they are expressed in, and is
+inspected under --vocabulary-only, which drops the requirement to declare an
+operation and keeps every other condition. Leaving it out would let it clear
+itself: the neutral vocabulary is read out of both headers, so an equation or a
+structure's field placed in the uninspected one is neutral by its own say-so,
+and it would take a structure's field out of that structure's ownership at the
+same time -- blinding the encapsulation check for that field in every consumer.
+
+Usage: check_plant_header.py <header> --plant-root <dir> [--vocabulary-only] [--cc clang]
 """
 
 from __future__ import annotations
@@ -108,6 +117,11 @@ def main(argv: list[str]) -> int:
         default=None,
         help="the directory the seam's own headers live in (defaults to the header's own)",
     )
+    parser.add_argument(
+        "--vocabulary-only",
+        action="store_true",
+        help="the header carries vocabulary rather than operations, so declaring none is not a fault",
+    )
     parser.add_argument("--cc", default=os.environ.get("CC", "clang"), help="C compiler to use")
     args = parser.parse_args(argv)
 
@@ -162,7 +176,7 @@ def main(argv: list[str]) -> int:
             print(f"  line {lineno}", file=sys.stderr)
 
     declared = sorted(set(_DECLARATION.findall(cleaned)))
-    if not declared:
+    if not declared and not args.vocabulary_only:
         failed = True
         print(
             "check_plant_header: the seam header declares no operation, so there is no "
@@ -192,9 +206,10 @@ def main(argv: list[str]) -> int:
     if failed:
         return 1
 
+    subject = "carries vocabulary only" if args.vocabulary_only else f"declares {len(declared)} operation(s)"
     print(
-        f"check_plant_header: {args.header} declares {len(declared)} operation(s), names no "
-        f"structure and compiles against all {len(structures)} of them "
+        f"check_plant_header: {args.header} {subject}, names no structure and compiles "
+        f"against all {len(structures)} of them "
         f"({', '.join(structure.name for structure in structures)})"
     )
     return 0
