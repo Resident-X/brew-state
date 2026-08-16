@@ -19,6 +19,12 @@ rationale: |
 
   The encapsulation check is included rather than left to review because the criterion it serves is verified by analysis, and an analysis that depends on someone remembering to look is not repeatable. Making it a build failure is what turns the property into something the toolchain asserts on every build.
 links:
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-HARDWARE-SEAM-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
   - target: DEL-SIM-SEAMS-HARNESS.C1
     type: derives-from
   - target: DEL-SIM-SEAMS-HARNESS.C2
@@ -31,9 +37,5 @@ links:
     type: targets
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
     type: targets
-  - target: DEC-HARDWARE-SEAM-AT-BUILD-TIME
-    type: justified-by
-  - target: DEC-FIRMWARE-LANGUAGE
-    type: justified-by
-  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
-    type: justified-by
+  - target: DEL-SIM-SEAMS-HARNESS.C9
+    type: derives-from

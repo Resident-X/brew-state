@@ -1,0 +1,21 @@
+id: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C6
+type: criterion
+title: Calls through the hardware interface are direct calls in the linked executable
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Every operation the control logic invokes through `firmware/include/hw_interface.h` resolves to a
+  direct call in the linked host executable, with no indirect call through a function-pointer table
+  or a virtual dispatch table on any control-path call site. The check disassembles the linked
+  executable, or inspects the compiler's emitted call sites for the interface's symbols, and fails
+  when a call through the interface is indirect. The header therefore declares free functions
+  rather than a struct of pointers, and no implementation is assigned to the seam while the program
+  runs. Indirect calls inside an implementation under firmware/src/hw are out of scope — the
+  constraint is on the seam's own call sites, not on what an implementation does internally. This
+  does not measure the cost of a call, which the real-time obligation requires be established by
+  measurement on the target.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+    type: criterion-of

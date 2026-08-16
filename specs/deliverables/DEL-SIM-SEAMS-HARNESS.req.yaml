@@ -14,12 +14,12 @@ rationale: |
 
   The host tier is the memory and undefined-behaviour net, and it is not optional given the language the firmware is written in. Emulation is a separate unit of work rather than part of this one, because it needs nothing here beyond the seams and would otherwise gate every other node in the phase behind the heaviest piece of infrastructure in it. Measuring worst-case timing is not in this phase at all — it needs a board.
 links:
-  - target: DEL-BARISTATE-DELIVERY.C1
-    type: derives-from
-  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
-    type: justified-by
   - target: DEC-FIRMWARE-LANGUAGE
     type: justified-by
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEL-BARISTATE-DELIVERY.C1
+    type: derives-from
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C1
     type: targets
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C2
@@ -42,3 +42,5 @@ links:
     type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C1
     type: targets
+  - target: DEC-HARDWARE-SEAM-AT-BUILD-TIME
+    type: justified-by
