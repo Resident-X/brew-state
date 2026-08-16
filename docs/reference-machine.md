@@ -53,9 +53,20 @@ Both elements together draw roughly **8.3 A at 240 V**. With both pumps running 
 
 **Margin note.** The coffee block's commanded target sits below its 110 °C thermostat, and the ±3 °C tolerance means the worst-case margin is a few degrees. That margin is what `REQ-MEASUREMENT-001.C1` is written against, and it is the reason absolute accuracy matters more than repeatability on this channel.
 
-**Pressure note — the open one.** `OBL-ELECTRICAL-THERMAL-SAFETY-001.C5` requires relief that acts on the pressure itself, works unpowered, and holds while a sensor is lying and while nothing has recognised a hazard. Nothing above establishes that any fitted device meets it, and the steam side has no documented relief at all.
+**Pressure note — the open one.** `OBL-ELECTRICAL-THERMAL-SAFETY-001.C5` requires the pressure this machine can generate to be **contained or released** without anything electrical having to act, and that guarantee to hold unpowered, with a sensor lying, and with nothing having recognised a hazard. Containment by adequate strength is an admissible answer; so is a relief device. What is not admissible is a guarantee that depends on something noticing.
 
-Three things follow. A relief internal to the pump protects the pump, not the heated masses, and leaves with the pump if the pump is substituted. A working-pressure cap — an OPV of the kind `DEC-PROFILE-COMMANDS-FLOW` relies on — is not a safety device and does not discharge this obligation. And a thermostat is an over-temperature device; the obligation separates pressure from temperature deliberately, because a blocked outlet raises pressure while every electrical part behaves exactly as commanded.
+**The level to design against is not the pump's.** On a heated mass with its outlet shut, pressure is set by saturation at whatever temperature the protection permits. The two sides differ by an order of magnitude:
+
+| | Protection permits | Saturation pressure | Dominant source |
+|---|---|---|---|
+| Coffee side | 110 °C | ≈1.4 bar absolute | the pump, at up to 15 bar |
+| Steam side | 200 °C (+5 tolerance) | ≈15.5 bar absolute, ≈17 bar at tolerance | thermal, by a wide margin |
+
+*(Saturation figures from standard steam tables; worth confirming against a reference before they size anything.)*
+
+**So the two sides need different answers.** On the coffee side the pump dominates by more than tenfold, and a working-pressure cap plus a vessel rated above it with margin designs the hazard out — no device left to fail, nothing to test periodically, nothing that leaves when a part is substituted. On the steam side thermal generation dominates, no OPV sits in that path at all, and water flashing to steam is roughly a 1600× expansion, so a trapped volume with a kilowatt entering it does not need long.
+
+Three traps to avoid when this is settled. A relief internal to the pump protects the pump, not the heated masses, and leaves with the pump when it is substituted. A working-pressure cap — the OPV `DEC-PROFILE-COMMANDS-FLOW` relies on — bounds a pressure *source*, not a blockage *location*: a restriction between the heated mass and the cap leaves the trapped volume on the wrong side of it. And a thermostat is an over-temperature device; the obligation separates pressure from temperature deliberately, because a blocked outlet raises pressure while every electrical part behaves exactly as commanded.
 
 This is the largest unevidenced safety claim in the project. It is not resolvable from either manufacturer document and needs the machine opened.
 

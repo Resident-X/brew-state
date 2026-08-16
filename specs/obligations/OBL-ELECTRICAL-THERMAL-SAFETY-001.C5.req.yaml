@@ -1,14 +1,16 @@
 id: OBL-ELECTRICAL-THERMAL-SAFETY-001.C5
 type: criterion
-title: Over-pressure is relieved without any electrical dependency
+title: Pressure the machine can generate is contained or released without anything electrical having to act
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
   Pressure can rise from a blocked outlet or a jammed valve while every electrical device in the machine behaves exactly as commanded, so an electrical cutoff does not address this hazard at all. Removing heat does not remove pressure that is already present.
 
-  Relief must therefore act on the pressure itself, and must stay effective while the machine is unpowered, while a sensor is lying about what it reads, and while nothing anywhere in the system has recognised that a hazard exists.
+  Whether it is contained by what holds it, or released by something acting on the pressure itself, is a design choice. Either way the guarantee holds while the machine is unpowered, while a sensor is lying about what it reads, and while nothing anywhere in the system has recognised that a hazard exists.
+
+  The level to answer to is the highest the machine can generate, which is not the highest it generates in service. On a heated mass whose outlet is shut it is set by saturation at whatever temperature the protection permits, not by what any pump can produce.
 links:
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001
     type: criterion-of
