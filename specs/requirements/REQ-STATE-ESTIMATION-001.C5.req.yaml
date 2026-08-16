@@ -1,17 +1,17 @@
 id: REQ-STATE-ESTIMATION-001.C5
 type: criterion
-title: The estimator predicts from the same plant model the design was established against
+title: The machine carries the plant model the design was established against
 status: active
 version: 1
 measurement_type: binary
 verification: analysis
 text: |
-  Prediction has to happen where the control law runs, so the model is carried by
-  the machine rather than living only in the tools that verified it. A second
-  model written to suit the controller would answer the same question differently
-  as soon as either was corrected, and that divergence arrives disguised: a
-  machine whose predictions stop matching observation looks exactly like a machine
-  that has drifted, which is the one thing this estimator exists to tell apart.
+  Prediction happens where the control law runs, so a model living only in the
+  tools that verified it cannot serve. A second model written to suit the
+  controller would answer the same question differently as soon as either was
+  corrected, and that divergence arrives disguised: a machine whose predictions
+  stop matching observation looks exactly like a machine that has drifted, which
+  is the one thing this estimator exists to tell apart.
 
   Out of scope: the estimator's structure and update strategy, and how the model's
   parameters are corrected once the machine is running.

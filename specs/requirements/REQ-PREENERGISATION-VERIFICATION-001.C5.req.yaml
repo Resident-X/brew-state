@@ -1,19 +1,19 @@
 id: REQ-PREENERGISATION-VERIFICATION-001.C5
 type: criterion
-title: The plant model behaves the same wherever verification runs it
+title: Verification carried out away from the machine binds the machine's behaviour
 status: active
 version: 1
-measurement_type: binary
+measurement_type: threshold
 verification: test
 text: |
-  Verification exercises the model in more than one place before the machine
-  exists, and each place computes in its own way. Where the same description and
-  the same inputs yield different trajectories in two of them, a result carried
-  from one to the other says less than it appears to, and the verification that
-  stands between a fault and an energised machine is weaker than it reads.
+  The control law is exercised before the machine exists, which means exercising
+  it somewhere the machine is not. A result obtained there carries only as far as
+  the two agree: where the same description and the same inputs produce different
+  answers in each, the verification standing between a fault and an energised
+  machine is weaker than it reads.
 
-  Agreement is judged over the trajectory rather than at its end, against the
-  bound the project declares for it. Out of scope: whether the model resembles a
+  The agreement required is declared rather than assumed, and is judged across the
+  behaviour rather than at its end. Out of scope: whether the model resembles a
   real machine, which no amount of agreement between two computations of the same
   equations can establish.
 links:

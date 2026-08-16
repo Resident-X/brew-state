@@ -46,6 +46,8 @@ links:
     type: targets
   - target: REQ-MODEL-COMMIT-001.C1
     type: targets
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C1
     type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C4
@@ -56,5 +58,5 @@ links:
     type: targets
   - target: REQ-STATE-ESTIMATION-001.C1
     type: targets
-  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+  - target: REQ-HARDWARE-HEADROOM-001.C4
     type: targets

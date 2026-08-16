@@ -4,7 +4,7 @@ category: task
 title: The emulation tier exercises the shipping firmware binary with no hardware present
 status: active
 level: task
-version: 1
+version: 2
 text: |
   The compiled firmware binary runs under emulation against modelled peripherals and the plant model, with no hardware present. The artefact under test is the one the target would run rather than a re-expression of it, so logic, peripheral-interaction and timing-structure defects are caught against what actually ships.
 rationale: |
@@ -12,15 +12,19 @@ rationale: |
 
   It belongs in this phase rather than the on-target one despite exercising the implementation, because the verification approach deliberately rejected writing the control law in one language and porting it. There is therefore no design artefact separate from the implementation: what the host tier compiles is already the thing that ships, and deferring emulation would hold the logic and peripheral-interaction net back until a board had been bought.
 
-  Two prerequisites are worth naming because they look like they belong to later phases and do not. The part family is already settled by the firmware-language decision, so nothing here waits on the controller selection that phase four owns. The modelled peripheral set is bounded to the channels the control logic reaches through the hardware seam, so it does not wait on the instrumentation the physical track fits either.
+  Two prerequisites are worth naming because they look like they belong to later phases and do not. A part family is nominated for pre-hardware verification, which is enough to emulate against and settles nothing about the controller the machine is eventually built on, so nothing here waits on the selection that phase four owns. The modelled peripheral set is bounded to the channels the control logic reaches through the hardware seam, so it does not wait on the instrumentation the physical track fits either.
 links:
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
   - target: DEL-BARISTATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-SEAMS-HARNESS
     type: depends-on
-  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
-    type: justified-by
-  - target: DEC-FIRMWARE-LANGUAGE
-    type: justified-by
   - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C5
     type: targets

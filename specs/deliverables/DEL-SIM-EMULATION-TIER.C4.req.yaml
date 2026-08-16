@@ -1,0 +1,13 @@
+id: DEL-SIM-EMULATION-TIER.C4
+type: criterion
+title: The plant model agrees across the tiers that run it
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The plant model's behaviour is consistent across the tiers that run it. The contributing work declares the agreement required between them and shows it holds, so a result established on one tier carries to the other rather than stopping there.
+links:
+  - target: DEL-SIM-EMULATION-TIER
+    type: criterion-of

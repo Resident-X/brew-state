@@ -1,0 +1,13 @@
+id: DEL-SIM-ESTIMATOR.C5
+type: criterion
+title: The machine carries the plant model the design was established against
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  One model serves both the verification and the machine. The contributing work puts the model the design was established against behind the estimator, rather than a second one written to suit the controller, so there is one model to correct and one to trust.
+links:
+  - target: DEL-SIM-ESTIMATOR
+    type: criterion-of
