@@ -1,0 +1,17 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4
+type: criterion
+title: An incomplete or inadmissible parameter record is refused rather than run
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Initialisation refuses a parameter description that omits a coefficient the structure
+  requires, carries one outside the admissible range the structure declares for it, or cannot
+  be parsed at all. The refusal reports which parameter was at fault, no model instance
+  becomes usable, and no default value is substituted for a missing or rejected one. Judging
+  whether an admissible set of parameters actually describes the machine in front of you is
+  out of scope — that is a commissioning question and needs the machine.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

@@ -1,0 +1,19 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C5
+type: criterion
+title: A direct plant-structure reference from a model consumer fails the build
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A check run as part of the build inspects the translation units that consume the model and
+  fails the build when one includes a structure's own header or names a symbol belonging to a
+  structure, instead of reaching the model through `firmware/include/plant_model.h`. The check
+  reports the offending file, line and symbol so the violation is actionable, and it fails
+  rather than passes when it finds nothing to inspect. The structures under
+  `firmware/src/plant/` are exempt by construction, since defining those symbols is exactly
+  their job. Extending the same boundary to subsystems that do not consume the model yet is
+  out of scope until they exist.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

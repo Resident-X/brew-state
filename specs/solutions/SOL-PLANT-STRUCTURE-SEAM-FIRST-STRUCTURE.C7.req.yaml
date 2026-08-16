@@ -1,0 +1,18 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7
+type: criterion
+title: A build naming no plant structure, or more than one, fails rather than choosing
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The build requires exactly one structure to be named. A configuration naming none, and one
+  compiling both the machine-describing structure and the fixture structure into the same artefact,
+  each stop the build with a message identifying the problem, rather than falling back to a default
+  or letting the linker choose between two definitions. The fixture is what gives the two-structure
+  case a subject while only one machine-describing structure exists; a test drives both
+  configurations and fails if either yields an artefact. Selecting a structure while the software
+  runs is out of scope by decision rather than by omission.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

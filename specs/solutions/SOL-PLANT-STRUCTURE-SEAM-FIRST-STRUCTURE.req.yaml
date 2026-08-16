@@ -1,0 +1,45 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+type: deliverable
+category: solution
+title: The named plant-structure seam and the first structure behind it
+status: active
+version: 1
+text: |
+  A named plant-model interface is declared once as a plain C header under `firmware/include/`, giving every consumer of the model one vocabulary for the operations it needs — initialising a model instance from a parameter record, advancing it one step under a given actuation, and reading the quantities it exposes. No signature names a concrete structure or a structure-specific quantity, so a translation unit that includes the header depends on the seam rather than on the equations behind it. The only consumer this slice puts behind that vocabulary is the host harness that drives the model; the control law and the state estimator adopt it when they are built, so what is established here is that the interface can be shared, not that it is already shared by the three consumers the requirement names.
+
+  One concrete structure sits behind that header, supplying the state and parameter types the interface's signatures refer to together with the equations that advance them. A second, deliberately trivial fixture structure ships alongside it for the build checks to work against. Without a second subject neither the exclusivity of the linked artefact nor the build's refusal to compile two structures can be made to fail, and a check that cannot fail is not a check. The fixture describes no machine, carries no claim about one, and is never compiled into a machine's artefact.
+
+  Which structure a build gets follows from which structure directory that build compiles and places on the include path, not from anything decided while the software runs. The linked artefact carries the symbols of exactly one structure, every call a consumer makes through the interface resolves to a direct call, and a build configuration naming no structure or more than one stops rather than choosing.
+
+  The numbers are held apart from the equations. Every coefficient the structure uses arrives in a parameter record supplied at initialisation and read from a data artefact the build does not compile in, so one linked artefact runs different parameter values without being rebuilt, and a record that is incomplete or outside the structure's declared admissible range is refused rather than run on defaults. A source-level check enforces the encapsulation the interface exists to create, failing the build when a model-consuming translation unit names a structure's own symbols instead of going through the header. The structures and the parameter loader are new sources the host tier has to cover, so they are compiled under the same memory and undefined-behaviour analysis and the same strict warning settings as the rest of this project's own sources rather than being quietly added outside them.
+
+  Out of scope: the reference machine's parameter values and the origin recorded against each of them, a second machine-describing structure and the demonstration that adding one disturbs neither existing structures nor their consumers, the published-support judgement about hardware a structure has been verified against, the control law and the state estimator that will later consume this interface, and persistence of a parameter record on the target. This slice delivers the seam, one structure behind it, and parameters as data — the structure's equations may be the thinnest set that expresses the machine's architecture, because what is established here is separability and replaceability, not the fidelity of the physics.
+rationale: |
+  The seam and one structure behind it are delivered together for the reason the hardware seam was: an interface with nothing behind it has not been shown to carry anything, and a structure with no interface in front of it is not replaceable. Parameters join them because the split the requirement draws — numbers are data, equations are code — is not observable until something reads the numbers from somewhere the equations do not own.
+
+  The three requirement criteria this targets are three faces of one artefact rather than three separable pieces of work. Parameters being data, the structure sitting behind a shared interface, and a build running only the structure it was built for are properties of the same seam, and a build that satisfies any two without the third has not delivered it: compiled-in numbers make the interface a formality, a private path around the interface makes a second structure a rewrite, and a structure that can be chosen while the machine runs is the failure the build-time decision exists to make unreachable.
+
+  The negative criteria carry most of the weight here. A seam holds only while nothing bypasses it, so a direct structure reference from a consumer is a build failure rather than a review note, on the same reasoning that made the vendor-symbol check one. The build failing on no structure and on two is the other half of build-time selection: selection that silently defaults is run-time selection with the choice hidden in the build system rather than in a configuration file, and controlling a machine with another architecture's dynamics has no obvious symptom until the machine is well outside where it should be. The fixture structure exists to keep those two negatives honest — an exclusivity check with nothing to exclude and a two-structure refusal with no second structure both pass unconditionally, which is indistinguishable from not having them.
+
+  The new sources are brought inside the host tier's analysis in this slice rather than left to the tier that established it. That tier's own criterion closed against the subject that existed then, so nothing already in the graph will notice equations and a parameter loader arriving outside the sanitizers and the strict warning settings, and unchecked arithmetic in the equations is exactly the class of defect that tier exists to catch.
+
+  Establishing that the physics is right is deliberately not here. Whether a structure describes any real machine cannot be settled without that machine, and the requirement says as much by making published support conditional on hardware verification. What can be settled before hardware exists is that the numbers are replaceable, the equations are replaceable, and neither is reachable except through the seam.
+links:
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEL-SIM-SEAMS-HARNESS.C4
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS.C5
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS.C6
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C1
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
+    type: targets
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by

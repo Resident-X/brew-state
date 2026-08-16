@@ -1,0 +1,20 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C8
+type: criterion
+title: Calls through the plant-model interface are direct calls in the linked artefact
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Every operation a consumer invokes through `firmware/include/plant_model.h` resolves to a direct
+  call in the linked host executable, with no indirect call through a function-pointer table or a
+  virtual dispatch table at any consumer call site, so no structure is bound while the program runs.
+  The check disassembles the linked executable, or inspects the emitted call sites for the
+  interface's symbols, and fails both when a call through the interface is indirect and when an
+  interface operation the consumers reference is reached by no direct call at all. Indirect calls
+  inside a structure's own implementation are out of scope — the constraint is on the seam's call
+  sites. This does not measure what a call costs, which the real-time obligation requires be
+  established by measurement on the target.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

@@ -1,0 +1,20 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C9
+type: criterion
+title: The structures and the parameter loader are compiled under the host tier's analysis and warning settings
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The sources this slice adds — the structures under `firmware/src/plant/` and the code that
+  populates a parameter record from a data artefact — are compiled into the host build under the
+  same memory and undefined-behaviour analysis and the same strict warning settings this project
+  already applies to its own sources, treating a conversion, a shadowed name or any other warning as
+  a failure. A check fails the build when a source of this project's own reaches the host artefact
+  without them, so enlarging the subject cannot quietly narrow the analysis. Exercising the model
+  through the host artefact reports no finding, and a finding fails the build rather than printing
+  and continuing. Third-party sources the build compiles keep the relaxed settings they already
+  have, and thread and leak analysis stay out of scope for this tier.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

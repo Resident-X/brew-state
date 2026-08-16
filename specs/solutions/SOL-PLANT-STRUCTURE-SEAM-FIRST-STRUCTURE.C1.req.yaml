@@ -1,0 +1,19 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C1
+type: criterion
+title: The plant-model interface declares the model's operations without naming a structure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A single plain C header at `firmware/include/plant_model.h` declares the operations a
+  consumer of the model uses: initialising a model instance from a parameter record,
+  advancing that instance by one step under a given actuation, and reading the quantities
+  the model exposes. The state and parameter types those signatures refer to are supplied
+  by whichever structure the build compiles, so no signature names a concrete structure, a
+  structure-specific quantity, or a vendor type, and the header carries no equation. Which
+  quantities a structure keeps internally is its own business and is out of scope here —
+  this criterion covers the vocabulary consumers share, not the physics behind it.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

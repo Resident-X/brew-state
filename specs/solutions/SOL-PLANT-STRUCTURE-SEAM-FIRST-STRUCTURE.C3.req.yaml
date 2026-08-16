@@ -1,0 +1,20 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3
+type: criterion
+title: Every coefficient the structure uses arrives in a supplied parameter record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The structure's equations read every coefficient from the parameter record handed to them
+  at initialisation, and the record is populated from a data artefact the build does not
+  compile in. One linked host artefact, run twice against two parameter descriptions that
+  differ in a single coefficient, produces two different trajectories with no rebuild between
+  the runs — which is what a coefficient quietly written into the equations would fail. Unit
+  conversions and structural constants that are properties of the equations rather than of a
+  machine are not parameters and are out of scope. Where a parameter record lives on the
+  target and how a commissioned value is written back to it are out of scope too; they belong
+  to the stored-data work.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

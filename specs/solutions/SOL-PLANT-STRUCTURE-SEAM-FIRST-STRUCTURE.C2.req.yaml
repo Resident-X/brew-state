@@ -1,0 +1,20 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2
+type: criterion
+title: One concrete plant structure implements the interface and runs on the host
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A structure directory under `firmware/src/plant/` defines the state and parameter types the
+  interface refers to and implements every operation the header declares. The host build compiles
+  it, initialises a model instance and advances it over a sequence of steps to completion, and a
+  test asserts properties fixed independently of what the structure says about itself: a step taken
+  with no actuation and no external influence leaves every quantity the model exposes unchanged; a
+  step taken with heat applied raises the temperature quantities and lowers none of them; and the
+  same step sequence run twice from the same initial state and inputs reproduces the same trajectory
+  exactly. Whether that trajectory matches a real machine is out of scope and cannot be settled
+  until one exists to measure against.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of

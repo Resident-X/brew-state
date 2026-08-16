@@ -1,0 +1,19 @@
+id: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C6
+type: criterion
+title: The linked artefact carries only the plant structure it was built for
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Inspecting the linked host executable finds the symbols of the one structure the build names and
+  none belonging to any other structure in the source tree, including the fixture structure the
+  build checks work against. Building the same consumers against the fixture instead reverses which
+  symbols are present, so the check fails if either structure survives into an artefact built for
+  the other — which is what keeps it from passing unconditionally while only one machine-describing
+  structure exists. How a call through the interface is dispatched is a separate property and is out
+  of scope here. So is what the artefact occupies on the target: this inspects what the artefact
+  contains, not what it costs.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+    type: criterion-of
