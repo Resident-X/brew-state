@@ -38,11 +38,22 @@ VENDOR_IDENTIFIER_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("CMSIS core intrinsic", re.compile(r"\b__(NOP|WFI|WFE|DSB|DMB|ISB|enable_irq|disable_irq|get_[A-Z]+|set_[A-Z]+)\b")),
     ("CMSIS core symbol", re.compile(r"\b(NVIC|SCB|SysTick|ITM|DWT|CoreDebug)\b")),
     ("peripheral instance", re.compile(r"\b(GPIO[A-K]|TIM[0-9]+|ADC[0-9]+|DAC[0-9]+|USART[0-9]+|UART[0-9]+|SPI[0-9]+|I2C[0-9]+|DMA[0-9]+|CAN[0-9]+|RTC|IWDG|WWDG|RCC|PWR|FLASH|EXTI)\b")),
-    ("device family macro", re.compile(r"\bSTM32[A-Z0-9_]*\b")),
+    ("device family macro", re.compile(r"\bSTM32[A-Za-z0-9_]*\b", re.IGNORECASE)),
+    ("inline assembly", re.compile(r"\b(?:__asm__|__asm|asm)\b")),
+    (
+        "memory-mapped register address",
+        re.compile(r"\(\s*(?:const\s+)?volatile[A-Za-z0-9_ \t*]*\*\s*\)\s*0[xX][0-9A-Fa-f]+"),
+    ),
     ("build-injected macro", re.compile(r"\b(USE_HAL_DRIVER|USE_FULL_LL_DRIVER|PLATFORMIO|ARDUINO|F_CPU|HSE_VALUE|HSI_VALUE)\b")),
 )
 
 _INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]')
+
+#: Include paths that reach an implementation of the seam rather than the seam.
+#: Only the implementations are allowed to know which hardware is behind it, so
+#: a control translation unit reaching one of their headers has gone around the
+#: interface even when the header itself names no vendor symbol.
+IMPLEMENTATION_PATH_PATTERN = re.compile(r"(^|/)(hw|src)?/?hw/[^/]+/", re.IGNORECASE)
 _INCLUDE_DIRECTIVE = re.compile(r"^\s*#\s*include\b")
 
 
@@ -128,12 +139,23 @@ def find_violations(path: str, source: str) -> list[Violation]:
             original = original_lines[lineno - 1] if lineno <= len(original_lines) else ""
             match = _INCLUDE.match(original)
             if match is None:
+                # The included file is named by a macro, so what is actually
+                # included cannot be read here. Fail rather than skip: an
+                # unresolvable include is exactly where a device header hides.
+                violations.append(
+                    Violation(path, lineno, original.strip(), "include the check cannot resolve")
+                )
                 continue
-            header = match.group(1).split("/")[-1]
+            included = match.group(1)
+            header = included.split("/")[-1]
             if any(pattern.match(header) for pattern in VENDOR_INCLUDE_PATTERNS):
-                violations.append(Violation(path, lineno, match.group(1), "vendor header include"))
+                violations.append(Violation(path, lineno, included, "vendor header include"))
+            elif IMPLEMENTATION_PATH_PATTERN.search(included):
+                violations.append(
+                    Violation(path, lineno, included, "seam implementation header include")
+                )
             # An include line's own text is not scanned for identifiers: the
-            # header name has already been judged on the rule that fits it.
+            # header name has already been judged on the rules that fit it.
             continue
 
         for kind, pattern in VENDOR_IDENTIFIER_PATTERNS:

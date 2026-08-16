@@ -76,13 +76,16 @@ def runtime_linked(executable: str) -> bool:
 def check(project: str, environment: str, executable: str, pio: str) -> list[str]:
     problems: list[str] = []
 
-    control_directory = os.path.realpath(os.path.join(project, "src", "control"))
+    # Every source this project compiles into the host build, not only the
+    # control logic: an implementation of the seam that is not instrumented is
+    # a hole in the same analysis.
+    source_directory = os.path.realpath(os.path.join(project, "src"))
     database = compile_commands(project, environment, pio)
 
     inspected = 0
     for entry in database:
         source = os.path.realpath(os.path.join(entry.get("directory", project), entry["file"]))
-        if not source.startswith(control_directory + os.sep):
+        if not source.startswith(source_directory + os.sep):
             continue
         inspected += 1
         arguments = entry.get("arguments") or shlex.split(entry["command"])
@@ -95,7 +98,7 @@ def check(project: str, environment: str, executable: str, pio: str) -> list[str
 
     if inspected == 0:
         problems.append(
-            f"no control translation unit is compiled in '{environment}', so the "
+            f"no project translation unit is compiled in '{environment}', so the "
             "analysis stage has no subject"
         )
 

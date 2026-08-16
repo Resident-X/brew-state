@@ -104,6 +104,24 @@ static void test_refused_drive_command_is_reported_and_latches(void)
     TEST_ASSERT_TRUE(state.faulted);
 }
 
+/* SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C2: when the seam refuses the off command
+ * as well, the state must not claim the heater is off -- it is still at
+ * whatever was last accepted, and recording zero would assert something the
+ * seam never confirmed. */
+static void test_a_refused_shutdown_is_not_recorded_as_the_heater_being_off(void)
+{
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
+    const uint16_t driven = state.brew_heater_permille;
+    TEST_ASSERT_GREATER_THAN_UINT16(0u, driven);
+
+    hw_sim_set_output_refused(true);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_OUTPUT_REFUSED, control_step(&state));
+    TEST_ASSERT_TRUE(state.faulted);
+    TEST_ASSERT_EQUAL_UINT16(driven, state.brew_heater_permille);
+}
+
 /* SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C2: the control logic consults the seam's
  * clock rather than assuming a call rate, so a step arriving early is refused. */
 static void test_step_inside_the_interval_is_refused(void)
@@ -181,6 +199,7 @@ int main(void)
     RUN_TEST(test_drive_level_stays_within_full_scale_at_extremes);
     RUN_TEST(test_invalid_reading_de_energises_and_latches);
     RUN_TEST(test_refused_drive_command_is_reported_and_latches);
+    RUN_TEST(test_a_refused_shutdown_is_not_recorded_as_the_heater_being_off);
     RUN_TEST(test_step_inside_the_interval_is_refused);
     RUN_TEST(test_step_interval_survives_the_clock_wrapping);
     RUN_TEST(test_initialisation_commands_the_heater_off);

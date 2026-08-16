@@ -84,6 +84,39 @@ class VendorSymbolDetection(unittest.TestCase):
         source = '#include "hw_interface.h"\nvoid f(void) { hw_output_set(0, 0); }\n'
         self.assertEqual([], vendor_symbols.find_violations("a.c", source))
 
+    def test_an_include_named_by_a_macro_is_a_violation(self):
+        """What is included cannot be read, so it cannot be cleared."""
+        source = "#define VENDOR_DEVICE_HEADER <stm32f4xx_hal.h>\n#include VENDOR_DEVICE_HEADER\n"
+        kinds = {violation.kind for violation in vendor_symbols.find_violations("a.c", source)}
+        self.assertIn("include the check cannot resolve", kinds)
+
+    def test_including_a_seam_implementation_header_is_a_violation(self):
+        source = '#include "../hw/stm32/hw_stm32.h"\n'
+        violations = vendor_symbols.find_violations("a.c", source)
+        self.assertEqual(1, len(violations))
+        self.assertEqual("seam implementation header include", violations[0].kind)
+
+    def test_a_memory_mapped_register_address_is_a_violation(self):
+        source = "#define PORT_OUT (*(volatile uint32_t *)0x40020014u)\n"
+        kinds = {violation.kind for violation in vendor_symbols.find_violations("a.c", source)}
+        self.assertIn("memory-mapped register address", kinds)
+
+    def test_inline_assembly_is_a_violation(self):
+        source = 'void f(void) { __asm__ volatile("nop"); }\n'
+        kinds = {violation.kind for violation in vendor_symbols.find_violations("a.c", source)}
+        self.assertIn("inline assembly", kinds)
+
+    def test_a_lowercase_device_name_is_a_violation(self):
+        source = "static const char *header = 0; int stm32f4xx_shim(void);\n"
+        symbols = {violation.symbol for violation in vendor_symbols.find_violations("a.c", source)}
+        self.assertIn("stm32f4xx_shim", symbols)
+
+    def test_including_the_seam_header_itself_is_not_a_violation(self):
+        self.assertEqual([], vendor_symbols.find_violations("a.c", '#include "hw_interface.h"\n'))
+
+    def test_a_commented_out_include_is_not_a_violation(self):
+        self.assertEqual([], vendor_symbols.find_violations("a.c", '// #include "stm32f4xx_hal.h"\n'))
+
     def test_one_symbol_is_reported_once_even_when_several_rules_match(self):
         violations = vendor_symbols.find_violations("a.c", "void f(void) { __HAL_RCC_X(); }\n")
         self.assertEqual(1, len(violations))
@@ -311,6 +344,39 @@ class DirectCallCheck(unittest.TestCase):
                 problems,
             )
 
+    def test_an_objdump_style_direct_call_is_recognised(self):
+        """Not every host has otool; the binutils output form must parse too."""
+        match = check_direct_calls.DIRECT_CALL.match("bl\t0x100001720 <hw_monotonic_millis>")
+        self.assertIsNotNone(match)
+        self.assertEqual("hw_monotonic_millis", match.group("angled"))
+
+    def test_a_pointer_authenticated_branch_counts_as_indirect(self):
+        for instruction in ("blraa\tx8, x9", "blraaz\tx8", "braa\tx8, x9", "blr\tx8"):
+            self.assertIsNotNone(
+                check_direct_calls.INDIRECT_CALL.match(instruction), instruction
+            )
+
+    def test_a_branch_to_an_address_is_not_taken_for_a_call(self):
+        self.assertIsNone(check_direct_calls.DIRECT_CALL.match("b\t0x1000010ec"))
+        self.assertIsNone(check_direct_calls.INDIRECT_CALL.match("b.ne\t0x100001100"))
+
+    def test_a_host_with_no_disassembler_is_an_error_not_a_pass(self):
+        real_run = subprocess.run
+
+        def without_disassemblers(command, **kwargs):
+            if command and command[0] in ("otool", "objdump", "llvm-objdump"):
+                raise FileNotFoundError(2, "No such file or directory", command[0])
+            return real_run(command, **kwargs)
+
+        with tempfile.TemporaryDirectory() as scratch:
+            executable, _control = self.build(scratch, self.DIRECT_CONTROL)
+            subprocess.run = without_disassemblers
+            try:
+                with self.assertRaises(SystemExit):
+                    check_direct_calls.disassemble(executable)
+            finally:
+                subprocess.run = real_run
+
     def test_no_object_files_fails_rather_than_passing_vacuously(self):
         with tempfile.TemporaryDirectory() as scratch:
             executable, _control = self.build(scratch, self.DIRECT_CONTROL)
@@ -353,6 +419,33 @@ class PreprocessedComparison(unittest.TestCase):
             self.assertIn("ours", tokens)
             self.assertIn("also_ours", tokens)
             self.assertNotIn("theirs", tokens)
+
+    def test_relative_line_markers_resolve_against_the_compilers_directory(self):
+        """The compiler runs in the project directory, so its markers are relative.
+
+        Resolving them against this process's directory instead matches nothing,
+        and two empty token streams compare equal -- a pass that established
+        nothing.
+        """
+        with tempfile.TemporaryDirectory() as scratch:
+            project = os.path.realpath(scratch)
+            own = os.path.join(project, "src", "control")
+            os.makedirs(own)
+            preprocessed = '# 1 "src/control/control.c"\nint ours = 1;\n'
+
+            self.assertEqual(
+                ["int", "ours", "=", "1", ";"],
+                check_control_identical.own_tokens(preprocessed, [own], project),
+            )
+            self.assertEqual(
+                [], check_control_identical.own_tokens(preprocessed, [own], "/elsewhere")
+            )
+
+    def test_a_unit_contributing_no_tokens_fails_rather_than_comparing_nothing(self):
+        per_environment = {"native": {"control.c": []}, "stm32": {"control.c": []}}
+        problems = check_control_identical.differences(["native", "stm32"], per_environment)
+        self.assertTrue(problems)
+        self.assertIn("nothing was compared", problems[0])
 
     def test_whitespace_differences_are_not_a_difference(self):
         with tempfile.TemporaryDirectory() as scratch:

@@ -31,13 +31,20 @@ import sys
 
 # `bl <symbol>` on arm64, `callq <addr> <symbol>` on x86-64. A branch to a bare
 # address is control flow inside the function, not a call to another function.
-DIRECT_CALL = re.compile(r"^\s*(?:bl|call|callq)\s+(?:0x[0-9a-f]+\s+)?(_[A-Za-z0-9_.$]+)\s*$")
+DIRECT_CALL = re.compile(
+    r"^\s*(?:bl|call|callq)\s+(?:0x[0-9a-f]+\s+)?"
+    r"(?:<(?P<angled>[A-Za-z_][A-Za-z0-9_.$]*)>|(?P<plain>_[A-Za-z0-9_.$]+))\s*$"
+)
 
-# `blr x8` / `br x8` on arm64, `callq *%rax` / `jmpq *(%rax)` on x86-64.
-INDIRECT_CALL = re.compile(r"^\s*(?:blr|br|call|callq|jmp|jmpq)\s+[*xw]")
+# `blr x8` / `br x8` on arm64 and their pointer-authenticated forms `blraa`,
+# `blraaz`, `braa`; `callq *%rax` / `jmpq *(%rax)` on x86-64.
+INDIRECT_CALL = re.compile(r"^\s*(?:blra[abz]*|bra[abz]*|blr|br|call|callq|jmp|jmpq)\s+[*xw]")
 
 # A tail call: the last operation reached by jumping straight to another symbol.
-DIRECT_TAIL_CALL = re.compile(r"^\s*(?:b|jmp|jmpq)\s+(_[A-Za-z0-9_.$]+)\s*$")
+DIRECT_TAIL_CALL = re.compile(
+    r"^\s*(?:b|jmp|jmpq)\s+(?:0x[0-9a-f]+\s+)?"
+    r"(?:<(?P<angled>[A-Za-z_][A-Za-z0-9_.$]*)>|(?P<plain>_[A-Za-z0-9_.$]+))\s*$"
+)
 
 SYMBOL_LABEL = re.compile(r"^(_[A-Za-z0-9_.$]+):\s*$")
 
@@ -61,7 +68,7 @@ def seam_symbols(header_path: str) -> set[str]:
     if not names:
         raise SystemExit(f"check_direct_calls: no seam operations declared in {header_path}")
     # Mach-O prefixes C symbols with an underscore; ELF does not, so accept both.
-    return {name for name in names} | {f"_{name}" for name in names}
+    return names | {f"_{name}" for name in names}
 
 
 def collect_objects(roots: list[str]) -> list[str]:
@@ -98,23 +105,36 @@ def symbols_of(objects: list[str]) -> tuple[set[str], set[str]]:
     return defined, undefined
 
 
+def _disassembler_output(executable: str) -> subprocess.CompletedProcess:
+    """Run whichever disassembler this host has.
+
+    Neither tool is present everywhere -- otool ships with the Apple toolchain,
+    objdump with binutils and LLVM -- so each is tried and a missing one is not
+    an error. Having none at all is, since the check would otherwise inspect
+    nothing.
+    """
+    attempts = (
+        (["otool", "-tV", executable], "(__TEXT,__text)"),
+        (["objdump", "-d", "--no-show-raw-insn", executable], "<"),
+        (["llvm-objdump", "-d", "--no-show-raw-insn", executable], "<"),
+    )
+
+    for command, expected in attempts:
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, check=False)
+        except FileNotFoundError:
+            continue
+        if result.returncode == 0 and expected in result.stdout:
+            return result
+
+    raise SystemExit(
+        f"check_direct_calls: no disassembler on this host could read {executable}"
+    )
+
+
 def disassemble(executable: str) -> dict[str, list[str]]:
     """The executable's text section, split into one instruction list per symbol."""
-    result = subprocess.run(
-        ["otool", "-tV", executable], capture_output=True, text=True, check=False
-    )
-    if result.returncode != 0 or "(__TEXT,__text)" not in result.stdout:
-        result = subprocess.run(
-            ["objdump", "-d", "--no-show-raw-insn", executable],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            raise SystemExit(
-                "check_direct_calls: neither otool nor objdump could disassemble "
-                f"{executable}"
-            )
+    result = _disassembler_output(executable)
 
     functions: dict[str, list[str]] = {}
     current: str | None = None
@@ -173,8 +193,11 @@ def check(executable: str, header: str, object_roots: list[str]) -> list[str]:
                 )
                 continue
             direct = DIRECT_CALL.match(instruction) or DIRECT_TAIL_CALL.match(instruction)
-            if direct and direct.group(1) in seam:
-                reached.add(direct.group(1))
+            if direct is None:
+                continue
+            target = direct.group("angled") or direct.group("plain")
+            if target in seam:
+                reached.add(target)
 
     if inspected == 0:
         problems.append(f"no control function was found in {executable} to inspect")

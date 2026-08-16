@@ -36,11 +36,19 @@ static uint16_t drive_level_for_reading(int32_t reading_milli_c)
     return (uint16_t)(error_degrees * CONTROL_GAIN_PERMILLE_PER_DEGREE);
 }
 
+/*
+ * Latch the fault and command the heater off. The recorded level follows what
+ * the interface accepted rather than what was asked for: if the off command is
+ * itself refused -- which is exactly the condition that produced an
+ * output-refused step -- the heater is still at its previous level, and
+ * recording zero would state that it is off when nothing established that.
+ */
 static control_step_result_t shut_down(control_state_t *state, control_step_result_t reason)
 {
     state->faulted = true;
-    state->brew_heater_permille = 0u;
-    (void)hw_output_set(HW_OUTPUT_BREW_HEATER, 0u);
+    if (hw_output_set(HW_OUTPUT_BREW_HEATER, 0u)) {
+        state->brew_heater_permille = 0u;
+    }
     return reason;
 }
 
@@ -80,8 +88,9 @@ control_step_result_t control_step(control_state_t *state)
     state->step_count++;
 
     if (state->faulted) {
-        state->brew_heater_permille = 0u;
-        (void)hw_output_set(HW_OUTPUT_BREW_HEATER, 0u);
+        if (hw_output_set(HW_OUTPUT_BREW_HEATER, 0u)) {
+            state->brew_heater_permille = 0u;
+        }
         return CONTROL_STEP_FAULT_LATCHED;
     }
 

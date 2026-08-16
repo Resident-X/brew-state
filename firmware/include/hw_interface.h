@@ -64,8 +64,10 @@ hw_reading_t hw_sensor_read(hw_sensor_channel_t channel);
 
 /*
  * Drive an output channel at `level_permille` parts per thousand of full scale.
- * Returns false and changes nothing when the channel is out of range or the
- * level exceeds HW_OUTPUT_FULL_SCALE.
+ * Returns false and changes nothing when the channel is out of range, when the
+ * level exceeds HW_OUTPUT_FULL_SCALE, or when the implementation cannot drive
+ * the channel at all -- a caller must treat a refusal as "the channel is at
+ * whatever it was", not as "the channel is off".
  */
 bool hw_output_set(hw_output_channel_t channel, uint16_t level_permille);
 

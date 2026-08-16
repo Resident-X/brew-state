@@ -52,11 +52,6 @@ def scan(roots: list[str]) -> list[Violation]:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("roots", nargs="+", help="files or directories to check")
-    parser.add_argument(
-        "--allow-empty",
-        action="store_true",
-        help="succeed when the roots contain no source files",
-    )
     args = parser.parse_args(argv)
 
     for root in args.roots:
@@ -65,7 +60,7 @@ def main(argv: list[str]) -> int:
             return 2
 
     sources = collect_sources(args.roots)
-    if not sources and not args.allow_empty:
+    if not sources:
         print(
             "check_encapsulation: no C sources found -- the check would pass "
             "without inspecting anything",

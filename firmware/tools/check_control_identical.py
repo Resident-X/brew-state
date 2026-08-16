@@ -107,12 +107,18 @@ def preprocess(entry: dict, project: str) -> str:
     return result.stdout
 
 
-def own_tokens(preprocessed: str, own_directories: list[str]) -> list[str]:
+def own_tokens(preprocessed: str, own_directories: list[str], base: str = ".") -> list[str]:
     """The token sequence contributed by the project's own sources.
 
     Line markers name the file each following run of text came from, so this
     walks them and keeps only the runs attributed to the directories that hold
     the control logic and the seam header.
+
+    A compiler invoked from the project directory emits relative marker paths,
+    so `base` is the directory those are relative to -- the directory the
+    compiler ran in, not this process's working directory. Resolving them
+    against the wrong directory matches nothing, and matching nothing is
+    indistinguishable from two environments agreeing.
     """
     keeping = False
     tokens: list[str] = []
@@ -120,16 +126,12 @@ def own_tokens(preprocessed: str, own_directories: list[str]) -> list[str]:
     for line in preprocessed.splitlines():
         marker = LINE_MARKER.match(line)
         if marker:
-            path = os.path.realpath(marker.group(1))
+            path = os.path.realpath(os.path.join(base, marker.group(1)))
             keeping = any(
                 path.startswith(directory + os.sep) or path == directory
                 for directory in own_directories
             )
             continue
-        if line.startswith("#"):
-            # A pragma or other directive surviving preprocessing; attribute it
-            # like ordinary text.
-            pass
         if keeping:
             tokens.extend(TOKEN.findall(line))
 
@@ -152,7 +154,7 @@ def check(project: str, environments: list[str], pio: str) -> list[str]:
             if not source.startswith(control_directory + os.sep):
                 continue
             units[os.path.relpath(source, project)] = own_tokens(
-                preprocess(entry, project), own_directories
+                preprocess(entry, project), own_directories, entry.get("directory", project)
             )
         per_environment[environment] = units
 
@@ -169,6 +171,19 @@ def differences(
 
     if not reference:
         return [f"no control translation unit was compiled in '{reference_environment}'"]
+
+    # A unit whose own text contributed no tokens means the comparison saw
+    # nothing -- two empty streams compare equal, which would report agreement
+    # the check never established.
+    for environment, units in per_environment.items():
+        for unit, tokens in sorted(units.items()):
+            if not tokens:
+                problems.append(
+                    f"{unit}: no text of its own survived preprocessing in "
+                    f"'{environment}', so nothing was compared"
+                )
+    if problems:
+        return problems
 
     for environment in environments[1:]:
         other = per_environment[environment]
