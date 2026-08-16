@@ -1,0 +1,21 @@
+id: EVD-SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C6-ANALYSIS
+type: evidence
+title: Disassembly of the linked host executable — every seam call site is a direct call (SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C6)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-16T08:00:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_direct_calls.py::linked native executable
+text: |-
+  check_direct_calls.py passes. It disassembles the linked host executable, identifies the functions the control translation units defined, and requires every seam operation those functions reference to be reached by a direct call, with no indirect call on any control-path call site. It works from the linked binary rather than from the header's shape, so the property is asserted about what was actually emitted. Indirect calls inside an implementation under firmware/src/hw are out of scope and are not flagged.
+
+  Detector coverage lives in the DirectCallCheck and SeamDeclarationParsing classes of firmware/tools/tests/test_checks.py, including a fixture whose seam call is routed through a mutable function-pointer table and which the check correctly rejects — so the check discriminates rather than passing everything put in front of it. This does not measure call cost, which the real-time obligation requires be established by measurement on the target.
+
+  Observed on branch req/SOL-CONTROL-HARDWARE-SEAM-HOST-SIM/host-sim-seam via `task fw:verify` from the repo root, which builds both PlatformIO environments, runs all five checks, runs 13 Unity tests and 48 Python tests, and runs the host executable.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C6
+    type: satisfies

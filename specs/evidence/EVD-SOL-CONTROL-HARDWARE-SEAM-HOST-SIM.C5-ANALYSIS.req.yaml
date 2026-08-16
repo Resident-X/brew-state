@@ -1,0 +1,23 @@
+id: EVD-SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C5-ANALYSIS
+type: evidence
+title: Encapsulation check wired into the build — a vendor reference from control logic fails it (SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C5)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-16T08:00:03Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_encapsulation.py::firmware/tools/pio_encapsulation.py
+text: |
+  check_encapsulation.py passes over the translation units under firmware/src/control, and firmware/tools/pio_encapsulation.py wires it into every PlatformIO build — native, native_test and stm32 — so a violation fails the build before compilation begins rather than depending on someone remembering to run it. A finding names the offending file, line and symbol, so the violation is actionable. The implementations under firmware/src/hw are exempt by construction.
+
+  Verified in the failing direction as well as the passing one: injecting `extern unsigned int HAL_GetTick(void);` into a control source makes `pio run -e native` fail with that file, line and symbol named, and the same injection fails the stm32 build. Detector coverage lives in the EncapsulationCheck and VendorSymbolDetection classes of firmware/tools/tests/test_checks.py and includes the evasions that would otherwise slip through — macro-named includes, includes of a seam-implementation header, memory-mapped register addresses written as literals, and inline assembly.
+
+  Coverage limit of this evidence, recorded so the guarantee is not read wider than it is: the checker enumerates sources by the suffixes `.c` and `.h` (check_encapsulation.py), whereas the build filter `+<control/>` in platformio.ini compiles any C++ or assembly source placed in that directory as well. Every translation unit under firmware/src/control is a `.c` file today, so the check does inspect all of them and the criterion holds over the sources as they stand. It would stop holding silently if a `.cpp`, `.cc` or `.S` control source were added, since such a file would be compiled and linked without ever being inspected. The result recorded here is a pass over the present sources, not a claim that the gate is closed against every source kind the build accepts.
+
+  Observed on branch req/SOL-CONTROL-HARDWARE-SEAM-HOST-SIM/host-sim-seam via `task fw:verify` from the repo root, which builds both PlatformIO environments, runs all five checks, runs 13 Unity tests and 48 Python tests, and runs the host executable.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C5
+    type: satisfies

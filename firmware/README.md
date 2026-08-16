@@ -68,14 +68,18 @@ task runner. Two of them also run automatically inside every `pio run`.
 
 | Check | What it fails on |
 | --- | --- |
-| `check_header_neutral.py` | The seam header names a vendor symbol, or does not compile standalone against a freestanding compiler with no vendor include path. |
-| `check_encapsulation.py` | A translation unit under `src/control` reaches a HAL function, a CMSIS symbol, a peripheral instance or a device header directly. Runs inside every build. |
+| `check_header_neutral.py` | The seam header names a vendor symbol, or does not compile standalone against a freestanding compiler with no vendor include path. Runs inside every build. |
+| `check_encapsulation.py` | A file under `src/control` reaches a HAL function, a CMSIS symbol, a peripheral instance, a device header, an include the check cannot resolve, a peripheral address, or assembly. Runs inside every build. |
 | `check_sanitizers.py` | The host build links the sanitizer runtime while the control logic is not actually compiled under it — a failure that otherwise passes silently. |
 | `check_direct_calls.py` | A seam call in the linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
 
 Each check fails rather than passes when it cannot find what it is meant to
-inspect. A check that inspects nothing must not report success.
+inspect. A check that inspects nothing must not report success. The
+encapsulation check applies the same rule to file kinds: it inspects every file
+under `src/control` except a listed set it knows a build never compiles, so a
+C++ or assembly source dropped into a directory the build filter takes
+wholesale cannot walk past it.
 
 ## The nominated STM32 family
 

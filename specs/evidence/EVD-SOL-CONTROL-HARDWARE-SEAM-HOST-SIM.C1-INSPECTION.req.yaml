@@ -1,0 +1,21 @@
+id: EVD-SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C1-INSPECTION
+type: evidence
+title: Header neutrality inspection — hw_interface.h names no vendor symbol (SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-16T07:59:20Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_header_neutral.py::firmware/include/hw_interface.h
+text: |-
+  check_header_neutral.py, run over firmware/include/hw_interface.h as part of `task fw:check`, passes. It does two things: it scans the header for vendor symbols (STM32 HAL handles, CMSIS register definitions, device-header includes, PlatformIO-injected macros) and finds none, and it compiles the header standalone with -ffreestanding -nostdinc and only the compiler's own freestanding include directory on the path, proving the header carries no dependency on a vendor include path. The declared operations are the sensor-channel read, the output drive and the monotonic clock read.
+
+  The checker itself is covered by the HeaderNeutralityCheck and VendorSymbolDetection test classes in firmware/tools/tests/test_checks.py, which exercise vendor-symbol recognition and the standalone-compile path against synthetic headers including negative fixtures. The seam's declared contract is exercised at run time by the Unity tests test_out_of_range_channels_are_refused_by_the_seam and test_seam_clock_never_goes_backwards in firmware/test/test_control/test_control.c.
+
+  Observed on branch req/SOL-CONTROL-HARDWARE-SEAM-HOST-SIM/host-sim-seam via `task fw:verify` from the repo root, which builds both PlatformIO environments, runs all five checks, runs 13 Unity tests and 48 Python tests, and runs the host executable.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C1
+    type: satisfies

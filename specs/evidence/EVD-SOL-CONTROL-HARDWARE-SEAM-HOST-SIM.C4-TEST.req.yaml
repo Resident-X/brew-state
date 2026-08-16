@@ -1,0 +1,21 @@
+id: EVD-SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C4-TEST
+type: evidence
+title: Sanitizer-instrumented host build and run — no memory or undefined-behaviour finding (SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T07:59:51Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_sanitizers.py::pio run -e native
+text: |-
+  check_sanitizers.py passes. It proves every project translation unit in the host build is compiled with -fsanitize=address,undefined -fno-sanitize-recover=all — so a diagnostic aborts the run rather than printing and continuing — and that the linked executable actually links a sanitizer runtime, closing the gap where the flags are present but the instrumentation is not. The host executable then runs to completion through its control-logic entry path and the 13 Unity tests run, both clean under those sanitizers.
+
+  The instrumentation is load-bearing rather than decorative: during this slice the sanitizers caught a real signed-overflow defect in the control logic, which was fixed. That is the tier-one analysis stage doing the job it exists for on its first subject.
+
+  Observed on branch req/SOL-CONTROL-HARDWARE-SEAM-HOST-SIM/host-sim-seam via `task fw:verify` from the repo root, which builds both PlatformIO environments, runs all five checks, runs 13 Unity tests and 48 Python tests, and runs the host executable.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C4
+    type: satisfies

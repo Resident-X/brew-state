@@ -1,0 +1,21 @@
+id: EVD-SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C3-DEMONSTRATION
+type: evidence
+title: Preprocessed-token comparison across environments — control sources are environment-independent (SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C3)
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-08-16T07:59:41Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_control_identical.py --env native --env stm32
+text: |-
+  check_control_identical.py --env native --env stm32 passes. It preprocesses every control translation unit under firmware/src/control in both PlatformIO environments and compares the token streams attributed to the project's own sources, so a macro defined by one environment and not the other is caught rather than hidden by a raw-source diff. Which hardware implementation is linked follows from the environment being built, not from any edit to or branch inside a control source.
+
+  The check was verified against a negative probe rather than only in the passing direction: injecting an environment-specific -D macro that reaches a control translation unit makes the check fail and print the differing tokens; with the probe removed the check passes. That establishes the comparison discriminates rather than trivially agreeing.
+
+  Observed on branch req/SOL-CONTROL-HARDWARE-SEAM-HOST-SIM/host-sim-seam via `task fw:verify` from the repo root, which builds both PlatformIO environments, runs all five checks, runs 13 Unity tests and 48 Python tests, and runs the host executable.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C3
+    type: satisfies

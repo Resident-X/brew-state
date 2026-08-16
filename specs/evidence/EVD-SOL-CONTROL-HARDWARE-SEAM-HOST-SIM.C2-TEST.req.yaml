@@ -1,0 +1,19 @@
+id: EVD-SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C2-TEST
+type: evidence
+title: Host build and Unity suite — control logic builds and runs with no target present (SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T07:59:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::pio test -e native_test
+text: |-
+  `pio run -e native` compiles the control-logic sources under firmware/src/control together with the simulated implementation under firmware/src/hw/sim and links a host executable. The build needs no STM32 toolchain, no CMSIS headers and no attached device. The linked executable then runs to completion under `task fw:run`, and the 13 Unity tests in firmware/test/test_control/test_control.c pass under `pio test -e native_test`, exercising the control logic through the simulated seam rather than merely proving the binary starts.
+
+  Observed on branch req/SOL-CONTROL-HARDWARE-SEAM-HOST-SIM/host-sim-seam via `task fw:verify` from the repo root, which builds both PlatformIO environments, runs all five checks, runs 13 Unity tests and 48 Python tests, and runs the host executable.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C2
+    type: satisfies

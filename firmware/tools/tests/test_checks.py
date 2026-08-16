@@ -519,15 +519,52 @@ class SanitizerRuntimeDetection(unittest.TestCase):
 class SourceCollection(unittest.TestCase):
     """SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C5: the check inspects what it claims to."""
 
-    def test_only_c_sources_and_headers_are_collected(self):
+    def test_documentation_is_not_inspected_but_every_source_kind_is(self):
         with tempfile.TemporaryDirectory() as scratch:
-            write(scratch, "control/loop.c", "int f(void){return 0;}\n")
-            write(scratch, "control/loop.h", "int f(void);\n")
+            for name in ("loop.c", "loop.h", "loop.cpp", "loop.cc", "loop.S", "loop.hpp"):
+                write(scratch, f"control/{name}", "int f(void);\n")
             write(scratch, "control/notes.md", "HAL_GetTick is mentioned here\n")
             collected = check_encapsulation.collect_sources([os.path.join(scratch, "control")])
             self.assertEqual(
-                ["loop.c", "loop.h"], sorted(os.path.basename(path) for path in collected)
+                ["loop.S", "loop.c", "loop.cc", "loop.cpp", "loop.h", "loop.hpp"],
+                sorted(os.path.basename(path) for path in collected),
             )
+
+    def test_a_file_kind_the_check_does_not_know_is_inspected_anyway(self):
+        """The build filter takes a directory, so an unfamiliar suffix still compiles."""
+        with tempfile.TemporaryDirectory() as scratch:
+            write(scratch, "control/loop.unexpected", "int f(void){return 0;}\n")
+            collected = check_encapsulation.collect_sources([os.path.join(scratch, "control")])
+            self.assertEqual(1, len(collected))
+
+    def test_a_cpp_control_source_reaching_the_vendor_fails(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            write(
+                scratch,
+                "control/sneaky.cpp",
+                """\
+                #include "stm32f4xx_hal.h"
+                extern "C" int f(void) { return (int)HAL_GetTick(); }
+                """,
+            )
+            result = run_tool("check_encapsulation.py", os.path.join(scratch, "control"))
+            self.assertEqual(1, result.returncode)
+            self.assertIn("sneaky.cpp", result.stderr)
+
+    def test_an_assembly_control_source_reaching_a_register_fails(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            write(scratch, "control/sneaky.S", "  ldr r0, =0x40020014\n  str r1, [r0]\n")
+            collected = check_encapsulation.collect_sources([os.path.join(scratch, "control")])
+            self.assertEqual(1, len(collected), "an assembly control source was not inspected")
+
+    def test_a_file_that_cannot_be_decoded_is_reported_rather_than_skipped(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            os.makedirs(os.path.join(scratch, "control"))
+            with open(os.path.join(scratch, "control", "blob.c"), "wb") as handle:
+                handle.write(b"\xff\xfe\x00\x01binary")
+            violations = check_encapsulation.scan([os.path.join(scratch, "control")])
+            self.assertEqual(1, len(violations))
+            self.assertEqual("file the check cannot read", violations[0].kind)
 
     def test_a_single_file_can_be_given_directly(self):
         with tempfile.TemporaryDirectory() as scratch:

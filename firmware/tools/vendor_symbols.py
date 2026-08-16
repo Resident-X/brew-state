@@ -44,6 +44,13 @@ VENDOR_IDENTIFIER_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         "memory-mapped register address",
         re.compile(r"\(\s*(?:const\s+)?volatile[A-Za-z0-9_ \t*]*\*\s*\)\s*0[xX][0-9A-Fa-f]+"),
     ),
+    # The Cortex-M peripheral and private-peripheral regions. A literal in
+    # either is a register address whatever syntax reaches it, which is what
+    # catches an address the compiler never sees as a pointer cast.
+    (
+        "peripheral address literal",
+        re.compile(r"\b0[xX](?:[45][0-9A-Fa-f]{7}|[Ee]00[0-9A-Fa-f]{5})\b"),
+    ),
     ("build-injected macro", re.compile(r"\b(USE_HAL_DRIVER|USE_FULL_LL_DRIVER|PLATFORMIO|ARDUINO|F_CPU|HSE_VALUE|HSI_VALUE)\b")),
 )
 
