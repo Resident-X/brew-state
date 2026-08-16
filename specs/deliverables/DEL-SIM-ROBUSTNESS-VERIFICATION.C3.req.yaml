@@ -1,0 +1,13 @@
+id: DEL-SIM-ROBUSTNESS-VERIFICATION.C3
+type: criterion
+title: Behaviour at the actuator limit is designed rather than left incidental
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Full heater duty is the normal operating point on this machine rather than an exception, so what the controller does there is part of each loop's design rather than something discovered in service.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION
+    type: criterion-of

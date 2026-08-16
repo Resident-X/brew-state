@@ -1,0 +1,13 @@
+id: DEL-SIM-EMULATION-TIER.C3
+type: criterion
+title: The emulated firmware drives the plant model and is driven by it, with no hardware present
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  Closing the loop through the plant model is what makes this a behavioural test rather than a boot check, and running it with nothing connected is what lets it run while the machine is in pieces.
+links:
+  - target: DEL-SIM-EMULATION-TIER
+    type: criterion-of

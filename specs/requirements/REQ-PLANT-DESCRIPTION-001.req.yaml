@@ -1,0 +1,24 @@
+id: REQ-PLANT-DESCRIPTION-001
+type: requirement
+category: constraint
+title: The plant description the design is established against declares the origin of every value it carries
+status: active
+priority: must
+version: 1
+text: |
+  The design is established against a description of the machine long before the machine has been measured. That description carries values, and those values are not all the same kind of fact: some are read off a component, some are derived from geometry, some are estimated from a comparable machine, and later some will be measured on the bench.
+
+  An estimate that cannot be told apart from a measurement is the more dangerous of the two, because it is trusted like the measurement it resembles.
+rationale: |
+  The whole software-first approach rests on an artefact nothing in the graph required to exist. The control design is validated against a plant description built from estimates, procurement is ranked by analysing it, and commissioning later replaces its values with measured ones — three load-bearing uses of a thing no criterion asserted, which is the failure mode where something the design depends on is assumed in prose rather than required.
+
+  Provenance is required per value rather than per description because a description is a mixture from the outset and stays one throughout commissioning. A machine part-way through characterisation holds measured values beside the estimates not yet displaced, and the design's error assumptions only mean anything if the two can be told apart.
+
+  Distinct from the declaration of the machine's own local configuration, which records what this machine is — its supply, its protective trip points, its measured characteristics. This is the description the design reasons against, which exists before any of that has been established and is the thing those measurements later correct.
+
+  Silent on the form the description takes, on how many quantities it carries, and on what counts as an acceptable origin for a value. The assumed error on the description is required elsewhere and deliberately not restated here.
+links:
+  - target: OBL-CONTROL-DESIGN-DISCIPLINE-001.C2
+    type: derives-from
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C3
+    type: derives-from

@@ -1,0 +1,13 @@
+id: DEL-SIM-SENSITIVITY.C1
+type: criterion
+title: The parameters and channels dominating delivery behaviour are identified by analysis of the closed-loop model
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  Dominance is a property of the loop rather than of the plant alone — a parameter the control law is insensitive to does not dominate delivery behaviour however large it looms in the plant.
+links:
+  - target: DEL-SIM-SENSITIVITY
+    type: criterion-of

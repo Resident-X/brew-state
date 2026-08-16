@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C1
+type: criterion
+title: The control logic builds and runs to completion with no target microcontroller or peripherals present
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  This is what lets the memory-safety net reach the control logic at all, since that net runs on the host rather than on the target.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

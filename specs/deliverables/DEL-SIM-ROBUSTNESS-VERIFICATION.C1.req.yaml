@@ -1,0 +1,13 @@
+id: DEL-SIM-ROBUSTNESS-VERIFICATION.C1
+type: criterion
+title: Stability is established across the declared error range on both plants rather than at nominal parameters
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+closes_by: cascade
+text: |
+  The coffee and steam sides differ in dynamics and in how hard they are disturbed, so the margin is established for each rather than argued once and assumed to carry.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION
+    type: criterion-of

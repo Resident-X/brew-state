@@ -1,0 +1,12 @@
+id: REQ-PLANT-DESCRIPTION-001.C3
+type: criterion
+title: An estimated value is distinguishable from a measured one
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  This holds while the two coexist, which is the normal condition of a machine part-way through characterisation rather than an edge case at the end of it. An estimate mistaken for a measurement is trusted to a precision nothing established.
+links:
+  - target: REQ-PLANT-DESCRIPTION-001
+    type: criterion-of

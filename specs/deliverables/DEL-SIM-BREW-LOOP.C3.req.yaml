@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C3
+type: criterion
+title: Brew temperature following a hot water draw matches brew temperature from rest
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The coffee side serves both draws from shared thermal mass, so a controller that assumes it starts rested is wrong on every drink after the first.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

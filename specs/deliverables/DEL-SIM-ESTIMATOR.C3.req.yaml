@@ -1,0 +1,13 @@
+id: DEL-SIM-ESTIMATOR.C3
+type: criterion
+title: Estimates stay bounded and usable across a briefly lost or implausible measurement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Loss and implausibility are ordinary operating conditions rather than faults handled somewhere else; the estimator keeps producing output the control law can act on for the duration.
+links:
+  - target: DEL-SIM-ESTIMATOR
+    type: criterion-of

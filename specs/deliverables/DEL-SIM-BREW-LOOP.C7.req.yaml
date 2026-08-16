@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C7
+type: criterion
+title: Hot water leaves the machine within the drinking-temperature band, with rate yielding when both cannot be met
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  A machine that passes water through as fast as it can heat it makes the opposite trade by default and does so silently. Water below temperature cannot be fixed downstream and drags the finished drink with it.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-SIM-UNCERTAINTY-BUDGET.C2
+type: criterion
+title: Behaviour that must survive an arbitrarily wrong model is separated from behaviour permitted to degrade with it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The separation is made before the loops are designed, so each loop is built knowing which of its properties are allowed to lean on model quality. Deciding afterwards would mean discovering the answer from whatever the implementation happened to do.
+links:
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: criterion-of

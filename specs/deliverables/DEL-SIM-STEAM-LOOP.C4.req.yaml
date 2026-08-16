@@ -1,0 +1,13 @@
+id: DEL-SIM-STEAM-LOOP.C4
+type: criterion
+title: The steam side returns to a ready state after a draw without operator action
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Recovery is the machine's work rather than a step the operator has to know about or wait on deliberately.
+links:
+  - target: DEL-SIM-STEAM-LOOP
+    type: criterion-of

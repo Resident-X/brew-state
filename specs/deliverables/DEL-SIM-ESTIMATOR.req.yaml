@@ -1,0 +1,26 @@
+id: DEL-SIM-ESTIMATOR
+type: deliverable
+category: task
+title: The state estimator and the residual it reports
+status: active
+level: task
+version: 1
+text: |
+  The estimator reconstructs the states the control law needs from the measurements that exist, produces the running comparison between predicted and observed measurements, and keeps its estimates bounded and usable when a measurement is briefly lost or reads implausibly. It delivers output at the rate the control law consumes it.
+rationale: |
+  Estimation and residual reporting are built as one unit because they are one mechanism: any estimator that predicts measurements in order to correct itself already computes the residual that drift detection consumes downstream. Splitting them across units of work invites them being built twice.
+
+  This sits before the robustness work rather than after it, because the estimator is inside the loop whose stability and margin that work has to establish. Its output rate is asserted here rather than assumed, because the control law's timing budget depends on it.
+links:
+  - target: DEL-BARISTATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: REQ-STATE-ESTIMATION-001.C1
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C2
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C3
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C4
+    type: targets

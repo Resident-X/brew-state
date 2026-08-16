@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C6
+type: criterion
+title: A build runs only the plant structure it was built for
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Controlling one architecture with another's dynamics is a fault with no obvious symptom until the machine is well outside where it should be, so the wrong structure is made unreachable rather than merely unlikely.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

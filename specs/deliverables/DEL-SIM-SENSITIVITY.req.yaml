@@ -1,0 +1,24 @@
+id: DEL-SIM-SENSITIVITY
+type: deliverable
+category: task
+title: The parameters and channels that dominate delivery behaviour, ranked by analysis
+status: active
+level: task
+version: 1
+text: |
+  The parameters and channels that dominate the machine's delivery behaviour are identified by analysing the closed-loop model rather than by assumption, and the ranking is recorded together with the analysis that produced it so it can be redone against the committed model later.
+rationale: |
+  This is the unit of work the physical track's procurement waits on: precision is bought only where a dominant parameter makes the margin thin, and that discipline is only sound if dominance is established rather than guessed. An unbacked ranking would leave the cost discipline resting on intuition.
+
+  It comes last in the phase because dominance is a property of the closed loop, not of the plant alone — a parameter the control law is insensitive to does not dominate delivery behaviour however large it looms in the plant. Ranking before both loops are demonstrated would rank the wrong thing.
+
+  The analysis is recorded rather than only its conclusion, because the ranking has to be redone against the committed model once the machine is measured, and a conclusion with no method behind it cannot be repeated.
+links:
+  - target: DEL-BARISTATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-BREW-LOOP
+    type: depends-on
+  - target: DEL-SIM-STEAM-LOOP
+    type: depends-on
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets

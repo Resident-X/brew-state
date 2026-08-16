@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C8
+type: criterion
+title: Contention between deliveries on the shared heated mass is resolved by the machine without involving the operator
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A demand that cannot be served yet is deferred and proceeds once conditions return, rather than being refused or served degraded. This is the behaviour the two deliveries were demonstrated together in order to reach.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

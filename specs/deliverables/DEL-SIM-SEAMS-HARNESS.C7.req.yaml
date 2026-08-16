@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C7
+type: criterion
+title: A further plant structure is added without changing existing structures or their consumers
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  This is the property the adopter promise rests on, and it is the one that quietly stops holding the first time a second structure is added by editing the first.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

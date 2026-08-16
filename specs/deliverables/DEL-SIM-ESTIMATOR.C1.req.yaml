@@ -1,0 +1,13 @@
+id: DEL-SIM-ESTIMATOR.C1
+type: criterion
+title: States the control law needs but no sensor provides are reconstructed from those that are measured
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  Sensors sit where they can physically go rather than where the interesting quantities are, and a low-mass flow-through system puts real dynamics between the two. Reconstruction is what closes that distance.
+links:
+  - target: DEL-SIM-ESTIMATOR
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C6
+type: criterion
+title: Departure from the profile during a delivery is reported rather than absorbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A machine that quietly does its best produces a drink nobody can reproduce and a record that cannot explain itself.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

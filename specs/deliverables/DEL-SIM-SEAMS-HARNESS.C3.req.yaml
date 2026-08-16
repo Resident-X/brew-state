@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C3
+type: criterion
+title: A simulated hardware interface stands in for the target without any change to the control logic
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Substitutability is what makes the same artefact answerable to both a plant model and real hardware, and it fails silently if the control logic has to be edited to accept the stand-in.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

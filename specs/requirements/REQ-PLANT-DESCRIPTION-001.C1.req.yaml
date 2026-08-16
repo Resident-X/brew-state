@@ -1,0 +1,12 @@
+id: REQ-PLANT-DESCRIPTION-001.C1
+type: criterion
+title: The plant description the design is established against states the quantities it represents and the relations between them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A description that lists values without saying what they describe cannot be checked against the machine, and cannot be extended without guessing what its author meant. What it leaves out matters as much as what it carries, because a quantity the description omits is a quantity the design cannot reason about.
+links:
+  - target: REQ-PLANT-DESCRIPTION-001
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C5
+type: criterion
+title: A delivery that cannot be achieved is refused before it begins
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A delivery abandoned part way has consumed the coffee and the operator's time; one refused at the outset has consumed neither. A target unreachable for now is deferred rather than refused outright.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: REQ-PLANT-DESCRIPTION-001.C2
+type: criterion
+title: Every value in the plant description carries the origin of that value
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Origins differ in how far they can be trusted and in what would displace them. Recording the origin alongside the value is what lets a later measurement replace an estimate deliberately rather than silently, and what lets someone rebuilding this on a different machine tell which values were ever theirs to reuse.
+links:
+  - target: REQ-PLANT-DESCRIPTION-001
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-SIM-ESTIMATOR.C4
+type: criterion
+title: Estimator output is available at the rate the control law consumes it
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The control law's timing budget depends on this rate, so it is asserted rather than assumed by whatever consumes the estimate.
+links:
+  - target: DEL-SIM-ESTIMATOR
+    type: criterion-of

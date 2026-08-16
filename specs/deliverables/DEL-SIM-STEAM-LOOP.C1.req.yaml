@@ -1,0 +1,13 @@
+id: DEL-SIM-STEAM-LOOP.C1
+type: criterion
+title: Steam properties stay within band for the whole of a draw regardless of its duration
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The operator works continuously against whatever comes out, so the band holds for as long as the valve is open rather than for some nominal draw length.
+links:
+  - target: DEL-SIM-STEAM-LOOP
+    type: criterion-of

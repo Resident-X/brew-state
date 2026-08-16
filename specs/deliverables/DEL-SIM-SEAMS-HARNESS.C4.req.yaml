@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C4
+type: criterion
+title: Plant parameters are supplied as data rather than compiled into the control logic
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Changing a parameter value is then a data change, which is what lets one artefact carry estimated values now and measured values after commissioning. Drift correction, model commit and stored-data integrity all rest on this downstream.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

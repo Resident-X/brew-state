@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C2
+type: criterion
+title: Hardware input and output are reached only through the named interface
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Control logic that touches a peripheral directly cannot be built away from the target, so the boundary is asserted rather than left as a convention the code happens to follow.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

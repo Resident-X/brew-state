@@ -1,0 +1,13 @@
+id: DEL-SIM-UNCERTAINTY-BUDGET.C1
+type: criterion
+title: The range of model error the design assumes is declared and carried with the plant description
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Carried with the description rather than held separately, because a range that travels apart from the values it qualifies stops being checked against them.
+links:
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: criterion-of

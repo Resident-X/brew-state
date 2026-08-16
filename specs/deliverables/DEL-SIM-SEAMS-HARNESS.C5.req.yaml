@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C5
+type: criterion
+title: The plant structure sits behind a named interface its consumers share
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  One interface rather than several is what keeps a second structure from rippling through everything that reads the first.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

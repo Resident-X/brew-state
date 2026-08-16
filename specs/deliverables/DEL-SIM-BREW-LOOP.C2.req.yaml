@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C2
+type: criterion
+title: The controlled variable is the temperature the water reaches the coffee at
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  Where the machine senses and where the drink is sensitive are not the same point, and the distance between them is the substance of this loop rather than an offset to be trimmed out.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

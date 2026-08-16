@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C9
+type: criterion
+title: The host tier exercises the control logic under memory and undefined-behaviour analysis
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  This is the tier where those defects are caught, because emulation reproduces undefined behaviour rather than detecting it. It runs with the target absent entirely.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

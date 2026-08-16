@@ -1,0 +1,44 @@
+id: DEL-SIM-SEAMS-HARNESS
+type: deliverable
+category: epic
+title: Seams, the plant description, and the host verification tier
+status: active
+level: epic
+version: 1
+text: |
+  The control logic reaches hardware only through a named interface, and the plant structure sits behind its own named interface with plant parameters carried as data. The reference machine's plant description is populated behind that seam, and the host verification tier exercises the whole under memory and undefined-behaviour analysis with the target absent entirely.
+rationale: |
+  This is the thinnest end-to-end path through the software track — a plant description, a control loop, and something that runs both — and every later unit of phase-one work is exercised through it. Pairing the seams with the host tier is deliberate: a harness with nothing to run proves nothing, and control logic with no harness cannot be shown separable from the hardware it drives.
+
+  The plant description belongs here rather than being left implicit. Everything downstream in this phase reasons against it — the estimator reconstructs states it defines, the loops are demonstrated against it, the dominance ranking analyses it — and until it exists with the origin of each value recorded, the phase rests on an artefact nothing produced.
+
+  The host tier is the memory and undefined-behaviour net, and it is not optional given the language the firmware is written in. Emulation is a separate unit of work rather than part of this one, because it needs nothing here beyond the seams and would otherwise gate every other node in the phase behind the heaviest piece of infrastructure in it. Measuring worst-case timing is not in this phase at all — it needs a board.
+links:
+  - target: DEL-BARISTATE-DELIVERY.C1
+    type: derives-from
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C1
+    type: targets
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C2
+    type: targets
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C1
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C4
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C2
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C3
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets

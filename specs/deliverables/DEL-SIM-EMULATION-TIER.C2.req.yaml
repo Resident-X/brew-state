@@ -1,0 +1,13 @@
+id: DEL-SIM-EMULATION-TIER.C2
+type: criterion
+title: Peripherals are modelled for every channel the control logic reaches through the hardware seam
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The seam bounds the set, so the tier does not wait on instrumentation the physical track has yet to fit. A channel the control logic never touches needs no model.
+links:
+  - target: DEL-SIM-EMULATION-TIER
+    type: criterion-of

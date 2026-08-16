@@ -1,0 +1,13 @@
+id: DEL-SIM-STEAM-LOOP.C2
+type: criterion
+title: Delivery is prevented until the steam side can sustain it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Steam drawn before the side can support it comes out wet, which ruins the milk rather than merely delaying the drink, so readiness gates delivery rather than advising it.
+links:
+  - target: DEL-SIM-STEAM-LOOP
+    type: criterion-of

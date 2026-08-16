@@ -1,0 +1,13 @@
+id: DEL-SIM-ROBUSTNESS-VERIFICATION.C4
+type: criterion
+title: Behaviour classified as independent of model quality holds against an arbitrarily wrong model
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The classification is made upstream, before the loops are designed; what is established here is that the loops as built actually honour it. An identification failure then puts a known set of properties in question rather than all of them.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION
+    type: criterion-of

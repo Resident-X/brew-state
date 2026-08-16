@@ -1,0 +1,13 @@
+id: DEL-SIM-ESTIMATOR.C2
+type: criterion
+title: A running comparison between predicted and observed measurements is produced as estimator output
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The comparison is what drift detection consumes in service, and it falls out of any estimator that predicts measurements in order to correct itself, so it is exposed here rather than recomputed elsewhere.
+links:
+  - target: DEL-SIM-ESTIMATOR
+    type: criterion-of

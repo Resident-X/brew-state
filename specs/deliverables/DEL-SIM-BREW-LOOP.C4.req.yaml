@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C4
+type: criterion
+title: A delivery is commanded as a profile that states the condition on which it ends
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The end condition belongs to the profile rather than sitting elsewhere, and it is expressed in a quantity the machine measures as the delivery proceeds. A course with no stated end leaves the machine to invent one at the moment it can least justify the choice.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

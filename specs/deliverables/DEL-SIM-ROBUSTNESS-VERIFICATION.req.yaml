@@ -1,0 +1,32 @@
+id: DEL-SIM-ROBUSTNESS-VERIFICATION
+type: deliverable
+category: task
+title: Each loop holds its guarantees across the declared range of model error
+status: active
+level: task
+version: 1
+text: |
+  Each control loop holds its guarantees across the declared range of model error rather than at nominal parameters alone: stability is established across the range on both plants, commanded margin widens with model error as well as with sensing error, behaviour at the actuator limit is designed rather than incidental, and the behaviours classified as not depending on model quality are shown to hold against an arbitrarily wrong model.
+rationale: |
+  Placed after both loops because every claim here is a claim about a loop. Stability holds for a particular control law on a particular plant, and the coffee and steam sides are different plants with different dynamics and different margins — so a single claim made before either loop existed would have been a claim about nothing. The same reasoning already governs the dominance ranking, which is placed after the loops for exactly this reason.
+
+  Saturation is called out separately because this machine spends much of its working life at full heater duty. Where the actuator limit is the normal operating point rather than an exception, what the controller does there is designed alongside the loop rather than established as a general property beforehand.
+
+  The supply-budget behaviour named in the last of these guarantees is verified here only in the sense that the controller's respect for a declared budget survives a wrong model. The budget itself is a property of the machine and its supply, established on the physical track rather than in simulation, so nothing in this phase asserts what that budget is.
+links:
+  - target: DEL-BARISTATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-BREW-LOOP
+    type: depends-on
+  - target: DEL-SIM-STEAM-LOOP
+    type: depends-on
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: depends-on
+  - target: REQ-ROBUST-CONTROL-001.C1
+    type: targets
+  - target: REQ-ROBUST-CONTROL-001.C3
+    type: targets
+  - target: REQ-ROBUST-CONTROL-001.C4
+    type: targets
+  - target: REQ-ROBUST-CONTROL-001.C5
+    type: targets

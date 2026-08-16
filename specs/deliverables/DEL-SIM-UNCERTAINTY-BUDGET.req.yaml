@@ -1,0 +1,22 @@
+id: DEL-SIM-UNCERTAINTY-BUDGET
+type: deliverable
+category: task
+title: The assumed model error and the behaviours that must survive it are declared
+status: active
+level: task
+version: 1
+text: |
+  The range of model error the design assumes is declared and carried with the plant description, and the behaviours that must survive an arbitrarily wrong model are separated from those permitted to degrade with it. Both are design inputs the loops are then held to, rather than findings produced by building them.
+rationale: |
+  Split from the verification of those guarantees because the two sit on opposite sides of the loops. Declaring how wrong the model may be, and deciding which properties are not allowed to depend on the answer, are inputs a control law is designed against. Establishing that a particular loop holds its margin across that range is a claim about a loop, and cannot be made before the loop exists.
+
+  Separating what must survive an arbitrarily wrong model from what may degrade with it is the substantive content here. Without the split, a model that turns out worse than assumed threatens every property at once and nothing can be said about which ones still hold.
+
+  Declaring the range at this point is also what makes the later re-verification against the committed model a comparison rather than a fresh start: a measured parameter can be judged inside or outside the range the design was established over, instead of the design being re-established from nothing.
+links:
+  - target: DEL-BARISTATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: REQ-ROBUST-CONTROL-001.C2
+    type: targets

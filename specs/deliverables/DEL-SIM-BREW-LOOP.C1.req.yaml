@@ -1,0 +1,13 @@
+id: DEL-SIM-BREW-LOOP.C1
+type: criterion
+title: Water arriving at the group tracks the commanded temperature for a whole extraction in simulation
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Tracking holds for the duration rather than being reached at the start, and it holds from whatever thermal state the preceding demand left the machine in rather than only from rest.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of

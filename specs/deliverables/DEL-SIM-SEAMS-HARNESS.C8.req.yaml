@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C8
+type: criterion
+title: The reference machine's plant description is populated behind the seam with the origin of each value recorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Everything else in this phase reasons against this description: the estimator reconstructs the states it defines, both loops are demonstrated against it, and the dominance ranking analyses it. Recording origins is what lets commissioning displace an estimate deliberately later.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

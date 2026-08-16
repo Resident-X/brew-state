@@ -1,0 +1,13 @@
+id: DEL-SIM-STEAM-LOOP.C3
+type: criterion
+title: Demand beyond sustainable capacity reduces delivered quantity before delivered quality
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Capacity is bounded by physics the controller does not negotiate with; what it decides is how the operator meets that bound. Slowing leaves the jug finishable, thinning does not.
+links:
+  - target: DEL-SIM-STEAM-LOOP
+    type: criterion-of

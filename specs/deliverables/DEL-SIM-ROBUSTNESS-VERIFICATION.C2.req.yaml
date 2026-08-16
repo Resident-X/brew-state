@@ -1,0 +1,13 @@
+id: DEL-SIM-ROBUSTNESS-VERIFICATION.C2
+type: criterion
+title: Commanded margin widens with model error as well as with sensing error
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+closes_by: cascade
+text: |
+  Model error is the larger of the two while the description is still built from estimates, and margin computed from sensing error alone understates how close a command sits to a protection limit.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION
+    type: criterion-of

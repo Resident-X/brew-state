@@ -1,0 +1,13 @@
+id: DEL-SIM-EMULATION-TIER.C1
+type: criterion
+title: The binary exercised under emulation is the one built for the target rather than a re-expression of it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Verifying a port would verify a different artefact than the one that runs, which is the reason the design was never split across two languages in the first place.
+links:
+  - target: DEL-SIM-EMULATION-TIER
+    type: criterion-of

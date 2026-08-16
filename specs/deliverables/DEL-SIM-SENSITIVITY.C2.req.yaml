@@ -1,0 +1,13 @@
+id: DEL-SIM-SENSITIVITY.C2
+type: criterion
+title: The ranking is recorded with the analysis that produced it, in a form repeatable against the committed model
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  A ranking taken from estimated parameters can move once measured values arrive, and procurement decided on a stale one buys precision in the wrong place. A conclusion with no method behind it cannot be repeated.
+links:
+  - target: DEL-SIM-SENSITIVITY
+    type: criterion-of
