@@ -1,0 +1,24 @@
+id: REQ-HARDWARE-HEADROOM-001.C4
+type: criterion
+title: Software written before the controller is selected does not narrow which controllers can run it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A capability that only some candidate parts provide, required by software
+  written while the choice is still open, settles that choice without anyone
+  deciding it. The decision then surfaces much later, as a part that will not do,
+  and the reason sits in software nobody was thinking about when the part was
+  being chosen.
+
+  What the software asks of the controller is therefore judged against what the
+  commodity parts in contention offer, rather than against the part nominated for
+  pre-hardware verification, which is a nomination that commits nothing.
+
+  Out of scope: which controller is eventually selected, and what the software
+  costs in time on it. The first is later work, and the second is a timing claim
+  that has to be measured on the part that is chosen.
+links:
+  - target: REQ-HARDWARE-HEADROOM-001
+    type: criterion-of
