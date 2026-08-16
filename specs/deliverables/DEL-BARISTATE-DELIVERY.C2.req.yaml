@@ -1,0 +1,13 @@
+id: DEL-BARISTATE-DELIVERY.C2
+type: criterion
+title: The reference machine's physical configuration and safety chain are established, and its behaviour is measured on the bench
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  The reference machine's physical configuration and protective chain, including the open pressure-relief question, are established rather than assumed; the instrumentation that cannot be derived from datasheets is fitted; and the machine's thermal and hydraulic behaviour is measured on the bench. The phase closes when its child work covering the safety investigation, the instrumentation, and the bench characterisation is complete.
+links:
+  - target: DEL-BARISTATE-DELIVERY
+    type: criterion-of

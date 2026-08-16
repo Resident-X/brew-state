@@ -1,0 +1,12 @@
+id: REQ-PARAMETER-SENSITIVITY-001.C1
+type: criterion
+title: The parameters and channels that dominate delivery behaviour are identified by analysis of the model rather than assumed
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  The ranking of which parameters and channels dominate delivery behaviour comes from an analysis of the model. A ranking asserted without a supporting analysis fails this.
+links:
+  - target: REQ-PARAMETER-SENSITIVITY-001
+    type: criterion-of

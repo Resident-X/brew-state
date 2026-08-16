@@ -1,0 +1,12 @@
+id: REQ-PARAMETER-SENSITIVITY-001.C2
+type: criterion
+title: The dominance ranking is redone against the committed model, not left standing on the estimated one
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  When the committed model replaces the estimated one, the dominance analysis is rerun so the ranking reflects measured parameters. A ranking left standing on estimated values after the model is committed fails this.
+links:
+  - target: REQ-PARAMETER-SENSITIVITY-001
+    type: criterion-of

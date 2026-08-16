@@ -1,0 +1,60 @@
+id: DEL-BARISTATE-DELIVERY
+type: deliverable
+category: roadmap
+title: 'Baristate delivery roadmap: validate in software, characterise the machine, then build and energise'
+status: active
+level: roadmap
+version: 1
+text: |
+  Baristate is built software-first. The control design is validated in simulation before hardware is bought, and the machine that already exists is characterised in parallel so the committed model rests on measurement rather than datasheets. Five phases run two tracks that converge: a software track that validates the design and ranks where measurement matters, and a physical track that establishes the machine's safety and behaviour, before the controller is built, verified on the target, and finally energised to deliver.
+rationale: |
+  Software first, because the control structure and its software can be validated against an estimated model at no procurement cost, and that is the cheapest place to find a wrong control law or a design gap. The estimated model is legitimate here: parameters are data behind a seam, so replacing estimated values with measured ones later is a data change, not a rebuild.
+
+  The physical track runs in parallel rather than after the software track, for two reasons. The reference machine already exists, so leaving it idle until the simulation finishes wastes the one asset the project already owns. And the largest unevidenced risk in the graph — whether over-pressure is contained without electrical action — cannot be touched in simulation at all; it needs the machine opened and measured, so deferring it behind the software track defers the project's biggest safety question to the end.
+
+  Procurement is downstream of the software track's sensitivity analysis: precision is bought only where a dominant parameter makes the margin thin. The exception, and the reason the physical track carries an early purchase, is the instrumentation that cannot be modelled from datasheets — flow and pressure sensing and the bench interface — because bench characterisation, and therefore the committed model, is blocked without it. That instrumentation is the one buy that does not wait for the simulation.
+
+  The tracks converge at the committed model: the software design is re-verified against measured parameters, the implementation is verified on the target, and energisation is gated on that verification passing. Energised delivery is the last phase because connecting mains power is the hard safety boundary, and nothing crosses it until the model is validated against real hardware and the implementation is proven on the target.
+links:
+  - target: JRN-COMMISSION-PLANT-001.C1
+    type: targets
+  - target: JRN-PULL-SHOT-001.C1
+    type: targets
+  - target: JRN-STEAM-JUG-001.C1
+    type: targets
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C1
+    type: targets
+  - target: OBL-REALTIME-DISCIPLINE-001.C6
+    type: targets
+  - target: REQ-ACTUATION-CONFIRMATION-001.C1
+    type: targets
+  - target: REQ-BENCH-INTERFACE-001.C1
+    type: targets
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C1
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C1
+    type: targets
+  - target: REQ-FAULT-RESPONSE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C1
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C3
+    type: targets
+  - target: REQ-MEASUREMENT-001.C7
+    type: targets
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets
+  - target: REQ-MODEL-COMMIT-001.C1
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C4
+    type: targets
+  - target: REQ-ROBUST-CONTROL-001.C1
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C5
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C1
+    type: targets
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets

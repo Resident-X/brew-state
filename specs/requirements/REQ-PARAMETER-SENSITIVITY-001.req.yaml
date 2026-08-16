@@ -1,0 +1,16 @@
+id: REQ-PARAMETER-SENSITIVITY-001
+type: requirement
+category: constraint
+title: The parameters that dominate behaviour are established by analysis rather than assumed
+status: active
+priority: should
+version: 1
+text: |
+  Which parameters and channels dominate the machine's delivery behaviour is determined by analysing the model, not by assumption or intuition. Because the analysis first runs against estimated parameters, it is repeated once the committed model replaces them, so the ranking reflects measured reality before it guides where measurement precision and procurement spend go.
+rationale: |
+  The delivery plan spends measurement effort and money only where a dominant parameter makes the margin thin, which is only sound if which parameters are dominant is established rather than guessed. An unbacked ranking would let the cost discipline rest on intuition — the failure mode where a load-bearing fact is assumed across the plan and asserted by no criterion.
+
+  Ranking on estimated parameters and never rechecking after the machine is measured is the specific way this goes wrong. The parameters that dominate behaviour are often the ones hardest to estimate, so the ranking taken from the estimated model can move once real values arrive; a procurement decision made on the stale ranking would buy precision in the wrong place.
+links:
+  - target: REQ-COST-DISCIPLINE-001.C2
+    type: derives-from
