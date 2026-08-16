@@ -1,0 +1,32 @@
+id: DEC-PREHARDWARE-TARGET-FAMILY
+type: decision
+category: strategic
+title: The target build's STM32F4 family is nominated for verification, not selected as the machine's controller
+status: active
+version: 1
+decided_by: david
+text: |
+  The pre-hardware target build names a specific microcontroller family — STM32F4, taken as the generic STM32F407VGT6 board definition built against the stm32cube framework — so that a real target build exists to compile the hardware-backed implementation of the seam against while no controller has been chosen and no hardware exists. Naming a family is what makes the target build real; without one there is nothing to compare the host build against, and the seam's substitutability could only be asserted rather than demonstrated.
+
+  The nomination is an act of verification, not of procurement. It commits no purchase, reserves no peripheral, fixes no pin assignment, and confers no standing on the named family when the controller is eventually chosen. Selecting the controller the machine will run stays open, and is answered later against measured plant parameters and the headroom the project is required to preserve. If the controller selected then belongs to a different family, this nomination is superseded rather than reworked.
+rationale: |
+  Context: The hardware seam is demonstrated by building the control logic two ways and showing that neither build changes it, which requires a target build to exist alongside the host build. A target build cannot be configured without naming a microcontroller family, and no node in the graph names one: controller selection sits in the roadmap's on-target phase, deliberately late, because it is answerable only against parameters the project has not measured yet. The seam has to be demonstrated before that phase, so something has to name a family early. Leaving the firmware naming a family that no node states is the failure this project has already produced elsewhere — load-bearing facts asserted in prose and required by nothing.
+
+  Trade-offs: Nominating a family early buys a demonstrable seam at the cost of a name in the build configuration that may not survive to the machine. STM32F4 is the family the project's own feasibility sketch already sits in, because the 3D-printer-class control boards it costed are built on it; it is covered by the open-source vendor framework and the GCC ARM toolchain, so it costs nothing to build against, which is what the builder's no-paid-tooling position requires. Declining to build any target environment until the controller is chosen was rejected because the seam's substitutability — the property the entire pre-hardware verification approach rests on — could then only be argued by reading the source, and would go unverified until the phase where discovering it wrong is most expensive. Treating the nomination as the controller selection was rejected because that selection is answerable only against the dominance ranking and the measured parameters that do not exist yet, and making it now would foreclose headroom on the least information the project will ever have. Weakening the substitutability check to a source-level inspection was rejected because it decides nothing — it declines to verify the property rather than resolving how to verify it.
+
+  Reversibility: Changing the nominated family touches the hardware-backed implementation of the seam and the build configuration, and no control-logic source at all. That is the seam's own defining property, so the nomination is cheap to reverse by construction: the thing that makes it safe to nominate early is the same thing the nomination exists to demonstrate. Supersession is the expected path, not rework — a controller chosen in the later phase replaces the name and leaves the demonstration standing.
+
+  Consequences: The pre-hardware target build now names a family, and anything reading that name as the machine's controller is reading it wrong; controller selection remains child work of the on-target delivery phase and is constrained by the headroom requirement, not by this decision. The target build is not claimed to drive real peripherals correctly — nothing exists to check that against — so its role is confined to establishing that selecting an implementation changes no control logic. Downstream work that needs a settled controller, including any pin assignment, peripheral budget or on-target timing claim, is blocked on the later selection rather than unblocked by this nomination.
+options_considered:
+  - option: Nominate the STM32F4 family for the pre-hardware target build and leave controller selection open
+    reason_rejected: ""
+  - option: Build no target environment until the controller is selected
+    reason_rejected: The seam's substitutability could then only be asserted by reading the source, leaving the property the whole pre-hardware verification approach rests on unverified until the phase where discovering it wrong is most expensive.
+  - option: Treat the nomination as the machine's controller selection
+    reason_rejected: Controller selection is answerable only against the dominance ranking and measured plant parameters that do not exist yet, and making it now would foreclose headroom on the least information the project will ever have.
+  - option: Weaken the substitutability criterion to a source-level inspection
+    reason_rejected: This decides nothing — it declines to verify the property rather than resolving how to verify it, and inspection cannot see a macro one environment defines and the other does not.
+chosen: Nominate the STM32F4 family for the pre-hardware target build and leave controller selection open
+links:
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
+    type: addresses

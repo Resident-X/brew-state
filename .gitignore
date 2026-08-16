@@ -9,3 +9,10 @@
 
 # Transient apply lock
 specs/.staircase-apply.lock
+
+# PlatformIO build tree and the compilation database the seam's checks generate
+firmware/.pio/
+firmware/compile_commands.json
+
+# Python bytecode from the firmware check scripts
+__pycache__/

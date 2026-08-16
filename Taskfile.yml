@@ -12,6 +12,9 @@ vars:
   STAIRCASE_REPO: git@github.com:Resident-X/staircase.git
   STAIRCASE_REF: main
   SPECS_DIR: specs
+  FW_DIR: firmware
+  # PlatformIO installs into its own virtual environment rather than onto PATH.
+  PIO: '{{.PIO | default "$HOME/.platformio/penv/bin/pio"}}'
 
 tasks:
   sc:install:
@@ -89,3 +92,47 @@ tasks:
     cmds:
       - task: sc:install
       - task: sc:sync-skills
+
+  # ---------------------------------------------------------------------------
+  # Firmware. The hardware seam's properties are asserted by the build itself,
+  # so these tasks are the same commands the checks run under PlatformIO --
+  # nothing here is a second implementation of a check.
+  # ---------------------------------------------------------------------------
+
+  fw:build:
+    desc: Build both environments — the host build behind the simulated seam, and the target build behind the STM32 one
+    dir: "{{.FW_DIR}}"
+    cmds:
+      - "{{.PIO}} run -e native"
+      - "{{.PIO}} run -e stm32"
+
+  fw:test:
+    desc: Run the control-logic tests on the host and the tests covering the build-time checks
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - cd {{.FW_DIR}} && {{.PIO}} test -e native_test
+      - python3 -m unittest discover -s {{.FW_DIR}}/tools/tests
+
+  fw:check:
+    desc: Run every build-time check the seam's criteria are verified by
+    dir: "{{.FW_DIR}}"
+    cmds:
+      - python3 tools/check_header_neutral.py include/hw_interface.h
+      - python3 tools/check_encapsulation.py src/control
+      - python3 tools/check_sanitizers.py --project . --env native --executable .pio/build/native/program
+      - python3 tools/check_direct_calls.py .pio/build/native/program --header include/hw_interface.h --objects .pio/build/native/src/control
+      - python3 tools/check_control_identical.py --project . --env native --env stm32
+
+  fw:run:
+    desc: Run the host executable through its control-logic entry path under the sanitizers
+    dir: "{{.FW_DIR}}"
+    cmds:
+      - ./.pio/build/native/program
+
+  fw:verify:
+    desc: The full firmware gate — build both environments, run every check, run the tests, run the host executable
+    cmds:
+      - task: fw:build
+      - task: fw:check
+      - task: fw:test
+      - task: fw:run

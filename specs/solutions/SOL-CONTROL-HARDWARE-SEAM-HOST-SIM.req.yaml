@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The named hardware seam and its host-simulated implementation
 status: active
-version: 1
+version: 2
 text: |
   A named hardware interface is declared once as a plain C header under `firmware/include/`, giving the control logic a single vocabulary for every peripheral operation it needs — reading a sensor channel, driving an output, and reading the monotonic clock. The header names no vendor type: no STM32 HAL handle, no CMSIS register definition, and no PlatformIO-injected macro appears in any signature, so a translation unit that includes it carries no dependency on the target.
 
@@ -31,11 +31,13 @@ links:
     type: derives-from
   - target: DEL-SIM-SEAMS-HARNESS.C3
     type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS.C9
+    type: derives-from
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C1
     type: targets
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C2
     type: targets
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
     type: targets
-  - target: DEL-SIM-SEAMS-HARNESS.C9
-    type: derives-from
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: justified-by
