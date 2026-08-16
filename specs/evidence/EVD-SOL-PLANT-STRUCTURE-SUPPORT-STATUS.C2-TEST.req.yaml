@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C2-TEST
+type: evidence
+title: The status vocabulary distinguishes hardware-verified from not, and nothing else (SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-16T22:31:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::VocabularyDrawsTheVerificationLine
+text: |-
+  The vocabulary declared in firmware/include/plant_support.h carries two values: unverified, and verified against hardware of the architecture. check_support_status.py reads it out of that header rather than carrying a copy, and refuses a vocabulary that has grown a third distinction or lost the verified value — VocabularyDrawsTheVerificationLine exercises both, and the refusal message names the added value. Every structure in the tree, including the one describing the architecture of the project's own machine, carries the unverified value; the check reports which value each structure claims on every build, so the two diverging would be visible rather than silent. firmware/README.md states the axis negatively as well as positively, above the layout table an adopter would otherwise choose from.
+links:
+  - target: SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C2
+    type: satisfies
