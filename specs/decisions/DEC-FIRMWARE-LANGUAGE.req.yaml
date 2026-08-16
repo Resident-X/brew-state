@@ -1,0 +1,27 @@
+id: DEC-FIRMWARE-LANGUAGE
+type: decision
+category: strategic
+title: The firmware is written in C/C++ on the bare STM32 HAL built with PlatformIO
+status: active
+version: 1
+text: |
+  The firmware is written in C/C++ against the bare microcontroller hardware-abstraction layer and built with an open-source, no-licence toolchain, rather than on a higher-level framework that hides interrupt priority. The language is one the solo maintainer can review without hesitation, which is a safety property where there is no second reviewer, and it aligns with the open-source espresso-controller ecosystem so existing work can be reused. The memory-safety advantages of the rejected alternative are given up deliberately: on this machine the catastrophic failure modes are contained by a hardware safety chain independent of the firmware, so the residual risk of C falls on quality and time rather than safety, and it is netted by the host verification tier.
+rationale: |
+  Context: The firmware language and build system were fixed only in non-authoritative working notes, which themselves record that the choice belongs in a decision node that does not yet exist. The choice is foundational and forecloses structure that is expensive to reverse, so it needs ratifying as a decision rather than resting in notes.
+
+  Trade-offs: The chosen language is one the solo maintainer can read and review without hesitation. That matters more than usual here, because there is no second reviewer and no separate quality pass (OBL-VERIFICATION-DISCIPLINE-001), so fluency in the firmware language is itself a safety property: the maintainer is the only check on generated code before it energises a mains-connected heater. The open-source espresso-controller ecosystem is C++ on this class of microcontroller, so the chosen language maximises reuse of existing work and the pool of people who can engage. The alternative language's compile-time memory safety and deadlock-free concurrency are genuine advantages and were weighed seriously; they were set aside because on this machine the catastrophic failure modes are already contained by a hardware safety chain that does not depend on the firmware being correct, so the residual risk the chosen language carries falls on the quality-and-time axis, not the safety axis. The higher-level framework alternative was rejected because it does not give direct control of interrupt priority, which the zero-cross burst-fire timing and the shared-bus sensor timing both require.
+
+  Reversibility: Reversing this to another language is a full firmware rewrite, the most expensive reversal in the project. The build-time model-structure seam and the control-logic hardware seam localise some churn but not the language itself.
+
+  Consequences: The pre-energisation verification toolchain decision assumes this choice, because its host-native test runners, sanitizers and static analysis are tools specific to the chosen language. The residual memory and concurrency risk the language carries is accepted only on the basis that it is netted by the host verification tier and bounded below catastrophe by the hardware safety chain; this makes the sanitizer and static-analysis layer non-optional rather than a nicety.
+options_considered:
+  - option: C/C++ on the bare STM32 HAL, built with PlatformIO
+    reason_rejected: ""
+  - option: Rust with RTIC or embassy
+    reason_rejected: Its compile-time memory safety and deadlock-free concurrency are real, but catastrophe is already contained by the firmware-independent hardware safety chain (OBL-ELECTRICAL-THERMAL-SAFETY-001, REQ-SAFETY-CHAIN-001.C6), so the residual C risk is quality-and-time not safety; against that, the solo maintainer knows C and not Rust with no second reviewer (OBL-VERIFICATION-DISCIPLINE-001), making review-fluency a safety property, and the espresso-controller ecosystem is C++ so C maximises reuse
+  - option: The Arduino framework
+    reason_rejected: It does not give direct control of interrupt priority, which the zero-cross burst-fire timing and shared-bus sensor timing require, against OBL-REALTIME-DISCIPLINE-001.C3
+chosen: C/C++ on the bare STM32 HAL, built with PlatformIO
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001.C3
+    type: addresses

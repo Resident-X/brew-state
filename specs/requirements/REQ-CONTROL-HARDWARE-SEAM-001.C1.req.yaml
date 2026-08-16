@@ -1,0 +1,12 @@
+id: REQ-CONTROL-HARDWARE-SEAM-001.C1
+type: criterion
+title: The control logic compiles and runs to completion without the target microcontroller or its peripherals present
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The control logic builds and its behaviour runs off the target, with no target microcontroller or peripherals attached. Control code that will not build away from the target fails this.
+links:
+  - target: REQ-CONTROL-HARDWARE-SEAM-001
+    type: criterion-of

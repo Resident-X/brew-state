@@ -1,0 +1,12 @@
+id: REQ-CONTROL-HARDWARE-SEAM-001.C3
+type: criterion
+title: A simulated implementation of the hardware interface stands in for the target without any change to the control logic
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  The named interface has a simulation-backed implementation the control logic runs against unchanged. If substituting it for the hardware implementation requires editing the control logic, this fails.
+links:
+  - target: REQ-CONTROL-HARDWARE-SEAM-001
+    type: criterion-of

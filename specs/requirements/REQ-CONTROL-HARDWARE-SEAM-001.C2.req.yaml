@@ -1,0 +1,12 @@
+id: REQ-CONTROL-HARDWARE-SEAM-001.C2
+type: criterion
+title: Hardware input and output are reached only through the named interface, never directly from the control logic
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  Every read from or write to a peripheral in the control logic passes through the named interface. A direct peripheral access from within the control logic fails this.
+links:
+  - target: REQ-CONTROL-HARDWARE-SEAM-001
+    type: criterion-of

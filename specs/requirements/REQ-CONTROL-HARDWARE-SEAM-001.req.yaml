@@ -1,0 +1,20 @@
+id: REQ-CONTROL-HARDWARE-SEAM-001
+type: requirement
+category: constraint
+title: Control logic is separable from hardware I/O behind a named seam
+status: active
+priority: must
+version: 1
+text: |
+  The control law and its estimator — together the control logic — reach hardware only through a named interface rather than depending on the target's peripherals directly. The same control-logic artefact can then be built and exercised away from the target, and a simulated implementation of that interface can stand in for the hardware.
+rationale: |
+  The pre-energisation verification strategy rests on exercising the control logic before the hardware exists and away from the assembled machine. Control logic wired directly to the target's peripherals cannot be built off the target, so the memory-safety net that runs there cannot reach it, and it cannot be driven against a plant model before hardware is present. Naming the seam is what makes the control logic substitutable against either the real hardware or a simulation of it.
+
+  This is distinct from the plant-structure seam, which swaps physics models behind an interface: that seam is about which plant a machine models, this one is about separating the control logic from the hardware it drives. Left unstated, the separability is load-bearing across the whole verification approach yet asserted by no criterion, which is the failure mode where something the design depends on is assumed rather than required.
+links:
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C7
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: derives-from

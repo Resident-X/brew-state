@@ -1,0 +1,35 @@
+id: DEC-SIM-VERIFICATION-TOOLCHAIN
+type: decision
+category: strategic
+title: Pre-energisation verification uses a three-tier open-source stack of host sanitizer tests, firmware-binary emulation, and on-target timing
+status: active
+version: 1
+text: |
+  Pre-energisation verification runs on three free and open-source tiers, each netting a distinct class of defect. The first tier compiles the control law, estimator and plant model for the host and runs them under memory and undefined-behaviour sanitizers with static analysis, catching memory and concurrency defects at the point they occur. The second tier runs the actual compiled firmware binary in an emulator against modelled peripherals and the plant model, catching logic, peripheral-interaction and timing-structure defects with no hardware present. The third tier measures worst-case timing on the real target board while it is un-energised. The tiers are complementary: the memory-safety net is the first tier, because the emulator reproduces undefined behaviour rather than detecting it.
+rationale: |
+  Context: REQ-PREENERGISATION-VERIFICATION-001 requires control behaviour to be verified against a plant model before anything is energised, but is deliberately silent on how the plant model is obtained, what executes the control law during verification, and what tooling is involved. Those are left as a decision with real cost differences. The builder has no lab and no paid simulation licence (PER-BUILDER-001), so the whole verification chain has to be free and open-source and has to run in CI with the machine absent.
+
+  Trade-offs: The three tiers catch different, non-overlapping classes of defect and are not redundant. The host tier runs the control law, estimator and plant model compiled for the host under AddressSanitizer and UndefinedBehaviorSanitizer, with static analysis (clang-tidy, cppcheck) and a MISRA-C subset; this is the memory-undefined-behaviour and data-race net, and it is where the residual risk of the chosen language is bounded, because an emulator faithfully reproduces undefined behaviour rather than detecting it. The emulation tier runs the actual compiled firmware binary against modelled peripherals and the plant model as an external peripheral; this is the logic, peripheral-interaction and timing-structure net, and it runs with no hardware present. Worst-case timing is then measured on the real target board, un-energised. Designing the control law in one language and porting it to another was rejected because the ported code is a re-implementation and verifying it would verify a different artefact than the one that runs. A thinner-peripheral emulator was rejected because peripheral behaviour would become a simplified stand-in rather than being exercised as the hardware behaves. Testing only on the assembled machine was rejected because it cannot run while the machine is in pieces, which is when most defects are introduced. Paid tooling is inadmissible.
+
+  Reversibility: The tiers are separable. Each tier is defined by the class of defect it nets, not by the specific tool, so one tier's tool can be swapped without discarding the others. Replacing the whole approach rebuilds the CI verification harness but not the firmware.
+
+  Consequences: This assumes the firmware is written in C/C++; the host-native runners, sanitizers and static analysis are language-specific tools, so it depends on the firmware-language decision. It requires the control logic to be separable from hardware I/O so the host tier can reach it, which is stated as its own requirement authored alongside this decision. The memory-safety guarantee lives in the host tier, not in the emulator; passing emulation must never be read as evidence of memory safety.
+options_considered:
+  - option: A three-tier stack of host-native tests under sanitizers, emulation of the firmware binary against modelled peripherals, and on-target timing measurement
+    reason_rejected: ""
+  - option: Design the control law in one language and port it to another for the target
+    reason_rejected: The ported code is a re-implementation, so verification would exercise a different artefact than the one that runs, violating OBL-VERIFICATION-DISCIPLINE-001.C4
+  - option: An emulator with thinner peripheral models
+    reason_rejected: Peripheral behaviour would become a simplified stand-in rather than being exercised as the hardware behaves, against OBL-VERIFICATION-DISCIPLINE-001.C6
+  - option: Verify only on the assembled machine
+    reason_rejected: Cannot run while the machine is in pieces, exactly when most defects are introduced, and fails the machine-absent constraint OBL-VERIFICATION-DISCIPLINE-001.C7
+  - option: A paid simulation or hardware-in-the-loop toolchain
+    reason_rejected: PER-BUILDER-001 states there is no paid simulation licence, so a paid tool is inadmissible
+chosen: A three-tier stack of host-native tests under sanitizers, emulation of the firmware binary against modelled peripherals, and on-target timing measurement
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: addresses
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: addresses
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C3
+    type: addresses
