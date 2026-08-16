@@ -1,4 +1,4 @@
-id: DEL-BARISTATE-DELIVERY.C5
+id: DEL-BREW-STATE-DELIVERY.C5
 type: criterion
 title: The machine performs its deliveries under closed-loop control on real hardware with the protective chain active
 status: active
@@ -9,5 +9,5 @@ closes_by: cascade
 text: |
   The machine delivers espresso, steam and hot water under closed-loop control on the real hardware, with the hardware protective chain active throughout and faults taken to a safe state. The phase closes when its child work delivering the served journeys under closed-loop control is complete.
 links:
-  - target: DEL-BARISTATE-DELIVERY
+  - target: DEL-BREW-STATE-DELIVERY
     type: criterion-of

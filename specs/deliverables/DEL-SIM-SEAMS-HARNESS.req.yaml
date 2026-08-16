@@ -22,7 +22,7 @@ links:
     type: justified-by
   - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
     type: justified-by
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: REQ-CONTROL-HARDWARE-SEAM-001.C1
     type: targets

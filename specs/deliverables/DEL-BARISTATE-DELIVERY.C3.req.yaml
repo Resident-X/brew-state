@@ -1,4 +1,4 @@
-id: DEL-BARISTATE-DELIVERY.C3
+id: DEL-BREW-STATE-DELIVERY.C3
 type: criterion
 title: The committed plant model is validated against measured reality and the design is re-verified against it
 status: active
@@ -9,5 +9,5 @@ closes_by: cascade
 text: |
   The plant model committed to the machine is fitted to the bench measurements and validated against data withheld from the fit, and the control design is re-verified against the committed model rather than the estimated one. The phase closes when its child work fitting, validating, and re-verifying the model is complete.
 links:
-  - target: DEL-BARISTATE-DELIVERY
+  - target: DEL-BREW-STATE-DELIVERY
     type: criterion-of

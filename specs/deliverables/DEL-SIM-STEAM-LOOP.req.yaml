@@ -12,7 +12,7 @@ rationale: |
 
   Quantity yielding before quality is the substantive behaviour to demonstrate. Faced with demand beyond capacity the controller can thin the steam or slow it, and only slowing leaves the operator able to finish the jug; thinning is also the failure that ruins milk irreversibly.
 links:
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: REQ-STEAM-DELIVERY-001.C1
     type: targets

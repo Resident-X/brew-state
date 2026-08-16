@@ -1,12 +1,12 @@
-id: DEL-BARISTATE-DELIVERY
+id: DEL-BREW-STATE-DELIVERY
 type: deliverable
 category: roadmap
-title: 'Baristate delivery roadmap: validate in software, characterise the machine, then build and energise'
+title: 'brew-state delivery roadmap: validate in software, characterise the machine, then build and energise'
 status: active
 level: roadmap
 version: 1
 text: |
-  Baristate is built software-first. The control design is validated in simulation before hardware is bought, and the machine that already exists is characterised in parallel so the committed model rests on measurement rather than datasheets. Five phases run two tracks that converge: a software track that validates the design and ranks where measurement matters, and a physical track that establishes the machine's safety and behaviour, before the controller is built, verified on the target, and finally energised to deliver.
+  brew-state is built software-first. The control design is validated in simulation before hardware is bought, and the machine that already exists is characterised in parallel so the committed model rests on measurement rather than datasheets. Five phases run two tracks that converge: a software track that validates the design and ranks where measurement matters, and a physical track that establishes the machine's safety and behaviour, before the controller is built, verified on the target, and finally energised to deliver.
 rationale: |
   Software first, because the control structure and its software can be validated against an estimated model at no procurement cost, and that is the cheapest place to find a wrong control law or a design gap. The estimated model is legitimate here: parameters are data behind a seam, so replacing estimated values with measured ones later is a data change, not a rebuild.
 

@@ -1,4 +1,4 @@
-id: DEL-BARISTATE-DELIVERY.C4
+id: DEL-BREW-STATE-DELIVERY.C4
 type: criterion
 title: The implementation is verified on the target against the validated model before any energisation
 status: active
@@ -9,5 +9,5 @@ closes_by: cascade
 text: |
   The controller hardware selected for the machine runs the implementation, verified on the target against the validated plant model with its timing measured on that target, and energisation stays blocked until that verification passes. The phase closes when its child work of controller selection, the on-target implementation, and the on-target verification is complete.
 links:
-  - target: DEL-BARISTATE-DELIVERY
+  - target: DEL-BREW-STATE-DELIVERY
     type: criterion-of

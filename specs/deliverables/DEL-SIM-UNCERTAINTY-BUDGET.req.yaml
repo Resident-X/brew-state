@@ -14,7 +14,7 @@ rationale: |
 
   Declaring the range at this point is also what makes the later re-verification against the committed model a comparison rather than a fresh start: a measured parameter can be judged inside or outside the range the design was established over, instead of the design being re-established from nothing.
 links:
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-SEAMS-HARNESS
     type: depends-on

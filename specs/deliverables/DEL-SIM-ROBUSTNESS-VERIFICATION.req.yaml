@@ -14,7 +14,7 @@ rationale: |
 
   The supply-budget behaviour named in the last of these guarantees is verified here only in the sense that the controller's respect for a declared budget survives a wrong model. The budget itself is a property of the machine and its supply, established on the physical track rather than in simulation, so nothing in this phase asserts what that budget is.
 links:
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-BREW-LOOP
     type: depends-on

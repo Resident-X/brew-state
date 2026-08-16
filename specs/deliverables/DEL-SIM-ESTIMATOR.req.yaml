@@ -12,7 +12,7 @@ rationale: |
 
   This sits before the robustness work rather than after it, because the estimator is inside the loop whose stability and margin that work has to establish. Its output rate is asserted here rather than assumed, because the control law's timing budget depends on it.
 links:
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-SEAMS-HARNESS
     type: depends-on

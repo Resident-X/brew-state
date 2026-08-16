@@ -6,7 +6,7 @@ status: active
 level: epic
 version: 1
 text: |
-  Work closed out under a sealed or attested deliverable sometimes turns out not to have delivered what that deliverable's own criteria required. Baristate carries the remediation of those shortfalls here rather than in the closed deliverable, which admits no further work.
+  Work closed out under a sealed or attested deliverable sometimes turns out not to have delivered what that deliverable's own criteria required. brew-state carries the remediation of those shortfalls here rather than in the closed deliverable, which admits no further work.
 
   Each confirmed shortfall becomes one criterion of this epic, naming the closed deliverable whose stated intent went unmet and the observable state that remediation restores, with the task or solution that closes it wired beneath. Nothing is admitted that does not meet that description: the gap must be against intent the closed deliverable already stated, and the deliverable must be closed to further work. A gap against intent recognised only since closure is new scope and is authored where that scope belongs; a gap in work still open is closed in the open work.
 

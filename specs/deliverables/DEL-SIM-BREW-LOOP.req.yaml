@@ -14,7 +14,7 @@ rationale: |
 
   The profile command surface is built with the temperature loop rather than separately because a commanded course is what the loop tracks — a controller demonstrated against a single held setpoint would not have been exercised against the thing it will actually be given. It also changes what the controller knows: a commanded profile is a known future input rather than demand estimated as it arrives, so the loop is to be exercised with that feedforward coupling live rather than as a reactive loop that happens to pass a nominal test.
 links:
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: REQ-BREW-TEMP-001.C1
     type: targets

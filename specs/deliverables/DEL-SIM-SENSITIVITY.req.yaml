@@ -14,7 +14,7 @@ rationale: |
 
   The analysis is recorded rather than only its conclusion, because the ranking has to be redone against the committed model once the machine is measured, and a conclusion with no method behind it cannot be repeated.
 links:
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-BREW-LOOP
     type: depends-on

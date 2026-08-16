@@ -20,7 +20,7 @@ links:
     type: justified-by
   - target: DEC-SIM-VERIFICATION-TOOLCHAIN
     type: justified-by
-  - target: DEL-BARISTATE-DELIVERY.C1
+  - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-SEAMS-HARNESS
     type: depends-on
