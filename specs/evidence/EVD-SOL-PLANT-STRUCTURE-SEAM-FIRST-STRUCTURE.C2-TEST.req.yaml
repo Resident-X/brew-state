@@ -5,7 +5,7 @@ status: active
 version: 1
 result: pass
 method: test
-observed_at: "2026-08-16T10:04:58Z"
+observed_at: "2026-08-16T10:44:30Z"
 valid_until: until-superseded
 artifact:
   kind: external
