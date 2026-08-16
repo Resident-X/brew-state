@@ -1,0 +1,17 @@
+id: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C4
+type: criterion
+title: The host build exercises the control logic under memory and undefined-behaviour analysis
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The host environment compiles and links with AddressSanitizer and UndefinedBehaviorSanitizer
+  enabled, and running the host executable through its control-logic entry path reports no
+  sanitizer finding. A sanitizer diagnostic during that run fails the build rather than printing
+  and continuing. Thread and memory-leak sanitizers are out of scope for this slice, as is
+  coverage measurement — this criterion establishes that the tier-one analysis stage has a
+  working subject, not that its subject is complete.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+    type: criterion-of

@@ -1,0 +1,32 @@
+id: DEC-HARDWARE-SEAM-AT-BUILD-TIME
+type: decision
+category: strategic
+title: The hardware interface implementation is selected at build time
+status: active
+version: 1
+decided_by: david
+text: |
+  The control logic reaches hardware through a named interface, and which implementation stands behind that interface is fixed when the software is built rather than chosen while it runs. A build produces either the target implementation or the simulated one, and the control logic is identical in both.
+rationale: |
+  Context: The control logic must reach hardware only through a named interface, and a simulated implementation must stand in for the target without the control logic changing. How that substitution happens was not settled anywhere in the graph: no decision addressed this seam, and the choice between fixing the implementation when the software is built and choosing it while the software runs determines whether an indirect call sits in the path that the real-time obligation has to bound.
+
+  Trade-offs: Fixing the implementation at build time costs a rebuild to move between the target and the simulation, and gives up the idea of one binary that can be pointed at either. In exchange there is no dispatch in the control path, no second implementation occupying storage on a part chosen for its price, and driving real hardware from a build intended for simulation becomes unreachable rather than merely unlikely. Injecting an implementation while the software runs — whether through a table of function pointers or through a virtual base class — buys the single binary and pays for it in all three: an indirect call remains in the shipping path, both implementations ship, and the binding is a run-time value that can be wrong. The substitution this seam actually needs is between two builds rather than within one run, so the run-time flexibility is bought without being wanted.
+
+  Reversibility: Moving to run-time selection later means introducing an indirect call into the path the real-time obligation bounds and re-establishing the timing claim against it by measurement on the target. Because the seam is named, the reversal is confined to the interface and its implementations rather than spreading through the control logic, so the cost is bounded and does not grow as further peripherals are added.
+
+  Consequences: The simulated implementation is reached by building for the host rather than by configuring a target build, which is what lets the host verification tier exercise the control logic under memory and undefined-behaviour analysis with no target present. Anything downstream that assumes it can swap the hardware implementation while the machine is running is assuming something this decision withholds. The claim that removing the indirection matters is a timing claim, and the real-time obligation requires it to be established by measurement on the target rather than by reasoning about source — this decision is taken on the structural grounds above, not on an unmeasured performance argument.
+options_considered:
+  - option: Select the hardware interface implementation at build time
+    reason_rejected: ""
+  - option: Inject an implementation at initialisation through a table of function pointers
+    reason_rejected: Leaves an indirect call in the shipping path the real-time obligation has to bound, and ships both implementations on a part chosen for its price
+  - option: Define the interface as a virtual base class and substitute a derived implementation
+    reason_rejected: Carries the same indirection as the function-pointer table plus per-object dispatch storage, and reaches for a language mechanism the bare-HAL firmware otherwise avoids
+  - option: Select the implementation while the software runs from configuration
+    reason_rejected: Buys a single binary the project does not need, since one build serves one machine, and makes the binding a run-time value that can be wrong
+chosen: Select the hardware interface implementation at build time
+links:
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C2
+    type: addresses
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
+    type: addresses

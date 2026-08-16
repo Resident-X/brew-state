@@ -1,0 +1,18 @@
+id: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C1
+type: criterion
+title: The named hardware interface declares every peripheral operation in vendor-neutral terms
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A single plain C header at `firmware/include/hw_interface.h` declares the operations the
+  control logic uses to reach hardware: sensor-channel reads, output drive, and a monotonic
+  clock read. No signature in the header names an STM32 HAL handle, a CMSIS register type, or
+  a PlatformIO-injected macro, so the header compiles standalone against a freestanding C
+  compiler with no vendor include path present. Interrupt registration and DMA configuration
+  are out of scope for this slice — the interface covers the operations the control logic
+  itself invokes, not the peripheral bring-up sequence that runs before it.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+    type: criterion-of

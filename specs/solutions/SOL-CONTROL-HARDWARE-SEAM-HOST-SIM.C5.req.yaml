@@ -1,0 +1,18 @@
+id: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C5
+type: criterion
+title: A direct vendor-symbol reference from control logic fails the build
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A check run as part of the host build inspects the translation units under
+  firmware/src/control and fails the build when one references a vendor symbol directly — an
+  STM32 HAL function, a CMSIS register definition, or a device header include — instead of
+  reaching hardware through `firmware/include/hw_interface.h`. The check reports the offending
+  file and symbol so the violation is actionable. The implementations under firmware/src/hw are
+  exempt by construction, since naming vendor symbols is exactly their job. Enforcing the same
+  boundary on future non-control subsystems is out of scope until those subsystems exist.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+    type: criterion-of

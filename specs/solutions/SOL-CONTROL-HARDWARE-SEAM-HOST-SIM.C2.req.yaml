@@ -1,0 +1,17 @@
+id: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C2
+type: criterion
+title: The control logic builds into a host executable with no target dependency present
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A PlatformIO native environment declared in `firmware/platformio.ini` compiles the control-logic
+  sources under firmware/src/control together with the simulated implementation and links a host
+  executable that runs to completion. The build succeeds on a machine with no STM32 toolchain, no
+  CMSIS headers and no device attached. A control-logic translation unit that fails to compile in
+  this environment fails this criterion. Cross-compilation for the target device is out of scope
+  here and is exercised by the target environment instead.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+    type: criterion-of

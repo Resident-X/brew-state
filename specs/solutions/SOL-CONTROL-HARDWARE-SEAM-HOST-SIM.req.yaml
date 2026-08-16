@@ -1,0 +1,39 @@
+id: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+type: deliverable
+category: solution
+title: The named hardware seam and its host-simulated implementation
+status: active
+version: 1
+text: |
+  A named hardware interface is declared once as a plain C header under `firmware/include/`, giving the control logic a single vocabulary for every peripheral operation it needs — reading a sensor channel, driving an output, and reading the monotonic clock. The header names no vendor type: no STM32 HAL handle, no CMSIS register definition, and no PlatformIO-injected macro appears in any signature, so a translation unit that includes it carries no dependency on the target.
+
+  Two implementations satisfy that header, each selected by which PlatformIO environment is built rather than by anything decided while the software runs. The `native` environment compiles the control logic against a simulated implementation under `firmware/src/hw/sim/` and links it into a host executable; the target environment compiles the same control-logic sources against the STM32 HAL-backed implementation under `firmware/src/hw/stm32/`. The control-logic sources under `firmware/src/control/` are byte-identical between the two builds — substitution is a link-time fact, not a source edit and not a run-time binding.
+
+  The host build is what the tier-one verification stage consumes: it compiles under AddressSanitizer and UndefinedBehaviorSanitizer, and exercising the control logic through the simulated implementation is what gives that stage something to analyse. A source-level check enforces the encapsulation the interface exists to create, failing the build when a control-logic translation unit reaches a vendor symbol directly instead of going through the header.
+
+  Out of scope: the plant model and its physics, the control law's own behaviour and tuning, the state estimator, the emulation tier that runs the shipping firmware binary, and any on-target timing measurement. This slice delivers the seam, its two implementations, and the host build that exercises them — the control logic behind the seam may be a minimal walking skeleton, because what is being established here is separability, not control performance.
+rationale: |
+  This is the thinnest artefact that makes the rest of the software track possible: until the control logic can be built and run away from the target, nothing downstream in the phase can be exercised before hardware exists. Delivering the seam and its host-simulated implementation together is deliberate — an interface with only one implementation has not been shown to be substitutable, and a host build with nothing behind the interface has nothing to run.
+
+  The three requirement criteria this targets describe one artefact from three angles rather than three separable mechanisms: building away from the target, routing all peripheral access through the interface, and substituting a simulated implementation without touching the control logic are properties of the same seam, and a build that satisfies any two without the third has not delivered it.
+
+  The encapsulation check is included rather than left to review because the criterion it serves is verified by analysis, and an analysis that depends on someone remembering to look is not repeatable. Making it a build failure is what turns the property into something the toolchain asserts on every build.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS.C1
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS.C2
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS.C3
+    type: derives-from
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C1
+    type: targets
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C2
+    type: targets
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
+    type: targets
+  - target: DEC-HARDWARE-SEAM-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by

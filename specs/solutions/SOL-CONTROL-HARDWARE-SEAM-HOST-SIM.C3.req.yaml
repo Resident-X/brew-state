@@ -1,0 +1,19 @@
+id: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C3
+type: criterion
+title: Selecting the simulated or target implementation changes no control-logic source
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The simulated implementation under firmware/src/hw/sim and the STM32 HAL-backed implementation
+  under firmware/src/hw/stm32 both satisfy `firmware/include/hw_interface.h`, and which one is
+  linked follows from the PlatformIO environment being built. The control-logic sources under
+  firmware/src/control are byte-identical between the two builds, verified by comparing those
+  sources across both environments' compilation databases. Preprocessor branching on the
+  environment inside a control-logic translation unit fails this criterion, because it makes the
+  source differ by build. Whether the target implementation drives real peripherals correctly is
+  out of scope — no hardware exists to check that against.
+links:
+  - target: SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+    type: criterion-of
