@@ -16,6 +16,15 @@ or against that.
   forward by authoring the correct nodes into the graph.
 - **Requirements are the baselined final state.** An incomplete requirement is *wrong*, not a
   placeholder for a future solution. Deferred work still needs a requirement in the graph.
+- **Remediating closed work goes in `DEL-MAINTENANCE`.** Sealing and attestation are one-way, so a
+  defect found in already-delivered work has nowhere to land. That epic is where it lands: one
+  criterion per confirmed shortfall, naming the closed criterion whose intent went unmet, with a
+  task or sol wired beneath. It sits outside the roadmap's phases — reach it by name, not by walking
+  the tree. Admission is gated on both axes and neither is optional: the deliverable must be **closed**
+  (live work absorbs its own defects), and the gap must be against **intent it already stated** (if you
+  can't name the criterion that went unhonoured, it's late-discovered scope — author it as new nodes).
+  Distinct from supersession: supersede when the criterion said the *wrong* thing; use this when the
+  criterion was right and delivery didn't honour it.
 - **Synthetic fixtures only.** Engine tests must use generic IDs (`REQ-TEST-001`, `TST-*`) and
   synthetic tempdir projects — never real requirement IDs from `specs/`. The reason is decoupling,
   not secrecy: tests that name real nodes break every time the graph is legitimately edited. The
