@@ -80,8 +80,10 @@ SUPPORT_STATUS = [
     "--plant-root", "src/plant", "--include-dir", "include", "--documentation", "README.md",
 ]
 ANALYSIS = [
-    sys.executable, "tools/check_sanitizers.py", "--project", ".", "--env", "native",
-    "--executable", ".pio/build/native/program",
+    sys.executable, "tools/check_sanitizers.py", "--project", ".",
+]
+TESTS_RUN = [
+    sys.executable, "tools/run_host_tests.py", "--project", ".", "--pio", PIO,
 ]
 
 #: Each entry: a name, the file to edit, the exact text to replace, what to put
@@ -95,6 +97,7 @@ LABELS = {
     tuple(SUPPORT_HEADER): "the support vocabulary header check",
     tuple(SUPPORT_STATUS): "the support status check",
     tuple(ANALYSIS): "the host tier's analysis check",
+    tuple(TESTS_RUN): "the task that runs the tests",
 }
 
 #: Commands that inspect the linked artefact rather than the sources.
@@ -262,6 +265,35 @@ MUTATIONS = (
         "find": "strict_flags = -Werror -Wconversion -Wshadow -Wdouble-promotion",
         "replace": "strict_flags = -Werror -Wconversion -Wshadow",
         "command": ANALYSIS,
+    },
+    {
+        "name": "one-environment-drops-the-warning-settings",
+        "why": "a single environment overrides the settings its base gives it, which is the "
+               "defect a gate verifying one named environment cannot see at all",
+        "file": "platformio.ini",
+        "find": "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture",
+        "replace": "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture\n"
+                   "build_src_flags = -Wall",
+        "command": ANALYSIS,
+    },
+    {
+        "name": "an-exemption-where-the-settings-could-be-kept",
+        "why": "an environment that compiles nothing but this project's sources claims the "
+               "exemption meant for the one that cannot, which is how a recorded reason "
+               "becomes a way of turning the settings off",
+        "file": "platformio.ini",
+        "find": "[env:native_fixture]",
+        "replace": "[env:native_fixture]\ncustom_strict_flags_exemption = they are inconvenient",
+        "command": ANALYSIS,
+    },
+    {
+        "name": "the-tests-stop-being-run",
+        "why": "the environment carrying the tests stops declaring it, and tests that never "
+               "run leave nothing behind to notice",
+        "file": "platformio.ini",
+        "find": "test_build_src = yes",
+        "replace": "",
+        "command": TESTS_RUN,
     },
 )
 

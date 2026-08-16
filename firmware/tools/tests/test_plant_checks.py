@@ -95,14 +95,19 @@ class SyntheticTree:
         self._write(os.path.join(self.include, "plant_types.h"), NEUTRAL_TYPES)
         self._write(os.path.join(self.include, "plant_model.h"), NEUTRAL_MODEL)
         for name in structures:
-            directory = os.path.join(self.plant, name)
-            os.makedirs(directory)
-            self._write(os.path.join(directory, "plant_structure.h"), structure_header(name))
+            self.structure(name)
 
     @staticmethod
     def _write(path: str, content: str) -> None:
         with open(path, "w", encoding="utf-8") as handle:
             handle.write(content)
+
+    def structure(self, name: str) -> str:
+        """Add one more structure to the tree, as adding one to the real tree would."""
+        directory = os.path.join(self.plant, name)
+        os.makedirs(directory, exist_ok=True)
+        self._write(os.path.join(directory, "plant_structure.h"), structure_header(name))
+        return directory
 
     def consumer(self, name: str, content: str) -> str:
         directory = os.path.join(self.source, "app")
@@ -111,8 +116,49 @@ class SyntheticTree:
         self._write(path, content)
         return path
 
+    def declare(self, environments) -> str:
+        """Write the build file declaring the given environments, and only those.
+
+        The gates read this rather than being told what to cover, so a test
+        showing a subject is covered without being named puts it here and
+        changes no invocation.
+        """
+        return declare_environments(self.root.name, environments)
+
+    def build_directory(self, environment: str) -> str:
+        directory = os.path.join(self.root.name, ".pio", "build", environment)
+        os.makedirs(directory, exist_ok=True)
+        return directory
+
+    def artefact(self, environment: str) -> str:
+        return os.path.join(self.build_directory(environment), "program")
+
     def cleanup(self) -> None:
         self.root.cleanup()
+
+
+def host_environment(structure: str | None = None, *, entry_point: bool = True, **options):
+    """One host environment's options, as the build file would declare them."""
+    terms = ["+<control/>"]
+    if structure is not None:
+        terms.append(f"+<plant/{structure}/>")
+    if entry_point:
+        terms.append("+<app/native/>")
+    declared = {"platform": "native", "build_src_filter": " ".join(terms)}
+    declared.update(options)
+    return declared
+
+
+def declare_environments(project: str, environments) -> str:
+    """Write a build file declaring `[(name, options), ...]` and nothing else."""
+    lines: list[str] = []
+    for name, options in environments:
+        lines.append(f"[env:{name}]")
+        lines.extend(f"{option} = {value}" for option, value in options.items())
+        lines.append("")
+    path = os.path.join(project, "platformio.ini")
+    write(path, "\n".join(lines))
+    return path
 
 
 def run_check(script: str, *args: str) -> subprocess.CompletedProcess:
@@ -551,7 +597,16 @@ class PlantHeaderCheck(unittest.TestCase):
 
 
 class StructureExclusiveCheck(unittest.TestCase):
-    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C6: one structure's symbols, and no other's."""
+    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C6: one structure's symbols, and no other's.
+
+    SOL-PLANT-SEAM-GATE-COVERAGE.C1: every structure is covered without being named.
+
+    What the check concludes is the first criterion's and is unchanged. What is
+    added here is that it reaches every structure in the tree from one
+    invocation naming none of them, so a structure nobody remembered cannot go
+    unchecked -- including the case that used to be invisible, a structure with
+    no artefact at all.
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -563,63 +618,100 @@ class StructureExclusiveCheck(unittest.TestCase):
         self.tree = SyntheticTree()
         self.addCleanup(self.tree.cleanup)
 
-    def build(self, prefix: str) -> str:
-        """Link a tiny executable defining one structure's unique symbol."""
-        source = os.path.join(self.tree.root.name, f"{prefix}.c")
-        binary = os.path.join(self.tree.root.name, f"{prefix}.out")
+    def build(self, environment: str, *prefixes: str) -> str:
+        """Link the environment's artefact, defining each named structure's symbol."""
+        source = os.path.join(self.tree.root.name, f"{environment}.c")
+        binary = self.tree.artefact(environment)
+        definitions = "".join(f"void {prefix}_advance(void) {{}}\n" for prefix in prefixes)
+        calls = "".join(f"    {prefix}_advance();\n" for prefix in prefixes)
         with open(source, "w", encoding="utf-8") as handle:
-            handle.write(
-                f"void {prefix}_advance(void) {{}}\n"
-                f"int main(void) {{ {prefix}_advance(); return 0; }}\n"
-            )
+            handle.write(f"{definitions}int main(void) {{\n{calls}    return 0;\n}}\n")
         subprocess.run([self.compiler, "-o", binary, source], check=True)
         return binary
 
-    def check(self, binary: str, structure: str, plant_root: str | None = None):
+    def declare(self, *structures: str) -> None:
+        self.tree.declare(
+            [(f"host_{structure}", host_environment(structure)) for structure in structures]
+        )
+
+    def check(self, plant_root: str | None = None):
         return run_check(
             "check_structure_exclusive.py",
-            binary,
-            "--structure",
-            structure,
+            "--project",
+            self.tree.root.name,
             "--plant-root",
             plant_root or self.tree.plant,
             "--include-dir",
             self.tree.include,
         )
 
-    def test_an_artefact_carrying_only_its_own_structure_passes(self):
-        result = self.check(self.build("alpha"), "alpha")
+    def test_every_structure_is_covered_by_an_invocation_naming_none_of_them(self):
+        self.declare("alpha", "beta")
+        self.build("host_alpha", "alpha")
+        self.build("host_beta", "beta")
+        result = self.check()
         self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("'alpha'", result.stdout)
+        self.assertIn("'beta'", result.stdout)
 
-    def test_the_check_reverses_for_the_other_structure(self):
-        result = self.check(self.build("beta"), "beta")
+    def test_a_structure_added_to_the_tree_is_covered_with_no_change_to_the_invocation(self):
+        # The invocation below is the same one the previous test makes. Adding
+        # a structure and the environment that builds it is the whole change,
+        # and it is what a forgotten line used to leave unchecked.
+        self.tree.structure("gamma")
+        self.declare("alpha", "beta", "gamma")
+        self.build("host_alpha", "alpha")
+        self.build("host_beta", "beta")
+        self.build("host_gamma", "gamma")
+        result = self.check()
         self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("'gamma'", result.stdout)
+
+    def test_a_structure_no_environment_builds_is_reported_rather_than_skipped(self):
+        # The failure the naming form could not see: beta is in the tree, and
+        # nothing builds an artefact carrying it, so nothing checks it.
+        self.declare("alpha")
+        self.build("host_alpha", "alpha")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("built by no environment", result.stderr)
+        self.assertIn("beta", result.stderr)
 
     def test_an_artefact_built_for_the_other_structure_fails(self):
-        result = self.check(self.build("beta"), "alpha")
+        self.declare("alpha", "beta")
+        self.build("host_alpha", "beta")
+        self.build("host_beta", "beta")
+        result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("alpha_advance", result.stderr)
         self.assertIn("is not in the artefact", result.stderr)
 
     def test_a_second_structure_surviving_into_the_artefact_fails(self):
-        source = os.path.join(self.tree.root.name, "both.c")
-        binary = os.path.join(self.tree.root.name, "both.out")
-        with open(source, "w", encoding="utf-8") as handle:
-            handle.write(
-                "void alpha_advance(void) {}\n"
-                "void beta_advance(void) {}\n"
-                "int main(void) { alpha_advance(); beta_advance(); return 0; }\n"
-            )
-        subprocess.run([self.compiler, "-o", binary, source], check=True)
-        result = self.check(binary, "alpha")
+        self.declare("alpha", "beta")
+        self.build("host_alpha", "alpha", "beta")
+        self.build("host_beta", "beta")
+        result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("beta_advance", result.stderr)
         self.assertIn("survived into the artefact", result.stderr)
 
+    def test_a_failure_in_the_second_artefact_is_found_as_well_as_the_first(self):
+        # A gate that stopped at the first artefact would cover the rest in
+        # name only.
+        self.declare("alpha", "beta")
+        self.build("host_alpha", "alpha")
+        self.build("host_beta", "beta", "alpha")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("host_beta", result.stderr)
+        self.assertIn("alpha_advance", result.stderr)
+
     def test_one_structure_leaves_nothing_to_exclude(self):
         single = SyntheticTree(structures=("alpha",))
         self.addCleanup(single.cleanup)
-        result = self.check(self.build("alpha"), "alpha", plant_root=single.plant)
+        self.declare("alpha")
+        self.build("host_alpha", "alpha")
+        result = self.check(plant_root=single.plant)
         self.assertEqual(2, result.returncode)
         self.assertIn("nothing to exclude", result.stderr)
 
@@ -631,17 +723,19 @@ class StructureExclusiveCheck(unittest.TestCase):
             path = os.path.join(self.tree.plant, name, "plant_structure.h")
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write(structure_header("shared"))
-        result = self.check(self.build("alpha"), "alpha")
+        self.declare("alpha", "beta")
+        self.build("host_alpha", "alpha")
+        self.build("host_beta", "beta")
+        result = self.check()
         self.assertEqual(2, result.returncode)
         self.assertIn("no symbol unique to them", result.stderr)
 
-    def test_a_structure_that_is_not_in_the_tree_is_an_error(self):
-        result = self.check(self.build("alpha"), "gamma")
+    def test_a_missing_artefact_is_an_error_not_a_pass(self):
+        self.declare("alpha", "beta")
+        self.build("host_alpha", "alpha")
+        result = self.check()
         self.assertEqual(2, result.returncode)
-
-    def test_a_missing_executable_is_an_error_not_a_pass(self):
-        result = self.check(os.path.join(self.tree.root.name, "nothing.out"), "alpha")
-        self.assertEqual(2, result.returncode)
+        self.assertIn("not been built", result.stderr)
 
 
 # --- check_parameters_are_data ----------------------------------------------
@@ -800,17 +894,22 @@ class PlantSeamDirectCalls(unittest.TestCase):
                 "#endif\n"
             )
 
-    def build(self, body: str) -> tuple[str, str]:
-        """Link a consumer against a separate implementation of the seam.
+    def build(self, environment: str, body: str) -> None:
+        """Link one environment's artefact against a separate implementation of the seam.
 
         The consuming translation unit must *reference* the operation rather
         than define it -- an object that defines what it calls is not reaching
         through a seam at all, and the check says so rather than passing.
+
+        Everything is placed where the build system places it, since that is
+        where the check now goes looking rather than being handed the paths.
         """
-        consumer = os.path.join(self.dir.name, "consumer.c")
-        implementation = os.path.join(self.dir.name, "implementation.c")
-        obj = os.path.join(self.dir.name, "consumer.o")
-        binary = os.path.join(self.dir.name, "program")
+        consumer = os.path.join(self.dir.name, f"{environment}.c")
+        implementation = os.path.join(self.dir.name, f"{environment}_implementation.c")
+        objects = os.path.join(self.dir.name, ".pio", "build", environment, "src", "app", "native")
+        os.makedirs(objects, exist_ok=True)
+        obj = os.path.join(objects, "consumer.o")
+        binary = os.path.join(self.dir.name, ".pio", "build", environment, "program")
 
         with open(consumer, "w", encoding="utf-8") as handle:
             handle.write('#include "plant_model.h"\n' + body)
@@ -824,23 +923,50 @@ class PlantSeamDirectCalls(unittest.TestCase):
             [self.compiler, "-O0", "-o", binary, "-I", self.dir.name, consumer, implementation],
             check=True,
         )
-        return binary, obj
 
-    def check(self, binary: str, obj: str):
-        return run_check("check_direct_calls.py", binary, "--header", self.header, "--objects", obj)
+    def declare(self, *environments: str) -> None:
+        declare_environments(
+            self.dir.name, [(name, host_environment("alpha")) for name in environments]
+        )
+
+    def check(self):
+        return run_check(
+            "check_direct_calls.py",
+            "--project",
+            self.dir.name,
+            "--header",
+            self.header,
+            "--objects-in",
+            os.path.join("src", "app", "native"),
+        )
+
+    DIRECT = "int main(void) { return plant_model_step(1) - 1; }\n"
+    THROUGH_A_POINTER = (
+        "static int (*volatile dispatch)(int) = plant_model_step;\n"
+        "int main(void) { return dispatch(1) - 1; }\n"
+    )
 
     def test_a_direct_call_through_the_plant_seam_passes(self):
-        binary, obj = self.build("int main(void) { return plant_model_step(1) - 1; }\n")
-        result = self.check(binary, obj)
+        self.declare("host")
+        self.build("host", self.DIRECT)
+        result = self.check()
         self.assertEqual(0, result.returncode, result.stderr)
 
     def test_binding_the_structure_through_a_pointer_fails(self):
-        binary, obj = self.build(
-            "static int (*volatile dispatch)(int) = plant_model_step;\n"
-            "int main(void) { return dispatch(1) - 1; }\n"
-        )
-        result = self.check(binary, obj)
+        self.declare("host")
+        self.build("host", self.THROUGH_A_POINTER)
+        result = self.check()
         self.assertEqual(1, result.returncode)
+
+    def test_a_second_artefact_is_inspected_as_well_as_the_first(self):
+        # SOL-PLANT-SEAM-GATE-COVERAGE.C1: the artefacts are discovered, so an
+        # environment added after the invocation was written is still covered.
+        self.declare("host", "host_second")
+        self.build("host", self.DIRECT)
+        self.build("host_second", self.THROUGH_A_POINTER)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("host_second", result.stderr)
 
 
 class PlantSourcesUnderTheHostTiersAnalysis(unittest.TestCase):
@@ -855,11 +981,18 @@ class PlantSourcesUnderTheHostTiersAnalysis(unittest.TestCase):
     directory of sources must not be able to narrow what is analysed.
     """
 
-    def test_the_required_flags_cover_analysis_and_the_strict_warnings(self):
+    def setUp(self):
         sys.path.insert(0, TOOLS)
+        import build_environments
+
+        self.environment = build_environments.Environment(
+            name="native", options=host_environment("thermoblock")
+        )
+
+    def test_the_required_flags_cover_analysis_and_the_strict_warnings(self):
         import check_sanitizers
 
-        required = set(check_sanitizers.REQUIRED_COMPILE_FLAGS)
+        required = set(check_sanitizers.SANITIZER_FLAGS) | set(check_sanitizers.STRICT_FLAGS)
         self.assertIn("-fsanitize=address,undefined", required)
         self.assertIn("-fno-sanitize-recover=all", required)
         self.assertIn("-Werror", required)
@@ -876,10 +1009,11 @@ class PlantSourcesUnderTheHostTiersAnalysis(unittest.TestCase):
         with open(source, "w", encoding="utf-8") as handle:
             handle.write("int x;\n")
 
-        for dropped in check_sanitizers.REQUIRED_COMPILE_FLAGS:
-            kept = [f for f in check_sanitizers.REQUIRED_COMPILE_FLAGS if f != dropped]
+        required = check_sanitizers.SANITIZER_FLAGS + check_sanitizers.STRICT_FLAGS
+        for dropped in required:
+            kept = [f for f in required if f != dropped]
             database = [{"directory": project, "file": source, "arguments": ["cc", *kept, source]}]
-            problems = check_sanitizers.analysis_problems(database, project, "native")
+            problems = check_sanitizers.analysis_problems(database, project, self.environment)
             self.assertTrue(
                 any(dropped in problem for problem in problems),
                 f"dropping {dropped} was not reported: {problems}",
@@ -890,7 +1024,7 @@ class PlantSourcesUnderTheHostTiersAnalysis(unittest.TestCase):
 
         project = tempfile.mkdtemp()
         os.makedirs(os.path.join(project, "src"))
-        problems = check_sanitizers.analysis_problems([], project, "native")
+        problems = check_sanitizers.analysis_problems([], project, self.environment)
         self.assertTrue(any("no subject" in problem for problem in problems), problems)
 
 # --- check_support_status ---------------------------------------------------
