@@ -59,6 +59,12 @@ Three things follow. A relief internal to the pump protects the pump, not the he
 
 This is the largest unevidenced safety claim in the project. It is not resolvable from either manufacturer document and needs the machine opened.
 
+**Hypothesis, not established.** The brew solenoid may vent to the drip tray in its de-energised position, which is standard espresso practice and would explain the absence of a dedicated relief part. If so it is a genuine fail-safe vent: losing power, or losing the controller's proof of life, opens the vent path without anything having to decide.
+
+It would still not meet the criterion. During a delivery the valve is deliberately held energised, which is exactly when pressure is highest, so a rise that firmware has not recognised is a rise nothing vents — the case the criterion names in its own wording. It is also on the brew path only, and it addresses hydraulic pressure, which the pump's own maximum already bounds. The uncovered case is thermal: heating against a blocked outlet with no flow, which on the steam side is the normal operating mode with the wand shut.
+
+To confirm at the machine: the parts list places the three-way valve (`3T0618W`) near the hot water arm and a two-way (`2T0607W`) on the thermoblock, while the schematic drives them as `COF VALVE` and `HOT VALVE`. Which of the two is the brew-and-vent valve, and whether either vents at all, is not established.
+
 **On substitution.** The pumps in particular are expected to change as the design settles. `OBL-PHYSICAL-CONFIGURATION-001` is the obligation that applies: a substituted component silently changes the safety case its predecessor was part of, and the pump relief above is exactly that hazard in miniature.
 
 ## Already fitted
