@@ -19,6 +19,7 @@
  * string by hand.
  */
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 #include <unity.h>
@@ -586,6 +587,628 @@ static void test_an_empty_description_is_refused(void)
     TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
 }
 
+/* ---------------------------------------------------------------------------
+ * Properties over the range each coefficient declares admissible.
+ *
+ * The tests above fix every coefficient at one nominal value. A structure that
+ * satisfies an invariant there can still violate it elsewhere inside the range
+ * it declares for itself, and the declared range is a claim the structure makes
+ * that nothing would otherwise check.
+ *
+ * The bounds are discovered through the seam rather than copied from the
+ * structure: a description is offered and either accepted or refused, and the
+ * boundary is found by bisection. Copying the numbers into this file would
+ * duplicate a claim that can drift, and reading them from the structure's own
+ * table would mean naming a symbol the seam exists to keep out of consumers.
+ *
+ * Generation is from a fixed seed, so a failure names a case that can be
+ * reproduced exactly rather than one that appeared once.
+ * ------------------------------------------------------------------------ */
+
+#define PROPERTY_CASES 128
+#define PROPERTY_SEED 0x5EEDu
+
+/* Corners with each coefficient independently at one bound or the other. */
+#define MIXED_CORNERS 64
+
+/* Far outside anything a coefficient of this structure could admit. */
+#define CERTAINLY_REFUSED 1.0e12
+
+/* Enough halvings to carry the starting width down past the precision the
+ * comparison is made in; too few silently converges on the anchor instead of
+ * on the bound, and every sample then comes from a single point. */
+#define BISECTION_STEPS 200
+
+static uint32_t rng_state;
+
+static void rng_seed(uint32_t seed)
+{
+    rng_state = seed != 0u ? seed : 1u;
+}
+
+/* xorshift32: small, deterministic, and adequate for spreading sample points. */
+static uint32_t rng_next(void)
+{
+    uint32_t x = rng_state;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    rng_state = x;
+    return x;
+}
+
+static double rng_unit(void)
+{
+    return (double)(rng_next() >> 8) / (double)(1u << 24);
+}
+
+/* A description with every coefficient admissible except the one under test. */
+static bool accepts(size_t index, double value)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        int written;
+        if (i == index) {
+            written = snprintf(text + used, sizeof(text) - used, "%s = %.17g\n", NOMINAL[i].name,
+                               value);
+        } else {
+            written = snprintf(text + used, sizeof(text) - used, "%s = 1.0\n", NOMINAL[i].name);
+        }
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < sizeof(text));
+    }
+
+    memset(&fault, 0, sizeof(fault));
+    return plant_parameters_load(text, used, &loaded, &fault);
+}
+
+/*
+ * The widest interval the structure accepts for one coefficient, found by
+ * bisecting between a value it takes and one it refuses.
+ */
+static void discover_bounds(size_t index, double *low, double *high)
+{
+    const double anchor = NOMINAL[index].value;
+    TEST_ASSERT_TRUE(accepts(index, anchor));
+
+    double inside = anchor;
+    double outside = CERTAINLY_REFUSED;
+    TEST_ASSERT_FALSE(accepts(index, outside));
+    for (int i = 0; i < BISECTION_STEPS; i++) {
+        const double middle = inside + (outside - inside) / 2.0;
+        if (accepts(index, middle)) {
+            inside = middle;
+        } else {
+            outside = middle;
+        }
+    }
+    *high = inside;
+
+    inside = anchor;
+    outside = -CERTAINLY_REFUSED;
+    TEST_ASSERT_FALSE(accepts(index, outside));
+    for (int i = 0; i < BISECTION_STEPS; i++) {
+        const double middle = inside + (outside - inside) / 2.0;
+        if (accepts(index, middle)) {
+            inside = middle;
+        } else {
+            outside = middle;
+        }
+    }
+    /*
+     * A description naming a value too small for this type to hold is refused,
+     * so bisecting downwards stops at the smallest value that survives being
+     * read rather than at the bound itself. Where the bound is zero, zero is
+     * still accepted -- it is asking for nothing, not asking for something
+     * unrepresentable -- and it lies below everything bisection can reach. The
+     * accepted set is therefore not one interval, and the bound is zero.
+     */
+    if (accepts(index, 0.0) && 0.0 < inside) {
+        inside = 0.0;
+    }
+    *low = inside;
+}
+
+/* A description drawing every coefficient uniformly from its declared range. */
+static size_t describe_sampled(const double *low, const double *high, char *out, size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const double value = low[i] + rng_unit() * (high[i] - low[i]);
+        const int written =
+            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/*
+ * The description for one deliberate corner of the declared space: `pick`
+ * chooses each coefficient's low or high bound. Uniform sampling reaches these
+ * with vanishing probability -- the two that break a naive integrator have
+ * likelihoods around a thousandth per case -- and they are exactly where a
+ * range's promise is cheapest to break.
+ */
+static size_t describe_corner(const double *low, const double *high, bool take_high, char *out,
+                              size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const double value = take_high ? high[i] : low[i];
+        const int written =
+            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/*
+ * Every coefficient at one bound or the other, chosen independently.
+ *
+ * The corners that matter are not the all-low and all-high ones. A step that
+ * assumes a constant rate destabilises when the mass is small *and* the loss
+ * large -- a mixed corner, which both uniform sampling and the two extreme
+ * corners miss, and which each-bound-alone misses too because the other
+ * coefficients stay nominal and hold it stable.
+ */
+static size_t describe_mixed_corner(const double *low, const double *high, char *out,
+                                    size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const double value = (rng_next() & 1u) != 0u ? high[i] : low[i];
+        const int written =
+            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/* One coefficient at a bound, the rest nominal -- so a single extreme is not
+ * masked by the others also being extreme. */
+static size_t describe_at_bound(const double *bounds, size_t index, char *out, size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const double value = (i == index) ? bounds[i] : NOMINAL[i].value;
+        const int written =
+            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, value);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/* A description of exactly these coefficient values, in table order. */
+static size_t describe_values(const double *values, char *out, size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written =
+            snprintf(out + used, capacity - used, "%s = %.17g\n", NOMINAL[i].name, values[i]);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+static void all_bounds(double *low, double *high)
+{
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        discover_bounds(i, &low[i], &high[i]);
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: the range a structure declares
+ * for a coefficient is the range it enforces -- a value inside is accepted and
+ * one just beyond is refused, at both ends of every coefficient. */
+static void test_every_declared_bound_is_enforced_at_its_edge(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+
+    all_bounds(low, high);
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        char message[200];
+
+        (void)snprintf(message, sizeof(message), "%s: bounds [%.17g, %.17g]", NOMINAL[i].name,
+                       low[i], high[i]);
+        TEST_ASSERT_TRUE_MESSAGE(accepts(i, low[i]), message);
+        TEST_ASSERT_TRUE_MESSAGE(accepts(i, high[i]), message);
+        /* One representable step out, which is what "immediately beyond" means
+         * for a value the comparison is made on. A relative epsilon would be
+         * many steps wide at the larger bounds and would leave the edge itself
+         * untested. */
+        TEST_ASSERT_FALSE_MESSAGE(accepts(i, nextafterf((float)low[i], -INFINITY)), message);
+        TEST_ASSERT_FALSE_MESSAGE(accepts(i, nextafterf((float)high[i], INFINITY)), message);
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: a step taken with no actuation
+ * and no external influence leaves every quantity unchanged, for any set of
+ * coefficients the structure calls admissible rather than only the nominal one.
+ * An initial state that is not an equilibrium of the structure's own equations
+ * shows up here and nowhere else. */
+static void test_rest_stays_at_rest_across_the_declared_range(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+
+    all_bounds(low, high);
+    rng_seed(PROPERTY_SEED);
+
+    for (int c = 0; c < PROPERTY_CASES; c++) {
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        plant_model_t model;
+        float before[PLANT_QUANTITY_COUNT];
+        float after[PLANT_QUANTITY_COUNT];
+        const size_t used = describe_sampled(low, high, text, sizeof(text));
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+        read_all(&model, before);
+        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+        read_all(&model, after);
+
+        if (memcmp(before, after, sizeof(before)) != 0) {
+            char message[160];
+            (void)snprintf(message, sizeof(message),
+                           "case %d: a step at rest moved the model; description was:\n%s", c,
+                           text);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: the same inputs reproduce the
+ * same trajectory exactly, for any admissible set of coefficients. */
+static void test_determinism_across_the_declared_range(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+
+    all_bounds(low, high);
+    rng_seed(PROPERTY_SEED);
+
+    for (int c = 0; c < PROPERTY_CASES; c++) {
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        plant_model_t first;
+        plant_model_t second;
+        float one[PLANT_QUANTITY_COUNT];
+        float two[PLANT_QUANTITY_COUNT];
+        const size_t used = describe_sampled(low, high, text, sizeof(text));
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_TRUE(plant_model_init(&first, &loaded));
+        TEST_ASSERT_TRUE(plant_model_init(&second, &loaded));
+        run(&first, &WORKING, SHORT_STEPS, one);
+        run(&second, &WORKING, SHORT_STEPS, two);
+        TEST_ASSERT_EQUAL_MEMORY(one, two, sizeof(one));
+
+        /*
+         * Two identical computations agree even when both diverge, because a
+         * not-a-number has the same bits either time. Without this the
+         * comparison above would be satisfied by a model that had stopped
+         * describing anything.
+         */
+        for (int q = 0; q < PLANT_QUANTITY_COUNT; q++) {
+            if (!isfinite(one[q])) {
+                char message[220];
+                (void)snprintf(message, sizeof(message),
+                               "case %d: quantity %d left the finite range; description was:\n%s",
+                               c, q, text);
+                TEST_FAIL_MESSAGE(message);
+            }
+        }
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: the model stays finite at the
+ * corners of the space it declares admissible, and at each bound taken alone.
+ * A step taken as though the rate held constant across it does not merely lose
+ * accuracy when the step is long against the time constant -- it alternates
+ * sign and grows without bound -- and the coefficients that provoke it are
+ * reached by uniform sampling about once in a thousand cases. */
+static void test_the_corners_of_the_declared_range_stay_finite(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+
+    all_bounds(low, high);
+
+    rng_seed(PROPERTY_SEED);
+
+    for (int corner = 0; corner < 2 + 2 * (int)COEFFICIENT_COUNT + MIXED_CORNERS; corner++) {
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        plant_model_t model;
+        float quantities[PLANT_QUANTITY_COUNT];
+        size_t used;
+
+        if (corner == 0) {
+            used = describe_corner(low, high, false, text, sizeof(text));
+        } else if (corner == 1) {
+            used = describe_corner(low, high, true, text, sizeof(text));
+        } else if (corner < 2 + 2 * (int)COEFFICIENT_COUNT) {
+            const size_t index = (size_t)(corner - 2) / 2u;
+            used = describe_at_bound(((corner - 2) % 2 == 0) ? low : high, index, text,
+                                     sizeof(text));
+        } else {
+            used = describe_mixed_corner(low, high, text, sizeof(text));
+        }
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+        run(&model, &WORKING, TRAJECTORY_STEPS, quantities);
+
+        for (int q = 0; q < PLANT_QUANTITY_COUNT; q++) {
+            if (!isfinite(quantities[q])) {
+                char message[220];
+                (void)snprintf(message, sizeof(message),
+                               "corner %d: quantity %d left the finite range; description was:\n%s",
+                               corner, q, text);
+                TEST_FAIL_MESSAGE(message);
+            }
+        }
+    }
+}
+
+/* Indices into the coefficient table, for the closed-form comparison below. */
+#define I_AMBIENT 0u
+#define I_BREW_MASS 1u
+#define I_BREW_POWER 2u
+#define I_BREW_LOSS 3u
+
+/* Long enough that a per-step error becomes visible in the distance travelled. */
+#define ACCUMULATION_STEPS 200
+
+/* Comfortably above what single precision accumulates over that many steps, and
+ * far below the error a mis-conditioned settled fraction introduces. */
+#define ACCUMULATED_TOLERANCE 1.0e-3
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: a step lands where the closed
+ * form of the structure's own equation says it should, across the range the
+ * structure declares admissible and across step lengths spanning four orders of
+ * magnitude.
+ *
+ * Rest, monotonicity and determinism are all satisfied by a step that is merely
+ * in the right direction, so a step can be badly wrong and pass every other
+ * property here. That is not hypothetical: computing the settled fraction as
+ * one minus the exponential rather than through expm1 throws away the leading
+ * digits for a short step, and is wrong in the third significant figure at a
+ * step a thousandth of the time constant -- worse than the constant-rate
+ * assumption it replaced, and invisible to every other test in this file.
+ *
+ * The comparison is over a run of steps rather than one, and against how far
+ * the quantity moved rather than where it ended up. A per-step error of a few
+ * percent on an increment that is itself small disappears entirely against the
+ * absolute temperature; it only becomes visible once it has accumulated, which
+ * is exactly how it would reach a machine. */
+static void test_a_step_matches_the_closed_form_across_the_declared_range(void)
+{
+    /*
+     * A millisecond step is deliberately absent. At that rate the temperature
+     * increment is a few tens of the smallest change this type can represent at
+     * the values a hot machine reaches, so each addition discards a percent or
+     * so of it, and the comparison would be measuring the arithmetic's
+     * resolution rather than the equation's accuracy. That resolution is a real
+     * constraint on how fast the model can usefully be stepped; it is not what
+     * this test is about.
+     */
+    static const uint32_t intervals_ms[] = {10u, 100u, 1000u};
+    const plant_actuation_t brew_only = {PLANT_ACTUATION_FULL_SCALE, 0u, 0u};
+
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    double values[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+
+    int compared = 0;
+
+    all_bounds(low, high);
+    rng_seed(PROPERTY_SEED);
+
+    for (int c = 0; c < PROPERTY_CASES; c++) {
+        for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+            values[i] = low[i] + rng_unit() * (high[i] - low[i]);
+        }
+        const size_t used = describe_values(values, text, sizeof(text));
+
+        for (size_t k = 0u; k < sizeof(intervals_ms) / sizeof(intervals_ms[0]); k++) {
+            plant_parameters_t loaded;
+            plant_parameter_error_t fault;
+            plant_model_t model;
+            float before[PLANT_QUANTITY_COUNT];
+            float after[PLANT_QUANTITY_COUNT];
+
+            memset(&fault, 0, sizeof(fault));
+            TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+            TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+            /* Off the equilibrium first: at rest the closed form is trivially
+             * matched by any step, so it would establish nothing. */
+            for (int warm = 0; warm < 5; warm++) {
+                TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 100u));
+            }
+            read_all(&model, before);
+            for (int n = 0; n < ACCUMULATION_STEPS; n++) {
+                TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, intervals_ms[k]));
+            }
+            read_all(&model, after);
+
+            const double seconds =
+                ((double)intervals_ms[k] * (double)ACCUMULATION_STEPS) / 1000.0;
+            const double ambient = values[I_AMBIENT];
+            const double mass = values[I_BREW_MASS];
+            const double power = values[I_BREW_POWER];
+            const double loss = values[I_BREW_LOSS];
+            const double from = (double)before[PLANT_QUANTITY_BREW_TEMPERATURE_C];
+
+            double expected;
+            if (loss > 0.0) {
+                const double settling = ambient + power / loss;
+                expected = settling + (from - settling) * exp(-(loss * seconds) / mass);
+            } else {
+                expected = from + (power * seconds) / mass;
+            }
+
+            const double got = (double)after[PLANT_QUANTITY_BREW_TEMPERATURE_C];
+            /* Against the distance travelled, not the absolute value: the
+             * latter is dominated by where the run started and would hide the
+             * error entirely. */
+            const double moved = fabs(expected - from);
+
+            /*
+             * Some admissible coefficients move the temperature so little per
+             * step that the increment is a few of the smallest changes this
+             * type can represent at that value. Each addition then discards a
+             * noticeable share of it, and what accumulates is the arithmetic's
+             * resolution rather than the equation's error -- comparing it would
+             * report the former as though it were the latter. The test is on
+             * the increment rather than the total for exactly that reason: a
+             * long run of unrepresentably small steps still travels a
+             * measurable distance while being mostly rounding. Those cases are
+             * skipped, and the count of the ones that were not is asserted
+             * below so that skipping cannot quietly become the whole test.
+             */
+            const float magnitude = fabsf(after[PLANT_QUANTITY_BREW_TEMPERATURE_C]) + 1.0f;
+            const double resolution = (double)(nextafterf(magnitude, INFINITY) - magnitude);
+            if ((moved / (double)ACCUMULATION_STEPS) < 1000.0 * resolution) {
+                continue;
+            }
+            compared++;
+
+            const double error = fabs(got - expected) / moved;
+
+            if (!(error < ACCUMULATED_TOLERANCE)) {
+                char message[240];
+                (void)snprintf(message, sizeof(message),
+                               "case %d at %ums x%d: moved %.9g, closed form moved %.9g, "
+                               "relative error %.3g",
+                               c, intervals_ms[k], ACCUMULATION_STEPS, got - from,
+                               expected - from, error);
+                TEST_FAIL_MESSAGE(message);
+            }
+        }
+    }
+
+    /* Enough of the sampled space was actually measurable to mean something. */
+    TEST_ASSERT_TRUE_MESSAGE(compared > PROPERTY_CASES / 4,
+                             "too few sampled cases moved far enough per step to compare");
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: the step stays accurate where
+ * the settled fraction is worst conditioned -- a step far shorter than the time
+ * constant, which is the ordinary case for a thermal mass under a control loop.
+ *
+ * Fixed coefficients rather than sampled ones, because the region that exposes
+ * this is a small corner of the declared space and leaving it to chance would
+ * mean a test that finds the defect in some runs and not others. */
+static void test_a_short_step_against_a_long_time_constant_stays_accurate(void)
+{
+    const plant_actuation_t brew_only = {PLANT_ACTUATION_FULL_SCALE, 0u, 0u};
+    double values[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        values[i] = NOMINAL[i].value;
+    }
+    /* A large mass with a small loss: the step is then ten-thousandths of a
+     * time constant, where one minus the exponential has thrown away most of
+     * its significant digits. */
+    values[I_BREW_MASS] = 5000.0;
+    values[I_BREW_LOSS] = 5.0;
+    values[I_BREW_POWER] = 2000.0;
+
+    const size_t used = describe_values(values, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+    read_all(&model, before);
+    for (int n = 0; n < ACCUMULATION_STEPS; n++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 10u));
+    }
+    read_all(&model, after);
+
+    const double seconds = (10.0 * (double)ACCUMULATION_STEPS) / 1000.0;
+    const double settling = values[I_AMBIENT] + values[I_BREW_POWER] / values[I_BREW_LOSS];
+    const double from = (double)before[PLANT_QUANTITY_BREW_TEMPERATURE_C];
+    const double expected =
+        settling + (from - settling) * exp(-(values[I_BREW_LOSS] * seconds) / values[I_BREW_MASS]);
+    const double got = (double)after[PLANT_QUANTITY_BREW_TEMPERATURE_C];
+    const double error = fabs(got - expected) / fabs(expected - from);
+
+    if (!(error < 1.0e-4)) {
+        char message[220];
+        (void)snprintf(message, sizeof(message),
+                       "moved %.9g, closed form moved %.9g, relative error %.3g", got - from,
+                       expected - from, error);
+        TEST_FAIL_MESSAGE(message);
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2: rest stays at rest at the
+ * corners too, where an initial state that is not an equilibrium is most
+ * likely to show. */
+static void test_the_corners_of_the_declared_range_stay_at_rest(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+
+    all_bounds(low, high);
+
+    for (int corner = 0; corner < 2; corner++) {
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        plant_model_t model;
+        float before[PLANT_QUANTITY_COUNT];
+        float after[PLANT_QUANTITY_COUNT];
+        const size_t used = describe_corner(low, high, corner == 1, text, sizeof(text));
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+        read_all(&model, before);
+        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+        read_all(&model, after);
+        TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -608,5 +1231,12 @@ int main(void)
     RUN_TEST(test_an_unparsable_description_is_refused_at_its_line);
     RUN_TEST(test_a_refusal_leaves_the_record_untouched);
     RUN_TEST(test_an_empty_description_is_refused);
+    RUN_TEST(test_every_declared_bound_is_enforced_at_its_edge);
+    RUN_TEST(test_rest_stays_at_rest_across_the_declared_range);
+    RUN_TEST(test_determinism_across_the_declared_range);
+    RUN_TEST(test_a_step_matches_the_closed_form_across_the_declared_range);
+    RUN_TEST(test_a_short_step_against_a_long_time_constant_stays_accurate);
+    RUN_TEST(test_the_corners_of_the_declared_range_stay_finite);
+    RUN_TEST(test_the_corners_of_the_declared_range_stay_at_rest);
     return UNITY_END();
 }

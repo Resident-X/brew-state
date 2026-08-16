@@ -1,0 +1,21 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C8
+type: criterion
+title: A property claimed over a declared range is verified across that range rather than at one point in it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A range a component declares admissible is a promise about behaviour inside it,
+  not only a boundary to refuse beyond. Verifying at one convenient value within
+  it demonstrates internal consistency and establishes nothing about the rest,
+  which is where the cases nobody thought of sit.
+
+  The bounds themselves are covered, and so are the values immediately beyond
+  them, because a boundary is the cheapest place for the promise to break and the
+  cheapest place to check it. How the values inside are chosen is out of scope,
+  since that varies with what is being verified and with what generating them
+  costs.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

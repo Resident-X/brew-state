@@ -8,6 +8,7 @@
  */
 #include "plant_model.h"
 
+#include <math.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -54,14 +55,63 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
-/* One mass's temperature after `seconds` of heating at `duty` and losing to ambient. */
+/*
+ * Steam pressure at a given steam temperature.
+ *
+ * One expression, used both to bring an instance up and to advance it. Writing
+ * it twice is what let the two disagree: an instance started with a pressure
+ * its own equations would not have produced is not at rest, and a step taken
+ * with no actuation then moves it.
+ */
+static float steam_pressure_at(const plant_parameters_t *parameters, float steam_temperature_c)
+{
+    const float above_saturation_k =
+        steam_temperature_c - parameters->steam_saturation_temperature_c;
+    return above_saturation_k > 0.0f ? parameters->steam_pressure_bar_per_k * above_saturation_k
+                                     : 0.0f;
+}
+
+/*
+ * How far a first-order relaxation travels towards its settling value in `x`
+ * time constants: 1 - exp(-x).
+ *
+ * Written with the library's expm1 rather than as `1 - exp(-x)`. For a short
+ * step the exponential is just under one, and subtracting it from one throws
+ * away the leading digits of an answer that is itself small -- the error is
+ * absolute in the exponential and so grows without bound relative to the
+ * result. At a step a thousandth of the time constant that spelling is wrong in
+ * the third significant figure, which is worse than assuming the rate held
+ * constant across the step, the very thing this exists to improve on.
+ */
+static float settled_fraction(float x)
+{
+    return -expm1f(-x);
+}
+
+/*
+ * The same fraction per time constant elapsed, which is one in the limit as the
+ * step vanishes. There is no threshold: expm1 is accurate all the way down, and
+ * a cut would put a discontinuity in the model where a coefficient crossed it.
+ */
+static float relaxation_factor(float x)
+{
+    return x > 0.0f ? settled_fraction(x) / x : 1.0f;
+}
+
+/*
+ * One mass's temperature after `seconds` of heating at `duty` and losing to
+ * ambient. Exact for a constant actuation over the step, and stable for any
+ * step length at any admissible coefficients.
+ */
 static float advanced_temperature(float temperature_c, float ambient_c, float heater_power_w,
                                    float duty, float loss_w_per_k, float thermal_mass_j_per_k,
                                    float seconds)
 {
     const float delivered_w = heater_power_w * duty;
     const float lost_w = loss_w_per_k * (temperature_c - ambient_c);
-    return temperature_c + ((delivered_w - lost_w) * seconds) / thermal_mass_j_per_k;
+    const float steps_of_time_constant = (seconds * loss_w_per_k) / thermal_mass_j_per_k;
+    const float effective_seconds = seconds * relaxation_factor(steps_of_time_constant);
+    return temperature_c + ((delivered_w - lost_w) * effective_seconds) / thermal_mass_j_per_k;
 }
 
 void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuation_t *actuation,
@@ -95,12 +145,14 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
 
     const float commanded_bar =
         p->pump_pressure_bar * (actuation->pump_permille / PERMILLE_FULL_SCALE);
-    model->brew_pressure_bar += ((commanded_bar - model->brew_pressure_bar) * seconds) /
-                                p->brew_pressure_time_constant_s;
+    /* The same relaxation the thermal masses use, through the same expression:
+     * the shortest admissible time constant is far below the step lengths a
+     * caller may use, and taking the rate as constant across the step would
+     * oscillate rather than settle. */
+    const float settled = settled_fraction(seconds / p->brew_pressure_time_constant_s);
+    model->brew_pressure_bar += (commanded_bar - model->brew_pressure_bar) * settled;
 
-    const float above_saturation_k = model->steam_temperature_c - p->steam_saturation_temperature_c;
-    model->steam_pressure_bar =
-        above_saturation_k > 0.0f ? p->steam_pressure_bar_per_k * above_saturation_k : 0.0f;
+    model->steam_pressure_bar = steam_pressure_at(p, model->steam_temperature_c);
 }
 
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
@@ -114,14 +166,16 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
 
     /*
      * The machine starts where it has been sitting: both masses at ambient,
-     * the pump off and nothing above saturation. A step taken from here with
-     * no actuation therefore moves nothing, which is what makes an
-     * accidentally hard-coded source or sink visible.
+     * the pump off, and every quantity at the value this structure's own
+     * equations give for that state. A step taken from here with no actuation
+     * therefore moves nothing, which is what makes an accidentally hard-coded
+     * source or sink visible -- and it holds for any admissible ambient, not
+     * only for one that happens to sit below saturation.
      */
     model->brew_temperature_c = parameters->ambient_temperature_c;
     model->steam_temperature_c = parameters->ambient_temperature_c;
     model->brew_pressure_bar = 0.0f;
-    model->steam_pressure_bar = 0.0f;
+    model->steam_pressure_bar = steam_pressure_at(parameters, model->steam_temperature_c);
     model->initialised = true;
     return true;
 }

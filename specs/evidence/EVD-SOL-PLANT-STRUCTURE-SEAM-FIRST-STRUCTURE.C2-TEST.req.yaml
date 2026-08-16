@@ -5,13 +5,15 @@ status: active
 version: 1
 result: pass
 method: test
-observed_at: "2026-08-16T12:40:09Z"
+observed_at: "2026-08-16T13:43:15Z"
 valid_until: until-superseded
 artifact:
   kind: external
   reference: firmware/test/test_plant/test_plant.c
-text: |-
-  Eight tests in test_plant.c reach the model only through plant_model.h and name no structure symbol. A step at rest changes nothing after one step and after 1200; rest also holds at an ambient no other test uses, so the property cannot rest on one temperature being written into the equations. Heat raises both temperature quantities and lowers none. The same inputs reproduce the same trajectory, compared bitwise. An out-of-scale actuation is refused and changes nothing, and an uninitialised instance is unusable.
+text: |
+  Thirteen tests in test_plant.c reach the model only through plant_model.h and name no structure symbol. A step at rest changes nothing after one step and after 1200; rest also holds at an ambient no other test uses, and at both extreme corners of the range every coefficient declares admissible, so the property cannot rest on one temperature being written into the equations. Heat raises both temperature quantities and lowers none. The same inputs reproduce the same trajectory, compared bitwise, and the trajectory is required to stay finite -- two identical computations agree even when both have diverged. An out-of-scale actuation is refused and changes nothing, and an uninitialised instance is unusable.
+
+  Four of those go further than the nominal coefficients. Rest, determinism and finiteness are exercised across values sampled from the range each coefficient declares, at both extreme corners, at each bound alone, and at corners with every coefficient independently at one bound or the other -- the combination that destabilises a constant-rate step is mixed, and neither uniform sampling nor the extreme corners reach it. A step is compared against the closed form of the structure's own equation, over a run rather than a single step and against the distance travelled rather than the value reached, since a per-step error of a few percent on a small increment is invisible against the absolute temperature until it has accumulated. Cases whose per-step increment approaches what the type can represent are skipped as unmeasurable, and the number that were not is asserted so that skipping cannot become the whole test.
 links:
   - target: SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C2
     type: satisfies

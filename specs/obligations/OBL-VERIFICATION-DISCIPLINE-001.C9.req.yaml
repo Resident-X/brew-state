@@ -1,0 +1,22 @@
+id: OBL-VERIFICATION-DISCIPLINE-001.C9
+type: criterion
+title: A check is shown to fail on the defect it exists to catch rather than asserted to be capable of it
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Judging from a reading that a check could fail is the same act that produced the
+  check, and it inherits the same blind spots. Introducing the defect and watching
+  the check stop is a different act, and it is what separates a check that works
+  from one that only reads as though it would.
+
+  A check that finds nothing to inspect fails rather than passes, since an empty
+  subject is the cheapest way for a check to report success without having
+  established anything. The demonstration is recorded alongside the check's own
+  result, so a later reader can see which defect was introduced rather than take
+  the capability on trust. How often it is repeated is out of scope; that follows
+  from how much the check changes, not from the standard it is held to.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001
+    type: criterion-of

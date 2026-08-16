@@ -96,6 +96,36 @@ task fw:check      # the build-time checks only
 task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
 ```
 
+One more runs on demand rather than in the gate:
+
+```sh
+task fw:mutate                    # break each guarded property, require its check to notice
+task fw:mutate -- -k header       # only the mutations whose name matches
+task fw:mutate -- --list          # name them without running
+```
+
+It edits sources in place and restores them, so it refuses to start when those
+files have uncommitted changes, and it verifies the restore before reporting.
+
+Three things make its answers mean something. Each command is run once before
+anything is broken, because a command that already fails would make every
+mutation under it look caught. A mutation counts as caught only when its command
+reports having *found the problem* — these checks exit 1 for that and 2 for
+being unable to look, and treating the second as a catch would be this tool
+committing the failure it exists to detect. And because editing the build file
+makes the build system discard every linked artefact, the artefacts are re-made
+during the run and again at the end, so neither the next mutation nor the
+ordinary gate is left inspecting something that is no longer there.
+
+It overlaps the tool tests under `tools/tests/` on purpose but does not replace
+them: those drive each check against synthetic broken subjects in the gate,
+where this drives the real checks against the real sources end to end, which is
+what catches a check that is correct in isolation and mis-wired in the build.
+
+It is out of the gate because it answers a question — are these checks real —
+that does not change between commits the way the checks' own results do. Run it
+when a check is added or reworked.
+
 Set `PIO=/path/to/pio` if PlatformIO lives somewhere other than
 `~/.platformio/penv/bin/pio`.
 
@@ -117,6 +147,14 @@ task runner. Five of them also run automatically inside every `pio run`.
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one. |
 | `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, or naming two — builds anyway, or leaves an artefact behind. |
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
+
+The plant model's invariants are additionally exercised across the range each
+coefficient declares admissible, rather than at the one nominal value. The
+bounds are discovered through the seam by offering a description and seeing
+whether it is accepted, so the test cannot drift from what the structure
+declares and does not have to name a structure symbol to read them. That test is
+what found an initial state which was not an equilibrium of the structure's own
+equations — invisible at the nominal ambient, which sits below saturation.
 
 Each check fails rather than passes when it cannot find what it is meant to
 inspect. A check that inspects nothing must not report success. The
