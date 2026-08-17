@@ -1,0 +1,26 @@
+id: REQ-READINESS-TIMELINESS-001
+type: requirement
+category: functional
+title: Readiness is reached in close to the least time the machine's physics allows
+status: active
+priority: must
+version: 1
+text: |
+  How accurately the machine holds temperature and how quickly it gets there are separate claims, and only the first has been made. A controller that settles perfectly after forty minutes satisfies every temperature requirement in this graph.
+
+  Time to readiness is not expressible as a fixed number, because it belongs to the machine rather than to the design: a different thermal mass on a different supply has a different floor. What is expressible is the distance between what the machine achieves and what its own physics permits, and that travels to any machine the description covers.
+
+  The floor is what the machine could do with everything it has, not with its heater alone. A machine that can move water can move heat with it, and a bound derived from heating in isolation would be a bound on one strategy rather than on the problem.
+rationale: |
+  This is the requirement that distinguishes the control design from a simple regulator, and until now the graph did not contain it. Everything about estimating unmeasurable states, carrying a plant description and predicting forward is bought to reach the right state sooner; nothing asserted that reaching it sooner mattered. That absence had already turned into an assumption stated in prose elsewhere, that warm-up is short enough for nobody to wait, asserted by no criterion and checked by nothing.
+
+  Two existing requirements make the omission bite rather than merely leave a gap. The machine is required not to sit holding heat for a drink nobody asked for, and readiness held without use is required to end on its own. Together they guarantee the machine is cold or cooling most of the time, which puts the cost of reaching readiness in front of the operator on almost every use.
+
+  The bound is expressed against the machine's declared description rather than in minutes, so that it is meaningful on an adopter's hardware and so that a structure with different physics is held to its own floor rather than to the reference machine's. The obvious weakness is that a wrong description moves the floor and lets a controller score well against its own error; that is accepted deliberately, because this is a claim about the controller and the truth of the description is carried separately by the requirements on validating and committing a model.
+
+  Settling rather than arrival is the measured event, or a controller that reaches target quickly and then rings around it would score better than one that arrives calmly and stays.
+
+  The overshoot criterion is not about elegance. This machine operates close enough to its protection trip point that the margin is thin, and a time-optimal approach spends exactly that margin. Bounding overshoot against the margin rather than against zero leaves the aggressive approach available where the margin can carry it.
+links:
+  - target: PER-OPERATOR-001.C7
+    type: derives-from

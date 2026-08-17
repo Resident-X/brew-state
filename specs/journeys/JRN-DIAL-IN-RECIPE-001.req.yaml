@@ -1,0 +1,38 @@
+id: JRN-DIAL-IN-RECIPE-001
+type: requirement
+category: journey
+title: Operator dials in a coffee they have not made before
+status: active
+priority: must
+version: 1
+text: |
+  The journey every other operator journey depends on and none of them cover. A shot cannot be reproduced before it has been arrived at, and arriving at one is a different activity from serving: the operator is changing something deliberately and reading the result, over several attempts, until the drink is what they wanted.
+
+  ## Main success scenario
+
+  1. The operator starts from an existing recipe, or from the machine's defaults for the drink.
+  2. The operator makes the drink and tastes it.
+  3. The machine reports what it delivered, closely enough for the operator to tell their own change apart from the machine's contribution.
+  4. The operator changes one thing — grind, dose, or a target the recipe carries — and makes the drink again.
+  5. The operator compares the two results and keeps the better one.
+  6. The operator repeats from step 4 until the drink is right.
+  7. The operator keeps the settled attempt as a recipe, and thereafter asks for it by name without attending to any of this.
+
+  ## Extensions
+
+  3a. The machine could not hold its own targets for that attempt. The machine says so, and the attempt is excluded from comparison rather than compared as though the difference came from the operator's change.
+
+  4a. The operator changes more than one thing between attempts. The machine records what was different, so the comparison remains available even where the attribution is ambiguous.
+
+  5a. The operator prefers an earlier attempt to the current one. Earlier attempts in the session remain available to return to rather than being displaced by the most recent.
+
+  7a. The operator abandons the session without settling on a recipe. Nothing is kept, and the recipe the session started from is unchanged.
+rationale: |
+  Separated from the shot journey rather than folded into it, because that journey opens by assuming the recipe already exists — "the operator is reproducing a drink they have made before". Every operator journey in this graph makes the same assumption, so nothing covered the case where the recipe is what is being produced. The gap was invisible precisely because reproduction is the interesting claim about the machine and dial-in is the interesting claim about the operator.
+
+  The journey also settles a tension in the operator persona. That persona holds the machine's internals opaque by choice, which reads as though the operator never wants telemetry. It is truer to say they want it in one bounded mode and not otherwise: while attributing a difference between two attempts, everything the machine knows is useful; once the recipe is settled, wanting to look at it again would be a failure of repeatability rather than a feature.
+
+  The exclusion extension carries most of the weight. Dial-in is an attribution exercise, and an attempt the machine itself did not deliver on target poisons the comparison in a way the operator cannot see from the cup. A machine that lets such an attempt into the comparison silently will send the operator to change the grind in response to its own error.
+links:
+  - target: PER-OPERATOR-001.C8
+    type: derives-from

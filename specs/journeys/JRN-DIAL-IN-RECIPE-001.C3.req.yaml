@@ -1,0 +1,14 @@
+id: JRN-DIAL-IN-RECIPE-001.C3
+type: criterion
+title: An attempt the machine could not deliver on target is excluded from comparison rather than compared
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The operator judges from the cup and cannot see that the machine missed its own targets on one attempt. Comparing it anyway attributes the machine's error to whatever the operator happened to change, and sends them to correct something that was never wrong.
+
+  Excluding it is not the same as discarding it: the attempt and the reason it was excluded both remain available.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001
+    type: criterion-of

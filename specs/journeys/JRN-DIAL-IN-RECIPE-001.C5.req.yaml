@@ -1,0 +1,14 @@
+id: JRN-DIAL-IN-RECIPE-001.C5
+type: criterion
+title: A settled attempt becomes a recipe without being made again to capture it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The attempt that turned out right is the one the operator wants, and requiring them to reproduce it before it can be kept asks them to hit it twice with no guarantee the second one lands.
+
+  Once kept, it is a recipe like any other, and nothing about how it was arrived at distinguishes it thereafter.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001
+    type: criterion-of

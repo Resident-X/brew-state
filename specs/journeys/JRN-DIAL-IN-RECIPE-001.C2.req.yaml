@@ -1,0 +1,14 @@
+id: JRN-DIAL-IN-RECIPE-001.C2
+type: criterion
+title: What the machine delivered is reported closely enough to attribute a difference to its cause
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A report too coarse to resolve the change the operator made is indistinguishable from no report, and one that overstates its own accuracy is worse than none, because the operator will act on a difference that was never there.
+
+  The resolution that matters is the smallest difference that would send the operator back to the grinder.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001
+    type: criterion-of

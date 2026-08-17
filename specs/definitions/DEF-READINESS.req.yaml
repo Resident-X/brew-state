@@ -2,8 +2,12 @@ id: DEF-READINESS
 type: definition
 title: readiness
 status: active
-version: 1
+version: 2
 text: |
   Readiness is the condition in which the machine could begin a delivery immediately if one were asked for, having reached and settled at the state that delivery requires.
 
-  It is a per-purpose condition rather than a single machine state: being ready to brew, to steam and to dispense hot water are different conditions with different settling behaviour, and a machine may be in one and not another. Reaching readiness moves no water and produces no drink, which is what distinguishes it from a delivery.
+  It is a per-purpose condition rather than a single machine state: being ready to brew, to steam and to dispense hot water are different conditions with different settling behaviour, and a machine may be in one and not another. What distinguishes reaching readiness from a delivery is that nothing is delivered: no drink is produced and nothing reaches a cup or a person. Water may move in the course of reaching it, since moving water through a heated mass is one of the ways a machine redistributes its own heat.
+rationale: |
+  The distinction was originally drawn at water movement, which is a proxy rather than the thing itself and forecloses by wording a class of behaviour the physics permits. A machine with a pump can move heat by moving water, and purging a heated mass to waste delivers nothing to anybody while moving a great deal of water.
+
+  Drawing the line at delivery instead keeps everything the original wording was protecting — in particular that reaching readiness on a schedule cannot hand a drink to an absent person — while leaving the machine free to use every actuator it has to get there.

@@ -4,11 +4,11 @@ category: functional
 title: The machine can reach readiness on a schedule or on request without a person present
 status: active
 priority: could
-version: 2
+version: 3
 text: |
   Reaching readiness heats the machine to a state it already holds whenever it is switched on and left alone. Nothing moves, nothing is dispensed, and no drink is made.
 
-  The reference machine gains almost nothing from this, because its warm-up time as declared is short enough that nobody waits for it. The capability exists for adopters whose hardware takes long enough that the wait shapes how the machine is used.
+  The reference machine gains least from this, because how long it takes to reach readiness is separately bounded against what its own physics permits. The capability exists for adopters whose hardware has a floor long enough that the wait shapes how the machine is used, and for whom removing the wait entirely is worth more than shortening it.
 rationale: |
   Priority is could, and honestly so. The capability has no real value on the reference machine, and recording it as anything higher would misrepresent what this project needs in order to be finished.
 

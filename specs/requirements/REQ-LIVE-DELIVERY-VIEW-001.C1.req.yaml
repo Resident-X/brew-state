@@ -1,0 +1,14 @@
+id: REQ-LIVE-DELIVERY-VIEW-001.C1
+type: criterion
+title: The temperature, pressure and flow of a delivery are observable while it is running
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Availability during the delivery is the whole of the claim: the same figures after it ends are already required elsewhere and do not satisfy this.
+
+  The rate has to resolve the events the operator is watching for, which are faster than the delivery itself.
+links:
+  - target: REQ-LIVE-DELIVERY-VIEW-001
+    type: criterion-of

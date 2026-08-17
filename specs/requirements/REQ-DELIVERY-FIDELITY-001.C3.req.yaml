@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-FIDELITY-001.C3
+type: criterion
+title: Brew temperature is reported true to within one degree Celsius
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Extraction is measurably sensitive at about this scale, so a figure looser than this cannot support the attribution the operator is making between one attempt and the next.
+
+  The bound is on the reported figure against the truth, not on how steadily the machine held target, which is asserted separately.
+links:
+  - target: REQ-DELIVERY-FIDELITY-001
+    type: criterion-of

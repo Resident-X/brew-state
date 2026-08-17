@@ -1,0 +1,14 @@
+id: REQ-LIVE-DELIVERY-VIEW-001.C2
+type: criterion
+title: What is shown during a delivery and what is retained with its record agree
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Two views of the same delivery that disagree leave the operator unable to trust either, and the disagreement will be discovered long after the drink that exposed it.
+
+  Agreement is required within the declared tolerance of each quantity, not to the digit.
+links:
+  - target: REQ-LIVE-DELIVERY-VIEW-001
+    type: criterion-of

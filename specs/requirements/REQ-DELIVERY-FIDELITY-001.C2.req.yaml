@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-FIDELITY-001.C2
+type: criterion
+title: A tolerance is set by the smallest difference that changes a decision or an outcome
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Deriving the tolerance from what the figure is used for is what keeps it from being set by whatever a sensing channel happens to achieve, which would let the part choose the requirement.
+
+  Where nothing anyone does changes at a finer resolution, the tolerance stops there rather than being tightened for its own sake.
+links:
+  - target: REQ-DELIVERY-FIDELITY-001
+    type: criterion-of

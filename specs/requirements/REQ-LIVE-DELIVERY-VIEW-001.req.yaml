@@ -1,0 +1,20 @@
+id: REQ-LIVE-DELIVERY-VIEW-001
+type: requirement
+category: interface
+title: A delivery is observable while it runs, not only once it has ended
+status: active
+priority: should
+version: 1
+text: |
+  While a shot is running there is information the operator can only use then. Pressure rising faster than it should, or flow that runs away partway through, tells them something about the puck that the finished cup no longer distinguishes from a dozen other causes.
+
+  The same figures retained with the record serve the comparison afterwards. What this requires is that they are also available during, at a rate that resolves what is happening rather than summarising it.
+rationale: |
+  Kept separate from the requirement that reported figures are true, because the two cost different things and can be met independently. A machine can report accurate figures only after the fact and still support dial-in, more slowly; a machine can show a live trace of figures nobody has bounded and support nothing at all. Combining them would price the pair as one and hide which half a shortfall was in.
+
+  The live view is deliberately not load-bearing for ordinary serving. The operator's normal relationship with the machine is to ask for a settled recipe and take the cup, and that is protected by repeatability rather than by watching. A machine that needed to be watched to be trusted would have failed the persona goal it is derived from, not served it.
+
+  Distinct from external monitoring, which is about systems other than the machine observing it without affecting it. This is the operator, at the machine, during the drink.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001.C2
+    type: derives-from

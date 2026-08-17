@@ -1,0 +1,14 @@
+id: PER-OPERATOR-001.C8
+type: criterion
+title: A coffee the operator has not made before can be brought to a repeatable recipe
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Every recipe the operator repeats was once a recipe that did not exist. Arriving at one means changing the grind or the dose, making the drink again, and attributing the difference in the cup to the change rather than to the machine.
+
+  What this must not require is a bench, a connected computer, or any of the knowledge the Builder has about the machine's internals. The operator stays the operator while they do it.
+links:
+  - target: PER-OPERATOR-001
+    type: criterion-of

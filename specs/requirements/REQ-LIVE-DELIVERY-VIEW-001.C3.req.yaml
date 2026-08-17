@@ -1,0 +1,12 @@
+id: REQ-LIVE-DELIVERY-VIEW-001.C3
+type: criterion
+title: A delivery proceeds unaffected whether or not anything is observing it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An observer that can slow, stall or alter the delivery has changed the thing it was meant to describe, and the effect will be largest exactly when the operator is watching most closely.
+links:
+  - target: REQ-LIVE-DELIVERY-VIEW-001
+    type: criterion-of
