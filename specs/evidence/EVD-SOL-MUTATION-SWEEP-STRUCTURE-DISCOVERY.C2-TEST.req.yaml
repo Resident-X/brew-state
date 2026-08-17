@@ -1,0 +1,23 @@
+id: EVD-SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C2-TEST
+type: evidence
+title: A discovery step finding no machine-describing structure fails rather than passes (SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T12:40:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_mull_sweep.py
+text: |
+  A discovery step that finds no structure declaring that its equations describe a machine stops with an error rather than reporting a clean result over an empty population.
+
+  TheDiscoveryStepRefusesAnEmptyPopulation drives the case directly: every structure in a synthetic tree is set to declare PLANT_DESCRIBES_NO_MACHINE and the derivation returns no structures together with a problem naming the emptiness. TheDerivationCanBeRunWithoutACompiler drives the same state through the tool itself and asserts it exits 1 rather than 0.
+
+  The state is distinguished from the emptiness cases the sweep already refused. A tree full of structures none of which describes a machine leaves an environment declared, a scope that reaches source, and mutants produced by the shared sources — so none of the existing guards fires, and the result reads exactly like a suite that killed everything. Neighbouring cases are covered alongside it: a tree with no structures at all, a vocabulary that is missing, and a vocabulary that has stopped drawing its line, the last two reported as being unable to look rather than as a finding.
+
+  The same refusal is reported by check_machine_claim.py over the whole tree, where AClaimCheckWithNothingToInspectFails asserts a tree in which no structure describes a machine fails rather than passes.
+links:
+  - target: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C2
+    type: satisfies

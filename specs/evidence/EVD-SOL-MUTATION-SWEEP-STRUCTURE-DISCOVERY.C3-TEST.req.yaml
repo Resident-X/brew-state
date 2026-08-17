@@ -1,0 +1,25 @@
+id: EVD-SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3-TEST
+type: evidence
+title: Every structure declares whether its equations describe a machine (SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T12:40:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py
+text: |
+  Every structure behind the seam declares whether its equations describe a machine, drawn from a vocabulary declared once in include/plant_machine_claim.h, and the build fails on a structure that declares nothing or declares something outside it.
+
+  check_machine_claim.py runs over the whole tree rather than the structure a build selected, and is wired into fw:check and into every build through pio_seam_checks.py — the same placement the support status has, which is what the criterion compares itself to. The gate reports all three shipped structures answering: boiler and thermoblock PLANT_DESCRIBES_A_MACHINE, fixture PLANT_DESCRIBES_NO_MACHINE.
+
+  StructureSaysWhetherItsEquationsDescribeAMachine drives the required case — a structure declaring neither value — and the neighbouring ones: a claim outside the vocabulary, a claim declared twice, a claim commented out, and a claim the preprocessor discards behind an if-zero, the last two being the shapes a reader would credit and a compiler would not. A structure arriving later is asserted to be asked the question with nothing in the check's invocation naming it.
+
+  TheClaimVocabularyDrawsOneLine covers the vocabulary growing a third term, losing one, and having a term renamed — the last because renaming a value in the header would otherwise change which structures the sweep draws from without failing anything. AClaimCheckWithNothingToInspectFails covers a missing plant root, a plant root holding no structure, a missing vocabulary, and a vocabulary declaring no claim type, each reported as being unable to look rather than as every structure having answered.
+
+  fw:mutate establishes that the gate can fail: structure-does-not-say-whether-it-describes-a-machine and machine-claim-vocabulary-grows-a-distinction are both caught by it.
+links:
+  - target: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3
+    type: satisfies

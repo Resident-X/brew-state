@@ -1,0 +1,23 @@
+id: EVD-SOL-SWEEP-SURVIVORS-ACCOUNTED.C1-TEST
+type: evidence
+title: A machine-describing structure's arithmetic fails a test when any operator in it is altered (SOL-SWEEP-SURVIVORS-ACCOUNTED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T12:40:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_boiler/test_plant_boiler.c
+text: |
+  The boiler structure's arithmetic now fails a test when an operator in it is altered. The mutation sweep reported nine surviving mutants in src/plant/boiler/plant_structure.c when its equations first entered the population — an altered subtraction in the saturation excess, a division for a multiplication in the pressure slope and in three places in the vessel's energy balance, an inverted and a widened comparison in the relaxation factor, and a multiplication for a division in the duty scaling. All nine are now killed.
+
+  Five tests in test/test_plant_boiler/test_plant_boiler.c do it. test_the_vessel_step_is_the_energy_balance_it_claims asserts one step against the closed form of the relaxation, written as a settling value approached by a plain exponential rather than by the effective-interval correction the implementation uses; it carries the vessel away from ambient first, because at ambient the loss term is zero and a step taken from there cannot distinguish a loss that opposes the heater from one that assists it. test_a_half_duty_delivers_half_the_power pins the duty scaling. test_a_long_step_is_corrected_for_the_relaxation_within_it drives a 300 s step against a 450 s time constant, where the correction is about three quarters rather than the 0.99989 a 100 ms step gives — an alteration to it moves a short step by less than any tolerance worth asserting, which is why it survived every other test. test_a_vessel_that_loses_nothing_heats_at_the_rate_its_power_implies drives the zero-loss description the bounds admit, where the correction's argument vanishes and an alteration reaching the division yields a value that is not a number; it asserts the result is not a NaN outright, because a comparison against one is false either way. test_the_steam_pressure_is_the_declared_slope_above_saturation and its below-saturation partner pin both sides of the comparison.
+
+  Also in the loader, where the sweep found origin parsing that had arrived on a parallel branch and never been swept: test_an_origin_separated_from_its_marker_by_blanks_is_read covers an annotation whose kind is separated from the marker by whitespace, which no shipped description writes and nothing exercised, and test_a_statement_the_description_cannot_make_is_refused now asserts the text a refused origin statement reports itself against rather than only the fault it reports.
+
+  The suites pass: 14 of 14 in test_plant_boiler, 50 of 50 in test_plant.
+links:
+  - target: SOL-SWEEP-SURVIVORS-ACCOUNTED.C1
+    type: satisfies

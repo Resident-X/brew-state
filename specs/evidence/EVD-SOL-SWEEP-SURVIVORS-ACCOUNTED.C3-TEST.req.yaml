@@ -1,0 +1,23 @@
+id: EVD-SOL-SWEEP-SURVIVORS-ACCOUNTED.C3-TEST
+type: evidence
+title: The sweep reports a clean run over the whole population it drew (SOL-SWEEP-SURVIVORS-ACCOUNTED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T12:40:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:sweep
+text: |
+  task fw:sweep exits 0 over the derived population. The run draws from src/plant/common, src/plant/boiler and src/plant/thermoblock — every machine-describing structure in the tree plus the sources they share — across three mutation environments: native_mutation over test_plant and test_control, native_fixture_mutation over test_plant_narrow, and native_boiler_mutation over test_plant_boiler.
+
+  165 mutants, 155 killed by the tests, 10 survived, every survivor accounted for with a reason: 7 that cannot change what the program does and 3 that only the sanitized build could notice. No unreviewed survivor and no judgement about a mutant the sweep did not produce. One judgement is reported as no longer load-bearing on this host because a test kills the mutant here; it is kept, since that mutant changes sides between hosts according to how the frame was laid out.
+
+  The sweep is now the last step of task fw:verify, which also exits 0 — so the full gate asks whether the tests would notice the model being wrong and not only whether the checks pass.
+
+  This is the observation that the two criteria above hold together rather than separately: a suite can pin one structure's arithmetic while another's is untouched, and a record can be complete about mutants that no longer exist. Neither shows up in a per-structure reading; both show up here.
+links:
+  - target: SOL-SWEEP-SURVIVORS-ACCOUNTED.C3
+    type: satisfies
