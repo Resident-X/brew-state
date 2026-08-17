@@ -128,7 +128,9 @@ class TheScopeDecidesWhatIsMutated(unittest.TestCase):
 
     def test_the_declared_exclusions_are_read_and_a_bad_pattern_is_reported_against_the_file(self):
         self.declare(excludes=[".*/test/.*"])
-        self.assertEqual([".*/test/.*"], mull_sweep.declared_excludes(self.project.name))
+        self.assertEqual(
+            ([".*/test/.*"], []), mull_sweep.declared_excludes(self.project.name)
+        )
         self.declare(excludes=["*unclosed["])
         with self.assertRaises(mull_sweep.SweepError) as raised:
             mull_sweep.declared_excludes(self.project.name)
@@ -138,14 +140,20 @@ class TheScopeDecidesWhatIsMutated(unittest.TestCase):
         # The written-down list is what this replaced, and the toolchain reads
         # this file rather than the derivation -- so a list reappearing here
         # would win silently. It has to fail instead.
+        # Reported as a problem found rather than as being unable to look: the
+        # file is perfectly readable, and what is wrong is what it says. The two
+        # exit statuses are not interchangeable, and mutate.py asks for this one.
         self.declare(excludes=[".*/test/.*"], includes=[".*/src/plant/thermoblock/.*"])
-        with self.assertRaises(mull_sweep.SweepError) as raised:
-            mull_sweep.declared_excludes(self.project.name)
-        self.assertIn("includePaths", str(raised.exception))
-        self.assertIn("PLANT_STRUCTURE_MACHINE_CLAIM", str(raised.exception))
+        excludes, problems = mull_sweep.declared_excludes(self.project.name)
+        self.assertEqual([".*/test/.*"], excludes)
+        self.assertEqual(1, len(problems))
+        self.assertIn("includePaths", problems[0])
+        self.assertIn("PLANT_STRUCTURE_MACHINE_CLAIM", problems[0])
 
     def test_the_configuration_this_project_ships_names_no_population(self):
-        self.assertTrue(mull_sweep.declared_excludes(PROJECT))
+        excludes, problems = mull_sweep.declared_excludes(PROJECT)
+        self.assertTrue(excludes)
+        self.assertEqual([], problems)
 
 
 # --- Where the population comes from ----------------------------------------
@@ -270,7 +278,7 @@ class ThePopulationFollowsTheTree(unittest.TestCase):
             structure.directory for structure in described
         ]
         includes = [mull_sweep.scope_pattern(self.tree.root, d) for d in directories]
-        excludes = mull_sweep.declared_excludes(self.tree.root)
+        excludes, _ = mull_sweep.declared_excludes(self.tree.root)
         self.assertEqual([], mull_sweep.scope_problems(self.tree.root, includes, excludes))
         self.assertTrue(
             mull_sweep.in_scope("/a/src/plant/alpha/plant_structure.h", includes, excludes)
@@ -307,7 +315,7 @@ class ThePopulationFollowsTheTree(unittest.TestCase):
             structure.directory for structure in described
         ]
         includes = [mull_sweep.scope_pattern(PROJECT, d) for d in directories]
-        excludes = mull_sweep.declared_excludes(PROJECT)
+        excludes, _ = mull_sweep.declared_excludes(PROJECT)
         self.assertEqual([], mull_sweep.scope_problems(PROJECT, includes, excludes))
 
         swept = [
@@ -419,7 +427,7 @@ class OnlyTheDerivedPopulationCountsTowardsTheScore(unittest.TestCase):
             structure.directory for structure in described
         ]
         self.includes = [mull_sweep.scope_pattern(self.tree.root, d) for d in directories]
-        self.excludes = mull_sweep.declared_excludes(self.tree.root)
+        self.excludes, _ = mull_sweep.declared_excludes(self.tree.root)
 
     def outside(self, *sources):
         found = {
@@ -506,9 +514,11 @@ class TheDerivationCanBeRunWithoutACompiler(unittest.TestCase):
         self.assertIn("no environment built for the sweep", result.stderr)
 
     def test_a_population_written_back_into_the_configuration_stops_the_run(self):
+        # Exit 1, not 2: the file is readable and what it says is wrong, which is
+        # a problem found rather than an inability to look.
         self.tree.config(includes=[".*/src/plant/beta/.*"])
         result = self.sweep()
-        self.assertEqual(2, result.returncode)
+        self.assertEqual(1, result.returncode)
         self.assertIn("includePaths", result.stderr)
 
     def test_a_missing_vocabulary_stops_the_run_as_being_unable_to_look(self):

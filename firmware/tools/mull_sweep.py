@@ -132,7 +132,7 @@ def load_yaml(path: str) -> object:
         raise SweepError(f"{path} cannot be read: {error}") from error
 
 
-def declared_excludes(project: str) -> list[str]:
+def declared_excludes(project: str) -> tuple[list[str], list[str]]:
     """The patterns the sweep's configuration refuses to draw mutants from.
 
     This is the only direction the configuration still states. The population is
@@ -142,13 +142,20 @@ def declared_excludes(project: str) -> list[str]:
     outright rather than merged: a list nobody has to maintain cannot be kept in
     step with a tree, which is the arrangement that let a machine-describing
     structure sit outside the population unnoticed.
+
+    Returns the exclusions and any problems found with the file. A list written
+    back into it is a problem *found*, not this tool being unable to look, and the
+    two are separate exit statuses here for a reason -- so it is returned rather
+    than raised. Being unable to read the file at all is still raised.
     """
     path = os.path.join(project, mull_toolchain.CONFIG_NAME)
     document = load_yaml(path)
     if not isinstance(document, dict):
         raise SweepError(f"{path} does not declare a mapping of settings")
+
+    problems: list[str] = []
     if document.get("includePaths"):
-        raise SweepError(
+        problems.append(
             f"{path} declares includePaths. The population is read from the structures in the "
             "tree, and a list here would silently take that over -- the toolchain reads this "
             "file, not the derivation. Remove it; a structure joins the population by declaring "
@@ -165,7 +172,7 @@ def declared_excludes(project: str) -> list[str]:
             raise SweepError(
                 f"{path}: excludePaths entry '{pattern}' is not a usable pattern: {error}"
             ) from error
-    return list(excludes)
+    return list(excludes), problems
 
 
 def machine_describing_structures(
@@ -667,12 +674,13 @@ def main(argv: list[str]) -> int:
         return COULD_NOT_LOOK
 
     try:
-        excludes = declared_excludes(project)
+        excludes, problems = declared_excludes(project)
         # SystemExit is what the shared discovery raises when a seam header it
         # needs is absent. That is this tool being unable to look rather than
         # something it found, and the exit codes here are not interchangeable.
         structures = discover(plant_root, include_dir)
-        described, problems = machine_describing_structures(structures, plant_root, include_dir)
+        described, faults = machine_describing_structures(structures, plant_root, include_dir)
+        problems.extend(faults)
     except (SweepError, Uninspectable, SystemExit) as error:
         print(f"mull_sweep: {error}", file=sys.stderr)
         return COULD_NOT_LOOK
