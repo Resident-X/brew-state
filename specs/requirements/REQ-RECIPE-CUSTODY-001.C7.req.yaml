@@ -1,0 +1,14 @@
+id: REQ-RECIPE-CUSTODY-001.C7
+type: criterion
+title: An attempt the machine could not hold to target is set aside from comparison rather than compared
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The operator judges from the cup and cannot see that the machine missed its own targets on one of the two attempts they are holding side by side. Comparing them anyway attributes the machine's error to whatever the operator happened to change, and sends them to correct something that was never wrong.
+
+  Excluding is not discarding. The attempt stays retained like any other and the reason it was set aside stays with it, so an operator who wants to look at it can.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

@@ -20,3 +20,5 @@ links:
     type: derives-from
   - target: JRN-SERVE-LONG-BLACK-001.C2
     type: derives-from
+  - target: JRN-DIAL-IN-RECIPE-001.C1
+    type: derives-from

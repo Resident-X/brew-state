@@ -3,12 +3,12 @@ type: criterion
 title: The view resolves the shortest event the operator would act on
 status: active
 version: 1
-measurement_type: binary
+measurement_type: threshold
 verification: test
 text: |
   An event the operator is watching for is over in a fraction of the delivery that contains it, and a view that averages across a longer span reports that nothing happened.
 
-  The resolution that matters is the shortest event the operator would act on, which is a property of what goes wrong in a drink rather than of the delivery's own length.
+  The resolution the view is held to is declared alongside the tolerances on the figures it carries, and derived the same way: from the shortest event the operator would act on, which is a property of what goes wrong in a drink rather than of the delivery's own length.
 links:
   - target: REQ-LIVE-DELIVERY-VIEW-001
     type: criterion-of

@@ -4,13 +4,13 @@ category: functional
 title: Readiness is reached in close to the least time the machine's physics allows
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   How accurately the machine holds temperature and how quickly it gets there are separate claims, and only the first has been made. A controller that settles perfectly after forty minutes satisfies every temperature requirement in this graph.
 
   Time to readiness is not expressible as a fixed number, because it belongs to the machine rather than to the design: a different thermal mass on a different supply has a different floor. What is expressible is the distance between what the machine achieves and what its own physics permits, and that travels to any machine the description covers.
 
-  The floor is what the machine could do with everything it has, not with its heater alone. A machine that can move water can move heat with it, and a bound derived from heating in isolation would be a bound on one strategy rather than on the problem.
+  The floor is what the machine could do with everything reaching readiness leaves available to it, not with its heater alone. A machine that can circulate water can move heat with it, and a floor derived from heating in isolation would bound one strategy rather than the problem.
 rationale: |
   This is the requirement that distinguishes the control design from a simple regulator, and until now the graph did not contain it. Everything about estimating unmeasurable states, carrying a plant description and predicting forward is bought to reach the right state sooner; nothing asserted that reaching it sooner mattered. That absence had already turned into an assumption stated in prose elsewhere, that warm-up is short enough for nobody to wait, asserted by no criterion and checked by nothing.
 

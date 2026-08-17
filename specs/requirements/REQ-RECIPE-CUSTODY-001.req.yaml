@@ -20,3 +20,5 @@ links:
     type: derives-from
   - target: JRN-DIAL-IN-RECIPE-001.C5
     type: derives-from
+  - target: JRN-DIAL-IN-RECIPE-001.C3
+    type: derives-from
