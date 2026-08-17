@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C12
+type: criterion
+title: The plant model's arithmetic is swept by automated mutation testing, in addition to the hand-selected named defects
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The plant model's arithmetic and boundary-condition code is additionally verified by an automated mutation-testing sweep, alongside the hand-selected named defects OBL-VERIFICATION-DISCIPLINE-001.C9 already requires, when its contributing solution closes.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

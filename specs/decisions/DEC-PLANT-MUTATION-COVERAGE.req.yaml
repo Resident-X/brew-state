@@ -1,0 +1,33 @@
+id: DEC-PLANT-MUTATION-COVERAGE
+type: decision
+category: strategic
+title: Plant-model mutation-testing coverage combines a hand-curated defect set with an automated LLVM-based operator-mutation sweep
+status: active
+version: 1
+text: |
+  Mutation-testing coverage for the plant model's host-tier verification comes from two complementary methods: `firmware/tools/mutate.py`, a hand-curated set of named mutations each proving one specific check can fail on the exact defect it exists to catch, kept for architectural and domain defects no generic mutation operator can express (encapsulation violations, header-vocabulary leaks, build-flag drops); and an LLVM/Clang-based automated mutation-testing tool run against the plant model's arithmetic and boundary-condition code, generating and running a broad set of operator mutants (comparison-operator swaps, arithmetic-operator swaps, increment/decrement swaps) that a hand-curated list would not think to enumerate one at a time. Neither replaces the other; each nets a distinct, non-overlapping class of defect.
+rationale: |
+  Context: OBL-VERIFICATION-DISCIPLINE-001.C2 requires a test to be capable of failing on a plausible defect, .C8 requires a property claimed over a declared range to be verified across it including near-boundary values, and .C9 requires a check to be shown to fail on the defect it exists to catch rather than asserted to be capable of it. `firmware/tools/mutate.py` already establishes .C9 for ~30 hand-picked, named defects, but a hand-picked list is bounded by what the author thought to name -- it cannot establish that the space of plausible arithmetic and boundary defects generally is covered, which is what .C2 and .C8 ask for.
+
+  Trade-offs: hand-curated mutation proves specific named defects are caught, including ones (encapsulation, header vocabulary, build-flag scope) that have no expression as a generic operator mutation at all -- an automated tool cannot invent "a model consumer reaches a field belonging to one structure" as a mutant. Automated operator mutation sweeps every comparison and arithmetic site in the target sources mechanically, catching boundary-condition gaps nobody thought to hand-write a mutation for, at the cost of producing occasional equivalent mutants (a mutated branch that provably cannot change any observable output) that need a human triage pass before being trusted as a real gap. Running one without the other leaves a class of defect the other would have caught.
+
+  Reversibility: the two methods are independent and separately swappable -- the automated tool's mutants depend only on the LLVM/Clang toolchain and the target sources, not on the hand-curated list, and the hand-curated list does not depend on the automated tool being present. Dropping either narrows coverage without invalidating the other's results.
+
+  Consequences: the automated tool requires the host-tier build to compile through a real LLVM/Clang toolchain matching the tool's supported LLVM version, which constrains the native-platform toolchain selection on any environment mutation testing runs in (verified viable on both a local Homebrew LLVM install and GitHub-hosted CI runners, which ship clang). Every automated survivor requires a triage judgement -- equivalent mutant or real gap -- before it can be treated as evidence of unmet intent; an unreviewed survivor count is not itself a finding.
+options_considered:
+  - option: Combine the hand-curated mutate.py defect set with an automated LLVM/Clang-based operator-mutation sweep, each covering a distinct, non-overlapping defect class
+    reason_rejected: ""
+  - option: Automated operator mutation only
+    reason_rejected: Cannot express architectural or domain defects such as encapsulation violations, header-vocabulary leaks, or build-flag scope drops, which this project's own checks specifically guard and which OBL-VERIFICATION-DISCIPLINE-001.C9 already establishes via the hand-curated set
+  - option: Hand-curated mutation only (status quo)
+    reason_rejected: Bounded by what the author thought to name; leaves the space of plausible arithmetic and boundary-condition defects generally unswept, against OBL-VERIFICATION-DISCIPLINE-001.C2 and .C8
+  - option: A regex-based or non-compiler-integrated mutation tool
+    reason_rejected: Produces lower-quality mutants and more equivalent mutants without compiler/IR integration, adding triage cost without the precision an LLVM-based tool gets from mutating post-optimisation IR
+chosen: Combine the hand-curated mutate.py defect set with an automated LLVM/Clang-based operator-mutation sweep, each covering a distinct, non-overlapping defect class
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: addresses
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C8
+    type: addresses
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: addresses

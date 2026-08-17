@@ -1,0 +1,25 @@
+id: SOL-PLANT-MUTATION-SWEEP
+type: deliverable
+category: solution
+title: An automated LLVM-based mutation-testing sweep covers the plant model's arithmetic, alongside the hand-curated named-defect set
+status: active
+version: 1
+text: |
+  An LLVM-based automated mutation-testing sweep runs against the plant model's arithmetic and boundary-condition sources, complementing the hand-curated named mutations `firmware/tools/mutate.py` already runs. Mull (`mull-runner-19`, `mull-ir-frontend-19`) compiles the scoped sources through a matching LLVM/Clang toolchain, generating comparison-, arithmetic-, and increment/decrement-operator mutants that a hand-picked list would not think to enumerate one at a time, and runs them against the existing `native_test` test suite unchanged. A `mull.yml` scoping configuration excludes test code and the vendored Unity framework from the mutant population, so the sweep mutates only the production sources it targets. A surviving mutant is triaged by hand as an equivalent mutant or a real gap before it is treated as a finding.
+
+  This is a distinct verification method from `firmware/tools/mutate.py`, not a replacement for it: the hand-curated set proves specific named defects are caught, including architectural and domain defects (encapsulation violations, header-vocabulary leaks, build-flag drops) that have no expression as a generic operator mutation; the automated sweep proves the broader space of arithmetic and boundary-condition defects is covered, which a hand-picked list cannot establish by construction.
+
+  Out of scope: mutating `firmware/src/control/` or `firmware/src/hw/`; wiring the sweep into the gate that runs on every push (it is invoked deliberately, the same way `firmware/tools/mutate.py` is); and automatic equivalent-mutant detection.
+rationale: |
+  Authority is internal, per DEC-PLANT-MUTATION-COVERAGE: the project's own judgement that hand-curated and automated mutation testing net distinct, non-overlapping defect classes, and that OBL-VERIFICATION-DISCIPLINE-001.C2 and .C8 ask for coverage a hand-picked list cannot establish by construction.
+
+  Scoped to the plant model's arithmetic sources (src/plant/common, src/plant/thermoblock) because that is where OBL-VERIFICATION-DISCIPLINE-001.C8's near-boundary claim and .C2's plausible-defect claim are least established today -- the existing hand-curated mutations in that area (coefficient-compiled-in, naive-temperature-step, and similar) prove specific named defects are caught, not that the surrounding comparisons and arithmetic generally are.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS.C12
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C8
+    type: targets
+  - target: DEC-PLANT-MUTATION-COVERAGE
+    type: justified-by

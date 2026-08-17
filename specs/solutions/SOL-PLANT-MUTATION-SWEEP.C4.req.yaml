@@ -1,0 +1,19 @@
+id: SOL-PLANT-MUTATION-SWEEP.C4
+type: criterion
+title: A surviving mutant is triaged as equivalent or a real gap before being treated as a finding
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every surviving mutant is reviewed by hand to determine whether it is an
+  equivalent mutant -- a mutated branch that provably cannot change any
+  observable output, such as a comparison-operator swap at a boundary where
+  both branches evaluate to the same value -- before it is treated as evidence
+  of an uncaught defect. An unreviewed survivor count is reported as a raw
+  number only, never asserted as a defect count. Out of scope: automatic
+  equivalent-mutant detection is not required; the triage is a reviewer
+  judgement, not a tool capability this criterion asks the sweep itself to have.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP
+    type: criterion-of

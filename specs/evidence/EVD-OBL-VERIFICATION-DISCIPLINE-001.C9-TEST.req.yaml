@@ -1,0 +1,18 @@
+id: EVD-OBL-VERIFICATION-DISCIPLINE-001.C9-TEST
+type: evidence
+title: mutate.py shows each check fail on the defect it exists to catch (OBL-VERIFICATION-DISCIPLINE-001.C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T07:11:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/mutate.py
+  verifier: david
+text: |
+  firmware/tools/mutate.py runs each of ~30 named mutations twice against the check it targets: once on the unmodified tree, where the check must pass, and once with the defect introduced, where the check must fail with the specific exit code that means "found the problem" rather than any other exit code. A check whose baseline run already fails, or that stops for a reason other than the defect, is refused rather than counted as a catch. This is the literal shape of C9: the check is shown to fail on the defect it exists to catch, on the real build, rather than asserted to be capable of it by reading the check's source.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: satisfies
