@@ -14,16 +14,22 @@ runs over the whole tree rather than over the structure a build selected, so a
 structure nobody compiles cannot sit there unanswered -- and a structure added
 later cannot reach the seam without answering.
 
-Three things are checked, because each can pass while another is broken:
+Four things are checked, because each can pass while another is broken:
 
   * every structure declares a set, exactly once,
-  * the set is built from the shared vocabulary's channels rather than from
-    names of its own, so a structure claiming to answer something that cannot be
-    commanded is reported rather than left to be discovered by a caller whose
-    command goes nowhere, and
+  * the set is built out of the shared vocabulary's channels, each one through
+    the operation that turns a channel into the set containing it -- so a
+    structure claiming to answer something that cannot be commanded is reported
+    rather than left to be discovered by a caller whose command goes nowhere,
+    and so is a channel named bare, which is an ordinary-looking declaration
+    whose value is the channel's index rather than the set containing it, and
   * the set names at least one channel, since a structure answering nothing
     responds to no command at all and has not stated a narrower architecture,
-    it has stated a broken one.
+    it has stated a broken one, and
+  * no other header beside the vocabulary enumerates a channel of it. Two lists
+    that must agree eventually do not, and the state this replaced -- the same
+    channels enumerated in one seam and named again in the other, kept in step
+    by a comment -- would otherwise be reachable again by writing it back.
 
 The check fails rather than passes when it cannot find what it is meant to
 inspect: no structures, or no vocabulary to read the channels out of. A check
@@ -67,6 +73,10 @@ CHANNEL_BIT = "ACTUATION_CHANNEL_BIT"
 _ENUM_BODY = re.compile(r"\benum\b[^;{]*\{([^}]*)\}\s*" + VOCABULARY_TYPE + r"\s*;", re.DOTALL)
 _ENUMERATOR = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)")
 _IDENTIFIER = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
+#: One channel named through the operation that makes the set containing it.
+_CHANNEL_OF_BIT = re.compile(
+    re.escape(CHANNEL_BIT) + r"\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)"
+)
 
 
 def vocabulary(path: str) -> list[str]:
@@ -104,6 +114,34 @@ def vocabulary(path: str) -> list[str]:
     return [name for name in declared if name != CHANNEL_COUNT]
 
 
+def second_list_problems(include_dir: str, channels: list[str]) -> list[str]:
+    """Every header beside the vocabulary that enumerates one of its channels.
+
+    A second enumeration is the state this vocabulary exists to end. It is
+    looked for by enumerator rather than by type name, because a copy made by
+    renaming the type is still a copy, and the names are what a reader and a
+    consumer would have to keep in step by hand.
+    """
+    problems: list[str] = []
+    for entry in sorted(os.listdir(include_dir)):
+        if not entry.endswith(".h") or entry == VOCABULARY_HEADER:
+            continue
+        path = os.path.join(include_dir, entry)
+        if not os.path.isfile(path):
+            continue
+        with open(path, "r", encoding="utf-8") as handle:
+            cleaned = strip_comments_and_strings(handle.read())
+        for body in re.finditer(r"\benum\b[^;{]*\{([^}]*)\}", cleaned, re.DOTALL):
+            named = sorted(set(_IDENTIFIER.findall(body.group(1))) & set(channels))
+            if named:
+                problems.append(
+                    f"  {path}: enumerates {', '.join(named)}, which {VOCABULARY_HEADER} "
+                    "already enumerates -- two lists of the machine's channels have to be "
+                    "kept in step by hand, and eventually are not"
+                )
+    return problems
+
+
 def structure_problems(header: str, channels: list[str]) -> list[str]:
     """Every way one structure fails to state the channels it answers."""
     with open(header, "r", encoding="utf-8") as handle:
@@ -127,6 +165,17 @@ def structure_problems(header: str, channels: list[str]) -> list[str]:
     problems: list[str] = []
     named = _IDENTIFIER.findall(value)
     answered = [name for name in named if name in channels]
+    # Which channels are named through the operation that makes a set of one.
+    through_the_operation = _CHANNEL_OF_BIT.findall(value)
+
+    for name in answered:
+        if name not in through_the_operation:
+            problems.append(
+                f"line {lineno}: names '{name}' bare rather than through "
+                f"{CHANNEL_BIT}, so the set it declares is that channel's index rather than "
+                "the set containing it -- which answers whichever channels that index happens "
+                "to have the bits of"
+            )
 
     for name in named:
         if name in channels or name == CHANNEL_BIT:
@@ -186,15 +235,15 @@ def main(argv: list[str]) -> int:
         )
         return 2
 
-    findings: list[str] = []
+    findings: list[str] = second_list_problems(args.include_dir, channels)
     for structure in structures:
         for problem in structure_problems(structure.header, channels):
             findings.append(f"  {structure.header}: {problem}")
 
     if findings:
         print(
-            "check_actuation_declaration: a structure does not state which actuation channels "
-            "it answers",
+            "check_actuation_declaration: the machine's actuation channels are not one set "
+            "every structure states its answer from",
             file=sys.stderr,
         )
         for finding in findings:

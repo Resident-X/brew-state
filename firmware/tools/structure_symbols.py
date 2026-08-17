@@ -157,17 +157,26 @@ def _blank_define_replacements(cleaned: str) -> str:
     """
     kept: list[str] = []
     continuing = False
-    for line in cleaned.splitlines():
-        directive = re.match(r"^(\s*#\s*define\s+[A-Za-z_][A-Za-z0-9_]*)", line)
+    # Split after each newline rather than on it, so the line endings are
+    # carried through untouched and every offset lands where it did. Rebuilding
+    # from splitlines() would drop a byte per line on a carriage-return tree and
+    # move every span this text is later searched against.
+    for line in re.split(r"(?<=\n)", cleaned):
+        body = line.rstrip("\r\n")
+        ending = line[len(body):]
+        directive = re.match(r"^(\s*#\s*define\s+[A-Za-z_][A-Za-z0-9_]*)", body)
         if continuing:
-            kept.append(" " * len(line))
+            kept.append(" " * len(body) + ending)
         elif directive is not None:
             head = directive.group(1)
-            kept.append(head + " " * (len(line) - len(head)))
+            kept.append(head + " " * (len(body) - len(head)) + ending)
         else:
             kept.append(line)
-        continuing = line.endswith("\\")
-    return "\n".join(kept)
+        # Only a directive's own line continues onto the next one for this
+        # purpose. A stray trailing backslash elsewhere is not a replacement
+        # spilling over, and reading it as one would blank a declaration.
+        continuing = (continuing or directive is not None) and body.endswith("\\")
+    return "".join(kept)
 
 
 def owned_names(header_source: str, neutral: frozenset[str]) -> tuple[frozenset[str], frozenset[str]]:

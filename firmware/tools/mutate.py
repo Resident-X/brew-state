@@ -389,6 +389,38 @@ MUTATIONS = (
         "command": ACTUATION_HEADER,
     },
     {
+        "name": "a-suite-runs-nowhere",
+        "why": "an environment stops taking in one of the suites it runs, which leaves that "
+               "suite running in no environment at all and nothing behind to notice",
+        "file": "platformio.ini",
+        "find": "test_filter = test_plant, test_control",
+        "replace": "test_filter = test_control",
+        "command": TESTS_RUN,
+    },
+    {
+        "name": "a-structure-claims-a-channel-bare",
+        "why": "a structure names a channel without the operation that makes the set containing "
+               "it, so its declaration is that channel's index and answers whichever channels "
+               "that index has the bits of",
+        "file": "src/plant/fixture/plant_structure.h",
+        "find": "#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER)",
+        "replace": "#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_STEAM_HEATER",
+        "command": ACTUATION_DECLARATION,
+    },
+    {
+        "name": "a-second-list-of-the-machines-channels",
+        "why": "a seam header enumerates the machine's channels a second time, which is the "
+               "state the shared vocabulary replaced and which agrees only by hand",
+        "file": "include/hw_interface.h",
+        "find": "typedef actuation_channel_t hw_output_channel_t;",
+        "replace": "typedef enum {\n"
+                   "    HW_OUTPUT_BREW_HEATER = ACTUATION_CHANNEL_BREW_HEATER,\n"
+                   "    HW_OUTPUT_STEAM_HEATER = ACTUATION_CHANNEL_STEAM_HEATER,\n"
+                   "    HW_OUTPUT_PUMP = ACTUATION_CHANNEL_PUMP\n"
+                   "} hw_output_channel_t;",
+        "command": ACTUATION_DECLARATION,
+    },
+    {
         "name": "the-narrow-structure's-tests-stop-being-run",
         "why": "the environment carrying the only tests that can exercise an unanswered channel "
                "stops declaring that it runs tests",

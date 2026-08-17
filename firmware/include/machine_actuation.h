@@ -59,7 +59,13 @@ typedef enum {
  */
 typedef uint32_t actuation_channel_set_t;
 
-/* The set containing one channel. */
+/*
+ * The set containing one channel. Defined for a channel of the enumeration
+ * above and for the terminating count, which is what bounds the set's width:
+ * the machine would have to grow past thirty-two actuators before the shift ran
+ * out of set to move within, and a machine with thirty-two actuators is a
+ * different machine than this vocabulary describes.
+ */
 #define ACTUATION_CHANNEL_BIT(channel) ((actuation_channel_set_t)1u << (unsigned)(channel))
 
 #endif /* MACHINE_ACTUATION_H */

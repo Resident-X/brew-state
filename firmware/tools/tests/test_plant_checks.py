@@ -126,6 +126,13 @@ class SyntheticTree:
         self._write(os.path.join(directory, "plant_structure.h"), structure_header(name))
         return directory
 
+    def suite(self, name: str) -> str:
+        """Add one test suite, as a directory under the test root the way PlatformIO collects them."""
+        directory = os.path.join(self.root.name, "test", name)
+        os.makedirs(directory, exist_ok=True)
+        self._write(os.path.join(directory, f"{name}.c"), "int main(void) { return 0; }\n")
+        return directory
+
     def consumer(self, name: str, content: str) -> str:
         directory = os.path.join(self.source, "app")
         os.makedirs(directory, exist_ok=True)

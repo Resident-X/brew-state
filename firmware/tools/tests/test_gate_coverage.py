@@ -710,6 +710,7 @@ class TheTestTaskDiscoversItsEnvironments(unittest.TestCase):
         # environments have to cover is part of what this gate establishes.
         self.tree = SyntheticTree(structures=("alpha",))
         self.addCleanup(self.tree.cleanup)
+        self.tree.suite("test_alpha")
         self.project = self.tree.root
         self.log = os.path.join(self.project.name, "ran.log")
         self.pio = executable_script(
@@ -753,6 +754,7 @@ class TheTestTaskDiscoversItsEnvironments(unittest.TestCase):
 
     def test_a_test_environment_added_later_runs_with_no_change_to_the_invocation(self):
         self.tree.structure("beta")
+        self.tree.suite("test_beta")
         declare_environments(
             self.project.name,
             [
@@ -766,6 +768,73 @@ class TheTestTaskDiscoversItsEnvironments(unittest.TestCase):
         result = self.run_tests()
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(["host_test", "host_second_test"], self.ran())
+
+    def test_a_suite_no_environment_would_run_is_reported(self):
+        # A filter is what confines an environment to its own suites once two
+        # structures ship tests, and a suite no filter takes in runs nowhere
+        # while the build stays green.
+        self.tree.suite("test_forgotten")
+        declare_environments(
+            self.project.name,
+            [
+                (
+                    "host_test",
+                    host_environment(
+                        "alpha", entry_point=False, test_build_src="yes", test_filter="test_alpha"
+                    ),
+                )
+            ],
+        )
+        result = self.run_tests()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("test_forgotten", result.stderr)
+        self.assertIn("runs nowhere", result.stderr)
+
+    def test_a_filter_naming_a_family_of_suites_claims_them(self):
+        self.tree.suite("test_alpha_edges")
+        declare_environments(
+            self.project.name,
+            [
+                (
+                    "host_test",
+                    host_environment(
+                        "alpha", entry_point=False, test_build_src="yes", test_filter="test_alpha*"
+                    ),
+                )
+            ],
+        )
+        result = self.run_tests()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_an_environment_declaring_no_filter_runs_every_suite(self):
+        self.tree.suite("test_second")
+        declare_environments(
+            self.project.name,
+            [("host_test", host_environment("alpha", entry_point=False, test_build_src="yes"))],
+        )
+        result = self.run_tests()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_tree_with_no_suites_at_all_is_reported(self):
+        bare = SyntheticTree(structures=("alpha",))
+        self.addCleanup(bare.cleanup)
+        declare_environments(
+            bare.root.name,
+            [("host_test", host_environment("alpha", entry_point=False, test_build_src="yes"))],
+        )
+        result = run_check(
+            "run_host_tests.py",
+            "--project",
+            bare.root.name,
+            "--pio",
+            self.pio,
+            "--plant-root",
+            bare.plant,
+            "--include-dir",
+            bare.include,
+        )
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no test suites", result.stderr)
 
     def test_a_structure_no_environment_runs_tests_against_is_reported(self):
         # The failure a count of environments cannot see: with more than one
@@ -865,6 +934,7 @@ class AGateWithNothingToCoverFails(unittest.TestCase):
 
     def test_the_test_task_finds_no_environment_carrying_tests(self):
         self.tree.declare([("host", host_environment("alpha"))])
+        self.tree.suite("test_alpha")
         result = run_check(
             "run_host_tests.py",
             "--project",
@@ -880,6 +950,7 @@ class AGateWithNothingToCoverFails(unittest.TestCase):
     def test_the_test_task_finds_no_structure_to_have_run_tests_against(self):
         empty = SyntheticTree(structures=())
         self.addCleanup(empty.cleanup)
+        empty.suite("test_alpha")
         empty.declare(
             [("host_test", host_environment(entry_point=False, test_build_src="yes"))]
         )

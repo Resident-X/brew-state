@@ -259,10 +259,17 @@ static void test_zeroing_an_unanswered_channel_gives_the_same_trajectory(void)
     plant_actuation_t untouched = {{0u}};
 
     /*
-     * The same command twice over: once with every channel the structure does
-     * not answer explicitly zeroed, once with them left alone. A caller that
-     * zeroes what it does not use is the ordinary shape of a control law
-     * driving a subset of the machine.
+     * A caller that zeroes every channel it does not use is the ordinary shape
+     * of a control law driving a subset of the machine, and what it must get is
+     * a step that runs. That is the whole claim, and the assertion below that
+     * carries it is PLANT_STEP_OK on the zeroed instance: an implementation
+     * treating a zero on an unanswered channel as a command refuses there.
+     *
+     * The two instances are stepped and compared as well, which pins that the
+     * trajectory is the one the same command produces rather than merely some
+     * trajectory -- but the two actuations are equal by construction, since a
+     * level of zero is what an unset channel already carries. Nothing about
+     * that comparison could fail on its own.
      */
     untouched.level_permille[answered_channel()] = ACTUATION_FULL_SCALE;
     zeroed = untouched;

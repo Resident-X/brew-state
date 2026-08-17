@@ -20,6 +20,13 @@ artefact: a structure nothing runs tests against is a structure the host tier
 establishes nothing about, and with more than one test environment in the tree,
 one of them silently ceasing to run is invisible in a count.
 
+So is every suite. An environment may confine itself to particular suites --
+which it has to, once two structures ship tests naming their own coefficients --
+and a suite no environment's confinement takes in runs nowhere while the build
+stays green. The suites are read from the test directory and every one of them
+is required to be claimed, so adding a suite and forgetting to name it fails
+here rather than passing quietly.
+
 Discovering none is a failure: running no environment reports success in
 exactly the way running nothing does.
 
@@ -30,6 +37,7 @@ Usage: run_host_tests.py --project <dir> --pio <executable> --plant-root <dir>
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import os
 import subprocess
 import sys
@@ -38,6 +46,44 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import build_environments  # noqa: E402
 from structure_symbols import discover  # noqa: E402
+
+
+#: The option an environment confines itself to particular suites with.
+FILTER_OPTION = "test_filter"
+
+
+def discovered_suites(test_dir: str) -> set[str]:
+    """Every test suite in the tree, named as PlatformIO names them.
+
+    A suite is a directory under the test root, which is the unit PlatformIO
+    collects and the unit a filter names.
+    """
+    if not os.path.isdir(test_dir):
+        return set()
+    return {
+        entry
+        for entry in os.listdir(test_dir)
+        if os.path.isdir(os.path.join(test_dir, entry)) and not entry.startswith(".")
+    }
+
+
+def claimed_suites(environments, suites: set[str]) -> set[str]:
+    """Every suite some environment would run.
+
+    An environment declaring no filter runs all of them, which is PlatformIO's
+    own default and is what one test environment in a tree needs no filter to
+    do. One that declares a filter claims what it names -- with `*` matched the
+    way PlatformIO matches it, so a filter naming a family of suites is read as
+    claiming them rather than as claiming nothing.
+    """
+    claimed: set[str] = set()
+    for environment in environments:
+        declared = environment.get(FILTER_OPTION).strip()
+        if not declared:
+            return set(suites)
+        for pattern in (term.strip() for term in declared.replace(",", " ").split()):
+            claimed.update(fnmatch.filter(suites, pattern))
+    return claimed
 
 
 def main(argv: list[str]) -> int:
@@ -53,6 +99,9 @@ def main(argv: list[str]) -> int:
     )
     parser.add_argument(
         "--include-dir", required=True, help="the directory the seam's headers sit in"
+    )
+    parser.add_argument(
+        "--test-dir", default="test", help="the directory the test suites sit in, under the project"
     )
     args = parser.parse_args(argv)
 
@@ -94,6 +143,25 @@ def main(argv: list[str]) -> int:
             "run_host_tests: no environment runs tests against "
             f"{', '.join(uncovered)} -- a structure nothing is run against is one the host "
             "tier establishes nothing about, and a count of environments would not show it",
+            file=sys.stderr,
+        )
+        return 1
+
+    suites = discovered_suites(os.path.join(args.project, args.test_dir))
+    if not suites:
+        print(
+            f"run_host_tests: no test suites under {os.path.join(args.project, args.test_dir)} "
+            "-- there is nothing for an environment to have been pointed at",
+            file=sys.stderr,
+        )
+        return 1
+
+    unclaimed = sorted(suites - claimed_suites(environments, suites))
+    if unclaimed:
+        print(
+            f"run_host_tests: no environment runs {', '.join(unclaimed)} -- a suite no "
+            "environment's test_filter takes in runs nowhere, and leaves nothing behind to "
+            "notice",
             file=sys.stderr,
         )
         return 1
