@@ -25,6 +25,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/*
+ * The machine's actuation channels. They are the same channels the plant model
+ * responds to, so they are named in one place that neither seam owns rather
+ * than enumerated again here.
+ */
+#include "machine_actuation.h"
+
 /* Sensor channels the control logic can read. */
 typedef enum {
     HW_SENSOR_BREW_TEMPERATURE = 0,
@@ -34,13 +41,13 @@ typedef enum {
     HW_SENSOR_CHANNEL_COUNT
 } hw_sensor_channel_t;
 
-/* Output channels the control logic can drive. */
-typedef enum {
-    HW_OUTPUT_BREW_HEATER = 0,
-    HW_OUTPUT_STEAM_HEATER,
-    HW_OUTPUT_PUMP,
-    HW_OUTPUT_CHANNEL_COUNT
-} hw_output_channel_t;
+/*
+ * Output channels the control logic can drive: the machine's actuation
+ * channels, under the name this seam knows them by. This is another name for
+ * the shared set rather than a second copy of it, so a channel added to the
+ * machine reaches this seam without anything here being edited.
+ */
+typedef actuation_channel_t hw_output_channel_t;
 
 /*
  * A sensor reading in thousandths of the channel's unit -- millidegrees Celsius
@@ -53,9 +60,6 @@ typedef struct {
     int32_t value_milli;
 } hw_reading_t;
 
-/* The largest drive level `hw_output_set` accepts, expressed in parts per thousand. */
-#define HW_OUTPUT_FULL_SCALE 1000u
-
 /*
  * Sample a sensor channel. An out-of-range channel yields an invalid reading
  * rather than undefined behaviour.
@@ -65,7 +69,7 @@ hw_reading_t hw_sensor_read(hw_sensor_channel_t channel);
 /*
  * Drive an output channel at `level_permille` parts per thousand of full scale.
  * Returns false and changes nothing when the channel is out of range, when the
- * level exceeds HW_OUTPUT_FULL_SCALE, or when the implementation cannot drive
+ * level exceeds ACTUATION_FULL_SCALE, or when the implementation cannot drive
  * the channel at all -- a caller must treat a refusal as "the channel is at
  * whatever it was", not as "the channel is off".
  */

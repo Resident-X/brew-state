@@ -88,6 +88,15 @@ SUPPORT_HEADER = [
     sys.executable, "tools/check_plant_header.py", "include/plant_support.h",
     "--plant-root", "src/plant", "--include-dir", "include", "--vocabulary-only",
 ]
+NARROW_TESTS = [PIO, "test", "-e", "native_fixture_test", "-f", "test_plant_narrow"]
+ACTUATION_HEADER = [
+    sys.executable, "tools/check_plant_header.py", "include/machine_actuation.h",
+    "--plant-root", "src/plant", "--include-dir", "include", "--vocabulary-only",
+]
+ACTUATION_DECLARATION = [
+    sys.executable, "tools/check_actuation_declaration.py",
+    "--plant-root", "src/plant", "--include-dir", "include",
+]
 SUPPORT_STATUS = [
     sys.executable, "tools/check_support_status.py",
     "--plant-root", "src/plant", "--include-dir", "include", "--documentation", "README.md",
@@ -97,6 +106,7 @@ ANALYSIS = [
 ]
 TESTS_RUN = [
     sys.executable, "tools/run_host_tests.py", "--project", ".", "--pio", PIO,
+    "--plant-root", "src/plant", "--include-dir", "include",
 ]
 
 #: Each entry: a name, the file to edit, the exact text to replace, what to put
@@ -109,6 +119,9 @@ LABELS = {
     tuple(VOCABULARY_HEADER): "the vocabulary header check",
     tuple(SUPPORT_HEADER): "the support vocabulary header check",
     tuple(SUPPORT_STATUS): "the support status check",
+    tuple(NARROW_TESTS): "the tests driving a narrowly-declared structure",
+    tuple(ACTUATION_HEADER): "the actuation vocabulary header check",
+    tuple(ACTUATION_DECLARATION): "the actuation declaration check",
     tuple(ANALYSIS): "the host tier's analysis check",
     tuple(TESTS_RUN): "the task that runs the tests",
 }
@@ -284,8 +297,10 @@ MUTATIONS = (
         "why": "a single environment overrides the settings its base gives it, which is the "
                "defect a gate verifying one named environment cannot see at all",
         "file": "platformio.ini",
-        "find": "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture",
-        "replace": "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture\n"
+        "find": "build_src_filter = ${native_base.build_src_filter} +<plant/fixture/> +<app/native/>\n"
+                "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture",
+        "replace": "build_src_filter = ${native_base.build_src_filter} +<plant/fixture/> +<app/native/>\n"
+                   "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture\n"
                    "build_src_flags = -Wall",
         "command": ANALYSIS,
     },
@@ -304,8 +319,114 @@ MUTATIONS = (
         "why": "the environment carrying the tests stops declaring it, and tests that never "
                "run leave nothing behind to notice",
         "file": "platformio.ini",
-        "find": "test_build_src = yes",
+        "find": "test_build_src = yes\n; The test runner's own generated support file",
+        "replace": "; The test runner's own generated support file",
+        "command": TESTS_RUN,
+    },
+    {
+        "name": "unanswered-channel-absorbed",
+        "why": "a command on a channel the structure does not answer is taken rather than "
+               "refused, which is indistinguishable to a caller from an actuator that is "
+               "present and ineffective",
+        "file": "src/plant/common/plant_step.c",
+        "find": "        if (commanded && !answers) {",
+        "replace": "        if (false && commanded && !answers) {",
+        "command": NARROW_TESTS,
+    },
+    {
+        "name": "unanswered-channel-zeroed",
+        "why": "the level on an unanswered channel is dropped and the step taken anyway, so a "
+               "refusal reads as the model having advanced with the command adjusted",
+        "file": "src/plant/common/plant_step.c",
+        "find": "        const bool commanded = actuation->level_permille[channel] != 0u;",
+        "replace": "        const bool commanded = false;",
+        "command": NARROW_TESTS,
+    },
+    {
+        "name": "zero-on-an-unanswered-channel-refused",
+        "why": "commanding nothing of an absent actuator is treated as a fault, which leaves a "
+               "caller that zeroes every channel it does not use unable to step at all",
+        "file": "src/plant/common/plant_step.c",
+        "find": "        const bool commanded = actuation->level_permille[channel] != 0u;",
+        "replace": "        const bool commanded = true;",
+        "command": NARROW_TESTS,
+    },
+    {
+        "name": "fault-order-left-to-the-implementation",
+        "why": "the two channel faults are looked for in one pass, so which of them a command "
+               "carrying both is refused for follows the channel it happens to be on",
+        "file": "src/plant/common/plant_step.c",
+        "find": "        if (actuation->level_permille[channel] > ACTUATION_FULL_SCALE) {",
+        "replace": "        if (actuation->level_permille[channel] > ACTUATION_FULL_SCALE &&\n"
+                   "            (answered & ACTUATION_CHANNEL_BIT(channel)) != 0u) {",
+        "command": NARROW_TESTS,
+    },
+    {
+        "name": "structure-states-no-channels",
+        "why": "a structure reaches the seam without saying which channels it answers, which "
+               "is the state every structure was in before this was required",
+        "file": "src/plant/fixture/plant_structure.h",
+        "find": "#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER)",
         "replace": "",
+        "command": ACTUATION_DECLARATION,
+    },
+    {
+        "name": "structure-claims-a-channel-the-machine-lacks",
+        "why": "a structure claims to answer something nothing can command, which would "
+               "otherwise be found by a caller whose command goes nowhere",
+        "file": "src/plant/fixture/plant_structure.h",
+        "find": "#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER)",
+        "replace": "#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_GRINDER)",
+        "command": ACTUATION_DECLARATION,
+    },
+    {
+        "name": "actuation-vocabulary-header-names-a-structure",
+        "why": "the header both seams draw the machine's channels from reaches into one "
+               "structure, which would put those equations behind every consumer of either seam",
+        "file": "include/machine_actuation.h",
+        "find": "#endif /* MACHINE_ACTUATION_H */",
+        "replace": '#include "thermoblock/plant_structure.h"\n#endif /* MACHINE_ACTUATION_H */',
+        "command": ACTUATION_HEADER,
+    },
+    {
+        "name": "a-suite-runs-nowhere",
+        "why": "an environment stops taking in one of the suites it runs, which leaves that "
+               "suite running in no environment at all and nothing behind to notice",
+        "file": "platformio.ini",
+        "find": "test_filter = test_plant, test_control",
+        "replace": "test_filter = test_control",
+        "command": TESTS_RUN,
+    },
+    {
+        "name": "a-structure-claims-a-channel-bare",
+        "why": "a structure names a channel without the operation that makes the set containing "
+               "it, so its declaration is that channel's index and answers whichever channels "
+               "that index has the bits of",
+        "file": "src/plant/fixture/plant_structure.h",
+        "find": "#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER)",
+        "replace": "#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_STEAM_HEATER",
+        "command": ACTUATION_DECLARATION,
+    },
+    {
+        "name": "a-second-list-of-the-machines-channels",
+        "why": "a seam header enumerates the machine's channels a second time, which is the "
+               "state the shared vocabulary replaced and which agrees only by hand",
+        "file": "include/hw_interface.h",
+        "find": "typedef actuation_channel_t hw_output_channel_t;",
+        "replace": "typedef enum {\n"
+                   "    HW_OUTPUT_BREW_HEATER = ACTUATION_CHANNEL_BREW_HEATER,\n"
+                   "    HW_OUTPUT_STEAM_HEATER = ACTUATION_CHANNEL_STEAM_HEATER,\n"
+                   "    HW_OUTPUT_PUMP = ACTUATION_CHANNEL_PUMP\n"
+                   "} hw_output_channel_t;",
+        "command": ACTUATION_DECLARATION,
+    },
+    {
+        "name": "the-narrow-structure's-tests-stop-being-run",
+        "why": "the environment carrying the only tests that can exercise an unanswered channel "
+               "stops declaring that it runs tests",
+        "file": "platformio.ini",
+        "find": "test_build_src = yes\ncustom_strict_flags_exemption",
+        "replace": "custom_strict_flags_exemption",
         "command": TESTS_RUN,
     },
 )

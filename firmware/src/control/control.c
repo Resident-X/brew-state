@@ -20,12 +20,12 @@
  */
 #define CONTROL_SATURATION_MILLI_C \
     (CONTROL_BREW_SETPOINT_MILLI_C - \
-     ((int32_t)HW_OUTPUT_FULL_SCALE / CONTROL_GAIN_PERMILLE_PER_DEGREE) * 1000)
+     ((int32_t)ACTUATION_FULL_SCALE / CONTROL_GAIN_PERMILLE_PER_DEGREE) * 1000)
 
 static uint16_t drive_level_for_reading(int32_t reading_milli_c)
 {
     if (reading_milli_c <= CONTROL_SATURATION_MILLI_C) {
-        return (uint16_t)HW_OUTPUT_FULL_SCALE;
+        return (uint16_t)ACTUATION_FULL_SCALE;
     }
     if (reading_milli_c >= CONTROL_BREW_SETPOINT_MILLI_C) {
         return 0u;
@@ -46,7 +46,7 @@ static uint16_t drive_level_for_reading(int32_t reading_milli_c)
 static control_step_result_t shut_down(control_state_t *state, control_step_result_t reason)
 {
     state->faulted = true;
-    if (hw_output_set(HW_OUTPUT_BREW_HEATER, 0u)) {
+    if (hw_output_set(ACTUATION_CHANNEL_BREW_HEATER, 0u)) {
         state->brew_heater_permille = 0u;
     }
     return reason;
@@ -64,7 +64,7 @@ bool control_init(control_state_t *state)
     state->started = false;
     state->faulted = false;
 
-    return hw_output_set(HW_OUTPUT_BREW_HEATER, 0u);
+    return hw_output_set(ACTUATION_CHANNEL_BREW_HEATER, 0u);
 }
 
 control_step_result_t control_step(control_state_t *state)
@@ -88,7 +88,7 @@ control_step_result_t control_step(control_state_t *state)
     state->step_count++;
 
     if (state->faulted) {
-        if (hw_output_set(HW_OUTPUT_BREW_HEATER, 0u)) {
+        if (hw_output_set(ACTUATION_CHANNEL_BREW_HEATER, 0u)) {
             state->brew_heater_permille = 0u;
         }
         return CONTROL_STEP_FAULT_LATCHED;
@@ -100,7 +100,7 @@ control_step_result_t control_step(control_state_t *state)
     }
 
     const uint16_t level = drive_level_for_reading(brew.value_milli);
-    if (!hw_output_set(HW_OUTPUT_BREW_HEATER, level)) {
+    if (!hw_output_set(ACTUATION_CHANNEL_BREW_HEATER, level)) {
         return shut_down(state, CONTROL_STEP_OUTPUT_REFUSED);
     }
 

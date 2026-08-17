@@ -1,0 +1,31 @@
+id: EVD-REQ-MODEL-STRUCTURE-SEAM-001.C6-ATTEST
+type: evidence
+title: Attestation of REQ-MODEL-STRUCTURE-SEAM-001.C6
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-17T01:33:34Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - SOL-PLANT-ACTUATION-CHANNEL-DECLARATION
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-MODEL-STRUCTURE-SEAM-001.C6.
+
+  Final-state intent: which actuation channels a structure answers is something the structure states rather than something a caller works out by watching what moves, and a command on a channel it does not answer is refused or reported so a caller can tell a command that acted from one that had nowhere to land. The criterion is explicitly silent on how a structure states it and on what a caller does with the answer.
+
+  Composition: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION, with active evidence EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C1-INSPECTION, .C2-INSPECTION, .C3-ANALYSIS, .C4-TEST, .C5-TEST, .C6-TEST and .C7-TEST.
+
+  Intent fit: the machine s actuation channels are now one enumerated set in a header neither seam owns, each structure states the subset it answers, and that statement is reached through the plant-model seam rather than from a structure s own header. A non-zero level on an unanswered channel is refused totally -- no state changes and nothing is clamped or dropped -- and the refusal record names the offending channel by its value in the shared set, distinguishable from a null argument, an uninitialised instance, a zero interval and an over-scale level, with a fixed precedence pinned by test. A zero level on an unanswered channel is not a fault, so a caller that zeroes what it does not use can still step. A build check runs over every structure in the tree and fails one that states nothing, states a channel the machine does not have, or names a channel bare rather than through the operation that makes the set containing it. Six mutations covering the refusal, the fault order, the zero case and the declaration check are each caught by the tests or the check, so none of these assertions passes vacuously.
+
+  Acknowledged scope boundary: the structure currently exercising the refusal is the fixture, which describes no machine -- the structure describing the reference machine answers every channel and cannot trigger it. That is the criterion s motivating case rather than a gap in it: the behaviour is established behind the seam in shared code that every structure applies, not per structure, and the first machine-describing structure to leave a channel unanswered arrives with SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE, which states its narrower set against this contract rather than negotiating one. What a control law does when it is refused is out of scope by the criterion s own terms.
+
+  Decision: attest. No unstated gap against the criterion s final-state intent.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C6
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

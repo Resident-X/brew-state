@@ -6,8 +6,8 @@ typedef struct {
 } sim_channel_t;
 
 static sim_channel_t sim_sensors[HW_SENSOR_CHANNEL_COUNT];
-static uint16_t sim_outputs[HW_OUTPUT_CHANNEL_COUNT];
-static uint32_t sim_output_writes[HW_OUTPUT_CHANNEL_COUNT];
+static uint16_t sim_outputs[ACTUATION_CHANNEL_COUNT];
+static uint32_t sim_output_writes[ACTUATION_CHANNEL_COUNT];
 static uint32_t sim_millis;
 static bool sim_output_refused;
 
@@ -24,7 +24,7 @@ static bool sensor_channel_in_range(hw_sensor_channel_t channel)
 
 static bool output_channel_in_range(hw_output_channel_t channel)
 {
-    return (unsigned)channel < (unsigned)HW_OUTPUT_CHANNEL_COUNT;
+    return (unsigned)channel < (unsigned)ACTUATION_CHANNEL_COUNT;
 }
 
 void hw_sim_reset(void)
@@ -33,7 +33,7 @@ void hw_sim_reset(void)
         sim_sensors[i].valid = false;
         sim_sensors[i].value_milli = 0;
     }
-    for (int i = 0; i < (int)HW_OUTPUT_CHANNEL_COUNT; i++) {
+    for (int i = 0; i < (int)ACTUATION_CHANNEL_COUNT; i++) {
         sim_outputs[i] = 0u;
         sim_output_writes[i] = 0u;
     }
@@ -91,7 +91,7 @@ hw_reading_t hw_sensor_read(hw_sensor_channel_t channel)
 
 bool hw_output_set(hw_output_channel_t channel, uint16_t level_permille)
 {
-    if (!output_channel_in_range(channel) || level_permille > HW_OUTPUT_FULL_SCALE) {
+    if (!output_channel_in_range(channel) || level_permille > ACTUATION_FULL_SCALE) {
         return false;
     }
     if (sim_output_refused) {

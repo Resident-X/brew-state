@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7-TEST
+type: evidence
+title: The structures and the control logic behave identically after the vocabulary is unified (SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T01:31:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified; firmware/test/test_control/test_control.c::test_the_control_logic_drives_what_it_drove_before_the_vocabulary_was_unified
+text: |-
+  The values compared against were recorded from the build as it stood before this change and are carried in the tests as hexadecimal literals, so they are exact and could not have been regenerated from the build afterwards. The machine-describing structure declares every channel the vocabulary carries; its four quantities are compared at four checkpoints along a rest-heating-working sequence and are required to match as stored rather than within a tolerance. The control logic's use of the hardware seam is pinned the same way: the level driven on the brew heater and the number of writes at each of ten readings from cold to past the setpoint, together with the too-soon, sensor-invalid and fault-latched steps that follow. An independent reviewer rebuilt both halves from the pre-change tree and reproduced every recorded value.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3-ANALYSIS
+type: evidence
+title: Every structure states which channels it answers, checked in the build (SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-17T01:31:05Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_actuation_declaration.py; firmware/tools/tests/test_plant_checks.py::StructureStatesWhatItAnswers, DeclarationsStayInsideTheVocabulary, ACheckWithNothingToInspectFails
+text: |-
+  Both structures under src/plant/ gained a declaration. check_actuation_declaration.py runs inside every build and from the check task, over every structure it discovers rather than the one a build selected, and fails on: no declaration, more than one, an empty set, a channel outside the shared vocabulary, the terminating count named as a channel, a channel named bare rather than through the operation that makes the set containing it, and a channel named twice. It reports uninspectable rather than success when it finds no structure, no vocabulary header, no channel type, or no terminating count. Fifteen tool tests over synthetic tempdir trees cover those, and the mutations structure-states-no-channels, structure-claims-a-channel-the-machine-lacks and a-structure-claims-a-channel-bare are each caught.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3
+    type: satisfies

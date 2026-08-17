@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C1-INSPECTION
+type: evidence
+title: One enumerated actuation set both seams speak (SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T01:31:05Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/include/machine_actuation.h; firmware/tools/check_plant_header.py include/machine_actuation.h --vocabulary-only; firmware/test/test_plant/test_plant.c::test_the_actuation_channels_are_one_enumerated_set
+text: |-
+  The channels and the full scale their levels are expressed on are enumerated once, in a vocabulary-only header both seams include and neither owns. The hardware seam's output-channel type is a name for that enumeration rather than a second copy, and the plant seam's actuation carries levels indexed by it rather than three named fields; neither seam defines a full scale of its own. The new header is a subject of the vocabulary check that already runs over the seam headers, on the same terms, and the declaration check additionally fails any other header that enumerates one of the machine's channels a second time. Two mutations pin that: actuation-vocabulary-header-names-a-structure and a-second-list-of-the-machines-channels are each caught.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C1
+    type: satisfies

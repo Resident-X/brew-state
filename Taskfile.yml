@@ -115,7 +115,7 @@ tasks:
       # because they exist rather than because a line here names them. The suite
       # covering the check tools is named because it is one fixed thing rather
       # than a set that grows with the tree.
-      - cd {{.FW_DIR}} && python3 tools/run_host_tests.py --project . --pio {{.PIO}}
+      - cd {{.FW_DIR}} && python3 tools/run_host_tests.py --project . --pio {{.PIO}} --plant-root src/plant --include-dir include
       - python3 -m unittest discover -s {{.FW_DIR}}/tools/tests
 
   fw:check:
@@ -135,6 +135,10 @@ tasks:
       - python3 tools/check_plant_header.py include/plant_model.h --plant-root src/plant --include-dir include
       - python3 tools/check_plant_header.py include/plant_types.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_plant_header.py include/plant_support.h --plant-root src/plant --include-dir include --vocabulary-only
+      # The vocabulary both seams draw the machine's actuation channels from,
+      # and every structure's statement of which of them it answers.
+      - python3 tools/check_plant_header.py include/machine_actuation.h --plant-root src/plant --include-dir include --vocabulary-only
+      - python3 tools/check_actuation_declaration.py --plant-root src/plant --include-dir include
       - python3 tools/check_plant_encapsulation.py src test --plant-root src/plant --include-dir include
       - python3 tools/check_support_status.py --plant-root src/plant --include-dir include --documentation README.md
       - python3 tools/check_direct_calls.py --project . --header include/plant_model.h --objects-in src/app/native

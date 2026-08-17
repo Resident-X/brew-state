@@ -30,6 +30,16 @@
  */
 #define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED
 
+/*
+ * The brew heater, and nothing else. This structure describes no machine, so it
+ * is free to describe one with fewer actuators than the vocabulary carries --
+ * and being narrower than the vocabulary is what makes it a subject the seam's
+ * refusal of an unanswered channel can be shown to fail against. A structure
+ * that answered everything could not trigger it, and a refusal nothing can
+ * trigger is indistinguishable from not having one.
+ */
+#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER)
+
 /* The one coefficient this structure reads. It means nothing. */
 typedef struct {
     float fixture_gain;

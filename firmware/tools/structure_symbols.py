@@ -43,7 +43,12 @@ STRUCTURE_HEADER = "plant_structure.h"
 
 #: The headers that carry the seam's own vocabulary. Everything they name is
 #: neutral: it belongs to the interface rather than to any structure.
-NEUTRAL_HEADERS = ("plant_model.h", "plant_types.h")
+#:
+#: The actuation vocabulary is among them because it belongs to the machine and
+#: is named by every structure that states which of its channels it answers. Its
+#: names would otherwise be read as that structure's own, and the seam headers
+#: carrying the same set would be reported for reaching into a structure.
+NEUTRAL_HEADERS = ("plant_model.h", "plant_types.h", "machine_actuation.h")
 
 _IDENTIFIER = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
 #: The declared name of one field: the identifier a member declaration ends on.
@@ -138,6 +143,42 @@ def _enum_regions(cleaned: str) -> list[tuple[int, int]]:
     return regions
 
 
+def _blank_define_replacements(cleaned: str) -> str:
+    """Blank what a `#define` expands to, keeping the name it declares.
+
+    A macro's replacement text is made of names the header uses, not names it
+    declares -- `#define X SET_OF(Y)` declares X, and says that SET_OF and Y are
+    somebody else's. Read whole, it would make every name a structure's macro
+    reaches for look like the structure's own, and the header those names really
+    come from would then be reported for naming them.
+
+    Blanked rather than removed so that every offset into the source still
+    points where it did: the record and enum spans are found on this same text.
+    """
+    kept: list[str] = []
+    continuing = False
+    # Split after each newline rather than on it, so the line endings are
+    # carried through untouched and every offset lands where it did. Rebuilding
+    # from splitlines() would drop a byte per line on a carriage-return tree and
+    # move every span this text is later searched against.
+    for line in re.split(r"(?<=\n)", cleaned):
+        body = line.rstrip("\r\n")
+        ending = line[len(body):]
+        directive = re.match(r"^(\s*#\s*define\s+[A-Za-z_][A-Za-z0-9_]*)", body)
+        if continuing:
+            kept.append(" " * len(body) + ending)
+        elif directive is not None:
+            head = directive.group(1)
+            kept.append(head + " " * (len(body) - len(head)) + ending)
+        else:
+            kept.append(line)
+        # Only a directive's own line continues onto the next one for this
+        # purpose. A stray trailing backslash elsewhere is not a replacement
+        # spilling over, and reading it as one would blank a declaration.
+        continuing = (continuing or directive is not None) and body.endswith("\\")
+    return "".join(kept)
+
+
 def owned_names(header_source: str, neutral: frozenset[str]) -> tuple[frozenset[str], frozenset[str]]:
     """Split a structure header's own names into declarations and members."""
     cleaned = strip_comments_and_strings(header_source)
@@ -151,7 +192,7 @@ def owned_names(header_source: str, neutral: frozenset[str]) -> tuple[frozenset[
     declarations.update(_TYPEDEF_TAIL.findall(cleaned))
     for begin, end in _enum_regions(cleaned):
         declarations.update(_IDENTIFIER.findall(cleaned[begin:end]))
-    for match in _CALLABLE.finditer(cleaned):
+    for match in _CALLABLE.finditer(_blank_define_replacements(cleaned)):
         if match.start(1) not in inside_record:
             declarations.add(match.group(1))
 

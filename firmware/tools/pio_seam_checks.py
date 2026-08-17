@@ -69,6 +69,28 @@ CHECKS = (
         include_dir,
         "--vocabulary-only",
     ],
+    # And so does the vocabulary the machine's actuation channels are drawn
+    # from. Both seams include it, so a structure name reaching it would reach
+    # every consumer of either seam rather than of one.
+    [
+        os.path.join(tools_dir, "check_plant_header.py"),
+        os.path.join(include_dir, "machine_actuation.h"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+        "--vocabulary-only",
+    ],
+    # Every structure in the tree states which of those channels it answers,
+    # over the whole tree for the same reason the support status is: a structure
+    # nobody compiles is exactly the one that would sit there unanswered.
+    [
+        os.path.join(tools_dir, "check_actuation_declaration.py"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+    ],
     # Nothing outside the structures reaches a structure's own symbols. The
     # tests are inspected alongside the sources: a test that reaches around the
     # seam is a test that would not survive a second structure either.

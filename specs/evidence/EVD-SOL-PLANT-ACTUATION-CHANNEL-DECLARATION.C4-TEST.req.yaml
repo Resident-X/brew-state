@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C4-TEST
+type: evidence
+title: A non-zero command on an unanswered channel is refused and nothing moves (SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T01:31:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_narrow/test_plant_narrow.c::test_a_command_on_an_unanswered_channel_refuses_and_moves_nothing, test_a_refused_command_is_not_applied_with_the_unanswered_channel_dropped, test_the_form_without_a_record_refuses_exactly_what_the_reporting_form_does
+text: |-
+  Driven against the fixture structure, whose declaration is narrower than the vocabulary -- the machine-describing structure answers every channel and could not trigger the refusal. One test steps the instance well away from its initial state, then issues the same command with a level added on an unanswered channel, and requires every quantity to be exactly where it was. A second shows the command was not applied with the unanswered channel dropped: an instance refused it and an instance given only the answered channel end in different states. The refusal is the same through the form that takes no record. Three mutations pin it: unanswered-channel-absorbed, unanswered-channel-zeroed and zero-on-an-unanswered-channel-refused are each caught.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C4
+    type: satisfies

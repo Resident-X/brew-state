@@ -28,10 +28,10 @@ static const uint32_t sensor_adc_channel[HW_SENSOR_CHANNEL_COUNT] = {
 };
 
 /* Timer compare channels backing the output channels, in hw_output_channel_t order. */
-static const uint32_t output_timer_channel[HW_OUTPUT_CHANNEL_COUNT] = {
-    TIM_CHANNEL_1, /* HW_OUTPUT_BREW_HEATER */
-    TIM_CHANNEL_2, /* HW_OUTPUT_STEAM_HEATER */
-    TIM_CHANNEL_3  /* HW_OUTPUT_PUMP */
+static const uint32_t output_timer_channel[ACTUATION_CHANNEL_COUNT] = {
+    TIM_CHANNEL_1, /* ACTUATION_CHANNEL_BREW_HEATER */
+    TIM_CHANNEL_2, /* ACTUATION_CHANNEL_STEAM_HEATER */
+    TIM_CHANNEL_3  /* ACTUATION_CHANNEL_PUMP */
 };
 
 /* Full-scale count of the converter, used to scale a raw sample to milli-units. */
@@ -93,7 +93,7 @@ static bool init_outputs(void)
     pwm.Instance = TIM3;
     pwm.Init.Prescaler = 0;
     pwm.Init.CounterMode = TIM_COUNTERMODE_UP;
-    pwm.Init.Period = HW_OUTPUT_FULL_SCALE - 1u;
+    pwm.Init.Period = ACTUATION_FULL_SCALE - 1u;
     pwm.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     pwm.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
@@ -106,7 +106,7 @@ static bool init_outputs(void)
     compare.OCPolarity = TIM_OCPOLARITY_HIGH;
     compare.OCFastMode = TIM_OCFAST_DISABLE;
 
-    for (int i = 0; i < (int)HW_OUTPUT_CHANNEL_COUNT; i++) {
+    for (int i = 0; i < (int)ACTUATION_CHANNEL_COUNT; i++) {
         if (HAL_TIM_PWM_ConfigChannel(&pwm, &compare, output_timer_channel[i]) != HAL_OK) {
             return false;
         }
@@ -175,10 +175,10 @@ hw_reading_t hw_sensor_read(hw_sensor_channel_t channel)
 
 bool hw_output_set(hw_output_channel_t channel, uint16_t level_permille)
 {
-    if (!peripherals_ready || (unsigned)channel >= (unsigned)HW_OUTPUT_CHANNEL_COUNT) {
+    if (!peripherals_ready || (unsigned)channel >= (unsigned)ACTUATION_CHANNEL_COUNT) {
         return false;
     }
-    if (level_permille > HW_OUTPUT_FULL_SCALE) {
+    if (level_permille > ACTUATION_FULL_SCALE) {
         return false;
     }
 

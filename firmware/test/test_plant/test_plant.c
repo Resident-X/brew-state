@@ -72,12 +72,11 @@ static const coefficient_t NOMINAL[] = {
 /* Short runs, where the criteria only need a step or a few dozen. */
 #define SHORT_STEPS 40
 
-static const plant_actuation_t AT_REST = {0u, 0u, 0u};
-static const plant_actuation_t HEATING = {PLANT_ACTUATION_FULL_SCALE, PLANT_ACTUATION_FULL_SCALE,
-                                          0u};
+static const plant_actuation_t AT_REST = {{0u, 0u, 0u}};
+static const plant_actuation_t HEATING = {{ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, 0u}};
 /* Heat and pump together, so no coefficient is left out of the trajectory. */
-static const plant_actuation_t WORKING = {PLANT_ACTUATION_FULL_SCALE, PLANT_ACTUATION_FULL_SCALE,
-                                          PLANT_ACTUATION_FULL_SCALE / 2u};
+static const plant_actuation_t WORKING = {
+    {ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE / 2u}};
 
 static plant_parameters_t parameters;
 static plant_parameter_error_t error;
@@ -314,7 +313,7 @@ static void test_an_actuation_beyond_full_scale_is_refused_and_changes_nothing(v
     plant_model_t model;
     float before[PLANT_QUANTITY_COUNT];
     float after[PLANT_QUANTITY_COUNT];
-    const plant_actuation_t over_scale = {PLANT_ACTUATION_FULL_SCALE + 1u, 0u, 0u};
+    const plant_actuation_t over_scale = {{ACTUATION_FULL_SCALE + 1u, 0u, 0u}};
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     read_all(&model, before);
@@ -1023,7 +1022,7 @@ static void test_a_step_matches_the_closed_form_across_the_declared_range(void)
      * this test is about.
      */
     static const uint32_t intervals_ms[] = {10u, 100u, 1000u};
-    const plant_actuation_t brew_only = {PLANT_ACTUATION_FULL_SCALE, 0u, 0u};
+    const plant_actuation_t brew_only = {{ACTUATION_FULL_SCALE, 0u, 0u}};
 
     double low[COEFFICIENT_COUNT];
     double high[COEFFICIENT_COUNT];
@@ -1133,7 +1132,7 @@ static void test_a_step_matches_the_closed_form_across_the_declared_range(void)
  * mean a test that finds the defect in some runs and not others. */
 static void test_a_short_step_against_a_long_time_constant_stays_accurate(void)
 {
-    const plant_actuation_t brew_only = {PLANT_ACTUATION_FULL_SCALE, 0u, 0u};
+    const plant_actuation_t brew_only = {{ACTUATION_FULL_SCALE, 0u, 0u}};
     double values[COEFFICIENT_COUNT];
     char text[DESCRIPTION_MAX];
     plant_parameters_t loaded;
@@ -1209,9 +1208,147 @@ static void test_the_corners_of_the_declared_range_stay_at_rest(void)
     }
 }
 
+/// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C1: The machine's actuation channels
+/// are one enumerated set both seams speak.
+static void test_the_actuation_channels_are_one_enumerated_set(void)
+{
+    /*
+     * The channels are addressable by value with a terminating count, which is
+     * what lets a structure state which it answers and a refusal name one. A
+     * set of separately named fields could carry the same three levels and none
+     * of those sentences.
+     */
+    TEST_ASSERT_TRUE((unsigned)ACTUATION_CHANNEL_COUNT > 0u);
+    TEST_ASSERT_EQUAL(0, (int)ACTUATION_CHANNEL_BREW_HEATER);
+
+    plant_actuation_t actuation = {{0u}};
+    for (unsigned channel = 0u; channel < (unsigned)ACTUATION_CHANNEL_COUNT; channel++) {
+        actuation.level_permille[channel] = (uint16_t)(channel + 1u);
+    }
+    for (unsigned channel = 0u; channel < (unsigned)ACTUATION_CHANNEL_COUNT; channel++) {
+        TEST_ASSERT_EQUAL_UINT16((uint16_t)(channel + 1u), actuation.level_permille[channel]);
+    }
+
+    /*
+     * One scale for the whole vocabulary. A per-seam copy is what this replaces,
+     * and the level that is one beyond it is the level the seam refuses -- so a
+     * second scale drifting from this one would move where the refusal falls.
+     */
+    plant_actuation_t at_scale = {{0u}};
+    plant_actuation_t beyond_scale = {{0u}};
+    plant_model_t model;
+
+    at_scale.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = ACTUATION_FULL_SCALE;
+    beyond_scale.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = ACTUATION_FULL_SCALE + 1u;
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &at_scale, STEP_MS));
+    TEST_ASSERT_FALSE(plant_model_step(&model, &beyond_scale, STEP_MS));
+}
+
+/// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C2: The plant-model seam carries each
+/// structure's statement of the channels it answers.
+/// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3: Every structure behind the seam
+/// declares which actuation channels it answers.
+static void test_the_structure_states_which_channels_it_answers(void)
+{
+    const actuation_channel_set_t answered = plant_structure_actuation_channels();
+
+    /* Reached through the seam, not by including a structure's own header. */
+    TEST_ASSERT_NOT_EQUAL(0u, answered);
+
+    /* Nothing outside the vocabulary is claimed. */
+    for (unsigned channel = (unsigned)ACTUATION_CHANNEL_COUNT; channel < 32u; channel++) {
+        TEST_ASSERT_EQUAL_UINT32(0u, answered & ACTUATION_CHANNEL_BIT(channel));
+    }
+
+    /*
+     * This structure describes the reference machine, which has every channel
+     * the vocabulary carries -- so every one of them is commandable here, and
+     * the refusal of an unanswered channel is exercised where it can fail, in
+     * the suite driving a structure that declares fewer.
+     */
+    plant_model_t model;
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    for (unsigned channel = 0u; channel < (unsigned)ACTUATION_CHANNEL_COUNT; channel++) {
+        plant_step_error_t refusal;
+        plant_actuation_t one_channel = {{0u}};
+
+        TEST_ASSERT_NOT_EQUAL(0u, answered & ACTUATION_CHANNEL_BIT(channel));
+        one_channel.level_permille[channel] = ACTUATION_FULL_SCALE;
+        TEST_ASSERT_TRUE(plant_model_step_reporting(&model, &one_channel, STEP_MS, &refusal));
+        TEST_ASSERT_EQUAL(PLANT_STEP_OK, refusal.fault);
+    }
+}
+
+/// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7: The structures and the control
+/// logic behave identically after the vocabulary is unified.
+static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified(void)
+{
+    /*
+     * Recorded from the build as it stood before the actuation vocabulary was
+     * unified, and carried here as values rather than regenerated: regenerating
+     * them from this build would compare the change with itself and pass
+     * whatever it did to the equations. Written as hexadecimal literals because
+     * they are exact -- nothing here touches an equation, so a difference of one
+     * bit is a difference this test exists to report.
+     */
+    static const float EXPECTED[][PLANT_QUANTITY_COUNT] = {
+        {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f},
+        {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f},
+        {0x1.c8693p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f},
+        {0x1.6a718ap+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f},
+        {0x1.28fbf8p+8f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f},
+    };
+    static const int STEPS[] = {0, 10, 30, 60, 1100};
+    static const plant_actuation_t *const UNDER[] = {&AT_REST, &AT_REST, &HEATING, &WORKING,
+                                                     &WORKING};
+
+    plant_model_t model;
+    float values[PLANT_QUANTITY_COUNT];
+
+    /*
+     * The description is the one the recording was made under, spelled here
+     * rather than taken from the table above so that changing a nominal value
+     * for another test's sake cannot silently move what this one compares.
+     */
+    static const char DESCRIPTION[] = "ambient_temperature_c = 20\n"
+                                      "brew.thermal_mass_j_per_k = 420\n"
+                                      "brew.heater_power_w = 1200\n"
+                                      "brew.loss_w_per_k = 1.5\n"
+                                      "steam.thermal_mass_j_per_k = 900\n"
+                                      "steam.heater_power_w = 1400\n"
+                                      "steam.loss_w_per_k = 2.2\n"
+                                      "pump.pressure_bar = 9\n"
+                                      "brew.pressure_time_constant_s = 0.8\n"
+                                      "steam.saturation_temperature_c = 100\n"
+                                      "steam.pressure_bar_per_k = 0.035\n";
+    plant_parameters_t recorded;
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &recorded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &recorded));
+
+    for (size_t checkpoint = 0u; checkpoint < sizeof(STEPS) / sizeof(STEPS[0]); checkpoint++) {
+        for (int i = 0; i < STEPS[checkpoint]; i++) {
+            TEST_ASSERT_TRUE(plant_model_step(&model, UNDER[checkpoint], STEP_MS));
+        }
+        read_all(&model, values);
+        /*
+         * Compared as stored rather than within a tolerance: a tolerance would
+         * accept exactly the quiet drift in the equations this exists to refuse.
+         */
+        TEST_ASSERT_EQUAL_MEMORY(EXPECTED[checkpoint], values, sizeof(values));
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_the_actuation_channels_are_one_enumerated_set);
+    RUN_TEST(test_the_structure_states_which_channels_it_answers);
+    RUN_TEST(test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified);
     RUN_TEST(test_the_model_advances_over_a_sequence_of_steps);
     RUN_TEST(test_a_step_at_rest_changes_nothing);
     RUN_TEST(test_many_steps_at_rest_change_nothing);
