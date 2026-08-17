@@ -1733,6 +1733,85 @@ static void test_a_statement_the_description_cannot_make_is_refused(void)
         TEST_ASSERT_EQUAL(PLANT_PARAMETER_ORIGIN, fault.fault);
         TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
         TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+
+        /*
+         * And what it reports the refusal against is the offending line itself,
+         * to its own length. Asserting only the fault leaves the reported text
+         * free to be the line plus whatever follows it in the description, which
+         * is what a wrong length here produces -- a refusal naming the right
+         * line and quoting the wrong thing, which is worse than quoting nothing.
+         */
+        char expected[PLANT_PARAMETER_NAME_MAX];
+        const size_t line_length = strlen(CASES[i]) - 1u; /* Without the newline. */
+        TEST_ASSERT_TRUE(line_length < sizeof(expected));
+        memcpy(expected, CASES[i], line_length);
+        expected[line_length] = '\0';
+        TEST_ASSERT_EQUAL_STRING(expected, fault.parameter);
+    }
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: the origin parser reads the span it was
+/// given and not a string, so a final annotated line with no newline after it is
+/// read on the same terms as any other.
+static void test_a_final_annotated_line_without_a_newline_is_read(void)
+{
+    /*
+     * The span discipline the loader was given a test for is exercised here
+     * through the annotation grammar, which arrived later and reaches further
+     * into the line than anything that test covers -- the kind is scanned to the
+     * end of the span, so a scan that steps one past it is looking at whatever
+     * follows.
+     *
+     * The byte after the span is set to something that is neither a newline nor a
+     * blank, for the reason the unannotated case gives: a parser reading one
+     * character too far is invisible against a buffer that happens to hold what
+     * it was looking for.
+     */
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    size_t used =
+        describe_with_origin(text, sizeof(text), "estimated", "a comparable machine");
+
+    TEST_ASSERT_TRUE(used > 0u);
+    TEST_ASSERT_EQUAL_CHAR('\n', text[used - 1u]);
+    used--;
+    text[used] = '#';
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &loaded, sizeof(parameters));
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: a test earns its place by being capable of
+/// failing on a plausible defect -- an annotation whose kind is separated from the
+/// marker by whitespace is read, so removing the skip that allows it is a change
+/// some test objects to.
+static void test_an_origin_separated_from_its_marker_by_blanks_is_read(void)
+{
+    /*
+     * Every description this project ships writes the marker hard against the
+     * kind, so nothing exercised the loader's skipping of what lies between them
+     * until this. The grammar admits it, an author will eventually write it, and
+     * a loader that refused it would refuse an honest description for a reason
+     * nothing states.
+     */
+    static const char *const SEPARATORS[] = {" ", "  ", "\t", " \t "};
+
+    for (size_t i = 0u; i < sizeof(SEPARATORS) / sizeof(SEPARATORS[0]); i++) {
+        char kind[16];
+        char annotated[DESCRIPTION_MAX];
+        plant_parameters_t loaded;
+
+        const int written = snprintf(kind, sizeof(kind), "%sestimated", SEPARATORS[i]);
+        TEST_ASSERT_TRUE(written > 0);
+
+        const size_t used = describe_with_origin(annotated, sizeof(annotated), kind,
+                                                 "a comparable machine, at rest");
+        load_expecting_success(annotated, used, &loaded);
+        /* Read the same as the unannotated description: the separator is not content. */
+        TEST_ASSERT_EQUAL_MEMORY(&parameters, &loaded, sizeof(parameters));
     }
 }
 
@@ -2099,6 +2178,8 @@ int main(void)
     RUN_TEST(test_an_origin_of_an_undeclared_kind_is_refused);
     RUN_TEST(test_an_origin_with_no_kind_or_no_account_is_refused);
     RUN_TEST(test_a_statement_the_description_cannot_make_is_refused);
+    RUN_TEST(test_an_origin_separated_from_its_marker_by_blanks_is_read);
+    RUN_TEST(test_a_final_annotated_line_without_a_newline_is_read);
     RUN_TEST(test_a_description_claiming_no_machine_is_read_like_any_other);
     RUN_TEST(test_every_refusal_still_fires_on_a_line_carrying_an_origin);
     RUN_TEST(test_an_annotated_refusal_still_reports_the_range_it_was_outside);

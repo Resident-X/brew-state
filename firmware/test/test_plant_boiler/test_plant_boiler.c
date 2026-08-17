@@ -15,6 +15,7 @@
  * coefficients are carried as text, on the same footing the other structures'
  * suites carry theirs.
  */
+#include <math.h>
 #include <string.h>
 
 #include <unity.h>
@@ -53,6 +54,23 @@ static const char DESCRIPTION[] = "ambient_temperature_c = 20.0\n"
 
 /* The channel the vessel's one heater is driven by. */
 #define HEATING_CHANNEL ACTUATION_CHANNEL_BREW_HEATER
+
+/*
+ * The coefficients DESCRIPTION carries, as numbers this suite can compute with.
+ *
+ * Restated here rather than read back out of the parameter record, because
+ * naming a field of that record is reaching around the seam -- the
+ * encapsulation check refuses it, and it would couple this suite to whichever
+ * structure the build selected. The two cannot drift silently: every assertion
+ * computed from these is against a trajectory produced from the text above, so
+ * a disagreement between them fails the test rather than passing quietly.
+ */
+#define AMBIENT_C 20.0f
+#define VESSEL_MASS_J_PER_K 900.0f
+#define VESSEL_HEATER_W 1400.0f
+#define VESSEL_LOSS_W_PER_K 2.0f
+#define SATURATION_C 100.0f
+#define STEAM_BAR_PER_K 0.036f
 
 static void read_all(const plant_model_t *model, float out[PLANT_QUANTITY_COUNT])
 {
@@ -380,6 +398,247 @@ static void test_the_structure_reads_its_own_coefficients_and_no_others(void)
     TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
 }
 
+/*
+ * What the equations compute, against an independent statement of the same
+ * physics.
+ *
+ * Everything above asserts properties that hold whatever the coefficients are --
+ * energy is not invented, a replay reproduces, the two temperatures do not drift
+ * apart. Those are the right properties and they are deliberately indifferent to
+ * the arithmetic, which is exactly why they leave it unpinned: the mutation sweep
+ * altered every operator in these equations in turn and nine of the alterations
+ * changed what the model says a machine does without a single test above
+ * objecting.
+ *
+ * The distinction this section rests on is between two questions that are easy to
+ * run together. Whether these equations describe a real single-boiler machine is
+ * unknowable here and stays out of scope, as the preamble says. Whether they
+ * compute what they claim to compute is a different question, and it is
+ * answerable: the vessel is a first-order thermal relaxation, so its step has a
+ * closed form, and the assertions below come from that closed form rather than
+ * from the implementation's own formulation of it.
+ *
+ * That independence is the point. The implementation advances the state with an
+ * effective-interval correction built out of expm1; these tests use the analytic
+ * solution written the other way, with a plain exponential towards the settling
+ * temperature. Restating the source's own expression would have made a test that
+ * agreed with the code however the code was wrong.
+ */
+
+/* The temperature the vessel settles at under a constant delivered power. */
+static float settling_temperature(float delivered_w)
+{
+    return AMBIENT_C + delivered_w / VESSEL_LOSS_W_PER_K;
+}
+
+/*
+ * Where a first-order relaxation from `from` towards `settles_at` has reached
+ * after `seconds`: the closed-form solution, in the form the implementation does
+ * not use.
+ */
+static float relaxed(float from, float settles_at, float seconds)
+{
+    const float time_constant_s = VESSEL_MASS_J_PER_K / VESSEL_LOSS_W_PER_K;
+    return settles_at + (from - settles_at) * expf(-seconds / time_constant_s);
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: a test earns its place by being capable of
+/// failing on a plausible defect -- the vessel's step is the energy balance it
+/// claims, so altering any operator in it is a change some test objects to.
+static void test_the_vessel_step_is_the_energy_balance_it_claims(void)
+{
+    plant_model_t model;
+    float before = 0.0f;
+    float after = 0.0f;
+    const plant_actuation_t applied = heating();
+
+    initialise(&model);
+
+    /*
+     * Carried away from ambient first, and this is load-bearing rather than
+     * tidiness. At ambient the loss term is zero, so a step taken from there
+     * cannot tell a loss that opposes the heater from one that assists it --
+     * which is one of the alterations that survived.
+     */
+    for (int i = 0; i < SETTLE_STEPS; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &applied, STEP_MS));
+    }
+
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &before));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &applied, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &after));
+
+    const float delivered_w = VESSEL_HEATER_W; /* Full duty. */
+    const float seconds = (float)STEP_MS / 1000.0f;
+    const float expected = relaxed(before, settling_temperature(delivered_w), seconds);
+
+    TEST_ASSERT_TRUE(before < after);
+    TEST_ASSERT_FLOAT_WITHIN(1e-3f, expected, after);
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: the duty a channel is driven at scales the
+/// power delivered, so an alteration to that scaling is one a test objects to.
+static void test_a_half_duty_delivers_half_the_power(void)
+{
+    plant_model_t model;
+    float before = 0.0f;
+    float after = 0.0f;
+    plant_actuation_t applied = {{0u}};
+
+    applied.level_permille[HEATING_CHANNEL] = ACTUATION_FULL_SCALE / 2u;
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &before));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &applied, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &after));
+
+    const float duty = (float)(ACTUATION_FULL_SCALE / 2u) / (float)ACTUATION_FULL_SCALE;
+    const float delivered_w = VESSEL_HEATER_W * duty;
+    const float seconds = (float)STEP_MS / 1000.0f;
+    const float expected = relaxed(before, settling_temperature(delivered_w), seconds);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-3f, expected, after);
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: a vessel losing nothing is an admissible
+/// description and the one where the relaxation correction is asked for a value at
+/// the edge of its domain, so the answer there is asserted rather than assumed.
+static void test_a_vessel_that_loses_nothing_heats_at_the_rate_its_power_implies(void)
+{
+    /*
+     * Zero loss is inside the declared range, and it is the description that
+     * drives the time constant to nothing -- so the correction the step applies
+     * is evaluated where its numerator and denominator both vanish. The limit is
+     * one and the temperature rises by the plain energy balance; an alteration
+     * that reaches the division anyway produces a value that is not a number,
+     * and every quantity downstream of it stops being one. Nothing above would
+     * notice, because a comparison against a NaN is false either way.
+     */
+    static const char LOSSLESS[] = "ambient_temperature_c = 20.0\n"
+                                   "vessel.thermal_mass_j_per_k = 900.0\n"
+                                   "vessel.heater_power_w = 1400.0\n"
+                                   "vessel.loss_w_per_k = 0.0\n"
+                                   "pump.pressure_bar = 15.0\n"
+                                   "brew.pressure_time_constant_s = 0.8\n"
+                                   "steam.saturation_temperature_c = 100.0\n"
+                                   "steam.pressure_bar_per_k = 0.036\n";
+
+    plant_parameters_t lossless;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    float before = 0.0f;
+    float after = 0.0f;
+    const plant_actuation_t applied = heating();
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(LOSSLESS, sizeof(LOSSLESS) - 1u, &lossless, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &lossless));
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &before));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &applied, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &after));
+
+    const float seconds = (float)STEP_MS / 1000.0f;
+    const float expected = before + (VESSEL_HEATER_W * seconds) / VESSEL_MASS_J_PER_K;
+
+    /* Stated outright: a NaN fails this where it passes a comparison. */
+    TEST_ASSERT_FALSE(isnan(after));
+    TEST_ASSERT_FLOAT_WITHIN(1e-3f, expected, after);
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: a step long enough for the relaxation to
+/// matter is corrected for it, so altering that correction is a change some test
+/// objects to.
+static void test_a_long_step_is_corrected_for_the_relaxation_within_it(void)
+{
+    plant_model_t model;
+    float before = 0.0f;
+    float after = 0.0f;
+    const plant_actuation_t applied = heating();
+
+    /*
+     * A step comparable with the vessel's time constant, and that is the whole
+     * point of it. Over the short steps every other test takes, the correction
+     * for the temperature changing during the step is within a part in ten
+     * thousand of unity -- so an alteration to it moves the answer by less than
+     * any tolerance worth asserting, and it survived. Here the correction is
+     * about three quarters, and getting it wrong in either direction is a
+     * difference of tens of degrees.
+     *
+     * A long step is also the case a caller most plausibly takes: catching up
+     * after a pause, or simulating faster than real time.
+     */
+    const uint32_t interval_ms = 300000u; /* 300 s against a 450 s time constant. */
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &before));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &applied, interval_ms));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &after));
+
+    const float seconds = (float)interval_ms / 1000.0f;
+    const float settles_at = settling_temperature(VESSEL_HEATER_W);
+    const float expected = relaxed(before, settles_at, seconds);
+
+    /*
+     * Asserted against the closed form, and additionally required not to have
+     * overshot: a relaxation cannot pass the temperature it is relaxing towards,
+     * however long the step, and an uncorrected step of this length would.
+     */
+    TEST_ASSERT_TRUE(after < settles_at);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2f, expected, after);
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: above saturation the steam pressure is the
+/// declared slope on the excess temperature, so altering either the difference or
+/// the slope is a change some test objects to.
+static void test_the_steam_pressure_is_the_declared_slope_above_saturation(void)
+{
+    plant_model_t model;
+    float temperature = 0.0f;
+    float pressure = 0.0f;
+    const plant_actuation_t applied = heating();
+
+    initialise(&model);
+    for (int i = 0; i < BOIL_STEPS; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &applied, STEP_MS));
+    }
+
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &temperature));
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_STEAM_PRESSURE_BAR, &pressure));
+
+    /* The premise of the assertion, not an assumption of it. */
+    TEST_ASSERT_TRUE(temperature > SATURATION_C);
+
+    const float expected = STEAM_BAR_PER_K * (temperature - SATURATION_C);
+    TEST_ASSERT_FLOAT_WITHIN(1e-4f, expected, pressure);
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: below saturation the steam pressure is
+/// nothing at all, which is the other side of the same comparison.
+static void test_the_steam_pressure_is_nothing_below_saturation(void)
+{
+    plant_model_t model;
+    float temperature = 0.0f;
+    float pressure = 0.0f;
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &temperature));
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_STEAM_PRESSURE_BAR, &pressure));
+
+    TEST_ASSERT_TRUE(temperature < SATURATION_C);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, pressure);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -391,5 +650,11 @@ int main(void)
     RUN_TEST(test_the_same_sequence_twice_reproduces_the_same_trajectory);
     RUN_TEST(test_both_temperature_quantities_follow_the_one_vessel);
     RUN_TEST(test_the_structure_reads_its_own_coefficients_and_no_others);
+    RUN_TEST(test_the_vessel_step_is_the_energy_balance_it_claims);
+    RUN_TEST(test_a_half_duty_delivers_half_the_power);
+    RUN_TEST(test_a_vessel_that_loses_nothing_heats_at_the_rate_its_power_implies);
+    RUN_TEST(test_a_long_step_is_corrected_for_the_relaxation_within_it);
+    RUN_TEST(test_the_steam_pressure_is_the_declared_slope_above_saturation);
+    RUN_TEST(test_the_steam_pressure_is_nothing_below_saturation);
     return UNITY_END();
 }
