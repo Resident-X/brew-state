@@ -22,3 +22,5 @@ links:
     type: derives-from
   - target: JRN-SERVE-GROUP-001.C4
     type: derives-from
+  - target: JRN-DIAL-IN-RECIPE-001.C3
+    type: derives-from

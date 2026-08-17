@@ -4,13 +4,17 @@ category: constraint
 title: Precision is bought only where the margin is thin
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The project exists because it is cheaper than buying the machine it aims to outperform, so cost is a boundary rather than a preference to trade away when a better part appears.
 
   Spending is decided channel by channel. Two channels measuring the same quantity can warrant different parts when they sit at different distances from a limit.
+
+  Channel-by-channel judgement does not by itself bound the build. Every channel can carry a good reason for its part and the total can still arrive at commercial pricing, so the build is held to an aggregate figure as well as to a per-channel rule.
 rationale: |
-  Written as a rule that hardware choices are checked against rather than as a budget figure, because the figure will move and the rule will not. It also makes the reasoning auditable: a choice either names what about its channel makes the cheaper option inadequate, or it does not.
+  Written as a rule that hardware choices are checked against, because the rule is what travels: it survives a change of currency, of market, and of what the builder paid for the machine, and it makes the reasoning auditable in a way a bare number does not. A choice either names what about its channel makes the cheaper option inadequate, or it does not.
+
+  The rule alone was found to be insufficient, and the aggregate criteria answer that rather than replace it. A per-channel argument never adds the channels up, so a build can satisfy every departure it made and still fail the goal the whole discipline derives from, which is stated in aggregate. The original objection to a figure — that the figure moves and the rule does not — is answered by where the figure lives: it is declared alongside the other values an adopter substitutes, rather than written into a requirement, so it moves without the graph being edited.
 
   The consequence-weighting criterion captures what makes clone-quality parts acceptable in some places and not others. Risk tolerance follows the cost of the failure, not the cost of the part.
 links:

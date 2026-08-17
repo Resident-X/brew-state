@@ -1,0 +1,14 @@
+id: JRN-DIAL-IN-RECIPE-001.C4
+type: criterion
+title: Attempts made earlier in a session remain available to return to
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Dial-in is not monotonic. The operator frequently establishes that the previous attempt was better than the current one, and that is a result rather than a wasted shot.
+
+  What must survive is enough to remake the earlier attempt, not merely a note that it happened.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C3
+type: criterion
+title: Keeping an attempt as a recipe requires no further delivery
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Asking the operator to reproduce the attempt before it can be kept asks them to hit it twice, with the coffee and the time that costs and no guarantee the second one lands.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

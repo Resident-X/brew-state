@@ -1,0 +1,14 @@
+id: REQ-RECIPE-CUSTODY-001.C7
+type: criterion
+title: An attempt the machine could not hold to target is set aside from comparison rather than compared
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The machine establishes that it did not hold its own targets for an attempt, and keeps that attempt out of the comparison the operator is drawing rather than offering it alongside the others.
+
+  Setting aside is not discarding. The attempt stays retained like any other and the reason it was set aside stays with it, so an operator who wants to look at it can.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

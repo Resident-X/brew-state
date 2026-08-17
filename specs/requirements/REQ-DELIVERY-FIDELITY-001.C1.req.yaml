@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-FIDELITY-001.C1
+type: criterion
+title: Every quantity the machine reports about a delivery carries a declared tolerance
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  An undeclared tolerance is not an absent claim, it is an unbounded one, and a reader has no way to tell a figure good to a tenth from a figure good to five.
+
+  Declaring it is separate from meeting it; a tolerance the machine cannot currently hold is still declared.
+links:
+  - target: REQ-DELIVERY-FIDELITY-001
+    type: criterion-of

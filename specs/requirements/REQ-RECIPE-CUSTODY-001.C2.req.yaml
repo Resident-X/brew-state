@@ -1,0 +1,14 @@
+id: REQ-RECIPE-CUSTODY-001.C2
+type: criterion
+title: Attempts within a session stay distinguishable from one another
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The comparison the operator is making is between attempts, so attempts that collapse into one another or into the running recipe destroy the only thing the session was for.
+
+  Distinguishable means returnable to, not merely countable: the operator establishing that the second was better than the fourth must be able to go back to it.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-COST-DISCIPLINE-001.C6
+type: criterion
+title: Total spend to date is weighed against the declared figure, not only each departure against its channel
+status: active
+version: 1
+measurement_type: threshold
+verification: inspection
+text: |
+  Per-channel justification and an aggregate limit are different constraints, and satisfying the first says nothing about the second. Every channel can carry a good reason for its part and the build can still finish at commercial pricing, because nothing in a channel-by-channel argument ever adds the channels up.
+
+  The running total is what a departure is weighed against, so a channel late in the build is judged against what is left rather than against the same headroom the first channel enjoyed.
+links:
+  - target: REQ-COST-DISCIPLINE-001
+    type: criterion-of

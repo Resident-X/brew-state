@@ -1,0 +1,14 @@
+id: JRN-DIAL-IN-RECIPE-001.C1
+type: criterion
+title: Successive attempts at a recipe differ only by what the operator changed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Attribution is the whole of this activity. Where the machine's own contribution varies between two attempts, the difference in the cup no longer isolates the operator's change and the comparison misleads rather than informs.
+
+  This holds the machine to the same delivery it would give a settled recipe, not to a relaxed standard because the recipe is provisional.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001
+    type: criterion-of

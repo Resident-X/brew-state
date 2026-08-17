@@ -4,11 +4,13 @@ category: persona-goal
 title: Operator serves consistent drinks on demand, including for guests
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The person who makes and serves the coffee. They interact with the machine only through its physical controls, and never touch firmware, calibration routines, or a connected PC. The internals are opaque to them by choice, and the retrofit succeeds only to the extent that it lets them stay that way.
 
   They judge the machine on two things: what ends up in the cup, and how the serving session felt. A drink that tastes different from the last one is a fault regardless of what any telemetry says about it. A session in which they were left waiting, or in which the fourth drink was worse than the first, is also a fault, even when every individual drink would have been acceptable on its own.
+
+  There is one bounded exception to that stance. A coffee they have not made before has no recipe yet, and arriving at one means changing the grind or the dose and judging what changed in the cup. For as long as that lasts they want everything the machine can tell them about the drink it has just made, because they are trying to attribute a difference. Once the recipe is settled they stop looking, and the machine is an appliance again.
 
   Crucially they are often not the only person drinking. Hosting means producing the drink the guest actually wants rather than the one the machine finds easy, and producing several of them close enough together that the first is still hot when the last is poured. A machine that makes one excellent drink for its owner and then needs several minutes to recover has not solved their problem.
 

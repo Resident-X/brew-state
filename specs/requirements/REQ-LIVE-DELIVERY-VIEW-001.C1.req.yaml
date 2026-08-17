@@ -1,0 +1,14 @@
+id: REQ-LIVE-DELIVERY-VIEW-001.C1
+type: criterion
+title: The temperature, pressure and flow of a delivery are observable while it is running
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Availability during the delivery is the whole of the claim: the same figures after it ends are already required elsewhere and do not satisfy this.
+
+  Which quantities is not open. A view carrying temperature alone would not show a channel opening in the puck, which is a pressure and flow event.
+links:
+  - target: REQ-LIVE-DELIVERY-VIEW-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: REQ-READINESS-TIMELINESS-001.C7
+type: criterion
+title: The plant description carries everything computing the floor requires
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The floor is computed from the machine's own description, so a description that omits what the computation needs makes the bound uncomputable rather than merely imprecise, and the omission will surface as a missing number long after the description was committed.
+
+  This constrains what the description must carry, not how the floor is computed from it.
+links:
+  - target: REQ-READINESS-TIMELINESS-001
+    type: criterion-of

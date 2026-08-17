@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-RECORD-001.C9
+type: criterion
+title: A delivery the machine made for its own purposes is recorded like any other
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine that moves water for its own reasons rather than for a drink has still sent water out of itself, and the operator who finds the tray filling has the same right to know why as they would for any other delivery.
+
+  The temptation is to treat it as internal housekeeping and record nothing, which loses exactly the deliveries that would explain an unaccounted change in the machine's behaviour.
+links:
+  - target: REQ-DELIVERY-RECORD-001
+    type: criterion-of

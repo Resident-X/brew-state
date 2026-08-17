@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-FIDELITY-001.C4
+type: criterion
+title: A reported value never claims precision finer than its declared tolerance
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Precision and accuracy come apart silently. A figure carried to a tenth reads as good to a tenth, and a reader who has not gone looking for the tolerance will act as though it were.
+
+  This binds how the value is presented as much as what it contains.
+links:
+  - target: REQ-DELIVERY-FIDELITY-001
+    type: criterion-of

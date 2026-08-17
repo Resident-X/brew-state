@@ -1,0 +1,14 @@
+id: REQ-LIVE-DELIVERY-VIEW-001.C5
+type: criterion
+title: The resolution the view is held to is a declared figure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Without a declared figure the resolution claim is unfalsifiable: any view can be called fine enough after the fact, and the criterion resting on it asserts nothing.
+
+  It sits with the tolerances on the figures the view carries and is derived the same way, but it is a property of the view rather than of any one quantity, so nothing requiring those tolerances to be declared reaches it.
+links:
+  - target: REQ-LIVE-DELIVERY-VIEW-001
+    type: criterion-of

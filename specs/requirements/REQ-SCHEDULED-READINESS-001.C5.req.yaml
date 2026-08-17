@@ -2,11 +2,11 @@ id: REQ-SCHEDULED-READINESS-001.C5
 type: criterion
 title: The capability can be disabled entirely
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |
-  On hardware whose declared warm-up is short it earns nothing, and the reference machine should ship with it off.
+  Where reaching readiness is already quick the capability earns nothing, and the reference machine ships with it off on that basis rather than on a general preference.
 
   A capability that cannot be turned off has to be reasoned about on every machine rather than only where it is wanted.
 links:

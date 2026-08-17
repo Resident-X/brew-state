@@ -1,0 +1,14 @@
+id: REQ-READINESS-TIMELINESS-001.C4
+type: criterion
+title: Overshoot while approaching readiness stays within the margin to the protection trip point
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The fastest approach available to any machine without cooling is to drive hard and stop late, and the room to do that is exactly the room between the target and the point at which protection removes power.
+
+  Bounding it against the margin rather than against zero keeps the aggressive approach available wherever the margin can carry it.
+links:
+  - target: REQ-READINESS-TIMELINESS-001
+    type: criterion-of

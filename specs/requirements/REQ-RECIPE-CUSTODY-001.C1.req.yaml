@@ -1,0 +1,14 @@
+id: REQ-RECIPE-CUSTODY-001.C1
+type: criterion
+title: An attempt is retained with everything needed to make it again
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Retention that records the outcome without the settings is a note that something good happened once, which is worse than nothing because it looks like a recovery path and is not.
+
+  What the operator contributed and what the machine was asked to do are both required, since neither alone reproduces the drink.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

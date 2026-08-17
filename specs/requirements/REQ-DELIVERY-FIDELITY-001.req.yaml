@@ -1,0 +1,24 @@
+id: REQ-DELIVERY-FIDELITY-001
+type: requirement
+category: functional
+title: What the machine reports as delivered is true to a declared tolerance
+status: active
+priority: should
+version: 1
+text: |
+  The machine says what it delivered — the temperature, pressure and flow of the water that reached the coffee. Nothing until now has required those figures to be true, only that they be recorded.
+
+  A figure that is wrong by more than the difference the operator is trying to see is not a weak version of a good figure. It is a confident false statement, and everything downstream inherits it: the operator changes the grind to chase an error the machine invented, and the record of that drink misleads whoever reads it years later.
+
+  Nothing here decides where a figure comes from. Some channels have already had that settled against them elsewhere, on grounds of their own; this requirement binds any figure the machine reports, however it was arrived at, and adds no preference between sensing and reconstruction where none has been established.
+rationale: |
+  The graph already applies this discipline on the plant side and never applied it here. The plant description must carry the origin of every value and must keep an estimate distinguishable from a measurement, because an estimate that resembles a measurement is trusted like one. The delivery record — what the machine says it actually did — was left to say whatever it liked, to whatever apparent precision it liked.
+
+  Tolerances are declared rather than fixed here, and derived rather than chosen. The anchor is the smallest difference that changes a decision or an outcome, which is the same shape the flow-resolution criterion already uses: resolve what the delivery is judged by, and no finer. That keeps the requirement honest against the cost boundary, because a tolerance nobody would act on cannot justify the part that would buy it.
+
+  Brew temperature is the one figure given a number, because it is the one already anchored from two directions: the drink is measurably sensitive at about that scale, and the absolute error on that channel is separately bounded by the margin to the protection trip point.
+
+  Priority is should rather than must because the tolerance is what costs money. The claim itself — that reported figures are true and say when they are not — is cheap; the accuracy that lets a particular figure meet a particular tolerance may not be, and that trade is settled per channel against the declared budget rather than assumed here.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001.C2
+    type: derives-from

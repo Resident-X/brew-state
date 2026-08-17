@@ -1,0 +1,14 @@
+id: REQ-COST-DISCIPLINE-001.C5
+type: criterion
+title: The spend the build is held to is a declared figure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  An undeclared budget is not a constraint, it is a shared impression, and it moves quietly upward as each individual part turns out to be worth it.
+
+  The declaration covers what the retrofit adds and excludes the machine it is added to. It is also the figure an adopter replaces with their own, since currency, market and the price they paid for their machine are all theirs rather than the reference build's.
+links:
+  - target: REQ-COST-DISCIPLINE-001
+    type: criterion-of

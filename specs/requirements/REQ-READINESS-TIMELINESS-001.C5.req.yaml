@@ -1,0 +1,14 @@
+id: REQ-READINESS-TIMELINESS-001.C5
+type: criterion
+title: The bound holds from any starting thermal state, not only from cold
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Cold is the rare case. Most approaches to readiness start from a machine part-way there, or from one left somewhere else entirely by the demand before it, and a controller tuned for the cold case can be arbitrarily slow from a warm one.
+
+  This is the physical bound on recovery; how long an operator will actually tolerate waiting between drinks is a separate and looser claim made elsewhere.
+links:
+  - target: REQ-READINESS-TIMELINESS-001
+    type: criterion-of

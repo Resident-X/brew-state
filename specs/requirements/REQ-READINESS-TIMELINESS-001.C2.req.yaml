@@ -1,0 +1,14 @@
+id: REQ-READINESS-TIMELINESS-001.C2
+type: criterion
+title: The least time is derived over every actuation channel the machine has, not over heating alone
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A machine that moves water can move heat with it, so the floor for a machine with a pump is not the floor for the same thermal masses with a heater alone.
+
+  The channels counted are those the machine may use while reaching readiness. Expelling water is not among them, since anything the machine sends out of itself is a delivery, and a floor derived as though it were would hold the controller to a time it is not permitted to achieve.
+links:
+  - target: REQ-READINESS-TIMELINESS-001
+    type: criterion-of

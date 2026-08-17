@@ -1,12 +1,14 @@
 id: REQ-DELIVERY-RECORD-001
 type: requirement
 category: functional
-title: The machine records what was asked of it and what it delivered
+title: The machine records every delivery it made, what was asked of it, and what it delivered
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Reproducibility is a property of the record as much as of the control. A machine that holds target well but cannot say afterwards what it was asked for, what it achieved and where delivery ended leaves the operator unable to ask for the same thing again.
+
+  Not every delivery was asked for by a person. The machine moves water for its own reasons too, and those occasions belong in the same record, because they are exactly the ones that would otherwise explain a change in its behaviour with nothing written down.
 
   The same record serves the builder years later, when the question is whether the machine's own corrections explain a change in its behaviour.
 rationale: |
@@ -14,7 +16,7 @@ rationale: |
 
   The non-gating criterion exists because storage is finite and writes fail. A machine that refuses to serve when it cannot record has turned a diagnostic aid into a failure mode, which is a strictly worse outcome than losing the record.
 links:
-  - target: JRN-PULL-SHOT-001.C4
-    type: derives-from
   - target: JRN-CORRECT-DRIFT-001.C5
+    type: derives-from
+  - target: JRN-PULL-SHOT-001.C4
     type: derives-from

@@ -1,0 +1,14 @@
+id: REQ-DELIVERY-FIDELITY-001.C5
+type: criterion
+title: A quantity that cannot meet its declared tolerance is reported as an estimate rather than as a measurement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The dangerous case is not the missing figure but the confident one, because a reader discounts an estimate and takes a measurement at face value.
+
+  Degrading to an estimate keeps the figure available, which is usually still worth having, without letting it be read as something it is not.
+links:
+  - target: REQ-DELIVERY-FIDELITY-001
+    type: criterion-of
