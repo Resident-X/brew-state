@@ -226,7 +226,10 @@ build system does — and answers which environments produce a host artefact,
 which link this project's own entry point, which run tests, and which structure
 each one selects. `run_host_artefacts.py` and `run_host_tests.py` use the same
 answers to run what was built, since a sanitizer reports nothing until the code
-runs and tests that never ran leave nothing behind to notice.
+runs and tests that never ran leave nothing behind to notice. Both also require
+every structure in the tree to be covered — an artefact to run, and an
+environment running tests against it — because with more than one of either, one
+of them quietly ceasing to run is invisible in a count.
 
 Two properties a gate must not guess at are declared in `platformio.ini` beside
 the environment they describe, with the reason as the value:

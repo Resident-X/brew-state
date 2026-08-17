@@ -706,8 +706,11 @@ class TheTestTaskDiscoversItsEnvironments(unittest.TestCase):
     """
 
     def setUp(self):
-        self.project = tempfile.TemporaryDirectory()
-        self.addCleanup(self.project.cleanup)
+        # A tree with structures in it, because which structures the discovered
+        # environments have to cover is part of what this gate establishes.
+        self.tree = SyntheticTree(structures=("alpha",))
+        self.addCleanup(self.tree.cleanup)
+        self.project = self.tree.root
         self.log = os.path.join(self.project.name, "ran.log")
         self.pio = executable_script(
             os.path.join(self.project.name, "pio"), f'echo "$3" >> "{self.log}"\n'
@@ -725,7 +728,15 @@ class TheTestTaskDiscoversItsEnvironments(unittest.TestCase):
 
     def run_tests(self, pio: str | None = None):
         return run_check(
-            "run_host_tests.py", "--project", self.project.name, "--pio", pio or self.pio
+            "run_host_tests.py",
+            "--project",
+            self.project.name,
+            "--pio",
+            pio or self.pio,
+            "--plant-root",
+            self.tree.plant,
+            "--include-dir",
+            self.tree.include,
         )
 
     def test_the_environment_carrying_tests_is_run(self):
@@ -741,6 +752,7 @@ class TheTestTaskDiscoversItsEnvironments(unittest.TestCase):
         self.assertEqual(["host_test"], self.ran())
 
     def test_a_test_environment_added_later_runs_with_no_change_to_the_invocation(self):
+        self.tree.structure("beta")
         declare_environments(
             self.project.name,
             [
@@ -754,6 +766,20 @@ class TheTestTaskDiscoversItsEnvironments(unittest.TestCase):
         result = self.run_tests()
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(["host_test", "host_second_test"], self.ran())
+
+    def test_a_structure_no_environment_runs_tests_against_is_reported(self):
+        # The failure a count of environments cannot see: with more than one
+        # test environment in the tree, one of them ceasing to run leaves the
+        # others to report success on its behalf.
+        self.tree.structure("beta")
+        declare_environments(
+            self.project.name,
+            [("host_test", host_environment("alpha", entry_point=False, test_build_src="yes"))],
+        )
+        result = self.run_tests()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("beta", result.stderr)
+        self.assertIn("no environment runs tests against", result.stderr)
 
     def test_a_failing_suite_fails_the_task(self):
         declare_environments(
@@ -839,9 +865,35 @@ class AGateWithNothingToCoverFails(unittest.TestCase):
 
     def test_the_test_task_finds_no_environment_carrying_tests(self):
         self.tree.declare([("host", host_environment("alpha"))])
-        result = run_check("run_host_tests.py", "--project", self.tree.root.name)
+        result = run_check(
+            "run_host_tests.py",
+            "--project",
+            self.tree.root.name,
+            "--plant-root",
+            self.tree.plant,
+            "--include-dir",
+            self.tree.include,
+        )
         self.assertEqual(1, result.returncode)
         self.assertIn("no test would run", result.stderr)
+
+    def test_the_test_task_finds_no_structure_to_have_run_tests_against(self):
+        empty = SyntheticTree(structures=())
+        self.addCleanup(empty.cleanup)
+        empty.declare(
+            [("host_test", host_environment(entry_point=False, test_build_src="yes"))]
+        )
+        result = run_check(
+            "run_host_tests.py",
+            "--project",
+            empty.root.name,
+            "--plant-root",
+            empty.plant,
+            "--include-dir",
+            empty.include,
+        )
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no structures under", result.stderr)
 
     def test_a_tree_with_no_structures_at_all_stops_the_exclusivity_gate(self):
         empty = SyntheticTree(structures=())

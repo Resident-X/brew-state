@@ -106,6 +106,7 @@ ANALYSIS = [
 ]
 TESTS_RUN = [
     sys.executable, "tools/run_host_tests.py", "--project", ".", "--pio", PIO,
+    "--plant-root", "src/plant", "--include-dir", "include",
 ]
 
 #: Each entry: a name, the file to edit, the exact text to replace, what to put
@@ -296,8 +297,10 @@ MUTATIONS = (
         "why": "a single environment overrides the settings its base gives it, which is the "
                "defect a gate verifying one named environment cannot see at all",
         "file": "platformio.ini",
-        "find": "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture",
-        "replace": "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture\n"
+        "find": "build_src_filter = ${native_base.build_src_filter} +<plant/fixture/> +<app/native/>\n"
+                "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture",
+        "replace": "build_src_filter = ${native_base.build_src_filter} +<plant/fixture/> +<app/native/>\n"
+                   "build_flags = ${native_base.build_flags} -I $PROJECT_DIR/src/plant/fixture\n"
                    "build_src_flags = -Wall",
         "command": ANALYSIS,
     },
@@ -316,8 +319,8 @@ MUTATIONS = (
         "why": "the environment carrying the tests stops declaring it, and tests that never "
                "run leave nothing behind to notice",
         "file": "platformio.ini",
-        "find": "test_build_src = yes\n; The suites naming this structure's coefficients",
-        "replace": "; The suites naming this structure's coefficients",
+        "find": "test_build_src = yes\n; The test runner's own generated support file",
+        "replace": "; The test runner's own generated support file",
         "command": TESTS_RUN,
     },
     {
@@ -390,8 +393,8 @@ MUTATIONS = (
         "why": "the environment carrying the only tests that can exercise an unanswered channel "
                "stops declaring that it runs tests",
         "file": "platformio.ini",
-        "find": "test_build_src = yes\ncustom_strict_flags_exemption = the test runner's generated support file is compiled through this path and is not ours to keep warning-free\nbuild_src_flags =\n; Only the suite written against a narrowly-declared structure.",
-        "replace": "custom_strict_flags_exemption = the test runner's generated support file is compiled through this path and is not ours to keep warning-free\nbuild_src_flags =\n; Only the suite written against a narrowly-declared structure.",
+        "find": "test_build_src = yes\ncustom_strict_flags_exemption",
+        "replace": "custom_strict_flags_exemption",
         "command": TESTS_RUN,
     },
 )

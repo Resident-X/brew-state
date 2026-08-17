@@ -115,7 +115,7 @@ tasks:
       # because they exist rather than because a line here names them. The suite
       # covering the check tools is named because it is one fixed thing rather
       # than a set that grows with the tree.
-      - cd {{.FW_DIR}} && python3 tools/run_host_tests.py --project . --pio {{.PIO}}
+      - cd {{.FW_DIR}} && python3 tools/run_host_tests.py --project . --pio {{.PIO}} --plant-root src/plant --include-dir include
       - python3 -m unittest discover -s {{.FW_DIR}}/tools/tests
 
   fw:check:
