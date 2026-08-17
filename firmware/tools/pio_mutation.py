@@ -54,7 +54,17 @@ except mull_toolchain.ToolchainError as error:
 #: directory the compiler is run in, which is the project directory, but naming
 #: it outright means a build started from somewhere else still mutates the same
 #: sources rather than silently mutating everything.
-CONFIG = os.path.join(PROJECT_DIR, mull_toolchain.CONFIG_NAME)
+#
+# A caller that has already worked out the scope passes it in, and that value
+# wins: the sweep derives which sources are mutated from the structures in the
+# tree, writes the result somewhere of its own, and hands the path down through
+# the environment. Preferring the project's own file here would mean the build
+# instrumented one population while the sweep reported over another -- and since
+# the project's file no longer names an included path at all, that build would
+# mutate every source compiled into the runner.
+CONFIG = os.environ.get("MULL_CONFIG") or os.path.join(
+    PROJECT_DIR, mull_toolchain.CONFIG_NAME
+)
 
 MUTATION_FLAGS = toolchain["compile_flags"] + ["-O0"]
 

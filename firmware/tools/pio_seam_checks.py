@@ -129,6 +129,31 @@ CHECKS = (
         "--documentation",
         os.path.join(project_dir, "README.md"),
     ],
+    # And so does the vocabulary a structure says whether its equations describe
+    # a machine from. Every structure header includes it, on the same terms as
+    # the support vocabulary above.
+    [
+        os.path.join(tools_dir, "check_plant_header.py"),
+        os.path.join(include_dir, "plant_machine_claim.h"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+        "--vocabulary-only",
+    ],
+    # Every structure in the tree says whether its equations describe a machine.
+    # Inside the build rather than in the check task alone, and for a reason the
+    # support status does not have: what this claim decides is which structures
+    # the mutation sweep draws mutants from, so a structure that reached a
+    # compiler without one would be a structure whose arithmetic is swept or not
+    # according to nothing the tree states.
+    [
+        os.path.join(tools_dir, "check_machine_claim.py"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+    ],
     # And so does the vocabulary a value's origin is recorded in. The loader
     # every structure's descriptions are read through includes it, so a
     # structure name reaching it would reach all of them at once.

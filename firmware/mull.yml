@@ -1,15 +1,26 @@
-# Which sources the sweep draws its mutants from.
+# What the sweep must never draw mutants from.
 #
-# The population is the plant model's own arithmetic: the parameter loader
-# shared by every structure, and the machine-describing structure's equations.
-# Those are where a wrong comparison or a wrong operator would change what the
-# model says the machine does while still compiling and still looking right.
+# The other direction -- which sources the sweep does draw from -- is not here,
+# and its absence is the point. That population is the plant model's own
+# arithmetic: the sources every structure shares, and the equations of every
+# structure that says it describes a machine. Both are read out of the tree by
+# mull_sweep.py, from the claim each structure carries in its own header, and the
+# derived scope is written somewhere of the sweep's own and handed to the
+# toolchain for that run.
 #
-# Everything else is out, and the two directions are both stated on purpose.
-# includePaths is what decides the population. excludePaths says the same thing
-# again about the sources it would be worst to mutate silently -- the tests, and
-# the test framework -- so that widening the include patterns later cannot take
-# them in without somebody also removing a line that says not to.
+# It was a pair of directory patterns here until a second machine-describing
+# structure arrived and sat outside them. Nothing failed: the sweep went on
+# reporting a percentage over part of the model, which is worse than reporting
+# nothing, because a number that means less than it appears to is one nobody
+# looks behind. A list here is a list somebody has to remember to extend, and
+# `includePaths` in this file is therefore now a finding rather than a setting --
+# mull_sweep.py refuses to run if it reappears, because a list would override
+# what the tree says and do it silently.
+#
+# What stays here is the refusal, which is not derivable and is not the same
+# statement. The sources it would be worst to mutate silently are named outright
+# so that a mistake in deriving the population cannot take them in without
+# somebody also removing a line saying not to.
 #
 # Mutating a test is not a weaker version of mutation testing, it is the
 # opposite of it: the test suite is the oracle here, and an oracle that has been
@@ -18,10 +29,6 @@
 #
 # The paths are matched against the source file each mutant comes from, as the
 # compiler recorded it.
-
-includePaths:
-  - ".*/src/plant/common/.*"
-  - ".*/src/plant/thermoblock/.*"
 
 excludePaths:
   - ".*/test/.*"

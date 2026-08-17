@@ -191,14 +191,14 @@ after that both build offline.
 Everything runs from the repository root through the task runner:
 
 ```sh
-task fw:verify     # build every environment, run every check, run the tests, run the host builds
+task fw:verify     # build every environment, run every check, run the tests, run the host builds, sweep the arithmetic
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
 task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
 task fw:run        # every host executable, against the descriptions its structure ships
 ```
 
-Two more run on demand rather than in the gate:
+One more runs on demand rather than in the gate:
 
 ```sh
 task fw:mutate                    # break each guarded property, require its check to notice
@@ -228,7 +228,10 @@ It is out of the gate because it answers a question — are these checks real �
 that does not change between commits the way the checks' own results do. Run it
 when a check is added or reworked.
 
-The second sweeps the plant model's arithmetic instead of the checks:
+The second sweeps the plant model's arithmetic instead of the checks. It is the
+last step of `fw:verify` as well as being runnable alone, so the full gate asks
+not only whether the checks pass but whether the tests would notice the model
+being wrong:
 
 ```sh
 task fw:sweep                     # alter every comparison and operator, require a test to notice
@@ -237,15 +240,21 @@ task fw:sweep -- --survivors-only # list what survived without judging it
 
 Where `fw:mutate` breaks named properties one at a time, this generates the
 class those names are drawn from. Every comparison, arithmetic operator and
-increment in `src/plant/common` and `src/plant/thermoblock` is altered in turn
-and the suite is run against each alteration. The two answer different
+increment in the sources every structure shares, and in the equations of every
+structure declaring that they describe a machine, is altered in turn and the
+suite is run against each alteration. That population is read out of the tree
+rather than listed anywhere: a structure joins it by declaring
+`PLANT_STRUCTURE_MACHINE_CLAIM` as `PLANT_DESCRIBES_A_MACHINE` in its own header,
+and `mull_sweep.py` refuses to run if a list reappears in `mull.yml` to override
+it. The two answer different
 questions, and the difference is the point: a list of specific defects that are
 caught establishes exactly the members of the list, and says nothing about the
 defects nobody thought to write down.
 
 It needs LLVM 19 and the matching Mull package, which the ordinary gate does
-not, so the environments it compiles — `native_mutation` and
-`native_fixture_mutation` — declare `custom_mutation_sweep` in `platformio.ini`
+not, so the environments it compiles — `native_mutation`,
+`native_fixture_mutation` and `native_boiler_mutation` — declare
+`custom_mutation_sweep` in `platformio.ini`
 and are left alone by the gates covering every host build. Those gates say so
 when they skip one rather than passing over it silently. Both environments are
 swept because a mutant counts as caught when *any* suite kills it: the sources
@@ -299,7 +308,7 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_sanitizers.py` | A source of this project's own reaches a host artefact without the sanitizers, or without the strict warning settings in an environment that could scope them to this project's sources, or the executable links no sanitizer runtime — failures that otherwise pass silently. Covers every host environment the build declares. |
 | `check_direct_calls.py` | A seam call in a linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. Covers every host artefact the build declares. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
-| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h`, `plant_support.h`, `plant_origin.h` and `machine_actuation.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
+| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h`, `plant_support.h`, `plant_machine_claim.h`, `plant_origin.h` and `machine_actuation.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one — or a structure in the tree is built by no environment at all, and so is checked by nothing. Covers every structure. |
@@ -307,6 +316,7 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
 | `check_actuation_declaration.py` | A structure declares no set of actuation channels, declares more than one, declares an empty one, or names a channel the machine's shared vocabulary does not carry. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_parameter_origins.py` | A description that claims a real machine carries a value with no origin, an origin of a kind the vocabulary does not declare, or a kind with no account behind it; a coefficient the structure requires is absent from it; or its statement of what it represents has fallen behind the coefficients and quantities it has to name. Also fails a vocabulary that no longer separates an estimate from a measurement, and a tree in which every description exempts itself, since that inspects nothing. Runs inside every build, over every description in the tree rather than the one the build runs against. |
+| `check_machine_claim.py` | A structure declares nothing about whether its equations describe a machine, declares it more than once, or declares something outside the vocabulary. Also fails a vocabulary that has grown a distinction beyond that one, and a tree in which no structure describes a machine at all, since the mutation sweep would then draw its mutants from an empty population. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 
 The plant model's invariants are additionally exercised across the range each
