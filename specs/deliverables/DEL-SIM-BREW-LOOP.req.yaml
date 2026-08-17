@@ -4,7 +4,7 @@ category: epic
 title: The coffee side holds its targets in simulation across both deliveries it serves
 status: active
 level: epic
-version: 2
+version: 3
 text: |
   In simulation against the plant description, the coffee side holds both of the deliveries it serves. Water arriving at the group tracks the commanded temperature for a whole extraction from whatever thermal state the preceding demand left behind, hot water is dispensed within the drinking-temperature band with rate yielding to temperature, and contention between the two for the shared heated mass is resolved by the machine. Deliveries the machine ends are commanded as a profile carrying its own end condition, refused before starting if they cannot be achieved, and reported on when they depart from what was asked.
 rationale: |
@@ -51,4 +51,6 @@ links:
   - target: REQ-HOT-WATER-001.C4
     type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
     type: targets

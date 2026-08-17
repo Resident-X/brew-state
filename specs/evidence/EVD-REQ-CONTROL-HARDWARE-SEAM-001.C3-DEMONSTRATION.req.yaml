@@ -1,0 +1,22 @@
+id: EVD-REQ-CONTROL-HARDWARE-SEAM-001.C3-DEMONSTRATION
+type: evidence
+title: Attestation of REQ-CONTROL-HARDWARE-SEAM-001.C3
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-08-17T14:15:47Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - DEL-SIM-SEAMS-HARNESS
+    - SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+attested_by: david
+text: |-
+  firmware/src/hw/sim/hw_sim.c and firmware/src/hw/stm32/hw_stm32.c both implement the seam and are selected purely by build_src_filter in firmware/platformio.ini, with the control sources shared unchanged by both environments and no preprocessor branch on implementation anywhere in src/control. check_control_identical.py --env native --env stm32 passes: it preprocesses every control translation unit with each environment's real compiler flags and compares the token streams attributed to src/control and include/, so an environment-specific macro would be caught and a unit contributing no tokens is a failure rather than a silent match. The control logic is exercised through the simulated implementation by fourteen Unity cases covering error and edge paths, and the STM32 implementation is a genuine HAL-backed ADC and PWM implementation rather than a stub, so the substitution demonstrated is real in both directions.
+links:
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

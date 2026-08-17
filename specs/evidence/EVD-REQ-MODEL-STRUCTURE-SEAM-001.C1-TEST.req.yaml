@@ -1,0 +1,22 @@
+id: EVD-REQ-MODEL-STRUCTURE-SEAM-001.C1-TEST
+type: evidence
+title: Attestation of REQ-MODEL-STRUCTURE-SEAM-001.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T14:15:47Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - DEL-SIM-SEAMS-HARNESS
+    - SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+attested_by: david
+text: |-
+  Every coefficient the structure declares is shown to reach the equations: test_every_coefficient_reaches_the_equations perturbs each one alone and requires the whole-trajectory signature to change, the signature accumulating in a wider type than the model's own so a coefficient that changes the path but not the endpoint still registers. The fixture descriptions are generated from the same table the loader validates against, so a coefficient added or dropped fails the suite rather than escaping it. At the artefact level, check_parameters_are_data.py runs one linked executable against two descriptions differing in a single coefficient and hashes the binary either side, so a compiled-in coefficient or a rebuild between runs is a failure rather than a pass. Inspection of both machine-describing structures confirms no machine coefficient survives as a literal in the equations, the only literals being unit conversions, though no gate enforces that last point.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C1
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

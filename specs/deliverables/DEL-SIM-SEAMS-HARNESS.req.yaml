@@ -3,6 +3,8 @@ type: deliverable
 category: epic
 title: Seams, the plant description, and the host verification tier
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: epic
 version: 3
 text: |
