@@ -1,0 +1,24 @@
+id: EVD-SOL-PLANT-SEAM-GATE-COVERAGE.C2-TEST
+type: evidence
+title: The analysis gate covers every environment that produces a host artefact (SOL-PLANT-SEAM-GATE-COVERAGE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T00:15:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_gate_coverage.py::AnalysisCoversEveryHostEnvironment, TheArtefactIsInspectedForTheRuntime, BuildFileResolution, EnvironmentClassification
+  artifact_version: 7721e551af5f2a48b2ab9241384b68582fa01c96
+  verifier: david
+  retrieval_at: "2026-08-17T00:15:44Z"
+text: |
+  The analysis gate is invoked as check_sanitizers.py --project . and covers every environment platformio.ini declares for the host, discovered rather than named. Against the real project that is native, native_fixture and native_test — where before only native was verified — with both deliberately misconfigured configurations excluded and their recorded reasons printed. AnalysisCoversEveryHostEnvironment drives the discovery against synthetic environments with a stand-in build system that records which environments it was asked about: every host environment asked about without being named, an environment added later caught dropping the sanitizer flags, and an environment declaring it must not build neither asked about nor required to build cleanly.
+
+  TheArtefactIsInspectedForTheRuntime covers the other half with real binaries: an artefact linking the runtime passes, one compiled under the analysis and linked without it is caught, an artefact not yet built is reported as could-not-look rather than as a pass, and the environment leaving its entry point to the test runner is not required to produce one. BuildFileResolution and EnvironmentClassification establish that what is read out of the build file agrees with what the build system resolves — inheritance, multiple parents, references, values wrapped over lines — and that anything unresolvable is refused rather than read as an absence: a host environment with no source filter would otherwise drop silently out of every set a gate covers.
+
+  check_selection_refused requires every environment declaring it must not build to be one it drives, so the declaration excusing an environment from this gate cannot become a way out of both at once.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE.C2
+    type: satisfies

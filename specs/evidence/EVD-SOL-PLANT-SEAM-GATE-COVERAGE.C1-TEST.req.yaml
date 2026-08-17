@@ -1,0 +1,22 @@
+id: EVD-SOL-PLANT-SEAM-GATE-COVERAGE.C1-TEST
+type: evidence
+title: Every per-structure gate covers every structure without being given its name (SOL-PLANT-SEAM-GATE-COVERAGE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T00:15:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::StructureExclusiveCheck, PlantSeamDirectCalls
+  artifact_version: 7721e551af5f2a48b2ab9241384b68582fa01c96
+  verifier: david
+  retrieval_at: "2026-08-17T00:15:44Z"
+text: |
+  The exclusivity gate and the plant-seam direct-call gate are invoked with no structure named: they discover every structure under the plant root and, from the build file, the artefact carrying each. StructureExclusiveCheck drives that against a synthetic tree — every structure covered by an invocation naming none of them, a structure added to the tree covered with no change to the invocation, a structure no environment builds reported rather than skipped (the failure the naming form could not see at all), a failure in the second artefact found as well as the first, and a second artefact built for the same structure inspected rather than passed over. PlantSeamDirectCalls adds the same property for artefacts: a second artefact routing the seam through a pointer is caught although the first is clean.
+
+  What each check concludes is unchanged and is the first-structure slice's evidence; what is established here is that it is reached for every subject rather than for the ones somebody remembered.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE.C1
+    type: satisfies
