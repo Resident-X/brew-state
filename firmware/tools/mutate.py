@@ -468,6 +468,19 @@ MUTATIONS = (
         "command": ORIGINS,
     },
     {
+        # The same defect again, against the other thing that catches it. Two
+        # defences are worth having here -- the build check reads the file, the
+        # suite reads the file the build hands it -- and a defence nothing
+        # demonstrates is one nobody would notice losing.
+        "name": "the-reference-description-exempts-itself-from-the-suite",
+        "why": "the description the model's own tests are exercised against claims no machine, "
+               "so the suite is asserting about a placeholder",
+        "file": "params/thermoblock.params",
+        "find": "ambient_temperature_c = 20.0 @estimated",
+        "replace": "@describes-no-machine\nambient_temperature_c = 20.0 @estimated",
+        "command": PLANT_TESTS,
+    },
+    {
         "name": "a-value-loses-its-origin",
         "why": "a coefficient in the reference description carries no account of where its "
                "figure came from",

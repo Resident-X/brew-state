@@ -1747,6 +1747,9 @@ class OriginTreeCase(unittest.TestCase):
         ]
         if "project" in overrides:
             arguments += ["--project", overrides["project"]]
+        else:
+            # No build file in these trees, said out loud rather than by omission.
+            arguments += ["--no-build"]
         return run_check("check_parameter_origins.py", *arguments)
 
     def build_naming(self, description: str) -> str:
@@ -1914,6 +1917,47 @@ class ExemptionIsClaimedRatherThanAssumed(OriginTreeCase):
         result = self.check(project=project)
         self.assertEqual(1, result.returncode)
         self.assertIn("absent.params", result.stderr)
+
+    def test_a_named_description_belonging_to_no_structure_fails(self):
+        # Existing on disk is not the same as having been inspected. A
+        # description no structure claims is never parsed, so a build pointed at
+        # one would otherwise be reasoned against a file this check never opened.
+        project = self.build_naming("reference.params")
+        self.tree.description("reference", "@describes-no-machine\nsomething = 1.0\n")
+        result = self.check(project=project)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("reference.params", result.stderr)
+        self.assertIn("not among the descriptions inspected", result.stderr)
+
+    def test_neither_naming_a_build_nor_saying_there_is_none_is_an_error(self):
+        # The weaker check must not be reachable by omission: a caller that
+        # dropped the build would otherwise get it with no sign of the loss.
+        result = run_check(
+            "check_parameter_origins.py",
+            "--plant-root",
+            self.tree.plant,
+            "--include-dir",
+            self.tree.include,
+            "--params-dir",
+            self.tree.params,
+        )
+        self.assertEqual(2, result.returncode)
+        self.assertIn("--no-build", result.stderr)
+
+    def test_claiming_both_a_build_and_no_build_is_an_error(self):
+        result = run_check(
+            "check_parameter_origins.py",
+            "--plant-root",
+            self.tree.plant,
+            "--include-dir",
+            self.tree.include,
+            "--params-dir",
+            self.tree.params,
+            "--project",
+            self.tree.root.name,
+            "--no-build",
+        )
+        self.assertEqual(2, result.returncode)
 
     def test_a_build_naming_a_description_that_accounts_for_itself_passes(self):
         project = self.build_naming("alpha.params")

@@ -344,9 +344,31 @@ def main(argv: list[str]) -> int:
     parser.add_argument(
         "--project",
         help="the directory the build file is in, read for the description each environment "
-        "is exercised against; omitted where there is no build to read",
+        "is exercised against",
+    )
+    parser.add_argument(
+        "--no-build",
+        action="store_true",
+        help="there is no build file to read, and the descriptions are to be inspected without "
+        "asking which one anything is exercised against",
     )
     args = parser.parse_args(argv)
+
+    #
+    # One of the two has to be said out loud. Leaving the build optional would
+    # mean a caller that quietly dropped --project got the weaker check and no
+    # sign of it -- and the weaker check is precisely the one that passes while
+    # the description a build reasons against exempts itself.
+    #
+    if bool(args.project) == bool(args.no_build):
+        print(
+            "check_parameter_origins: give --project, so the description each environment is "
+            "exercised against can be read out of the build, or --no-build to say there is no "
+            "build to read. Silently doing without it is how the weaker check becomes the one "
+            "that runs",
+            file=sys.stderr,
+        )
+        return 2
 
     vocabulary, problems = load_vocabulary(args.include_dir)
     if vocabulary is None:
@@ -396,6 +418,8 @@ def main(argv: list[str]) -> int:
     inspected = 0
     seen_any_description = False
     exempted: dict[str, str] = {}
+    #: The descriptions this run actually opened and held to account.
+    accounted: set[str] = set()
 
     for structure in structures:
         directory = os.path.join(args.plant_root, structure.name)
@@ -416,6 +440,7 @@ def main(argv: list[str]) -> int:
                 continue
             claiming.append(description)
             findings.extend(inspect(description, coefficients, vocabulary))
+            accounted.add(os.path.basename(path))
             inspected += 1
         if claiming:
             findings.extend(
@@ -430,16 +455,19 @@ def main(argv: list[str]) -> int:
                 "values have to account for themselves; exempting it leaves nothing inspected "
                 "that matters while this check goes on passing on another file's strength"
             )
-        elif not any(
-            os.path.basename(path) == name
-            for path in (
-                os.path.join(args.params_dir, entry) for entry in os.listdir(args.params_dir)
-            )
-        ):
+        elif name not in accounted:
+            #
+            # Not "is the file there" but "did this check open it". A
+            # description belonging to no structure is never parsed, so asking
+            # only whether it exists would let a build be reasoned against a
+            # file this check has never read -- which is the same hole as the
+            # exempt one, reached from the other side.
+            #
             findings.append(
                 f"{args.params_dir}: '{environment}' is exercised against '{name}', which is not "
-                "there. A build naming a description nothing supplies has not been checked "
-                "against one"
+                "among the descriptions inspected here. Either nothing supplies it, or it belongs "
+                "to no structure in the tree and so has no coefficient set to account for -- "
+                "either way the build reasons against a description nothing has checked"
             )
 
     if not seen_any_description:
