@@ -1,0 +1,48 @@
+# Staircase Project Configuration
+
+project:
+  name: "brew-state"
+
+# Graph data directory
+specs_dir: "specs/"
+
+hierarchy:
+  enforce_decomposition: false
+  require_rationale: true
+
+# Build-order configuration.
+#
+# combination_rule selects the path-score strategy for the build-order tree
+# and queue surfaces: lexicographic (parent score dominates child score),
+# sum, or weighted.
+#
+# priority_weights drives the `staircase next` surface's leverage-aware WSJF
+# score: each actionable item scores priority_weight x leverage / effort,
+# where leverage sums the priority weight of every unfinished node it
+# unblocks. The geometric spread lets a higher priority dominate while
+# leaving the leverage and effort terms room to distinguish items within one
+# tier. (`priority: wont` requirements resolve to the `default` tier.)
+build_order:
+  combination_rule: "lexicographic"
+  priority_weights:
+    must: 8
+    should: 4
+    could: 2
+    default: 1
+
+# Local semantic-search embedder. The pure-Go model2vec static embedder runs
+# in-process (no CGO, no server, no network at embed time). The model asset is
+# external and never committed to git (.staircase/models is gitignored and is a
+# symlink to the machine-global cache, wired by `task sc:embed`); only its
+# coordinates and pinned checksum live here. With the embedder configured,
+# `staircase build` re-projects per-node vectors into the vector store
+# incrementally by content_hash, so `query --mode hybrid|semantic` runs the
+# semantic path instead of silently degrading to lexical.
+embedder:
+  source: local
+  model: potion-retrieval-32M
+  model_path: .staircase/models/potion-retrieval-32M
+  model_checksum: "sha256:07609e5bd33aad37900b3fd62f4ec96f6daec88ca4d46b9d8b928bfababf6ea0"
+
+# Default actor for authoring mutations
+default_actor: david
