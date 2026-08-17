@@ -1,0 +1,39 @@
+# A description for the single-boiler structure.
+#
+# This describes no real machine. Nobody on this project owns one of this
+# architecture, so there is no machine these numbers could have been taken from
+# and none they could be checked against. They are plausible for a small
+# single-boiler machine and that is the whole of their standing: they exist so
+# that an artefact built against this structure can be initialised and run, and
+# so that the check that coefficients are read rather than compiled in has a
+# pair of descriptions to conclude from.
+#
+# The statement below is that fact in the form the check reads, and it is what
+# exempts every value here from accounting for itself. A value that was never
+# taken from a machine has no origin to record, and inventing one for each line
+# would be worse than saying so once: it would make this file look like the
+# reference machine's, which was assembled from documents and estimates that can
+# be argued with.
+#
+# For the same reason this structure is published as unverified against
+# hardware, in its own header and in the support-status table in README.md. A
+# description that reads as though somebody had checked it is the failure mode
+# that statement exists to prevent.
+#
+# What differs between this description and boiler-variant.params is the vessel
+# heater's rating and nothing else, which is what lets a difference in the
+# trajectory be attributed to the description rather than to the build.
+
+@describes-no-machine
+
+ambient_temperature_c = 20.0
+
+vessel.thermal_mass_j_per_k = 900.0
+vessel.heater_power_w = 1400.0
+vessel.loss_w_per_k = 2.0
+
+pump.pressure_bar = 15.0
+brew.pressure_time_constant_s = 0.8
+
+steam.saturation_temperature_c = 100.0
+steam.pressure_bar_per_k = 0.036

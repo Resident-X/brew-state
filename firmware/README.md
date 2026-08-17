@@ -42,10 +42,33 @@ keep one structure out of another's artefact, and that refuse a two-structure
 build, both pass unconditionally with only one structure in the tree — and a
 check that cannot fail is not a check.
 
+The `boiler` structure is what makes the paragraph above a demonstration rather
+than an intention. It is a different architecture, not the same equations with
+different numbers: one heated vessel serves both the brew path and the steam
+path, where the reference machine has two masses heated independently. So both
+temperature quantities are answered from the one vessel state, steam pressure
+follows that same state above saturation, and the machine's second heating
+channel goes unanswered — a structure of a given architecture answers the
+channels its machine has, and the vocabulary belongs to the machine rather than
+to the structure. A structure of the same architecture with different numbers
+would have exercised only the parameter path, which the two descriptions under
+`params/` already cover and which is the weaker claim.
+
+Adding it edited nothing already in the tree. No existing structure, neither
+seam header, the shared parameter loader, none of the check tools, no gate
+invocation and no existing test suite changed to admit it; what it cost is its
+own directory, its own two descriptions, its own suite, three environment
+entries here, two lines and one further argument in the repository's task file,
+and this documentation. That list is the claim, and the change-set that
+introduced it is where the claim is checked.
+
 Whether the `thermoblock` structure's equations describe any real machine is a
-question that needs a real machine. What is established here is that the numbers
-are replaceable, the equations are replaceable, and neither is reachable except
-through the seam.
+question that needs a real machine, and so is the same question about `boiler` —
+with the difference that nobody on this project owns a machine of that
+architecture, so `boiler` is unverified as a final state rather than as a gap
+somebody here is expected to close. What is established by both is that the
+numbers are replaceable, the equations are replaceable, and neither is reachable
+except through the seam.
 
 ## Where a value in a description came from
 
@@ -100,6 +123,7 @@ cited behind it. The vocabulary is declared once, in `include/plant_support.h`.
 | --- | --- | --- |
 | `thermoblock` | `PLANT_SUPPORT_UNVERIFIED` | — |
 | `fixture` | `PLANT_SUPPORT_UNVERIFIED` | — |
+| `boiler` | `PLANT_SUPPORT_UNVERIFIED` | — |
 
 The line is drawn at verification against real hardware and at nothing else. In
 particular it is **not** drawn at whose machine a structure describes: the
@@ -134,12 +158,14 @@ fails a check rather than the one that ships.
 | `src/plant/common/` | Reads a parameter record from a description. One parser, every structure. Not a structure itself. |
 | `src/plant/thermoblock/` | The machine-describing structure: two heated masses, pump-driven brew pressure, steam pressure above saturation. |
 | `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
+| `src/plant/boiler/` | A structure of a different architecture: one heated vessel serving both paths, so both temperature quantities follow one heater and the machine's second heating channel goes unanswered. |
 | `params/` | Parameter descriptions, and the statement of what each represents. Read at run time; the build compiles none of them in. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. A description that claims a real machine accounts for every value it carries and is accompanied by `<structure>.md`, which says what those quantities are and how they relate. |
 | `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
 | `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |
 | `test/test_plant/` | The plant model exercised through the seam, naming no structure symbol. |
 | `test/test_plant_narrow/` | The seam driven against a structure answering fewer actuation channels than the machine has — the refusal of a command with nowhere to land, which a structure answering everything cannot exercise. |
+| `test/test_plant_boiler/` | The single-boiler structure exercised through the seam, asserting what holds of that architecture whatever its coefficients are. |
 | `tools/` | The checks that make the seam's properties build failures rather than review notes. |
 
 The control logic behind the seam is a minimal path that reads a sensor,

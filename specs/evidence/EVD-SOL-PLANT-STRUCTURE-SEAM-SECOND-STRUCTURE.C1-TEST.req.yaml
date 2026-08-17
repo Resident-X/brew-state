@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C1-TEST
+type: evidence
+title: A second architecture runs on the host through the seam (SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T10:44:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_boiler/test_plant_boiler.c
+text: |-
+  The test_plant_boiler suite passes, 8 of 8, in the native_boiler_test environment. The structure under firmware/src/plant/boiler/ defines its own state and parameter types, implements every operation the seam declares, and answers all four enumerated quantities from its own states: test_both_temperature_quantities_follow_the_one_vessel drives 900 steps past saturation and asserts the brew and steam temperature quantities are bit-identical at every one, and test_the_pump_drives_the_brew_pressure_and_leaves_the_vessel_alone asserts brew pressure rises monotonically towards half the pump coefficient without overshoot while the vessel and steam pressure stand still. test_the_declared_channels_are_the_ones_this_architecture_has asserts the declared set carries the heating channel and the pump and NOT the machine's second heating channel. Two descriptions ship under firmware/params/ differing in one coefficient, both declaring describes-no-machine. The three properties fixed independently of what the structure says about itself all hold: test_a_step_with_nothing_applied_moves_nothing (100 idle steps, every quantity bit-identical), test_heat_raises_the_temperatures_and_lowers_no_quantity, and test_the_same_sequence_twice_reproduces_the_same_trajectory (recorded then re-initialised and replayed, compared at every step). Both new assertions were confirmed falsifiable by mutation: widening the declared channel set fails test_the_declared_channels_are_the_ones_this_architecture_has and nothing else; forcing the pump term to zero fails test_the_pump_drives_the_brew_pressure_and_leaves_the_vessel_alone and nothing else.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C1
+    type: satisfies

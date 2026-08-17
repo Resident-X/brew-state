@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C6-INSPECTION
+type: evidence
+title: The new structure is published as unverified against hardware (SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C6)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T10:44:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/src/plant/boiler/plant_structure.h, firmware/README.md, firmware/params/boiler.params, firmware/params/boiler-variant.params
+text: |-
+  The structure states its support status in the vocabulary the seam already carries: firmware/src/plant/boiler/plant_structure.h defines PLANT_STRUCTURE_SUPPORT_STATUS as PLANT_SUPPORT_UNVERIFIED, and defines no PLANT_STRUCTURE_SUPPORT_EVIDENCE, which the vocabulary permits only for the unverified value. The statement sits where an adopter meets it before running the structure rather than after: in the structure's own header, in the support-status table in firmware/README.md as a new row alongside the two that were there, and in both parameter descriptions under firmware/params/, each of which states in prose that the structure is published as unverified. check_support_status passes over all three structures and cross-checks the header value against the README row. No structure already in the tree was changed: thermoblock and fixture carry their own statuses under the same vocabulary, established before this work, and their rows and headers are untouched. Unverified is the correct final state rather than a gap: nobody on this project owns a machine of this architecture, and the requirement makes supported status conditional on verification against one.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C6
+    type: satisfies

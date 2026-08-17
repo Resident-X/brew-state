@@ -124,6 +124,7 @@ tasks:
     cmds:
       - "{{.PIO}} run -e native"
       - "{{.PIO}} run -e native_fixture"
+      - "{{.PIO}} run -e native_boiler"
       - "{{.PIO}} run -e stm32"
 
   fw:test:
@@ -173,9 +174,10 @@ tasks:
       # Two descriptions are named here because the check needs a pair differing
       # in a single coefficient before it can conclude anything.
       - python3 tools/check_parameters_are_data.py .pio/build/native/program --params params/thermoblock.params --params params/thermoblock-variant.params
+      - python3 tools/check_parameters_are_data.py .pio/build/native_boiler/program --params params/boiler.params --params params/boiler-variant.params
       # The misconfigured configurations are named because a forgotten name here
       # fails loudly rather than quietly.
-      - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --pio {{.PIO}}
+      - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --env native_boiler_two_structures --pio {{.PIO}}
       # The analysis the host tier runs everything of ours under, over every
       # environment the build declares for the host.
       - python3 tools/check_sanitizers.py --project .

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C3-TEST
+type: evidence
+title: The seam's build checks took up the new structure without being edited (SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T10:44:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:check && task fw:test && task fw:run
+text: |-
+  No file under firmware/tools/ and no gate invocation that discovers its subjects was edited, and every discovering gate reports the enlarged set. check_plant_header: 'compiles against all 3 of them (boiler, fixture, thermoblock)' for plant_model.h, plant_types.h, machine_actuation.h, plant_support.h and plant_origin.h. check_actuation_declaration: '3 structure(s) state which of 3 channel(s) they answer'. check_plant_encapsulation: '12 source(s) clean against 51 name(s) owned by 3 structure(s)' -- and it demonstrably still bites, having failed the build during this slice on a test assertion that reached a structure-owned coefficient name, which was then corrected to read through the seam. check_support_status: 'all 3 structure(s) carry a declared support status'. check_structure_exclusive and check_direct_calls both cover all three artefacts. run_host_tests: 'the tests ran in native_test, native_fixture_test, native_boiler_test' -- this structure's suite runs because its environment exists, no task-file line naming it. run_host_artefacts: '5 run(s) completed under the analysis'. The two checks that name their subjects are out of scope for this criterion and were paid for in the task file: the parameters-as-data invocation and the refusal check's further argument, the latter driving native_boiler_two_structures to 'check_selection_refused: 3 misconfigured build(s) refused'.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C3
+    type: satisfies

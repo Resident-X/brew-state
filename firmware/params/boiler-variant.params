@@ -1,0 +1,42 @@
+# A second description for the single-boiler structure, differing in one value.
+#
+# This describes no real machine either, for the same reason boiler.params does
+# not: there is no machine of this architecture to have taken these numbers
+# from. It is here so that the check that a structure's coefficients are read
+# from the description rather than compiled into the artefact has something to
+# conclude from. That check runs one unchanged executable against two
+# descriptions and requires the trajectories to differ; with a single
+# description it cannot tell a coefficient that was read from one that was
+# baked in.
+#
+# Exactly one value differs from boiler.params -- the vessel heater's rating,
+# 1800 W here against 1400 W there. One value rather than several, because a
+# difference in the trajectory then has one possible cause: if several moved, a
+# structure reading only one of them would still produce two different
+# trajectories and pass a check it should fail.
+#
+# Like boiler.params, and for the same reason, this belongs to a structure
+# published as unverified against hardware, in its own header and in the
+# support-status table in README.md. The statement is repeated here rather than
+# left to the other file because an adopter who opens only this one would
+# otherwise meet the claim that it describes no machine without meeting the
+# claim that nobody has checked the equations either.
+#
+# The rating is the coefficient chosen because it drives the vessel directly, so
+# the difference shows in the temperature quantities within the few seconds the
+# host artefact runs for, rather than being lost in the resolution of what is
+# printed.
+
+@describes-no-machine
+
+ambient_temperature_c = 20.0
+
+vessel.thermal_mass_j_per_k = 900.0
+vessel.heater_power_w = 1800.0
+vessel.loss_w_per_k = 2.0
+
+pump.pressure_bar = 15.0
+brew.pressure_time_constant_s = 0.8
+
+steam.saturation_temperature_c = 100.0
+steam.pressure_bar_per_k = 0.036
