@@ -8,7 +8,7 @@ verification: analysis
 text: |
   A machine that moves water can move heat with it, so the floor for a machine with a pump is not the floor for the same thermal masses with a heater alone.
 
-  Deriving it over heating alone would fix a bound on one strategy and then measure the controller against it, which cannot discover that a different strategy was available.
+  The channels counted are those the machine may use while reaching readiness. Expelling water is not among them, since anything the machine sends out of itself is a delivery, and a floor derived as though it were would hold the controller to a time it is not permitted to achieve.
 links:
   - target: REQ-READINESS-TIMELINESS-001
     type: criterion-of

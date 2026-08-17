@@ -8,6 +8,8 @@ verification: test
 text: |
   Extraction is measurably sensitive at about this scale, so a figure looser than this cannot support the attribution the operator is making between one attempt and the next.
 
+  Where the margin between commanded target and protection trip point is narrower than this, that margin governs and the reported figure is held to it instead, since a tolerance wider than the margin would let a report read as safe while the machine sat against its trip.
+
   The bound is on the reported figure against the truth, not on how steadily the machine held target, which is asserted separately.
 links:
   - target: REQ-DELIVERY-FIDELITY-001

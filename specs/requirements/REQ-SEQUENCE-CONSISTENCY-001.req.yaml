@@ -14,7 +14,9 @@ rationale: |
 
   Silent on how advance notice is used. Feeding it forward into the control law is the obvious approach, but the requirement is about acting before the effect appears, not about any particular structure for doing so.
 links:
+  - target: JRN-PULL-SHOT-001.C1
+    type: derives-from
   - target: JRN-SERVE-GROUP-001.C1
     type: derives-from
-  - target: JRN-PULL-SHOT-001.C1
+  - target: JRN-DIAL-IN-RECIPE-001.C1
     type: derives-from

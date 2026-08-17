@@ -1,0 +1,14 @@
+id: REQ-READINESS-TIMELINESS-001.C6
+type: criterion
+title: The fraction the machine is held to is a declared figure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  An undeclared fraction makes the bound unfalsifiable: any achieved time can be called close enough after the fact, and the criterion it appears in asserts nothing.
+
+  It is also the figure an adopter substitutes, since how close to its floor a machine can practically be driven depends on the machine rather than on the design.
+links:
+  - target: REQ-READINESS-TIMELINESS-001
+    type: criterion-of

@@ -8,7 +8,7 @@ verification: test
 text: |
   Availability during the delivery is the whole of the claim: the same figures after it ends are already required elsewhere and do not satisfy this.
 
-  The rate has to resolve the events the operator is watching for, which are faster than the delivery itself.
+  Which quantities is not open. A view carrying temperature alone would not show a channel opening in the puck, which is a pressure and flow event.
 links:
   - target: REQ-LIVE-DELIVERY-VIEW-001
     type: criterion-of

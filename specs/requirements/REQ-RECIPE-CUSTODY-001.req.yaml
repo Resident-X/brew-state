@@ -1,0 +1,22 @@
+id: REQ-RECIPE-CUSTODY-001
+type: requirement
+category: functional
+title: The machine holds the operator's recipes and the attempts they came from
+status: active
+priority: must
+version: 1
+text: |
+  Dial-in produces recipes, and until now nothing in the graph held them. Deliveries are recorded, and a previously delivered drink can be selected again, but a recipe is not a record: it is the thing the operator arrived at deliberately and intends to keep, and it has to survive the history it came out of.
+
+  The attempts behind a recipe matter for as long as the session lasts, because the operator regularly establishes that an earlier one was better. After that they are ordinary history.
+rationale: |
+  Authored with the dial-in journey rather than after it, because a journey whose criteria have nothing beneath them defers the work rather than specifying it. Every claim here traces to a step or an extension of that journey, and the journey makes no claim this requirement does not carry.
+
+  Kept apart from the delivery record because the two have opposite retention properties. History is bounded and discarded in a stated order; a recipe is kept until the operator discards it, and a recipe that expired because the machine needed the room would be a failure the operator discovers only when they next want the drink.
+
+  The abandonment criterion is the one that is easy to leave out and expensive to omit. An operator who tried four things and liked none of them expects the machine to be where they left it, and a machine that quietly adopted the last attempt has changed the drink they will serve tomorrow without telling them.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001.C4
+    type: derives-from
+  - target: JRN-DIAL-IN-RECIPE-001.C5
+    type: derives-from

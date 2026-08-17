@@ -1,0 +1,14 @@
+id: JRN-DIAL-IN-RECIPE-001.C6
+type: criterion
+title: A difference that shows only while the drink is being made can be seen as it happens
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Some faults in a drink are events rather than outcomes. Water finding a channel through the puck shows as it happens and leaves a finished cup that a dozen other causes would have produced equally well, so an operator who only sees the result cannot tell which of them to act on.
+
+  The finished record does not substitute for this. What matters is that the operator is watching at the moment the difference appears.
+links:
+  - target: JRN-DIAL-IN-RECIPE-001
+    type: criterion-of

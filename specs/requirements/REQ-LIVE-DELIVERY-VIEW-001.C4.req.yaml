@@ -1,12 +1,12 @@
 id: REQ-LIVE-DELIVERY-VIEW-001.C4
 type: criterion
-title: Serving a settled recipe requires nothing of the operator's attention
+title: A delivery can be asked for and served without the view being consulted
 status: active
 version: 1
 measurement_type: binary
 verification: demonstration
 text: |
-  The live view exists for the operator who is attributing a difference, and the operator who has finished doing that should be able to ignore it entirely and still get the drink.
+  The view exists for the operator who is attributing a difference. The operator who has finished doing that asks for the recipe and takes the cup, and nothing about the delivery may depend on the view having been opened, watched, or acknowledged.
 
   A machine that has to be watched to be trusted has failed the goal this derives from rather than served it.
 links:

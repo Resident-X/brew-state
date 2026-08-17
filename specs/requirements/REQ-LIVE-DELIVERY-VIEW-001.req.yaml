@@ -16,5 +16,5 @@ rationale: |
 
   Distinct from external monitoring, which is about systems other than the machine observing it without affecting it. This is the operator, at the machine, during the drink.
 links:
-  - target: JRN-DIAL-IN-RECIPE-001.C2
+  - target: JRN-DIAL-IN-RECIPE-001.C6
     type: derives-from

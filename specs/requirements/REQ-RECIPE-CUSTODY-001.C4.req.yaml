@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C4
+type: criterion
+title: A session that keeps nothing leaves the recipe it started from unchanged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An operator who tried several things and liked none of them expects the machine to be where they left it. A machine that quietly adopted the last attempt has changed the drink they will serve tomorrow, and they will discover it by tasting it.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of

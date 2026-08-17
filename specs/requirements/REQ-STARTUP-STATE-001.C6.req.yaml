@@ -1,14 +1,14 @@
 id: REQ-STARTUP-STATE-001.C6
 type: criterion
-title: Power-on proceeds to readiness once the known safe state is established
+title: Power-on proceeds to readiness only where the machine came up by a deliberate local act
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  An operator reaching for the switch has asked for coffee, and a machine that comes up inert and waits to be asked a second time has added a wait to every use of itself.
+  Power arriving is not the same event as a person asking for coffee, and the two are indistinguishable to a machine that treats every power-on alike. Mains restored to an empty house would heat a machine nobody is standing at, which is the situation the requirement this sits under exists to prevent.
 
-  This takes nothing from the known-state requirement it sits beside: heating begins from the established safe state rather than instead of it. Nor does it leave the machine holding heat indefinitely, because readiness reached this way expires on the same terms as readiness reached any other way.
+  Where the machine came up by a deliberate local act, proceeding is what the operator asked for and making them ask twice adds a wait to every use. Where it came up any other way, it rests, and the readiness capability that runs with nobody present is the separately-gated one rather than this.
 links:
   - target: REQ-STARTUP-STATE-001
     type: criterion-of

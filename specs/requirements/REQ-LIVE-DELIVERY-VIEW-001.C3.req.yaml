@@ -1,12 +1,14 @@
 id: REQ-LIVE-DELIVERY-VIEW-001.C3
 type: criterion
-title: A delivery proceeds unaffected whether or not anything is observing it
+title: The view resolves the shortest event the operator would act on
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  An observer that can slow, stall or alter the delivery has changed the thing it was meant to describe, and the effect will be largest exactly when the operator is watching most closely.
+  An event the operator is watching for is over in a fraction of the delivery that contains it, and a view that averages across a longer span reports that nothing happened.
+
+  The resolution that matters is the shortest event the operator would act on, which is a property of what goes wrong in a drink rather than of the delivery's own length.
 links:
   - target: REQ-LIVE-DELIVERY-VIEW-001
     type: criterion-of

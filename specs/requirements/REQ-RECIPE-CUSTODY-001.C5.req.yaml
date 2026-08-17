@@ -1,0 +1,12 @@
+id: REQ-RECIPE-CUSTODY-001.C5
+type: criterion
+title: What differed between two attempts is recorded even where more than one thing changed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Attribution and record are separate obligations. The operator who changed two things at once has made a comparison they cannot fully attribute, and that is their problem to carry; a machine that responds by recording nothing has taken away the evidence they would need to untangle it later.
+links:
+  - target: REQ-RECIPE-CUSTODY-001
+    type: criterion-of
