@@ -1,0 +1,12 @@
+id: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1
+type: criterion
+title: The mutant population covers every machine-describing structure without being given its name
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The sources the sweep draws mutants from are read from the source tree, and a structure whose equations describe a machine is in that population without its name appearing in the sweep's configuration. The check driving this adds a structure of that kind to a synthetic tree and asserts it is covered with nothing hand-maintained edited, and adds one describing no machine and asserts it is not — so the distinction is shown to be drawn on what a structure claims about itself rather than on how many structures there happen to be. Out of scope: which mutation operators are generated, whether the tests kill the mutants the enlarged population produces, and the sweep's judging threshold.
+links:
+  - target: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY
+    type: criterion-of

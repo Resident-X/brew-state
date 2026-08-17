@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C13
+type: criterion
+title: The mutation sweep's population follows the structures in the tree rather than a fixed list
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Every structure whose equations describe a machine has its arithmetic inside the mutant population the sweep draws from, and a structure added after the sweep was first configured is inside that population without the configuration being edited to name it — when its contributing solution closes. A structure that describes no machine carries no arithmetic a mutant would say anything about and is outside it.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

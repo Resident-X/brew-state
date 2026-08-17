@@ -1,0 +1,12 @@
+id: SOL-SUPPORT-CITATION-SUBSTANCE.C2
+type: criterion
+title: A citation that identifies what was run is accepted, and unverified structures are undisturbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A structure claiming the verified support value with a citation that identifies what was run and what it was run against is accepted, and every structure carrying the unverified value is accepted unchanged — so tightening the verified case refuses nothing that was admissible before, and the structures presently in the tree, all of which are unverified, are undisturbed. Out of scope: the status vocabulary and the line it draws, and the surfaces a status is published on beyond the one already cross-checked against the declaration.
+links:
+  - target: SOL-SUPPORT-CITATION-SUBSTANCE
+    type: criterion-of

@@ -1,0 +1,39 @@
+id: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY
+type: deliverable
+category: solution
+title: The mutation sweep discovers the structures it draws mutants from
+status: active
+version: 1
+text: |
+  The set of sources the mutation sweep draws its mutant population from is read from the source tree rather than written down, on the same terms every other gate guarding these seams already reads its subjects: a structure is in the population because its equations are in the tree, not because somebody remembered to add it after the fact.
+
+  The distinction the population is drawn on is whether a structure's equations describe a machine. A structure that describes none carries arithmetic that means nothing, so a surviving mutant in it says nothing about the tests and a killed one says nothing either; including it would inflate the denominator with a subject the sweep cannot draw a conclusion from.
+
+  No structure states that about itself today, and that is the first thing this work owes. The fact is presently carried in prose at the top of each structure's header, which a reader can act on and a discovery step cannot, and the present population encodes it the only way that leaves — by listing the directories that qualify, which is the arrangement being replaced. So each structure gains a declaration of whether its equations describe a machine, drawn from a vocabulary declared once, and the build refuses a structure that declares nothing, exactly as it already refuses one declaring no support status. That edits every structure header in the tree, which is admissible here and would not have been in the work that added the most recent structure: establishing a declaration is a change to what every structure must say, and the claim that adding a structure edits nothing is a claim about arriving behind a contract already in place, not about never establishing one.
+
+  The environment each structure's sweep is run in follows the same rule as the population. The sweep already runs against a build compiled by a mutation toolchain, one per structure whose suite is worth asking, and the tooling that discovers those builds already discovers them rather than being handed a list — so what is owed there is that a structure declaring it describes a machine is swept without the sweep's own configuration being edited.
+
+  Out of scope: which mutation operators are generated, the threshold a sweep result is judged against and whether the present one is right, the control logic and the hardware implementations which this sweep has never covered and does not begin to, and whether any particular structure's tests actually kill the mutants the enlarged population produces — that is what running the sweep answers, and a population that is complete is what makes the answer worth having rather than the answer itself.
+rationale: |
+  The sweep's population was drawn when one structure in the tree described a machine and one described nothing. Naming that structure was then indistinguishable from describing the rule, and the configuration recorded the name.
+
+  A second machine-describing structure has since arrived, and the arithmetic it carries is real. It sits outside the population, so every mutant the sweep reports is a mutant of the older structure's equations, and a sweep result that reads as coverage of the plant model is coverage of part of it. That is the failure mode worth fixing rather than the missing percentage: a number that means less than it appears to is worse than a number that is absent, because nobody goes looking behind it.
+
+  This is new scope rather than remediation, and the test is the one this project applies: can the closed criterion whose intent went unhonoured be named? It cannot. The criterion that closed the sweep stated its population as two named directories, so a structure arriving later being outside it is what that criterion described rather than a shortfall against it. Requiring the population to follow the tree is a wider claim than anything already agreed. The neighbouring gate-coverage work is not the missing name either: it scoped itself to the gates in the check task, and the sweep was deliberately kept out of that task, so its rule never reached here.
+
+  That leaves the reason the discipline arrives late rather than the discipline being new, which is worth stating plainly: drawing a subject set from the tree is the standing rule everywhere else these seams are guarded, and the sweep is where it had not yet been applied because when it was written there was nothing to discover.
+
+  The declaration each structure gains is the load-bearing part and is deliberately not assumed. Whether a structure's equations describe a machine currently exists only as prose a person reads, and a rule that depends on prose is a rule that depends on remembering. Requiring it to be stated, and failing the build on a structure that states nothing, is what turns the population from a judgement somebody makes into a property the tree carries — and it is the same move, for the same reason, that support status and the answered actuation channels already went through.
+
+  Whether the newly included equations survive the sweep is deliberately not promised here. A slice that owed both a complete population and a passing result would have an incentive to shape the population until the result passed, which is exactly backwards.
+links:
+  - target: DEC-PLANT-MUTATION-COVERAGE
+    type: justified-by
+  - target: DEL-SIM-SEAMS-HARNESS.C13
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+    type: depends-on
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C8
+    type: targets

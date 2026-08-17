@@ -1,0 +1,12 @@
+id: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3
+type: criterion
+title: Every structure declares whether its equations describe a machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every structure behind the seam declares whether its equations describe a machine, drawn from a vocabulary declared in one place, and the build fails on a structure that declares nothing or declares something outside it — so the property the mutant population is drawn on is one the tree carries rather than one a reader infers from a comment. The check driving this is given a structure declaring neither value and required to fail. Out of scope: whether a structure's claim about itself is true, which no build-time check reaches and which for the machine-describing case is the same question as whether its equations are right; and the support-status and actuation-channel declarations, which draw different lines and are left as they are.
+links:
+  - target: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY
+    type: criterion-of
