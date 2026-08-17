@@ -1,0 +1,36 @@
+id: EVD-REQ-MODEL-STRUCTURE-SEAM-001.C4-ATTEST
+type: evidence
+title: Attestation of REQ-MODEL-STRUCTURE-SEAM-001.C4
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-17T10:51:38Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - SOL-PLANT-SEAM-GATE-COVERAGE
+    - SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-MODEL-STRUCTURE-SEAM-001.C4.
+
+  Final-state intent: adding a plant structure must not require editing any structure already in the tree, nor any consumer of the plant-model interface.
+
+  Composition: SOL-PLANT-SEAM-GATE-COVERAGE and SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE, with their active evidence. DEL-SIM-SEAMS-HARNESS appears in the composition as the epic that targets this criterion; it carries no evidence of its own and contributes by cascade rather than by delivery, so it is not cited as an input.
+
+  Intent fit: commit 5a90923 adds a third structure of a different architecture and edits no file under any existing structure directory, neither seam header, the shared parameter loader, any check tool, any gate invocation that discovers its subjects, any existing test suite, or any translation unit including include/plant_model.h. firmware/platformio.ini gains three environment blocks with zero deletion lines. The residue was priced in advance: SOL-PLANT-SEAM-GATE-COVERAGE predicted the arriving structure would owe four environment entries, two task-file lines and one further argument; the addition came in at three entries, and the fourth was unnecessary because that slice had already confined both test environments to their own suites. A prediction made before the fact and met is the load-bearing part of this attestation.
+
+  Acknowledged scope boundary, and it is not narrow:
+  (1) Method is change-set analysis of a single addition. There is no standing assertion, and there cannot be one: a future addition made by editing an existing structure would be made by whoever also owns the test. This attestation is a snapshot and can rot silently.
+  (2) Consumers means translation units consuming include/plant_model.h. Shared build and task configuration is excluded and did change -- firmware/platformio.ini gains three blocks, and the root Taskfile.yml gains two lines plus one in-place edit appending an argument to the refusal check. That in-place edit is the only change to a pre-existing line of executable configuration in the change-set.
+  (3) Scoped to a structure expressible in the seam's existing quantity and actuation vocabularies. The boiler structure answers fewer channels than the vocabulary carries; no structure has yet required a quantity or a channel the vocabulary lacks, and such a structure would edit headers every consumer includes. That case is excluded by the contributing solution's out-of-scope statement but is not excluded by this criterion's own text.
+  (4) The additivity was partly bought by leaving the new structure less guarded than the old: firmware/mull.yml hardcodes the mutation-sweep population as src/plant/common and src/plant/thermoblock, so the new structure's arithmetic sits outside the sweep. That is a coverage question against DEL-SIM-SEAMS-HARNESS.C12, not a violation of this criterion, and is carried forward separately.
+
+  Decision: attest, at the scope named above. Verified by an independent adversarial pass that attempted to refute it and could not break the literal clause.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C4
+    type: satisfies
+attributes:
+  attested_criterion_version: 1
