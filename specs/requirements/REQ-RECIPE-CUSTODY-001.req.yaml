@@ -1,24 +1,26 @@
 id: REQ-RECIPE-CUSTODY-001
 type: requirement
 category: functional
-title: The machine holds the operator's recipes and the attempts they came from
+title: The machine holds the operator's recipes and the attempts they are compared against
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Dial-in produces recipes, and until now nothing in the graph held them. Deliveries are recorded, and a previously delivered drink can be selected again, but a recipe is not a record: it is the thing the operator arrived at deliberately and intends to keep, and it has to survive the history it came out of.
 
-  The attempts behind a recipe matter for as long as the session lasts, because the operator regularly establishes that an earlier one was better. After that they are ordinary history.
+  The attempts behind a recipe are held for a purpose, which is the comparison the operator is making between them. That purpose governs not only how long they are kept but which of them belong in the comparison at all, since an attempt the machine itself did not deliver on target answers a question the operator was not asking.
 rationale: |
   Authored with the dial-in journey rather than after it, because a journey whose criteria have nothing beneath them defers the work rather than specifying it. Every claim here traces to a step or an extension of that journey, and the journey makes no claim this requirement does not carry.
+
+  Custody and comparison are kept in one requirement rather than two because they are inseparable in practice: what it means to hold an attempt is to hold it for comparison, and a criterion excluding an attempt from that comparison has to say in the same breath that it is still held. Splitting them would put the two halves of one sentence in different nodes.
 
   Kept apart from the delivery record because the two have opposite retention properties. History is bounded and discarded in a stated order; a recipe is kept until the operator discards it, and a recipe that expired because the machine needed the room would be a failure the operator discovers only when they next want the drink.
 
   The abandonment criterion is the one that is easy to leave out and expensive to omit. An operator who tried four things and liked none of them expects the machine to be where they left it, and a machine that quietly adopted the last attempt has changed the drink they will serve tomorrow without telling them.
 links:
+  - target: JRN-DIAL-IN-RECIPE-001.C3
+    type: derives-from
   - target: JRN-DIAL-IN-RECIPE-001.C4
     type: derives-from
   - target: JRN-DIAL-IN-RECIPE-001.C5
-    type: derives-from
-  - target: JRN-DIAL-IN-RECIPE-001.C3
     type: derives-from
