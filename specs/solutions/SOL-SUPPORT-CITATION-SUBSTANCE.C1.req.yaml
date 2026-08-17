@@ -1,0 +1,12 @@
+id: SOL-SUPPORT-CITATION-SUBSTANCE.C1
+type: criterion
+title: A verified claim whose citation identifies nothing is refused wherever it is cross-checked
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A structure claiming the verified support value with a citation identifying neither what was run nor what it was run against is refused by the build, and the refusal names the structure and says the citation is insufficient rather than absent, so the two cases are told apart by whoever reads the failure. The refusal applies wherever the claim is cross-checked — both where the structure declares it and where it is published for an adopter to read — because a citation that has to survive scrutiny in the declaration and not in the published table leaves the weaker one on the surface more people meet. Each site is driven against a claim carrying such a citation and required to fail. Out of scope: whether a cited verification was competently performed, and the form the cited evidence itself takes.
+links:
+  - target: SOL-SUPPORT-CITATION-SUBSTANCE
+    type: criterion-of

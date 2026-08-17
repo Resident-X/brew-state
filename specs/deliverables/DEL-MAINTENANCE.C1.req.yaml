@@ -1,0 +1,15 @@
+id: DEL-MAINTENANCE.C1
+type: criterion
+title: A verified support claim carries a citation substantial enough to be challenged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  SOL-PLANT-STRUCTURE-SUPPORT-STATUS.C3 required that a structure carrying the verified support value cite evidence identifying what was run and against what, in enough detail to be challenged. What was delivered refuses a verified claim carrying no citation at all, and refuses one drawn from a fixed set of placeholder words, but accepts any other text however slight — a single character is enough to pass. A citation that cannot be challenged is the case that criterion existed to catch, because a status set from confidence rather than from a bench is indistinguishable from one set honestly once any string will do.
+
+  The state restored is that a verified support claim whose citation carries too little to be challenged is refused on the same terms as one carrying no citation at all, when its contributing work closes. Judging whether a cited verification was competently done remains a review question and stays out of scope, as it was in the criterion that went unmet.
+links:
+  - target: DEL-MAINTENANCE
+    type: criterion-of

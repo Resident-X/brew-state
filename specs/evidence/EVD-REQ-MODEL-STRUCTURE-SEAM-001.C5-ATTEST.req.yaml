@@ -1,0 +1,35 @@
+id: EVD-REQ-MODEL-STRUCTURE-SEAM-001.C5-ATTEST
+type: evidence
+title: Attestation of REQ-MODEL-STRUCTURE-SEAM-001.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-17T10:51:56Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - SOL-PLANT-STRUCTURE-SUPPORT-STATUS
+    - SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-MODEL-STRUCTURE-SEAM-001.C5.
+
+  Final-state intent: a structure may be published as supported only where it has been verified against real hardware.
+
+  Composition: SOL-PLANT-STRUCTURE-SUPPORT-STATUS and SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE, with their active evidence. DEL-SIM-SEAMS-HARNESS appears in the composition as the epic that targets this criterion; it carries no evidence of its own and contributes by cascade rather than by delivery, so it is not cited as an input.
+
+  Intent fit: the support vocabulary is declared once in include/plant_support.h and draws its line at hardware verification and nothing else. Every structure must declare a status from it or the build fails, and a structure claiming the verified value must also carry a citation or the build fails. All three structures in the tree declare PLANT_SUPPORT_UNVERIFIED in their own headers, and check_support_status cross-checks each header against its row in the adopter-facing table in firmware/README.md. Nothing in the tree is published as supported. The structure added by this slice describes an architecture nobody on this project owns a machine of, so unverified is its correct final state rather than a gap awaiting closure.
+
+  Acknowledged scope boundary, and it is material:
+  (1) What ships is an honest-declaration discipline, not enforcement that verification occurred. An independent adversarial pass demonstrated empirically that PLANT_SUPPORT_HARDWARE_VERIFIED is claimable against any string literal outside a fixed placeholder blocklist -- a citation of "x" passes with a green build. The check validates the citation's form, never its content. No build-time check can establish that a bench run happened, and this criterion's verification method is inspection, which concedes that closure is inspection of published claims rather than detection of a deliberate lie.
+  (2) Attested against the tree's current state, in which no structure is published as supported at all. The claim has never been exercised at its verified end.
+  (3) Cross-checking of published status covers exactly one surface: the file passed as --documentation, firmware/README.md. The same status is also published in prose in each structure's parameter descriptions under firmware/params/, and in the repository-root README, and neither is cross-checked. A structure whose status later changed would leave stale published claims in those places uncaught -- which is the failure mode the checking tool's own rationale names as worse than carrying no status, because it is believed. This gap is carried forward separately rather than left implicit here.
+
+  Decision: attest, at the scope named above. The mechanism does what a mechanism can: it forces every structure to answer the same question in the same words, refuses a verified claim with nothing behind it, and makes a header and the adopter-facing table disagree loudly. What remains outside it is named rather than claimed away.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C5
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

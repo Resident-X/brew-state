@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C2-ANALYSIS
+type: evidence
+title: Adding the structure changed no existing structure and no consumer (SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C2)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-17T10:44:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: git diff --cached HEAD, branch req/SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE/second-structure
+text: |-
+  Change-set analysis of the introducing diff. Added: firmware/src/plant/boiler/ (plant_structure.h, plant_structure.c), firmware/params/boiler.params and boiler-variant.params, firmware/test/test_plant_boiler/test_plant_boiler.c. Modified: firmware/platformio.ini, Taskfile.yml, firmware/README.md, and nothing else under firmware/. firmware/platformio.ini contains ZERO deletion lines -- the diff is purely additive, three new environment blocks (native_boiler, native_boiler_two_structures, native_boiler_test) and no line of any existing environment altered; in particular neither existing test environment's test_filter is touched, because each already confines itself to its own suites. Taskfile.yml is exactly two added lines (the native_boiler build line and the parameters-as-data invocation over the two boiler descriptions) and one further argument (--env native_boiler_two_structures appended to check_selection_refused). Untouched: every file under firmware/src/plant/thermoblock/ and firmware/src/plant/fixture/, both seam headers (include/plant_model.h, include/plant_types.h), the shared parameter loader (src/plant/common/), every tool under firmware/tools/, every gate invocation that discovers its subjects, every existing test suite, and every translation unit consuming the model (src/app/native/, src/control/). The one further file in the change-set is the graph node specs/solutions/SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C2.req.yaml -- this criterion itself, corrected in the same branch.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C2
+    type: satisfies

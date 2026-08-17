@@ -1,0 +1,12 @@
+id: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C2
+type: criterion
+title: A discovery step that finds no machine-describing structure fails rather than passes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A discovery step that finds no structure declaring that its equations describe a machine stops with an error rather than reporting a clean result over an empty population. This is the emptiness case for the new step specifically: the sweep already refuses to run when it discovers no mutation environment, when its scope takes in no source, and when no mutant is produced, and none of those fires when the tree holds structures and the new step simply matches none of them — which is the state a mis-drawn declaration would produce, and which yields no surviving mutants and so reads exactly like a suite that killed everything. Out of scope: what the sweep does with a population that is non-empty but smaller than expected, which is a judgement about the result rather than about whether the step ran.
+links:
+  - target: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY
+    type: criterion-of

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C5-TEST
+type: evidence
+title: The new structure is compiled under the host tier's analysis and warning settings (SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T10:44:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_sanitizers.py, task fw:check && task fw:run
+text: |-
+  The environments this structure adds fall inside the analysis gate rather than beside it, because that gate discovers every environment compiling sources under firmware/src/ for the host. check_sanitizers reports: 'native, native_fixture, native_boiler, native_test, native_fixture_test, native_boiler_test compile every source of this project's own under analysis, and every artefact of theirs links it'. Both new covered environments are named there without any edit to the gate. native_boiler inherits build_src_flags from native_base, so the structure compiles under -Werror -Wconversion -Wshadow -Wdouble-promotion and builds clean with no warning; the deliberately misconfigured native_boiler_two_structures is excluded by the gate reading its own custom_must_not_build declaration, alongside the two that existed before. The artefact is executed rather than merely built: run_host_artefacts reports '5 run(s) completed under the analysis', including the native_boiler artefact against both of its descriptions, and reports no finding.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C5
+    type: satisfies

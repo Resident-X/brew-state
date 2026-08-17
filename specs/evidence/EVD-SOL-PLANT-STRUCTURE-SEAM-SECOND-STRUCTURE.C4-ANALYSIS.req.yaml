@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C4-ANALYSIS
+type: evidence
+title: The new structure's artefact carries none of the other structures' symbols (SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C4)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-17T10:44:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_structure_exclusive.py, task fw:check
+text: |-
+  check_structure_exclusive inspects the linked host executables by symbol table and reports: './.pio/build/native_boiler/program carries 2 symbol(s) of boiler and none of any other; ./.pio/build/native_fixture/program carries 1 symbol(s) of fixture and none of any other; ./.pio/build/native/program carries 2 symbol(s) of thermoblock and none of any other'. Exclusivity therefore holds pairwise across all three structures rather than across the single pair that existed when the check was written -- which is what a third structure is able to falsify and a second was not. The artefacts built for the two existing structures are unchanged by the new one's arrival: the check reports them carrying none of its symbols, and the change-set edits no source they compile.
+links:
+  - target: SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C4
+    type: satisfies

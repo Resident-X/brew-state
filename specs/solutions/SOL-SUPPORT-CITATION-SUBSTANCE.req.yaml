@@ -1,0 +1,27 @@
+id: SOL-SUPPORT-CITATION-SUBSTANCE
+type: deliverable
+category: solution
+title: A verified support claim is refused unless its citation identifies what was run
+status: active
+version: 1
+text: |
+  A support claim of the verified value is refused unless what it cites carries enough to be challenged, on the same terms the absent citation is already refused, and at both the points that refusal is already made: where the structure declares its status, and where that status is published for an adopter to read. The weaker of the two is the one that matters most, because a citation that has to survive scrutiny in a header and not in the table everybody reads leaves the slack on the surface with the wider audience. Nothing else about the status vocabulary, the structures that carry it, or which surfaces are cross-checked changes.
+
+  What "enough to be challenged" means is settled by what the unmet criterion said the citation is for: it identifies what was run and against what. A reader who cannot tell from the citation which machine was exercised, or what was done to it, has nothing to go and check — so that is the shape the refusal is drawn against, rather than a character count, which any evasion clears by padding.
+
+  The refusal is driven rather than asserted in the abstract. A claim of the verified value carrying a citation too slight to identify anything is built and required to fail, alongside the absent-citation case that is already driven, so the new refusal is a thing the build demonstrates rather than a rule the source describes. Every structure presently in the tree carries the unverified value, so nothing standing is disturbed by tightening the verified one.
+
+  Out of scope: whether a cited verification was competently performed, which the unmet criterion also placed out of scope and which no build-time check reaches; the form the cited evidence takes; the status vocabulary itself and the line it draws; the surfaces a status is published on beyond the one already cross-checked; and any change to the structures in the tree, none of which claims the verified value.
+rationale: |
+  The criterion that went unmet asked for a citation identifying what was run and against what, in enough detail to be challenged. What shipped asks only that the citation not be one of a fixed set of placeholder words. The gap between those two is the whole of this work.
+
+  It matters more than the size of the fix suggests, because of which way the failure points. A support status is the field most likely to be set optimistically: setting it costs nothing at the moment of writing and its consequences land on somebody else's machine, much later, when their equations are trusted because a table said they had been checked. Requiring a citation is what makes the optimistic setting the one that fails the build rather than the one that ships — and a requirement any single character satisfies does not make it fail. The check reads as a guard while behaving as a formality, which is worse than an absent guard, because an absent one is visible.
+
+  This lands here rather than in the work that fell short because that work is closed, and closure is one-way on purpose: its criteria are the record of what was agreed, and editing them to describe what was built would destroy the evidence that the two differed. Nor is this a superseded specification — the criterion said the right thing. Delivery did not honour it, which is the distinction this epic exists to carry.
+
+  Drawing the refusal against what the citation identifies rather than against its length is deliberate. A length threshold is a number an author clears by typing, and a rule that can be satisfied without engaging with it teaches that the field is a formality — which is the state being remediated, reintroduced in a form that passes.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C5
+    type: targets

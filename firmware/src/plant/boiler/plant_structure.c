@@ -1,0 +1,225 @@
+/*
+ * The single-boiler structure's equations.
+ *
+ * One heated vessel serves both paths. Both temperature quantities are read off
+ * that one state, so a machine of this architecture cannot hold the brew side
+ * at one temperature while the steam side sits at another -- which is the
+ * behaviour the architecture actually has, and the reason a controller written
+ * against it has a different problem to solve than one written against two
+ * independent masses.
+ *
+ * Every coefficient these equations use is read from the parameter record the
+ * instance was initialised with. The only numbers written here are the unit
+ * conversions the interface's units imply and the constants of the integration
+ * itself, neither of which is a property of a machine.
+ */
+#include "plant_model.h"
+
+#include <math.h>
+#include <stddef.h>
+#include <string.h>
+
+/* Milliseconds to seconds, and parts per thousand to a fraction of full scale. */
+#define MILLIS_PER_SECOND 1000.0f
+#define PERMILLE_FULL_SCALE 1000.0f
+
+/*
+ * The admissible ranges are the ones outside which these equations stop
+ * describing a machine of this architecture rather than describing an unusual
+ * one: a mass or a time constant at or below zero divides, a negative loss
+ * coefficient makes the vessel run away from ambient, and a negative power or
+ * pressure drives the wrong way. The upper bounds are where a value stops being
+ * an espresso machine and starts being a data-entry error.
+ */
+static const plant_parameter_spec_t SPECS[] = {
+    {"ambient_temperature_c", -40.0f, 60.0f, offsetof(plant_parameters_t, ambient_temperature_c)},
+
+    {"vessel.thermal_mass_j_per_k", 1.0f, 100000.0f,
+     offsetof(plant_parameters_t, vessel_thermal_mass_j_per_k)},
+    {"vessel.heater_power_w", 0.0f, 10000.0f,
+     offsetof(plant_parameters_t, vessel_heater_power_w)},
+    {"vessel.loss_w_per_k", 0.0f, 1000.0f, offsetof(plant_parameters_t, vessel_loss_w_per_k)},
+
+    {"pump.pressure_bar", 0.0f, 30.0f, offsetof(plant_parameters_t, pump_pressure_bar)},
+    {"brew.pressure_time_constant_s", 0.001f, 100.0f,
+     offsetof(plant_parameters_t, brew_pressure_time_constant_s)},
+
+    {"steam.saturation_temperature_c", 0.0f, 300.0f,
+     offsetof(plant_parameters_t, steam_saturation_temperature_c)},
+    {"steam.pressure_bar_per_k", 0.0f, 10.0f,
+     offsetof(plant_parameters_t, steam_pressure_bar_per_k)},
+};
+
+actuation_channel_set_t plant_structure_actuation_channels(void)
+{
+    return PLANT_STRUCTURE_ACTUATION_CHANNELS;
+}
+
+const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
+{
+    if (count != NULL) {
+        *count = sizeof(SPECS) / sizeof(SPECS[0]);
+    }
+    return SPECS;
+}
+
+/*
+ * Steam pressure at a given vessel temperature.
+ *
+ * One expression, used both to bring an instance up and to advance it. Writing
+ * it twice is what let the two disagree: an instance started with a pressure
+ * its own equations would not have produced is not at rest, and a step taken
+ * with no actuation then moves it.
+ */
+static float steam_pressure_at(const plant_parameters_t *parameters, float vessel_temperature_c)
+{
+    const float above_saturation_k =
+        vessel_temperature_c - parameters->steam_saturation_temperature_c;
+    return above_saturation_k > 0.0f ? parameters->steam_pressure_bar_per_k * above_saturation_k
+                                     : 0.0f;
+}
+
+/*
+ * How far a first-order relaxation travels towards its settling value in `x`
+ * time constants: 1 - exp(-x).
+ *
+ * Written with the library's expm1 rather than as `1 - exp(-x)`. For a short
+ * step the exponential is just under one, and subtracting it from one throws
+ * away the leading digits of an answer that is itself small -- the error is
+ * absolute in the exponential and so grows without bound relative to the
+ * result.
+ */
+static float settled_fraction(float x)
+{
+    return -expm1f(-x);
+}
+
+/*
+ * The same fraction per time constant elapsed, which is one in the limit as the
+ * step vanishes. There is no threshold: expm1 is accurate all the way down, and
+ * a cut would put a discontinuity in the model where a coefficient crossed it.
+ */
+static float relaxation_factor(float x)
+{
+    return x > 0.0f ? settled_fraction(x) / x : 1.0f;
+}
+
+void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuation, float seconds)
+{
+    if (model == NULL || actuation == NULL) {
+        return;
+    }
+
+    const plant_parameters_t *p = &model->coefficients;
+
+    const float duty =
+        actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] / PERMILLE_FULL_SCALE;
+    const float delivered_w = p->vessel_heater_power_w * duty;
+    const float lost_w = p->vessel_loss_w_per_k * (model->vessel_temperature_c -
+                                                   p->ambient_temperature_c);
+    const float steps_of_time_constant =
+        (seconds * p->vessel_loss_w_per_k) / p->vessel_thermal_mass_j_per_k;
+    const float effective_seconds = seconds * relaxation_factor(steps_of_time_constant);
+
+    model->vessel_temperature_c +=
+        ((delivered_w - lost_w) * effective_seconds) / p->vessel_thermal_mass_j_per_k;
+}
+
+void boiler_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,
+                              float seconds)
+{
+    if (model == NULL || actuation == NULL) {
+        return;
+    }
+
+    const plant_parameters_t *p = &model->coefficients;
+
+    const float commanded_bar =
+        p->pump_pressure_bar *
+        (actuation->level_permille[ACTUATION_CHANNEL_PUMP] / PERMILLE_FULL_SCALE);
+    const float settled = settled_fraction(seconds / p->brew_pressure_time_constant_s);
+    model->brew_pressure_bar += (commanded_bar - model->brew_pressure_bar) * settled;
+
+    model->steam_pressure_bar = steam_pressure_at(p, model->vessel_temperature_c);
+}
+
+bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
+{
+    if (model == NULL || parameters == NULL) {
+        return false;
+    }
+
+    memset(model, 0, sizeof(*model));
+    model->coefficients = *parameters;
+
+    /*
+     * The machine starts where it has been sitting: the vessel at ambient, the
+     * pump off, and every quantity at the value this structure's own equations
+     * give for that state. A step taken from here with no actuation therefore
+     * moves nothing, which is what makes an accidentally hard-coded source or
+     * sink visible -- and it holds for any admissible ambient, not only for one
+     * that happens to sit below saturation.
+     */
+    model->vessel_temperature_c = parameters->ambient_temperature_c;
+    model->brew_pressure_bar = 0.0f;
+    model->steam_pressure_bar = steam_pressure_at(parameters, model->vessel_temperature_c);
+    model->initialised = true;
+    return true;
+}
+
+bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *actuation,
+                                uint32_t interval_millis, plant_step_error_t *error)
+{
+    if (error == NULL) {
+        return false;
+    }
+    if (model == NULL || !model->initialised) {
+        error->fault = PLANT_STEP_NOT_STEPPABLE;
+        error->channel = ACTUATION_CHANNEL_COUNT;
+        return false;
+    }
+    if (!plant_step_admissible(actuation, interval_millis, PLANT_STRUCTURE_ACTUATION_CHANNELS,
+                               error)) {
+        return false;
+    }
+
+    const float seconds = interval_millis / MILLIS_PER_SECOND;
+
+    /*
+     * The vessel first, then the pressures: steam pressure follows the vessel,
+     * so within one step it reflects where the vessel has just arrived.
+     */
+    boiler_advance_vessel(model, actuation, seconds);
+    boiler_advance_pressures(model, actuation, seconds);
+    return true;
+}
+
+bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity, float *value)
+{
+    if (model == NULL || value == NULL || !model->initialised) {
+        return false;
+    }
+
+    switch (quantity) {
+    /*
+     * Both temperature quantities answer from the one vessel, because there is
+     * one vessel. This is the architecture rather than an approximation of it:
+     * on a machine built this way the brew path and the steam path are the same
+     * body of water, and a model reporting two independent temperatures for
+     * them would be describing a machine that does not exist.
+     */
+    case PLANT_QUANTITY_BREW_TEMPERATURE_C:
+    case PLANT_QUANTITY_STEAM_TEMPERATURE_C:
+        *value = model->vessel_temperature_c;
+        return true;
+    case PLANT_QUANTITY_BREW_PRESSURE_BAR:
+        *value = model->brew_pressure_bar;
+        return true;
+    case PLANT_QUANTITY_STEAM_PRESSURE_BAR:
+        *value = model->steam_pressure_bar;
+        return true;
+    case PLANT_QUANTITY_COUNT:
+    default:
+        return false;
+    }
+}
