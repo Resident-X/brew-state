@@ -1,0 +1,34 @@
+#!/bin/sh
+# Refuse any push whose destination is main. Work reaches main through pull
+# requests, so a direct push is a mistake rather than a shortcut.
+#
+# This hook lives in the repository rather than in .git/hooks, which git does
+# not track — a guardrail that exists only in one clone protects only that
+# clone. `task repo:hooks` arms it by pointing core.hooksPath at this
+# directory, and `task sc:init` runs that for a fresh clone.
+#
+# It is a courtesy, not a control: `git push --no-verify` walks straight past it,
+# and only a server-side rule can stop someone determined. What it catches is the
+# mistake, which is the failure this repository actually has.
+#
+# The destination ref is what is matched, so `git push origin HEAD:main` is caught
+# as well as pushing the local main. Any remote counts — pushing main to a fork or
+# a backup remote is refused too, deliberately, since this repo has one home.
+#
+# git feeds one line per ref being pushed on stdin:
+#   <local ref> <local sha> <remote ref> <remote sha>
+
+protected_ref=refs/heads/main
+
+# The `|| [ -n "$remote_ref" ]` tail keeps a final line with no trailing newline
+# from being dropped. git always terminates its lines, so this only matters if
+# something else ever feeds the hook — but a guardrail should not fail open.
+while read -r _local_ref _local_sha remote_ref _remote_sha || [ -n "$remote_ref" ]; do
+	if [ "$remote_ref" = "$protected_ref" ]; then
+		echo "pre-push: refusing to push to ${protected_ref#refs/heads/}." >&2
+		echo "          Branch as req/{REQ-ID}/{short-slug} and open a pull request." >&2
+		exit 1
+	fi
+done
+
+exit 0

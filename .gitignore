@@ -1,5 +1,9 @@
-# Staircase derived indexes (rebuilt from specs/ via `task sc:index`)
+# Staircase derived indexes (rebuilt from specs/ via `task sc:index`), together
+# with the SQLite write-ahead sidecars that appear beside them while the engine
+# holds the index open
 .staircase/*.db
+.staircase/*.db-shm
+.staircase/*.db-wal
 # External embedder model asset (machine-global cache, wired by `task sc:embed`)
 .staircase/models
 # staircase binary — installed repo-locally via `task sc:install` (go install from source)

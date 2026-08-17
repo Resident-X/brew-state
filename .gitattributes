@@ -1,0 +1,4 @@
+# Git hooks must keep LF endings. On a clone with core.autocrlf=true a CRLF
+# shebang makes the hook unexecutable, and a hook that cannot run fails open —
+# silently, which is the one failure mode a guardrail must not have.
+.githooks/** text eol=lf

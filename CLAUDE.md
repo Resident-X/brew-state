@@ -99,8 +99,12 @@ or against that.
 
 ## Repo etiquette
 
-- Branch: `req/{REQ-ID}/{short-slug}`. **NEVER push to `main`** — PRs only (the pre-push hook
-  blocks it). `git fetch` fresh `main` before branching; never branch from stale local `main`.
+- Branch: `req/{REQ-ID}/{short-slug}`. **NEVER push to `main`** — PRs only. The tracked
+  `.githooks/pre-push` hook refuses it, but treat that as a catch for the mistake rather than as
+  enforcement: it is inert until `task repo:hooks` points `core.hooksPath` at that directory
+  (`task sc:init` and `task sc:update` both do), `--no-verify` bypasses it, and `main` carries no
+  server-side protection rule. The discipline is yours; the hook only notices. `git fetch` fresh
+  `main` before branching; never branch from stale local `main`.
 - Commit messages and PR titles reference the criteria they advance:
   `feat(component): description [REQ-ID.C1, .C2]`.
 - PR body needs a **"Why"** section (motivation, not just what changed), a criteria-resolved
