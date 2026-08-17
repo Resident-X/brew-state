@@ -34,7 +34,10 @@
  *
  * The description is `length` bytes of text and need not be terminated. Blank
  * lines and lines whose first non-blank character is '#' are ignored; every
- * other line is `name = value`.
+ * other line is `name = value`, optionally followed by the origin of that
+ * value -- the marker, a kind from the vocabulary plant_origin.h declares, and
+ * an account of where the figure came from. A line that is only a statement the
+ * description makes about itself carries the marker and that statement alone.
  *
  * Returns false and leaves no usable record when a line cannot be parsed, when
  * a name is not one this structure has, when a name is given twice, when a
@@ -42,6 +45,12 @@
  * coefficient the structure requires is absent. No value is assumed for a
  * coefficient that is missing or rejected. `error` reports which coefficient
  * was at fault and why; it may not be null.
+ *
+ * An annotation that is present and inadmissible is refused on those same
+ * terms rather than passed over as though it were a comment. Whether a value
+ * carries an annotation at all is not asked here: a description that claims
+ * nothing about a real machine has nothing to account for, and which
+ * descriptions those are is settled where they live rather than by the loader.
  */
 bool plant_parameters_load(const char *text, size_t length,
                            plant_parameters_t *parameters,

@@ -101,6 +101,14 @@ SUPPORT_STATUS = [
     sys.executable, "tools/check_support_status.py",
     "--plant-root", "src/plant", "--include-dir", "include", "--documentation", "README.md",
 ]
+ORIGIN_HEADER = [
+    sys.executable, "tools/check_plant_header.py", "include/plant_origin.h",
+    "--plant-root", "src/plant", "--include-dir", "include", "--vocabulary-only",
+]
+ORIGINS = [
+    sys.executable, "tools/check_parameter_origins.py", "--project", ".",
+    "--plant-root", "src/plant", "--include-dir", "include", "--params-dir", "params",
+]
 ANALYSIS = [
     sys.executable, "tools/check_sanitizers.py", "--project", ".",
 ]
@@ -122,6 +130,8 @@ LABELS = {
     tuple(NARROW_TESTS): "the tests driving a narrowly-declared structure",
     tuple(ACTUATION_HEADER): "the actuation vocabulary header check",
     tuple(ACTUATION_DECLARATION): "the actuation declaration check",
+    tuple(ORIGIN_HEADER): "the origin vocabulary header check",
+    tuple(ORIGINS): "the parameter origins check",
     tuple(ANALYSIS): "the host tier's analysis check",
     tuple(TESTS_RUN): "the task that runs the tests",
 }
@@ -428,6 +438,94 @@ MUTATIONS = (
         "find": "test_build_src = yes\ncustom_strict_flags_exemption",
         "replace": "custom_strict_flags_exemption",
         "command": TESTS_RUN,
+    },
+    {
+        "name": "an-origin-with-no-account-accepted",
+        "why": "an annotation carrying a kind and nothing behind it is accepted, so a value can "
+               "be labelled without saying what it was arrived at from",
+        "file": "src/plant/common/plant_parameters.c",
+        "find": "    return account_begin != account_end;",
+        "replace": "    return true;",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "a-statement-the-description-cannot-make-ignored",
+        "why": "a marker line the loader does not recognise is passed over instead of refused, "
+               "which turns the annotation grammar into a second comment syntax",
+        "file": "src/plant/common/plant_parameters.c",
+        "find": "            if (!spans_word(statement_begin, statement_end,\n"
+                "                            PLANT_ORIGIN_NO_MACHINE_DECLARATION)) {",
+        "replace": "            if (false) {",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "the-reference-description-exempts-itself",
+        "why": "the description the design is reasoned against claims no machine, so every value "
+               "in it stops owing an account while the check goes on passing",
+        "file": "params/thermoblock.params",
+        "find": "ambient_temperature_c = 20.0 @estimated",
+        "replace": "@describes-no-machine\nambient_temperature_c = 20.0 @estimated",
+        "command": ORIGINS,
+    },
+    {
+        # The same defect again, against the other thing that catches it. Two
+        # defences are worth having here -- the build check reads the file, the
+        # suite reads the file the build hands it -- and a defence nothing
+        # demonstrates is one nobody would notice losing.
+        "name": "the-reference-description-exempts-itself-from-the-suite",
+        "why": "the description the model's own tests are exercised against claims no machine, "
+               "so the suite is asserting about a placeholder",
+        "file": "params/thermoblock.params",
+        "find": "ambient_temperature_c = 20.0 @estimated",
+        "replace": "@describes-no-machine\nambient_temperature_c = 20.0 @estimated",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "a-value-loses-its-origin",
+        "why": "a coefficient in the reference description carries no account of where its "
+               "figure came from",
+        "file": "params/thermoblock.params",
+        "find": "brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the "
+                "circuit diagram on p.24 of the Sunbeam EM7000 service manual.",
+        "replace": "brew.heater_power_w = 1000.0",
+        "command": ORIGINS,
+    },
+    {
+        "name": "an-estimate-labelled-with-a-word-nobody-declared",
+        "why": "a value carries an origin kind outside the vocabulary, so what separates an "
+               "estimate from a measurement stops being a fixed set of words",
+        "file": "params/thermoblock.params",
+        "find": "brew.pressure_time_constant_s = 0.8 @estimated",
+        "replace": "brew.pressure_time_constant_s = 0.8 @approximately",
+        "command": ORIGINS,
+    },
+    {
+        "name": "origin-vocabulary-grows-a-distinction",
+        "why": "the vocabulary gains a kind for a figure nobody established, which is a term "
+               "for how much a value is trusted rather than for how it was arrived at",
+        "file": "include/plant_origin.h",
+        "find": "    PLANT_ORIGIN_KIND_COUNT",
+        "replace": "    PLANT_ORIGIN_ASSUMED,\n    PLANT_ORIGIN_KIND_COUNT",
+        "command": ORIGINS,
+    },
+    {
+        "name": "the-statement-falls-behind-the-description",
+        "why": "a coefficient the description carries is named nowhere in the statement of what "
+               "the description represents, so it has no unit and enters no relation",
+        "file": "params/thermoblock.md",
+        "find": "| `brew.loss_w_per_k` / `steam.loss_w_per_k` |",
+        "replace": "| the loss coefficients |",
+        "command": ORIGINS,
+    },
+    {
+        "name": "origin-vocabulary-header-names-a-structure",
+        "why": "the vocabulary every structure's descriptions are read through reaches into one "
+               "structure's record",
+        "file": "include/plant_origin.h",
+        "find": "#endif /* PLANT_ORIGIN_H */",
+        "replace": "float brew_thermal_mass_j_per_k_of(const plant_model_t *model);\n"
+                   "#endif /* PLANT_ORIGIN_H */",
+        "command": ORIGIN_HEADER,
     },
 )
 

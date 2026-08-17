@@ -1,24 +1,37 @@
-# The same description as thermoblock-nominal.params with one coefficient
-# changed: brew.heater_power_w is 1600 rather than 1200.
+# The reference machine's description with one coefficient changed:
+# brew.heater_power_w is 1600 rather than the 1000 the service manual gives.
 #
 # It exists so that one linked executable can be run against both and produce
 # two different trajectories with no rebuild between the runs. A coefficient
-# quietly written into the equations rather than read from here would give the
-# same trajectory twice, which is exactly what that check fails on. Like the
-# nominal description, these values describe no machine.
+# quietly written into the equations rather than read from a description would
+# give the same trajectory twice, which is exactly what that check fails on.
+#
+# The changed figure is not this machine's, so the description as a whole claims
+# no machine and says so below. That statement is what exempts it from
+# accounting for its values: there is no origin to record for a number chosen
+# because it differs, and requiring one would only produce a form of words.
+#
+# The other ten values are the reference description's, and the account of where
+# each came from is there rather than here -- deliberately, because this file
+# must stay one coefficient away from that one for the check to conclude
+# anything from the pair. So quote thermoblock.params, never this file: a figure
+# read out of here has had its provenance stripped by design, and one value of
+# the eleven is not the machine's at all.
+
+@describes-no-machine
 
 ambient_temperature_c = 20.0
 
-brew.thermal_mass_j_per_k = 420.0
+brew.thermal_mass_j_per_k = 320.0
 brew.heater_power_w = 1600.0
-brew.loss_w_per_k = 1.5
+brew.loss_w_per_k = 1.2
 
-steam.thermal_mass_j_per_k = 900.0
-steam.heater_power_w = 1400.0
-steam.loss_w_per_k = 2.2
+steam.thermal_mass_j_per_k = 360.0
+steam.heater_power_w = 1000.0
+steam.loss_w_per_k = 1.5
 
-pump.pressure_bar = 9.0
+pump.pressure_bar = 15.0
 brew.pressure_time_constant_s = 0.8
 
 steam.saturation_temperature_c = 100.0
-steam.pressure_bar_per_k = 0.035
+steam.pressure_bar_per_k = 0.036

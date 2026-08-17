@@ -1,0 +1,21 @@
+id: EVD-SOL-PLANT-DESCRIPTION-BASELINE.C5-TEST
+type: evidence
+title: The host artefact and the model's tests are exercised against the reference description (SOL-PLANT-DESCRIPTION-BASELINE.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T05:57:38Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_reference_description_is_admissible_and_advances_a_model,test_the_reference_description_claims_a_machine; firmware/platformio.ini::env:native_test
+text: |-
+  The reference description is named by the native_test environment through REFERENCE_DESCRIPTION_PATH, so the model's own tests read the file the machine's numbers live in rather than a copy. The host artefact reaches it by the same naming convention the artefact runner discovers: task fw:run executes .pio/build/native/program against params/thermoblock.params, and check_parameters_are_data runs the unchanged artefact against it and the variant.
+
+  test_the_reference_description_claims_a_machine refuses a reference description that has picked up the exemption, because every value in it would then stop owing an account while the check went on passing. The build-time check enforces the same thing from the other side, reading which description each environment is exercised against out of the build file.
+
+  The descriptions remaining in the tree for other purposes each state that they describe no real machine: params/fixture.params, whose single number means nothing, and params/thermoblock-variant.params, which exists so one linked artefact can be run against two descriptions differing in a single coefficient. Both carry the declaration that exempts them, and the variant's header names thermoblock.params as where the provenance of its other ten values lives.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE.C5
+    type: satisfies

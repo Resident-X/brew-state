@@ -129,6 +129,34 @@ CHECKS = (
         "--documentation",
         os.path.join(project_dir, "README.md"),
     ],
+    # And so does the vocabulary a value's origin is recorded in. The loader
+    # every structure's descriptions are read through includes it, so a
+    # structure name reaching it would reach all of them at once.
+    [
+        os.path.join(tools_dir, "check_plant_header.py"),
+        os.path.join(include_dir, "plant_origin.h"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+        "--vocabulary-only",
+    ],
+    # Every value in a description that claims a machine accounts for itself,
+    # and the statement of what those values represent still names all of them.
+    # Over every description in the tree rather than the one this environment
+    # runs against: a description nothing runs is exactly the one whose
+    # provenance would rot unnoticed.
+    [
+        os.path.join(tools_dir, "check_parameter_origins.py"),
+        "--project",
+        project_dir,
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+        "--params-dir",
+        os.path.join(project_dir, "params"),
+    ],
     # A build that compiles the plant model names exactly one structure.
     [
         os.path.join(tools_dir, "check_structure_selection.py"),

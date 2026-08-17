@@ -1643,5 +1643,424 @@ class ACheckWithNothingToInspectFails(ActuationTreeCase):
         self.assertIn("declares no channel", result.stderr)
 
 
+# --- The origin recorded against a value ------------------------------------
+
+ORIGIN_VOCABULARY = """
+#ifndef PLANT_ORIGIN_H
+#define PLANT_ORIGIN_H
+typedef enum {
+    PLANT_ORIGIN_DOCUMENT = 0,
+    PLANT_ORIGIN_ESTIMATED,
+    PLANT_ORIGIN_MEASURED,
+    PLANT_ORIGIN_KIND_COUNT
+} plant_origin_kind_t;
+#define PLANT_ORIGIN_DOCUMENT_WORD "document"
+#define PLANT_ORIGIN_ESTIMATED_WORD "estimated"
+#define PLANT_ORIGIN_MEASURED_WORD "measured"
+#define PLANT_ORIGIN_MARKER '@'
+#define PLANT_ORIGIN_NO_MACHINE_DECLARATION "describes-no-machine"
+#endif
+"""
+
+QUANTITY_VOCABULARY = """
+typedef enum {
+    PLANT_QUANTITY_HEAT_C = 0,
+    PLANT_QUANTITY_SQUEEZE_BAR,
+    PLANT_QUANTITY_COUNT
+} plant_quantity_t;
+"""
+
+#: A description of the alpha structure accounting for both its coefficients.
+ACCOUNTED = (
+    "alpha.one = 1.0 @document a circuit diagram, p.24\n"
+    "alpha.two = 2.0 @estimated a comparable machine of the same architecture\n"
+)
+
+QUANTITIES = ("PLANT_QUANTITY_HEAT_C", "PLANT_QUANTITY_SQUEEZE_BAR")
+ALPHA_COEFFICIENTS = ("alpha.one", "alpha.two")
+
+
+class OriginTree(SyntheticTree):
+    """A tree of structures with parameter tables, descriptions and statements.
+
+    Nothing here is the project's own machine-describing structure. A test that
+    read the real description would fail on the day a commissioned measurement
+    displaced an estimate, which is a legitimate edit rather than a defect.
+    """
+
+    def __init__(self):
+        super().__init__(structures=())
+        self.params = os.path.join(self.root.name, "params")
+        os.makedirs(self.params)
+        self._write(os.path.join(self.include, "plant_origin.h"), ORIGIN_VOCABULARY)
+        self._write(
+            os.path.join(self.include, "plant_types.h"), NEUTRAL_TYPES + QUANTITY_VOCABULARY
+        )
+        self.structure_with_coefficients("alpha", ALPHA_COEFFICIENTS)
+
+    def structure_with_coefficients(self, name: str, coefficients) -> None:
+        """A structure declaring a parameter table, as a real one does in its source."""
+        directory = self.structure(name)
+        entries = "".join(
+            f'    {{"{coefficient}", 0.0f, 100.0f, {index}u}},\n'
+            for index, coefficient in enumerate(coefficients)
+        )
+        self._write(
+            os.path.join(directory, "plant_structure.c"),
+            '#include "plant_model.h"\n'
+            "static const plant_parameter_spec_t SPECS[] = {\n" + entries + "};\n",
+        )
+
+    def complete_statement(self, structure: str, coefficients, quantities) -> None:
+        named = "\n".join(f"- `{name}`" for name in list(coefficients) + list(quantities))
+        self._write(
+            os.path.join(self.params, f"{structure}.md"),
+            f"# What {structure} represents\n\n{named}\n",
+        )
+
+    def description(self, name: str, body: str) -> str:
+        path = os.path.join(self.params, f"{name}.params")
+        self._write(path, body)
+        return path
+
+    def vocabulary(self, text: str) -> None:
+        self._write(os.path.join(self.include, "plant_origin.h"), text)
+
+
+class OriginTreeCase(unittest.TestCase):
+    """A tree of structures, descriptions, statements and a vocabulary."""
+
+    def setUp(self):
+        self.tree = OriginTree()
+        self.addCleanup(self.tree.cleanup)
+        self.tree.description("alpha", ACCOUNTED)
+        self.tree.complete_statement("alpha", ALPHA_COEFFICIENTS, QUANTITIES)
+
+    def check(self, **overrides):
+        arguments = [
+            "--plant-root",
+            overrides.get("plant_root", self.tree.plant),
+            "--include-dir",
+            overrides.get("include_dir", self.tree.include),
+            "--params-dir",
+            overrides.get("params_dir", self.tree.params),
+        ]
+        if "project" in overrides:
+            arguments += ["--project", overrides["project"]]
+        else:
+            # No build file in these trees, said out loud rather than by omission.
+            arguments += ["--no-build"]
+        return run_check("check_parameter_origins.py", *arguments)
+
+    def build_naming(self, description: str) -> str:
+        """A build file whose one environment is exercised against `description`."""
+        self.tree.declare(
+            [
+                (
+                    "host",
+                    host_environment(
+                        "alpha",
+                        build_flags=f"-O1 -D REFERENCE_DESCRIPTION_PATH='\"$PROJECT_DIR/params/{description}\"'",
+                    ),
+                )
+            ]
+        )
+        return self.tree.root.name
+
+
+class EveryValueAccountsForItself(OriginTreeCase):
+    """SOL-PLANT-DESCRIPTION-BASELINE.C2: every value in the reference description carries the origin of that value."""
+
+    def test_a_description_accounting_for_every_value_passes(self):
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_value_with_no_origin_fails_and_names_the_coefficient(self):
+        self.tree.description(
+            "alpha", "alpha.one = 1.0\nalpha.two = 2.0 @document a circuit diagram, p.24\n"
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha.one", result.stderr)
+        self.assertIn("carries no origin", result.stderr)
+
+    def test_an_origin_with_no_account_behind_it_fails(self):
+        # A kind on its own is a label. It says how the figure was arrived at
+        # and not what it was arrived at from, so it cannot be challenged.
+        self.tree.description("alpha", "alpha.one = 1.0 @document\nalpha.two = 2.0 @measured\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no account behind it", result.stderr)
+        self.assertIn("alpha.one", result.stderr)
+
+    def test_a_coefficient_the_structure_requires_and_the_description_omits_fails(self):
+        # The coefficient added to a structure on the day the description was
+        # not opened. Nothing else reads that file closely enough to notice.
+        self.tree.description("alpha", "alpha.one = 1.0 @document a circuit diagram, p.24\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha.two", result.stderr)
+        self.assertIn("required by the structure", result.stderr)
+
+    def test_a_structure_added_later_is_inspected_without_being_named(self):
+        self.tree.structure_with_coefficients("gamma", ("gamma.one",))
+        self.tree.description("gamma", "gamma.one = 1.0\n")
+        self.tree.complete_statement("gamma", ("gamma.one",), QUANTITIES)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("gamma.one", result.stderr)
+
+    def test_a_structure_whose_name_prefixes_another_does_not_collect_its_descriptions(self):
+        self.tree.structure_with_coefficients("alphabet", ("alphabet.one",))
+        self.tree.description("alphabet", "alphabet.one = 1.0 @document p.24\n")
+        self.tree.complete_statement("alphabet", ("alphabet.one",), QUANTITIES)
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_structure_declaring_no_parameter_table_is_reported(self):
+        # What its descriptions owe an account for cannot be established, which
+        # is not the same as their owing none.
+        self.tree.structure("delta")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("declares no parameter table", result.stderr)
+
+
+class AnEstimateIsToldFromAMeasurement(OriginTreeCase):
+    """SOL-PLANT-DESCRIPTION-BASELINE.C3: an estimated value is distinguishable from a measured one."""
+
+    def test_a_kind_outside_the_vocabulary_fails_and_names_it(self):
+        self.tree.description(
+            "alpha",
+            "alpha.one = 1.0 @guessed a comparable machine\n"
+            "alpha.two = 2.0 @document a circuit diagram, p.24\n",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("guessed", result.stderr)
+        self.assertIn("plant_origin.h", result.stderr)
+
+    def test_a_kind_that_reads_like_a_measurement_and_is_not_one_fails(self):
+        # The dangerous shape: a word a reader skims as a measurement, which no
+        # measurement stands behind.
+        self.tree.description(
+            "alpha",
+            "alpha.one = 1.0 @measured-ish the bench, roughly\n"
+            "alpha.two = 2.0 @document a circuit diagram, p.24\n",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("measured-ish", result.stderr)
+
+    def test_a_vocabulary_that_no_longer_separates_estimate_from_measurement_fails(self):
+        # The failure this check exists upstream of: every description would
+        # then carry a word from a vocabulary answering a different question.
+        self.tree.vocabulary(
+            ORIGIN_VOCABULARY.replace("PLANT_ORIGIN_MEASURED,", "PLANT_ORIGIN_TRUSTED,").replace(
+                'PLANT_ORIGIN_MEASURED_WORD "measured"', 'PLANT_ORIGIN_TRUSTED_WORD "trusted"'
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_ORIGIN_MEASURED", result.stderr)
+
+    def test_a_vocabulary_that_has_grown_a_fourth_kind_fails(self):
+        self.tree.vocabulary(
+            ORIGIN_VOCABULARY.replace(
+                "    PLANT_ORIGIN_KIND_COUNT",
+                "    PLANT_ORIGIN_ASSUMED,\n    PLANT_ORIGIN_KIND_COUNT",
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("deliberate act", result.stderr)
+
+    def test_a_kind_declaring_no_word_fails(self):
+        self.tree.vocabulary(
+            ORIGIN_VOCABULARY.replace('#define PLANT_ORIGIN_MEASURED_WORD "measured"\n', "")
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("declares no word", result.stderr)
+
+
+class ExemptionIsClaimedRatherThanAssumed(OriginTreeCase):
+    """SOL-PLANT-DESCRIPTION-BASELINE.C2: a description claiming no machine has nothing an origin could support."""
+
+    def test_a_description_saying_it_describes_no_machine_owes_no_origins(self):
+        self.tree.description("alpha-variant", "@describes-no-machine\nalpha.one = 9.0\n")
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_statement_the_description_is_not_entitled_to_make_fails(self):
+        self.tree.description("alpha-variant", "@describes-a-machine\nalpha.one = 9.0\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("not a statement a description is entitled to make", result.stderr)
+
+    def test_the_description_a_build_is_exercised_against_may_not_exempt_itself(self):
+        # The hole a tree-wide count leaves open: the description the design is
+        # reasoned against exempts itself, another claims a machine, and the
+        # check passes having inspected nothing that matters.
+        project = self.build_naming("alpha.params")
+        self.tree.description("alpha", "@describes-no-machine\nalpha.one = 9.0\nalpha.two = 8.0\n")
+        self.tree.structure_with_coefficients("gamma", ("gamma.one",))
+        self.tree.description("gamma", "gamma.one = 1.0 @document p.24\n")
+        self.tree.complete_statement("gamma", ("gamma.one",), QUANTITIES)
+        result = self.check(project=project)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("host", result.stderr)
+        self.assertIn("claims no machine", result.stderr)
+
+    def test_the_description_a_build_names_and_nothing_supplies_fails(self):
+        project = self.build_naming("absent.params")
+        result = self.check(project=project)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("absent.params", result.stderr)
+
+    def test_a_named_description_belonging_to_no_structure_fails(self):
+        # Existing on disk is not the same as having been inspected. A
+        # description no structure claims is never parsed, so a build pointed at
+        # one would otherwise be reasoned against a file this check never opened.
+        project = self.build_naming("reference.params")
+        self.tree.description("reference", "@describes-no-machine\nsomething = 1.0\n")
+        result = self.check(project=project)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("reference.params", result.stderr)
+        self.assertIn("not among the descriptions inspected", result.stderr)
+
+    def test_neither_naming_a_build_nor_saying_there_is_none_is_an_error(self):
+        # The weaker check must not be reachable by omission: a caller that
+        # dropped the build would otherwise get it with no sign of the loss.
+        result = run_check(
+            "check_parameter_origins.py",
+            "--plant-root",
+            self.tree.plant,
+            "--include-dir",
+            self.tree.include,
+            "--params-dir",
+            self.tree.params,
+        )
+        self.assertEqual(2, result.returncode)
+        self.assertIn("--no-build", result.stderr)
+
+    def test_claiming_both_a_build_and_no_build_is_an_error(self):
+        result = run_check(
+            "check_parameter_origins.py",
+            "--plant-root",
+            self.tree.plant,
+            "--include-dir",
+            self.tree.include,
+            "--params-dir",
+            self.tree.params,
+            "--project",
+            self.tree.root.name,
+            "--no-build",
+        )
+        self.assertEqual(2, result.returncode)
+
+    def test_a_build_naming_a_description_that_accounts_for_itself_passes(self):
+        project = self.build_naming("alpha.params")
+        result = self.check(project=project)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_tree_in_which_everything_exempts_itself_fails_rather_than_passing(self):
+        # The hole this closes: exempting every description would otherwise
+        # leave the check reporting success having inspected no value at all.
+        self.tree.description("alpha", "@describes-no-machine\nalpha.one = 9.0\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("every description exempts itself", result.stderr)
+
+
+class TheStatementNamesWhatTheDescriptionCarries(OriginTreeCase):
+    """SOL-PLANT-DESCRIPTION-BASELINE.C1: the description states the quantities it represents and the relations between them."""
+
+    def test_a_missing_statement_fails(self):
+        os.remove(os.path.join(self.tree.params, "alpha.md"))
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no statement at", result.stderr)
+
+    def test_a_statement_that_omits_a_coefficient_fails_and_names_it(self):
+        # The drift this catches: a coefficient added to the structure and
+        # accounted for in the description, with no unit or relation anywhere.
+        self.tree.complete_statement("alpha", ("alpha.one",), QUANTITIES)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha.two", result.stderr)
+
+    def test_a_statement_that_omits_a_quantity_the_seam_exposes_fails(self):
+        self.tree.complete_statement("alpha", ALPHA_COEFFICIENTS, ("PLANT_QUANTITY_HEAT_C",))
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_QUANTITY_SQUEEZE_BAR", result.stderr)
+
+    def test_a_description_claiming_no_machine_needs_no_statement(self):
+        self.tree.description("alpha", "@describes-no-machine\nalpha.one = 9.0\n")
+        os.remove(os.path.join(self.tree.params, "alpha.md"))
+        result = self.check()
+        # It fails for having inspected nothing, not for the absent statement.
+        self.assertEqual(1, result.returncode)
+        self.assertNotIn("no statement at", result.stderr)
+
+
+class TheCheckStopsRatherThanReportingSuccess(OriginTreeCase):
+    """SOL-PLANT-DESCRIPTION-BASELINE.C2: the check fails rather than passes when it finds no description to inspect."""
+
+    def test_no_descriptions_at_all_fails(self):
+        os.remove(os.path.join(self.tree.params, "alpha.params"))
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("nothing was inspected", result.stderr)
+
+    def test_a_params_directory_that_is_not_there_fails(self):
+        result = self.check(params_dir=os.path.join(self.tree.root.name, "absent"))
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no descriptions at", result.stderr)
+
+    def test_a_plant_root_that_is_not_there_fails(self):
+        result = self.check(plant_root=os.path.join(self.tree.root.name, "absent"))
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no plant root", result.stderr)
+
+    def test_a_plant_root_holding_no_structures_fails(self):
+        # An empty tree is the vacuous case that reads like a clean one:
+        # nothing declares which coefficients a description owes an origin for.
+        empty = os.path.join(self.tree.root.name, "empty")
+        os.makedirs(empty)
+        result = self.check(plant_root=empty)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no structures", result.stderr)
+
+    def test_no_vocabulary_fails(self):
+        os.remove(os.path.join(self.tree.include, "plant_origin.h"))
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no origin vocabulary", result.stderr)
+
+    def test_a_vocabulary_declaring_no_marker_fails(self):
+        self.tree.vocabulary(ORIGIN_VOCABULARY.replace("#define PLANT_ORIGIN_MARKER '@'\n", ""))
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no marker is declared", result.stderr)
+
+    def test_a_vocabulary_declaring_no_exemption_fails(self):
+        self.tree.vocabulary(
+            ORIGIN_VOCABULARY.replace(
+                '#define PLANT_ORIGIN_NO_MACHINE_DECLARATION "describes-no-machine"\n', ""
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no exemption statement", result.stderr)
+
+    def test_no_quantities_enumerated_fails(self):
+        write(os.path.join(self.tree.include, "plant_types.h"), NEUTRAL_TYPES)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("enumerates no quantities", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

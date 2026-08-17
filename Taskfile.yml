@@ -154,6 +154,12 @@ tasks:
       - python3 tools/check_plant_header.py include/plant_model.h --plant-root src/plant --include-dir include
       - python3 tools/check_plant_header.py include/plant_types.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_plant_header.py include/plant_support.h --plant-root src/plant --include-dir include --vocabulary-only
+      # The vocabulary a value's origin is recorded in, and every description
+      # that claims a machine accounting for the values it carries. The
+      # structures and their descriptions are discovered, so a description added
+      # later is inspected without a line here naming it.
+      - python3 tools/check_plant_header.py include/plant_origin.h --plant-root src/plant --include-dir include --vocabulary-only
+      - python3 tools/check_parameter_origins.py --project . --plant-root src/plant --include-dir include --params-dir params
       # The vocabulary both seams draw the machine's actuation channels from,
       # and every structure's statement of which of them it answers.
       - python3 tools/check_plant_header.py include/machine_actuation.h --plant-root src/plant --include-dir include --vocabulary-only
@@ -166,7 +172,7 @@ tasks:
       - python3 tools/check_structure_exclusive.py --project . --plant-root src/plant --include-dir include
       # Two descriptions are named here because the check needs a pair differing
       # in a single coefficient before it can conclude anything.
-      - python3 tools/check_parameters_are_data.py .pio/build/native/program --params params/thermoblock-nominal.params --params params/thermoblock-variant.params
+      - python3 tools/check_parameters_are_data.py .pio/build/native/program --params params/thermoblock.params --params params/thermoblock-variant.params
       # The misconfigured configurations are named because a forgotten name here
       # fails loudly rather than quietly.
       - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --pio {{.PIO}}

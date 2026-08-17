@@ -125,7 +125,19 @@ typedef enum {
     /* A coefficient is outside the range the structure declares admissible. */
     PLANT_PARAMETER_OUT_OF_RANGE,
     /* A coefficient the structure requires is absent, and none is assumed. */
-    PLANT_PARAMETER_MISSING
+    PLANT_PARAMETER_MISSING,
+    /*
+     * An origin against a value, or a statement the description makes about
+     * itself, is not one this vocabulary declares -- no kind after the marker,
+     * a kind that is not one of the declared words, an account that is empty,
+     * or a statement the description is not entitled to make.
+     *
+     * Separate from MALFORMED because it is the one fault whose subject is what
+     * the description claims rather than whether it can be read, and a caller
+     * distinguishing the two is the difference between "this file is damaged"
+     * and "this value is not accounted for".
+     */
+    PLANT_PARAMETER_ORIGIN
 } plant_parameter_fault_t;
 
 /*

@@ -3,5 +3,11 @@
 # The fixture describes no machine and this number means nothing. It exists so
 # that an artefact built against the fixture can be run at all, which is what
 # lets the exclusivity check compare two real artefacts rather than one.
+#
+# The statement below is that same fact in the form the check reads, and it is
+# what exempts this description from accounting for its value. A number that
+# means nothing has no origin to record.
+
+@describes-no-machine
 
 fixture.gain = 2.5
