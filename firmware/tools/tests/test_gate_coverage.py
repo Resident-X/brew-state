@@ -78,7 +78,7 @@ class BuildFileResolution(unittest.TestCase):
 
     def test_an_environments_own_value_wins_over_the_inherited_one(self):
         self.write(
-            "[base]\nplatform = native\nbuild_src_flags = -Wall\n\n"
+            "[base]\nplatform = native\nbuild_src_filter = +<control/>\nbuild_src_flags = -Wall\n\n"
             "[env:host]\nextends = base\nbuild_src_flags = -Werror\n"
         )
         (environment,) = build_environments.load(self.project.name)
@@ -104,10 +104,40 @@ class BuildFileResolution(unittest.TestCase):
 
     def test_a_reference_to_something_absent_is_refused_rather_than_emptied(self):
         # Substituting nothing would silently drop a term of the filter, and a
-        # filter missing a term is a build compiling something else.
+        # filter missing a term is a build compiling something else. The message
+        # is asserted too: one naming an inheritance that does not exist sends
+        # the reader to the wrong line.
         self.write("[env:host]\nplatform = native\nbuild_src_filter = ${common.sources}\n")
-        with self.assertRaises(build_environments.ConfigurationError):
+        with self.assertRaisesRegex(
+            build_environments.ConfigurationError, r"\$\{common\.sources\}.*not declared"
+        ):
             build_environments.load(self.project.name)
+
+    def test_a_host_environment_leaving_its_filter_to_the_default_is_refused(self):
+        # PlatformIO would compile everything under src/. Reading the absence as
+        # "compiles nothing" would drop the environment out of every set a gate
+        # covers without a word, which is the silence all of this exists against.
+        self.write("[env:host]\nplatform = native\n")
+        with self.assertRaisesRegex(build_environments.ConfigurationError, "build_src_filter"):
+            build_environments.load(self.project.name)
+
+    def test_multiple_parents_are_inherited_in_order(self):
+        self.write(
+            "[first]\nplatform = native\nbuild_src_filter = +<a/>\nbuild_src_flags = -Wall\n\n"
+            "[second]\nbuild_src_filter = +<b/>\n\n"
+            "[env:host]\nextends = first, second\n"
+        )
+        (environment,) = build_environments.load(self.project.name)
+        self.assertEqual("+<b/>", environment.source_filter)
+        self.assertEqual("-Wall", environment.source_flags)
+
+    def test_a_value_wrapped_over_several_lines_is_read_as_one(self):
+        self.write(
+            "[env:host]\nplatform = native\n"
+            "build_src_filter =\n    +<control/>\n    +<app/native/>\n"
+        )
+        (environment,) = build_environments.load(self.project.name)
+        self.assertEqual("+<control/> +<app/native/>", environment.source_filter)
 
     def test_extending_something_absent_is_refused(self):
         self.write("[env:host]\nextends = missing\n")
@@ -124,7 +154,10 @@ class BuildFileResolution(unittest.TestCase):
             build_environments.load(self.project.name)
 
     def test_sections_that_are_not_environments_are_not_environments(self):
-        self.write("[platformio]\ndefault_envs = host\n\n[env:host]\nplatform = native\n")
+        self.write(
+            "[platformio]\ndefault_envs = host\n\n"
+            "[env:host]\nplatform = native\nbuild_src_filter = +<control/>\n"
+        )
         self.assertEqual(["host"], [e.name for e in build_environments.load(self.project.name)])
 
 
@@ -203,6 +236,22 @@ class EnvironmentClassification(unittest.TestCase):
         self.assertEqual("beta", selected["host_second"])
         self.assertIsNone(selected["host_refused"])
         self.assertIsNone(selected["target"])
+
+    def test_a_filter_taking_a_directory_wholesale_includes_the_entry_point(self):
+        environment = build_environments.Environment(
+            name="host", options={"platform": "native", "build_src_filter": "+<app/>"}
+        )
+        self.assertTrue(environment.links_host_entry_point)
+
+    def test_a_filter_taking_the_entry_point_back_out_does_not_link_it(self):
+        # Reading only the additions would report an entry point the artefact
+        # does not have, and the run task would then hand it a description it
+        # cannot take.
+        environment = build_environments.Environment(
+            name="host",
+            options={"platform": "native", "build_src_filter": "+<app/> -<app/native/>"},
+        )
+        self.assertFalse(environment.links_host_entry_point)
 
     def test_the_artefact_and_its_objects_are_where_the_build_puts_them(self):
         (host,) = [e for e in self.environments if e.name == "host"]
@@ -390,6 +439,109 @@ class AnalysisCoversEveryHostEnvironment(unittest.TestCase):
         self.assertIn("it can carry them", result.stderr)
 
 
+class TheArtefactIsInspectedForTheRuntime(unittest.TestCase):
+    """SOL-PLANT-SEAM-GATE-COVERAGE.C2: an artefact that links no sanitizer runtime is found.
+
+    Instrumented compilation and a linked runtime are separate conditions and
+    either can hold while the other does not, so the artefact of every
+    environment that links one is inspected. The environment leaving its entry
+    point to the test runner has no artefact of its own here, and is not
+    required to produce one -- it is run, under the same analysis, by the task
+    that runs the tests.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.compiler = os.environ.get("CC", "clang")
+        if subprocess.run([cls.compiler, "--version"], capture_output=True, check=False).returncode:
+            raise unittest.SkipTest(f"{cls.compiler} is not available on this host")
+
+    def setUp(self):
+        self.project = tempfile.TemporaryDirectory()
+        self.addCleanup(self.project.cleanup)
+        self.source_directory = os.path.join(self.project.name, "src", "control")
+        os.makedirs(self.source_directory)
+        self.source = os.path.join(self.source_directory, "control.c")
+        with open(self.source, "w", encoding="utf-8") as handle:
+            handle.write("int main(void) { return 0; }\n")
+
+        self.databases = os.path.join(self.project.name, "databases")
+        os.makedirs(self.databases)
+        self.pio = executable_script(
+            os.path.join(self.project.name, "pio"),
+            f'cp "{self.databases}/$3.json" compile_commands.json\n',
+        )
+
+    def database(self, environment: str) -> None:
+        entries = [
+            {
+                "directory": self.project.name,
+                "file": self.source,
+                "arguments": [
+                    "cc",
+                    *check_sanitizers.SANITIZER_FLAGS,
+                    *check_sanitizers.STRICT_FLAGS,
+                    "-c",
+                    self.source,
+                ],
+            }
+        ]
+        with open(os.path.join(self.databases, f"{environment}.json"), "w", encoding="utf-8") as h:
+            json.dump(entries, h)
+
+    def artefact(self, environment: str, *flags: str) -> str:
+        directory = os.path.join(self.project.name, ".pio", "build", environment)
+        os.makedirs(directory, exist_ok=True)
+        binary = os.path.join(directory, "program")
+        subprocess.run([self.compiler, *flags, "-o", binary, self.source], check=True)
+        return binary
+
+    def check(self):
+        return run_check("check_sanitizers.py", "--project", self.project.name, "--pio", self.pio)
+
+    def test_an_artefact_linking_the_runtime_passes(self):
+        declare_environments(self.project.name, [("host", host_environment("alpha"))])
+        self.database("host")
+        self.artefact("host", "-fsanitize=address,undefined")
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_an_artefact_linking_no_runtime_is_found(self):
+        # Compiled under the analysis and linked without it: the flags read
+        # clean and nothing would be reported at run time.
+        declare_environments(self.project.name, [("host", host_environment("alpha"))])
+        self.database("host")
+        self.artefact("host")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("links no sanitizer runtime", result.stderr)
+
+    def test_an_artefact_that_has_not_been_built_is_could_not_look_not_a_pass(self):
+        # Distinct from a finding, and distinct from success: the gate has to
+        # say it could not look, or a tree with no artefacts reads as clean.
+        declare_environments(self.project.name, [("host", host_environment("alpha"))])
+        self.database("host")
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("has not been built", result.stderr)
+
+    def test_the_environment_leaving_its_entry_point_to_the_runner_needs_no_artefact(self):
+        declare_environments(
+            self.project.name,
+            [("host_test", host_environment("alpha", entry_point=False, test_build_src="yes"))],
+        )
+        self.database("host_test")
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_build_database_that_cannot_be_produced_is_could_not_look(self):
+        declare_environments(self.project.name, [("host", host_environment("alpha"))])
+        self.artefact("host", "-fsanitize=address,undefined")
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no compilation database", result.stderr)
+
+
 # --- Running what was built -------------------------------------------------
 
 
@@ -514,6 +666,18 @@ class EveryHostArtefactIsExecuted(unittest.TestCase):
         result = self.run_artefacts()
         self.assertEqual(1, result.returncode)
         self.assertIn("exited 1", result.stderr)
+
+    def test_a_description_no_structure_claims_is_reported_rather_than_left_unrun(self):
+        # Renaming a description out of the convention is how one drops out of
+        # the analysis: it still looks like part of it and takes no part in it.
+        self.tree.declare([("host_alpha", host_environment("alpha"))])
+        self.artefact("host_alpha")
+        self.description("alpha.params")
+        self.description("alpha_variant.params")
+        result = self.run_artefacts()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha_variant.params", result.stderr)
+        self.assertIn("belong to no structure", result.stderr)
 
     def test_a_description_belongs_to_the_whole_of_a_structures_name(self):
         # `thermo` must not inherit `thermoblock`'s descriptions, which is what

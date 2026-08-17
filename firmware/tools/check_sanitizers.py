@@ -69,6 +69,16 @@ STRICT_FLAGS = (
 )
 
 
+class CannotInspect(Exception):
+    """The gate could not look, which is not the same as finding nothing wrong.
+
+    Kept apart from a finding all the way to the exit code, because a check
+    that could not run has established nothing -- and something that counts a
+    could-not-look as a catch is committing the failure this whole gate exists
+    to detect.
+    """
+
+
 def compile_commands(project: str, environment: str, pio: str) -> list[dict]:
     database_path = os.path.join(project, "compile_commands.json")
     if os.path.exists(database_path):
@@ -82,8 +92,8 @@ def compile_commands(project: str, environment: str, pio: str) -> list[dict]:
         check=False,
     )
     if not os.path.exists(database_path):
-        raise SystemExit(
-            f"check_sanitizers: no compilation database for '{environment}':\n"
+        raise CannotInspect(
+            f"no compilation database could be produced for '{environment}':\n"
             f"{result.stdout}\n{result.stderr}"
         )
     with open(database_path, "r", encoding="utf-8") as handle:
@@ -186,35 +196,43 @@ def check(
     environment: build_environments.Environment,
     pio: str,
     linked: bool,
-) -> list[str]:
-    """Every reason this environment is not under the analysis it claims.
+) -> tuple[list[str], list[str]]:
+    """What is wrong with this environment's analysis, and what could not be looked at.
 
     `linked` says whether the environment produces an executable of its own.
     One that leaves the entry point to the test runner has nothing here to
     inspect for a runtime; it is run under the analysis by the test task
     instead, and its compilation is checked the same as any other.
+
+    An unbuilt artefact and a host with no inspector on it are returned
+    separately from the findings rather than raised, so that findings already
+    collected are not discarded by a diagnostic about the host.
     """
-    database = compile_commands(project, environment.name, pio)
+    blockers: list[str] = []
+    try:
+        database = compile_commands(project, environment.name, pio)
+    except CannotInspect as error:
+        return [], [f"{environment.name}: {error}"]
+
     problems = analysis_problems(database, project, environment)
 
     if not linked:
-        return problems
+        return problems, blockers
 
     executable = environment.artefact(project)
     if not os.path.exists(executable):
-        problems.append(f"{environment.name}: {executable} has not been built")
-        return problems
+        return problems, [f"{environment.name}: {executable} has not been built"]
 
     runtime = runtime_linked(executable)
     if runtime is None:
-        problems.append(
+        blockers.append(
             f"{environment.name}: no tool on this host could inspect {executable} for a "
             "sanitizer runtime"
         )
     elif not runtime:
         problems.append(f"{environment.name}: {executable} links no sanitizer runtime")
 
-    return problems
+    return problems, blockers
 
 
 def main(argv: list[str]) -> int:
@@ -248,14 +266,23 @@ def main(argv: list[str]) -> int:
     linked = {environment.name for environment in build_environments.artefact_environments(declared)}
 
     problems: list[str] = []
+    blockers: list[str] = []
     for environment in covered:
-        problems.extend(check(project, environment, args.pio, environment.name in linked))
+        found, blocked = check(project, environment, args.pio, environment.name in linked)
+        problems.extend(found)
+        blockers.extend(blocked)
 
     if problems:
         print("check_sanitizers: a host build is not under analysis", file=sys.stderr)
         for problem in problems:
             print(f"  {problem}", file=sys.stderr)
         return 1
+
+    if blockers:
+        print("check_sanitizers: the analysis could not be established", file=sys.stderr)
+        for blocker in blockers:
+            print(f"  {blocker}", file=sys.stderr)
+        return 2
 
     for environment in build_environments.refused_environments(declared):
         print(

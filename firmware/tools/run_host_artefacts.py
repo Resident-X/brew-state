@@ -64,6 +64,30 @@ def descriptions_for(structure: str, params_directory: str) -> list[str]:
     return found
 
 
+def unclaimed_descriptions(structures: list[str], params_directory: str) -> list[str]:
+    """Every description no structure in the tree claims.
+
+    A description whose name does not match a structure is one nothing runs,
+    which is the same silence as an artefact nobody executes: a file that looks
+    like part of the analysis and takes no part in it. Renaming a description
+    out of the convention is the way that happens by accident.
+    """
+    if not os.path.isdir(params_directory):
+        return []
+
+    claimed = {
+        path
+        for structure in structures
+        for path in descriptions_for(structure, params_directory)
+    }
+    return [
+        os.path.join(params_directory, entry)
+        for entry in sorted(os.listdir(params_directory))
+        if entry.endswith(DESCRIPTION_SUFFIX)
+        and os.path.join(params_directory, entry) not in claimed
+    ]
+
+
 def runs(
     project: str,
     environments: list[build_environments.Environment],
@@ -129,6 +153,18 @@ def main(argv: list[str]) -> int:
         return 1
 
     structures = [structure.name for structure in discover(args.plant_root, args.include_dir)]
+
+    unclaimed = unclaimed_descriptions(structures, args.params_dir)
+    if unclaimed:
+        print(
+            "run_host_artefacts: these parameter descriptions belong to no structure in the "
+            "tree, so nothing runs them -- a description is named for the structure it "
+            "describes, as <structure>.params or <structure>-<variant>.params",
+            file=sys.stderr,
+        )
+        for path in unclaimed:
+            print(f"  {path}", file=sys.stderr)
+        return 1
 
     planned, problems = runs(args.project, environments, structures, args.params_dir)
     if problems:

@@ -737,6 +737,23 @@ class StructureExclusiveCheck(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertIn("not been built", result.stderr)
 
+    def test_a_second_artefact_built_for_the_same_structure_is_inspected_too(self):
+        # Covering only the first artefact found for a structure would leave the
+        # rest carrying whatever they like.
+        self.tree.declare(
+            [
+                ("host_alpha", host_environment("alpha")),
+                ("host_alpha_again", host_environment("alpha")),
+                ("host_beta", host_environment("beta")),
+            ]
+        )
+        self.build("host_alpha", "alpha")
+        self.build("host_alpha_again", "alpha", "beta")
+        self.build("host_beta", "beta")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("host_alpha_again", result.stderr)
+
 
 # --- check_parameters_are_data ----------------------------------------------
 
@@ -815,11 +832,25 @@ class ParametersAreDataCheck(unittest.TestCase):
 
 
 class SelectionRefusedCheck(unittest.TestCase):
-    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7: the refusal itself is exercised."""
+    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7: the refusal itself is exercised.
+
+    SOL-PLANT-SEAM-GATE-COVERAGE.C2: an environment excused from the analysis is one this drives.
+    """
 
     def setUp(self):
         self.project = tempfile.TemporaryDirectory()
         self.addCleanup(self.project.cleanup)
+        self.declare("native_no_structure")
+
+    def declare(self, *refused: str) -> None:
+        declare_environments(
+            self.project.name,
+            [("native", host_environment("alpha"))]
+            + [
+                (name, host_environment(None, custom_must_not_build="it names no structure"))
+                for name in refused
+            ],
+        )
 
     def fake_pio(self, body: str) -> str:
         path = os.path.join(self.project.name, "pio")
@@ -860,6 +891,18 @@ class SelectionRefusedCheck(unittest.TestCase):
         )
         self.assertEqual(1, result.returncode)
         self.assertIn("left an artefact behind", result.stderr)
+
+    def test_an_environment_declaring_it_must_not_build_and_never_driven_is_reported(self):
+        # That declaration is what excuses an environment from the gate covering
+        # every host build. An excuse nothing exercises is a way out of both
+        # gates at once, which is what this refuses.
+        self.declare("native_no_structure", "native_two_structures")
+        result = self.check(
+            self.fake_pio('echo "check_structure_selection: names no structure"\nexit 1\n')
+        )
+        self.assertEqual(1, result.returncode)
+        self.assertIn("native_two_structures", result.stderr)
+        self.assertIn("nothing here drives them", result.stderr)
 
 
 

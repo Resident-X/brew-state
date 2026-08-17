@@ -36,15 +36,29 @@ import time
 FIRMWARE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PIO = os.environ.get("PIO", os.path.expanduser("~/.platformio/penv/bin/pio"))
 
-#: The linked executables the checks inspect. Editing the build file makes the
-#: build system discard every one of them, not only the one a mutation was
-#: aimed at, so they are re-made rather than assumed. Restoring just the one
-#: this tool happens to need would leave the ordinary gate unable to run.
-ARTEFACTS = {
-    "native": os.path.join(FIRMWARE, ".pio", "build", "native", "program"),
-    "native_fixture": os.path.join(FIRMWARE, ".pio", "build", "native_fixture", "program"),
-}
-HOST_ARTEFACT = ARTEFACTS["native"]
+sys.path.insert(0, os.path.join(FIRMWARE, "tools"))
+
+import build_environments  # noqa: E402
+
+
+def artefacts() -> dict[str, str]:
+    """The linked executables the checks inspect, as the build declares them.
+
+    Editing the build file makes the build system discard every one of them,
+    not only the one a mutation was aimed at, so they are re-made rather than
+    assumed. Restoring just the one this tool happens to need would leave the
+    ordinary gate unable to run -- and a hand-written list of them here would
+    be the very thing the checks below no longer keep.
+
+    Read afresh on each call, because a mutation edits the build file and the
+    answer can change while this is running.
+    """
+    return {
+        environment.name: environment.artefact(FIRMWARE)
+        for environment in build_environments.artefact_environments(
+            build_environments.load(FIRMWARE)
+        )
+    }
 
 
 def build(environment: str) -> int:
@@ -58,7 +72,6 @@ def build(environment: str) -> int:
 FOUND_THE_PROBLEM = 1
 
 PLANT_TESTS = [PIO, "test", "-e", "native_test", "-f", "test_plant"]
-LABELS = {}
 ENCAPSULATION = [
     sys.executable, "tools/check_plant_encapsulation.py", "src", "test",
     "--plant-root", "src/plant", "--include-dir", "include",
@@ -309,23 +322,26 @@ def label_for(command: list[str]) -> str:
 
 
 def ensure_artefact(command: list[str]) -> bool:
-    """Re-make the linked artefact when the command about to run inspects it.
+    """Re-make the linked artefacts when the command about to run inspects them.
 
-    Editing the build file makes the build system discard the executable, so a
+    Editing the build file makes the build system discard the executables, so a
     later check would report that it cannot find one -- a different exit code
     and a different meaning from the check failing. Left unhandled, the next
     mutation in the run reads as caught while establishing nothing, and the
     tree is left without an artefact for the ordinary gate to inspect.
+
+    Every artefact is re-made rather than one of them, because the commands
+    here now inspect every artefact the build declares.
     """
-    if tuple(command) not in NEEDS_ARTEFACT or os.path.exists(HOST_ARTEFACT):
+    if tuple(command) not in NEEDS_ARTEFACT:
         return True
-    return build("native") == 0
+    return not restore_artefacts()
 
 
 def restore_artefacts() -> list[str]:
     """Re-make every artefact the ordinary gate inspects. Returns what failed."""
     failed = []
-    for environment, path in ARTEFACTS.items():
+    for environment, path in artefacts().items():
         if not os.path.exists(path) and build(environment) != 0:
             failed.append(environment)
     return failed

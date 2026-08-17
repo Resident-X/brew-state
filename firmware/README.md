@@ -93,7 +93,7 @@ fails a check rather than the one that ships.
 | `src/plant/common/` | Reads a parameter record from a description. One parser, every structure. Not a structure itself. |
 | `src/plant/thermoblock/` | The machine-describing structure: two heated masses, pump-driven brew pressure, steam pressure above saturation. |
 | `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
-| `params/` | Parameter descriptions. Read at run time; the build compiles none of them in. |
+| `params/` | Parameter descriptions. Read at run time; the build compiles none of them in. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. |
 | `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
 | `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |

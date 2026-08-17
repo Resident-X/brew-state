@@ -8,13 +8,21 @@ which environments produce a host artefact, which of them link this project's
 own entry point, which run tests, and which structure each one selects.
 
 `extends` and `${section.option}` are resolved here rather than by asking
-PlatformIO, for two reasons. A gate that has to start a build before it can
-work out what to cover cannot be exercised against a synthetic tree, and a
-check that cannot be shown to fail is not a check. And the properties the
-gates turn on are declared, not derived -- an environment says it must not
-build, or that it cannot carry the strict warning settings, in its own entry,
-where the reason sits beside the declaration rather than in a gate's argument
-list somewhere else.
+PlatformIO, for two reasons. Asking it requires PlatformIO to be installed,
+which would mean the gates could not be exercised against a synthetic tree on
+a host that has none -- and a check that cannot be shown to fail is not a
+check. And the properties the gates turn on are declared, not derived: an
+environment says it must not build, or that it cannot carry the strict warning
+settings, in its own entry, where the reason sits beside the declaration rather
+than in a gate's argument list somewhere else.
+
+Reading the build file separately from the build system is a divergence risk,
+so anything this cannot resolve is refused rather than read as an absence. A
+reference to a section that is not there, an inheritance cycle, and a host
+environment that leaves its source filter to PlatformIO's default are all
+errors here. The last is the one worth naming: an unread filter would make an
+environment look as though it compiled nothing, and quietly drop out of every
+set a gate covers -- the exact silence this exists to remove.
 
 Nothing here decides whether a build is correct. It reports what the build
 says it is, and the gates draw the conclusions.
@@ -72,6 +80,16 @@ STRICT_EXEMPTION_OPTION = "custom_strict_flags_exemption"
 #: `${section.option}`, the build file's own reference to another value.
 _REFERENCE = re.compile(r"\$\{([^}\s]+)\.([^}\s]+)\}")
 
+#: One `+<path>` or `-<path>` term of a source filter.
+_FILTER_TERM = re.compile(r"([+-])\s*<([^>]*)>")
+
+
+def _covers(term: str, path: str) -> bool:
+    """Whether a filter term takes in the given path, wholesale or exactly."""
+    if term in ("", "*"):
+        return True
+    return path == term or path.startswith(term + "/")
+
 _TRUTHY = ("yes", "true", "1", "on")
 
 
@@ -87,7 +105,13 @@ class Environment:
     options: dict[str, str]
 
     def get(self, option: str, default: str = "") -> str:
-        return self.options.get(option, default)
+        """One resolved option, with the whitespace a value may be wrapped over collapsed."""
+        if option not in self.options:
+            return default
+        return " ".join(self.options[option].split())
+
+    def declares(self, option: str) -> bool:
+        return option in self.options
 
     @property
     def platform(self) -> str:
@@ -114,12 +138,19 @@ class Environment:
         This is what separates an environment whose artefact can be run with a
         parameter description from one whose artefact the test runner supplies
         an entry point for.
+
+        A term taking a directory wholesale includes what is under it, and a
+        later term can take it back out again, so the filter is walked in order
+        rather than searched for one prefix: reading only the additions would
+        report an entry point an artefact does not have.
         """
-        for sign, path in re.findall(r"([+-])\s*<([^>]*)>", self.source_filter):
-            normalised = path.strip().replace("\\", "/").lstrip("./")
-            if sign == "+" and normalised.startswith(HOST_ENTRY_PREFIX.rstrip("/")):
-                return True
-        return False
+        included = False
+        for sign, path in _FILTER_TERM.findall(self.source_filter):
+            normalised = path.strip().replace("\\", "/").lstrip("./").rstrip("/")
+            if not _covers(normalised, HOST_ENTRY_PREFIX.rstrip("/")):
+                continue
+            included = sign == "+"
+        return included
 
     @property
     def runs_tests(self) -> bool:
@@ -196,22 +227,25 @@ def _inherited(parser: configparser.ConfigParser, section: str, seen: tuple[str,
     """One section's options, with anything it extends underneath it.
 
     A section's own value wins over an inherited one, which is what `extends`
-    means. A cycle is reported rather than followed: it would otherwise be an
-    interpreter recursion error naming nothing useful.
+    means, and a later parent wins over an earlier one. A cycle is reported
+    rather than followed: it would otherwise be an interpreter recursion error
+    naming nothing useful.
     """
     if section in seen:
         raise ConfigurationError(
             f"'{section}' extends itself, through {' -> '.join(seen + (section,))}"
         )
     if not parser.has_section(section):
-        raise ConfigurationError(f"'{seen[-1] if seen else section}' extends '{section}', which is not declared")
+        if seen:
+            raise ConfigurationError(f"'{seen[-1]}' extends '{section}', which is not declared")
+        raise ConfigurationError(f"'{section}' is not declared")
 
     options = dict(parser.items(section))
 
     inherited: dict[str, str] = {}
-    for parent in (name.strip() for name in options.get("extends", "").split(",")):
-        if parent:
-            inherited.update(_inherited(parser, parent, seen + (section,)))
+    # A parent list may be separated by commas, by newlines, or by both.
+    for parent in options.get("extends", "").replace(",", " ").split():
+        inherited.update(_inherited(parser, parent, seen + (section,)))
 
     inherited.update(options)
     inherited.pop("extends", None)
@@ -236,7 +270,7 @@ def _resolve(
         target, option = match.group(1), match.group(2)
         if target == "this":
             target = section
-        if target.startswith("sysenv"):
+        if target == "sysenv":
             return os.environ.get(option, "")
         key = f"{target}.{option}"
         if key in seen:
@@ -244,9 +278,11 @@ def _resolve(
         try:
             referenced = _inherited(parser, target, ())
         except ConfigurationError as error:
-            raise ConfigurationError(f"{section}: {error}") from error
+            raise ConfigurationError(
+                f"{section}: '${{{key}}}' is referenced, and {error}"
+            ) from error
         if option not in referenced:
-            raise ConfigurationError(f"{section}: '{key}' is referenced but not declared")
+            raise ConfigurationError(f"{section}: '${{{key}}}' is referenced but not declared")
         return _resolve(parser, target, referenced[option], seen + (key,))
 
     return _REFERENCE.sub(substitute, value)
@@ -262,15 +298,22 @@ def load(project: str) -> list[Environment]:
             continue
         name = section[len(ENVIRONMENT_PREFIX) :]
         options = _inherited(parser, section, ())
-        environments.append(
-            Environment(
-                name=name,
-                options={
-                    option: " ".join(_resolve(parser, section, value).split())
-                    for option, value in options.items()
-                },
-            )
+        environment = Environment(
+            name=name,
+            options={
+                option: _resolve(parser, section, value) for option, value in options.items()
+            },
         )
+        if environment.is_host and not environment.declares("build_src_filter"):
+            # PlatformIO would compile everything under src/ here. Rather than
+            # reproduce that default, this refuses: an environment whose filter
+            # went unread would look as though it compiled nothing and drop out
+            # of every set a gate covers without a word.
+            raise ConfigurationError(
+                f"'{name}' builds for the host and declares no build_src_filter, so what it "
+                "compiles cannot be established without reproducing the build system's default"
+            )
+        environments.append(environment)
     return environments
 
 

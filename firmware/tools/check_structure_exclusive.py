@@ -145,11 +145,14 @@ def main(argv: list[str]) -> int:
         print(f"check_structure_exclusive: {error}", file=sys.stderr)
         return 2
 
-    covered: dict[str, str] = {}
+    # Every artefact carrying a structure, not the first one found for it: two
+    # environments can build the same structure, and the second is as capable
+    # of carrying another structure's symbols as the first.
+    covered: dict[str, list[str]] = {}
     for environment in build_environments.artefact_environments(declared):
         structure = environment.structure(names)
         if structure is not None:
-            covered.setdefault(structure, environment.artefact(args.project))
+            covered.setdefault(structure, []).append(environment.artefact(args.project))
 
     # An empty subject set and a structure nobody builds are findings rather
     # than states this cannot look at: the artefacts are missing from what the
@@ -174,8 +177,10 @@ def main(argv: list[str]) -> int:
             print(f"  {name}", file=sys.stderr)
         return 1
 
-    missing = [path for path in covered.values() if not os.path.exists(path)]
+    missing = [path for paths in covered.values() for path in paths if not os.path.exists(path)]
     if missing:
+        # A declared artefact that has not been built yet is a state this
+        # cannot look at, unlike an artefact the build never declares.
         print("check_structure_exclusive: these artefacts have not been built", file=sys.stderr)
         for path in missing:
             print(f"  {path}", file=sys.stderr)
@@ -183,7 +188,8 @@ def main(argv: list[str]) -> int:
 
     problems: list[str] = []
     for structure in names:
-        problems.extend(problems_in(covered[structure], structure, exclusive))
+        for path in covered[structure]:
+            problems.extend(problems_in(path, structure, exclusive))
 
     if problems:
         print(
@@ -197,9 +203,10 @@ def main(argv: list[str]) -> int:
     print(
         "check_structure_exclusive: "
         + "; ".join(
-            f"{covered[structure]} carries {len(exclusive[structure])} symbol(s) of "
-            f"'{structure}' and none of any other"
+            f"{path} carries {len(exclusive[structure])} symbol(s) of '{structure}' and none "
+            "of any other"
             for structure in names
+            for path in covered[structure]
         )
     )
     return 0
