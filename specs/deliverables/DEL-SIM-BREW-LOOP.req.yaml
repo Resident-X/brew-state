@@ -4,7 +4,7 @@ category: epic
 title: The coffee side holds its targets in simulation across both deliveries it serves
 status: active
 level: epic
-version: 1
+version: 2
 text: |
   In simulation against the plant description, the coffee side holds both of the deliveries it serves. Water arriving at the group tracks the commanded temperature for a whole extraction from whatever thermal state the preceding demand left behind, hot water is dispensed within the drinking-temperature band with rate yielding to temperature, and contention between the two for the shared heated mass is resolved by the machine. Deliveries the machine ends are commanded as a profile carrying its own end condition, refused before starting if they cannot be achieved, and reported on when they depart from what was asked.
 rationale: |
@@ -14,8 +14,14 @@ rationale: |
 
   The profile command surface is built with the temperature loop rather than separately because a commanded course is what the loop tracks — a controller demonstrated against a single held setpoint would not have been exercised against the thing it will actually be given. It also changes what the controller knows: a commanded profile is a known future input rather than demand estimated as it arrives, so the loop is to be exercised with that feedforward coupling live rather than as a reactive loop that happens to pass a nominal test.
 links:
+  - target: DEC-PROFILE-FEEDS-THE-HORIZON
+    type: justified-by
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
+  - target: DEL-SIM-ESTIMATOR
+    type: depends-on
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: depends-on
   - target: REQ-BREW-TEMP-001.C1
     type: targets
   - target: REQ-BREW-TEMP-001.C2
@@ -36,12 +42,6 @@ links:
     type: targets
   - target: REQ-DELIVERY-PROFILE-001.C5
     type: targets
-  - target: DEL-SIM-ESTIMATOR
-    type: depends-on
-  - target: DEL-SIM-UNCERTAINTY-BUDGET
-    type: depends-on
-  - target: DEC-PROFILE-FEEDS-THE-HORIZON
-    type: justified-by
   - target: REQ-HOT-WATER-001.C1
     type: targets
   - target: REQ-HOT-WATER-001.C2
@@ -49,4 +49,6 @@ links:
   - target: REQ-HOT-WATER-001.C3
     type: targets
   - target: REQ-HOT-WATER-001.C4
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
     type: targets
