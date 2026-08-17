@@ -29,7 +29,7 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 
 | Value | Figure | Provenance |
 |---|---|---|
-| Coffee thermoblock element | 1000 W | Circuit diagram, service manual p.24 — read at source |
+| Coffee thermoblock element | 1000 W — **disputed, see below** | Circuit diagram, service manual p.24 — read at source |
 | Steam thermoblock element | 1000 W | Circuit diagram, service manual p.24 — read at source |
 | Steam pump | 22 W (JYPC-4) | Service manual parts list |
 | Coffee pump | 48 W (Ulka EP5) | Manufacturer spec sheet for the fitted type |
@@ -37,6 +37,19 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 | **Total installed heating** | **2000 W** | Sum of the two elements |
 
 Both elements together draw roughly **8.3 A at 240 V**. With both pumps running as well the worst case is about **2.07 kW, or 8.6 A**, inside a 10 A supply with roughly 330 W of headroom. Concurrent brew and steam is therefore *available* on this supply. It would not be at 120 V, where the same 2000 W is over 16 A.
+
+**The coffee element's rating is disputed, and the concurrency conclusion above depends on it.** The service manual's circuit diagram gives both elements as 1000 W. The machine's owner recalls the coffee element being **1200 W** and the steam element 1000 W, and believes the manual to be wrong — a service manual describing a variant is exactly the failure `REQ-MACHINE-CONFIGURATION-001.C5` exists to keep visible, and neither reading has been established on this machine.
+
+It is not a small difference, because the headroom above is what it eats:
+
+| | Installed heating | Worst case with both pumps, at 240 V | At 253 V (230 V nominal, +10%) |
+|---|---|---|---|
+| Manual: 1000 + 1000 | 2000 W | 2.07 kW, 8.6 A | 9.1 A |
+| Recollection: 1200 + 1000 | 2200 W | 2.27 kW, 9.5 A | **9.9 A** |
+
+At the top of the permitted supply range the second reading leaves essentially nothing against a 10 A circuit. So *"concurrent brew and steam is available on this supply"* is a conclusion that holds on the manual's figures and is marginal on the owner's, and nothing downstream should treat it as settled until the elements are measured.
+
+**Establish by measurement**, not by preferring one source to the other. Element power is a thermal characteristic of this machine, so `REQ-MACHINE-CONFIGURATION-001.C3` already requires it measured rather than adopted from a document; the reading is a resistance measurement across each element cold, which needs no bench rig and no energised machine. Until it happens, `firmware/params/thermoblock.params` carries the manual's figure with the dispute recorded against it, because the manual is the only citable source and a recollection is not one — that is a statement about provenance, not a judgement about which is right.
 
 ## Protection
 

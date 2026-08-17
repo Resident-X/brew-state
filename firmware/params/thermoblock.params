@@ -20,7 +20,7 @@
 ambient_temperature_c = 20.0 @estimated Assumed indoor ambient for the machine's AU/NZ domestic market. Nothing has been measured where the machine actually stands, and the value it settles from moves with the room.
 
 brew.thermal_mass_j_per_k = 320.0 @estimated From the coffee thermoblock's aluminium casting, taken as roughly 0.35 kg at 900 J/kg/K. The casting has not been weighed and its alloy is not stated in either manual.
-brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the circuit diagram on p.24 of the Sunbeam EM7000 service manual.
+brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the circuit diagram on p.24 of the Sunbeam EM7000 service manual. Disputed: the machine's owner recalls this element as 1200 W and believes the manual describes a variant. The manual is the only citable source, so its figure stands here until the element is measured, which is what settles it -- see the heating section of docs/reference-machine.md, where the concurrency margin that depends on this is worked both ways.
 brew.loss_w_per_k = 1.2 @estimated From the casting's exposed area under still-air convection, with no allowance for conduction into the chassis. Not measured, and the chassis path is the part most likely to be wrong.
 
 steam.thermal_mass_j_per_k = 360.0 @estimated From the steam thermochamber's casting, taken as slightly heavier than the coffee block's on the strength of the exploded views in the service manual. Neither casting has been weighed.
