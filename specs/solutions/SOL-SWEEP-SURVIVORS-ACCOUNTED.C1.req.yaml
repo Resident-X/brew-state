@@ -1,0 +1,12 @@
+id: SOL-SWEEP-SURVIVORS-ACCOUNTED.C1
+type: criterion
+title: A machine-describing structure's arithmetic fails a test when any operator in it is altered
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each machine-describing structure behind the plant-structure seam carries tests that pin what its equations compute, so that altering an arithmetic operator or a comparison in them fails a test rather than passing unnoticed. The vessel's step is asserted against the closed form of the first-order relaxation — a settling value approached exponentially, written with a plain exponential rather than with the effective-interval correction the implementation advances by — so the assertion tests the equation and not the code's own expression of it. Driven at a short step and at one comparable with the time constant, because at a hundred milliseconds the relaxation correction is within a part in ten thousand of unity and an alteration to it moves the answer by less than any tolerance worth asserting. Also driven at the edges the equations admit: a description losing nothing, which drives the correction's argument to zero where an alteration reaching the division yields a value that is not a number and no comparison notices, and either side of the saturation the steam pressure is drawn from. Out of scope: whether the equations describe any real machine, which no test reaches; and the coefficient-independent properties the suite already asserts, which are kept.
+links:
+  - target: SOL-SWEEP-SURVIVORS-ACCOUNTED
+    type: criterion-of

@@ -167,6 +167,12 @@ tasks:
       - python3 tools/check_actuation_declaration.py --plant-root src/plant --include-dir include
       - python3 tools/check_plant_encapsulation.py src test --plant-root src/plant --include-dir include
       - python3 tools/check_support_status.py --plant-root src/plant --include-dir include --documentation README.md
+      # The vocabulary a structure says whether its equations describe a machine
+      # from, and every structure's claim. This is what the mutation sweep draws
+      # its population from, so a structure arriving without a claim fails here
+      # rather than silently joining or missing that population.
+      - python3 tools/check_plant_header.py include/plant_machine_claim.h --plant-root src/plant --include-dir include --vocabulary-only
+      - python3 tools/check_machine_claim.py --plant-root src/plant --include-dir include
       - python3 tools/check_direct_calls.py --project . --header include/plant_model.h --objects-in src/app/native
       # Every structure in the tree, and the artefact carrying it, are
       # discovered: forgetting to add a line cannot leave one unchecked.
@@ -198,15 +204,22 @@ tasks:
       - python3 tools/mutate.py {{.CLI_ARGS}}
 
   fw:sweep:
-    desc: Alter every comparison and operator in the plant model's arithmetic and require a test to notice — on demand, not part of the gate
+    desc: Alter every comparison and operator in the plant model's arithmetic and require a test to notice — part of the full gate, and runnable alone
     dir: "{{.FW_DIR}}"
     cmds:
-      - python3 tools/mull_sweep.py --project . --pio {{.PIO}} {{.CLI_ARGS}}
+      # The structures the mutants are drawn from are discovered, so a structure
+      # added later joins the population without a line here naming it.
+      - python3 tools/mull_sweep.py --project . --plant-root src/plant --include-dir include --pio {{.PIO}} {{.CLI_ARGS}}
 
   fw:verify:
-    desc: The full firmware gate — build every environment, run every check, run the tests, run the host executables
+    desc: The full firmware gate — build every environment, run every check, run the tests, run the host executables, sweep the plant model's arithmetic
     cmds:
       - task: fw:build
       - task: fw:check
       - task: fw:test
       - task: fw:run
+      # Last because it is the longest and because it asks the hardest question:
+      # not whether the checks pass, but whether the tests would notice the model
+      # being wrong. It needs an LLVM toolchain matching the mutation plugin, so
+      # a host without one fails the gate here rather than passing quietly.
+      - task: fw:sweep

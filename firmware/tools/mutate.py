@@ -101,6 +101,17 @@ SUPPORT_STATUS = [
     sys.executable, "tools/check_support_status.py",
     "--plant-root", "src/plant", "--include-dir", "include", "--documentation", "README.md",
 ]
+MACHINE_CLAIM = [
+    sys.executable, "tools/check_machine_claim.py",
+    "--plant-root", "src/plant", "--include-dir", "include",
+]
+#: The sweep's own derivation, stopped before it needs a compiler. Without
+#: --population-only this would ask for a matching LLVM release and then spend
+#: minutes mutating, to establish something decided before either.
+MULL_POPULATION = [
+    sys.executable, "tools/mull_sweep.py", "--project", ".",
+    "--plant-root", "src/plant", "--include-dir", "include", "--population-only",
+]
 ORIGIN_HEADER = [
     sys.executable, "tools/check_plant_header.py", "include/plant_origin.h",
     "--plant-root", "src/plant", "--include-dir", "include", "--vocabulary-only",
@@ -130,6 +141,8 @@ LABELS = {
     tuple(NARROW_TESTS): "the tests driving a narrowly-declared structure",
     tuple(ACTUATION_HEADER): "the actuation vocabulary header check",
     tuple(ACTUATION_DECLARATION): "the actuation declaration check",
+    tuple(MACHINE_CLAIM): "the machine claim check",
+    tuple(MULL_POPULATION): "the sweep's derivation of its population",
     tuple(ORIGIN_HEADER): "the origin vocabulary header check",
     tuple(ORIGINS): "the parameter origins check",
     tuple(ANALYSIS): "the host tier's analysis check",
@@ -257,6 +270,36 @@ MUTATIONS = (
         "find": "#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED",
         "replace": "#define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_HARDWARE_VERIFIED",
         "command": SUPPORT_STATUS,
+    },
+    {
+        "name": "structure-does-not-say-whether-it-describes-a-machine",
+        "why": "the structure describing the reference machine's architecture reaches the seam "
+               "without saying whether its equations describe a machine, which is what decides "
+               "whether the mutation sweep draws mutants from them at all",
+        "file": "src/plant/thermoblock/plant_structure.h",
+        "find": "#define PLANT_STRUCTURE_MACHINE_CLAIM PLANT_DESCRIBES_A_MACHINE\n",
+        "replace": "",
+        "command": MACHINE_CLAIM,
+    },
+    {
+        "name": "machine-claim-vocabulary-grows-a-distinction",
+        "why": "the vocabulary gains a term for describing a machine in part, which is a "
+               "judgement no build-time check can make and somewhere vague for an arriving "
+               "structure to sit, from which whether the sweep draws mutants is undecided",
+        "file": "include/plant_machine_claim.h",
+        "find": "    PLANT_DESCRIBES_A_MACHINE\n",
+        "replace": "    PLANT_DESCRIBES_PART_OF_A_MACHINE,\n    PLANT_DESCRIBES_A_MACHINE\n",
+        "command": MACHINE_CLAIM,
+    },
+    {
+        "name": "the-sweep-is-handed-a-population-again",
+        "why": "the written-down list comes back in the configuration the toolchain reads, which "
+               "would take the derivation over silently and is the arrangement that let a "
+               "machine-describing structure sit outside the population unnoticed",
+        "file": "mull.yml",
+        "find": "excludePaths:",
+        "replace": 'includePaths:\n  - ".*/src/plant/thermoblock/.*"\nexcludePaths:',
+        "command": MULL_POPULATION,
     },
     {
         "name": "support-vocabulary-grows-a-distinction",
@@ -435,8 +478,13 @@ MUTATIONS = (
         "why": "the environment carrying the only tests that can exercise an unanswered channel "
                "stops declaring that it runs tests",
         "file": "platformio.ini",
-        "find": "test_build_src = yes\ncustom_strict_flags_exemption",
-        "replace": "custom_strict_flags_exemption",
+        # Anchored on the line that selects the narrow structure, because the two
+        # lines below it are what every test environment carries -- a third
+        # structure's test environment made the pair ambiguous and left this
+        # mutation reporting that its subject was not the one described.
+        "find": "-I $PROJECT_DIR/src/plant/fixture\ntest_build_src = yes\n"
+                "custom_strict_flags_exemption",
+        "replace": "-I $PROJECT_DIR/src/plant/fixture\ncustom_strict_flags_exemption",
         "command": TESTS_RUN,
     },
     {

@@ -1,0 +1,13 @@
+id: DEL-SIM-SEAMS-HARNESS.C14
+type: criterion
+title: Every mutant the sweep produces is killed by a test or carries a recorded judgement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A structure whose equations are in the mutant population carries tests that kill the mutants drawn from them, or a recorded judgement of why no test can — read per structure rather than as one total, so a suite that leaves one structure's arithmetic unpinned is visible instead of absorbed into an aggregate score. The sweep's own exit status is what reports it: a survivor nobody has judged fails the run, and so does a judgement about a mutant the sweep no longer produces, which is how a decision outlives the code it was made about. When its contributing solution closes.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-SWEEP-SURVIVORS-ACCOUNTED.C3
+type: criterion
+title: The sweep reports a clean run over the whole population it drew
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The sweep run over the derived population exits reporting that every surviving mutant is accounted for, with no unreviewed survivor and no judgement about a mutant it did not produce — which is the observation that the two criteria above hold together rather than separately, since a suite can pin one structure's arithmetic while another's is untouched and a record can be complete about mutants that no longer exist. The population it reports over is the one derived from the structures in the tree, so a clean run is a statement about every machine-describing structure and not about a subset of them. Out of scope: the percentage killed, which is informational rather than the gate, and whether the population itself is correctly drawn, which the contributing work for the population criterion establishes.
+links:
+  - target: SOL-SWEEP-SURVIVORS-ACCOUNTED
+    type: criterion-of

@@ -1,0 +1,31 @@
+id: SOL-SWEEP-SURVIVORS-ACCOUNTED
+type: deliverable
+category: solution
+title: The mutants the swept population produces are killed or judged
+status: active
+version: 1
+text: |
+  The mutants the sweep draws from a machine-describing structure are each either killed by a test or carried by a written judgement of why no test can kill them, and that is asked of each structure in the population rather than of the population as a whole.
+
+  The distinction this rests on is between two questions that are easy to run together. Whether a structure's equations describe a real machine is unknowable without one to measure, and stays unknowable here. Whether they compute what they claim to compute is a different question and is answerable, because the equations have a closed form: a first-order thermal relaxation can be stated as a settling value approached exponentially, which is not the form the implementation uses to advance it. Asserting against the closed form tests the equation; restating the implementation's own expression would agree with it however it was wrong.
+
+  That distinction is what a suite asserting only coefficient-independent properties cannot reach. Energy is not invented, a replay reproduces, two temperatures behind one body of water do not drift apart — all true, all worth asserting, and all indifferent to whether an operator in the arithmetic was altered. A structure verified only that way passes every test it has while its arithmetic is unpinned, and the sweep is the only thing that says so.
+
+  The judgement of a survivor is the other half and is deliberately not automated. Some mutants cannot change any observable behaviour, and no test can kill them; recording one as a gap would ask somebody to write a test asserting something untrue in order to move a number. Deciding which is which is a reading of what the code means, so each survivor carries a reason written against the code at its own line — and a judgement whose subject has moved is re-made rather than renumbered, because the line is part of what was judged.
+
+  Out of scope: which mutation operators are generated, the threshold a sweep result is judged against, the control logic and the hardware implementations which this sweep has never covered, and whether a structure's claim to describe a machine is true.
+rationale: |
+  This is deliberately separate from the work that made the population follow the tree, and the separation is the point rather than tidiness. A slice owing both a complete population and a passing sweep is under pressure to shape the population until the result passes, which is exactly backwards — the population is what makes the answer worth having, and the answer is what the population is for. Holding them apart means the population was settled without reference to what it would cost.
+
+  What forced this into its own node is that the earlier slice named its own boundary and kept to it: it promised a population drawn from the tree and explicitly declined to promise that the newly included equations would survive. That left real work with nowhere to sit, which is the definition of scope discovered during delivery rather than of a shortfall.
+
+  The pre-existing half arrived the same way and is worth recording because the mechanism will recur. The parameter loader grew by a hundred and twenty-four lines on one branch while the sweep's triage record was being written on another. Neither branch was wrong and neither could have known; the record simply described code that had moved by the time both merged, and nobody ran the sweep in between because it runs on demand. Every judgement in it was stale at once. A harness that is only run deliberately will be stale in proportion to how long since somebody chose to run it, and the same merge left the hand-curated mutation harness reporting one of its own subjects as ambiguous for the same reason.
+links:
+  - target: DEL-SIM-SEAMS-HARNESS.C14
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
+  - target: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY
+    type: depends-on
+  - target: DEC-PLANT-MUTATION-COVERAGE
+    type: justified-by

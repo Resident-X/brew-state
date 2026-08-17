@@ -1,0 +1,25 @@
+id: EVD-SOL-SWEEP-SURVIVORS-ACCOUNTED.C2-INSPECTION
+type: evidence
+title: A survivor carries a reason written against the code at its own line (SOL-SWEEP-SURVIVORS-ACCOUNTED.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T12:40:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/mutation_triage.yaml
+text: |
+  Every surviving mutant in firmware/mutation_triage.yaml carries a verdict from the declared set and a reason written against the code at its own line. Eleven judgements stand: seven equivalent and four recorded as visible only to the sanitized tier.
+
+  Seven of them were re-made rather than renumbered. The parameter loader grew by 124 lines between the sweep being written on one branch and the description work merging on another, so every recorded line had moved and the sweep reported the whole record as stale. Each was read against the code now at its line before being moved — the leading-blank trim at 48, the name-length clamp at 136, the zero-length copy guard at 139, the spec-table size guard at 207, the line-cursor ternary at 231, the value-token length guard at 170 and the spec-lookup bound at 297 — and each carries the same reasoning because the arithmetic at those lines is unchanged. An entry whose code had actually changed would have had to be judged again rather than moved.
+
+  Two are new and record mutants that provably refuse the same input either way. Both widen a bound in the origin parser: the skip between the marker and the kind, and the scan of the kind itself. In each case the original and the mutant reach the same refusal by different routes, so no assertion separates them; what remains is a one-byte read past the span, reachable only for a final line with no newline whose annotation ends at the kind, which no test constructs.
+
+  One records the single-boiler structure's saturation comparison widened at exactly zero, where the mutant evaluates the pressure slope against a zero and the original returns the literal — the same judgement the thermoblock's equivalent comparison already carried, reached independently.
+
+  The record's own staleness detection is what establishes the discipline holds: the sweep fails on a judgement about a mutant it did not produce, and it now reports none.
+links:
+  - target: SOL-SWEEP-SURVIVORS-ACCOUNTED.C2
+    type: satisfies

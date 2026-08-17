@@ -28,8 +28,20 @@
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
 
+#include "plant_machine_claim.h"
 #include "plant_support.h"
 #include "plant_types.h"
+
+/*
+ * These equations are an account of a real architecture -- single-boiler
+ * machines exist in quantity, whether or not anyone here owns one -- so altering
+ * their arithmetic changes what the model says such a machine does, and whether
+ * a test notices is a question worth asking. Nothing about this claim is
+ * weakened by the structure being unverified: describing an architecture and
+ * having been checked against one are separate, and the support status below is
+ * where the second is answered.
+ */
+#define PLANT_STRUCTURE_MACHINE_CLAIM PLANT_DESCRIBES_A_MACHINE
 
 /*
  * Unverified, and nobody here can change that. These equations describe an

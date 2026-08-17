@@ -1,0 +1,12 @@
+id: SOL-SWEEP-SURVIVORS-ACCOUNTED.C2
+type: criterion
+title: A survivor carries a reason written against the code at its own line
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every mutant the sweep reports as surviving is accounted for in the triage record by a verdict drawn from the declared set and a reason stating why no test can kill it, and a judgement whose subject has moved is made again against the code now at that line rather than renumbered onto it. The record's own staleness detection is what reports the second case: a judgement about a mutant the sweep did not produce fails the run, so a decision cannot outlive the code it was made about by being carried forward. The reason is the whole content of a judgement — a verdict nobody has to justify is a way of marking a survivor read without reading it. Out of scope: whether a recorded judgement is correct, which is a review question rather than a build-time one; and the threshold the resulting score is judged against.
+links:
+  - target: SOL-SWEEP-SURVIVORS-ACCOUNTED
+    type: criterion-of

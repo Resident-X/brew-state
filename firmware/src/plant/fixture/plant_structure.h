@@ -18,8 +18,19 @@
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
 
+#include "plant_machine_claim.h"
 #include "plant_support.h"
 #include "plant_types.h"
+
+/*
+ * These equations describe no machine, and the one coefficient they read has no
+ * physical meaning, so altering their arithmetic changes nothing about anything
+ * physical. Nothing that draws a conclusion from the model's arithmetic should
+ * draw one here: a mutation sweep including this structure would report a number
+ * over a subject no conclusion follows from, in either direction -- a survivor
+ * would not be a gap in the tests and a kill would not be evidence of one.
+ */
+#define PLANT_STRUCTURE_MACHINE_CLAIM PLANT_DESCRIBES_NO_MACHINE
 
 /*
  * Unverified, and unverifiable: there is no hardware this structure could be

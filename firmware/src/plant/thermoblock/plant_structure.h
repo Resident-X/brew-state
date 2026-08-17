@@ -19,8 +19,18 @@
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
 
+#include "plant_machine_claim.h"
 #include "plant_support.h"
 #include "plant_types.h"
+
+/*
+ * These equations are an account of a real architecture -- the one the project's
+ * own machine is built on -- so altering their arithmetic changes what the model
+ * says a machine does, and whether a test notices is a question worth asking.
+ * That is a claim about what the equations are about, and not a claim that they
+ * are right about it; the support status below is where that is answered.
+ */
+#define PLANT_STRUCTURE_MACHINE_CLAIM PLANT_DESCRIBES_A_MACHINE
 
 /*
  * Nothing has been on the bench. These equations describe the architecture the

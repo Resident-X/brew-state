@@ -2062,5 +2062,233 @@ class TheCheckStopsRatherThanReportingSuccess(OriginTreeCase):
         self.assertIn("enumerates no quantities", result.stderr)
 
 
+# --- Whether a structure's equations describe a machine ---------------------
+
+MACHINE_CLAIM_VOCABULARY = """
+#ifndef PLANT_MACHINE_CLAIM_H
+#define PLANT_MACHINE_CLAIM_H
+typedef enum {
+    PLANT_DESCRIBES_NO_MACHINE = 0,
+    PLANT_DESCRIBES_A_MACHINE
+} plant_machine_claim_t;
+#endif
+"""
+
+
+class ClaimTree:
+    """A temporary tree of structures and the vocabulary their claims are drawn from."""
+
+    def __init__(self, structures: tuple[str, ...] = ("alpha", "beta")):
+        self.root = tempfile.TemporaryDirectory()
+        self.include = os.path.join(self.root.name, "include")
+        self.plant = os.path.join(self.root.name, "src", "plant")
+        os.makedirs(self.include)
+        os.makedirs(self.plant)
+        write(os.path.join(self.include, "machine_actuation.h"), NEUTRAL_ACTUATION)
+        write(os.path.join(self.include, "plant_types.h"), NEUTRAL_TYPES)
+        write(os.path.join(self.include, "plant_model.h"), NEUTRAL_MODEL)
+        write(os.path.join(self.include, "plant_machine_claim.h"), MACHINE_CLAIM_VOCABULARY)
+        for name in structures:
+            self.structure(name, "PLANT_DESCRIBES_A_MACHINE")
+
+    def structure(self, name: str, claim: str | None, *, raw: str | None = None) -> str:
+        """Write one structure, optionally claiming what its equations are about.
+
+        `raw` replaces the declaration outright, so a claim the preprocessor
+        never sees or one hidden in a comment can be written as a reader would
+        find it rather than described.
+        """
+        directory = os.path.join(self.plant, name)
+        os.makedirs(directory, exist_ok=True)
+        declarations = raw if raw is not None else ""
+        if claim is not None:
+            declarations += f"#define PLANT_STRUCTURE_MACHINE_CLAIM {claim}\n"
+        path = os.path.join(directory, "plant_structure.h")
+        write(
+            path,
+            structure_header(name).replace(
+                '#include "plant_types.h"\n',
+                f'#include "plant_machine_claim.h"\n#include "plant_types.h"\n{declarations}',
+            ),
+        )
+        return path
+
+    def vocabulary(self, content: str) -> None:
+        """Replace the shared vocabulary, so a tree without a usable one can be driven."""
+        write(os.path.join(self.include, "plant_machine_claim.h"), content)
+
+    def cleanup(self) -> None:
+        self.root.cleanup()
+
+
+class ClaimTreeCase(unittest.TestCase):
+    """A tree of structures and the vocabulary their claims are drawn from."""
+
+    def setUp(self):
+        self.tree = ClaimTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def check(self, **overrides):
+        return run_check(
+            "check_machine_claim.py",
+            "--plant-root",
+            overrides.get("plant_root", self.tree.plant),
+            "--include-dir",
+            overrides.get("include_dir", self.tree.include),
+        )
+
+
+class StructureSaysWhetherItsEquationsDescribeAMachine(ClaimTreeCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3: every structure declares whether
+    its equations describe a machine, and the build refuses one that declares nothing."""
+
+    def test_every_structure_carrying_a_declared_claim_passes(self):
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_structure_declaring_neither_value_fails_and_names_it(self):
+        self.tree.structure("beta", None)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("beta", result.stderr)
+        self.assertIn("PLANT_STRUCTURE_MACHINE_CLAIM", result.stderr)
+
+    def test_a_claim_outside_the_vocabulary_fails(self):
+        self.tree.structure("beta", "PLANT_DESCRIBES_MOST_OF_A_MACHINE")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_DESCRIBES_MOST_OF_A_MACHINE", result.stderr)
+
+    def test_a_structure_claiming_twice_fails_rather_than_taking_either(self):
+        self.tree.structure(
+            "beta",
+            "PLANT_DESCRIBES_A_MACHINE",
+            raw="#define PLANT_STRUCTURE_MACHINE_CLAIM PLANT_DESCRIBES_NO_MACHINE\n",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("2 times", result.stderr)
+
+    def test_a_commented_out_claim_is_not_a_claim(self):
+        self.tree.structure(
+            "beta", None, raw="/* #define PLANT_STRUCTURE_MACHINE_CLAIM PLANT_DESCRIBES_A_MACHINE */\n"
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("defines no PLANT_STRUCTURE_MACHINE_CLAIM", result.stderr)
+
+    def test_a_claim_the_preprocessor_discards_is_not_a_claim(self):
+        self.tree.structure(
+            "beta",
+            None,
+            raw="#if 0\n#define PLANT_STRUCTURE_MACHINE_CLAIM PLANT_DESCRIBES_A_MACHINE\n#endif\n",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("defines no PLANT_STRUCTURE_MACHINE_CLAIM", result.stderr)
+
+    def test_a_structure_arriving_later_is_required_to_claim_without_the_check_being_edited(self):
+        # The subjects are discovered, so this is the case that would have caught
+        # the sweep's population going stale: a structure added to the tree is
+        # asked the question with nothing here naming it.
+        self.tree.structure("gamma", None)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("gamma", result.stderr)
+
+    def test_a_structure_describing_no_machine_is_a_declared_claim_and_not_a_failure(self):
+        self.tree.structure("beta", "PLANT_DESCRIBES_NO_MACHINE")
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("beta PLANT_DESCRIBES_NO_MACHINE", result.stdout)
+
+
+class TheClaimVocabularyDrawsOneLine(ClaimTreeCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3: the claim is drawn from a
+    vocabulary declared in one place, and that vocabulary draws one distinction."""
+
+    def test_a_vocabulary_carrying_a_third_term_fails(self):
+        self.tree.vocabulary(
+            MACHINE_CLAIM_VOCABULARY.replace(
+                "    PLANT_DESCRIBES_A_MACHINE\n",
+                "    PLANT_DESCRIBES_A_MACHINE,\n    PLANT_DESCRIBES_PART_OF_A_MACHINE\n",
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_DESCRIBES_PART_OF_A_MACHINE", result.stderr)
+
+    def test_a_vocabulary_missing_a_term_fails(self):
+        self.tree.vocabulary(
+            "typedef enum { PLANT_DESCRIBES_A_MACHINE = 0 } plant_machine_claim_t;\n"
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("PLANT_DESCRIBES_NO_MACHINE", result.stderr)
+
+    def test_a_renamed_term_fails_rather_than_silently_changing_the_population(self):
+        self.tree.vocabulary(
+            MACHINE_CLAIM_VOCABULARY.replace(
+                "PLANT_DESCRIBES_A_MACHINE", "PLANT_DESCRIBES_SOME_MACHINE"
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("declares no 'PLANT_DESCRIBES_A_MACHINE'", result.stderr)
+
+
+class AClaimCheckWithNothingToInspectFails(ClaimTreeCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3: the check fails rather than
+    passes when it finds no structure, no vocabulary, or no machine to describe."""
+
+    def test_a_missing_plant_root_is_an_error_not_a_pass(self):
+        result = self.check(plant_root=os.path.join(self.tree.root.name, "src", "nowhere"))
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no plant root", result.stderr)
+
+    def test_a_plant_root_holding_no_structure_is_an_error_not_a_pass(self):
+        empty = os.path.join(self.tree.root.name, "src", "nothing")
+        os.makedirs(empty, exist_ok=True)
+        result = self.check(plant_root=empty)
+        self.assertEqual(2, result.returncode)
+        self.assertIn("nothing to have carried a claim", result.stderr)
+
+    def test_a_missing_vocabulary_is_an_error_not_a_pass(self):
+        result = self.check(include_dir=os.path.join(self.tree.root.name, "nowhere"))
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no vocabulary header", result.stderr)
+
+    def test_a_vocabulary_declaring_no_claim_type_is_an_error_not_a_pass(self):
+        self.tree.vocabulary("#define PLANT_CLAIM_UNUSED 1\n")
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("declares no plant_machine_claim_t", result.stderr)
+
+    def test_a_tree_where_no_structure_describes_a_machine_is_a_failure(self):
+        # Not a hypothetical: it is the state a mis-drawn declaration produces,
+        # and it yields an empty population rather than a small one.
+        for name in ("alpha", "beta"):
+            self.tree.structure(name, "PLANT_DESCRIBES_NO_MACHINE")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no structure claims to describe a machine", result.stderr)
+
+
+class TheShippedTreeAnswersTheQuestion(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3: what this project ships carries
+    the claim on every structure, and the check passes over it."""
+
+    def test_every_structure_this_project_ships_declares_a_claim(self):
+        project = os.path.dirname(TOOLS)
+        result = run_check(
+            "check_machine_claim.py",
+            "--plant-root",
+            os.path.join(project, "src", "plant"),
+            "--include-dir",
+            os.path.join(project, "include"),
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

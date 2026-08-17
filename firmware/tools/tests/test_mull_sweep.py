@@ -31,7 +31,9 @@ sys.path.insert(0, TOOLS)
 import build_environments  # noqa: E402
 import mull_sweep  # noqa: E402
 import mull_toolchain  # noqa: E402
-from test_plant_checks import declare_environments, host_environment  # noqa: E402
+from check_support_status import Uninspectable  # noqa: E402
+from structure_symbols import discover  # noqa: E402
+from test_plant_checks import ClaimTree, declare_environments, host_environment  # noqa: E402
 
 #: The real project, for the cases asserting that what is shipped is scoped the
 #: way it says it is. The tree is the subject there, not a stand-in for one.
@@ -78,12 +80,19 @@ class TheScopeDecidesWhatIsMutated(unittest.TestCase):
             with open(os.path.join(self.project.name, path), "w", encoding="utf-8") as handle:
                 handle.write("int main(void) { return 0; }\n")
 
-    def declare(self, includes, excludes=()):
+    def declare(self, excludes=(), includes=()):
+        """Write the sweep's configuration.
+
+        Includes are writable even though the tool now refuses them, because
+        refusing them is the behaviour under test: the file is what the toolchain
+        reads, so a list reappearing here has to fail rather than be ignored.
+        """
         path = os.path.join(self.project.name, mull_toolchain.CONFIG_NAME)
         with open(path, "w", encoding="utf-8") as handle:
-            handle.write("includePaths:\n")
-            for pattern in includes:
-                handle.write(f'  - "{pattern}"\n')
+            if includes:
+                handle.write("includePaths:\n")
+                for pattern in includes:
+                    handle.write(f'  - "{pattern}"\n')
             handle.write("excludePaths:\n")
             for pattern in excludes:
                 handle.write(f'  - "{pattern}"\n')
@@ -103,41 +112,569 @@ class TheScopeDecidesWhatIsMutated(unittest.TestCase):
         )
 
     def test_a_scope_reaching_the_tests_is_refused(self):
-        self.declare([".*"])
-        includes, excludes = mull_sweep.scope_patterns(self.project.name)
-        problems = mull_sweep.scope_problems(self.project.name, includes, excludes)
+        self.declare()
+        problems = mull_sweep.scope_problems(self.project.name, [".*"], [])
         self.assertEqual(1, len(problems))
         self.assertIn("test sources", problems[0])
         self.assertIn("test/test_plant/test_plant.c", problems[0])
 
     def test_a_scope_reaching_nothing_is_refused(self):
-        self.declare([".*/src/plant/nowhere/.*"])
-        includes, excludes = mull_sweep.scope_patterns(self.project.name)
-        problems = mull_sweep.scope_problems(self.project.name, includes, excludes)
+        self.declare()
+        problems = mull_sweep.scope_problems(
+            self.project.name, [".*/src/plant/nowhere/.*"], []
+        )
         self.assertEqual(1, len(problems))
         self.assertIn("no source under src/", problems[0])
 
-    def test_a_scope_declaring_no_includes_is_refused(self):
-        self.declare([])
+    def test_the_declared_exclusions_are_read_and_a_bad_pattern_is_reported_against_the_file(self):
+        self.declare(excludes=[".*/test/.*"])
+        self.assertEqual(
+            ([".*/test/.*"], []), mull_sweep.declared_excludes(self.project.name)
+        )
+        self.declare(excludes=["*unclosed["])
         with self.assertRaises(mull_sweep.SweepError) as raised:
-            mull_sweep.scope_patterns(self.project.name)
-        self.assertIn("includePaths", str(raised.exception))
+            mull_sweep.declared_excludes(self.project.name)
+        self.assertIn("excludePaths", str(raised.exception))
 
-    def test_the_scope_this_project_ships_takes_in_the_plant_model_and_not_the_tests(self):
-        includes, excludes = mull_sweep.scope_patterns(PROJECT)
+    def test_a_configuration_declaring_a_population_of_its_own_is_refused(self):
+        # The written-down list is what this replaced, and the toolchain reads
+        # this file rather than the derivation -- so a list reappearing here
+        # would win silently. It has to fail instead.
+        # Reported as a problem found rather than as being unable to look: the
+        # file is perfectly readable, and what is wrong is what it says. The two
+        # exit statuses are not interchangeable, and mutate.py asks for this one.
+        self.declare(excludes=[".*/test/.*"], includes=[".*/src/plant/thermoblock/.*"])
+        excludes, problems = mull_sweep.declared_excludes(self.project.name)
+        self.assertEqual([".*/test/.*"], excludes)
+        self.assertEqual(1, len(problems))
+        self.assertIn("includePaths", problems[0])
+        self.assertIn("PLANT_STRUCTURE_MACHINE_CLAIM", problems[0])
+
+    def test_the_configuration_this_project_ships_names_no_population(self):
+        excludes, problems = mull_sweep.declared_excludes(PROJECT)
+        self.assertTrue(excludes)
+        self.assertEqual([], problems)
+
+
+# --- Where the population comes from ----------------------------------------
+
+
+def mutation_environment(structure: str, suite: str) -> dict:
+    """One environment declaring itself built for the sweep, over one structure."""
+    options = host_environment(structure, entry_point=False)
+    options["custom_mutation_sweep"] = "it is compiled by a mutation toolchain"
+    options["test_filter"] = suite
+    return options
+
+
+class PopulationTree:
+    """A synthetic project whose structures say what their equations are about.
+
+    Built on the same tree the claim gate is driven against, so a test here
+    cannot pass because this file's idea of a declaration has drifted from the
+    gate's.
+    """
+
+    def __init__(self):
+        self.tree = ClaimTree(("alpha", "beta"))
+        self.root = self.tree.root.name
+        self.plant = self.tree.plant
+        self.include = self.tree.include
+        self.shared = os.path.join(self.plant, "common")
+        os.makedirs(self.shared, exist_ok=True)
+        with open(os.path.join(self.shared, "plant_step.c"), "w", encoding="utf-8") as handle:
+            handle.write("float advance(float x) { return x * 2.0f; }\n")
+        self.describe("beta", "PLANT_DESCRIBES_NO_MACHINE")
+        self.config()
+        self.declare([("native_alpha_mutation", mutation_environment("alpha", "test_alpha"))])
+
+    def describe(self, name: str, claim: str | None) -> str:
+        """Add or restate one structure's claim, as editing the tree would."""
+        return self.tree.structure(name, claim)
+
+    def config(self, excludes=(".*/test/.*",), includes=()) -> str:
+        path = os.path.join(self.root, mull_toolchain.CONFIG_NAME)
+        with open(path, "w", encoding="utf-8") as handle:
+            if includes:
+                handle.write("includePaths:\n")
+                for pattern in includes:
+                    handle.write(f'  - "{pattern}"\n')
+            handle.write("excludePaths:\n")
+            for pattern in excludes:
+                handle.write(f'  - "{pattern}"\n')
+        return path
+
+    def declare(self, environments) -> str:
+        return declare_environments(self.root, environments)
+
+    def structures(self):
+        return discover(self.plant, self.include)
+
+    def described(self):
+        """The structures the sweep would draw from, and why the tree might not say."""
+        return mull_sweep.machine_describing_structures(
+            self.structures(), self.plant, self.include
+        )
+
+    def directories(self) -> list[str]:
+        """The population, as relative paths, the way the sweep assembles it."""
+        described, _ = self.described()
+        assembled = mull_sweep.shared_directories(self.plant) + [
+            structure.directory for structure in described
+        ]
+        return [os.path.relpath(directory, self.root) for directory in assembled]
+
+    def environments(self):
+        return build_environments.mutation_environments(build_environments.load(self.root))
+
+    def cleanup(self) -> None:
+        self.tree.cleanup()
+
+
+class ThePopulationFollowsTheTree(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1: the sources the sweep draws
+    mutants from are read from the tree, and a machine-describing structure is in
+    that population without its name appearing in the sweep's configuration."""
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def test_a_structure_describing_a_machine_is_in_the_population(self):
+        self.assertIn(os.path.join("src", "plant", "alpha"), self.tree.directories())
+
+    def test_a_structure_describing_no_machine_is_not_in_the_population(self):
+        self.assertNotIn(os.path.join("src", "plant", "beta"), self.tree.directories())
+
+    def test_the_shared_sources_are_in_the_population_without_being_a_structure(self):
+        self.assertIn(os.path.join("src", "plant", "common"), self.tree.directories())
+
+    def test_a_structure_arriving_later_joins_the_population_with_nothing_edited(self):
+        # The case the fixed list could not answer. Nothing hand-maintained is
+        # touched here: no pattern is written, no name is added to a
+        # configuration, and the sweep's own files are left exactly as they were.
+        before = self.tree.directories()
+        self.tree.describe("gamma", "PLANT_DESCRIBES_A_MACHINE")
+        after = self.tree.directories()
+        self.assertNotIn(os.path.join("src", "plant", "gamma"), before)
+        self.assertIn(os.path.join("src", "plant", "gamma"), after)
+
+    def test_a_structure_arriving_later_describing_no_machine_stays_out(self):
+        # The other half of the distinction: the population is drawn on what a
+        # structure claims about itself, not on how many structures there are.
+        self.tree.describe("gamma", "PLANT_DESCRIBES_NO_MACHINE")
+        self.assertNotIn(os.path.join("src", "plant", "gamma"), self.tree.directories())
+
+    def test_a_structure_whose_claim_is_unreadable_is_refused_rather_than_left_out(self):
+        self.tree.describe("gamma", None)
+        described, problems = self.tree.described()
+        self.assertNotIn("gamma", [structure.name for structure in described])
+        self.assertTrue(problems, "a structure carrying no claim was silently left out")
+        self.assertIn("gamma", " ".join(problems))
+
+    def test_the_derived_patterns_reach_the_sources_and_not_the_tests(self):
+        described, _ = self.tree.described()
+        directories = mull_sweep.shared_directories(self.tree.plant) + [
+            structure.directory for structure in described
+        ]
+        includes = [mull_sweep.scope_pattern(self.tree.root, d) for d in directories]
+        excludes, _ = mull_sweep.declared_excludes(self.tree.root)
+        self.assertEqual([], mull_sweep.scope_problems(self.tree.root, includes, excludes))
+        self.assertTrue(
+            mull_sweep.in_scope("/a/src/plant/alpha/plant_structure.h", includes, excludes)
+        )
+        self.assertFalse(
+            mull_sweep.in_scope("/a/src/plant/beta/plant_structure.h", includes, excludes)
+        )
+
+    def test_a_derived_scope_written_out_reads_back_as_the_same_patterns(self):
+        # The patterns are regular expressions, so they carry backslashes. A
+        # document quoting them the wrong way round is one the toolchain reads as
+        # different patterns -- and the sweep would then mutate a different set
+        # from the one reported here, which is the failure that would look most
+        # like success.
+        includes = [".*/src/plant/alpha/.*"]
+        excludes = [".*/test/.*", ".*/\\.pio/.*", ".*[Uu]nity.*"]
+        with tempfile.TemporaryDirectory() as directory:
+            path = mull_sweep.write_scope(directory, includes, excludes)
+            written = mull_sweep.load_yaml(path)
+        self.assertEqual(includes, written["includePaths"])
+        self.assertEqual(excludes, written["excludePaths"])
+
+    def test_the_population_this_project_ships_covers_every_structure_that_claims_a_machine(self):
+        plant = os.path.join(PROJECT, "src", "plant")
+        include = os.path.join(PROJECT, "include")
+        structures = discover(plant, include)
+        described, problems = mull_sweep.machine_describing_structures(
+            structures, plant, include
+        )
+        self.assertEqual([], problems)
+        self.assertTrue(described, "the shipped tree claims no machine at all")
+
+        directories = mull_sweep.shared_directories(plant) + [
+            structure.directory for structure in described
+        ]
+        includes = [mull_sweep.scope_pattern(PROJECT, d) for d in directories]
+        excludes, _ = mull_sweep.declared_excludes(PROJECT)
         self.assertEqual([], mull_sweep.scope_problems(PROJECT, includes, excludes))
+
         swept = [
             os.path.relpath(path, PROJECT)
             for path in mull_sweep.sources_under(os.path.join(PROJECT, "src"))
             if mull_sweep.in_scope(path, includes, excludes)
         ]
-        self.assertTrue(swept, "the shipped scope reaches no source at all")
+        self.assertTrue(swept, "the derived scope reaches no source at all")
+        # Every structure claiming a machine contributes, and nothing else does.
+        for structure in described:
+            prefix = os.path.relpath(structure.directory, PROJECT) + os.sep
+            self.assertTrue(
+                any(path.startswith(prefix) for path in swept),
+                f"{structure.name} claims a machine and no source of it is swept",
+            )
+        allowed = tuple(
+            os.path.relpath(directory, PROJECT) + os.sep for directory in directories
+        )
         for path in swept:
             self.assertTrue(
-                path.startswith("src/plant/common/")
-                or path.startswith("src/plant/thermoblock/"),
+                path.startswith(allowed),
                 f"{path} is swept but is outside the plant model's arithmetic",
             )
+
+
+class AnEnvironmentExistsForEveryStructureSwept(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1: a structure in the population
+    that no mutation build compiles is refused, because it would contribute no
+    mutants while the score read as covering it."""
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def uncovered(self):
+        described, problems = self.tree.described()
+        self.assertEqual([], problems)
+        return mull_sweep.uncovered_structures(
+            self.tree.environments(), self.tree.structures(), described
+        )
+
+    def test_a_structure_every_environment_covers_passes(self):
+        self.assertEqual([], self.uncovered())
+
+    def test_a_machine_describing_structure_with_no_environment_is_named(self):
+        self.tree.describe("gamma", "PLANT_DESCRIBES_A_MACHINE")
+        self.assertEqual(["gamma"], self.uncovered())
+
+    def test_a_structure_describing_no_machine_needs_no_environment(self):
+        self.tree.describe("gamma", "PLANT_DESCRIBES_NO_MACHINE")
+        self.assertEqual([], self.uncovered())
+
+    def test_an_environment_added_for_a_structure_is_taken_up_without_being_named(self):
+        self.tree.describe("gamma", "PLANT_DESCRIBES_A_MACHINE")
+        self.tree.declare(
+            [
+                ("native_alpha_mutation", mutation_environment("alpha", "test_alpha")),
+                ("native_gamma_mutation", mutation_environment("gamma", "test_gamma")),
+            ]
+        )
+        self.assertEqual([], self.uncovered())
+
+    def test_an_environment_not_declared_for_the_sweep_does_not_cover_a_structure(self):
+        # An ordinary test environment compiles the structure but carries no
+        # mutants, so it is not what makes the structure swept.
+        self.tree.describe("gamma", "PLANT_DESCRIBES_A_MACHINE")
+        self.tree.declare(
+            [
+                ("native_alpha_mutation", mutation_environment("alpha", "test_alpha")),
+                ("native_gamma_test", host_environment("gamma", entry_point=False)),
+            ]
+        )
+        self.assertEqual(["gamma"], self.uncovered())
+
+    def test_every_structure_this_project_ships_has_an_environment_built_for_it(self):
+        plant = os.path.join(PROJECT, "src", "plant")
+        include = os.path.join(PROJECT, "include")
+        structures = discover(plant, include)
+        described, problems = mull_sweep.machine_describing_structures(
+            structures, plant, include
+        )
+        self.assertEqual([], problems)
+        environments = build_environments.mutation_environments(
+            build_environments.load(PROJECT)
+        )
+        self.assertEqual(
+            [], mull_sweep.uncovered_structures(environments, structures, described)
+        )
+
+
+class OnlyTheDerivedPopulationCountsTowardsTheScore(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1: mutants from sources the derived
+    population does not take in are refused, so the score cannot be computed over
+    more than the plant model's arithmetic.
+
+    What the scope says and what was instrumented are different facts. Since the
+    population is no longer written in the file the toolchain reads, a scope that
+    fails to reach the plugin yields an unbounded sweep rather than a narrow one --
+    the control logic arrives in the report, and if its own tests kill those
+    mutants the run passes with an inflated score.
+    """
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+        described, problems = self.tree.described()
+        self.assertEqual([], problems)
+        directories = mull_sweep.shared_directories(self.tree.plant) + [
+            structure.directory for structure in described
+        ]
+        self.includes = [mull_sweep.scope_pattern(self.tree.root, d) for d in directories]
+        self.excludes, _ = mull_sweep.declared_excludes(self.tree.root)
+
+    def outside(self, *sources):
+        found = {
+            f"cxx_lt_to_le:{source}:1:1": dict(survivor(source), source=source)
+            for source in sources
+        }
+        return mull_sweep.outside_the_population(
+            self.tree.root, found, self.includes, self.excludes
+        )
+
+    def test_a_mutant_from_the_population_is_not_reported(self):
+        self.assertEqual([], self.outside(os.path.join("src", "plant", "alpha", "x.c")))
+
+    def test_a_mutant_from_the_shared_sources_is_not_reported(self):
+        self.assertEqual([], self.outside(os.path.join("src", "plant", "common", "x.c")))
+
+    def test_a_mutant_from_the_control_logic_is_reported(self):
+        # The measured consequence of the scope not reaching the compiler.
+        source = os.path.join("src", "control", "control.c")
+        self.assertEqual([source], self.outside(source))
+
+    def test_a_mutant_from_a_structure_describing_no_machine_is_reported(self):
+        source = os.path.join("src", "plant", "beta", "plant_structure.c")
+        self.assertEqual([source], self.outside(source))
+
+    def test_an_unbounded_sweep_is_reported_rather_than_averaged_in(self):
+        control = os.path.join("src", "control", "control.c")
+        hardware = os.path.join("src", "hw", "sim", "hw_sim.c")
+        inside = os.path.join("src", "plant", "alpha", "x.c")
+        self.assertEqual(sorted([control, hardware]), self.outside(control, hardware, inside))
+
+
+class TheDerivationCanBeRunWithoutACompiler(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1, .C2: the population and the
+    checks about it are reachable without the mutation toolchain, and each refusal
+    reports through the tool's own exit codes rather than only as a function."""
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def sweep(self):
+        return subprocess.run(
+            [
+                sys.executable,
+                os.path.join(TOOLS, "mull_sweep.py"),
+                "--project",
+                self.tree.root,
+                "--plant-root",
+                os.path.relpath(self.tree.plant, self.tree.root),
+                "--include-dir",
+                os.path.relpath(self.tree.include, self.tree.root),
+                "--population-only",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def test_the_population_is_reported_and_the_run_succeeds(self):
+        result = self.sweep()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn(os.path.join("src", "plant", "alpha"), result.stdout)
+        self.assertIn(os.path.join("src", "plant", "common"), result.stdout)
+        self.assertNotIn(os.path.join("src", "plant", "beta"), result.stdout)
+
+    def test_a_structure_carrying_no_claim_stops_the_run(self):
+        self.tree.describe("gamma", None)
+        result = self.sweep()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("gamma", result.stderr)
+
+    def test_a_tree_claiming_no_machine_stops_the_run(self):
+        self.tree.describe("alpha", "PLANT_DESCRIBES_NO_MACHINE")
+        result = self.sweep()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no structure declares", result.stderr)
+
+    def test_a_structure_with_no_mutation_environment_stops_the_run(self):
+        self.tree.describe("gamma", "PLANT_DESCRIBES_A_MACHINE")
+        result = self.sweep()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("gamma", result.stderr)
+        self.assertIn("no environment built for the sweep", result.stderr)
+
+    def test_a_population_written_back_into_the_configuration_stops_the_run(self):
+        # Exit 1, not 2: the file is readable and what it says is wrong, which is
+        # a problem found rather than an inability to look.
+        self.tree.config(includes=[".*/src/plant/beta/.*"])
+        result = self.sweep()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("includePaths", result.stderr)
+
+    def test_a_missing_vocabulary_stops_the_run_as_being_unable_to_look(self):
+        os.remove(os.path.join(self.tree.include, "plant_machine_claim.h"))
+        result = self.sweep()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no vocabulary header", result.stderr)
+
+
+class TheDerivedScopeReachesTheCompiler(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1: the build is told which sources
+    to instrument, because the plugin decides that while the compiler runs.
+
+    A scope written only for the mutant runner would leave the build instrumenting
+    whatever it liked and the report describing something narrower, which is the
+    one failure that would look exactly like success.
+    """
+
+    def test_the_build_is_handed_the_derived_configuration(self):
+        recorded = {}
+
+        def fake_run(command, cwd=None, env=None, check=False):
+            recorded["env"] = env
+            return subprocess.CompletedProcess(command, 0)
+
+        original = mull_sweep.subprocess.run
+        mull_sweep.subprocess.run = fake_run
+        self.addCleanup(setattr, mull_sweep.subprocess, "run", original)
+        mull_sweep.build_and_run("/project", "pio", "native_mutation", "suite", "/derived/mull.yml")
+        self.assertEqual("/derived/mull.yml", recorded["env"]["MULL_CONFIG"])
+
+    def test_the_build_script_prefers_an_inherited_configuration_over_the_tracked_one(self):
+        # pio_mutation.py runs inside SCons and cannot be imported here, so the
+        # one line that decides this is asserted against its source. Without it
+        # the build would instrument the tracked file's scope -- which, now that
+        # the file names no population, means everything.
+        with open(os.path.join(TOOLS, "pio_mutation.py"), encoding="utf-8") as handle:
+            source = handle.read()
+        self.assertIn('CONFIG = os.environ.get("MULL_CONFIG") or os.path.join(', source)
+
+
+class TheClaimIsCheckedInsideEveryBuild(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3: the build refuses a structure
+    that declares nothing, and not only the check task.
+
+    Every peer declaration gate runs inside the build for the same reason: a
+    structure that reached a compiler unanswered would be one whose arithmetic is
+    swept or not according to nothing the tree states.
+    """
+
+    def test_the_in_build_checks_include_the_claim_gate_and_its_vocabulary(self):
+        with open(os.path.join(TOOLS, "pio_seam_checks.py"), encoding="utf-8") as handle:
+            source = handle.read()
+        self.assertIn("check_machine_claim.py", source)
+        self.assertIn("plant_machine_claim.h", source)
+
+    def test_every_gate_the_check_task_runs_over_the_claim_also_runs_in_the_build(self):
+        # The check task and the build must not disagree about which declarations
+        # a structure owes, so the pairing is asserted rather than assumed.
+        with open(os.path.join(TOOLS, "pio_seam_checks.py"), encoding="utf-8") as handle:
+            in_build = handle.read()
+        with open(
+            os.path.join(os.path.dirname(PROJECT), "Taskfile.yml"), encoding="utf-8"
+        ) as handle:
+            tasks = handle.read()
+        for gate in ("check_machine_claim.py", "check_support_status.py"):
+            self.assertIn(gate, tasks)
+            self.assertIn(gate, in_build)
+
+
+class TheDiscoveryStepRefusesAnEmptyPopulation(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C2: a discovery step that finds no
+    machine-describing structure stops with an error rather than reporting a clean
+    result over an empty population."""
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def test_a_tree_where_no_structure_describes_a_machine_is_refused(self):
+        # The state a mis-drawn declaration produces. It yields no survivors, so
+        # it reads exactly like a suite that killed everything -- and none of the
+        # sweep's other emptiness guards fires, because the tree is full of
+        # structures and an environment is declared.
+        self.tree.describe("alpha", "PLANT_DESCRIBES_NO_MACHINE")
+        described, problems = self.tree.described()
+        self.assertEqual([], described)
+        self.assertTrue(problems, "an empty population was reported as fine")
+        self.assertIn("no structure declares", " ".join(problems))
+
+    def test_a_tree_with_no_structures_at_all_is_refused(self):
+        empty = os.path.join(self.tree.root, "src", "nothing")
+        os.makedirs(empty, exist_ok=True)
+        described, problems = mull_sweep.machine_describing_structures(
+            [], empty, self.tree.include
+        )
+        self.assertEqual([], described)
+        self.assertIn("no structures under", " ".join(problems))
+
+    def test_a_missing_vocabulary_is_refused_rather_than_read_as_no_machines(self):
+        with self.assertRaises(Uninspectable):
+            mull_sweep.machine_describing_structures(
+                self.tree.structures(),
+                self.tree.plant,
+                os.path.join(self.tree.root, "nowhere"),
+            )
+
+    def test_a_vocabulary_that_stopped_drawing_the_line_is_refused(self):
+        self.tree.tree.vocabulary(
+            "typedef enum { PLANT_DESCRIBES_A_MACHINE = 0 } plant_machine_claim_t;\n"
+        )
+        _, problems = self.tree.described()
+        self.assertIn("PLANT_DESCRIBES_NO_MACHINE", " ".join(problems))
+
+
+class AStructureThatProducedNoMutantIsRefused(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1: a structure the scope named and
+    a build compiled, which produced no mutant at all, is reported rather than
+    counted as swept -- the only one of the three checks that is evidence rather
+    than a statement about configuration."""
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def described(self):
+        described, problems = self.tree.described()
+        self.assertEqual([], problems)
+        return described
+
+    def found(self, *sources):
+        return {
+            f"cxx_lt_to_le:{source}:1:1": dict(survivor(f"m:{source}"), source=source)
+            for source in sources
+        }
+
+    def test_a_structure_that_contributed_a_mutant_is_not_named(self):
+        found = self.found(os.path.join("src", "plant", "alpha", "plant_structure.h"))
+        self.assertEqual([], mull_sweep.unswept(self.tree.root, found, self.described()))
+
+    def test_a_structure_that_contributed_nothing_is_named(self):
+        found = self.found(os.path.join("src", "plant", "common", "plant_step.c"))
+        self.assertEqual(
+            ["alpha"], mull_sweep.unswept(self.tree.root, found, self.described())
+        )
+
+    def test_a_report_carrying_nothing_names_every_structure_in_the_population(self):
+        self.assertEqual(
+            ["alpha"], mull_sweep.unswept(self.tree.root, {}, self.described())
+        )
+
+    def test_a_structure_describing_no_machine_is_never_expected_to_contribute(self):
+        found = self.found(os.path.join("src", "plant", "alpha", "plant_structure.h"))
+        described = self.described()
+        self.assertEqual(["alpha"], [structure.name for structure in described])
+        self.assertEqual([], mull_sweep.unswept(self.tree.root, found, described))
 
 
 # --- What the sweep compiles with -------------------------------------------

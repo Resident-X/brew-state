@@ -1,0 +1,23 @@
+id: EVD-SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1-TEST
+type: evidence
+title: The mutant population is drawn from the tree and covers every machine-describing structure (SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T12:40:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_mull_sweep.py
+text: |
+  The mutant population is derived from the source tree and covers every machine-describing structure without its name appearing in the sweep's configuration. mull_sweep.py assembles it from the directories under src/plant that supply no structure header — the sources every structure shares — plus every structure whose header declares PLANT_STRUCTURE_MACHINE_CLAIM as PLANT_DESCRIBES_A_MACHINE, read through check_machine_claim.py so there is one reader of the declaration.
+
+  Driven against the real tree and against synthetic ones. ThePopulationFollowsTheTree adds a structure declaring a machine to a synthetic tree and asserts it enters the population with nothing hand-maintained edited, adds one describing no machine and asserts it stays out, and asserts a structure whose claim is unreadable is refused rather than silently left out. The shipped tree is asserted separately: boiler and thermoblock are in, fixture is out, and the derived patterns reach every machine-describing structure's sources and nothing else.
+
+  Three further checks establish that the population is swept rather than merely named. AnEnvironmentExistsForEveryStructureSwept covers the refusal when a machine-describing structure has no environment compiled by the mutation toolchain, and asserts the shipped tree has one for each. OnlyTheDerivedPopulationCountsTowardsTheScore covers mutants arriving from outside the population, which is what an unbounded sweep produces when the derived scope does not reach the compiler. AStructureThatProducedNoMutantIsRefused covers a structure the scope named and a build compiled that returned no mutant at all — the only one of the three that is evidence rather than a statement about configuration.
+
+  The run over the shipped tree draws from src/plant/common, src/plant/boiler and src/plant/thermoblock, and produces 165 mutants across three mutation environments including native_boiler_mutation.
+links:
+  - target: SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C1
+    type: satisfies

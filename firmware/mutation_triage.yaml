@@ -30,14 +30,34 @@
 #   gap         A real hole in what the tests catch. The sweep fails while any
 #               of these stand: the point of finding one is to close it.
 #
-# There are no `gap` entries here. Six were found when this sweep was first run
-# and all six were closed by tests rather than recorded -- see the suite's own
-# entries for indented lines, a final line without a newline, the two reports
-# that quote a line, the declared bounds being admissible values, and a value
-# token longer than the loader can hold.
+# There are no `gap` entries here, and there never have been for long. Six were
+# found when this sweep was first run and all six were closed by tests rather than
+# recorded -- see the suite's own entries for indented lines, a final line without
+# a newline, the two reports that quote a line, the declared bounds being
+# admissible values, and a value token longer than the loader can hold.
+#
+# Eleven more were found when the population stopped being a written-down list and
+# took in the single-boiler structure's equations and the origin parsing that had
+# arrived in the loader unswept. All eleven were closed the same way. Nine were in
+# the boiler structure, whose suite asserted properties that hold whatever the
+# coefficients are and so left the arithmetic itself unpinned; it now checks the
+# vessel's step against the closed form of the relaxation, at a step long enough
+# for the correction to matter as well as a short one, along with the duty scaling,
+# a description that loses nothing, and the steam pressure either side of
+# saturation. Two were in the loader: an annotation whose kind is separated from
+# the marker by whitespace, which every shipped description happens to write
+# without, and the text a refused origin statement reports itself against.
+
+# Every judgement about plant_parameters.c below was re-made at a new line rather
+# than carried forward. The loader grew by 124 lines between the sweep being
+# written and the description work merging -- two branches in parallel, neither
+# wrong -- and nobody ran the sweep in between, so the whole record went stale at
+# once. Each entry was checked against the code now at its line before being
+# moved: the reasoning is unchanged because the arithmetic is unchanged, and an
+# entry whose code had actually moved would have had to be judged again.
 
 survivors:
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:46:19:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:48:19:
     verdict: equivalent
     reason: >-
       Leading-blank trim, `*begin < *end` widened to `<=`. When the span is
@@ -46,7 +66,7 @@ survivors:
       description -- none of which is blank. The body therefore never executes
       and `begin` is never moved, so the trimmed span is the same one.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:64:16:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:136:16:
     verdict: equivalent
     reason: >-
       Name-length clamp, `copied > NAME_MAX - 1` widened to `>=`. The two differ
@@ -54,7 +74,7 @@ survivors:
       guard assigns exactly that value. The mutant does the assignment and the
       original skips it, with the same result either way.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:67:32:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:139:32:
     verdict: equivalent
     reason: >-
       `copied > 0` widened to `>= 0` on a `size_t`, which makes the guard always
@@ -62,7 +82,7 @@ survivors:
       zero bytes copies nothing. The other half of the condition still refuses a
       null source, so nothing is dereferenced that was not before.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:135:20:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:207:20:
     verdict: equivalent
     reason: >-
       Spec-table size guard, `spec_count > SPEC_LIMIT` widened to `>=`, which
@@ -77,7 +97,7 @@ survivors:
       rather than assumed here, so a structure growing towards the limit fails
       that test instead of quietly invalidating this judgement.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:159:28:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:231:28:
     verdict: equivalent
     reason: >-
       `cursor = (line_end < limit) ? line_end + 1 : limit` widened to `<=`, so
@@ -86,7 +106,7 @@ survivors:
       which is false for both, and it is never dereferenced. The loop ends in
       the same place having read the same lines.
 
-  cxx_ge_to_gt:src/plant/common/plant_parameters.c:98:32:
+  cxx_ge_to_gt:src/plant/common/plant_parameters.c:170:32:
     verdict: analysis
     reason: >-
       Value-token length guard, `length >= VALUE_TEXT_MAX` narrowed to `>`, which
@@ -109,7 +129,7 @@ survivors:
       and the sweep reports a judgement about a mutant the local host kills as no
       longer load-bearing rather than as a failure.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:192:47:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:297:47:
     verdict: analysis
     reason: >-
       Spec-lookup loop bound widened to `<=`, so the search reads one entry past
@@ -140,3 +160,57 @@ survivors:
       Those are the same value: the coefficient is finite and admissible, so the
       product is a zero, and a zero of either sign compares equal to the literal
       and behaves identically in everything downstream.
+
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:78:31:
+    verdict: equivalent
+    reason: >-
+      Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`
+      widened to `>=`. The same judgement as the thermoblock's, for the same
+      reason and independently of it: the two differ only at exactly zero, where
+      the mutant evaluates `steam_pressure_bar_per_k * 0.0f` and the original
+      returns the literal `0.0f`. The coefficient is finite and admissible, so
+      the product is a zero, and a zero of either sign compares equal to the
+      literal and behaves identically in everything downstream.
+
+      The other nine survivors this structure produced when it first entered the
+      population were real gaps and were closed by tests rather than recorded --
+      the suite now pins the vessel's step against the closed-form solution of
+      the relaxation, the duty scaling, a losing-nothing description, and the
+      steam pressure above and below saturation.
+
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:100:19:
+    verdict: analysis
+    reason: >-
+      Origin annotation, the skip over what lies between the marker and the kind:
+      `cursor < end` widened to `<=`. The two differ only when everything after
+      the marker is blank, and there the outcome is the same either way -- the
+      original stops with `cursor` at `end`, the mutant looks at `*end` and stops
+      too unless it is blank, and in every case the kind scan that follows finds
+      nothing and the annotation is refused for carrying no kind. No assertion can
+      separate them because there is nothing different to assert.
+
+      What the mutant does do is read the byte after the span it was given. The
+      span ends where the trimmed line ends, so that byte is ordinarily the
+      newline or the text of the next line and reading it is harmless. It is only
+      outside anything when the description's last line ends at the marker with no
+      newline after it, and the buffer holding it ends there too -- an input no
+      test constructs, which is why nothing is watching this in either build. The
+      sanitized tier would report it if one did.
+
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:105:21:
+    verdict: analysis
+    reason: >-
+      The same widening one loop further on, scanning the kind word: `kind_end <
+      end` widened to `<=`. It differs only when the kind runs to the end of the
+      span, which is an annotation carrying a kind and no account -- and that is
+      refused either way. The original refuses it for having no account; the
+      mutant carries `kind_end` one past the end, so the kind no longer matches
+      any declared word and it is refused for naming no kind. Same refusal, same
+      fault, same reported line.
+
+      As with the skip above, the difference that remains is a one-byte read past
+      the span, reachable only for a final line with no newline after it whose
+      annotation ends with the kind. test_a_final_annotated_line_without_a_newline
+      _is_read now offers a final annotated line with no newline and a non-blank
+      byte behind it, which is the nearest any test comes; it carries an account,
+      so the scan stops on the blank before it rather than on the bound.
