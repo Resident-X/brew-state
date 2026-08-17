@@ -4,7 +4,7 @@ category: roadmap
 title: 'brew-state delivery roadmap: validate in software, characterise the machine, then build and energise'
 status: active
 level: roadmap
-version: 1
+version: 2
 text: |
   brew-state is built software-first. The control design is validated in simulation before hardware is bought, and the machine that already exists is characterised in parallel so the committed model rests on measurement rather than datasheets. Five phases run two tracks that converge: a software track that validates the design and ranks where measurement matters, and a physical track that establishes the machine's safety and behaviour, before the controller is built, verified on the target, and finally energised to deliver.
 rationale: |
@@ -38,6 +38,8 @@ links:
     type: targets
   - target: REQ-HARDWARE-HEADROOM-001.C1
     type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C4
+    type: targets
   - target: REQ-MACHINE-CONFIGURATION-001.C3
     type: targets
   - target: REQ-MEASUREMENT-001.C7
@@ -58,5 +60,5 @@ links:
     type: targets
   - target: REQ-STATE-ESTIMATION-001.C1
     type: targets
-  - target: REQ-HARDWARE-HEADROOM-001.C4
+  - target: REQ-MACHINE-CONFIGURATION-001.C6
     type: targets

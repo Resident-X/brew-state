@@ -2,12 +2,12 @@ id: DEL-BREW-STATE-DELIVERY.C2
 type: criterion
 title: The reference machine's physical configuration and safety chain are established, and its behaviour is measured on the bench
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: demonstration
 closes_by: cascade
-text: |
-  The reference machine's physical configuration and protective chain, including the open pressure-relief question, are established rather than assumed; the instrumentation that cannot be derived from datasheets is fitted; and the machine's thermal and hydraulic behaviour is measured on the bench. The phase closes when its child work covering the safety investigation, the instrumentation, and the bench characterisation is complete.
+text: |-
+  The reference machine's physical configuration and protective chain, including the open pressure-relief question, are established rather than assumed; the instrumentation that cannot be derived from datasheets is fitted; and the machine's thermal, hydraulic and electrical behaviour is measured on the bench -- the last of these including what each load actually draws while energised, across the span the supply occupies, rather than what its rating claims. The phase closes when its child work covering the safety investigation, the instrumentation, and the bench characterisation is complete.
 links:
   - target: DEL-BREW-STATE-DELIVERY
     type: criterion-of

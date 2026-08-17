@@ -6,7 +6,7 @@ status: active
 priority: must
 authority: internal
 managed: true
-version: 1
+version: 2
 text: |
   The hardware protective chain is a last resort and operates at limits well beyond normal running. Between a fault occurring and that chain acting, the machine can spend a long time doing something wrong: heating a mass that is already hot, failing to heat at all, or holding an output on that was commanded off.
 
@@ -19,3 +19,5 @@ rationale: |
   Kept separate from the firmware-independent safety obligation rather than folded into it. That obligation's entire claim is that it holds with the controller hung, crashed or commanding nonsense, and mixing firmware-dependent criteria into it would blur the property that makes it trustworthy.
 
   The precedence criterion exists because the characteristic failure of an obligation like this one is that it becomes an excuse. A project that detects faults in firmware is tempted to economise on hardware protection, which trades a mechanism that always works for one that works while the software is healthy.
+
+  Both bounds are drawn from the declared span of conditions rather than from nominal, because the two ways of getting a threshold wrong fail in opposite directions and only one of them is visible. Too tight and it fires on responses that were merely slow, which does not read as a defect in the threshold — it reads as a nuisance, and it is answered by widening until the nuisance stops. Too wide and nothing announces it at all; the detection simply never catches anything again. Deriving both ends from the declared span is what makes that trade explicit, and what stops a threshold being tuned by how often it annoys somebody.

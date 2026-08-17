@@ -1,0 +1,14 @@
+id: REQ-MACHINE-CONFIGURATION-001.C6
+type: criterion
+title: What a load draws while energised is declared as established on this machine rather than taken from its rating
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Duty says what proportion of the time a load spends energised and says nothing about what it draws while it is on. That second half is what turns a commanded duty into energy, and it has been carried as a figure lifted from a rating nobody checked.
+
+  It is not a single figure. It moves across the span the supply occupies, and for some loads it moves again with the load's own temperature as it heats, so what is declared is the figure together with how far it travels over those conditions. This is the electrical half of the standard the thermal and hydraulic characteristics are already held to, and it is held for the same reason: a rating describes a component in free air, not that component in this machine on this supply.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

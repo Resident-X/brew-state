@@ -1,0 +1,14 @@
+id: REQ-MACHINE-CONFIGURATION-001.C7
+type: criterion
+title: The ambient conditions the machine operates across are declared
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The span of ambient the machine is expected to work over sets where every thermal quantity starts and how quickly it leaves. A machine started cold in an unheated room and one started in a warm kitchen are different problems, and a bound timed on one is wrong about the other.
+
+  Ambient is what this covers. Another condition belongs here once something is shown to depend on it, and the test is the same one ambient meets: it varies, a bound is drawn from it, and left undeclared it is silently taken at whatever the design assumed.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

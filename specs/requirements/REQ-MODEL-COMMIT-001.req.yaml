@@ -4,7 +4,7 @@ category: functional
 title: A model is validated against withheld data before the machine controls against it
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Fitting quality against the data a model was derived from says almost nothing about whether it predicts anything, and can be made arbitrarily good by a model with enough freedom and no meaning.
 
@@ -13,8 +13,14 @@ rationale: |
   Requires validation against withheld data rather than any goodness-of-fit measure, because the two answer different questions and only one of them is the question being asked. This is the difference between a model and a curve.
 
   Retaining the predecessor exists because a model can validate on the bench and still behave worse in service. Without a way back, discovering that means recommissioning, which is expensive enough that the builder will instead live with the worse model.
+
+  Requires a structured residual reported because validation against withheld data cannot tell a description that is right from one wrong in a shape the withheld data happened not to expose. A repeatable effect the structure cannot carry produces a small, patterned error rather than a large one, which is precisely the error a threshold on prediction quality waves through. The residual's shape carries information its magnitude does not.
+
+  Reporting rather than refusing, because a shortfall found here may be one worth accepting and the builder is the one to weigh that. It sits beside the refusal criterion rather than softening it: a description that fails validation is still refused. What is refused here is a description that passes while carrying a known shortfall nobody was told about, whose cost is then paid out of a margin budgeted for something else.
 links:
   - target: JRN-COMMISSION-PLANT-001.C5
     type: derives-from
   - target: JRN-COMMISSION-PLANT-001.C6
+    type: derives-from
+  - target: JRN-COMMISSION-PLANT-001.C7
     type: derives-from

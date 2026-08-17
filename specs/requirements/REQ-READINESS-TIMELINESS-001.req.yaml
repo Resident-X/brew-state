@@ -4,14 +4,14 @@ category: functional
 title: Readiness is reached in close to the least time the machine's physics allows
 status: active
 priority: must
-version: 2
+version: 3
 text: |
   How accurately the machine holds temperature and how quickly it gets there are separate claims, and only the first has been made. A controller that settles perfectly after forty minutes satisfies every temperature requirement in this graph.
 
   Time to readiness is not expressible as a fixed number, because it belongs to the machine rather than to the design: a different thermal mass on a different supply has a different floor. What is expressible is the distance between what the machine achieves and what its own physics permits, and that travels to any machine the description covers.
 
   The floor is what the machine could do with everything reaching readiness leaves available to it, not with its heater alone. A machine that can circulate water can move heat with it, and a floor derived from heating in isolation would bound one strategy rather than the problem.
-rationale: |
+rationale: |-
   This is the requirement that distinguishes the control design from a simple regulator, and until now the graph did not contain it. Everything about estimating unmeasurable states, carrying a plant description and predicting forward is bought to reach the right state sooner; nothing asserted that reaching it sooner mattered. That absence had already turned into an assumption stated in prose elsewhere, that warm-up is short enough for nobody to wait, asserted by no criterion and checked by nothing.
 
   Two existing requirements make the omission bite rather than merely leave a gap. The machine is required not to sit holding heat for a drink nobody asked for, and readiness held without use is required to end on its own. Together they guarantee the machine is cold or cooling most of the time, which puts the cost of reaching readiness in front of the operator on almost every use.
@@ -21,6 +21,8 @@ rationale: |
   Settling rather than arrival is the measured event, or a controller that reaches target quickly and then rings around it would score better than one that arrives calmly and stays.
 
   The overshoot criterion is not about elegance. This machine operates close enough to its protection trip point that the margin is thin, and a time-optimal approach spends exactly that margin. Bounding overshoot against the margin rather than against zero leaves the aggressive approach available where the margin can carry it.
+
+  The floor is measured against the conditions a run actually happened under rather than against nominal, because the supply and the ambient the machine declares are spans. Held against a nominal floor the bound punishes a machine for a cold morning on a low supply and flatters it on a warm one, which measures the day rather than the design.
 links:
   - target: PER-OPERATOR-001.C7
     type: derives-from

@@ -4,7 +4,7 @@ category: journey
 title: Builder commissions the machine and establishes its description
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The journey that has to happen before any of the operator journeys can. The builder is establishing what this particular machine actually does, and doing it in an order that keeps every mistake cheap and survivable.
 
@@ -26,6 +26,8 @@ text: |
   3b. The bench stops responding partway through the sequence. The machine ends the sequence and returns itself to a resting state without waiting to be told.
 
   5a. The fitted description does not predict the held-back data. The builder is told the description is not trustworthy, and does not commit it to the machine on the strength of how well it fitted the data it was derived from.
+
+  5b. The fitted description predicts the held-back data, and the difference that remains has a shape to it rather than being scattered. The builder is told that what is left over looks like the machine doing something the description has no way to represent, rather than being left to read that off a plot nobody produced.
 
   6a. A later commissioning pass produces a different description. The machine keeps enough of the previous one to fall back to if the new one turns out to be worse in service.
 rationale: |
