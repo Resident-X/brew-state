@@ -18,6 +18,7 @@ and both are decided from what the tool says about itself.
 from __future__ import annotations
 
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -344,6 +345,75 @@ class TheSweepRunsWhereverTheToolsAre(unittest.TestCase):
         )
         self.assertEqual(mull_sweep.FOUND_THE_PROBLEM, result.returncode)
         self.assertIn("declares itself built for the mutation sweep", result.stderr)
+
+
+# --- What the hosted run is allowed to pull in ------------------------------
+
+
+class TheHostedRunPullsInOnlyWhatItNames(unittest.TestCase):
+    """SOL-PLANT-MUTATION-SWEEP.C3: the sweep's hosted run is pinned to code somebody chose.
+
+    A workflow step written as `owner/action@v4` runs whatever that tag points
+    at on the day it runs, and a tag is a moving reference its owner can
+    repoint. This job checks out the repository and installs a package with
+    sudo, so what it pulls in is worth naming exactly rather than by a label
+    that can be re-aimed.
+
+    The version stays in a trailing comment so the pin still reads as a version
+    to a person, and so an updater can bump the digest and the comment together
+    -- the shape those tools expect. Asserting both halves is what stops the
+    pin degrading back into a tag the next time somebody edits the file.
+    """
+
+    #: A pinned reference: a full commit digest, then the version it was.
+    PINNED = re.compile(r"^[0-9a-f]{40}$")
+
+    def workflows(self):
+        directory = os.path.join(os.path.dirname(PROJECT), ".github", "workflows")
+        for name in sorted(os.listdir(directory)):
+            if name.endswith((".yml", ".yaml")):
+                with open(os.path.join(directory, name), encoding="utf-8") as handle:
+                    yield name, handle.read()
+
+    def uses(self):
+        for name, declared in self.workflows():
+            for line in declared.splitlines():
+                stripped = line.strip().lstrip("- ").strip()
+                if stripped.startswith("uses:"):
+                    yield name, stripped[len("uses:"):].strip()
+
+    def test_there_is_something_to_check(self):
+        # A gate over an empty set reports success in exactly the way a gate
+        # nobody ran does.
+        self.assertTrue(list(self.uses()), "no workflow step uses an action at all")
+
+    def test_every_action_is_pinned_to_a_digest_rather_than_a_tag(self):
+        for workflow, used in self.uses():
+            reference = used.split("#", 1)[0].strip()
+            self.assertIn("@", reference, f"{workflow}: '{used}' names no version at all")
+            _, _, version = reference.partition("@")
+            self.assertRegex(
+                version,
+                self.PINNED,
+                f"{workflow}: '{used}' is pinned to a moving reference rather than a digest",
+            )
+
+    def test_every_pinned_action_still_says_which_version_it_is(self):
+        for workflow, used in self.uses():
+            _, marker, comment = used.partition("#")
+            self.assertTrue(
+                marker and comment.strip(),
+                f"{workflow}: '{used}' is a digest with nothing saying which release it is",
+            )
+
+    def test_the_versions_the_run_installs_are_named_rather_than_taken_as_latest(self):
+        # A sweep whose result moved because a build tool was upgraded that
+        # morning would be a finding about nothing.
+        for workflow, declared in self.workflows():
+            for line in declared.splitlines():
+                if "pip install" in line:
+                    self.assertNotIn("--upgrade", line, f"{workflow}: {line.strip()}")
+                    self.assertIn("==", line, f"{workflow}: {line.strip()}")
 
 
 # --- What every suite together says about one mutant ------------------------

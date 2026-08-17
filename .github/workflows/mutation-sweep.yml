@@ -27,30 +27,69 @@ on:
 permissions:
   contents: read
 
+# One sweep per ref at a time, and the newest dispatch is the one that matters.
+# The answer is about the state of a ref rather than about a moment, so a run
+# still going when another starts is establishing something about a ref that has
+# already moved on -- finishing it would burn a runner to produce an answer
+# nobody asked for any more.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sweep:
+    name: Sweep the plant model's arithmetic
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      # Actions are pinned to the commit a release points at rather than to the
+      # tag, because a tag is a moving reference: whoever owns it can repoint it
+      # at other code, and this job holds a checkout of this repository and a
+      # package installed with sudo. The version is kept in the comment so the
+      # pin still reads as a version to a person, and so an automated updater
+      # can bump both together.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The checkout otherwise leaves a credential in .git/config for the
+          # rest of the job. Nothing here pushes anything -- the sweep reads the
+          # tree and reports -- so the token is not wanted after the clone, and
+          # leaving it behind is what turns an uploaded artefact or a stray
+          # `git config` dump into a leak.
+          persist-credentials: false
 
       - name: Install the mutation toolchain
         env:
+          # renovate: datasource=github-releases depName=mull-project/mull
           MULL_RELEASE: "0.34.0"
-          MULL_PACKAGE: "Mull-19-0.34.0-LLVM-19.1.1-ubuntu-amd64-24.04.deb"
+          # The LLVM build the package for this runner's distribution is made
+          # against, which is not the newest LLVM 19 -- it is whichever one that
+          # distribution ships, and the two have to agree. Not an independent
+          # choice, so not something to bump on its own.
+          MULL_LLVM: "19.1.1"
         run: |
           set -euo pipefail
+          package="Mull-19-${MULL_RELEASE}-LLVM-${MULL_LLVM}-ubuntu-amd64-24.04.deb"
           sudo apt-get update
           sudo apt-get install -y clang-19
-          curl -fsSL -o "/tmp/${MULL_PACKAGE}" \
-            "https://github.com/mull-project/mull/releases/download/${MULL_RELEASE}/${MULL_PACKAGE}"
-          sudo dpkg -i "/tmp/${MULL_PACKAGE}"
+          curl -fsSL -o "/tmp/${package}" \
+            "https://github.com/mull-project/mull/releases/download/${MULL_RELEASE}/${package}"
+          # dpkg does not resolve dependencies; apt is asked to finish the job
+          # rather than leaving the package half-installed and the run confusing.
+          sudo dpkg -i "/tmp/${package}" || sudo apt-get -f install -y
 
       - name: Install PlatformIO and what reads the sweep's configuration
+        env:
+          # renovate: datasource=pypi depName=platformio
+          PLATFORMIO_VERSION: "6.1.19"
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
         run: |
           set -euo pipefail
-          python3 -m pip install --upgrade platformio pyyaml
+          # Pinned rather than upgraded to whatever is newest that morning: a
+          # sweep whose result changed because a build tool moved underneath it
+          # would be a finding about nothing.
+          python3 -m pip install "platformio==${PLATFORMIO_VERSION}" "pyyaml==${PYYAML_VERSION}"
 
       - name: Report the toolchain the sweep resolved
         # Printed before the sweep runs so that a mutant population which looks
