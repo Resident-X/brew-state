@@ -1,9 +1,9 @@
 version: "3"
 
-# Coffe uses the Staircase requirement graph. The engine binary, the
+# brew-state uses the Staircase requirement graph. The engine binary, the
 # /staircase-* skills, and the type schema all come from the (private)
 # Resident-X/staircase repo — this Taskfile owns fetching and refreshing
-# them so Coffe needs no local checkout of Staircase.
+# them so brew-state needs no local checkout of Staircase.
 #
 # Pin STAIRCASE_REF to a tag/commit for reproducibility; `main` tracks HEAD.
 
@@ -79,19 +79,38 @@ tasks:
       - ./engine/staircase build ./{{.SPECS_DIR}}
 
   sc:init:
-    desc: One-shot bootstrap — install binary, sync skills, seed schema, link embedder, build index
+    desc: One-shot bootstrap — install binary, sync skills, seed schema, link embedder, build index, arm git hooks
     cmds:
       - task: sc:install
       - task: sc:sync-skills
       - task: sc:seed-schema
       - task: sc:embed
       - task: sc:index
+      # Not staircase work, but this is the task a fresh clone runs, and a
+      # guardrail nobody arms is the state this one was already in.
+      - task: repo:hooks
 
   sc:update:
     desc: Update the binary + skills to STAIRCASE_REF (leaves your graph and schema untouched)
     cmds:
       - task: sc:install
       - task: sc:sync-skills
+      # Idempotent, and it is what reaches the clones that were bootstrapped
+      # before the hooks existed — they will never run sc:init again.
+      - task: repo:hooks
+
+  # ---------------------------------------------------------------------------
+  # Repository hygiene. Not staircase and not firmware.
+  # ---------------------------------------------------------------------------
+
+  repo:hooks:
+    desc: Arm the tracked git hooks (pre-push refuses a direct push to main) by pointing core.hooksPath at .githooks
+    cmds:
+      # .git/hooks is not tracked, so a hook copied into it protects one clone
+      # and no other. Pointing core.hooksPath at a directory that IS tracked is
+      # what makes the guardrail travel with the repository.
+      - git config core.hooksPath .githooks
+      - echo "core.hooksPath -> .githooks (pre-push refuses pushes to main)"
 
   # ---------------------------------------------------------------------------
   # Firmware. The seams' properties are asserted by the build itself, so these
