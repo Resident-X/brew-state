@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C5-TEST
+type: evidence
+title: A refused command names the channel that had nowhere to land (SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T01:31:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_narrow/test_plant_narrow.c::test_a_refusal_names_the_channel_that_had_nowhere_to_land, test_an_unanswered_channel_is_told_apart_from_the_other_refusals, test_a_command_with_two_faults_reports_the_same_one_every_time
+text: |-
+  The refusal record carries the fault and the offending channel by its value in the shared set. One test requires the reported channel to be the one commanded; a second requires the unanswered-channel fault to be distinct from a null argument, an uninitialised instance, a zero interval and a level beyond full scale, and requires a step that ran to report OK rather than leave the previous record standing. A third commands a level that is both beyond full scale and on an unanswered channel eight times over, with the record pre-filled with a poison value each time, and requires the same fault and the same channel every time -- the fixed precedence the seam documents. Existing consumers that only test the boolean were not edited: the three-argument step operation keeps its signature and is written once in the shared plant sources. The mutation fault-order-left-to-the-implementation is caught.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C5
+    type: satisfies

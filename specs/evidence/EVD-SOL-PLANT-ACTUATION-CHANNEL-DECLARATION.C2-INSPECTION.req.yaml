@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C2-INSPECTION
+type: evidence
+title: A structure's statement of what it answers is reached through the seam (SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T01:31:05Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/include/plant_model.h::plant_structure_actuation_channels; firmware/test/test_plant/test_plant.c::test_the_structure_states_which_channels_it_answers; firmware/test/test_plant_narrow/test_plant_narrow.c::test_the_seam_reports_a_narrower_set_than_the_machine_has
+text: |-
+  plant_structure_actuation_channels is declared in the seam header alongside the parameter table, expressed over the shared channel set, and supplied by whichever structure the build compiles. Both test suites reach it that way -- neither includes a structure's own header, and the plant-encapsulation check fails any consumer that names a structure symbol. Nothing in the seam's vocabulary was widened to carry it: the set type is the shared one.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C2
+    type: satisfies

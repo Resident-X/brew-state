@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C6-TEST
+type: evidence
+title: A zero level on an unanswered channel advances the model normally (SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T01:31:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_narrow/test_plant_narrow.c::test_zeroing_an_unanswered_channel_gives_the_same_trajectory
+text: |-
+  The narrowly-declared structure is stepped twenty-five times from the same initial state under the same description, once with every unanswered channel explicitly zeroed and once with them left alone, and both trajectories are required to be identical in every quantity with neither step refused. The load-bearing assertion is that the zeroed instance reports OK rather than a fault: an implementation treating a zero on an absent actuator as a command refuses there, which is what would leave a control law that zeroes what it does not use unable to step at all. The mutation zero-on-an-unanswered-channel-refused is caught.
+links:
+  - target: SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C6
+    type: satisfies
