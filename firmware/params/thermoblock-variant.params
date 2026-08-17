@@ -10,6 +10,13 @@
 # no machine and says so below. That statement is what exempts it from
 # accounting for its values: there is no origin to record for a number chosen
 # because it differs, and requiring one would only produce a form of words.
+#
+# The other ten values are the reference description's, and the account of where
+# each came from is there rather than here -- deliberately, because this file
+# must stay one coefficient away from that one for the check to conclude
+# anything from the pair. So quote thermoblock.params, never this file: a figure
+# read out of here has had its provenance stripped by design, and one value of
+# the eleven is not the machine's at all.
 
 @describes-no-machine
 

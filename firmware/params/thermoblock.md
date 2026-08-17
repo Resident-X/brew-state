@@ -67,7 +67,7 @@ The two masses are independent. Nothing in these relations couples one to the ot
 
 | Coefficient | Enters as | Unit |
 |---|---|---|
-| `pump.pressure_bar` | The pressure the pump commands at full duty | bar |
+| `pump.pressure_bar` | The pressure the brew path settles to at full pump duty — the asymptote of the relation above, not the pump's closed-outlet rating, though it is the rating this description estimates it from | bar |
 | `brew.pressure_time_constant_s` | `τ`, how fast the path reaches it | s |
 
 **Steam pressure.** Algebraic, from the steam block's temperature, and zero until that mass reaches saturation:
@@ -94,5 +94,6 @@ Each of these is absent on purpose. Some belong to work not yet done, and some a
 - **Anything inside the casting.** Element-to-casting lag, gradients across the block, and where a sensor is bonded relative to the water channel are all collapsed into one uniform temperature.
 - **Sensor behaviour.** No noise, no lag, no offset, no failure. The model answers with the state itself, and what a sensor would have reported is the measurement work's subject.
 - **The protective devices.** Thermostats, thermal fuse and relief hardware are absent: the model will happily run a block past a trip point that would have opened on the real machine. Their trip points are declared in the reference-machine declaration.
+- **Steam pressure anywhere but just above saturation.** `steam.pressure_bar_per_k` is the saturation line's *local* slope at 100 °C, and the saturation line is not a straight one. Extrapolated to the 200 °C the steam thermostat permits, this relation gives roughly a quarter of the real pressure. The steam side's behaviour near its protection limit is the one thing this description must not be used to reason about, and it is where the machine's largest open pressure question sits — see the pressure note in `../../docs/reference-machine.md`.
 - **Steam quality and latent heat.** The steam relation is a pressure–temperature slope only. Nothing here says how much steam is available or what drawing it costs.
 - **How wrong all of this is.** The error the design is entitled to assume against this description is required elsewhere and deliberately not stated here, so that one statement of it exists rather than two that can disagree.

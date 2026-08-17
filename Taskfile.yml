@@ -140,7 +140,7 @@ tasks:
       # structures and their descriptions are discovered, so a description added
       # later is inspected without a line here naming it.
       - python3 tools/check_plant_header.py include/plant_origin.h --plant-root src/plant --include-dir include --vocabulary-only
-      - python3 tools/check_parameter_origins.py --plant-root src/plant --include-dir include --params-dir params
+      - python3 tools/check_parameter_origins.py --project . --plant-root src/plant --include-dir include --params-dir params
       # The vocabulary both seams draw the machine's actuation channels from,
       # and every structure's statement of which of them it answers.
       - python3 tools/check_plant_header.py include/machine_actuation.h --plant-root src/plant --include-dir include --vocabulary-only

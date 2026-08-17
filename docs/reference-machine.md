@@ -103,7 +103,9 @@ Other figures: water tank 3 L; espresso pump rated 15 bar; steam pump rated 4 ba
 
 **Not established.** These are to be measured during commissioning per `JRN-COMMISSION-PLANT-001`, not adopted from datasheets — which is what `REQ-MACHINE-CONFIGURATION-001.C3` requires.
 
-The plant model needs figures for them before that happens, so `firmware/params/thermoblock.params` carries estimates — each recording what it was estimated from, and none of them claiming to be measured. An estimate recorded as an estimate is not a characteristic established by this section, and reading one back as though it were is exactly what recording the origin against each value exists to prevent. When commissioning displaces one, that value's origin says `measured` and this section stops saying *not established* for it.
+The plant model needs figures for them before that happens, so `firmware/params/thermoblock.params` carries estimates, each recording what it was estimated from. An estimate recorded as an estimate is not a characteristic established by this section, and reading one back as though it were is exactly what recording the origin against each value exists to prevent. Read the origins in that file rather than this paragraph for which values are which: what the build guarantees is that every value there carries one and that the words are a fixed set, not what any particular value's origin currently says.
+
+When commissioning establishes one of these on the bench, the measurement is recorded here and that value's origin in the description becomes `measured`. Until then, nothing in either place claims a measurement.
 
 ## What depends on these values
 

@@ -51,6 +51,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import build_environments  # noqa: E402
 from structure_symbols import discover  # noqa: E402
 
 #: The header the origin vocabulary is declared in, relative to the include directory.
@@ -74,6 +75,20 @@ VARIANT_SEPARATOR = "-"
 
 #: What a description's statement of what it represents is called.
 STATEMENT_SUFFIX = ".md"
+
+#: The macro a build environment names its reference description with.
+#
+# An environment naming one is saying that this is the description its artefact
+# and its tests are exercised against, which is exactly the description that
+# must not exempt itself: were it to, every value the design is reasoned against
+# would stop owing an account while this check went on passing on the strength
+# of some other file. Read out of the build rather than named here, because
+# which description that is belongs to the build.
+REFERENCE_MACRO = "REFERENCE_DESCRIPTION_PATH"
+
+_REFERENCE_FLAG = re.compile(
+    r"-D\s*" + REFERENCE_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*"
+)
 
 #: The kinds the requirement's distinction is made of.
 #
@@ -200,6 +215,21 @@ def required_coefficients(structure_directory: str) -> list[str]:
     return names
 
 
+def references_named_by_the_build(project: str) -> dict[str, str]:
+    """Every description an environment names as the one it is exercised against.
+
+    Keyed by the resolved file name, valued by the environments naming it, so a
+    failure can say which build's claim is the one going unmet.
+    """
+    named: dict[str, str] = {}
+    for environment in build_environments.load(project):
+        for flag in ("build_flags", "build_src_flags"):
+            for match in _REFERENCE_FLAG.finditer(environment.get(flag)):
+                path = match.group(1).replace("$PROJECT_DIR/", "").replace("${PROJECT_DIR}/", "")
+                named.setdefault(os.path.basename(path), environment.name)
+    return named
+
+
 def descriptions_for(structure: str, params_directory: str) -> list[str]:
     """Every description the named structure ships, in order.
 
@@ -311,6 +341,11 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--plant-root", required=True, help="the directory the structures live in")
     parser.add_argument("--include-dir", required=True, help="the directory the seam headers are in")
     parser.add_argument("--params-dir", required=True, help="the directory the descriptions are in")
+    parser.add_argument(
+        "--project",
+        help="the directory the build file is in, read for the description each environment "
+        "is exercised against; omitted where there is no build to read",
+    )
     args = parser.parse_args(argv)
 
     vocabulary, problems = load_vocabulary(args.include_dir)
@@ -355,9 +390,12 @@ def main(argv: list[str]) -> int:
         )
         return 1
 
+    references = references_named_by_the_build(args.project) if args.project else {}
+
     findings: list[str] = []
     inspected = 0
     seen_any_description = False
+    exempted: dict[str, str] = {}
 
     for structure in structures:
         directory = os.path.join(args.plant_root, structure.name)
@@ -374,6 +412,7 @@ def main(argv: list[str]) -> int:
             description = Description(path, vocabulary)
             if description.exempt:
                 findings.extend(description.problems)
+                exempted[os.path.basename(path)] = path
                 continue
             claiming.append(description)
             findings.extend(inspect(description, coefficients, vocabulary))
@@ -381,6 +420,26 @@ def main(argv: list[str]) -> int:
         if claiming:
             findings.extend(
                 check_statement(structure.name, coefficients, quantities, args.params_dir)
+            )
+
+    for name, environment in sorted(references.items()):
+        if name in exempted:
+            findings.append(
+                f"{exempted[name]}: '{environment}' is exercised against this description, and it "
+                "claims no machine. The description a build reasons against is the one whose "
+                "values have to account for themselves; exempting it leaves nothing inspected "
+                "that matters while this check goes on passing on another file's strength"
+            )
+        elif not any(
+            os.path.basename(path) == name
+            for path in (
+                os.path.join(args.params_dir, entry) for entry in os.listdir(args.params_dir)
+            )
+        ):
+            findings.append(
+                f"{args.params_dir}: '{environment}' is exercised against '{name}', which is not "
+                "there. A build naming a description nothing supplies has not been checked "
+                "against one"
             )
 
     if not seen_any_description:

@@ -1567,6 +1567,13 @@ static void test_every_refusal_still_fires_on_a_line_carrying_an_origin(void)
          "brew.heater_power_w 1200 @document p.24", NULL},
         /* An empty name, which the marker does not excuse. */
         {" = 1200 @document p.24\n", PLANT_PARAMETER_MALFORMED, "= 1200 @document p.24", NULL},
+        /*
+         * An empty value with a well-formed origin. The likeliest place for the
+         * extension to swallow one: the annotation is the only thing on the
+         * line after the separator, and an account is not a value.
+         */
+        {"brew.heater_power_w = @document p.24\n", PLANT_PARAMETER_MALFORMED,
+         "brew.heater_power_w", "brew.heater_power_w"},
     };
 
     for (size_t i = 0u; i < sizeof(CASES) / sizeof(CASES[0]); i++) {
@@ -1608,6 +1615,71 @@ static void test_every_refusal_still_fires_on_a_line_carrying_an_origin(void)
         TEST_ASSERT_EQUAL_STRING(CASES[i].parameter, fault.parameter);
         TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
     }
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
+static void test_an_annotated_refusal_still_reports_the_range_it_was_outside(void)
+{
+    /*
+     * The refusals carry more than a fault code: an out-of-range value is
+     * reported with what arrived and the bounds it missed, which is what makes
+     * one actionable. A regression that kept the refusal and stopped populating
+     * those would pass every assertion above.
+     */
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t untouched;
+    plant_parameter_error_t fault;
+    size_t used = 0u;
+
+    for (size_t i = 1u; i < COEFFICIENT_COUNT; i++) {
+        const int written = snprintf(text + used, sizeof(text) - used,
+                                     "%s = %.9g @estimated a comparable machine\n",
+                                     NOMINAL[i].name, NOMINAL[i].value);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+    }
+    /* Ambient is declared admissible between -40 and 60. */
+    const int written = snprintf(text + used, sizeof(text) - used,
+                                 "%s = 250.0 @document p.24\n", NOMINAL[0].name);
+    TEST_ASSERT_TRUE(written > 0);
+    used += (size_t)written;
+
+    memset(&untouched, 0xA5, sizeof(untouched));
+    memset(&fault, 0, sizeof(fault));
+
+    TEST_ASSERT_FALSE(plant_parameters_load(text, used, &untouched, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[0].name, fault.parameter);
+    TEST_ASSERT_EQUAL_FLOAT(250.0f, fault.value);
+    TEST_ASSERT_TRUE(fault.minimum < fault.maximum);
+    TEST_ASSERT_TRUE(fault.value > fault.maximum);
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C3: an estimated value in the reference description is distinguishable from a measured one
+static void test_a_description_mixing_the_kinds_is_read_like_any_other(void)
+{
+    /*
+     * The state commissioning produces, which the distinction has to survive:
+     * measured values displacing estimates one at a time while the rest stand.
+     * A description part-way through that is the ordinary case, not an odd one,
+     * so every kind appears here at once and the record is the same one the
+     * unannotated description gives.
+     */
+    static const char *const KINDS[] = {"document", "estimated", "measured"};
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t mixed;
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written =
+            snprintf(text + used, sizeof(text) - used, "%s = %.9g @%s what it came from\n",
+                     NOMINAL[i].name, NOMINAL[i].value, KINDS[i % 3u]);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+    }
+
+    load_expecting_success(text, used, &mixed);
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &mixed, sizeof(parameters));
 }
 
 /// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
@@ -1787,6 +1859,8 @@ int main(void)
     RUN_TEST(test_a_statement_the_description_cannot_make_is_refused);
     RUN_TEST(test_a_description_claiming_no_machine_is_read_like_any_other);
     RUN_TEST(test_every_refusal_still_fires_on_a_line_carrying_an_origin);
+    RUN_TEST(test_an_annotated_refusal_still_reports_the_range_it_was_outside);
+    RUN_TEST(test_a_description_mixing_the_kinds_is_read_like_any_other);
     RUN_TEST(test_a_coefficient_omitted_from_an_annotated_description_is_still_refused);
     RUN_TEST(test_the_reference_description_is_admissible_and_advances_a_model);
     RUN_TEST(test_the_reference_description_claims_a_machine);

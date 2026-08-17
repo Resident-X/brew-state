@@ -1737,15 +1737,32 @@ class OriginTreeCase(unittest.TestCase):
         self.tree.complete_statement("alpha", ALPHA_COEFFICIENTS, QUANTITIES)
 
     def check(self, **overrides):
-        return run_check(
-            "check_parameter_origins.py",
+        arguments = [
             "--plant-root",
             overrides.get("plant_root", self.tree.plant),
             "--include-dir",
             overrides.get("include_dir", self.tree.include),
             "--params-dir",
             overrides.get("params_dir", self.tree.params),
+        ]
+        if "project" in overrides:
+            arguments += ["--project", overrides["project"]]
+        return run_check("check_parameter_origins.py", *arguments)
+
+    def build_naming(self, description: str) -> str:
+        """A build file whose one environment is exercised against `description`."""
+        self.tree.declare(
+            [
+                (
+                    "host",
+                    host_environment(
+                        "alpha",
+                        build_flags=f"-O1 -D REFERENCE_DESCRIPTION_PATH='\"$PROJECT_DIR/params/{description}\"'",
+                    ),
+                )
+            ]
         )
+        return self.tree.root.name
 
 
 class EveryValueAccountsForItself(OriginTreeCase):
@@ -1877,6 +1894,31 @@ class ExemptionIsClaimedRatherThanAssumed(OriginTreeCase):
         result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("not a statement a description is entitled to make", result.stderr)
+
+    def test_the_description_a_build_is_exercised_against_may_not_exempt_itself(self):
+        # The hole a tree-wide count leaves open: the description the design is
+        # reasoned against exempts itself, another claims a machine, and the
+        # check passes having inspected nothing that matters.
+        project = self.build_naming("alpha.params")
+        self.tree.description("alpha", "@describes-no-machine\nalpha.one = 9.0\nalpha.two = 8.0\n")
+        self.tree.structure_with_coefficients("gamma", ("gamma.one",))
+        self.tree.description("gamma", "gamma.one = 1.0 @document p.24\n")
+        self.tree.complete_statement("gamma", ("gamma.one",), QUANTITIES)
+        result = self.check(project=project)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("host", result.stderr)
+        self.assertIn("claims no machine", result.stderr)
+
+    def test_the_description_a_build_names_and_nothing_supplies_fails(self):
+        project = self.build_naming("absent.params")
+        result = self.check(project=project)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("absent.params", result.stderr)
+
+    def test_a_build_naming_a_description_that_accounts_for_itself_passes(self):
+        project = self.build_naming("alpha.params")
+        result = self.check(project=project)
+        self.assertEqual(0, result.returncode, result.stderr)
 
     def test_a_tree_in_which_everything_exempts_itself_fails_rather_than_passing(self):
         # The hole this closes: exempting every description would otherwise

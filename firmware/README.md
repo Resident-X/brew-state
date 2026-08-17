@@ -60,9 +60,11 @@ So a description that claims a real machine records, against each value and in
 the same file, how that figure was arrived at and what it was arrived at from:
 
 ```
-brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the
-circuit diagram on p.24 of the service manual.
+brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the circuit diagram on p.24 of the service manual.
 ```
+
+An annotation runs to the end of its line, so that is one line however far it
+wraps on screen. A continuation line carries no `=` and is refused.
 
 The kinds — `document`, `estimated`, `measured` — are declared once, in
 `include/plant_origin.h`, so a further one is a deliberate edit there rather than

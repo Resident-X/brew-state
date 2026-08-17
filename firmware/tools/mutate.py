@@ -106,7 +106,7 @@ ORIGIN_HEADER = [
     "--plant-root", "src/plant", "--include-dir", "include", "--vocabulary-only",
 ]
 ORIGINS = [
-    sys.executable, "tools/check_parameter_origins.py",
+    sys.executable, "tools/check_parameter_origins.py", "--project", ".",
     "--plant-root", "src/plant", "--include-dir", "include", "--params-dir", "params",
 ]
 ANALYSIS = [
@@ -460,12 +460,12 @@ MUTATIONS = (
     },
     {
         "name": "the-reference-description-exempts-itself",
-        "why": "the description the design is reasoned against claims no machine, which would "
-               "silence the origins check while leaving it passing",
+        "why": "the description the design is reasoned against claims no machine, so every value "
+               "in it stops owing an account while the check goes on passing",
         "file": "params/thermoblock.params",
         "find": "ambient_temperature_c = 20.0 @estimated",
         "replace": "@describes-no-machine\nambient_temperature_c = 20.0 @estimated",
-        "command": PLANT_TESTS,
+        "command": ORIGINS,
     },
     {
         "name": "a-value-loses-its-origin",

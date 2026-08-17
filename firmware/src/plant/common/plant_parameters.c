@@ -82,10 +82,20 @@ static bool spans_word(const char *begin, const char *end, const char *word)
  * the document it names exists, is a review question, and a parser that tried
  * to answer it would refuse honest descriptions.
  */
+static const char *const ORIGIN_WORDS[] = PLANT_ORIGIN_KIND_WORDS;
+
+/*
+ * The words and the kinds are two halves of one vocabulary and are edited
+ * separately, so the build is made to check they still agree. Adding a kind and
+ * forgetting its word is the likely edit -- it is the one the header invites --
+ * and it would otherwise read one entry past this array at run time rather than
+ * failing here.
+ */
+_Static_assert(sizeof(ORIGIN_WORDS) / sizeof(ORIGIN_WORDS[0]) == PLANT_ORIGIN_KIND_COUNT,
+               "every origin kind declares a word, and no word belongs to no kind");
+
 static bool origin_is_admissible(const char *begin, const char *end)
 {
-    static const char *const words[] = PLANT_ORIGIN_KIND_WORDS;
-
     const char *cursor = begin + 1; /* Past the marker. */
     while (cursor < end && is_blank(*cursor)) {
         cursor++;
@@ -100,7 +110,7 @@ static bool origin_is_admissible(const char *begin, const char *end)
     }
 
     size_t kind = 0u;
-    while (kind < PLANT_ORIGIN_KIND_COUNT && !spans_word(cursor, kind_end, words[kind])) {
+    while (kind < PLANT_ORIGIN_KIND_COUNT && !spans_word(cursor, kind_end, ORIGIN_WORDS[kind])) {
         kind++;
     }
     if (kind == PLANT_ORIGIN_KIND_COUNT) {

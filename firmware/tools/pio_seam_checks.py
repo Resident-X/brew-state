@@ -148,6 +148,8 @@ CHECKS = (
     # provenance would rot unnoticed.
     [
         os.path.join(tools_dir, "check_parameter_origins.py"),
+        "--project",
+        project_dir,
         "--plant-root",
         plant_root,
         "--include-dir",
