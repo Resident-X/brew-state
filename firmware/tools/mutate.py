@@ -478,8 +478,13 @@ MUTATIONS = (
         "why": "the environment carrying the only tests that can exercise an unanswered channel "
                "stops declaring that it runs tests",
         "file": "platformio.ini",
-        "find": "test_build_src = yes\ncustom_strict_flags_exemption",
-        "replace": "custom_strict_flags_exemption",
+        # Anchored on the line that selects the narrow structure, because the two
+        # lines below it are what every test environment carries -- a third
+        # structure's test environment made the pair ambiguous and left this
+        # mutation reporting that its subject was not the one described.
+        "find": "-I $PROJECT_DIR/src/plant/fixture\ntest_build_src = yes\n"
+                "custom_strict_flags_exemption",
+        "replace": "-I $PROJECT_DIR/src/plant/fixture\ncustom_strict_flags_exemption",
         "command": TESTS_RUN,
     },
     {
