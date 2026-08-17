@@ -1,0 +1,27 @@
+id: EVD-SOL-PLANT-MUTATION-SWEEP.C3-TEST
+type: evidence
+title: The sweep is invocable on demand and runs on a hosted runner (SOL-PLANT-MUTATION-SWEEP.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T09:14:10Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_mull_sweep.py::TheSweepRunsWhereverTheToolsAre
+text: |
+  TheSweepRunsWhereverTheToolsAre passes. task fw:sweep invokes the sweep, and the
+  task runner is asserted to declare it. Portability is asserted rather than
+  assumed: a Linux layout is among the candidate paths for both the compiler and
+  the pass plugin, a bare name is tried ahead of any packaging layout, and each
+  tool can be named by the environment. .github/workflows/mutation-sweep.yml runs
+  the sweep on a GitHub-hosted ubuntu-24.04 runner, taking clang-19 and Mull from
+  the same distribution so the pair agrees; a test asserts that workflow carries
+  no push, pull_request or schedule trigger, so the sweep cannot drift into the
+  gate that runs on every push. The sweep also refuses to run when no environment
+  declares itself swept, which is the discovering-gate rule every other gate here
+  follows.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP.C3
+    type: satisfies

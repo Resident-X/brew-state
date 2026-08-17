@@ -1,0 +1,41 @@
+id: EVD-SOL-PLANT-MUTATION-SWEEP.C4-INSPECTION
+type: evidence
+title: Every surviving mutant is judged by hand with written reasoning (SOL-PLANT-MUTATION-SWEEP.C4)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T09:14:10Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/mutation_triage.yaml
+text: |
+  Every surviving mutant is accounted for by hand in firmware/mutation_triage.yaml
+  before anything is treated as a finding. The sweep draws 111 mutants across both
+  structures' test runners; 104 are killed by the tests and 7 survive. Each of the
+  7 carries a verdict and written reasoning: 6 equivalent, 1 analysis. No survivor
+  is recorded as an open gap.
+
+  The judgement was made by reading each mutation site rather than by any tool
+  capability. Its first run surfaced 6 real gaps in what the tests caught -- the
+  loader never being offered an indented line, a final line with no trailing
+  newline, a value token longer than it can hold, the reported text of the two
+  refusals that quote a line, and a value sitting exactly on a declared bound. All
+  6 were closed by tests rather than recorded, which is why the shipped record
+  carries no gap entry.
+
+  The one analysis verdict is demonstrated rather than asserted: rebuilding the
+  same environment with tools/pio_sanitize.py restored and sweeping again reports
+  that mutant as Killed, where the ordinary unsanitized sweep records it as
+  surviving -- so the claim that the other verification tier catches it is an
+  observation, not a reading.
+
+  The tool enforces the judgement rather than merely inviting it. An unreviewed
+  survivor fails the run and is reported as a count of survivors, never as a count
+  of defects; a verdict with no reason is refused; a verdict nobody recognises is
+  refused; and a judgement about a mutant the sweep no longer finds fails too, so
+  a decision cannot outlive the code it was made about.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP.C4
+    type: satisfies

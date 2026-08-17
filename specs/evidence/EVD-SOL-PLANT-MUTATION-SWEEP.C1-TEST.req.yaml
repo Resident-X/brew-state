@@ -1,0 +1,23 @@
+id: EVD-SOL-PLANT-MUTATION-SWEEP.C1-TEST
+type: evidence
+title: Mutation scope covers the plant model's arithmetic and excludes the tests (SOL-PLANT-MUTATION-SWEEP.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T09:13:57Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_mull_sweep.py::TheScopeDecidesWhatIsMutated
+text: |
+  TheScopeDecidesWhatIsMutated passes. The mutant population is asserted three
+  ways: in_scope admits the two plant directories and refuses src/control; a scope
+  widened to everything is refused with the offending test file named; and the
+  scope this project ships is walked against the real tree, failing if anything
+  outside src/plant/common or src/plant/thermoblock is swept. A run over the tree
+  draws 111 mutants from exactly the three intended sources and none from the
+  tests or the vendored framework.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP.C1
+    type: satisfies
