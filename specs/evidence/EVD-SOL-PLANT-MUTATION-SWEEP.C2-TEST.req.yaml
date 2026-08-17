@@ -1,0 +1,27 @@
+id: EVD-SOL-PLANT-MUTATION-SWEEP.C2-TEST
+type: evidence
+title: The mutation build compiles through a matching LLVM toolchain or refuses (SOL-PLANT-MUTATION-SWEEP.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T09:14:10Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_mull_sweep.py::TheToolchainIsTheOneTheMutantsNeed
+text: |
+  TheToolchainIsTheOneTheMutantsNeed and ASweptEnvironmentIsExcusedFromTheOrdinary\
+  Gates pass. The compiler is refused unless it reports the LLVM release the pass
+  plugin is built against -- Apple's Clang, which is what PATH resolves to on a
+  Mac, reports a version naming no LLVM release and is passed over; a compiler
+  named outright is never silently replaced by a discovered one; and a runner from
+  another release line is refused naming both versions. On the host that produced
+  this evidence the resolved pair is Homebrew clang 19.1.7 and mull-runner-19
+  built against 19.1.7, reached through the version-stable opt symlink rather than
+  a versioned Cellar path. The environments this toolchain builds are excluded
+  from the gates covering every host build, and check_sanitizers reports each
+  exclusion with its declared reason rather than skipping it silently.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP.C2
+    type: satisfies

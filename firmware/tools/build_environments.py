@@ -77,6 +77,15 @@ MUST_NOT_BUILD_OPTION = "custom_must_not_build"
 #: path -- see `strict_flags_exemption`.
 STRICT_EXEMPTION_OPTION = "custom_strict_flags_exemption"
 
+#: An environment built only to be swept for mutants declares it here, and the
+#: value is the reason. It compiles through a toolchain the ordinary gates do
+#: not require anyone to have, so the gates that cover every host build leave it
+#: alone rather than making that toolchain a condition of running them. What
+#: keeps the exclusion honest is that the same translation units are covered by
+#: the environment this one is derived from, and that the sweep refuses to run
+#: when it discovers none of these.
+MUTATION_SWEEP_OPTION = "custom_mutation_sweep"
+
 #: `${section.option}`, the build file's own reference to another value.
 _REFERENCE = re.compile(r"\$\{([^}\s]+)\.([^}\s]+)\}")
 
@@ -173,6 +182,19 @@ class Environment:
         the gate that asks.
         """
         return self.get(STRICT_EXEMPTION_OPTION).strip()
+
+    @property
+    def mutation_sweep_reason(self) -> str:
+        """Why this environment is built for the mutation sweep alone, or empty.
+
+        The declaration is what takes it out of the sets the ordinary gates
+        cover. It is not a way of avoiding them: it says the environment exists
+        to be compiled through a mutation-instrumenting toolchain, which is the
+        one property that cannot be asked of a host anybody is expected to build
+        on, and the sources it compiles are covered under the environment it
+        extends.
+        """
+        return self.get(MUTATION_SWEEP_OPTION).strip()
 
     def build_directory(self, project: str) -> str:
         return os.path.join(project, BUILD_ROOT, self.name)
@@ -323,11 +345,19 @@ def host_environments(environments: list[Environment]) -> list[Environment]:
     The ones declared to be refused are not among them: requiring a clean
     build of a configuration that must not build at all would contradict the
     refusal it exists to demonstrate.
+
+    Nor are the ones declared to exist for the mutation sweep. Every gate here
+    builds what it covers, and building one of those requires a mutation
+    toolchain -- so covering them would make that toolchain a condition of
+    running the ordinary gates at all, on every host, for a build whose
+    translation units are already covered under the environment it extends.
     """
     return [
         environment
         for environment in environments
-        if environment.is_host and not environment.must_not_build_reason
+        if environment.is_host
+        and not environment.must_not_build_reason
+        and not environment.mutation_sweep_reason
     ]
 
 
@@ -350,3 +380,15 @@ def test_environments(environments: list[Environment]) -> list[Environment]:
 def refused_environments(environments: list[Environment]) -> list[Environment]:
     """Every environment declared to be refused rather than built."""
     return [environment for environment in environments if environment.must_not_build_reason]
+
+
+def mutation_environments(environments: list[Environment]) -> list[Environment]:
+    """Every environment declared to exist for the mutation sweep.
+
+    The sweep finds its subjects here rather than being handed a name, for the
+    same reason every other gate does, and with one consequence worth stating:
+    an environment excused from the gates that cover every host build and driven
+    by nothing at all would be an exclusion with nothing on the other side of
+    it. The sweep refusing to run when this is empty is what closes that.
+    """
+    return [environment for environment in environments if environment.mutation_sweep_reason]

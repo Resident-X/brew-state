@@ -1,19 +1,37 @@
 id: SOL-PLANT-MUTATION-SWEEP.C4
 type: criterion
-title: A surviving mutant is triaged as equivalent or a real gap before being treated as a finding
+title: A surviving mutant is judged by hand before it is treated as a finding
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Every surviving mutant is reviewed by hand to determine whether it is an
-  equivalent mutant -- a mutated branch that provably cannot change any
-  observable output, such as a comparison-operator swap at a boundary where
-  both branches evaluate to the same value -- before it is treated as evidence
-  of an uncaught defect. An unreviewed survivor count is reported as a raw
-  number only, never asserted as a defect count. Out of scope: automatic
-  equivalent-mutant detection is not required; the triage is a reviewer
-  judgement, not a tool capability this criterion asks the sweep itself to have.
+  Every surviving mutant is reviewed by hand before it is treated as evidence of an
+  uncaught defect, and recorded as one of three things with the reasoning written
+  down.
+
+  An equivalent mutant provably cannot change any observable output -- a
+  comparison-operator swap at a boundary where both branches evaluate to the same
+  value -- so no test could kill it, and writing one to try would mean asserting
+  something untrue to move a number. A real gap is a change in behaviour the tests
+  ought to have noticed and did not; it stands as a finding until a test closes it.
+
+  The third is a mutant whose only effect is a read or write outside an object. No
+  assertion can observe it, and the sweep is compiled without the memory analysis
+  deliberately, so that a mutant counts as caught when a test notices it rather
+  than when the analysis aborts on it. Recording such a survivor as equivalent
+  would be untrue -- it does change what the program does -- and recording it as a
+  gap would demand a test that cannot exist, so it is recorded as caught by the
+  other verification tier. That is admissible only where some test really does
+  reach the line, and where restoring the analysis is shown to kill the mutant,
+  rather than either being asserted.
+
+  An unreviewed survivor count is reported as a raw number only, never asserted as
+  a defect count.
+
+  Out of scope: automatic equivalent-mutant detection is not required; the triage
+  is a reviewer judgement, not a tool capability this criterion asks the sweep
+  itself to have.
 links:
   - target: SOL-PLANT-MUTATION-SWEEP
     type: criterion-of

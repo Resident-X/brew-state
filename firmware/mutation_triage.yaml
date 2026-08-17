@@ -1,0 +1,142 @@
+# What each surviving mutant was judged to be, and why.
+#
+# A mutant the tests do not kill is not a defect until somebody has decided it
+# could be one. Some of these cannot change what the program does at all, so no
+# test could kill them and writing one to try would mean asserting something
+# untrue in order to move a number. Deciding which is which is a reading of what
+# the code means, and the sweep does not make that judgement -- it requires that
+# somebody has, and reports an unjudged survivor as unreviewed rather than as a
+# fault found.
+#
+# Each key is the mutant as tools/mull_sweep.py names it:
+#
+#     <mutator>:<source relative to firmware/>:<line>:<column>
+#
+# The line and column are part of the identity on purpose. Editing the code
+# these were judged about moves them, the judgement stops matching any mutant
+# the sweep finds, and the sweep fails on the stale entry rather than carrying a
+# decision forward past the code it was made about.
+#
+# verdict is one of:
+#
+#   equivalent  The mutant provably cannot change any observable behaviour. No
+#               test can kill it because there is nothing to observe.
+#   analysis    The mutant does change what the program does, but only by
+#               reading or writing outside something -- which no assertion can
+#               see, and which the sanitized build aborts on. The sweep runs
+#               with that analysis deliberately switched off, so it cannot see
+#               it either. Admissible only when some test really does reach the
+#               line, or nothing is watching it in either build.
+#   gap         A real hole in what the tests catch. The sweep fails while any
+#               of these stand: the point of finding one is to close it.
+#
+# There are no `gap` entries here. Six were found when this sweep was first run
+# and all six were closed by tests rather than recorded -- see the suite's own
+# entries for indented lines, a final line without a newline, the two reports
+# that quote a line, the declared bounds being admissible values, and a value
+# token longer than the loader can hold.
+
+survivors:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:46:19:
+    verdict: equivalent
+    reason: >-
+      Leading-blank trim, `*begin < *end` widened to `<=`. When the span is
+      empty the loop body runs only if the character at that position is blank,
+      and every caller ends a span at `=`, at a newline, or at the end of the
+      description -- none of which is blank. The body therefore never executes
+      and `begin` is never moved, so the trimmed span is the same one.
+
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:64:16:
+    verdict: equivalent
+    reason: >-
+      Name-length clamp, `copied > NAME_MAX - 1` widened to `>=`. The two differ
+      only when `copied` already equals `NAME_MAX - 1`, and the branch they
+      guard assigns exactly that value. The mutant does the assignment and the
+      original skips it, with the same result either way.
+
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:67:32:
+    verdict: equivalent
+    reason: >-
+      `copied > 0` widened to `>= 0` on a `size_t`, which makes the guard always
+      true. What it guards is a `memcpy` of `copied` bytes, and a `memcpy` of
+      zero bytes copies nothing. The other half of the condition still refuses a
+      null source, so nothing is dereferenced that was not before.
+
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:135:20:
+    verdict: equivalent
+    reason: >-
+      Spec-table size guard, `spec_count > SPEC_LIMIT` widened to `>=`, which
+      refuses a table of exactly SPEC_LIMIT entries. The table is not input: it
+      is compiled in, chosen at build time by which structure the environment
+      names, and every structure in the tree declares a single-figure number of
+      parameters. Both forms therefore accept every table any build of this
+      program can present, which is what makes the two indistinguishable rather
+      than merely untested. The property that argument rests on -- that the
+      structures stay far below the limit -- is asserted by
+      test_the_structure_declares_far_fewer_parameters_than_the_loader_admits
+      rather than assumed here, so a structure growing towards the limit fails
+      that test instead of quietly invalidating this judgement.
+
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:159:28:
+    verdict: equivalent
+    reason: >-
+      `cursor = (line_end < limit) ? line_end + 1 : limit` widened to `<=`, so
+      on the last line the cursor is set to `limit + 1` instead of `limit`. The
+      only thing done with it afterwards is the loop test `cursor < limit`,
+      which is false for both, and it is never dereferenced. The loop ends in
+      the same place having read the same lines.
+
+  cxx_ge_to_gt:src/plant/common/plant_parameters.c:98:32:
+    verdict: analysis
+    reason: >-
+      Value-token length guard, `length >= VALUE_TEXT_MAX` narrowed to `>`, which
+      admits a token exactly as long as the buffer it is about to be copied into.
+      The copy then fills the buffer and the terminator is written one past the
+      end of it. Nothing the loader reports changes: the token is parsed and the
+      value it names is refused as out of range either way, which is why no
+      assertion tells the two apart. What differs is a one-byte write outside a
+      stack array, which the sanitized build reports, and
+      test_a_value_token_longer_than_the_loader_holds_is_refused offers tokens
+      across a span wide enough to include that length, so the line is reached
+      there.
+
+      This mutant and the spec-table one below are killed or not according to
+      whether the out-of-bounds access happens to disturb something a test
+      observes, which is a property of how the compiler laid the frame out rather
+      than of the tests. They change sides between hosts: on macOS this one is
+      killed and the other survives, and on the Linux runner it is the other way
+      round. Both are judged here so the record means the same thing on either,
+      and the sweep reports a judgement about a mutant the local host kills as no
+      longer load-bearing rather than as a failure.
+
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:192:47:
+    verdict: analysis
+    reason: >-
+      Spec-lookup loop bound widened to `<=`, so the search reads one entry past
+      the end of the structure's spec table. What it reads is whatever follows
+      that table, and the outcome changes only if it happens to hold a name of
+      the same length that compares equal -- otherwise the loop still ends with
+      no match and the same UNKNOWN refusal is reported, which is why no
+      assertion distinguishes the two. The read itself is out of bounds on a
+      static array, which the sanitized build reports rather than ignores, and
+      the tests offering an unknown parameter name run the loop to its end, so
+      the line is reached there.
+
+      That last part is shown rather than argued. Compiling this same
+      environment with tools/pio_sanitize.py restored and sweeping it again
+      kills this mutant, where the ordinary unsanitized sweep records it as
+      surviving -- so the other tier does catch it, and the verdict is a
+      statement about which tier is watching rather than an excuse for a
+      survivor. Repeat that experiment if this reasoning is ever in doubt: add
+      the sanitizer script back to the environment's extra_scripts and run the
+      sweep, and this line should report Killed.
+
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:75:31:
+    verdict: equivalent
+    reason: >-
+      Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
+      differ only at exactly zero, where the mutant evaluates
+      `pressure_bar_per_k * 0.0f` and the original returns the literal `0.0f`.
+      Those are the same value: the coefficient is finite and admissible, so the
+      product is a zero, and a zero of either sign compares equal to the literal
+      and behaves identically in everything downstream.
