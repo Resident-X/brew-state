@@ -1,0 +1,14 @@
+id: REQ-MODEL-COMMIT-001.C5
+type: criterion
+title: A structured residual is reported rather than absorbed into margin
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  Withheld data asks whether the description predicts closely enough, which is a different question from whether it is the right shape. An effect the structure cannot represent -- repeatable, and in step with the run rather than scattered through it -- shows up as a pattern left behind in the residual rather than as a large error -- the commissioning-time signature of structural error, so a description carrying one can pass validation comfortably while being wrong in a way no parameter value will fix.
+
+  This concerns a description that passes. One that fails is refused outright and nothing here softens that. What is refused here is silence: because the structure cannot be changed on the machine, a shortfall found at this point is not correctable later, and the shape of the residual is the only place it announces itself before the design starts depending on it.
+links:
+  - target: REQ-MODEL-COMMIT-001
+    type: criterion-of

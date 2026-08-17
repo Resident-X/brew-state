@@ -4,7 +4,7 @@ category: constraint
 title: The machine's local configuration is declared in one place the requirements point at
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The requirements in this graph hold for any machine of this shape. What they have actually been checked against is one machine, on one supply, protected by one set of devices, and none of that is visible in the requirements themselves.
 
@@ -17,10 +17,14 @@ rationale: |
   Requires the machine's own characteristics to be established by measurement rather than adopted from datasheets, on the same grounds the measurement requirements already apply: a figure quoted for a component in free air does not describe that component assembled into this machine.
 
   Silent on the form the declaration takes. What matters is that one place holds the values and that statements depending on them point at it.
+
+  Requires the supply as a span rather than a nominal because a single figure is true only at an instant, and because a resistive load turns supply movement into delivered power movement squared. A design bounding its error against the midpoint has bounded it against a condition the machine passes through rather than one it sits at. The same reasoning puts the conditions the machine operates across here: ambient is the other quantity that varies, is never declared, and gets silently taken at whatever the design assumed.
+
+  Requires what a load draws while energised for the same reason it requires the thermal characteristics measured, and to the same standard. Duty is the half of delivered energy that gets modelled; the watts are the half that gets assumed, and a rating describes a component in free air rather than that component in this machine on this supply. A budget spent in assumed watts, and a response time bounded by them, are both wrong by however far the assumption is, and neither has anywhere to report that.
 links:
   - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C3
     type: derives-from
-  - target: PER-ADOPTER-001.C2
-    type: derives-from
   - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C6
+    type: derives-from
+  - target: PER-ADOPTER-001.C2
     type: derives-from

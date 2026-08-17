@@ -4,7 +4,7 @@ category: constraint
 title: Total electrical draw is planned within a declared supply budget
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The two heated masses together can ask for more than an ordinary domestic circuit provides. Nothing in the machine prevents that on its own, so the constraint has to live in what the controller is willing to command.
 
@@ -15,6 +15,8 @@ rationale: |
   Precedence is required to be defined rather than emergent. Allocation by arrival order produces behaviour that cannot be predicted, cannot be explained to the operator, and cannot be argued to be safe.
 
   Defaulting an undeclared budget to the most restrictive supported value makes the open question about the actual circuit rating safe rather than merely unresolved. A later declaration can only ever relax the constraint.
+
+  Requires the budget spent against the worst of the declared supply span because the allocation has no feedback to correct it. Constraining what is commanded rather than what is measured is deliberate and is kept, but its price is that the figures going in have to be pessimistic: a resistive load draws more as the supply rises, and the protecting device responds to the current that flowed rather than to the arithmetic that authorised it.
 links:
   - target: JRN-SERVE-GROUP-001.C2
     type: derives-from

@@ -1,14 +1,16 @@
 id: REQ-MACHINE-CONFIGURATION-001.C1
 type: criterion
-title: The supply the machine is built for is declared rather than inferred from its behaviour
+title: The supply the machine is built for is declared as a span rather than inferred from its behaviour
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |
+text: |-
   Voltage, frequency and the rating of the protecting circuit set what the machine may draw and how its loads may be driven, and a machine has no way to discover any of them for itself.
 
   Left undeclared they are inherited from wherever the design happened to be written.
+
+  The supply is declared as the span it occupies rather than as a nominal figure. It moves with the hour, with the season, and with whatever else draws on the same circuit; a load that is a resistance turns that movement into delivered power moving with its square. A design bounding its error against the midpoint has bounded it against a condition the machine passes through rather than one it sits at. Whether the machine observes its own supply while running is a separate question and is not settled here — a span that is declared and never measured is still the span everything downstream is entitled to assume.
 links:
   - target: REQ-MACHINE-CONFIGURATION-001
     type: criterion-of

@@ -2,13 +2,15 @@ id: REQ-READINESS-TIMELINESS-001.C1
 type: criterion
 title: Time to readiness stays within the declared fraction of the least time the machine's description implies
 status: active
-version: 1
+version: 2
 measurement_type: threshold
 verification: test
-text: |
+text: |-
   The comparison is against this machine's floor rather than against a figure in minutes, so the bound means the same thing on hardware with different masses, a different supply, or a different architecture behind the model.
 
   A machine whose achieved time cannot be brought within the fraction fails here rather than being granted a looser fraction.
+
+  The floor is not one number either, because the supply and the starting conditions the machine declares are spans rather than points. The bound holds against the floor implied by the conditions the run actually happened under, so that a slow morning on a low supply is not counted as a failure to be timely and a fast one on a high supply does not earn credit the design has not got.
 links:
   - target: REQ-READINESS-TIMELINESS-001
     type: criterion-of

@@ -1,0 +1,14 @@
+id: JRN-COMMISSION-PLANT-001.C7
+type: criterion
+title: Structure remaining in the residual of a description that validated is reported to the builder
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  The builder is fitting a description in order to stop guessing, and a residual with a shape in it is the machine saying that some of the guessing is still going on somewhere the description cannot see. Left unreported it is invisible: it does not show up as a large error, it shows up as a small one that is always in the same direction at the same point in the run.
+
+  Reporting it is not refusing it. A description whose remaining error is understood may still be the one to commit, and the builder is the one who decides that. What the builder must not have to do is discover it later from the machine behaving oddly, having been told only that validation passed.
+links:
+  - target: JRN-COMMISSION-PLANT-001
+    type: criterion-of
