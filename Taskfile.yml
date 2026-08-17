@@ -111,17 +111,25 @@ tasks:
     desc: Run the control-logic and plant-model tests on the host, and the tests covering the build-time checks
     dir: "{{.ROOT_DIR}}"
     cmds:
-      - cd {{.FW_DIR}} && {{.PIO}} test -e native_test
+      # Which environments carry tests is discovered, so a structure's tests run
+      # because they exist rather than because a line here names them. The suite
+      # covering the check tools is named because it is one fixed thing rather
+      # than a set that grows with the tree.
+      - cd {{.FW_DIR}} && python3 tools/run_host_tests.py --project . --pio {{.PIO}}
       - python3 -m unittest discover -s {{.FW_DIR}}/tools/tests
 
   fw:check:
     desc: Run every build-time check the seams' criteria are verified by
     dir: "{{.FW_DIR}}"
     cmds:
-      # The hardware seam.
+      # The hardware seam. The artefacts the seam's calls are inspected in are
+      # discovered from the build, so an environment added later is covered
+      # without a line here naming it.
       - python3 tools/check_header_neutral.py include/hw_interface.h
       - python3 tools/check_encapsulation.py src/control
-      - python3 tools/check_direct_calls.py .pio/build/native/program --header include/hw_interface.h --objects .pio/build/native/src/control
+      - python3 tools/check_direct_calls.py --project . --header include/hw_interface.h --objects-in src/control
+      # Two environments are named here because comparing that pair is what the
+      # check is, not because it carries a list.
       - python3 tools/check_control_identical.py --project . --env native --env stm32
       # The plant-model seam.
       - python3 tools/check_plant_header.py include/plant_model.h --plant-root src/plant --include-dir include
@@ -129,20 +137,28 @@ tasks:
       - python3 tools/check_plant_header.py include/plant_support.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_plant_encapsulation.py src test --plant-root src/plant --include-dir include
       - python3 tools/check_support_status.py --plant-root src/plant --include-dir include --documentation README.md
-      - python3 tools/check_direct_calls.py .pio/build/native/program --header include/plant_model.h --objects .pio/build/native/src/app/native
-      - python3 tools/check_structure_exclusive.py .pio/build/native/program --structure thermoblock --plant-root src/plant --include-dir include
-      - python3 tools/check_structure_exclusive.py .pio/build/native_fixture/program --structure fixture --plant-root src/plant --include-dir include
+      - python3 tools/check_direct_calls.py --project . --header include/plant_model.h --objects-in src/app/native
+      # Every structure in the tree, and the artefact carrying it, are
+      # discovered: forgetting to add a line cannot leave one unchecked.
+      - python3 tools/check_structure_exclusive.py --project . --plant-root src/plant --include-dir include
+      # Two descriptions are named here because the check needs a pair differing
+      # in a single coefficient before it can conclude anything.
       - python3 tools/check_parameters_are_data.py .pio/build/native/program --params params/thermoblock-nominal.params --params params/thermoblock-variant.params
+      # The misconfigured configurations are named because a forgotten name here
+      # fails loudly rather than quietly.
       - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --pio {{.PIO}}
-      # The analysis the host tier runs everything of ours under.
-      - python3 tools/check_sanitizers.py --project . --env native --executable .pio/build/native/program
+      # The analysis the host tier runs everything of ours under, over every
+      # environment the build declares for the host.
+      - python3 tools/check_sanitizers.py --project .
 
   fw:run:
-    desc: Run the host executable through its control-logic and plant-model entry paths under the sanitizers
+    desc: Run every host executable the build declares through its control-logic and plant-model entry paths under the sanitizers
     dir: "{{.FW_DIR}}"
     cmds:
-      - ./.pio/build/native/program params/thermoblock-nominal.params
-      - ./.pio/build/native_fixture/program params/fixture.params
+      # The artefacts and the descriptions they are run against are discovered,
+      # because an artefact built under the sanitizers and never run has been
+      # analysed for nothing.
+      - python3 tools/run_host_artefacts.py --project . --plant-root src/plant --include-dir include --params-dir params
 
   fw:mutate:
     desc: Break each guarded property on purpose and require its check to notice — on demand, not part of the gate

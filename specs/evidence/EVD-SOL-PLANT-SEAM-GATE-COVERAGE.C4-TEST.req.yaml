@@ -1,0 +1,22 @@
+id: EVD-SOL-PLANT-SEAM-GATE-COVERAGE.C4-TEST
+type: evidence
+title: A gate that finds nothing to cover fails rather than passes (SOL-PLANT-SEAM-GATE-COVERAGE.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T00:15:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_gate_coverage.py::AGateWithNothingToCoverFails
+  artifact_version: 7721e551af5f2a48b2ab9241384b68582fa01c96
+  verifier: david
+  retrieval_at: "2026-08-17T00:15:44Z"
+text: |
+  AGateWithNothingToCoverFails drives each converted gate against a tree holding nothing for it to find, and none reports success: the exclusivity gate with no artefact carrying a structure, the direct-call gate with no artefact, the analysis gate with no host environment, the task that runs the artefacts with nothing to run, and the task that runs the tests with no environment carrying them. Each message names which gate found nothing. A tree with no structures at all stops the exclusivity gate too.
+
+  Found-the-problem and could-not-look are kept apart all the way to the exit code, because the mutation harness counts only the first as a catch and counting the second would be this project committing the failure the harness exists to detect. An empty discovered set is a finding — what the build declares has a hole in it. An artefact that has not been built yet, a compilation database that cannot be produced, and a host with no tool to inspect a binary are could-not-look, and exit accordingly.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE.C4
+    type: satisfies

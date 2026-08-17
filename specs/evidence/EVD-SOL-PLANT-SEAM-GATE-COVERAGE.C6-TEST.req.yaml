@@ -1,0 +1,22 @@
+id: EVD-SOL-PLANT-SEAM-GATE-COVERAGE.C6-TEST
+type: evidence
+title: The test task discovers the environments it runs rather than being given a list (SOL-PLANT-SEAM-GATE-COVERAGE.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T00:15:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_gate_coverage.py::TheTestTaskDiscoversItsEnvironments; firmware/tools/mutate.py::the-tests-stop-being-run
+  artifact_version: 7721e551af5f2a48b2ab9241384b68582fa01c96
+  verifier: david
+  retrieval_at: "2026-08-17T00:15:44Z"
+text: |
+  The task that runs the tests discovers the environments carrying them from the property the build file already declares, rather than naming one. TheTestTaskDiscoversItsEnvironments drives it with a stand-in build system that records which environments it was asked to run: the environment carrying tests is run and the ordinary host environment is not, a second test environment added later runs with no change to the invocation, and a failing suite fails the task. A tree where no environment carries tests stops with an error rather than reporting success, which is the case this criterion exists for — a forgotten test entry leaves no artefact missing and nothing else to notice.
+
+  The mutation harness makes the same point against the real build: the-tests-stop-being-run removes the declaration from the environment that carries the tests, and the task stops rather than quietly running nothing.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE.C6
+    type: satisfies

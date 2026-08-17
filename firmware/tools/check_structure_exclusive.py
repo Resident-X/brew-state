@@ -19,8 +19,15 @@ no unique symbol is therefore a structure this check cannot see, and is
 reported as a failure rather than passed over: that is the state in which the
 check would pass unconditionally.
 
-Usage: check_structure_exclusive.py <executable> --structure <name>
-                                    --plant-root <dir> --include-dir <dir>
+Which structures are covered is discovered rather than given. Every structure
+in the source tree is covered, and the artefact carrying each one is found from
+the build's own configuration -- so a structure added without a line being added
+here cannot go unchecked, and a structure nobody builds an artefact for is
+reported rather than passed over. Discovering nothing at all is a failure, on
+the same terms: a gate covering an empty set reports success in exactly the way
+a gate nobody ran does.
+
+Usage: check_structure_exclusive.py --project <dir> --plant-root <dir> --include-dir <dir>
 """
 
 from __future__ import annotations
@@ -32,6 +39,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import build_environments  # noqa: E402
 from structure_symbols import discover, exclusive_declarations  # noqa: E402
 
 #: Symbol listers to try, in order. The first that runs decides.
@@ -70,19 +78,42 @@ def defined_symbols(executable: str) -> set[str]:
     )
 
 
+def problems_in(
+    executable: str,
+    structure: str,
+    exclusive: dict[str, frozenset[str]],
+) -> list[str]:
+    """Every way the artefact fails to carry exactly the structure it names."""
+    present = defined_symbols(executable)
+    problems: list[str] = []
+
+    for symbol in sorted(exclusive[structure]):
+        if symbol not in present:
+            problems.append(
+                f"{executable}: {symbol}: the '{structure}' structure the build names is not "
+                "in the artefact"
+            )
+
+    for name in sorted(exclusive):
+        if name == structure:
+            continue
+        for symbol in sorted(exclusive[name]):
+            if symbol in present:
+                problems.append(
+                    f"{executable}: {symbol}: the '{name}' structure survived into the artefact"
+                )
+
+    return problems
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("executable", help="the linked executable to inspect")
-    parser.add_argument("--structure", required=True, help="the structure the build names")
+    parser.add_argument("--project", default=".", help="the PlatformIO project directory")
     parser.add_argument("--plant-root", required=True, help="the directory the structures live in")
     parser.add_argument(
         "--include-dir", required=True, help="the directory the seam's own headers live in"
     )
     args = parser.parse_args(argv)
-
-    if not os.path.exists(args.executable):
-        print(f"check_structure_exclusive: no such executable: {args.executable}", file=sys.stderr)
-        return 2
 
     structures = discover(args.plant_root, args.include_dir)
     if len(structures) < 2:
@@ -95,13 +126,6 @@ def main(argv: list[str]) -> int:
         return 2
 
     names = [structure.name for structure in structures]
-    if args.structure not in names:
-        print(
-            f"check_structure_exclusive: '{args.structure}' is not one of the structures "
-            f"({', '.join(names)})",
-            file=sys.stderr,
-        )
-        return 2
 
     exclusive = exclusive_declarations(structures)
     blind = sorted(name for name, symbols in exclusive.items() if not symbols)
@@ -115,37 +139,75 @@ def main(argv: list[str]) -> int:
             print(f"  {name}", file=sys.stderr)
         return 2
 
-    present = defined_symbols(args.executable)
+    try:
+        declared = build_environments.load(args.project)
+    except build_environments.ConfigurationError as error:
+        print(f"check_structure_exclusive: {error}", file=sys.stderr)
+        return 2
+
+    # Every artefact carrying a structure, not the first one found for it: two
+    # environments can build the same structure, and the second is as capable
+    # of carrying another structure's symbols as the first.
+    covered: dict[str, list[str]] = {}
+    for environment in build_environments.artefact_environments(declared):
+        structure = environment.structure(names)
+        if structure is not None:
+            covered.setdefault(structure, []).append(environment.artefact(args.project))
+
+    # An empty subject set and a structure nobody builds are findings rather
+    # than states this cannot look at: the artefacts are missing from what the
+    # build *declares*, which is a hole in the coverage itself. A declared
+    # artefact that has not been built yet is the other thing, and is below.
+    if not covered:
+        print(
+            "check_structure_exclusive: no environment builds an artefact carrying a structure, "
+            "so this gate has nothing to cover and would report success without checking anything",
+            file=sys.stderr,
+        )
+        return 1
+
+    uncovered = [name for name in names if name not in covered]
+    if uncovered:
+        print(
+            "check_structure_exclusive: these structures are built by no environment, so "
+            "nothing establishes what an artefact carrying them would carry",
+            file=sys.stderr,
+        )
+        for name in uncovered:
+            print(f"  {name}", file=sys.stderr)
+        return 1
+
+    missing = [path for paths in covered.values() for path in paths if not os.path.exists(path)]
+    if missing:
+        # A declared artefact that has not been built yet is a state this
+        # cannot look at, unlike an artefact the build never declares.
+        print("check_structure_exclusive: these artefacts have not been built", file=sys.stderr)
+        for path in missing:
+            print(f"  {path}", file=sys.stderr)
+        return 2
+
     problems: list[str] = []
-
-    for symbol in sorted(exclusive[args.structure]):
-        if symbol not in present:
-            problems.append(
-                f"{symbol}: the '{args.structure}' structure the build names is not in the artefact"
-            )
-
-    for name in names:
-        if name == args.structure:
-            continue
-        for symbol in sorted(exclusive[name]):
-            if symbol in present:
-                problems.append(f"{symbol}: the '{name}' structure survived into the artefact")
+    for structure in names:
+        for path in covered[structure]:
+            problems.extend(problems_in(path, structure, exclusive))
 
     if problems:
         print(
-            f"check_structure_exclusive: {args.executable} does not carry exactly the "
-            f"'{args.structure}' structure",
+            "check_structure_exclusive: an artefact does not carry exactly the structure it names",
             file=sys.stderr,
         )
         for problem in problems:
             print(f"  {problem}", file=sys.stderr)
         return 1
 
-    others = [name for name in names if name != args.structure]
     print(
-        f"check_structure_exclusive: {args.executable} carries "
-        f"{len(exclusive[args.structure])} symbol(s) of '{args.structure}' and none of "
-        f"{', '.join(others)}"
+        "check_structure_exclusive: "
+        + "; ".join(
+            f"{path} carries {len(exclusive[structure])} symbol(s) of '{structure}' and none "
+            "of any other"
+            for structure in names
+            for path in covered[structure]
+        )
     )
     return 0
 

@@ -93,7 +93,7 @@ fails a check rather than the one that ships.
 | `src/plant/common/` | Reads a parameter record from a description. One parser, every structure. Not a structure itself. |
 | `src/plant/thermoblock/` | The machine-describing structure: two heated masses, pump-driven brew pressure, steam pressure above saturation. |
 | `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
-| `params/` | Parameter descriptions. Read at run time; the build compiles none of them in. |
+| `params/` | Parameter descriptions. Read at run time; the build compiles none of them in. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. |
 | `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
 | `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |
@@ -127,6 +127,7 @@ task fw:verify     # build every environment, run every check, run the tests, ru
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
 task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
+task fw:run        # every host executable, against the descriptions its structure ships
 ```
 
 One more runs on demand rather than in the gate:
@@ -171,13 +172,13 @@ task runner. Six of them also run automatically inside every `pio run`.
 | --- | --- |
 | `check_header_neutral.py` | The seam header names a vendor symbol, or does not compile standalone against a freestanding compiler with no vendor include path. Runs inside every build. |
 | `check_encapsulation.py` | A file under `src/control` reaches a HAL function, a CMSIS symbol, a peripheral instance, a device header, an include the check cannot resolve, a peripheral address, or assembly. Runs inside every build. |
-| `check_sanitizers.py` | A source of this project's own reaches the host artefact without the sanitizers or without the strict warning settings, or the executable links no sanitizer runtime — failures that otherwise pass silently. |
-| `check_direct_calls.py` | A seam call in the linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. |
+| `check_sanitizers.py` | A source of this project's own reaches a host artefact without the sanitizers, or without the strict warning settings in an environment that could scope them to this project's sources, or the executable links no sanitizer runtime — failures that otherwise pass silently. Covers every host environment the build declares. |
+| `check_direct_calls.py` | A seam call in a linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. Covers every host artefact the build declares. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
 | `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h` and `plant_support.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
-| `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one. |
+| `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one — or a structure in the tree is built by no environment at all, and so is checked by nothing. Covers every structure. |
 | `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, or naming two — builds anyway, or leaves an artefact behind. |
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
@@ -211,6 +212,40 @@ What a structure owns is read out of the structures themselves rather than
 listed in the tools: `structure_symbols.py` derives each structure's fields and
 declarations from its own header, so a structure that gains a coefficient does
 not need a check to be updated to keep covering it.
+
+## What the gates cover, and how they know
+
+A gate handed the name of what it covers checks what somebody remembered to
+name, and a green build looks identical either way. So the gates whose subjects
+are a set that grows with the tree discover them instead. `build_environments.py`
+reads `platformio.ini` — resolving `extends` and `${section.option}` the way the
+build system does — and answers which environments produce a host artefact,
+which link this project's own entry point, which run tests, and which structure
+each one selects. `run_host_artefacts.py` and `run_host_tests.py` use the same
+answers to run what was built, since a sanitizer reports nothing until the code
+runs and tests that never ran leave nothing behind to notice.
+
+Two properties a gate must not guess at are declared in `platformio.ini` beside
+the environment they describe, with the reason as the value:
+`custom_must_not_build` on the configurations required to be refused, which
+cannot also be required to build cleanly; and `custom_strict_flags_exemption` on
+the environment that compiles the test runner's generated support file through
+the same path as this project's sources, and so cannot scope the warning
+settings to ours alone. The exemption is honoured only on an environment that
+really does compile foreign sources that way, so it cannot become a way of
+turning the settings off where they could be kept.
+
+Four gates keep their named subjects, because there the names are the content of
+the check rather than a list to forget: the two plant-header checks (one header
+is a seam, the other a vocabulary, and the obligations differ),
+`check_control_identical.py` (comparing that pair is what it compares),
+`check_selection_refused.py` (a forgotten name there fails loudly rather than
+quietly), and `check_parameters_are_data.py` (it needs two descriptions
+differing in a single coefficient before it can conclude anything).
+
+Every discovering gate fails when it discovers nothing — no structure, no
+artefact, no environment — because a gate covering an empty set reports success
+in exactly the way a gate nobody ran does.
 
 ## The nominated STM32 family
 

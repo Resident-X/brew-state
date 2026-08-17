@@ -18,7 +18,13 @@ It fails rather than passes when it cannot find what it is meant to inspect --
 no control functions in the disassembly, or no seam references at all -- since
 a check that inspects nothing must not report success.
 
-Usage: check_direct_calls.py <executable> --header <hw_interface.h> --objects <dir-or-obj> [...]
+Which artefacts are covered is discovered rather than given: every artefact the
+build declares an environment for is inspected, each against the objects built
+alongside it, so an artefact added later is covered without a line being added
+here. Discovering none is a failure on the same terms as inspecting nothing.
+
+Usage: check_direct_calls.py --project <dir> --header <hw_interface.h>
+                             --objects-in <source directory>
 """
 
 from __future__ import annotations
@@ -28,6 +34,10 @@ import os
 import re
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import build_environments  # noqa: E402
 
 # `bl <symbol>` on arm64, `callq <addr> <symbol>` on x86-64. A branch to a bare
 # address is control flow inside the function, not a call to another function.
@@ -214,22 +224,46 @@ def check(executable: str, header: str, object_roots: list[str]) -> list[str]:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("executable", help="the linked host executable")
+    parser.add_argument("--project", default=".", help="the PlatformIO project directory")
     parser.add_argument("--header", required=True, help="the seam header declaring the operations")
     parser.add_argument(
-        "--objects",
+        "--objects-in",
         required=True,
-        nargs="+",
-        help="object files, or directories of them, built from the control sources",
+        help="the source directory whose objects call through the seam, relative to the project",
     )
     args = parser.parse_args(argv)
 
-    for path in [args.executable, args.header, *args.objects]:
-        if not os.path.exists(path):
-            print(f"check_direct_calls: no such path: {path}", file=sys.stderr)
-            return 2
+    if not os.path.exists(args.header):
+        print(f"check_direct_calls: no such path: {args.header}", file=sys.stderr)
+        return 2
 
-    problems = check(args.executable, args.header, args.objects)
+    try:
+        declared = build_environments.load(args.project)
+    except build_environments.ConfigurationError as error:
+        print(f"check_direct_calls: {error}", file=sys.stderr)
+        return 2
+
+    environments = build_environments.artefact_environments(declared)
+    if not environments:
+        print(
+            "check_direct_calls: no environment builds a host artefact, so this gate has "
+            "nothing to cover and would report success without inspecting anything",
+            file=sys.stderr,
+        )
+        return 1
+
+    problems: list[str] = []
+    inspected: list[str] = []
+    for environment in environments:
+        executable = environment.artefact(args.project)
+        objects = environment.objects_under(args.project, args.objects_in)
+        for path in (executable, objects):
+            if not os.path.exists(path):
+                print(f"check_direct_calls: no such path: {path}", file=sys.stderr)
+                return 2
+        inspected.append(executable)
+        problems.extend(f"{executable}: {problem}" for problem in check(executable, args.header, [objects]))
+
     if problems:
         print("check_direct_calls: the seam is not reached by direct calls", file=sys.stderr)
         for problem in problems:
@@ -237,8 +271,8 @@ def main(argv: list[str]) -> int:
         return 1
 
     print(
-        f"check_direct_calls: every operation the callers of {args.header} use is a "
-        "direct call"
+        f"check_direct_calls: in {', '.join(inspected)}, every operation the callers of "
+        f"{args.header} use is a direct call"
     )
     return 0
 

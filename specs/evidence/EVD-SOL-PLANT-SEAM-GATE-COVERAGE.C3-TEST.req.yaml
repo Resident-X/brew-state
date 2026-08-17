@@ -1,0 +1,22 @@
+id: EVD-SOL-PLANT-SEAM-GATE-COVERAGE.C3-TEST
+type: evidence
+title: Strict warning settings are required wherever the build can scope flags to this project's sources alone (SOL-PLANT-SEAM-GATE-COVERAGE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T00:15:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_gate_coverage.py::AnalysisCoversEveryHostEnvironment; firmware/tools/mutate.py::one-environment-drops-the-warning-settings, an-exemption-where-the-settings-could-be-kept
+  artifact_version: 7721e551af5f2a48b2ab9241384b68582fa01c96
+  verifier: david
+  retrieval_at: "2026-08-17T00:15:44Z"
+text: |
+  The strict warning settings are required of every host environment whose build applies flags to this project's sources and to nothing else, checked on the compile line each source is actually built with rather than read out of the build file. An environment that cannot scope them declares the exemption with the reason as its value, and the exemption is honoured only where the build really does compile foreign sources through that path — the test runner's generated support file — so it cannot be used to relax an environment that could hold them.
+
+  AnalysisCoversEveryHostEnvironment exercises all three positions: the settings required where nothing foreign shares the path, the exemption honoured where it does, the exemption refused on an environment that could keep them, and the exemption not excusing the sanitizer flags themselves. The mutation harness makes the same point against the real build: one-environment-drops-the-warning-settings has a single environment override what its base gives it — the defect a gate verifying one named environment cannot see — and an-exemption-where-the-settings-could-be-kept claims the exemption without the foreign sources. Both are caught. The target build and the environments required to be refused stay outside, as the criterion requires.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE.C3
+    type: satisfies

@@ -1,0 +1,22 @@
+id: EVD-SOL-PLANT-SEAM-GATE-COVERAGE.C5-TEST
+type: evidence
+title: Every host artefact is executed under the analysis, not only built under it (SOL-PLANT-SEAM-GATE-COVERAGE.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T00:15:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_gate_coverage.py::EveryHostArtefactIsExecuted
+  artifact_version: 7721e551af5f2a48b2ab9241384b68582fa01c96
+  verifier: david
+  retrieval_at: "2026-08-17T00:15:44Z"
+text: |
+  The task that runs the host artefacts discovers them: every environment whose artefact links this project's own entry point, run against every parameter description its own structure ships. Against the real project that is three runs where the hand-written pair was two — the variant description was built, analysed, and never executed before this. EveryHostArtefactIsExecuted establishes the discovery on a synthetic tree: every artefact run against every description its structure ships, an environment added later run with no change to the invocation, the environment leaving its entry point to the test runner excluded by that property rather than by name, an unbuilt artefact and a structure shipping no description stopping rather than being skipped, and a failing run failing the task.
+
+  The association between a description and its structure is the whole of the structure's name, so a structure whose name begins another's does not inherit its descriptions, and a description no structure claims is reported rather than left silently unrun — the way a description drops out of the analysis by being renamed.
+links:
+  - target: SOL-PLANT-SEAM-GATE-COVERAGE.C5
+    type: satisfies
