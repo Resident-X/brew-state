@@ -1,0 +1,22 @@
+id: EVD-REQ-PLANT-DESCRIPTION-001.C1-INSPECTION
+type: evidence
+title: Attestation of REQ-PLANT-DESCRIPTION-001.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T14:15:24Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - DEL-SIM-SEAMS-HARNESS
+    - SOL-PLANT-DESCRIPTION-BASELINE
+attested_by: david
+text: |-
+  The statement in firmware/params/thermoblock.md gives every state and every seam quantity its physical meaning and unit, states the three relations in closed form with the coefficient entering each, and names twelve deliberate omissions so a reader can tell an exclusion from an oversight. The build-time check fails when the statement omits any coefficient the structure declares or any quantity the seam enumerates, discovering both sets from source rather than a list, so the statement cannot silently fall behind the description. Whether the relations match the machine's measured behaviour is not settled here and is not claimed.
+links:
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

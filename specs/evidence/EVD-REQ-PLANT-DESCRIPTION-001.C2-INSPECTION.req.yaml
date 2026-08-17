@@ -1,0 +1,22 @@
+id: EVD-REQ-PLANT-DESCRIPTION-001.C2-INSPECTION
+type: evidence
+title: Attestation of REQ-PLANT-DESCRIPTION-001.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T14:15:24Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - DEL-SIM-SEAMS-HARNESS
+    - SOL-PLANT-DESCRIPTION-BASELINE
+attested_by: david
+text: |-
+  Every one of the eleven coefficients in firmware/params/thermoblock.params carries its origin on the value's own line, with an account detailed enough to be reproduced or challenged, including a recorded dispute over the brew element rating and an explicit note that the pump coefficient is a judgement rather than a reading. check_parameter_origins.py runs as a pre-build step on every environment and fails a coefficient with no origin, an origin with no account, a coefficient the structure declares and the description omits, and a tree where nothing was inspected; the coefficient set is discovered from each structure's parameter table rather than a maintained list. Descriptions that describe no machine claim the declared exemption in-file rather than being given invented origins, and the description the build is exercised against is read out of platformio.ini and refused if it exempts itself.
+links:
+  - target: REQ-PLANT-DESCRIPTION-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

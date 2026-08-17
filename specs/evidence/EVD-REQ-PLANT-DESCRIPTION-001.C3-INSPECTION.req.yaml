@@ -1,0 +1,22 @@
+id: EVD-REQ-PLANT-DESCRIPTION-001.C3-INSPECTION
+type: evidence
+title: Attestation of REQ-PLANT-DESCRIPTION-001.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T14:15:24Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - DEL-SIM-SEAMS-HARNESS
+    - SOL-PLANT-DESCRIPTION-BASELINE
+attested_by: david
+text: |-
+  The estimated-versus-measured distinction is carried by a three-kind vocabulary declared once in firmware/include/plant_origin.h, read by both the loader and the build check, with a static assertion binding the words to the enum. A kind outside the vocabulary is refused by the loader, including measured_ish, the word that reads as a measurement to a skimmer, and the build check independently fails a vocabulary that renames, drops or adds a kind, so moving where the line falls is a deliberate act. Nothing in the reference description claims to be measured, because the machine has not been on the bench, and the file states that rather than leaving it to be inferred; the mixed state commissioning will produce is exercised today by a test that loads all three kinds at once.
+links:
+  - target: REQ-PLANT-DESCRIPTION-001.C3
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

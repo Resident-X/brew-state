@@ -1,0 +1,22 @@
+id: EVD-REQ-CONTROL-HARDWARE-SEAM-001.C2-ANALYSIS
+type: evidence
+title: Attestation of REQ-CONTROL-HARDWARE-SEAM-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-17T14:15:47Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - DEL-SIM-SEAMS-HARNESS
+    - SOL-CONTROL-HARDWARE-SEAM-HOST-SIM
+attested_by: david
+text: |-
+  The control logic under firmware/src/control reaches hardware only through firmware/include/hw_interface.h: nm on the linked target object shows its only undefined symbols are the seam's three operations, and check_encapsulation.py, run as a pre-build step on every PlatformIO environment, inspects every file the build filter could compile and fails the build on a vendor header, HAL or CMSIS identifier, peripheral-register address, inline assembly, unresolvable include or seam-implementation header. It treats an unrecognised suffix as inspectable rather than skippable, and exits non-zero rather than passing when it finds no sources; a standing suite injects each violation class and asserts the gate names file, line and symbol. check_direct_calls.py independently confirms against the linked binaries that the seam operations the control objects reference are reached by direct calls. The gate matches vendor names rather than asserting the control objects' undefined-symbol set is contained in the seam's, which is recorded as a residual rather than claimed as covered.
+links:
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

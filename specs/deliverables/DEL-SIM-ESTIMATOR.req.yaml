@@ -4,7 +4,7 @@ category: task
 title: The state estimator and the residual it reports
 status: active
 level: task
-version: 1
+version: 2
 text: |
   The estimator reconstructs the states the control law needs from the measurements that exist, produces the running comparison between predicted and observed measurements, and keeps its estimates bounded and usable when a measurement is briefly lost or reads implausibly. It delivers output at the rate the control law consumes it.
 rationale: |
@@ -25,4 +25,6 @@ links:
   - target: REQ-STATE-ESTIMATION-001.C4
     type: targets
   - target: REQ-STATE-ESTIMATION-001.C5
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
     type: targets

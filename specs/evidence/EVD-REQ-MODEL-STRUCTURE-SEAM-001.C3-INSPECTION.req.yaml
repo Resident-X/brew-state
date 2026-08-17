@@ -1,0 +1,22 @@
+id: EVD-REQ-MODEL-STRUCTURE-SEAM-001.C3-INSPECTION
+type: evidence
+title: Attestation of REQ-MODEL-STRUCTURE-SEAM-001.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-17T14:15:47Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - DEL-SIM-SEAMS-HARNESS
+    - SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE
+attested_by: david
+text: |-
+  Structure selection is established against the linked artefact rather than the build file: check_structure_exclusive.py lists the executable's symbols with nm and requires every symbol unique to the named structure to be present and every other structure's to be absent, with the structures discovered from the tree and their artefacts from platformio.ini, so an added structure is covered without the invocation changing. Every state in which the check could pass without checking, being fewer than two structures, a structure with no unique symbol, no artefact-building environment, or a structure nobody builds, is a reported failure rather than a skip. The refusal of a build naming no structure or two is separately exercised by check_selection_refused.py, which drives all three misconfigured environments and requires each to stop on the selection check, leave no artefact, and be among those declaring they must not build. The exclusivity inspection covers host artefacts only, which is complete today because the target build compiles no plant source.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
+    type: satisfies
+attributes:
+  attested_criterion_version: 2
