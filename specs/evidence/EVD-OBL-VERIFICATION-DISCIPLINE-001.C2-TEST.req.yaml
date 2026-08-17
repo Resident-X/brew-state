@@ -1,0 +1,18 @@
+id: EVD-OBL-VERIFICATION-DISCIPLINE-001.C2-TEST
+type: evidence
+title: mutate.py demonstrates specific tests earn their place against plausible named defects (OBL-VERIFICATION-DISCIPLINE-001.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T07:11:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/mutate.py
+  verifier: david
+text: |
+  Every mutation firmware/tools/mutate.py runs is a demonstration that some specific test or check earns its place: it is capable of failing, because it is shown failing, against a plausible defect named in the mutation's own "why" field (a cancelling settled-fraction computation, a coefficient compiled in rather than read from the parameter record, an unanswered actuation channel silently absorbed, and so on). A test that could not fail on any of these would not appear in the tool's list, because the tool refuses to run and report a catch unless the pre-mutation baseline already passes.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: satisfies

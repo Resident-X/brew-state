@@ -1,0 +1,19 @@
+id: SOL-PLANT-MUTATION-SWEEP.C1
+type: criterion
+title: An automated mutation-testing sweep runs against the plant model's arithmetic sources, scoped to exclude test code
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Mull (mull-runner-19 / mull-ir-frontend-19, LLVM 19) runs against the compiled
+  native_test artefact and generates operator mutants (comparison, arithmetic,
+  increment/decrement) from `firmware/src/plant/common/` and
+  `firmware/src/plant/thermoblock/`. A `mull.yml` `includePaths`/`excludePaths`
+  configuration scopes the mutant population to those production sources and
+  excludes `firmware/test/` and the vendored Unity framework, so the sweep does
+  not mutate test code or third-party sources. Out of scope: `firmware/src/control/`
+  and `firmware/src/hw/`, which this sweep does not cover.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP
+    type: criterion-of

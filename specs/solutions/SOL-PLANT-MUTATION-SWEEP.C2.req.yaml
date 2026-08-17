@@ -1,0 +1,20 @@
+id: SOL-PLANT-MUTATION-SWEEP.C2
+type: criterion
+title: The mutation-testing build compiles the scoped sources through a real LLVM/Clang toolchain matching Mull's LLVM version
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  PlatformIO's native platform resolves its C compiler by scanning the PATH for
+  `cc`/`gcc` and, on macOS, that ordinarily resolves to Apple Clang, whose ABI
+  does not match Mull's `-fpass-plugin` requirement. The mutation-testing
+  invocation pins the toolchain to the Homebrew-installed `llvm@19` Clang
+  (matching the installed `mull@19` package's LLVM version) ahead of PlatformIO's
+  default resolution, and injects `-fpass-plugin=.../mull-ir-frontend-19
+  -grecord-command-line` into the compile flags for that invocation only. Out of
+  scope: the toolchain pin applies only to the mutation-testing build; the
+  ordinary sanitizer/analysis build's toolchain resolution is unchanged.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP
+    type: criterion-of

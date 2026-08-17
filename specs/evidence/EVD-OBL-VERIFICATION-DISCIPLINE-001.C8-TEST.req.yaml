@@ -1,0 +1,18 @@
+id: EVD-OBL-VERIFICATION-DISCIPLINE-001.C8-TEST
+type: evidence
+title: The plant model's declared ranges are verified at their bounds and corners, not only an interior value (OBL-VERIFICATION-DISCIPLINE-001.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T07:11:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_every_declared_bound_is_enforced_at_its_edge, test_the_corners_of_the_declared_range_stay_finite, test_the_corners_of_the_declared_range_stay_at_rest
+  verifier: david
+text: |
+  firmware/test/test_plant/test_plant.c exercises the plant model's declared ranges rather than a single interior value: test_every_declared_bound_is_enforced_at_its_edge checks each declared bound at its edge, and test_the_corners_of_the_declared_range_stay_finite / test_the_corners_of_the_declared_range_stay_at_rest check the range's corners rather than an arbitrary interior point. Together these establish C8's claim for the plant model's declared parameter ranges: the bounds themselves and the values immediately beyond them are covered, not only a convenient value inside the range.
+links:
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C8
+    type: satisfies

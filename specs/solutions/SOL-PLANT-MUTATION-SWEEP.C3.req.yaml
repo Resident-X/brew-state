@@ -1,0 +1,20 @@
+id: SOL-PLANT-MUTATION-SWEEP.C3
+type: criterion
+title: The sweep is invocable on demand as a Taskfile target and runs on GitHub-hosted CI runners
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A Taskfile target builds the scoped native_test artefact with the mutation
+  toolchain pin and flags, then runs `mull-runner-19` against the produced test
+  binary, reporting a mutation score and the surviving mutants. Verified viable
+  on GitHub-hosted `ubuntu-latest` runners, which ship Clang, so no bespoke
+  toolchain provisioning is required in CI beyond installing the `mull@19`
+  package. Out of scope: this is not wired into the gate that runs on every
+  push -- like `firmware/tools/mutate.py`, it is invoked deliberately, run when
+  the swept sources change materially or a reviewer asks whether the sweep still
+  catches what it should, consistent with its own runtime cost.
+links:
+  - target: SOL-PLANT-MUTATION-SWEEP
+    type: criterion-of
