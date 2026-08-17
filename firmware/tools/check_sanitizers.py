@@ -267,6 +267,22 @@ def main(argv: list[str]) -> int:
 
     problems: list[str] = []
     blockers: list[str] = []
+
+    # An environment built for the mutation sweep is excused this gate on one
+    # stated ground: the translation units it compiles are analysed under
+    # another environment. That is a claim about the build file, so it is read
+    # out of the build file rather than trusted. Without this the declaration
+    # would be an unconditional way out of the analysis -- which is what its
+    # sibling exemption is careful not to be.
+    compiled = {environment.source_filter for environment in covered}
+    for environment in build_environments.mutation_environments(declared):
+        if environment.source_filter not in compiled:
+            problems.append(
+                f"'{environment.name}' is excused this gate because the sources it compiles are "
+                "covered elsewhere, but no environment this gate covers compiles the same set. "
+                "Either it is analysed somewhere or it is not covered at all."
+            )
+
     for environment in covered:
         found, blocked = check(project, environment, args.pio, environment.name in linked)
         problems.extend(found)
@@ -287,6 +303,15 @@ def main(argv: list[str]) -> int:
     for environment in build_environments.refused_environments(declared):
         print(
             f"check_sanitizers: '{environment.name}' is not covered -- {environment.must_not_build_reason}"
+        )
+
+    # An environment this gate leaves alone is reported with the reason it
+    # declares, whichever reason that is. Saying which environments are covered
+    # while staying silent about the ones that are not is how an exclusion stops
+    # being a decision anybody sees.
+    for environment in build_environments.mutation_environments(declared):
+        print(
+            f"check_sanitizers: '{environment.name}' is not covered -- {environment.mutation_sweep_reason}"
         )
 
     print(

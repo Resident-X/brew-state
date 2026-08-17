@@ -1,0 +1,29 @@
+# Which sources the sweep draws its mutants from.
+#
+# The population is the plant model's own arithmetic: the parameter loader
+# shared by every structure, and the machine-describing structure's equations.
+# Those are where a wrong comparison or a wrong operator would change what the
+# model says the machine does while still compiling and still looking right.
+#
+# Everything else is out, and the two directions are both stated on purpose.
+# includePaths is what decides the population. excludePaths says the same thing
+# again about the sources it would be worst to mutate silently -- the tests, and
+# the test framework -- so that widening the include patterns later cannot take
+# them in without somebody also removing a line that says not to.
+#
+# Mutating a test is not a weaker version of mutation testing, it is the
+# opposite of it: the test suite is the oracle here, and an oracle that has been
+# altered cannot report on anything. The framework is not ours to mutate either;
+# a surviving mutant in it would be a finding about somebody else's code.
+#
+# The paths are matched against the source file each mutant comes from, as the
+# compiler recorded it.
+
+includePaths:
+  - ".*/src/plant/common/.*"
+  - ".*/src/plant/thermoblock/.*"
+
+excludePaths:
+  - ".*/test/.*"
+  - ".*[Uu]nity.*"
+  - ".*/\\.pio/.*"

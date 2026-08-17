@@ -189,6 +189,12 @@ tasks:
     cmds:
       - python3 tools/mutate.py {{.CLI_ARGS}}
 
+  fw:sweep:
+    desc: Alter every comparison and operator in the plant model's arithmetic and require a test to notice — on demand, not part of the gate
+    dir: "{{.FW_DIR}}"
+    cmds:
+      - python3 tools/mull_sweep.py --project . --pio {{.PIO}} {{.CLI_ARGS}}
+
   fw:verify:
     desc: The full firmware gate — build every environment, run every check, run the tests, run the host executables
     cmds:

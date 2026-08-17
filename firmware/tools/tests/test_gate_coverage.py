@@ -368,6 +368,34 @@ class AnalysisCoversEveryHostEnvironment(unittest.TestCase):
         self.assertNotIn("host_refused", self.asked())
         self.assertIn("it names no structure", result.stdout)
 
+    def test_an_environment_built_for_the_mutation_sweep_is_excused_and_says_so(self):
+        # The gate builds what it covers, and this one is built by a toolchain
+        # nobody is required to have. What must not happen is the exclusion
+        # being silent: a gate naming what it covered while saying nothing about
+        # what it skipped reads as though it covered everything.
+        declare_environments(
+            self.project.name,
+            [
+                ("host", host_environment("alpha", entry_point=False)),
+                (
+                    "host_mutation",
+                    host_environment(
+                        "alpha",
+                        entry_point=False,
+                        test_build_src="yes",
+                        custom_mutation_sweep="it is compiled by a mutation toolchain the "
+                        "ordinary gates do not require",
+                    ),
+                ),
+            ],
+        )
+        self.database("host", self.ANALYSED)
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("host_mutation", self.asked())
+        self.assertIn("is not covered", result.stdout)
+        self.assertIn("mutation toolchain the ordinary gates do not require", result.stdout)
+
     def test_the_strict_settings_are_required_where_nothing_foreign_shares_the_path(self):
         declare_environments(
             self.project.name, [("host", host_environment("alpha", entry_point=False))]

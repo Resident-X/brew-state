@@ -1,0 +1,68 @@
+# The plant model's mutation sweep, run on a hosted runner when somebody asks
+# for it.
+#
+# It is started by hand and by nothing else. The sweep answers a question --
+# does the test suite still notice a change to the model's arithmetic -- that
+# does not change between commits the way the tests' own results do, and it
+# compiles every swept source afresh and runs the suite once per mutant. Wiring
+# that into every push would spend most of its time re-establishing an answer
+# nobody was waiting for. The same reasoning keeps `task fw:mutate` out of the
+# gate, and the firmware README states it at greater length.
+#
+# What this being here establishes is that the sweep runs somewhere other than
+# the machine it was written on. Nothing in the toolchain discovery names a
+# Homebrew path or a Mac, but a verification tool is only portable once it has
+# been run somewhere else, and this is where that happens.
+#
+# The compiler is Ubuntu's own clang-19 rather than a newer one from apt.llvm.org,
+# because Mull's package for this release of Ubuntu is built against Ubuntu's
+# build of LLVM 19. Taking both from the same distribution is what makes them
+# agree.
+
+name: Mutation sweep
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the mutation toolchain
+        env:
+          MULL_RELEASE: "0.34.0"
+          MULL_PACKAGE: "Mull-19-0.34.0-LLVM-19.1.1-ubuntu-amd64-24.04.deb"
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          curl -fsSL -o "/tmp/${MULL_PACKAGE}" \
+            "https://github.com/mull-project/mull/releases/download/${MULL_RELEASE}/${MULL_PACKAGE}"
+          sudo dpkg -i "/tmp/${MULL_PACKAGE}"
+
+      - name: Install PlatformIO and what reads the sweep's configuration
+        run: |
+          set -euo pipefail
+          python3 -m pip install --upgrade platformio pyyaml
+
+      - name: Report the toolchain the sweep resolved
+        # Printed before the sweep runs so that a mutant population which looks
+        # wrong can be read against the versions that produced it.
+        run: |
+          set -euo pipefail
+          cd firmware
+          python3 -c "import sys; sys.path.insert(0, 'tools'); import mull_toolchain, json; \
+            print(json.dumps({k: str(v) for k, v in mull_toolchain.resolved(warn=print).items()}, indent=2))"
+
+      - name: Sweep the plant model's arithmetic
+        run: |
+          set -euo pipefail
+          cd firmware
+          python3 tools/mull_sweep.py --project . --pio "$(command -v pio)"

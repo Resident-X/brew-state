@@ -132,7 +132,7 @@ task fw:test       # the control-logic and plant-model tests, and the tests cove
 task fw:run        # every host executable, against the descriptions its structure ships
 ```
 
-One more runs on demand rather than in the gate:
+Two more run on demand rather than in the gate:
 
 ```sh
 task fw:mutate                    # break each guarded property, require its check to notice
@@ -162,8 +162,64 @@ It is out of the gate because it answers a question — are these checks real �
 that does not change between commits the way the checks' own results do. Run it
 when a check is added or reworked.
 
+The second sweeps the plant model's arithmetic instead of the checks:
+
+```sh
+task fw:sweep                     # alter every comparison and operator, require a test to notice
+task fw:sweep -- --survivors-only # list what survived without judging it
+```
+
+Where `fw:mutate` breaks named properties one at a time, this generates the
+class those names are drawn from. Every comparison, arithmetic operator and
+increment in `src/plant/common` and `src/plant/thermoblock` is altered in turn
+and the suite is run against each alteration. The two answer different
+questions, and the difference is the point: a list of specific defects that are
+caught establishes exactly the members of the list, and says nothing about the
+defects nobody thought to write down.
+
+It needs LLVM 19 and the matching Mull package, which the ordinary gate does
+not, so the environments it compiles — `native_mutation` and
+`native_fixture_mutation` — declare `custom_mutation_sweep` in `platformio.ini`
+and are left alone by the gates covering every host build. Those gates say so
+when they skip one rather than passing over it silently. Both environments are
+swept because a mutant counts as caught when *any* suite kills it: the sources
+under `src/plant/common` are compiled into both structures' runners, and the
+refusal of a command on an unanswered channel can only be triggered against the
+fixture, which answers one channel of three.
+
+The sweep is the one host build compiled without the sanitizers, deliberately.
+A mutant that makes the program read out of bounds is stopped by
+AddressSanitizer whether or not a test asserts anything, and counting that as
+caught would credit the suite with noticing something the analysis noticed. The
+question here is what the tests catch, so it is asked with nothing else
+watching.
+
+A mutant no test kills is not a defect until somebody has decided it could be
+one. Some cannot change what the program does at all — a comparison at a
+boundary where both branches give the same value — and writing a test to kill
+one would mean asserting something untrue to move a number. So every survivor
+is accounted for by hand in `mutation_triage.yaml`, as `equivalent`, as a real
+`gap`, or as `analysis` for one whose only effect is a read or write outside
+something, which no assertion can see and the sanitized build aborts on. The
+sweep fails on a survivor nobody has judged, and reports it as an unreviewed
+count rather than as a defect count, because which of the two it is is exactly
+what has not been decided. It fails on a gap left standing, and on a judgement
+about a mutant it no longer finds — the code that judgement was made about has
+changed, so it has to be made again rather than carried forward.
+
+Its first run found six real gaps and they were closed by tests, not recorded:
+indented lines, a final line with no newline after it, the two refusals that
+quote a line, the declared bounds being admissible values rather than the first
+refused ones, and a value token longer than the loader can hold.
+
+`.github/workflows/mutation-sweep.yml` runs it on a hosted runner, started by
+hand for the same reason the task is. Nothing in the toolchain discovery names a
+Homebrew path, but a verification tool is only portable once it has run
+somewhere other than the machine it was written on.
+
 Set `PIO=/path/to/pio` if PlatformIO lives somewhere other than
-`~/.platformio/penv/bin/pio`.
+`~/.platformio/penv/bin/pio`, and `MULL_CLANG`, `MULL_IR_FRONTEND` or
+`MULL_RUNNER` if the mutation toolchain is somewhere the sweep does not look.
 
 ## What the checks enforce
 

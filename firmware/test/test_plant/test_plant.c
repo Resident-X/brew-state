@@ -586,6 +586,241 @@ static void test_an_empty_description_is_refused(void)
     TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
 }
 
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3: a name reached past leading
+ * blanks is the same name. A description written with its lines indented -- by
+ * a generator that lines values up, or by hand -- describes the same machine as
+ * one written flush left, and a loader that stopped trimming would refuse every
+ * line of it as unknown rather than say what was wrong. */
+static void test_leading_blanks_do_not_change_what_is_read(void)
+{
+    char indented[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    size_t used = 0u;
+
+    /* An indented comment too: the line is recognised as a comment only after
+     * the blanks in front of it have been stepped over. */
+    const int header = snprintf(indented, sizeof(indented), "   \t# an indented comment\n");
+    TEST_ASSERT_TRUE(header > 0);
+    used += (size_t)header;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written = snprintf(indented + used, sizeof(indented) - used, "  \t%s = %.9g\n",
+                                     NOMINAL[i].name, NOMINAL[i].value);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < sizeof(indented));
+    }
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(indented, used, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &loaded, sizeof(parameters));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3: the description is the span it
+ * was given and not a string. A file whose last line has no newline after it is
+ * ordinary, and the loader is told a length rather than left to find a
+ * terminator -- so the last line has to be read without stepping past the span
+ * to look for one. The byte after the span is set to something that is not a
+ * newline here, because a loader reading one character too far is invisible
+ * against a buffer that happens to hold the newline it was looking for. */
+static void test_a_final_line_without_a_newline_is_read(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    size_t used = describe(text, sizeof(text), SCALE_NOTHING, 1.0);
+
+    TEST_ASSERT_TRUE(used > 0u);
+    TEST_ASSERT_EQUAL_CHAR('\n', text[used - 1u]);
+    used--;
+    text[used] = '#';
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &loaded, sizeof(parameters));
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a line that is not a setting is
+ * refused, and the refusal quotes the line. The quoted text is the whole
+ * content of the report for a line with no separator -- there is no name to
+ * give -- so a report carrying the wrong span names the wrong thing to whoever
+ * has to fix the file. */
+static void test_a_line_with_no_separator_is_refused_quoting_the_line(void)
+{
+    static const char TEXT[] = "ambient_temperature_c 20\n";
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(TEXT, sizeof(TEXT) - 1u, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MALFORMED, fault.fault);
+    TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
+    TEST_ASSERT_EQUAL_STRING("ambient_temperature_c 20", fault.parameter);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a setting with no name is
+ * refused quoting the line, for the same reason -- an empty name is not a name
+ * the report could give instead. */
+static void test_a_setting_with_no_name_is_refused_quoting_the_line(void)
+{
+    static const char TEXT[] = "= 20\n";
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(TEXT, sizeof(TEXT) - 1u, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MALFORMED, fault.fault);
+    TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
+    TEST_ASSERT_EQUAL_STRING("= 20", fault.parameter);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: the bounds a structure declares
+ * are admissible values and not the first refused ones.
+ *
+ * The bisection further down finds whichever boundary the loader happens to
+ * enforce, and shows that it enforces one. That is a different claim from this.
+ * A loader refusing its own declared maximum would still have a boundary to
+ * find, one value away from the right one, and every property sampled inside
+ * the range would still pass. The declared bound itself is what a calibration
+ * tool writes out when a measurement lands at the end of the admissible span,
+ * so refusing it rejects a description the structure says is fine.
+ *
+ * Both bounds are learned through the seam by provoking a refusal, so nothing
+ * here duplicates a number the structure could change. */
+static void test_the_declared_bounds_are_themselves_admissible(void)
+{
+    char text[DESCRIPTION_MAX];
+    char token[32];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    /* brew.heater_power_w, far beyond the power any espresso machine draws, so
+     * the refusal reports the range rather than anything about this value. */
+    size_t used = describe_with(2u, "1e12", text, sizeof(text));
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+
+    const float bounds[] = {fault.minimum, fault.maximum};
+    TEST_ASSERT_TRUE(bounds[0] < bounds[1]);
+
+    /* Nine significant figures round-trip a single-precision value exactly, so
+     * what is offered back is the bound itself and not a neighbour of it. */
+    for (size_t i = 0u; i < sizeof(bounds) / sizeof(bounds[0]); i++) {
+        TEST_ASSERT_TRUE(snprintf(token, sizeof(token), "%.9g", (double)bounds[i]) > 0);
+        used = describe_with(2u, token, text, sizeof(text));
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+    }
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: the structure asks for far fewer
+ * parameters than the loader will admit.
+ *
+ * The loader caps how many parameters a structure may declare, because it
+ * tracks which ones were supplied in a fixed-width bitmask. Nothing else here
+ * approaches that cap, and several things quietly rely on nothing doing so --
+ * including the reading that a mutation of the cap's comparison cannot change
+ * what any build of this program does. That reading is only true while the
+ * structures stay well clear of it, so this asserts the clearance rather than
+ * leaving it as a property somebody would have to notice going away.
+ *
+ * The count is the test's own table, which the omission test above pins to the
+ * structure's: every name in it is one the structure requires, and omitting any
+ * one of them is refused. */
+static void test_the_structure_declares_far_fewer_parameters_than_the_loader_admits(void)
+{
+    /* Conservative: well under the cap, and well over what a machine this size
+     * plausibly grows to. Raising it is a decision, not a formality. */
+    TEST_ASSERT_TRUE(COEFFICIENT_COUNT <= 32u);
+}
+
+/* SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C4: a value token longer than the
+ * loader can hold is refused rather than copied.
+ *
+ * The loader parses a token by copying it into a fixed buffer first, so the
+ * length it will take is a boundary of its own -- one nothing else here
+ * approaches, since every other description is written by a generator that
+ * produces short numbers. A token at or past that length is the input that
+ * would overrun the buffer, and it is offered here across a span wide enough to
+ * sit either side of wherever the limit falls, so that no number naming the
+ * limit has to be repeated in this file to aim at it. */
+static void test_a_value_token_longer_than_the_loader_holds_is_refused(void)
+{
+    /* Comfortably past any buffer a token this short would be copied into. */
+    char token[256];
+
+    for (size_t length = 32u; length < sizeof(token) - 1u; length++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+
+        /*
+         * A number far outside any admissible range. Whether this is refused as
+         * unreadable or as out of range depends on whether the loader could
+         * hold it at all -- but refused it must be, at every length.
+         */
+        memset(token, '9', length);
+        token[length] = '\0';
+        size_t used = describe_with(2u, token, text, sizeof(text));
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_TRUE(fault.fault == PLANT_PARAMETER_MALFORMED ||
+                         fault.fault == PLANT_PARAMETER_OUT_OF_RANGE);
+
+        /*
+         * The nominal value of the same coefficient, padded out to the same
+         * length with zeros after a decimal point -- a different spelling of
+         * the same number. Magnitude cannot be what refuses this one, so its
+         * length is the only thing left under test. Where it is short enough to
+         * hold, the record that arrives has to be the one the nominal
+         * description produces: a loader that copied as much as it had room for
+         * and parsed that would read a truncation of the number and deliver a
+         * different coefficient without reporting anything.
+         */
+        int written = snprintf(token, sizeof(token), "%.9g", NOMINAL[2].value);
+        TEST_ASSERT_TRUE(written > 0);
+        size_t spelled = (size_t)written;
+        if (spelled >= length) {
+            continue;
+        }
+        if (strchr(token, '.') == NULL && strchr(token, 'e') == NULL) {
+            token[spelled++] = '.';
+        }
+        while (spelled < length) {
+            token[spelled++] = '0';
+        }
+        token[spelled] = '\0';
+
+        used = 0u;
+        for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+            if (i == 2u) {
+                written = snprintf(text + used, sizeof(text) - used, "%s = %s\n", NOMINAL[i].name,
+                                   token);
+            } else {
+                written = snprintf(text + used, sizeof(text) - used, "%s = %.9g\n", NOMINAL[i].name,
+                                   NOMINAL[i].value);
+            }
+            TEST_ASSERT_TRUE(written > 0);
+            used += (size_t)written;
+            TEST_ASSERT_TRUE(used < sizeof(text));
+        }
+
+        memset(&fault, 0, sizeof(fault));
+        if (plant_parameters_load(text, used, &loaded, &fault)) {
+            TEST_ASSERT_EQUAL_MEMORY(&parameters, &loaded, sizeof(parameters));
+        } else {
+            TEST_ASSERT_EQUAL(PLANT_PARAMETER_MALFORMED, fault.fault);
+        }
+    }
+}
+
 /* ---------------------------------------------------------------------------
  * Properties over the range each coefficient declares admissible.
  *
@@ -1368,6 +1603,13 @@ int main(void)
     RUN_TEST(test_an_unparsable_description_is_refused_at_its_line);
     RUN_TEST(test_a_refusal_leaves_the_record_untouched);
     RUN_TEST(test_an_empty_description_is_refused);
+    RUN_TEST(test_leading_blanks_do_not_change_what_is_read);
+    RUN_TEST(test_a_final_line_without_a_newline_is_read);
+    RUN_TEST(test_a_line_with_no_separator_is_refused_quoting_the_line);
+    RUN_TEST(test_a_setting_with_no_name_is_refused_quoting_the_line);
+    RUN_TEST(test_the_declared_bounds_are_themselves_admissible);
+    RUN_TEST(test_the_structure_declares_far_fewer_parameters_than_the_loader_admits);
+    RUN_TEST(test_a_value_token_longer_than_the_loader_holds_is_refused);
     RUN_TEST(test_every_declared_bound_is_enforced_at_its_edge);
     RUN_TEST(test_rest_stays_at_rest_across_the_declared_range);
     RUN_TEST(test_determinism_across_the_declared_range);
