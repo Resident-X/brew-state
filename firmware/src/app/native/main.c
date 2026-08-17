@@ -134,6 +134,19 @@ static void exercise_refused_descriptions(void)
         " = 12.0\n",
         "definitely.not.a.parameter = 1.0\n",
         "definitely.not.a.parameter = not-a-number\n",
+        /*
+         * A statement no description is entitled to make. This is the one
+         * annotation fault reachable without naming a coefficient, and naming
+         * one here would tie this exercise to a structure. The rest of the
+         * annotation grammar's refusals are driven by the model's own tests,
+         * which know what the structure they are built against has.
+         */
+        "@describes-a-machine\n",
+        /*
+         * An unknown coefficient carrying a well-formed origin. An annotation
+         * is not a way past the checks a line already faced.
+         */
+        "definitely.not.a.parameter = 1.0 @document a page nobody has\n",
     };
 
     for (size_t i = 0u; i < sizeof(refused) / sizeof(refused[0]); i++) {

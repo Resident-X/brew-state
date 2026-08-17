@@ -33,9 +33,12 @@ typedef struct {
 } coefficient_t;
 
 /*
- * Admissible, plausible, and describing no machine -- the same standing as the
- * descriptions under params/. What matters here is only that they are accepted
- * and that changing any one of them is visible.
+ * Admissible, plausible, and describing no machine. Deliberately not the
+ * reference machine's own figures, which live in the description under params/
+ * and are exercised on their own terms at the end of this file: what matters
+ * here is only that these are accepted and that changing any one of them is
+ * visible, and coupling that to the machine's numbers would mean every
+ * commissioned measurement edited a test.
  */
 static const coefficient_t NOMINAL[] = {
     {"ambient_temperature_c", 20.0},
@@ -1343,6 +1346,408 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
     }
 }
 
+/* --- The origin recorded against a value ---------------------------------- */
+
+/*
+ * Write the nominal description with an origin against every value, so that
+ * what is loaded differs from `valid_text` in nothing but the annotations.
+ * `kind` and `account` are what every line carries, which is what lets one
+ * malformed spelling be driven through a whole description at once.
+ */
+static size_t describe_with_origin(char *out, size_t capacity, const char *kind,
+                                   const char *account)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written = snprintf(out + used, capacity - used, "%s = %.9g @%s%s%s\n",
+                                     NOMINAL[i].name, NOMINAL[i].value, kind,
+                                     (account[0] != '\0') ? " " : "", account);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+static void load_expecting_success(const char *text, size_t length, plant_parameters_t *into)
+{
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    memset(into, 0, sizeof(*into));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, length, into, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
+static void test_an_origin_against_a_value_changes_nothing_that_is_read(void)
+{
+    char annotated[DESCRIPTION_MAX];
+    plant_parameters_t with_origins;
+
+    const size_t used =
+        describe_with_origin(annotated, sizeof(annotated), "document", "service manual p.24");
+    load_expecting_success(annotated, used, &with_origins);
+
+    /*
+     * Compared against the record the same coefficients produce unannotated:
+     * the account travels with the value in the file and reaches the record in
+     * nothing but its own absence.
+     */
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &with_origins, sizeof(parameters));
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
+static void test_two_accounts_of_the_same_value_read_the_same(void)
+{
+    char first[DESCRIPTION_MAX];
+    char second[DESCRIPTION_MAX];
+    plant_parameters_t from_first;
+    plant_parameters_t from_second;
+
+    load_expecting_success(first, describe_with_origin(first, sizeof(first), "document", "p.24"),
+                           &from_first);
+    load_expecting_success(
+        second,
+        describe_with_origin(second, sizeof(second), "estimated", "a comparable machine, at rest"),
+        &from_second);
+
+    TEST_ASSERT_EQUAL_MEMORY(&from_first, &from_second, sizeof(from_first));
+}
+
+/*
+ * One malformed annotation, driven through a description that is otherwise the
+ * valid one. Each case asserts the fault, the coefficient named, and that the
+ * caller's record is untouched -- the last because an annotation fault arriving
+ * after the value has been read is exactly where a half-filled record could
+ * escape.
+ */
+static void expect_origin_refusal(const char *kind, const char *account)
+{
+    char annotated[DESCRIPTION_MAX];
+    plant_parameters_t untouched;
+    plant_parameters_t before;
+    plant_parameter_error_t fault;
+
+    const size_t used = describe_with_origin(annotated, sizeof(annotated), kind, account);
+    memset(&untouched, 0xA5, sizeof(untouched));
+    before = untouched;
+    memset(&fault, 0, sizeof(fault));
+
+    TEST_ASSERT_FALSE(plant_parameters_load(annotated, used, &untouched, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_ORIGIN, fault.fault);
+    /* The first coefficient is where the description first goes wrong. */
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[0].name, fault.parameter);
+    TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
+    TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C3: an estimated value in the reference description is distinguishable from a measured one
+static void test_an_origin_of_an_undeclared_kind_is_refused(void)
+{
+    /*
+     * The kind is the whole of the estimated-versus-measured distinction, so a
+     * word nobody declared is refused rather than carried. `measured_ish` is
+     * the dangerous shape: it reads as a measurement to someone skimming and is
+     * one to nothing.
+     */
+    expect_origin_refusal("guessed", "a comparable machine");
+    expect_origin_refusal("measured_ish", "the bench, roughly");
+    expect_origin_refusal("Document", "p.24");
+    expect_origin_refusal("documented", "p.24");
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
+static void test_an_origin_with_no_kind_or_no_account_is_refused(void)
+{
+    /* A marker and nothing after it. */
+    expect_origin_refusal("", "");
+    /* A kind with nothing behind it is a label, not an account. */
+    expect_origin_refusal("document", "");
+    expect_origin_refusal("estimated", "");
+    expect_origin_refusal("measured", "");
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
+static void test_a_statement_the_description_cannot_make_is_refused(void)
+{
+    static const char *const CASES[] = {
+        "@describes-a-machine\n",
+        "@describes-no-machine-really\n",
+        "@\n",
+        "@ exempt\n",
+    };
+    char text[DESCRIPTION_MAX];
+
+    for (size_t i = 0u; i < sizeof(CASES) / sizeof(CASES[0]); i++) {
+        plant_parameters_t untouched;
+        plant_parameters_t before;
+        plant_parameter_error_t fault;
+        const int written = snprintf(text, sizeof(text), "%s", CASES[i]);
+        TEST_ASSERT_TRUE(written > 0);
+        const size_t used =
+            (size_t)written +
+            describe(text + written, sizeof(text) - (size_t)written, SCALE_NOTHING, 1.0);
+
+        memset(&untouched, 0xA5, sizeof(untouched));
+        before = untouched;
+        memset(&fault, 0, sizeof(fault));
+
+        TEST_ASSERT_FALSE(plant_parameters_load(text, used, &untouched, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_ORIGIN, fault.fault);
+        TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
+        TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+    }
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C2: every value in the reference description carries the origin of that value
+static void test_a_description_claiming_no_machine_is_read_like_any_other(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t exempt;
+
+    const int written = snprintf(text, sizeof(text), "@describes-no-machine\n");
+    TEST_ASSERT_TRUE(written > 0);
+    const size_t used =
+        (size_t)written +
+        describe(text + written, sizeof(text) - (size_t)written, SCALE_NOTHING, 1.0);
+
+    /*
+     * The statement exempts a description from accounting for its values; it
+     * does not change what the loader reads out of one. Which descriptions are
+     * entitled to carry it is settled where they live, not here.
+     */
+    load_expecting_success(text, used, &exempt);
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &exempt, sizeof(parameters));
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
+static void test_every_refusal_still_fires_on_a_line_carrying_an_origin(void)
+{
+    /*
+     * The worst outcome available to this slice is a grammar extension that
+     * quietly relaxed a refusal, because nothing else it asserts would notice.
+     * So each refusal the loader made before is driven again with a
+     * well-formed origin on the offending line: the annotation must not become
+     * a way past the check that would otherwise have caught the value.
+     */
+    static const struct {
+        const char *line;
+        plant_parameter_fault_t fault;
+        const char *parameter;
+        /*
+         * The coefficient the offending line supplies, left out of the
+         * description before it so that the fault under test is the one that
+         * fires. Null where the line names none, and for the duplicate case,
+         * which needs the coefficient present to be a duplicate of.
+         */
+        const char *displaces;
+    } CASES[] = {
+        /* A name this structure does not have. */
+        {"not.a.coefficient = 1.0 @document p.24\n", PLANT_PARAMETER_UNKNOWN, "not.a.coefficient",
+         NULL},
+        /* A value outside the range the structure declares. */
+        {"brew.thermal_mass_j_per_k = -5.0 @document p.24\n", PLANT_PARAMETER_OUT_OF_RANGE,
+         "brew.thermal_mass_j_per_k", "brew.thermal_mass_j_per_k"},
+        /* A value that is not a number at all. */
+        {"brew.heater_power_w = twelve @document p.24\n", PLANT_PARAMETER_MALFORMED,
+         "brew.heater_power_w", "brew.heater_power_w"},
+        /* A token with a second number behind it, before the annotation. */
+        {"brew.heater_power_w = 1.0 2.0 @document p.24\n", PLANT_PARAMETER_MALFORMED,
+         "brew.heater_power_w", "brew.heater_power_w"},
+        /* A not-a-number, which every comparison against a bound accepts. */
+        {"brew.loss_w_per_k = nan @estimated a comparable machine\n", PLANT_PARAMETER_OUT_OF_RANGE,
+         "brew.loss_w_per_k", "brew.loss_w_per_k"},
+        /* A coefficient given twice, annotated the second time. */
+        {"ambient_temperature_c = 21.0 @document p.24\n", PLANT_PARAMETER_DUPLICATE,
+         "ambient_temperature_c", NULL},
+        /* A line with no separator at all, carrying what looks like an origin. */
+        {"brew.heater_power_w 1200 @document p.24\n", PLANT_PARAMETER_MALFORMED,
+         "brew.heater_power_w 1200 @document p.24", NULL},
+        /* An empty name, which the marker does not excuse. */
+        {" = 1200 @document p.24\n", PLANT_PARAMETER_MALFORMED, "= 1200 @document p.24", NULL},
+    };
+
+    for (size_t i = 0u; i < sizeof(CASES) / sizeof(CASES[0]); i++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t untouched;
+        plant_parameters_t before;
+        plant_parameter_error_t fault;
+        size_t used = 0u;
+
+        /*
+         * The offending line follows an otherwise valid description, so nothing
+         * before it is what the refusal is about. Every line of that prefix
+         * carries an origin too: the refusal has to survive a description that
+         * is annotated throughout, not only one where the offending line is the
+         * single annotated one.
+         */
+        for (size_t c = 0u; c < COEFFICIENT_COUNT; c++) {
+            if (CASES[i].displaces != NULL &&
+                strcmp(NOMINAL[c].name, CASES[i].displaces) == 0) {
+                continue;
+            }
+            const int line = snprintf(text + used, sizeof(text) - used,
+                                      "%s = %.9g @document p.24\n", NOMINAL[c].name,
+                                      NOMINAL[c].value);
+            TEST_ASSERT_TRUE(line > 0);
+            used += (size_t)line;
+        }
+
+        const int written = snprintf(text + used, sizeof(text) - used, "%s", CASES[i].line);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+
+        memset(&untouched, 0xA5, sizeof(untouched));
+        before = untouched;
+        memset(&fault, 0, sizeof(fault));
+
+        TEST_ASSERT_FALSE(plant_parameters_load(text, used, &untouched, &fault));
+        TEST_ASSERT_EQUAL(CASES[i].fault, fault.fault);
+        TEST_ASSERT_EQUAL_STRING(CASES[i].parameter, fault.parameter);
+        TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+    }
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C6: every refusal the parameter loader already makes survives the grammar extension
+static void test_a_coefficient_omitted_from_an_annotated_description_is_still_refused(void)
+{
+    /*
+     * The refusal with no line to point at. An annotated description short of a
+     * coefficient is as incomplete as a bare one, and the origins it does carry
+     * buy it nothing.
+     */
+    for (size_t omitted = 0u; omitted < COEFFICIENT_COUNT; omitted++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t untouched;
+        plant_parameters_t before;
+        plant_parameter_error_t fault;
+        size_t used = 0u;
+
+        for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+            if (i == omitted) {
+                continue;
+            }
+            const int written =
+                snprintf(text + used, sizeof(text) - used, "%s = %.9g @document p.24\n",
+                         NOMINAL[i].name, NOMINAL[i].value);
+            TEST_ASSERT_TRUE(written > 0);
+            used += (size_t)written;
+        }
+
+        memset(&untouched, 0xA5, sizeof(untouched));
+        before = untouched;
+        memset(&fault, 0, sizeof(fault));
+
+        TEST_ASSERT_FALSE(plant_parameters_load(text, used, &untouched, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
+        TEST_ASSERT_EQUAL_STRING(NOMINAL[omitted].name, fault.parameter);
+        TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+    }
+}
+
+/* --- The reference machine's own description ------------------------------ */
+
+/* Room for the description on disk, which carries an account against every
+ * value and is therefore far longer than the ones built above. */
+#define REFERENCE_MAX 8192
+
+/*
+ * Read the description the build names, which is the file the reference
+ * machine's numbers live in rather than a copy of them.
+ */
+static size_t read_reference_description(char *out, size_t capacity)
+{
+    FILE *const handle = fopen(REFERENCE_DESCRIPTION_PATH, "rb");
+    TEST_ASSERT_NOT_NULL_MESSAGE(handle, "the reference description named by the build is absent");
+    const size_t used = fread(out, 1u, capacity - 1u, handle);
+    (void)fclose(handle);
+    /*
+     * A description that filled the buffer was truncated, and a truncated one
+     * would be refused for a reason that has nothing to do with the file.
+     */
+    TEST_ASSERT_TRUE(used > 0u);
+    TEST_ASSERT_TRUE(used < capacity - 1u);
+    out[used] = '\0';
+    return used;
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C4: the reference description is admissible to the structure it describes and advances a model instance
+/// SOL-PLANT-DESCRIPTION-BASELINE.C5: the host build and the model's tests run against the reference description
+static void test_the_reference_description_is_admissible_and_advances_a_model(void)
+{
+    char text[REFERENCE_MAX];
+    plant_parameters_t reference;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    float values[PLANT_QUANTITY_COUNT];
+
+    const size_t used = read_reference_description(text, sizeof(text));
+
+    /*
+     * Nothing missing, nothing outside the structure's declared ranges, and no
+     * line refused -- the annotations included, which is what makes the origins
+     * a property of a file the code actually reads rather than of a document
+     * beside it. This is what catches the description drifting from the code on
+     * the day the structure's coefficient set changes, which is otherwise
+     * silent because nothing else reads it.
+     */
+    memset(&reference, 0, sizeof(reference));
+    memset(&fault, 0, sizeof(fault));
+    if (!plant_parameters_load(text, used, &reference, &fault)) {
+        char message[192];
+        (void)snprintf(message, sizeof(message),
+                       "the reference description was refused: fault %d at line %u, coefficient "
+                       "'%s'",
+                       (int)fault.fault, (unsigned)fault.line, fault.parameter);
+        TEST_FAIL_MESSAGE(message);
+    }
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &reference));
+
+    /* Read through the seam rather than out of the record: what the instance
+     * started from is a quantity the model exposes, not a field to reach for. */
+    float initial[PLANT_QUANTITY_COUNT];
+    read_all(&model, initial);
+
+    for (int i = 0; i < TRAJECTORY_STEPS; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+    }
+
+    /* And it answers every quantity the seam enumerates, with a number. */
+    read_all(&model, values);
+    for (size_t quantity = 0u; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        TEST_ASSERT_TRUE(isfinite(values[quantity]));
+    }
+    /*
+     * The masses were driven for two minutes. A description that reached the
+     * model as zeroes, or an instance answering with its own initial state,
+     * would not have moved.
+     */
+    TEST_ASSERT_TRUE(values[PLANT_QUANTITY_BREW_TEMPERATURE_C] >
+                     initial[PLANT_QUANTITY_BREW_TEMPERATURE_C]);
+}
+
+/// SOL-PLANT-DESCRIPTION-BASELINE.C5: the host build and the model's tests run against the reference description
+static void test_the_reference_description_claims_a_machine(void)
+{
+    char text[REFERENCE_MAX];
+
+    (void)read_reference_description(text, sizeof(text));
+
+    /*
+     * The description these tests are run against is the one carrying the
+     * machine's own figures, not a placeholder that exempts itself. Were it to
+     * pick up the exemption, every value in it would stop owing an account and
+     * the check that reads it would fall silent while still passing -- so the
+     * suite that runs against it is where that is refused.
+     */
+    TEST_ASSERT_NULL_MESSAGE(strstr(text, "@describes-no-machine"),
+                             "the reference description exempts itself from carrying origins");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1375,5 +1780,15 @@ int main(void)
     RUN_TEST(test_a_short_step_against_a_long_time_constant_stays_accurate);
     RUN_TEST(test_the_corners_of_the_declared_range_stay_finite);
     RUN_TEST(test_the_corners_of_the_declared_range_stay_at_rest);
+    RUN_TEST(test_an_origin_against_a_value_changes_nothing_that_is_read);
+    RUN_TEST(test_two_accounts_of_the_same_value_read_the_same);
+    RUN_TEST(test_an_origin_of_an_undeclared_kind_is_refused);
+    RUN_TEST(test_an_origin_with_no_kind_or_no_account_is_refused);
+    RUN_TEST(test_a_statement_the_description_cannot_make_is_refused);
+    RUN_TEST(test_a_description_claiming_no_machine_is_read_like_any_other);
+    RUN_TEST(test_every_refusal_still_fires_on_a_line_carrying_an_origin);
+    RUN_TEST(test_a_coefficient_omitted_from_an_annotated_description_is_still_refused);
+    RUN_TEST(test_the_reference_description_is_admissible_and_advances_a_model);
+    RUN_TEST(test_the_reference_description_claims_a_machine);
     return UNITY_END();
 }

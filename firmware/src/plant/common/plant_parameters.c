@@ -14,6 +14,8 @@
  */
 #include "plant_model.h"
 
+#include "plant_origin.h"
+
 #include <errno.h>
 #include <math.h>
 #include <stdlib.h>
@@ -49,6 +51,66 @@ static void trim(const char **begin, const char **end)
     while (*end > *begin && is_blank(*(*end - 1))) {
         (*end)--;
     }
+}
+
+/*
+ * Whether [begin, end) is exactly `word`.
+ *
+ * The span is not terminated -- it points into the description -- so the length
+ * is compared as well as the bytes. A kind that merely starts with a declared
+ * word is not that kind.
+ */
+static bool spans_word(const char *begin, const char *end, const char *word)
+{
+    const size_t length = (size_t)(end - begin);
+    return strlen(word) == length && memcmp(word, begin, length) == 0;
+}
+
+/*
+ * Read the origin annotation occupying [begin, end), which the caller has
+ * established starts with the marker.
+ *
+ * An annotation is the marker, a kind from the declared vocabulary, and an
+ * account of where the figure came from -- and all three are required. An
+ * annotation carrying a kind and nothing else is refused rather than accepted
+ * as a bare label: the kind says how a figure was arrived at and the account
+ * says what it was arrived at from, and a value with the first and not the
+ * second cannot be reproduced or challenged, which is the whole point of
+ * recording it.
+ *
+ * What the account says is not judged here. Whether a citation is truthful, or
+ * the document it names exists, is a review question, and a parser that tried
+ * to answer it would refuse honest descriptions.
+ */
+static bool origin_is_admissible(const char *begin, const char *end)
+{
+    static const char *const words[] = PLANT_ORIGIN_KIND_WORDS;
+
+    const char *cursor = begin + 1; /* Past the marker. */
+    while (cursor < end && is_blank(*cursor)) {
+        cursor++;
+    }
+
+    const char *kind_end = cursor;
+    while (kind_end < end && !is_blank(*kind_end)) {
+        kind_end++;
+    }
+    if (kind_end == cursor) {
+        return false;
+    }
+
+    size_t kind = 0u;
+    while (kind < PLANT_ORIGIN_KIND_COUNT && !spans_word(cursor, kind_end, words[kind])) {
+        kind++;
+    }
+    if (kind == PLANT_ORIGIN_KIND_COUNT) {
+        return false;
+    }
+
+    const char *account_begin = kind_end;
+    const char *account_end = end;
+    trim(&account_begin, &account_end);
+    return account_begin != account_end;
 }
 
 static void report(plant_parameter_error_t *error, plant_parameter_fault_t fault, uint32_t line,
@@ -164,6 +226,28 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
             continue;
         }
 
+        /*
+         * A line that is nothing but a statement the description makes about
+         * itself. Only one such statement exists, and anything else in that
+         * position is refused rather than passed over: a marker that could be
+         * ignored when unrecognised would turn the whole annotation grammar
+         * into a second comment syntax, and a description exempting itself
+         * with a word this loader has never heard of would read as exempt to
+         * its author and as unaccounted-for to everything else.
+         */
+        if (*line_begin == PLANT_ORIGIN_MARKER) {
+            const char *statement_begin = line_begin + 1;
+            const char *statement_end = line_end;
+            trim(&statement_begin, &statement_end);
+            if (!spans_word(statement_begin, statement_end,
+                            PLANT_ORIGIN_NO_MACHINE_DECLARATION)) {
+                report(error, PLANT_PARAMETER_ORIGIN, line_number, line_begin,
+                       (size_t)(line_end - line_begin));
+                return false;
+            }
+            continue;
+        }
+
         const char *separator = line_begin;
         while (separator < line_end && *separator != '=') {
             separator++;
@@ -177,8 +261,19 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
         const char *name_begin = line_begin;
         const char *name_end = separator;
         trim(&name_begin, &name_end);
+        /*
+         * The value runs to the marker where one is present, and to the end of
+         * the line where it is not. Splitting here rather than after parsing is
+         * what keeps the value token what it always was: `1.0 @document p.24`
+         * offers the parser `1.0`, so the refusal of a token with a second
+         * number after it -- `1.0 2.0` -- is untouched by the extension.
+         */
+        const char *origin_begin = separator + 1;
+        while (origin_begin < line_end && *origin_begin != PLANT_ORIGIN_MARKER) {
+            origin_begin++;
+        }
         const char *value_begin = separator + 1;
-        const char *value_end = line_end;
+        const char *value_end = origin_begin;
         trim(&value_begin, &value_end);
 
         const size_t name_length = (size_t)(name_end - name_begin);
@@ -245,6 +340,24 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
             error->value = value;
             error->minimum = specs[index].minimum;
             error->maximum = specs[index].maximum;
+            return false;
+        }
+
+        /*
+         * The account is read after the value it belongs to, so a line whose
+         * value is wrong is reported as that rather than as an accounting
+         * fault: the substance of a line is refused before its provenance.
+         *
+         * Nothing is retained from it. Which values are accounted for, and
+         * whether the account is adequate, is settled where the description
+         * lives -- by the check that reads the file -- rather than by carrying
+         * strings into a record the target holds in memory. What this loader
+         * owes the property is that an account cannot be malformed and pass,
+         * because a description whose annotations are quietly skipped is a
+         * description with no annotations at all.
+         */
+        if (origin_begin != line_end && !origin_is_admissible(origin_begin, line_end)) {
+            report(error, PLANT_PARAMETER_ORIGIN, line_number, name_begin, name_length);
             return false;
         }
 

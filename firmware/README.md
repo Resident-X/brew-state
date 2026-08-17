@@ -47,6 +47,43 @@ question that needs a real machine. What is established here is that the numbers
 are replaceable, the equations are replaceable, and neither is reachable except
 through the seam.
 
+## Where a value in a description came from
+
+The design is reasoned against a description of the machine long before the
+machine has been measured, and the values in such a description are not all the
+same kind of fact. Some are read off a document, some are estimated because
+nothing states them, and later some will be measured on the bench. An estimate
+that cannot be told apart from a measurement is the more dangerous of the two,
+because it is trusted like the measurement it resembles.
+
+So a description that claims a real machine records, against each value and in
+the same file, how that figure was arrived at and what it was arrived at from:
+
+```
+brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the
+circuit diagram on p.24 of the service manual.
+```
+
+The kinds — `document`, `estimated`, `measured` — are declared once, in
+`include/plant_origin.h`, so a further one is a deliberate edit there rather than
+a word somebody typed into a description. Keeping the account beside the value
+rather than in a table next to it is what stops the two drifting apart: an
+estimate that has lost its provenance is trusted like the measurement it
+resembles, and nothing about a bare number reveals that its account has gone.
+
+A description that claims no machine at all says so, with `@describes-no-machine`
+on a line of its own, and that statement is what exempts it from accounting for
+its values — a number chosen because it differs from another has no origin to
+record. The exemption follows what a description claims rather than which
+structure it belongs to, so a machine-describing structure may still ship
+descriptions that claim nothing about one.
+
+The loader refuses a malformed annotation rather than skipping it, and
+`check_parameter_origins.py` fails the build on a value with no account behind
+it. A convention that depends on remembering is not a discipline: provenance
+decays under time pressure, adding one more coefficient, and the failure leaves
+no trace at the point of use.
+
 ## How far a structure has been verified
 
 Cheap to add is not the same as supported. Every structure here compiles, links
@@ -88,13 +125,14 @@ fails a check rather than the one that ships.
 | `include/machine_actuation.h` | The machine's actuation channels and the scale their levels are on, declared once for both seams. Owned by neither. |
 | `include/plant_types.h` | The vocabulary the plant seam is expressed in: quantities, actuation, parameter and step faults. |
 | `include/plant_support.h` | The one place the support-status vocabulary is declared. Names no structure. |
+| `include/plant_origin.h` | The one place the origin vocabulary is declared — how a value in a description was arrived at, and how a description says it claims no machine. Names no structure. |
 | `src/control/` | The control logic. Reaches hardware only through the seam. Identical in both builds. |
 | `src/hw/sim/` | The simulated implementation, and the controls tests use to stand readings up. |
 | `src/hw/stm32/` | The STM32 HAL-backed implementation. Naming vendor symbols is its job. |
 | `src/plant/common/` | Reads a parameter record from a description. One parser, every structure. Not a structure itself. |
 | `src/plant/thermoblock/` | The machine-describing structure: two heated masses, pump-driven brew pressure, steam pressure above saturation. |
 | `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
-| `params/` | Parameter descriptions. Read at run time; the build compiles none of them in. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. |
+| `params/` | Parameter descriptions, and the statement of what each represents. Read at run time; the build compiles none of them in. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. A description that claims a real machine accounts for every value it carries and is accompanied by `<structure>.md`, which says what those quantities are and how they relate. |
 | `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
 | `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |
@@ -177,13 +215,14 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_sanitizers.py` | A source of this project's own reaches a host artefact without the sanitizers, or without the strict warning settings in an environment that could scope them to this project's sources, or the executable links no sanitizer runtime — failures that otherwise pass silently. Covers every host environment the build declares. |
 | `check_direct_calls.py` | A seam call in a linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. Covers every host artefact the build declares. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
-| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h`, `plant_support.h` and `machine_actuation.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
+| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h`, `plant_support.h`, `plant_origin.h` and `machine_actuation.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one — or a structure in the tree is built by no environment at all, and so is checked by nothing. Covers every structure. |
 | `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, or naming two — builds anyway, or leaves an artefact behind. |
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
 | `check_actuation_declaration.py` | A structure declares no set of actuation channels, declares more than one, declares an empty one, or names a channel the machine's shared vocabulary does not carry. Runs inside every build, over every structure in the tree rather than the one the build selected. |
+| `check_parameter_origins.py` | A description that claims a real machine carries a value with no origin, an origin of a kind the vocabulary does not declare, or a kind with no account behind it; a coefficient the structure requires is absent from it; or its statement of what it represents has fallen behind the coefficients and quantities it has to name. Also fails a vocabulary that no longer separates an estimate from a measurement, and a tree in which every description exempts itself, since that inspects nothing. Runs inside every build, over every description in the tree rather than the one the build runs against. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 
 The plant model's invariants are additionally exercised across the range each

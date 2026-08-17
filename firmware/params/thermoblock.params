@@ -1,0 +1,34 @@
+# The reference machine's description, for the thermoblock structure.
+#
+# This is the description the design is established against, and it describes
+# the machine named in docs/reference-machine.md rather than the architecture in
+# general. Every value carries the origin of that value, because they are not
+# all the same kind of fact: two are read off the manufacturer's circuit
+# diagram, two are derived from steam tables, and the rest are estimates that
+# say what they were estimated from.
+#
+# Nothing here is measured. The machine has not been on the bench, so no value
+# claims it. Commissioning replaces these estimates one at a time, each becoming
+# a measured value with its own account, while the rest stand -- which is why
+# the origin sits against the value rather than at the top of the file.
+#
+# What these quantities mean, what they are carried in, and how they relate to
+# one another is stated in thermoblock.md beside this file. That statement is
+# part of the description; a list of numbers cannot be checked against a machine
+# on its own.
+
+ambient_temperature_c = 20.0 @estimated Assumed indoor ambient for the machine's AU/NZ domestic market. Nothing has been measured where the machine actually stands, and the value it settles from moves with the room.
+
+brew.thermal_mass_j_per_k = 320.0 @estimated From the coffee thermoblock's aluminium casting, taken as roughly 0.35 kg at 900 J/kg/K. The casting has not been weighed and its alloy is not stated in either manual.
+brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the circuit diagram on p.24 of the Sunbeam EM7000 service manual.
+brew.loss_w_per_k = 1.2 @estimated From the casting's exposed area under still-air convection, with no allowance for conduction into the chassis. Not measured, and the chassis path is the part most likely to be wrong.
+
+steam.thermal_mass_j_per_k = 360.0 @estimated From the steam thermochamber's casting, taken as slightly heavier than the coffee block's on the strength of the exploded views in the service manual. Neither casting has been weighed.
+steam.heater_power_w = 1000.0 @document Steam thermoblock element, read off the circuit diagram on p.24 of the Sunbeam EM7000 service manual. The two elements are equally rated.
+steam.loss_w_per_k = 1.5 @estimated By the same method as the coffee side, and larger because this mass runs far hotter and so drives a larger gradient into the same surroundings.
+
+pump.pressure_bar = 15.0 @document Ulka EP5 vibratory pump, the type fitted to the coffee side, rated 15 bar on the manufacturer's spec sheet. This is the pump's rating against a closed outlet; the pressure reaching the group during extraction is lower and is not established.
+brew.pressure_time_constant_s = 0.8 @estimated From comparable vibratory-pump machines of this architecture. The compliance and fill volume of this machine's brew path have not been measured, and this is the coefficient the extraction transient is most sensitive to.
+
+steam.saturation_temperature_c = 100.0 @document Saturation temperature of water at one atmosphere, from standard steam tables.
+steam.pressure_bar_per_k = 0.036 @document Derived from standard steam tables: the slope of saturation pressure with temperature just above 100 C is about 3.6 kPa/K. It is a local slope, so it understates pressure well above saturation.
