@@ -45,6 +45,21 @@ typedef struct {
 #endif
 """
 
+NEUTRAL_ACTUATION = """
+#ifndef MACHINE_ACTUATION_H
+#define MACHINE_ACTUATION_H
+#include <stdint.h>
+typedef enum {
+    ACTUATION_CHANNEL_HEATER = 0,
+    ACTUATION_CHANNEL_PUMP,
+    ACTUATION_CHANNEL_COUNT
+} actuation_channel_t;
+#define ACTUATION_FULL_SCALE 1000u
+typedef uint32_t actuation_channel_set_t;
+#define ACTUATION_CHANNEL_BIT(channel) ((actuation_channel_set_t)1u << (unsigned)(channel))
+#endif
+"""
+
 NEUTRAL_MODEL = """
 #ifndef PLANT_MODEL_H
 #define PLANT_MODEL_H
@@ -68,6 +83,7 @@ def structure_header(prefix: str) -> str:
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
 #include "plant_types.h"
+#define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER)
 typedef struct {{
     double {prefix}_coefficient;
 }} plant_parameters_t;
@@ -92,6 +108,7 @@ class SyntheticTree:
         self.source = os.path.join(self.root.name, "src")
         os.makedirs(self.include)
         os.makedirs(self.plant)
+        self._write(os.path.join(self.include, "machine_actuation.h"), NEUTRAL_ACTUATION)
         self._write(os.path.join(self.include, "plant_types.h"), NEUTRAL_TYPES)
         self._write(os.path.join(self.include, "plant_model.h"), NEUTRAL_MODEL)
         for name in structures:
@@ -1094,6 +1111,7 @@ class SupportTree:
         self.documentation = os.path.join(self.root.name, "README.md")
         os.makedirs(self.include)
         os.makedirs(self.plant)
+        write(os.path.join(self.include, "machine_actuation.h"), NEUTRAL_ACTUATION)
         write(os.path.join(self.include, "plant_types.h"), NEUTRAL_TYPES)
         write(os.path.join(self.include, "plant_model.h"), NEUTRAL_MODEL)
         write(os.path.join(self.include, "plant_support.h"), SUPPORT_VOCABULARY)
@@ -1435,6 +1453,187 @@ class DocumentationSaysWhatTheSourcesSay(SupportTreeCase):
         result = self.check(documentation=os.path.join(self.tree.root.name, "nowhere.md"))
         self.assertEqual(2, result.returncode)
         self.assertIn("no documentation", result.stderr)
+
+
+class ActuationTree:
+    """A temporary tree of structures and the actuation vocabulary they draw on."""
+
+    def __init__(self, structures: tuple[str, ...] = ("alpha", "beta")):
+        self.root = tempfile.TemporaryDirectory()
+        self.include = os.path.join(self.root.name, "include")
+        self.plant = os.path.join(self.root.name, "src", "plant")
+        os.makedirs(self.include)
+        os.makedirs(self.plant)
+        write(os.path.join(self.include, "machine_actuation.h"), NEUTRAL_ACTUATION)
+        write(os.path.join(self.include, "plant_types.h"), NEUTRAL_TYPES)
+        write(os.path.join(self.include, "plant_model.h"), NEUTRAL_MODEL)
+        for name in structures:
+            self.structure(name, "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER)")
+
+    def structure(self, name: str, declaration: str | None) -> str:
+        """Write one structure, optionally stating which channels it answers."""
+        directory = os.path.join(self.plant, name)
+        os.makedirs(directory, exist_ok=True)
+        body = structure_header(name).replace(
+            "#define PLANT_STRUCTURE_ACTUATION_CHANNELS "
+            "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER)\n",
+            "",
+        )
+        declarations = ""
+        if declaration is not None:
+            declarations += f"#define PLANT_STRUCTURE_ACTUATION_CHANNELS {declaration}\n"
+        path = os.path.join(directory, "plant_structure.h")
+        write(
+            path,
+            body.replace('#include "plant_types.h"\n', f'#include "plant_types.h"\n{declarations}'),
+        )
+        return path
+
+    def vocabulary(self, content: str) -> None:
+        """Replace the shared vocabulary, so a tree without one can be driven."""
+        write(os.path.join(self.include, "machine_actuation.h"), content)
+
+    def cleanup(self) -> None:
+        self.root.cleanup()
+
+
+class ActuationTreeCase(unittest.TestCase):
+    """A tree of structures and the vocabulary their declarations are drawn from."""
+
+    def setUp(self):
+        self.tree = ActuationTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def check(self, **overrides):
+        return run_check(
+            "check_actuation_declaration.py",
+            "--plant-root",
+            overrides.get("plant_root", self.tree.plant),
+            "--include-dir",
+            overrides.get("include_dir", self.tree.include),
+        )
+
+
+class StructureStatesWhatItAnswers(ActuationTreeCase):
+    """SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3: no structure reaches the seam
+    without saying which actuation channels it answers."""
+
+    def test_every_structure_stating_a_set_passes(self):
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_structure_stating_nothing_fails_and_names_it(self):
+        self.tree.structure("beta", None)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("beta", result.stderr)
+        self.assertIn("PLANT_STRUCTURE_ACTUATION_CHANNELS", result.stderr)
+
+    def test_a_structure_stating_two_sets_is_reported_rather_than_resolved(self):
+        self.tree.structure(
+            "beta",
+            "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER)\n"
+            "#define PLANT_STRUCTURE_ACTUATION_CHANNELS "
+            "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_PUMP)",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("2 times", result.stderr)
+
+    def test_a_declaration_the_preprocessor_discards_is_not_a_declaration(self):
+        self.tree.structure(
+            "beta",
+            "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER)\n#if 0\n"
+            "#define PLANT_STRUCTURE_ACTUATION_CHANNELS 0\n#endif",
+        )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_structure_answering_nothing_fails(self):
+        self.tree.structure("beta", "0u")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("names no channel", result.stderr)
+
+
+class DeclarationsStayInsideTheVocabulary(ActuationTreeCase):
+    """SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3: a declaration naming a channel
+    outside the shared set is refused."""
+
+    def test_a_channel_the_machine_does_not_have_fails_and_names_it(self):
+        self.tree.structure("beta", "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_GRINDER)")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("ACTUATION_CHANNEL_GRINDER", result.stderr)
+        self.assertIn("not a channel the machine has", result.stderr)
+
+    def test_the_terminating_count_is_not_a_channel(self):
+        self.tree.structure("beta", "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_COUNT)")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("counts the channels", result.stderr)
+
+    def test_naming_a_channel_twice_fails(self):
+        self.tree.structure(
+            "beta",
+            "(ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER) | "
+            "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER))",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("more than once", result.stderr)
+
+    def test_every_channel_of_the_vocabulary_is_answerable(self):
+        self.tree.structure(
+            "beta",
+            "(ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_HEATER) | "
+            "ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_PUMP))",
+        )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+
+class ACheckWithNothingToInspectFails(ActuationTreeCase):
+    """SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3: the check fails rather than
+    passes when it finds no structure to inspect."""
+
+    def test_a_tree_with_no_structures_is_an_error_not_a_pass(self):
+        result = self.check(plant_root=os.path.join(self.tree.root.name, "src", "empty"))
+        self.assertNotEqual(0, result.returncode)
+
+    def test_a_plant_root_holding_no_structure_is_an_error_not_a_pass(self):
+        empty = os.path.join(self.tree.root.name, "src", "nothing")
+        os.makedirs(empty, exist_ok=True)
+        result = self.check(plant_root=empty)
+        self.assertEqual(2, result.returncode)
+        self.assertIn("nothing to have stated", result.stderr)
+
+    def test_a_missing_vocabulary_is_an_error_not_a_pass(self):
+        result = self.check(include_dir=os.path.join(self.tree.root.name, "nowhere"))
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no vocabulary header", result.stderr)
+
+    def test_a_vocabulary_declaring_no_channel_type_is_an_error_not_a_pass(self):
+        self.tree.vocabulary("#define ACTUATION_FULL_SCALE 1000u\n")
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("declares no actuation_channel_t", result.stderr)
+
+    def test_a_vocabulary_without_a_terminating_count_is_an_error_not_a_pass(self):
+        self.tree.vocabulary(
+            "typedef enum { ACTUATION_CHANNEL_HEATER = 0 } actuation_channel_t;\n"
+        )
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("terminating ACTUATION_CHANNEL_COUNT", result.stderr)
+
+    def test_a_vocabulary_carrying_only_the_count_is_an_error_not_a_pass(self):
+        self.tree.vocabulary(
+            "typedef enum { ACTUATION_CHANNEL_COUNT = 0 } actuation_channel_t;\n"
+        )
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("declares no channel", result.stderr)
 
 
 if __name__ == "__main__":

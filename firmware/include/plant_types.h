@@ -33,6 +33,13 @@
 #include <stdint.h>
 
 /*
+ * The channels a step is taken under, and the scale their levels are expressed
+ * on. They are the machine's rather than this seam's, so they are included
+ * from the vocabulary both seams share rather than enumerated again here.
+ */
+#include "machine_actuation.h"
+
+/*
  * The quantities every plant structure exposes, in the units named. These are
  * the quantities the machine has, not the states a structure keeps: what a
  * structure carries internally to produce them is its own business, and two
@@ -46,19 +53,48 @@ typedef enum {
     PLANT_QUANTITY_COUNT
 } plant_quantity_t;
 
-/* The largest drive level an actuation field expresses, in parts per thousand. */
-#define PLANT_ACTUATION_FULL_SCALE 1000u
-
 /*
  * What is applied to the plant over one step, in parts per thousand of full
- * scale on each channel. The channels are the machine's, and correspond to the
- * output channels the hardware seam drives.
+ * scale on each channel. The levels are indexed by the machine's actuation
+ * channels, so a level and the channel it is for are one thing rather than a
+ * field and a convention about which channel it corresponds to.
  */
 typedef struct {
-    uint16_t brew_heater_permille;
-    uint16_t steam_heater_permille;
-    uint16_t pump_permille;
+    uint16_t level_permille[ACTUATION_CHANNEL_COUNT];
 } plant_actuation_t;
+
+/*
+ * Why a step was refused.
+ *
+ * The order these are checked in is fixed rather than left to the
+ * implementation, so a command with more than one thing wrong with it reports
+ * the same fault every time: the faults below are reported in the order they
+ * are declared, and within a fault the lowest-numbered offending channel is the
+ * one reported.
+ */
+typedef enum {
+    /* Nothing was wrong; the model advanced. */
+    PLANT_STEP_OK = 0,
+    /* The model or the actuation was null, or the model was never initialised. */
+    PLANT_STEP_NOT_STEPPABLE,
+    /* The interval was zero, so there is no span to advance over. */
+    PLANT_STEP_ZERO_INTERVAL,
+    /* A channel was commanded beyond ACTUATION_FULL_SCALE. */
+    PLANT_STEP_LEVEL_OVER_SCALE,
+    /* A channel this structure does not answer was commanded a non-zero level. */
+    PLANT_STEP_CHANNEL_UNANSWERED
+} plant_step_fault_t;
+
+/*
+ * What was wrong with a refused step. `channel` names the offending channel and
+ * is meaningful only for a fault that has one -- an over-scale level or an
+ * unanswered channel; it is ACTUATION_CHANNEL_COUNT for the others, which name
+ * no channel and must not be read as naming the first one.
+ */
+typedef struct {
+    plant_step_fault_t fault;
+    actuation_channel_t channel;
+} plant_step_error_t;
 
 /* The longest parameter name a refusal can report, including the terminator. */
 #define PLANT_PARAMETER_NAME_MAX 48

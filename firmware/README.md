@@ -85,7 +85,8 @@ fails a check rather than the one that ships.
 | --- | --- |
 | `include/hw_interface.h` | The hardware seam. Free functions, no vendor type, compiles freestanding. |
 | `include/plant_model.h` | The plant-model seam. Free functions, no structure named, no equation. |
-| `include/plant_types.h` | The vocabulary the plant seam is expressed in: quantities, actuation, parameter faults. |
+| `include/machine_actuation.h` | The machine's actuation channels and the scale their levels are on, declared once for both seams. Owned by neither. |
+| `include/plant_types.h` | The vocabulary the plant seam is expressed in: quantities, actuation, parameter and step faults. |
 | `include/plant_support.h` | The one place the support-status vocabulary is declared. Names no structure. |
 | `src/control/` | The control logic. Reaches hardware only through the seam. Identical in both builds. |
 | `src/hw/sim/` | The simulated implementation, and the controls tests use to stand readings up. |
@@ -98,6 +99,7 @@ fails a check rather than the one that ships.
 | `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |
 | `test/test_plant/` | The plant model exercised through the seam, naming no structure symbol. |
+| `test/test_plant_narrow/` | The seam driven against a structure answering fewer actuation channels than the machine has — the refusal of a command with nowhere to land, which a structure answering everything cannot exercise. |
 | `tools/` | The checks that make the seam's properties build failures rather than review notes. |
 
 The control logic behind the seam is a minimal path that reads a sensor,
@@ -175,12 +177,13 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_sanitizers.py` | A source of this project's own reaches a host artefact without the sanitizers, or without the strict warning settings in an environment that could scope them to this project's sources, or the executable links no sanitizer runtime — failures that otherwise pass silently. Covers every host environment the build declares. |
 | `check_direct_calls.py` | A seam call in a linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. Covers every host artefact the build declares. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
-| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h` and `plant_support.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
+| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h`, `plant_support.h` and `machine_actuation.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one — or a structure in the tree is built by no environment at all, and so is checked by nothing. Covers every structure. |
 | `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, or naming two — builds anyway, or leaves an artefact behind. |
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
+| `check_actuation_declaration.py` | A structure declares no set of actuation channels, declares more than one, declares an empty one, or names a channel the machine's shared vocabulary does not carry. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 
 The plant model's invariants are additionally exercised across the range each

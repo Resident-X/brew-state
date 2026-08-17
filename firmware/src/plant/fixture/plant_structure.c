@@ -31,9 +31,15 @@ void fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation
     if (model == NULL || actuation == NULL) {
         return;
     }
-    model->accumulated +=
-        model->coefficients.fixture_gain * (actuation->brew_heater_permille / PERMILLE_FULL_SCALE) *
-        seconds;
+    model->accumulated += model->coefficients.fixture_gain *
+                          (actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] /
+                           PERMILLE_FULL_SCALE) *
+                          seconds;
+}
+
+actuation_channel_set_t plant_structure_actuation_channels(void)
+{
+    return PLANT_STRUCTURE_ACTUATION_CHANNELS;
 }
 
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
@@ -48,15 +54,19 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     return true;
 }
 
-bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
-                      uint32_t interval_millis)
+bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *actuation,
+                                uint32_t interval_millis, plant_step_error_t *error)
 {
-    if (model == NULL || actuation == NULL || !model->initialised || interval_millis == 0u) {
+    if (error == NULL) {
         return false;
     }
-    if (actuation->brew_heater_permille > PLANT_ACTUATION_FULL_SCALE ||
-        actuation->steam_heater_permille > PLANT_ACTUATION_FULL_SCALE ||
-        actuation->pump_permille > PLANT_ACTUATION_FULL_SCALE) {
+    if (model == NULL || !model->initialised) {
+        error->fault = PLANT_STEP_NOT_STEPPABLE;
+        error->channel = ACTUATION_CHANNEL_COUNT;
+        return false;
+    }
+    if (!plant_step_admissible(actuation, interval_millis, PLANT_STRUCTURE_ACTUATION_CHANNELS,
+                               error)) {
         return false;
     }
 

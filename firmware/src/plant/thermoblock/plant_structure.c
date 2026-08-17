@@ -47,6 +47,11 @@ static const plant_parameter_spec_t SPECS[] = {
      offsetof(plant_parameters_t, steam_pressure_bar_per_k)},
 };
 
+actuation_channel_set_t plant_structure_actuation_channels(void)
+{
+    return PLANT_STRUCTURE_ACTUATION_CHANNELS;
+}
+
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
 {
     if (count != NULL) {
@@ -125,12 +130,14 @@ void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuatio
 
     model->brew_temperature_c = advanced_temperature(
         model->brew_temperature_c, p->ambient_temperature_c, p->brew_heater_power_w,
-        actuation->brew_heater_permille / PERMILLE_FULL_SCALE, p->brew_loss_w_per_k,
+        actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] / PERMILLE_FULL_SCALE,
+        p->brew_loss_w_per_k,
         p->brew_thermal_mass_j_per_k, seconds);
 
     model->steam_temperature_c = advanced_temperature(
         model->steam_temperature_c, p->ambient_temperature_c, p->steam_heater_power_w,
-        actuation->steam_heater_permille / PERMILLE_FULL_SCALE, p->steam_loss_w_per_k,
+        actuation->level_permille[ACTUATION_CHANNEL_STEAM_HEATER] / PERMILLE_FULL_SCALE,
+        p->steam_loss_w_per_k,
         p->steam_thermal_mass_j_per_k, seconds);
 }
 
@@ -144,7 +151,8 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
     const plant_parameters_t *p = &model->coefficients;
 
     const float commanded_bar =
-        p->pump_pressure_bar * (actuation->pump_permille / PERMILLE_FULL_SCALE);
+        p->pump_pressure_bar *
+        (actuation->level_permille[ACTUATION_CHANNEL_PUMP] / PERMILLE_FULL_SCALE);
     /* The same relaxation the thermal masses use, through the same expression:
      * the shortest admissible time constant is far below the step lengths a
      * caller may use, and taking the rate as constant across the step would
@@ -180,15 +188,19 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     return true;
 }
 
-bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
-                      uint32_t interval_millis)
+bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *actuation,
+                                uint32_t interval_millis, plant_step_error_t *error)
 {
-    if (model == NULL || actuation == NULL || !model->initialised || interval_millis == 0u) {
+    if (error == NULL) {
         return false;
     }
-    if (actuation->brew_heater_permille > PLANT_ACTUATION_FULL_SCALE ||
-        actuation->steam_heater_permille > PLANT_ACTUATION_FULL_SCALE ||
-        actuation->pump_permille > PLANT_ACTUATION_FULL_SCALE) {
+    if (model == NULL || !model->initialised) {
+        error->fault = PLANT_STEP_NOT_STEPPABLE;
+        error->channel = ACTUATION_CHANNEL_COUNT;
+        return false;
+    }
+    if (!plant_step_admissible(actuation, interval_millis, PLANT_STRUCTURE_ACTUATION_CHANNELS,
+                               error)) {
         return false;
     }
 

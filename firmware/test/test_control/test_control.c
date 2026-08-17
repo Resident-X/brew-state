@@ -45,7 +45,7 @@ static void test_reading_reaches_the_control_logic_through_the_seam(void)
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
 
     /* 50 degrees below the setpoint at 40 permille per degree saturates the drive. */
-    TEST_ASSERT_EQUAL_UINT16(HW_OUTPUT_FULL_SCALE, hw_sim_output(HW_OUTPUT_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(ACTUATION_FULL_SCALE, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 }
 
 /* SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C3: a drive command issued by the control
@@ -55,12 +55,12 @@ static void test_drive_level_falls_as_the_reading_approaches_the_setpoint(void)
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, CONTROL_BREW_SETPOINT_MILLI_C - 5000);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
-    TEST_ASSERT_EQUAL_UINT16(200u, hw_sim_output(HW_OUTPUT_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(200u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, CONTROL_BREW_SETPOINT_MILLI_C);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
-    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(HW_OUTPUT_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 }
 
 /* SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C2: the drive level the control logic
@@ -73,8 +73,8 @@ static void test_drive_level_stays_within_full_scale_at_extremes(void)
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, readings[i]);
         hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
         TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
-        TEST_ASSERT_LESS_OR_EQUAL_UINT16(HW_OUTPUT_FULL_SCALE,
-                                         hw_sim_output(HW_OUTPUT_BREW_HEATER));
+        TEST_ASSERT_LESS_OR_EQUAL_UINT16(ACTUATION_FULL_SCALE,
+                                         hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
     }
 }
 
@@ -85,13 +85,13 @@ static void test_invalid_reading_de_energises_and_latches(void)
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_SENSOR_INVALID, control_step(&state));
-    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(HW_OUTPUT_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 
     /* A good reading afterwards does not un-latch the fault. */
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
-    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(HW_OUTPUT_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 }
 
 /* SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C4: a refused drive command is an error
@@ -154,8 +154,8 @@ static void test_initialisation_commands_the_heater_off(void)
 {
     hw_sim_reset();
     TEST_ASSERT_TRUE(control_init(&state));
-    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(HW_OUTPUT_BREW_HEATER));
-    TEST_ASSERT_EQUAL_UINT32(1u, hw_sim_output_write_count(HW_OUTPUT_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT32(1u, hw_sim_output_write_count(ACTUATION_CHANNEL_BREW_HEATER));
 }
 
 /* SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C4: a null state is a plausible defect in
@@ -173,8 +173,8 @@ static void test_out_of_range_channels_are_refused_by_the_seam(void)
     const hw_reading_t reading = hw_sensor_read((hw_sensor_channel_t)HW_SENSOR_CHANNEL_COUNT);
     TEST_ASSERT_FALSE(reading.valid);
 
-    TEST_ASSERT_FALSE(hw_output_set((hw_output_channel_t)HW_OUTPUT_CHANNEL_COUNT, 0u));
-    TEST_ASSERT_FALSE(hw_output_set(HW_OUTPUT_PUMP, HW_OUTPUT_FULL_SCALE + 1u));
+    TEST_ASSERT_FALSE(hw_output_set((hw_output_channel_t)ACTUATION_CHANNEL_COUNT, 0u));
+    TEST_ASSERT_FALSE(hw_output_set(ACTUATION_CHANNEL_PUMP, ACTUATION_FULL_SCALE + 1u));
 }
 
 /* SOL-CONTROL-HARDWARE-SEAM-HOST-SIM.C1: the seam's clock is monotonic, which
@@ -190,9 +190,56 @@ static void test_seam_clock_never_goes_backwards(void)
     }
 }
 
+/// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7: The structures and the control
+/// logic behave identically after the vocabulary is unified.
+static void test_the_control_logic_drives_what_it_drove_before_the_vocabulary_was_unified(void)
+{
+    /*
+     * A climb from cold to past the setpoint, and what the control logic drove
+     * on the brew heater at each reading -- recorded from the build as it stood
+     * before the two seams' channel enumerations were replaced by one, and
+     * carried here as values. Regenerating them from this build would compare
+     * the change with itself and pass whatever it did to the control law.
+     *
+     * The write counts are here for the same reason as the levels: a change
+     * that drove the right level a different number of times would be a change
+     * to what reaches the hardware, and the levels alone would not show it.
+     */
+    static const int32_t READINGS[] = {
+        0, 20000, 60000, 68000, 68001, 80000, 88500, 92999, 93000, 95000,
+    };
+    static const uint16_t LEVELS[] = {
+        1000u, 1000u, 1000u, 1000u, 960u, 520u, 160u, 0u, 0u, 0u,
+    };
+    /* Initialisation commands the heater off, so the first step is the second write. */
+    static const uint32_t WRITES[] = {2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u};
+
+    for (size_t i = 0u; i < sizeof(READINGS) / sizeof(READINGS[0]); i++) {
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, READINGS[i]);
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
+        TEST_ASSERT_EQUAL_UINT16(LEVELS[i], hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+        TEST_ASSERT_EQUAL_UINT32(WRITES[i],
+                                 hw_sim_output_write_count(ACTUATION_CHANNEL_BREW_HEATER));
+    }
+
+    /* And the refusals, which are part of what the control logic does with the seam. */
+    TEST_ASSERT_EQUAL(CONTROL_STEP_TOO_SOON, control_step(&state));
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_SENSOR_INVALID, control_step(&state));
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT32(13u, hw_sim_output_write_count(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT32(12u, state.step_count);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_the_control_logic_drives_what_it_drove_before_the_vocabulary_was_unified);
     RUN_TEST(test_control_runs_against_the_simulated_implementation);
     RUN_TEST(test_reading_reaches_the_control_logic_through_the_seam);
     RUN_TEST(test_drive_level_falls_as_the_reading_approaches_the_setpoint);

@@ -32,6 +32,18 @@
 #define PLANT_STRUCTURE_SUPPORT_STATUS PLANT_SUPPORT_UNVERIFIED
 
 /*
+ * Every channel the machine has. This architecture heats two masses
+ * independently and drives a pump, so there is no channel of the vocabulary it
+ * leaves unanswered -- which is a property of this architecture rather than of
+ * structures in general, and is why the refusal of an unanswered channel cannot
+ * be demonstrated against this one.
+ */
+#define PLANT_STRUCTURE_ACTUATION_CHANNELS                                        \
+    (ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER) |                       \
+     ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_STEAM_HEATER) |                      \
+     ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_PUMP))
+
+/*
  * Every coefficient this structure uses. There is no number in the equations
  * that is not read from here, apart from unit conversions and the constants of
  * the integration itself, which are properties of the equations rather than of

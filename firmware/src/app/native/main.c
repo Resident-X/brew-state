@@ -50,7 +50,7 @@ static void exercise_actuating_steps(control_state_t *state)
         hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
         expect(control_step(state) == CONTROL_STEP_ACTUATED, "an actuating step did not actuate");
     }
-    expect(hw_sim_output(HW_OUTPUT_BREW_HEATER) > 0u, "the heater was never driven");
+    expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) > 0u, "the heater was never driven");
 }
 
 static void exercise_early_step(control_state_t *state)
@@ -63,7 +63,7 @@ static void exercise_invalid_sensor(control_state_t *state)
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     expect(control_step(state) == CONTROL_STEP_SENSOR_INVALID, "an invalid reading was accepted");
-    expect(hw_sim_output(HW_OUTPUT_BREW_HEATER) == 0u, "the heater stayed on through a fault");
+    expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) == 0u, "the heater stayed on through a fault");
 }
 
 static void exercise_refused_output(void)
@@ -170,25 +170,55 @@ static void exercise_plant(const char *parameter_path)
     plant_model_t model;
     expect(plant_model_init(&model, &parameters), "the plant model could not be initialised");
 
-    const plant_actuation_t heating = {
-        .brew_heater_permille = PLANT_ACTUATION_FULL_SCALE,
-        .steam_heater_permille = PLANT_ACTUATION_FULL_SCALE,
-        .pump_permille = PLANT_ACTUATION_FULL_SCALE / 2u,
-    };
+    /*
+     * Drive what the structure this artefact was built against says it answers,
+     * read through the seam rather than assumed: the two artefacts this exercise
+     * is run as are built against structures that answer different channels, and
+     * commanding a channel a structure does not answer is refused rather than
+     * absorbed.
+     */
+    const actuation_channel_set_t answered = plant_structure_actuation_channels();
+    plant_actuation_t heating = {{0u}};
+    for (unsigned channel = 0u; channel < (unsigned)ACTUATION_CHANNEL_COUNT; channel++) {
+        if ((answered & ACTUATION_CHANNEL_BIT(channel)) == 0u) {
+            continue;
+        }
+        heating.level_permille[channel] =
+            (channel == (unsigned)ACTUATION_CHANNEL_PUMP) ? ACTUATION_FULL_SCALE / 2u
+                                                          : ACTUATION_FULL_SCALE;
+    }
     for (int i = 0; i < EXERCISE_STEPS; i++) {
         expect(plant_model_step(&model, &heating, PLANT_STEP_INTERVAL_MS),
                "a plant step was refused");
     }
 
-    /* A step the seam must refuse, so that path is executed too. */
-    const plant_actuation_t over_scale = {
-        .brew_heater_permille = PLANT_ACTUATION_FULL_SCALE + 1u,
-        .steam_heater_permille = 0u,
-        .pump_permille = 0u,
-    };
-    expect(!plant_model_step(&model, &over_scale, PLANT_STEP_INTERVAL_MS),
+    /* Steps the seam must refuse, so those paths are executed too. */
+    plant_actuation_t over_scale = {{0u}};
+    over_scale.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = ACTUATION_FULL_SCALE + 1u;
+    plant_step_error_t refusal;
+    expect(!plant_model_step_reporting(&model, &over_scale, PLANT_STEP_INTERVAL_MS, &refusal),
            "an out-of-scale actuation was accepted");
+    expect(refusal.fault == PLANT_STEP_LEVEL_OVER_SCALE,
+           "an out-of-scale actuation was refused for the wrong reason");
     expect(!plant_model_step(&model, &heating, 0u), "a zero-length step was accepted");
+
+    /*
+     * The unanswered-channel path, on the artefacts whose structure leaves one
+     * unanswered. A structure that answers everything cannot exercise it, and
+     * pretending otherwise here would report a path as run that was not.
+     */
+    for (unsigned channel = 0u; channel < (unsigned)ACTUATION_CHANNEL_COUNT; channel++) {
+        if ((answered & ACTUATION_CHANNEL_BIT(channel)) != 0u) {
+            continue;
+        }
+        plant_actuation_t unanswered = {{0u}};
+        unanswered.level_permille[channel] = ACTUATION_FULL_SCALE;
+        expect(!plant_model_step_reporting(&model, &unanswered, PLANT_STEP_INTERVAL_MS, &refusal),
+               "a command on an unanswered channel was accepted");
+        expect(refusal.fault == PLANT_STEP_CHANNEL_UNANSWERED &&
+                   (unsigned)refusal.channel == channel,
+               "a refused command did not name the channel that had nowhere to land");
+    }
 
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
         float value = 0.0f;
