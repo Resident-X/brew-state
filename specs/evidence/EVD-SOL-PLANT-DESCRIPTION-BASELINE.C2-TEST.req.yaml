@@ -1,0 +1,21 @@
+id: EVD-SOL-PLANT-DESCRIPTION-BASELINE.C2-TEST
+type: evidence
+title: Every value in the reference description accounts for itself, and the check refuses one that does not (SOL-PLANT-DESCRIPTION-BASELINE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T05:56:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::EveryValueAccountsForItself,ExemptionIsClaimedRatherThanAssumed,TheCheckStopsRatherThanReportingSuccess
+text: |-
+  All eleven coefficients in firmware/params/thermoblock.params carry an origin on the value's own line, so the account cannot be separated from the figure by a copy or a move. check_parameter_origins.py fails a coefficient with no origin and names it, an origin with no account behind it, and a coefficient the structure requires that the description omits.
+
+  The vacuous cases are refused rather than passed: no descriptions, no vocabulary, no marker, no exemption statement, an empty plant root, a structure with no parameter table, and a tree in which every description exempts itself. So is a description a build is exercised against that exempts itself, or that this check never opened -- read from the build file rather than named, so the guard cannot be aimed at the wrong file. Reading the build is not droppable in silence either: --project or --no-build must be said.
+
+  Exemption is claimed rather than assumed -- ExemptionIsClaimedRatherThanAssumed shows a description exempting itself with the declared statement and a statement it is not entitled to make being refused. The loader half is pinned by test_a_description_claiming_no_machine_is_read_like_any_other in firmware/test/test_plant/test_plant.c. task fw:mutate: a-value-loses-its-origin and the-reference-description-exempts-itself are both caught by the parameter origins check.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE.C2
+    type: satisfies

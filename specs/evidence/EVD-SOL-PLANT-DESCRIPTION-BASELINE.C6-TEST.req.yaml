@@ -1,0 +1,23 @@
+id: EVD-SOL-PLANT-DESCRIPTION-BASELINE.C6-TEST
+type: evidence
+title: Every refusal the parameter loader already made survives the grammar extension (SOL-PLANT-DESCRIPTION-BASELINE.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T05:57:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_every_refusal_still_fires_on_a_line_carrying_an_origin,test_a_coefficient_omitted_from_an_annotated_description_is_still_refused,test_an_annotated_refusal_still_reports_the_range_it_was_outside,test_an_origin_with_no_kind_or_no_account_is_refused,test_a_statement_the_description_cannot_make_is_refused
+text: |-
+  The tests that pinned the loader's refusals before this change run unchanged against the extended grammar -- they are byte-identical in the diff, and none was adjusted to suit it.
+
+  Each of those refusals is then driven again with a well-formed origin on the offending line, against a description annotated throughout: a name the structure does not have, a value outside its declared range, a value that is not a number, a token with a second number before the annotation, a not-a-number, a coefficient given twice, a line with no separator, an empty name, and an empty value whose line carries only an account. Every one is still refused, with the same fault, still naming the coefficient at fault, still leaving the caller's record untouched, and still substituting no default. A coefficient omitted from an annotated description is still refused as missing, driven for each of the eleven in turn. An annotated out-of-range refusal still reports the value that arrived and the bounds it missed, so a regression that kept the refusal and stopped populating them fails.
+
+  An origin annotation that is itself malformed is refused on the same terms rather than skipped as though it were a comment -- no kind after the marker, a kind nobody declared, a kind with no account -- and so is a statement no description is entitled to make. Splitting the value at the marker before parsing is what leaves the value token what it always was.
+
+  task fw:mutate exercises both halves against the real sources: an-origin-with-no-account-accepted and a-statement-the-description-cannot-make-ignored are each caught by the model's tests, and all 42 defects in the harness are caught.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE.C6
+    type: satisfies

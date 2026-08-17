@@ -1,0 +1,19 @@
+id: EVD-SOL-PLANT-DESCRIPTION-BASELINE.C1-TEST
+type: evidence
+title: The statement names every quantity and coefficient the description carries (SOL-PLANT-DESCRIPTION-BASELINE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T05:56:41Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::TheStatementNamesWhatTheDescriptionCarries
+text: |-
+  firmware/params/thermoblock.md states, for every quantity the seam exposes and every state the thermoblock structure integrates, the physical thing it stands for and the unit it is carried in; the relations linking them with the coefficient entering each; and eleven explicit omissions, from water flow through to the assumed model error that is required elsewhere.
+
+  TheStatementNamesWhatTheDescriptionCarries drives the drift the statement is exposed to against synthetic trees: a missing statement, a statement omitting a coefficient the structure requires, and one omitting a quantity the seam enumerates each fail the build-time check and name what is absent. task fw:mutate exercises the same property against the real statement -- the-statement-falls-behind-the-description removes the loss coefficients' row and is caught by the parameter origins check.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE.C1
+    type: satisfies

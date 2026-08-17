@@ -1,0 +1,21 @@
+id: EVD-SOL-PLANT-DESCRIPTION-BASELINE.C4-TEST
+type: evidence
+title: The reference description is admissible to the thermoblock structure and advances a model instance (SOL-PLANT-DESCRIPTION-BASELINE.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T05:57:24Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_reference_description_is_admissible_and_advances_a_model
+text: |-
+  The test reads firmware/params/thermoblock.params off disk -- the file itself, through the path the build names, not a copy of its values -- and loads it into the thermoblock structure. It asserts no coefficient missing, none outside the range that structure declares admissible for it, and no line refused, the origin annotations included. A refusal reports the fault, line and coefficient rather than a bare failure.
+
+  A model instance initialised from that record then advances over 1200 steps of 100 ms under simultaneous heating and pumping, every step returning true, and answers every quantity the seam enumerates with a finite value. Brew temperature is required to have risen above where the instance started, read back through the seam rather than out of the record, so a description arriving as zeroes or an instance answering with its own initial state fails.
+
+  This is what catches the description drifting from the code on the day the structure's coefficient set changes, which is otherwise silent because nothing else reads the file that closely.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE.C4
+    type: satisfies

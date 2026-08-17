@@ -1,0 +1,21 @@
+id: EVD-SOL-PLANT-DESCRIPTION-BASELINE.C3-TEST
+type: evidence
+title: An estimated value is told from a measured one, and a kind nobody declared is refused (SOL-PLANT-DESCRIPTION-BASELINE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-17T05:57:12Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_an_origin_of_an_undeclared_kind_is_refused,test_a_description_mixing_the_kinds_is_read_like_any_other; firmware/tools/tests/test_plant_checks.py::AnEstimateIsToldFromAMeasurement
+text: |-
+  The vocabulary is declared once, in firmware/include/plant_origin.h: document, estimated, measured. Both readers take it from there -- the loader through PLANT_ORIGIN_KIND_WORDS, the check by parsing the header -- and a static assertion ties the word list's length to the enum so the two halves cannot disagree silently.
+
+  test_an_origin_of_an_undeclared_kind_is_refused drives descriptions that mislabel a kind and requires each to be refused: an invented word, a differently-cased one, a near-miss, and measured_ish -- the dangerous shape, which reads as a measurement to someone skimming and is one to nothing. AnEstimateIsToldFromAMeasurement does the same through the build check, and additionally fails a vocabulary that has renamed measured to trusted or grown a fourth kind, since either moves where the line between an estimate and a measurement falls.
+
+  As it ships nothing in the reference description claims to be measured, because the machine has not been on the bench. The distinction is asserted against the mixture commissioning produces rather than only against today's state: test_a_description_mixing_the_kinds_is_read_like_any_other loads a description carrying all three kinds at once and requires the record to be the one the unannotated description gives. task fw:mutate: an-estimate-labelled-with-a-word-nobody-declared and origin-vocabulary-grows-a-distinction are both caught.
+links:
+  - target: SOL-PLANT-DESCRIPTION-BASELINE.C3
+    type: satisfies
