@@ -4,7 +4,7 @@ category: task
 title: The steam loop holds its character for the whole draw in simulation
 status: active
 level: task
-version: 1
+version: 2
 text: |
   In simulation against the estimated plant model, steam properties stay within band for the whole of a draw regardless of its duration, delivery is prevented until the steam side can sustain it, demand beyond capacity reduces delivered quantity before delivered quality, and the steam side returns to a ready state after a draw without operator action.
 rationale: |
@@ -14,6 +14,10 @@ rationale: |
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
+  - target: DEL-SIM-ESTIMATOR
+    type: depends-on
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: depends-on
   - target: REQ-STEAM-DELIVERY-001.C1
     type: targets
   - target: REQ-STEAM-DELIVERY-001.C2
@@ -22,7 +26,5 @@ links:
     type: targets
   - target: REQ-STEAM-DELIVERY-001.C4
     type: targets
-  - target: DEL-SIM-ESTIMATOR
-    type: depends-on
-  - target: DEL-SIM-UNCERTAINTY-BUDGET
-    type: depends-on
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets

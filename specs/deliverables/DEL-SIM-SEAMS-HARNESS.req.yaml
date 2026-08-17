@@ -4,7 +4,7 @@ category: epic
 title: Seams, the plant description, and the host verification tier
 status: active
 level: epic
-version: 2
+version: 3
 text: |
   The control logic reaches hardware only through a named interface, and the plant structure sits behind its own named interface with plant parameters carried as data. A structure behind that interface says what it is: which of the machine's actuation channels it answers, and whether any hardware has verified it. The reference machine's plant description is populated behind that seam, and the host verification tier exercises the whole under memory and undefined-behaviour analysis with the target absent entirely.
 rationale: |
@@ -38,15 +38,13 @@ links:
     type: targets
   - target: REQ-MODEL-STRUCTURE-SEAM-001.C4
     type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C5
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C6
+    type: targets
   - target: REQ-PLANT-DESCRIPTION-001.C1
     type: targets
   - target: REQ-PLANT-DESCRIPTION-001.C2
     type: targets
   - target: REQ-PLANT-DESCRIPTION-001.C3
-    type: targets
-  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
-    type: targets
-  - target: REQ-MODEL-STRUCTURE-SEAM-001.C5
-    type: targets
-  - target: REQ-MODEL-STRUCTURE-SEAM-001.C6
     type: targets
