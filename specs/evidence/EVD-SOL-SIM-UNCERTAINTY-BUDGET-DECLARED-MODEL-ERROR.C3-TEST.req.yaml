@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3-TEST
+type: evidence
+title: Verification of SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3 by test
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c test_every_refusal_still_fires_on_a_line_carrying_an_assumed_error plus the assumed-error refusal tests; every pre-existing refusal test passes unmodified
+  artifact_version: 27c9c11637397f52eb518acb681be9b767ae03f6
+  verifier: david
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3
+    type: satisfies

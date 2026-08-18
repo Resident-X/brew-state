@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2-TEST
+type: evidence
+title: Verification of SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2 by test
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c and firmware/test/test_plant_boiler/test_plant_boiler.c budget-through-the-seam tests; the accessor answers for every coefficient without a structure header, refuses an unknown name and a never-loaded record
+  artifact_version: 27c9c11637397f52eb518acb681be9b767ae03f6
+  verifier: david
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C5-TEST
+type: evidence
+title: Verification of SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C5 by test
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:verify exit 0 across native, native_fixture and native_boiler; mull_sweep 183 mutants with 172 killed and 11 survivors all accounted for; mutate.py reports 52 defects each caught
+  artifact_version: 27c9c11637397f52eb518acb681be9b767ae03f6
+  verifier: david
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C5
+    type: satisfies

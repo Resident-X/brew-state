@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The assumed model error and the behaviours that must survive it are declared
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |
