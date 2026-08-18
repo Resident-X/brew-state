@@ -1,0 +1,18 @@
+id: SOL-LINT-SWEEP-PROJECT-FIT.C5
+type: criterion
+title: The sweep's remaining warnings are accounted for rather than counted down
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  After the work, every warning the sweep still reports is attributable to one of the
+  three groups, so a reader can tell at a glance whether a number has changed because a
+  finding arrived or because the graph drifted. No target count is set or claimed, and a
+  reduction achieved by disabling a rule that still has subjects here is a failure of
+  this criterion rather than a pass. Keeping the classification current as rules change
+  upstream is out of scope — this criterion covers the state at the end of this work,
+  not its maintenance afterwards.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT
+    type: criterion-of

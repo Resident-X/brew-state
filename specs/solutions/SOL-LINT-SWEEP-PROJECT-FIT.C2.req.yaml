@@ -1,0 +1,19 @@
+id: SOL-LINT-SWEEP-PROJECT-FIT.C2
+type: criterion
+title: A rule that can fit this project is given what it needs rather than suppressed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each rule in the second group, the vocabulary or convention it lacks is supplied
+  through the engine's own configuration surface, discovered from
+  `staircase capabilities --format json` rather than assumed, and the rule afterwards
+  reports on this project's subjects. The rule can still fail: a deliberately introduced
+  violation is shown to raise it, so that a configuration which merely silences it is
+  distinguishable from one that makes it meaningful. Where the engine offers no such
+  surface, that absence is the finding and the rule moves to the third group rather than
+  being worked around. Changing what any rule asserts is out of scope.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT
+    type: criterion-of
