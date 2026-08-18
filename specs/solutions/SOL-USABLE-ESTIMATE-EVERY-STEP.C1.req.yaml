@@ -1,0 +1,22 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C1
+type: criterion
+title: Every plant description declares plausible bounds for the channels it is corrected against
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Nothing under `firmware/params/` is keyed by sensor channel today, and the robustness
+  declaration beside it declares `behaviour = class` with no numbers in it, so this is a new
+  file, a new vocabulary header and a new checker rather than an extension of an existing one —
+  it borrows that declaration's shape, not its contents. One line per `hw_sensor_channel_t`
+  gives that channel's admissible low and high in the units the channel reports, each carrying
+  an origin drawn from the vocabulary in `plant_origin.h`, with the admissible shape declared in
+  a header rather than in a comment. A check under `firmware/tools/` runs in `task fw:check` and
+  fails the build when a channel the estimator corrects against carries no line, so the
+  reference, fixture and boiler descriptions each carry their own rather than inheriting a
+  default. Whether the declared numbers are right for the reference machine is out of scope —
+  they are declared with their origin, and nothing has been on a bench.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

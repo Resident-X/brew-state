@@ -1,0 +1,15 @@
+id: REQ-UNOBSERVED-ACTUATION-BOUND-001.C3
+type: criterion
+title: Drive is removed from the affected load once the bound is passed, rather than continuing on prediction
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Passing the bound is an ordinary outcome with a defined effect, not a condition detected
+  and reported while the load stays energised. The load whose governing state went
+  unobserved is the one that stops; loads whose states are still observed are unaffected by
+  another's blindness.
+links:
+  - target: REQ-UNOBSERVED-ACTUATION-BOUND-001
+    type: criterion-of

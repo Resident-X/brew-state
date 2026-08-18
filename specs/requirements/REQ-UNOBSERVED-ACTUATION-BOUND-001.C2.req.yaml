@@ -1,0 +1,16 @@
+id: REQ-UNOBSERVED-ACTUATION-BOUND-001.C2
+type: criterion
+title: The bound is derived from the machine's own thermal behaviour rather than from what the reconstruction can tolerate
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A bound chosen because the estimate is still credible answers a different question from
+  one chosen because the process is still safe, and the two coincide only by accident. What
+  the bound is derived from is recorded, and a derivation resting on the estimator's
+  tolerance rather than on the machine's response does not satisfy this however comfortable
+  the resulting number looks.
+links:
+  - target: REQ-UNOBSERVED-ACTUATION-BOUND-001
+    type: criterion-of

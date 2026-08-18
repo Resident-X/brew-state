@@ -24,6 +24,8 @@ links:
     type: targets
   - target: OBL-PHYSICAL-CONFIGURATION-001.C1
     type: targets
+  - target: OBL-REALTIME-DISCIPLINE-001.C1
+    type: targets
   - target: OBL-REALTIME-DISCIPLINE-001.C6
     type: targets
   - target: REQ-ACTUATION-CONFIRMATION-001.C1
@@ -41,6 +43,8 @@ links:
   - target: REQ-HARDWARE-HEADROOM-001.C4
     type: targets
   - target: REQ-MACHINE-CONFIGURATION-001.C3
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C6
     type: targets
   - target: REQ-MEASUREMENT-001.C7
     type: targets
@@ -60,5 +64,7 @@ links:
     type: targets
   - target: REQ-STATE-ESTIMATION-001.C1
     type: targets
-  - target: REQ-MACHINE-CONFIGURATION-001.C6
+  - target: REQ-STATE-ESTIMATION-001.C4
+    type: targets
+  - target: REQ-UNOBSERVED-ACTUATION-BOUND-001.C1
     type: targets

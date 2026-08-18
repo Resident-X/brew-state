@@ -1,0 +1,22 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C6
+type: criterion
+title: A brief gap in the brew reading does not latch a fault in the control law
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `control_step` in `firmware/src/control/control.c` stops treating an absent brew residual as
+  grounds for `shut_down`. It drives from the reconstructed state for as long as the estimator
+  reports that state usable, and shuts down when the estimator refuses it instead.
+  `test_invalid_reading_de_energises_and_latches` in `firmware/test/test_control/test_control.c`
+  encodes the behaviour being replaced, down to its comment that a good reading afterwards does
+  not un-latch the fault; it is rewritten to withdraw the reading for a run inside the tolerance
+  window and show the heater still driven and the fault flag still clear, then carry the gap past
+  the window and show the latch arrive. `SOL-UNMEASURED-STATE-RECONSTRUCTION.C4` rests on that
+  suite, so the rewrite keeps a case that still exercises a reading the control law cannot trust
+  reaching the estimator rather than the sensor seam. Clearing the latch afterwards is out of
+  scope and stays with fault response.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

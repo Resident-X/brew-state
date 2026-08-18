@@ -1,0 +1,42 @@
+id: REQ-UNOBSERVED-ACTUATION-BOUND-001
+type: requirement
+category: functional
+title: A load is driven from an unobserved state only for less time than the process needs to become hazardous
+status: active
+priority: must
+version: 1
+text: |
+  A controller that has lost sight of what it is driving does not thereby stop driving. Between
+  the last trustworthy observation and the moment protection acts, the machine can spend a long
+  time doing something wrong, and the hardware chain that finally intervenes is deliberately set
+  well beyond normal running — it is a last resort rather than the thing that keeps the process
+  in bounds.
+
+  Reconstructing a state the sensors do not reach makes that interval longer rather than
+  shorter, because a prediction still being produced looks exactly like knowledge. How long a
+  load may be driven on a state nothing has observed is therefore a quantity the machine must
+  own outright. It is set by what the process can do in that time, not by how long the
+  reconstruction stays plausible.
+rationale: |
+  Authored because the concern was stated and asserted by nothing. The controller fault-response
+  obligation already says the machine can spend a long time heating a mass that is already hot
+  between a fault occurring and the protection chain acting, and no criterion beneath it bounds
+  that time. Tolerating a briefly lost measurement made the gap concrete: a window chosen for
+  what a reconstruction can survive is a different quantity from one chosen for what a heater
+  can do, and the two were on their way to being conflated in a single declared number.
+
+  Deliberately not derived from the electrical and thermal safety obligation. That obligation's
+  whole claim is that it holds with the firmware dead, and folding a firmware-side bound into it
+  would blur the independence its rationale exists to protect. This requirement is about what
+  the controller does while it is alive and confident, which is precisely the case the hardware
+  chain is not sized for.
+
+  Silent on how the bound is enforced and on where its value comes from beyond its being the
+  process's rather than the estimator's. Whether it is expressed as a timeout, a budget or an
+  authority that decays is a design question, and the figure itself waits on a machine that has
+  been measured.
+links:
+  - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C3
+    type: derives-from
+  - target: REQ-STATE-ESTIMATION-001.C3
+    type: derives-from

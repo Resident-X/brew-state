@@ -30,3 +30,7 @@ links:
     type: targets
   - target: REQ-ROBUST-CONTROL-001.C5
     type: targets
+  - target: REQ-UNOBSERVED-ACTUATION-BOUND-001.C2
+    type: targets
+  - target: REQ-UNOBSERVED-ACTUATION-BOUND-001.C3
+    type: targets

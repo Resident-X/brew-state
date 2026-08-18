@@ -16,6 +16,8 @@ links:
     type: derives-from
   - target: DEL-SIM-SEAMS-HARNESS
     type: depends-on
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
   - target: REQ-STATE-ESTIMATION-001.C1
     type: targets
   - target: REQ-STATE-ESTIMATION-001.C2
@@ -26,5 +28,7 @@ links:
     type: targets
   - target: REQ-STATE-ESTIMATION-001.C5
     type: targets
-  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C1
+    type: targets
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C2
     type: targets

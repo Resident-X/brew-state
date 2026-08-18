@@ -1,0 +1,18 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C8
+type: criterion
+title: An accepted control step acts on an estimate advanced for that step
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `control_step` reads the reconstructed state only after `estimator_step` has run for the same
+  step, and a step refused as `CONTROL_STEP_TOO_SOON` advances the estimator not at all and
+  consumes no estimate. A host suite shows the state read on each accepted step differing from
+  the one the previous step read wherever the plant moved between them, so a reuse of the prior
+  estimate fails rather than passing unnoticed. This is an ordering claim in simulated time:
+  measuring a wall-clock duration, a deadline margin or a worst case is out of scope here and
+  no test written for this criterion measures one.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of
