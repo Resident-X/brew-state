@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3-INSPECTION
+type: evidence
+title: The reference description travels in the target artefact rather than being read from a path (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/pio_embed_description.py; firmware/tools/embedded_description.py; firmware/src/app/stm32/reference_description.c; firmware/tools/tests/test_target_model_checks.py::TheEmbeddedFormSurvivesBeingReadBack,TheArtefactCarriesTheModel
+text: |
+  The bytes of firmware/params/thermoblock.params are rendered into the build directory by pio_embed_description as an array of bytes and compiled by one translation unit under src/app/stm32. Nothing is checked into the source tree: the rendered file lives under .pio, which a clean discards, and the include directory it is reached through is prepended so a copy left in the tree could not win the search and be compiled instead. Which description is rendered is read off the environment's custom_embedded_description rather than named in the script, so a second board is covered without it being edited.
+
+  TheEmbeddedFormSurvivesBeingReadBack drives the rendering and the reading back together, over all 256 byte values, and refuses an empty description rather than emitting an initialiser no compiler is obliged to accept. It also establishes the form is a brace initialiser and not a string literal, which is what keeps a description of any size out of C11's guaranteed limit on literal length. TheArtefactCarriesTheModel reads the bytes back out of a linked artefact, and against the real target build the 5371 bytes of the description appear in firmware.bin exactly once with the variant absent.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3
+    type: satisfies

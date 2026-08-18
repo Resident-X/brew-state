@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C1-TEST
+type: evidence
+title: The target build compiles one structure, and one describing a machine (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_machine_structure_selected.py; firmware/tools/tests/test_target_model_checks.py::ABuildForAMachineCarriesAMachinesEquations; firmware/platformio.ini::env:stm32
+text: |
+  env:stm32 compiles src/plant/common and src/plant/thermoblock, put on the include path by the same environment that names them, and nothing decides which while the software runs. check_structure_selection runs before anything is compiled in every environment and refuses a build naming none or two; check_machine_structure_selected then asks the question a count cannot, requiring every build for a board to select a structure whose header declares PLANT_DESCRIBES_A_MACHINE rather than the fixture, whose own header says its equations describe no machine.
+
+  Nine cases in AMachineBuildForAMachineCarriesAMachinesEquations drive it against a synthetic tree that is wrong in each way: the fixture selected, no structure, two structures, a claim that cannot be read, a second board discovered without the invocation changing, a host build against the fixture correctly not asked, a build required to be refused correctly not asked, and a tree with no machine build at all failing rather than passing vacuously. The mutation machine-built-against-equations-describing-nothing points the real target environment at the fixture and requires the check to notice.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C1
+    type: satisfies

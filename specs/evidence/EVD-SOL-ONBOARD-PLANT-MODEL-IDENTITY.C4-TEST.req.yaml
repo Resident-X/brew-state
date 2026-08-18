@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C4-TEST
+type: evidence
+title: The target parses its description through the same loader the host tier uses (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_carried_description_is_refused_on_the_loaders_own_terms; firmware/src/app/stm32/main.c; firmware/platformio.ini::env:stm32
+text: |
+  src/app/stm32/main.c hands the carried bytes to plant_parameters_load from src/plant/common, which env:stm32 compiles, and stops without a model when the record is refused rather than continuing on whatever a partly-filled one holds. There is no second parser: the loader is the only one compiled into the target, and the link requires it because the seam's operations are named to the linker as wanted.
+
+  test_the_carried_description_is_refused_on_the_loaders_own_terms drives the reference description itself, not a description written for the suite, through each of the loader's declared refusals: a line that cannot be parsed, a name the structure does not have, a name given twice, a value replaced in place with one outside the declared range, and the description truncated at a coefficient so one is missing. The specific fault is asserted in each case rather than merely that something was refused, which is what distinguishes the range case from the duplicate it would otherwise silently repeat. After every refusal the record is asserted untouched, which is the property a caller with no second description to fall back on depends on.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C4
+    type: satisfies

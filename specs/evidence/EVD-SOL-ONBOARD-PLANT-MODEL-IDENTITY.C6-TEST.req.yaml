@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C6-TEST
+type: evidence
+title: The plant sources added to the target build are compiled under the target build's strict settings (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_machine_build_settings.py; firmware/tools/tests/test_target_model_checks.py::AMachineBuildKeepsItsSettings; firmware/tools/mutate.py::the-machine-build-drops-its-warning-settings,the-machine-build-claims-a-host-exemption,the-machine-build-stops-compiling-the-model
+text: |
+  The structure and the shared loader arrive in env:stm32 through its build_src_filter, which is what puts them under build_src_flags alongside the control logic already compiled there. Nothing is admitted through a relaxation of those flags, and the target's flags are not widened to carry the host tier's analysis, which stays the host tier's to run.
+
+  check_machine_build_settings establishes this rather than a reader of the build file. For every environment building for a board it requires the shared directories under src/plant to be compiled by the filter after every term is applied, requires the environment to apply some settings to this project's own sources, and refuses the strict-flags exemption outright, since that exemption exists for a build compiling sources which are not ours through the same path and a build for a machine compiles no such thing. Ten cases drive it, including a filter that adds the shared sources and takes them back out again, a host environment holding the exemption correctly not being asked, and a tree with no machine build failing rather than passing vacuously. Three mutations drive the real tree: the settings emptied, the exemption claimed, and the shared sources dropped from the filter.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C6
+    type: satisfies
