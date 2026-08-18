@@ -259,6 +259,25 @@ class AMachineBuildKeepsItsSettings(TargetModelCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("plant/common", result.stderr)
 
+    def test_a_shared_directory_named_from_outside_the_root_is_not_read_as_inside_it(self):
+        """SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1: this gate reads a term like every other reader does.
+
+        `../plant/common/` is a different directory from `plant/common/`. Read
+        as the same one, a machine build compiling none of the shared sources
+        is reported as compiling them under its settings. This gate arrived
+        carrying its own reading, and this is what holds it to the shared one.
+        """
+        self.declare(
+            {
+                "build_src_filter": target_environment("thermoblock")[
+                    "build_src_filter"
+                ].replace("+<plant/common/>", "+<../plant/common/>")
+            }
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("plant/common", result.stderr)
+
     def test_a_host_build_is_not_asked(self):
         """Host environments have their own gate, and one of them holds an exemption."""
         self.tree.declare(

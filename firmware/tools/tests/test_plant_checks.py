@@ -17,6 +17,7 @@ from __future__ import annotations
 
 
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -468,6 +469,17 @@ class StructureSelectionCheck(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertIn("cannot be established", result.stderr)
 
+    def test_a_sibling_directory_sharing_the_first_letters_is_a_different_directory(self):
+        """SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1: `plantation/` is not `plant/` taken wholesale.
+
+        Read as the plant root, a build naming one structure alongside an
+        unrelated sibling is refused for naming two -- the same
+        prefix-read-as-characters mistake, one level up from the term.
+        """
+        result = self.check("+<control/> +<plantation/x/> +<plant/common/> +<plant/alpha/>")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("alpha", result.stdout)
+
     def test_a_term_reaching_outside_the_source_root_selects_nothing_in_it(self):
         """`../plant/alpha/` is a different directory from `plant/alpha/`.
 
@@ -538,6 +550,122 @@ class FilterTermReading(unittest.TestCase):
 
     def test_an_absolute_path_is_not_quietly_made_relative(self):
         self.assertEqual("/opt/alpha", filter_terms.path_of("/opt/alpha/"))
+
+    def tool_sources(self):
+        """Every tool module's source, keyed by file name, excluding the reader itself."""
+        sources = {}
+        for entry in sorted(os.listdir(TOOLS)):
+            if not entry.endswith(".py") or entry == "filter_terms.py":
+                continue
+            with open(os.path.join(TOOLS, entry), "r", encoding="utf-8") as handle:
+                sources[entry] = handle.read()
+        # A scan that scanned nothing reports success in exactly the way a scan
+        # nobody ran does. The tools this is about are named so that a renamed
+        # directory or a wrong root fails here rather than passing.
+        self.assertIn("build_environments.py", sources)
+        self.assertIn("check_structure_selection.py", sources)
+        self.assertGreater(len(sources), 20)
+        return sources
+
+    def test_no_tool_matches_filter_terms_for_itself(self):
+        """SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1: one reader, and the tree kept to it.
+
+        The reading was moved into one module because copies of it had been
+        written the same and were all wrong. That argument only holds while
+        nobody writes another: a caller matching `+<...>` for itself has taken
+        the reading back, and it arrives by being written beside the fix rather
+        than by anyone editing it.
+
+        The pattern is what is looked for rather than the stripping, because the
+        stripping is only the half that was wrong first. A caller that matched
+        terms itself and normalised them correctly today would be the next one
+        to be wrong on its own.
+
+        A sign class and an angle bracket on one line is what a filter-term
+        pattern looks like and what nothing else here looks like: a sign class
+        on its own belongs to the number grammars, and an angle bracket on its
+        own belongs to reading a disassembly. This is a proxy for the property
+        rather than the property, which is why it is not the only guard.
+        """
+        sign_class = re.compile(r"\[\+-\]")
+        offenders = [
+            name
+            for name, source in self.tool_sources().items()
+            if any(sign_class.search(line) and "<" in line for line in source.splitlines())
+        ]
+        self.assertEqual(
+            [],
+            offenders,
+            "these match filter terms themselves instead of using filter_terms.terms",
+        )
+
+    def test_no_tool_strips_a_path_prefix_for_itself(self):
+        """SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1: the idiom that was wrong, kept out by name."""
+        offenders = [
+            name
+            for name, source in self.tool_sources().items()
+            if 'lstrip("./")' in source or "lstrip('./')" in source
+        ]
+        self.assertEqual(
+            [],
+            offenders,
+            "these read a path for themselves instead of through filter_terms.path_of",
+        )
+
+    def test_every_tool_module_can_be_imported(self):
+        """SOL-FILTER-TERM-READ-IN-ONE-PLACE.C2: a gate that cannot be imported establishes nothing.
+
+        This is the failure that actually happened: one change removed a name
+        another change had begun importing, the two touched different files so
+        nothing conflicted, and every environment's pre-build step died on an
+        ImportError. Nothing here asserted the gates could be loaded at all --
+        they were only ever reached as subprocesses, so the breakage arrived as
+        a spray of mismatched assertions rather than as one clear failure.
+
+        The scripts the build injects a name into are left out: they are not
+        importable outside it, and that is a property of how they are run
+        rather than of whether they are sound.
+        """
+        sources = self.tool_sources()
+        checked = []
+        for name in sources:
+            if name.startswith("pio_"):
+                continue
+            module = name[: -len(".py")]
+            with self.subTest(module=module):
+                result = subprocess.run(
+                    [sys.executable, "-c", f"import sys; sys.path.insert(0, {TOOLS!r}); "
+                                           f"import {module}"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(0, result.returncode, result.stderr)
+            checked.append(module)
+        self.assertIn("check_machine_build_settings", checked)
+        self.assertGreater(len(checked), 15)
+
+    def test_one_predicate_answers_what_a_term_covers(self):
+        """SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1: the callers had a predicate each, and they had begun to disagree."""
+        self.assertTrue(filter_terms.covers("plant", "plant/common"))
+        self.assertTrue(filter_terms.covers("plant/common", "plant/common"))
+        self.assertTrue(filter_terms.covers("", "anything"))
+        self.assertTrue(filter_terms.covers("*", "anything"))
+        self.assertFalse(filter_terms.covers("plant/common", "plant/commonly"))
+        self.assertFalse(filter_terms.covers("../plant", "plant/common"))
+
+    def test_everything_under_a_directory_is_the_directory(self):
+        """`plant/*` and `plant/` say the same thing, and used to be answered differently.
+
+        One reader took `plant/*` as naming every structure and the other took
+        it as naming nothing, so the same filter got two answers depending on
+        which gate asked.
+        """
+        self.assertTrue(filter_terms.covers("plant/*", "plant/common"))
+        self.assertEqual(
+            filter_terms.covers("plant/*", "plant/common"),
+            filter_terms.covers("plant", "plant/common"),
+        )
 
     def test_terms_are_returned_in_order_with_their_signs(self):
         """A later term can take back what an earlier one added, so order is the answer."""

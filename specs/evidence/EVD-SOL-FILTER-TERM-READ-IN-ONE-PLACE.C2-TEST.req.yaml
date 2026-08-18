@@ -1,0 +1,21 @@
+id: EVD-SOL-FILTER-TERM-READ-IN-ONE-PLACE.C2-TEST
+type: evidence
+title: Every gate in the tree can be loaded (SOL-FILTER-TERM-READ-IN-ONE-PLACE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T10:15:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::FilterTermReading::test_every_tool_module_can_be_imported
+text: |
+  test_every_tool_module_can_be_imported loads every module under firmware/tools, excluding the six the build injects a name into -- excluded by that property rather than by a list, since they are not importable outside the build and that is a fact about how they are run.
+
+  It is asserted because its absence is what let a gate that could not be loaded reach the default branch. Every gate was reached only as a subprocess, so a name removed by one change and imported by another surfaced as ten mismatched assertions across unrelated suites rather than as one failure naming the module and the name. Restoring the removed import into a copy of the tree fails this test and names check_machine_build_settings directly.
+
+  The scan refuses to run against an empty set on the same terms as the others, naming a module it expects to load.
+links:
+  - target: SOL-FILTER-TERM-READ-IN-ONE-PLACE.C2
+    type: satisfies

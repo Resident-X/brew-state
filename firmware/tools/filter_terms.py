@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """How a term of a build's source filter is read.
 
-A filter is a sequence of `+<path>` and `-<path>` terms, and two things in this
-tree need to know what path a term names: the check that reports which plant
-structure a build compiles, and the reader that reports which environments
-produce a host artefact. They ask different questions of the answer, but the
-answer is the same one, and it lives here so there is one of it.
+A filter is a sequence of `+<path>` and `-<path>` terms, and several things in
+this tree need to know what a term names and what it covers: the check that
+reports which plant structure a build compiles, the reader that reports which
+environments produce a host artefact, and the check that reports whether a build
+for a machine compiles the shared sources under its own settings. They ask
+different questions of the answer, but the answer is the same one, and it lives
+here so there is one of it.
+
+How many callers there are is deliberately not stated. The count was wrong here
+once already -- a third caller arrived in a branch written beside this one, and
+prose saying "two" was true when written and false when merged.
 
 There was not, and the two copies did not drift: they were written the same and
 were both wrong, which is what a copy does before it ever gets the chance. Each
@@ -58,3 +64,31 @@ def path_of(term: str) -> str:
 def terms(source_filter: str) -> list[tuple[str, str]]:
     """Every term of the filter, in order, as (sign, path)."""
     return [(sign, path_of(path)) for sign, path in TERM.findall(source_filter)]
+
+
+#: A term naming everything beneath a directory rather than the directory. A
+#: filter may write either, and they mean the same thing to the build.
+_EVERYTHING_UNDER = "/*"
+
+
+def covers(term: str, path: str) -> bool:
+    """Whether a filter term takes in the given path, wholesale or exactly.
+
+    Here rather than beside each caller for the reason the reading above is:
+    the callers had a predicate each, written the same, and they had already
+    begun to disagree -- one read `plant/*` as naming everything under `plant`
+    and the other did not, so the same filter answered two ways depending on
+    which gate asked.
+
+    The term is what a caller already normalised through `path_of`; the path is
+    whatever that caller is asking about. Neither is normalised again here,
+    because a predicate that quietly re-reads its arguments is how the two got
+    apart in the first place.
+    """
+    if term in ("", "*"):
+        return True
+    if term.endswith(_EVERYTHING_UNDER):
+        term = term[: -len(_EVERYTHING_UNDER)]
+        if term == "":
+            return True
+    return path == term or path.startswith(term + "/")

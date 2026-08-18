@@ -1,0 +1,16 @@
+id: SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1
+type: criterion
+title: One module answers what a filter term names and what it covers
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `firmware/tools/filter_terms.py` is the only module that matches a filter's `+<path>` and `-<path>` terms and the only one that decides whether a term covers a given path. `check_structure_selection`, `build_environments` and `check_machine_build_settings` each keep only the question they ask of the answer.
+
+  Two consequences are asserted rather than assumed. `plant/*` and `plant/` name the same thing to every caller, where the two copies of the predicate had already come to disagree about it. And a directory whose name merely begins with the plant root's letters is a different directory, so a build naming `plantation/` alongside one structure is not refused for naming two.
+
+  Out of scope: whether a filter may declare a term reaching outside the source root, which is PlatformIO's question; and `+<*>` on its own, whose reading `check_structure_selection` has never treated as naming the plant directory and which is unchanged here.
+links:
+  - target: SOL-FILTER-TERM-READ-IN-ONE-PLACE
+    type: criterion-of

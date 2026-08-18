@@ -1,0 +1,17 @@
+id: DEL-MAINTENANCE.C4
+type: criterion
+title: A filter is read in one place, and the gates that read it can be loaded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  `SOL-ONBOARD-PLANT-MODEL-IDENTITY.C6` requires the plant sources on a machine build to be compiled under that build's own settings, and it closed on evidence citing the check that establishes it. `SOL-FILTER-TERM-PREFIX-READING.C1` requires a filter term naming a path outside the source root not to be read as naming one inside it, and it closed on evidence citing the module that answers what a term names. Both closed by direct evidence, which is how a solution leaf closes; neither can take a seal.
+
+  They were built beside each other and merged an hour apart, and each was true of the tree it was tested against. Together they are not. One added a check that read filter terms for itself, with the misreading the other was removing; the other removed the name that check imported. The result compiles nothing at all — every environment's pre-build step stops on the missing name — so the check named by the first criterion's evidence establishes nothing, and the reading the second criterion's evidence describes is not the only one in the tree.
+
+  Neither slice was wrong about the tree in front of it, which is the point: the shortfall belongs to neither and is against the stated intent of both. Remediation restores what each criterion's evidence claims — the check runs, and one module answers what a filter term names and what it covers. The state that shows it is a tree whose gates can be loaded, with no second reader of a filter term in it.
+links:
+  - target: DEL-MAINTENANCE
+    type: criterion-of
