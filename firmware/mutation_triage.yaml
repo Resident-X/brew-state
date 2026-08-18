@@ -58,9 +58,11 @@
 
 # The thermoblock's steam-pressure judgement was re-made at a new line when the
 # coffee side gained a second temperature. The comparison it is about did not
-# move relative to anything around it -- it was pushed down the file by a helper
-# added above it -- and the expression at its new line is character for character
-# the one the judgement was written about, so the reasoning stands unaltered. The
+# move relative to anything around it -- it was pushed down two lines by the
+# parameter table above it gaining an entry for the outlet time constant, and the
+# helper that slice added sits below it and moved it not at all. The expression
+# at its new line is character for character the one the judgement was written
+# about, so the reasoning stands unaltered. The
 # arithmetic that slice added produced mutants of its own, and the suite killed
 # every one of them; none of it is recorded here, which is what that means.
 

@@ -2908,7 +2908,6 @@ static void test_the_water_on_its_way_to_the_group_trails_the_heated_mass(void)
     plant_model_t model;
     float water = 0.0f;
     float reported = 0.0f;
-    int strictly_behind = 0;
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
 
@@ -2933,9 +2932,7 @@ static void test_the_water_on_its_way_to_the_group_trails_the_heated_mass(void)
             TEST_ASSERT_TRUE(water > previous_water);
         }
         TEST_ASSERT_TRUE(water < reported);
-        strictly_behind++;
     }
-    TEST_ASSERT_EQUAL_INT(SHORT_STEPS, strictly_behind);
 
     /*
      * And the quantity the seam exposes is the casting rather than the water.
@@ -3228,9 +3225,8 @@ static void test_a_state_read_that_cannot_be_answered_is_refused_and_writes_noth
 /// SOL-PLANT-RECONSTRUCTABLE-STATE.C4: A consumer reads a structure's state
 /// through the seam rather than around it.
 ///
-/// This file is a consumer: it sits outside src/plant, includes only
-/// plant_model.h, and names no field or function the thermoblock structure
-/// owns. It reaches the water on its way to the group all the same, which is
+/// This file is a consumer: it sits outside src/plant, includes no structure's
+/// own header, and names no field or function the thermoblock structure owns. It reaches the water on its way to the group all the same, which is
 /// what the work that reconstructs that temperature will need. The other half
 /// of this criterion is not written here and cannot be: that naming those
 /// fields directly fails the build is what check_plant_encapsulation.py

@@ -95,12 +95,28 @@ To confirm at the machine: the parts list places the three-way valve (`3T0618W`)
 
 Sensing:
 
-- Coffee thermoblock temperature sensor
-- Steam thermoblock temperature sensor
+- Coffee thermoblock temperature sensor, on the block itself
+- Steam thermoblock temperature sensor, on the block itself
 - Steam wand temperature sensor, in the wand itself
 - Water level sensor in the tank (magnet/reed type)
 - Flow meter in the water path, wired to the OEM controller
 - Two microswitches, one on each control knob
+
+**Nothing measures the brew path downstream of the coffee block.** That is a
+property of the list above rather than a separate claim — there is no sensor at
+the group, in the delivery line, or anywhere between the block and the puck — and
+it is load-bearing well beyond this document. The temperature an extraction is
+judged by is the water's at the group, so on this machine that temperature is not
+measured at all and can only be reconstructed from the block's. `firmware/params/thermoblock.md`
+sets out what that costs: the coefficient relating the two sits downstream of the
+only sensor, so nothing the machine reads depends on it, and no run of the machine
+as it stands can narrow it or notice it drifting.
+
+Where within the block each temperature sensor is bonded is **not established**,
+and the plant model does not distinguish it — the block is one uniform
+temperature there. That is recorded as an omission in the same file. What the
+list above does establish is the part the design leans on: the sensor is on the
+block and not in the stream.
 
 Actuation:
 
