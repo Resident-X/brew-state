@@ -1,0 +1,21 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C4
+type: criterion
+title: The reconstruction is refused once it has travelled past its declared excursion bound
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An excursion bound declared alongside the tolerance window limits how far a reconstructed
+  state may move from the value it held when its observations stopped. `estimator_state`
+  refuses the state once that distance is exceeded, however much of the window remains, and the
+  `isfinite` refusal already in that function stays underneath as the floor. What this bounds
+  is the estimate and not the machine: a well-behaved model sitting still while the real mass
+  runs away trips nothing here, and it is the tolerance window's finite duration that bounds
+  how long the machine is driven without feedback. A host suite drives the estimator under an
+  actuation that would run the prediction away and shows the refusal arriving at the declared
+  distance rather than at the window's end. Whether the declared distance is right for the
+  reference machine is out of scope; it is declared with its origin.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

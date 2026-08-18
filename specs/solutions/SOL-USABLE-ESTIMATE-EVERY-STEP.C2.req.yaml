@@ -1,0 +1,19 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C2
+type: criterion
+title: A reading outside its declared bounds is not corrected against
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `estimator_step` in `firmware/src/estimator/estimator.c` tests each channel's reading
+  against that channel's declared bounds before reaching `correct_against`, and a reading
+  outside them takes the path a reading with `valid` false already takes: the prediction
+  advances, the correction is skipped, and no residual is reported for that channel. A host
+  suite under `firmware/test/test_estimator/` drives the brew channel far outside its
+  bounds and shows the reconstruction ending where a run with that channel absent ends,
+  rather than dragged toward the absurd value. Judging a reading that lies inside its
+  bounds is out of scope — that is the question the residual exists to report on.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

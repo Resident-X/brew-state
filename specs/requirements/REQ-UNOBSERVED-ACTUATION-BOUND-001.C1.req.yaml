@@ -1,0 +1,16 @@
+id: REQ-UNOBSERVED-ACTUATION-BOUND-001.C1
+type: criterion
+title: The time a load may be driven from a state no observation has supported is shorter than the time that load needs to carry the process to its protection trip point
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Two intervals are compared: how long the machine will go on driving without a trustworthy
+  observation, and how long that drive needs to take the process to the point where
+  protection intervenes. The first is shorter, with the margin between them stated rather
+  than left to inspection. The comparison is made per load, since what a heater can do in a
+  second and what a pump can do differ.
+links:
+  - target: REQ-UNOBSERVED-ACTUATION-BOUND-001
+    type: criterion-of

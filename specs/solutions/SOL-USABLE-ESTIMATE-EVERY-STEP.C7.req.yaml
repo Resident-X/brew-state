@@ -1,0 +1,19 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C7
+type: criterion
+title: The estimator is advanced by the interval that elapsed rather than the nominal one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `control_step` already computes `now - state->last_step_millis` to decide whether a step
+  is admissible, and that same difference is what it hands to `estimator_step`, replacing
+  the `CONTROL_STEP_INTERVAL_MS` it passes today; the comment recording the deferred choice
+  goes with it. A host suite drives `hw_sim_advance_millis` by an interval longer than
+  nominal and shows the plant model inside the estimator advanced by the elapsed figure,
+  failing if the nominal one is used. The first accepted step has no predecessor to measure
+  from and is advanced by the declared interval. How long the step itself took to execute
+  is out of scope — this is the interval between steps, not the duration of one.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

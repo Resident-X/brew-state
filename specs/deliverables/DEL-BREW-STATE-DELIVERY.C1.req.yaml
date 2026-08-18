@@ -1,13 +1,13 @@
 id: DEL-BREW-STATE-DELIVERY.C1
 type: criterion
-title: The control design holds its targets in simulation against an estimated plant model, with the dominant parameters identified
+title: The control design holds its targets in simulation against an estimated plant model, with the dominant parameters identified and the unidentifiable ones named
 status: active
 version: 1
 measurement_type: binary
 verification: demonstration
 closes_by: cascade
 text: |
-  The control law and state estimator, exercised through the three-tier pre-energisation verification harness against a plant model built from estimated parameters, hold their targets in simulation, and a sensitivity analysis has identified which parameters dominate behaviour. The phase closes when its child work — the plant-model structure, the control law and estimator, the verification harness, and the sensitivity analysis — is complete.
+  The control law and state estimator, exercised through the three-tier pre-energisation verification harness against a plant model built from estimated parameters, hold their targets in simulation, and a sensitivity analysis has identified which parameters dominate behaviour and which of those a reconstructed state rests on no observation can reach. The phase closes when its child work — the plant-model structure, the control law and estimator, the verification harness, and the sensitivity analysis — is complete.
 links:
   - target: DEL-BREW-STATE-DELIVERY
     type: criterion-of

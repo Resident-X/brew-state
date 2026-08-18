@@ -1,0 +1,179 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP
+type: deliverable
+category: solution
+title: What the estimator does without a good measurement, and the interval it is advanced by
+status: active
+version: 1
+text: |
+  Both properties this slice delivers were named as deferred by the slice that built the
+  estimator seam, and deferred against that seam rather than against hardware. The seam now
+  exists: `estimator_step` reads every channel `hw_interface.h` reports, corrects against each
+  one whose reading came back valid, and lets prediction carry the rest. What it does not yet
+  have is any account of a reading that arrives and is wrong, any bound on how long it may run
+  without one, or any agreement with the control law about the interval a step represents.
+
+  `hw_reading_t` carries a `valid` flag, and that flag answers one question only: whether the
+  seam could obtain the reading. It says nothing about a reading that arrived intact and is
+  absurd. A brew thermocouple reporting nine hundred degrees is valid by that definition and
+  goes straight into the correction step, where it drags the reconstruction toward a
+  temperature the machine cannot be at. Plausible bounds are therefore declared per channel as
+  data beside the plant description, following the pattern `params/robustness.declaration`
+  already sets: one line per channel, a header declaring the admissible shape, and a check
+  under `firmware/tools/` that fails the build when a channel arrives carrying no bounds — so
+  an unbounded channel cannot quietly default to trusted. A reading outside its bounds is
+  treated exactly as one the seam could not obtain: not corrected against, prediction
+  continuing.
+
+  Losing a reading briefly is an ordinary operating condition, and the control path does not
+  currently treat it as one. `control.c` asks the estimator for the brew residual, does not
+  find it fresh because that channel was skipped for a single step, and calls `shut_down`,
+  which latches a fault that nothing in the tree ever clears. One dropped sample is thereby
+  made indistinguishable from a burnt-out sensor. The estimator instead accumulates, per
+  reconstructed state, the time elapsed since the last usable observation among the channels
+  that state actually depends on, and tolerates it up to a window declared alongside the
+  bounds. Judging per state rather than per channel matters: the estimator answers one state
+  today while correcting four, and a channel reaching no state the caller asked for has no
+  business refusing one. Measuring the gap in elapsed time rather than in steps matters for
+  the same kind of reason — a step's duration is whatever elapsed, so a window counted in
+  steps would stretch without limit on a loop that has stalled. Inside the window the
+  reconstruction runs on prediction and reports itself usable; outside it the loss is no
+  longer brief, and the estimator reports that state unusable, which the control law treats as
+  it already treats a reading it cannot trust.
+
+  Bounded, over that window, is asserted rather than argued — and it is worth being exact about
+  what is bounded. The excursion bound declared beside the window limits how far the
+  reconstruction may travel from where it stood when observations stopped, and past that
+  distance the state is unusable however much of the window remains, because a prediction that
+  has run away is not made trustworthy by being early. That bounds the estimate. What bounds
+  the machine's exposure is the window's finite duration, since a well-behaved model sitting
+  still while the real mass runs away trips no excursion at all. The `isfinite` refusal already
+  in `estimator_state` stays underneath both as the floor.
+
+  The interval is the second half of the slice, and the code has been waiting for it.
+  `control.c` advances the estimator by `CONTROL_STEP_INTERVAL_MS` no matter how long actually
+  elapsed, and its own comment records that choosing between the nominal and the elapsed figure
+  is the deferred rate question, ending "Nothing here should decide that quietly." It is
+  decided here, in favour of the elapsed interval: an estimator advanced by the nominal figure
+  across a late step integrates over time that did not pass and answers for an instant that
+  never happened. Step-for-step reproducibility is not lost by this, because the host suites
+  drive `hw_sim_advance_millis` explicitly and so control the elapsed figure exactly — it is
+  kept by governing the clock rather than by misinforming the estimator.
+
+  The control law then asserts the cadence instead of assuming it. An accepted step acts on an
+  estimate advanced for that step and not on one left over from a previous one; a step refused
+  as `CONTROL_STEP_TOO_SOON` advances nothing and consumes nothing; and a step arriving after
+  more than a declared tolerable multiple of the interval is reported through its own result
+  rather than absorbed silently, because an estimate that arrives late is a different quantity
+  from the one the control law asked for. `CONTROL_STEP_INTERVAL_MS` joins the same declaration
+  so the interval carries a stated origin rather than standing as a bare macro with no
+  criterion behind it.
+
+  Out of scope: any claim about how long the work takes. Nothing here asserts a completion
+  time, a deadline margin or a worst-case duration, and no test measures one. That claim is
+  `OBL-REALTIME-DISCIPLINE-001.C1`'s, which asks for a known worst case on every path that must
+  meet a deadline, established by the method `.C6` sets out — measurement on the target board,
+  which does not exist yet. Whether ten milliseconds is the right interval is a sufficiency
+  question about the disturbance timescale and belongs elsewhere; this slice fixes where the
+  interval lives and the contract written against it, not its value. Whether the tolerance
+  window is short enough that the process cannot become hazardous while the machine drives on
+  prediction is owned by `REQ-UNOBSERVED-ACTUATION-BOUND-001`, which exists because that
+  question had no home; this slice declares the window and does not claim it sufficient.
+  Clearing a latched fault is also out of scope — this slice stops a brief gap being classed as
+  a fault at all, and recovering from a real one is fault response's to define. Tuning the
+  control law to behave well across a gap is out of scope, as is any claim that the declared
+  bounds, windows and tolerances are quantitatively right for the reference machine.
+rationale: |
+  Plausibility is declared separately from validity because they are different failures with
+  opposite consequences, and a seam that conflates them has to choose which one to get wrong. A
+  flag meaning "no reading" pressed into service as "no good reading" either admits an absurd
+  value as trustworthy or condemns a working channel on a value the seam had no opinion about.
+  The bounds are data rather than constants for the reason the robustness declaration beside
+  them is data: a channel that arrives carrying no bounds is the failure worth preventing,
+  because it is the one that reads as covered to everybody who looks at it.
+
+  Loss tolerance and the step interval are built together because they are one question asked
+  twice. "Briefly" is denominated in steps, and what a step is worth depends on the interval it
+  represents; a slice that fixed the tolerance window first would have to guess what the rate
+  slice was going to decide, and a slice that fixed the rate first would leave the tolerance
+  written against an interval that had no meaning yet. Both also rewrite the same few lines of
+  `control_step`. Splitting them would have produced two changes to one function, the second
+  rebasing on the first and invalidating the tests the first had just written — which is the
+  same argument the parent task makes for building estimation and residual reporting as one
+  unit, arriving at the same seam from the other side.
+
+  Advancing the estimator by the elapsed interval rather than the nominal one is the less
+  convenient answer and the correct one. The comment in `control.c` states the case for nominal
+  fairly: it is reproducible step for step, and an estimator that never sees a varying interval
+  never surprises anybody. But reproducibility bought that way is reproducibility of a fiction.
+  The model integrates over an interval, and handing it an interval that did not elapse makes
+  its output an answer to a question nobody asked — silently, and most on exactly the late
+  steps where the reconstruction matters most. Determinism survives because the tests that
+  exercise the control path own the clock rather than observe it: `hw_sim_advance_millis` makes
+  the elapsed figure an input the suite chooses. The estimator suite reaches the estimator
+  directly and passes its own interval, so it never depended on the nominal figure either.
+
+  Loss is judged per reconstructed state rather than per channel because that is where the
+  consequence lands. The estimator corrects four plant states from four channels and answers
+  one state to its caller; a rule keyed on channels would let a dead steam-pressure sensor
+  refuse a brew temperature that never depended on it, and would shut the machine down for a
+  reason that has nothing to do with what it was asked to control. The window is likewise
+  denominated in time rather than steps, because the same slice makes a step's duration
+  whatever elapsed — counting steps would have made the tolerance an unbounded stretch of wall
+  clock exactly when the loop was in trouble.
+
+  The brief-gap fault is fixed by prevention rather than by adding a way out of it. The obvious
+  repair — a path that clears `faulted` once readings return — would put this slice in the
+  business of deciding when a machine that has shut itself down may start driving a heater
+  again, which is a fault-response question with a safety consequence and no business being
+  settled as a side effect of an estimator slice. Preventing a brief gap from being classed as
+  a fault leaves the latch exactly as absolute as it is today, and leaves what may clear it to
+  the requirement that owns it.
+
+  The step interval is pulled into a declaration because it is presently an assumption wearing
+  the clothes of a requirement. Ten milliseconds entered the tree as a bare macro with nothing
+  asserting it and nothing to check it against, which is the shape a load-bearing number takes
+  just before everybody starts treating it as settled. Giving it a stated origin does not make
+  it right, and this slice deliberately does not claim it is; it makes the number visible as a
+  choice, so the question of whether it is sufficient can be asked of something rather than
+  inferred from a header.
+
+  The new build gates are demonstrated by hand-written mutants rather than by the automated
+  sweep, because the sweep does not reach this code and saying otherwise would have been the
+  more comfortable lie. Its population is derived from what plant structures share plus the
+  equations of those describing a machine, so a sweep criterion written over the estimator and
+  the control law would have reported a clean percentage over nothing at all — the empty
+  subject that the verification obligation names as the cheapest way for a check to report
+  success without establishing anything.
+
+  What waits on hardware is not claimed. No duration, margin or worst case is asserted here,
+  and the bounds and windows are declared with their origins rather than established — a
+  machine that has never run cannot tell anyone how far a reconstruction drifts in practice or
+  how long a real sensor goes quiet. What can be settled now, and is, is that an absurd reading
+  does not steer the estimate, that a short gap does not stop the machine, that a long one is
+  noticed rather than ridden indefinitely, and that the interval the estimator is advanced by
+  is the interval that passed.
+links:
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-PLANT-MUTATION-COVERAGE
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: DEL-SIM-ESTIMATOR.C3
+    type: derives-from
+  - target: DEL-SIM-ESTIMATOR.C4
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C3
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C3
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C4
+    type: targets
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C1
+    type: targets
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C2
+    type: targets
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: depends-on

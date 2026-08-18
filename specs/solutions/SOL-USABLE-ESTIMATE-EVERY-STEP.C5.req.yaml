@@ -1,0 +1,19 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C5
+type: criterion
+title: A state whose observations stop for longer than the declared window becomes unusable
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Refusal is per reconstructed state, so a state whose own observations are still arriving keeps
+  answering while one starved of them stops. Once the milliseconds elapsed since the last usable
+  observation among a state's dependencies pass the tolerance window, `estimator_state` refuses
+  that state rather than answering from prediction indefinitely. A host suite carries the brew
+  gap one interval past the window and shows the refusal, then restores the channel and shows
+  the elapsed figure cleared and correction resuming on the next accepted observation. What
+  becomes of a fault the control law latched while the state was refused is out of scope — this
+  covers the estimator's own report and its own recovery, not the control law's.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

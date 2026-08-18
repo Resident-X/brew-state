@@ -1,0 +1,18 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C9
+type: criterion
+title: A control step arriving later than the cadence tolerates is reported rather than absorbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A step whose elapsed interval exceeds a declared tolerable multiple of the step interval
+  returns a `control_step_result_t` value of its own rather than `CONTROL_STEP_ACTUATED`,
+  so a caller that has fallen behind learns it from the result instead of from the coffee.
+  The step still runs: the estimator is advanced by the elapsed interval and the heater is
+  still driven, because being late is not a reason to stop controlling. A host suite drives
+  `hw_sim_advance_millis` past the tolerable multiple and asserts the new result. What a
+  caller ought to do about it, and why the step was late, are both out of scope.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

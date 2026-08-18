@@ -1,0 +1,21 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C11
+type: criterion
+title: Each build gate this slice adds is shown to fail on the defect it exists to catch
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `firmware/tools/mutate.py` carries hand-written mutants, each proving one check stops on the
+  exact defect it exists to catch, and the two gates this slice adds each gain one: a plant
+  description whose channel carries no declared bounds, and a tolerance redeclared away from its
+  single site. The LLVM sweep is not the vehicle for them. `mull_sweep.py` derives its population
+  from what every plant structure shares plus the equations of structures declaring they describe
+  a machine, so `control.c` and `estimator.c` fall outside it, and a sweep criterion written here
+  would report success over an empty subject. The boundary arithmetic this slice adds is covered
+  instead by tests that exercise each declared bound at the step either side of it rather than
+  only well clear of it. Widening the sweep's population is out of scope and would contradict the
+  scope its own decision sets.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

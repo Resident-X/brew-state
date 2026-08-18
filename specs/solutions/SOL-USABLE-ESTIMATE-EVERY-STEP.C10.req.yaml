@@ -1,0 +1,19 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C10
+type: criterion
+title: Every number the cadence and loss behaviour rest on is declared with its origin
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The step interval, the loss-tolerance window, the excursion bound and the late-step multiple
+  each carry an origin drawn from the admissible vocabulary, and each is declared in exactly one
+  place rather than as bare macros spread between `firmware/src/control/control.h` and the
+  estimator — `CONTROL_STEP_INTERVAL_MS` is presently the first of them, standing at ten
+  milliseconds with nothing asserting it. A check under `firmware/tools/` runs in `task fw:check`
+  and fails the build when one of them is redeclared elsewhere or arrives with no origin.
+  Whether ten milliseconds is sufficient for the disturbance timescale is out of scope — this
+  fixes where each number lives and what it admits to, not its value.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

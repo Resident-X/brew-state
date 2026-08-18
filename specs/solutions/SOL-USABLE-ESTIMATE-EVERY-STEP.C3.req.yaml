@@ -1,0 +1,25 @@
+id: SOL-USABLE-ESTIMATE-EVERY-STEP.C3
+type: criterion
+title: A reconstructed state stays usable across a gap in the observations it depends on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The estimator answers one reconstructed state and corrects four plant states from four
+  channels, so usability is judged against the observations that state actually rests on rather
+  than against every channel the seam reports — a channel reaching no state the caller asked
+  for cannot make that state unusable. Which observations each reconstructed state depends on
+  is a table the estimator declares beside the state vocabulary in `firmware/include/estimator.h`,
+  not a relation inferred at the call site. `estimator_t` accumulates, per reconstructed state,
+  the milliseconds elapsed since the last usable observation among that state's own
+  dependencies, and reports the state usable while that figure is inside the declared tolerance
+  window. The window is time rather than a count of steps because a step's duration is the
+  elapsed interval, so a window counted in steps would span an unbounded stretch of wall clock
+  on a loop that has stalled. A host suite under `firmware/test/test_estimator/` withdraws the
+  brew channel for a run inside the window and shows the state still answering and still
+  tracking the reference `plant_model_t`, and withdraws a channel that state does not depend on
+  to show it unaffected. Gaps beyond the window are out of scope here.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP
+    type: criterion-of

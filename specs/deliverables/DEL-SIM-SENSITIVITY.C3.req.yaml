@@ -1,0 +1,13 @@
+id: DEL-SIM-SENSITIVITY.C3
+type: criterion
+title: Every parameter a reconstructed state depends on is shown identifiable from the channels the machine observes
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  A parameter that reaches no observed channel cannot be adjusted by any amount of running, so drift correction can never reach it and no residual reports when it is wrong; the brew outlet relation sits downstream of the only brew sensor and is the case that raised this. Each parameter a reconstructed state depends on is traced to the observations that could move it, and one that reaches none is reported as unidentifiable rather than passed over. Structural reach is the question here — whether an observation could move the parameter at all — not how well a fit recovers it from real data, which waits on the machine.
+links:
+  - target: DEL-SIM-SENSITIVITY
+    type: criterion-of

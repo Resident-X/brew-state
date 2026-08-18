@@ -1,12 +1,14 @@
 id: DEL-SIM-SENSITIVITY
 type: deliverable
 category: task
-title: The parameters and channels that dominate delivery behaviour, ranked by analysis
+title: The parameters and channels that dominate delivery behaviour, ranked by analysis, and those no observation can reach
 status: active
 level: task
-version: 1
+version: 2
 text: |
   The parameters and channels that dominate the machine's delivery behaviour are identified by analysing the closed-loop model rather than by assumption, and the ranking is recorded together with the analysis that produced it so it can be redone against the committed model later.
+
+  The same analysis answers a second question about the same parameters: whether each one a reconstructed state rests on can be identified at all from the channels the machine observes. Dominance and identifiability are both properties of the model and its sensor set, both are settled before instrumentation is bought, and a parameter that dominates delivery while reaching no observation is the strongest case the analysis can make for adding a channel.
 rationale: |
   This is the unit of work the physical track's procurement waits on: precision is bought only where a dominant parameter makes the margin thin, and that discipline is only sound if dominance is established rather than guessed. An unbacked ranking would leave the cost discipline resting on intuition.
 
@@ -21,4 +23,6 @@ links:
   - target: DEL-SIM-STEAM-LOOP
     type: depends-on
   - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C6
     type: targets
