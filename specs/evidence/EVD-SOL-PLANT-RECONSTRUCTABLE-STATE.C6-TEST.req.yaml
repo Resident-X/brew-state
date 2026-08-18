@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-RECONSTRUCTABLE-STATE.C6-TEST
+type: evidence
+title: The description's narrative and its variant carry the new coefficient (SOL-PLANT-RECONSTRUCTABLE-STATE.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T14:22:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_statement_and_the_variant_carry_every_coefficient
+text: |-
+  firmware/params/thermoblock.md gains the state, the relation the coefficient enters, and the account of why its assumed error is the widest in the description. firmware/params/thermoblock-variant.params gains the coefficient at the same value as the reference, so the pair still differs in exactly one value, brew.heater_power_w, rather than in the set of names. test_the_statement_and_the_variant_carry_every_coefficient reads both files through paths the build declares and requires the narrative to name every coefficient the structure carries and the variant to be accepted by the same loader. The statement check inside check_parameter_origins.py and check_parameters_are_data.py both pass in task fw:check, the latter reporting two descriptions giving two distinct trajectories from one unchanged artefact.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE.C6
+    type: satisfies

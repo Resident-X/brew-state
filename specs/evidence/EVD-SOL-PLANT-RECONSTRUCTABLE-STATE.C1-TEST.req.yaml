@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-RECONSTRUCTABLE-STATE.C1-TEST
+type: evidence
+title: The reference structure distinguishes the casting from the water leaving it (SOL-PLANT-RECONSTRUCTABLE-STATE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T14:20:57Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_water_on_its_way_to_the_group_trails_the_heated_mass
+text: |-
+  Three tests pass under task fw:test. test_the_water_on_its_way_to_the_group_trails_the_heated_mass drives a step change in brew heater duty from rest and observes, at every one of forty steps, the water rising and staying strictly below the casting the seam reports; at rest the two are equal, which is the state being right rather than the distinction being absent. test_the_water_follows_the_casting_by_its_own_time_constant compares the water against the closed form of the two relations composed, derived on paper rather than from the expression the structure evaluates, at four points spanning the shorter pole. test_a_shorter_outlet_time_constant_brings_the_water_closer establishes the coefficient acts in the direction it claims. tools/mutate.py carries three hand-curated defects against this arithmetic -- the-outlet-is-the-casting-read-twice, the-outlet-follows-the-casting-where-it-arrived, the-outlet-carries-the-traverse-by-the-settled-fraction -- and each is caught.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE.C1
+    type: satisfies
