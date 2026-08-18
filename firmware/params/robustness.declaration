@@ -1,0 +1,110 @@
+# What a wrong model is permitted to take away, and what it is not.
+#
+# The plant model beside this file will be wrong. It was assembled from a
+# service manual, a set of steam tables and a number of estimates from geometry,
+# against a machine that has never been on a bench, and every value in it
+# carries the fraction it may be out by. The useful question is not how wrong it
+# is but what still holds when it is -- and that question has two answers, not
+# one.
+#
+# Some behaviours must hold however wrong the model turns out to be. They are
+# the ones whose failure is a machine that is unsafe, that damages itself, or
+# that quietly does something other than what it was asked for, and none of them
+# is allowed to depend on identification having succeeded -- because
+# identification is the single thing most likely to be wrong on a first build.
+# Others are permitted to get worse as the model does: they are how good the
+# coffee is rather than whether the machine is fit to be switched on, and the
+# design is entitled to trade them away to keep the first class intact.
+#
+# Without the split, a fit that lands badly threatens every property at once and
+# nobody can say which ones still stand. With it, a bad fit has a known blast
+# radius.
+#
+# This is data rather than a paragraph because its consumer is a later
+# verification and not a reader. A paragraph cannot be checked for
+# exhaustiveness, cannot be diffed when a behaviour is added, and cannot fail a
+# build when a behaviour arrives carrying no class -- and an unclassified
+# behaviour is the failure this exists to prevent, because it is the one that
+# reads as covered to everybody who looks at it.
+#
+# Each line is `behaviour = class`. The admissible classes are declared in
+# ../include/plant_robustness.h and nowhere else, so another one is added by a
+# deliberate edit to that header rather than by a word being typed here and
+# accepted. tools/check_robustness_declaration.py refuses a behaviour with no
+# class, with two, with a word the header does not declare, a behaviour named
+# twice, and a class with no behaviours in it at all.
+#
+# Nothing here names a control law, a structure, or a mechanism. These are
+# statements about the machine's behaviour, and they have to outlive whatever
+# loop is eventually built to deliver them. What each of them costs, and whether
+# a particular loop actually holds one across the declared range, is the
+# robustness verification's question -- there is no loop yet, and this file does
+# not claim there is.
+
+# --- What must hold however wrong the model is ------------------------------
+
+# The machine is asked for things it cannot do: an extraction while the steam
+# side is climbing, a temperature the supply cannot reach in the time allowed.
+# Refusing is a decision about what is possible, and a model that is wrong about
+# how fast a mass heats must not turn a refusal into an acceptance -- the caller
+# has then been told the machine will do something it will not, and has no way
+# to find out otherwise until it has not happened.
+refusing-what-cannot-be-delivered = invariant
+
+# Where a safe state is reached from, at what temperature, and how fast, are all
+# quantities this model supplies badly. That it is reached at all cannot be one
+# of them. A machine that fails to shut down because its model of the block was
+# optimistic has failed in the one place where being wrong is not recoverable by
+# a later correction.
+reaching-a-safe-state = invariant
+
+# The machine draws from a supply that cannot carry both elements and the pump
+# at once, and the budget is a property of the wiring rather than of the model.
+# A controller that overruns it because its model understated what an element
+# draws has taken a decision the supply does not get to argue with; the trip is
+# upstream and it opens on the truth, not on the estimate.
+respecting-the-supply-budget = invariant
+
+# Full duty is this machine's ordinary condition rather than an exception, so
+# the actuator limit is where it spends much of its working life. What must hold
+# there is that accumulated intent does not outlive the limit and arrive as an
+# overshoot after the disturbance has passed. How much intent accumulates
+# depends on the model; that it is surrendered when the actuator can take no
+# more does not.
+surrendering-accumulated-intent-at-the-actuator-limit = invariant
+
+# --- What holds across the error this description declares ------------------
+
+# Stability at nominal parameters demonstrates internal consistency and nothing
+# about the machine. It is required across the whole declared range of model
+# error, including its least convenient direction -- which is the one a fit will
+# not warn about, because a fit reports how well it matched the data it was
+# given and not how far the machine sits from it. It is not claimed beyond that
+# range: a machine found to sit outside it has not been shown to be stable, and
+# the answer is to establish it again against what was measured.
+staying-stable-across-the-declared-error-range = bounded
+
+# Where a margin stands between the machine and a hardware trip point, exhausting
+# it is exactly the event the margin existed to prevent. The margin is therefore
+# sized for what the model may be wrong by as well as for what the sensor may be
+# wrong by -- the model error is the larger of the two -- and it must survive the
+# model being wrong by the amount the description says it may be.
+keeping-the-margin-that-protects-a-trip-point = bounded
+
+
+# --- What is permitted to degrade as the model worsens ----------------------
+
+# How closely a temperature is held is the quality of the coffee, and it
+# degrades with the model honestly: a mass that is a third heavier than assumed
+# is a slower loop, and a slower loop holds a setpoint less tightly. Declaring
+# it here is not an excuse for it. It is a statement that its failure is a worse
+# cup rather than an unsafe machine, and that the design may trade it away to
+# keep everything above intact.
+holding-a-setpoint-to-a-stated-tolerance = degrading
+
+# The same reasoning for the transient rather than the steady state. How long
+# the machine takes to become ready follows directly from coefficients nobody
+# has measured -- a casting mass estimated from a drawing, an element rating the
+# owner disputes -- and a design that promised a time independent of them would
+# be promising something this description cannot support.
+reaching-a-setpoint-within-a-stated-time = degrading

@@ -2274,6 +2274,411 @@ class AClaimCheckWithNothingToInspectFails(ClaimTreeCase):
         self.assertIn("no structure claims to describe a machine", result.stderr)
 
 
+# --- The error the design assumes against a value ---------------------------
+
+BUDGET_VOCABULARY = """
+#ifndef PLANT_BUDGET_H
+#define PLANT_BUDGET_H
+#define PLANT_BUDGET_MARKER '~'
+#endif
+"""
+
+#: A description of the alpha structure stating how wrong each of its values
+#: may be, as well as where each came from.
+BUDGETED = (
+    "alpha.one = 1.0 ~ 0.25 @document a circuit diagram, p.24\n"
+    "alpha.two = 2.0 ~ 0.4 @estimated a comparable machine of the same architecture\n"
+)
+
+
+class BudgetTree(OriginTree):
+    """The origin tree, with the vocabulary an assumed error is written in.
+
+    The two vocabularies sit in the same include directory in the real tree and
+    are read by two checks over one file, so a tree exercising either of them
+    has to carry both.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._write(os.path.join(self.include, "plant_budget.h"), BUDGET_VOCABULARY)
+
+    def budget_vocabulary(self, text: str) -> None:
+        self._write(os.path.join(self.include, "plant_budget.h"), text)
+
+
+class BudgetTreeCase(unittest.TestCase):
+    """A tree of structures and descriptions carrying both annotations."""
+
+    def setUp(self):
+        self.tree = BudgetTree()
+        self.addCleanup(self.tree.cleanup)
+        self.tree.description("alpha", BUDGETED)
+
+    def check(self, **overrides):
+        return run_check(
+            "check_assumed_error.py",
+            "--plant-root",
+            overrides.get("plant_root", self.tree.plant),
+            "--include-dir",
+            overrides.get("include_dir", self.tree.include),
+            "--params-dir",
+            overrides.get("params_dir", self.tree.params),
+        )
+
+
+class EveryValueSaysHowWrongItMayBe(BudgetTreeCase):
+    """SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C1: every value in a description that claims a machine carries the model error the design assumes for it."""
+
+    def test_a_description_stating_an_error_for_every_value_passes(self):
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_value_with_no_assumed_error_fails_and_names_the_coefficient(self):
+        self.tree.description(
+            "alpha",
+            "alpha.one = 1.0 @document a circuit diagram, p.24\n"
+            "alpha.two = 2.0 ~ 0.4 @estimated a comparable machine\n",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha.one", result.stderr)
+        self.assertIn("carries no assumed error", result.stderr)
+
+    def test_the_marker_with_no_figure_behind_it_fails(self):
+        # The worst of the shapes: it reads as declared to anyone skimming and
+        # says nothing at all.
+        self.tree.description(
+            "alpha", "alpha.one = 1.0 ~ @document p.24\nalpha.two = 2.0 ~ 0.4 @document p.24\n"
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha.one", result.stderr)
+        self.assertIn("no figure behind it", result.stderr)
+
+    def test_a_figure_that_is_not_a_number_fails(self):
+        self.tree.description(
+            "alpha",
+            "alpha.one = 1.0 ~ a quarter @document p.24\nalpha.two = 2.0 ~ 0.4 @document p.24\n",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("is not a number", result.stderr)
+        self.assertIn("alpha.one", result.stderr)
+
+    def test_a_negative_figure_fails(self):
+        # There is no distance shorter than none, and a sign here would silently
+        # widen a margin in the direction nobody meant.
+        self.tree.description(
+            "alpha", "alpha.one = 1.0 ~ -0.25 @document p.24\nalpha.two = 2.0 ~ 0.4 @document p.24\n"
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no distance shorter than none", result.stderr)
+
+    def test_a_figure_that_is_not_finite_fails(self):
+        for figure in ("inf", "nan", "-inf"):
+            with self.subTest(figure=figure):
+                self.tree.description(
+                    "alpha",
+                    f"alpha.one = 1.0 ~ {figure} @document p.24\n"
+                    "alpha.two = 2.0 ~ 0.4 @document p.24\n",
+                )
+                result = self.check()
+                self.assertEqual(1, result.returncode)
+                self.assertIn("alpha.one", result.stderr)
+
+    def test_an_error_written_after_the_origin_is_not_an_error_at_all(self):
+        # The account is free text running to the end of the line, so a figure
+        # written after it is inside somebody's sentence. Reading it would mean
+        # the grammar had no fixed order.
+        self.tree.description(
+            "alpha",
+            "alpha.one = 1.0 @document p.24, good to ~ 0.25\nalpha.two = 2.0 ~ 0.4 @document p.24\n",
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha.one", result.stderr)
+        self.assertIn("carries no assumed error", result.stderr)
+
+    def test_a_coefficient_the_structure_requires_and_the_description_omits_fails(self):
+        self.tree.description("alpha", "alpha.one = 1.0 ~ 0.25 @document p.24\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("alpha.two", result.stderr)
+        self.assertIn("required by the structure", result.stderr)
+
+    def test_a_description_claiming_no_machine_is_not_asked(self):
+        # It has nothing to be wrong about, and requiring a figure would produce
+        # a form of words. The exemption follows what the description claims.
+        self.tree.structure_with_coefficients("gamma", ("gamma.one",))
+        self.tree.description("gamma", "@describes-no-machine\ngamma.one = 1.0\n")
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_structure_added_later_is_inspected_without_being_named(self):
+        self.tree.structure_with_coefficients("gamma", ("gamma.one",))
+        self.tree.description("gamma", "gamma.one = 1.0 @document p.24\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("gamma.one", result.stderr)
+
+    def test_a_figure_the_machines_own_loader_would_refuse_is_refused_here(self):
+        # This check reads the figure with Python and the loader reads it with
+        # strtof, and the two do not spell numbers the same way. Where they
+        # disagree, a description passes the gate and is then refused by the
+        # machine that has to run it -- which is the failure this check exists
+        # to prevent, arriving through the check itself.
+        #
+        # A digit separator reads as a number to Python and as nonsense to
+        # strtof; a full-width digit is a decimal digit to Python and not a
+        # digit at all to strtof; and a figure that fits a double but not the
+        # single precision the model is carried in arrives at the loader as
+        # infinity.
+        for figure in ("0_2", "\uff11.\uff10", "3.5e38"):
+            with self.subTest(figure=figure):
+                self.tree.description(
+                    "alpha",
+                    f"alpha.one = 1.0 ~ {figure} @document p.24\n"
+                    "alpha.two = 2.0 ~ 0.4 @document p.24\n",
+                )
+                result = self.check()
+                self.assertEqual(1, result.returncode)
+                self.assertIn("alpha.one", result.stderr)
+
+    def test_a_figure_the_loader_accepts_is_accepted_here(self):
+        # The disagreement runs both ways. strtof reads a hexadecimal
+        # significand, so refusing one here would fail a description the machine
+        # would have loaded -- the same divergence in the other direction.
+        self.tree.description(
+            "alpha",
+            "alpha.one = 1.0 ~ 0x1p-3 @document p.24\nalpha.two = 2.0 ~ 0.4 @document p.24\n",
+        )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+
+class TheAssumedErrorCheckStopsRatherThanReportingSuccess(BudgetTreeCase):
+    """SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C1: the check fails rather than passes when it finds no description to inspect."""
+
+    def test_a_tree_where_every_description_exempts_itself_fails(self):
+        self.tree.description("alpha", "@describes-no-machine\nalpha.one = 1.0\nalpha.two = 2.0\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("every description exempts itself", result.stderr)
+
+    def test_a_tree_with_no_description_belonging_to_a_structure_fails(self):
+        os.remove(os.path.join(self.tree.params, "alpha.params"))
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("nothing was inspected", result.stderr)
+
+    def test_a_tree_with_no_structures_stops(self):
+        empty = os.path.join(self.tree.root.name, "empty")
+        os.makedirs(empty, exist_ok=True)
+        result = self.check(plant_root=empty)
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no structures under", result.stderr)
+
+    def test_no_vocabulary_to_read_the_marker_from_stops(self):
+        os.remove(os.path.join(self.tree.include, "plant_budget.h"))
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no assumed-error vocabulary", result.stderr)
+
+    def test_a_vocabulary_declaring_no_marker_stops(self):
+        self.tree.budget_vocabulary("#ifndef PLANT_BUDGET_H\n#define PLANT_BUDGET_H\n#endif\n")
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("declares no PLANT_BUDGET_MARKER", result.stderr)
+
+    def test_a_marker_that_is_already_the_origins_stops(self):
+        # One marker cannot introduce two annotations: the account swallows the
+        # figure, and every value then reads as carrying one.
+        self.tree.budget_vocabulary(
+            "#ifndef PLANT_BUDGET_H\n#define PLANT_BUDGET_H\n#define PLANT_BUDGET_MARKER '@'\n#endif\n"
+        )
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("already what introduces an origin", result.stderr)
+
+    def test_a_structure_declaring_no_parameter_table_is_reported(self):
+        self.tree.structure("delta")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("declares no parameter table", result.stderr)
+
+
+# --- What a wrong model is not permitted to take away -----------------------
+
+ROBUSTNESS_VOCABULARY = """
+#ifndef PLANT_ROBUSTNESS_H
+#define PLANT_ROBUSTNESS_H
+typedef enum {
+    PLANT_ROBUSTNESS_INVARIANT = 0,
+    PLANT_ROBUSTNESS_BOUNDED,
+    PLANT_ROBUSTNESS_DEGRADING,
+    PLANT_ROBUSTNESS_KIND_COUNT
+} plant_robustness_kind_t;
+#define PLANT_ROBUSTNESS_INVARIANT_WORD "invariant"
+#define PLANT_ROBUSTNESS_BOUNDED_WORD "bounded"
+#define PLANT_ROBUSTNESS_DEGRADING_WORD "degrading"
+#endif
+"""
+
+CLASSIFIED = (
+    "# What a wrong model may not take away.\n"
+    "refusing-what-cannot-be-delivered = invariant\n"
+    "reaching-a-safe-state = invariant\n"
+    "\n"
+    "staying-stable-across-the-declared-error-range = bounded\n"
+    "\n"
+    "holding-a-setpoint-to-a-stated-tolerance = degrading\n"
+)
+
+
+class RobustnessDeclarationCase(unittest.TestCase):
+    """A vocabulary of classes and an artefact declaring behaviours in it."""
+
+    def setUp(self):
+        self.root = tempfile.TemporaryDirectory()
+        self.addCleanup(self.root.cleanup)
+        self.include = os.path.join(self.root.name, "include")
+        os.makedirs(self.include)
+        self.vocabulary(ROBUSTNESS_VOCABULARY)
+        self.path = os.path.join(self.root.name, "robustness.declaration")
+        self.declare(CLASSIFIED)
+
+    def vocabulary(self, text: str) -> None:
+        write(os.path.join(self.include, "plant_robustness.h"), text)
+
+    def declare(self, text: str) -> None:
+        write(self.path, text)
+
+    def check(self, **overrides):
+        return run_check(
+            "check_robustness_declaration.py",
+            "--include-dir",
+            overrides.get("include_dir", self.include),
+            "--declaration",
+            overrides.get("declaration", self.path),
+        )
+
+
+class EveryBehaviourCarriesExactlyOneClass(RobustnessDeclarationCase):
+    """SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C4: each declared behaviour names exactly one of the declared classes, and the check names the behaviour at fault."""
+
+    def test_a_declaration_classifying_every_behaviour_passes(self):
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_behaviour_with_no_class_fails_and_names_it(self):
+        self.declare(CLASSIFIED + "respecting-the-supply-budget =\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("respecting-the-supply-budget", result.stderr)
+        self.assertIn("carries no class", result.stderr)
+
+    def test_a_behaviour_carrying_both_classes_fails(self):
+        # One that falls on both sides of the line says nothing, and it is the
+        # shape an argument that was never settled leaves behind.
+        self.declare(CLASSIFIED + "respecting-the-supply-budget = invariant degrading\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("respecting-the-supply-budget", result.stderr)
+        self.assertIn("2 classes", result.stderr)
+
+    def test_a_class_nobody_declared_fails(self):
+        self.declare(CLASSIFIED + "respecting-the-supply-budget = mostly-invariant\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("mostly-invariant", result.stderr)
+        self.assertIn("not one of", result.stderr)
+
+    def test_a_behaviour_declared_twice_fails(self):
+        self.declare(CLASSIFIED + "reaching-a-safe-state = degrading\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("reaching-a-safe-state", result.stderr)
+        self.assertIn("more than once", result.stderr)
+
+    def test_a_line_that_is_not_a_classification_fails(self):
+        self.declare(CLASSIFIED + "respecting the supply budget\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("is not `behaviour = class`", result.stderr)
+
+    def test_a_class_with_no_behaviour_declares_no_line(self):
+        # Everything invariant, or everything degrading, is a file that took no
+        # decision at all while reading as though it had.
+        self.declare(
+            "refusing-what-cannot-be-delivered = invariant\nreaching-a-safe-state = invariant\n"
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("degrading", result.stderr)
+        self.assertIn("drawn no line", result.stderr)
+
+
+class TheRobustnessCheckStopsRatherThanReportingSuccess(RobustnessDeclarationCase):
+    """SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C4: the check fails when the artefact is absent, empty, or has no vocabulary to be read against."""
+
+    def test_an_absent_declaration_fails(self):
+        os.remove(self.path)
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no declaration at", result.stderr)
+
+    def test_an_empty_declaration_fails(self):
+        self.declare("# nothing but a comment\n")
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("declares no behaviour at all", result.stderr)
+
+    def test_no_vocabulary_stops(self):
+        os.remove(os.path.join(self.include, "plant_robustness.h"))
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no robustness vocabulary", result.stderr)
+
+    def test_a_vocabulary_that_has_grown_a_third_class_stops(self):
+        # A term for a behaviour that mostly holds is somewhere for an
+        # unexamined property to sit, and every property put there is one
+        # nobody has to decide about.
+        self.vocabulary(
+            ROBUSTNESS_VOCABULARY.replace(
+                "    PLANT_ROBUSTNESS_KIND_COUNT",
+                "    PLANT_ROBUSTNESS_MOSTLY_HOLDS,\n    PLANT_ROBUSTNESS_KIND_COUNT",
+            )
+        )
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("deliberate act", result.stderr)
+
+    def test_a_class_declaring_no_word_stops(self):
+        self.vocabulary(
+            ROBUSTNESS_VOCABULARY.replace('#define PLANT_ROBUSTNESS_DEGRADING_WORD "degrading"', "")
+        )
+        result = self.check()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("declares no word", result.stderr)
+
+
+class TheShippedDeclarationAnswersTheQuestion(unittest.TestCase):
+    """SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C4: what this project ships classifies every behaviour it declares, and the check passes over it."""
+
+    def test_the_declaration_this_project_ships_classifies_every_behaviour(self):
+        project = os.path.dirname(TOOLS)
+        result = run_check(
+            "check_robustness_declaration.py",
+            "--include-dir",
+            os.path.join(project, "include"),
+            "--declaration",
+            os.path.join(project, "params", "robustness.declaration"),
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+
+
 class TheShippedTreeAnswersTheQuestion(unittest.TestCase):
     """SOL-MUTATION-SWEEP-STRUCTURE-DISCOVERY.C3: what this project ships carries
     the claim on every structure, and the check passes over it."""

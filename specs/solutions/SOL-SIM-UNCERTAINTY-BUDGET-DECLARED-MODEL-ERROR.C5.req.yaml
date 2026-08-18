@@ -1,0 +1,14 @@
+id: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C5
+type: criterion
+title: The host build and the model's tests run against the extended descriptions
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every description under `firmware/params/` that claims to describe a machine is updated to carry an assumed error for each coefficient its structure requires, and `task fw:verify` completes green across the environments that carry tests — `native`, `native_fixture` and `native_boiler` — with the plant tests, the build-time checks, the sanitiser run and the mutation sweep all passing.
+
+  Choosing the numbers is part of this slice and they are declared as assumed rather than measured; establishing them by measurement on the built machine is out of scope and belongs to the characterisation work. Descriptions that claim no machine are updated only where the grammar change would otherwise stop them loading.
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR
+    type: criterion-of

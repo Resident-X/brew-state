@@ -1,0 +1,29 @@
+id: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR
+type: deliverable
+category: solution
+title: The assumed model error carried with the plant description, and the behaviours not permitted to depend on it
+status: active
+version: 1
+text: |
+  The model error the design assumes is carried in the plant description itself, beside the value it qualifies, by the same route the origin of a value already travels: the artefacts under `firmware/params/`, the grammar `firmware/src/plant/common/plant_parameters.c` parses, and a build-time check that refuses a description which omits it. A coefficient therefore cannot be copied, edited or moved without both the account of where its figure came from and the account of how wrong that figure may be travelling with it.
+
+  The assumed error is read back through the plant-model seam rather than from a structure's own header, so a consumer — a control design, a robustness sweep, a report — asks the model how wrong each of its coefficients may be without naming the structure it is talking to. This keeps the budget usable by work that is deliberately structure-agnostic, and keeps `firmware/include/plant_model.h` the single vocabulary through which the plant is addressed.
+
+  Separately, and in the same commit, the behaviours the design is not allowed to make contingent on the model are declared and separated from those permitted to degrade as the model worsens. That declaration is an enumerated, machine-checkable artefact rather than prose: each named behaviour carries exactly one class, and the build refuses a declaration in which a behaviour appears unclassified. Refusing what cannot be delivered, reaching a safe state and respecting the supply budget sit in the first class; holding a setpoint tightly sits in the second.
+
+  Both halves are design inputs. This slice establishes and carries them; it does not exercise any loop against them.
+rationale: |
+  The plant description already carries per-value metadata that must not be separable from the value — the origin of the figure. Assumed error is the same kind of fact about the same value, and giving it a second, parallel mechanism would mean two grammars, two loaders and two build checks over one artefact, with the standing risk that a value moves under one of them and not the other. Extending the route that already exists is the smaller and more durable change.
+
+  Reading the budget back through the seam rather than the structure header is what makes it useful later. The robustness verification that holds each loop across the declared range, and the sensitivity analysis that identifies which parameters dominate, are both structure-agnostic by intent; if the budget could only be reached by naming a structure, both would have to name one, and the seam's whole purpose would be undone at the first consumer.
+
+  The behaviour classification is declared as data rather than written as prose because its consumer is a later verification, not a reader. A prose paragraph stating which properties must survive cannot be checked for exhaustiveness, cannot be diffed when a behaviour is added, and cannot fail a build when a new behaviour arrives unclassified — and an unclassified behaviour is precisely the failure this criterion exists to prevent.
+
+  The two halves ship together because they are one design input: a declared range of model error is not actionable without knowing which properties are not permitted to depend on it, and the classification is empty without a range to be classified against. Splitting them would produce two leaves neither of which is independently useful to the loops that consume them.
+links:
+  - target: DEL-SIM-UNCERTAINTY-BUDGET.C1
+    type: derives-from
+  - target: DEL-SIM-UNCERTAINTY-BUDGET.C2
+    type: derives-from
+  - target: REQ-ROBUST-CONTROL-001.C2
+    type: targets

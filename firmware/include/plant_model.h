@@ -34,10 +34,14 @@
  *
  * The description is `length` bytes of text and need not be terminated. Blank
  * lines and lines whose first non-blank character is '#' are ignored; every
- * other line is `name = value`, optionally followed by the origin of that
- * value -- the marker, a kind from the vocabulary plant_origin.h declares, and
- * an account of where the figure came from. A line that is only a statement the
- * description makes about itself carries the marker and that statement alone.
+ * other line is `name = value`, optionally followed by the error the design
+ * assumes for that value -- the marker plant_budget.h declares and a fraction
+ * of the value -- and then by the origin of that value -- the marker, a kind
+ * from the vocabulary plant_origin.h declares, and an account of where the
+ * figure came from. The order of the two is fixed, because the account of an
+ * origin is free text and runs to the end of the line. A line that is only a
+ * statement the description makes about itself carries the origin marker and
+ * that statement alone.
  *
  * Returns false and leaves no usable record when a line cannot be parsed, when
  * a name is not one this structure has, when a name is given twice, when a
@@ -55,6 +59,55 @@
 bool plant_parameters_load(const char *text, size_t length,
                            plant_parameters_t *parameters,
                            plant_parameter_error_t *error);
+
+/*
+ * Read the error the design assumes for each value, from the same description.
+ *
+ * The same text, read on the same terms and refused on the same terms: a
+ * description this accepts is one plant_parameters_load accepts and the other
+ * way round, because it is the one parse with something different kept from it.
+ * What is kept here is the assumed error against each value -- the annotation
+ * plant_budget.h declares -- rather than the coefficients themselves, which the
+ * caller has the loader above for.
+ *
+ * It is a second operation rather than another argument to the loader because
+ * the two answer different callers. Everything that runs the model wants the
+ * coefficients; only work reasoning about how wrong the model may be wants the
+ * budget, and making every consumer supply somewhere to put a record it will
+ * never read would put the uncertainty work's vocabulary in front of all of
+ * them.
+ *
+ * Returns false and leaves no usable record when the description is refused,
+ * for any of the reasons plant_parameters_load refuses one. `error` reports
+ * which coefficient was at fault and why; it may not be null.
+ *
+ * A description carrying no assumed error for a value is not refused here. It
+ * loads, and that value reads back as having no error declared -- which is a
+ * different answer from an error of zero. See plant_parameter_budget_for.
+ */
+bool plant_parameter_budget_load(const char *text, size_t length,
+                                 plant_parameter_budget_t *budget,
+                                 plant_parameter_error_t *error);
+
+/*
+ * The error the design assumes for one coefficient, by the name the description
+ * calls it by.
+ *
+ * By name rather than by index, because the order a structure declares its
+ * coefficients in is that structure's own business, and a consumer that had to
+ * know it would be reaching around this seam to find it out. The name is text
+ * the consumer already has -- it is what the description says -- so asking with
+ * it names no structure.
+ *
+ * Returns false and writes nothing when an argument is null, when the name is
+ * not one this structure's parameter table declares, or when the description
+ * carried no assumed error for it. The last of those is deliberately not
+ * answered with zero: a caller sizing a margin has to be able to tell "the
+ * description says this coefficient is exact" from "the description says
+ * nothing about this coefficient", and the two demand opposite responses.
+ */
+bool plant_parameter_budget_for(const plant_parameter_budget_t *budget,
+                                const char *name, float *assumed_error);
 
 /*
  * Bring a model instance to its initial state under the given parameters.

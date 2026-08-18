@@ -56,8 +56,18 @@
 # moved: the reasoning is unchanged because the arithmetic is unchanged, and an
 # entry whose code had actually moved would have had to be judged again.
 
+# Every judgement about plant_parameters.c was re-made at a new line a second
+# time, when the grammar grew the error the design assumes for a value. The
+# loader gained a second annotation to read, a helper both of its public loaders
+# share, and an accessor of its own, which moved every line below the first of
+# them. Each entry was checked against the code now at its coordinates before
+# being moved: the reasoning is unchanged wherever the arithmetic is unchanged,
+# the two entries whose subject genuinely changed shape say so, and the
+# accessor's own copy of the spec-table guard is judged on its own terms rather
+# than by pointing at the walk's.
+
 survivors:
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:48:19:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:49:19:
     verdict: equivalent
     reason: >-
       Leading-blank trim, `*begin < *end` widened to `<=`. When the span is
@@ -66,7 +76,7 @@ survivors:
       description -- none of which is blank. The body therefore never executes
       and `begin` is never moved, so the trimmed span is the same one.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:136:16:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:137:16:
     verdict: equivalent
     reason: >-
       Name-length clamp, `copied > NAME_MAX - 1` widened to `>=`. The two differ
@@ -74,7 +84,7 @@ survivors:
       guard assigns exactly that value. The mutant does the assignment and the
       original skips it, with the same result either way.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:139:32:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:140:32:
     verdict: equivalent
     reason: >-
       `copied > 0` widened to `>= 0` on a `size_t`, which makes the guard always
@@ -82,11 +92,12 @@ survivors:
       zero bytes copies nothing. The other half of the condition still refuses a
       null source, so nothing is dereferenced that was not before.
 
-  cxx_gt_to_ge:src/plant/common/plant_parameters.c:207:20:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:286:20:
     verdict: equivalent
     reason: >-
-      Spec-table size guard, `spec_count > SPEC_LIMIT` widened to `>=`, which
-      refuses a table of exactly SPEC_LIMIT entries. The table is not input: it
+      Spec-table size guard in the description walk, `spec_count >
+      PLANT_PARAMETER_LIMIT` widened to `>=`, which refuses a table of exactly
+      PLANT_PARAMETER_LIMIT entries. The table is not input: it
       is compiled in, chosen at build time by which structure the environment
       names, and every structure in the tree declares a single-figure number of
       parameters. Both forms therefore accept every table any build of this
@@ -97,7 +108,7 @@ survivors:
       rather than assumed here, so a structure growing towards the limit fails
       that test instead of quietly invalidating this judgement.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:231:28:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:318:28:
     verdict: equivalent
     reason: >-
       `cursor = (line_end < limit) ? line_end + 1 : limit` widened to `<=`, so
@@ -106,7 +117,7 @@ survivors:
       which is false for both, and it is never dereferenced. The loop ends in
       the same place having read the same lines.
 
-  cxx_ge_to_gt:src/plant/common/plant_parameters.c:170:32:
+  cxx_ge_to_gt:src/plant/common/plant_parameters.c:171:32:
     verdict: analysis
     reason: >-
       Value-token length guard, `length >= VALUE_TEXT_MAX` narrowed to `>`, which
@@ -129,11 +140,14 @@ survivors:
       and the sweep reports a judgement about a mutant the local host kills as no
       longer load-bearing rather than as a failure.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:297:47:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:257:43:
     verdict: analysis
     reason: >-
       Spec-lookup loop bound widened to `<=`, so the search reads one entry past
-      the end of the structure's spec table. What it reads is whatever follows
+      the end of the structure's spec table. The loop is now the one helper both
+      the description walk and the assumed-error accessor look a name up
+      through, so this is one mutant where it used to be one per caller -- the
+      reasoning is unchanged, and it is reached from either. What it reads is whatever follows
       that table, and the outcome changes only if it happens to hold a name of
       the same length that compares equal -- otherwise the loop still ends with
       no match and the same UNKNOWN refusal is reported, which is why no
@@ -150,6 +164,18 @@ survivors:
       survivor. Repeat that experiment if this reasoning is ever in doubt: add
       the sanitizer script back to the environment's extra_scripts and run the
       sweep, and this line should report Killed.
+
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:556:57:
+    verdict: equivalent
+    reason: >-
+      The same spec-table size guard again, in the accessor that answers what
+      error the design assumes for one coefficient: `spec_count >
+      PLANT_PARAMETER_LIMIT` widened to `>=`. The judgement is the entry above's
+      and is made again rather than referred to, because the two guards are
+      separately editable and a change to one would not move the other. The
+      table is compiled in, chosen by which structure the environment names, and
+      every structure in the tree declares a single-figure number of parameters,
+      so both forms accept every table any build of this program can present.
 
   cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:75:31:
     verdict: equivalent
@@ -178,7 +204,7 @@ survivors:
       the relaxation, the duty scaling, a losing-nothing description, and the
       steam pressure above and below saturation.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:100:19:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:101:19:
     verdict: analysis
     reason: >-
       Origin annotation, the skip over what lies between the marker and the kind:
@@ -197,7 +223,7 @@ survivors:
       test constructs, which is why nothing is watching this in either build. The
       sanitized tier would report it if one did.
 
-  cxx_lt_to_le:src/plant/common/plant_parameters.c:105:21:
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:106:21:
     verdict: analysis
     reason: >-
       The same widening one loop further on, scanning the kind word: `kind_end <

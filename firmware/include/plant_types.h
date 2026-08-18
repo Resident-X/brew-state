@@ -100,6 +100,22 @@ typedef struct {
 #define PLANT_PARAMETER_NAME_MAX 48
 
 /*
+ * The most coefficients a structure may declare.
+ *
+ * The loader records which coefficients a description has supplied in a bitmap
+ * one word wide, and a structure with more coefficients than that is refused
+ * outright rather than silently having the surplus go unchecked for absence.
+ *
+ * It sits in the vocabulary rather than in the loader because the record of
+ * what the design assumes each coefficient may be wrong by is indexed by the
+ * same positions and has to be the same length. Two limits that must agree are
+ * two limits that eventually do not, and the failure would be silent: a
+ * structure past the shorter of them would have its last coefficients' assumed
+ * errors written nowhere and read back as undeclared.
+ */
+#define PLANT_PARAMETER_LIMIT 64
+
+/*
  * One coefficient a structure requires, where it lands in that structure's
  * parameter record, and the range outside which the structure declares it
  * inadmissible. A structure supplies one of these per coefficient; nothing
@@ -137,7 +153,25 @@ typedef enum {
      * distinguishing the two is the difference between "this file is damaged"
      * and "this value is not accounted for".
      */
-    PLANT_PARAMETER_ORIGIN
+    PLANT_PARAMETER_ORIGIN,
+    /*
+     * The assumed error against a value is not one that can stand -- the marker
+     * with no token behind it, a token that is not a number, an error below
+     * zero, or one that is not finite.
+     *
+     * Separate from ORIGIN because the two annotations answer different
+     * questions about the same value: where the figure came from, and how far
+     * out it may be. A caller told only that "an annotation is wrong" would
+     * have to read the file to find out which, and the two are repaired by
+     * different people from different sources.
+     *
+     * A value carrying no assumed error at all is not this fault, and is not a
+     * fault here at all. Whether a description owes an error for every value it
+     * carries follows what that description claims about a real machine, which
+     * is settled where the description lives rather than by the loader -- the
+     * same division the origin annotation already draws.
+     */
+    PLANT_PARAMETER_ASSUMED_ERROR
 } plant_parameter_fault_t;
 
 /*
@@ -154,5 +188,39 @@ typedef struct {
     float minimum;
     float maximum;
 } plant_parameter_error_t;
+
+/*
+ * What the design assumes each of a structure's coefficients may be wrong by,
+ * as a fraction of the value the description gave for it.
+ *
+ * This is the one thing a description carries that is kept after it has been
+ * read. The origin of a value is not: which values are accounted for, and
+ * whether the account is adequate, is a question about a file and is settled
+ * where that file lives. The assumed error is different because it has a
+ * consumer on this side of the seam -- a margin is sized from it, a sweep is
+ * run across it -- and a figure the running program cannot reach is a figure
+ * that has to be typed a second time into whatever consumes it.
+ *
+ * `assumed_error` and `declared` are indexed by the structure's own order of
+ * coefficients, which is the order its parameter table declares them in. That
+ * is an ordering nothing outside the structure knows, so a caller reaches an
+ * entry by the coefficient's name rather than by an index it would have to
+ * have obtained from somewhere.
+ *
+ * `declared` is separate from the figure rather than being a reserved value of
+ * it, because zero is a perfectly ordinary thing for a description to say: a
+ * coefficient believed exact -- a defined saturation point, a ratio fixed by
+ * construction -- has an assumed error of nothing at all, and reading that back
+ * as "no error was declared" would silently turn the strongest claim a
+ * description can make into the weakest.
+ *
+ * `count` is how many coefficients the structure has, and therefore how much of
+ * the two arrays means anything. It is not how many errors were declared.
+ */
+typedef struct {
+    float assumed_error[PLANT_PARAMETER_LIMIT];
+    bool declared[PLANT_PARAMETER_LIMIT];
+    size_t count;
+} plant_parameter_budget_t;
 
 #endif /* PLANT_TYPES_H */

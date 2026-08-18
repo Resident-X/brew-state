@@ -1,0 +1,14 @@
+id: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3
+type: criterion
+title: A description whose assumed error is absent or inadmissible is refused
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |
+  The loader refuses a description in which a required coefficient carries an assumed error that is not admissible for it, and reports which coefficient and which fault through the existing `plant_parameter_error_t` record rather than a new error channel. A negative error, and one that is not finite, are both inadmissible. An absent annotation is not a loader fault: whether every value a description owes an error actually carries one is settled where the description lives, by the check that reads the file, on the same claims-based terms that decide whether a value owes an origin. Splitting it that way is what keeps one answer to whether an annotation must be present, rather than one answer in the loader and a different one at the gate.
+
+  Every refusal `plant_parameters_load()` already makes survives the grammar extension unchanged — an unknown coefficient, a value outside the spec's minimum and maximum, a malformed line, a missing origin — each still refused, with the same fault reported. This is verified by the existing refusal tests continuing to pass unmodified in `firmware/test/test_plant/test_plant.c`, not by new tests asserting the same thing. Whether the declared range is wide enough to contain the machine's real behaviour is out of scope.
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR
+    type: criterion-of

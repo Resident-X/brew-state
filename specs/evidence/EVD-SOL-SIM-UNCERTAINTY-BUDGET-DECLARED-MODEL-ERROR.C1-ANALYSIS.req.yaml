@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C1-ANALYSIS
+type: evidence
+title: Verification of SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C1 by analysis
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-18"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: check_assumed_error over firmware/params reports every value carrying the error the design assumes for it; tools/tests/test_plant_checks.py EveryValueSaysHowWrongItMayBe and TheAssumedErrorCheckStopsRatherThanReportingSuccess; mutate.py a-value-loses-its-assumed-error and an-assumed-error-the-machine-would-refuse each caught
+  artifact_version: 27c9c11637397f52eb518acb681be9b767ae03f6
+  verifier: david
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C1
+    type: satisfies

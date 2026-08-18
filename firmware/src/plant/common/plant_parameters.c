@@ -11,9 +11,18 @@
  * serves a host reading from disk and a target reading from wherever a record
  * is stored. Where a record lives on the target belongs to the stored-data
  * work and is not decided here.
+ *
+ * A line carries two annotations against its value as well as the value
+ * itself: how far out the design assumes that value may be, and where the
+ * figure came from. Both are read by the one walk below, and one of them is
+ * kept. Two walks would mean two parsers, and two parsers are one grammar
+ * until somebody extends one of them -- at which point a description would
+ * load through one operation and be refused by the other, which is a worse
+ * answer than either of them alone.
  */
 #include "plant_model.h"
 
+#include "plant_budget.h"
 #include "plant_origin.h"
 
 #include <errno.h>
@@ -28,14 +37,6 @@
  * that terminates the token bounded.
  */
 #define VALUE_TEXT_MAX 64
-
-/*
- * Coefficients a structure may declare. The bitmap that records which ones a
- * description supplied is one word wide, and a structure with more
- * coefficients than that is refused outright rather than silently having the
- * surplus go unchecked for absence.
- */
-#define SPEC_LIMIT 64
 
 static bool is_blank(char c)
 {
@@ -193,8 +194,86 @@ static bool parse_value(const char *begin, const char *end, float *value, bool *
     return true;
 }
 
-bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *parameters,
-                           plant_parameter_error_t *error)
+/*
+ * Read the assumed-error annotation occupying [begin, end), which the caller
+ * has established starts with the marker, and say whether it can stand.
+ *
+ * The token is a fraction of the value it stands against, so it is a plain
+ * number and is parsed by the same routine the value itself is: a description
+ * that spells a coefficient one way and its error another would be two
+ * grammars in one line.
+ *
+ * Three things disqualify what is read. A marker with nothing behind it says
+ * the author meant to state an error and did not, which is worse than not
+ * having claimed one at all -- it reads as declared to anyone skimming. A
+ * negative error is not a smaller error, it is a sentence with no meaning: the
+ * figure says how far either side of the value the machine may sit, and there
+ * is no distance shorter than none. A not-a-number is what a spreadsheet that
+ * divided by zero emits, and every comparison against it is false, so it is
+ * caught by the lower bound being written as a question about what the value is
+ * rather than about what it is not; an infinity passes that question and is
+ * refused separately, because "wrong by an unbounded amount" is a statement
+ * about a coefficient nobody should be designing against, not a wide margin.
+ *
+ * There is no upper bound. An error larger than the value is entirely possible
+ * for a coefficient nobody has measured -- a loss estimated from geometry with
+ * the conduction path left out can be a factor out rather than a percentage --
+ * and a limit here would be this file inventing a judgement that belongs to
+ * whoever wrote the description.
+ */
+static bool assumed_error_is_admissible(const char *begin, const char *end, float *fraction)
+{
+    const char *token_begin = begin + 1; /* Past the marker. */
+    const char *token_end = end;
+    trim(&token_begin, &token_end);
+
+    float parsed = 0.0f;
+    bool representable = true;
+    if (!parse_value(token_begin, token_end, &parsed, &representable)) {
+        return false;
+    }
+    if (!(parsed >= 0.0f)) {
+        return false;
+    }
+    if (!isfinite(parsed)) {
+        return false;
+    }
+
+    *fraction = parsed;
+    return true;
+}
+
+/*
+ * Where in the structure's table the coefficient called `name` sits, or
+ * `spec_count` when it has none.
+ *
+ * The name is a span rather than a terminated string on one side and a
+ * terminated one on the other, so the length is compared as well as the bytes:
+ * a description naming `brew.loss` must not reach `brew.loss_w_per_k`.
+ */
+static size_t index_of(const plant_parameter_spec_t *specs, size_t spec_count, const char *name,
+                       size_t name_length)
+{
+    for (size_t candidate = 0u; candidate < spec_count; candidate++) {
+        const char *declared = specs[candidate].name;
+        if (strlen(declared) == name_length && memcmp(declared, name, name_length) == 0) {
+            return candidate;
+        }
+    }
+    return spec_count;
+}
+
+/*
+ * The one walk over a description, which both of the seam's loaders are.
+ *
+ * `parameters` is required and `budget` is not, because the record of what the
+ * design assumes each value may be wrong by is wanted by some callers and not
+ * by most. Both are assembled here and copied out only once the whole
+ * description is known to be admissible, so a refusal leaves the caller with
+ * what it had rather than with half of a new record.
+ */
+static bool read_description(const char *text, size_t length, plant_parameters_t *parameters,
+                             plant_parameter_budget_t *budget, plant_parameter_error_t *error)
 {
     if (error == NULL) {
         return false;
@@ -204,7 +283,7 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
     size_t spec_count = 0u;
     const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
     if (text == NULL || parameters == NULL || specs == NULL || spec_count == 0u ||
-        spec_count > SPEC_LIMIT) {
+        spec_count > PLANT_PARAMETER_LIMIT) {
         report(error, PLANT_PARAMETER_MALFORMED, 0u, NULL, 0u);
         return false;
     }
@@ -213,9 +292,17 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
      * Everything is assembled here and copied out only once the description is
      * known to be complete and admissible, so a refused description leaves the
      * caller's record untouched rather than half filled in.
+     *
+     * The assumed errors are assembled whether or not the caller asked for
+     * them. Writing them costs one store on a line that has already been parsed
+     * and read, and making the walk itself conditional on who is calling would
+     * be two paths through the one parser that this file exists to keep single.
      */
     plant_parameters_t staging;
     memset(&staging, 0, sizeof(staging));
+    plant_parameter_budget_t assumed;
+    memset(&assumed, 0, sizeof(assumed));
+    assumed.count = spec_count;
     uint64_t supplied = 0u;
 
     const char *cursor = text;
@@ -272,18 +359,31 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
         const char *name_end = separator;
         trim(&name_begin, &name_end);
         /*
-         * The value runs to the marker where one is present, and to the end of
-         * the line where it is not. Splitting here rather than after parsing is
-         * what keeps the value token what it always was: `1.0 @document p.24`
-         * offers the parser `1.0`, so the refusal of a token with a second
-         * number after it -- `1.0 2.0` -- is untouched by the extension.
+         * The value runs to whichever annotation comes first, and to the end of
+         * the line where there is none. Splitting here rather than after
+         * parsing is what keeps the value token what it always was: `1.0 ~ 0.2
+         * @document p.24` offers the parser `1.0`, so the refusal of a token
+         * with a second number after it -- `1.0 2.0` -- is untouched by either
+         * extension. That refusal is the one an annotation grammar is most
+         * likely to lose, because both extensions work by ending the value
+         * somewhere earlier than the line does.
+         *
+         * The origin is found first and the error is looked for only ahead of
+         * it, which is what fixes the order of the two. An origin's account is
+         * free text running to the end of the line, so a marker appearing
+         * inside it is part of what somebody wrote about a service manual
+         * rather than a second annotation.
          */
         const char *origin_begin = separator + 1;
         while (origin_begin < line_end && *origin_begin != PLANT_ORIGIN_MARKER) {
             origin_begin++;
         }
+        const char *budget_begin = separator + 1;
+        while (budget_begin < origin_begin && *budget_begin != PLANT_BUDGET_MARKER) {
+            budget_begin++;
+        }
         const char *value_begin = separator + 1;
-        const char *value_end = origin_begin;
+        const char *value_end = budget_begin;
         trim(&value_begin, &value_end);
 
         const size_t name_length = (size_t)(name_end - name_begin);
@@ -293,14 +393,7 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
             return false;
         }
 
-        size_t index = spec_count;
-        for (size_t candidate = 0u; candidate < spec_count; candidate++) {
-            const char *name = specs[candidate].name;
-            if (strlen(name) == name_length && memcmp(name, name_begin, name_length) == 0) {
-                index = candidate;
-                break;
-            }
-        }
+        const size_t index = index_of(specs, spec_count, name_begin, name_length);
         if (index == spec_count) {
             report(error, PLANT_PARAMETER_UNKNOWN, line_number, name_begin, name_length);
             return false;
@@ -371,8 +464,38 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
             return false;
         }
 
+        /*
+         * The assumed error is read after the origin, so a line with both
+         * annotations wrong is reported as the fault declared first in
+         * plant_parameter_fault_t -- fixed here rather than left to the order
+         * the two happen to be written in, so a description with more than one
+         * thing wrong with it reports the same fault every time it is read.
+         *
+         * This is the annotation that is kept. It is not enough that it be
+         * well-formed, because something on this side of the seam sizes a
+         * margin from it, and a figure that reached a margin calculation as a
+         * negative number or as an infinity would produce a margin nobody could
+         * account for rather than a refusal anybody could see.
+         *
+         * A value carrying no error at all is not refused. A description that
+         * claims no real machine has nothing to be wrong about, and which
+         * descriptions those are is settled where they live -- the same
+         * division the origin annotation draws, drawn again here rather than
+         * differently, because a grammar with two answers to "must an
+         * annotation be present" is one nobody can hold in their head.
+         */
+        const bool carries_error = budget_begin != origin_begin;
+        float assumed_error = 0.0f;
+        if (carries_error &&
+            !assumed_error_is_admissible(budget_begin, origin_begin, &assumed_error)) {
+            report(error, PLANT_PARAMETER_ASSUMED_ERROR, line_number, name_begin, name_length);
+            return false;
+        }
+
         float *field = (float *)(void *)((char *)&staging + specs[index].offset);
         *field = value;
+        assumed.assumed_error[index] = assumed_error;
+        assumed.declared[index] = carries_error;
         supplied |= bit;
     }
 
@@ -384,7 +507,76 @@ bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *
         }
     }
 
+    if (budget != NULL) {
+        *budget = assumed;
+    }
     *parameters = staging;
     error->fault = PLANT_PARAMETER_OK;
+    return true;
+}
+
+bool plant_parameters_load(const char *text, size_t length, plant_parameters_t *parameters,
+                           plant_parameter_error_t *error)
+{
+    return read_description(text, length, parameters, NULL, error);
+}
+
+bool plant_parameter_budget_load(const char *text, size_t length, plant_parameter_budget_t *budget,
+                                 plant_parameter_error_t *error)
+{
+    if (error == NULL) {
+        return false;
+    }
+    if (budget == NULL) {
+        memset(error, 0, sizeof(*error));
+        report(error, PLANT_PARAMETER_MALFORMED, 0u, NULL, 0u);
+        return false;
+    }
+
+    /*
+     * The coefficients are read and dropped. A caller asking what the design
+     * assumes about the values has usually loaded them already, and reading
+     * the description on any terms other than the full ones would mean a
+     * budget could come back from a description the model itself would refuse
+     * -- a set of errors about coefficients that never arrived.
+     */
+    plant_parameters_t discarded;
+    return read_description(text, length, &discarded, budget, error);
+}
+
+bool plant_parameter_budget_for(const plant_parameter_budget_t *budget, const char *name,
+                                float *assumed_error)
+{
+    if (budget == NULL || name == NULL || assumed_error == NULL) {
+        return false;
+    }
+
+    size_t spec_count = 0u;
+    const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
+    if (specs == NULL || spec_count == 0u || spec_count > PLANT_PARAMETER_LIMIT) {
+        return false;
+    }
+
+    /*
+     * A record whose length does not match the structure's answers nothing.
+     * That is what a record never loaded looks like -- zeroed, and therefore
+     * claiming no coefficients at all -- and answering from one would report
+     * the design as assuming an error of nothing for every coefficient in the
+     * model, which is the most dangerous possible reading of a description that
+     * was never read.
+     */
+    if (budget->count != spec_count) {
+        return false;
+    }
+
+    const size_t index = index_of(specs, spec_count, name, strlen(name));
+    if (index == spec_count) {
+        return false;
+    }
+    if (!budget->declared[index]) {
+        return false;
+    }
+
+    *assumed_error = budget->assumed_error[index];
     return true;
 }

@@ -83,7 +83,7 @@ So a description that claims a real machine records, against each value and in
 the same file, how that figure was arrived at and what it was arrived at from:
 
 ```
-brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the circuit diagram on p.24 of the service manual.
+brew.heater_power_w = 1000.0 ~ 0.25 @document Coffee thermoblock element, read off the circuit diagram on p.24 of the service manual.
 ```
 
 An annotation runs to the end of its line, so that is one line however far it
@@ -108,6 +108,59 @@ The loader refuses a malformed annotation rather than skipping it, and
 it. A convention that depends on remembering is not a discipline: provenance
 decays under time pressure, adding one more coefficient, and the failure leaves
 no trace at the point of use.
+
+## How wrong a value is assumed to be
+
+The figure after the `~` is the error the design is entitled to assume for the
+value before it, as a fraction of that value: `1000.0 ~ 0.25` says the machine's
+real figure is assumed to lie within a quarter either side of a thousand. It is
+assumed rather than measured, like everything else in a description of a machine
+that has not been on a bench, and the marker is declared once in
+`include/plant_budget.h`.
+
+The order of the two annotations is fixed — value, then error, then origin —
+because an origin's account is free text running to the end of the line and
+would otherwise swallow whatever followed it.
+
+It is carried beside the value for the same reason the origin is: a margin held
+against an unstated uncertainty cannot be checked by anyone, including its author
+later, and cannot be revisited when identification lands better or worse than it
+was sized for. `check_assumed_error.py` fails the build on a coefficient with no
+figure against it, in every description that claims a machine.
+
+This is the one annotation the running program keeps.
+`plant_parameter_budget_load()` reads a description for it and
+`plant_parameter_budget_for()` answers for one coefficient by name, both through
+the seam, so a consumer reasoning about how wrong the model may be never names a
+structure. A coefficient the description carried no figure for reads back as
+undeclared rather than as an error of zero: "the description says this is exact"
+and "the description says nothing about this" demand opposite responses.
+
+## What a wrong model is not permitted to take away
+
+The model will be wrong, and the useful question is what still holds when it is.
+`params/robustness.declaration` names each behaviour the design commits to and
+classifies it as one of three words declared in `include/plant_robustness.h`:
+`invariant` for what must hold however wrong the model turns out to be —
+refusing what cannot be delivered, reaching a safe state, respecting the supply
+budget, surrendering accumulated intent at the actuator limit — `bounded` for
+what holds across the error the description declares and is not claimed beyond
+it, such as stability and the margin protecting a trip point, and `degrading`
+for what is permitted to get worse as the model does, such as how tightly a
+setpoint is held.
+
+The middle class earns its place: a guarantee that holds whatever the model says
+and a guarantee that holds provided the model is within the declared error are
+different promises, and a later verification checks the first by making the
+model arbitrarily wrong and the second by sweeping the declared range.
+
+It is data rather than a paragraph because a paragraph cannot be diffed when a
+behaviour is added and cannot fail a build when one arrives unclassified.
+`check_robustness_declaration.py` refuses a behaviour with no class, with two,
+with a word the header does not declare, a behaviour named twice, and a class
+nothing falls into. Whether a loop actually holds an invariant behaviour across
+the declared range of model error is the robustness verification's question;
+there is no loop yet.
 
 ## How far a structure has been verified
 
@@ -152,6 +205,8 @@ fails a check rather than the one that ships.
 | `include/plant_types.h` | The vocabulary the plant seam is expressed in: quantities, actuation, parameter and step faults. |
 | `include/plant_support.h` | The one place the support-status vocabulary is declared. Names no structure. |
 | `include/plant_origin.h` | The one place the origin vocabulary is declared — how a value in a description was arrived at, and how a description says it claims no machine. Names no structure. |
+| `include/plant_budget.h` | The one place the marker introducing a value's assumed error is declared, and what that figure means. Names no structure. |
+| `include/plant_robustness.h` | The one place the three classes a declared behaviour is put in are declared — what a wrong model may take away, what it may take away only beyond the declared error, and what it may not. Names no structure, and names no control law. |
 | `src/control/` | The control logic. Reaches hardware only through the seam. Identical in both builds. |
 | `src/hw/sim/` | The simulated implementation, and the controls tests use to stand readings up. |
 | `src/hw/stm32/` | The STM32 HAL-backed implementation. Naming vendor symbols is its job. |
@@ -160,6 +215,7 @@ fails a check rather than the one that ships.
 | `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
 | `src/plant/boiler/` | A structure of a different architecture: one heated vessel serving both paths, so both temperature quantities follow one heater and the machine's second heating channel goes unanswered. |
 | `params/` | Parameter descriptions, and the statement of what each represents. Read at run time; the build compiles none of them in. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. A description that claims a real machine accounts for every value it carries and is accompanied by `<structure>.md`, which says what those quantities are and how they relate. |
+| `params/robustness.declaration` | The behaviours the design commits to, each classified as one that must survive an arbitrarily wrong model or one permitted to degrade with it. Carried with the descriptions because it is the other half of the same design input: a declared range of model error says nothing without a statement of which behaviours are not allowed to depend on it. |
 | `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
 | `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |
@@ -308,7 +364,7 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_sanitizers.py` | A source of this project's own reaches a host artefact without the sanitizers, or without the strict warning settings in an environment that could scope them to this project's sources, or the executable links no sanitizer runtime — failures that otherwise pass silently. Covers every host environment the build declares. |
 | `check_direct_calls.py` | A seam call in a linked executable is indirect, or a seam operation the control logic references is reached by no direct call at all. Covers every host artefact the build declares. |
 | `check_control_identical.py` | A control translation unit does not preprocess identically in both environments — which is how an environment-defined macro reaching the control logic is caught. |
-| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h`, `plant_support.h`, `plant_machine_claim.h`, `plant_origin.h` and `machine_actuation.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
+| `check_plant_header.py` | A seam header names a structure, reaches into a structure's record, carries a function definition, or fails to compile standalone against *every* structure in turn. Run over `plant_model.h`, and over `plant_types.h`, `plant_support.h`, `plant_machine_claim.h`, `plant_origin.h`, `plant_budget.h`, `plant_robustness.h` and `machine_actuation.h` under `--vocabulary-only`, which drops only the requirement to declare an operation. Inspecting one and not the others would let the uninspected one clear itself. Runs inside every build. |
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one — or a structure in the tree is built by no environment at all, and so is checked by nothing. Covers every structure. |
@@ -316,6 +372,8 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
 | `check_actuation_declaration.py` | A structure declares no set of actuation channels, declares more than one, declares an empty one, or names a channel the machine's shared vocabulary does not carry. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_parameter_origins.py` | A description that claims a real machine carries a value with no origin, an origin of a kind the vocabulary does not declare, or a kind with no account behind it; a coefficient the structure requires is absent from it; or its statement of what it represents has fallen behind the coefficients and quantities it has to name. Also fails a vocabulary that no longer separates an estimate from a measurement, and a tree in which every description exempts itself, since that inspects nothing. Runs inside every build, over every description in the tree rather than the one the build runs against. |
+| `check_assumed_error.py` | A description that claims a real machine carries a value with no assumed error against it, or one that is not a figure a value could be out by — absent after its marker, unreadable, negative or not finite. Also fails a vocabulary whose marker is the one that already introduces an origin, since an account runs to the end of the line and would swallow every figure, and a tree in which every description exempts itself, since that inspects nothing. Runs inside every build, over every description in the tree. |
+| `check_robustness_declaration.py` | A behaviour the design commits to carries no class, carries two, or carries a word the vocabulary does not declare; a behaviour is declared twice; a class has nothing in it, which is a declaration that drew no line; or the artefact is absent or empty. Reads the classes out of `plant_robustness.h` rather than restating them. |
 | `check_machine_claim.py` | A structure declares nothing about whether its equations describe a machine, declares it more than once, or declares something outside the vocabulary. Also fails a vocabulary that has grown a distinction beyond that one, and a tree in which no structure describes a machine at all, since the mutation sweep would then draw its mutants from an empty population. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 

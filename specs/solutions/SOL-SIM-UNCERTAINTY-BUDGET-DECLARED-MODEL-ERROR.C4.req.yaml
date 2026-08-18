@@ -1,0 +1,14 @@
+id: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C4
+type: criterion
+title: Behaviour that must survive an arbitrarily wrong model is declared separately from behaviour permitted to degrade
+status: active
+version: 2
+measurement_type: binary
+verification: analysis
+text: |
+  The behaviours the design commits to are enumerated in one machine-readable artefact carried with the plant description, and each names exactly one of the classes the vocabulary declares. Three are declared, because a guarantee that holds whatever the model says and a guarantee that holds provided the model is within the declared error are different promises, and collapsing them would hide the difference a later verification has to act on: one is checked by making the model arbitrarily wrong, the other by sweeping the declared range. Refusing what cannot be delivered, reaching a safe state, respecting the supply budget and surrendering accumulated intent at the actuator limit are declared as holding however wrong the model is; stability across the declared range and the margin protecting a trip point are declared as holding across that range and not claimed beyond it; holding a setpoint to a tolerance and reaching one within a time are declared as permitted to degrade.
+
+  A check run as part of `task fw:check` fails when a declared behaviour carries no class, when it carries more than one, when it carries a word the vocabulary does not declare, and when the artefact is absent, and names the behaviour at fault. The vocabulary is read from the header that declares it rather than restated by the check, so a class is added by a deliberate edit in one place. Demonstrating that a loop actually holds any of these is out of scope — that is the robustness verification's claim about a loop, and no loop exists yet.
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR
+    type: criterion-of
