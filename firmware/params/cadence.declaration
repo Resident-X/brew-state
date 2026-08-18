@@ -1,0 +1,28 @@
+# Where the cadence figures came from.
+#
+# Two of the four numbers this machine's timing and loss behaviour rest on are
+# properties of the control loop rather than of any machine, so they are not
+# carried in a per-machine description the way the other two are: the step
+# interval and the late-step multiple are the same on every machine this
+# software runs on, and a copy of them in each description would be three
+# statements of one fact.
+#
+# They live as single definitions in src/control/control.h, and this file is
+# where each one accounts for itself. It carries no values, deliberately. A
+# value written here as well as there would be the second site the whole
+# arrangement exists to prevent -- and it is the one that goes stale silently,
+# because nothing compiles this file.
+#
+# The check that reads it fails the build when one of these is defined more than
+# once, when one arrives with no origin, and when either of the two figures that
+# are per-machine data -- the loss-tolerance window and the excursion bound --
+# turns up as a definition in the source at all. Those two belong to a machine's
+# limits declaration beside its description, and a macro carrying one would be a
+# figure that no longer varies with the machine it describes.
+#
+# The vocabulary is the one every description in this project accounts for its
+# values in: a kind, and an account of what the figure was arrived at from.
+
+step-interval-ms @estimated Estimated from the thermal time constants of the brew path, which are seconds rather than milliseconds, so that the loop samples far faster than the process it controls and the choice of interval is not what limits the control law. Nothing has established that this margin is the right one, and whether ten milliseconds is sufficient for the disturbances this machine actually sees is a question for the control-law work rather than a claim made here.
+
+late-step-multiple @estimated Estimated as the smallest multiple that is unambiguously a scheduling failure rather than ordinary jitter. One interval of slack absorbs the variation any loop shows; three is far enough beyond it that a step arriving that late means something took the processor away, which is a fact a caller should be told rather than one absorbed into a longer integration.

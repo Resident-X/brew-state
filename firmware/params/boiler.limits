@@ -1,0 +1,29 @@
+# The single-boiler structure's limits declaration.
+#
+# This structure describes no real machine, and these numbers mean nothing. The
+# file exists because every description is required to declare its own bounds
+# rather than inherit a default, and that requirement is worth more than the
+# exemption would save: a channel that arrives carrying no bounds is the failure
+# worth preventing, because it is the one that reads as covered to everybody who
+# looks at it.
+#
+# The estimator refuses this architecture outright -- it keeps no state between
+# the heated mass and what leaves it -- so nothing here is ever consulted while
+# a model runs. That is not a reason to leave it out. The check asks every
+# description the same question, and a description exempted because today's
+# estimator happens not to reach it would be exempt for a reason that stops
+# being true without anybody editing this file.
+#
+# The statement below is what exempts these figures from accounting for
+# themselves, in the form the check reads. Numbers that mean nothing have no
+# origin to record.
+
+@describes-no-machine
+
+brew-temperature = -10000 .. 250000
+steam-temperature = -10000 .. 250000
+brew-pressure = -1000 .. 20000
+steam-pressure = -1000 .. 20000
+
+loss-tolerance-window-ms = 500
+excursion-bound-milli-c = 15000

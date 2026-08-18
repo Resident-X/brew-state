@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C10-INSPECTION
+type: evidence
+title: Every number the cadence and loss behaviour rest on is declared with its origin (SOL-USABLE-ESTIMATE-EVERY-STEP.C10)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/params/cadence.declaration; firmware/tools/check_cadence_declaration.py; firmware/tools/tests/test_estimator_limits_checks.py::EveryCadenceFigureAccountsForItself; ::EachFigureHasOneHomeAndOnlyOne
+text: |-
+  The four figures each carry an origin from the plant_origin.h vocabulary and each has one home. The loss-tolerance window and the excursion bound vary with the machine and carry value and origin together in each <structure>.limits file. The step interval and the late-step multiple are the same on every machine, so their value sits at one site in src/control/control.h and their account at one site in params/cadence.declaration, which carries no values deliberately. check_cadence_declaration.py runs in task fw:check and closes the loop in both directions: a figure accounted for but defined nowhere fails, a figure defined in two files fails and names both, a figure with no origin or no account fails, and a per-machine figure appearing as a numeric macro fails as having stopped varying with its machine. CONTROL_STEP_INTERVAL_MS previously stood at ten milliseconds with nothing asserting it; whether ten milliseconds is sufficient is not claimed.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C10
+    type: satisfies

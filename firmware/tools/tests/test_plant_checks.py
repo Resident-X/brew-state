@@ -993,13 +993,21 @@ class StructureExclusiveCheck(unittest.TestCase):
 
 
 class ParametersAreDataCheck(unittest.TestCase):
-    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3: one artefact, two descriptions, two runs."""
+    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C3, SOL-USABLE-ESTIMATE-EVERY-STEP.C1: one artefact, two descriptions against one unchanging limits declaration, two runs."""
 
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.dir.cleanup)
         self.a = self.write("a.params", "gain = 1.0\n")
         self.b = self.write("b.params", "gain = 2.0\n")
+        # One declaration, named once and held across the pair. The artefact
+        # reconstructs a state and cannot do so without knowing what a reading
+        # off the machine may plausibly be, but what is being established here
+        # is that a coefficient is read rather than compiled in -- so the
+        # descriptions are what vary, and a second declaration alongside them
+        # would leave the two runs differing for a reason this check could not
+        # attribute to either.
+        self.limits = self.write("structure.limits", "some-channel = -1000 .. 250000\n")
 
     def write(self, name: str, content: str) -> str:
         path = os.path.join(self.dir.name, name)
@@ -1014,9 +1022,16 @@ class ParametersAreDataCheck(unittest.TestCase):
         os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
         return path
 
-    def check(self, executable: str):
+    def check(self, executable: str, limits: str | None = None):
         return run_check(
-            "check_parameters_are_data.py", executable, "--params", self.a, "--params", self.b
+            "check_parameters_are_data.py",
+            executable,
+            "--params",
+            self.a,
+            "--params",
+            self.b,
+            "--limits",
+            self.limits if limits is None else limits,
         )
 
     def test_two_descriptions_giving_two_trajectories_passes(self):
@@ -1040,15 +1055,39 @@ class ParametersAreDataCheck(unittest.TestCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("changed between the runs", result.stderr)
 
+    def test_the_one_declaration_reaches_both_runs_as_the_second_argument(self):
+        # The artefact refuses anything else, so two completed runs are two
+        # runs handed the declaration named once on the command line -- rather
+        # than one left to find a declaration of its own, or handed a different
+        # one alongside each description.
+        result = self.check(
+            self.executable(f'test "$2" = "{self.limits}" || exit 4\ncat "$1"\n')
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("2 description(s) gave 2 distinct", result.stdout)
+
     def test_one_description_cannot_establish_anything(self):
         result = run_check(
             "check_parameters_are_data.py",
             self.executable('cat "$1"\n'),
             "--params",
             self.a,
+            "--limits",
+            self.limits,
         )
         self.assertEqual(2, result.returncode)
         self.assertIn("two descriptions are needed", result.stderr)
+
+    def test_a_missing_limits_declaration_is_an_error_not_a_pass(self):
+        # A declaration that is not there is the state the check has to stop
+        # on: two runs against nothing would differ for the same reason two
+        # runs against one file do, and would read as an established result.
+        result = self.check(
+            self.executable('cat "$1"\n'),
+            limits=os.path.join(self.dir.name, "absent.limits"),
+        )
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no such limits declaration", result.stderr)
 
     def test_a_missing_description_is_an_error_not_a_pass(self):
         result = run_check(
@@ -1058,8 +1097,11 @@ class ParametersAreDataCheck(unittest.TestCase):
             self.a,
             "--params",
             os.path.join(self.dir.name, "absent.params"),
+            "--limits",
+            self.limits,
         )
         self.assertEqual(2, result.returncode)
+        self.assertIn("no such description", result.stderr)
 
 
 # --- check_selection_refused ------------------------------------------------

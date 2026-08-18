@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "estimator_limits.h"
 #include "hw_interface.h"
 #include "plant_model.h"
 
@@ -46,6 +47,47 @@ typedef enum {
 } estimator_state_t;
 
 /*
+ * A set of the seam's sensor channels, as bits.
+ *
+ * One machine word rather than an array of flags because the sets below are
+ * compared and combined a step at a time, and because a set that fits in a
+ * register costs the target nothing to carry.
+ */
+typedef uint32_t estimator_observation_set_t;
+
+#define ESTIMATOR_OBSERVATION_BIT(channel)                                                         \
+    ((estimator_observation_set_t)1u << (unsigned)(channel))
+
+/*
+ * Which observations each reconstructed state rests on.
+ *
+ * Declared here rather than worked out at the call site, and declared per state
+ * rather than per channel, because that is where the consequence lands. This
+ * seam corrects four plant states from four channels and answers one state to
+ * its caller, so a rule keyed on channels would let a dead steam-pressure
+ * sensor refuse a brew temperature that never depended on it -- and stop the
+ * machine for a reason that has nothing to do with what it was asked to
+ * control.
+ *
+ * The state this seam answers is the water on its way to the group, and no
+ * channel observes it. What reaches it is the temperature of the mass being
+ * heated, which the brew temperature channel corrects and which the water
+ * follows; nothing downstream of that mass feeds back into it. So the set below
+ * names the one channel a gap in which actually starves this state, and a gap
+ * in any other leaves it answering.
+ *
+ * A state added here without its dependencies stated would default to depending
+ * on nothing, and would then go on being reported usable through a total loss
+ * of observation. The build is made to check the table is as wide as the
+ * vocabulary for that reason.
+ */
+#define ESTIMATOR_STATE_OBSERVATIONS                                                               \
+    {                                                                                              \
+        [ESTIMATOR_STATE_BREW_TEMPERATURE_C] =                                                     \
+            ESTIMATOR_OBSERVATION_BIT(HW_SENSOR_BREW_TEMPERATURE),                                 \
+    }
+
+/*
  * An estimator instance.
  *
  * The members are here because a consumer holds one by value rather than
@@ -55,26 +97,48 @@ typedef enum {
 typedef struct {
     bool ready;
     plant_model_t model;
+    estimator_limits_t limits;
     bool residual_fresh[HW_SENSOR_CHANNEL_COUNT];
     int32_t residual_milli[HW_SENSOR_CHANNEL_COUNT];
+    /*
+     * Per reconstructed state: how long since a usable observation among the
+     * ones it depends on, and where it stood when they stopped arriving. The
+     * anchor is what the excursion bound is measured from, and it is only
+     * meaningful once an observation has established it -- which is what the
+     * flag beside it records, rather than a sentinel value a real temperature
+     * could take.
+     */
+    uint32_t unobserved_millis[ESTIMATOR_STATE_COUNT];
+    float observed_at[ESTIMATOR_STATE_COUNT];
+    bool anchored[ESTIMATOR_STATE_COUNT];
 } estimator_t;
 
 /*
  * Bring an instance to its initial state under a parameter record.
  *
- * Returns false, leaving the instance unusable, when the instance or the record
- * is null, when the record does not initialise a model, or when the structure
- * this build compiled does not keep a state this seam reconstructs. The last is
- * the interesting one: a structure whose architecture has nowhere for such a
- * state to live cannot have it reconstructed, and running on whatever it does
- * keep would hand the caller a substitute under the name of the thing it asked
- * for. Which states a structure keeps is fixed by the structure, so this is
+ * The limits record travels alongside the parameter record because the two are
+ * one description of one machine seen from two sides -- what it is, and what a
+ * reading off it may plausibly be. An instance brought up from one without the
+ * other would either believe every reading or believe none.
+ *
+ * Returns false, leaving the instance unusable, when the instance or either
+ * record is null, when the record does not initialise a model, or when the
+ * structure this build compiled does not keep a state this seam reconstructs.
+ * The last is the interesting one: a structure whose architecture has nowhere
+ * for such a state to live cannot have it reconstructed, and running on what
+ * it does keep would hand the caller a substitute under the name of what it
+ * asked for. Which states a structure keeps is fixed by the structure, so this is
  * settled once here rather than on every read.
  *
  * An instance that refused to initialise answers nothing: every read below
- * returns false until an initialisation succeeds.
+ * returns false until an initialisation succeeds. That holds however early the
+ * refusal came, including for an instance handed no record at all -- the caller
+ * still holds the instance afterwards, and it is put into its refusing state
+ * before its arguments are looked at rather than left as whatever the memory it
+ * was declared in contained.
  */
-bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters);
+bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters,
+                    const estimator_limits_t *limits);
 
 /*
  * Advance the instance by one interval under the actuation that was commanded,
@@ -98,7 +162,18 @@ bool estimator_step(estimator_t *estimator, const plant_actuation_t *actuation,
  *
  * Returns false and writes nothing when the instance or the destination is
  * null, when the instance is not initialised, when the state is not one of the
- * enumerated ones, or when what the model holds is not a number. A refusal is
+ * enumerated ones, when what the model holds is not a number, when the state
+ * has travelled further from where its observations left it than the declared
+ * excursion bound admits, or when those observations stopped longer ago than
+ * the declared tolerance window.
+ *
+ * The last two are the estimator declining to answer for a reconstruction it
+ * can no longer support, and they are separate refusals rather than one. The
+ * distance bounds the estimate: a prediction that has run away is not made
+ * trustworthy by being early, so it is refused however much of the window
+ * remains. The window bounds the machine's exposure, because a well-behaved
+ * model sitting still while the real mass runs away travels no distance at all
+ * and would otherwise be believed indefinitely. A refusal is
  * not a reading of zero: an uninitialised estimator has reconstructed nothing,
  * and answering with a default would be indistinguishable from a machine that
  * happens to be cold. The last refusal is there for the same reason -- a value

@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C9-TEST
+type: evidence
+title: A control step arriving later than the cadence tolerates is reported rather than absorbed (SOL-USABLE-ESTIMATE-EVERY-STEP.C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_step_past_the_tolerable_multiple_is_reported_late; ::test_a_late_step_still_drives_the_heater_and_advances_the_estimator
+text: |-
+  A step whose elapsed interval exceeds CONTROL_STEP_LATE_MULTIPLE times the step interval returns CONTROL_STEP_LATE rather than CONTROL_STEP_ACTUATED. Both sides of the threshold are exercised: exactly at the tolerable multiple the step is ordinary, one millisecond past it is late. The step still runs -- the heater is still driven, the fault flag stays clear, and the estimator is advanced by the elapsed figure, asserted against a reference model -- because being late is not a reason to stop controlling. What a caller should do about it, and why the step was late, are not addressed.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C9
+    type: satisfies

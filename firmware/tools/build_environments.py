@@ -34,6 +34,7 @@ import configparser
 import os
 import re
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -100,6 +101,12 @@ MUTATION_SWEEP_OPTION = "custom_mutation_sweep"
 #: makes that answerable before the artefact exists.
 EMBEDDED_DESCRIPTION_OPTION = "custom_embedded_description"
 
+#: The same declaration for the limits declaration that travels beside the
+#: description. An artefact carrying a description of a machine and no statement
+#: of what a reading off that machine may plausibly be would either believe every
+#: reading or believe none, so the two travel together or not at all.
+EMBEDDED_LIMITS_OPTION = "custom_embedded_limits"
+
 #: The macro a build names the description its artefact and its tests are
 #: exercised against with. An environment naming one is pinning the host
 #: verification tier to that description: it is the file the model's own tests
@@ -112,11 +119,20 @@ EMBEDDED_DESCRIPTION_OPTION = "custom_embedded_description"
 #: disagree.
 REFERENCE_MACRO = "REFERENCE_DESCRIPTION_PATH"
 
+#: The same, for the limits declaration the host tier is pinned to. Separate
+#: from the macro above because the two files are separate: a build could
+#: legitimately pin one and forget the other, and that is precisely the omission
+#: worth being able to see.
+REFERENCE_LIMITS_MACRO = "REFERENCE_LIMITS_PATH"
+
 #: The flag options a reference description can be named in.
 _FLAG_OPTIONS = ("build_flags", "build_src_flags")
 
 #: `-D REFERENCE_DESCRIPTION_PATH='"..."'`, however the quoting survived.
 _REFERENCE_FLAG = re.compile(r"-D\s*" + REFERENCE_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*")
+_REFERENCE_LIMITS_FLAG = re.compile(
+    r"-D\s*" + REFERENCE_LIMITS_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*"
+)
 
 #: `${section.option}`, the build file's own reference to another value.
 _REFERENCE = re.compile(r"\$\{([^}\s]+)\.([^}\s]+)\}")
@@ -247,6 +263,18 @@ class Environment:
         return _project_relative(self.get(EMBEDDED_DESCRIPTION_OPTION).strip())
 
     @property
+    def embedded_limits(self) -> str:
+        """The limits declaration this artefact carries compiled in, or empty.
+
+        Declared separately from the description rather than derived from its
+        name. A path derived by substitution would be a second statement of
+        which files belong together, made by a script rather than by the build,
+        and it would go on producing a plausible answer after somebody renamed
+        one of them.
+        """
+        return _project_relative(self.get(EMBEDDED_LIMITS_OPTION).strip())
+
+    @property
     def reference_descriptions(self) -> list[str]:
         """Every description this environment names as the one it is exercised
         against, as paths relative to the project, in the order they appear.
@@ -259,6 +287,19 @@ class Environment:
         found: list[str] = []
         for option in _FLAG_OPTIONS:
             for match in _REFERENCE_FLAG.finditer(self.get(option)):
+                path = _project_relative(match.group(1))
+                if path not in found:
+                    found.append(path)
+        return found
+
+    @property
+    def reference_limits(self) -> list[str]:
+        """Every limits declaration this environment names as the one it is
+        exercised against, on the same terms as the descriptions above.
+        """
+        found: list[str] = []
+        for option in _FLAG_OPTIONS:
+            for match in _REFERENCE_LIMITS_FLAG.finditer(self.get(option)):
                 path = _project_relative(match.group(1))
                 if path not in found:
                     found.append(path)
@@ -489,13 +530,22 @@ def machine_environments(environments: list[Environment]) -> list[Environment]:
     ]
 
 
-def pinned_description(environments: list[Environment]) -> tuple[str, list[str]]:
-    """The one description the build pins its verification to, and what went wrong.
+def _pinned(
+    environments: list[Environment],
+    named_by: Callable[[Environment], list[str]],
+    macro: str,
+    subject: str,
+) -> tuple[str, list[str]]:
+    """The one file of a kind the build pins its verification to, and what went wrong.
 
-    This is the single reader of that declaration. The gate that asks whether a
+    This is the single reader of such a declaration. The gate that asks whether a
     machine carries the verified model and the gate that asks whether every
     value in it accounts for itself are asking about the same file, and a second
-    reader of the same flag is the way those two answers start to differ.
+    reader of the same flag is the way those two answers start to differ. Which
+    is why the description and the limits declaration are answered here by one
+    body of code rather than by two that agree today: they are the same question
+    asked about two files, and written twice they would drift the moment either
+    was corrected.
 
     Naming none and naming two are both reported rather than resolved: a tier
     pinned to nothing has verified against nothing in particular, and a tier
@@ -503,13 +553,13 @@ def pinned_description(environments: list[Environment]) -> tuple[str, list[str]]
     """
     named: dict[str, list[str]] = {}
     for environment in environments:
-        for path in environment.reference_descriptions:
+        for path in named_by(environment):
             named.setdefault(path, []).append(environment.name)
 
     if not named:
         return "", [
-            f"no environment names a description with {REFERENCE_MACRO}, so there is no "
-            "description the verification tier is pinned to"
+            f"no environment names a {subject} with {macro}, so there is no "
+            f"{subject} the verification tier is pinned to"
         ]
     if len(named) > 1:
         detail = "; ".join(
@@ -517,8 +567,39 @@ def pinned_description(environments: list[Environment]) -> tuple[str, list[str]]
             for path, environments_naming in sorted(named.items())
         )
         return "", [
-            f"more than one description is named with {REFERENCE_MACRO} ({detail}), so which "
+            f"more than one {subject} is named with {macro} ({detail}), so which "
             "one the verification tier is pinned to is not settled"
         ]
 
     return next(iter(named)), []
+
+
+def pinned_description(environments: list[Environment]) -> tuple[str, list[str]]:
+    """The one description the build pins its verification to, and what went wrong.
+
+    What the tier's own tests read the machine's coefficients out of, and so what
+    an artefact claiming to carry the verified model has to be carrying.
+    """
+    return _pinned(
+        environments,
+        lambda environment: environment.reference_descriptions,
+        REFERENCE_MACRO,
+        "description",
+    )
+
+
+def pinned_limits(environments: list[Environment]) -> tuple[str, list[str]]:
+    """The one limits declaration the build pins its verification to, and what went wrong.
+
+    Asked separately from the description above because the two files are
+    separate. A build can pin one and leave the other unnamed, and that omission
+    is the one worth being able to see: an artefact carrying a description of a
+    machine and no statement of what a reading off that machine may plausibly be
+    would either believe every reading or believe none.
+    """
+    return _pinned(
+        environments,
+        lambda environment: environment.reference_limits,
+        REFERENCE_LIMITS_MACRO,
+        "limits declaration",
+    )

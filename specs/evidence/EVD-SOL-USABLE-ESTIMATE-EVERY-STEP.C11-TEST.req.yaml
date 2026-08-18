@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C11-TEST
+type: evidence
+title: Each build gate this slice adds is shown to fail on the defect it exists to catch (SOL-USABLE-ESTIMATE-EVERY-STEP.C11)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/mutate.py::a-channel-carries-no-declared-bounds; ::a-tolerance-redeclared-away-from-its-single-site; firmware/tools/tests/test_estimator_limits_checks.py::EachGateThisSliceAddsIsShownToFailOnItsOwnDefect
+text: |-
+  Both gates gain a hand-written mutant in mutate.py and both are caught: a plant description whose channel carries no line stops the limits check, and a tolerance redeclared as a macro away from its single site stops the cadence check. task fw:mutate reports 64 defects, each caught, and mutate.py counts a mutant as caught only on an exact exit code of 1, so a check that stopped for some other reason reads as inconclusive rather than as a catch. The LLVM sweep is not the vehicle for either: mull_sweep.py derives its population from what plant structures share plus the equations of those describing a machine, so control.c and estimator.c fall outside it and a sweep criterion here would report success over an empty subject. The boundary arithmetic this slice adds is covered instead by tests exercising each declared bound at the step either side of it. A unit test additionally asserts each gate has a mutant, that no mutant's subject has been edited out from under it, and that every replacement introduces something -- which turns a stale mutant into a failing test rather than an aborted run that reads as a broken tool.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C11
+    type: satisfies

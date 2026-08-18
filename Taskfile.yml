@@ -179,6 +179,8 @@ tasks:
       # looks at it, because nobody notices the absence of a sentence.
       - python3 tools/check_plant_header.py include/plant_robustness.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_robustness_declaration.py --include-dir include --declaration params/robustness.declaration
+      - python3 tools/check_estimator_limits.py --include-dir include --plant-root src/plant --params-dir params
+      - python3 tools/check_cadence_declaration.py --include-dir include --source-dir src --declaration params/cadence.declaration
       # The vocabulary both seams draw the machine's actuation channels from,
       # and every structure's statement of which of them it answers.
       - python3 tools/check_plant_header.py include/machine_actuation.h --plant-root src/plant --include-dir include --vocabulary-only
@@ -218,8 +220,8 @@ tasks:
       - python3 tools/check_structure_exclusive.py --project . --plant-root src/plant --include-dir include
       # Two descriptions are named here because the check needs a pair differing
       # in a single coefficient before it can conclude anything.
-      - python3 tools/check_parameters_are_data.py .pio/build/native/program --params params/thermoblock.params --params params/thermoblock-variant.params
-      - python3 tools/check_parameters_are_data.py .pio/build/native_boiler/program --params params/boiler.params --params params/boiler-variant.params
+      - python3 tools/check_parameters_are_data.py .pio/build/native/program --params params/thermoblock.params --params params/thermoblock-variant.params --limits params/thermoblock.limits
+      - python3 tools/check_parameters_are_data.py .pio/build/native_boiler/program --params params/boiler.params --params params/boiler-variant.params --limits params/boiler.limits
       # The misconfigured configurations are named because a forgotten name here
       # fails loudly rather than quietly.
       - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --env native_boiler_two_structures --env stm32_no_structure --env stm32_two_structures --pio {{.PIO}}

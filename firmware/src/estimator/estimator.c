@@ -78,6 +78,26 @@ static const plant_state_t STATE_FOR_RECONSTRUCTION[ESTIMATOR_STATE_COUNT] = {
 };
 
 /*
+ * Which observations each reconstructed state rests on, read from the seam's
+ * own declaration rather than restated here. A second statement of it would be
+ * the one that disagreed after a state was added.
+ */
+static const estimator_observation_set_t OBSERVATIONS_FOR_RECONSTRUCTION[ESTIMATOR_STATE_COUNT] =
+    ESTIMATOR_STATE_OBSERVATIONS;
+
+/*
+ * A state added to the vocabulary without its dependencies stated would default
+ * to depending on nothing, and a state depending on nothing is one no gap can
+ * ever starve -- it would go on being reported usable through a total loss of
+ * observation, which is the failure this table exists to prevent. Designated
+ * initialisers make that omission silent, so the build is made to notice it.
+ */
+_Static_assert(sizeof(OBSERVATIONS_FOR_RECONSTRUCTION) /
+                       sizeof(OBSERVATIONS_FOR_RECONSTRUCTION[0]) ==
+                   (size_t)ESTIMATOR_STATE_COUNT,
+               "every reconstructed state names the observations it depends on");
+
+/*
  * A reading in the unit the hardware seam reports, saturating rather than
  * wrapping. The seam's readings are bounded by what an int32_t holds, and a
  * model that has been driven somewhere absurd must not turn into a plausible
@@ -108,6 +128,38 @@ static int32_t difference_milli(int32_t predicted, int32_t observed)
         return INT32_MIN;
     }
     return (int32_t)delta;
+}
+
+/*
+ * Whether a reading that arrived is one the machine could actually have
+ * produced. Compared in the unit the seam reports, so nothing is converted on
+ * the way to being judged: a reading is either inside the span the description
+ * declared for its channel or it is not.
+ *
+ * This is a different question from the one the seam's own flag answers. That
+ * flag says whether a sample could be obtained; this says whether the sample
+ * obtained is possible. A disconnected or shorted channel produces values that
+ * are arithmetically fine and physically absurd, and correcting against one
+ * drags the reconstruction toward a state the machine cannot be in.
+ */
+static bool reading_is_plausible(const estimator_t *estimator, hw_sensor_channel_t channel,
+                                 int32_t value_milli)
+{
+    return value_milli >= estimator->limits.low_milli[channel] &&
+           value_milli <= estimator->limits.high_milli[channel];
+}
+
+/*
+ * Add an elapsed interval to a figure that must not wrap. A gap that overflowed
+ * back to nothing would report a state starved of observation for weeks as
+ * freshly observed, which is the one answer worse than either bound.
+ */
+static uint32_t saturating_add(uint32_t accumulated, uint32_t interval_millis)
+{
+    if (UINT32_MAX - accumulated < interval_millis) {
+        return UINT32_MAX;
+    }
+    return accumulated + interval_millis;
 }
 
 static void forget_residuals(estimator_t *estimator)
@@ -153,14 +205,41 @@ static bool correct_against(estimator_t *estimator, hw_sensor_channel_t channel,
     return true;
 }
 
-bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters)
+bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters,
+                    const estimator_limits_t *limits)
 {
-    if (estimator == NULL || parameters == NULL) {
+    if (estimator == NULL) {
         return false;
     }
 
+    /*
+     * Put the instance into its refusing state before anything else is looked
+     * at, including the arguments. What this seam promises is that an instance
+     * which refused to initialise answers nothing, and that promise has to hold
+     * for an instance whose initialisation was refused on its first line -- a
+     * caller that passed no record still holds the instance afterwards, and
+     * every read of it must refuse rather than report whatever the memory it
+     * was declared in happened to contain.
+     *
+     * No state has been observed yet, and none has an anchor. Starting the
+     * elapsed figures at nothing rather than at the window is deliberate: an
+     * instance that has just come up has not yet failed to observe anything,
+     * and refusing on that basis would make every machine unusable at start-up
+     * until a first reading happened to arrive.
+     */
     estimator->ready = false;
     forget_residuals(estimator);
+    for (unsigned state = 0u; state < (unsigned)ESTIMATOR_STATE_COUNT; state++) {
+        estimator->unobserved_millis[state] = 0u;
+        estimator->observed_at[state] = 0.0f;
+        estimator->anchored[state] = false;
+    }
+
+    if (parameters == NULL || limits == NULL) {
+        return false;
+    }
+
+    estimator->limits = *limits;
 
     if (!plant_model_init(&estimator->model, parameters)) {
         return false;
@@ -201,12 +280,52 @@ bool estimator_step(estimator_t *estimator, const plant_actuation_t *actuation,
         return false;
     }
 
+    /*
+     * Which channels actually fed the estimate this step. A reading the seam
+     * could not obtain and a reading it obtained that is absurd take the same
+     * path -- the prediction advances, the correction is skipped, no residual
+     * is reported -- because in both cases there is nothing here worth
+     * correcting toward.
+     */
+    estimator_observation_set_t usable = 0u;
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         const hw_reading_t observed = hw_sensor_read((hw_sensor_channel_t)channel);
         if (!observed.valid) {
             continue;
         }
-        (void)correct_against(estimator, (hw_sensor_channel_t)channel, observed.value_milli);
+        if (!reading_is_plausible(estimator, (hw_sensor_channel_t)channel, observed.value_milli)) {
+            continue;
+        }
+        if (correct_against(estimator, (hw_sensor_channel_t)channel, observed.value_milli)) {
+            usable |= ESTIMATOR_OBSERVATION_BIT(channel);
+        }
+    }
+
+    /*
+     * Then the bookkeeping each reconstructed state needs to say whether it is
+     * still supported. It is judged against that state's own dependencies: a
+     * channel reaching no state the caller asked for has no business making one
+     * unusable, and this is where that is enforced rather than at the call
+     * site.
+     *
+     * The anchor is taken after the corrections rather than before, so the
+     * distance a later step measures is travel away from where the last
+     * observation actually left the state.
+     */
+    for (unsigned state = 0u; state < (unsigned)ESTIMATOR_STATE_COUNT; state++) {
+        if ((OBSERVATIONS_FOR_RECONSTRUCTION[state] & usable) == 0u) {
+            estimator->unobserved_millis[state] =
+                saturating_add(estimator->unobserved_millis[state], interval_millis);
+            continue;
+        }
+
+        estimator->unobserved_millis[state] = 0u;
+
+        float held = 0.0f;
+        if (plant_model_state(&estimator->model, STATE_FOR_RECONSTRUCTION[state], &held)) {
+            estimator->observed_at[state] = held;
+            estimator->anchored[state] = true;
+        }
     }
 
     return true;
@@ -235,6 +354,31 @@ bool estimator_state(const estimator_t *estimator, estimator_state_t state, floa
      * was written.
      */
     if (!isfinite(reconstructed)) {
+        return false;
+    }
+
+    /*
+     * How far the reconstruction has travelled from where its observations left
+     * it. Refused past the declared distance however much of the window
+     * remains, because a prediction that has run away is not made trustworthy
+     * by being early. Measured only once an observation has established
+     * somewhere to measure from: before that there is no travel to speak of,
+     * only a starting value.
+     */
+    if (estimator->anchored[state]) {
+        const float travelled = fabsf(reconstructed - estimator->observed_at[state]);
+        if (milli_from_unit(travelled) > estimator->limits.excursion_bound_milli) {
+            return false;
+        }
+    }
+
+    /*
+     * And how long ago they stopped. Inside the window the reconstruction runs
+     * on prediction and is still answered; past it the loss is no longer brief,
+     * and answering would be reporting a state nothing has supported for longer
+     * than this machine's description says is safe.
+     */
+    if (estimator->unobserved_millis[state] > estimator->limits.tolerance_window_ms) {
         return false;
     }
 

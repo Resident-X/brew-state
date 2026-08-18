@@ -73,7 +73,8 @@ static control_step_result_t shut_down(control_state_t *state, control_step_resu
     return reason;
 }
 
-bool control_init(control_state_t *state, const plant_parameters_t *parameters)
+bool control_init(control_state_t *state, const plant_parameters_t *parameters,
+                  const estimator_limits_t *limits)
 {
     if (state == NULL) {
         return false;
@@ -94,7 +95,7 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters)
      * untrustworthy reading does: there is no temperature to act on, and a
      * control law that started driving later would be driving blind.
      */
-    if (!estimator_init(&state->estimator, parameters)) {
+    if (!estimator_init(&state->estimator, parameters, limits)) {
         state->faulted = true;
         return false;
     }
@@ -114,9 +115,37 @@ control_step_result_t control_step(control_state_t *state)
      * Compare the elapsed difference rather than the absolute instants, so the
      * step interval survives the monotonic counter wrapping.
      */
-    if (state->started && (now - state->last_step_millis) < CONTROL_STEP_INTERVAL_MS) {
+    const uint32_t elapsed = now - state->last_step_millis;
+    if (state->started && elapsed < CONTROL_STEP_INTERVAL_MS) {
         return CONTROL_STEP_TOO_SOON;
     }
+
+    /*
+     * What the estimator will be advanced by: the interval that actually
+     * elapsed, not the one the loop is meant to run at. The two coincide on a
+     * loop that is not late, and they differ on exactly the steps where the
+     * reconstruction matters most. A model integrates over an interval, and
+     * handing it one that did not pass makes its output an answer to a question
+     * nobody asked -- an instant that never happened, reported as the present.
+     *
+     * The first accepted step has no predecessor to measure from, so it is
+     * advanced by the declared interval rather than by the age of the instance.
+     *
+     * Reproducibility is not what is given up here. The suites that drive this
+     * path own the clock rather than observe it, so the elapsed figure is an
+     * input they choose exactly; determinism is kept by governing the clock
+     * rather than by misinforming the estimator.
+     */
+    const uint32_t advance = state->started ? elapsed : CONTROL_STEP_INTERVAL_MS;
+
+    /*
+     * Whether this step arrived later than the cadence tolerates. Noted before
+     * the step runs and reported after it, because being late does not stop the
+     * step: the estimator is still advanced by what elapsed and the heater is
+     * still driven. What it changes is what the caller is told.
+     */
+    const bool late =
+        state->started && elapsed > (CONTROL_STEP_INTERVAL_MS * CONTROL_STEP_LATE_MULTIPLE);
 
     state->started = true;
     state->last_step_millis = now;
@@ -129,31 +158,25 @@ control_step_result_t control_step(control_state_t *state)
         return CONTROL_STEP_FAULT_LATCHED;
     }
 
-    /*
-     * Advanced by the interval the control path runs at rather than by the
-     * elapsed difference computed above. The two coincide on a loop that is not
-     * late, and which of them the estimator ought to be advanced by is part of
-     * the rate question this slice defers: an estimator told the truth about a
-     * late step is more accurate, and one told the nominal interval is
-     * reproducible step for step. Nothing here should decide that quietly.
-     */
     const plant_actuation_t commanded = commanded_actuation(state);
-    if (!estimator_step(&state->estimator, &commanded, CONTROL_STEP_INTERVAL_MS)) {
+    if (!estimator_step(&state->estimator, &commanded, advance)) {
         return shut_down(state, CONTROL_STEP_SENSOR_INVALID);
     }
 
     /*
-     * Whether the brew reading could be trusted is asked of the estimator
-     * rather than of the seam a second time. The estimator corrects against a
-     * channel exactly when that channel's reading was usable, so the absence of
-     * a residual for it is the same fact a repeated read would establish -- and
-     * asking twice would let the two answers disagree across the step.
+     * Whether there is a state to drive from is asked of the estimator once,
+     * and asked as that question rather than as a question about a channel. A
+     * reading that did not arrive, or arrived and was absurd, is an ordinary
+     * operating condition: the estimator carries the reconstruction on
+     * prediction and goes on answering, and this path drives from it. It stops
+     * answering when the loss is no longer brief or the prediction has
+     * travelled too far, and that refusal -- not the absence of one reading --
+     * is what brings the heater down.
+     *
+     * Asking about the residual instead, as this once did, made a single
+     * dropped sample indistinguishable from a burnt-out sensor and latched a
+     * fault nothing in the tree clears.
      */
-    int32_t brew_residual = 0;
-    if (!estimator_residual(&state->estimator, HW_SENSOR_BREW_TEMPERATURE, &brew_residual)) {
-        return shut_down(state, CONTROL_STEP_SENSOR_INVALID);
-    }
-
     float brew_c = 0.0f;
     if (!estimator_state(&state->estimator, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &brew_c)) {
         return shut_down(state, CONTROL_STEP_SENSOR_INVALID);
@@ -165,5 +188,5 @@ control_step_result_t control_step(control_state_t *state)
     }
 
     state->brew_heater_permille = level;
-    return CONTROL_STEP_ACTUATED;
+    return late ? CONTROL_STEP_LATE : CONTROL_STEP_ACTUATED;
 }

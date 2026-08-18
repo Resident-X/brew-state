@@ -615,11 +615,17 @@ class TheArtefactIsInspectedForTheRuntime(unittest.TestCase):
 
 
 class EveryHostArtefactIsExecuted(unittest.TestCase):
-    """SOL-PLANT-SEAM-GATE-COVERAGE.C5: an artefact built under the analysis is run under it.
+    """SOL-PLANT-SEAM-GATE-COVERAGE.C5, SOL-USABLE-ESTIMATE-EVERY-STEP.C1: an artefact built under the analysis is run under it, against everything it needs to run at all.
 
     A sanitizer reports nothing until the code runs, so the environments whose
     artefact takes a parameter description are discovered and each is run
     against every description its own structure ships.
+
+    An artefact also reconstructs a state, which it cannot do without knowing
+    what a reading off that machine may plausibly be, so each run is handed its
+    structure's limits declaration as well. A structure shipping descriptions
+    and no declaration is reported rather than run against a default, because
+    an unbounded channel reads as covered to everybody who looks at it.
     """
 
     def setUp(self):
@@ -635,9 +641,24 @@ class EveryHostArtefactIsExecuted(unittest.TestCase):
             handle.write("coefficient = 1.0\n")
         return path
 
+    def limits(self, name: str) -> str:
+        """The declaration beside the descriptions, for the structure named in it.
+
+        Its contents are never parsed here -- the runner hands the path over
+        and the artefact reads it -- but it reads like one so the fixture stays
+        honest about what is being handed across.
+        """
+        path = os.path.join(self.params, name)
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write("some-channel = -1000 .. 250000\n")
+        return path
+
     def artefact(self, environment: str, body: str = "") -> str:
+        # Both arguments are logged, so every run the gate makes records what
+        # it was handed rather than only that it happened.
         return executable_script(
-            self.tree.artefact(environment), f'echo "{environment} $1" >> "{self.log}"\n' + body
+            self.tree.artefact(environment),
+            f'echo "{environment} $1 $2" >> "{self.log}"\n' + body,
         )
 
     def ran(self) -> list[str]:
@@ -671,12 +692,21 @@ class EveryHostArtefactIsExecuted(unittest.TestCase):
         nominal = self.description("alpha.params")
         variant = self.description("alpha-variant.params")
         beta = self.description("beta.params")
+        # One declaration per structure, which every variant of that structure
+        # runs against: what varies between variants is what the machine is,
+        # not what its sensors can report.
+        alpha_limits = self.limits("alpha.limits")
+        beta_limits = self.limits("beta.limits")
 
         result = self.run_artefacts()
         self.assertEqual(0, result.returncode, result.stderr)
         # In name order, which is the order the descriptions are discovered in.
         self.assertEqual(
-            [f"host_alpha {variant}", f"host_alpha {nominal}", f"host_beta {beta}"],
+            [
+                f"host_alpha {variant} {alpha_limits}",
+                f"host_alpha {nominal} {alpha_limits}",
+                f"host_beta {beta} {beta_limits}",
+            ],
             self.ran(),
         )
 
@@ -692,6 +722,8 @@ class EveryHostArtefactIsExecuted(unittest.TestCase):
         self.artefact("host_gamma")
         self.description("alpha.params")
         self.description("gamma.params")
+        self.limits("alpha.limits")
+        self.limits("gamma.limits")
 
         result = self.run_artefacts()
         self.assertEqual(0, result.returncode, result.stderr)
@@ -709,6 +741,7 @@ class EveryHostArtefactIsExecuted(unittest.TestCase):
         self.artefact("host_alpha")
         self.artefact("host_test")
         self.description("alpha.params")
+        self.limits("alpha.limits")
 
         result = self.run_artefacts()
         self.assertEqual(0, result.returncode, result.stderr)
@@ -728,10 +761,50 @@ class EveryHostArtefactIsExecuted(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertIn("has not been built", result.stderr)
 
+    def test_a_structure_shipping_no_limits_declaration_is_reported_rather_than_run(self):
+        # Reported rather than run against a default, for the reason a default
+        # is refused everywhere else here: an unbounded channel reads as
+        # covered to everybody who looks at it, and nothing about the run would
+        # distinguish a channel nobody bounded from one somebody decided was
+        # fine.
+        self.tree.declare([("host_alpha", host_environment("alpha"))])
+        self.artefact("host_alpha")
+        self.description("alpha.params")
+        result = self.run_artefacts()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("ships no limits declaration", result.stderr)
+        self.assertEqual([], self.ran())
+
+    def test_the_limits_declaration_is_handed_to_the_artefact_as_its_second_argument(self):
+        # The artefact is told which description to read and what a reading off
+        # that machine may be, in that order. A gate that ran it against the
+        # description alone would exercise the artefact's default rather than
+        # what the structure declares.
+        self.tree.declare([("host_alpha", host_environment("alpha"))])
+        self.artefact("host_alpha")
+        description = self.description("alpha.params")
+        limits = self.limits("alpha.limits")
+        result = self.run_artefacts()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([f"host_alpha {description} {limits}"], self.ran())
+
+    def test_a_limits_declaration_belongs_to_the_whole_of_a_structures_name(self):
+        # `thermo` must not inherit `thermoblock`'s declaration any more than
+        # it inherits its descriptions, and it must not be handed one because a
+        # variant of another structure happened to be named for it.
+        self.limits("thermoblock.limits")
+        self.limits("thermoblock-variant.limits")
+        self.assertEqual("", run_host_artefacts.limits_for("thermo", self.params))
+        self.assertEqual(
+            os.path.join(self.params, "thermoblock.limits"),
+            run_host_artefacts.limits_for("thermoblock", self.params),
+        )
+
     def test_a_run_that_fails_fails_the_task(self):
         self.tree.declare([("host_alpha", host_environment("alpha"))])
         self.artefact("host_alpha", "exit 1\n")
         self.description("alpha.params")
+        self.limits("alpha.limits")
         result = self.run_artefacts()
         self.assertEqual(1, result.returncode)
         self.assertIn("exited 1", result.stderr)

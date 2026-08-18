@@ -1,0 +1,21 @@
+# The fixture structure's limits declaration.
+#
+# The fixture describes no machine, and these numbers mean nothing. The file
+# exists because every description is required to declare its own bounds rather
+# than inherit a default, and that requirement is worth more than the exemption
+# would save: a channel that arrives carrying no bounds is the failure worth
+# preventing, because it is the one that reads as covered to everybody who looks.
+#
+# The statement below is what exempts these figures from accounting for
+# themselves, in the form the check reads. Numbers that mean nothing have no
+# origin to record.
+
+@describes-no-machine
+
+brew-temperature = -10000 .. 250000
+steam-temperature = -10000 .. 250000
+brew-pressure = -1000 .. 20000
+steam-pressure = -1000 .. 20000
+
+loss-tolerance-window-ms = 500
+excursion-bound-milli-c = 15000

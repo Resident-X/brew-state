@@ -128,6 +128,15 @@ ROBUSTNESS_DECLARATION = [
     sys.executable, "tools/check_robustness_declaration.py",
     "--include-dir", "include", "--declaration", "params/robustness.declaration",
 ]
+ESTIMATOR_LIMITS = [
+    sys.executable, "tools/check_estimator_limits.py",
+    "--include-dir", "include", "--plant-root", "src/plant", "--params-dir", "params",
+]
+CADENCE_DECLARATION = [
+    sys.executable, "tools/check_cadence_declaration.py",
+    "--include-dir", "include", "--source-dir", "src",
+    "--declaration", "params/cadence.declaration",
+]
 ANALYSIS = [
     sys.executable, "tools/check_sanitizers.py", "--project", ".",
 ]
@@ -176,6 +185,8 @@ LABELS = {
     tuple(ORIGINS): "the parameter origins check",
     tuple(ASSUMED_ERROR): "the assumed model error check",
     tuple(ROBUSTNESS_DECLARATION): "the robustness declaration check",
+    tuple(ESTIMATOR_LIMITS): "the limits declaration check",
+    tuple(CADENCE_DECLARATION): "the cadence declaration check",
     tuple(ANALYSIS): "the host tier's analysis check",
     tuple(MACHINE_SETTINGS): "the check that a machine build keeps its warning settings",
     tuple(MACHINE_STRUCTURE): "the check that a machine build carries a machine's equations",
@@ -425,8 +436,8 @@ MUTATIONS = (
                "carrying none -- which the settings check notices as the model no longer "
                "arriving under the settings at all",
         "file": "platformio.ini",
-        "find": "build_src_filter = ${common.control_sources} ${common.plant_sources} +<hw/stm32/> +<app/stm32/>",
-        "replace": "build_src_filter = ${common.control_sources} +<hw/stm32/> +<app/stm32/>",
+        "find": "build_src_filter = ${common.control_sources} ${common.estimator_sources} ${common.plant_sources} +<hw/stm32/> +<app/stm32/>",
+        "replace": "build_src_filter = ${common.control_sources} ${common.estimator_sources} +<hw/stm32/> +<app/stm32/>",
         "command": MACHINE_SETTINGS,
     },
     {
@@ -736,6 +747,28 @@ MUTATIONS = (
         "find": "pump.pressure_bar = 15.0 ~ 0.4 @estimated",
         "replace": "pump.pressure_bar = 15.0 ~ @estimated",
         "command": ASSUMED_ERROR,
+    },
+    {
+        "name": "a-channel-carries-no-declared-bounds",
+        "why": "a channel the estimator corrects against is left with no admissible span, so "
+               "the machine goes on believing whatever that channel reports -- which is the "
+               "one state nothing about the running machine distinguishes from a bound "
+               "somebody chose, and the failure the declaration exists to prevent",
+        "file": "params/thermoblock.limits",
+        "find": "\nsteam-pressure = -1000 .. 20000",
+        "replace": "\n#steam-pressure = -1000 .. 20000",
+        "command": ESTIMATOR_LIMITS,
+    },
+    {
+        "name": "a-tolerance-redeclared-away-from-its-single-site",
+        "why": "a figure that varies with the machine is compiled in beside the vocabulary "
+               "that names it, so it has stopped varying with the machine while going on "
+               "reading as declared in every limits file the tree ships",
+        "file": "include/estimator_limits.h",
+        "find": "#define ESTIMATOR_LIMITS_RANGE_MARKER \"..\"",
+        "replace": "#define ESTIMATOR_LIMITS_RANGE_MARKER \"..\"\n"
+                   "#define ESTIMATOR_LOSS_TOLERANCE_WINDOW_MS 500",
+        "command": CADENCE_DECLARATION,
     },
     {
         "name": "a-behaviour-carries-no-class",

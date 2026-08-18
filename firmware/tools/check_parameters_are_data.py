@@ -12,7 +12,13 @@ a single coefficient and requires two different trajectories. It hashes the
 executable either side of the pair as well: two runs producing different output
 prove nothing if the artefact was rebuilt between them.
 
+The limits declaration is held fixed across the pair and named once. What is
+being established is that a coefficient is read rather than compiled in, so the
+descriptions are what vary; varying anything else alongside them would leave
+two runs differing for a reason this check could not attribute.
+
 Usage: check_parameters_are_data.py <executable> --params <a> --params <b>
+                                    --limits <declaration>
 """
 
 from __future__ import annotations
@@ -43,6 +49,11 @@ def main(argv: list[str]) -> int:
         dest="descriptions",
         help="a parameter description to run against",
     )
+    parser.add_argument(
+        "--limits",
+        required=True,
+        help="the limits declaration to hold fixed across both runs",
+    )
     args = parser.parse_args(argv)
 
     if not os.path.exists(args.executable):
@@ -60,6 +71,12 @@ def main(argv: list[str]) -> int:
         if not os.path.isfile(path):
             print(f"check_parameters_are_data: no such description: {path}", file=sys.stderr)
             return 2
+    if not os.path.isfile(args.limits):
+        print(
+            f"check_parameters_are_data: no such limits declaration: {args.limits}",
+            file=sys.stderr,
+        )
+        return 2
 
     before = digest(args.executable)
     outputs: list[tuple[str, str]] = []
@@ -67,7 +84,10 @@ def main(argv: list[str]) -> int:
 
     for path in args.descriptions:
         result = subprocess.run(
-            [os.path.abspath(args.executable), path], capture_output=True, text=True, check=False
+            [os.path.abspath(args.executable), path, args.limits],
+            capture_output=True,
+            text=True,
+            check=False,
         )
         if result.returncode != 0:
             problems.append(

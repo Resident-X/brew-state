@@ -1,26 +1,41 @@
 #!/usr/bin/env python3
-"""Fail when a machine would be built carrying a description nobody verified.
+"""Fail when a machine would be built carrying bytes nobody verified.
 
-The bytes an artefact embeds are the one thing about the model that cannot be
-read back off the running machine. Generating them from the description file
-removes the obvious way for them to go stale, but it does not establish that
-the artefact and the host verification tier are pinned to the same file. A
-build naming a different description, a generated file left behind by an
-incremental build, and a second description sitting alongside the intended one
-each produce a target carrying something the tier never saw.
+An artefact carries two files compiled in: the description of what the machine
+is, and the declaration of what a reading off that machine may plausibly be.
+Both are the one thing about the model that cannot be read back off the running
+machine. Generating them from the files removes the obvious way for them to go
+stale, but it does not establish that the artefact and the host verification
+tier are pinned to the same files. A build naming a different description, a
+generated file left behind by an incremental build, and a second description
+sitting alongside the intended one each produce a target carrying something the
+tier never saw.
 
 None of those has a symptom. A machine predicting from coefficients that
 describe a different variant is wrong in exactly the way a machine that has
 drifted is wrong, and the residual that would eventually surface it cannot tell
-the two apart. So this is a build failure and not a warning, and it runs before
-anything is compiled rather than against the artefact afterwards: an artefact
-that should not exist is not made better by being inspected.
+the two apart. A machine believing readings a different machine's sensors could
+produce is wrong the same way and just as quietly. So this is a build failure
+and not a warning, and it runs before anything is compiled rather than against
+the artefact afterwards: an artefact that should not exist is not made better by
+being inspected.
+
+Both embeddings are asked the same questions by the same code, and every message
+names which of the two it is about. Written as two checks they would answer
+differently: the description would keep its refusals and the limits declaration
+would quietly acquire fewer.
 
 What the tier is pinned to is read through the module that reads the build, and
 what the artefact carries is read through the module that wrote it. This check
 owns neither format.
 
-Usage: check_embedded_description.py --project <dir> [--generated ENV=PATH]
+Usage: check_embedded_description.py --project <dir> [--generated ENV=DIR]
+
+`DIR` is the environment's generated directory -- the directory the build
+renders into -- and not one file in it. Each embedding is then found under its
+own name, which is the module that owns the format's answer rather than a
+caller's, so a third file arriving later is compared without this invocation
+changing.
 """
 
 from __future__ import annotations
@@ -28,6 +43,8 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from collections.abc import Callable
+from typing import NamedTuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -35,13 +52,50 @@ import build_environments  # noqa: E402
 import embedded_description  # noqa: E402
 
 
+class Subject(NamedTuple):
+    """One embedding, with the three things about it that live in the build file.
+
+    The embedding itself says what is rendered and under what name. What it is
+    called in an environment's declaration, how that declaration is read, and
+    which macro pins the tier to it are all facts about the build rather than
+    about the format, so they are joined to it here rather than restated at each
+    of the questions below.
+    """
+
+    #: What the artefact carries, and the name the build renders it under.
+    embedding: embedded_description.Embedding
+    #: What an environment declaring it calls the option.
+    option: str
+    #: What that environment declares, read off it.
+    declared: Callable[[build_environments.Environment], str]
+    #: What the verification tier is pinned to, read off the whole build.
+    pinned_by: Callable[[list[build_environments.Environment]], tuple[str, list[str]]]
+
+
+#: Everything an artefact carries compiled in, in the order it is reported on.
+SUBJECTS = (
+    Subject(
+        embedded_description.DESCRIPTION,
+        build_environments.EMBEDDED_DESCRIPTION_OPTION,
+        lambda environment: environment.embedded_description,
+        build_environments.pinned_description,
+    ),
+    Subject(
+        embedded_description.LIMITS,
+        build_environments.EMBEDDED_LIMITS_OPTION,
+        lambda environment: environment.embedded_limits,
+        build_environments.pinned_limits,
+    ),
+)
+
+
 def read_bytes(path: str) -> bytes:
     with open(path, "rb") as handle:
         return handle.read()
 
 
-def rendered_path(project: str, environment: build_environments.Environment) -> str:
-    """Where this environment's build puts what it renders.
+def rendered_directory(project: str, environment: build_environments.Environment) -> str:
+    """Where this environment's build puts everything it renders.
 
     Derived rather than given, so a second board is compared without a caller
     naming its build directory, and through the module that owns the format, so
@@ -50,36 +104,64 @@ def rendered_path(project: str, environment: build_environments.Environment) -> 
     return os.path.join(
         environment.build_directory(project),
         embedded_description.GENERATED_DIRECTORY,
-        embedded_description.GENERATED_NAME,
     )
 
 
+def rendered_path(directory: str, embedding: embedded_description.Embedding) -> str:
+    """One embedding's rendered file inside a generated directory.
+
+    The name comes from the embedding rather than from the caller, which is what
+    lets a run be handed a directory and still be looking at the same file the
+    build wrote into it.
+    """
+    return os.path.join(directory, embedding.generated_name)
+
+
 def check(project: str, generated: dict[str, str]) -> tuple[list[str], list[str]]:
-    """Every way a machine build's embedding diverges from the pinned description.
+    """Every way a machine build's embeddings diverge from what the tier is pinned to.
 
-    `generated` maps an environment name to the generated file to read for it.
+    `generated` maps an environment name to the generated directory to read for
+    it.
 
-    Which description each machine build declares is asked of every one of them,
+    Which files each machine build declares is asked of every one of them,
     because that is answerable from the build file alone. The bytes are compared
-    only for the environments a generated file is offered for, because they are
-    rendered by the build and only exist for the build that ran. This runs
-    inside each machine build and is offered that build's own file, so every
+    only for the environments a generated directory is offered for, because they
+    are rendered by the build and only exist for the build that ran. This runs
+    inside each machine build and is offered that build's own directory, so every
     artefact's bytes are compared as it is made -- and an environment offered
     here that does not build for a machine is refused rather than inspected,
     since it would be an answer about something that is not an artefact.
     """
     declared = build_environments.load(project)
-    pinned, problems = build_environments.pinned_description(declared)
+
+    # What the tier is pinned to, for each thing an artefact carries, before any
+    # artefact is asked about. Both are resolved before either is compared: a run
+    # that stopped at the first unresolved pin would report one omission and
+    # leave the reader to discover the other on the next run.
+    problems: list[str] = []
+    pins: list[tuple[Subject, str]] = []
+    for subject in SUBJECTS:
+        path, pin_problems = subject.pinned_by(declared)
+        if pin_problems:
+            problems.extend(pin_problems)
+            continue
+        pins.append((subject, path))
     if problems:
         return problems, []
 
-    pinned_path = os.path.join(project, pinned)
-    if not os.path.isfile(pinned_path):
-        return [
-            f"the verification tier is pinned to {pinned}, which is not there, so there is "
-            "nothing for an artefact to be compared against"
-        ], []
-    verified = read_bytes(pinned_path)
+    resolved: list[tuple[Subject, str, bytes]] = []
+    for subject, path in pins:
+        pinned_path = os.path.join(project, path)
+        if not os.path.isfile(pinned_path):
+            problems.append(
+                f"the verification tier is pinned to the {subject.embedding.description} "
+                f"{path}, which is not there, so there is nothing for an artefact to be "
+                "compared against"
+            )
+            continue
+        resolved.append((subject, path, read_bytes(pinned_path)))
+    if problems:
+        return problems, []
 
     environments = build_environments.machine_environments(declared)
     if not environments:
@@ -94,14 +176,11 @@ def check(project: str, generated: dict[str, str]) -> tuple[list[str], list[str]
         # where the artefacts already exist and a board nobody named would
         # otherwise go uncompared.
         generated = {
-            environment.name: rendered_path(project, environment)
+            environment.name: rendered_directory(project, environment)
             for environment in environments
         }
 
     source_root = os.path.abspath(os.path.join(project, "src"))
-    scanned_source_tree = {
-        path for path in generated.values() if os.path.abspath(path).startswith(source_root)
-    }
 
     known = {environment.name for environment in environments}
     for name in sorted(set(generated) - known):
@@ -112,57 +191,66 @@ def check(project: str, generated: dict[str, str]) -> tuple[list[str], list[str]
 
     inspected: list[str] = []
     for environment in environments:
-        declared_description = environment.embedded_description
-        if not declared_description:
-            problems.append(
-                f"{environment.name}: builds for a machine and declares no "
-                f"{build_environments.EMBEDDED_DESCRIPTION_OPTION}, so which description its "
-                "artefact carries is not stated anywhere"
-            )
-            continue
-        if declared_description != pinned:
-            problems.append(
-                f"{environment.name}: declares it embeds {declared_description}, but the "
-                f"verification tier is pinned to {pinned}, so the machine would carry a "
-                "description the tier never verified"
-            )
-            continue
+        directory = generated.get(environment.name)
+        for subject, expected, verified in resolved:
+            what = subject.embedding.description
 
-        path = generated.get(environment.name)
-        if path is None:
-            # Not this run's subject. Its declaration has been checked above, and
-            # its bytes are compared by its own build, which is the only run that
-            # renders them.
-            continue
-        if path in scanned_source_tree:
-            problems.append(
-                f"{environment.name}: {path} is inside the source tree. The rendered "
-                "description belongs under the build directory; a copy kept in the tree is "
-                "the second description this compares against one"
-            )
-            continue
-        if not os.path.isfile(path):
-            problems.append(f"{environment.name}: no generated embedding at {path}")
-            continue
+            declared_file = subject.declared(environment)
+            if not declared_file:
+                problems.append(
+                    f"{environment.name}: builds for a machine and declares no "
+                    f"{subject.option}, so which {what} its artefact carries is not stated "
+                    "anywhere"
+                )
+                continue
+            if declared_file != expected:
+                problems.append(
+                    f"{environment.name}: declares it embeds the {what} {declared_file}, but "
+                    f"the verification tier is pinned to {expected}, so the machine would "
+                    f"carry a {what} the tier never verified"
+                )
+                continue
 
-        try:
-            source, carried = embedded_description.decode(read_bytes(path).decode("utf-8"))
-        except (embedded_description.MalformedEmbedding, UnicodeDecodeError) as error:
-            problems.append(f"{environment.name}: {path}: {error}")
-            continue
+            if directory is None:
+                # Not this run's subject. Its declaration has been checked above,
+                # and its bytes are compared by its own build, which is the only
+                # run that renders them.
+                continue
 
-        inspected.append(environment.name)
-        if source != pinned:
-            problems.append(
-                f"{environment.name}: {path} was generated from {source}, not from the "
-                f"pinned {pinned}"
-            )
-        if carried != verified:
-            problems.append(
-                f"{environment.name}: the {len(carried)} bytes it would embed are not the "
-                f"{len(verified)} bytes of {pinned}, so the artefact and the tier disagree "
-                "about what the machine is"
-            )
+            path = rendered_path(directory, subject.embedding)
+            if os.path.abspath(path).startswith(source_root):
+                problems.append(
+                    f"{environment.name}: {path} is inside the source tree. The rendered "
+                    f"{what} belongs under the build directory; a copy kept in the tree is "
+                    "the second one this compares against one"
+                )
+                continue
+            if not os.path.isfile(path):
+                problems.append(
+                    f"{environment.name}: no generated embedding of the {what} at {path}"
+                )
+                continue
+
+            try:
+                source, carried = embedded_description.decode(
+                    read_bytes(path).decode("utf-8"), subject.embedding
+                )
+            except (embedded_description.MalformedEmbedding, UnicodeDecodeError) as error:
+                problems.append(f"{environment.name}: {what}: {path}: {error}")
+                continue
+
+            inspected.append(f"{environment.name}'s {what}")
+            if source != expected:
+                problems.append(
+                    f"{environment.name}: {path} was generated from {source}, not from the "
+                    f"pinned {what} {expected}"
+                )
+            if carried != verified:
+                problems.append(
+                    f"{environment.name}: the {len(carried)} bytes of {what} it would embed "
+                    f"are not the {len(verified)} bytes of {expected}, so the artefact and "
+                    "the tier disagree about what the machine is"
+                )
 
     return problems, inspected
 
@@ -174,22 +262,22 @@ def main(argv: list[str]) -> int:
         "--generated",
         action="append",
         default=[],
-        metavar="ENV=PATH",
-        help="the generated embedding to read for one environment; without any, every "
-             "machine build is read from where its own build put it",
+        metavar="ENV=DIR",
+        help="the generated directory to read every embedding for one environment out of; "
+             "without any, every machine build is read from where its own build put it",
     )
     args = parser.parse_args(argv)
 
     offered: dict[str, str] = {}
     for entry in args.generated:
-        name, separator, path = entry.partition("=")
-        if not separator or not name or not path:
+        name, separator, directory = entry.partition("=")
+        if not separator or not name or not directory:
             print(
-                f"check_embedded_description: --generated wants ENV=PATH, not '{entry}'",
+                f"check_embedded_description: --generated wants ENV=DIR, not '{entry}'",
                 file=sys.stderr,
             )
             return 2
-        offered[name] = path
+        offered[name] = directory
 
     try:
         problems, inspected = check(args.project, offered)
@@ -199,8 +287,8 @@ def main(argv: list[str]) -> int:
 
     if problems:
         print(
-            "check_embedded_description: a machine would be built carrying a description "
-            "the verification tier did not verify",
+            "check_embedded_description: a machine would be built carrying something the "
+            "verification tier did not verify",
             file=sys.stderr,
         )
         for problem in problems:
@@ -208,7 +296,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     print(
-        f"check_embedded_description: {', '.join(inspected)} would embed the description the "
+        f"check_embedded_description: {', '.join(inspected)} would embed what the "
         "verification tier is pinned to, byte for byte"
     )
     return 0

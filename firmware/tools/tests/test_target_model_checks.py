@@ -30,7 +30,13 @@ sys.path.insert(
 )
 
 import embedded_description  # noqa: E402
-from test_plant_checks import ClaimTree, declare_environments, run_check, write  # noqa: E402
+from test_plant_checks import (  # noqa: E402
+    TOOLS,
+    ClaimTree,
+    declare_environments,
+    run_check,
+    write,
+)
 
 #: A description in the language the loader accepts. Its content is never
 #: parsed here -- these gates compare bytes -- but a description that reads like
@@ -47,6 +53,21 @@ VARIANT = (
     "alpha.coefficient = 2.5 ~ 0.1 @estimated From nothing in particular either.\n"
 )
 
+#: The declaration that travels beside the description: what a reading off the
+#: machine may plausibly be. Its content is no more parsed here than the
+#: description's is, and it reads like one for the same reason.
+LIMITS = (
+    "# A synthetic limits declaration.\n"
+    "some-channel = -1000 .. 250000 @estimated From nothing in particular.\n"
+)
+
+#: A second declaration, for the tree that has acquired one beside the intended
+#: one.
+LIMITS_VARIANT = (
+    "# A synthetic variant limits declaration.\n"
+    "some-channel = -2000 .. 300000 @estimated From nothing in particular either.\n"
+)
+
 
 def target_environment(structure: str | None = None, **options):
     """One environment building for a board, as the build file would declare it."""
@@ -58,12 +79,38 @@ def target_environment(structure: str | None = None, **options):
     return declared
 
 
-def host_test_environment(structure: str, description: str, **options):
-    """The host environment that pins the tier to a description, as the build file has it."""
+def carrying_environment(structure: str | None = None, **options):
+    """A board environment declaring both of the things an artefact carries.
+
+    The pair is what a build is entitled to declare, so the fixture declares the
+    pair. A test about one of them overrides that one, which is what makes the
+    tests that leave one out visibly about leaving it out.
+    """
+    declared = {
+        "custom_embedded_description": "params/thermoblock.params",
+        "custom_embedded_limits": "params/thermoblock.limits",
+    }
+    declared.update(options)
+    return target_environment(structure, **declared)
+
+
+def host_test_environment(
+    structure: str,
+    description: str,
+    limits: str = "params/thermoblock.limits",
+    **options,
+):
+    """The host environment that pins the tier to a description, as the build file has it.
+
+    It pins the limits declaration on the same terms and in the same place,
+    because that is where the build states it: the two are named separately so
+    that a build pinning one and forgetting the other is a state a gate can see.
+    """
     declared = {
         "platform": "native",
         "build_src_filter": f"+<control/> +<plant/common/> +<plant/{structure}/> +<app/native/>",
-        "build_flags": f"-O1 -D REFERENCE_DESCRIPTION_PATH='\"$PROJECT_DIR/{description}\"'",
+        "build_flags": f"-O1 -D REFERENCE_DESCRIPTION_PATH='\"$PROJECT_DIR/{description}\"'"
+        + (f" -D REFERENCE_LIMITS_PATH='\"$PROJECT_DIR/{limits}\"'" if limits else ""),
         "test_build_src": "yes",
     }
     declared.update(options)
@@ -80,6 +127,7 @@ class TargetModelTree:
         self.params = os.path.join(self.root, "params")
         os.makedirs(self.params, exist_ok=True)
         self.describe("thermoblock.params", DESCRIPTION)
+        self.describe("thermoblock.limits", LIMITS)
         # The directory every structure shares. It carries no structure header,
         # which is what makes it shared rather than a structure, and the real
         # tree keeps the parameter loader in it.
@@ -94,21 +142,49 @@ class TargetModelTree:
     def declare(self, environments) -> str:
         return declare_environments(self.root, environments)
 
-    def generate(self, environment: str, source: str, data: bytes | None = None) -> str:
-        """Render an embedding the way the build's own script renders it.
-
-        `data` overrides what is carried, so an embedding that has fallen out of
-        step with the description it names can be written as one would be found
-        rather than described.
-        """
+    def generated(self, environment: str) -> str:
+        """The directory this environment's build renders into."""
         directory = os.path.join(self.root, ".pio", "build", environment, "generated")
         os.makedirs(directory, exist_ok=True)
-        path = os.path.join(directory, "reference_description_bytes.h")
+        return directory
+
+    def render(
+        self,
+        environment: str,
+        embedding: embedded_description.Embedding,
+        source: str,
+        data: bytes | None = None,
+    ) -> str:
+        """Render one embedding the way the build's own script renders it.
+
+        `data` overrides what is carried, so an embedding that has fallen out of
+        step with the file it names can be written as one would be found rather
+        than described.
+        """
+        path = os.path.join(self.generated(environment), embedding.generated_name)
         if data is None:
             with open(os.path.join(self.root, source), "rb") as handle:
                 data = handle.read()
-        write(path, embedded_description.render(source, data))
+        write(path, embedded_description.render(source, data, embedding))
         return path
+
+    def generate(
+        self,
+        environment: str,
+        source: str = "params/thermoblock.params",
+        data: bytes | None = None,
+        limits_source: str = "params/thermoblock.limits",
+        limits_data: bytes | None = None,
+    ) -> str:
+        """Render both embeddings and answer the directory they went into.
+
+        Both, because a build renders both and a fixture rendering one would be
+        exercising the gate against a state no build produces. The directory is
+        what the gate is offered, so it is what this hands back.
+        """
+        self.render(environment, embedded_description.DESCRIPTION, source, data)
+        self.render(environment, embedded_description.LIMITS, limits_source, limits_data)
+        return self.generated(environment)
 
     def cleanup(self) -> None:
         self.tree.cleanup()
@@ -450,7 +526,11 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
 
     SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3: the description travels in the artefact rather than being read from a path.
 
-    Each way an artefact's bytes can diverge from what the tier verified.
+    Each way an artefact's bytes can diverge from what the tier verified, asked
+    of both of the things an artefact carries. The two are the same mechanism
+    twice, and the reason each refusal is driven for each of them is that the
+    second one acquiring fewer refusals than the first is exactly what a shared
+    implementation is supposed to prevent and would not announce.
     """
 
     def setUp(self):
@@ -464,88 +544,121 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         return run_check("check_embedded_description.py", *arguments)
 
     def declare(self, board_options=None):
-        options = target_environment(
-            "thermoblock", custom_embedded_description="params/thermoblock.params"
-        )
+        options = carrying_environment("thermoblock")
         options.update(board_options or {})
         self.tree.declare([("board", options), ("native_test", self.pinned)])
 
-    def test_an_embedding_matching_the_pinned_description_passes(self):
+    def test_both_embeddings_matching_what_is_pinned_pass(self):
         self.declare()
-        generated = self.tree.generate("board", "params/thermoblock.params")
+        generated = self.tree.generate("board")
         result = self.check(f"board={generated}")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("byte for byte", result.stdout)
+
+    def test_the_success_line_names_both_of_the_things_it_inspected(self):
+        """A line naming one while having compared two would misreport its own coverage."""
+        self.declare()
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("board's parameter description", result.stdout)
+        self.assertIn("board's limits declaration", result.stdout)
 
     def test_a_build_declaring_a_different_description_fails(self):
         """The first divergence: a build naming a description the tier never saw."""
         self.tree.describe("thermoblock-variant.params", VARIANT)
         self.declare({"custom_embedded_description": "params/thermoblock-variant.params"})
-        generated = self.tree.generate("board", "params/thermoblock-variant.params")
+        generated = self.tree.generate("board", source="params/thermoblock-variant.params")
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("thermoblock-variant.params", result.stderr)
-        self.assertIn("never verified", result.stderr)
+        self.assertIn("parameter description the tier never verified", result.stderr)
+
+    def test_a_build_declaring_a_different_limits_declaration_fails(self):
+        self.tree.describe("thermoblock-variant.limits", LIMITS_VARIANT)
+        self.declare({"custom_embedded_limits": "params/thermoblock-variant.limits"})
+        generated = self.tree.generate(
+            "board", limits_source="params/thermoblock-variant.limits"
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("thermoblock-variant.limits", result.stderr)
+        self.assertIn("limits declaration the tier never verified", result.stderr)
 
     def test_an_embedding_left_stale_by_an_incremental_build_fails(self):
         """The second: the description moved on and the rendered bytes did not."""
         self.declare()
-        generated = self.tree.generate(
-            "board", "params/thermoblock.params", data=DESCRIPTION.encode("utf-8")
-        )
+        generated = self.tree.generate("board", data=DESCRIPTION.encode("utf-8"))
         self.tree.describe("thermoblock.params", DESCRIPTION + "alpha.extra = 3.0\n")
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of parameter description", result.stderr)
+        self.assertIn("disagree about what the machine is", result.stderr)
+
+    def test_limits_left_stale_by_an_incremental_build_fail(self):
+        """The same divergence on the other file, which has no symptom either."""
+        self.declare()
+        generated = self.tree.generate("board", limits_data=LIMITS.encode("utf-8"))
+        self.tree.describe("thermoblock.limits", LIMITS + "other-channel = 0 .. 1\n")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of limits declaration", result.stderr)
         self.assertIn("disagree about what the machine is", result.stderr)
 
     def test_an_embedding_rendered_from_a_second_description_fails(self):
         """The third: a variant sitting beside the intended one is what got carried."""
         self.tree.describe("thermoblock-variant.params", VARIANT)
         self.declare()
-        generated = self.tree.generate("board", "params/thermoblock-variant.params")
+        generated = self.tree.generate("board", source="params/thermoblock-variant.params")
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("generated from params/thermoblock-variant.params", result.stderr)
 
+    def test_limits_rendered_from_a_second_declaration_fail(self):
+        self.tree.describe("thermoblock-variant.limits", LIMITS_VARIANT)
+        self.declare()
+        generated = self.tree.generate(
+            "board", limits_source="params/thermoblock-variant.limits"
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("generated from params/thermoblock-variant.limits", result.stderr)
+        self.assertIn("pinned limits declaration", result.stderr)
+
     def test_an_embedding_carrying_two_descriptions_fails(self):
         """Two definitions leave which one the machine carries to the compiler."""
         self.declare()
-        generated = self.tree.generate("board", "params/thermoblock.params")
-        with open(generated, "a", encoding="utf-8") as handle:
-            handle.write(embedded_description.render("params/thermoblock.params", b"other"))
+        generated = self.tree.generate("board")
+        rendered = os.path.join(
+            generated, embedded_description.DESCRIPTION.generated_name
+        )
+        with open(rendered, "a", encoding="utf-8") as handle:
+            handle.write(
+                embedded_description.render("params/thermoblock.params", b"other")
+            )
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("defined more than once", result.stderr)
 
     def test_a_machine_build_declaring_no_description_fails(self):
         self.tree.declare(
-            [("board", target_environment("thermoblock")), ("native_test", self.pinned)]
-        )
-        generated = self.tree.generate("board", "params/thermoblock.params")
-        result = self.check(f"board={generated}")
-        self.assertEqual(1, result.returncode)
-        self.assertIn("custom_embedded_description", result.stderr)
-
-    def test_a_build_pinning_no_description_fails(self):
-        """A tier pinned to nothing has verified against nothing in particular."""
-        self.tree.declare(
             [
                 (
                     "board",
                     target_environment(
-                        "thermoblock",
-                        custom_embedded_description="params/thermoblock.params",
+                        "thermoblock", custom_embedded_limits="params/thermoblock.limits"
                     ),
-                )
+                ),
+                ("native_test", self.pinned),
             ]
         )
-        generated = self.tree.generate("board", "params/thermoblock.params")
+        generated = self.tree.generate("board")
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
-        self.assertIn("REFERENCE_DESCRIPTION_PATH", result.stderr)
+        self.assertIn("custom_embedded_description", result.stderr)
 
-    def test_a_build_pinning_two_descriptions_fails(self):
-        self.tree.describe("thermoblock-variant.params", VARIANT)
+    def test_a_machine_build_declaring_no_limits_fails(self):
+        """A machine believing every reading is as unstated as one with no model."""
         self.tree.declare(
             [
                 (
@@ -556,28 +669,104 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
                     ),
                 ),
                 ("native_test", self.pinned),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("custom_embedded_limits", result.stderr)
+        self.assertIn("limits declaration its artefact carries", result.stderr)
+
+    def test_a_build_pinning_no_description_fails(self):
+        """A tier pinned to nothing has verified against nothing in particular."""
+        self.tree.declare([("board", carrying_environment("thermoblock"))])
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("REFERENCE_DESCRIPTION_PATH", result.stderr)
+
+    def test_a_build_pinning_no_limits_fails(self):
+        """The same omission on the other file, which is why it is read separately."""
+        self.tree.declare(
+            [
+                ("board", carrying_environment("thermoblock")),
                 (
-                    "other_test",
-                    host_test_environment("thermoblock", "params/thermoblock-variant.params"),
+                    "native_test",
+                    host_test_environment(
+                        "thermoblock", "params/thermoblock.params", limits=""
+                    ),
                 ),
             ]
         )
-        generated = self.tree.generate("board", "params/thermoblock.params")
+        generated = self.tree.generate("board")
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
+        self.assertIn("REFERENCE_LIMITS_PATH", result.stderr)
+        self.assertIn("no limits declaration the verification tier is pinned to", result.stderr)
+
+    def test_a_build_pinning_two_descriptions_fails(self):
+        self.tree.describe("thermoblock-variant.params", VARIANT)
+        self.tree.declare(
+            [
+                ("board", carrying_environment("thermoblock")),
+                ("native_test", self.pinned),
+                (
+                    "other_test",
+                    host_test_environment(
+                        "thermoblock", "params/thermoblock-variant.params"
+                    ),
+                ),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("more than one description is named", result.stderr)
         self.assertIn("not settled", result.stderr)
+
+    def test_a_build_pinning_two_limits_declarations_fails(self):
+        """Two answers to what a reading may be is no answer at all."""
+        self.tree.describe("thermoblock-variant.limits", LIMITS_VARIANT)
+        self.tree.declare(
+            [
+                ("board", carrying_environment("thermoblock")),
+                ("native_test", self.pinned),
+                (
+                    "other_test",
+                    host_test_environment(
+                        "thermoblock",
+                        "params/thermoblock.params",
+                        limits="params/thermoblock-variant.limits",
+                    ),
+                ),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("more than one limits declaration is named", result.stderr)
+        self.assertIn("thermoblock-variant.limits by other_test", result.stderr)
 
     def test_a_pinned_description_that_is_not_there_fails(self):
         self.declare()
-        generated = self.tree.generate("board", "params/thermoblock.params")
+        generated = self.tree.generate("board")
         os.remove(os.path.join(self.tree.root, "params", "thermoblock.params"))
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("nothing for an artefact to be compared against", result.stderr)
 
+    def test_a_pinned_limits_declaration_that_is_not_there_fails(self):
+        self.declare()
+        generated = self.tree.generate("board")
+        os.remove(os.path.join(self.tree.root, "params", "thermoblock.limits"))
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("pinned to the limits declaration", result.stderr)
+        self.assertIn("nothing for an artefact to be compared against", result.stderr)
+
     def test_an_embedding_offered_for_something_that_is_not_a_machine_build_fails(self):
         self.declare()
-        generated = self.tree.generate("native_test", "params/thermoblock.params")
+        generated = self.tree.generate("native_test")
         result = self.check(f"native_test={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("does not build an artefact for a machine", result.stderr)
@@ -585,7 +774,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
     def test_offering_nothing_reads_every_machine_build_from_its_own_build_directory(self):
         """Naming none is how the gate outside the build covers a board nobody named."""
         self.declare()
-        self.tree.generate("board", "params/thermoblock.params")
+        self.tree.generate("board")
         result = self.check()
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("board", result.stdout)
@@ -595,63 +784,101 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.declare()
         result = self.check()
         self.assertEqual(1, result.returncode)
-        self.assertIn("no generated embedding", result.stderr)
+        self.assertIn("no generated embedding of the parameter description", result.stderr)
+        self.assertIn("no generated embedding of the limits declaration", result.stderr)
+
+    def test_a_machine_build_whose_limits_alone_were_never_rendered_fails(self):
+        """Half a rendering is the state an added embedding arrives through."""
+        self.declare()
+        self.tree.generate("board")
+        os.remove(
+            os.path.join(
+                self.tree.generated("board"), embedded_description.LIMITS.generated_name
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no generated embedding of the limits declaration", result.stderr)
+
+    def test_a_generated_directory_inside_the_source_tree_is_refused(self):
+        """A rendered file kept in the tree is the second copy this exists to prevent."""
+        self.declare()
+        inside = os.path.join(self.tree.root, "src", "generated")
+        os.makedirs(inside, exist_ok=True)
+        for embedding in embedded_description.EMBEDDINGS:
+            write(
+                os.path.join(inside, embedding.generated_name),
+                embedded_description.render(
+                    "params/thermoblock.params", b"whatever", embedding
+                ),
+            )
+        result = self.check(f"board={inside}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("is inside the source tree", result.stderr)
 
     def test_a_second_board_is_compared_without_being_named(self):
-        options = target_environment(
-            "thermoblock", custom_embedded_description="params/thermoblock.params"
-        )
         self.tree.declare(
             [
-                (
-                    "board",
-                    target_environment(
-                        "thermoblock",
-                        custom_embedded_description="params/thermoblock.params",
-                    ),
-                ),
-                ("second_board", options),
+                ("board", carrying_environment("thermoblock")),
+                ("second_board", carrying_environment("thermoblock")),
                 ("native_test", self.pinned),
             ]
         )
-        self.tree.generate("board", "params/thermoblock.params")
-        self.tree.generate(
-            "second_board", "params/thermoblock.params", data=b"# something else entirely\n"
-        )
+        self.tree.generate("board")
+        self.tree.generate("second_board", data=b"# something else entirely\n")
         result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("second_board", result.stderr)
 
     def test_a_generated_file_that_is_not_an_embedding_fails(self):
         self.declare()
-        generated = self.tree.generate("board", "params/thermoblock.params")
-        write(generated, "const char reference_description[] = { 0x00 };\n")
+        generated = self.tree.generate("board")
+        write(
+            os.path.join(generated, embedded_description.DESCRIPTION.generated_name),
+            "const char reference_description[] = { 0x00 };\n",
+        )
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
+        self.assertIn("description-source:", result.stderr)
+        self.assertIn("parameter description", result.stderr)
+
+    def test_a_generated_limits_file_that_is_not_an_embedding_fails(self):
+        self.declare()
+        generated = self.tree.generate("board")
+        write(
+            os.path.join(generated, embedded_description.LIMITS.generated_name),
+            "const char reference_limits[] = { 0x00 };\n",
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("limits declaration", result.stderr)
         self.assertIn("description-source:", result.stderr)
 
     def test_a_second_board_declaring_the_wrong_description_is_caught(self):
         self.tree.describe("thermoblock-variant.params", VARIANT)
-        options = target_environment(
-            "thermoblock", custom_embedded_description="params/thermoblock-variant.params"
-        )
         self.tree.declare(
             [
+                ("board", carrying_environment("thermoblock")),
                 (
-                    "board",
-                    target_environment(
+                    "second_board",
+                    carrying_environment(
                         "thermoblock",
-                        custom_embedded_description="params/thermoblock.params",
+                        custom_embedded_description="params/thermoblock-variant.params",
                     ),
                 ),
-                ("second_board", options),
                 ("native_test", self.pinned),
             ]
         )
-        generated = self.tree.generate("board", "params/thermoblock.params")
+        generated = self.tree.generate("board")
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("second_board", result.stderr)
+
+    def test_the_generated_argument_wants_a_directory_and_says_so(self):
+        self.declare()
+        result = self.check("board")
+        self.assertEqual(2, result.returncode)
+        self.assertIn("--generated wants ENV=DIR", result.stderr)
 
 
 # --- check_target_carries_model ---------------------------------------------
@@ -696,15 +923,7 @@ class TheArtefactCarriesTheModel(TargetModelCase):
         )
 
     def declare(self, *names: str):
-        environments = [
-            (
-                name,
-                target_environment(
-                    "thermoblock", custom_embedded_description="params/thermoblock.params"
-                ),
-            )
-            for name in names
-        ]
+        environments = [(name, carrying_environment("thermoblock")) for name in names]
         environments.append(("native_test", host_test_environment("thermoblock", "params/thermoblock.params")))
         self.tree.declare(environments)
 
@@ -726,14 +945,14 @@ class TheArtefactCarriesTheModel(TargetModelCase):
                 rendered = embedded_description.render(description, handle.read())
             parts.append(
                 rendered.replace(
-                    f"const char {embedded_description.SYMBOL}[]",
-                    f"const char {embedded_description.SYMBOL}_{index}[]",
+                    f"const char {embedded_description.DESCRIPTION.symbol}[]",
+                    f"const char {embedded_description.DESCRIPTION.symbol}_{index}[]",
                 )
             )
         parts.extend(f"int {name}(void) {{ return 0; }}\n" for name in operations)
         used = "".join(f"    total += {name}();\n" for name in operations)
         used += "".join(
-            f"    total += {embedded_description.SYMBOL}_{index}[0];\n"
+            f"    total += {embedded_description.DESCRIPTION.symbol}_{index}[0];\n"
             for index in range(len(descriptions))
         )
         parts.append(f"int main(void) {{\n    int total = 0;\n{used}    return total;\n}}\n")
@@ -809,6 +1028,192 @@ class TheArtefactCarriesTheModel(TargetModelCase):
         self.assertIn("declares no operations", result.stderr)
 
 
+# --- pio_embed_description --------------------------------------------------
+
+
+#: A stand-in for the build system, so the script that renders into an artefact
+#: can be driven on a host that has no PlatformIO installed.
+#:
+#: It answers the three substitutions the script makes and turns Exit into the
+#: process exit SCons's own Exit is, which is what makes a refusal observable
+#: here as an exit status rather than as a description of one. Anything the
+#: script does beyond that -- what it puts on the include path -- is printed, so
+#: a test can assert on it rather than reach into the script's variables.
+PIO_DRIVER = '''import sys
+
+project_dir, build_dir, environment_name, script = sys.argv[1:5]
+
+
+class BuildEnvironment:
+    def subst(self, token):
+        return {
+            "$PROJECT_DIR": project_dir,
+            "$BUILD_DIR": build_dir,
+            "$PIOENV": environment_name,
+        }[token]
+
+    def Exit(self, code):
+        sys.exit(code)
+
+    def Prepend(self, **values):
+        for name, entries in values.items():
+            for entry in entries:
+                print(f"prepend {name} {entry}")
+
+
+namespace = {"__name__": "__main__", "Import": lambda *names: None, "env": BuildEnvironment()}
+with open(script, "r", encoding="utf-8") as handle:
+    exec(compile(handle.read(), script, "exec"), namespace)
+'''
+
+
+class TheArtefactIsGivenWhatItCarries(TargetModelCase):
+    """SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3: what an artefact carries is rendered into it by the build rather than read from a path.
+
+    The renderer is driven rather than reasoned about, because the state it
+    exists to refuse -- an artefact carrying a description of a machine and no
+    statement of what a reading off it may plausibly be -- compiles cleanly and
+    reports nothing on the running machine.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.pinned = host_test_environment("thermoblock", "params/thermoblock.params")
+
+    def declare(self, board_options=None):
+        options = carrying_environment("thermoblock")
+        options.update(board_options or {})
+        self.tree.declare([("board", options), ("native_test", self.pinned)])
+
+    def embed(self, environment: str = "board"):
+        # The script resolves its own imports and the check it runs from
+        # PROJECT_DIR, because the working directory a build runs it from is not
+        # guaranteed. A synthetic project therefore has to have those tools where
+        # the script looks for them, and linking rather than copying keeps this
+        # driving the scripts as they are rather than a snapshot of them.
+        linked = os.path.join(self.tree.root, "tools")
+        if not os.path.exists(linked):
+            os.symlink(TOOLS, linked)
+
+        driver = os.path.join(self.tree.root, "drive_extra_script.py")
+        write(driver, PIO_DRIVER)
+        return subprocess.run(
+            [
+                sys.executable,
+                driver,
+                self.tree.root,
+                os.path.join(self.tree.root, ".pio", "build", environment),
+                environment,
+                os.path.join(TOOLS, "pio_embed_description.py"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def rendered(self, embedding, environment: str = "board") -> str:
+        return os.path.join(
+            self.tree.root, ".pio", "build", environment, "generated", embedding.generated_name
+        )
+
+    def test_both_embeddings_are_rendered(self):
+        self.declare()
+        result = self.embed()
+        self.assertEqual(0, result.returncode, result.stderr)
+        for embedding, content in (
+            (embedded_description.DESCRIPTION, DESCRIPTION),
+            (embedded_description.LIMITS, LIMITS),
+        ):
+            with open(self.rendered(embedding), "r", encoding="utf-8") as handle:
+                source, carried = embedded_description.decode(handle.read(), embedding)
+            self.assertEqual(content.encode("utf-8"), carried)
+            self.assertIn("params/thermoblock", source)
+
+    def test_the_generated_directory_goes_on_the_include_path_once(self):
+        """Twice would be the same answer on the path twice, and one of them
+        could later be a different one."""
+        self.declare()
+        result = self.embed()
+        self.assertEqual(0, result.returncode, result.stderr)
+        prepends = [line for line in result.stdout.splitlines() if line.startswith("prepend ")]
+        self.assertEqual(1, len(prepends), result.stdout)
+        self.assertTrue(prepends[0].endswith("generated"), prepends[0])
+
+    def test_a_build_declaring_a_description_and_no_limits_is_refused(self):
+        """Half a declaration: the artefact would believe every reading."""
+        self.tree.declare(
+            [
+                (
+                    "board",
+                    target_environment(
+                        "thermoblock",
+                        custom_embedded_description="params/thermoblock.params",
+                    ),
+                ),
+                ("native_test", self.pinned),
+            ]
+        )
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("custom_embedded_limits", result.stderr)
+        self.assertIn("believe every reading or believe none", result.stderr)
+        self.assertFalse(os.path.exists(self.rendered(embedded_description.DESCRIPTION)))
+
+    def test_a_build_declaring_limits_and_no_description_is_refused(self):
+        self.tree.declare(
+            [
+                (
+                    "board",
+                    target_environment(
+                        "thermoblock", custom_embedded_limits="params/thermoblock.limits"
+                    ),
+                ),
+                ("native_test", self.pinned),
+            ]
+        )
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("custom_embedded_description", result.stderr)
+
+    def test_a_build_declaring_neither_is_refused(self):
+        self.tree.declare(
+            [("board", target_environment("thermoblock")), ("native_test", self.pinned)]
+        )
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("declares neither", result.stderr)
+
+    def test_a_declared_limits_file_that_is_not_there_is_refused(self):
+        self.declare({"custom_embedded_limits": "params/nowhere.limits"})
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no limits declaration at", result.stderr)
+
+    def test_an_unchanged_declaration_is_not_rewritten(self):
+        """Restamping the rendered file would rebuild the translation unit that
+        includes it on every build."""
+        self.declare()
+        self.assertEqual(0, self.embed().returncode)
+        stamps = {
+            embedding.generated_name: os.stat(self.rendered(embedding)).st_mtime_ns
+            for embedding in embedded_description.EMBEDDINGS
+        }
+        self.assertEqual(0, self.embed().returncode)
+        for embedding in embedded_description.EMBEDDINGS:
+            self.assertEqual(
+                stamps[embedding.generated_name],
+                os.stat(self.rendered(embedding)).st_mtime_ns,
+            )
+
+    def test_what_was_rendered_is_compared_before_anything_is_compiled(self):
+        """The renderer is not on its own an argument that the bytes are right."""
+        self.tree.describe("thermoblock-variant.limits", LIMITS_VARIANT)
+        self.declare({"custom_embedded_limits": "params/thermoblock-variant.limits"})
+        result = self.embed()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("thermoblock-variant.limits", result.stderr)
+
+
 # --- the form the description travels in ------------------------------------
 
 
@@ -826,6 +1231,27 @@ class TheEmbeddedFormSurvivesBeingReadBack(unittest.TestCase):
         self.assertEqual("params/x.params", source)
         self.assertEqual(data, carried)
 
+    def test_every_embedding_round_trips_under_its_own_symbol(self):
+        """Two embeddings, one format. A second symbol reading back through the
+        first would decode whichever file happened to be looked at."""
+        data = bytes(range(256))
+        for embedding in embedded_description.EMBEDDINGS:
+            rendered = embedded_description.render("params/x", data, embedding)
+            self.assertIn(f"const char {embedding.symbol}[]", rendered)
+            source, carried = embedded_description.decode(rendered, embedding)
+            self.assertEqual("params/x", source)
+            self.assertEqual(data, carried)
+
+    def test_one_embedding_is_not_read_back_as_another(self):
+        """Reading the limits file through the description's symbol would find no
+        definition, which is the refusal that keeps the two from being swapped."""
+        rendered = embedded_description.render(
+            "params/x.limits", b"data", embedded_description.LIMITS
+        )
+        with self.assertRaises(embedded_description.MalformedEmbedding) as raised:
+            embedded_description.decode(rendered, embedded_description.DESCRIPTION)
+        self.assertIn(embedded_description.DESCRIPTION.symbol, str(raised.exception))
+
     def test_an_empty_description_is_refused_rather_than_rendered(self):
         """An empty initialiser is not C every compiler accepts, and an empty
         description is not a smaller description of the machine."""
@@ -835,7 +1261,7 @@ class TheEmbeddedFormSurvivesBeingReadBack(unittest.TestCase):
     def test_the_bytes_are_an_initialiser_rather_than_a_string_literal(self):
         """A literal would put the description under C11's 4095-character limit."""
         rendered = embedded_description.render("params/x.params", b"# a description\n")
-        definition = rendered[rendered.index(f"const char {embedded_description.SYMBOL}") :]
+        definition = rendered[rendered.index(f"const char {embedded_description.DESCRIPTION.symbol}") :]
         self.assertNotIn('"', definition)
         self.assertIn("(char)0x23u", definition)
 
