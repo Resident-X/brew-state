@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The machine is built carrying the verified plant model, and only that one
 status: active
-version: 1
+version: 2
 text: |
   The target environment in `firmware/platformio.ini` compiles no plant sources at all today: its `build_src_filter` names the control logic, the STM32 hardware implementation and the target entry point, and nothing under `src/plant/`. The model the design is established against therefore lives only in the host tier that verified it. This slice puts it on the machine.
 
@@ -17,21 +17,21 @@ text: |
 rationale: |
   This is a wiring slice rather than an invention. Every part it needs already ships: the plant-structure seam, build-time structure selection with its refusal of none and of two, the parameter loader with its refusals, and a reference description carrying the origin of each value. What is missing is only that the target build was never given any of it, because the tier that established those pieces had the host in front of it.
 
-  It sits apart from the estimator slice deliberately. The two share no seam — one establishes reconstruction behind a new interface, the other moves an existing artefact onto an existing build — and folding a cheap, independently checkable piece of wiring into a slice that has to invent a correction strategy would hide it behind that slice's schedule. Neither depends on the other to be correct.
+  It is a separate slice from the estimator rather than folded into it because the two are different kinds of work — one moves existing artefacts onto an existing build, the other has to choose a correction strategy — and folding a cheap, independently checkable piece of wiring into the larger slice would hide it behind that slice's schedule. Separate is not independent, though: the estimator holds a plant-model instance and the control law that drives it compiles into every environment, so the target build cannot link the estimator until it carries the plant model this slice puts there. That ordering is recorded as a dependency on the estimator slice rather than left to be discovered at the first target build.
 
-  The embedding check carries most of the weight. Putting the description in the artefact is straightforward and a reviewer would believe it on sight; what a reviewer cannot see is whether the bytes went stale after someone corrected the description and rebuilt only the host. A criterion that asserts the model travels, without asserting it is the same model, is satisfied by exactly the two-model failure the requirement was written against, so the comparison is a build failure rather than a test that someone remembers to run.
+  The embedding check carries the weight the mechanism cannot. Generating the embedded bytes from the description file removes the obvious way for a copy to go stale, but it does not by itself establish that the artefact and the host tier are pinned to the same description: a build flag naming a different path, a stale generated artefact surviving an incremental build, or a second description arriving alongside the first would each produce a target carrying something the tier never verified. Comparing what the artefact embeds against what the tier is pinned to is what closes those, and it is a build failure rather than a test because the failure it prevents has no symptom on the machine — predictions that stop matching observation look exactly like drift.
 
   Reusing the loader rather than writing a target-side reader follows the same reasoning one level down. A second parser accepts a slightly different language sooner or later — a whitespace rule, a rejected annotation quietly skipped — and then the machine is running numbers the host tier never saw, from a file both claim to read. One parser cannot disagree with itself.
 
-  Whether an embedded description is the right long-term answer for a machine that will eventually be recalibrated in the field is a question this slice does not settle, and says so. What it settles is that before any of that exists, a machine cannot be built carrying no model, two models, or a model other than the verified one.
+  Whether an embedded description is the right long-term answer for a machine that will eventually be recalibrated in the field is a question this slice does not settle, and says so. What it settles is that before any of that exists, a machine cannot be built carrying no model, two models, a model that describes no machine, or a model other than the verified one.
 links:
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: justified-by
   - target: DEL-SIM-ESTIMATOR.C5
     type: derives-from
   - target: REQ-STATE-ESTIMATION-001.C5
     type: targets
-  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
-    type: justified-by
-  - target: DEC-FIRMWARE-LANGUAGE
-    type: justified-by
-  - target: DEC-PREHARDWARE-TARGET-FAMILY
-    type: justified-by

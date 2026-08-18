@@ -1,6 +1,6 @@
 id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C3
 type: criterion
-title: A reconstructed quantity converges on the truth the plant model holds
+title: A reconstructed state converges on the truth the plant model holds
 status: active
 version: 1
 measurement_type: binary
@@ -9,7 +9,7 @@ text: |
   A host suite under `firmware/test/` runs a reference `plant_model_t` instance as the
   truth, feeds the estimator only the quantities `hw_interface.h` exposes as sensor
   channels, and starts the estimator from a state deliberately displaced from that truth.
-  Over a run of steps the error in a reconstructed quantity falls and stays fallen rather
+  Over a run of steps the error in the reconstructed state falls and stays fallen rather
   than growing or oscillating without bound. The suite drives the machine-describing
   structure through `env:native_test`. An accuracy figure against a real machine is out of
   scope, and none could be asserted before measured parameters exist; what is asserted is

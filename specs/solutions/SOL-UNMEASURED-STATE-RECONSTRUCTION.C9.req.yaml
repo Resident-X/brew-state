@@ -1,0 +1,20 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C9
+type: criterion
+title: The reported residual is the one the correction step used
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The value the seam reports is the same difference the correction step consumed on that
+  step, taken from one computation rather than recomputed for the report. A host test
+  establishes this by driving a step whose correction is observable in the reconstructed
+  state and checking the reported residual against it, and by confirming that a step which
+  performs no correction reports no residual rather than a stale one. Two residuals that
+  agree when written drift apart the first time either is touched, and the parent
+  requirement bundles estimation with error reporting precisely so that they are not built
+  twice. Whether the residual is a good drift signal is out of scope; that it is the same
+  number the estimator acted on is what this criterion covers.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

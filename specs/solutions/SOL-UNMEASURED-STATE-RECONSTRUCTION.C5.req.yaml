@@ -1,17 +1,18 @@
 id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C5
 type: criterion
-title: A direct plant-structure or vendor reference from the estimator fails the build
+title: A vendor header included from the estimator fails the build
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The estimator sources are brought inside the source-level encapsulation checks under
-  `firmware/tools/` that already guard the plant and hardware seams, so a translation
-  unit under the estimator that names a structure's own types or fields, or includes a
-  vendor header, stops the build rather than earning a review comment. A seam holds only
-  while nothing bypasses it, and a check that reports rather than refuses is a report.
-  Extending those checks to sources beyond the estimator is out of scope.
+  The vendor-symbol check at `firmware/tools/check_encapsulation.py`, which is scoped to
+  `src/control` today, is widened to cover the estimator sources, so a translation unit
+  there that includes a vendor header stops the build rather than earning a review
+  comment. The plant-encapsulation check already covers the whole source root and needs no
+  widening, so it is not what this criterion asks for. A seam holds only while nothing
+  bypasses it, and a check that reports rather than refuses is a report. Extending either
+  check to sources beyond the estimator is out of scope.
 links:
   - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
     type: criterion-of

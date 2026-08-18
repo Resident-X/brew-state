@@ -1,0 +1,20 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C7
+type: criterion
+title: The target build links the maths the plant sources call into
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The plant sources call into the maths library — `expm1f` among them — and the target
+  environment carries none of the link-time arrangement the host environments get from
+  `firmware/tools/pio_link_maths.py`, which is a post-script on the host base alone. The
+  target build links what those sources need, and `task fw:build` building `env:stm32` is
+  what establishes it rather than a reading of the link line. That script exists because
+  leaving the dependency implicit fails on some hosts and not others, and the same
+  reasoning applies to a toolchain nobody has run these sources through yet. Whether the
+  target toolchain's maths implementation is fast enough for the loop is out of scope —
+  timing claims are established by measurement on the target, which is a later tier.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: criterion-of
