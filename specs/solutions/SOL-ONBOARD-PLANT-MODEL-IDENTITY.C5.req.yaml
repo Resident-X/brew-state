@@ -1,0 +1,22 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C5
+type: criterion
+title: A target build embedding a description other than the verified one fails
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |
+  A build-time check compares the bytes the target artefact embeds against the description
+  the host verification tier is pinned to, and stops the target build when they differ
+  rather than emitting a warning. It is driven against each way they can diverge that
+  generating the embedding does not already close: a build flag naming a different
+  description, a generated artefact left stale by an incremental build, and a second
+  description present alongside the intended one. Each is shown to fail rather than
+  assumed unreachable. The failure this prevents has no symptom on the machine —
+  predictions that stop matching observation are indistinguishable from a machine that has
+  drifted. Recognising that divergence while the machine runs is out of scope; the
+  residual that would surface it is a separate deliverable, and this criterion covers only
+  what the build refuses.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: criterion-of

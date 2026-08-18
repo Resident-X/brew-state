@@ -1,0 +1,18 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C4
+type: criterion
+title: The control law reads reconstructed states rather than raw sensor readings
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `firmware/src/control/control.c` obtains the brew temperature it acts on from the
+  estimator rather than from `hw_sensor_read(HW_SENSOR_BREW_TEMPERATURE)`, and a host
+  test distinguishes the two by holding the sensor at one value while the estimator's
+  reconstruction sits at another and observing which one the drive level follows. The
+  control law's existing refusals — an untrustworthy reading, a rejected drive command,
+  a latched fault — keep the behaviour they already have. Tuning the control law to the
+  reconstructed signal is out of scope; the substitution is what this criterion covers.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

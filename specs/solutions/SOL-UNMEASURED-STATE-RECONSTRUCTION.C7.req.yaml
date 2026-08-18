@@ -1,0 +1,21 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C7
+type: criterion
+title: The reference structure distinguishes the heated mass from the water leaving it
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The thermoblock structure under `firmware/src/plant/thermoblock/` gains a state for the
+  temperature of the heated mass, distinct from the brew temperature it already exposes
+  through `plant_quantity_t`, with the second following the first through a lag the
+  parameter record supplies as a coefficient like any other. Every state the structure
+  holds today is reported by a sensor channel, so before this distinction exists there is
+  nothing for an estimator to reconstruct and the requirement cannot be met by any
+  estimator whatsoever. The new coefficient carries its admissible range and its
+  provenance on the same terms as the rest of the description. Whether the lag is
+  quantitatively right for the reference machine is out of scope — the structure's support
+  status records that nothing has been on the bench, and measurement is what settles it.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

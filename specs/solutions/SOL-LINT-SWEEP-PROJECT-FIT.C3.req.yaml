@@ -1,0 +1,18 @@
+id: SOL-LINT-SWEEP-PROJECT-FIT.C3
+type: criterion
+title: A rule that cannot be satisfied here is raised where it lives, not worked around
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  For each rule in the third group, an account of why it cannot be met from this
+  repository is recorded together with where it was raised upstream. No graph node is
+  edited to satisfy such a rule: an identifier renamed, a path reworded or an artifact
+  reference changed to please a registry that does not know this project buys a quieter
+  sweep with a claim that no longer describes what is there. Whether the upstream change
+  is accepted is out of scope — this project cannot close that, and the criterion asks
+  that it be raised and recorded rather than resolved.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT
+    type: criterion-of

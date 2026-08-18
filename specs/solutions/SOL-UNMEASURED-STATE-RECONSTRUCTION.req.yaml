@@ -1,0 +1,49 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION
+type: deliverable
+category: solution
+title: The estimator seam, the state it reconstructs, and the residual it reports
+status: active
+version: 2
+text: |
+  The reference structure has no state to reconstruct today. Its `plant_model_t` holds four states and the hardware seam reports four sensor channels, and they correspond one for one: brew temperature, steam temperature, brew pressure, steam pressure. Every state the model has is sensed, so an estimator built against it would reconstruct nothing. That is not an oversight in the structure — its own header calls its equations the thinnest set that expresses the architecture, and the slice that delivered it established separability rather than fidelity. Closing the gap this requirement exists to close therefore starts by making the gap exist in the model.
+
+  So the reference structure gains a distinction it does not draw yet: the temperature of the mass being heated is not the temperature of the water leaving it. A low-mass flow-through system puts real dynamics between the two, and a sensor can be placed on the block far more easily than in the stream. One of those is what the control law wants and the other is what the sensor reports, and once they are separate states the reconstruction has something to do.
+
+  A named estimator interface is then declared once as a plain C header under `firmware/include/`. It gives the control law a vocabulary for the states it works from, which is the estimator's own rather than the plant seam's: `plant_quantity_t` enumerates what the machine exposes, and the states the control law needs are by definition not all in that set. No signature names a plant structure or a structure-specific coefficient, so a translation unit including the header depends on the estimator seam and the plant-model seam rather than on either structure's equations.
+
+  Behind that header sits one implementation. It holds a `plant_model_t` instance initialised from the parameter record the control law is given, advances it under the actuation that was commanded, and corrects it toward the channels `hw_interface.h` reports. Correcting requires comparing each predicted measurement against the observed one, and that difference is the residual: it is reported through the same seam rather than recomputed by whatever consumes it later, because a residual computed twice is two answers to one question. `firmware/src/control/control.c` is rewired to drive from a reconstructed state instead of `hw_sensor_read(HW_SENSOR_BREW_TEMPERATURE)`, and to carry the parameter record the estimator needs, which its `control_init` signature does not take today.
+
+  The estimator reaches the target as well as the host. `control.c` is compiled into every environment including `env:stm32`, so rewiring it onto the estimator without putting the estimator in that build leaves the target unable to link. The estimator also holds a plant-model instance, which the target build only gains through the slice that puts the plant model on the machine — hence the dependency recorded between them.
+
+  Out of scope: what the estimator does when a measurement is briefly lost or reads implausibly, and the rate at which its output must be available to the control law. Both are properties of a correction strategy this slice chooses only as far as reconstruction and the residual demand, and both are deferred as premise-pending against this seam. Tuning the control law to the reconstructed signal, and any claim that the structure's new distinction is quantitatively right for the reference machine, are also out of scope — the second is settled by measurement, and the structure's support status already records that nothing has been on the bench.
+rationale: |
+  Extending the reference structure is in this slice because the criterion is otherwise unsatisfiable, not because the physics wanted improving. A model whose every state is sensed admits no estimator, and an estimator with nothing to reconstruct would satisfy the words of the criterion by reconstructing a state that was already being read. The distinction added is the smallest one that makes the requirement's own account true of the model — sensors sit where the machine allows, which is not where the interesting temperature is — and it is added to the structure rather than invented inside the estimator so that both consumers of the model keep answering from one set of equations.
+
+  This does not reopen the slice that delivered the structure. That slice established the numbers and the equations are separable and replaceable, and said in terms that whether the equations describe any real machine could not be settled without one. Replacing thin equations with less thin ones is the replaceability it delivered being used, not a shortfall in what it delivered.
+
+  The residual is built here rather than deferred, reversing an earlier plan that deferred it. Both the parent requirement and the parent task state that estimation and error reporting are one mechanism and that splitting them invites them being built twice, and they are right: the correction step this slice performs computes predicted-minus-observed in order to correct at all. Deferring the residual would have meant a slice that computes it, does not expose it, and has to be reopened to expose it — which is the second build those rationales warn about, arriving by a different route. What is asserted is not merely that a residual appears, but that the one reported is the one the correction used; two residuals that agree today drift apart the first time either is touched.
+
+  The estimator holds a plant-model instance rather than reimplementing the dynamics for the same reason. A second set of equations written to suit the estimator answers the same question differently as soon as either is corrected, and that divergence arrives disguised: predictions that stop matching observation look exactly like a machine that has drifted, which is the one thing this estimator exists to tell apart.
+
+  The dependency on the onboarding slice is recorded rather than designed around. The control law compiles into every environment, so the moment it reads from the estimator, the target build needs the estimator, which needs the plant model, which the target does not carry until the other slice puts it there. An earlier plan asserted the two slices shared no seam and neither depended on the other; that was wrong, and the ordering is a fact about the build rather than a preference about sequencing.
+
+  What cannot be settled before hardware exists is deliberately not claimed. That a reconstructed state is close enough to control a real machine with, and that the new distinction in the equations is quantitatively right, both wait on measured parameters. What can be settled now is that a state no sensor reports is produced, that it converges on the model's own truth rather than wandering, that the control law reads it, and that the comparison the correction relies on is the one anything downstream will see.
+links:
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: DEL-SIM-ESTIMATOR.C1
+    type: derives-from
+  - target: DEL-SIM-ESTIMATOR.C2
+    type: derives-from
+  - target: REQ-STATE-ESTIMATION-001.C1
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C2
+    type: targets
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: depends-on
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE
+    type: depends-on

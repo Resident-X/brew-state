@@ -1,0 +1,18 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C2
+type: criterion
+title: A target build naming no plant structure, or more than one, fails rather than choosing
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pre-build check in `firmware/tools/pio_seam_checks.py` that already refuses a host
+  build naming no structure or naming two applies to the target environment on the same
+  terms, and a deliberately misconfigured target environment declaring
+  `custom_must_not_build` is driven to prove the refusal fires rather than passing
+  vacuously. A machine built with no model, or with the linker choosing between two, has
+  no obvious symptom until it is well outside where it should be. The equivalent refusals
+  on host environments are out of scope here — they are already covered elsewhere.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: criterion-of

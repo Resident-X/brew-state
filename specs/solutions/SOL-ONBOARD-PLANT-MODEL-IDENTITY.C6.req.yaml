@@ -1,0 +1,18 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C6
+type: criterion
+title: The plant sources added to the target build are compiled under the target build's strict settings
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The structure and the shared loader are compiled by `env:stm32` under its
+  `build_src_flags`, alongside the control logic already compiled there, rather than
+  being admitted through a relaxation of them. Those translation units are already
+  analysed by the host tier, so what this criterion covers is that arriving on the target
+  does not quietly move them outside the settings the target applies to this project's
+  own sources. Widening the target environment's flags to match the host tier's
+  sanitizers is out of scope; the host tier is where that analysis runs.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: criterion-of

@@ -1,0 +1,19 @@
+id: SOL-LINT-SWEEP-PROJECT-FIT.C1
+type: criterion
+title: Every lint rule reporting against this graph is classified by whether this project can act on it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Each rule the sweep reports is placed in one of three groups, recorded in the
+  repository where the next reader finds it: rules that fit this project and whose
+  warnings are real findings, rules that could fit once given this project's vocabulary
+  or conventions, and rules that cannot be satisfied from inside this repository at all.
+  The classification cites what was read to reach it — `lint explain <rule-id>` for the
+  rule's own intent, and the sampled locations for what it fires on here. Rules that
+  report nothing today are not classified, since a rule with no subject cannot be judged
+  by what it says about this graph; they are out of scope.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT
+    type: criterion-of

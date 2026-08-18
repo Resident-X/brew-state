@@ -1,0 +1,33 @@
+id: SOL-LINT-SWEEP-PROJECT-FIT
+type: deliverable
+category: solution
+title: The lint sweep is made readable as a health signal for this project
+status: active
+version: 1
+text: |
+  This slice makes `staircase lint` a signal this project can read. It does not begin by fixing warnings — it begins by establishing which of them are this project's to fix, because the sweep as it stands does not distinguish the two and acting on the count without that separation would mean editing nodes that are correct.
+
+  The sweep to work from is `./engine/staircase lint --format json`, whose cluster summary gives one record per rule with a count and a sample. `lint --rule <id> --limit N` pages the full locations for one rule, and `lint explain <family>` errors while shipping `data.known_rules[]`, after which `lint explain <rule-id>` returns that rule's advice and before/after examples. That pair is how each rule's intent is read; nothing here should be inferred from the rule's name.
+
+  What the current sweep looks like, as the starting point rather than as a specification: 86 `orphaned_seam_registry_entry` naming engine-internal Go identifiers such as `GraphView` and `SeverityWarning`, which exist in the staircase source tree and not in this one — `engine/` here holds a compiled binary and no Go source, so neither the registry nor those identifiers can be reached from this repository. 24 `unresolved_backticked_token` and 8 `unresolved_camelcase_identifier` flag this project's own C names and file paths against that same registry. 18 `cited_test_non_go_artifact` and 2 `cited_test_file_absent` fire on evidence whose artifact is a Unity suite or a Taskfile invocation such as `task fw:sweep`, which is how this project's verification is actually run. 58 `attested_criterion` and 16 `sealed_aggregation_criterion` are immutability notices on frozen criteria and describe the graph working as intended. 1 `decision_authoring.title_as_statement` is the detector behaviour this project's own guidance already records as probably a detector limitation.
+
+  Those figures will have moved by the time this is built and are given so the shape is recognisable, not so they can be asserted against.
+
+  The resolution differs by which side of the line a rule falls. A rule that can be made to fit here is made to fit — by supplying this project's vocabulary and test-artifact conventions to it, through whatever configuration surface the engine offers, discovered from `staircase capabilities --format json` and the engine's own configuration rather than assumed to exist. A rule that cannot be satisfied from inside this repository is not worked around by editing graph nodes to please it; it is raised where the rule lives, and recorded here as raised. A warning that turns out to name a real defect in this project's nodes is fixed as a defect, through the authoring surface like any other change, and never by editing an attested or sealed criterion in place.
+
+  Out of scope: changing what any rule asserts, and any edit to a frozen criterion. Also out of scope is a target warning count — the count is an outcome of separating the two populations, and a slice that drove toward a number would reach it by suppressing rules rather than by fitting them.
+rationale: |
+  A lint sweep nobody reads is worse than no sweep, because it looks like coverage. This project's own guidance already warns that a clean lint run is not a clean graph; the inverse has now happened too — a sweep so dominated by warnings this repository cannot act on that a real finding would arrive indistinguishable from the noise around it. The two findings that mattered in the slice this work was discovered alongside were both caught by blind review, not by lint, and lint would not have been consulted on them.
+
+  The slice deliberately begins with a separation rather than a fix. The obvious reading of two hundred warnings is that the graph is in poor repair, and acting on that reading would mean editing nodes that are correct — the immutability notices in particular describe criteria that are frozen precisely because the work behind them was attested as intended, and "fixing" one would mean superseding delivered work to satisfy a notice that exists to prevent exactly that.
+
+  Nothing here is scoped as a warning count. A count is trivially reachable by turning rules off, and the difference between a rule configured to fit a C firmware project and a rule suppressed because it was inconvenient is not visible in the number. What distinguishes them is whether the rule can still fail — so the test of this work is that each rule either has a subject here and can report on it, or has been raised where it lives, rather than that the total came down.
+
+  Raising a rule upstream rather than working around it is the same discipline the project applies to its own seams. A graph node edited to please a rule that does not understand this project is a drifted claim bought with a clean sweep, and the claim outlives the sweep.
+
+  This lands under the maintenance epic on the caller's direction. It is worth recording that it does not meet that epic's usual admission on the second axis: no closed criterion of this project stated an intent that went unmet here. The engine's lint families were authored against the repository the engine lives in, and this project inherited them by using the engine — which is late-discovered scope rather than a shortfall in anything delivered. If the epic's boundary is to hold strictly, this belongs in new nodes outside it and should be moved.
+links:
+  - target: DEL-MAINTENANCE.C2
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

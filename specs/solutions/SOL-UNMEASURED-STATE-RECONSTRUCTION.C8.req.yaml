@@ -1,0 +1,20 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C8
+type: criterion
+title: The estimator reports the difference between each predicted and observed measurement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For every sensor channel the estimator corrects against, the seam reports the difference
+  between the measurement the model predicted and the measurement that was observed, in
+  the unit that channel is read in. A host test drives the estimator against a model held
+  away from the truth and reads a residual whose sign and magnitude follow the imposed
+  discrepancy rather than staying at zero. A channel the estimator was not stepped against
+  reports no residual rather than reporting zero, because a caller distinguishing a
+  matched prediction from an absent one needs those to differ. What consumes the residual
+  downstream, and what magnitude constitutes drift, are out of scope — drift detection is
+  a separate deliverable.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

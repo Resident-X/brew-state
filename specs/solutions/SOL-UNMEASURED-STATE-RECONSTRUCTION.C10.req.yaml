@@ -1,0 +1,21 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C10
+type: criterion
+title: The estimator receives its parameter record through the control law's initialisation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `control_init` takes the parameter record the estimator needs, rather than the no-argument
+  form it has today at `firmware/src/control/control.h`, and both entry points under
+  `firmware/src/app/` are updated to supply one: the host entry already loads a description
+  from a path, and the target entry reaches the record the onboarding slice puts in the
+  artefact. An initialisation given no usable record leaves the control law in its
+  pre-run condition with the heater commanded off, which is the behaviour it already has
+  when the interface refuses that command. Where the target's record comes from is out of
+  scope here — that is the onboarding slice's subject, and this criterion covers only that
+  the record reaches the estimator through the control law rather than by a path of its
+  own.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

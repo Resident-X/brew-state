@@ -1,0 +1,19 @@
+id: SOL-LINT-SWEEP-PROJECT-FIT.C4
+type: criterion
+title: A warning naming a real defect in this project's nodes is fixed through the authoring surface
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Where classification finds a warning that names a genuine defect in a node this project
+  owns, it is corrected with `staircase author update` like any other change, and
+  `staircase validate` stays clean afterwards. A criterion that is attested or sealed is
+  not edited in place: the immutability rules exist for that case and the remedy is
+  supersession, which is a deliberate act with its own reasoning rather than part of a lint
+  sweep. Whether any such defect exists is out of scope to assert in advance — this
+  criterion covers how one is handled if the classification surfaces it, and passes
+  vacuously if none does.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT
+    type: criterion-of

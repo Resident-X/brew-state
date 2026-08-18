@@ -1,0 +1,18 @@
+id: SOL-PLANT-RECONSTRUCTABLE-STATE.C6
+type: criterion
+title: The description's narrative and its variant carry the new coefficient
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `firmware/params/thermoblock.md` gains the account of where the lag figure came from,
+  because the description names that narrative as part of itself and the origins check
+  verifies it still names every coefficient. `firmware/params/thermoblock-variant.params`
+  gains the coefficient too, so the comparison
+  `firmware/tools/check_parameters_are_data.py` makes still has a pair differing in one
+  value rather than in the set of names. Adding coefficients to descriptions of other
+  structures is out of scope; this criterion covers the reference machine's own.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE
+    type: criterion-of

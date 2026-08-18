@@ -1,0 +1,20 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C11
+type: criterion
+title: The estimator compiles into the target build alongside the control law
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `env:stm32` in `firmware/platformio.ini` compiles the estimator sources, so the target
+  links. The control logic is compiled into every environment through
+  `[common] control_sources`, so the step that makes it read from the estimator makes the
+  estimator a dependency of the target build rather than of the host builds alone, and a
+  target that cannot link is a gate failure in `task fw:build` rather than a deferred
+  concern. The estimator also holds a plant-model instance, which the target build carries
+  only once the onboarding slice has landed — the recorded dependency between the two
+  slices. Widening the target environment's analysis or warning settings is out of scope;
+  this criterion covers that the estimator is compiled there at all.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

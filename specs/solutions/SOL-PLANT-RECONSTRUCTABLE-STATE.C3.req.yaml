@@ -1,0 +1,18 @@
+id: SOL-PLANT-RECONSTRUCTABLE-STATE.C3
+type: criterion
+title: Every plant structure answers the state accessor
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The thermoblock, boiler and fixture structures under `firmware/src/plant/` each answer
+  the new read operation for the states they keep, and each refuses a state it does not
+  keep rather than reporting zero for it. The fixture and boiler are subjects here rather
+  than afterthoughts: an operation only one structure answers is not a seam operation,
+  and a refusal that no structure can trigger cannot be shown to fail. Reading a state
+  from an uninitialised instance is refused on the same terms `plant_model_quantity`
+  already refuses one. What any structure does with its states internally is out of scope.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE
+    type: criterion-of

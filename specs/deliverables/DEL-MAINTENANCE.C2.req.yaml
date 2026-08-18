@@ -1,0 +1,29 @@
+id: DEL-MAINTENANCE.C2
+type: criterion
+title: The lint sweep reports only warnings this project can act on
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  `staircase lint` over this graph reports 213 warnings across eight rules, and a reader
+  cannot tell from that number whether the graph is healthy. The sweep is dominated by
+  rules that cannot be satisfied from inside this repository: 86 orphaned seam-registry
+  entries naming the engine's own Go identifiers, which this project has no source tree
+  for and no surface to edit, and a further 32 unresolved backticked and camel-case tokens
+  flagged against the same registry because it does not know this project's C vocabulary.
+  Twenty more fire because the evidence-liveness family expects a Go test path where this
+  project's evidence correctly cites a Unity suite or a Taskfile target. Seventy-four are
+  immutability notices on criteria that are frozen precisely because they were attested or
+  sealed as intended.
+
+  The remediated state is a sweep whose warning count means something here: every reported
+  warning names work this project can act on, and work it cannot is either configured out
+  against a project-supplied vocabulary or raised where the rule lives. What the count
+  should be is not fixed in advance — the number is an outcome of that separation rather
+  than a target to drive toward, and driving toward a number is the failure this criterion
+  exists to avoid.
+links:
+  - target: DEL-MAINTENANCE
+    type: criterion-of

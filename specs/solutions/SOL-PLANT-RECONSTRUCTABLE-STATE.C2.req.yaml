@@ -1,0 +1,18 @@
+id: SOL-PLANT-RECONSTRUCTABLE-STATE.C2
+type: criterion
+title: The plant seam declares a vocabulary for the states a structure keeps
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  `firmware/include/plant_types.h` enumerates the states a structure keeps in a vocabulary
+  separate from `plant_quantity_t`, and `firmware/include/plant_model.h` declares a read
+  operation for them beside `plant_model_quantity`. The existing enumeration is left as it
+  is, because it describes the quantities the machine exposes and the header says so;
+  widening it would collapse the distinction rather than serve it. No signature names a
+  structure. Which states a given structure keeps is that structure's own answer and is out
+  of scope here — this criterion covers the vocabulary, not its membership.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE
+    type: criterion-of
