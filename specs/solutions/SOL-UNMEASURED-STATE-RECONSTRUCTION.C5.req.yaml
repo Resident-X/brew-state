@@ -2,7 +2,7 @@ id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C5
 type: criterion
 title: A vendor header included from the estimator fails the build
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |

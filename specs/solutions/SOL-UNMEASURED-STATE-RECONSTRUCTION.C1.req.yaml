@@ -2,7 +2,7 @@ id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C1
 type: criterion
 title: The estimator interface declares its operations without naming a plant structure
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |

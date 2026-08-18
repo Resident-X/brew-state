@@ -37,11 +37,13 @@ links:
     type: justified-by
   - target: DEL-SIM-ESTIMATOR.C1
     type: derives-from
+  - target: DEL-SIM-ESTIMATOR.C2
+    type: derives-from
   - target: REQ-STATE-ESTIMATION-001.C1
     type: targets
   - target: REQ-STATE-ESTIMATION-001.C2
     type: targets
-  - target: DEL-SIM-ESTIMATOR.C2
-    type: derives-from
   - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: depends-on
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE
     type: depends-on

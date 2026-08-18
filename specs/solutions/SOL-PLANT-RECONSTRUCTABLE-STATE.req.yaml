@@ -1,0 +1,41 @@
+id: SOL-PLANT-RECONSTRUCTABLE-STATE
+type: deliverable
+category: solution
+title: A state worth reconstructing, and a seam that reaches it
+status: active
+version: 1
+text: |
+  The reference structure holds four states and the hardware seam reports four sensor channels, and they correspond one for one: brew temperature, steam temperature, brew pressure, steam pressure. Every state the model has is sensed. Nothing an estimator could reconstruct exists, so the requirement that the control law work from reconstructed states cannot be met by any estimator until the model draws a distinction it does not draw today.
+
+  The thermoblock structure gains that distinction: the temperature of the heated mass is not the temperature of the water leaving it. The second follows the first through a lag the parameter record supplies as a coefficient like any other, so the numbers stay data and the equations stay code. This is the architecture's own physics rather than an addition to it — a low-mass flow-through system puts real dynamics between the block and the stream, and a sensor reaches the block far more easily than the stream. The structure's own header already calls its equations the thinnest set that expresses the architecture; this is that thinness being spent where the estimator needs it.
+
+  The plant seam gains a second way to read. `plant_quantity_t` enumerates what the machine exposes, and `plant_types.h` says so in terms: these are the quantities the machine has, not the states a structure keeps. Reconstruction needs the latter, and today nothing outside `src/plant/` can reach them — the encapsulation check covers the whole source root and fails a build for any consumer naming a structure's fields. So the seam declares a separate vocabulary for the states a structure keeps, with a read operation beside `plant_model_quantity`, and every structure answers it. An estimator and its convergence tests then reach the state through the seam rather than around it, and the distinction `plant_types.h` draws in prose becomes one the code enforces.
+
+  The description work travels with the coefficient. A new coefficient in `firmware/params/thermoblock.params` carries its admissible range in the structure's parameter table, its origin, and the assumed error the design takes against it; `firmware/params/thermoblock.md` gains the account the description names as part of itself; and `firmware/params/thermoblock-variant.params` gains the coefficient so the parameters-are-data comparison still has a pair to compare. Each of those is a separate build check today and none of them is satisfied by adding the number alone.
+
+  New arithmetic in a machine-describing structure joins the mutation sweep's population without anything being widened, because that population follows the plant tree. The lag the structure now integrates is swept like the rest of its equations, and the mutants it produces are killed by the structure's own suite or judged in the triage record rather than left as unreviewed survivors.
+
+  Out of scope: the estimator itself, the residual, and the rewiring of the control law, which are the slice this one unblocks. Whether the lag is quantitatively right for the reference machine is also out of scope — the structure's support status records that nothing has been on the bench, and measurement is what settles it. What this slice establishes is that there is a state to reconstruct and a way to read it, not that the number is right.
+rationale: |
+  This slice exists because the criterion it serves is otherwise unsatisfiable, not because the physics wanted improving. A model whose every state is sensed admits no estimator, and an estimator with nothing to reconstruct would meet the words of the requirement by reconstructing something already being read. The distinction added is the smallest one that makes the requirement's own account true of the model, and it belongs in the structure rather than inside the estimator so that both consumers of the model keep answering from one set of equations. An estimator carrying its own lag would be the second model the whole estimation requirement is written to prevent.
+
+  It is a separate leaf rather than a criterion of the estimator slice because it sits behind an entirely different gate set. The parameter description, its per-value origin and assumed error, the narrative the description names as part of itself, the variant description the parameters-are-data check compares against, and the mutation sweep whose population follows the plant tree are all this work's subjects and none of them are the estimator's. Carried as one criterion inside the estimator slice, every one of those consequences went unstated — which is how a slice acquires a gate failure nobody wrote down.
+
+  The second read vocabulary is the part worth arguing about, because adding to a seam is not free. The case for it is that the seam is already wrong about itself: `plant_types.h` says its enumeration is the quantities the machine has rather than the states a structure keeps, and then offers no way to read the latter, so a consumer that needs one has no option but to reach around the seam and be refused by the encapsulation check. Making the states readable through the seam turns a prose distinction into an enforced one. The alternative — widening `plant_quantity_t` — would make the machine's exposed quantities and a structure's internal states the same list, which is the distinction collapsing rather than being served, and would oblige every structure to expose states it does not keep.
+
+  Every structure answering the new accessor is a cost accepted deliberately. The fixture and the boiler are subjects of this slice rather than afterthoughts, because a seam operation only one structure answers is not a seam operation, and because the refusals it needs cannot be shown to fail against a structure that answers everything. That is the same reasoning the fixture was introduced under.
+
+  This does not reopen the slice that delivered the structure. That slice established that the numbers and the equations are separable and replaceable, and said in terms that whether the equations describe any real machine could not be settled without one. Replacing thin equations with less thin ones is the replaceability it delivered being used. Nor does it belong in the maintenance epic: nothing closed there stated an intent that the structure distinguish the heated mass from the water leaving it, so this is late-discovered scope, which the graph carries by authoring new nodes.
+links:
+  - target: DEL-SIM-ESTIMATOR.C1
+    type: derives-from
+  - target: REQ-STATE-ESTIMATION-001.C1
+    type: targets
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: DEC-PLANT-MUTATION-COVERAGE
+    type: justified-by

@@ -2,7 +2,7 @@ id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C1
 type: criterion
 title: The target build compiles exactly one plant structure, and one describing a machine
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |

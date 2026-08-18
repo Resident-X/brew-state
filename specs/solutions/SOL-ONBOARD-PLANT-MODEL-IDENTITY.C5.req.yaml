@@ -2,7 +2,7 @@ id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C5
 type: criterion
 title: A target build embedding a description other than the verified one fails
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |

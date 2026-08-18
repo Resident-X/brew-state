@@ -2,7 +2,7 @@ id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C3
 type: criterion
 title: A reconstructed state converges on the truth the plant model holds
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |

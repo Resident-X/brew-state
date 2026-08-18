@@ -2,7 +2,7 @@ id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C2
 type: criterion
 title: The estimator reconstructs a state no sensor channel reports
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
@@ -10,10 +10,11 @@ text: |
   `hw_sensor_channel_t`, and a host test reads a usable value for it after stepping the
   estimator against readings drawn only from the channels that do exist. Reading a state
   before the instance has been initialised, or one outside the enumerated set, is refused
-  rather than answered with a default. Whether the reconstructed figure is close enough to
-  control a real machine with is out of scope — this criterion asks that a state the
-  machine cannot sense is produced at all, which the reference structure could not offer
-  until it drew the distinction its sibling criterion adds.
+  rather than answered with a default. The state exists to be reconstructed only because
+  the slice this one depends on adds it to the reference structure and gives the plant seam
+  a way to read it. Whether the reconstructed figure is close enough to control a real
+  machine with is out of scope — this criterion asks that a state the machine cannot sense
+  is produced at all.
 links:
   - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
     type: criterion-of

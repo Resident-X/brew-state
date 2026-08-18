@@ -1,0 +1,19 @@
+id: SOL-PLANT-RECONSTRUCTABLE-STATE.C5
+type: criterion
+title: The new coefficient carries its range, origin and assumed error
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The lag coefficient appears in the structure's parameter table with an admissible
+  range, and in `firmware/params/thermoblock.params` with both an origin from the
+  vocabulary `plant_origin.h` declares and the assumed error the design takes against
+  it. `firmware/tools/check_parameter_origins.py` and
+  `firmware/tools/check_assumed_error.py` each enforce one of those and neither is
+  satisfied by adding the number alone. A description missing either is refused rather
+  than run on a default. What the assumed error should be for the reference machine is
+  out of scope — it is declared here, and measurement is what settles it.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE
+    type: criterion-of

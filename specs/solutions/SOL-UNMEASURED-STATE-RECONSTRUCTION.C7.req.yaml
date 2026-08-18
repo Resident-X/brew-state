@@ -1,7 +1,7 @@
 id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C7
 type: criterion
 title: The reference structure distinguishes the heated mass from the water leaving it
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

@@ -1,0 +1,21 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C12
+type: criterion
+title: The estimator refuses a structure that lacks the state it reconstructs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control logic compiles into every environment through `[common] control_sources`, so
+  rewiring it onto the estimator puts the estimator into the fixture and boiler builds as
+  well as the reference one, against structures that keep fewer states than the thermoblock
+  does. The estimator refuses to initialise against a structure that does not keep a state
+  it reconstructs, rather than running on a substitute, and the control law treats that
+  refusal as it treats an untrustworthy reading: the heater is commanded off and the fault
+  latches. `env:native_fixture` and `env:native_boiler` build and run clean under
+  `task fw:run`, whose artefact runner fails the gate on a non-zero exit, and the narrow and
+  boiler suites still pass. Which states a structure ought to keep is out of scope — this
+  criterion covers what the estimator does about the ones that do not.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

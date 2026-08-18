@@ -1,0 +1,18 @@
+id: SOL-PLANT-RECONSTRUCTABLE-STATE.C7
+type: criterion
+title: The mutants the new arithmetic produces are killed or judged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The lag the structure now integrates joins the mutation sweep's population without
+  anything being widened, because that population follows the structures declaring they
+  describe a machine. Every mutant drawn from the new arithmetic is killed by a suite or
+  recorded in `firmware/mutation_triage.yaml` with a judgement, so `task fw:sweep` passes
+  rather than reporting an unreviewed survivor. Extending the sweep to sources outside
+  the plant tree is out of scope — that population is defined by the tree and widening it
+  is its own act.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE
+    type: criterion-of
