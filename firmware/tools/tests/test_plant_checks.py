@@ -2566,7 +2566,7 @@ class RobustnessDeclarationCase(unittest.TestCase):
 
 
 class EveryBehaviourCarriesExactlyOneClass(RobustnessDeclarationCase):
-    """SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C4: each declared behaviour names exactly one of the two classes, and the check names the behaviour at fault."""
+    """SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C4: each declared behaviour names exactly one of the declared classes, and the check names the behaviour at fault."""
 
     def test_a_declaration_classifying_every_behaviour_passes(self):
         result = self.check()

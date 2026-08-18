@@ -34,7 +34,7 @@ Five things are checked, because each can pass while another is broken:
   * no behaviour is named twice, since two lines for one behaviour are two
     answers to the question this file exists to answer, and which of them
     applies is then whichever the reader's eye landed on,
-  * both classes have something in them, because a declaration where everything
+  * every class has something in it, because a declaration where everything
     is invariant, or everything degrades, has drawn no line and taken no
     decision, and
   * there is a declaration at all, with something in it. An absent or empty

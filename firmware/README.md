@@ -140,11 +140,19 @@ and "the description says nothing about this" demand opposite responses.
 
 The model will be wrong, and the useful question is what still holds when it is.
 `params/robustness.declaration` names each behaviour the design commits to and
-classifies it as one of two words declared in `include/plant_robustness.h`:
+classifies it as one of three words declared in `include/plant_robustness.h`:
 `invariant` for what must hold however wrong the model turns out to be —
 refusing what cannot be delivered, reaching a safe state, respecting the supply
-budget — and `degrading` for what is permitted to get worse as the model does,
-such as how tightly a setpoint is held.
+budget, surrendering accumulated intent at the actuator limit — `bounded` for
+what holds across the error the description declares and is not claimed beyond
+it, such as stability and the margin protecting a trip point, and `degrading`
+for what is permitted to get worse as the model does, such as how tightly a
+setpoint is held.
+
+The middle class earns its place: a guarantee that holds whatever the model says
+and a guarantee that holds provided the model is within the declared error are
+different promises, and a later verification checks the first by making the
+model arbitrarily wrong and the second by sweeping the declared range.
 
 It is data rather than a paragraph because a paragraph cannot be diffed when a
 behaviour is added and cannot fail a build when one arrives unclassified.
@@ -198,7 +206,7 @@ fails a check rather than the one that ships.
 | `include/plant_support.h` | The one place the support-status vocabulary is declared. Names no structure. |
 | `include/plant_origin.h` | The one place the origin vocabulary is declared — how a value in a description was arrived at, and how a description says it claims no machine. Names no structure. |
 | `include/plant_budget.h` | The one place the marker introducing a value's assumed error is declared, and what that figure means. Names no structure. |
-| `include/plant_robustness.h` | The one place the two classes a declared behaviour is put in are declared — what a wrong model may take away, and what it may not. Names no structure, and names no control law. |
+| `include/plant_robustness.h` | The one place the three classes a declared behaviour is put in are declared — what a wrong model may take away, what it may take away only beyond the declared error, and what it may not. Names no structure, and names no control law. |
 | `src/control/` | The control logic. Reaches hardware only through the seam. Identical in both builds. |
 | `src/hw/sim/` | The simulated implementation, and the controls tests use to stand readings up. |
 | `src/hw/stm32/` | The STM32 HAL-backed implementation. Naming vendor symbols is its job. |
@@ -365,7 +373,7 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_actuation_declaration.py` | A structure declares no set of actuation channels, declares more than one, declares an empty one, or names a channel the machine's shared vocabulary does not carry. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_parameter_origins.py` | A description that claims a real machine carries a value with no origin, an origin of a kind the vocabulary does not declare, or a kind with no account behind it; a coefficient the structure requires is absent from it; or its statement of what it represents has fallen behind the coefficients and quantities it has to name. Also fails a vocabulary that no longer separates an estimate from a measurement, and a tree in which every description exempts itself, since that inspects nothing. Runs inside every build, over every description in the tree rather than the one the build runs against. |
 | `check_assumed_error.py` | A description that claims a real machine carries a value with no assumed error against it, or one that is not a figure a value could be out by — absent after its marker, unreadable, negative or not finite. Also fails a vocabulary whose marker is the one that already introduces an origin, since an account runs to the end of the line and would swallow every figure, and a tree in which every description exempts itself, since that inspects nothing. Runs inside every build, over every description in the tree. |
-| `check_robustness_declaration.py` | A behaviour the design commits to carries no class, carries two, or carries a word the vocabulary does not declare; a behaviour is declared twice; a class has nothing in it, which is a declaration that drew no line; or the artefact is absent or empty. Reads the two classes out of `plant_robustness.h` rather than restating them. |
+| `check_robustness_declaration.py` | A behaviour the design commits to carries no class, carries two, or carries a word the vocabulary does not declare; a behaviour is declared twice; a class has nothing in it, which is a declaration that drew no line; or the artefact is absent or empty. Reads the classes out of `plant_robustness.h` rather than restating them. |
 | `check_machine_claim.py` | A structure declares nothing about whether its equations describe a machine, declares it more than once, or declares something outside the vocabulary. Also fails a vocabulary that has grown a distinction beyond that one, and a tree in which no structure describes a machine at all, since the mutation sweep would then draw its mutants from an empty population. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 
