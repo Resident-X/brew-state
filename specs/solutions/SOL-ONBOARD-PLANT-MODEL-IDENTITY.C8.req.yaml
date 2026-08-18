@@ -1,0 +1,26 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C8
+type: criterion
+title: The artefact a machine would run retains the plant model's operations
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The linker discards what nothing reaches, and nothing on the machine drives the
+  model yet -- the estimator that will hold an instance of it, and the control law
+  that will drive that, are separate deliverables. So the operations declared in
+  `include/plant_model.h` are named to the linker as wanted, read out of that
+  header rather than listed anywhere a seam gaining an operation could leave
+  behind, and the artefact is inspected after linking to establish they survived.
+
+  An artefact they were dropped from is the failure every earlier check passes.
+  The build succeeds, the description is still carried, and the maths those
+  equations call into stops being needed -- so a toolchain that could never have
+  resolved it is not asked, and answers nothing while appearing to have answered.
+
+  Whether anything on the machine should be calling those operations yet is out of
+  scope, and so is what it would do with them; this asks only that the artefact
+  still carries them for the deliverable that will.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: criterion-of

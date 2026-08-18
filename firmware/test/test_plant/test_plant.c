@@ -2654,6 +2654,112 @@ static void test_the_reference_description_is_admissible_and_advances_a_model(vo
                      initial[PLANT_QUANTITY_BREW_TEMPERATURE_C]);
 }
 
+/// SOL-ONBOARD-PLANT-MODEL-IDENTITY.C4: the target parses its description through the same loader the host tier uses, refused on the same terms, and a refused record leaves no usable model rather than defaults
+static void test_the_carried_description_is_refused_on_the_loaders_own_terms(void)
+{
+    /*
+     * The machine carries these bytes compiled in and reads them back through
+     * this loader, because there is no filesystem on the target to open a
+     * description from. Nothing on the machine can report what it made of them,
+     * so the terms it is refused on are established here, against the same
+     * bytes and the same parser rather than against a description written for
+     * the occasion: a suite carrying its own text would go on passing after the
+     * file the machine actually carries had drifted away from it.
+     *
+     * Each damaged form below is one of the loader's declared refusals, and the
+     * fault is asserted rather than merely the refusal. Two damaged forms can
+     * be refused for the same reason -- appending a name the description
+     * already carries is a duplicate long before it is out of range -- and an
+     * assertion that only asks whether something was refused cannot tell that
+     * apart from the case it was written for.
+     */
+    static const char POISON = '\xa5';
+    char text[REFERENCE_MAX];
+    const size_t used = read_reference_description(text, sizeof(text));
+
+    /* A coefficient this structure has, whose value can be replaced in place so
+     * that the damaged form is out of range rather than repeated. */
+    static const char IN_RANGE[] = "brew.thermal_mass_j_per_k = 320.0";
+    static const char OUT_OF_RANGE[] = "brew.thermal_mass_j_per_k = -1.0";
+    TEST_ASSERT_NOT_NULL_MESSAGE(strstr(text, IN_RANGE),
+                                 "the description no longer carries the value this replaces");
+
+    char damaged[REFERENCE_MAX];
+    struct {
+        const char *what;
+        const char *appended;
+        const char *replace_with;
+        plant_parameter_fault_t expected;
+    } const cases[] = {
+        {"a line that cannot be parsed", "this line is not a name and a value\n", NULL,
+         PLANT_PARAMETER_MALFORMED},
+        {"a name the structure does not have", "definitely.not.a.parameter = 1.0\n", NULL,
+         PLANT_PARAMETER_UNKNOWN},
+        {"a name given twice", "brew.heater_power_w = 900.0\n", NULL, PLANT_PARAMETER_DUPLICATE},
+        {"a value outside the structure's declared range", NULL, OUT_OF_RANGE,
+         PLANT_PARAMETER_OUT_OF_RANGE},
+    };
+
+    for (size_t i = 0u; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        size_t length;
+
+        if (cases[i].appended != NULL) {
+            const size_t appended = strlen(cases[i].appended);
+            TEST_ASSERT_TRUE(used + appended < sizeof(damaged));
+            memcpy(damaged, text, used);
+            memcpy(damaged + used, cases[i].appended, appended);
+            length = used + appended;
+        } else {
+            const char *const at = strstr(text, IN_RANGE);
+            const size_t before = (size_t)(at - text);
+            const size_t replacement = strlen(cases[i].replace_with);
+            const size_t after = used - before - strlen(IN_RANGE);
+            TEST_ASSERT_TRUE(before + replacement + after < sizeof(damaged));
+            memcpy(damaged, text, before);
+            memcpy(damaged + before, cases[i].replace_with, replacement);
+            memcpy(damaged + before + replacement, at + strlen(IN_RANGE), after);
+            length = before + replacement + after;
+        }
+
+        memset(&loaded, POISON, sizeof(loaded));
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE_MESSAGE(plant_parameters_load(damaged, length, &loaded, &fault),
+                                  cases[i].what);
+        TEST_ASSERT_EQUAL_MESSAGE(cases[i].expected, fault.fault, cases[i].what);
+
+        /*
+         * And nothing was written. The header promises no value is assumed for
+         * a coefficient that is missing or rejected; this asks the stronger
+         * question the machine's position actually depends on, which is that a
+         * caller with no second description to fall back on finds the record as
+         * it left it rather than partly filled.
+         */
+        const unsigned char *const bytes = (const unsigned char *)&loaded;
+        for (size_t offset = 0u; offset < sizeof(loaded); offset++) {
+            TEST_ASSERT_EQUAL_HEX8_MESSAGE((unsigned char)POISON, bytes[offset], cases[i].what);
+        }
+    }
+
+    /*
+     * And a description truncated at one of its coefficients, which is the
+     * refusal the cases above cannot reach: each of those leaves the required
+     * set complete and adds something on top of it. Truncating removes that
+     * coefficient and every one after it, which is enough to be missing one.
+     */
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    const char *const line = strstr(text, "brew.heater_power_w");
+    TEST_ASSERT_NOT_NULL(line);
+    const size_t before = (size_t)(line - text);
+
+    memcpy(damaged, text, before);
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(damaged, before, &loaded, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
+}
+
 /// SOL-PLANT-DESCRIPTION-BASELINE.C5: the host build and the model's tests run against the reference description
 static void test_the_reference_description_claims_a_machine(void)
 {
@@ -2770,6 +2876,7 @@ int main(void)
     RUN_TEST(test_a_description_mixing_the_kinds_is_read_like_any_other);
     RUN_TEST(test_a_coefficient_omitted_from_an_annotated_description_is_still_refused);
     RUN_TEST(test_the_reference_description_is_admissible_and_advances_a_model);
+    RUN_TEST(test_the_carried_description_is_refused_on_the_loaders_own_terms);
     RUN_TEST(test_the_reference_description_claims_a_machine);
     RUN_TEST(test_the_assumed_error_of_every_coefficient_is_readable);
     RUN_TEST(test_a_coefficient_the_structure_does_not_have_is_refused);

@@ -82,13 +82,14 @@ STATEMENT_SUFFIX = ".md"
 # and its tests are exercised against, which is exactly the description that
 # must not exempt itself: were it to, every value the design is reasoned against
 # would stop owing an account while this check went on passing on the strength
-# of some other file. Read out of the build rather than named here, because
-# which description that is belongs to the build.
-REFERENCE_MACRO = "REFERENCE_DESCRIPTION_PATH"
-
-_REFERENCE_FLAG = re.compile(
-    r"-D\s*" + REFERENCE_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*"
-)
+# of some other file.
+#
+# Read out of the build, and read through the one module that reads the build,
+# rather than by a pattern of this check's own. The gate that asks whether a
+# machine carries the verified model asks about the same declaration, and two
+# readers of it are two answers waiting to disagree about which file the design
+# was established against.
+REFERENCE_MACRO = build_environments.REFERENCE_MACRO
 
 #: The kinds the requirement's distinction is made of.
 #
@@ -223,10 +224,8 @@ def references_named_by_the_build(project: str) -> dict[str, str]:
     """
     named: dict[str, str] = {}
     for environment in build_environments.load(project):
-        for flag in ("build_flags", "build_src_flags"):
-            for match in _REFERENCE_FLAG.finditer(environment.get(flag)):
-                path = match.group(1).replace("$PROJECT_DIR/", "").replace("${PROJECT_DIR}/", "")
-                named.setdefault(os.path.basename(path), environment.name)
+        for path in environment.reference_descriptions:
+            named.setdefault(os.path.basename(path), environment.name)
     return named
 
 

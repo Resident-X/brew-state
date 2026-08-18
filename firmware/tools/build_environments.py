@@ -53,6 +53,11 @@ BUILD_ROOT = os.path.join(".pio", "build")
 #: host it builds for; the `.exe` form appears on Windows.
 ARTEFACT_NAMES = ("program", "program.exe")
 
+#: What a linked artefact for a board is called. It is a different name because
+#: it is a different kind of thing: nothing runs it here, and what inspects it
+#: is asking what the machine would carry rather than what a run produced.
+MACHINE_ARTEFACT_NAMES = ("firmware.elf",)
+
 #: The platform an environment names when it builds for the host rather than
 #: for a target board.
 HOST_PLATFORM = "native"
@@ -86,11 +91,55 @@ STRICT_EXEMPTION_OPTION = "custom_strict_flags_exemption"
 #: when it discovers none of these.
 MUTATION_SWEEP_OPTION = "custom_mutation_sweep"
 
+#: An environment that carries a parameter description inside its artefact
+#: declares which description here, as a path relative to the project. A target
+#: has no filesystem to read one from, so the description travels compiled in
+#: rather than named for opening -- and the one thing that cannot then be read
+#: off the running machine is which description it was. The declaration is what
+#: makes that answerable before the artefact exists.
+EMBEDDED_DESCRIPTION_OPTION = "custom_embedded_description"
+
+#: The macro a build names the description its artefact and its tests are
+#: exercised against with. An environment naming one is pinning the host
+#: verification tier to that description: it is the file the model's own tests
+#: read, so it is the file a machine claiming to carry the verified model has
+#: to be carrying.
+#:
+#: Read out of the build rather than named in a gate, because which description
+#: that is belongs to the build. Read here rather than in each gate that wants
+#: it, because two readers of the same declaration are two answers waiting to
+#: disagree.
+REFERENCE_MACRO = "REFERENCE_DESCRIPTION_PATH"
+
+#: The flag options a reference description can be named in.
+_FLAG_OPTIONS = ("build_flags", "build_src_flags")
+
+#: `-D REFERENCE_DESCRIPTION_PATH='"..."'`, however the quoting survived.
+_REFERENCE_FLAG = re.compile(r"-D\s*" + REFERENCE_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*")
+
 #: `${section.option}`, the build file's own reference to another value.
 _REFERENCE = re.compile(r"\$\{([^}\s]+)\.([^}\s]+)\}")
 
 #: One `+<path>` or `-<path>` term of a source filter.
 _FILTER_TERM = re.compile(r"([+-])\s*<([^>]*)>")
+
+
+def _project_relative(path: str) -> str:
+    """A declared path with the build file's own way of naming the project cut off.
+
+    The build file writes `$PROJECT_DIR/params/x.params` because that is what
+    the compiler needs; a gate comparing declarations wants the part that is the
+    same wherever the tree is checked out.
+    """
+    if not path:
+        return ""
+    trimmed = path.replace("${PROJECT_DIR}/", "").replace("$PROJECT_DIR/", "")
+    forward = trimmed.replace("\\", "/")
+    # A prefix, not a set of characters. Stripping the characters would turn
+    # `../params/x` into `params/x` -- a different file, and one that may exist.
+    while forward.startswith("./"):
+        forward = forward[2:]
+    return forward
 
 
 def _covers(term: str, path: str) -> bool:
@@ -196,17 +245,52 @@ class Environment:
         """
         return self.get(MUTATION_SWEEP_OPTION).strip()
 
+    @property
+    def embedded_description(self) -> str:
+        """The parameter description this artefact carries compiled in, or empty.
+
+        A path relative to the project. An environment declaring one is saying
+        its artefact does not read a description at start-up because there is
+        nowhere to read one from, so the bytes travel with the code.
+        """
+        return _project_relative(self.get(EMBEDDED_DESCRIPTION_OPTION).strip())
+
+    @property
+    def reference_descriptions(self) -> list[str]:
+        """Every description this environment names as the one it is exercised
+        against, as paths relative to the project, in the order they appear.
+
+        A list rather than one value because naming two is a state the build can
+        be in, and a reader collapsing it to one would answer a question the
+        build has not settled. The callers that need a single answer are the
+        ones that refuse the ambiguity.
+        """
+        found: list[str] = []
+        for option in _FLAG_OPTIONS:
+            for match in _REFERENCE_FLAG.finditer(self.get(option)):
+                path = _project_relative(match.group(1))
+                if path not in found:
+                    found.append(path)
+        return found
+
     def build_directory(self, project: str) -> str:
         return os.path.join(project, BUILD_ROOT, self.name)
 
     def artefact(self, project: str) -> str:
-        """The linked executable, whether or not it has been built yet."""
+        """The linked artefact, whether or not it has been built yet.
+
+        Which names are candidates follows from what the environment builds for:
+        a host build produces an executable something runs, a board build
+        produces an image nothing here runs. Looking for the wrong one would
+        report an artefact absent rather than found under its own name.
+        """
         directory = self.build_directory(project)
-        for name in ARTEFACT_NAMES:
+        names = ARTEFACT_NAMES if self.is_host else MACHINE_ARTEFACT_NAMES
+        for name in names:
             candidate = os.path.join(directory, name)
             if os.path.exists(candidate):
                 return candidate
-        return os.path.join(directory, ARTEFACT_NAMES[0])
+        return os.path.join(directory, names[0])
 
     def objects_under(self, project: str, source_subdirectory: str) -> str:
         """Where the objects built from one source directory are put."""
@@ -392,3 +476,58 @@ def mutation_environments(environments: list[Environment]) -> list[Environment]:
     it. The sweep refusing to run when this is empty is what closes that.
     """
     return [environment for environment in environments if environment.mutation_sweep_reason]
+
+
+def machine_environments(environments: list[Environment]) -> list[Environment]:
+    """Every environment that builds an artefact for a machine.
+
+    A build that is not for the host is for something that will be energised,
+    and what a gate may demand of it differs in kind from what it may demand of
+    an analysis build: the machine has to carry a model of itself, and the
+    analysis builds deliberately include ones that do not. The environments
+    declared to be refused are left out because a build required to fail is not
+    an artefact anybody gets.
+
+    Discovered from the platform rather than from the environment's name, so a
+    second board arriving later is covered without a gate being told about it.
+    """
+    return [
+        environment
+        for environment in environments
+        if not environment.is_host and not environment.must_not_build_reason
+    ]
+
+
+def pinned_description(environments: list[Environment]) -> tuple[str, list[str]]:
+    """The one description the build pins its verification to, and what went wrong.
+
+    This is the single reader of that declaration. The gate that asks whether a
+    machine carries the verified model and the gate that asks whether every
+    value in it accounts for itself are asking about the same file, and a second
+    reader of the same flag is the way those two answers start to differ.
+
+    Naming none and naming two are both reported rather than resolved: a tier
+    pinned to nothing has verified against nothing in particular, and a tier
+    pinned to two has no single answer to be compared against.
+    """
+    named: dict[str, list[str]] = {}
+    for environment in environments:
+        for path in environment.reference_descriptions:
+            named.setdefault(path, []).append(environment.name)
+
+    if not named:
+        return "", [
+            f"no environment names a description with {REFERENCE_MACRO}, so there is no "
+            "description the verification tier is pinned to"
+        ]
+    if len(named) > 1:
+        detail = "; ".join(
+            f"{path} by {', '.join(environments_naming)}"
+            for path, environments_naming in sorted(named.items())
+        )
+        return "", [
+            f"more than one description is named with {REFERENCE_MACRO} ({detail}), so which "
+            "one the verification tier is pinned to is not settled"
+        ]
+
+    return next(iter(named)), []

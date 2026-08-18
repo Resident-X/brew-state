@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C2-TEST
+type: evidence
+title: A target build naming no plant structure, or more than one, is refused (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_selection_refused.py; Taskfile.yml::fw:check; firmware/tools/tests/test_target_model_checks.py::AMachineBuildIsDrivenToBeRefused; firmware/platformio.ini::env:stm32_no_structure,env:stm32_two_structures
+text: |
+  env:stm32_no_structure and env:stm32_two_structures are declared in firmware/platformio.ini with custom_must_not_build and the reason as the value, and task fw:check drives both for real through check_selection_refused. That check requires each to stop, to leave no artefact behind, and to stop because of check_structure_selection by name rather than for a compile error that happened to arrive first. Each carries exactly one reason to fail: they take only the seam checks as pre-scripts, so the script that renders the carried description cannot supply a second reason whose precedence would depend on script order.
+
+  The refusal is established on the environment that would be energised rather than inferred from the host environments that would not, because a machine built with no model, or with the linker choosing between two, has no obvious symptom until it is well outside where it should be. AMachineBuildIsDrivenToBeRefused drives the check against a synthetic target environment through a stand-in build command: one that stops for the selection reason passes, one that succeeds fails, one that stops for another reason fails, and a declared refusal nobody drives fails.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C2
+    type: satisfies

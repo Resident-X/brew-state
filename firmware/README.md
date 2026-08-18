@@ -214,15 +214,15 @@ fails a check rather than the one that ships.
 | `src/plant/thermoblock/` | The machine-describing structure: two heated masses, pump-driven brew pressure, steam pressure above saturation. |
 | `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
 | `src/plant/boiler/` | A structure of a different architecture: one heated vessel serving both paths, so both temperature quantities follow one heater and the machine's second heating channel goes unanswered. |
-| `params/` | Parameter descriptions, and the statement of what each represents. Read at run time; the build compiles none of them in. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. A description that claims a real machine accounts for every value it carries and is accompanied by `<structure>.md`, which says what those quantities are and how they relate. |
+| `params/` | Parameter descriptions, and the statement of what each represents. Read at run time. The host builds open the one they are given; the target has no filesystem to open one from, so its build compiles the description it declares into the artefact and the entry point reads those bytes back through the same loader. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. A description that claims a real machine accounts for every value it carries and is accompanied by `<structure>.md`, which says what those quantities are and how they relate. |
 | `params/robustness.declaration` | The behaviours the design commits to, each classified as one that must survive an arbitrarily wrong model or one permitted to degrade with it. Carried with the descriptions because it is the other half of the same design input: a declared range of model error says nothing without a statement of which behaviours are not allowed to depend on it. |
 | `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
-| `src/app/stm32/` | Target entry point: brings the peripherals up, then runs the same control path. |
+| `src/app/stm32/` | Target entry point: brings the peripherals up, turns the description the artefact carries into a parameter record, then runs the same control path. It also holds the one translation unit that compiles the description the build generates. |
 | `test/test_control/` | The control logic exercised against the simulated implementation. |
 | `test/test_plant/` | The plant model exercised through the seam, naming no structure symbol. |
 | `test/test_plant_narrow/` | The seam driven against a structure answering fewer actuation channels than the machine has — the refusal of a command with nowhere to land, which a structure answering everything cannot exercise. |
 | `test/test_plant_boiler/` | The single-boiler structure exercised through the seam, asserting what holds of that architecture whatever its coefficients are. |
-| `tools/` | The checks that make the seam's properties build failures rather than review notes. |
+| `tools/` | The checks that make the seam's properties build failures rather than review notes, and the build steps that render the carried description and keep the model's operations in the artefact. |
 
 The control logic behind the seam is a minimal path that reads a sensor,
 consults the clock and drives an output. What this establishes is separability,
@@ -425,14 +425,15 @@ environment's `test_filter` takes in — is invisible in a count of what passed.
 The matching requirement for artefacts is `check_structure_exclusive.py`'s,
 which reports a structure no environment builds one for.
 
-Two properties a gate must not guess at are declared in `platformio.ini` beside
-the environment they describe, with the reason as the value:
-`custom_must_not_build` on the configurations required to be refused, which
-cannot also be required to build cleanly; and `custom_strict_flags_exemption` on
-the environment that compiles the test runner's generated support file through
-the same path as this project's sources, and so cannot scope the warning
-settings to ours alone. The exemption is honoured only on an environment that
-really does compile foreign sources that way, so it cannot become a way of
+Properties a gate must not guess at are declared in `platformio.ini` beside the
+environment they describe, with the reason as the value: `custom_must_not_build`
+on the configurations required to be refused, which cannot also be required to
+build cleanly; `custom_strict_flags_exemption` on the environment that compiles
+the test runner's generated support file through the same path as this project's
+sources, and so cannot scope the warning settings to ours alone; and
+`custom_embedded_description` on a build for a board, naming the description its
+artefact carries compiled in. The exemption is honoured only on an environment
+that really does compile foreign sources that way, so it cannot become a way of
 turning the settings off where they could be kept.
 
 Four gates keep their named subjects, because there the names are the content of
@@ -446,6 +447,37 @@ differing in a single coefficient before it can conclude anything).
 Every discovering gate fails when it discovers nothing — no structure, no
 artefact, no environment — because a gate covering an empty set reports success
 in exactly the way a gate nobody ran does.
+
+## What the machine carries
+
+A host build opens the description it is exercised against; the machine has no
+filesystem to open one from. So the description travels inside the artefact:
+the build renders `params/thermoblock.params` into the build directory as an
+array of bytes, one translation unit under `src/app/stm32/` compiles it, and the
+entry point hands those bytes to the plant seam's own loader. There is no
+second parser, and a description that loader refuses leaves the machine without
+a model rather than running on defaults.
+
+Rendering the bytes from the file is not an argument that they are the right
+bytes. Three things can put a description into an artefact that nobody verified
+— a build naming a different one, a rendering left behind by an incremental
+build, and a variant sitting in `params/` beside the intended one — and none of
+them has a symptom on the machine, because predictions that stop matching
+observation look exactly like a machine that has drifted. So the rendered bytes
+are compared against the description the host tier is pinned to through
+`REFERENCE_DESCRIPTION_PATH`, before anything is compiled, and the build stops
+when they differ.
+
+The artefact is then read after linking, which is a separate question from all
+of the above. The linker discards what nothing reaches, and nothing on the
+machine drives the model yet — the estimator that will hold an instance of it is
+a later unit of work. An artefact the equations were dropped from passes every
+check made before it exists: the build succeeds, the description is still
+carried, and the maths those equations call into stops being needed, so a
+toolchain that could never have resolved it is not asked and appears to have
+answered. The operations `include/plant_model.h` declares are therefore named to
+the linker as wanted, read out of that header rather than listed anywhere, and
+`check_target_carries_model.py` establishes they survived.
 
 ## The nominated STM32 family
 

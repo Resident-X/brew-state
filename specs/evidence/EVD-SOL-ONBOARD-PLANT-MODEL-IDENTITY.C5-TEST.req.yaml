@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C5-TEST
+type: evidence
+title: A target build embedding a description other than the verified one fails (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_embedded_description.py; firmware/tools/tests/test_target_model_checks.py::AMachineCarriesTheVerifiedDescription; firmware/tools/mutate.py::carried-description-is-not-the-verified-one,carried-description-left-stale
+text: |
+  check_embedded_description compares the bytes each machine build would embed against the description the host verification tier is pinned to through REFERENCE_DESCRIPTION_PATH, read through the one module that reads the build file, and stops the build rather than warning. It runs inside the target build immediately after the bytes are rendered and before anything is compiled, and again from task fw:check against what the build actually produced. Neither run names an environment or a path: both are derived, so a second board is compared without a line naming it.
+
+  Each of the three divergences the criterion enumerates is driven to fail rather than assumed unreachable. A build declaring a different description fails on the declaration before any bytes are read. A rendering left behind while the description moved on fails on the bytes. A rendering made from the variant sitting beside the intended description fails on the source it records, and one carrying two definitions fails because which description it carries is not settled. Two of the three are also mutations of the real tree: carried-description-is-not-the-verified-one and carried-description-left-stale.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C5
+    type: satisfies

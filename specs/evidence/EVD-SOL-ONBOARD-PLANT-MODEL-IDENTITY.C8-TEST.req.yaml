@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C8-TEST
+type: evidence
+title: The artefact a machine would run retains the plant model's operations (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_target_carries_model.py; firmware/tools/pio_retain_plant_model.py; firmware/tools/plant_seam_operations.py; firmware/tools/tests/test_target_model_checks.py::TheArtefactCarriesTheModel; firmware/tools/mutate.py::model-discarded-from-the-artefact
+text: |
+  check_target_carries_model inspects the linked artefact of every build for a board and requires it to define every operation the plant seam declares. The list is read out of include/plant_model.h through plant_seam_operations, the same module pio_retain_plant_model reads it through to name those operations to the linker as wanted, so a seam gaining an operation cannot leave one retained and unchecked or checked and discarded. A name a function could not have -- what a function-pointer typedef at column zero would yield -- is refused there rather than passed to a linker that would ask for a symbol called void.
+
+  The check was driven against the real tree with the retention step removed: the artefact then defines none of plant_model_init, plant_model_step, plant_model_step_reporting, plant_model_quantity, plant_parameter_budget_for, plant_parameter_budget_load, plant_step_admissible or plant_structure_actuation_channels, and the check reports it. That is the mutation model-discarded-from-the-artefact, which re-makes the artefact with the mutation in place, because a mutation of how an artefact is made changes no source and would otherwise be judged against one made the old way. Eight further cases drive the check against synthetic linked artefacts, including an operation missing, no artefact built, a second board discovered, and a seam declaring no operations failing rather than looking for nothing and finding it.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C8
+    type: satisfies

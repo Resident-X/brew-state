@@ -12,9 +12,13 @@ the problem rather than arriving as a duplicate-symbol error from the linker or
 as a missing-type error from the first translation unit that got there.
 
 A build that compiles no plant source at all is not a model build and is not
-this check's business -- the target environment in this project is one today.
-A build that compiles the shared parameter loader but no structure *is* a model
-build, and is exactly the "names none" case.
+this check's business. A build that compiles the shared parameter loader but no
+structure *is* a model build, and is exactly the "names none" case.
+
+Counting is only half of what a build for a machine has to satisfy: a structure
+declaring that its equations describe nothing would pass a count of one while
+leaving the machine predicting nothing about itself. That half is asked by
+check_machine_structure_selected.py, which runs alongside this one.
 
 Usage: check_structure_selection.py --filter "<build src filter>" --plant-root <dir>
 """

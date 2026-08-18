@@ -1,0 +1,19 @@
+id: EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C7-TEST
+type: evidence
+title: The target build links the maths the plant sources call into (SOL-ONBOARD-PLANT-MODEL-IDENTITY.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T08:26:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: Taskfile.yml::fw:build; firmware/tools/pio_link_maths.py; firmware/platformio.ini::stm32_base
+text: |
+  task fw:build builds env:stm32 and it links. The plant sources leave expm1f undefined -- it is what the thermal relaxation is computed through -- and the linked artefact defines it, so the maths those sources call into was resolved by a toolchain nobody had put them through before.
+
+  The build is what establishes this rather than a reading of the link line, as the criterion asks, and what makes that reading honest is that the equations calling into the maths are still in what gets linked. They would not be otherwise: the linker discards what nothing reaches, and nothing on the machine drives the model at this point. Without the step that keeps them, the artefact links cleanly whether the maths could be resolved or not, and the question goes unasked while appearing answered -- which is why C8 exists and why its check is what this leans on. The target also names the maths library through the same script the host builds use. Its platform happens to name it too, so that changes nothing today; the dependency belongs to the build that compiles the equations rather than to whoever packaged the platform.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C7
+    type: satisfies
