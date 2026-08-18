@@ -1,0 +1,19 @@
+id: REQ-STATE-ESTIMATION-001.C6
+type: criterion
+title: Every parameter a reconstructed state depends on is identifiable from what the machine observes
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A state the control law acts on is only as good as the parameters the
+  reconstruction rests on, and a parameter nothing observes cannot be checked, cannot
+  be corrected, and cannot be shown to have gone wrong. Fouling and ageing move such
+  a parameter exactly as they move any other, and the machine reports nothing.
+
+  Every parameter a reconstructed state depends on is identifiable from what the
+  machine observes, or that state is not offered to the control law as though it
+  were known.
+links:
+  - target: REQ-STATE-ESTIMATION-001
+    type: criterion-of

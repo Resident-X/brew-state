@@ -2,18 +2,21 @@ id: SOL-PLANT-RECONSTRUCTABLE-STATE.C1
 type: criterion
 title: The reference structure distinguishes the heated mass from the water leaving it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
   The thermoblock structure under `firmware/src/plant/thermoblock/` integrates a
-  temperature for the heated mass separate from the brew temperature it reports, with
-  the second following the first through a lag the parameter record supplies. A host
-  test drives a step change in heater duty and observes the reported brew temperature
-  trailing the heated mass rather than moving with it, which is what distinguishes two
-  states from one state read twice. Whether the lag is quantitatively right for the
-  reference machine is out of scope — the structure's support status records that
-  nothing has been on the bench.
+  temperature for the water on its way to the group, separate from the temperature
+  of the heated mass it reports, with the first following the second through a lag
+  the parameter record supplies. The mass is the one this machine senses, so the
+  water is the state nothing reports and an extraction is judged by; reporting the
+  water instead would leave the estimator reconstructing a temperature already
+  being read. A host test drives a step change in heater duty and observes the
+  water trailing the reported temperature rather than moving with it, which is what
+  distinguishes two states from one state read twice. Whether the lag is
+  quantitatively right for the reference machine is out of scope — the structure's
+  support status records that nothing has been on the bench.
 links:
   - target: SOL-PLANT-RECONSTRUCTABLE-STATE
     type: criterion-of
