@@ -1,0 +1,19 @@
+id: EVD-SOL-FILTER-TERM-PREFIX-READING.C1-TEST
+type: evidence
+title: A term outside the source root is not read as one inside it (SOL-FILTER-TERM-PREFIX-READING.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T09:24:45Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::StructureSelectionCheck,FilterTermReading; firmware/tools/filter_terms.py
+text: |
+  check_structure_selection now reports the structures a build actually names. A filter carrying `+<../plant/alpha/>` is refused for naming no structure, where it previously cleared as naming alpha and handed the build to the linker; a filter carrying `-<../plant/alpha/>` alongside `+<plant/alpha/>` still selects alpha, where the exclusion previously cancelled an inclusion it does not name.
+
+  StructureSelectionCheck drives the real script as a subprocess against both, alongside the answers it already gave for one structure, none, two, the plant directory wholesale, and an exclusion inside the root — all unchanged. FilterTermReading drives the reading itself: a directory is the same directory however it is punctuated, a run of separators is one separator, the root itself is the empty path, and a path outside the root, an absolute path and a directory whose name begins with a dot each keep saying what they say. Reverting the correction fails eight of these.
+links:
+  - target: SOL-FILTER-TERM-PREFIX-READING.C1
+    type: satisfies

@@ -1,0 +1,14 @@
+id: SOL-FILTER-TERM-PREFIX-READING.C1
+type: criterion
+title: A filter term naming a path outside the source root is not read as naming one inside it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `check_structure_selection.selected` reports the structures a build compiles, and a term naming `../plant/<structure>/` is a different directory from `plant/<structure>/` however similar the two look. A build whose filter reaches outside the source root is reported as selecting none of the tree's structures, which is what it does, rather than as selecting the one whose name it happens to end with.
+
+  The check's existing answers for the terms a build ordinarily writes are unchanged: naming one structure, naming none while compiling the model, naming two, naming the plant directory wholesale, and excluding a structure a earlier term included. Whether a term reaching outside the source root is a sensible thing for a build to declare is out of scope; this is about reading what it declares.
+links:
+  - target: SOL-FILTER-TERM-PREFIX-READING
+    type: criterion-of

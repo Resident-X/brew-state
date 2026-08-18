@@ -1,0 +1,16 @@
+id: SOL-FILTER-TERM-PREFIX-READING.C2
+type: criterion
+title: An environment linking a path outside the source root is not counted as producing a host artefact
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `build_environments.Environment.links_host_entry_point` decides which environments the artefact-inspecting gates cover, and it answers on the same normalisation. An environment whose filter names `../app/native/` links something that is not this project's host entry point, and is reported as not linking it.
+
+  The classification of every environment the build declares today is unchanged, which is the other half of the claim and the harder one: a correction to a discovery rule that quietly moved an existing environment out of the sets the gates cover would be a second defect wearing the first one's fix. A term written `./app/native/`, one written `.//app/native/` with a spare separator, one taking the source root wholesale, and one excluded after being included all keep the answers they have.
+
+  Out of scope: whether the gates that cover those environments are the right set of gates, and what any of them then does with an environment — this is about which environments they are handed.
+links:
+  - target: SOL-FILTER-TERM-PREFIX-READING
+    type: criterion-of

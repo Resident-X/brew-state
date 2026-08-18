@@ -27,15 +27,12 @@ from __future__ import annotations
 
 import argparse
 import os
-import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import filter_terms  # noqa: E402
 from structure_symbols import STRUCTURE_HEADER  # noqa: E402
-
-#: One `+<path>` or `-<path>` term of a PlatformIO source filter.
-_TERM = re.compile(r"([+-])\s*<([^>]*)>")
 
 #: The directory, relative to the source root, the structures live in.
 PLANT_PREFIX = "plant/"
@@ -62,8 +59,7 @@ def selected(source_filter: str, available: list[str]) -> tuple[set[str], bool]:
     chosen: set[str] = set()
     touches_plant = False
 
-    for sign, path in _TERM.findall(source_filter):
-        normalised = path.strip().replace("\\", "/").lstrip("./")
+    for sign, normalised in filter_terms.terms(source_filter):
         if not normalised.startswith(PLANT_PREFIX.rstrip("/")):
             continue
         touches_plant = True

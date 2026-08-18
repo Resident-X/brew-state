@@ -1,0 +1,19 @@
+id: EVD-SOL-FILTER-TERM-PREFIX-READING.C2-TEST
+type: evidence
+title: An environment linking outside the source root produces no host artefact of ours (SOL-FILTER-TERM-PREFIX-READING.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T09:24:45Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_gate_coverage.py::EnvironmentClassification; firmware/tools/build_environments.py
+text: |
+  links_host_entry_point now counts an environment as producing a host artefact only when it compiles this project's entry point. An environment naming `+<../app/native/>` is not in the set the artefact-inspecting gates cover, where it previously was and the gates would have been handed an artefact that is not ours.
+
+  EnvironmentClassification asserts that alongside the other half of the claim, which is that nothing already classified moved: the same environment written `app/native/` and written `./app/native/` is found, and the shared tree's exact set membership — every host environment, the artefact environments, the test environments, the structure each selects — is unchanged and still asserted by the cases that were there before. The environments used for the new cases are declared inside them rather than added to that tree, so the assertions about it still mean what they meant.
+links:
+  - target: SOL-FILTER-TERM-PREFIX-READING.C2
+    type: satisfies
