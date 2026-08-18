@@ -59,8 +59,13 @@ def selected(source_filter: str, available: list[str]) -> tuple[set[str], bool]:
     chosen: set[str] = set()
     touches_plant = False
 
+    plant_root = PLANT_PREFIX.rstrip("/")
     for sign, normalised in filter_terms.terms(source_filter):
-        if not normalised.startswith(PLANT_PREFIX.rstrip("/")):
+        # The plant directory itself, or something under it. A sibling whose
+        # name merely begins with the same letters -- `plantation/` -- is a
+        # different directory, and reading it as this one is the same mistake
+        # as reading a set of leading characters as a prefix.
+        if normalised != plant_root and not normalised.startswith(PLANT_PREFIX):
             continue
         touches_plant = True
 

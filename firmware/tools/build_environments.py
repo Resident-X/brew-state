@@ -140,12 +140,6 @@ def _project_relative(path: str) -> str:
     return forward
 
 
-def _covers(term: str, path: str) -> bool:
-    """Whether a filter term takes in the given path, wholesale or exactly."""
-    if term in ("", "*"):
-        return True
-    return path == term or path.startswith(term + "/")
-
 _TRUTHY = ("yes", "true", "1", "on")
 
 
@@ -202,7 +196,7 @@ class Environment:
         """
         included = False
         for sign, normalised in filter_terms.terms(self.source_filter):
-            if not _covers(normalised, HOST_ENTRY_PREFIX.rstrip("/")):
+            if not filter_terms.covers(normalised, HOST_ENTRY_PREFIX.rstrip("/")):
                 continue
             included = sign == "+"
         return included

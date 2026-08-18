@@ -1,0 +1,21 @@
+id: EVD-SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1-TEST
+type: evidence
+title: One module answers what a filter term names and what it covers (SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T10:15:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/filter_terms.py; firmware/tools/tests/test_plant_checks.py::FilterTermReading,StructureSelectionCheck; firmware/tools/tests/test_target_model_checks.py::AMachineBuildKeepsItsSettings
+text: |
+  filter_terms owns both halves of reading a filter: TERM and path_of answer what a term names, covers answers what it takes in. check_structure_selection, build_environments and check_machine_build_settings each keep only the question they ask of the answer, and none of them matches a term or strips a path for itself.
+
+  FilterTermReading drives the predicate directly, including the case the two copies had already come to disagree about -- plant/* and plant/ naming the same thing -- and asserts the two readings agree rather than asserting each separately. StructureSelectionCheck drives the sibling case through the real script: a build naming plantation/ alongside one structure is not refused for naming two. AMachineBuildKeepsItsSettings drives the gate that arrived carrying its own reading against a term naming the shared sources from outside the root.
+
+  Two scans hold the tree to it: no tool matches filter terms for itself, and none strips a path prefix for itself. Both refuse to run against an empty set, naming the modules they expect to find, because a scan that scanned nothing reports success the way a scan nobody ran does. Reverting the three defects into a copy of the tree fails four of these.
+links:
+  - target: SOL-FILTER-TERM-READ-IN-ONE-PLACE.C1
+    type: satisfies

@@ -1,0 +1,27 @@
+id: SOL-FILTER-TERM-READ-IN-ONE-PLACE
+type: deliverable
+category: solution
+title: One module answers what a filter term names and what it covers, and the gates can be loaded
+status: active
+version: 1
+text: |
+  `check_machine_build_settings` matched filter terms with a pattern of its own, normalised them with the `lstrip("./")` this tree was in the middle of removing, and tested whether a term covers a path with a predicate copied from `build_environments`. It imported the term pattern by name from `check_structure_selection`, and that name is gone.
+
+  Both halves move to `firmware/tools/filter_terms.py`: what a term names, which was already there, and what a term covers, which was not. Three callers now take both from it. The covering predicate goes with the reading because the two copies of it had already begun to disagree — one read `plant/*` as naming everything under `plant` and the other read it as naming nothing, so the same filter got two answers according to which gate asked. The same reasoning reaches one level further: the test for whether a term is under the plant root compared leading characters rather than a path, so a sibling directory named `plantation/` was read as the plant root taken wholesale and a correct build was refused for naming two structures.
+
+  What is added alongside is what would have noticed. A test loads every gate, because the failure here was a gate that could not be imported and nothing asserted that any of them could be — the breakage arrived as a spray of mismatched assertions rather than as one clear message. A second refuses a tool that matches filter terms for itself, which is the shape a fourth reader would arrive in.
+
+  Out of scope: the absence of any automated check on a pull request, which is the reason two individually-green branches could merge into a tree that builds nothing. That is not a shortfall against intent this project has stated anywhere, so it is scope to be authored rather than remediation, and it is raised rather than smuggled in here.
+rationale: |
+  The interesting part of this is that neither branch was wrong. Each was written against a tree in which its own claim held, each carried the tests and the evidence its criteria asked for, and each was reviewed blind before it merged. The defect is entirely in their composition, and it was invisible from inside either one: the branch that removed the name never saw the file that imported it, because that file did not exist when the branch was cut.
+
+  That is worth recording rather than fixing quietly, because the obvious lesson is the wrong one. The obvious lesson is that someone should have checked the merge, and the durable one is that a tree of gates nothing loads is a tree where a missing name surfaces as ten confusing assertion failures rather than one clear message — and that a reading extracted into one module stays extracted only while nothing writes another. Both of those are properties the tree can hold for itself, and both are now asserted.
+
+  The covering predicate is extracted alongside the reading rather than left for a later slice, because leaving it would have repeated the mistake this whole line of work is about. The reading was moved into one module on the argument that two copies written the same are both wrong before they ever drift; that argument applies unchanged to the predicate beside it, which had already produced two different answers to the same filter. Fixing one and leaving the other would have left exactly the state the next reader concludes is fine.
+
+  The sibling-directory misreading is folded in for the same reason and not a different one. It is the same mistake -- a prefix compared as leading characters -- one level up from the term, in the same function, found while reading it. Authoring it as a separate shortfall to be fixed later would put a node in the graph describing two lines nobody is going to leave wrong.
+links:
+  - target: DEL-MAINTENANCE.C4
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
+    type: targets

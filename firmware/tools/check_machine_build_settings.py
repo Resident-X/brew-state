@@ -31,8 +31,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import build_environments  # noqa: E402
+import filter_terms  # noqa: E402
 import structure_symbols  # noqa: E402
-from check_structure_selection import PLANT_PREFIX, _TERM  # noqa: E402
+from check_structure_selection import PLANT_PREFIX  # noqa: E402
 
 
 def shared_directories(plant_root: str) -> list[str]:
@@ -61,11 +62,15 @@ def compiles(source_filter: str, path: str) -> bool:
     wholesale includes what is under it and a later term can take it back out
     again. Reading only the additions would report a directory compiled that a
     build has since excluded.
+
+    What a term names, and what it covers, are both asked of the module that
+    answers those for every caller. This asked both for itself once and got the
+    same answers wrong the same way -- which is what a copy of a reading does,
+    and why there is one of it.
     """
     included = False
-    for sign, term in _TERM.findall(source_filter):
-        normalised = term.strip().replace("\\", "/").lstrip("./").rstrip("/")
-        if normalised in ("", "*") or path == normalised or path.startswith(normalised + "/"):
+    for sign, term in filter_terms.terms(source_filter):
+        if filter_terms.covers(term, path):
             included = sign == "+"
     return included
 

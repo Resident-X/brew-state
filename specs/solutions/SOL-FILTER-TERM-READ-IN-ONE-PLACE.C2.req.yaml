@@ -1,0 +1,16 @@
+id: SOL-FILTER-TERM-READ-IN-ONE-PLACE.C2
+type: criterion
+title: Every gate in the tree can be loaded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every module under `firmware/tools/` can be imported. The scripts the build injects a name into are the exception and are excluded by that property rather than by a list: they are not importable outside the build, which is a fact about how they are run rather than about whether they are sound.
+
+  This is the assertion whose absence let a gate that could not be loaded reach the default branch. Every gate was reached only as a subprocess, so a missing name surfaced as a spray of mismatched assertions in unrelated suites rather than as one failure naming the module and the name.
+
+  Out of scope: whether the gates are correct, which is what the rest of the suite is for, and whether anything runs them before a merge, which is not something a test in the tree can establish about itself.
+links:
+  - target: SOL-FILTER-TERM-READ-IN-ONE-PLACE
+    type: criterion-of
