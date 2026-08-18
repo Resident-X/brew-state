@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C3-TEST
+type: evidence
+title: A reconstructed state stays usable across a gap in the observations it depends on (SOL-USABLE-ESTIMATE-EVERY-STEP.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_a_state_stays_usable_across_a_gap_in_what_it_depends_on; ::test_a_gap_in_a_channel_the_state_does_not_depend_on_leaves_it_answering
+text: |-
+  The observations each reconstructed state rests on are declared in include/estimator.h beside the state vocabulary as ESTIMATOR_STATE_OBSERVATIONS, read from there by estimator.c rather than restated, and width-guarded by a static assertion. Inside the declared window the state is still answered and still tracks a reference plant_model_t advanced identically, so an estimator that froze rather than predicted would part company with it. Withdrawing the steam temperature and both pressures -- channels the answered state does not rest on -- for two hundred steps, far beyond the window, leaves it answering, which a rule keyed on channels rather than states would not.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C3
+    type: satisfies

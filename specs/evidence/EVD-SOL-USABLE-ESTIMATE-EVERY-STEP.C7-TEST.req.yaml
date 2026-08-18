@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C7-TEST
+type: evidence
+title: The estimator is advanced by the interval that elapsed rather than the nominal one (SOL-USABLE-ESTIMATE-EVERY-STEP.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_estimator_is_advanced_by_the_interval_that_elapsed; ::test_the_first_accepted_step_is_advanced_by_the_declared_interval
+text: |-
+  control_step hands estimator_step the same now-minus-last difference it uses to decide admissibility, replacing the CONTROL_STEP_INTERVAL_MS it passed before; the comment recording the deferred choice went with it. The test withdraws every reading so the model is a pure function of the interval handed to it, drives hw_sim_advance_millis by three times nominal, and asserts the model matches a reference advanced by the elapsed figure and differs from one advanced by the nominal figure -- so it fails against the implementation being replaced rather than merely passing against the new one. The first accepted step has no predecessor to measure from and is advanced by the declared interval, tested with the clock run five seconds forward.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C7
+    type: satisfies

@@ -26,16 +26,43 @@
 /* Brew temperature the skeleton drives toward, in millidegrees Celsius. */
 #define CONTROL_BREW_SETPOINT_MILLI_C 93000
 
-/* Shortest interval between two accepted steps, in milliseconds. */
+/*
+ * Shortest interval between two accepted steps, in milliseconds.
+ *
+ * This is the single site of the figure. Where it came from is accounted for in
+ * params/cadence.declaration, and a check run as part of the build refuses a
+ * second definition of it anywhere in the tree -- because a cadence figure
+ * spelled in two places is one that stops agreeing with itself the first time
+ * either is touched, silently, on exactly the timing question nobody re-reads.
+ *
+ * Whether ten milliseconds is short enough for the disturbances this machine
+ * sees is a sufficiency question, and nothing here claims it is.
+ */
 #define CONTROL_STEP_INTERVAL_MS 10u
+
+/*
+ * How many step intervals may elapse before an arriving step is reported late
+ * rather than treated as ordinary. Its single site, and accounted for beside
+ * the interval it multiplies.
+ */
+#define CONTROL_STEP_LATE_MULTIPLE 3u
 
 /* Why a step did not produce a fresh actuation. */
 typedef enum {
     CONTROL_STEP_ACTUATED = 0,   /* the step ran and drove the heater */
     CONTROL_STEP_TOO_SOON,       /* the step interval had not elapsed */
-    CONTROL_STEP_SENSOR_INVALID, /* the sensor could not be trusted */
+    CONTROL_STEP_SENSOR_INVALID, /* the estimator would not support the state acted on */
     CONTROL_STEP_OUTPUT_REFUSED, /* the interface rejected the drive level */
-    CONTROL_STEP_FAULT_LATCHED   /* an earlier step faulted and the heater stays off */
+    CONTROL_STEP_FAULT_LATCHED,  /* an earlier step faulted and the heater stays off */
+    /*
+     * The step ran and drove the heater, having arrived later than the cadence
+     * tolerates. It is its own result rather than an actuated one because an
+     * estimate that arrives late is a different quantity from the one the
+     * control law asked for, and a caller that has fallen behind should learn
+     * it here rather than from the coffee. Being late is not a reason to stop
+     * controlling, so the step is not refused.
+     */
+    CONTROL_STEP_LATE
 } control_step_result_t;
 
 typedef struct {
@@ -56,8 +83,9 @@ typedef struct {
  * that a build which initialises but never steps still leaves the heater
  * de-energised.
  *
- * The parameter record is the one the estimator reconstructs from, carried in
- * through here rather than reached by a path of its own, so that the control
+ * The parameter record is the one the estimator reconstructs from, and the
+ * limits record is what that estimator will believe a reading to be, carried in
+ * through here rather than reached by a path of their own, so that the control
  * path and the state it acts on are brought up from the same description.
  *
  * Returns false when the interface refuses the off command, when no usable
@@ -66,7 +94,8 @@ typedef struct {
  * does: a control law that cannot obtain the temperature it acts on must not
  * drive the heater, and it must not start driving it later either.
  */
-bool control_init(control_state_t *state, const plant_parameters_t *parameters);
+bool control_init(control_state_t *state, const plant_parameters_t *parameters,
+                  const estimator_limits_t *limits);
 
 /*
  * Advance the control path by one step: the estimator is advanced under the
@@ -77,6 +106,12 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters);
  * command is refused, commands the heater off and latches the fault; a latched
  * fault keeps the heater off on every subsequent step. A null state is treated
  * as a sensor-invalid step rather than dereferenced.
+ *
+ * A reading that is briefly absent or implausible is not on its own such a
+ * step. The estimator carries the reconstruction on prediction for as long as
+ * this machine's description says it may, and only its refusal to support the
+ * state any longer brings the heater down -- so a single dropped sample is no
+ * longer made indistinguishable from a burnt-out sensor.
  */
 control_step_result_t control_step(control_state_t *state);
 

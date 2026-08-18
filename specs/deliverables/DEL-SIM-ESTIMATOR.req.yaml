@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The state estimator and the residual it reports
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 2
 text: |

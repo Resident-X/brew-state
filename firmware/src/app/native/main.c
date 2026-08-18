@@ -8,15 +8,26 @@
  * actually executes both paths rather than merely linking them.
  *
  * It walks the paths the control logic can take -- an ordinary actuating step,
- * a step arriving before the interval has elapsed, a step finding an
- * untrustworthy reading, and a step whose drive command is refused -- because a
- * run that only ever takes the happy path leaves the others unanalysed. It
- * walks every way a parameter description can be refused for the same reason.
+ * a step arriving before the interval has elapsed, a step riding out a brief
+ * gap in the reading, a step whose gap has outlasted what the machine declares
+ * tolerable, and a step whose drive command is refused -- because a run that
+ * only ever takes the happy path leaves the others unanalysed. It walks every
+ * way a parameter description and a limits declaration can be refused for the
+ * same reason.
  *
  * The parameter description is named on the command line rather than compiled
  * in, so the same executable runs different parameter values without being
  * rebuilt. It is loaded once and handed to both paths, because the control path
  * now drives from a state reconstructed against that same record.
+ *
+ * The limits declaration is named beside it on the same terms. It says what a
+ * reading off this machine may plausibly be and how long the estimator may go
+ * without one, which is a fact about a machine and its sensors rather than
+ * about the software, so it varies with the description and is supplied with
+ * it. Naming it rather than deriving its path from the description's is
+ * deliberate: a path arrived at by substitution is a second statement of which
+ * files belong together, and it goes on producing a plausible answer after
+ * somebody renames one of them.
  *
  * Nothing here names a plant structure. Whether the control path comes up at
  * all is therefore something this exercise observes rather than assumes: a
@@ -30,6 +41,7 @@
 #include <string.h>
 
 #include "control.h"
+#include "estimator_limits.h"
 #include "hw_sim.h"
 #include "plant_model.h"
 
@@ -65,21 +77,42 @@ static void exercise_early_step(control_state_t *state)
     expect(control_step(state) == CONTROL_STEP_TOO_SOON, "a step inside the interval was accepted");
 }
 
+/*
+ * Both sides of a lost reading, because they are different paths and a run that
+ * walked only one would leave the other unanalysed. A brief gap is an ordinary
+ * operating condition the machine drives through; a sustained one is the
+ * estimator withdrawing the state, which is what brings the heater down.
+ *
+ * How many steps the first takes is not asserted here -- where the window falls
+ * belongs to the machine's declaration and to the suites that test it. What
+ * this establishes is that both paths execute.
+ */
 static void exercise_invalid_sensor(control_state_t *state)
 {
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
-    expect(control_step(state) == CONTROL_STEP_SENSOR_INVALID, "an invalid reading was accepted");
-    expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) == 0u, "the heater stayed on through a fault");
+    expect(control_step(state) == CONTROL_STEP_ACTUATED,
+           "a single missing reading brought the machine down");
+
+    bool brought_down = false;
+    for (int i = 0; i < EXERCISE_STEPS * 16 && !brought_down; i++) {
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        brought_down = control_step(state) == CONTROL_STEP_SENSOR_INVALID;
+    }
+    expect(brought_down, "a reading gone for good was ridden indefinitely");
+    expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) == 0u,
+           "the heater stayed on through a fault");
 }
 
-static void exercise_refused_output(const plant_parameters_t *parameters)
+static void exercise_refused_output(const plant_parameters_t *parameters,
+                                    const estimator_limits_t *limits)
 {
     control_state_t state;
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
-    expect(control_init(&state, parameters), "the control path could not be initialised");
+    expect(control_init(&state, parameters, limits), "the control path could not be initialised");
     hw_sim_set_output_refused(true);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     expect(control_step(&state) == CONTROL_STEP_OUTPUT_REFUSED,
@@ -111,7 +144,7 @@ static char *read_file(const char *path, size_t *length)
 {
     FILE *handle = fopen(path, "rb");
     if (handle == NULL) {
-        (void)fprintf(stderr, "host exercise: cannot open parameter description %s\n", path);
+        (void)fprintf(stderr, "host exercise: cannot open %s\n", path);
         return NULL;
     }
 
@@ -186,6 +219,37 @@ static void exercise_refused_descriptions(void)
     }
 }
 
+/*
+ * Every way a limits declaration can be refused, so those paths are executed
+ * under the analysis rather than only the accepting one. None of these names a
+ * plant structure, so each is refusable whatever structure the build compiled.
+ */
+static void exercise_refused_limits(void)
+{
+    static const char *const refused[] = {
+        "",
+        "this line has no separator\n",
+        " = 1 .. 2\n",
+        "definitely-not-a-channel = 1 .. 2\n",
+        "brew-temperature = 1\n",
+        "brew-temperature = not-a-number .. 2\n",
+        "brew-temperature = 20 .. 10\n",
+        "brew-temperature = 10 .. 10\n",
+        "@describes-a-machine\n",
+        "brew-temperature = 1 .. 2 @document\n",
+        "brew-temperature = 1 .. 2 @invented an origin nobody declared\n",
+    };
+
+    for (size_t i = 0u; i < sizeof(refused) / sizeof(refused[0]); i++) {
+        estimator_limits_t limits;
+        estimator_limits_error_t error;
+        const bool accepted =
+            estimator_limits_load(refused[i], strlen(refused[i]), &limits, &error);
+        expect(!accepted, "a refusable limits declaration was accepted");
+        expect(error.fault != ESTIMATOR_LIMITS_OK, "a refusal reported no fault");
+    }
+}
+
 static void exercise_plant(const plant_parameters_t *parameters)
 {
     plant_model_t model;
@@ -255,14 +319,15 @@ static void exercise_plant(const plant_parameters_t *parameters)
            "a quantity outside the enumerated ones was answered");
 
     exercise_refused_descriptions();
+    exercise_refused_limits();
 }
 
 int main(int argc, char **argv)
 {
     control_state_t state;
 
-    if (argc != 2) {
-        (void)fprintf(stderr, "usage: %s <parameter-description>\n",
+    if (argc != 3) {
+        (void)fprintf(stderr, "usage: %s <parameter-description> <limits-declaration>\n",
                       argc > 0 ? argv[0] : "program");
         return 2;
     }
@@ -285,15 +350,34 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    size_t limits_length = 0u;
+    char *declaration = read_file(argv[2], &limits_length);
+    if (declaration == NULL) {
+        return 1;
+    }
+
+    estimator_limits_t limits;
+    estimator_limits_error_t limits_error;
+    const bool limits_loaded =
+        estimator_limits_load(declaration, limits_length, &limits, &limits_error);
+    free(declaration);
+
+    if (!limits_loaded) {
+        (void)fprintf(stderr,
+                      "host exercise: limits declaration refused: %s (fault %d, line %u)\n",
+                      limits_error.name, (int)limits_error.fault, limits_error.line);
+        return 1;
+    }
+
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
 
-    if (control_init(&state, &parameters)) {
+    if (control_init(&state, &parameters, &limits)) {
         (void)printf("host exercise: control path reconstructs its brew temperature\n");
         exercise_actuating_steps(&state);
         exercise_early_step(&state);
         exercise_invalid_sensor(&state);
-        exercise_refused_output(&parameters);
+        exercise_refused_output(&parameters, &limits);
     } else {
         (void)printf("host exercise: this structure keeps no state to reconstruct\n");
         exercise_refused_reconstruction(&state);

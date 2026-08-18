@@ -28,21 +28,56 @@ a reason the file gives no sign of.
 from __future__ import annotations
 
 import re
+from typing import NamedTuple
 
 #: The line the generated file records its origin on, so what it was made from
 #: is answerable from the artefact rather than from the build that made it.
 SOURCE_MARKER = "description-source:"
 
-#: The symbol the generated array is defined as. The checked-in declaration
-#: names the same symbol; nothing else may.
-SYMBOL = "reference_description"
-
 #: Where the build puts what it renders, under the environment's build
-#: directory, and what it calls it. Here rather than in the script that writes
-#: it, because the check that reads it needs the same answer and a second
-#: statement of where a file is, is how the two come to look at different ones.
+#: directory. Here rather than in the script that writes it, because the check
+#: that reads it needs the same answer and a second statement of where a file
+#: is, is how the two come to look at different ones.
 GENERATED_DIRECTORY = "generated"
-GENERATED_NAME = "reference_description_bytes.h"
+
+
+class Embedding(NamedTuple):
+    """One file an artefact carries compiled in.
+
+    An artefact carries more than one: the description of the machine, and the
+    declaration of what a reading off that machine may plausibly be. They are
+    the same mechanism twice rather than two mechanisms, so the parts that
+    differ between them -- the symbol defined and the file rendered to -- are
+    named here and everything else is shared. A second copy of the renderer for
+    the second file is how the two formats would come to differ.
+    """
+
+    #: The symbol the generated array is defined as. The checked-in declaration
+    #: names the same symbol; nothing else may.
+    symbol: str
+    #: What the rendered file is called, under GENERATED_DIRECTORY.
+    generated_name: str
+    #: What the file is, in words, for a message a reader has to act on.
+    description: str
+
+
+#: The parameter description: what the machine is.
+DESCRIPTION = Embedding(
+    symbol="reference_description",
+    generated_name="reference_description_bytes.h",
+    description="parameter description",
+)
+
+#: The limits declaration: what a reading off it may plausibly be, and how long
+#: the estimator may go without one.
+LIMITS = Embedding(
+    symbol="reference_limits",
+    generated_name="reference_limits_bytes.h",
+    description="limits declaration",
+)
+
+#: Both, in the order a build renders them.
+EMBEDDINGS = (DESCRIPTION, LIMITS)
 
 #: How many bytes go on one line. Narrow enough to read, wide enough that a
 #: description of a few kilobytes does not become a file of a few thousand
@@ -57,28 +92,28 @@ class MalformedEmbedding(Exception):
     """The generated file is not something this module wrote."""
 
 
-def render(source: str, data: bytes) -> str:
+def render(source: str, data: bytes, embedding: Embedding = DESCRIPTION) -> str:
     """The C definition carrying `data`, recording `source` as where it came from.
 
-    Refuses an empty description. There is no C for it that every compiler
-    accepts -- an empty initialiser is an extension -- and a description with
-    nothing in it is not a smaller description of the machine anyway.
+    Refuses an empty file. There is no C for it that every compiler accepts --
+    an empty initialiser is an extension -- and a description with nothing in it
+    is not a smaller description of the machine anyway.
     """
     if not data:
-        raise MalformedEmbedding(f"{source} is empty, so there is no description to carry")
+        raise MalformedEmbedding(f"{source} is empty, so there is nothing to carry")
 
     lines = [
         "/*",
         " * Generated. Do not edit, and do not check in.",
         " *",
-        " * It is derived from the description named below every time the build runs. A copy",
-        " * of it kept in the source tree would be a second description of the same machine,",
+        " * It is derived from the file named below every time the build runs. A copy of it",
+        " * kept in the source tree would be a second statement about the same machine,",
         " * answering differently the moment either was corrected.",
         " *",
         f" * {SOURCE_MARKER} {source}",
         " */",
         "",
-        f"const char {SYMBOL}[] = {{",
+        f"const char {embedding.symbol}[] = {{",
     ]
     for offset in range(0, len(data), _BYTES_PER_LINE):
         chunk = data[offset : offset + _BYTES_PER_LINE]
@@ -88,7 +123,7 @@ def render(source: str, data: bytes) -> str:
     return "\n".join(lines)
 
 
-def decode(text: str) -> tuple[str, bytes]:
+def decode(text: str, embedding: Embedding = DESCRIPTION) -> tuple[str, bytes]:
     """The source a generated file records, and the bytes it carries.
 
     Refuses rather than returning what it managed to find. A file whose marker
@@ -102,23 +137,27 @@ def decode(text: str) -> tuple[str, bytes]:
             f"no '{SOURCE_MARKER}' line, so what it was generated from is not recorded"
         )
 
-    opening = text.find(f"const char {SYMBOL}[] = {{")
+    opening = text.find(f"const char {embedding.symbol}[] = {{")
     if opening < 0:
-        raise MalformedEmbedding(f"no definition of {SYMBOL}, so it carries no description")
+        raise MalformedEmbedding(
+            f"no definition of {embedding.symbol}, so it carries no {embedding.description}"
+        )
     closing = text.find("};", opening)
     if closing < 0:
-        raise MalformedEmbedding(f"the definition of {SYMBOL} is not terminated")
+        raise MalformedEmbedding(f"the definition of {embedding.symbol} is not terminated")
 
     body = text[opening:closing]
-    if text.find(f"const char {SYMBOL}[] = {{", closing) >= 0:
+    if text.find(f"const char {embedding.symbol}[] = {{", closing) >= 0:
         raise MalformedEmbedding(
-            f"{SYMBOL} is defined more than once, so which description it carries is not settled"
+            f"{embedding.symbol} is defined more than once, so which "
+            f"{embedding.description} it carries is not settled"
         )
 
     stray = re.sub(_BYTE.pattern, "", body[body.index("{") + 1 :]).replace(",", "")
     if stray.split():
         raise MalformedEmbedding(
-            f"the definition of {SYMBOL} carries something other than bytes: {stray.split()[0]}"
+            f"the definition of {embedding.symbol} carries something other than "
+            f"bytes: {stray.split()[0]}"
         )
 
     return named.group(1), bytes(int(pair, 16) for pair in _BYTE.findall(body))

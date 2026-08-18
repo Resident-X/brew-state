@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C2-TEST
+type: evidence
+title: A reading outside its declared bounds is not corrected against (SOL-USABLE-ESTIMATE-EVERY-STEP.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_a_reading_outside_its_declared_bounds_is_not_corrected_against; ::test_each_declared_bound_is_believed_and_the_step_beyond_it_is_not
+text: |-
+  estimator_step tests each channel's reading against that channel's declared span before reaching correct_against. The first test advances two instances identically, one with the brew channel reporting nine hundred degrees and one with it absent, and shows the reconstruction ending in the same place -- so an absurd reading takes exactly the path an unobtainable one takes -- and that no residual is reported for the skipped channel. The second exercises the declared low, the declared high, and the step either side of each, so a comparison written the wrong way round fails rather than passing.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C2
+    type: satisfies

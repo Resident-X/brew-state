@@ -1,0 +1,62 @@
+# What a reading off the reference machine may plausibly be, and how long the
+# estimator may go without one.
+#
+# This file is the sensor-side companion to thermoblock.params. That file says
+# what the machine is; this one says what a reading taken off it could possibly
+# report, and what the estimator is entitled to do while no such reading is
+# arriving. They are separate files because they answer to separate seams: the
+# coefficients belong to a plant structure's equations, and these belong to the
+# hardware seam's channels, which no structure has an opinion about.
+#
+# A channel line gives that channel's admissible low and high in the unit the
+# hardware seam reports it in -- thousandths, so millidegrees Celsius for a
+# temperature and millibar for a pressure. A reading outside the span is treated
+# exactly as one the seam could not obtain at all: the prediction advances, the
+# correction is skipped, and no residual is reported for that channel.
+#
+# The spans are deliberately wide. What they are for is refusing the absurd --
+# the disconnected channel reading full scale, the shorted one reading nothing --
+# and not for judging a reading that is merely surprising. Deciding whether a
+# plausible reading is also a correct one is what the residual exists to report
+# on, and a span drawn tightly enough to do that job would start refusing the
+# machine's own behaviour on a cold morning.
+#
+# Nothing here has been on a bench. Every figure is estimated, and says so.
+
+# A cold machine in an unheated room sits at ambient, and the casting a brew
+# thermocouple is placed on runs to the boiling point and somewhat past it while
+# the element is on. The low is below any indoor ambient this machine will see
+# and the high is above any temperature its thermal cut-out would permit, so a
+# reading outside them is a channel fault rather than a machine state.
+brew-temperature = -10000 .. 250000 @estimated Estimated from the span between the coldest plausible indoor ambient for the AU/NZ domestic market and a casting temperature above what the machine's thermal protection admits. Neither end is a measurement; both are chosen to sit outside anything the working machine reaches.
+
+# The steam path's casting reaches a higher working temperature than the brew
+# path's and is bounded the same way, from the same reasoning.
+steam-temperature = -10000 .. 250000 @estimated Estimated on the same basis as the brew channel: below the coldest plausible ambient and above what thermal protection admits. The steam path runs hotter in normal use but is not bounded differently, because what the span refuses is a broken channel rather than a hot one.
+
+# Gauge pressure, so an idle machine reads nothing. The low is below zero
+# because a path cooling after a shot can pull slightly negative, and a span
+# that refused that would refuse the machine behaving correctly. The high is
+# above the pump's dead-head pressure and well above the mechanical cap.
+brew-pressure = -1000 .. 20000 @estimated Estimated from the pump's dead-head pressure with margin above it, and from the small negative excursion a brew path shows as it cools after delivery. No pressure sensor has been selected for this machine, so this is not the range of a chosen part.
+
+# The steam path is bounded on the same reasoning as the brew path.
+steam-pressure = -1000 .. 20000 @estimated Estimated on the same basis as the brew pressure channel, with the same margin above the highest pressure the machine can develop. No sensor has been selected, so this is not a part's declared range.
+
+# How long a reconstructed state may go with no usable observation among the
+# channels it depends on before the estimator stops answering for it.
+#
+# Fifty steps at the declared interval, chosen so that a handful of dropped
+# samples is treated as the ordinary operating condition it is. Whether it is
+# short enough -- that a dead channel is noticed before the brew path has gone
+# anywhere, and that the process cannot become hazardous while the machine
+# drives on prediction -- is not settled here and is not claimed.
+loss-tolerance-window-ms = 500 @estimated Estimated as fifty steps at the declared step interval: enough to ride out a burst of dropped samples, short against the thermal time constants of the brew path. Not established against any measurement of how long a real channel goes quiet on this machine.
+
+# How far the reconstruction may travel from where its observations left it
+# before the estimator stops answering for it, in millidegrees.
+#
+# This bounds the estimate rather than the machine. A model sitting still while
+# the real mass runs away trips nothing here; what bounds that exposure is the
+# window above.
+excursion-bound-milli-c = 15000 @estimated Estimated from the temperature error at which the control law's response would differ materially from the one the machine needs, which is a few degrees, with margin above it so that ordinary prediction across a short gap does not trip it. Not established against a measurement of how far this machine's reconstruction actually drifts.

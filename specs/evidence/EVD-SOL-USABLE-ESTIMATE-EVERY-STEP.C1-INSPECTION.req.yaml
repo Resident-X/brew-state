@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C1-INSPECTION
+type: evidence
+title: Every plant description declares plausible bounds for the channels it is corrected against (SOL-USABLE-ESTIMATE-EVERY-STEP.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_estimator_limits.py; firmware/tools/tests/test_estimator_limits_checks.py::EveryChannelTheSeamReportsCarriesABound; firmware/test/test_estimator/test_estimator.c::test_a_window_or_a_distance_outside_what_it_admits_is_refused
+text: |-
+  params/thermoblock.limits, params/fixture.limits and params/boiler.limits each give a line for all four hw_sensor_channel_t channels plus the tolerance window and excursion bound. check_estimator_limits.py runs in task fw:check and reports '3 declaration(s) bound every channel the estimator corrects against'; it exits 1 when a channel carries no line, naming that channel, and exits 2 rather than 1 when the vocabulary it reads is itself unusable, so an empty subject cannot report success. The gate enforces the same numeric span the C loader admits, so a declaration cannot pass the build and then be refused by the machine. The admissible shape is declared in include/estimator_limits.h rather than in a comment, and origins are drawn from the plant_origin.h vocabulary, with fixture and boiler exempt by the @describes-no-machine statement they carry.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C1
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C4-TEST
+type: evidence
+title: The reconstruction is refused once it has travelled past its declared excursion bound (SOL-USABLE-ESTIMATE-EVERY-STEP.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_the_reconstruction_is_refused_past_its_declared_excursion_bound
+text: |-
+  estimator_state refuses a state that has travelled further from where its observations left it than the declared distance admits, however much of the window remains, with the isfinite refusal underneath as the floor. The test declares a window far wider than the run lasts, so a refusal cannot be the window expiring, and asserts both sides of the distance: the last answer given was inside the bound, and the step that was refused had travelled past it. Asserting only the first would pass for every threshold at or below the declared one; the two-sided form fails against an estimator refusing at half the bound, which was checked by weakening the implementation and observing the failure.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C4
+    type: satisfies

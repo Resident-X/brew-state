@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C8-TEST
+type: evidence
+title: An accepted control step acts on an estimate advanced for that step (SOL-USABLE-ESTIMATE-EVERY-STEP.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_each_accepted_step_acts_on_an_estimate_advanced_for_it; ::test_a_step_refused_as_too_soon_advances_and_consumes_nothing
+text: |-
+  control_step reads the reconstructed state only after estimator_step has run for the same step. The first test shows the state read on each accepted step differing from the one before wherever the plant moved between them, so a reuse of the prior estimate fails rather than passing unnoticed. The second shows a step refused as CONTROL_STEP_TOO_SOON leaving the reconstruction, the step count and the drive level all unchanged -- it advances the estimator not at all and consumes no estimate. Both are ordering claims in simulated time; no wall-clock duration, deadline margin or worst case is measured.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C8
+    type: satisfies

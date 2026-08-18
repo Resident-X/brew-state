@@ -1,0 +1,17 @@
+id: EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C5-TEST
+type: evidence
+title: A state whose observations stop for longer than the declared window becomes unusable (SOL-USABLE-ESTIMATE-EVERY-STEP.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T23:33:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_a_state_becomes_unusable_past_the_window_and_recovers_after_it; ::test_a_persistently_implausible_reading_starves_the_state_too
+text: |-
+  The gap is carried to the window's edge, where the state still answers, and one interval past it, where it does not -- so the test says where the refusal arrives rather than only that one eventually does. The channel is then restored and the state answers again on the next accepted observation, with a fresh residual, showing the elapsed figure cleared rather than only ever growing. A channel arriving intact and absurd every step starves the state on the same path, which is what would notice if plausibility and availability were ever separated.
+links:
+  - target: SOL-USABLE-ESTIMATE-EVERY-STEP.C5
+    type: satisfies

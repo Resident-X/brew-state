@@ -21,6 +21,16 @@ A parameter description belongs to the structure whose name its file carries --
 more than one. Every description a structure ships is run, since a description
 that is never run is a description nothing checks can be loaded.
 
+Each run also needs the limits declaration belonging to that structure --
+`<structure>.limits` -- because the artefact reconstructs a state and cannot do
+so without knowing what a reading off the machine may plausibly be. A structure
+shipping descriptions and no limits declaration is reported rather than run
+against a default, for the reason a default is refused everywhere else here: an
+unbounded channel reads as covered to everybody who looks at it. Every variant
+description of a structure runs against that structure's one declaration, since
+what varies between variants is what the machine is, not what its sensors can
+report.
+
 Usage: run_host_artefacts.py --project <dir> --plant-root <dir> --include-dir <dir>
                              --params-dir <dir>
 """
@@ -39,6 +49,9 @@ from structure_symbols import discover  # noqa: E402
 
 #: What a parameter description file is called.
 DESCRIPTION_SUFFIX = ".params"
+
+#: What the limits declaration beside it is called.
+LIMITS_SUFFIX = ".limits"
 
 #: What separates a structure's name from the variant, where it ships several.
 VARIANT_SEPARATOR = "-"
@@ -88,14 +101,20 @@ def unclaimed_descriptions(structures: list[str], params_directory: str) -> list
     ]
 
 
+def limits_for(structure: str, params_directory: str) -> str:
+    """The limits declaration the named structure ships, or empty when it ships none."""
+    candidate = os.path.join(params_directory, structure + LIMITS_SUFFIX)
+    return candidate if os.path.isfile(candidate) else ""
+
+
 def runs(
     project: str,
     environments: list[build_environments.Environment],
     structures: list[str],
     params_directory: str,
-) -> tuple[list[tuple[str, str]], list[str]]:
-    """The (artefact, description) pairs to run, and why any could not be made."""
-    planned: list[tuple[str, str]] = []
+) -> tuple[list[tuple[str, str, str]], list[str]]:
+    """The (artefact, description, limits) runs to make, and why any could not be."""
+    planned: list[tuple[str, str, str]] = []
     problems: list[str] = []
 
     for environment in environments:
@@ -120,7 +139,16 @@ def runs(
             )
             continue
 
-        planned.extend((artefact, description) for description in descriptions)
+        limits = limits_for(structure, params_directory)
+        if not limits:
+            problems.append(
+                f"{environment.name}: the '{structure}' structure ships no limits "
+                f"declaration under {params_directory}, so its artefact cannot reconstruct "
+                "a state and there is nothing to run it against"
+            )
+            continue
+
+        planned.extend((artefact, description, limits) for description in descriptions)
 
     return planned, problems
 
@@ -173,13 +201,13 @@ def main(argv: list[str]) -> int:
             print(f"  {problem}", file=sys.stderr)
         return 2
 
-    for artefact, description in planned:
+    for artefact, description, limits in planned:
         # Flushed before the run so the artefact's own output follows the line
         # naming it rather than arriving ahead of it in a redirected log.
-        print(f"run_host_artefacts: {artefact} {description}", flush=True)
+        print(f"run_host_artefacts: {artefact} {description} {limits}", flush=True)
         # Paths are used as given rather than resolved against the project, so
-        # the artefact sees the same description path the caller wrote.
-        result = subprocess.run([artefact, description], check=False)
+        # the artefact sees the same paths the caller wrote.
+        result = subprocess.run([artefact, description, limits], check=False)
         if result.returncode != 0:
             print(
                 f"run_host_artefacts: {artefact} exited {result.returncode} on {description}",

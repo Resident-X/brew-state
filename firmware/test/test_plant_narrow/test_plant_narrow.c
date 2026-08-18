@@ -25,6 +25,7 @@
 #include <unity.h>
 
 #include "estimator.h"
+#include "estimator_limits.h"
 #include "plant_model.h"
 
 #define STEP_MS 100u
@@ -472,6 +473,21 @@ static void test_a_state_written_before_initialisation_is_refused(void)
     TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)PLANT_STATE_COUNT, 1.0f));
 }
 
+/*
+ * A limits declaration for the estimator to be brought up against. It carries
+ * the statement that exempts it from accounting for its figures, because this
+ * suite describes no machine and the numbers below mean nothing: what is being
+ * established here is that the structure is refused, and an estimator refused
+ * for want of a limits record would be refused for the wrong reason.
+ */
+static const char LIMITS_DECLARATION[] = "@describes-no-machine\n"
+                                         "brew-temperature = -10000 .. 250000\n"
+                                         "steam-temperature = -10000 .. 250000\n"
+                                         "brew-pressure = -1000 .. 20000\n"
+                                         "steam-pressure = -1000 .. 20000\n"
+                                         "loss-tolerance-window-ms = 500\n"
+                                         "excursion-bound-milli-c = 15000\n";
+
 /// SOL-UNMEASURED-STATE-RECONSTRUCTION.C12: The estimator refuses a structure
 /// that lacks the state it reconstructs.
 ///
@@ -490,7 +506,12 @@ static void test_the_estimator_refuses_a_structure_without_the_state_it_reconstr
     TEST_ASSERT_TRUE(
         plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
 
-    TEST_ASSERT_FALSE(estimator_init(&estimator, &parameters));
+    estimator_limits_t limits;
+    estimator_limits_error_t limits_fault;
+    TEST_ASSERT_TRUE(estimator_limits_load(LIMITS_DECLARATION, sizeof(LIMITS_DECLARATION) - 1u,
+                                           &limits, &limits_fault));
+
+    TEST_ASSERT_FALSE(estimator_init(&estimator, &parameters, &limits));
     TEST_ASSERT_FALSE(estimator_state(&estimator, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &value));
     TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
 
