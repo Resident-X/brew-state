@@ -26,6 +26,7 @@ import unittest
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
+import filter_terms  # noqa: E402
 import structure_symbols  # noqa: E402
 from structure_symbols import discover, exclusive_declarations, owned_names  # noqa: E402
 
@@ -412,7 +413,10 @@ class PlantEncapsulationCheck(unittest.TestCase):
 
 
 class StructureSelectionCheck(unittest.TestCase):
-    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7: exactly one structure, or the build stops."""
+    """SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE.C7: exactly one structure, or the build stops.
+
+    SOL-FILTER-TERM-PREFIX-READING.C1: a term naming a path outside the source root is not read as naming one inside it.
+    """
 
     def setUp(self):
         self.tree = SyntheticTree()
@@ -463,6 +467,84 @@ class StructureSelectionCheck(unittest.TestCase):
         result = self.check("   ")
         self.assertEqual(2, result.returncode)
         self.assertIn("cannot be established", result.stderr)
+
+    def test_a_term_reaching_outside_the_source_root_selects_nothing_in_it(self):
+        """`../plant/alpha/` is a different directory from `plant/alpha/`.
+
+        Read as the same one, a build compiling none of the tree's structures
+        is reported as naming exactly one and proceeds -- by the check whose
+        whole job is to refuse a build that has not settled which.
+        """
+        result = self.check("+<control/> +<plant/common/> +<../plant/alpha/>")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("names no structure", result.stderr)
+
+    def test_excluding_a_path_outside_the_source_root_takes_nothing_back(self):
+        """The mirror case, where the misreading refuses a build that is correct."""
+        result = self.check("+<plant/common/> +<plant/alpha/> -<../plant/alpha/>")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("alpha", result.stdout)
+
+    def test_a_term_written_relative_to_here_is_the_same_term(self):
+        """`./` says only that the path is relative, which every term already is."""
+        result = self.check("+<control/> +<./plant/common/> +<./plant/alpha/>")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("alpha", result.stdout)
+
+
+# --- filter_terms -----------------------------------------------------------
+
+
+class FilterTermReading(unittest.TestCase):
+    """SOL-FILTER-TERM-PREFIX-READING.C1: what path a filter term names, read once for every caller.
+
+    The two readers of a filter agreed on this and were both wrong the same
+    way, which is what a copy does rather than what a copy drifting does. So
+    the answer is asserted here, where it is now given.
+    """
+
+    def test_a_directory_is_the_same_directory_however_it_is_punctuated(self):
+        for written in ("plant/alpha", "plant/alpha/", "./plant/alpha/", "  plant/alpha  "):
+            with self.subTest(written=written):
+                self.assertEqual("plant/alpha", filter_terms.path_of(written))
+
+    def test_backslashes_are_read_as_separators(self):
+        self.assertEqual("plant/alpha", filter_terms.path_of("plant\\alpha"))
+
+    def test_a_path_outside_the_root_keeps_saying_so(self):
+        self.assertEqual("../plant/alpha", filter_terms.path_of("../plant/alpha/"))
+
+    def test_repeated_here_prefixes_are_all_removed(self):
+        self.assertEqual("plant/alpha", filter_terms.path_of("././plant/alpha"))
+
+    def test_a_run_of_separators_is_one_separator(self):
+        """`.//x` is `./` written with a spare slash, not `./` and then a root.
+
+        Read the second way it becomes an absolute path, and an environment
+        naming its entry point that way drops out of the set the artefact gates
+        cover -- which is the failure this reading exists to prevent, arrived at
+        from the other side.
+        """
+        self.assertEqual("app/native", filter_terms.path_of(".//app/native/"))
+        self.assertEqual("plant/alpha", filter_terms.path_of("plant//alpha"))
+
+    def test_the_root_itself_is_the_empty_path_every_caller_reads_as_everything(self):
+        for written in (".", "./", ".//"):
+            with self.subTest(written=written):
+                self.assertEqual("", filter_terms.path_of(written))
+
+    def test_a_directory_whose_name_begins_with_a_dot_keeps_its_name(self):
+        self.assertEqual(".generated/alpha", filter_terms.path_of(".generated/alpha/"))
+
+    def test_an_absolute_path_is_not_quietly_made_relative(self):
+        self.assertEqual("/opt/alpha", filter_terms.path_of("/opt/alpha/"))
+
+    def test_terms_are_returned_in_order_with_their_signs(self):
+        """A later term can take back what an earlier one added, so order is the answer."""
+        self.assertEqual(
+            [("+", "plant"), ("-", "plant/beta"), ("+", "../elsewhere")],
+            filter_terms.terms("+<plant/> -<plant/beta/> +<../elsewhere/>"),
+        )
 
 
 # --- check_plant_header -----------------------------------------------------

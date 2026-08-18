@@ -164,6 +164,8 @@ class BuildFileResolution(unittest.TestCase):
 class EnvironmentClassification(unittest.TestCase):
     """SOL-PLANT-SEAM-GATE-COVERAGE.C2: which environments a gate finds, and which it leaves alone.
 
+    SOL-FILTER-TERM-PREFIX-READING.C2: an environment linking a path outside the source root is not counted as producing a host artefact.
+
     Each set a gate covers is defined by a property the environment declares,
     so that adding an environment puts it in the right set without anybody
     editing a gate. The sets are asserted here against one tree carrying every
@@ -198,6 +200,45 @@ class EnvironmentClassification(unittest.TestCase):
 
     def named(self, environments):
         return [environment.name for environment in environments]
+
+    def entry_point_written_as(self, term: str):
+        """One host environment whose entry-point term is written as given.
+
+        Declared here rather than in the shared tree, because the cases above
+        assert that tree's membership exactly and an environment added to it
+        for one question would change the answers to the others.
+        """
+        declare_environments(
+            self.project.name,
+            [
+                (
+                    "host_subject",
+                    {
+                        "platform": "native",
+                        "build_src_filter": f"+<control/> +<plant/alpha/> +<{term}>",
+                    },
+                )
+            ],
+        )
+        return self.named(
+            build_environments.artefact_environments(
+                build_environments.load(self.project.name)
+            )
+        )
+
+    def test_an_entry_point_outside_the_source_root_is_not_this_projects(self):
+        """`../app/native/` is a different directory from `app/native/`.
+
+        Read as the same one, the gates that inspect artefacts are handed an
+        environment that produces none of ours -- discovered, and wrong.
+        """
+        self.assertNotIn("host_subject", self.entry_point_written_as("../app/native/"))
+
+    def test_the_entry_point_written_plainly_is_still_found(self):
+        self.assertIn("host_subject", self.entry_point_written_as("app/native/"))
+
+    def test_an_entry_point_written_relative_to_here_is_still_found(self):
+        self.assertIn("host_subject", self.entry_point_written_as("./app/native/"))
 
     def test_the_target_build_is_not_a_host_environment(self):
         self.assertNotIn("target", self.named(build_environments.host_environments(self.environments)))

@@ -38,6 +38,7 @@ from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import filter_terms  # noqa: E402
 from check_structure_selection import selected  # noqa: E402
 
 #: The build file every environment is declared in.
@@ -88,9 +89,6 @@ MUTATION_SWEEP_OPTION = "custom_mutation_sweep"
 
 #: `${section.option}`, the build file's own reference to another value.
 _REFERENCE = re.compile(r"\$\{([^}\s]+)\.([^}\s]+)\}")
-
-#: One `+<path>` or `-<path>` term of a source filter.
-_FILTER_TERM = re.compile(r"([+-])\s*<([^>]*)>")
 
 
 def _covers(term: str, path: str) -> bool:
@@ -154,8 +152,7 @@ class Environment:
         report an entry point an artefact does not have.
         """
         included = False
-        for sign, path in _FILTER_TERM.findall(self.source_filter):
-            normalised = path.strip().replace("\\", "/").lstrip("./").rstrip("/")
+        for sign, normalised in filter_terms.terms(self.source_filter):
             if not _covers(normalised, HOST_ENTRY_PREFIX.rstrip("/")):
                 continue
             included = sign == "+"
