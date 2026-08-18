@@ -1,0 +1,14 @@
+id: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2
+type: criterion
+title: The assumed error is readable through the seam without naming a structure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A consumer holding only `firmware/include/plant_model.h` can ask, for any coefficient the loaded description carries, what error the design assumes for it, and gets an answer without including a structure's own `plant_structure.h` or naming a structure in any other way. The operation is declared in the seam header beside the existing free functions and is answered by the shared loader rather than per-structure code, so a second structure inherits it without reimplementing it.
+
+  The tests exercising this construct the plant the way the existing seam tests do — building a description in memory and loading it through `plant_parameters_load()` — and run under the host tier for both `native` and `native_boiler`. Interpreting the error, propagating it into a margin, or combining it across coefficients is out of scope; this criterion covers only that the declared figure is reachable through the seam.
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR
+    type: criterion-of

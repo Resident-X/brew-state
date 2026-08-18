@@ -120,6 +120,14 @@ ORIGINS = [
     sys.executable, "tools/check_parameter_origins.py", "--project", ".",
     "--plant-root", "src/plant", "--include-dir", "include", "--params-dir", "params",
 ]
+ASSUMED_ERROR = [
+    sys.executable, "tools/check_assumed_error.py",
+    "--plant-root", "src/plant", "--include-dir", "include", "--params-dir", "params",
+]
+ROBUSTNESS_DECLARATION = [
+    sys.executable, "tools/check_robustness_declaration.py",
+    "--include-dir", "include", "--declaration", "params/robustness.declaration",
+]
 ANALYSIS = [
     sys.executable, "tools/check_sanitizers.py", "--project", ".",
 ]
@@ -145,6 +153,8 @@ LABELS = {
     tuple(MULL_POPULATION): "the sweep's derivation of its population",
     tuple(ORIGIN_HEADER): "the origin vocabulary header check",
     tuple(ORIGINS): "the parameter origins check",
+    tuple(ASSUMED_ERROR): "the assumed model error check",
+    tuple(ROBUSTNESS_DECLARATION): "the robustness declaration check",
     tuple(ANALYSIS): "the host tier's analysis check",
     tuple(TESTS_RUN): "the task that runs the tests",
 }
@@ -511,8 +521,8 @@ MUTATIONS = (
         "why": "the description the design is reasoned against claims no machine, so every value "
                "in it stops owing an account while the check goes on passing",
         "file": "params/thermoblock.params",
-        "find": "ambient_temperature_c = 20.0 @estimated",
-        "replace": "@describes-no-machine\nambient_temperature_c = 20.0 @estimated",
+        "find": "ambient_temperature_c = 20.0 ~ 0.25 @estimated",
+        "replace": "@describes-no-machine\nambient_temperature_c = 20.0 ~ 0.25 @estimated",
         "command": ORIGINS,
     },
     {
@@ -524,8 +534,8 @@ MUTATIONS = (
         "why": "the description the model's own tests are exercised against claims no machine, "
                "so the suite is asserting about a placeholder",
         "file": "params/thermoblock.params",
-        "find": "ambient_temperature_c = 20.0 @estimated",
-        "replace": "@describes-no-machine\nambient_temperature_c = 20.0 @estimated",
+        "find": "ambient_temperature_c = 20.0 ~ 0.25 @estimated",
+        "replace": "@describes-no-machine\nambient_temperature_c = 20.0 ~ 0.25 @estimated",
         "command": PLANT_TESTS,
     },
     {
@@ -533,9 +543,9 @@ MUTATIONS = (
         "why": "a coefficient in the reference description carries no account of where its "
                "figure came from",
         "file": "params/thermoblock.params",
-        "find": "brew.heater_power_w = 1000.0 @document Coffee thermoblock element, read off the "
-                "circuit diagram on p.24 of the Sunbeam EM7000 service manual.",
-        "replace": "brew.heater_power_w = 1000.0",
+        "find": "brew.heater_power_w = 1000.0 ~ 0.25 @document Coffee thermoblock element, read off "
+                "the circuit diagram on p.24 of the Sunbeam EM7000 service manual.",
+        "replace": "brew.heater_power_w = 1000.0 ~ 0.25",
         "command": ORIGINS,
     },
     {
@@ -543,8 +553,8 @@ MUTATIONS = (
         "why": "a value carries an origin kind outside the vocabulary, so what separates an "
                "estimate from a measurement stops being a fixed set of words",
         "file": "params/thermoblock.params",
-        "find": "brew.pressure_time_constant_s = 0.8 @estimated",
-        "replace": "brew.pressure_time_constant_s = 0.8 @approximately",
+        "find": "brew.pressure_time_constant_s = 0.8 ~ 0.5 @estimated",
+        "replace": "brew.pressure_time_constant_s = 0.8 ~ 0.5 @approximately",
         "command": ORIGINS,
     },
     {
@@ -564,6 +574,75 @@ MUTATIONS = (
         "find": "| `brew.loss_w_per_k` / `steam.loss_w_per_k` |",
         "replace": "| the loss coefficients |",
         "command": ORIGINS,
+    },
+    {
+        "name": "a-value-loses-its-assumed-error",
+        "why": "a coefficient in the reference description carries no account of how far out "
+               "the design is entitled to assume it may be, so a margin sized against it is "
+               "sized against an uncertainty that exists only in its author's head",
+        "file": "params/thermoblock.params",
+        "find": "brew.thermal_mass_j_per_k = 320.0 ~ 0.4 @estimated",
+        "replace": "brew.thermal_mass_j_per_k = 320.0 @estimated",
+        "command": ASSUMED_ERROR,
+    },
+    {
+        "name": "an-assumed-error-the-machine-would-refuse",
+        "why": "a figure this check reads as a number and the machine's own loader does not -- a "
+               "digit separator is two digits here and nonsense there -- so the description "
+               "passes the gate that exists to stop exactly this and is refused at run time by "
+               "the loader it was cleared for",
+        "file": "params/thermoblock.params",
+        "find": "brew.thermal_mass_j_per_k = 320.0 ~ 0.4 @estimated",
+        "replace": "brew.thermal_mass_j_per_k = 320.0 ~ 0_4 @estimated",
+        "command": ASSUMED_ERROR,
+    },
+    {
+        "name": "an-assumed-error-that-says-nothing",
+        "why": "a value carries the marker with no figure behind it, which reads as declared to "
+               "anyone skimming the file and states nothing at all -- the shape a half-finished "
+               "edit leaves behind",
+        "file": "params/thermoblock.params",
+        "find": "pump.pressure_bar = 15.0 ~ 0.4 @estimated",
+        "replace": "pump.pressure_bar = 15.0 ~ @estimated",
+        "command": ASSUMED_ERROR,
+    },
+    {
+        "name": "a-behaviour-carries-no-class",
+        "why": "a behaviour the design commits to is declared without saying whether it must "
+               "survive an arbitrarily wrong model, which is the one failure the declaration "
+               "exists to prevent and the one nobody notices by reading",
+        "file": "params/robustness.declaration",
+        "find": "reaching-a-safe-state = invariant",
+        "replace": "reaching-a-safe-state =",
+        "command": ROBUSTNESS_DECLARATION,
+    },
+    {
+        "name": "a-behaviour-classified-both-ways",
+        "why": "a behaviour falls on both sides of the line the classification exists to draw, "
+               "which is what an argument nobody settled leaves behind",
+        "file": "params/robustness.declaration",
+        "find": "respecting-the-supply-budget = invariant",
+        "replace": "respecting-the-supply-budget = invariant degrading",
+        "command": ROBUSTNESS_DECLARATION,
+    },
+    {
+        "name": "a-negative-assumed-error-accepted",
+        "why": "an error below zero is delivered rather than refused, so a figure that means "
+               "nothing reaches whatever sizes a margin from it",
+        "file": "src/plant/common/plant_parameters.c",
+        "find": "    if (!(parsed >= 0.0f)) {",
+        "replace": "    if (false) {",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "the-value-token-runs-past-the-assumed-error",
+        "why": "the value ends at the origin rather than at whichever annotation comes first, so "
+               "a value and the error against it are parsed as one token -- which is how the "
+               "refusal of a second number in a value would be lost to the extension",
+        "file": "src/plant/common/plant_parameters.c",
+        "find": "        const char *value_end = budget_begin;",
+        "replace": "        const char *value_end = origin_begin;",
+        "command": PLANT_TESTS,
     },
     {
         "name": "origin-vocabulary-header-names-a-structure",

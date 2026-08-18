@@ -20,11 +20,13 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <unity.h>
 
 #include "plant_model.h"
+#include "plant_robustness.h"
 
 /* One coefficient of the structure under test, and an admissible value for it. */
 typedef struct {
@@ -2033,6 +2035,542 @@ static void test_a_coefficient_omitted_from_an_annotated_description_is_still_re
     }
 }
 
+/* --- The error the design assumes against a value ------------------------- */
+
+/*
+ * A different assumed error for each coefficient, so that a budget read back
+ * cannot be right by accident. Were every value to carry the same figure, an
+ * implementation that answered from the wrong index -- or from the first entry
+ * for everything -- would pass every assertion below.
+ */
+static float error_for(size_t index)
+{
+    return 0.01f * (float)(index + 1u);
+}
+
+/*
+ * Write the nominal description with an assumed error against every value, so
+ * that what is loaded differs from `valid_text` in nothing but the annotations.
+ */
+static size_t describe_with_errors(char *out, size_t capacity)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written = snprintf(out + used, capacity - used, "%s = %.9g ~ %.9g\n",
+                                     NOMINAL[i].name, NOMINAL[i].value, (double)error_for(i));
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/*
+ * The same, with one spelling of the figure written against every value, which
+ * is what lets one inadmissible annotation be driven through a whole
+ * description at once.
+ */
+static size_t describe_with_error_text(char *out, size_t capacity, const char *figure)
+{
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written = snprintf(out + used, capacity - used, "%s = %.9g ~%s%s\n",
+                                     NOMINAL[i].name, NOMINAL[i].value,
+                                     (figure[0] != '\0') ? " " : "", figure);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < capacity);
+    }
+    return used;
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: a consumer holding only the seam header can ask, for any coefficient the loaded description carries, what error the design assumes for it
+static void test_the_assumed_error_of_every_coefficient_is_readable(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    const size_t used = describe_with_errors(text, sizeof(text));
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+
+    /*
+     * Asked for by the name the description calls it, which is the only handle
+     * a consumer has that does not come from a structure's own header.
+     */
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        float assumed = -1.0f;
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, NOMINAL[i].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT(error_for(i), assumed);
+    }
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: a name the structure does not have is refused rather than answered
+static void test_a_coefficient_the_structure_does_not_have_is_refused(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+    float assumed = 12.0f;
+
+    const size_t used = describe_with_errors(text, sizeof(text));
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, "not.a.coefficient", &assumed));
+    /* Nothing is written to a destination the answer did not fill. */
+    TEST_ASSERT_EQUAL_FLOAT(12.0f, assumed);
+
+    /*
+     * A name that is a leading part of one the structure has, and one that
+     * extends it. Both are the failure a comparison over the shorter of two
+     * lengths would let through, and either would report a coefficient's error
+     * against a coefficient that is not it.
+     */
+    char shortened[PLANT_PARAMETER_NAME_MAX];
+    (void)snprintf(shortened, sizeof(shortened), "%s", NOMINAL[1].name);
+    shortened[strlen(shortened) - 1u] = '\0';
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, shortened, &assumed));
+
+    char extended[PLANT_PARAMETER_NAME_MAX];
+    (void)snprintf(extended, sizeof(extended), "%s_x", NOMINAL[1].name);
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, extended, &assumed));
+
+    /* An empty name is not the first coefficient. */
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, "", &assumed));
+    TEST_ASSERT_EQUAL_FLOAT(12.0f, assumed);
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: a coefficient the description carried no error for reads as undeclared rather than as an error of zero
+static void test_a_value_with_no_error_is_undeclared_rather_than_zero(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+    size_t used = 0u;
+
+    /*
+     * The first coefficient carries nothing, the second carries an error of
+     * zero, and the rest carry ordinary figures. The two are opposite claims --
+     * "nobody has said how wrong this may be" against "the description says
+     * this one is exact" -- and a caller sizing a margin has to act differently
+     * on each, so the seam must not answer them alike.
+     */
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        int written;
+        if (i == 0u) {
+            written = snprintf(text + used, sizeof(text) - used, "%s = %.9g\n", NOMINAL[i].name,
+                               NOMINAL[i].value);
+        } else if (i == 1u) {
+            written = snprintf(text + used, sizeof(text) - used, "%s = %.9g ~ 0.0\n",
+                               NOMINAL[i].name, NOMINAL[i].value);
+        } else {
+            written = snprintf(text + used, sizeof(text) - used, "%s = %.9g ~ %.9g\n",
+                               NOMINAL[i].name, NOMINAL[i].value, (double)error_for(i));
+        }
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < sizeof(text));
+    }
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    /* A description with an annotation missing is not a refused description. */
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+
+    float assumed = 7.0f;
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, NOMINAL[0].name, &assumed));
+    TEST_ASSERT_EQUAL_FLOAT(7.0f, assumed);
+
+    TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, NOMINAL[1].name, &assumed));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, assumed);
+
+    for (size_t i = 2u; i < COEFFICIENT_COUNT; i++) {
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, NOMINAL[i].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT(error_for(i), assumed);
+    }
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: a record no description was ever read into answers nothing
+static void test_a_budget_never_loaded_answers_nothing(void)
+{
+    plant_parameter_budget_t empty;
+    float assumed = 3.0f;
+
+    /*
+     * The shape a caller that forgot to load one is holding. Answering from it
+     * would report the design as assuming an error of nothing for every
+     * coefficient in the model, which is the most dangerous possible reading of
+     * a description that was never read.
+     */
+    memset(&empty, 0, sizeof(empty));
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&empty, NOMINAL[0].name, &assumed));
+    TEST_ASSERT_EQUAL_FLOAT(3.0f, assumed);
+
+    /* And a null record, or nowhere to put the answer, is not a crash. */
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(NULL, NOMINAL[0].name, &assumed));
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&empty, NULL, &assumed));
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&empty, NOMINAL[0].name, NULL));
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: the budget is read from the same description on the same terms, and a description the model would refuse yields no budget
+static void test_a_refused_description_yields_no_budget(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_budget_t before;
+    plant_parameter_error_t fault;
+
+    /* One coefficient short: refused by the loader, and refused here. */
+    size_t used = 0u;
+    for (size_t i = 1u; i < COEFFICIENT_COUNT; i++) {
+        const int written = snprintf(text + used, sizeof(text) - used, "%s = %.9g ~ %.9g\n",
+                                     NOMINAL[i].name, NOMINAL[i].value, (double)error_for(i));
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+    }
+
+    memset(&budget, 0xA5, sizeof(budget));
+    before = budget;
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameter_budget_load(text, used, &budget, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[0].name, fault.parameter);
+    TEST_ASSERT_EQUAL_MEMORY(&before, &budget, sizeof(before));
+
+    /* Nowhere to put the record, and no record of the fault, are both refused. */
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameter_budget_load(text, used, NULL, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_MALFORMED, fault.fault);
+    TEST_ASSERT_FALSE(plant_parameter_budget_load(text, used, &budget, NULL));
+}
+
+/*
+ * One inadmissible figure, driven through a description that is otherwise the
+ * valid one, through both of the seam's loaders. Both are asserted because the
+ * refusal belongs to the grammar rather than to the operation: a description
+ * that loaded as a parameter record while being refused as a budget would be a
+ * description the two halves of the seam disagree about.
+ */
+static void expect_assumed_error_refusal(const char *figure)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t untouched;
+    plant_parameters_t before;
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    const size_t used = describe_with_error_text(text, sizeof(text), figure);
+
+    memset(&untouched, 0xA5, sizeof(untouched));
+    before = untouched;
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(text, used, &untouched, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_ASSUMED_ERROR, fault.fault);
+    /* The first coefficient is where the description first goes wrong. */
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[0].name, fault.parameter);
+    TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
+    TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameter_budget_load(text, used, &budget, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_ASSUMED_ERROR, fault.fault);
+    TEST_ASSERT_EQUAL_STRING(NOMINAL[0].name, fault.parameter);
+    TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: an assumed error that is absent after its marker, unreadable, negative or not finite is refused, and the coefficient and line are reported
+static void test_an_assumed_error_that_cannot_stand_is_refused(void)
+{
+    /* The marker with nothing behind it: it reads as declared and says nothing. */
+    expect_assumed_error_refusal("");
+
+    /* Not a number at all, and a number with something after it. */
+    expect_assumed_error_refusal("a fifth");
+    expect_assumed_error_refusal("0.2x");
+    expect_assumed_error_refusal("0.2 0.3");
+    expect_assumed_error_refusal("%");
+
+    /* There is no distance shorter than none. */
+    expect_assumed_error_refusal("-0.1");
+    expect_assumed_error_refusal("-0.0001");
+
+    /*
+     * A not-a-number passes every comparison written the other way round, and
+     * an infinity says the value may be wrong by an unbounded amount, which is
+     * a finding about the description rather than a wide margin.
+     */
+    expect_assumed_error_refusal("nan");
+    expect_assumed_error_refusal("inf");
+    expect_assumed_error_refusal("-inf");
+
+    /* And a figure spelled beyond what this type can hold at all. */
+    expect_assumed_error_refusal("1e999");
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: an error of zero, and one larger than the value it stands against, are both admissible
+static void test_the_admissible_extremes_of_an_assumed_error_are_taken(void)
+{
+    static const char *const FIGURES[] = {"0", "0.0", "1", "2.5", "1e-30", "1e30"};
+    char text[DESCRIPTION_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    /*
+     * Nothing here caps the figure. A coefficient nobody has measured can be a
+     * factor out rather than a percentage -- a loss estimated from geometry
+     * with the conduction path left out is the case in this very description --
+     * and a limit in the loader would be the loader inventing a judgement that
+     * belongs to whoever wrote the description.
+     */
+    for (size_t i = 0u; i < sizeof(FIGURES) / sizeof(FIGURES[0]); i++) {
+        const size_t used = describe_with_error_text(text, sizeof(text), FIGURES[i]);
+        memset(&budget, 0, sizeof(budget));
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+
+        float assumed = -1.0f;
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, NOMINAL[0].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT((float)atof(FIGURES[i]), assumed);
+    }
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: an assumed error against a value changes nothing about the value that is read
+static void test_an_assumed_error_changes_nothing_that_is_read(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t with_errors;
+
+    const size_t used = describe_with_errors(text, sizeof(text));
+    load_expecting_success(text, used, &with_errors);
+
+    /*
+     * Compared against the record the same coefficients produce unannotated:
+     * the figure travels with the value in the file and reaches the parameter
+     * record in nothing but its own absence.
+     */
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &with_errors, sizeof(parameters));
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: the value token ends at whichever annotation comes first, so every refusal the loader already makes survives the extension
+static void test_every_refusal_still_fires_on_a_line_carrying_an_assumed_error(void)
+{
+    /*
+     * The refusals a grammar extension is most likely to lose, each driven on a
+     * line that also carries a well-formed assumed error: the annotation must
+     * not become a way for a bad value to reach the record, and the value token
+     * must not run past the marker and take the figure in with it.
+     *
+     * `displaces` names the coefficient the offending line stands in for, so
+     * that a line meant to be refused for its value is not refused for being a
+     * second setting of a coefficient the prefix already supplied.
+     */
+    static const struct {
+        const char *line;
+        plant_parameter_fault_t fault;
+        const char *parameter;
+        const char *displaces;
+    } CASES[] = {
+        {"not.a.coefficient = 1.0 ~ 0.2\n", PLANT_PARAMETER_UNKNOWN, "not.a.coefficient", NULL},
+        {"brew.thermal_mass_j_per_k = -5.0 ~ 0.2\n", PLANT_PARAMETER_OUT_OF_RANGE,
+         "brew.thermal_mass_j_per_k", "brew.thermal_mass_j_per_k"},
+        {"brew.heater_power_w = twelve ~ 0.2\n", PLANT_PARAMETER_MALFORMED, "brew.heater_power_w",
+         "brew.heater_power_w"},
+        /* The one that matters most: a second number in the value token. */
+        {"brew.heater_power_w = 1.0 2.0 ~ 0.2\n", PLANT_PARAMETER_MALFORMED,
+         "brew.heater_power_w", "brew.heater_power_w"},
+        {"brew.loss_w_per_k = nan ~ 0.2\n", PLANT_PARAMETER_OUT_OF_RANGE, "brew.loss_w_per_k",
+         "brew.loss_w_per_k"},
+        /* A coefficient given twice, with the figure on the second of them. */
+        {"ambient_temperature_c = 21.0 ~ 0.2\n", PLANT_PARAMETER_DUPLICATE,
+         "ambient_temperature_c", NULL},
+        /* An empty value, with the figure sitting where the value should be. */
+        {"brew.heater_power_w = ~ 0.2\n", PLANT_PARAMETER_MALFORMED, "brew.heater_power_w",
+         "brew.heater_power_w"},
+    };
+
+    for (size_t c = 0u; c < sizeof(CASES) / sizeof(CASES[0]); c++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t untouched;
+        plant_parameters_t before;
+        plant_parameter_error_t fault;
+        size_t used = 0u;
+        uint32_t lines = 0u;
+
+        /*
+         * The offending line follows an otherwise valid description, every line
+         * of which carries an assumed error too: the refusal has to survive a
+         * description that is annotated throughout, not only one where the
+         * offending line is the single annotated one.
+         */
+        for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+            if (CASES[c].displaces != NULL && strcmp(NOMINAL[i].name, CASES[c].displaces) == 0) {
+                continue;
+            }
+            const int written = snprintf(text + used, sizeof(text) - used, "%s = %.9g ~ %.9g\n",
+                                         NOMINAL[i].name, NOMINAL[i].value, (double)error_for(i));
+            TEST_ASSERT_TRUE(written > 0);
+            used += (size_t)written;
+            lines++;
+        }
+        const int appended = snprintf(text + used, sizeof(text) - used, "%s", CASES[c].line);
+        TEST_ASSERT_TRUE(appended > 0);
+        used += (size_t)appended;
+        lines++;
+        TEST_ASSERT_TRUE(used < sizeof(text));
+
+        memset(&untouched, 0xA5, sizeof(untouched));
+        before = untouched;
+        memset(&fault, 0, sizeof(fault));
+
+        TEST_ASSERT_FALSE(plant_parameters_load(text, used, &untouched, &fault));
+        TEST_ASSERT_EQUAL(CASES[c].fault, fault.fault);
+        TEST_ASSERT_EQUAL_STRING(CASES[c].parameter, fault.parameter);
+        TEST_ASSERT_EQUAL_UINT32(lines, fault.line);
+        TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+    }
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: the two annotations are read in the order the grammar fixes, and a line carrying both is read as both
+static void test_a_line_carries_both_annotations_in_the_fixed_order(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t record;
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+    size_t used = 0u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written =
+            snprintf(text + used, sizeof(text) - used, "%s = %.9g ~ %.9g @document p.24\n",
+                     NOMINAL[i].name, NOMINAL[i].value, (double)error_for(i));
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < sizeof(text));
+    }
+
+    load_expecting_success(text, used, &record);
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &record, sizeof(parameters));
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        float assumed = -1.0f;
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, NOMINAL[i].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT(error_for(i), assumed);
+    }
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: a marker inside an origin's account is prose rather than a second annotation
+static void test_a_marker_inside_an_account_is_part_of_the_account(void)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+    size_t used = 0u;
+
+    /*
+     * The order is fixed because an account is free text running to the end of
+     * the line. A description writing the error after the origin has written it
+     * inside somebody's sentence about a service manual, and it reads as no
+     * error at all -- which is what it is. Reading it would mean the grammar
+     * had no fixed order, and an account mentioning a tilde would then change
+     * what the design assumes.
+     */
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        const int written =
+            snprintf(text + used, sizeof(text) - used, "%s = %.9g @estimated within ~ 0.5\n",
+                     NOMINAL[i].name, NOMINAL[i].value);
+        TEST_ASSERT_TRUE(written > 0);
+        used += (size_t)written;
+        TEST_ASSERT_TRUE(used < sizeof(text));
+    }
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        float assumed = 9.0f;
+        TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, NOMINAL[i].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT(9.0f, assumed);
+    }
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: the figure is reached past the blanks around it, and a final annotated line without a newline is read
+static void test_an_assumed_error_is_read_however_it_is_spaced(void)
+{
+    static const char *const SPACINGS[] = {"~0.25", "~ 0.25", "~\t0.25", "   ~   0.25   "};
+    char text[DESCRIPTION_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    for (size_t s = 0u; s < sizeof(SPACINGS) / sizeof(SPACINGS[0]); s++) {
+        size_t used = 0u;
+        for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+            const int written = snprintf(text + used, sizeof(text) - used, "%s = %.9g %s\n",
+                                         NOMINAL[i].name, NOMINAL[i].value, SPACINGS[s]);
+            TEST_ASSERT_TRUE(written > 0);
+            used += (size_t)written;
+            TEST_ASSERT_TRUE(used < sizeof(text));
+        }
+        /* The last line loses its newline, so the span is what is read. */
+        used--;
+
+        memset(&budget, 0, sizeof(budget));
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+
+        float assumed = -1.0f;
+        TEST_ASSERT_TRUE(
+            plant_parameter_budget_for(&budget, NOMINAL[COEFFICIENT_COUNT - 1u].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT(0.25f, assumed);
+    }
+}
+
+/* --- The behaviours a wrong model is not permitted to take away ----------- */
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C4: the classes a behaviour is declared in are one enumerated vocabulary, and each has exactly one word
+static void test_the_robustness_classes_are_one_enumerated_set(void)
+{
+    static const char *const WORDS[] = PLANT_ROBUSTNESS_KIND_WORDS;
+
+    /*
+     * The words and the classes are two halves of one vocabulary, edited
+     * separately. A class added without its word would read one entry past this
+     * array; a word belonging to no class would let a declaration classify a
+     * behaviour as something the design does not distinguish.
+     */
+    TEST_ASSERT_EQUAL_UINT32((uint32_t)PLANT_ROBUSTNESS_KIND_COUNT,
+                             (uint32_t)(sizeof(WORDS) / sizeof(WORDS[0])));
+
+    for (size_t i = 0u; i < sizeof(WORDS) / sizeof(WORDS[0]); i++) {
+        TEST_ASSERT_NOT_NULL(WORDS[i]);
+        TEST_ASSERT_TRUE(WORDS[i][0] != '\0');
+        for (size_t j = i + 1u; j < sizeof(WORDS) / sizeof(WORDS[0]); j++) {
+            /*
+             * Two classes sharing a word would collapse the distinction while
+             * the vocabulary went on declaring two of them, and every behaviour
+             * carrying that word would be classified as both.
+             */
+            TEST_ASSERT_FALSE(strcmp(WORDS[i], WORDS[j]) == 0);
+        }
+    }
+
+    TEST_ASSERT_EQUAL_STRING("invariant", WORDS[PLANT_ROBUSTNESS_INVARIANT]);
+    TEST_ASSERT_EQUAL_STRING("degrading", WORDS[PLANT_ROBUSTNESS_DEGRADING]);
+}
+
 /* --- The reference machine's own description ------------------------------ */
 
 /* Room for the description on disk, which carries an account against every
@@ -2134,6 +2672,52 @@ static void test_the_reference_description_claims_a_machine(void)
                              "the reference description exempts itself from carrying origins");
 }
 
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C5: the description under params/ carries an assumed error for every coefficient its structure requires, and it is readable through the seam
+static void test_the_reference_description_states_how_wrong_every_value_may_be(void)
+{
+    char text[REFERENCE_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    const size_t used = read_reference_description(text, sizeof(text));
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    if (!plant_parameter_budget_load(text, used, &budget, &fault)) {
+        char message[192];
+        (void)snprintf(message, sizeof(message),
+                       "the reference description was refused: fault %d at line %u, coefficient "
+                       "'%s'",
+                       (int)fault.fault, (unsigned)fault.line, fault.parameter);
+        TEST_FAIL_MESSAGE(message);
+    }
+
+    /*
+     * Every coefficient the structure requires, not merely the ones the file
+     * happens to annotate. This is what catches the description gaining a
+     * coefficient without gaining a judgement about how wrong it may be -- the
+     * build check reads the file, and this reads the file the build hands the
+     * suite, and two defences are worth having over a property nothing else
+     * would notice losing.
+     */
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        float assumed = -1.0f;
+        char message[128];
+        (void)snprintf(message, sizeof(message), "'%s' declares no assumed error",
+                       NOMINAL[i].name);
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_for(&budget, NOMINAL[i].name, &assumed),
+                                 message);
+        /*
+         * A fraction of the value, so it is finite and not negative. Nothing
+         * here asserts a particular figure: choosing them is a judgement argued
+         * in thermoblock.md, and pinning one in a test would mean revising an
+         * assumption edited a test.
+         */
+        TEST_ASSERT_TRUE(isfinite(assumed));
+        TEST_ASSERT_TRUE(assumed >= 0.0f);
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -2187,5 +2771,19 @@ int main(void)
     RUN_TEST(test_a_coefficient_omitted_from_an_annotated_description_is_still_refused);
     RUN_TEST(test_the_reference_description_is_admissible_and_advances_a_model);
     RUN_TEST(test_the_reference_description_claims_a_machine);
+    RUN_TEST(test_the_assumed_error_of_every_coefficient_is_readable);
+    RUN_TEST(test_a_coefficient_the_structure_does_not_have_is_refused);
+    RUN_TEST(test_a_value_with_no_error_is_undeclared_rather_than_zero);
+    RUN_TEST(test_a_budget_never_loaded_answers_nothing);
+    RUN_TEST(test_a_refused_description_yields_no_budget);
+    RUN_TEST(test_an_assumed_error_that_cannot_stand_is_refused);
+    RUN_TEST(test_the_admissible_extremes_of_an_assumed_error_are_taken);
+    RUN_TEST(test_an_assumed_error_changes_nothing_that_is_read);
+    RUN_TEST(test_every_refusal_still_fires_on_a_line_carrying_an_assumed_error);
+    RUN_TEST(test_a_line_carries_both_annotations_in_the_fixed_order);
+    RUN_TEST(test_a_marker_inside_an_account_is_part_of_the_account);
+    RUN_TEST(test_an_assumed_error_is_read_however_it_is_spaced);
+    RUN_TEST(test_the_robustness_classes_are_one_enumerated_set);
+    RUN_TEST(test_the_reference_description_states_how_wrong_every_value_may_be);
     return UNITY_END();
 }

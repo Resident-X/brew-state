@@ -1,0 +1,15 @@
+id: DEL-SIM-ROBUSTNESS-VERIFICATION.C5
+type: criterion
+title: A sweep across the declared range honours the shape of the error rather than assuming independence
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The declared error states how far each value may be out and nothing about the shape of that error, so a sweep that treats the coefficients as independent symmetric draws is reasoning about a description that was never written. Two properties of the reference description are known and are not carried by the budget: some coefficients are one-sided, and some move together — the element ratings are fed from one supply, so a sagging mains makes both low at once, and combining them independently understates the case where both elements are wanted.
+
+  A sweep establishing a guarantee across the declared range therefore accounts for both, either by moving one coefficient at a time or by combining them under a stated dependence, and states which it did. Whether the assumed dependence is the real one is a characterisation question and out of scope; what is in scope is that the sweep does not silently assume independence the description does not claim.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION
+    type: criterion-of

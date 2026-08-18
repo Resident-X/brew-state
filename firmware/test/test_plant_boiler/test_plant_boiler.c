@@ -639,6 +639,158 @@ static void test_the_steam_pressure_is_nothing_below_saturation(void)
     TEST_ASSERT_EQUAL_FLOAT(0.0f, pressure);
 }
 
+/* --- The error the design assumes against a value ------------------------- */
+
+/*
+ * The same description with the error the design assumes for each value written
+ * against it. It is carried here as text, like every other coefficient this
+ * suite uses, so that what is exercised is the grammar and the seam rather than
+ * whatever figures happen to be in the file under params/.
+ *
+ * A different figure against each, so that a record read back cannot be right
+ * by accident: an implementation answering from the wrong position, or from the
+ * first entry for everything, would pass an assertion made against one repeated
+ * number.
+ */
+static const char ANNOTATED[] = "ambient_temperature_c = 20.0 ~ 0.25\n"
+                                "vessel.thermal_mass_j_per_k = 900.0 ~ 0.4\n"
+                                "vessel.heater_power_w = 1400.0 ~ 0.2\n"
+                                "vessel.loss_w_per_k = 2.0 ~ 0.6\n"
+                                "pump.pressure_bar = 15.0 ~ 0.35\n"
+                                "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
+                                "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
+                                "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
+
+static const struct {
+    const char *name;
+    float assumed;
+} ASSUMED[] = {
+    {"ambient_temperature_c", 0.25f},
+    {"vessel.thermal_mass_j_per_k", 0.4f},
+    {"vessel.heater_power_w", 0.2f},
+    {"vessel.loss_w_per_k", 0.6f},
+    {"pump.pressure_bar", 0.35f},
+    {"brew.pressure_time_constant_s", 0.5f},
+    {"steam.saturation_temperature_c", 0.02f},
+    {"steam.pressure_bar_per_k", 0.3f},
+};
+
+#define ASSUMED_COUNT (sizeof(ASSUMED) / sizeof(ASSUMED[0]))
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: the operation is answered by the shared loader, so a second structure inherits it without reimplementing it
+static void test_the_assumed_error_is_read_through_the_seam_here_too(void)
+{
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(
+        plant_parameter_budget_load(ANNOTATED, sizeof(ANNOTATED) - 1u, &budget, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+
+    /*
+     * Nothing in this structure's own sources knows what an assumed error is.
+     * The coefficients are a different set from the other structures', and the
+     * figures come back against the names this description uses.
+     */
+    for (size_t i = 0u; i < ASSUMED_COUNT; i++) {
+        float assumed = -1.0f;
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, ASSUMED[i].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT(ASSUMED[i].assumed, assumed);
+    }
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: a name this structure's table does not declare is refused rather than answered
+static void test_a_name_this_structure_does_not_have_is_refused(void)
+{
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+    float assumed = 5.0f;
+
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(
+        plant_parameter_budget_load(ANNOTATED, sizeof(ANNOTATED) - 1u, &budget, &fault));
+
+    /*
+     * A coefficient belonging to a structure of the other architecture. It is a
+     * perfectly good name in that tree and means nothing in this one, and an
+     * answer for it would mean the budget was being read from something other
+     * than the structure this build compiled.
+     */
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, "brew.thermal_mass_j_per_k", &assumed));
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, "steam.heater_power_w", &assumed));
+    TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, "not.a.coefficient", &assumed));
+    TEST_ASSERT_EQUAL_FLOAT(5.0f, assumed);
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: an assumed error that cannot stand is refused whatever structure the description is for
+static void test_an_assumed_error_that_cannot_stand_is_refused_here_too(void)
+{
+    static const char NEGATIVE[] = "ambient_temperature_c = 20.0 ~ -0.25\n"
+                                   "vessel.thermal_mass_j_per_k = 900.0 ~ 0.4\n"
+                                   "vessel.heater_power_w = 1400.0 ~ 0.2\n"
+                                   "vessel.loss_w_per_k = 2.0 ~ 0.6\n"
+                                   "pump.pressure_bar = 15.0 ~ 0.35\n"
+                                   "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
+                                   "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
+                                   "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
+    static const char EMPTY[] = "ambient_temperature_c = 20.0 ~\n"
+                                "vessel.thermal_mass_j_per_k = 900.0 ~ 0.4\n"
+                                "vessel.heater_power_w = 1400.0 ~ 0.2\n"
+                                "vessel.loss_w_per_k = 2.0 ~ 0.6\n"
+                                "pump.pressure_bar = 15.0 ~ 0.35\n"
+                                "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
+                                "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
+                                "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
+    plant_parameters_t untouched;
+    plant_parameters_t before;
+    plant_parameter_error_t fault;
+
+    memset(&untouched, 0xA5, sizeof(untouched));
+    before = untouched;
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(
+        plant_parameters_load(NEGATIVE, sizeof(NEGATIVE) - 1u, &untouched, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_ASSUMED_ERROR, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("ambient_temperature_c", fault.parameter);
+    TEST_ASSERT_EQUAL_UINT32(1u, fault.line);
+    TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_FALSE(plant_parameters_load(EMPTY, sizeof(EMPTY) - 1u, &untouched, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_ASSUMED_ERROR, fault.fault);
+    TEST_ASSERT_EQUAL_STRING("ambient_temperature_c", fault.parameter);
+    TEST_ASSERT_EQUAL_MEMORY(&before, &untouched, sizeof(before));
+}
+
+/// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C3: a description carrying no assumed error at all still loads, and reads back as declaring none
+static void test_the_suites_own_description_declares_no_assumed_error(void)
+{
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    /*
+     * The description the rest of this suite runs on carries no annotation of
+     * any kind. It is not refused for that -- the loader's contract is
+     * unchanged by the extension -- and every coefficient in it reads back as
+     * having no error declared rather than as an error of zero.
+     */
+    memset(&budget, 0, sizeof(budget));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(
+        plant_parameter_budget_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &budget, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+
+    for (size_t i = 0u; i < ASSUMED_COUNT; i++) {
+        float assumed = 4.0f;
+        TEST_ASSERT_FALSE(plant_parameter_budget_for(&budget, ASSUMED[i].name, &assumed));
+        TEST_ASSERT_EQUAL_FLOAT(4.0f, assumed);
+    }
+}
+
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -656,5 +808,9 @@ int main(void)
     RUN_TEST(test_a_long_step_is_corrected_for_the_relaxation_within_it);
     RUN_TEST(test_the_steam_pressure_is_the_declared_slope_above_saturation);
     RUN_TEST(test_the_steam_pressure_is_nothing_below_saturation);
+    RUN_TEST(test_the_assumed_error_is_read_through_the_seam_here_too);
+    RUN_TEST(test_a_name_this_structure_does_not_have_is_refused);
+    RUN_TEST(test_an_assumed_error_that_cannot_stand_is_refused_here_too);
+    RUN_TEST(test_the_suites_own_description_declares_no_assumed_error);
     return UNITY_END();
 }

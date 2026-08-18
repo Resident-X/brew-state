@@ -161,6 +161,20 @@ tasks:
       # later is inspected without a line here naming it.
       - python3 tools/check_plant_header.py include/plant_origin.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_parameter_origins.py --project . --plant-root src/plant --include-dir include --params-dir params
+      # The vocabulary the error the design assumes for a value is recorded in,
+      # and every description that claims a machine stating how far out each of
+      # its values may be. Separate from the origins check because the two
+      # answer different questions about the same number -- where it came from,
+      # and how wrong it may be -- and a description can carry either without
+      # the other.
+      - python3 tools/check_plant_header.py include/plant_budget.h --plant-root src/plant --include-dir include --vocabulary-only
+      - python3 tools/check_assumed_error.py --plant-root src/plant --include-dir include --params-dir params
+      # The vocabulary the design classifies its own behaviours in against a
+      # wrong model, and the declaration itself. An unclassified behaviour is
+      # the failure this exists to prevent: it reads as covered to everybody who
+      # looks at it, because nobody notices the absence of a sentence.
+      - python3 tools/check_plant_header.py include/plant_robustness.h --plant-root src/plant --include-dir include --vocabulary-only
+      - python3 tools/check_robustness_declaration.py --include-dir include --declaration params/robustness.declaration
       # The vocabulary both seams draw the machine's actuation channels from,
       # and every structure's statement of which of them it answers.
       - python3 tools/check_plant_header.py include/machine_actuation.h --plant-root src/plant --include-dir include --vocabulary-only

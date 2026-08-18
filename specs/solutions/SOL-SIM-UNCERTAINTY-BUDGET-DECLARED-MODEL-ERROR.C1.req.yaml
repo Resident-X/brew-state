@@ -1,0 +1,14 @@
+id: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C1
+type: criterion
+title: Every value in the plant description carries the model error the design assumes for it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The assumed error is recorded against the value in the same artefact under `firmware/params/`, so a value cannot be copied, edited or moved without the account of how wrong it may be travelling with it. Carrying it there is a change to the grammar `firmware/src/plant/common/plant_parameters.c` parses, alongside the origin the grammar already accepts. A check run as part of `task fw:check` fails when a coefficient the structure requires appears with no assumed error, reports which coefficient was at fault, and fails rather than passes when it finds no description to inspect.
+
+  A parameter description that states explicitly that it describes no real machine is exempt, on the same terms the origin check already exempts it: the exemption follows what a description claims, not which structure it belongs to. Judging whether a declared error is honest, and comparing it against any figure later measured on the machine, are review and characterisation questions and are out of scope here.
+links:
+  - target: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR
+    type: criterion-of
