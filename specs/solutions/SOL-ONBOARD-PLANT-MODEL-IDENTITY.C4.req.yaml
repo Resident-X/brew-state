@@ -1,0 +1,18 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C4
+type: criterion
+title: The target parses its description through the same loader the host tier uses
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The embedded description is turned into a `plant_parameters_t` by
+  `plant_parameters_load` from `src/plant/common/`, not by a reader written for the
+  target, and it is refused on exactly the terms that loader already refuses one:
+  an unparseable line, an unknown or repeated name, a value outside the structure's
+  declared range, or a missing coefficient. A refused record leaves the machine without a
+  usable model rather than running on defaults. What the machine should do about being
+  left without a model is a fault-response concern and is out of scope here.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: criterion-of

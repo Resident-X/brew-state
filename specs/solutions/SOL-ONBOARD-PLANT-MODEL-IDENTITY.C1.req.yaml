@@ -1,0 +1,17 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY.C1
+type: criterion
+title: The target build compiles exactly one plant structure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  `env:stm32` in `firmware/platformio.ini` gains `+<plant/common/>` and exactly one
+  structure directory in its `build_src_filter`, with the matching include path, so the
+  target artefact carries the model's equations rather than none. Which structure it is
+  follows from the environment, as it does for every host environment, and from nothing
+  read while the machine runs. Adding a second machine-describing structure to the target
+  tree is out of scope; what this criterion covers is that the target compiles one.
+links:
+  - target: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+    type: criterion-of

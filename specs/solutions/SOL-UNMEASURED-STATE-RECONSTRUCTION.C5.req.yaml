@@ -1,0 +1,17 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C5
+type: criterion
+title: A direct plant-structure or vendor reference from the estimator fails the build
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The estimator sources are brought inside the source-level encapsulation checks under
+  `firmware/tools/` that already guard the plant and hardware seams, so a translation
+  unit under the estimator that names a structure's own types or fields, or includes a
+  vendor header, stops the build rather than earning a review comment. A seam holds only
+  while nothing bypasses it, and a check that reports rather than refuses is a report.
+  Extending those checks to sources beyond the estimator is out of scope.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

@@ -1,0 +1,37 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION
+type: deliverable
+category: solution
+title: The named estimator seam and the reconstruction behind it
+status: active
+version: 1
+text: |
+  A named estimator interface is declared once as a plain C header under `firmware/include/`, giving the control law one vocabulary for the quantities it works from: bringing an estimator instance to its initial state under a parameter record, advancing it by one interval under the actuation that was commanded and the readings that came back, and reading any quantity the machine's model exposes. No signature names a plant structure or a structure-specific quantity, so a translation unit including the header depends on the estimator seam and on the plant-model seam behind it rather than on either structure's equations.
+
+  Behind that header sits one implementation. It holds a `plant_model_t` instance initialised from the same parameter record the rest of the build loads, advances it under the actuation the control law commanded, and corrects it toward the sensor channels `hw_interface.h` reports. What the control law reads afterwards is the corrected model's quantities rather than the raw readings, and at least one quantity the estimator exposes corresponds to no `hw_sensor_channel_t` at all. That gap is what this slice exists to close: sensors sit where the machine physically allows, which on a flow-through system is not where the interesting temperatures are.
+
+  `firmware/src/control/control.c` is rewired to consume it. That unit reads `HW_SENSOR_BREW_TEMPERATURE` directly today and drives the heater from it; afterwards it steps the estimator and drives from a reconstructed quantity, because an estimator nothing consumes leaves the control law still working from a raw measurement standing in for the state it wanted.
+
+  The encapsulation the plant seam already enforces extends to cover the new sources. The estimator names no structure's own types and includes no vendor header, and the source-level checks under `firmware/tools/` fail the build when it does. Its sources are new subjects for the host tier, so they compile under the same sanitizers and the same strict warning settings as the rest of this project's own sources, driven by a Unity suite under `firmware/test/` against the machine-describing structure.
+
+  Out of scope: the running comparison between predicted and observed measurements and everything downstream of it, what the estimator does when a measurement is briefly lost or reads implausibly, the rate at which estimator output reaches the control law, and getting the model onto the target artefact. Those are the criteria this task defers as premise-pending, and they rebase onto the seam this slice makes real. The estimator's structure, order and correction strategy are settled here only as far as reconstruction demands; whether that choice is sufficient is not knowable before real response data exists, and nothing here claims it is.
+rationale: |
+  The seam and one implementation behind it are delivered together for the reason the plant-structure seam was: an interface with nothing behind it has not been shown to carry anything, and an estimator with no interface in front of it is not replaceable once response data says the first choice of structure was wrong.
+
+  This slice is deliberately one criterion wide. The three siblings that would naturally join it — the residual, the behaviour across a lost measurement, and the output rate — all consume the estimator seam rather than sit beside it, and none of their specifics can be fixed before it exists. A residual is a comparison against a prediction this slice has not yet made; bounded behaviour across a dropout is a property of a correction strategy not yet chosen; the rate is set by what the control law ends up consuming. Writing those briefs now would mean writing them against a seam still being invented.
+
+  Rewiring the control law belongs here rather than in a later slice. The criterion asks that the control law work from reconstructed states rather than from raw measurements standing in for them, and an estimator running beside a control law that still reads its sensor directly meets the words and not the intent. The substitution is where the mistake would show, so it is where the check has to sit.
+
+  The estimator holds a plant-model instance rather than reimplementing the dynamics because a second set of equations written to suit the estimator would answer the same question differently as soon as either was corrected. That divergence arrives disguised: predictions that stop matching observation look exactly like a machine that has drifted, which is the one thing this estimator exists to tell apart.
+
+  Establishing that the reconstruction is accurate enough to control a real machine with is deliberately not here. What can be settled before hardware exists is that a quantity no sensor reports is produced, that it converges on the truth the model holds rather than wandering away from it, and that the control law reads it. Whether the machine agrees is a question for measured parameters.
+links:
+  - target: DEL-SIM-ESTIMATOR.C1
+    type: derives-from
+  - target: REQ-STATE-ESTIMATION-001.C1
+    type: targets
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: justified-by
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by

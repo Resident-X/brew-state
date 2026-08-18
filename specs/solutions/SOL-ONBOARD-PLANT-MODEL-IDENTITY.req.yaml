@@ -1,0 +1,37 @@
+id: SOL-ONBOARD-PLANT-MODEL-IDENTITY
+type: deliverable
+category: solution
+title: The machine is built carrying the verified plant model, and only that one
+status: active
+version: 1
+text: |
+  The target environment in `firmware/platformio.ini` compiles no plant sources at all today: its `build_src_filter` names the control logic, the STM32 hardware implementation and the target entry point, and nothing under `src/plant/`. The model the design is established against therefore lives only in the host tier that verified it. This slice puts it on the machine.
+
+  The target build gains the shared parameter loader and exactly one structure directory, selected the way every other environment selects one — by which directory it compiles and puts on the include path, and by nothing decided while the software runs. The pre-build check that already stops a host build naming no structure or naming two covers the target environment on the same terms, so the machine cannot be built without a model or with a choice left to the linker.
+
+  A description read from a path at build time does not survive onto a target with no filesystem, so the reference description travels in the artefact instead. The bytes of `firmware/params/thermoblock.params` are carried into the target build as data and parsed at start-up through `plant_parameters_load` — the same loader, refusing on the same terms, rather than a second reader written for the target. A record the loader refuses leaves the machine without a model rather than running on defaults, which is the behaviour the loader already has and the target build inherits rather than relaxes.
+
+  That the description travels is not the same as it being the right one. A build-time check compares the bytes the target artefact embeds against the description the host tier is pinned to through `REFERENCE_DESCRIPTION_PATH`, and a target build carrying anything else stops rather than producing an artefact. Without that check the embedding is a copy, and a copy is the second model this criterion exists to prevent: two records that answer the same question differently as soon as either is corrected, with the divergence showing up as a machine that looks like it has drifted.
+
+  Out of scope: what the machine does with the model once it carries it — the estimator, the residual and the control law are separate deliverables — and any claim that the reference description's numbers are right for the reference machine, which is settled by measurement and recorded as provenance against each value where it already is. Persisting a replacement description on the target, and updating one in the field, are also out of scope; this slice establishes that a machine carries the verified model, not that the model can be changed without a rebuild.
+rationale: |
+  This is a wiring slice rather than an invention. Every part it needs already ships: the plant-structure seam, build-time structure selection with its refusal of none and of two, the parameter loader with its refusals, and a reference description carrying the origin of each value. What is missing is only that the target build was never given any of it, because the tier that established those pieces had the host in front of it.
+
+  It sits apart from the estimator slice deliberately. The two share no seam — one establishes reconstruction behind a new interface, the other moves an existing artefact onto an existing build — and folding a cheap, independently checkable piece of wiring into a slice that has to invent a correction strategy would hide it behind that slice's schedule. Neither depends on the other to be correct.
+
+  The embedding check carries most of the weight. Putting the description in the artefact is straightforward and a reviewer would believe it on sight; what a reviewer cannot see is whether the bytes went stale after someone corrected the description and rebuilt only the host. A criterion that asserts the model travels, without asserting it is the same model, is satisfied by exactly the two-model failure the requirement was written against, so the comparison is a build failure rather than a test that someone remembers to run.
+
+  Reusing the loader rather than writing a target-side reader follows the same reasoning one level down. A second parser accepts a slightly different language sooner or later — a whitespace rule, a rejected annotation quietly skipped — and then the machine is running numbers the host tier never saw, from a file both claim to read. One parser cannot disagree with itself.
+
+  Whether an embedded description is the right long-term answer for a machine that will eventually be recalibrated in the field is a question this slice does not settle, and says so. What it settles is that before any of that exists, a machine cannot be built carrying no model, two models, or a model other than the verified one.
+links:
+  - target: DEL-SIM-ESTIMATOR.C5
+    type: derives-from
+  - target: REQ-STATE-ESTIMATION-001.C5
+    type: targets
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-FIRMWARE-LANGUAGE
+    type: justified-by
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: justified-by

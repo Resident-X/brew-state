@@ -1,0 +1,19 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C6
+type: criterion
+title: The estimator sources are compiled under the host tier's analysis and warning settings
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The new translation units are compiled by the host environments in
+  `firmware/platformio.ini` under the same address and undefined-behaviour sanitizers and
+  the same `-Werror -Wconversion -Wshadow -Wdouble-promotion` settings as this project's
+  other sources, rather than being added outside them. Single-precision arithmetic in a
+  correction step is exactly where a stray promotion hides, and an unsuffixed literal is
+  enough to introduce one. Mutation-sweep coverage of the estimator's arithmetic is out
+  of scope here — the sweep's population follows the plant tree and widening it is its
+  own act.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

@@ -1,0 +1,19 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C1
+type: criterion
+title: The estimator interface declares its operations without naming a plant structure
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A single plain C header at `firmware/include/estimator.h` declares what a consumer of
+  the estimator uses: bringing an instance to its initial state under a parameter record,
+  advancing it by one interval under a commanded actuation, and reading a quantity by the
+  `plant_quantity_t` name the plant seam already gives it. The signatures name no
+  structure, no structure-specific coefficient and no vendor type, and the header carries
+  no equation. Which quantities the estimator keeps internally, and how it corrects them,
+  are out of scope here: this criterion covers the vocabulary the control law shares with
+  the estimator, not the arithmetic behind it.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of
