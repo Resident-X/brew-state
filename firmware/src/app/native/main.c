@@ -15,8 +15,15 @@
  *
  * The parameter description is named on the command line rather than compiled
  * in, so the same executable runs different parameter values without being
- * rebuilt. Nothing here names a plant structure: the trajectory printed below
- * is whichever structure the build compiled, reached through the seam.
+ * rebuilt. It is loaded once and handed to both paths, because the control path
+ * now drives from a state reconstructed against that same record.
+ *
+ * Nothing here names a plant structure. Whether the control path comes up at
+ * all is therefore something this exercise observes rather than assumes: a
+ * structure that keeps no state for the estimator to reconstruct is one the
+ * control path refuses to start against, and that refusal is a path worth
+ * walking on the artefacts built against such a structure. Both outcomes are
+ * exercised, and which one happened is printed.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,17 +73,37 @@ static void exercise_invalid_sensor(control_state_t *state)
     expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) == 0u, "the heater stayed on through a fault");
 }
 
-static void exercise_refused_output(void)
+static void exercise_refused_output(const plant_parameters_t *parameters)
 {
     control_state_t state;
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
-    (void)control_init(&state);
+    expect(control_init(&state, parameters), "the control path could not be initialised");
     hw_sim_set_output_refused(true);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     expect(control_step(&state) == CONTROL_STEP_OUTPUT_REFUSED,
            "a refused drive was reported as success");
+}
+
+/*
+ * What a control path that refused to start must do, on the artefacts built
+ * against a structure the estimator cannot reconstruct from. The refusal is
+ * only worth anything if it holds: the heater must be off, and it must stay off
+ * however many steps arrive afterwards.
+ */
+static void exercise_refused_reconstruction(control_state_t *state)
+{
+    expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) == 0u,
+           "a refused initialisation left the heater driven");
+
+    for (int i = 0; i < EXERCISE_STEPS; i++) {
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        expect(control_step(state) == CONTROL_STEP_FAULT_LATCHED,
+               "a step after a refused initialisation was not latched");
+    }
+    expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) == 0u,
+           "the heater was driven after a refused initialisation");
 }
 
 /* Read a whole file into a heap buffer. The caller frees it. */
@@ -159,29 +186,10 @@ static void exercise_refused_descriptions(void)
     }
 }
 
-static void exercise_plant(const char *parameter_path)
+static void exercise_plant(const plant_parameters_t *parameters)
 {
-    size_t length = 0u;
-    char *description = read_file(parameter_path, &length);
-    if (description == NULL) {
-        failures++;
-        return;
-    }
-
-    plant_parameters_t parameters;
-    plant_parameter_error_t error;
-    const bool loaded = plant_parameters_load(description, length, &parameters, &error);
-    free(description);
-
-    if (!loaded) {
-        (void)fprintf(stderr, "host exercise: parameter description refused: %s (fault %d, line %u)\n",
-                      error.parameter, (int)error.fault, error.line);
-        failures++;
-        return;
-    }
-
     plant_model_t model;
-    expect(plant_model_init(&model, &parameters), "the plant model could not be initialised");
+    expect(plant_model_init(&model, parameters), "the plant model could not be initialised");
 
     /*
      * Drive what the structure this artefact was built against says it answers,
@@ -259,14 +267,39 @@ int main(int argc, char **argv)
         return 2;
     }
 
-    hw_sim_reset();
-    expect(control_init(&state), "the control path could not be initialised");
+    size_t length = 0u;
+    char *description = read_file(argv[1], &length);
+    if (description == NULL) {
+        return 1;
+    }
 
-    exercise_actuating_steps(&state);
-    exercise_early_step(&state);
-    exercise_invalid_sensor(&state);
-    exercise_refused_output();
-    exercise_plant(argv[1]);
+    plant_parameters_t parameters;
+    plant_parameter_error_t error;
+    const bool loaded = plant_parameters_load(description, length, &parameters, &error);
+    free(description);
+
+    if (!loaded) {
+        (void)fprintf(stderr,
+                      "host exercise: parameter description refused: %s (fault %d, line %u)\n",
+                      error.parameter, (int)error.fault, error.line);
+        return 1;
+    }
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+
+    if (control_init(&state, &parameters)) {
+        (void)printf("host exercise: control path reconstructs its brew temperature\n");
+        exercise_actuating_steps(&state);
+        exercise_early_step(&state);
+        exercise_invalid_sensor(&state);
+        exercise_refused_output(&parameters);
+    } else {
+        (void)printf("host exercise: this structure keeps no state to reconstruct\n");
+        exercise_refused_reconstruction(&state);
+    }
+
+    exercise_plant(&parameters);
 
     if (failures != 0) {
         (void)fprintf(stderr, "host exercise: %d expectation(s) unmet\n", failures);

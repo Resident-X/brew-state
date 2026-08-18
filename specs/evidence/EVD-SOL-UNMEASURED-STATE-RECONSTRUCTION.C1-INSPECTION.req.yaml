@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C1-INSPECTION
+type: evidence
+title: The estimator interface declares its operations without naming a plant structure (SOL-UNMEASURED-STATE-RECONSTRUCTION.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_plant_header.py include/estimator.h --plant-root src/plant --include-dir include
+text: |-
+  check_plant_header reports that include/estimator.h declares 4 operations, names no structure and compiles against all 3 of them (boiler, fixture, thermoblock). Its vendor-neutrality is covered by check_encapsulation.py, which now takes the header as a subject alongside src/estimator: the header cannot be inspected by check_header_neutral.py, which requires a header to compile against nothing, and this one names the plant seam's neutral types by design. Both run before every build in every environment and fail it. The header enumerates estimator_state_t in its own words rather than reusing plant_quantity_t or plant_state_t, and carries no equation.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C1
+    type: satisfies

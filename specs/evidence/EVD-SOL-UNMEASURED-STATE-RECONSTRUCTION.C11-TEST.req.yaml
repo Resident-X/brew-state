@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C11-TEST
+type: evidence
+title: The estimator compiles into the target build alongside the control law (SOL-UNMEASURED-STATE-RECONSTRUCTION.C11)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_estimator_compiled.py --project .; firmware/tools/tests/test_gate_coverage.py::EstimatorCompiledBesideTheControlLogic; task fw:build
+text: |-
+  [common] estimator_sources is in [stm32_base] build_src_filter alongside control_sources, and task fw:build links env:stm32 -- the elf builds at 27408 bytes of flash and 672 of RAM. A new gate, check_estimator_compiled.py, discovers from the build file every environment that compiles the control logic and fails the build unless each also compiles the estimator, so an environment added later is covered without a line naming it and the failure arrives before the link error rather than as one. It reports 10 such environments today, exempting the five the build declares must not build. Its own behaviour is driven against a synthetic build file in the tool suite: an environment compiling the control logic alone fails, one that takes the estimator back out with a later filter term fails, an environment required to be refused is exempt, and a build file nothing compiles the control logic in is refused rather than passed. The target environment's analysis and warning settings were not widened.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C11
+    type: satisfies

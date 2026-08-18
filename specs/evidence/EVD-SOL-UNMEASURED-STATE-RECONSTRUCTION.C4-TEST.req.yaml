@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C4-TEST
+type: evidence
+title: The control law reads reconstructed states rather than raw sensor readings (SOL-UNMEASURED-STATE-RECONSTRUCTION.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_drive_level_follows_the_reconstruction_and_not_the_reading, ::test_an_untrustworthy_reading_still_refuses_though_a_reconstruction_exists, ::test_invalid_reading_de_energises_and_latches, ::test_refused_drive_command_is_reported_and_latches, ::test_the_control_logic_drives_what_it_drove_before_the_vocabulary_was_unified
+text: |-
+  control.c no longer calls hw_sensor_read at all: it drives from estimator_state. The sensor is held at the setpoint while the reconstruction sits at 43 C and the heater goes to full scale, then the two are exchanged and the heater goes to nothing -- a control law reading the sensor would have answered the opposite way each time, so the drive level says which of them it acted on rather than merely that it acted. The existing refusals keep the behaviour they had: an untrustworthy reading de-energises and latches, a refused drive command is reported and latches, and a refused shutdown is still not recorded as the heater being off. The drive levels and output write counts recorded before the two channel vocabularies were unified are unchanged, so the mapping from a temperature to a drive level survived the substitution.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C4
+    type: satisfies

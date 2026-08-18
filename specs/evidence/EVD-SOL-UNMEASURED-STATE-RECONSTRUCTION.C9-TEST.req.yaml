@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C9-TEST
+type: evidence
+title: The reported residual is the one the correction step used (SOL-UNMEASURED-STATE-RECONSTRUCTION.C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_the_reported_residual_is_the_one_the_correction_used, ::test_a_step_that_corrects_nothing_reports_no_residual
+text: |-
+  A second model instance is advanced identically and left uncorrected, which is what the estimator predicted before it corrected anything. The reported residual is asserted equal to that prediction minus the observation exactly, and the amount taken out of the state is asserted to be the same proportion of the reported residual across two different imposed discrepancies -- so a residual recomputed for the report, after the correction had already moved the state, would read a different fraction and fail. A step that corrects nothing reports no residual rather than the one the step before it acted on: the reading is withdrawn and the residual goes absent, and a step the seam refuses leaves none behind either, because residuals are cleared before the step rather than after it.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C9
+    type: satisfies

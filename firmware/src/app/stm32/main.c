@@ -3,8 +3,9 @@
  *
  * It brings the peripherals up through the implementation's own bring-up call,
  * takes the parameter description the artefact carries and turns it into a
- * parameter record, and then runs the same control-logic entry path the host
- * build runs. The control logic it calls is compiled from the same sources,
+ * parameter record, hands that record to the control-logic entry path so the
+ * state estimator behind it reconstructs from the same figures, and then runs
+ * the same entry path the host build runs. The control logic it calls is compiled from the same sources,
  * unchanged: the only difference between this build and the host build is
  * which implementation of the seam is linked behind it.
  *
@@ -52,7 +53,13 @@ int main(void)
         }
     }
 
-    (void)control_init(&state);
+    /*
+     * The record goes in through the control path rather than reaching the
+     * estimator by a route of its own, so the machine drives from the same
+     * description it was verified against. A refusal here leaves the heater
+     * commanded off and the fault latched, and the loop below keeps it there.
+     */
+    (void)control_init(&state, &parameters);
 
     for (;;) {
         (void)control_step(&state);

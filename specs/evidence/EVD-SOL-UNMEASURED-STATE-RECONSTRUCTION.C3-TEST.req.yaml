@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C3-TEST
+type: evidence
+title: A reconstructed state converges on the truth the plant model holds (SOL-UNMEASURED-STATE-RECONSTRUCTION.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_the_reconstruction_converges_on_the_models_own_truth
+text: |-
+  A reference plant_model_t instance is run 400 steps away from ambient and thereafter reports only the quantities hw_interface.h exposes as sensor channels. The estimator is started from ambient, more than one kelvin displaced from that truth, and is given nothing else. Over 4000 steps the error in the reconstructed outlet temperature falls below a tenth of the displacement, and the worst error over the final half of the run stays below it -- so a reconstruction that dipped through the truth and climbed out the far side would be caught. The suite runs in env:native_test against the machine-describing structure. No accuracy figure against a real machine is claimed; the coefficients are unmeasured and the structure's support status records it.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C3
+    type: satisfies

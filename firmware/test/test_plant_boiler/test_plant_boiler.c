@@ -20,6 +20,7 @@
 
 #include <unity.h>
 
+#include "estimator.h"
 #include "plant_model.h"
 
 #define STEP_MS 100u
@@ -895,6 +896,103 @@ static void test_a_state_read_from_an_uninitialised_instance_is_refused_here_too
     }
 }
 
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// This architecture keeps one vessel where the vocabulary names two bodies of
+/// water, so it accepts the write everywhere it answers the read and refuses it
+/// for the state it does not keep. A structure that took a write it would not
+/// answer a read for could be written to and then not read back.
+static void test_this_structure_answers_the_writes_it_answers_the_reads_for(void)
+{
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    unsigned refused = 0u;
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float held = 0.0f;
+        if (plant_model_state(&model, (plant_state_t)state, &held)) {
+            float read_back = 0.0f;
+            TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, held + 3.25f));
+            TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read_back));
+            TEST_ASSERT_EQUAL_FLOAT(held + 3.25f, read_back);
+        } else {
+            TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)state, 1.0f));
+            refused++;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(refused > 0u, "this structure refused no write, so nothing was shown");
+
+    /* And the refusals that hold whatever a structure keeps. */
+    plant_model_t uninitialised;
+    memset(&uninitialised, 0, sizeof(uninitialised));
+    TEST_ASSERT_FALSE(
+        plant_model_set_state(&uninitialised, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 1.0f));
+    TEST_ASSERT_FALSE(plant_model_set_state(NULL, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 1.0f));
+    TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)PLANT_STATE_COUNT, 1.0f));
+}
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// One vessel serves both temperatures here, so a write to either is a write to
+/// the same state. That is what it means for them to be one body of water, and
+/// a structure that let them drift apart under writing would be reporting two
+/// bodies it does not have.
+static void test_writing_either_temperature_moves_the_one_vessel(void)
+{
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    float brew = 0.0f;
+    float steam = 0.0f;
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 64.0f));
+    TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, &steam));
+    TEST_ASSERT_EQUAL_FLOAT(64.0f, steam);
+
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, 111.0f));
+    TEST_ASSERT_TRUE(
+        plant_model_state(&model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, &brew));
+    TEST_ASSERT_EQUAL_FLOAT(111.0f, brew);
+}
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C12: The estimator refuses a structure
+/// that lacks the state it reconstructs.
+///
+/// Nothing sits between this architecture's heated mass and what leaves it, so
+/// there is no state here to reconstruct. The estimator says so rather than
+/// handing back the vessel under the name of the water on its way to the group,
+/// which would be reconstructing something that was already being read.
+static void test_the_estimator_refuses_this_architecture(void)
+{
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    estimator_t estimator;
+    float value = -999.0f;
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+
+    TEST_ASSERT_FALSE(estimator_init(&estimator, &parameters));
+    TEST_ASSERT_FALSE(estimator_state(&estimator, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &value));
+    TEST_ASSERT_EQUAL_FLOAT(-999.0f, value);
+
+    const plant_actuation_t idle = {{0u}};
+    TEST_ASSERT_FALSE(estimator_step(&estimator, &idle, 100u));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -919,5 +1017,8 @@ int main(void)
     RUN_TEST(test_a_name_this_structure_does_not_have_is_refused);
     RUN_TEST(test_an_assumed_error_that_cannot_stand_is_refused_here_too);
     RUN_TEST(test_the_suites_own_description_declares_no_assumed_error);
+    RUN_TEST(test_this_structure_answers_the_writes_it_answers_the_reads_for);
+    RUN_TEST(test_writing_either_temperature_moves_the_one_vessel);
+    RUN_TEST(test_the_estimator_refuses_this_architecture);
     return UNITY_END();
 }

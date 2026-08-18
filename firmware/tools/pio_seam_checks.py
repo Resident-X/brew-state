@@ -41,17 +41,47 @@ if not source_filter.strip():
     env.Exit(2)  # noqa: F821
 
 CHECKS = (
-    # The control logic reaches hardware only through the hardware seam.
-    [os.path.join(tools_dir, "check_encapsulation.py"), os.path.join(source_dir, "control")],
+    # The control logic and the estimator it drives from reach hardware only
+    # through the hardware seam. The estimator is named alongside the control
+    # logic because it reads the seam directly rather than through it, so a
+    # vendor header included there would go unreported by a check scoped to the
+    # control sources alone. Its header is named too: it cannot be inspected by
+    # check_header_neutral, which requires a header to compile against nothing,
+    # and this one names the plant seam's neutral types by design.
+    [
+        os.path.join(tools_dir, "check_encapsulation.py"),
+        os.path.join(source_dir, "control"),
+        os.path.join(source_dir, "estimator"),
+        os.path.join(include_dir, "estimator.h"),
+    ],
     # The hardware seam itself names no vendor type and stands alone.
     [
         os.path.join(tools_dir, "check_header_neutral.py"),
         os.path.join(include_dir, "hw_interface.h"),
     ],
+    # Wherever the control logic is compiled, the estimator it drives from is
+    # compiled beside it. Which environments those are is discovered, so one
+    # added later is covered without a line here naming it.
+    [
+        os.path.join(tools_dir, "check_estimator_compiled.py"),
+        "--project",
+        project_dir,
+    ],
     # The plant seam names no structure and compiles against every one of them.
     [
         os.path.join(tools_dir, "check_plant_header.py"),
         os.path.join(include_dir, "plant_model.h"),
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+    ],
+    # And neither does the estimator seam, which is what lets a control law
+    # include it without taking on the equations behind whichever structure the
+    # build selected.
+    [
+        os.path.join(tools_dir, "check_plant_header.py"),
+        os.path.join(include_dir, "estimator.h"),
         "--plant-root",
         plant_root,
         "--include-dir",

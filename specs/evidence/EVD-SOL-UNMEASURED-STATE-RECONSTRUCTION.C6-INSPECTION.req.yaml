@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C6-INSPECTION
+type: evidence
+title: The estimator sources are compiled under the host tier's analysis and warning settings (SOL-UNMEASURED-STATE-RECONSTRUCTION.C6)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/platformio.ini [common] estimator_sources in [native_base] build_src_filter; firmware/tools/check_sanitizers.py --project .
+text: |-
+  The estimator arrives in the host environments through [native_base] build_src_filter, so it is compiled under that section's build_src_flags -- the same -Werror -Wconversion -Wshadow -Wdouble-promotion as this project's other sources -- and under the address and undefined-behaviour sanitizers pio_sanitize.py applies, rather than being added outside them. check_sanitizers.py reports that native, native_fixture, native_boiler, native_test, native_fixture_test and native_boiler_test compile every source of this project's own under analysis and that every artefact of theirs links it; it inspects every translation unit rather than a list, so the new ones are covered without being named. Every literal in the estimator's single-precision arithmetic is f-suffixed and every narrowing explicitly cast, and the build is clean. The mutation sweep's population was not widened -- it still follows the plant tree, as the sweep's own first line reports.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C6
+    type: satisfies

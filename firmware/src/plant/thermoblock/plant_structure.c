@@ -316,3 +316,32 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
         return false;
     }
 }
+
+bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value)
+{
+    if (model == NULL || !model->initialised) {
+        return false;
+    }
+
+    /* Every state the vocabulary names is kept here, so every one can be written. */
+    switch (state) {
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
+        model->brew_temperature_c = value;
+        return true;
+    case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+        model->brew_outlet_temperature_c = value;
+        return true;
+    case PLANT_STATE_STEAM_TEMPERATURE_C:
+        model->steam_temperature_c = value;
+        return true;
+    case PLANT_STATE_BREW_PRESSURE_BAR:
+        model->brew_pressure_bar = value;
+        return true;
+    case PLANT_STATE_STEAM_PRESSURE_BAR:
+        model->steam_pressure_bar = value;
+        return true;
+    case PLANT_STATE_COUNT:
+    default:
+        return false;
+    }
+}

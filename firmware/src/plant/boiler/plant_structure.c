@@ -262,3 +262,38 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
         return false;
     }
 }
+
+bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value)
+{
+    if (model == NULL || !model->initialised) {
+        return false;
+    }
+
+    switch (state) {
+    /*
+     * Refused on writing for the reason it is refused on reading: there is no
+     * such body of water on a machine built this way, so there is nothing here
+     * for the value to be written to.
+     */
+    case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+        return false;
+    /*
+     * One vessel, so a correction to either temperature is a correction to the
+     * same state. A caller writing both in one pass gets the second, which is
+     * what it means for them to be one body of water.
+     */
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
+    case PLANT_STATE_STEAM_TEMPERATURE_C:
+        model->vessel_temperature_c = value;
+        return true;
+    case PLANT_STATE_BREW_PRESSURE_BAR:
+        model->brew_pressure_bar = value;
+        return true;
+    case PLANT_STATE_STEAM_PRESSURE_BAR:
+        model->steam_pressure_bar = value;
+        return true;
+    case PLANT_STATE_COUNT:
+    default:
+        return false;
+    }
+}

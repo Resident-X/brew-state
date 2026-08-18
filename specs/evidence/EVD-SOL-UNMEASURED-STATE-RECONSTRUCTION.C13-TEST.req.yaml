@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C13-TEST
+type: evidence
+title: Every plant structure answers a state written through the seam (SOL-UNMEASURED-STATE-RECONSTRUCTION.C13)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_every_state_this_structure_keeps_takes_a_write, ::test_writing_one_state_leaves_the_others_where_they_were, ::test_a_state_written_to_an_instance_that_cannot_take_it_is_refused, ::test_a_written_state_is_what_the_next_step_advances_from; firmware/test/test_plant_narrow/test_plant_narrow.c::test_a_structure_keeping_fewer_states_answers_some_writes_and_refuses_others; firmware/test/test_plant_boiler/test_plant_boiler.c::test_this_structure_answers_the_writes_it_answers_the_reads_for, ::test_writing_either_temperature_moves_the_one_vessel
+text: |-
+  plant_model.h declares plant_model_set_state beside plant_model_state, and the thermoblock, boiler and fixture structures each answer it. Each suite asserts that the write is accepted exactly where the read is answered and refused exactly where the read refuses, that a written state reads back as written, that writing one state leaves every other where it was, and that the four shared refusals -- null instance, uninitialised instance, out-of-enum state, and a state this structure does not keep -- change nothing. The thermoblock suite additionally shows that a written value is what the next step advances from rather than something the equations discard. The boiler suite shows that a write to either temperature moves the one vessel, which is what it means for them to be one body of water. No plausibility check is made on what is written, which the criterion places out of scope.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C13
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C5-INSPECTION
+type: evidence
+title: A vendor header included from the estimator fails the build (SOL-UNMEASURED-STATE-RECONSTRUCTION.C5)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'firmware/tools/pio_seam_checks.py and Taskfile.yml fw:check: check_encapsulation.py src/control src/estimator include/estimator.h'
+text: |-
+  The vendor-symbol check was scoped to src/control; it now takes src/estimator and include/estimator.h as subjects alongside it, both in Taskfile fw:check and in pio_seam_checks.py, which runs before compilation in every environment and calls env.Exit on a non-zero return. It refuses rather than reports: adding an include of a vendor header to src/estimator/estimator.c makes the check fail with the file, line and symbol and exit 1, and the build stops. It reports 4 sources clean on the current tree. The plant-encapsulation check already covered the whole source root and was not widened, and neither check was extended to sources beyond the estimator.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C5
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C10-TEST
+type: evidence
+title: The estimator receives its parameter record through the control law's initialisation (SOL-UNMEASURED-STATE-RECONSTRUCTION.C10)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_record_reaches_the_estimator_the_control_law_holds, ::test_initialisation_without_a_record_leaves_the_heater_off_and_latched; firmware/src/app/native/main.c; firmware/src/app/stm32/main.c
+text: |-
+  control_init now takes a const plant_parameters_t * rather than the no-argument form it had. The record reaches the estimator rather than merely being accepted at the door: a reconstruction can be read after initialisation and settles at the description's declared ambient, which an estimator holding no model could not answer at all. Both entry points supply one -- the host entry loads the description named on its command line once and hands it to control_init before exercising anything, and the target entry passes the record it already parses out of the embedded description. An initialisation given no usable record leaves the control law in its pre-run condition with the heater commanded off and the fault latched, and every subsequent step keeps it there.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C10
+    type: satisfies
