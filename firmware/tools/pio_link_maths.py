@@ -11,6 +11,13 @@ run on. A dependency that is satisfied by accident on the machine the author
 uses is one nobody discovers until somebody else builds, and by then it looks
 like their problem rather than the build file's.
 
+The build for the board is here for the same reason one step removed. Its
+platform happens to name the maths library already, so this changes nothing
+there today -- and that is exactly the kind of thing that changes underneath a
+project. A dependency the plant model's equations have either belongs to the
+build that compiles them or belongs to whoever packaged the platform, and only
+one of those is ours to keep true.
+
 This is a separate script from the sanitizer one on purpose. Every host build
 needs the maths library; the build compiled for the mutation sweep needs it too
 and deliberately does not run the sanitizer script, so folding the two together

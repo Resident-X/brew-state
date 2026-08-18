@@ -192,6 +192,33 @@ CHECKS = (
         "--env",
         environment_name,
     ],
+    # And a build for a machine compiles the model under the settings it applies
+    # to the control logic already there, rather than through a relaxation of
+    # them. Inside the build because the artefact it would produce is the one
+    # that gets energised, and outside a build nobody would be reading the
+    # settings at all.
+    [
+        os.path.join(tools_dir, "check_machine_build_settings.py"),
+        "--project",
+        project_dir,
+        "--plant-root",
+        plant_root,
+    ],
+    # And a build for a machine names one whose equations describe a machine.
+    # Counting reaches only half of it: the fixture structure would satisfy a
+    # count of one while leaving the machine running equations that say they
+    # describe nothing. Over every environment that builds for a machine rather
+    # than the one being built, because a target nobody has built yet is exactly
+    # the one that would sit there carrying the wrong equations unnoticed.
+    [
+        os.path.join(tools_dir, "check_machine_structure_selected.py"),
+        "--project",
+        project_dir,
+        "--plant-root",
+        plant_root,
+        "--include-dir",
+        include_dir,
+    ],
 )
 
 for check in CHECKS:

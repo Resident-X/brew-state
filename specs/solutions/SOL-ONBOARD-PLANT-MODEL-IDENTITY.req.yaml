@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The machine is built carrying the verified plant model, and only that one
 status: active
-version: 2
+version: 3
 text: |
   The target environment in `firmware/platformio.ini` compiles no plant sources at all today: its `build_src_filter` names the control logic, the STM32 hardware implementation and the target entry point, and nothing under `src/plant/`. The model the design is established against therefore lives only in the host tier that verified it. This slice puts it on the machine.
 
@@ -13,6 +13,13 @@ text: |
 
   That the description travels is not the same as it being the right one. A build-time check compares the bytes the target artefact embeds against the description the host tier is pinned to through `REFERENCE_DESCRIPTION_PATH`, and a target build carrying anything else stops rather than producing an artefact. Without that check the embedding is a copy, and a copy is the second model this criterion exists to prevent: two records that answer the same question differently as soon as either is corrected, with the divergence showing up as a machine that looks like it has drifted.
 
+  Carrying the model is not the same as the artefact still having it. The linker
+  discards what nothing reaches, and nothing on the machine drives the model at
+  this point -- so the equations are exactly what it drops, and everything above
+  becomes untrue at once while the build goes on succeeding. The operations the
+  seam declares are therefore named to the linker as wanted, and the artefact is
+  inspected after linking rather than trusted.
+
   Out of scope: what the machine does with the model once it carries it — the estimator, the residual and the control law are separate deliverables — and any claim that the reference description's numbers are right for the reference machine, which is settled by measurement and recorded as provenance against each value where it already is. Persisting a replacement description on the target, and updating one in the field, are also out of scope; this slice establishes that a machine carries the verified model, not that the model can be changed without a rebuild.
 rationale: |
   This is a wiring slice rather than an invention. Every part it needs already ships: the plant-structure seam, build-time structure selection with its refusal of none and of two, the parameter loader with its refusals, and a reference description carrying the origin of each value. What is missing is only that the target build was never given any of it, because the tier that established those pieces had the host in front of it.
@@ -20,6 +27,14 @@ rationale: |
   It is a separate slice from the estimator rather than folded into it because the two are different kinds of work — one moves existing artefacts onto an existing build, the other has to choose a correction strategy — and folding a cheap, independently checkable piece of wiring into the larger slice would hide it behind that slice's schedule. Separate is not independent, though: the estimator holds a plant-model instance and the control law that drives it compiles into every environment, so the target build cannot link the estimator until it carries the plant model this slice puts there. That ordering is recorded as a dependency on the estimator slice rather than left to be discovered at the first target build.
 
   The embedding check carries the weight the mechanism cannot. Generating the embedded bytes from the description file removes the obvious way for a copy to go stale, but it does not by itself establish that the artefact and the host tier are pinned to the same description: a build flag naming a different path, a stale generated artefact surviving an incremental build, or a second description arriving alongside the first would each produce a target carrying something the tier never verified. Comparing what the artefact embeds against what the tier is pinned to is what closes those, and it is a build failure rather than a test because the failure it prevents has no symptom on the machine — predictions that stop matching observation look exactly like drift.
+
+  The same reasoning reaches one step further than the build file. Every check
+  above runs before an artefact exists, and none of them survives a linker that
+  drops what nothing calls -- which is the state this slice leaves the machine in,
+  because the work that will drive the model comes later. An artefact inspected
+  after linking is what closes that, and it is worth saying why it is not simply
+  deferred to the slice that will call those operations: until then the maths
+  question this target has never been asked would go on looking answered.
 
   Reusing the loader rather than writing a target-side reader follows the same reasoning one level down. A second parser accepts a slightly different language sooner or later — a whitespace rule, a rejected annotation quietly skipped — and then the machine is running numbers the host tier never saw, from a file both claim to read. One parser cannot disagree with itself.
 

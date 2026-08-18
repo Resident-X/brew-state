@@ -187,6 +187,27 @@ tasks:
       # rather than silently joining or missing that population.
       - python3 tools/check_plant_header.py include/plant_machine_claim.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_machine_claim.py --plant-root src/plant --include-dir include
+      # And every build that would be energised selecting a structure whose
+      # equations claim to describe a machine, rather than merely selecting one.
+      # The environments are discovered from the platform each names, so a
+      # second board is covered without a line here naming it.
+      - python3 tools/check_machine_structure_selected.py --project . --plant-root src/plant --include-dir include
+      # And that it compiles the model under the settings it applies to the
+      # control logic already there. The gate that asks this of the host builds
+      # covers only those, so without this the one artefact that gets energised
+      # is the one nothing asks it of.
+      - python3 tools/check_machine_build_settings.py --project . --plant-root src/plant
+      # The description each of those builds would carry compiled in, compared
+      # against the one the host verification tier is pinned to. It runs inside
+      # the target build as well, before anything is compiled; here it asks the
+      # same question of the artefact that was actually built, which is the run
+      # that would notice a build directory carrying something else.
+      - python3 tools/check_embedded_description.py --project .
+      # And the artefact itself, because none of the above survives the linker
+      # on its own: it discards what nothing reaches, and nothing on the machine
+      # drives the model yet. An artefact the equations were dropped from passes
+      # every check before this one.
+      - python3 tools/check_target_carries_model.py --project . --include-dir include --params-dir params
       - python3 tools/check_direct_calls.py --project . --header include/plant_model.h --objects-in src/app/native
       # Every structure in the tree, and the artefact carrying it, are
       # discovered: forgetting to add a line cannot leave one unchecked.
@@ -197,7 +218,7 @@ tasks:
       - python3 tools/check_parameters_are_data.py .pio/build/native_boiler/program --params params/boiler.params --params params/boiler-variant.params
       # The misconfigured configurations are named because a forgotten name here
       # fails loudly rather than quietly.
-      - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --env native_boiler_two_structures --pio {{.PIO}}
+      - python3 tools/check_selection_refused.py --project . --env native_no_structure --env native_two_structures --env native_boiler_two_structures --env stm32_no_structure --env stm32_two_structures --pio {{.PIO}}
       # The analysis the host tier runs everything of ours under, over every
       # environment the build declares for the host.
       - python3 tools/check_sanitizers.py --project .

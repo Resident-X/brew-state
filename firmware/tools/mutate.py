@@ -53,12 +53,12 @@ def artefacts() -> dict[str, str]:
     Read afresh on each call, because a mutation edits the build file and the
     answer can change while this is running.
     """
-    return {
-        environment.name: environment.artefact(FIRMWARE)
-        for environment in build_environments.artefact_environments(
-            build_environments.load(FIRMWARE)
-        )
-    }
+    declared = build_environments.load(FIRMWARE)
+    covered = build_environments.artefact_environments(declared)
+    # The artefact a machine would run is inspected by the checks too, and it is
+    # discarded by an edit to the build file on exactly the same terms.
+    covered += build_environments.machine_environments(declared)
+    return {environment.name: environment.artefact(FIRMWARE) for environment in covered}
 
 
 def build(environment: str) -> int:
@@ -131,6 +131,21 @@ ROBUSTNESS_DECLARATION = [
 ANALYSIS = [
     sys.executable, "tools/check_sanitizers.py", "--project", ".",
 ]
+MACHINE_SETTINGS = [
+    sys.executable, "tools/check_machine_build_settings.py", "--project", ".",
+    "--plant-root", "src/plant",
+]
+MACHINE_STRUCTURE = [
+    sys.executable, "tools/check_machine_structure_selected.py", "--project", ".",
+    "--plant-root", "src/plant", "--include-dir", "include",
+]
+EMBEDDED_DESCRIPTION = [
+    sys.executable, "tools/check_embedded_description.py", "--project", ".",
+]
+CARRIES_MODEL = [
+    sys.executable, "tools/check_target_carries_model.py", "--project", ".",
+    "--include-dir", "include", "--params-dir", "params",
+]
 TESTS_RUN = [
     sys.executable, "tools/run_host_tests.py", "--project", ".", "--pio", PIO,
     "--plant-root", "src/plant", "--include-dir", "include",
@@ -139,6 +154,12 @@ TESTS_RUN = [
 #: Each entry: a name, the file to edit, the exact text to replace, what to put
 #: in its place, and the command that has to stop because of it. `find` must
 #: appear exactly once in the file, so a mutation cannot silently miss.
+#:
+#: An entry may also declare `remake`, for a mutation that changes how an
+#: artefact is made rather than what it is made from. Those leave every source
+#: as it was, so the artefacts have to be discarded and built again with the
+#: mutation in place -- otherwise the check inspects one made the old way and
+#: the defect reads as survived without ever having reached anything.
 LABELS = {
     tuple(PLANT_TESTS): "the plant model's tests",
     tuple(ENCAPSULATION): "the encapsulation check",
@@ -156,11 +177,15 @@ LABELS = {
     tuple(ASSUMED_ERROR): "the assumed model error check",
     tuple(ROBUSTNESS_DECLARATION): "the robustness declaration check",
     tuple(ANALYSIS): "the host tier's analysis check",
+    tuple(MACHINE_SETTINGS): "the check that a machine build keeps its warning settings",
+    tuple(MACHINE_STRUCTURE): "the check that a machine build carries a machine's equations",
+    tuple(EMBEDDED_DESCRIPTION): "the check that a machine carries the verified description",
+    tuple(CARRIES_MODEL): "the check that the artefact carries the model",
     tuple(TESTS_RUN): "the task that runs the tests",
 }
 
 #: Commands that inspect the linked artefact rather than the sources.
-NEEDS_ARTEFACT = {tuple(ANALYSIS)}
+NEEDS_ARTEFACT = {tuple(ANALYSIS), tuple(EMBEDDED_DESCRIPTION), tuple(CARRIES_MODEL)}
 
 MUTATIONS = (
     {
@@ -338,6 +363,78 @@ MUTATIONS = (
         "find": "#endif /* PLANT_SUPPORT_H */",
         "replace": '#include "thermoblock/plant_structure.h"\n#endif /* PLANT_SUPPORT_H */',
         "command": SUPPORT_HEADER,
+    },
+    {
+        "name": "the-machine-build-drops-its-warning-settings",
+        "why": "the settings the target applies to our own sources are emptied, so the model "
+               "and the control logic beside it compile under whatever the platform defaults "
+               "to -- on the one artefact that gets energised",
+        "file": "platformio.ini",
+        "find": "build_src_flags = -Werror\nextra_scripts =",
+        "replace": "build_src_flags =\nextra_scripts =",
+        "command": MACHINE_SETTINGS,
+    },
+    {
+        "name": "the-machine-build-claims-a-host-exemption",
+        "why": "the target claims the exemption meant for a build compiling sources that are "
+               "not ours, which is how a recorded reason becomes a way of turning the "
+               "settings off where they could be kept",
+        "file": "platformio.ini",
+        "find": "custom_embedded_description = params/thermoblock.params",
+        "replace": "custom_embedded_description = params/thermoblock.params\n"
+                   "custom_strict_flags_exemption = it would be convenient",
+        "command": MACHINE_SETTINGS,
+    },
+    {
+        "name": "the-machine-build-stops-compiling-the-model",
+        "why": "the model is taken out of the target's source filter, so the machine is built "
+               "carrying none -- which the settings check notices as the model no longer "
+               "arriving under the settings at all",
+        "file": "platformio.ini",
+        "find": "build_src_filter = ${common.control_sources} ${common.plant_sources} +<hw/stm32/> +<app/stm32/>",
+        "replace": "build_src_filter = ${common.control_sources} +<hw/stm32/> +<app/stm32/>",
+        "command": MACHINE_SETTINGS,
+    },
+    {
+        "name": "machine-built-against-equations-describing-nothing",
+        "why": "the build that would be energised selects the structure whose own header says "
+               "its equations describe no machine, which a count of one structure passes",
+        "file": "platformio.ini",
+        "find": "build_src_filter = ${stm32_base.build_src_filter} +<plant/thermoblock/>\n"
+                "build_flags = ${stm32_base.build_flags} -I $PROJECT_DIR/src/plant/thermoblock",
+        "replace": "build_src_filter = ${stm32_base.build_src_filter} +<plant/fixture/>\n"
+                   "build_flags = ${stm32_base.build_flags} -I $PROJECT_DIR/src/plant/fixture",
+        "command": MACHINE_STRUCTURE,
+    },
+    {
+        "name": "carried-description-is-not-the-verified-one",
+        "why": "the build declares it carries a variant description rather than the one the "
+               "host verification tier is pinned to, which nothing on the machine could report",
+        "file": "platformio.ini",
+        "find": "custom_embedded_description = params/thermoblock.params",
+        "replace": "custom_embedded_description = params/thermoblock-variant.params",
+        "command": EMBEDDED_DESCRIPTION,
+    },
+    {
+        "name": "carried-description-left-stale",
+        "why": "the description moves on and the bytes rendered into the artefact do not, "
+               "which is the divergence generating them was supposed to have closed",
+        "file": "params/thermoblock.params",
+        "find": "# The reference machine's description, for the thermoblock structure.",
+        "replace": "# The reference machine's description, for the thermoblock structure.\n"
+                   "# A line the rendered embedding does not carry.",
+        "command": EMBEDDED_DESCRIPTION,
+    },
+    {
+        "name": "model-discarded-from-the-artefact",
+        "why": "the step that keeps the model's operations in the artefact is dropped, and the "
+               "linker discards equations nothing on the machine drives yet -- which every "
+               "check before the artefact passes",
+        "file": "platformio.ini",
+        "find": "    post:tools/pio_retain_plant_model.py\n",
+        "replace": "",
+        "command": CARRIES_MODEL,
+        "remake": True,
     },
     {
         "name": "strict-warnings-narrowed",
@@ -693,6 +790,20 @@ def restore_artefacts() -> list[str]:
     return failed
 
 
+def discard_artefacts() -> None:
+    """Remove every artefact, so the next re-make builds rather than reuses.
+
+    A mutation of how an artefact is made -- a build step dropped, a flag
+    removed -- leaves the sources it was built from untouched, so a build system
+    asked to build again has nothing to notice and the check goes on inspecting
+    an artefact made the old way. That is the mutation reported as survived
+    while never having been applied to anything.
+    """
+    for path in artefacts().values():
+        if os.path.exists(path):
+            os.remove(path)
+
+
 def write_atomic(path: str, content: str) -> None:
     """Replace a file in one step, so an interruption cannot truncate it."""
     directory = os.path.dirname(path)
@@ -797,9 +908,27 @@ def main(argv: list[str]) -> int:
             return 2
         try:
             write_atomic(path, original.replace(mutation["find"], mutation["replace"]))
+            if mutation.get("remake"):
+                # This one changes how the artefact is made rather than what it
+                # is made from, so it has to be made again with the mutation in
+                # place. Nothing else would differ.
+                #
+                # A re-make that fails leaves no artefact, and a check that
+                # cannot find one stops with the same code as a check that found
+                # the problem. Counting that as a catch would be this tool
+                # committing the failure it exists to detect, so it stops here.
+                discard_artefacts()
+                unbuilt = restore_artefacts()
+                if unbuilt:
+                    print(f"BUILD FAILED ({', '.join(unbuilt)})")
+                    return 2
             code = run(mutation["command"])
         finally:
             write_atomic(path, original)
+            if mutation.get("remake"):
+                # And discarded again, so what is left behind was not built
+                # from a mutated build file. The re-make at the end rebuilds it.
+                discard_artefacts()
 
         expected = mutation.get("expect", FOUND_THE_PROBLEM)
         if code == expected:
