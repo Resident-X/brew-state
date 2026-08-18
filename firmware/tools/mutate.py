@@ -198,6 +198,40 @@ MUTATIONS = (
         "command": PLANT_TESTS,
     },
     {
+        "name": "the-outlet-follows-the-casting-where-it-arrived",
+        "why": "the water relaxes towards where the casting ended the step rather than across "
+               "the traverse it made, which is first order in the step length",
+        "file": "src/plant/thermoblock/plant_structure.c",
+        "find": "    return block_to_c - (block_to_c - block_from_c) * carried +\n"
+                "           (outlet_c - block_from_c) * (1.0f - settled);",
+        "replace": "    (void)carried;\n"
+                   "    return block_to_c + (outlet_c - block_to_c) * (1.0f - settled);",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "the-outlet-carries-the-traverse-by-the-settled-fraction",
+        "why": "the casting's traverse across the step is weighted by how far the relaxation "
+               "travelled rather than by that fraction per time constant elapsed, which is the "
+               "same confusion between the two expressions the mass's own step avoids",
+        "file": "src/plant/thermoblock/plant_structure.c",
+        "find": "    const float carried = relaxation_factor(steps_of_time_constant);",
+        "replace": "    const float carried = settled;",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "the-outlet-is-the-casting-read-twice",
+        "why": "the water on its way to the group is the casting, which is the model this "
+               "structure had before it distinguished the two and leaves an estimator nothing "
+               "to reconstruct",
+        "file": "src/plant/thermoblock/plant_structure.c",
+        "find": "    model->brew_outlet_temperature_c =\n"
+                "        advanced_outlet(model->brew_outlet_temperature_c, casting_before_c,\n"
+                "                        model->brew_temperature_c, "
+                "p->brew_outlet_time_constant_s, seconds);",
+        "replace": "    model->brew_outlet_temperature_c = model->brew_temperature_c;",
+        "command": PLANT_TESTS,
+    },
+    {
         "name": "naive-temperature-step",
         "why": "the thermal masses advance as though the rate held constant across the step, "
                "which diverges at admissible coefficients",

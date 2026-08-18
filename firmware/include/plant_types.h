@@ -54,6 +54,51 @@ typedef enum {
 } plant_quantity_t;
 
 /*
+ * The states a structure may integrate, in the units named. This is a separate
+ * vocabulary from the quantities above and not a widening of them, because the
+ * two answer different questions: a quantity is something the machine has and
+ * every structure exposes, while a state is something a structure carries to
+ * produce those quantities and is a property of its architecture. Collapsing
+ * them into one list would oblige a structure to expose states it does not keep
+ * and would destroy the distinction plant_types.h has drawn in prose since it
+ * was written.
+ *
+ * The vocabulary is the machine's rather than any one structure's, on the same
+ * reasoning the actuation channels are: a name a refusal can report has to
+ * exist independently of whether the structure in the build happens to keep the
+ * state it names. A structure of a given architecture will therefore not answer
+ * every state in it -- a machine that heats the water in the vessel it delivers
+ * from keeps nothing between the two -- and plant_model_state is where a
+ * consumer finds out which it does.
+ *
+ * That the same names appear here and above for four of these is a property of
+ * the two architectures behind the seam today rather than of the split. Where a
+ * structure answers both, it is because the quantity it exposes is read from
+ * the state it keeps; where it answers a state and no quantity of that name, or
+ * the other way round, nothing here objects.
+ */
+typedef enum {
+    /*
+     * The temperature of the mass the brew heater acts on directly. On this
+     * machine's architecture it is also the one a sensor can reach, which is
+     * why it is exposed as a quantity as well.
+     */
+    PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C = 0,
+    /*
+     * The temperature of the water on its way to the group, after it has left
+     * that mass. It is the temperature an extraction is judged by and the one
+     * nothing on the machine reports, which is what makes it the state worth
+     * reconstructing. A structure that heats the water where it delivers it
+     * keeps no such state and refuses this one.
+     */
+    PLANT_STATE_BREW_OUTLET_TEMPERATURE_C,
+    PLANT_STATE_STEAM_TEMPERATURE_C,
+    PLANT_STATE_BREW_PRESSURE_BAR,
+    PLANT_STATE_STEAM_PRESSURE_BAR,
+    PLANT_STATE_COUNT
+} plant_state_t;
+
+/*
  * What is applied to the plant over one step, in parts per thousand of full
  * scale on each channel. The levels are indexed by the machine's actuation
  * channels, so a level and the channel it is for are one thing rather than a

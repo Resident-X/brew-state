@@ -223,3 +223,42 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
         return false;
     }
 }
+
+bool plant_model_state(const plant_model_t *model, plant_state_t state, float *value)
+{
+    if (model == NULL || value == NULL || !model->initialised) {
+        return false;
+    }
+
+    switch (state) {
+    /*
+     * This architecture heats the water in the vessel it delivers from, so
+     * nothing sits between the mass and what leaves it: the water on its way out
+     * is the water in the vessel. That is not a state this structure has chosen
+     * to leave out and could add -- a single-vessel machine has nothing there to
+     * keep. Refusing it is how work that reconstructs such a state finds out it
+     * is asking the wrong structure, rather than being handed the vessel and
+     * quietly reconstructing something that was already being read.
+     */
+    case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+        return false;
+    /*
+     * The heated mass and the steam mass are the one vessel here, for the same
+     * reason both temperature quantities are: on a machine built this way they
+     * are the same body of water.
+     */
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
+    case PLANT_STATE_STEAM_TEMPERATURE_C:
+        *value = model->vessel_temperature_c;
+        return true;
+    case PLANT_STATE_BREW_PRESSURE_BAR:
+        *value = model->brew_pressure_bar;
+        return true;
+    case PLANT_STATE_STEAM_PRESSURE_BAR:
+        *value = model->steam_pressure_bar;
+        return true;
+    case PLANT_STATE_COUNT:
+    default:
+        return false;
+    }
+}

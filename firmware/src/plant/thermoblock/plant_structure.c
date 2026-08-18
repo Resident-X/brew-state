@@ -31,6 +31,8 @@ static const plant_parameter_spec_t SPECS[] = {
      offsetof(plant_parameters_t, brew_thermal_mass_j_per_k)},
     {"brew.heater_power_w", 0.0f, 10000.0f, offsetof(plant_parameters_t, brew_heater_power_w)},
     {"brew.loss_w_per_k", 0.0f, 1000.0f, offsetof(plant_parameters_t, brew_loss_w_per_k)},
+    {"brew.outlet_time_constant_s", 0.001f, 100.0f,
+     offsetof(plant_parameters_t, brew_outlet_time_constant_s)},
 
     {"steam.thermal_mass_j_per_k", 1.0f, 100000.0f,
      offsetof(plant_parameters_t, steam_thermal_mass_j_per_k)},
@@ -119,6 +121,37 @@ static float advanced_temperature(float temperature_c, float ambient_c, float he
     return temperature_c + ((delivered_w - lost_w) * effective_seconds) / thermal_mass_j_per_k;
 }
 
+/*
+ * The water on its way to the group after `seconds`, having entered the step at
+ * `outlet_c` while the casting travelled from `block_from_c` to `block_to_c`.
+ *
+ * The heater does not appear here. It acts on the casting, and the only way it
+ * reaches the water is through this relaxation -- which is the whole of what
+ * distinguishes these two states from one state read twice.
+ *
+ * Exact for a block that traverses the step linearly, rather than for one held
+ * at either end of it. Relaxing towards a fixed value is what the pressure path
+ * does, and it is exact there because the pump's command really is constant
+ * across a step; the block's temperature is not, and taking either end of its
+ * traverse as though it were leaves an error first order in the step length --
+ * every other integration in this structure is exact for its own step, and one
+ * that is not would be the one a shorter step was needed to hide.
+ *
+ * The two library expressions are the ones already used above: how far a
+ * relaxation travels in the step, and the same per time constant elapsed. That
+ * second one is what carries the block's traverse, and it is why the result
+ * reduces to the ordinary relaxation when the block does not move.
+ */
+static float advanced_outlet(float outlet_c, float block_from_c, float block_to_c,
+                             float time_constant_s, float seconds)
+{
+    const float steps_of_time_constant = seconds / time_constant_s;
+    const float settled = settled_fraction(steps_of_time_constant);
+    const float carried = relaxation_factor(steps_of_time_constant);
+    return block_to_c - (block_to_c - block_from_c) * carried +
+           (outlet_c - block_from_c) * (1.0f - settled);
+}
+
 void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuation_t *actuation,
                                       float seconds)
 {
@@ -128,11 +161,17 @@ void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuatio
 
     const plant_parameters_t *p = &model->coefficients;
 
+    const float casting_before_c = model->brew_temperature_c;
+
     model->brew_temperature_c = advanced_temperature(
-        model->brew_temperature_c, p->ambient_temperature_c, p->brew_heater_power_w,
+        casting_before_c, p->ambient_temperature_c, p->brew_heater_power_w,
         actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] / PERMILLE_FULL_SCALE,
         p->brew_loss_w_per_k,
         p->brew_thermal_mass_j_per_k, seconds);
+
+    model->brew_outlet_temperature_c =
+        advanced_outlet(model->brew_outlet_temperature_c, casting_before_c,
+                        model->brew_temperature_c, p->brew_outlet_time_constant_s, seconds);
 
     model->steam_temperature_c = advanced_temperature(
         model->steam_temperature_c, p->ambient_temperature_c, p->steam_heater_power_w,
@@ -174,6 +213,9 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
 
     /*
      * The machine starts where it has been sitting: both masses at ambient,
+     * the water on its way to the group at ambient with them -- a casting and an
+     * outlet at the same temperature is what having stood still means, and any
+     * other pairing would have the two moving before anything was commanded --
      * the pump off, and every quantity at the value this structure's own
      * equations give for that state. A step taken from here with no actuation
      * therefore moves nothing, which is what makes an accidentally hard-coded
@@ -181,6 +223,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
      * only for one that happens to sit below saturation.
      */
     model->brew_temperature_c = parameters->ambient_temperature_c;
+    model->brew_outlet_temperature_c = parameters->ambient_temperature_c;
     model->steam_temperature_c = parameters->ambient_temperature_c;
     model->brew_pressure_bar = 0.0f;
     model->steam_pressure_bar = steam_pressure_at(parameters, model->steam_temperature_c);
@@ -235,6 +278,40 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
         *value = model->steam_pressure_bar;
         return true;
     case PLANT_QUANTITY_COUNT:
+    default:
+        return false;
+    }
+}
+
+bool plant_model_state(const plant_model_t *model, plant_state_t state, float *value)
+{
+    if (model == NULL || value == NULL || !model->initialised) {
+        return false;
+    }
+
+    /*
+     * This architecture keeps every state the vocabulary names. The casting and
+     * the water that has left it are separate states here, and only the first
+     * is exposed as a quantity -- which is what gives work reconstructing the
+     * second from a reading of the first something to reconstruct.
+     */
+    switch (state) {
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
+        *value = model->brew_temperature_c;
+        return true;
+    case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+        *value = model->brew_outlet_temperature_c;
+        return true;
+    case PLANT_STATE_STEAM_TEMPERATURE_C:
+        *value = model->steam_temperature_c;
+        return true;
+    case PLANT_STATE_BREW_PRESSURE_BAR:
+        *value = model->brew_pressure_bar;
+        return true;
+    case PLANT_STATE_STEAM_PRESSURE_BAR:
+        *value = model->steam_pressure_bar;
+        return true;
+    case PLANT_STATE_COUNT:
     default:
         return false;
     }

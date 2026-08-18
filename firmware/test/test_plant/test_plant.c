@@ -47,6 +47,7 @@ static const coefficient_t NOMINAL[] = {
     {"brew.thermal_mass_j_per_k", 420.0},
     {"brew.heater_power_w", 1200.0},
     {"brew.loss_w_per_k", 1.5},
+    {"brew.outlet_time_constant_s", 1.2},
     {"steam.thermal_mass_j_per_k", 900.0},
     {"steam.heater_power_w", 1400.0},
     {"steam.loss_w_per_k", 2.2},
@@ -128,6 +129,27 @@ static void read_all(const plant_model_t *model, float out[PLANT_QUANTITY_COUNT]
     }
 }
 
+/*
+ * Read every state the structure keeps into `out`, and require it to keep them
+ * all. This structure does; a structure that did not would refuse, and the
+ * suites driving those are where that is exercised.
+ */
+static void read_all_states(const plant_model_t *model, float out[PLANT_STATE_COUNT])
+{
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        TEST_ASSERT_TRUE(plant_model_state(model, (plant_state_t)state, &out[state]));
+    }
+}
+
+/* The casting the element acts on, which is also the quantity this machine reports. */
+static float heated_mass(const plant_model_t *model)
+{
+    float value = 0.0f;
+    TEST_ASSERT_TRUE(
+        plant_model_state(model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, &value));
+    return value;
+}
+
 /* Run `steps` steps under one actuation and leave the quantities in `out`. */
 static void run(plant_model_t *model, const plant_actuation_t *actuation, int steps,
                 float out[PLANT_QUANTITY_COUNT])
@@ -146,22 +168,32 @@ static void run(plant_model_t *model, const plant_actuation_t *actuation, int st
  * changes how fast a pressure settles and not what it settles at, so comparing
  * final values alone would report it as unused.
  *
- * The accumulator is deliberately wider than the quantities it sums. It is a
+ * The accumulator is deliberately wider than the states it sums. It is a
  * comparison device rather than part of the model, and summing thousands of
  * single-precision values into a single-precision total would lose the small
  * differences this exists to detect -- which would quietly blind the check that
  * every coefficient reaches the equations.
+ *
+ * Taken over the states rather than over the quantities, because what these
+ * tests ask is whether a coefficient reaches the equations, and a coefficient
+ * can reach them without reaching anything the machine exposes. The outlet time
+ * constant is exactly that: it acts on the water on its way to the group, which
+ * is downstream of every quantity and feeds back into none of them. Summing the
+ * quantities would report that coefficient as unread -- a wrong conclusion from
+ * a true observation, since it is read and what it changes is a state no
+ * quantity carries. That the machine cannot see it either is a real limit and
+ * is stated where it belongs, among the omissions in params/thermoblock.md.
  */
 static double signature(plant_model_t *model, const plant_actuation_t *actuation, int steps)
 {
     double total = 0.0;
 
     for (int i = 0; i < steps; i++) {
-        float quantities[PLANT_QUANTITY_COUNT];
+        float states[PLANT_STATE_COUNT];
         TEST_ASSERT_TRUE(plant_model_step(model, actuation, STEP_MS));
-        read_all(model, quantities);
-        for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
-            total += quantities[quantity];
+        read_all_states(model, states);
+        for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+            total += states[state];
         }
     }
     return total;
@@ -1224,6 +1256,7 @@ static void test_the_corners_of_the_declared_range_stay_finite(void)
 #define I_BREW_MASS 1u
 #define I_BREW_POWER 2u
 #define I_BREW_LOSS 3u
+#define I_BREW_OUTLET_TAU 4u
 
 /* Long enough that a per-step error becomes visible in the distance travelled. */
 #define ACCUMULATION_STEPS 200
@@ -1378,8 +1411,6 @@ static void test_a_short_step_against_a_long_time_constant_stays_accurate(void)
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
     plant_model_t model;
-    float before[PLANT_QUANTITY_COUNT];
-    float after[PLANT_QUANTITY_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
         values[i] = NOMINAL[i].value;
@@ -1396,15 +1427,18 @@ static void test_a_short_step_against_a_long_time_constant_stays_accurate(void)
     TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
     TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
 
+    float before[PLANT_QUANTITY_COUNT];
+    float after[PLANT_QUANTITY_COUNT];
+
     read_all(&model, before);
     for (int n = 0; n < ACCUMULATION_STEPS; n++) {
         TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 10u));
     }
     read_all(&model, after);
 
+    const double from = (double)before[PLANT_QUANTITY_BREW_TEMPERATURE_C];
     const double seconds = (10.0 * (double)ACCUMULATION_STEPS) / 1000.0;
     const double settling = values[I_AMBIENT] + values[I_BREW_POWER] / values[I_BREW_LOSS];
-    const double from = (double)before[PLANT_QUANTITY_BREW_TEMPERATURE_C];
     const double expected =
         settling + (from - settling) * exp(-(values[I_BREW_LOSS] * seconds) / values[I_BREW_MASS]);
     const double got = (double)after[PLANT_QUANTITY_BREW_TEMPERATURE_C];
@@ -1531,6 +1565,13 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
      * whatever it did to the equations. Written as hexadecimal literals because
      * they are exact -- nothing here touches an equation, so a difference of one
      * bit is a difference this test exists to report.
+     *
+     * Kept rather than retaken when the coffee side gained the water on its way
+     * to the group. That state is downstream of everything these columns record
+     * and enters none of it, so every figure below is produced by arithmetic the
+     * change did not touch -- which is what makes keeping the recording a claim
+     * rather than a convenience. A recording retaken from the build that moved
+     * the equations would have compared the change with itself.
      */
     static const float EXPECTED[][PLANT_QUANTITY_COUNT] = {
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f},
@@ -1555,6 +1596,7 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
                                       "brew.thermal_mass_j_per_k = 420\n"
                                       "brew.heater_power_w = 1200\n"
                                       "brew.loss_w_per_k = 1.5\n"
+                                      "brew.outlet_time_constant_s = 1.2\n"
                                       "steam.thermal_mass_j_per_k = 900\n"
                                       "steam.heater_power_w = 1400\n"
                                       "steam.loss_w_per_k = 2.2\n"
@@ -2824,12 +2866,576 @@ static void test_the_reference_description_states_how_wrong_every_value_may_be(v
     }
 }
 
+/* --- The states this structure keeps, and the seam that reaches them ------- */
+
+/*
+ * Describe the nominal coefficients with the outlet time constant replaced.
+ * Everything else is the nominal table, so a difference between two runs built
+ * this way is that coefficient and nothing else.
+ */
+static size_t describe_with_outlet_tau(char *out, size_t capacity, double tau_s)
+{
+    double values[COEFFICIENT_COUNT];
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        values[i] = NOMINAL[i].value;
+    }
+    values[I_BREW_OUTLET_TAU] = tau_s;
+    return describe_values(values, out, capacity);
+}
+
+/* The water on its way to the group, which no quantity carries. */
+static float outlet(const plant_model_t *model)
+{
+    float value = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_state(model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &value));
+    return value;
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C1: The reference structure distinguishes the
+/// heated mass from the water leaving it.
+///
+/// A step change in heater duty from rest, watched at every step. The casting
+/// rises the moment the element is commanded, and it is the casting this machine
+/// senses and reports; the water the group receives has to be carried there by
+/// that casting and so is always behind it while it is climbing. Two states read
+/// from one field would be equal at every step, which is the defect this is
+/// written against -- and it is not a hypothetical one, since it is precisely
+/// what this structure did before.
+static void test_the_water_on_its_way_to_the_group_trails_the_heated_mass(void)
+{
+    const plant_actuation_t brew_only = {{ACTUATION_FULL_SCALE, 0u, 0u}};
+    plant_model_t model;
+    float water = 0.0f;
+    float reported = 0.0f;
+    int strictly_behind = 0;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    /* At rest the two are the same: a machine that has stood still has no
+     * gradient in it, so equality here is the state being right rather than the
+     * distinction being absent. */
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &reported));
+    TEST_ASSERT_EQUAL_FLOAT(reported, outlet(&model));
+
+    for (int step = 0; step < SHORT_STEPS; step++) {
+        const float previous_water = water;
+
+        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, STEP_MS));
+        water = outlet(&model);
+        TEST_ASSERT_TRUE(
+            plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &reported));
+
+        /* Rising, so the trailing below is a lag rather than a failure to move
+         * at all -- water pinned at ambient would also always be below the
+         * casting. The first step has nothing before it to rise from. */
+        if (step > 0) {
+            TEST_ASSERT_TRUE(water > previous_water);
+        }
+        TEST_ASSERT_TRUE(water < reported);
+        strictly_behind++;
+    }
+    TEST_ASSERT_EQUAL_INT(SHORT_STEPS, strictly_behind);
+
+    /*
+     * And the quantity the seam exposes is the casting rather than the water.
+     * This machine's brew sensor is in the casting, so a model reporting the
+     * water under that name would be predicting something nothing observes --
+     * and the estimator built on it would difference a prediction of the stream
+     * against a reading of the metal, carrying this very lag as a standing bias
+     * in the residual that exists to detect drift.
+     */
+    TEST_ASSERT_EQUAL_FLOAT(reported, heated_mass(&model));
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C1: The reference structure distinguishes the
+/// heated mass from the water leaving it.
+///
+/// The lag is the one the description asks for, not merely some lag. Compared
+/// against the closed form of the two relations composed -- a first-order mass
+/// driving a first-order follower -- which is arithmetic derived on paper rather
+/// than the expression the structure evaluates. A time constant entered
+/// inverted, or the pressure path's constant used by mistake, satisfies the
+/// trailing test above and fails this one.
+static void test_the_water_follows_the_casting_by_its_own_time_constant(void)
+{
+    /* Both poles well inside the run, and both far longer than the step, so the
+     * step-wise relaxation is close to the continuous solution it approximates. */
+    const double mass = 100.0;
+    const double loss = 5.0;
+    const double power = 400.0;
+    const double tau_outlet = 2.0;
+    const uint32_t interval_ms = 10u;
+
+    const plant_actuation_t brew_only = {{ACTUATION_FULL_SCALE, 0u, 0u}};
+    double values[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        values[i] = NOMINAL[i].value;
+    }
+    values[I_BREW_MASS] = mass;
+    values[I_BREW_LOSS] = loss;
+    values[I_BREW_POWER] = power;
+    values[I_BREW_OUTLET_TAU] = tau_outlet;
+
+    const size_t used = describe_values(values, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+    const double start = values[I_AMBIENT];
+    const double settling = start + power / loss;
+    const double tau_casting = mass / loss;
+
+    /* Sampled at a few multiples of the shorter pole, where the two curves are
+     * furthest apart and a wrong constant has nowhere to hide. */
+    static const int SAMPLES_AT[] = {100, 300, 1000, 3000};
+
+    int taken = 0;
+    for (size_t s = 0u; s < sizeof(SAMPLES_AT) / sizeof(SAMPLES_AT[0]); s++) {
+        while (taken < SAMPLES_AT[s]) {
+            TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, interval_ms));
+            taken++;
+        }
+
+        const double seconds = ((double)taken * (double)interval_ms) / 1000.0;
+        const double casting_decay = exp(-seconds / tau_casting);
+        const double outlet_decay = exp(-seconds / tau_outlet);
+        /*
+         * Two first-order lags in series, from a common starting temperature:
+         * the casting relaxes towards its settling value, and the water relaxes
+         * towards the casting. The weights below are what solving that pair
+         * gives and reduce to the casting's own curve as the outlet constant
+         * vanishes.
+         */
+        const double expected =
+            settling + (start - settling) *
+                           ((tau_casting * casting_decay - tau_outlet * outlet_decay) /
+                            (tau_casting - tau_outlet));
+
+        const double got = (double)outlet(&model);
+        const double travelled = fabs(expected - start);
+        const double relative = fabs(got - expected) / travelled;
+        if (!(relative < 5.0e-3)) {
+            char message[220];
+            (void)snprintf(message, sizeof(message),
+                           "at %.3g s: water %.9g, closed form %.9g, relative error %.3g",
+                           seconds, got, expected, relative);
+            TEST_FAIL_MESSAGE(message);
+        }
+
+        /* The casting itself still satisfies its own curve, so a discrepancy
+         * above is in the following rather than in what is being followed. */
+        const double casting_expected = settling + (start - settling) * casting_decay;
+        const double casting_relative =
+            fabs((double)heated_mass(&model) - casting_expected) / fabs(casting_expected - start);
+        if (!(casting_relative < 5.0e-3)) {
+            char message[220];
+            (void)snprintf(message, sizeof(message),
+                           "at %.3g s: casting %.9g, closed form %.9g, relative error %.3g",
+                           seconds, (double)heated_mass(&model), casting_expected,
+                           casting_relative);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C1: The reference structure distinguishes the
+/// heated mass from the water leaving it.
+///
+/// The coefficient is what sets how far apart the two states are, and it acts in
+/// the direction it claims to. A shorter constant leaves the water closer to the
+/// casting at the same point in the same transient; a constant entered as its
+/// reciprocal, or one that never reaches the equation at all, does not.
+static void test_a_shorter_outlet_time_constant_brings_the_water_closer(void)
+{
+    static const double TAUS[] = {0.2, 1.0, 5.0};
+    const plant_actuation_t brew_only = {{ACTUATION_FULL_SCALE, 0u, 0u}};
+    double gaps[sizeof(TAUS) / sizeof(TAUS[0])];
+
+    for (size_t t = 0u; t < sizeof(TAUS) / sizeof(TAUS[0]); t++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        plant_model_t model;
+
+        const size_t used = describe_with_outlet_tau(text, sizeof(text), TAUS[t]);
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+        for (int step = 0; step < SHORT_STEPS; step++) {
+            TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, STEP_MS));
+        }
+        gaps[t] = (double)heated_mass(&model) - (double)outlet(&model);
+
+        /* Behind, at every constant sampled -- the ordering below would also be
+         * satisfied by three water temperatures that had all overshot. */
+        TEST_ASSERT_TRUE(gaps[t] > 0.0);
+    }
+
+    for (size_t t = 1u; t < sizeof(TAUS) / sizeof(TAUS[0]); t++) {
+        char message[160];
+        (void)snprintf(message, sizeof(message),
+                       "a constant of %.3g s left a gap of %.9g, and %.3g s left %.9g",
+                       TAUS[t - 1u], gaps[t - 1u], TAUS[t], gaps[t]);
+        TEST_ASSERT_TRUE_MESSAGE(gaps[t] > gaps[t - 1u], message);
+    }
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C2: The plant seam declares a vocabulary for
+/// the states a structure keeps.
+///
+/// The substance of the split is that a state exists with no quantity against
+/// it. If the two vocabularies ever carried the same members, there would be
+/// nothing for an estimator to reconstruct that a consumer could not already
+/// read, and the second vocabulary would be a synonym for the first.
+static void test_the_state_vocabulary_carries_what_the_quantities_cannot(void)
+{
+    const float SENTINEL = -4321.0f;
+    plant_model_t model;
+
+    /* Compared as counts rather than as enumerators: they are two vocabularies,
+     * and a compiler is right to object to one being weighed against the other. */
+    TEST_ASSERT_TRUE((int)PLANT_STATE_COUNT > (int)PLANT_QUANTITY_COUNT);
+
+    /* Enumerated from zero and dense, so a caller may walk the vocabulary
+     * rather than having to know the names in it. */
+    TEST_ASSERT_EQUAL_INT(0, (int)PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C);
+
+    /*
+     * Every member of the vocabulary is either answered or refused, and a
+     * refusal writes nothing. A structure that let an enumerated state fall
+     * through to a default would return whatever the caller's variable already
+     * held while saying it had succeeded, which is the failure a vocabulary
+     * walked by index makes possible and nothing else here would catch.
+     */
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float value = SENTINEL;
+        char message[96];
+
+        (void)snprintf(message, sizeof(message), "state %d neither answered nor refused cleanly",
+                       state);
+        if (plant_model_state(&model, (plant_state_t)state, &value)) {
+            TEST_ASSERT_TRUE_MESSAGE(isfinite(value), message);
+        } else {
+            TEST_ASSERT_EQUAL_FLOAT_MESSAGE(SENTINEL, value, message);
+        }
+    }
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
+/// accessor.
+///
+/// Every state comes back carrying what it names, not merely a finite number.
+/// A state accessor is a switch of assignments, so the defect it invites is a
+/// case wired to the wrong field -- steam temperature answering a pressure, the
+/// two pressures crossed. That produces no arithmetic for the operator sweep to
+/// mutate and passes every property asserted about the trajectory, so it is
+/// caught here or nowhere.
+///
+/// The model is driven to a point where all five states are distinct before
+/// anything is compared, because a structure at rest has several of them equal
+/// and a crossed pair would read correctly.
+static void test_every_state_carries_the_quantity_it_names(void)
+{
+    const plant_actuation_t working = {
+        {ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE / 2u}};
+    plant_model_t model;
+    float states[PLANT_STATE_COUNT];
+    float quantities[PLANT_QUANTITY_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    for (int step = 0; step < TRAJECTORY_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, STEP_MS));
+    }
+    read_all_states(&model, states);
+    read_all(&model, quantities);
+
+    /* Distinct, so an equality below is a wiring that is right rather than two
+     * numbers that happen to coincide. */
+    for (int a = 0; a < PLANT_STATE_COUNT; a++) {
+        for (int b = a + 1; b < PLANT_STATE_COUNT; b++) {
+            char message[112];
+            (void)snprintf(message, sizeof(message),
+                           "states %d and %d are equal, so a crossed pair would not show", a, b);
+            TEST_ASSERT_TRUE_MESSAGE(states[a] != states[b], message);
+        }
+    }
+
+    /*
+     * Each state this structure exposes as a quantity answers with the same
+     * number through both routes. Reading the same field twice is exactly what
+     * is wanted here -- the claim is that the two routes agree about which
+     * field, not that they are computed apart.
+     */
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_BREW_TEMPERATURE_C],
+                            states[PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C]);
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_STEAM_TEMPERATURE_C],
+                            states[PLANT_STATE_STEAM_TEMPERATURE_C]);
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_BREW_PRESSURE_BAR],
+                            states[PLANT_STATE_BREW_PRESSURE_BAR]);
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_STEAM_PRESSURE_BAR],
+                            states[PLANT_STATE_STEAM_PRESSURE_BAR]);
+
+    /*
+     * The one with no quantity against it is pinned by what it is: the water on
+     * its way to the group sits between the casting it came from and the
+     * ambient the machine started at, and it is neither of them.
+     */
+    const float water = states[PLANT_STATE_BREW_OUTLET_TEMPERATURE_C];
+    TEST_ASSERT_TRUE((double)water > NOMINAL[I_AMBIENT].value);
+    TEST_ASSERT_TRUE(water < states[PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C]);
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
+/// accessor.
+///
+/// A read this structure will not answer -- a null instance, a null
+/// destination, an instance never initialised, or a value outside the
+/// vocabulary -- is refused on the terms plant_model_quantity already refuses
+/// one, and leaves what the caller passed exactly as it was. Writing a zero
+/// into it would be indistinguishable from a state that happens to be zero.
+static void test_a_state_read_that_cannot_be_answered_is_refused_and_writes_nothing(void)
+{
+    const float SENTINEL = -12345.0f;
+    plant_model_t uninitialised;
+    plant_model_t model;
+    float value = SENTINEL;
+
+    memset(&uninitialised, 0, sizeof(uninitialised));
+    TEST_ASSERT_FALSE(
+        plant_model_state(&uninitialised, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &value));
+    TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+
+    TEST_ASSERT_FALSE(plant_model_state(NULL, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &value));
+    TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_FALSE(plant_model_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, NULL));
+
+    TEST_ASSERT_FALSE(plant_model_state(&model, PLANT_STATE_COUNT, &value));
+    TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+    TEST_ASSERT_FALSE(plant_model_state(&model, (plant_state_t)(PLANT_STATE_COUNT + 7), &value));
+    TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C4: A consumer reads a structure's state
+/// through the seam rather than around it.
+///
+/// This file is a consumer: it sits outside src/plant, includes only
+/// plant_model.h, and names no field or function the thermoblock structure
+/// owns. It reaches the water on its way to the group all the same, which is
+/// what the work that reconstructs that temperature will need. The other half
+/// of this criterion is not written here and cannot be: that naming those
+/// fields directly fails the build is what check_plant_encapsulation.py
+/// enforces over this file among the rest.
+static void test_the_unreported_state_is_reachable_through_the_seam_alone(void)
+{
+    const plant_actuation_t brew_only = {{ACTUATION_FULL_SCALE, 0u, 0u}};
+    plant_model_t model;
+    float reported = 0.0f;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    for (int step = 0; step < SHORT_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, STEP_MS));
+    }
+
+    const float water = outlet(&model);
+    TEST_ASSERT_TRUE(isfinite(water));
+    /* Above where it started, taken from the table the description was written
+     * from rather than from the loaded record: naming a field of that record is
+     * the very thing this criterion says a consumer must not do, and the
+     * encapsulation check refuses the build for it. */
+    TEST_ASSERT_TRUE((double)water > NOMINAL[I_AMBIENT].value);
+
+    /*
+     * And no quantity carries it, which is what makes it worth reconstructing:
+     * a consumer holding only the quantities cannot obtain this number by any
+     * route, so the seam operation is the only way to it rather than a second
+     * way to something already reachable.
+     */
+    for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        char message[96];
+
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, (plant_quantity_t)quantity, &reported));
+        (void)snprintf(message, sizeof(message), "quantity %d carries the water after all",
+                       quantity);
+        TEST_ASSERT_TRUE_MESSAGE(reported != water, message);
+    }
+}
+
+/// OBL-VERIFICATION-DISCIPLINE-001.C2: the positional constants above index the
+/// coefficient table, and nothing but this ties the two together. A coefficient
+/// inserted into that table silently re-points every one of them, and the
+/// closed-form comparisons would then be checking the wrong equation against the
+/// wrong numbers while still passing.
+static void test_the_coefficient_indices_name_what_they_claim(void)
+{
+    TEST_ASSERT_EQUAL_STRING("ambient_temperature_c", NOMINAL[I_AMBIENT].name);
+    TEST_ASSERT_EQUAL_STRING("brew.thermal_mass_j_per_k", NOMINAL[I_BREW_MASS].name);
+    TEST_ASSERT_EQUAL_STRING("brew.heater_power_w", NOMINAL[I_BREW_POWER].name);
+    TEST_ASSERT_EQUAL_STRING("brew.loss_w_per_k", NOMINAL[I_BREW_LOSS].name);
+    TEST_ASSERT_EQUAL_STRING("brew.outlet_time_constant_s", NOMINAL[I_BREW_OUTLET_TAU].name);
+}
+
+/* --- What the description says about the new coefficient ------------------ */
+
+/* Read a file the build named, into `out`. Returns how many bytes were read. */
+static size_t read_named_file(const char *path, char *out, size_t capacity)
+{
+    FILE *const handle = fopen(path, "rb");
+    char message[256];
+
+    (void)snprintf(message, sizeof(message), "could not open %s", path);
+    TEST_ASSERT_NOT_NULL_MESSAGE(handle, message);
+
+    const size_t used = fread(out, 1u, capacity - 1u, handle);
+    (void)fclose(handle);
+    TEST_ASSERT_TRUE(used > 0u);
+    TEST_ASSERT_TRUE(used < capacity - 1u);
+    out[used] = '\0';
+    return used;
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C5: The new coefficient carries its range,
+/// origin and assumed error.
+///
+/// The range is the structure's own and is read here the way every other bound
+/// in this file is read -- by driving the loader either side of it, which names
+/// no structure symbol. A coefficient with no declared range would be accepted
+/// at any value, including ones that divide; this asserts that it is not.
+static void test_the_outlet_time_constant_has_an_enforced_admissible_range(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+
+    all_bounds(low, high);
+
+    const double minimum = low[I_BREW_OUTLET_TAU];
+    const double maximum = high[I_BREW_OUTLET_TAU];
+
+    /* A time constant at or below zero divides, so the range has to exclude it
+     * -- and it has to be a range rather than a floor. */
+    TEST_ASSERT_TRUE(minimum > 0.0);
+    TEST_ASSERT_TRUE(maximum > minimum);
+    TEST_ASSERT_TRUE(isfinite(maximum));
+
+    /* Enforced, not merely declared: either side of it is refused. */
+    for (int side = 0; side < 2; side++) {
+        char text[DESCRIPTION_MAX];
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        const double outside = side == 0 ? minimum / 2.0 : maximum * 2.0;
+
+        const size_t used = describe_with_outlet_tau(text, sizeof(text), outside);
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_FALSE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+        TEST_ASSERT_EQUAL_STRING("brew.outlet_time_constant_s", fault.parameter);
+    }
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C5: The new coefficient carries its range,
+/// origin and assumed error.
+///
+/// The assumed error is kept after the description is read, so the suite can
+/// require the shipped description to declare one for this coefficient rather
+/// than leaving it to the build check alone. The origin is not kept -- which
+/// values are accounted for is a question about a file -- so that half is
+/// check_parameter_origins.py's, and tools/mutate.py holds a defect proving it
+/// bites.
+static void test_the_shipped_description_declares_an_assumed_error_for_the_new_coefficient(void)
+{
+    char text[DESCRIPTION_MAX * 4];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+    float assumed = -1.0f;
+
+    const size_t used = read_named_file(REFERENCE_DESCRIPTION_PATH, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        plant_parameter_budget_for(&budget, "brew.outlet_time_constant_s", &assumed),
+        "the shipped description declares no assumed error for brew.outlet_time_constant_s");
+    TEST_ASSERT_TRUE(isfinite(assumed));
+    /*
+     * Above zero, and this one specifically. A declared error of nothing is a
+     * claim that a coefficient is exact, which is a claim nobody is entitled to
+     * make about a figure that stands for a residence time nothing has measured
+     * and that no reading of this machine can narrow. The figure itself is a
+     * judgement argued in the statement beside the description and is not
+     * pinned here.
+     */
+    TEST_ASSERT_TRUE(assumed > 0.0f);
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C6: The description's narrative and its
+/// variant carry the new coefficient.
+///
+/// A coefficient can be added to the list of values and left out of the account
+/// of what they mean, and out of the near-copy that establishes the values are
+/// read rather than compiled in. Both are separate files and neither is
+/// exercised by loading the description, so a suite that only loaded it would
+/// pass while the description had stopped describing itself.
+static void test_the_statement_and_the_variant_carry_every_coefficient(void)
+{
+    char statement[DESCRIPTION_MAX * 16];
+    char variant[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+
+    (void)read_named_file(REFERENCE_STATEMENT_PATH, statement, sizeof(statement));
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        char message[160];
+        (void)snprintf(message, sizeof(message), "%s names nothing for '%s'",
+                       REFERENCE_STATEMENT_PATH, NOMINAL[i].name);
+        TEST_ASSERT_NOT_NULL_MESSAGE(strstr(statement, NOMINAL[i].name), message);
+    }
+
+    /*
+     * The variant is accepted by the same loader, which is what establishes it
+     * carries the same set of names: a description missing any coefficient the
+     * structure requires is refused, and one naming a coefficient the structure
+     * does not have is refused too. That is the property the parameters-are-data
+     * comparison rests on -- the pair has to differ in a value rather than in
+     * which coefficients it mentions.
+     */
+    const size_t used = read_named_file(REFERENCE_VARIANT_PATH, variant, sizeof(variant));
+    memset(&fault, 0, sizeof(fault));
+    if (!plant_parameters_load(variant, used, &loaded, &fault)) {
+        char message[192];
+        (void)snprintf(message, sizeof(message),
+                       "%s was refused: fault %d at line %u, coefficient '%s'",
+                       REFERENCE_VARIANT_PATH, (int)fault.fault, (unsigned)fault.line,
+                       fault.parameter);
+        TEST_FAIL_MESSAGE(message);
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_the_actuation_channels_are_one_enumerated_set);
     RUN_TEST(test_the_structure_states_which_channels_it_answers);
     RUN_TEST(test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified);
+    RUN_TEST(test_the_coefficient_indices_name_what_they_claim);
+    RUN_TEST(test_the_water_on_its_way_to_the_group_trails_the_heated_mass);
+    RUN_TEST(test_the_water_follows_the_casting_by_its_own_time_constant);
+    RUN_TEST(test_a_shorter_outlet_time_constant_brings_the_water_closer);
+    RUN_TEST(test_the_state_vocabulary_carries_what_the_quantities_cannot);
+    RUN_TEST(test_every_state_carries_the_quantity_it_names);
+    RUN_TEST(test_a_state_read_that_cannot_be_answered_is_refused_and_writes_nothing);
+    RUN_TEST(test_the_unreported_state_is_reachable_through_the_seam_alone);
+    RUN_TEST(test_the_outlet_time_constant_has_an_enforced_admissible_range);
+    RUN_TEST(test_the_shipped_description_declares_an_assumed_error_for_the_new_coefficient);
+    RUN_TEST(test_the_statement_and_the_variant_carry_every_coefficient);
     RUN_TEST(test_the_model_advances_over_a_sequence_of_steps);
     RUN_TEST(test_a_step_at_rest_changes_nothing);
     RUN_TEST(test_many_steps_at_rest_change_nothing);

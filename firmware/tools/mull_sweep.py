@@ -82,6 +82,28 @@ COULD_NOT_LOOK = 2
 #: Where the judgement about each surviving mutant is written down.
 TRIAGE_RECORD = "mutation_triage.yaml"
 
+#: How long the unmutated suite is allowed before the runner calls it hung.
+#:
+#: This bounds only the warm-up and baseline runs, which the runner makes once
+#: per suite with nothing mutated. Each mutant's own budget is derived from how
+#: long the baseline actually took, so a generous figure here does not slow the
+#: sweep down -- it only decides how patient the runner is with the suite it is
+#: about to measure against.
+#:
+#: Stated rather than left to the runner's default, which is three seconds and
+#: is documented nowhere -- it was established by handing the runner a one
+#: millisecond timeout and watching the unmutated suite come back `Timedout`, and
+#: by the plant suite passing at 2.4 seconds and failing at 2.9. That is a figure
+#: sized for a unit test rather than for a suite that sweeps a sampled parameter
+#: space, and it stopped being an idle setting the moment these suites grew
+#: towards it: a baseline that overruns is reported as the original test failing,
+#: which reads as a broken suite rather than as a clock, and it would arrive
+#: first on whichever machine happened to be slowest rather than when somebody
+#: made the suite slower. What is left of the protection is what it was for -- a
+#: suite that genuinely hangs still stops the sweep, in a minute rather than in
+#: three seconds.
+BASELINE_TIMEOUT_MS = 60000
+
 #: What a survivor may be judged to be.
 #:
 #: `analysis` is the third answer because this project verifies in more than one
@@ -437,6 +459,8 @@ def run_mull(runner: str, program: str, config: str, project: str) -> dict:
                 reports,
                 "--report-name",
                 "sweep",
+                "--timeout",
+                str(BASELINE_TIMEOUT_MS),
             ],
             cwd=project,
             env=environment,
