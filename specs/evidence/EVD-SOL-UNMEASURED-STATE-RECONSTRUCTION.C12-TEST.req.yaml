@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C12-TEST
+type: evidence
+title: The estimator refuses a structure that lacks the state it reconstructs (SOL-UNMEASURED-STATE-RECONSTRUCTION.C12)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_narrow/test_plant_narrow.c::test_the_estimator_refuses_a_structure_without_the_state_it_reconstructs; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_estimator_refuses_this_architecture; firmware/test/test_estimator/test_estimator.c::test_a_structure_that_keeps_the_state_is_accepted; task fw:run
+text: |-
+  The fixture and boiler structures keep no state for the water leaving the heated mass, and against both the estimator refuses to initialise rather than running on a substitute: the instance answers nothing afterwards, steps refuse, and no residual is reported. The thermoblock structure keeps it and is accepted. The control law treats that refusal as it treats an untrustworthy reading -- the heater is commanded off and the fault latches -- and the host entry point walks that path, asserting the heater is off and that 64 subsequent steps are all latched. env:native_fixture and env:native_boiler build and run clean under task fw:run, whose artefact runner fails the gate on a non-zero exit, and all five artefact runs completed. The narrow and boiler suites pass, at 13 and 24 cases.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C12
+    type: satisfies

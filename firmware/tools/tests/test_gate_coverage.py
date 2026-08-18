@@ -1052,5 +1052,66 @@ class AGateWithNothingToCoverFails(unittest.TestCase):
         self.assertIn("0 structure(s)", result.stderr)
 
 
+class EstimatorCompiledBesideTheControlLogic(unittest.TestCase):
+    """SOL-UNMEASURED-STATE-RECONSTRUCTION.C11: the estimator compiles into the
+    target build alongside the control law.
+
+    Driven against a synthetic build file rather than this project's, so the
+    gate can be shown to fail. An environment that compiles the control logic
+    without the estimator does not link, and the environment most likely to be
+    left behind is the one nobody builds by hand.
+    """
+
+    def setUp(self):
+        self.tree = SyntheticTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def declare(self, environments):
+        declare_environments(self.tree.root.name, environments)
+        return run_check("check_estimator_compiled.py", "--project", self.tree.root.name)
+
+    @staticmethod
+    def with_estimator(**options):
+        declared = host_environment("alpha", **options)
+        declared["build_src_filter"] = declared["build_src_filter"] + " +<estimator/>"
+        return declared
+
+    def test_an_environment_compiling_both_passes(self):
+        result = self.declare([("native", self.with_estimator())])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("compile the estimator beside it", result.stdout)
+
+    def test_an_environment_compiling_the_control_logic_alone_fails(self):
+        result = self.declare(
+            [("native", self.with_estimator()), ("board", host_environment("alpha"))]
+        )
+        self.assertEqual(1, result.returncode)
+        self.assertIn("board", result.stderr)
+        self.assertNotIn("\n  native\n", result.stderr)
+
+    def test_an_environment_that_takes_the_estimator_back_out_is_caught(self):
+        dropped = self.with_estimator()
+        dropped["build_src_filter"] = dropped["build_src_filter"] + " -<estimator/>"
+        result = self.declare([("native", dropped)])
+        self.assertEqual(1, result.returncode)
+        self.assertIn("native", result.stderr)
+
+    def test_an_environment_required_to_be_refused_is_exempt(self):
+        result = self.declare(
+            [
+                ("native", self.with_estimator()),
+                ("broken", host_environment("alpha", custom_must_not_build="names no structure")),
+            ]
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_build_file_nothing_compiles_the_control_logic_in_is_refused(self):
+        environment = host_environment("alpha")
+        environment["build_src_filter"] = "+<plant/alpha/> +<app/native/>"
+        result = self.declare([("native", environment)])
+        self.assertEqual(2, result.returncode)
+        self.assertIn("without inspecting anything", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

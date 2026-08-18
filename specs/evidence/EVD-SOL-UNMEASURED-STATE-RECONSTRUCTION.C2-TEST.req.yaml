@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C2-TEST
+type: evidence
+title: A state no sensor channel reports is reconstructed (SOL-UNMEASURED-STATE-RECONSTRUCTION.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_a_state_no_channel_reports_is_reconstructed, ::test_a_state_read_before_initialisation_is_refused, ::test_a_state_outside_the_enumerated_set_is_refused, ::test_the_reconstruction_survives_a_withdrawn_reading, ::test_a_reconstruction_that_is_not_a_number_is_refused
+text: |-
+  Stepped against readings drawn only from the four channels hw_interface.h exposes, the estimator answers ESTIMATOR_STATE_BREW_TEMPERATURE_C -- the water on its way to the group, which corresponds to no member of hw_sensor_channel_t -- with a finite value equal to none of the four readings. Reading before initialisation, outside the enumerated set, through a null instance or into a null destination is refused rather than answered with a default, and the destination is left as the caller left it. A reconstruction that is not a number is refused on the same terms. The reconstruction keeps running when a reading is withdrawn, which is the regression guard on it being a model that is corrected rather than a reading passed through.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C2
+    type: satisfies

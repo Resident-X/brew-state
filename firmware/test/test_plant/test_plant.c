@@ -3415,6 +3415,127 @@ static void test_the_statement_and_the_variant_carry_every_coefficient(void)
     }
 }
 
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// This structure keeps every state the vocabulary names, so every one of them
+/// takes a write and reads back what was written. Correcting a reconstruction
+/// is what the write exists for, and a state that could not be written could
+/// not be corrected.
+static void test_every_state_this_structure_keeps_takes_a_write(void)
+{
+    plant_model_t model;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float held = 0.0f;
+        float read_back = 0.0f;
+
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &held));
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, held + 11.5f));
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read_back));
+        TEST_ASSERT_EQUAL_FLOAT(held + 11.5f, read_back);
+    }
+}
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// Written to one state, nothing else moves. A write that carried into its
+/// neighbours would make a correction to one channel silently a correction to
+/// all of them, and the estimator would be acting on states nothing observed.
+static void test_writing_one_state_leaves_the_others_where_they_were(void)
+{
+    plant_model_t model;
+    float before[PLANT_STATE_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &before[state]));
+    }
+
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, 71.25f));
+
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float now = 0.0f;
+        TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &now));
+        if (state == PLANT_STATE_BREW_OUTLET_TEMPERATURE_C) {
+            TEST_ASSERT_EQUAL_FLOAT(71.25f, now);
+        } else {
+            TEST_ASSERT_EQUAL_FLOAT(before[state], now);
+        }
+    }
+}
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// The refusals the write shares with the read: no instance, an instance that
+/// was never initialised, and a state outside the vocabulary. Each changes
+/// nothing rather than writing somewhere unintended.
+static void test_a_state_written_to_an_instance_that_cannot_take_it_is_refused(void)
+{
+    plant_model_t model;
+    plant_model_t uninitialised;
+
+    memset(&uninitialised, 0, sizeof(uninitialised));
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        TEST_ASSERT_FALSE(plant_model_set_state(&uninitialised, (plant_state_t)state, 1.0f));
+    }
+    TEST_ASSERT_FALSE(plant_model_set_state(NULL, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, 1.0f));
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    float outlet_before = 0.0f;
+    TEST_ASSERT_TRUE(
+        plant_model_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &outlet_before));
+    TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)PLANT_STATE_COUNT, 1.0f));
+    TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)(PLANT_STATE_COUNT + 1), 1.0f));
+
+    float outlet_after = 0.0f;
+    TEST_ASSERT_TRUE(
+        plant_model_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &outlet_after));
+    TEST_ASSERT_EQUAL_FLOAT(outlet_before, outlet_after);
+}
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// A written state is what the equations carry forward, not a value the next
+/// step discards. The water leaving is put somewhere the equations would not
+/// have taken it, and the step after is asked whether it started from there.
+static void test_a_written_state_is_what_the_next_step_advances_from(void)
+{
+    plant_model_t model;
+    plant_model_t untouched;
+    plant_actuation_t heating = {{0u}};
+
+    heating.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = ACTUATION_FULL_SCALE;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_init(&untouched, &parameters));
+
+    TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, 5.0f));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &heating, 100u));
+    TEST_ASSERT_TRUE(plant_model_step(&untouched, &heating, 100u));
+
+    float advanced = 0.0f;
+    float unwritten = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &advanced));
+    TEST_ASSERT_TRUE(
+        plant_model_state(&untouched, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &unwritten));
+
+    /* It carried the written value forward: still far below where the same step
+     * takes an instance that was not written to, and moved up from where it was
+     * put rather than snapping back. */
+    TEST_ASSERT_TRUE(advanced < unwritten - 10.0f);
+    TEST_ASSERT_TRUE(advanced > 5.0f);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -3494,5 +3615,9 @@ int main(void)
     RUN_TEST(test_an_assumed_error_is_read_however_it_is_spaced);
     RUN_TEST(test_the_robustness_classes_are_one_enumerated_set);
     RUN_TEST(test_the_reference_description_states_how_wrong_every_value_may_be);
+    RUN_TEST(test_every_state_this_structure_keeps_takes_a_write);
+    RUN_TEST(test_writing_one_state_leaves_the_others_where_they_were);
+    RUN_TEST(test_a_state_written_to_an_instance_that_cannot_take_it_is_refused);
+    RUN_TEST(test_a_written_state_is_what_the_next_step_advances_from);
     return UNITY_END();
 }

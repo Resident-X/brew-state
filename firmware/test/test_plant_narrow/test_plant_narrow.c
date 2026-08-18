@@ -24,6 +24,7 @@
 
 #include <unity.h>
 
+#include "estimator.h"
 #include "plant_model.h"
 
 #define STEP_MS 100u
@@ -407,6 +408,99 @@ static void test_a_state_read_before_initialisation_is_refused(void)
     }
 }
 
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// A structure keeping fewer states than the vocabulary names answers the write
+/// exactly where it answers the read, and refuses it everywhere else. A write
+/// quietly dropped would leave a caller believing a correction it made was
+/// taken, which is worse than being told the structure has nowhere to put it.
+static void test_a_structure_keeping_fewer_states_answers_some_writes_and_refuses_others(void)
+{
+    const float SENTINEL = -999.0f;
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    unsigned accepted = 0u;
+    unsigned refused = 0u;
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float held = SENTINEL;
+        const bool readable = plant_model_state(&model, (plant_state_t)state, &held);
+
+        if (readable) {
+            float read_back = SENTINEL;
+            TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, held + 7.5f));
+            TEST_ASSERT_TRUE(plant_model_state(&model, (plant_state_t)state, &read_back));
+            TEST_ASSERT_EQUAL_FLOAT(held + 7.5f, read_back);
+            accepted++;
+        } else {
+            TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)state, 1.0f));
+            refused++;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(accepted > 0u, "this structure accepted no write at all");
+    TEST_ASSERT_TRUE_MESSAGE(refused > 0u, "this structure refused no write, so nothing was shown");
+}
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
+/// state written through the seam.
+///
+/// The refusals that do not depend on which states a structure keeps: an
+/// instance that was never initialised, and a state outside the vocabulary.
+static void test_a_state_written_before_initialisation_is_refused(void)
+{
+    plant_model_t uninitialised;
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+
+    memset(&uninitialised, 0, sizeof(uninitialised));
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        TEST_ASSERT_FALSE(plant_model_set_state(&uninitialised, (plant_state_t)state, 1.0f));
+    }
+    TEST_ASSERT_FALSE(plant_model_set_state(NULL, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 1.0f));
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)PLANT_STATE_COUNT, 1.0f));
+}
+
+/// SOL-UNMEASURED-STATE-RECONSTRUCTION.C12: The estimator refuses a structure
+/// that lacks the state it reconstructs.
+///
+/// This structure keeps no state for the water leaving the mass, so an
+/// estimator has nothing here to reconstruct. It refuses rather than running on
+/// whichever state this structure does keep, and an instance that refused
+/// answers nothing afterwards.
+static void test_the_estimator_refuses_a_structure_without_the_state_it_reconstructs(void)
+{
+    const float SENTINEL = -999.0f;
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    estimator_t estimator;
+    float value = SENTINEL;
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+
+    TEST_ASSERT_FALSE(estimator_init(&estimator, &parameters));
+    TEST_ASSERT_FALSE(estimator_state(&estimator, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &value));
+    TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+
+    const plant_actuation_t idle = {{0u}};
+    TEST_ASSERT_FALSE(estimator_step(&estimator, &idle, 100u));
+
+    int32_t residual = 0;
+    TEST_ASSERT_FALSE(estimator_residual(&estimator, HW_SENSOR_BREW_TEMPERATURE, &residual));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -420,5 +514,8 @@ int main(void)
     RUN_TEST(test_a_command_with_two_faults_reports_the_same_one_every_time);
     RUN_TEST(test_zeroing_an_unanswered_channel_gives_the_same_trajectory);
     RUN_TEST(test_the_form_without_a_record_refuses_exactly_what_the_reporting_form_does);
+    RUN_TEST(test_a_structure_keeping_fewer_states_answers_some_writes_and_refuses_others);
+    RUN_TEST(test_a_state_written_before_initialisation_is_refused);
+    RUN_TEST(test_the_estimator_refuses_a_structure_without_the_state_it_reconstructs);
     return UNITY_END();
 }

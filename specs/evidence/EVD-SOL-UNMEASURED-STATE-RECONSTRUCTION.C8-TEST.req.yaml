@@ -1,0 +1,17 @@
+id: EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C8-TEST
+type: evidence
+title: The estimator reports the difference between each predicted and observed measurement (SOL-UNMEASURED-STATE-RECONSTRUCTION.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T15:28:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_every_channel_reports_its_own_difference, ::test_a_channels_correction_lands_on_its_own_state_and_no_other, ::test_the_residual_follows_the_imposed_discrepancy, ::test_a_channel_not_corrected_against_reports_no_residual
+text: |-
+  Each of the four channels is stood away from what the model predicts by a different amount and in a different direction, in that channel's own unit, and each reports exactly that difference -- so a correspondence with two channels crossed, or one that corrected against the brew channel alone, is caught rather than passing on the strength of one channel. Both were confirmed by mutation: restricting the correction loop to the brew channel, and crossing steam temperature onto the brew pressure state, each fail the suite. A channel's correction is shown to land on the state that channel observes and to leave every other state exactly where the equations left it. A channel the step did not correct against reports no residual at all rather than zero, and a channel whose prediction matched its observation reports zero and reports it as present, so the two are distinguishable.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION.C8
+    type: satisfies

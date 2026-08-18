@@ -1,0 +1,23 @@
+id: SOL-UNMEASURED-STATE-RECONSTRUCTION.C13
+type: criterion
+title: Every plant structure answers a state written through the seam
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The estimator's correction step has to put a corrected value back into the `plant_model_t`
+  instance it holds, and `plant_model.h` declares only a read of a structure's states, so
+  `firmware/tools/check_plant_encapsulation.py` leaves no admissible way to do it — a consumer
+  outside `src/plant` that reaches a field directly fails the build on every environment. The
+  seam therefore gains a write beside `plant_model_state`, refusing on the terms the read
+  already refuses on: a null or uninitialised instance, a state outside the enumerated set, or
+  a state this structure does not keep, each answered by refusal rather than by a silent write
+  or a substitute. The thermoblock, boiler and fixture structures each answer it, and the host
+  suite covering each asserts the accepted write and the refusals alike. Whether a value a
+  caller writes is plausible, and how far a state may be moved in one step, are out of scope —
+  this criterion covers that a state can be written at all, and that a structure which does not
+  keep one says so.
+links:
+  - target: SOL-UNMEASURED-STATE-RECONSTRUCTION
+    type: criterion-of

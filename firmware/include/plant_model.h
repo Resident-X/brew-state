@@ -222,4 +222,29 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
  */
 bool plant_model_state(const plant_model_t *model, plant_state_t state, float *value);
 
+/*
+ * Write one state the structure this build compiles integrates, in the unit
+ * that state is named in.
+ *
+ * The counterpart of plant_model_state, and here for the same reason. Work that
+ * reconstructs a state no sensor reports has to correct its own instance of the
+ * model toward what the machine reports, and correcting means putting a value
+ * back. Reaching into a structure's fields to do it is what the plant
+ * encapsulation check refuses, so without a write through the seam the
+ * correction has no admissible expression at all.
+ *
+ * Returns false and changes nothing when the instance is null, when it was
+ * never initialised, when the state is not one of the enumerated ones, or when
+ * it is enumerated but this structure does not keep it -- the same refusals the
+ * read answers with, for the same reasons. A structure that does not keep a
+ * state has nowhere to put the value, and quietly dropping it would leave a
+ * caller believing a correction it made was taken.
+ *
+ * What is written is not checked for plausibility. The seam has no view on
+ * which values a machine could be in, and a structure that rejected the ones it
+ * disagreed with would be deciding for the consumer whether its reconstruction
+ * is any good, which is the consumer's question.
+ */
+bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value);
+
 #endif /* PLANT_MODEL_H */

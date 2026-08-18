@@ -131,3 +131,29 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
         return false;
     }
 }
+
+bool plant_model_set_state(plant_model_t *model, plant_state_t state, float value)
+{
+    if (model == NULL || !model->initialised) {
+        return false;
+    }
+
+    /*
+     * The same one state the read answers, and the same refusals for the rest.
+     * A structure that answered a write it would not answer a read for could be
+     * written to and then not read back, which is a worse thing to be than
+     * narrow.
+     */
+    switch (state) {
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
+        model->accumulated = value;
+        return true;
+    case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+    case PLANT_STATE_STEAM_TEMPERATURE_C:
+    case PLANT_STATE_BREW_PRESSURE_BAR:
+    case PLANT_STATE_STEAM_PRESSURE_BAR:
+    case PLANT_STATE_COUNT:
+    default:
+        return false;
+    }
+}

@@ -146,13 +146,17 @@ tasks:
       # discovered from the build, so an environment added later is covered
       # without a line here naming it.
       - python3 tools/check_header_neutral.py include/hw_interface.h
-      - python3 tools/check_encapsulation.py src/control
+      - python3 tools/check_encapsulation.py src/control src/estimator include/estimator.h
       - python3 tools/check_direct_calls.py --project . --header include/hw_interface.h --objects-in src/control
       # Two environments are named here because comparing that pair is what the
       # check is, not because it carries a list.
       - python3 tools/check_control_identical.py --project . --env native --env stm32
       # The plant-model seam.
       - python3 tools/check_plant_header.py include/plant_model.h --plant-root src/plant --include-dir include
+      - python3 tools/check_plant_header.py include/estimator.h --plant-root src/plant --include-dir include
+      # Wherever the control logic is compiled, the estimator it drives from is
+      # compiled beside it. The environments are discovered from the build file.
+      - python3 tools/check_estimator_compiled.py --project .
       - python3 tools/check_plant_header.py include/plant_types.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_plant_header.py include/plant_support.h --plant-root src/plant --include-dir include --vocabulary-only
       # The vocabulary a value's origin is recorded in, and every description
