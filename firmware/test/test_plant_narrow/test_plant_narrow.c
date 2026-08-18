@@ -18,6 +18,8 @@
  * this environment builds is a description of its coefficients, as text, on the
  * same footing the machine-describing structure's coefficients are carried on.
  */
+#include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <unity.h>
@@ -329,10 +331,88 @@ static void test_the_form_without_a_record_refuses_exactly_what_the_reporting_fo
     TEST_ASSERT_FALSE(plant_model_step_reporting(&reporting_instance, &runnable, STEP_MS, NULL));
 }
 
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
+/// accessor.
+///
+/// This structure describes no machine, and it keeps one state rather than the
+/// five the vocabulary names. That is why the refusal is exercised here: the
+/// structures that describe a machine keep nearly all of them, so a refusal
+/// demonstrated only against those would be demonstrated against almost
+/// nothing -- the same reason this structure's actuation declaration is narrower
+/// than the channel vocabulary.
+///
+/// Nothing here says which state it keeps. That is the structure's own answer,
+/// and a test naming it would be asserting one structure's shape rather than
+/// what the seam does with a narrow one.
+static void test_a_structure_keeping_fewer_states_answers_some_and_refuses_others(void)
+{
+    const float SENTINEL = -999.0f;
+    plant_model_t model;
+    int answered_states = 0;
+    int refused_states = 0;
+
+    plant_actuation_t driving = {{0u}};
+    driving.level_permille[answered_channel()] = ACTUATION_FULL_SCALE;
+
+    initialise(&model);
+    for (int i = 0; i < SETTLE_STEPS; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &driving, STEP_MS));
+    }
+
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float value = SENTINEL;
+        char message[96];
+
+        (void)snprintf(message, sizeof(message), "state %d", state);
+        if (plant_model_state(&model, (plant_state_t)state, &value)) {
+            /* Answered, so it carries something the structure actually keeps
+             * rather than the sentinel it was handed. */
+            TEST_ASSERT_TRUE_MESSAGE(value != SENTINEL, message);
+            TEST_ASSERT_TRUE_MESSAGE(isfinite(value), message);
+            answered_states++;
+        } else {
+            /* Refused, so what the caller passed is exactly as it was. Zeroing
+             * it is the failure this is written against: a caller cannot tell a
+             * zero it was given from a state that happens to be zero. */
+            TEST_ASSERT_EQUAL_FLOAT_MESSAGE(SENTINEL, value, message);
+            refused_states++;
+        }
+    }
+
+    /* Both cases occurred, so neither branch above passed by never running. */
+    TEST_ASSERT_TRUE(answered_states > 0);
+    TEST_ASSERT_TRUE(refused_states > 0);
+    TEST_ASSERT_EQUAL_INT(PLANT_STATE_COUNT, answered_states + refused_states);
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
+/// accessor.
+///
+/// A state this structure does keep is still refused before the instance has
+/// been initialised, on the terms plant_model_quantity already refuses one. The
+/// refusal for an uninitialised instance and the refusal for a state the
+/// structure does not keep are different things, and an implementation that
+/// checked only the second would answer this one from a record that was never
+/// populated.
+static void test_a_state_read_before_initialisation_is_refused(void)
+{
+    const float SENTINEL = -555.0f;
+    plant_model_t uninitialised;
+
+    memset(&uninitialised, 0, sizeof(uninitialised));
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float value = SENTINEL;
+        TEST_ASSERT_FALSE(plant_model_state(&uninitialised, (plant_state_t)state, &value));
+        TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_the_seam_reports_a_narrower_set_than_the_machine_has);
+    RUN_TEST(test_a_structure_keeping_fewer_states_answers_some_and_refuses_others);
+    RUN_TEST(test_a_state_read_before_initialisation_is_refused);
     RUN_TEST(test_a_command_on_an_unanswered_channel_refuses_and_moves_nothing);
     RUN_TEST(test_a_refused_command_is_not_applied_with_the_unanswered_channel_dropped);
     RUN_TEST(test_a_refusal_names_the_channel_that_had_nowhere_to_land);

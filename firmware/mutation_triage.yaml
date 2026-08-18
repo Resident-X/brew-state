@@ -56,6 +56,16 @@
 # moved: the reasoning is unchanged because the arithmetic is unchanged, and an
 # entry whose code had actually moved would have had to be judged again.
 
+# The thermoblock's steam-pressure judgement was re-made at a new line when the
+# coffee side gained a second temperature. The comparison it is about did not
+# move relative to anything around it -- it was pushed down two lines by the
+# parameter table above it gaining an entry for the outlet time constant, and the
+# helper that slice added sits below it and moved it not at all. The expression
+# at its new line is character for character the one the judgement was written
+# about, so the reasoning stands unaltered. The
+# arithmetic that slice added produced mutants of its own, and the suite killed
+# every one of them; none of it is recorded here, which is what that means.
+
 # Every judgement about plant_parameters.c was re-made at a new line a second
 # time, when the grammar grew the error the design assumes for a value. The
 # loader gained a second annotation to read, a helper both of its public loaders
@@ -177,7 +187,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:75:31:
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:77:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two

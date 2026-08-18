@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-RECONSTRUCTABLE-STATE.C3-TEST
+type: evidence
+title: Every plant structure answers the state accessor (SOL-PLANT-RECONSTRUCTABLE-STATE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T14:22:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_narrow/test_plant_narrow.c::test_a_structure_keeping_fewer_states_answers_some_and_refuses_others
+text: |-
+  Six tests across the three suites pass under task fw:test. The thermoblock answers all five states, and test_every_state_carries_the_quantity_it_names drives them apart before pinning each to the quantity it names, so a case wired to the wrong field is caught: an accessor is a switch of assignments and produces no arithmetic for the operator sweep to mutate. The boiler refuses the outlet, keeping nothing between the mass and what leaves it, and its test asserts the destination is left as the caller passed it rather than zeroed. The fixture answers one state and refuses four, and its test asserts both branches occurred so neither passes by never running. Reading from an uninitialised instance is refused in all three suites on the terms plant_model_quantity already refuses one.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE.C3
+    type: satisfies

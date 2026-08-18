@@ -10,11 +10,14 @@
  * outside it that names them.
  *
  * The equations are the thinnest set that expresses this architecture: two
- * independently heated thermal masses, each losing to ambient, with brew
- * pressure driven by the pump and steam pressure following the steam mass
- * above saturation. Whether they describe any real machine cannot be settled
- * until there is one to measure against; what they establish here is that the
- * numbers and the equations are separable and replaceable.
+ * independently heated thermal masses, each losing to ambient; the water on its
+ * way to the group following the coffee block's temperature through a lag,
+ * because a low-mass flow-through system puts real dynamics between the metal
+ * and the stream; brew pressure driven by the pump; and steam pressure
+ * following the steam mass above saturation. Whether they describe any real
+ * machine cannot be settled until there is one to measure against; what they
+ * establish here is that the numbers and the equations are separable and
+ * replaceable.
  */
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
@@ -65,6 +68,7 @@ typedef struct {
     float brew_thermal_mass_j_per_k;
     float brew_heater_power_w;
     float brew_loss_w_per_k;
+    float brew_outlet_time_constant_s;
 
     float steam_thermal_mass_j_per_k;
     float steam_heater_power_w;
@@ -79,14 +83,31 @@ typedef struct {
 
 /*
  * One model instance: the states this structure integrates, and the record it
- * was initialised from. Steam pressure is not integrated -- it follows the
- * steam mass -- but it is kept here so a read costs no arithmetic.
+ * was initialised from.
+ *
+ * The coffee side carries two temperatures rather than one. `brew_temperature_c`
+ * is the casting the heater acts on, which is where this machine's brew sensor
+ * is and so is the one it reports; `brew_outlet_temperature_c` is the water on
+ * its way to the group, which is what an extraction is judged by and what
+ * nothing on the machine reads. On this architecture the second follows the
+ * first rather than being it, and keeping only one would say the metal and the
+ * stream are at the same temperature -- the assumption a flow-through machine is
+ * least entitled to make.
+ *
+ * The outlet is the state worth reconstructing precisely because no quantity
+ * carries it. Nothing downstream of the casting feeds back into these equations,
+ * so it is also a state nothing here can identify from a reading -- see the
+ * omissions in params/thermoblock.md.
+ *
+ * Steam pressure is not integrated -- it follows the steam mass -- but it is
+ * kept here so a read costs no arithmetic.
  */
 typedef struct {
     bool initialised;
     plant_parameters_t coefficients;
 
     float brew_temperature_c;
+    float brew_outlet_temperature_c;
     float steam_temperature_c;
     float brew_pressure_bar;
     float steam_pressure_bar;
@@ -100,9 +121,11 @@ typedef struct {
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
 
 /*
- * Advance both thermal masses over `seconds` under the given actuation. Each
- * mass takes in what its heater delivers at the commanded duty and gives up
- * what its loss coefficient carries to ambient.
+ * Advance both thermal masses over `seconds` under the given actuation, and the
+ * water on its way to the group with them. Each mass takes in what its heater
+ * delivers at the commanded duty and gives up what its loss coefficient carries
+ * to ambient; the water relaxes towards the casting it has just passed through,
+ * with the structure's outlet time constant.
  */
 void thermoblock_advance_temperatures(plant_model_t *model,
                                       const plant_actuation_t *actuation,

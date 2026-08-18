@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-RECONSTRUCTABLE-STATE.C4-TEST
+type: evidence
+title: A consumer reads a structure's state through the seam rather than around it (SOL-PLANT-RECONSTRUCTABLE-STATE.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T14:22:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_unreported_state_is_reachable_through_the_seam_alone
+text: |-
+  test_the_unreported_state_is_reachable_through_the_seam_alone passes. It sits in firmware/test/, outside firmware/src/plant/, includes no structure's own header, and reaches the water on its way to the group through plant_model_state, then walks every quantity to establish that none of them carries that number, so the seam operation is the only route to it rather than a second way to something already reachable. check_plant_encapsulation.py runs over src and test in task fw:check and reports 14 sources clean against 56 names owned by 3 structures. The check demonstrated its bite during this slice: an earlier draft of this test named a field of the loaded parameter record and the build was refused, naming the field.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE.C4
+    type: satisfies

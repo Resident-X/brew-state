@@ -2,17 +2,19 @@ id: SOL-PLANT-RECONSTRUCTABLE-STATE.C4
 type: criterion
 title: A consumer reads a structure's state through the seam rather than around it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  A host test outside `firmware/src/plant/` reads the heated-mass state through the new
-  seam operation, establishing that the state reconstruction needs is reachable without
-  naming a structure's fields. The plant-encapsulation check at
-  `firmware/tools/check_plant_encapsulation.py`, which covers the whole source root,
-  continues to fail the build for a consumer that names those fields directly, so the
-  seam operation is the only route rather than a convenience beside one. Which consumers
-  go on to use it is out of scope; the estimator that will is a separate deliverable.
+  A host test outside `firmware/src/plant/` reads the water on its way to the group
+  through the new seam operation, establishing that the state reconstruction needs
+  is reachable without naming a structure's fields. It is the state with no
+  quantity against it, so nothing else reaches it. The plant-encapsulation check at
+  `firmware/tools/check_plant_encapsulation.py`, which covers the whole source
+  root, continues to fail the build for a consumer that names those fields
+  directly, so the seam operation is the only route rather than a convenience
+  beside one. Which consumers go on to use it is out of scope; the estimator that
+  will is a separate deliverable.
 links:
   - target: SOL-PLANT-RECONSTRUCTABLE-STATE
     type: criterion-of

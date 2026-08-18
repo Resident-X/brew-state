@@ -791,6 +791,110 @@ static void test_the_suites_own_description_declares_no_assumed_error(void)
 }
 
 
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
+/// accessor.
+///
+/// This architecture heats the water in the vessel it delivers from, so nothing
+/// sits between the mass and what leaves it. Asking it for the water on its way
+/// to the group is asking the wrong structure, and it says so rather than
+/// handing back the vessel -- which is the whole value of the refusal, because a
+/// caller given the vessel under that name would go on to reconstruct a state it
+/// was already being told.
+static void test_this_structure_refuses_the_state_it_does_not_keep(void)
+{
+    const float SENTINEL = -777.0f;
+    plant_model_t model;
+    float value = SENTINEL;
+    float vessel = 0.0f;
+
+    const plant_actuation_t applied = heating();
+
+    initialise(&model);
+    for (int i = 0; i < SETTLE_STEPS; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &applied, STEP_MS));
+    }
+
+    TEST_ASSERT_FALSE(
+        plant_model_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &value));
+    /* Not zeroed, and not quietly the vessel either. */
+    TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+
+    TEST_ASSERT_TRUE(
+        plant_model_state(&model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, &vessel));
+    TEST_ASSERT_TRUE(vessel != SENTINEL);
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
+/// accessor.
+///
+/// Every state it does keep carries the quantity it names, so a case wired to
+/// the wrong field is caught here -- that is a switch of assignments, which
+/// produces no arithmetic for the operator sweep to mutate and passes every
+/// property asserted about the trajectory. The two temperatures come back as the
+/// one vessel, which is the same answer the quantities of those names give,
+/// because on this architecture they are the same body of water.
+static void test_every_state_this_structure_keeps_carries_what_it_names(void)
+{
+    plant_model_t model;
+    float mass_state = 0.0f;
+    float steam_state = 0.0f;
+    float brew_pressure = 0.0f;
+    float steam_pressure = 0.0f;
+    float quantities[PLANT_QUANTITY_COUNT];
+
+    plant_actuation_t applied = heating();
+
+    /* Heat and pump together, and long enough to carry the vessel past
+     * saturation: at rest both pressures are zero, and two states that are both
+     * zero cannot show a crossed pair. */
+    applied.level_permille[ACTUATION_CHANNEL_PUMP] = ACTUATION_FULL_SCALE / 2u;
+
+    initialise(&model);
+    for (int i = 0; i < BOIL_STEPS; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &applied, STEP_MS));
+    }
+    for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        TEST_ASSERT_TRUE(
+            plant_model_quantity(&model, (plant_quantity_t)quantity, &quantities[quantity]));
+    }
+
+    TEST_ASSERT_TRUE(
+        plant_model_state(&model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, &mass_state));
+    TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, &steam_state));
+    TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_BREW_PRESSURE_BAR, &brew_pressure));
+    TEST_ASSERT_TRUE(plant_model_state(&model, PLANT_STATE_STEAM_PRESSURE_BAR, &steam_pressure));
+
+    /* The temperatures are one vessel and the pressures are two different
+     * numbers, so a crossed pair among them would show. */
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_BREW_TEMPERATURE_C], mass_state);
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_STEAM_TEMPERATURE_C], steam_state);
+    TEST_ASSERT_EQUAL_FLOAT(mass_state, steam_state);
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_BREW_PRESSURE_BAR], brew_pressure);
+    TEST_ASSERT_EQUAL_FLOAT(quantities[PLANT_QUANTITY_STEAM_PRESSURE_BAR], steam_pressure);
+    TEST_ASSERT_TRUE(brew_pressure != steam_pressure);
+}
+
+/// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
+/// accessor.
+///
+/// A state read from an instance that was never initialised is refused on the
+/// terms plant_model_quantity already refuses one, here as in the structure that
+/// keeps every state -- so the refusal is the seam's and not one architecture's
+/// habit.
+static void test_a_state_read_from_an_uninitialised_instance_is_refused_here_too(void)
+{
+    const float SENTINEL = -888.0f;
+    plant_model_t uninitialised;
+    float value = SENTINEL;
+
+    memset(&uninitialised, 0, sizeof(uninitialised));
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        value = SENTINEL;
+        TEST_ASSERT_FALSE(plant_model_state(&uninitialised, (plant_state_t)state, &value));
+        TEST_ASSERT_EQUAL_FLOAT(SENTINEL, value);
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -801,6 +905,9 @@ int main(void)
     RUN_TEST(test_heat_raises_the_temperatures_and_lowers_no_quantity);
     RUN_TEST(test_the_same_sequence_twice_reproduces_the_same_trajectory);
     RUN_TEST(test_both_temperature_quantities_follow_the_one_vessel);
+    RUN_TEST(test_this_structure_refuses_the_state_it_does_not_keep);
+    RUN_TEST(test_every_state_this_structure_keeps_carries_what_it_names);
+    RUN_TEST(test_a_state_read_from_an_uninitialised_instance_is_refused_here_too);
     RUN_TEST(test_the_structure_reads_its_own_coefficients_and_no_others);
     RUN_TEST(test_the_vessel_step_is_the_energy_balance_it_claims);
     RUN_TEST(test_a_half_duty_delivers_half_the_power);

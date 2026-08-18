@@ -151,6 +151,11 @@ class TheScopeDecidesWhatIsMutated(unittest.TestCase):
         self.assertIn("PLANT_STRUCTURE_MACHINE_CLAIM", problems[0])
 
     def test_the_configuration_this_project_ships_names_no_population(self):
+        """SOL-PLANT-RECONSTRUCTABLE-STATE.C7: nothing is widened to take new
+        arithmetic into the sweep. The shipped configuration states only what the
+        sweep must never mutate; a population written back into it would be the
+        written-down list again, and arithmetic added to a structure would then
+        join the sweep only if somebody remembered to say so."""
         excludes, problems = mull_sweep.declared_excludes(PROJECT)
         self.assertTrue(excludes)
         self.assertEqual([], problems)
@@ -302,6 +307,11 @@ class ThePopulationFollowsTheTree(unittest.TestCase):
         self.assertEqual(excludes, written["excludePaths"])
 
     def test_the_population_this_project_ships_covers_every_structure_that_claims_a_machine(self):
+        """SOL-PLANT-RECONSTRUCTABLE-STATE.C7: the population follows the
+        structures declaring they describe a machine, so arithmetic added to one
+        of them is swept without anything being widened. Whether the mutants that
+        arithmetic produces are then killed or judged is the sweep's own run
+        against mutation_triage.yaml, which this cannot stand in for."""
         plant = os.path.join(PROJECT, "src", "plant")
         include = os.path.join(PROJECT, "include")
         structures = discover(plant, include)

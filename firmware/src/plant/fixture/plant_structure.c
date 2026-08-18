@@ -97,3 +97,37 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
         return false;
     }
 }
+
+bool plant_model_state(const plant_model_t *model, plant_state_t state, float *value)
+{
+    if (model == NULL || value == NULL || !model->initialised) {
+        return false;
+    }
+
+    /*
+     * Deliberately narrower than the quantities above, and narrower than the
+     * vocabulary. This structure describes no machine, so it is free to keep
+     * whatever states it likes, and keeping one is what makes the refusal of
+     * the rest something a test can trigger. The structures that do describe a
+     * machine answer nearly all of them, so a refusal demonstrated only against
+     * those would be demonstrated against almost nothing -- which is the same
+     * reason this structure's actuation declaration is narrower than the
+     * channel vocabulary.
+     *
+     * The one it answers is the accumulator, under the name of the mass a
+     * heater acts on. Nothing here claims that is a temperature of anything
+     * real.
+     */
+    switch (state) {
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
+        *value = model->accumulated;
+        return true;
+    case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+    case PLANT_STATE_STEAM_TEMPERATURE_C:
+    case PLANT_STATE_BREW_PRESSURE_BAR:
+    case PLANT_STATE_STEAM_PRESSURE_BAR:
+    case PLANT_STATE_COUNT:
+    default:
+        return false;
+    }
+}

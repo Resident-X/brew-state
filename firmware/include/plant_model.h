@@ -185,9 +185,41 @@ bool plant_step_admissible(const plant_actuation_t *actuation, uint32_t interval
  * Read one quantity the model exposes, in the unit that quantity is named in.
  *
  * Returns false and writes nothing when the instance or the destination is
- * null, or when the quantity is not one of the enumerated ones.
+ * null, when the instance was never initialised, or when the quantity is not
+ * one of the enumerated ones. Every structure answers every quantity -- they are
+ * the machine's rather than any structure's -- so there is no refusal here for a
+ * quantity a structure does not have. plant_model_state below has one, because
+ * states are the other way round.
  */
 bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
                           float *value);
+
+/*
+ * Read one state the structure this build compiles integrates, in the unit that
+ * state is named in.
+ *
+ * A separate operation from plant_model_quantity because the two ask different
+ * things. A quantity is what the machine has, and every structure answers all
+ * of them; a state is what a structure carries to produce those quantities, and
+ * which states it carries follows its architecture. A consumer that needs the
+ * second -- work reconstructing a state no sensor reports, or a test checking
+ * such a reconstruction against the truth the model holds -- has no way to ask
+ * for it through the quantities, and reaching around this seam into a
+ * structure's fields is what the plant encapsulation check refuses.
+ *
+ * Returns false and writes nothing when the instance or the destination is
+ * null, when the instance was never initialised, when the state is not one of
+ * the enumerated ones, or when it is enumerated but this structure does not
+ * keep it. The last of those is a refusal and not a reading of zero: a caller
+ * has to be able to tell "this architecture has no such state" from "this state
+ * is currently nothing", and the two demand opposite responses -- the first
+ * says the caller is asking the wrong structure, the second is an ordinary
+ * value. A refused read leaves the destination as the caller left it.
+ *
+ * Which states a structure keeps is fixed by the structure and does not vary
+ * over an instance's life, so a caller may establish it once at initialisation
+ * rather than checking every read.
+ */
+bool plant_model_state(const plant_model_t *model, plant_state_t state, float *value);
 
 #endif /* PLANT_MODEL_H */

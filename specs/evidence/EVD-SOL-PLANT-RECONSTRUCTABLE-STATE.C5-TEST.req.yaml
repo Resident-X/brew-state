@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-RECONSTRUCTABLE-STATE.C5-TEST
+type: evidence
+title: The new coefficient carries its range, origin and assumed error (SOL-PLANT-RECONSTRUCTABLE-STATE.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T14:22:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_outlet_time_constant_has_an_enforced_admissible_range
+text: |-
+  brew.outlet_time_constant_s carries an admissible range of 0.001 to 100 seconds in the thermoblock's parameter table, and test_the_outlet_time_constant_has_an_enforced_admissible_range drives the loader either side of it and requires PLANT_PARAMETER_OUT_OF_RANGE naming the coefficient, so the range is enforced rather than merely declared. firmware/params/thermoblock.params carries the value with an assumed error of 0.7, the widest fraction in the description, and an estimated origin accounting for where the figure came from and why no measurement of it is easy. test_the_shipped_description_declares_an_assumed_error_for_the_new_coefficient reads that error back through the budget seam and requires it above zero. check_parameter_origins.py and check_assumed_error.py both pass in task fw:check, each reporting one description claiming a machine with every value accounted for, and tools/mutate.py holds defects proving each of them bites.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE.C5
+    type: satisfies

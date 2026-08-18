@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-RECONSTRUCTABLE-STATE.C2-INSPECTION
+type: evidence
+title: The plant seam declares a vocabulary for the states a structure keeps (SOL-PLANT-RECONSTRUCTABLE-STATE.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-18T14:22:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/include/plant_types.h::plant_state_t
+text: |-
+  plant_state_t is declared in firmware/include/plant_types.h beside plant_quantity_t and separate from it, and plant_model_state is declared in firmware/include/plant_model.h beside plant_model_quantity. The existing enumeration is unchanged. No signature names a structure: the read takes the plant_model_t the seam already carries. check_plant_header.py runs over plant_types.h in task fw:check with --vocabulary-only and reports it carries vocabulary only, names no structure, and compiles against all three structures. test_the_state_vocabulary_carries_what_the_quantities_cannot asserts the state vocabulary is strictly larger than the quantity one, which is the substance of the split since a state with no quantity against it is what makes reconstruction worth anything, and that every member of it is either answered or cleanly refused.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE.C2
+    type: satisfies

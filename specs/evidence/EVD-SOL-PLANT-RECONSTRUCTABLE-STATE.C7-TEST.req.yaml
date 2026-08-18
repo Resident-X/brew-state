@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-RECONSTRUCTABLE-STATE.C7-TEST
+type: evidence
+title: The mutants the new arithmetic produces are killed or judged (SOL-PLANT-RECONSTRUCTABLE-STATE.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-18T14:22:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/mutation_triage.yaml
+text: |-
+  task fw:sweep passes. The population is derived from the structures declaring they describe a machine, so the new arithmetic joined it with nothing widened: mull.yml still carries only exclusions, and a population written back into it is refused as a finding. The sweep drew 183 mutants before this slice and 191 after, so the eight the new arithmetic produced were all killed, survivors staying at 11 and every one of those already judged. One existing judgement was re-made at a new line, the thermoblock's steam-pressure comparison having been pushed down two lines by the parameter table above it gaining an entry; the expression at its new line is character for character the one the judgement was written about. No gap verdict was recorded and none was needed.
+links:
+  - target: SOL-PLANT-RECONSTRUCTABLE-STATE.C7
+    type: satisfies

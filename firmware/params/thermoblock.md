@@ -12,14 +12,17 @@ The reference machine declared in `../../docs/reference-machine.md`: two indepen
 
 ## The states the structure integrates
 
-Each is a field the model advances from one step to the next. All four are single precision, as everything crossing the seam is.
+Each is a field the model advances from one step to the next. All five are single precision, as everything crossing the seam is.
 
 | State | Physical thing | Unit |
 |---|---|---|
 | `brew_temperature_c` | Bulk temperature of the coffee thermoblock's casting, taken as uniform | °C |
+| `brew_outlet_temperature_c` | Temperature of the water on its way from that casting to the group | °C |
 | `steam_temperature_c` | Bulk temperature of the steam thermochamber's casting, taken as uniform | °C |
 | `brew_pressure_bar` | Pressure in the brew path between the pump and the group | bar, gauge |
 | `steam_pressure_bar` | Pressure in the steam path | bar, gauge |
+
+The coffee side carries two temperatures because on this architecture they are two things. The element acts on the casting, and the water the group receives has passed through that casting and left it; a machine that heats water as it flows past puts real dynamics between the metal and the stream, and a description carrying one temperature for both would be asserting there are none. The casting is the one the machine senses — its brew sensor is in the casting, which is where a sensor can physically go — and the water at the group is the one an extraction is judged by, which is why the two have to be separate before anything can reconstruct the second from the first. The steam side carries one because nothing is drawn through it in the same way — what a steam draw does to that mass is among the omissions at the end of this statement.
 
 `steam_pressure_bar` is held alongside the others but is not integrated independently: every step recomputes it from `steam_temperature_c` through the saturation relation below. It is a state in the record and a function in the equations, and treating it as though it had its own dynamics would be wrong.
 
@@ -33,6 +36,18 @@ These are what a consumer can read back through `plant_model_quantity`. Each is 
 | `PLANT_QUANTITY_STEAM_TEMPERATURE_C` | `steam_temperature_c` |
 | `PLANT_QUANTITY_BREW_PRESSURE_BAR` | `brew_pressure_bar` |
 | `PLANT_QUANTITY_STEAM_PRESSURE_BAR` | `steam_pressure_bar` |
+
+There are five states and four quantities, and the one with no quantity against it is `brew_outlet_temperature_c`. That is the point of carrying it: it is the temperature the design most wants and the one the machine does not report, so it is what work reconstructing an unmeasured state has to reconstruct. Reading it is a separate operation from reading a quantity — `plant_model_state`, over the vocabulary below — because the quantities are the machine's and the states are this structure's, and a structure of another architecture answers a different set.
+
+| State reachable through `plant_model_state` | Answered from |
+|---|---|
+| `PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C` | `brew_temperature_c` |
+| `PLANT_STATE_BREW_OUTLET_TEMPERATURE_C` | `brew_outlet_temperature_c` |
+| `PLANT_STATE_STEAM_TEMPERATURE_C` | `steam_temperature_c` |
+| `PLANT_STATE_BREW_PRESSURE_BAR` | `brew_pressure_bar` |
+| `PLANT_STATE_STEAM_PRESSURE_BAR` | `steam_pressure_bar` |
+
+This structure keeps every state the vocabulary names, which is a property of this architecture and not of structures in general.
 
 ## What drives it
 
@@ -60,6 +75,18 @@ advanced over a step by the exact solution for a constant duty, rather than by a
 | `ambient_temperature_c` | `T_ambient`, shared by both masses and the state both start from | °C |
 
 The two masses are independent. Nothing in these relations couples one to the other — which is a property of this machine, whose blocks are separately heated and not plumbed in series.
+
+**The water on its way to the group.** A first-order relaxation towards the casting it has just passed through:
+
+    τ · dT_outlet/dt = T_brew − T_outlet
+
+| Coefficient | Enters as | Unit |
+|---|---|---|
+| `brew.outlet_time_constant_s` | `τ`, how far the water the group receives lags the casting | s |
+
+The element does not appear in this relation, and that is the whole of it: the heater reaches the water only through the casting. Nor does the water appear anywhere else: nothing downstream of the casting enters any other relation here, which is what the omissions below say about identifying this coefficient. Set `τ` small enough and the two temperatures become one, which is the model this description used to be — so the coefficient is also the measure of how much of a distinction is being claimed. What it stands for is a residence time and a length of tube rather than a thermal capacity, so it is not derived from the coefficients above and cannot be.
+
+Advanced over a step by the exact solution for a casting that traverses the step linearly, rather than by holding the casting at either end of its traverse. Holding it would be first-order in the step length, and every other relation here is exact for its own step — the pressure relations because what they relax towards really is constant across a step, and the masses because the closed form for a constant duty is available.
 
 **Brew pressure.** A first-order relaxation towards what the pump is commanding:
 
@@ -96,6 +123,7 @@ The reasoning, by the kind of fact each figure is:
 - **The loss coefficients** are the loosest figures in the description, deliberately. They come from exposed area under still-air convection with no allowance at all for conduction into the chassis, and that path exists and is not small. The estimate is therefore known to be low rather than merely uncertain, and the fraction against each is wide enough to admit a value well above it.
 - **The pump's pressure** is a nameplate rating used for something it is not: what the pump makes against a closed outlet, standing in for what the brew path settles to at full duty. That substitution is a judgement rather than a reading, and the true figure is lower rather than symmetrically uncertain — the fraction is sized to reach it.
 - **The brew path's time constant** comes from comparable machines rather than from this one, whose compliance and fill volume are not established. It is also the coefficient the extraction transient is most sensitive to, so it carries about half the value: a coefficient that is both poorly known and influential is where a narrow assumed error does the most damage.
+- **The outlet time constant** is the widest fraction in the description, and it is wide for a different reason from the loss coefficients: those are known to be wrong in a direction, and this one is barely known at all. It stands for a residence time and a run of tube that have not been measured, and measuring them is not cheap — it needs a temperature at the group during an extraction, which is precisely the reading this machine is not instrumented to take. It is also the coefficient that decides how much of a gap there is between the casting and the water, so anything reconstructing the water from a reading of the casting — which is the only reading this machine has — is sensitive to it directly. A narrow fraction here would be a claim nobody is in a position to make.
 - **Ambient** is not a property of the machine at all but of the room it stands in, and it moves. The fraction against it covers an ordinary indoor range rather than an error in a measurement, because there is no measurement — a machine commissioned in a cold garage sits at one end of it and one in a warm kitchen at the other.
 - **The saturation temperature** is the tightest figure in the description, and the only one whose uncertainty is not really about the machine: water boils where the atmosphere says it does, so the fraction against it stands for the elevation and the weather the machine might be operated at rather than for any doubt about the steam tables.
 - **The saturation slope** is read off the same tables and is arithmetically sound, but it is a local slope standing in for a curve. Its error is a property of where it is used rather than of the reading: close to saturation it is nearly exact, and well above — where the steam thermostat permits the mass to go — it understates the truth by a factor. The fraction is sized for the range the model may legitimately be used over. It is not a licence to use the model outside that range, which the omission below rules out entirely.
@@ -104,8 +132,9 @@ The reasoning, by the kind of fact each figure is:
 
 Each of these is absent on purpose. Some belong to work not yet done, and some are outside what a plant description is for — but none of them is an oversight, and a design decision that depends on one is depending on something this description does not carry.
 
-- **Water flow, and the energy it carries away.** Nothing here models water entering a block, being heated, and leaving. The masses lose energy only to ambient. This is the largest omission by far: during an extraction or a steam draw, flow dominates the thermal balance, and the model will understate the droop.
-- **The mass and temperature of anything downstream** — group head, portafilter, the water already in the path. Brew temperature here is the casting's, not the water's at the puck.
+- **Water flow, and the energy it carries away.** Nothing here models water entering a block, being heated, and leaving. The masses lose energy only to ambient. This is the largest omission by far: during an extraction or a steam draw, flow dominates the thermal balance, and the model will understate the droop. The outlet relation does not soften this. It carries the casting's temperature to the water with a lag and takes no energy out of the casting to do it, so it is a description of delay and not of flow — and its time constant is fixed rather than moving with the rate water is actually drawn at, which on a real machine is what would set it.
+- **The mass and temperature of anything downstream** — group head, portafilter, the water already in the path. The outlet temperature here is the water as it leaves the casting, which is not the water at the puck: everything between the two is absent.
+- **Any way to identify the outlet time constant from what the machine senses.** This is a consequence of the first omission rather than a separate choice, and it is the sharpest limit in this description. The machine's only brew temperature sensor is in the casting, and the outlet relation is downstream of it — the water takes nothing out of the casting in these equations, so nothing the sensor reads depends on that coefficient. A prediction error computed against that sensor is therefore blind to it, and so is anything built on such an error: an outlet constant that is wrong, or one that moves as the water channel fouls, produces no residual at all rather than a small one. What this description carries about that coefficient is an assumed error and nothing else, and no run of the machine as it stands can narrow it. Closing it needs either a flow term in the relations above, which would make the casting's own reading depend on what is drawn through it, or an observation downstream of the casting. Which of those is the answer is not settled here.
 - **Any coupling between the two sides.** No shared water, no shared supply budget, no heat conducted between the blocks through the chassis. The supply budget is real on this machine and is reasoned about elsewhere; it is not in these equations.
 - **The pump's flow-versus-pressure characteristic, and the puck.** Pressure follows the command with a time constant and no resistance term; the model has no notion of what is downstream of the pump or of how much water moves.
 - **The hot-water path and the three-way valve.** The machine serialises espresso and hot water through one block in the plumbing. This description carries one brew path and cannot represent that contention.
