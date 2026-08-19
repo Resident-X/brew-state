@@ -1,0 +1,17 @@
+id: DEL-SIM-STEAM-DRAW-TERM.C2
+type: criterion
+title: A draw enters the plant as an input supplied from outside the control law rather than a level on an actuation channel
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The pump is commanded and the wand is not: the operator opens it, and the machine neither schedules
+  it nor is told it is coming. Representing it as a permille level beside the brew heater, steam
+  heater and pump would make the disturbance the steam side is judged on rejecting look like
+  something the controller sets, and would invite a later loop to close around a quantity it does not
+  get to move. The existing channels keep their meanings unchanged.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: criterion-of

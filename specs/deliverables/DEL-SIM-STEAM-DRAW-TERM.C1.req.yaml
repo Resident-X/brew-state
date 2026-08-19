@@ -1,0 +1,19 @@
+id: DEL-SIM-STEAM-DRAW-TERM.C1
+type: criterion
+title: The steam mass loses energy to the steam drawn from it, written through what that steam carries away
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Today the mass loses energy only to ambient, so holding the wand open costs the description nothing
+  and a draw of any length looks the same as no draw at all. What leaves is written through the
+  enthalpy the drawn steam carries relative to the feed that replaces it, so it depends on the rate
+  steam is drawn and on the state it leaves in rather than on a coefficient that widens while the
+  valve is open. A term that merely grew with valve position would reproduce the droop and none of
+  its cause. Latent heat enters the relations with it; steam quality as a delivered property does
+  not, and stays absent.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: criterion-of

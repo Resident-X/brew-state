@@ -1,0 +1,17 @@
+id: DEL-SIM-STEAM-DRAW-TERM.C3
+type: criterion
+title: Steam pressure and steam temperature diverge once a draw is open
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Pressure is recomputed each step from the block temperature through a local saturation slope, which
+  holds for a closed vessel at equilibrium and fails for one venting to atmosphere. While the valve
+  is open the two are no longer tied, so pressure becomes worth observing in its own right rather
+  than being recoverable from temperature. Which quantity a steam loop works with stays open; a
+  description in which one is an affine function of the other would settle that by construction.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: criterion-of

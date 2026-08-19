@@ -1,0 +1,17 @@
+id: DEL-SIM-STEAM-DRAW-TERM.C5
+type: criterion
+title: The description's declared error and stated omissions match the relations once the draw enters them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  New coefficients carry their assumed error and the origin of their figure by the same route every
+  other value in the description already travels, so a draw coefficient cannot be copied or edited
+  without both accounts travelling with it. The omissions the description states are corrected where
+  this work removes one, and what remains absent is named rather than left implied: steam quality as
+  a delivered property, and the contention between the two sides drawing on one supply.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: criterion-of
