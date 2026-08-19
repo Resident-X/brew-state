@@ -1,21 +1,23 @@
 id: DEL-MAINTENANCE
 type: deliverable
 category: epic
-title: Remediation of delivered work that fell short of its own criteria
+title: Maintenance and business-as-usual — ongoing defect correction and emergent work
 status: active
 level: epic
-version: 1
+version: 2
 text: |
-  Work closed out under a sealed or attested deliverable sometimes turns out not to have delivered what that deliverable's own criteria required. brew-state carries the remediation of those shortfalls here rather than in the closed deliverable, which admits no further work.
+  The standing home for emergent, corrective, and business-as-usual work that arises outside the roadmap's value-delivery phases: defects in delivered behaviour, small corrections, cleanup, and patching, together with remediation of work that shipped without honouring its own sealed criteria. Each item is grouped here as a child task or solution and traces to the requirement criterion whose behaviour it restores, so this work can be ranked and scheduled independently of net-new delivery while each item still points at the intent it serves.
 
-  Each confirmed shortfall becomes one criterion of this epic, naming the closed deliverable whose stated intent went unmet and the observable state that remediation restores, with the task or solution that closes it wired beneath. Nothing is admitted that does not meet that description: the gap must be against intent the closed deliverable already stated, and the deliverable must be closed to further work. A gap against intent recognised only since closure is new scope and is authored where that scope belongs; a gap in work still open is closed in the open work.
-
-  This epic carries no criteria until a shortfall is confirmed, and it is sealed only when the graph itself is complete.
+  The lane is continuous: it is never itself sealed, and its state is only ever the rolled-up state of whatever work it currently holds. It carries the maintenance role marker so it is distinguishable from strategic delivery by query rather than by title or prose, and it sits outside the roadmap's phases — reached by name, not by walking the delivery tree from the roadmap.
 rationale: |
-  Sealing and attestation are deliberately one-way: a closed deliverable's criteria are the historical record of the spec its work was built against, and editing them destroys the evidence of what was actually agreed. That leaves a real hole. When a defect surfaces that the closed criteria plainly already required, there is nowhere to put the fix — the deliverable that owed it cannot take it, and inventing a new phase for every such fix would shred the roadmap.
+  A closed deliverable admits no further work, yet defects surface in delivered behaviour and ordinary maintenance never stops. Both need a delivery-chain home that is ranked alongside strategic work but is not a phase of it and never itself completes. This epic is that home. It groups standalone corrective and business-as-usual work at the epic level so cross-domain items attach as ordinary children rather than as solutions hung directly off a single milestone.
 
-  Supersession is the wrong instrument for this case, and the distinction is worth stating because the two are easily conflated. Supersession corrects a spec that was wrong: the criterion said the wrong thing, so a successor deliverable carries the right thing. This epic covers the opposite case, where the criterion said the right thing and the delivery did not honour it. Superseding a sound criterion to re-state it unchanged would misrecord the history as a specification error.
+  It replaces an earlier, narrower model in which every confirmed shortfall in sealed work became its own criterion, naming the closed criterion it missed, with a solution beneath. That model conflated a criterion — a specification of done — with a work-tracking slot, grew the criterion list by one for every fix, and by construction excluded general maintenance that corrects live or emergent behaviour rather than remediating a sealed criterion. The continuous-lane model keeps a single criterion that composes by cascade over its children, and carries admission discipline on each child's trace to the requirement it restores rather than on a criterion per shortfall. DEC-MAINTENANCE-CONTINUOUS-LANE records that change and the gate it accepts loosening.
 
-  The admission gate is what stops this from becoming a dumping ground, and it is deliberately narrow on two axes rather than one. Closure is the first: work still open absorbs its own defects, so routing a fix here to avoid reopening a live deliverable is an evasion, not a use. Intent already stated is the second, and it is the load-bearing one — it forces the author to point at the specific closed criterion that was not honoured. Anything that cannot name that criterion is not remediation; it is scope discovered late, and the discipline this project runs on is that discovered scope is authored as new nodes rather than smuggled in as a fix.
-
-  This epic sits outside the roadmap's phases rather than under one of them, because remediation is not a stage of the work and does not sequence against the others. Its consequence is accepted: the epic does not surface when the delivery tree is walked from the roadmap, so its contents are reached by naming it. That is preferable to fitting a non-phase into a phase list and corrupting what a phase means.
+  The lane sits outside the roadmap's phases because maintenance is not a stage of the work and does not sequence against the others. Its consequence is accepted: it does not surface when the delivery tree is walked from the roadmap, so its contents are reached by naming it. Its continuous closure is what keeps the seal surfaces from ever asking it to complete; its state is only the state of the work it currently holds.
+attributes:
+  role: maintenance
+  closure: continuous
+links:
+  - target: DEC-MAINTENANCE-CONTINUOUS-LANE
+    type: justified-by
