@@ -1,0 +1,81 @@
+id: DEL-SIM-STEAM-DRAW-TERM
+type: deliverable
+category: task
+title: Steam carries energy away in the plant model, and a draw is something the operator opens, not something the machine commands
+status: active
+level: task
+version: 1
+text: |
+  The plant description carries what leaving steam does to the mass that made it. Today the steam
+  mass loses energy only to ambient, and drawing steam from it costs the description nothing: the
+  wand can be held open indefinitely without anything registering that steam has left. A loop asked
+  to hold steam character for the whole of a draw would be asked to reject a disturbance the
+  description does not contain, and would satisfy that demand by ignoring the wand entirely.
+
+  What a draw removes is the enthalpy of the steam drawn, measured against the feed that replaces it,
+  rather than a loss to ambient that widens while the valve is open. A term that merely grew with
+  valve position would reproduce the droop and none of its cause, and would leave the description
+  unable to say what happens when the same energy leaves at a different rate. Latent heat enters the
+  relations with it.
+
+  Demand and feed are separate, and only one of them is commanded. How far the wand is opened is set
+  by hand; the knob carries a microswitch so the machine can observe that a draw has begun, but it
+  does not choose the demand, and that is what makes a draw the disturbance the steam side is judged
+  on rejecting. The feed is the other half: the machine carries two pumps, one to each side, and the
+  steam side holds no reservoir, so the rate water reaches the block is the rate steam can be made.
+  The description gains both -- a demand supplied from outside the control law, and a commanded steam
+  feed the shared channel vocabulary does not yet carry.
+
+  Once a draw is open, steam pressure stops being a function of steam temperature. Pressure is
+  recomputed each step from the block temperature through a local saturation slope, which holds for a
+  closed vessel sitting at equilibrium and fails for one venting to atmosphere. Letting the two
+  diverge while the valve is open is what makes pressure worth observing separately from temperature,
+  and so what leaves the choice of which quantity a steam loop regulates open to be answered by
+  simulation rather than settled by the shape of the model.
+
+  Out of scope: what a steam loop regulates and how readiness is decided, both of which
+  REQ-STEAM-DELIVERY-001 holds open deliberately and which this task supplies the plant behaviour to
+  answer rather than answering; the loop itself, which is DEL-SIM-STEAM-LOOP's work; measuring steam
+  draw or steam pressure on the physical machine, which is bench instrumentation; steam quality as a
+  delivered property, which the description does not carry and which this task does not introduce;
+  and the contention between the two sides drawing on one supply, which the description cannot
+  represent and which stays absent.
+rationale: |
+  The steam side is where the disturbance-rejection claim is actually tested, because opening the
+  valve is a large step the controller cannot anticipate from the demand itself. That claim is only
+  testable against a description in which opening the valve does something. Adding the term is
+  therefore not an improvement in fidelity but the precondition for the steam loop's criteria meaning
+  anything: without it, holding for the whole of a draw regardless of its duration is satisfied by a
+  controller that never reacts to the wand at all.
+
+  It is a separate task from the loop for the same reason the flow term is separate from the coffee
+  loop. It changes the plant description and its declared error, which later work reads -- the
+  robustness sweep and the sensitivity analysis both consume the relations this changes -- while the
+  loop changes only what is done with them. Keeping them apart also keeps the loop honest, since a
+  loop authored in the same breath as the plant behaviour it is judged against can be tuned to the
+  description rather than to the machine.
+
+  Separating demand from feed is the substantive modelling choice, and it is the one that decides
+  whether a later loop has anything to work with. Treating a draw as wholly exogenous would be
+  faithful to the wand and wrong about the machine: the steam pump is commanded, and on a side with
+  no reservoir it is the only handle by which delivered quantity can be reduced while what is
+  delivered is held to standard. A description that carried the demand but not the feed would leave
+  that behaviour unrepresentable and the requirement that asks for it unbuildable, which is why the
+  feed is named here rather than left to the loop to discover.
+
+  Letting pressure and temperature diverge under draw is the second choice. The graph deliberately
+  leaves open which quantity a steam loop regulates, and that question cannot be studied in a
+  description where one is an affine function of the other -- the model would answer it by
+  construction, and the answer would be an artefact of the linearisation rather than a property of
+  the machine. Preserving the divergence keeps the decision where the requirement put it.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: depends-on
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets

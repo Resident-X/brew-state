@@ -1,0 +1,16 @@
+id: DEL-SIM-STEAM-DRAW-TERM.C4
+type: criterion
+title: The plant reports the rate steam is drawn as a readable quantity
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The quantity sits beside the temperatures and pressures the plant already reports and is reached
+  the same way through the shared plant interface, without naming a structure. A loop that must
+  reject a draw then has something to read, and a later bench measurement has something to be
+  compared with.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: criterion-of

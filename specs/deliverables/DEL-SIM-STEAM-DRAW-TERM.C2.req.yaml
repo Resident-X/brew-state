@@ -1,0 +1,17 @@
+id: DEL-SIM-STEAM-DRAW-TERM.C2
+type: criterion
+title: How much steam a draw demands enters the plant from outside the control law
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  How far the wand is opened is set by hand, and nothing the control law writes changes it. The knob
+  carries a microswitch, so the machine can observe that a draw has begun; what it cannot do is
+  choose the demand, which is why this is the disturbance the steam side is judged on rejecting
+  rather than an input it schedules. It therefore reaches the plant from outside the control law, and
+  what the machine does command about a draw is the feed, not the demand.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: criterion-of
