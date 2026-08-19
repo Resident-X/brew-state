@@ -4,9 +4,12 @@ category: epic
 title: The coffee side holds its targets in simulation across both deliveries it serves
 status: active
 level: epic
-version: 3
+version: 4
 text: |
-  In simulation against the plant description, the coffee side holds both of the deliveries it serves. Water arriving at the group tracks the commanded temperature for a whole extraction from whatever thermal state the preceding demand left behind, hot water is dispensed within the drinking-temperature band with rate yielding to temperature, and contention between the two for the shared heated mass is resolved by the machine. Deliveries the machine ends are commanded as a profile carrying its own end condition, refused before starting if they cannot be achieved, and reported on when they depart from what was asked.
+  In simulation against the plant description, the coffee side holds both of the deliveries it serves. Water arriving at the group tracks the commanded temperature for a whole extraction from whatever thermal state the preceding demand left behind, hot water is dispensed within the drinking-temperature band with rate yielding to temperature, and contention between the two for the shared heated mass is resolved by the machine. The commanded course is acted on before its effect reaches the water rather than after the error it
+  leaves behind, so the loop is exercised against a known future input rather than as a reactive loop
+  that happens to pass a nominal test. Deliveries the machine ends are commanded as a profile carrying
+  its own end condition, refused before starting if they cannot be achieved, and reported on when they depart from what was asked.
 rationale: |
   The coffee side is the constrained side of this machine: it serves both espresso and hot water from one heated mass and runs close enough to its protection trip point that the margin is thin. Both deliveries are demonstrated together rather than separately because the hard part is neither of them alone — it is the contention between them, which no split that puts them in different units of work would exercise.
 
@@ -19,6 +22,8 @@ links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-ESTIMATOR
+    type: depends-on
+  - target: DEL-SIM-FLOW-TERM
     type: depends-on
   - target: DEL-SIM-UNCERTAINTY-BUDGET
     type: depends-on
@@ -50,7 +55,9 @@ links:
     type: targets
   - target: REQ-HOT-WATER-001.C4
     type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C1
     type: targets
-  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+  - target: REQ-SEQUENCE-CONSISTENCY-001.C2
     type: targets

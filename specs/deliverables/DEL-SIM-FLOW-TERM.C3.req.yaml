@@ -1,0 +1,18 @@
+id: DEL-SIM-FLOW-TERM.C3
+type: criterion
+title: The outlet time constant moves with the rate water is drawn
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The lag between the casting and the water leaving it varies with what is drawn through it rather
+  than standing as a fixed coefficient, since it is a residence time and a residence time depends on
+  the rate. This is what makes the coefficient physically honest across a delivery whose flow changes;
+  it is the coupling in the casting's own balance, not this variation, that makes the coefficient
+  reachable from what the machine senses. Whether the resulting sensitivity is large enough to
+  identify the coefficient from real runs is the sensitivity analysis's question.
+links:
+  - target: DEL-SIM-FLOW-TERM
+    type: criterion-of

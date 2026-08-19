@@ -1,0 +1,18 @@
+id: DEL-SIM-FLOW-TERM.C4
+type: criterion
+title: The description's declared error and omissions match the relations once flow enters them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Every coefficient the flow relations add carries a declared assumed error and an origin drawn from
+  the existing vocabulary, in the same file and shape as the coefficients already there, and the
+  declarations the change supersedes are corrected rather than left standing -- the outlet time
+  constant's own assumed error was written for a fixed residence time, and the description's statement
+  of what it leaves out no longer holds where these relations now reach. Whether the declared figures
+  are right for the reference machine is out of scope until the bench measures it.
+links:
+  - target: DEL-SIM-FLOW-TERM
+    type: criterion-of

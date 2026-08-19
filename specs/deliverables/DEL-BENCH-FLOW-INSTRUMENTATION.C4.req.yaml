@@ -1,0 +1,19 @@
+id: DEL-BENCH-FLOW-INSTRUMENTATION.C4
+type: criterion
+title: A pump moving no water is distinguishable before fed-forward heat reaches the block's trip point
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+closes_by: cascade
+text: |
+  A pump commanded to move water while the reading shows none is distinguishable from a pump that is
+  working, within a time shorter than the heat already fed forward for that delivery needs to carry the
+  coffee block to its protection trip point. The block is the load that bounds this, not the pump:
+  heat is being applied in anticipation of cooling that never arrives, and a block with little stored
+  energy covers the margin to its thermostat in seconds where a dry pump reaching its own takes
+  minutes. What the machine then does -- withdrawing that heat, ending the delivery -- belongs to the
+  control law and is out of scope.
+links:
+  - target: DEL-BENCH-FLOW-INSTRUMENTATION
+    type: criterion-of

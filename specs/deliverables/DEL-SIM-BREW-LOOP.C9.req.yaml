@@ -1,0 +1,17 @@
+id: DEL-SIM-BREW-LOOP.C9
+type: criterion
+title: The commanded course is acted on before its effect reaches the water
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The machine commands the flow that disturbs its own brew temperature, so the size and timing of that
+  disturbance are known before it arrives rather than inferred from the error it leaves behind. On a
+  block with little stored energy the dip reaches the water before a loop waiting on that error can
+  answer it, which is why the commanded course is an input to the control law rather than a record of
+  what the operator asked for.
+links:
+  - target: DEL-SIM-BREW-LOOP
+    type: criterion-of
