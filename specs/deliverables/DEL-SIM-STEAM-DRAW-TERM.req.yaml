@@ -12,17 +12,19 @@ text: |
   to hold steam character for the whole of a draw would be asked to reject a disturbance the
   description does not contain, and would satisfy that demand by ignoring the wand entirely.
 
-  What a draw removes is written through what the steam carries away as it leaves -- the enthalpy of
-  the steam drawn, against the feed that replaces it -- rather than as a loss to ambient that widens
-  while the valve is open. A term that merely grew with valve position would reproduce the droop and
-  none of its cause, and would leave the description unable to say what happens when the same energy
-  leaves at a different rate. Latent heat enters the relations with it.
+  What a draw removes is the enthalpy of the steam drawn, measured against the feed that replaces it,
+  rather than a loss to ambient that widens while the valve is open. A term that merely grew with
+  valve position would reproduce the droop and none of its cause, and would leave the description
+  unable to say what happens when the same energy leaves at a different rate. Latent heat enters the
+  relations with it.
 
-  A draw is an exogenous input. The wand is opened by hand, and the machine neither commands it nor
-  is told it is coming; it is the disturbance the steam side is judged on rejecting. It therefore
-  enters the plant as an input supplied from outside the control law rather than as a level on an
-  actuation channel, and the permille channels the brew heater, steam heater and pump already answer
-  keep their meanings unchanged.
+  Demand and feed are separate, and only one of them is commanded. How far the wand is opened is set
+  by hand; the knob carries a microswitch so the machine can observe that a draw has begun, but it
+  does not choose the demand, and that is what makes a draw the disturbance the steam side is judged
+  on rejecting. The feed is the other half: the machine carries two pumps, one to each side, and the
+  steam side holds no reservoir, so the rate water reaches the block is the rate steam can be made.
+  The description gains both -- a demand supplied from outside the control law, and a commanded steam
+  feed the shared channel vocabulary does not yet carry.
 
   Once a draw is open, steam pressure stops being a function of steam temperature. Pressure is
   recomputed each step from the block temperature through a local saturation slope, which holds for a
@@ -53,22 +55,22 @@ rationale: |
   loop authored in the same breath as the plant behaviour it is judged against can be tuned to the
   description rather than to the machine.
 
-  Writing the draw as an exogenous input rather than an actuation channel is the substantive
-  modelling choice. The pump is commanded and the wand is not, and a description representing both as
-  levels the controller sets would make the steam disturbance look predictable in exactly the way the
-  requirement says it is not. It would also invite a later loop to close around a quantity it does not
-  get to move.
+  Separating demand from feed is the substantive modelling choice, and it is the one that decides
+  whether a later loop has anything to work with. Treating a draw as wholly exogenous would be
+  faithful to the wand and wrong about the machine: the steam pump is commanded, and on a side with
+  no reservoir it is the only handle by which delivered quantity can be reduced while what is
+  delivered is held to standard. A description that carried the demand but not the feed would leave
+  that behaviour unrepresentable and the requirement that asks for it unbuildable, which is why the
+  feed is named here rather than left to the loop to discover.
 
-  Letting pressure and temperature diverge under draw is the second. The graph deliberately leaves
-  open which quantity a steam loop regulates, and that question cannot be studied in a description
-  where one is an affine function of the other -- the model would answer it by construction, and the
-  answer would be an artefact of the linearisation rather than a property of the machine. Preserving
-  the divergence keeps the decision where the requirement put it.
+  Letting pressure and temperature diverge under draw is the second choice. The graph deliberately
+  leaves open which quantity a steam loop regulates, and that question cannot be studied in a
+  description where one is an affine function of the other -- the model would answer it by
+  construction, and the answer would be an artefact of the linearisation rather than a property of
+  the machine. Preserving the divergence keeps the decision where the requirement put it.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
-  - target: DEL-SIM-ESTIMATOR
-    type: depends-on
   - target: DEL-SIM-SEAMS-HARNESS
     type: depends-on
   - target: DEL-SIM-UNCERTAINTY-BUDGET

@@ -1,17 +1,17 @@
 id: DEL-SIM-STEAM-DRAW-TERM.C2
 type: criterion
-title: A draw enters the plant as an input supplied from outside the control law rather than a level on an actuation channel
+title: How much steam a draw demands enters the plant from outside the control law
 status: active
 version: 1
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The pump is commanded and the wand is not: the operator opens it, and the machine neither schedules
-  it nor is told it is coming. Representing it as a permille level beside the brew heater, steam
-  heater and pump would make the disturbance the steam side is judged on rejecting look like
-  something the controller sets, and would invite a later loop to close around a quantity it does not
-  get to move. The existing channels keep their meanings unchanged.
+  How far the wand is opened is set by hand, and nothing the control law writes changes it. The knob
+  carries a microswitch, so the machine can observe that a draw has begun; what it cannot do is
+  choose the demand, which is why this is the disturbance the steam side is judged on rejecting
+  rather than an input it schedules. It therefore reaches the plant from outside the control law, and
+  what the machine does command about a draw is the feed, not the demand.
 links:
   - target: DEL-SIM-STEAM-DRAW-TERM
     type: criterion-of

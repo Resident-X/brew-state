@@ -1,0 +1,19 @@
+id: DEL-SIM-STEAM-DRAW-TERM.C6
+type: criterion
+title: The feed replacing drawn steam is commanded on its own channel
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The machine carries two pumps, one to each side, and the steam side holds no reservoir: the rate
+  water reaches the block is the rate steam can be made, so the feed is the handle the control law
+  actually holds during a draw. A description carrying a single pump channel cannot represent the
+  steam side slowing what it delivers while holding what it delivers to standard, because that
+  handle is the feed and no other channel reaches it. The channel vocabulary the hardware seam and
+  the plant model share gains it, and a structure states whether it answers it as it does for every
+  other channel.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: criterion-of
