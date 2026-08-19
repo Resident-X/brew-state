@@ -2,16 +2,18 @@ id: DEC-PLUMBING-LEFT-AS-BUILT
 type: decision
 title: The machine's plumbing is left as the factory built it
 status: active
-version: 1
+version: 2
 decided_by: david
 rationale: |
   Context: The two heated masses are independent, and the obvious efficiency is to route brew water through the steam side first so it arrives preheated. Doing so would reduce what the coffee side has to add and shorten the time to a stable brew temperature. The shape of a large part of this graph depends on not doing it, and until now that dependence was carried by no node.
 
-  Trade-offs: Preheating through the steam side serialises brew and steam through one mass, which removes the ability to run them together. That ability is exactly what the group-throughput goal asks for, and the resulting machine would be simpler to control and worse to use during the only scenario anyone complains about. It is also fluid work, and the project's scope was fixed at the control system and the electrical install specifically to keep plumbing out. Re-routing hot water onto the steam side instead would decouple espresso from hot water, which is a real contention on this machine, but it is the same out-of-scope fluid work and it trades a contention that is understood for one that is not. Leaving the plumbing alone costs the preheat efficiency and keeps both capabilities.
+  Trade-offs: Preheating through the steam side serialises brew and steam through one mass, which removes the ability to run them together. That ability is exactly what the group-throughput goal asks for, and the resulting machine would be simpler to control and worse to use during the only scenario anyone complains about. Re-routing is also substantial fluid work -- paths moved, supports and joints remade, the result re-tested -- but that is a cost rather than the reason, and it is not a cost that generalises to every fitting. Re-routing hot water onto the steam side instead would decouple espresso from hot water, which is a real contention on this machine, but it is the same substantial re-routing and it trades a contention that is understood for one that is not. Leaving the plumbing alone costs the preheat efficiency and keeps both capabilities.
 
-  Reversibility: Reversible at any time, at the cost of fluid work this project's scope excludes. Nothing in the control design forecloses it; the supply arbitration would simply have less to arbitrate. What would not survive reversal is simultaneous brew and steam, so reversing this decision means revisiting the throughput goal rather than the controller.
+  Reversibility: Reversible at any time, at the cost of that re-routing. Nothing in the control design forecloses it; the supply arbitration would simply have less to arbitrate. What would not survive reversal is simultaneous brew and steam, so reversing this decision means revisiting the throughput goal rather than the controller. The condition that would reopen it is the steam side failing to hold its character on its own, since preheating is the answer that trades simultaneity for steam capacity; short of that, the ability to run both together is worth more than the preheat.
 
   Consequences: Brew and steam remain independently heated and simultaneously available, which is why the supply budget has to arbitrate between them at all and why sequence consistency has to handle concurrent demand. Espresso and hot water remain serialised through the coffee side, in the plumbing as well as thermally, because one three-way valve chooses between the group and the hot water outlet. No control strategy undoes either of those.
+
+  What this decision does not settle: it governs the topology of the water path -- which mass feeds what, and in what order -- and not whether a line may be opened. Inserting instrumentation into a path that already exists changes no topology and is not refused here: the machine is required to measure pressure in both the brew and steam paths and carries a transducer on neither, so tapping those lines is work this project already owes. A fitting that observes the path the machine has is a different act from re-routing the path itself, and only the second is what was weighed above.
 options_considered:
   - option: Leave the plumbing as built
     reason_rejected: ""

@@ -1,0 +1,17 @@
+id: DEL-BENCH-FLOW-INSTRUMENTATION.C3
+type: criterion
+title: The volume held between the meter and each point of delivery is established
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  The volume held between the meter and each point of delivery is measured on this machine and
+  declared with its origin, one figure for the group and one for the hot water spout, because the
+  three-way diverter puts two different lengths of path downstream of a single reading. Until they are
+  established, an endpoint expressed against the meter carries an unknown offset. Compensating for
+  that offset in a control law is out of scope.
+links:
+  - target: DEL-BENCH-FLOW-INSTRUMENTATION
+    type: criterion-of

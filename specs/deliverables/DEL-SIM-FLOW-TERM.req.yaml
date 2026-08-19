@@ -1,0 +1,54 @@
+id: DEL-SIM-FLOW-TERM
+type: deliverable
+category: task
+title: Water carries energy away in the plant model, and flow is what a delivery commands
+status: active
+level: task
+version: 1
+text: |
+  The plant description carries what water does to the heated mass it passes through. Today the
+  masses lose energy only to ambient, which the reference description names as its largest omission:
+  during an extraction or a steam draw, flow dominates the thermal balance and a model without it
+  understates the droop. Water drawn through the casting takes energy out of it, at a rate set by
+  what is drawn, so a delivery that commands flow produces a temperature disturbance the model can
+  reproduce and a controller can be exercised against.
+
+  What the pump moves becomes a quantity the plant reports, alongside the temperatures and pressures
+  it already reports, so a loop commanding a rate of water has something to close against and a meter's
+  reading has something to be compared with. The actuation record keeps the permille levels both seams
+  share; what changes is that the model says what those levels move, not what they are called.
+
+  The casting's own balance gains the water as a path energy leaves by, written through the
+  temperature of the water leaving rather than the casting's. That is what makes the brew sensor's
+  reading depend on the outlet state, and so what makes the outlet coefficient reachable by a
+  prediction error at all -- the identifiability limit the reference description records as its
+  sharpest. A term that removed energy at the casting's temperature, or a lag that merely varied with
+  the rate, would leave that limit exactly where it was. The lag does vary with the rate as well,
+  because a residence time depends on what is flowing, but that is honesty about the coefficient
+  rather than the thing that closes the gap.
+
+  Out of scope: measuring flow on the physical machine, and what resolution that
+  measurement must reach, both of which are bench instrumentation established in the physical track
+  and neither of which waits on this task; the steam side, whose draw is a hand-opened wand rather
+  than the pump channel and whose energy cost the reference description records as a separate
+  omission that stays open; the puck and the pump's flow-versus-pressure characteristic, which remain absent;
+  and the contention between two destinations drawing on one block, which the description cannot
+  represent and which stays absent -- what this task adds is the energy water removes as it is drawn,
+  not a second path to draw it down.
+links:
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
+    type: justified-by
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: depends-on
+  - target: DEL-SIM-ESTIMATOR
+    type: depends-on

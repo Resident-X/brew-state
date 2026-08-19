@@ -1,0 +1,46 @@
+id: DEL-BENCH-FLOW-INSTRUMENTATION
+type: deliverable
+category: task
+title: The flow the machine already senses is read, positioned and resolved
+status: active
+level: task
+version: 1
+text: |
+  The flow the machine already senses becomes flow the machine can use. A meter is fitted in the water
+  path and wired to the OEM controller this project replaces, so the reading exists but is not
+  available to anything being built, and where in the path it sits was never established. What it
+  measures, what it resolves, and whether a brew delivery can be told from a steam draw by it are
+  established on the bench rather than assumed from the part.
+
+  Position is the first question because it decides the rest. The machine draws through two pumps from
+  one tank, and a meter on the shared supply sees whatever is drawing rather than the delivery in
+  progress. Where the fitted meter cannot distinguish a coffee delivery, or cannot
+  resolve what a delivery is judged by, the correction is a meter on the
+  coffee pump's own inlet -- a suction line from the tank, so an inexpensive part rated for no working
+  pressure -- rather than a downstream meter that would have to survive brew pressure. What such a
+  restriction costs a vibratory pump in priming and cavitation margin is established on the bench
+  before it is adopted.
+
+  What the reading resolves is set by the smallest difference between drinks an operator would notice,
+  which is a property of the deliveries the machine is judged by rather than of what the part
+  conveniently provides. This work does not wait on the sensitivity analysis: the roadmap carries
+  instrumentation as the exception to procurement following that analysis, because bench
+  characterisation, and so the committed model, is blocked without it.
+
+  A pump that is energised but moving nothing becomes distinguishable from one that is working, which
+  is the observation a commanded-flow fault has to rest on. What the machine then does about such a
+  fault belongs to the control law.
+
+  Out of scope: the flow term in the plant model, which is software-track work established against
+  estimated values; the thermal, hydraulic and electrical bench characterisation of the other
+  channels, which this phase carries separately; the safety and pressure-relief investigation; and
+  withdrawing heat fed forward for a delivery that is not happening, which is a control-law behaviour.
+links:
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
+    type: justified-by
+  - target: DEL-BREW-STATE-DELIVERY.C2
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C5
+    type: targets
+  - target: REQ-MEASUREMENT-001.C6
+    type: targets

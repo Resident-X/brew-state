@@ -1,0 +1,20 @@
+id: DEL-SIM-FLOW-TERM.C1
+type: criterion
+title: The casting loses energy to the water leaving it, written through that water's temperature
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The casting's energy balance loses energy to the water passing through it, written through the
+  temperature of that water leaving rather than through the casting's own, so what the casting reads
+  depends on the outlet state and not only on the draw rate. That coupling is the point: with the
+  water taking nothing out of the casting, nothing the brew sensor reads depends on the outlet
+  coefficient at all, and a term that removes energy at the casting's temperature would leave that
+  exactly as it was. Every plant structure that answers the pump channel carries the term. What the
+  puck does to the water, and how the pump's output varies with the pressure it works against, remain
+  out of scope.
+links:
+  - target: DEL-SIM-FLOW-TERM
+    type: criterion-of

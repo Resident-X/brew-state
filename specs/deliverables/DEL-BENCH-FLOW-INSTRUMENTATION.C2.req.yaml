@@ -1,0 +1,17 @@
+id: DEL-BENCH-FLOW-INSTRUMENTATION.C2
+type: criterion
+title: The reading the controller receives resolves the smallest difference between drinks
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The smallest difference in delivered quantity an operator would notice is stated for this machine and
+  recorded with its origin, and the reading the controller receives resolves it. Where the fitted meter
+  cannot, the task is not finished until one that can is in the path -- a figure established and then
+  missed would leave a requirement looking served by a number nobody met. Whether any particular recipe
+  is achievable at that resolution is out of scope.
+links:
+  - target: DEL-BENCH-FLOW-INSTRUMENTATION
+    type: criterion-of

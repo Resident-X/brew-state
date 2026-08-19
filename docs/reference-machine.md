@@ -148,7 +148,7 @@ If you replace this file, these are the parts of the graph your substitution rea
 | Thermostat trip points | `REQ-MEASUREMENT-001.C1`, `REQ-BREW-TEMP-001`, `REQ-SAFETY-CHAIN-001.C3` |
 | Which mass serves hot water | `REQ-HOT-WATER-001` and `.C4`, `JRN-SERVE-LONG-BLACK-001`, `DEF-COFFEE-SIDE` |
 | Warm-up time | `REQ-SCHEDULED-READINESS-001` and `.C5`, `DEC-NO-REMOTE-ACTUATION` |
-| Sensing already fitted | `REQ-MEASUREMENT-001.C4`, `.C7`, `.C8`, `REQ-WATER-SUPPLY-001.C2` |
+| Sensing already fitted | `REQ-MEASUREMENT-001.C4`, `.C5`, `.C6`, `.C7`, `.C8`, `REQ-WATER-SUPPLY-001.C2`, `REQ-ACTUATION-CONFIRMATION-001.C5` |
 | Wiring authority | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C9`, `REQ-ELECTRICAL-INSTALL-001` |
 
 The clearest case is the supply. At 240 V the two elements together draw about 8.3 A and concurrent brew and steam fits inside a 10 A circuit. At 120 V the same 2000 W is over 16 A, so that concurrency is simply unavailable — which does not change any requirement, but does change what the machine can be asked for, and makes `DEC-PLUMBING-LEFT-AS-BUILT` a decision worth re-reading rather than inheriting.

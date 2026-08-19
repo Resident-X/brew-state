@@ -53,6 +53,16 @@ or against that.
   one at a time.
 - `authority:` and `managed:` have **no CLI flags**. Setting them needs the direct-file-edit escape
   hatch; `validate` accepts them but `show` does not project them.
+- **Read a node before you link to it.** Every `targets`, `justified-by`, `derives-from`,
+  `depends-on` and `addresses` edge — and every node id named in `text:` or `rationale:` prose —
+  requires that you have read the target with `show <id>` **in this session**. A title, a `list`
+  row, a `query` hit, or a subagent's paraphrase is not grounds to cite a node. Titles are lossy:
+  `DEC-PLUMBING-LEFT-AS-BUILT` reads as "no plumbing changes ever", but its options are all
+  water-path *re-routing* and it rules on topology, not on whether a fitting may be inserted —
+  citing it from the title produced a link that contradicted the fitted pressure sensing
+  `REQ-MEASUREMENT-001.C7`/`.C8` require. An edge authored from a title is an edge nobody can
+  build against. Batch the `show` calls for everything you intend to link *before* authoring.
+
 - Authoring through the engine **inserts into the index itself** — no reindex step is owed. Run
   `task sc:index` only after using the direct-file-edit escape hatch, to pick the change back up.
 - To edit one sentence inside a long `text:`/`rationale:`, pull the current field out with

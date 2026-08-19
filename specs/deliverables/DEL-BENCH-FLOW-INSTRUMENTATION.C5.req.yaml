@@ -1,0 +1,17 @@
+id: DEL-BENCH-FLOW-INSTRUMENTATION.C5
+type: criterion
+title: A coffee delivery is distinguishable from a steam draw by the reading and commanded state
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  A coffee delivery is distinguishable from a steam draw by the flow reading together with the state
+  the machine commands, which the fitted position may not allow: the machine draws through two pumps
+  from one tank, so a meter on the shared supply sees their sum. Where the fitted position cannot
+  distinguish them, a meter on the coffee pump's own inlet is fitted instead. What such a meter costs
+  that pump is a separate criterion.
+links:
+  - target: DEL-BENCH-FLOW-INSTRUMENTATION
+    type: criterion-of

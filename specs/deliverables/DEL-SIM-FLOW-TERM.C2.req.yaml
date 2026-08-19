@@ -1,0 +1,20 @@
+id: DEL-SIM-FLOW-TERM.C2
+type: criterion
+title: The plant reports the rate water moves through it as a readable quantity
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The plant reports the rate water is moving through it as a quantity a consumer can read, in the same
+  way it reports temperatures and pressures, so a loop commanding flow has something to close against
+  and the estimator has something to compare a meter's reading with. The actuation record keeps the
+  permille levels both seams already share -- the pump is still driven by a level, and forking that
+  vocabulary would give the hardware seam and the plant model two different names for one thing.
+  Turning a commanded rate of water into the level the pump is driven with belongs to the control law,
+  which closes that loop against this quantity; it is not a table this task supplies, and the pump's
+  flow-versus-pressure characteristic remains absent.
+links:
+  - target: DEL-SIM-FLOW-TERM
+    type: criterion-of
