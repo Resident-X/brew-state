@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The lint sweep is made readable as a health signal for this project
 status: active
-version: 1
+version: 2
 text: |
   This slice makes `staircase lint` a signal this project can read. It does not begin by fixing warnings — it begins by establishing which of them are this project's to fix, because the sweep as it stands does not distinguish the two and acting on the count without that separation would mean editing nodes that are correct.
 
@@ -25,9 +25,9 @@ rationale: |
 
   Raising a rule upstream rather than working around it is the same discipline the project applies to its own seams. A graph node edited to please a rule that does not understand this project is a drifted claim bought with a clean sweep, and the claim outlives the sweep.
 
-  This lands under the maintenance epic on the caller's direction. It is worth recording that it does not meet that epic's usual admission on the second axis: no closed criterion of this project stated an intent that went unmet here. The engine's lint families were authored against the repository the engine lives in, and this project inherited them by using the engine — which is late-discovered scope rather than a shortfall in anything delivered. If the epic's boundary is to hold strictly, this belongs in new nodes outside it and should be moved.
+  This lands under the maintenance epic as ordinary business-as-usual work. That epic is a continuous lane for emergent and corrective work, so admission here does not require naming a closed criterion whose intent went unmet; it requires that the work trace to the requirement whose behaviour it restores, which this does through its target on the verification-discipline criterion. The engine's lint families were authored against the repository the engine lives in and were inherited by this project by using the engine — emergent scope of exactly the kind this lane exists to hold, not a shortfall to be rehoused elsewhere. See DEC-MAINTENANCE-CONTINUOUS-LANE.
 links:
-  - target: DEL-MAINTENANCE.C2
+  - target: DEL-MAINTENANCE.C1
     type: derives-from
   - target: OBL-VERIFICATION-DISCIPLINE-001.C9
     type: targets

@@ -21,7 +21,7 @@ rationale: |
 
   The correction stays narrow on purpose. It does not reject a term reaching outside the source root, and it does not canonicalise paths — each of those is a claim about what a filter may declare, where this is about reading what it does declare. A build that genuinely wants to compile something from outside its source root is PlatformIO's business, and it will now be told it names no structure, which is true.
 links:
-  - target: DEL-MAINTENANCE.C3
-    type: derives-from
   - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
     type: targets
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from

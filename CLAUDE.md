@@ -16,15 +16,18 @@ or against that.
   forward by authoring the correct nodes into the graph.
 - **Requirements are the baselined final state.** An incomplete requirement is *wrong*, not a
   placeholder for a future solution. Deferred work still needs a requirement in the graph.
-- **Remediating closed work goes in `DEL-MAINTENANCE`.** Sealing and attestation are one-way, so a
-  defect found in already-delivered work has nowhere to land. That epic is where it lands: one
-  criterion per confirmed shortfall, naming the closed criterion whose intent went unmet, with a
-  task or sol wired beneath. It sits outside the roadmap's phases — reach it by name, not by walking
-  the tree. Admission is gated on both axes and neither is optional: the deliverable must be **closed**
-  (live work absorbs its own defects), and the gap must be against **intent it already stated** (if you
-  can't name the criterion that went unhonoured, it's late-discovered scope — author it as new nodes).
-  Distinct from supersession: supersede when the criterion said the *wrong* thing; use this when the
-  criterion was right and delivery didn't honour it.
+- **Emergent, corrective, and BAU work goes in `DEL-MAINTENANCE`.** It is a **continuous lane**
+  (`attributes.closure: continuous`, `attributes.role: maintenance`): never itself sealed, excluded
+  from the seal surfaces, its state only ever the rollup of the work it holds. Defects, cleanup,
+  patching, and remediation of already-sealed work that fell short all land here the same way — as a
+  **child task or solution**, each tracing to the requirement criterion whose behaviour it restores.
+  It carries a **single cascade criterion** (`DEL-MAINTENANCE.C1`, `closes_by: cascade`); do **not**
+  add a criterion per item — the criterion count is not the fix count. It sits outside the roadmap's
+  phases — reach it by name, not by walking the tree. Admission discipline lives on each child's trace
+  to the requirement it restores: if a child can't name the criterion whose behaviour it serves, it is
+  unscoped, not maintenance. Still distinct from supersession: supersede when the criterion said the
+  *wrong* thing; use this lane when the behaviour, not the spec, needs correcting. See
+  `DEC-MAINTENANCE-CONTINUOUS-LANE` for why this replaced the earlier one-criterion-per-shortfall model.
 - **Synthetic fixtures only.** Engine tests must use generic IDs (`REQ-TEST-001`, `TST-*`) and
   synthetic tempdir projects — never real requirement IDs from `specs/`. The reason is decoupling,
   not secrecy: tests that name real nodes break every time the graph is legitimately edited. The

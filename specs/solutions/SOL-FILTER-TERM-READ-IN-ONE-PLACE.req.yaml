@@ -21,7 +21,7 @@ rationale: |
 
   The sibling-directory misreading is folded in for the same reason and not a different one. It is the same mistake -- a prefix compared as leading characters -- one level up from the term, in the same function, found while reading it. Authoring it as a separate shortfall to be fixed later would put a node in the graph describing two lines nobody is going to leave wrong.
 links:
-  - target: DEL-MAINTENANCE.C4
-    type: derives-from
   - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
     type: targets
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
