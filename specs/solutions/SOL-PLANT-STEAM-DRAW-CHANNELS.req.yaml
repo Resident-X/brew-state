@@ -1,0 +1,27 @@
+id: SOL-PLANT-STEAM-DRAW-CHANNELS
+type: deliverable
+category: solution
+title: The plant step gains an exogenous steam-demand input, and the replacing feed is commanded on its own channel
+status: active
+version: 1
+text: |
+  The plant step function today carries no notion of a steam draw at all: `thermoblock`'s and `boiler`'s temperature updates read no demand, and `machine_actuation.h`'s `actuation_channel_t` has three members -- `ACTUATION_CHANNEL_BREW_HEATER`, `ACTUATION_CHANNEL_STEAM_HEATER`, `ACTUATION_CHANNEL_PUMP` -- none of which reaches a steam-side feed. This slice adds two things the plant description needs before it can lose anything to a draw or replace what a draw removes.
+
+  The demand is a rate the plant step receives from outside the actuation record -- the operator's wand position, which the control law does not set and a bench or simulation harness supplies directly. It carries no coefficient of its own: it is a raw ml/s the caller supplies, not something derived from an existing commanded level, because the wand is the only actuator and nothing in the machine computes how far it is open. Every structure's step accepts it identically, the way every structure already accepts the existing actuation record, regardless of which channels that structure answers.
+
+  The feed is different, and only one structure has one to command. `thermoblock`'s own `PLANT_STRUCTURE_ACTUATION_CHANNELS` macro already answers all three existing channels, and its steam side has no reservoir, so the rate water reaches the block from a second, steam-side pump is the rate steam can be made -- this is the "two pumps, one to each side" machine the parent task describes. `boiler` is a different architecture: its own header states plainly that "a machine of this architecture is a brewing machine that can also make steam, not the other way round," it answers only `BREW_HEATER` and `PUMP` today, and it has one pump feeding one vessel. A new actuation channel -- `ACTUATION_CHANNEL_STEAM_PUMP`, a permille level in the vocabulary `ACTUATION_CHANNEL_PUMP` already uses -- is added to the shared enumeration and to `thermoblock`'s answered set; `boiler`'s answered set is left unchanged, so it continues to refuse the new channel through the same admissibility check that already refuses `STEAM_HEATER` on it today.
+
+  Out of scope: any relation that consumes either quantity -- the energy the demand removes and the divergence it drives in pressure are SOL-PLANT-STEAM-DRAW-ENERGY's work, and exposing the demand as a plant_quantity_t other structures can read is SOL-PLANT-STEAM-DRAW-REPORTED's; the puck, the pump's flow-versus-pressure characteristic and the mechanical pressure cap the water side already declares as omissions, which apply here identically and are not re-declared; contention between the two sides drawing on one supply, which stays absent; and giving `boiler` a second pump or a steam heater, which is not this machine's architecture to gain.
+rationale: |
+  The demand carries no coefficient because it is not derived from anything the machine already knows -- the water side's flow term multiplies a commanded permille level by a described full-scale rate, but there is no commanded steam-demand level to scale; the operator's hand is the only actuator, and the plant model's contract with a bench or simulation harness is to accept whatever rate that hand supplies, not to compute one. It applies to every structure uniformly because it is a step argument, not a channel -- the distinction the actuation vocabulary itself draws between what the machine has and what a given architecture answers does not apply to a value nothing commands.
+
+  The feed channel is thermoblock-only because the machine it models is the only one with a second pump to command. Adding it to boiler's answered set would assert a physical actuator boiler's own description says it does not have; leaving boiler's macro unchanged and relying on the admissibility check already in place -- the same one that refuses STEAM_HEATER on boiler today -- is what keeps the declaration honest rather than inventing new refusal code for a case the existing mechanism already covers.
+
+  The permille vocabulary is reused rather than invented on thermoblock, because the two seams the actuation record and the pressure-scaling code already share should not gain a second unit system for the same kind of command. Splitting demand and feed into one solution rather than two is deliverable-shape, not physics: both are the plant's new external interfaces -- one input every structure receives, one channel only one structure exposes -- and a slice that added only one would leave the model unable to represent a draw the machine cannot both sense the size of and, where it has the pump to do it, replace.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM.C2
+    type: derives-from
+  - target: DEL-SIM-STEAM-DRAW-TERM.C6
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets

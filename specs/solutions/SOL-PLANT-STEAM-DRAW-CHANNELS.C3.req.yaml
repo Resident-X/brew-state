@@ -1,0 +1,19 @@
+id: SOL-PLANT-STEAM-DRAW-CHANNELS.C3
+type: criterion
+title: A dedicated actuation channel commands thermoblock's steam-side feed pump
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: adds the channel only; excludes any relation consuming the commanded level
+text: |
+  actuation_channel_t in machine_actuation.h gains ACTUATION_CHANNEL_STEAM_PUMP, carrying a
+  permille level in the vocabulary ACTUATION_CHANNEL_PUMP already uses. thermoblock's
+  PLANT_STRUCTURE_ACTUATION_CHANNELS macro adds the new channel to its answered set;
+  ACTUATION_CHANNEL_PUMP and the brew side's flow are unaffected by any level the new channel
+  carries. Out of scope: boiler and fixture, whose answered sets are untouched by this
+  criterion, and any relation that consumes the commanded level to compute a flow rate or a
+  mass balance -- this criterion adds the channel, not its effect.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: criterion-of

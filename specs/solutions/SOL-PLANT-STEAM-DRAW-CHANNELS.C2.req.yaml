@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-CHANNELS.C2
+type: criterion
+title: The demand input defaults to zero and changes no existing behaviour when unset
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: zero-demand regression only; non-zero effects excluded
+text: |
+  A step called with zero demand reproduces byte-for-byte the temperature and pressure
+  trajectory the structure produced before this slice existed, for thermoblock, boiler, and
+  fixture alike -- the regression guard against the new parameter silently altering existing
+  behaviour every current test already exercises. Out of scope: non-zero demand's effect on
+  temperature or pressure, which this criterion does not touch.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: criterion-of

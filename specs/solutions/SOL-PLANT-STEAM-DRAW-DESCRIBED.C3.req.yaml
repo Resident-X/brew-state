@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-DESCRIBED.C3
+type: criterion
+title: The description's stated omissions still name what remains uncaptured once steam draw enters it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: omissions-list fidelity only; no new omissions introduced
+text: |
+  The steam side's omissions list -- the puck, the pump's flow-versus-pressure characteristic,
+  contention between the two sides on one supply, and steam quality as a delivered property --
+  is restated to confirm none of it is inadvertently claimed as captured by the new relations,
+  matching the parent task's own out-of-scope list line for line. Out of scope: adding any
+  omission the parent task's text does not already name.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-DESCRIBED
+    type: criterion-of

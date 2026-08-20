@@ -1,0 +1,23 @@
+id: SOL-PLANT-STEAM-DRAW-ENERGY.C1
+type: criterion
+title: The steam-side state each structure keeps loses energy to drawn steam through its latent heat, independent of any existing loss term
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: single-state loss addition only; no coupled integration
+text: |
+  The steam-side state each structure already keeps -- steam_temperature_c on thermoblock,
+  vessel_temperature_c on boiler -- gains a second, independent loss term: the
+  steam_demand_ml_per_s argument SOL-PLANT-STEAM-DRAW-CHANNELS's step signature carries,
+  multiplied by a latent-heat-of-vaporisation coefficient (J/ml), read directly from the step's
+  own argument rather than through plant_model_quantity(). On boiler this term is added
+  alongside the existing brew-flow loss already present there, without altering it. At zero
+  demand the added term is exactly zero on every structure. Out of scope: coupling this loss to
+  a second integrated state -- neither structure's steam side has a downstream reservoir
+  analogous to the water side's outlet, so this is a single addition to the existing step, not a
+  coupled pair; and any interaction between this term and boiler's existing brew-flow term,
+  which sum independently.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY
+    type: criterion-of

@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-ENERGY.C4
+type: criterion
+title: Steam pressure reverts to the affine relation the instant demand returns to zero
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: reversion existence only; reconvergence rate excluded
+text: |
+  The moment the steam_demand_ml_per_s step argument returns to zero, the integrated pressure
+  state re-converges to steam_pressure_at()'s existing affine relation rather than drifting or
+  requiring an operator action to resync, on both thermoblock and boiler, so the two behaviours
+  meet at a single, well-defined boundary. Out of scope: the rate of reconvergence -- this
+  criterion establishes that it returns, not how quickly.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY
+    type: criterion-of

@@ -1,0 +1,19 @@
+id: SOL-PLANT-STEAM-DRAW-CHANNELS.C5
+type: criterion
+title: The new interfaces are exercised end to end on the host verification tier
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: host-tier wiring exercise only; physical effects excluded
+text: |
+  A host-tier test drives thermoblock through a step with non-zero demand and a non-zero
+  commanded feed level and observes both values reach the structure's internal state; the same
+  test drives boiler and fixture through a step with non-zero demand alone and confirms the
+  feed channel command against either is refused, all under the same memory and
+  undefined-behaviour analysis DEL-SIM-SEAMS-HARNESS already runs the plant model through. Out
+  of scope: any assertion about the physical effect of either quantity, which belongs to
+  SOL-PLANT-STEAM-DRAW-ENERGY and SOL-PLANT-STEAM-DRAW-REPORTED.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: criterion-of

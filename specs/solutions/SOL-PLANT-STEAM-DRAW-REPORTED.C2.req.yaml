@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-REPORTED.C2
+type: criterion
+title: Every plant structure answers the steam-draw quantity
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: every-structure coverage only; fixture's physical fidelity excluded
+text: |
+  thermoblock, boiler, and fixture each implement the quantity accessor for
+  PLANT_QUANTITY_STEAM_DRAW_ML_PER_S and return a value rather than the seam's refusal path,
+  mirroring how PLANT_QUANTITY_BREW_FLOW_ML_PER_S is answered by every structure today. Out of
+  scope: fixture producing a value with any physical meaning -- it exists so the seam's
+  every-structure-answers contract has a subject to test against, not to model a machine.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED
+    type: criterion-of

@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-DESCRIBED.C1
+type: criterion
+title: The description states the enthalpy-loss and pressure-divergence relations steam draw now enters
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: energy and pressure relations only; interfaces excluded here
+text: |
+  The plant description's steam-side entry gains the enthalpy loss term and the pressure
+  state's divergence-and-reversion behaviour SOL-PLANT-STEAM-DRAW-ENERGY builds, each stated as
+  a relation with its represented quantities named, mirroring the form the water side's
+  flow-energy relations are stated in. Out of scope: restating the demand input or feed
+  channel, which are a separate entry under this solution's second criterion.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-DESCRIBED
+    type: criterion-of

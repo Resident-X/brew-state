@@ -1,0 +1,19 @@
+id: SOL-PLANT-STEAM-DRAW-REPORTED.C3
+type: criterion
+title: A quantity no state observes is deliberately refused rather than silently mapped
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: table-entry safety only; downstream estimation excluded
+text: |
+  state_observed_by() in firmware/src/estimator/estimator.c gains a case for
+  PLANT_QUANTITY_STEAM_DRAW_ML_PER_S that returns false, exactly as its existing case for
+  PLANT_QUANTITY_BREW_FLOW_ML_PER_S already does, with a comment recording that the refusal is
+  deliberate: no structure keeps an integrated state for a rate that is supplied rather than
+  accumulated. The switch's absence of a default keeps an unhandled quantity a compile failure
+  rather than a silent fall-through. Out of scope: adding any steam-side estimation loop that
+  would need such a state -- none exists to consume one.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED
+    type: criterion-of

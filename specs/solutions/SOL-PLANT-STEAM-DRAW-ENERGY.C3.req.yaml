@@ -1,0 +1,19 @@
+id: SOL-PLANT-STEAM-DRAW-ENERGY.C3
+type: criterion
+title: Steam pressure is driven by an integrated state once a draw is open, rather than derived fresh from temperature every step
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: divergence mechanism only; precise rate calibration excluded
+text: |
+  steam_pressure_at()'s affine saturation-slope relation -- present on both thermoblock and
+  boiler -- is recomputed fresh every step regardless of draw state today. This criterion gives
+  pressure an integrated state that, while the steam_demand_ml_per_s step argument is non-zero,
+  moves at a rate the demand sets rather than tracking the affine relation, so the two
+  quantities can read apart from each other for the first time. Out of scope: which physical
+  mechanism sets that rate precisely -- a bench characterises it; this criterion establishes
+  that the state can diverge, not the exact slope it diverges at.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY
+    type: criterion-of

@@ -1,0 +1,31 @@
+id: SOL-PLANT-STEAM-DRAW-ENERGY
+type: deliverable
+category: solution
+title: The steam mass loses energy to the steam drawn from it, through latent heat rather than a widening ambient loss
+status: active
+version: 1
+text: |
+  Today neither structure's steam-side state loses energy to a draw. `thermoblock` keeps `steam_temperature_c` as a state fed only by `steam_heater_power_w` and ambient loss -- no water flow term touches it, unlike its own `brew_temperature_c`/`brew_outlet_temperature_c` pair. `boiler` keeps one `vessel_temperature_c` that already loses energy to ambient and, separately, to water drawn through it at the brew side's rate (`drawn_w_per_k * (vessel_temperature_c - water_feed_temperature_c)`) -- but nothing in that existing term is steam-specific, and holding the wand open costs neither structure's description anything beyond what already happens today. This slice adds a second, independent loss term to whichever state each structure keeps: the rate `SOL-PLANT-STEAM-DRAW-CHANNELS`'s `steam_demand_ml_per_s` step argument carries, multiplied by a latent-heat-of-vaporisation coefficient -- not the sensible-heat difference the water side's casting-to-outlet and boiler's own brew-flow terms use, because steam leaves as vapour with no measurable outlet temperature to write a difference through. The new term is read from the step's own argument directly, the way `thermoblock`'s existing flow term reads `commanded_flow_ml_per_s(p, actuation)` directly rather than through `plant_model_quantity()` -- the seam accessor is for external readers, not for a structure's own step to round-trip through.
+
+  On `thermoblock` the new term stands alone, added to the existing ambient-only loss. On `boiler` it is added alongside the existing brew-flow term, independently -- the two losses sum without any interaction between them, since the task's own scope leaves contention between the two sides drawing on one supply unrepresented. At zero demand the added term is exactly zero on every structure and today's behaviour, including boiler's existing brew-flow loss, is unchanged.
+
+  The second half of this slice makes steam pressure diverge from the affine saturation-slope relation `steam_pressure_at()` already implements -- present on both `thermoblock` and `boiler` -- once a draw is open. Today pressure is recomputed fresh every step from temperature through that slope -- correct for a closed vessel at equilibrium, wrong for one venting to atmosphere. This slice gives pressure its own integrated state, driven down at a rate the demand sets while the demand argument is non-zero, and reverting to the existing affine relation the instant demand returns to zero -- so the choice of which quantity a steam loop eventually regulates stays open to whichever tier of work answers it, rather than being settled by the shape of this model.
+
+  Out of scope: what a steam loop regulates and how steam readiness is decided, both of which REQ-STEAM-DELIVERY-001 holds open deliberately; contention between the coffee and steam sides on one supply, which the structure cannot represent; steam quality as a delivered property; and identifying either new coefficient from real data, which needs a machine on a bench.
+rationale: |
+  Latent heat rather than a temperature difference is the substantive choice, because steam leaves the vessel as vapour -- writing the loss through a temperature difference the way the water side does would need an outlet temperature that does not exist on either structure's steam side. Reading the demand from the step's own argument rather than through `plant_model_quantity()` mirrors what the water side's energy term actually does, not what its dependency graph might suggest: `thermoblock_advance_temperatures()` calls `commanded_flow_ml_per_s(p, actuation)` directly and only afterward is the same value separately stored for the external accessor to answer. Depending on SOL-PLANT-STEAM-DRAW-CHANNELS rather than SOL-PLANT-STEAM-DRAW-REPORTED reflects that this slice consumes the step argument CHANNELS introduces, not the quantity REPORTED exposes for readers outside the step -- the two are siblings over the same underlying value, not a chain.
+
+  Boiler's existing brew-flow loss term is left untouched and the new steam-demand term is added independently alongside it, rather than folded into one combined relation, because the two losses have different physical causes -- one is water leaving the vessel as liquid, carrying sensible heat measured against the feed temperature; the other is water leaving as vapour, carrying latent heat regardless of feed temperature. Combining them into one term would assert an interaction between brew draw and steam draw the task's own scope explicitly leaves unrepresented; keeping them as two independent subtractions is what makes the "contention stays absent" boundary literal rather than aspirational.
+
+  Giving pressure its own state rather than continuing to derive it from temperature every step is what makes divergence possible at all -- an affine function of temperature can never diverge from that same temperature by construction, so the existing steam_pressure_at() relation, present on both structures, cannot be asked to do this on its own. The reversion to the affine relation at zero demand is deliberate: this slice does not claim pressure is always its own state, only that it stops being fully determined by temperature the instant a draw opens, and returns to being so the instant it closes -- which is exactly the boundary DEL-SIM-STEAM-DRAW-TERM.C3 draws.
+
+  No coupled two-state integration is introduced, unlike the water side's casting-and-outlet pair, because neither structure's steam side has anything analogous to couple to: the outlet's coupling exists because the casting's own temperature has to depend on the outlet's for a prediction error against the brew sensor to carry information about the outlet coefficient, and no equivalent sensor-identifiability argument applies here.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM.C1
+    type: derives-from
+  - target: DEL-SIM-STEAM-DRAW-TERM.C3
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: depends-on

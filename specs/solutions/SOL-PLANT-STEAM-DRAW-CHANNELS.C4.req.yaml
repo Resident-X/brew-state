@@ -1,0 +1,18 @@
+id: SOL-PLANT-STEAM-DRAW-CHANNELS.C4
+type: criterion
+title: Every existing actuation channel behaves unchanged on every structure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: non-interference at zero; non-zero cross-channel interaction excluded
+text: |
+  Exercising ACTUATION_CHANNEL_BREW_HEATER, ACTUATION_CHANNEL_STEAM_HEATER, and
+  ACTUATION_CHANNEL_PUMP at their existing test coverage produces identical results on
+  thermoblock, boiler, and fixture with the demand input left at zero and, on thermoblock,
+  the new feed channel left at zero. Out of scope: interaction between the new feed channel
+  and the existing heater channels under non-zero commands, since none is modelled -- heat and
+  water-movement channels remain unrelated to each other exactly as they are today.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: criterion-of

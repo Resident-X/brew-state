@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-ENERGY.C2
+type: criterion
+title: The latent-heat coefficient is a described coefficient with a declared origin and error
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: coefficient declaration only; bench identification excluded
+text: |
+  The plant description gains a steam_latent_heat_j_per_ml coefficient alongside the other
+  described coefficients -- water_feed_temperature_c, water_heat_capacity_j_per_ml_k -- each
+  with a recorded origin and declared error, so this coefficient does not arrive undeclared the
+  way the description's own standard forbids. Out of scope: identifying its value from measured
+  data, which needs a machine on a bench.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY
+    type: criterion-of

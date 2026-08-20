@@ -1,0 +1,18 @@
+id: SOL-PLANT-STEAM-DRAW-CHANNELS.C1
+type: criterion
+title: Every plant structure's step accepts a steam-demand rate the control law never sets
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: adds the input only; excludes any relation consuming it
+text: |
+  thermoblock, boiler, and fixture's step functions each gain a steam_demand_ml_per_s
+  argument distinct from every existing actuation channel; nothing in the control loop or the
+  actuation record writes it, and a test or simulation harness supplies it directly, uniformly
+  across every structure regardless of which actuation channels that structure answers. Out of
+  scope: any relation that reads this value to compute a loss or a pressure change -- those
+  belong to SOL-PLANT-STEAM-DRAW-ENERGY.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: criterion-of

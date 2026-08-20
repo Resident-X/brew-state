@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-DESCRIBED.C2
+type: criterion
+title: The description states the demand input and the feed channel as the plant's new external interfaces
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: demand and feed interfaces only; reported quantity excluded here
+text: |
+  The plant description's steam-side entry names steam_demand_ml_per_s as an
+  externally-supplied input the control law does not set, and the new feed actuation channel
+  as a commanded quantity, distinguishing the two exactly as SOL-PLANT-STEAM-DRAW-CHANNELS
+  builds them. Out of scope: the reported quantity, which this solution's third criterion
+  covers.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-DESCRIBED
+    type: criterion-of

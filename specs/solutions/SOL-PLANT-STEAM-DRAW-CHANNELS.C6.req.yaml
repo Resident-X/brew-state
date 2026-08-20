@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-CHANNELS.C6
+type: criterion
+title: Boiler and fixture correctly refuse the new steam-feed channel
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Commanding a non-zero level on ACTUATION_CHANNEL_STEAM_PUMP against boiler or fixture is
+  refused by plant_step_admissible(), through the same PLANT_STRUCTURE_ACTUATION_CHANNELS
+  mechanism that already refuses ACTUATION_CHANNEL_STEAM_HEATER on boiler today -- boiler's and
+  fixture's answered-channel macros are not extended to include the new channel. Out of scope:
+  changing boiler's or fixture's architecture to add a second pump, which this criterion does
+  not do.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: criterion-of
