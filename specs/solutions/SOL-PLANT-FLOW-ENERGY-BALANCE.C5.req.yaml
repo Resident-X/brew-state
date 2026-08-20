@@ -1,0 +1,18 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C5
+type: criterion
+title: A closed draw leaves the outlet relation defined at its conduction limit
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  At zero drawn rate the residence time is unbounded, so the effective constant is bounded above by a
+  no-draw constant combined with it as reciprocals, giving a relation defined at zero with no guard and no
+  special-case branch. Stepping the structure with the pump commanded to zero produces the no-draw
+  constant exactly. That constant is a newly declared coefficient describing conduction into water that is
+  not being displaced, not the existing outlet coefficient reused — the existing one's origin is a
+  residence time at shot flow, which is the quantity the drawn-rate term now supplies. Choosing its value
+  by measurement is out of scope; it is declared as estimated.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C7
+type: criterion
+title: The heat a unit of drawn water carries is a described coefficient
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The reported rate is a volume per unit time, so converting it into an energy flux needs the heat
+  capacity a unit volume of water carries; that coefficient is added to the parameter record with a
+  declared error and an origin, and the conversion appears in the relations rather than being folded
+  invisibly into another constant. Temperature dependence of that property across the working range is
+  out of scope and is stated as an omission rather than modelled.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

@@ -1,0 +1,17 @@
+id: SOL-PLANT-FLOW-REPORTED.C6
+type: criterion
+title: The reported rate is exercised end to end on the host tier
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The host verification tier steps the reference structure under a commanded pump level and reads the
+  rate back through the seam rather than from a structure field, which the encapsulation check
+  enforces by failing any consumer outside the plant sources that names a structure field directly.
+  The native application reports the new quantity through the loop it already runs over every
+  quantity. Reaching the rate on the target, or through any hardware sensor channel, is out of scope:
+  no flow sensor channel exists in the hardware seam and this slice adds none.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: criterion-of

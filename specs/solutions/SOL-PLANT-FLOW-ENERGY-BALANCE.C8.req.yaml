@@ -1,0 +1,18 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C8
+type: criterion
+title: The stepped structure stays admissible with a draw open
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Two checks are asserted and they are not the same one. The parameter record's load-time range validation
+  continues to accept every coefficient this slice adds, each declared with a range as the existing
+  coefficients are. Separately, and newly, stepping the structure with the pump commanded from closed to
+  full scale against a cold casting leaves every state finite and non-diverging across the interval the
+  seam declares — the existing step-admissibility check tests actuation and interval validity and has no
+  notion of state, so this is an addition rather than a reuse. Behaviour outside the declared coefficient
+  ranges is out of scope.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

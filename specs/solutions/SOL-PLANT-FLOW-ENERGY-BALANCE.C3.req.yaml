@@ -1,0 +1,18 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C3
+type: criterion
+title: The casting and the outlet advance as a coupled pair
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Because each state now enters the other's equation, the two independent closed forms stop being exact —
+  one was exact for a mass losing heat only to ambient, the other for a block traversed linearly. The pair
+  is linear and time-invariant over a step of constant actuation, so it is advanced by the exact solution
+  of the coupled system rather than by a bounded approximation, holding the standard the structure already
+  sets: every other integration in it is exact for its own step, and one that is not would be the one a
+  shorter step was needed to hide. Adapting or subdividing the interval at run time is out of scope; the
+  interval remains the one the seam declares.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

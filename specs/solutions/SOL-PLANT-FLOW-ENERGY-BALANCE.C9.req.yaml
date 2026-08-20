@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C9
+type: criterion
+title: The new arithmetic survives the mutation sweep the plant model is held to
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The mutation sweep already run over the plant model's arithmetic covers the coupled step, the loss
+  term and the varying constant, and the tests kill the mutants it raises there rather than leaving
+  them surviving. Extending the sweep's configuration to sources outside the plant model is out of
+  scope; the obligation is that the arithmetic this slice adds is covered to the standard the existing
+  arithmetic is.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

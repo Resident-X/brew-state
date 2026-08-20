@@ -1,0 +1,17 @@
+id: SOL-PLANT-FLOW-REPORTED.C3
+type: criterion
+title: The reported rate follows the pump's commanded level
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The reference structure computes the rate from the commanded pump level in the actuation record,
+  read against the record's full-scale value and scaled by the parameter naming the rate the pump
+  moves water at full scale. A commanded level of zero reports zero, and the relationship is linear
+  across the range. Any dependence of delivered flow on what the water is pushed through — the puck,
+  the pump's flow-versus-pressure characteristic, the mechanical pressure cap opening — is out of
+  scope and stays a stated omission: this reports the rate commanded, not the rate a cup received.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: criterion-of

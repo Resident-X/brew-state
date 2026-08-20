@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C2
+type: criterion
+title: The energy removed is written through the temperature of the water leaving
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The difference driving the loss is taken between the outlet state and the temperature the water
+  enters at, not between the casting and the inlet. The consequence is the point of the slice and is
+  asserted directly: with the draw open, perturbing the outlet time constant alone changes the
+  casting's own trajectory, which it cannot do in the present relations. A term written at the
+  casting's temperature is out of scope precisely because it would leave that dependence absent.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

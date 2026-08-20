@@ -1,0 +1,17 @@
+id: SOL-PLANT-FLOW-REPORTED.C2
+type: criterion
+title: Every plant structure answers the flow quantity
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The contract being held is that a quantity is the machine's vocabulary rather than a structure's, so
+  none of the three structures behind the seam may refuse it the way the single-vessel structure refuses
+  the outlet temperature. The structure that describes no machine answers zero. Whether a structure's
+  answer is quantitatively right for the machine it describes is out of scope here — for the reference
+  structure that is carried by the coefficient's declared error, and for the single-vessel structure by
+  its own parameter record.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: criterion-of
