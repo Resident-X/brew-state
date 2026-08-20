@@ -1,0 +1,88 @@
+id: SOL-PLANT-FLOW-REPORTED
+type: deliverable
+category: solution
+title: The rate water is drawn through the plant, reported as a quantity every structure answers
+status: active
+version: 1
+text: |
+  The plant seam reports four quantities today — the two temperatures and the two pressures a machine
+  of this architecture senses — and keeps five states, the extra one being the water on its way to the
+  group. What it does not report is how fast water is moving. That is the quantity a delivery commands,
+  and it is the quantity the casting's energy balance needs before it can lose anything to the water
+  passing through it, so it has to exist across the seam before either the control law or the relations
+  can reach for it.
+
+  The actuation record already carries what is needed on the input side. Its pump channel holds a
+  permille level, and the reference structure already reads that level — but only to scale pump
+  pressure. Nothing anywhere turns it into a rate. This slice gives the level its second meaning: a
+  coefficient in the parameter record names the rate the pump moves water at full scale, and the
+  structure reports the product of that coefficient and the commanded level. No actuation channel is
+  added, and the permille vocabulary both seams share is untouched.
+
+  The rate is placed in the seam's *quantity* vocabulary rather than its *state* vocabulary, and the
+  distinction is load-bearing. Quantities are the machine's, and the seam's contract is that every
+  structure answers every one; states are a structure's own, and a structure is permitted to refuse one
+  the way the single-vessel structure refuses the outlet temperature. A rate that some structures
+  answered and others did not would be a quantity consumers had to test for before reading, which is the
+  negotiation the seam exists to prevent. So all three structures behind the seam answer it, including
+  the one that describes no machine and exists so the exclusivity checks have a subject.
+
+  One latent defect is repaired rather than stepped around. The estimator holds a table mapping each
+  quantity to the state that observes it, sized by the quantity count and filled by designated
+  initialiser with no completeness assertion, so a quantity added without an entry reads silently as the
+  first state. That is inert today only because nothing indexes the table except by sensor channel and
+  no flow sensor channel exists. Adding a quantity is exactly the act that makes it live, so the
+  omission becomes a compile-time failure here instead of waiting to be discovered as a wrong state.
+
+  Out of scope: the energy the moving water carries out of the casting and the lag that varies with it,
+  which are the relations themselves and are the slice this one is depended on by; measuring flow on the
+  physical machine, which is bench instrumentation on the other track and which this slice neither needs
+  nor anticipates — no hardware sensor channel is added; and any dependence of the rate on what the water
+  is being pushed through. The puck, the pump's flow-versus-pressure characteristic and the mechanical
+  pressure cap all sit between a commanded level and what a cup receives, and all three remain stated
+  omissions of the description. What is reported here is the rate the pump was commanded to move, not
+  the rate a drink was delivered at.
+rationale: |
+  Flow enters as a quantity rather than a state because the seam's two vocabularies carry different
+  promises and only one of them is the promise this rate needs. A state is a structure's own claim about
+  what it keeps, and the seam already allows a structure to refuse one — the single-vessel structure
+  refuses the outlet temperature, correctly, because it does not model an outlet. A quantity is the
+  machine's, answered by every structure. Consumers can therefore read a quantity unconditionally, and
+  that is what makes this rate usable by the control law and the relations without either of them
+  learning which structure it was built against.
+
+  The pump channel gains a meaning rather than a sibling because a second channel would be a second
+  thing to command, and there is only one pump and one commanded level. The parent task puts this
+  plainly: the model should say what the existing levels move, not rename them. A separate flow-command
+  channel would also have to be kept consistent with the pressure scaling that reads the same level,
+  and two representations of one command drift the first time either is touched.
+
+  Expressing the rate as a volume per unit time rather than a mass per unit time is a choice about what
+  can be checked. A flow meter reads volume, the coefficient's origin is a block's internal volume
+  against the flow a shot is drawn at, and the description's error budget is already written in those
+  terms. The energy balance downstream needs a mass rate and will convert, which is one multiplication
+  by a density the description will have to declare — a visible conversion in the relations is preferable
+  to a quantity nobody can compare against an instrument.
+
+  The estimator's quantity-to-state table is fixed here rather than recorded as a defect elsewhere
+  because this slice is what makes it reachable. Before a fifth quantity exists the missing entry cannot
+  be hit; after it exists, the failure mode is an estimator silently observing the wrong state, which
+  presents as a machine that has drifted rather than as a wiring mistake. That is the class of fault the
+  residual exists to tell apart, so leaving it to be found later would be leaving it to be misdiagnosed.
+
+  What this slice does not claim is that the reported rate is what the machine actually delivers. It is
+  the commanded rate, and the gap between commanded and delivered is the puck, the pump characteristic
+  and the cap — three omissions the description already carries and which this slice deliberately leaves
+  carried. Reporting a commanded rate as though it were a measured one would be the more useful-looking
+  and less honest option, and the description is the place that distinction has to survive.
+links:
+  - target: DEL-SIM-FLOW-TERM.C2
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by

@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-REPORTED.C5
+type: criterion
+title: A quantity with no state mapping fails the build rather than defaulting silently
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The estimator's table mapping each quantity to the state that observes it is sized by the quantity
+  count and filled by designated initialiser, so a quantity added without an entry reads as the first
+  state with no diagnostic. A compile-time assertion over that table's completeness is added, making
+  the omission a build failure. Scope is that table and any other in the estimator keyed on the same
+  count; a sweep of unrelated designated-initialiser tables elsewhere in the firmware is not in scope.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: criterion-of

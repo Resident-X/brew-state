@@ -1,0 +1,17 @@
+id: SOL-PLANT-FLOW-REPORTED.C2
+type: criterion
+title: Every plant structure answers the flow quantity
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each of the three structures behind the seam returns a value for the new quantity rather than
+  refusing it, holding the contract that a quantity is the machine's vocabulary and every structure
+  answers every one. The structure that describes no machine answers zero. Whether a structure's
+  answer is quantitatively right for the machine it describes is out of scope here — for the reference
+  structure that is carried by the coefficient's declared error, and for the single-vessel structure
+  by its own parameter record.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: criterion-of

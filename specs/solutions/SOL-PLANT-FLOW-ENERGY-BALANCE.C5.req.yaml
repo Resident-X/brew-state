@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C5
+type: criterion
+title: A closed draw leaves the outlet relation defined at its conduction limit
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  At zero drawn rate the residence time is unbounded, so the constant is bounded above by the existing
+  fixed outlet coefficient, re-read as the no-draw limit in which the water is not displaced and
+  reaches the casting by conduction. Stepping the structure with the pump commanded to zero produces
+  the same outlet behaviour the present relations produce, with no division by zero and no special-case
+  branch. Retiring or renaming that coefficient is out of scope: it keeps its declared error and origin.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

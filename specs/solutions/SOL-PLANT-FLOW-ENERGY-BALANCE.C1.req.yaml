@@ -1,0 +1,17 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C1
+type: criterion
+title: The casting loses energy to the water drawn through it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The reference structure's brew-casting balance gains a loss term proportional to the rate water is
+  drawn and to the temperature difference across it, alongside the ambient loss it already carries.
+  With a draw open and the heater off, the casting falls faster than the same structure falls with no
+  draw; with the heater holding, the droop under draw is larger than the model produces today. The
+  steam mass gains no such term here — the steam draw is a separate omission of the description and
+  stays open.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

@@ -1,0 +1,104 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE
+type: deliverable
+category: solution
+title: The energy drawn water carries out of the casting, and an outlet lag that moves with the draw
+status: active
+version: 1
+text: |
+  The masses in the reference structure lose energy only to ambient. The description names that as its
+  largest omission by far and says why: during an extraction or a steam draw, flow dominates the thermal
+  balance, so a model without it understates the droop. It also names the omission that follows from it.
+  Water takes nothing out of the casting in these equations, so nothing the brew sensor reads depends on
+  the outlet time constant, and a prediction error computed against that sensor is blind to the one
+  coefficient the description declares its widest. This slice closes the first omission, and closing it
+  is what makes the second reachable.
+
+  The casting's balance gains a path energy leaves by: the water drawn through it carries energy away at
+  a rate set by how fast it is drawn and by how much colder it arrives than it leaves. Writing that
+  difference through the temperature of the water *leaving* — the outlet state — rather than through the
+  casting's own is the whole point, and not a detail of arrangement. A term that removed energy at the
+  casting's temperature would be a term the outlet coefficient never enters, and the identifiability
+  limit would stand exactly where it stands now. Written through the outlet, the casting's own reading
+  depends on the outlet state, so a prediction error against the only sensor this machine has finally
+  carries information about the coefficient that produced it.
+
+  That coupling costs the closed form. The casting is advanced today by an expression exact for a mass
+  losing heat only to ambient under constant duty, and the outlet by one exact for a block traversing
+  linearly. Neither stays exact once the casting's balance contains the outlet state and the outlet's
+  time constant contains the draw, because the two states now feed each other within a step. They are
+  advanced as a coupled pair instead, over the same interval the seam already declares, and the error
+  that substitution introduces is declared rather than assumed away.
+
+  The lag moves with the draw as well. A residence time is a held volume divided by a rate, so the
+  outlet's time constant shortens as water is pulled through faster. At no draw the water is not
+  displaced at all and reaches the casting by conduction instead, which is what the present fixed
+  constant already describes — so the constant is not replaced but re-read as the no-draw limit, with the
+  residence time taking over as the draw opens. That keeps the coefficient the description has already
+  declared an error against, and keeps the relation defined at zero without a guard bolted on to avoid a
+  division.
+
+  Two coefficients arrive with the term. The water has to enter at some temperature, and there is no
+  such coefficient today — ambient is the only temperature in the parameter set. The energy the water
+  carries away also needs the heat a unit of it holds, which the volume-rate quantity does not supply on
+  its own. Both are described where every other coefficient is described, each with a declared error and
+  a recorded origin, because a coefficient that arrives undeclared is the thing the description exists to
+  prevent.
+
+  Out of scope: the steam side, whose draw is a hand-opened wand rather than a commanded channel and
+  whose energy cost the description records as a separate omission that stays open; the puck and the
+  pump's flow-versus-pressure characteristic, so the rate entering these relations remains the commanded
+  one; contention between two destinations drawing on one block, which the structure cannot represent and
+  which stays absent — what this slice adds is the energy water removes as it is drawn, not a second path
+  to draw it down; and identifying the outlet coefficient from real data, which needs a machine on a
+  bench. What is claimed here is that the coefficient has become reachable in principle, not that it has
+  been reached.
+rationale: |
+  The term is written through the outlet temperature because that is the only form of it that buys
+  anything the description does not already have. Energy leaving at the casting's own temperature is
+  easier to write and integrates without coupling the two states, and it would reproduce the droop well
+  enough to look right. It would also leave the sharpest limit the description records exactly where it
+  is: nothing the sensor reads would depend on the outlet coefficient, so no amount of data would
+  identify it. The parent task is explicit that a lag which merely varied with the rate would not close
+  that gap either. The coupling is therefore the deliverable, and the droop is a consequence of it.
+
+  Re-reading the existing outlet constant as the no-draw limit, rather than replacing it with a pure
+  residence time, keeps two things that would otherwise be lost. The relation stays defined at zero draw
+  without a special case, which matters because zero draw is the state the machine spends nearly all its
+  time in. And the coefficient keeps the error fraction and the origin already declared against it,
+  rather than being retired in favour of a new one that would have to declare both from nothing. The
+  physical reading is honest: with no water moving, the tube equilibrates by conduction, and that is what
+  a fixed constant describes.
+
+  Inlet temperature is a coefficient of its own rather than a reuse of ambient. The two are numerically
+  close in a warm kitchen, which is exactly what makes conflating them attractive and wrong — they are
+  different physical quantities that happen to agree, and a machine fed from mains in a cold country
+  separates them immediately. This project is written to be rebuilt on a different machine in a different
+  country, so a description that cannot express that difference is a description that does not travel.
+  The cost of keeping them apart is one coefficient with a wide declared error; the cost of merging them
+  is a model whose feed-water assumption is invisible.
+
+  The closed forms are given up deliberately rather than patched. Keeping them would mean advancing the
+  casting with an expression that assumes its only loss is to ambient, then subtracting the flow term
+  afterwards — which is a first-order splitting whose error grows with exactly the quantity this slice
+  exists to represent, and grows fastest during the extraction the model is being trusted for. A coupled
+  step over the declared interval is more work and is the only version whose declared error survives
+  contact with a large draw.
+
+  What is not claimed is that the outlet coefficient has been identified. Reachability and identification
+  are different statements, and only the first is settled by relations. The second needs a machine, a
+  bench and measured data, and the description already records that nothing has been on the bench. Saying
+  the limit is closed rather than reachable would be the kind of overclaim the description's omissions
+  list exists to make impossible.
+links:
+  - target: DEL-SIM-FLOW-TERM.C1
+    type: derives-from
+  - target: DEL-SIM-FLOW-TERM.C3
+    type: derives-from
+  - target: DEL-SIM-FLOW-TERM.C4
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: depends-on

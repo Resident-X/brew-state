@@ -1,0 +1,18 @@
+id: SOL-PLANT-FLOW-REPORTED.C1
+type: criterion
+title: The plant seam names the rate water is drawn as a reported quantity
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The quantity vocabulary in `firmware/include/plant_types.h` gains an entry for the rate water is
+  drawn through the brew path, expressed as a volume per unit time so it reads against both the
+  coefficient that produces it and against what a bench meter would later report. The quantity count
+  grows with it, and every array keyed on that count grows to match — the estimator's quantity-to-state
+  table, the native application's reporting loop, and the arrays in the three plant test suites.
+  Adding a *state* for the same rate is out of scope: a state is a structure's own vocabulary and may
+  be refused, whereas every structure answers every quantity, which is the contract this rate needs.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: criterion-of

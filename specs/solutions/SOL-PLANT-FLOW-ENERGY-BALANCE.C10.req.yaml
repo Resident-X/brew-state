@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C10
+type: criterion
+title: The description states the relations flow now enters
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The machine's description replaces the passage naming water flow and the energy it carries as an
+  omission with a statement of the relations that now carry it, and states the error the coupled step
+  introduces alongside the coefficient errors it already declares. Every coefficient this slice adds is
+  named there by the same build-enforced check that already fails a description omitting a coefficient
+  or a quantity. Rewriting passages about omissions this slice does not close is out of scope.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

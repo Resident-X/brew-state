@@ -1,0 +1,15 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C12
+type: criterion
+title: The omissions this slice does not close remain stated
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The steam draw's energy cost, the puck and the pump's flow-versus-pressure characteristic, and the
+  contention between two destinations drawing on one block each remain in the description's omissions
+  list, worded so that the arrival of a flow term is not read as having closed them. The rate entering
+  the relations is the commanded rate, and the description says so. Closing any of these is out of scope.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

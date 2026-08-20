@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C11
+type: criterion
+title: The description records that the outlet coefficient has become reachable rather than identified
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The passage recording that nothing the machine senses depends on the outlet time constant is replaced
+  by one stating that the casting's own reading now depends on it, so a prediction error against the
+  brew sensor carries information about it. It states reachability, not identification: no claim is made
+  that the coefficient has been estimated from data, and identifying it against a real machine stays
+  outside this slice and outside the simulation track entirely.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

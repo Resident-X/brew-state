@@ -1,0 +1,16 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C6
+type: criterion
+title: The temperature the water enters at is a coefficient in its own right
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The parameter record gains a feed-water temperature distinct from ambient, carrying its own declared
+  error fraction and recorded origin, and the relations read it rather than reusing the ambient value.
+  Reusing ambient is explicitly not done, so that a machine fed from a cold mains rather than a warm
+  tank is described by changing a number and not by editing equations. Establishing the value for the
+  reference machine by measurement is out of scope; it is declared as estimated.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

@@ -1,0 +1,17 @@
+id: SOL-PLANT-FLOW-REPORTED.C4
+type: criterion
+title: The rate the pump moves water at full scale is a described coefficient
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The reference machine's parameter record gains the coefficient carrying a declared error fraction
+  and an origin marker, and the machine's description names it in prose. The build enforces the
+  latter: the parameter-origin check fails any build whose description omits a coefficient or a
+  quantity enumerator by name, so neither the coefficient nor the new quantity can ship undescribed.
+  Establishing the value by measurement on the physical machine is out of scope — it is declared as
+  estimated, with an error fraction wide enough to say so.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED
+    type: criterion-of
