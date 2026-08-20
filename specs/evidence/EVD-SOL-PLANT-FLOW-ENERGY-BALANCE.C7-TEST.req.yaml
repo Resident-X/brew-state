@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C7-TEST
+type: evidence
+title: The heat a unit of drawn water carries is a described coefficient (SOL-PLANT-FLOW-ENERGY-BALANCE.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_settled_droop_is_the_energy_balance_the_coefficients_state, ::test_the_drawn_power_is_the_volume_rate_times_the_heat_capacity; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_vessel_settles_where_the_drawn_energy_balance_puts_it
+text: |-
+  task fw:test passes. water.heat_capacity_j_per_ml_k (volumetric, matching the volumetric flow reading) converts the reported flow rate into an energy flux visibly in the relations; the settled droop under both structures is checked against the hand-computable energy balance. A fresh-context blind review verified the @document origin classification and the 4.15 J/mL/K figure against IAPWS-IF97 c_p*rho independently.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C7
+    type: satisfies

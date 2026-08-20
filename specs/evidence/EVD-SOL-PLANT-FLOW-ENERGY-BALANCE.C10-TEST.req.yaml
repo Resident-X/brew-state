@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C10-TEST
+type: evidence
+title: The description states the relations flow now enters (SOL-PLANT-FLOW-ENERGY-BALANCE.C10)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_statement_writes_out_the_relation_flow_enters; firmware/params/thermoblock.md
+text: |-
+  task fw:test passes. thermoblock.md replaces the flow-energy omission bullet with the actual relation and coefficient table; the coupled-step rounding-error passage was revised after blind review to state its error honestly (proportional to how many time constants of the faster mode the step spans, negligible at the declared coefficients and the seam's driven interval, rather than an unqualified 'adds nothing that grows with the step'). Every new coefficient is named in the description, enforced by the existing check_parameter_origins.py/check_assumed_error.py build-time checks (task fw:check, passes). Test asserts required co-occurring content on one line, not scattered matches.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C10
+    type: satisfies

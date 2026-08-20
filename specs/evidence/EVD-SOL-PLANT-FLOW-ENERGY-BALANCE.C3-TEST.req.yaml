@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C3-TEST
+type: evidence
+title: The casting and outlet advance as an exact coupled pair (SOL-PLANT-FLOW-ENERGY-BALANCE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_coupled_step_matches_the_pair_integrated_independently, ::test_the_pair_lands_in_the_same_place_however_the_step_is_cut
+text: |-
+  task fw:test passes. test_the_coupled_step_matches_the_pair_integrated_independently cross-checks the closed form against an independently written RK4 integration of the same relations at 4000 substeps across three coefficient regimes (separated real modes, oscillating complex-eigenvalue regime, repeated eigenvalue), tolerance on distance travelled. test_the_pair_lands_in_the_same_place_however_the_step_is_cut asserts 1x1000ms == 10x100ms == 100x10ms, which only an exact (not truncated) integration passes. A fresh-context blind review independently re-derived both closed-form branches algebraically and confirmed they match the code character for character.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C3
+    type: satisfies

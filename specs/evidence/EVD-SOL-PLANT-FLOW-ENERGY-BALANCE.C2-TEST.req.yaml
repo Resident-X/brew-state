@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C2-TEST
+type: evidence
+title: The loss is written through the outlet temperature, not the casting's own (SOL-PLANT-FLOW-ENERGY-BALANCE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_casting_depends_on_where_the_water_leaving_sits, ::test_the_outlet_time_constant_reaches_the_casting_only_under_a_draw
+text: |-
+  task fw:test passes. test_the_casting_depends_on_where_the_water_leaving_sits perturbs the outlet state alone and requires the casting's own trajectory to move under an open draw and to be byte-identical to the unperturbed run with the draw closed -- the direct assertion this criterion requires. test_the_outlet_time_constant_reaches_the_casting_only_under_a_draw confirms the dependence is draw-gated.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C2
+    type: satisfies

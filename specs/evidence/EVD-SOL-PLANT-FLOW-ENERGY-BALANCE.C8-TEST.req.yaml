@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C8-TEST
+type: evidence
+title: The stepped structure stays admissible with a draw open (SOL-PLANT-FLOW-ENERGY-BALANCE.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_flow_terms_coefficients_carry_enforced_admissible_ranges, ::test_a_toggling_draw_against_a_cold_casting_stays_bounded
+text: |-
+  task fw:test passes. Two distinct checks, per the criterion's explicit split: load-time range validation admits every new coefficient (SPECS[] entries, divisors floored strictly above zero and asserted specifically), and a separate new state-admissibility check steps the structure with the pump commanded closed-to-full-scale against a cold casting and asserts every state stays finite and non-diverging across the seam's declared interval.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C8
+    type: satisfies

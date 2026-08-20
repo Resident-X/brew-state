@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C1-TEST
+type: evidence
+title: The casting/vessel loses energy to drawn water (SOL-PLANT-FLOW-ENERGY-BALANCE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_a_draw_cools_the_heated_mass_faster_than_no_draw, ::test_the_steam_mass_gains_no_term_from_the_draw; firmware/test/test_plant_boiler/test_plant_boiler.c::test_a_draw_cools_the_vessel_faster_than_no_draw, ::test_a_long_step_under_a_draw_is_corrected_for_both_losses, ::test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed
+text: |-
+  task fw:test passes. A loss proportional to drawn rate and to the temperature difference across the water joins the ambient loss on every structure answering the pump channel: the thermoblock casting (test_a_draw_cools_the_heated_mass_faster_than_no_draw) and the single-vessel boiler (test_a_draw_cools_the_vessel_faster_than_no_draw, test_a_long_step_under_a_draw_is_corrected_for_both_losses, test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed, the last closing a real mutation-sweep gap the boiler's relaxation correction opened). The steam mass gains no term and is asserted byte-for-byte unchanged under a draw (test_the_steam_mass_gains_no_term_from_the_draw).
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C1
+    type: satisfies

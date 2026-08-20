@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C14-TEST
+type: evidence
+title: The description states how completely the drawn water is assumed to equilibrate (SOL-PLANT-FLOW-ENERGY-BALANCE.C14)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_omissions_the_flow_term_does_not_close_are_still_recorded
+text: |-
+  task fw:test passes. thermoblock.md states the outlet relation assumes complete equilibration toward the casting's temperature regardless of draw rate, which a real block would not achieve at high flow, overstating both delivered temperature and droop in the regime the flow term exists to represent -- recorded as a new omission rather than left implicit after the flow term's arrival.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C14
+    type: satisfies

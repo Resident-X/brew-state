@@ -45,6 +45,11 @@ static const plant_parameter_spec_t SPECS[] = {
     {"brew.pressure_time_constant_s", 0.001f, 100.0f,
      offsetof(plant_parameters_t, brew_pressure_time_constant_s)},
 
+    {"water.feed_temperature_c", 0.0f, 60.0f,
+     offsetof(plant_parameters_t, water_feed_temperature_c)},
+    {"water.heat_capacity_j_per_ml_k", 1.0f, 10.0f,
+     offsetof(plant_parameters_t, water_heat_capacity_j_per_ml_k)},
+
     {"steam.saturation_temperature_c", 0.0f, 300.0f,
      offsetof(plant_parameters_t, steam_saturation_temperature_c)},
     {"steam.pressure_bar_per_k", 0.0f, 10.0f,
@@ -105,27 +110,6 @@ static float relaxation_factor(float x)
     return x > 0.0f ? settled_fraction(x) / x : 1.0f;
 }
 
-void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuation, float seconds)
-{
-    if (model == NULL || actuation == NULL) {
-        return;
-    }
-
-    const plant_parameters_t *p = &model->coefficients;
-
-    const float duty =
-        actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] / PERMILLE_FULL_SCALE;
-    const float delivered_w = p->vessel_heater_power_w * duty;
-    const float lost_w = p->vessel_loss_w_per_k * (model->vessel_temperature_c -
-                                                   p->ambient_temperature_c);
-    const float steps_of_time_constant =
-        (seconds * p->vessel_loss_w_per_k) / p->vessel_thermal_mass_j_per_k;
-    const float effective_seconds = seconds * relaxation_factor(steps_of_time_constant);
-
-    model->vessel_temperature_c +=
-        ((delivered_w - lost_w) * effective_seconds) / p->vessel_thermal_mass_j_per_k;
-}
-
 /*
  * The rate the pump was commanded to move water at, linear in the commanded
  * level and zero when it is zero. What the water is pushed through does not
@@ -136,6 +120,55 @@ static float commanded_flow_ml_per_s(const plant_parameters_t *p,
 {
     return p->pump_flow_ml_per_s *
            (actuation->level_permille[ACTUATION_CHANNEL_PUMP] / PERMILLE_FULL_SCALE);
+}
+
+void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuation, float seconds)
+{
+    if (model == NULL || actuation == NULL) {
+        return;
+    }
+
+    const plant_parameters_t *p = &model->coefficients;
+
+    const float duty =
+        actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] / PERMILLE_FULL_SCALE;
+    const float drawn_ml_per_s = commanded_flow_ml_per_s(p, actuation);
+    /*
+     * What the water drawn out costs the vessel, per kelvin it is carried away
+     * above the temperature it arrived at. A volume rate, so the conversion to a
+     * power is the volumetric heat capacity of water and nothing else.
+     */
+    const float drawn_w_per_k = drawn_ml_per_s * p->water_heat_capacity_j_per_ml_k;
+    const float delivered_w = p->vessel_heater_power_w * duty;
+    /*
+     * Two losses, and the second is written at the vessel's own temperature.
+     * That is not the shortcut the reference architecture rules out -- there the
+     * water leaving is a state of its own and taking the difference at the
+     * casting would be claiming a gradient that structure exists to represent.
+     * Here there is no such state to take it at: this architecture heats the
+     * water in the vessel it delivers from, so the water on its way out is the
+     * water in the vessel, and the vessel's temperature is the leaving
+     * temperature rather than a stand-in for it. A machine of this kind that
+     * cooled at the outlet and not at the vessel would be two bodies of water,
+     * which is the other architecture.
+     */
+    const float lost_w = p->vessel_loss_w_per_k * (model->vessel_temperature_c -
+                                                   p->ambient_temperature_c) +
+                         drawn_w_per_k * (model->vessel_temperature_c -
+                                          p->water_feed_temperature_c);
+    /*
+     * Both losses pull the vessel towards something, so both set how fast it
+     * gets there: the relaxation the step is corrected for is the sum of the two
+     * coefficients rather than the ambient one alone. With the pump closed the
+     * drawn term is exactly zero and this is the coefficient it always was.
+     */
+    const float settling_w_per_k = p->vessel_loss_w_per_k + drawn_w_per_k;
+    const float steps_of_time_constant =
+        (seconds * settling_w_per_k) / p->vessel_thermal_mass_j_per_k;
+    const float effective_seconds = seconds * relaxation_factor(steps_of_time_constant);
+
+    model->vessel_temperature_c +=
+        ((delivered_w - lost_w) * effective_seconds) / p->vessel_thermal_mass_j_per_k;
 }
 
 void boiler_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,

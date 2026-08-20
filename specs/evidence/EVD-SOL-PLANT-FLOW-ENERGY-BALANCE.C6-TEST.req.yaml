@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C6-TEST
+type: evidence
+title: The feed-water temperature is its own coefficient (SOL-PLANT-FLOW-ENERGY-BALANCE.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_feed_temperature_is_read_rather_than_ambient
+text: |-
+  task fw:test passes. water.feed_temperature_c is read distinctly from ambient_temperature_c and the relations move when the two are set apart, confirmed by a dedicated test rather than by inspection alone -- a stronger method than the criterion's declared inspection verification. Declared with its own error fraction and origin in thermoblock.params/.md.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C6
+    type: satisfies

@@ -72,6 +72,14 @@ def build(environment: str) -> int:
 FOUND_THE_PROBLEM = 1
 
 PLANT_TESTS = [PIO, "test", "-e", "native_test", "-f", "test_plant"]
+#: The single-boiler structure's own suite, which is a separate run rather than
+#: a filter over the one above. `env:native_test` compiles only the coffee-block
+#: structure's sources, so a defect introduced into the boiler's equations never
+#: reaches a translation unit that build makes -- the mutation would be reported
+#: as survived having never been compiled, which is precisely the unfalsifiable
+#: check this tool exists to catch. A mutation aimed at a boiler source has to
+#: name the environment that builds it.
+BOILER_TESTS = [PIO, "test", "-e", "native_boiler_test", "-f", "test_plant_boiler"]
 ENCAPSULATION = [
     sys.executable, "tools/check_plant_encapsulation.py", "src", "test",
     "--plant-root", "src/plant", "--include-dir", "include",
@@ -171,6 +179,7 @@ TESTS_RUN = [
 #: the defect reads as survived without ever having reached anything.
 LABELS = {
     tuple(PLANT_TESTS): "the plant model's tests",
+    tuple(BOILER_TESTS): "the single-boiler structure's tests",
     tuple(ENCAPSULATION): "the encapsulation check",
     tuple(SEAM_HEADER): "the seam header check",
     tuple(VOCABULARY_HEADER): "the vocabulary header check",
@@ -209,24 +218,23 @@ MUTATIONS = (
         "command": PLANT_TESTS,
     },
     {
-        "name": "the-outlet-follows-the-casting-where-it-arrived",
-        "why": "the water relaxes towards where the casting ended the step rather than across "
-               "the traverse it made, which is first order in the step length",
+        "name": "naive-coupled-step",
+        "why": "the coupled pair advances as though each state's rate held constant across the "
+               "step, which is first order in the step length and is exactly what a caller "
+               "would then have to shorten the interval to hide",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "    return block_to_c - (block_to_c - block_from_c) * carried +\n"
-                "           (outlet_c - block_from_c) * (1.0f - settled);",
-        "replace": "    (void)carried;\n"
-                   "    return block_to_c + (outlet_c - block_to_c) * (1.0f - settled);",
+        "find": "    *kappa = seconds * (carried + (decay + decay) * second_order);",
+        "replace": "    *kappa = seconds;",
         "command": PLANT_TESTS,
     },
     {
-        "name": "the-outlet-carries-the-traverse-by-the-settled-fraction",
-        "why": "the casting's traverse across the step is weighted by how far the relaxation "
+        "name": "the-pair-carries-its-separation-by-the-settled-fraction",
+        "why": "the separation between the pair's two modes is weighted by how far a relaxation "
                "travelled rather than by that fraction per time constant elapsed, which is the "
-               "same confusion between the two expressions the mass's own step avoids",
+               "same confusion between the two expressions the single-mass step avoids",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "    const float carried = relaxation_factor(steps_of_time_constant);",
-        "replace": "    const float carried = settled;",
+        "find": "        carried = expf(-slow) * relaxation_factor(separation + separation);",
+        "replace": "        carried = expf(-slow) * settled_fraction(separation + separation);",
         "command": PLANT_TESTS,
     },
     {
@@ -235,12 +243,41 @@ MUTATIONS = (
                "structure had before it distinguished the two and leaves an estimator nothing "
                "to reconstruct",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "    model->brew_outlet_temperature_c =\n"
-                "        advanced_outlet(model->brew_outlet_temperature_c, casting_before_c,\n"
-                "                        model->brew_temperature_c, "
-                "p->brew_outlet_time_constant_s, seconds);",
-        "replace": "    model->brew_outlet_temperature_c = model->brew_temperature_c;",
+        "find": "    *outlet_c = outlet_before_c + kappa * outlet_rate + sigma * outlet_curvature;",
+        "replace": "    *outlet_c = *casting_c;",
         "command": PLANT_TESTS,
+    },
+    {
+        "name": "the-drawn-loss-written-at-the-casting",
+        "why": "the energy the drawn water carries away is reckoned at the casting's own "
+               "temperature rather than at the water leaving, which leaves nothing the brew "
+               "sensor reads depending on the state no sensor reports",
+        "file": "src/plant/thermoblock/plant_structure.c",
+        "find": "         carried_w_per_k * (outlet_before_c - p->water_feed_temperature_c)) /",
+        "replace": "         carried_w_per_k * (casting_before_c - p->water_feed_temperature_c)) /",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "the-outlet-lag-does-not-move-with-the-draw",
+        "why": "the water leaving approaches the casting at the no-draw conduction rate however "
+               "hard the pump is driven, which is the fixed outlet time constant this structure "
+               "carried before the drawn rate entered the relation",
+        "file": "src/plant/thermoblock/plant_structure.c",
+        "find": "    const float approach_per_s = outlet_approach_per_s(p, drawn_ml_per_s);",
+        "replace": "    const float approach_per_s = 1.0f / p->brew_outlet_conduction_time_constant_s;",
+        "command": PLANT_TESTS,
+    },
+    {
+        "name": "the-feed-water-is-the-room",
+        "why": "the temperature the drawn water arrives at is taken as ambient, which is the "
+               "same number on this machine and a different quantity on any machine plumbed to "
+               "a main",
+        "file": "src/plant/boiler/plant_structure.c",
+        "find": "                         drawn_w_per_k * (model->vessel_temperature_c -\n"
+                "                                          p->water_feed_temperature_c);",
+        "replace": "                         drawn_w_per_k * (model->vessel_temperature_c -\n"
+                   "                                          p->ambient_temperature_c);",
+        "command": BOILER_TESTS,
     },
     {
         "name": "naive-temperature-step",
@@ -272,8 +309,8 @@ MUTATIONS = (
         "name": "loss-coefficient-compiled-in",
         "why": "a second coefficient, in a different equation, becomes a literal",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "p->brew_loss_w_per_k,",
-        "replace": "1.5f,",
+        "find": "p->brew_loss_w_per_k * (casting_before_c - p->ambient_temperature_c)",
+        "replace": "1.5f * (casting_before_c - p->ambient_temperature_c)",
         "command": PLANT_TESTS,
     },
     {

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C4-TEST
+type: evidence
+title: The outlet time constant shortens as the draw increases (SOL-PLANT-FLOW-ENERGY-BALANCE.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_outlet_settles_faster_the_harder_the_draw
+text: |-
+  task fw:test passes. Settling behaviour compared at two draw rates confirms a faster outlet response at the larger draw. brew.outlet_held_volume_ml carries its own declared error fraction and origin in thermoblock.params.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C4
+    type: satisfies

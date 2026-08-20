@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C12-TEST
+type: evidence
+title: The omissions this slice does not close remain stated (SOL-PLANT-FLOW-ENERGY-BALANCE.C12)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_omissions_the_flow_term_does_not_close_are_still_recorded
+text: |-
+  task fw:test passes. Puck, pump flow-vs-pressure characteristic, dual-destination contention (three-way valve), and the steam draw's energy cost (latent heat) are each asserted present as omissions, and specifically after the omissions heading rather than merely present anywhere in the file. Following blind review, a new omissions bullet was also added for the held water's own uncharged thermal cost (its heat capacity and the free zero-draw conduction warming), which this test's equilibrate-phrase check also covers via C14 in the same function.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C12
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C11-TEST
+type: evidence
+title: The description records the outlet coefficient as reachable, not identified (SOL-PLANT-FLOW-ENERGY-BALANCE.C11)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_statement_records_the_outlet_coefficients_as_reachable
+text: |-
+  task fw:test passes. thermoblock.md's passage stating nothing the sensor reads depends on the outlet time constant is replaced by one stating the casting's own reading now depends on it; the test requires the old sentence to be absent, not merely outnumbered by the new one, and requires reachability language without a claim of identification or estimation from data.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C11
+    type: satisfies

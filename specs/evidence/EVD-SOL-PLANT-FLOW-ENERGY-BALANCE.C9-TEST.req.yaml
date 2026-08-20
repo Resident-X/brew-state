@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C9-TEST
+type: evidence
+title: The new arithmetic survives the mutation sweep (SOL-PLANT-FLOW-ENERGY-BALANCE.C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/mutation_triage.yaml
+text: |-
+  task fw:sweep passes: 247 mutants, 236 killed, 96%. Every survivor is accounted for in mutation_triage.yaml with a written judgement; none are unjudged gaps. One real gap the new boiler relaxation correction opened (unpinned at a long step under an open draw) was closed by a new test (test_a_long_step_under_a_draw_is_corrected_for_both_losses), not judged away. A fresh-context blind review independently spot-checked the triage file's new/moved entries for honesty and confirmed no gap was excused, and separately found and the implementation fixed an unrelated task fw:mutate defect (a hand-written boiler mutant wired to a test environment that never compiled the boiler source) -- task fw:mutate now also passes clean (67 defects, all caught).
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C9
+    type: satisfies
