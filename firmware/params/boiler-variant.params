@@ -36,6 +36,7 @@ vessel.heater_power_w = 1800.0
 vessel.loss_w_per_k = 2.0
 
 pump.pressure_bar = 15.0
+pump.flow_ml_per_s = 7.0
 brew.pressure_time_constant_s = 0.8
 
 steam.saturation_temperature_c = 100.0

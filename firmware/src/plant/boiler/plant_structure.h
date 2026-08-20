@@ -89,6 +89,7 @@ typedef struct {
     float vessel_loss_w_per_k;
 
     float pump_pressure_bar;
+    float pump_flow_ml_per_s;
     float brew_pressure_time_constant_s;
 
     float steam_saturation_temperature_c;
@@ -109,6 +110,15 @@ typedef struct {
     float vessel_temperature_c;
     float brew_pressure_bar;
     float steam_pressure_bar;
+
+    /*
+     * The rate water was drawn at over the step just taken, held so the seam
+     * can answer it without being handed the actuation again. It is not a
+     * state: nothing integrates it and nothing carries over between steps -- it
+     * is recomputed whole from the commanded pump level every step, which is
+     * why no state vocabulary names it.
+     */
+    float brew_flow_ml_per_s;
 } plant_model_t;
 
 /*

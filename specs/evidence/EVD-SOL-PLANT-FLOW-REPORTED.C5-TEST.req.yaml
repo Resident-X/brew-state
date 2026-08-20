@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-REPORTED.C5-TEST
+type: evidence
+title: A quantity no state observes cannot read as the first state (SOL-PLANT-FLOW-REPORTED.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T10:38:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_each_channel_corrects_the_state_its_own_reading_is_measured_against
+text: |-
+  The quantity-to-state table filled by designated initialiser was replaced by a switch with no default label, so an unanswered quantity fails the build rather than resolving to the zeroth state; confirmed by injecting a sixth quantity and observing -Werror=switch reject it. The channel-to-quantity table one lookup earlier in the same function carried the identical defect and was converted the same way, confirmed by injecting a fifth sensor channel. The runtime half is covered by driving each channel alone with a disagreeing reading and requiring that channel's own residual magnitude to close over eight steps, which happens only if the correction lands on the state the reading is measured against; mis-pairing steam temperature to the first state was injected and the test failed with the residual frozen at its opening value.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED.C5
+    type: satisfies

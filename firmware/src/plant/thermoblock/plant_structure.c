@@ -40,6 +40,7 @@ static const plant_parameter_spec_t SPECS[] = {
     {"steam.loss_w_per_k", 0.0f, 1000.0f, offsetof(plant_parameters_t, steam_loss_w_per_k)},
 
     {"pump.pressure_bar", 0.0f, 30.0f, offsetof(plant_parameters_t, pump_pressure_bar)},
+    {"pump.flow_ml_per_s", 0.0f, 100.0f, offsetof(plant_parameters_t, pump_flow_ml_per_s)},
     {"brew.pressure_time_constant_s", 0.001f, 100.0f,
      offsetof(plant_parameters_t, brew_pressure_time_constant_s)},
 
@@ -180,6 +181,21 @@ void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuatio
         p->steam_thermal_mass_j_per_k, seconds);
 }
 
+/*
+ * The rate the pump was commanded to move water at, from the level it was
+ * commanded with. Linear in that level and zero when it is zero, which is the
+ * whole of the relation: what the water is being pushed through does not enter
+ * it, so a puck, the pump's own flow-versus-pressure characteristic and the
+ * mechanical cap are all absent. This is the rate commanded, not the rate a cup
+ * received, and params/thermoblock.md carries that gap as a stated omission.
+ */
+static float commanded_flow_ml_per_s(const plant_parameters_t *p,
+                                     const plant_actuation_t *actuation)
+{
+    return p->pump_flow_ml_per_s *
+           (actuation->level_permille[ACTUATION_CHANNEL_PUMP] / PERMILLE_FULL_SCALE);
+}
+
 void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,
                                    float seconds)
 {
@@ -226,6 +242,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->brew_outlet_temperature_c = parameters->ambient_temperature_c;
     model->steam_temperature_c = parameters->ambient_temperature_c;
     model->brew_pressure_bar = 0.0f;
+    model->brew_flow_ml_per_s = 0.0f;
     model->steam_pressure_bar = steam_pressure_at(parameters, model->steam_temperature_c);
     model->initialised = true;
     return true;
@@ -255,6 +272,15 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
      */
     thermoblock_advance_temperatures(model, actuation, seconds);
     thermoblock_advance_pressures(model, actuation, seconds);
+
+    /*
+     * The rate drawn over the step just taken. It is recomputed whole rather
+     * than advanced, so where it is set within the step does not matter; it is
+     * set here rather than inside either advance because it is neither a
+     * temperature nor a pressure, and folding it into one of those would make
+     * that function's name a smaller truth than its body.
+     */
+    model->brew_flow_ml_per_s = commanded_flow_ml_per_s(&model->coefficients, actuation);
     return true;
 }
 
@@ -277,10 +303,25 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
     case PLANT_QUANTITY_STEAM_PRESSURE_BAR:
         *value = model->steam_pressure_bar;
         return true;
+    case PLANT_QUANTITY_BREW_FLOW_ML_PER_S:
+        *value = model->brew_flow_ml_per_s;
+        return true;
+    /*
+     * Not a quantity, so there is nothing to answer with. No default label
+     * beside it, and that absence is deliberate: -Wall gives -Wswitch and this
+     * is built under -Werror, so a quantity added to the machine's vocabulary
+     * fails the build here rather than being quietly refused by every
+     * structure. A quantity is the machine's and not a structure's -- the seam
+     * promises every consumer that every structure answers every one -- so
+     * silently refusing a new one would break that promise in the one way no
+     * consumer can test for.
+     */
     case PLANT_QUANTITY_COUNT:
-    default:
         return false;
     }
+
+    /* Reached only by a value that is not in the vocabulary at all. */
+    return false;
 }
 
 bool plant_model_state(const plant_model_t *model, plant_state_t state, float *value)

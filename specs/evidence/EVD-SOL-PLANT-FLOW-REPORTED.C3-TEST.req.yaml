@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-REPORTED.C3-TEST
+type: evidence
+title: The reported rate follows the pump's commanded level (SOL-PLANT-FLOW-REPORTED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T10:38:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_drawn_rate_follows_the_commanded_pump_level
+text: |-
+  Five commanded levels including both endpoints are each checked against the figure the coefficient and full scale give, rather than against the neighbouring level, so a curve, dead band or early saturation fails rather than passing as monotonic. test_a_pump_commanded_off_reports_no_flow checks zero after a draw, catching a latched rather than recomputed value. test_the_drawn_rate_is_unmoved_by_the_heaters runs forty steps with both heaters at full scale and requires the same rate as the pump commanded alone. Held on the single-vessel structure by its own test of the same name.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED.C3
+    type: satisfies

@@ -2,17 +2,23 @@ id: SOL-PLANT-FLOW-REPORTED.C4
 type: criterion
 title: The rate the pump moves water at full scale is a described coefficient
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Every structure that answers the pump channel gains the coefficient in its own parameter record, each
-  carrying a declared error fraction and an origin marker, and each machine's description names it in
-  prose. The build enforces the naming: the parameter-origin check fails any build whose description omits
-  a coefficient or a quantity enumerator by name, so neither the coefficient nor the new quantity can ship
-  undescribed in any structure. A structure that answers no pump channel needs no such coefficient.
-  Establishing any value by measurement on a physical machine is out of scope — each is declared as
-  estimated, with an error fraction wide enough to say so.
+  The coefficient is added to every structure that answers the pump channel. Where a description
+  claims a machine it carries a declared error fraction and an origin marker like every other value
+  there; where it declares that it describes no machine its values stand bare, and this one stands
+  bare with them -- provenance invented for a figure taken from no machine is what that exemption
+  exists to prevent. Each machine's description names the coefficient in prose and states that it and
+  the pressure commanded at full duty are opposite ends of one pump characteristic, so a model at full
+  duty reports a pressure and a rate no machine produces together; a description carrying both without
+  saying so invites a margin sized against a case the machine has not got. The build enforces the
+  naming: the parameter-origin check fails any build whose description omits a coefficient or a
+  quantity enumerator by name, so neither the coefficient nor the new quantity can ship undescribed. A
+  structure answering no pump channel needs no such coefficient. Out of scope: establishing any value
+  by measurement on a physical machine, and the characteristic relating the two, which stays a
+  declared omission -- each value is estimated, with an error fraction wide enough to say so.
 links:
   - target: SOL-PLANT-FLOW-REPORTED
     type: criterion-of

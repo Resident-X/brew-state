@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-REPORTED.C4-TEST
+type: evidence
+title: The full-scale rate is a described coefficient (SOL-PLANT-FLOW-REPORTED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T10:38:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_statement_warns_that_the_two_pump_coefficients_exclude_each_other
+text: |-
+  pump.flow_ml_per_s is present in every structure that answers the pump channel. The description claiming a machine carries a declared error fraction and an origin marker with an account, asserted by test_the_shipped_description_declares_an_assumed_error_for_the_drawn_rate; the descriptions declaring that they describe no machine carry it bare, as their other values do. The statement names it, and names it beside pump.pressure_bar in one paragraph stating the two are opposite ends of one pump characteristic that no machine reaches at once -- verified by a test that fails when that paragraph is removed. check_parameter_origins fails any build whose statement omits a coefficient or quantity enumerator by name, confirmed by injecting an enumerator and observing the refusal.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED.C4
+    type: satisfies

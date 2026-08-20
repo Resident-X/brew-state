@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-REPORTED.C1-TEST
+type: evidence
+title: The seam names the drawn rate as a quantity (SOL-PLANT-FLOW-REPORTED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T10:38:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_seam_names_the_drawn_rate_as_a_quantity
+text: |-
+  PLANT_QUANTITY_BREW_FLOW_ML_PER_S is enumerated in the quantity vocabulary, sits inside PLANT_QUANTITY_COUNT and is distinct from every other member, so the vocabulary can be walked to reach it. Every array keyed on the quantity count grew with it: the three plant suites and the native reporting loop compile and pass against the widened count. No state was added for the rate, which is asserted directly.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED.C1
+    type: satisfies

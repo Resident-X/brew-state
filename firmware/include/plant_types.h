@@ -50,6 +50,23 @@ typedef enum {
     PLANT_QUANTITY_STEAM_TEMPERATURE_C,
     PLANT_QUANTITY_BREW_PRESSURE_BAR,
     PLANT_QUANTITY_STEAM_PRESSURE_BAR,
+    /*
+     * The rate water is drawn through the brew path, as a volume per unit
+     * time. It is here rather than in the state vocabulary below because a
+     * consumer has to be able to read it without knowing which structure it
+     * was built against: a loop commanding a rate of water closes against
+     * this, and a quantity some structures answered and others refused would
+     * be one every such consumer had to test for first. No structure keeps it
+     * as a state -- it is produced from what the pump was commanded, not
+     * integrated -- which is exactly the case the two vocabularies are
+     * separate to allow.
+     *
+     * What it reports is the rate the pump was commanded to move, not the rate
+     * a cup received. The puck, the pump's flow-versus-pressure characteristic
+     * and the mechanical pressure cap all sit between the two and are none of
+     * them represented; each structure's description says so.
+     */
+    PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
     PLANT_QUANTITY_COUNT
 } plant_quantity_t;
 

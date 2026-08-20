@@ -1035,9 +1035,97 @@ static void test_a_window_or_a_distance_outside_what_it_admits_is_refused(void)
     }
 }
 
+/// SOL-PLANT-FLOW-REPORTED.C5: A quantity no state observes cannot read as the
+/// first state.
+///
+/// The failure this guards is not a crash. A quantity paired with a state it is
+/// not read from leaves the estimator correcting the wrong state against a
+/// reading and going on running: the reported residual looks ordinary, the
+/// correction never reaches the prediction it was computed from, and the
+/// machine presents as one that has drifted rather than as one that is
+/// miswired. Telling those two apart is the whole job of the residual, so it is
+/// the one failure the pairing must not have.
+///
+/// Held by driving one channel at a time with a reading that disagrees with the
+/// model, and requiring that channel's own residual to close over successive
+/// steps. A correction landing on the state the reading is measured against
+/// moves the prediction the next residual is computed from, so the disagreement
+/// shrinks; one landing on any other state -- the first among them -- leaves
+/// that prediction where it was, and the residual stands still while every step
+/// goes on reporting a correction that happened.
+///
+/// The steam pressure channel is driven and checked for a residual but not for
+/// closure, and that is the structure's answer rather than a gap here. This
+/// structure does not integrate steam pressure: every step recomputes it from
+/// the steam mass through the saturation relation, so a correction written into
+/// it is overwritten before the next residual is taken. The correction was
+/// offered and the equations decided, which is a different thing from the
+/// correction never arriving.
+static void test_each_channel_corrects_the_state_its_own_reading_is_measured_against(void)
+{
+    struct driven {
+        hw_sensor_channel_t channel;
+        int32_t reading_milli;
+        bool correction_sticks;
+    };
+
+    /*
+     * A reading per channel that disagrees with a model sitting at ambient and
+     * is still inside the span the limits declaration admits -- an implausible
+     * one is refused before any correction is reached, which would leave this
+     * passing for the wrong reason.
+     */
+    static const struct driven DRIVEN[] = {
+        {HW_SENSOR_BREW_TEMPERATURE, 60000, true},
+        {HW_SENSOR_STEAM_TEMPERATURE, 60000, true},
+        {HW_SENSOR_BREW_PRESSURE, 5000, true},
+        {HW_SENSOR_STEAM_PRESSURE, 5000, false},
+    };
+
+    for (size_t i = 0u; i < sizeof(DRIVEN) / sizeof(DRIVEN[0]); i++) {
+        estimator_t estimator;
+        TEST_ASSERT_TRUE(estimator_init(&estimator, &parameters, &limits));
+
+        const plant_actuation_t actuation = idle();
+
+        /* One channel at a time, so no other channel's correction can move the
+         * prediction this one is being measured against. */
+        hw_sim_reset();
+        hw_sim_set_sensor(DRIVEN[i].channel, true, DRIVEN[i].reading_milli);
+
+        TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
+
+        int32_t first = 0;
+        TEST_ASSERT_TRUE_MESSAGE(estimator_residual(&estimator, DRIVEN[i].channel, &first),
+                                 "a channel reporting a plausible reading produced no residual");
+        TEST_ASSERT_TRUE_MESSAGE(first != 0, "the reading was chosen to disagree and did not");
+
+        for (int step = 0; step < 8; step++) {
+            TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
+        }
+
+        int32_t later = 0;
+        TEST_ASSERT_TRUE(estimator_residual(&estimator, DRIVEN[i].channel, &later));
+
+        /* Compared as magnitudes, so a residual that closed by overshooting
+         * through zero is not read as one that failed to close. */
+        const int32_t opened = (first < 0) ? -first : first;
+        const int32_t closed = (later < 0) ? -later : later;
+
+        if (DRIVEN[i].correction_sticks) {
+            char message[112];
+            (void)snprintf(message, sizeof(message),
+                           "channel %d: correcting left its own disagreement at %ld of %ld",
+                           (int)DRIVEN[i].channel, (long)closed, (long)opened);
+            TEST_ASSERT_TRUE_MESSAGE(closed < opened, message);
+        }
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_each_channel_corrects_the_state_its_own_reading_is_measured_against);
     RUN_TEST(test_a_state_no_channel_reports_is_reconstructed);
     RUN_TEST(test_a_state_read_before_initialisation_is_refused);
     RUN_TEST(test_a_state_outside_the_enumerated_set_is_refused);
