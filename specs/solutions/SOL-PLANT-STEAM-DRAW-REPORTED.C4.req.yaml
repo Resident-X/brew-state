@@ -1,0 +1,18 @@
+id: SOL-PLANT-STEAM-DRAW-REPORTED.C4
+type: criterion
+title: The reported steam-draw quantity is exercised end to end on the host tier
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: host-tier agreement only; target-hardware read excluded
+text: |
+  A host-tier test commands a non-zero demand through the step SOL-PLANT-STEAM-DRAW-CHANNELS
+  introduces and reads it back through plant_model_quantity(PLANT_QUANTITY_STEAM_DRAW_ML_PER_S),
+  confirming the two values agree for both thermoblock and boiler under the same host
+  verification tier DEL-SIM-SEAMS-HARNESS runs the rest of the plant model through. Out of
+  scope: reading the quantity from the target microcontroller, which needs hardware this task
+  does not reach.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED
+    type: criterion-of

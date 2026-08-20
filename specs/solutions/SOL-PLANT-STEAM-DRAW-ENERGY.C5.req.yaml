@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-DRAW-ENERGY.C5
+type: criterion
+title: The stepped structure stays admissible with a draw open
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: admissibility within the declared range only
+text: |
+  The new loss and pressure-divergence terms preserve whatever numerical admissibility
+  guarantee thermoblock and boiler's existing step already holds -- no not-a-number result, no
+  unbounded growth, no violation of the structure's own step-size assumptions -- across a demand
+  sweep from zero to the largest value the plant description's declared range permits. Out of
+  scope: admissibility outside that declared range, which the model does not claim to hold for.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY
+    type: criterion-of

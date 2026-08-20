@@ -1,0 +1,25 @@
+id: SOL-PLANT-STEAM-DRAW-REPORTED
+type: deliverable
+category: solution
+title: The rate steam is drawn is reported as a quantity every plant structure answers
+status: active
+version: 1
+text: |
+  The plant seam's quantity vocabulary in `plant_types.h` names a fixed set consumers read through `plant_model_quantity()`, and none of them is the rate steam is being drawn -- SOL-PLANT-STEAM-DRAW-CHANNELS gives every structure's step a `steam_demand_ml_per_s` argument, but nothing outside that step can read it. This slice gives the demand a second identity: a `PLANT_QUANTITY_STEAM_DRAW_ML_PER_S` entry every structure -- `thermoblock`, `boiler`, and the `fixture` test double -- answers, exactly the demand value the current step received, with no scaling or derivation of its own since the input already arrives as a rate.
+
+  The estimator's quantity-to-state table, `state_observed_by()` in `firmware/src/estimator/estimator.c`, gains a deliberate refusal for the new quantity, exactly as it already refuses `PLANT_QUANTITY_BREW_FLOW_ML_PER_S`: no structure keeps an integrated state for a rate that is supplied rather than accumulated, so there is no state a reading of it could correct, and the switch's absence of a default keeps that refusal a stated decision rather than a silently wrong mapping.
+
+  Out of scope: computing anything from the reported rate -- the energy it removes and the pressure divergence it drives are SOL-PLANT-STEAM-DRAW-ENERGY's; and any hardware sensor for steam draw, which stays bench instrumentation on the other track.
+rationale: |
+  The demand is placed in the quantity vocabulary rather than left reachable only inside the step function for the same reason the water side's flow rate is: quantities are the machine's, answered unconditionally by every structure including the one that models no real machine, so a consumer built against the seam never has to learn which structure it is running against before it can read the draw rate.
+
+  No scaling accompanies the report, unlike the water side's flow quantity, because the water side derives its rate from a commanded permille level and needs a coefficient to do the multiplication; the steam demand already arrives as a rate with nothing to derive it from, so reporting it is a pass-through rather than a computation, and inventing a coefficient here would describe an origin the value does not have.
+
+  The estimator table gains a refusal rather than an observing-state entry because the demand is exactly the shape of quantity `state_observed_by()` already declines to correct: a rate supplied from outside rather than a state the plant integrates. Mapping it to a state anyway would invent an integrated steam-draw state this slice does not add and the estimator has nothing to hold, which is precisely the silent-wrong-read failure mode the switch's missing default exists to convert into a compile-time decision instead.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM.C4
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: depends-on

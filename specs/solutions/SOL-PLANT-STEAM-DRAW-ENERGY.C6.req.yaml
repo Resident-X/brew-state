@@ -1,0 +1,16 @@
+id: SOL-PLANT-STEAM-DRAW-ENERGY.C6
+type: criterion
+title: The new arithmetic survives the mutation sweep the plant model is held to
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: mutation coverage of modified sources only
+text: |
+  task fw:sweep (Mull-based) run against the modified sources reports every surviving mutant
+  triaged in firmware/mutation_triage.yaml as equivalent or analysis, none left as an
+  unexamined gap, matching the standard SOL-PLANT-FLOW-ENERGY-BALANCE.C9 already met. Out of
+  scope: sweeping files this slice did not modify.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY
+    type: criterion-of

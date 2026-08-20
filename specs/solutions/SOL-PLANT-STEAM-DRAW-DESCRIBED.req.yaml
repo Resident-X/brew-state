@@ -1,0 +1,27 @@
+id: SOL-PLANT-STEAM-DRAW-DESCRIBED
+type: deliverable
+category: solution
+title: The plant description's declared error and omissions are rewritten to match the relations steam draw now enters
+status: active
+version: 1
+text: |
+  The plant description carries, for every relation it states, a declared error and a list of what it deliberately omits -- the water side's flow-energy slice rewrote its share of that record when the casting-to-outlet coupling changed what the description claims. The steam side's description still reads as though `thermoblock`'s `steam_temperature_c` loses energy only to ambient, as though `boiler`'s `vessel_temperature_c` loses energy only to ambient and to brew flow, and as though `steam_pressure_at()` is always exact for a closed vessel on either structure; SOL-PLANT-STEAM-DRAW-ENERGY, SOL-PLANT-STEAM-DRAW-CHANNELS, and SOL-PLANT-STEAM-DRAW-REPORTED between them make all of those statements false, and this slice is where the description catches up.
+
+  This is documentation of relations already built, not new relations of its own: the enthalpy loss term, the pressure-state divergence and its reversion, the demand input, the feed channel, and the reported quantity each get an entry stating what they represent, what they claim to be accurate to, and what they still leave out -- the puck, the pump characteristic and contention between the two sides remain undeclared exactly as the water side's equivalent record leaves its analogues.
+
+  Out of scope: changing any relation the description states -- this slice only brings the record into agreement with relations the three depended-on slices already built; and the coefficients' declared error ranges beyond what SOL-PLANT-STEAM-DRAW-ENERGY already establishes for its own coefficients.
+rationale: |
+  This lands as its own solution rather than folded into SOL-PLANT-STEAM-DRAW-ENERGY because it has to state what three separate slices changed, not one -- the water side's precedent bundled its documentation criterion into the energy solution because on that side only one slice touched the description; here the demand input, the feed channel and the reported quantity are SOL-PLANT-STEAM-DRAW-CHANNELS and SOL-PLANT-STEAM-DRAW-REPORTED's work, and a documentation criterion that only spoke for the energy term would leave the description silent about the other two.
+
+  Depending on all three rather than only the physics-bearing one is what keeps this slice from being written against relations that might still change -- describing the demand and feed before SOL-PLANT-STEAM-DRAW-CHANNELS lands would be documenting an interface that does not yet exist to describe.
+links:
+  - target: DEL-SIM-STEAM-DRAW-TERM.C5
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: depends-on
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY
+    type: depends-on
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED
+    type: depends-on

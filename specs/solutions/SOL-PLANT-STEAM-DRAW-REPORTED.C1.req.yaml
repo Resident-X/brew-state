@@ -1,0 +1,16 @@
+id: SOL-PLANT-STEAM-DRAW-REPORTED.C1
+type: criterion
+title: The plant seam names the steam-draw rate as a reported quantity
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: pass-through reporting only; no derivation
+text: |
+  plant_types.h's plant_quantity_t gains PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, and
+  plant_model_quantity() returns the steam_demand_ml_per_s value SOL-PLANT-STEAM-DRAW-CHANNELS's
+  step input carries, for whichever structure was selected at build time. Out of scope:
+  deriving the value from anything other than passing through the step's own input.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED
+    type: criterion-of
