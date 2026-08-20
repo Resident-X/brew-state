@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: Water carries energy away in the plant model, and flow is what a delivery commands
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |
@@ -42,13 +44,13 @@ links:
     type: justified-by
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
+  - target: DEL-SIM-ESTIMATOR
+    type: depends-on
   - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
     type: depends-on
   - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
     type: targets
   - target: REQ-PLANT-DESCRIPTION-001.C1
     type: targets
-  - target: DEL-SIM-UNCERTAINTY-BUDGET
-    type: depends-on
-  - target: DEL-SIM-ESTIMATOR
-    type: depends-on

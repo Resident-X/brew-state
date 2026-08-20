@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C13-TEST
+type: evidence
+title: The outlet coefficient's superseded declaration is re-derived, not carried over (SOL-PLANT-FLOW-ENERGY-BALANCE.C13)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_superseded_outlet_declaration_was_re_derived
+text: |-
+  task fw:test passes. brew.outlet_time_constant_s is removed from both thermoblock.params and thermoblock.md, verified absent by the test in both files; brew.outlet_held_volume_ml and brew.outlet_conduction_time_constant_s each carry their own value/error/origin. The 'widest fraction' claim is enforced structurally: the test reads the shipped budget, computes which coefficient actually carries the widest fraction, and requires the prose to name that one -- brew.outlet_conduction_time_constant_s at 0.8, confirmed the true maximum of the 16 declared fractions.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C13
+    type: satisfies

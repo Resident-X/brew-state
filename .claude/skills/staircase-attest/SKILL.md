@@ -49,7 +49,7 @@ Attest progress:
 ./engine/staircase --format json next --explain <CRITERION-ID>
 ```
 
-`show` returns the criterion text — the intent you are attesting against. `next --explain <CRITERION-ID>` returns the criterion's full **composition** in `data.explain.composition[]`: each contributing input as `{id, title, active_evidence_ids[]}` — the input identifier and the complete enumeration of its load-bearing active evidence. That tells you which solution(s) to cite with `--input` in Step 7 and which evidence backs them. (The open-ended `staircase next` answer surfaces the criterion as a `review-ready` action so you can find it; `--explain` hydrates its full composition.) Either way, the evidence itself is read from disk in Step 2, not from the payload.
+`show` returns the criterion text — the intent you are attesting against. `next --explain <CRITERION-ID>` returns the criterion's full **composition** in `data.explain.composition[]`: each contributing input as `{id, title, active_evidence_ids[]}` — the input identifier and the complete enumeration of its load-bearing active evidence. That is the composition the engine synthesises and cites for you at attest time (Step 7 takes no `--input` flag); reviewing it here is how you judge whether the union meets intent and which evidence backs the claim. (The open-ended `staircase next` answer surfaces the criterion as a `review-ready` action so you can find it; `--explain` hydrates its full composition.) Either way, the evidence itself is read from disk in Step 2, not from the payload.
 
 If `$0` is an isolation domain (`MS-*` / `SOL-*`), run `./engine/staircase --format json next --throughput --scope $0` and walk its `review-ready` actions individually.
 
@@ -144,14 +144,14 @@ Preview first (omit `--confirm` — preview exits non-zero and writes nothing), 
   --evidence-id "EVD-<CRITERION-ID>-ATTEST" \
   --attestor david --actor david \
   --method analysis \
-  --input <CONTRIBUTING-INPUT-ID> [--input <ANOTHER-INPUT-ID>]... \
   --rationale "<the Step-6 rationale>" \
   --confirm
 ```
 
 - `--method analysis` for both Tier 1 and Tier 2 — the attestor is reviewing prior evidence, not generating a new test artefact. (`--method test` is only for direct-evidence cases where the attestor is the one running the test.)
-- `--evidence-id` convention: `EVD-<CRITERION-ID>-ATTEST`. The created node carries `result: pass`, an artifact of `kind: composition` whose `cites` slot enumerates the `--input` IDs, `attested_by: <attestor>`, and a `satisfies` link to the criterion.
-- One `--input` per contributing input from the Step-1 composition. Zero inputs is rejected by the engine (empty `cites` slot fails schema validation), so a Tier-2 attest must cite the composing solution(s) explicitly.
+- The contributing composition is **not hand-listed** — the engine synthesises the full contributing-input set for the parent criterion and records the marshalled `composition.Summary` (per-input state, status, artifact_version) as the evidence node's artifact reference, the same rich snapshot the queue-invoker path records. There is no `--input` flag; the composition surfaced in Step 1 is what the engine cites.
+- `--evidence-id` convention: `EVD-<CRITERION-ID>-ATTEST`. The created node carries `result: pass`, an artifact of `kind: external` whose reference is the marshalled composition summary, `attested_by: <attestor>`, and a `satisfies` link to the criterion.
+- A parent criterion with **no contributing inputs** is rejected by the handler (nothing to attest a composition over) — the Step-1 composition must be non-empty, which for a review-ready criterion it always is.
 
 ## Step 8 — Confirm the criterion cleared review-ready
 

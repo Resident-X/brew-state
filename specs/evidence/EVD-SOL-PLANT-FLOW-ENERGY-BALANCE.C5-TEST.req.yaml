@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-ENERGY-BALANCE.C5-TEST
+type: evidence
+title: A closed draw leaves the outlet relation defined at its conduction limit (SOL-PLANT-FLOW-ENERGY-BALANCE.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T13:34:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_a_closed_pump_relaxes_at_the_conduction_constant
+text: |-
+  task fw:test passes. Stepping with the pump commanded to zero produces the no-draw conduction constant exactly, via the reciprocal combination 1/tau(flow) = flow/V_held + 1/tau_conduction with no guard and no branch (confirmed in source and by a fresh-context blind review, which verified the degenerate real/complex eigenvalue boundary is reached only from the real branch so no 0/0 is ever evaluated). brew.outlet_conduction_time_constant_s is a newly declared coefficient, not the superseded brew.outlet_time_constant_s reused.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE.C5
+    type: satisfies

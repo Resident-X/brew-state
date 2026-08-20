@@ -92,6 +92,16 @@ typedef struct {
     float pump_flow_ml_per_s;
     float brew_pressure_time_constant_s;
 
+    /*
+     * Properties of the water rather than of this machine, which is why they sit
+     * apart from the coefficients above. They are the same two names the other
+     * architecture's description carries, because what a millilitre of water
+     * costs and what temperature it arrives at do not depend on how the machine
+     * around it is built.
+     */
+    float water_feed_temperature_c;
+    float water_heat_capacity_j_per_ml_k;
+
     float steam_saturation_temperature_c;
     float steam_pressure_bar_per_k;
 } plant_parameters_t;
@@ -130,8 +140,11 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
 
 /*
  * Advance the vessel over `seconds` under the given actuation. The vessel takes
- * in what its one heater delivers at the commanded duty and gives up what its
- * loss coefficient carries to ambient.
+ * in what its one heater delivers at the commanded duty, gives up what its loss
+ * coefficient carries to ambient, and gives up what the water drawn out of it
+ * carries away above the temperature the water arrived at. There is one state to
+ * write that second loss at, because on a machine of this architecture the water
+ * leaving is the water in the vessel.
  */
 void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuation, float seconds);
 

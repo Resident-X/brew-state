@@ -66,6 +66,25 @@
 # arithmetic that slice added produced mutants of its own, and the suite killed
 # every one of them; none of it is recorded here, which is what that means.
 
+# Both steam-pressure judgements were re-made at new lines when the water drawn
+# through a block started taking energy out of it. Neither expression moved
+# relative to anything it depends on: the thermoblock's was pushed down by its
+# parameter table gaining four entries and by the note above that table growing a
+# paragraph about the two water properties, and the boiler's by the same table
+# gaining two and by the flow relation being lifted above the vessel's step so
+# the step could read it. The comparison at each new line is character for
+# character the one the judgement was written about, and what it is about -- a
+# gauge pressure that is nothing below saturation either way -- is untouched by
+# anything the flow term added, which reaches neither steam mass.
+#
+# The arithmetic that term did add produced mutants of its own in both
+# structures, and the suites killed every one of them; none of it is recorded
+# here, which is what that means. One of them was a real gap when it first
+# appeared -- the vessel's relaxation correction, which the drawn coefficient now
+# enters, was pinned by no test at a step long enough for the correction to
+# matter with the pump open -- and it was closed by a test rather than recorded,
+# the way the others before it were.
+
 # Every judgement about plant_parameters.c was re-made at a new line a second
 # time, when the grammar grew the error the design assumes for a value. The
 # loader gained a second annotation to read, a helper both of its public loaders
@@ -187,7 +206,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:78:31:
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:95:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
@@ -197,7 +216,7 @@ survivors:
       product is a zero, and a zero of either sign compares equal to the literal
       and behaves identically in everything downstream.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:79:31:
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:84:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`

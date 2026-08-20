@@ -39,5 +39,8 @@ pump.pressure_bar = 15.0
 pump.flow_ml_per_s = 7.0
 brew.pressure_time_constant_s = 0.8
 
+water.feed_temperature_c = 20.0
+water.heat_capacity_j_per_ml_k = 4.15
+
 steam.saturation_temperature_c = 100.0
 steam.pressure_bar_per_k = 0.036

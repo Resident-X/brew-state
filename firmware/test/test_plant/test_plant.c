@@ -47,13 +47,23 @@ static const coefficient_t NOMINAL[] = {
     {"brew.thermal_mass_j_per_k", 420.0},
     {"brew.heater_power_w", 1200.0},
     {"brew.loss_w_per_k", 1.5},
-    {"brew.outlet_time_constant_s", 1.2},
+    {"brew.outlet_held_volume_ml", 6.0},
+    {"brew.outlet_conduction_time_constant_s", 15.0},
     {"steam.thermal_mass_j_per_k", 900.0},
     {"steam.heater_power_w", 1400.0},
     {"steam.loss_w_per_k", 2.2},
     {"pump.pressure_bar", 9.0},
     {"pump.flow_ml_per_s", 6.0},
     {"brew.pressure_time_constant_s", 0.8},
+    /*
+     * Deliberately not the same number as the ambient two lines above. They are
+     * separate quantities, and a table that gave them one value would let a
+     * structure reading ambient where it should read the feed pass every test
+     * here -- which is the substitution the description says outright it must
+     * not make.
+     */
+    {"water.feed_temperature_c", 18.0},
+    {"water.heat_capacity_j_per_ml_k", 4.15},
     {"steam.saturation_temperature_c", 100.0},
     {"steam.pressure_bar_per_k", 0.035},
 };
@@ -78,6 +88,19 @@ static const coefficient_t NOMINAL[] = {
 
 /* Short runs, where the criteria only need a step or a few dozen. */
 #define SHORT_STEPS 40
+
+/*
+ * Long enough that the coffee side has stopped moving at any coefficients these
+ * tests use, so a comparison against an energy balance is against where the
+ * model settled rather than against a point on its way there.
+ */
+#define SETTLED_STEPS 5000
+
+/*
+ * And long enough to be well into a transient without being through it, which is
+ * where a coefficient that only shapes the way there has anything to say.
+ */
+#define TRANSIENT_STEPS 400
 
 static const plant_actuation_t AT_REST = {{0u, 0u, 0u}};
 static const plant_actuation_t HEATING = {{ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, 0u}};
@@ -1270,7 +1293,11 @@ static void test_the_corners_of_the_declared_range_stay_finite(void)
 #define I_BREW_MASS 1u
 #define I_BREW_POWER 2u
 #define I_BREW_LOSS 3u
-#define I_BREW_OUTLET_TAU 4u
+#define I_BREW_HELD_VOLUME 4u
+#define I_BREW_CONDUCTION_TAU 5u
+#define I_PUMP_FLOW 10u
+#define I_WATER_FEED 12u
+#define I_WATER_HEAT_CAPACITY 13u
 
 /* Long enough that a per-step error becomes visible in the distance travelled. */
 #define ACCUMULATION_STEPS 200
@@ -1588,23 +1615,72 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
      * the equations would have compared the change with itself.
      *
      * Kept again, on the same reasoning, when the seam gained the rate water is
-     * drawn. The four recorded columns are unchanged byte for byte: that rate
-     * enters none of the relations that produce them, so a description carrying
-     * the coefficient behind it gives the same trajectory as one without it,
-     * and any movement in those columns would be the change reaching somewhere
-     * it was not supposed to. The fifth column is not a recording and was not
-     * read off a run. It is arithmetic a reader can do: the coefficient below
-     * is 8 mL/s, the pump is commanded at half scale under WORKING and at
-     * nothing under the other two, so the rate is exactly 4 and exactly 0, and
-     * both are exact in binary. A figure that had to be read off a run would
-     * have been the change checking itself.
+     * drawn. The four recorded columns were unchanged byte for byte: that rate
+     * entered none of the relations that produce them, so a description carrying
+     * the coefficient behind it gave the same trajectory as one without it. The
+     * fifth column is not a recording and was not read off a run. It is
+     * arithmetic a reader can do: the coefficient below is 8 mL/s, the pump is
+     * commanded at half scale under WORKING and at nothing under the other two,
+     * so the rate is exactly 4 and exactly 0, and both are exact in binary. A
+     * figure that had to be read off a run would have been the change checking
+     * itself.
+     *
+     * Retaken -- for the first time -- when the water drawn through the casting
+     * started taking energy out of it. That reasoning has run out, and saying so
+     * is the point of this paragraph: the whole of the previous two changes'
+     * claim was that flow entered none of these relations, and it now enters two
+     * of them. Keeping the recording would have been asserting the change did
+     * nothing, which is the opposite of what it is for.
+     *
+     * What the retaken figures have to be read against, row by row, because the
+     * rows are not all in the same position:
+     *
+     * The two AT_REST rows are unchanged byte for byte, and that is still a
+     * claim rather than a convenience. Nothing is drawn at rest, so the new
+     * terms are multiplied by an exact zero and the pair sits at an equilibrium
+     * of its own equations. A machine standing still that has started to move is
+     * the failure a flow term is most likely to introduce, and it would show
+     * here first.
+     *
+     * The HEATING row's steam column is unchanged byte for byte -- the steam
+     * mass gained no term and shares no arithmetic with the coffee side, so any
+     * movement there would be the change reaching across. Its brew column moved
+     * in its last few bits: from 0x1.c8693p+4 to 0x1.c8692p+4, about half a part
+     * in a million. Nothing is drawn under HEATING either, so the equations
+     * being evaluated are the ones this row was recorded under -- what changed
+     * is the arithmetic that evaluates them. The casting and the water are now
+     * advanced as one coupled pair, and with nothing drawn that pair separates
+     * back into the two independent relations exactly, on paper. It does not
+     * separate back into the same rounding: the coupled form reaches the same
+     * closed form through a different sequence of single-precision operations,
+     * and a handful of units in the last place is what that costs. That was
+     * worth chasing down rather than accepting, because a much larger movement
+     * here would have meant the zero-draw case was not reducing at all. The
+     * reduction itself is asserted properly, against arithmetic rather than
+     * against a recording, in the test that compares a closed pump against the
+     * uncoupled closed forms -- this row is only where it would be noticed.
+     *
+     * The two WORKING rows moved substantially, and are meant to. The pump is at
+     * half scale there, 4 mL/s of water is being drawn through a casting held at
+     * 1200 W, and where that used to climb to about 297 degrees it now heads for
+     * somewhere in the eighties instead -- which is the droop the description
+     * said it was understating and the reason for the whole change. The figure it
+     * heads for is one a reader can work out with the coefficients below and no
+     * run: at rest the water leaving is at the casting's own temperature, so the
+     * balance is 1200 = 1.5·(T − 20) + 4·4.15·(T − 18), which settles at 84.46.
+     * The last row is not that figure and is not meant to be read as it. It is
+     * 116 s of WORKING actuation in, which is a little over five multiples of
+     * this pair's slow time constant of roughly 22 s, so it is still short of
+     * where it is going -- about a third of a kelvin short, at 84.19. Close
+     * enough that the hand-computed balance says what the row is for, and not so
+     * close that the two are the same number.
      */
     static const float EXPECTED[][PLANT_QUANTITY_COUNT] = {
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
-        {0x1.c8693p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
-        {0x1.6a718ap+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f, 0x1p+2f},
-        {0x1.28fbf8p+8f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
+        {0x1.c8692p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
+        {0x1.5108f2p+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f, 0x1p+2f},
+        {0x1.50bfb6p+6f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
     };
     static const int STEPS[] = {0, 10, 30, 60, 1100};
     static const plant_actuation_t *const UNDER[] = {&AT_REST, &AT_REST, &HEATING, &WORKING,
@@ -1622,13 +1698,16 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
                                       "brew.thermal_mass_j_per_k = 420\n"
                                       "brew.heater_power_w = 1200\n"
                                       "brew.loss_w_per_k = 1.5\n"
-                                      "brew.outlet_time_constant_s = 1.2\n"
+                                      "brew.outlet_held_volume_ml = 6\n"
+                                      "brew.outlet_conduction_time_constant_s = 15\n"
                                       "steam.thermal_mass_j_per_k = 900\n"
                                       "steam.heater_power_w = 1400\n"
                                       "steam.loss_w_per_k = 2.2\n"
                                       "pump.pressure_bar = 9\n"
                                       "pump.flow_ml_per_s = 8\n"
                                       "brew.pressure_time_constant_s = 0.8\n"
+                                      "water.feed_temperature_c = 18\n"
+                                      "water.heat_capacity_j_per_ml_k = 4.15\n"
                                       "steam.saturation_temperature_c = 100\n"
                                       "steam.pressure_bar_per_k = 0.035\n";
     plant_parameters_t recorded;
@@ -2644,7 +2723,13 @@ static void test_the_robustness_classes_are_one_enumerated_set(void)
 
 /* Room for the description on disk, which carries an account against every
  * value and is therefore far longer than the ones built above. */
-#define REFERENCE_MAX 8192
+#define REFERENCE_MAX 16384
+
+/*
+ * And room for the statement beside it, which is prose and an order larger than
+ * the values it accounts for.
+ */
+#define STATEMENT_MAX 65536
 
 /*
  * Read the description the build names, which is the file the reference
@@ -2896,18 +2981,18 @@ static void test_the_reference_description_states_how_wrong_every_value_may_be(v
 /* --- The states this structure keeps, and the seam that reaches them ------- */
 
 /*
- * Describe the nominal coefficients with the outlet time constant replaced.
- * Everything else is the nominal table, so a difference between two runs built
- * this way is that coefficient and nothing else.
+ * Describe the nominal coefficients with one of them replaced. Everything else
+ * is the nominal table, so a difference between two runs built this way is that
+ * coefficient and nothing else.
  */
-static size_t describe_with_outlet_tau(char *out, size_t capacity, double tau_s)
+static size_t describe_with_one(char *out, size_t capacity, size_t index, double value)
 {
     double values[COEFFICIENT_COUNT];
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
         values[i] = NOMINAL[i].value;
     }
-    values[I_BREW_OUTLET_TAU] = tau_s;
+    values[index] = value;
     return describe_values(values, out, capacity);
 }
 
@@ -2981,6 +3066,13 @@ static void test_the_water_on_its_way_to_the_group_trails_the_heated_mass(void)
 /// than the expression the structure evaluates. A time constant entered
 /// inverted, or the pressure path's constant used by mistake, satisfies the
 /// trailing test above and fails this one.
+///
+/// Run with the pump closed, which is the case the composed closed form
+/// describes: with nothing being drawn the two relations are the pair they
+/// always were, the lag is the no-draw conduction constant alone, and the
+/// casting does not depend on the water. What the structure evaluates is the
+/// coupled step, so this is also the check that the coupled step reduces to the
+/// uncoupled pair where the pair is uncoupled.
 static void test_the_water_follows_the_casting_by_its_own_time_constant(void)
 {
     /* Both poles well inside the run, and both far longer than the step, so the
@@ -3004,7 +3096,7 @@ static void test_the_water_follows_the_casting_by_its_own_time_constant(void)
     values[I_BREW_MASS] = mass;
     values[I_BREW_LOSS] = loss;
     values[I_BREW_POWER] = power;
-    values[I_BREW_OUTLET_TAU] = tau_outlet;
+    values[I_BREW_CONDUCTION_TAU] = tau_outlet;
 
     const size_t used = describe_values(values, text, sizeof(text));
     memset(&fault, 0, sizeof(fault));
@@ -3075,6 +3167,11 @@ static void test_the_water_follows_the_casting_by_its_own_time_constant(void)
 /// the direction it claims to. A shorter constant leaves the water closer to the
 /// casting at the same point in the same transient; a constant entered as its
 /// reciprocal, or one that never reaches the equation at all, does not.
+///
+/// With the pump closed, so the constant being varied is the whole of the lag.
+/// That is the no-draw conduction constant now, and it is the case in which it
+/// is the only thing setting the gap -- the draw-dependent test below is where
+/// the other half of the relation is exercised.
 static void test_a_shorter_outlet_time_constant_brings_the_water_closer(void)
 {
     static const double TAUS[] = {0.2, 1.0, 5.0};
@@ -3087,7 +3184,8 @@ static void test_a_shorter_outlet_time_constant_brings_the_water_closer(void)
         plant_parameter_error_t fault;
         plant_model_t model;
 
-        const size_t used = describe_with_outlet_tau(text, sizeof(text), TAUS[t]);
+        const size_t used =
+            describe_with_one(text, sizeof(text), I_BREW_CONDUCTION_TAU, TAUS[t]);
         memset(&fault, 0, sizeof(fault));
         TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
         TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
@@ -3346,7 +3444,13 @@ static void test_the_coefficient_indices_name_what_they_claim(void)
     TEST_ASSERT_EQUAL_STRING("brew.thermal_mass_j_per_k", NOMINAL[I_BREW_MASS].name);
     TEST_ASSERT_EQUAL_STRING("brew.heater_power_w", NOMINAL[I_BREW_POWER].name);
     TEST_ASSERT_EQUAL_STRING("brew.loss_w_per_k", NOMINAL[I_BREW_LOSS].name);
-    TEST_ASSERT_EQUAL_STRING("brew.outlet_time_constant_s", NOMINAL[I_BREW_OUTLET_TAU].name);
+    TEST_ASSERT_EQUAL_STRING("brew.outlet_held_volume_ml", NOMINAL[I_BREW_HELD_VOLUME].name);
+    TEST_ASSERT_EQUAL_STRING("brew.outlet_conduction_time_constant_s",
+                             NOMINAL[I_BREW_CONDUCTION_TAU].name);
+    TEST_ASSERT_EQUAL_STRING("pump.flow_ml_per_s", NOMINAL[I_PUMP_FLOW].name);
+    TEST_ASSERT_EQUAL_STRING("water.feed_temperature_c", NOMINAL[I_WATER_FEED].name);
+    TEST_ASSERT_EQUAL_STRING("water.heat_capacity_j_per_ml_k",
+                             NOMINAL[I_WATER_HEAT_CAPACITY].name);
 }
 
 /* --- What the description says about the new coefficient ------------------ */
@@ -3370,39 +3474,68 @@ static size_t read_named_file(const char *path, char *out, size_t capacity)
 
 /// SOL-PLANT-RECONSTRUCTABLE-STATE.C5: The new coefficient carries its range,
 /// origin and assumed error.
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C8: The stepped structure stays admissible with
+/// a draw open -- load-time range validation continues to accept every new
+/// coefficient.
 ///
 /// The range is the structure's own and is read here the way every other bound
 /// in this file is read -- by driving the loader either side of it, which names
 /// no structure symbol. A coefficient with no declared range would be accepted
-/// at any value, including ones that divide; this asserts that it is not.
-static void test_the_outlet_time_constant_has_an_enforced_admissible_range(void)
+/// at any value, including ones that divide; this asserts that none of the four
+/// coefficients the flow term brought with it is in that state.
+///
+/// Each is checked for the shape its own relation needs rather than for a range
+/// in general. Two of them divide, so their ranges have to exclude zero from
+/// below; the other two do not divide and are bounded because a value outside
+/// the band is a description of something that is not this machine and not
+/// water. A single loop asserting "some range exists" would pass on a floor of
+/// zero for a divisor, which is the one failure that matters here.
+static void test_the_flow_terms_coefficients_carry_enforced_admissible_ranges(void)
 {
+    /* The two that appear in a denominator, and so may not reach zero. */
+    static const size_t DIVIDES[] = {I_BREW_HELD_VOLUME, I_BREW_CONDUCTION_TAU};
+    /* And every coefficient the flow term added, divisor or not. */
+    static const size_t ALL[] = {I_BREW_HELD_VOLUME, I_BREW_CONDUCTION_TAU, I_WATER_FEED,
+                                 I_WATER_HEAT_CAPACITY};
+
     double low[COEFFICIENT_COUNT];
     double high[COEFFICIENT_COUNT];
 
     all_bounds(low, high);
 
-    const double minimum = low[I_BREW_OUTLET_TAU];
-    const double maximum = high[I_BREW_OUTLET_TAU];
+    for (size_t d = 0u; d < sizeof(DIVIDES) / sizeof(DIVIDES[0]); d++) {
+        char message[160];
+        (void)snprintf(message, sizeof(message), "%s reaches zero from below",
+                       NOMINAL[DIVIDES[d]].name);
+        TEST_ASSERT_TRUE_MESSAGE(low[DIVIDES[d]] > 0.0, message);
+    }
 
-    /* A time constant at or below zero divides, so the range has to exclude it
-     * -- and it has to be a range rather than a floor. */
-    TEST_ASSERT_TRUE(minimum > 0.0);
-    TEST_ASSERT_TRUE(maximum > minimum);
-    TEST_ASSERT_TRUE(isfinite(maximum));
+    for (size_t i = 0u; i < sizeof(ALL) / sizeof(ALL[0]); i++) {
+        const size_t index = ALL[i];
+        const double minimum = low[index];
+        const double maximum = high[index];
+        char message[160];
 
-    /* Enforced, not merely declared: either side of it is refused. */
-    for (int side = 0; side < 2; side++) {
-        char text[DESCRIPTION_MAX];
-        plant_parameters_t loaded;
-        plant_parameter_error_t fault;
-        const double outside = side == 0 ? minimum / 2.0 : maximum * 2.0;
+        (void)snprintf(message, sizeof(message), "%s: bounds [%.17g, %.17g]", NOMINAL[index].name,
+                       minimum, maximum);
+        TEST_ASSERT_TRUE_MESSAGE(maximum > minimum, message);
+        TEST_ASSERT_TRUE_MESSAGE(isfinite(maximum), message);
 
-        const size_t used = describe_with_outlet_tau(text, sizeof(text), outside);
-        memset(&fault, 0, sizeof(fault));
-        TEST_ASSERT_FALSE(plant_parameters_load(text, used, &loaded, &fault));
-        TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
-        TEST_ASSERT_EQUAL_STRING("brew.outlet_time_constant_s", fault.parameter);
+        /* Enforced, not merely declared: either side of it is refused, and the
+         * refusal names the coefficient rather than some neighbour. */
+        for (int side = 0; side < 2; side++) {
+            char text[DESCRIPTION_MAX];
+            plant_parameters_t loaded;
+            plant_parameter_error_t fault;
+            const double outside =
+                side == 0 ? minimum - (maximum - minimum) : maximum + (maximum - minimum);
+
+            const size_t used = describe_with_one(text, sizeof(text), index, outside);
+            memset(&fault, 0, sizeof(fault));
+            TEST_ASSERT_FALSE_MESSAGE(plant_parameters_load(text, used, &loaded, &fault), message);
+            TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+            TEST_ASSERT_EQUAL_STRING(NOMINAL[index].name, fault.parameter);
+        }
     }
 }
 
@@ -3417,28 +3550,45 @@ static void test_the_outlet_time_constant_has_an_enforced_admissible_range(void)
 /// bites.
 static void test_the_shipped_description_declares_an_assumed_error_for_the_new_coefficient(void)
 {
-    char text[DESCRIPTION_MAX * 4];
+    /*
+     * Every coefficient the flow term brought with it, including the two water
+     * properties. A property of water is still a figure this description chose,
+     * and one carrying no declared error would read as exact -- which is a claim
+     * nobody is entitled to make about a single number standing in for something
+     * that moves with temperature.
+     */
+    static const char *const REQUIRED[] = {
+        "brew.outlet_held_volume_ml",
+        "brew.outlet_conduction_time_constant_s",
+        "water.feed_temperature_c",
+        "water.heat_capacity_j_per_ml_k",
+    };
+
+    char text[REFERENCE_MAX];
     plant_parameter_budget_t budget;
     plant_parameter_error_t fault;
-    float assumed = -1.0f;
 
     const size_t used = read_named_file(REFERENCE_DESCRIPTION_PATH, text, sizeof(text));
     memset(&fault, 0, sizeof(fault));
     TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
 
-    TEST_ASSERT_TRUE_MESSAGE(
-        plant_parameter_budget_for(&budget, "brew.outlet_time_constant_s", &assumed),
-        "the shipped description declares no assumed error for brew.outlet_time_constant_s");
-    TEST_ASSERT_TRUE(isfinite(assumed));
-    /*
-     * Above zero, and this one specifically. A declared error of nothing is a
-     * claim that a coefficient is exact, which is a claim nobody is entitled to
-     * make about a figure that stands for a residence time nothing has measured
-     * and that no reading of this machine can narrow. The figure itself is a
-     * judgement argued in the statement beside the description and is not
-     * pinned here.
-     */
-    TEST_ASSERT_TRUE(assumed > 0.0f);
+    for (size_t i = 0u; i < sizeof(REQUIRED) / sizeof(REQUIRED[0]); i++) {
+        char message[160];
+        float assumed = -1.0f;
+
+        (void)snprintf(message, sizeof(message),
+                       "the shipped description declares no assumed error for %s", REQUIRED[i]);
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_for(&budget, REQUIRED[i], &assumed),
+                                 message);
+        TEST_ASSERT_TRUE(isfinite(assumed));
+        /*
+         * Above zero. A declared error of nothing is a claim that a coefficient
+         * is exact, and none of these is. The figures themselves are judgements
+         * argued in the statement beside the description and are not pinned
+         * here.
+         */
+        TEST_ASSERT_TRUE_MESSAGE(assumed > 0.0f, message);
+    }
 }
 
 /// SOL-PLANT-RECONSTRUCTABLE-STATE.C6: The description's narrative and its
@@ -3451,7 +3601,7 @@ static void test_the_shipped_description_declares_an_assumed_error_for_the_new_c
 /// pass while the description had stopped describing itself.
 static void test_the_statement_and_the_variant_carry_every_coefficient(void)
 {
-    char statement[DESCRIPTION_MAX * 16];
+    char statement[STATEMENT_MAX];
     char variant[DESCRIPTION_MAX];
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
@@ -3770,7 +3920,7 @@ static void test_the_drawn_rate_is_unmoved_by_the_heaters(void)
 /// pinned here.
 static void test_the_shipped_description_declares_an_assumed_error_for_the_drawn_rate(void)
 {
-    char text[DESCRIPTION_MAX * 4];
+    char text[REFERENCE_MAX];
     plant_parameter_budget_t budget;
     plant_parameter_error_t fault;
     float assumed = -1.0f;
@@ -3800,13 +3950,16 @@ static void test_the_drawn_rate_is_reached_end_to_end_through_the_seam(void)
                                       "brew.thermal_mass_j_per_k = 420\n"
                                       "brew.heater_power_w = 1200\n"
                                       "brew.loss_w_per_k = 1.5\n"
-                                      "brew.outlet_time_constant_s = 1.2\n"
+                                      "brew.outlet_held_volume_ml = 6\n"
+                                      "brew.outlet_conduction_time_constant_s = 15\n"
                                       "steam.thermal_mass_j_per_k = 900\n"
                                       "steam.heater_power_w = 1400\n"
                                       "steam.loss_w_per_k = 2.2\n"
                                       "pump.pressure_bar = 9\n"
                                       "pump.flow_ml_per_s = 8\n"
                                       "brew.pressure_time_constant_s = 0.8\n"
+                                      "water.feed_temperature_c = 18\n"
+                                      "water.heat_capacity_j_per_ml_k = 4.15\n"
                                       "steam.saturation_temperature_c = 100\n"
                                       "steam.pressure_bar_per_k = 0.035\n";
     plant_parameters_t loaded;
@@ -3848,7 +4001,7 @@ static void test_the_drawn_rate_is_reached_end_to_end_through_the_seam(void)
 /// newline is splitting on the paragraph.
 static void test_the_statement_warns_that_the_two_pump_coefficients_exclude_each_other(void)
 {
-    char statement[DESCRIPTION_MAX * 16];
+    char statement[STATEMENT_MAX];
     (void)read_named_file(REFERENCE_STATEMENT_PATH, statement, sizeof(statement));
 
     bool paragraph_names_both = false;
@@ -3866,6 +4019,1111 @@ static void test_the_statement_warns_that_the_two_pump_coefficients_exclude_each
                              "both be reached");
 }
 
+/* --- The energy the drawn water carries out of the casting ---------------- */
+
+/*
+ * The nominal coefficients as numbers, so a test can change the ones it is
+ * about and leave the rest where the shared table put them.
+ */
+static void nominal_values(double *values)
+{
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        values[i] = NOMINAL[i].value;
+    }
+}
+
+/* An instance described by exactly these values, reached through the loader the
+ * way every other test here reaches one -- no structure field is named. */
+static void model_from(plant_model_t *model, const double *values)
+{
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    const size_t used = describe_values(values, text, sizeof(text));
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(model, &loaded));
+}
+
+/* A command on the brew heater and the pump, in parts per thousand of each. */
+static plant_actuation_t commanding(uint16_t heater_permille, uint16_t pump_permille)
+{
+    plant_actuation_t actuation = {{0u}};
+
+    actuation.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = heater_permille;
+    actuation.level_permille[ACTUATION_CHANNEL_PUMP] = pump_permille;
+    return actuation;
+}
+
+/* Put an instance where a test wants it to start from, through the seam. */
+static void place(plant_model_t *model, float casting_c, float outlet_c)
+{
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, casting_c));
+    TEST_ASSERT_TRUE(plant_model_set_state(model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, outlet_c));
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C1: The casting loses energy to the water drawn
+/// through it -- with a draw open and the heater off, the heated mass falls
+/// faster than the same structure falls with no draw.
+///
+/// Two instances of one description, started at the same temperature well above
+/// ambient with the element off, stepped side by side with the pump the only
+/// difference between them. The one being drawn through has to fall faster at
+/// every step, not merely end up lower: a term that only bit once, or one that
+/// acted on the wrong sign of the difference, can produce a lower endpoint
+/// without producing a steeper fall throughout.
+static void test_a_draw_cools_the_heated_mass_faster_than_no_draw(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t drawn;
+    plant_model_t undrawn;
+
+    nominal_values(values);
+    model_from(&drawn, values);
+    model_from(&undrawn, values);
+
+    place(&drawn, 90.0f, 90.0f);
+    place(&undrawn, 90.0f, 90.0f);
+
+    const plant_actuation_t with_draw = commanding(0u, ACTUATION_FULL_SCALE);
+    const plant_actuation_t without_draw = commanding(0u, 0u);
+
+    float previous_drawn = 90.0f;
+    float previous_undrawn = 90.0f;
+
+    for (int step = 0; step < SHORT_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &with_draw, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &without_draw, STEP_MS));
+
+        const float now_drawn = heated_mass(&drawn);
+        const float now_undrawn = heated_mass(&undrawn);
+
+        /* Both are cooling -- so what is compared below is two falls rather than
+         * a fall against a rise. */
+        TEST_ASSERT_TRUE(now_drawn < previous_drawn);
+        TEST_ASSERT_TRUE(now_undrawn < previous_undrawn);
+
+        /* And this step took more out of the one being drawn through than out of
+         * the one that is not. */
+        TEST_ASSERT_TRUE((previous_drawn - now_drawn) > (previous_undrawn - now_undrawn));
+
+        previous_drawn = now_drawn;
+        previous_undrawn = now_undrawn;
+    }
+
+    /* By a margin nobody could mistake for rounding: the drawn rate here carries
+     * far more per kelvin than the loss coefficient does. */
+    TEST_ASSERT_TRUE(previous_undrawn - previous_drawn > 10.0f);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C1: The casting loses energy to the water drawn
+/// through it -- with the heater holding, the droop under draw is larger than
+/// the model produces today.
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C7: The heat a unit of drawn water carries is a
+/// described coefficient -- the volumetric heat capacity of water, appearing in
+/// the relations rather than folded into another constant.
+///
+/// Held under a constant element and a constant draw until it stops moving, the
+/// casting settles where the energy balance puts it and not merely lower than it
+/// used to. The figure compared against is arithmetic a reader can redo from the
+/// coefficient table: what the element delivers equals what the loss coefficient
+/// carries to ambient plus what the drawn volume carries away, and the second of
+/// those is the drawn rate times the volumetric heat capacity times how far the
+/// water leaving sits above the water arriving.
+///
+/// That is the whole of what makes this a check on the coefficient rather than
+/// on the direction of an inequality. A term that used a heat capacity per unit
+/// mass, or that folded a wrong constant into the drawn rate, lands at a
+/// different settling temperature and fails here while passing every ordering
+/// test above.
+static void test_the_settled_droop_is_the_energy_balance_the_coefficients_state(void)
+{
+    /* Two heat capacities, so the settling point moves with the coefficient
+     * rather than happening to agree at one value. */
+    static const double CAPACITIES[] = {4.15, 2.0};
+
+    for (size_t c = 0u; c < sizeof(CAPACITIES) / sizeof(CAPACITIES[0]); c++) {
+        double values[COEFFICIENT_COUNT];
+        plant_model_t model;
+
+        nominal_values(values);
+        values[I_WATER_HEAT_CAPACITY] = CAPACITIES[c];
+        model_from(&model, values);
+
+        /* Long enough that the slowest admissible case here is settled rather
+         * than still on its way, so what is compared is a balance and not a
+         * point on a transient. */
+        const plant_actuation_t working = commanding(ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE);
+        for (int step = 0; step < SETTLED_STEPS; step++) {
+            TEST_ASSERT_TRUE(plant_model_step(&model, &working, STEP_MS));
+        }
+
+        const double drawn = values[I_PUMP_FLOW];
+        const double carried_w_per_k = drawn * CAPACITIES[c];
+        const double settled =
+            (values[I_BREW_POWER] + values[I_BREW_LOSS] * values[I_AMBIENT] +
+             carried_w_per_k * values[I_WATER_FEED]) /
+            (values[I_BREW_LOSS] + carried_w_per_k);
+
+        const double got = (double)heated_mass(&model);
+        if (!(fabs(got - settled) < 0.05)) {
+            char message[220];
+            (void)snprintf(message, sizeof(message),
+                           "at %.9g J/(mL K): settled at %.9g, the balance gives %.9g",
+                           CAPACITIES[c], got, settled);
+            TEST_FAIL_MESSAGE(message);
+        }
+
+        /* And far below where the same element holds the same casting with the
+         * pump closed, which is the droop this term exists to produce. */
+        const double without_draw =
+            values[I_AMBIENT] + values[I_BREW_POWER] / values[I_BREW_LOSS];
+        TEST_ASSERT_TRUE(got < without_draw - 100.0);
+    }
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C1: The steam mass is out of scope and gains no
+/// such term.
+///
+/// The pump is on the brew path. Commanding it must leave the steam mass exactly
+/// where the same run leaves it with the pump closed -- byte for byte, because
+/// the steam relation shares no arithmetic with the coffee side and a difference
+/// of one bit would mean it had started to. A term written from the drawn rate
+/// onto the steam mass would be the coffee side's water leaving through the
+/// steam wand.
+static void test_the_steam_mass_gains_no_term_from_the_draw(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t drawn;
+    plant_model_t undrawn;
+
+    nominal_values(values);
+    model_from(&drawn, values);
+    model_from(&undrawn, values);
+
+    const plant_actuation_t with_draw = {
+        {ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE}};
+    const plant_actuation_t without_draw = {{ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, 0u}};
+
+    for (int step = 0; step < TRAJECTORY_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &with_draw, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &without_draw, STEP_MS));
+    }
+
+    float steam_drawn = 0.0f;
+    float steam_undrawn = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_quantity(&drawn, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &steam_drawn));
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&undrawn, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &steam_undrawn));
+    TEST_ASSERT_EQUAL_MEMORY(&steam_undrawn, &steam_drawn, sizeof(float));
+
+    /* And the coffee side did move, so the equality above is the steam mass
+     * being left alone rather than the draw doing nothing at all. */
+    TEST_ASSERT_TRUE(heated_mass(&drawn) < heated_mass(&undrawn) - 100.0f);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C2: The energy removed is written through the
+/// temperature of the water leaving -- with the draw open, the outlet state
+/// enters the casting's own trajectory, which it cannot do in relations that
+/// take the difference at the casting.
+///
+/// The sharpest form the criterion has: two instances identical in every
+/// coefficient and identical in the casting, differing only in where the water
+/// leaving has been placed, stepped once. With a draw open the castings come
+/// apart, and in the direction the physics requires -- the hotter the water
+/// leaving, the more energy it takes with it, so the hotter outlet leaves the
+/// colder casting. Relations that took the difference at the casting would leave
+/// the two castings identical, which is exactly what the pump-closed half of
+/// this test shows they are when nothing is being drawn.
+static void test_the_casting_depends_on_where_the_water_leaving_sits(void)
+{
+    double values[COEFFICIENT_COUNT];
+
+    nominal_values(values);
+
+    for (int drawing = 0; drawing < 2; drawing++) {
+        plant_model_t cool_outlet;
+        plant_model_t warm_outlet;
+
+        model_from(&cool_outlet, values);
+        model_from(&warm_outlet, values);
+
+        /* One casting temperature, two temperatures for the water leaving it. */
+        place(&cool_outlet, 80.0f, 30.0f);
+        place(&warm_outlet, 80.0f, 75.0f);
+
+        const plant_actuation_t actuation =
+            commanding(0u, drawing ? ACTUATION_FULL_SCALE : (uint16_t)0u);
+        TEST_ASSERT_TRUE(plant_model_step(&cool_outlet, &actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&warm_outlet, &actuation, STEP_MS));
+
+        const float after_cool = heated_mass(&cool_outlet);
+        const float after_warm = heated_mass(&warm_outlet);
+
+        if (drawing) {
+            /* The warmer outlet carried more away, so its casting is colder --
+             * and by a margin, not by a bit. */
+            TEST_ASSERT_TRUE(after_warm < after_cool - 0.1f);
+        } else {
+            /*
+             * Nothing drawn, so the term is multiplied by an exact zero and the
+             * casting cannot have seen the outlet at all. Compared byte for byte
+             * rather than within a tolerance: a term that leaked in through a
+             * near-zero rather than a zero would show here and nowhere else.
+             */
+            TEST_ASSERT_EQUAL_MEMORY(&after_cool, &after_warm, sizeof(float));
+        }
+    }
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C2: The energy removed is written through the
+/// temperature of the water leaving -- perturbing the outlet time constant alone
+/// changes the casting's own trajectory.
+///
+/// The consequence the criterion asks to be asserted directly, and the one that
+/// makes the outlet coefficients reachable from the only sensor this machine
+/// has. The lag is perturbed through the no-draw conduction constant, which
+/// enters the outlet relation and nothing else; with a draw open it moves the
+/// casting by degrees, and with the pump closed it moves it by nothing a reader
+/// could distinguish from the rounding of two spellings of one closed form.
+static void test_the_outlet_time_constant_reaches_the_casting_only_under_a_draw(void)
+{
+    static const double CONDUCTION_TAUS[] = {2.0, 60.0};
+
+    for (int drawing = 0; drawing < 2; drawing++) {
+        float castings[sizeof(CONDUCTION_TAUS) / sizeof(CONDUCTION_TAUS[0])];
+
+        for (size_t t = 0u; t < sizeof(CONDUCTION_TAUS) / sizeof(CONDUCTION_TAUS[0]); t++) {
+            double values[COEFFICIENT_COUNT];
+            plant_model_t model;
+
+            nominal_values(values);
+            values[I_BREW_CONDUCTION_TAU] = CONDUCTION_TAUS[t];
+            model_from(&model, values);
+
+            /*
+             * A tenth of full scale rather than all of it. At a full draw the
+             * held volume is turned over so fast that the conduction constant
+             * barely enters the relation it shares -- which is the relation
+             * behaving as it should, and would make a poor place to look for the
+             * constant's effect. A modest draw is where the two terms are
+             * comparable, and it is also the draw a machine actually pulls a
+             * shot at.
+             */
+            const plant_actuation_t actuation = commanding(
+                ACTUATION_FULL_SCALE, drawing ? (uint16_t)(ACTUATION_FULL_SCALE / 10u)
+                                              : (uint16_t)0u);
+            for (int step = 0; step < TRANSIENT_STEPS; step++) {
+                TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+            }
+            castings[t] = heated_mass(&model);
+        }
+
+        const double moved = fabs((double)castings[0] - (double)castings[1]);
+        char message[200];
+        (void)snprintf(message, sizeof(message),
+                       "%s a draw, the casting moved %.9g K when only the outlet constant changed",
+                       drawing ? "with" : "without", moved);
+
+        if (drawing) {
+            TEST_ASSERT_TRUE_MESSAGE(moved > 1.0, message);
+        } else {
+            /*
+             * Not byte-for-byte here, and the reason is worth being exact about.
+             * With nothing drawn the pair separates back into two independent
+             * relations and the casting's answer is the same closed form it
+             * always was -- but the coupled step reaches that closed form
+             * through arithmetic that has the outlet's rate in it, so the last
+             * few bits move with a coefficient the mathematics has cancelled
+             * out. A thousandth of a kelvin is far below anything a machine
+             * means and far above the rounding, so a real dependence hiding in
+             * this case fails here.
+             */
+            TEST_ASSERT_TRUE_MESSAGE(moved < 1.0e-3, message);
+        }
+    }
+}
+
+/*
+ * The pair of relations the structure integrates, written out here from the
+ * description rather than taken from the structure, and stepped with a
+ * fourth-order Runge-Kutta at a step far shorter than anything the seam is
+ * driven with. It is an approximation where the structure's own step is not,
+ * which is the point: an independent answer, arrived at by a method with
+ * nothing in common with a closed form, is what a closed form can be wrong
+ * against.
+ */
+typedef struct {
+    double casting_c;
+    double outlet_c;
+} pair_t;
+
+static pair_t pair_rate(const double *values, double duty, double drawn, pair_t state)
+{
+    const double carried = drawn * values[I_WATER_HEAT_CAPACITY];
+    const double approach =
+        drawn / values[I_BREW_HELD_VOLUME] + 1.0 / values[I_BREW_CONDUCTION_TAU];
+    pair_t rate;
+
+    rate.casting_c = (values[I_BREW_POWER] * duty -
+                      values[I_BREW_LOSS] * (state.casting_c - values[I_AMBIENT]) -
+                      carried * (state.outlet_c - values[I_WATER_FEED])) /
+                     values[I_BREW_MASS];
+    rate.outlet_c = approach * (state.casting_c - state.outlet_c);
+    return rate;
+}
+
+static pair_t pair_offset(pair_t state, pair_t rate, double by)
+{
+    pair_t moved;
+
+    moved.casting_c = state.casting_c + rate.casting_c * by;
+    moved.outlet_c = state.outlet_c + rate.outlet_c * by;
+    return moved;
+}
+
+static pair_t integrated(const double *values, double duty, double drawn, pair_t state,
+                         double seconds, int substeps)
+{
+    const double h = seconds / (double)substeps;
+
+    for (int i = 0; i < substeps; i++) {
+        const pair_t k1 = pair_rate(values, duty, drawn, state);
+        const pair_t k2 = pair_rate(values, duty, drawn, pair_offset(state, k1, h / 2.0));
+        const pair_t k3 = pair_rate(values, duty, drawn, pair_offset(state, k2, h / 2.0));
+        const pair_t k4 = pair_rate(values, duty, drawn, pair_offset(state, k3, h));
+
+        state.casting_c += (h / 6.0) * (k1.casting_c + 2.0 * k2.casting_c + 2.0 * k3.casting_c +
+                                        k4.casting_c);
+        state.outlet_c +=
+            (h / 6.0) * (k1.outlet_c + 2.0 * k2.outlet_c + 2.0 * k3.outlet_c + k4.outlet_c);
+    }
+    return state;
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C3: The casting and the outlet advance as a
+/// coupled pair, by the exact solution of the coupled system rather than a
+/// bounded approximation.
+///
+/// Compared against the pair integrated independently to a far finer resolution
+/// than the structure is asked to work at. Three regimes are driven, because the
+/// closed form has three shapes to be wrong in: an ordinary machine where the
+/// two modes are well separated, a light casting under a fierce draw where the
+/// pair oscillates, and coefficients arranged so the two modes coincide exactly
+/// -- the case a form built on the difference between them divides by nothing
+/// at.
+///
+/// The tolerance is on the distance travelled rather than on the temperature, so
+/// a step that moved almost nothing cannot pass by being nearly right about
+/// where it started.
+static void test_the_coupled_step_matches_the_pair_integrated_independently(void)
+{
+    static const uint32_t INTERVALS_MS[] = {10u, 100u, 1000u};
+
+    for (int regime = 0; regime < 3; regime++) {
+        double values[COEFFICIENT_COUNT];
+
+        nominal_values(values);
+        if (regime == 1) {
+            /* A casting light enough that the water it is chasing pulls it
+             * about: the pair's discriminant goes negative here. */
+            values[I_BREW_MASS] = 20.0;
+        } else if (regime == 2) {
+            /*
+             * The two modes made to coincide. With the pump closed the pair's
+             * modes are the casting's own rate and the outlet's own rate, so
+             * setting the second equal to the first is arithmetic rather than a
+             * search: a loss of 1.5 W/K on 300 J/K is 0.005 per second, and so
+             * is a conduction constant of 200 seconds.
+             */
+            values[I_BREW_MASS] = 300.0;
+            values[I_BREW_LOSS] = 1.5;
+            values[I_BREW_CONDUCTION_TAU] = 200.0;
+        }
+
+        const uint16_t pump = regime == 2 ? (uint16_t)0u : ACTUATION_FULL_SCALE;
+        const double drawn = regime == 2 ? 0.0 : values[I_PUMP_FLOW];
+        const double duty = 1.0;
+        const plant_actuation_t actuation = commanding(ACTUATION_FULL_SCALE, pump);
+
+        for (size_t i = 0u; i < sizeof(INTERVALS_MS) / sizeof(INTERVALS_MS[0]); i++) {
+            plant_model_t model;
+            pair_t reference;
+
+            model_from(&model, values);
+            place(&model, 35.0f, 25.0f);
+            reference.casting_c = 35.0;
+            reference.outlet_c = 25.0;
+
+            const double seconds = (double)INTERVALS_MS[i] / 1000.0;
+            for (int step = 0; step < 8; step++) {
+                TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, INTERVALS_MS[i]));
+                reference = integrated(values, duty, drawn, reference, seconds, 4000);
+            }
+
+            const double casting_travelled = fabs(reference.casting_c - 35.0);
+            const double outlet_travelled = fabs(reference.outlet_c - 25.0);
+            const double casting_error = fabs((double)heated_mass(&model) - reference.casting_c);
+            const double outlet_error = fabs((double)outlet(&model) - reference.outlet_c);
+
+            if (!(casting_error < 1.0e-4 * (casting_travelled + 1.0)) ||
+                !(outlet_error < 1.0e-4 * (outlet_travelled + 1.0))) {
+                char message[260];
+                (void)snprintf(message, sizeof(message),
+                               "regime %d at %u ms: casting %.9g against %.9g, water %.9g against "
+                               "%.9g",
+                               regime, (unsigned)INTERVALS_MS[i], (double)heated_mass(&model),
+                               reference.casting_c, (double)outlet(&model), reference.outlet_c);
+                TEST_FAIL_MESSAGE(message);
+            }
+        }
+    }
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C3: The pair is advanced by the exact solution
+/// over the interval the seam declares, rather than by subdividing it.
+///
+/// What being exact over a step means operationally: the same stretch of time
+/// gives the same answer however it is cut up. One step of a second, ten of a
+/// tenth and a hundred of a hundredth land in the same place to within the
+/// rounding of single precision. A method carrying any truncation error at all
+/// would separate these three, and would separate them further the longer the
+/// step -- which is also what would make somebody reach for a shorter interval
+/// to hide it.
+static void test_the_pair_lands_in_the_same_place_however_the_step_is_cut(void)
+{
+    static const uint32_t INTERVALS_MS[] = {1000u, 100u, 10u};
+    static const int REPEATS[] = {1, 10, 100};
+
+    double values[COEFFICIENT_COUNT];
+    float castings[sizeof(INTERVALS_MS) / sizeof(INTERVALS_MS[0])];
+    float outlets[sizeof(INTERVALS_MS) / sizeof(INTERVALS_MS[0])];
+
+    nominal_values(values);
+
+    for (size_t i = 0u; i < sizeof(INTERVALS_MS) / sizeof(INTERVALS_MS[0]); i++) {
+        plant_model_t model;
+        const plant_actuation_t actuation = commanding(ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE);
+
+        model_from(&model, values);
+        place(&model, 30.0f, 22.0f);
+        /* Ten seconds, cut three ways. */
+        for (int repeat = 0; repeat < REPEATS[i] * 10; repeat++) {
+            TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, INTERVALS_MS[i]));
+        }
+        castings[i] = heated_mass(&model);
+        outlets[i] = outlet(&model);
+    }
+
+    for (size_t i = 1u; i < sizeof(INTERVALS_MS) / sizeof(INTERVALS_MS[0]); i++) {
+        char message[220];
+        const double casting_gap = fabs((double)castings[i] - (double)castings[0]);
+        const double outlet_gap = fabs((double)outlets[i] - (double)outlets[0]);
+
+        (void)snprintf(message, sizeof(message),
+                       "%u ms gave %.9g / %.9g where %u ms gave %.9g / %.9g",
+                       (unsigned)INTERVALS_MS[i], (double)castings[i], (double)outlets[i],
+                       (unsigned)INTERVALS_MS[0], (double)castings[0], (double)outlets[0]);
+        TEST_ASSERT_TRUE_MESSAGE(casting_gap < 1.0e-3, message);
+        TEST_ASSERT_TRUE_MESSAGE(outlet_gap < 1.0e-3, message);
+    }
+
+    /* And the stretch actually went somewhere, so agreement is agreement about
+     * a trajectory rather than about a model that never moved. */
+    TEST_ASSERT_TRUE(castings[0] > 35.0f);
+}
+
+/*
+ * How much of the gap between the casting and the water leaving is closed over
+ * `seconds` at a given pump level, with the casting held as still as an
+ * admissible description can hold it.
+ *
+ * The thermal mass is put at the top of its declared range and the element left
+ * off, so what the outlet relaxes towards barely moves and the fraction below is
+ * the outlet relation's own behaviour rather than a race between two moving
+ * states. It is not held exactly still -- nothing admissible would do that --
+ * which is why what is compared against the closed form carries a tolerance
+ * rather than being compared as stored.
+ */
+static double gap_closed_at(uint16_t pump_permille, double seconds, double *effective_tau_s)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+
+    nominal_values(values);
+    values[I_BREW_MASS] = 100000.0;
+    model_from(&model, values);
+    place(&model, 90.0f, 20.0f);
+
+    const plant_actuation_t actuation = commanding(0u, pump_permille);
+    const int steps = (int)((seconds * 1000.0) / (double)STEP_MS);
+    for (int step = 0; step < steps; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+    }
+
+    if (effective_tau_s != NULL) {
+        const double drawn =
+            values[I_PUMP_FLOW] * ((double)pump_permille / (double)ACTUATION_FULL_SCALE);
+        *effective_tau_s = 1.0 / (drawn / values[I_BREW_HELD_VOLUME] +
+                                  1.0 / values[I_BREW_CONDUCTION_TAU]);
+    }
+    return ((double)outlet(&model) - 20.0) / (90.0 - 20.0);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C4: The outlet time constant shortens as the
+/// draw increases -- the constant becomes a held volume divided by the drawn
+/// rate, verified by comparing settling behaviour at two draw rates.
+///
+/// Two rates, and the comparison is against the constant each one implies rather
+/// than against the other. A relation that merely got faster with flow -- the
+/// square of it, the square root of it, a different volume -- would satisfy an
+/// ordering test and fail this one, because what is checked is how far the
+/// relaxation has travelled after a fixed time against what a held volume
+/// divided by that rate says it should have.
+static void test_the_outlet_settles_faster_the_harder_the_draw(void)
+{
+    static const uint16_t LEVELS[] = {ACTUATION_FULL_SCALE / 4u, ACTUATION_FULL_SCALE};
+    static const double SECONDS = 3.0;
+
+    double closed[sizeof(LEVELS) / sizeof(LEVELS[0])];
+
+    for (size_t i = 0u; i < sizeof(LEVELS) / sizeof(LEVELS[0]); i++) {
+        double tau = 0.0;
+
+        closed[i] = gap_closed_at(LEVELS[i], SECONDS, &tau);
+
+        const double expected = 1.0 - exp(-SECONDS / tau);
+        if (!(fabs(closed[i] - expected) < 0.02)) {
+            char message[220];
+            (void)snprintf(message, sizeof(message),
+                           "at level %u the water closed %.9g of the gap; a constant of %.9g s "
+                           "gives %.9g",
+                           (unsigned)LEVELS[i], closed[i], tau, expected);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
+
+    /* And the harder draw got further, which is the direction the criterion
+     * names and which the two closed-form comparisons above do not state on
+     * their own. */
+    TEST_ASSERT_TRUE(closed[1] > closed[0] + 0.05);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C5: A closed draw leaves the outlet relation
+/// defined at its conduction limit -- stepping with the pump at zero produces
+/// the no-draw constant exactly, with no guard and no special-case branch.
+///
+/// Two things, and they are separate. The first is the value: with the pump
+/// closed the relaxation is the one the conduction constant alone gives, checked
+/// against the closed form rather than against another run. The second is that
+/// there is no seam at zero -- the levels below approach a closed pump from
+/// above and what they produce approaches the closed-pump answer smoothly, so a
+/// branch taken at or near zero would show up as a step in this sequence rather
+/// than having to be read out of the source.
+static void test_a_closed_pump_relaxes_at_the_conduction_constant(void)
+{
+    static const double SECONDS = 3.0;
+    /* A closed pump, then levels approaching it from above by decades. */
+    static const uint16_t LEVELS[] = {0u, 1u, 10u, 100u};
+
+    double at_rest_tau = 0.0;
+    const double at_rest = gap_closed_at(0u, SECONDS, &at_rest_tau);
+
+    /* The conduction constant itself, and nothing else: the drawn term is zero,
+     * so the reciprocal sum is the reciprocal of that constant alone. */
+    TEST_ASSERT_TRUE(fabs(at_rest_tau - NOMINAL[I_BREW_CONDUCTION_TAU].value) < 1.0e-9);
+
+    const double expected = 1.0 - exp(-SECONDS / at_rest_tau);
+    if (!(fabs(at_rest - expected) < 0.005)) {
+        char message[200];
+        (void)snprintf(message, sizeof(message),
+                       "with the pump closed the water closed %.9g of the gap; the conduction "
+                       "constant gives %.9g",
+                       at_rest, expected);
+        TEST_FAIL_MESSAGE(message);
+    }
+
+    /*
+     * And no step at zero. Each level is a tenth of the next, so what the drawn
+     * term contributes falls by a decade each time and the answers have to close
+     * on the closed-pump one geometrically. A guard, a floor, or a branch that
+     * substituted one relation for another at some small rate would break that
+     * ordering.
+     */
+    double distances[sizeof(LEVELS) / sizeof(LEVELS[0])];
+    for (size_t i = 1u; i < sizeof(LEVELS) / sizeof(LEVELS[0]); i++) {
+        distances[i] = fabs(gap_closed_at(LEVELS[i], SECONDS, NULL) - at_rest);
+    }
+    for (size_t i = sizeof(LEVELS) / sizeof(LEVELS[0]) - 1u; i > 1u; i--) {
+        char message[240];
+
+        (void)snprintf(message, sizeof(message),
+                       "level %u sits %.9g from the closed-pump answer, and level %u -- ten times "
+                       "the draw -- sits %.9g",
+                       (unsigned)LEVELS[i - 1u], distances[i - 1u], (unsigned)LEVELS[i],
+                       distances[i]);
+        /* A decade less draw, and several times closer: a floor under the drawn
+         * term, or a branch substituting one relation for another below some
+         * rate, stops this shrinking. */
+        TEST_ASSERT_TRUE_MESSAGE(distances[i - 1u] < distances[i] / 5.0, message);
+    }
+
+    /* And the smallest non-zero draw the vocabulary can express has all but
+     * arrived, which is what having no discontinuity at zero looks like from
+     * outside. */
+    TEST_ASSERT_TRUE(distances[1] < 0.01);
+}
+
+/*
+ * Where the casting settles under a full draw and a full element, for one
+ * coefficient moved off the nominal table.
+ */
+static double settled_casting_with(size_t index, double value)
+{
+    plant_model_t model;
+    double values[COEFFICIENT_COUNT];
+    const plant_actuation_t working = commanding(ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE);
+
+    nominal_values(values);
+    values[index] = value;
+    model_from(&model, values);
+    for (int step = 0; step < SETTLED_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, STEP_MS));
+    }
+    return (double)heated_mass(&model);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C6: The temperature the water enters at is a
+/// coefficient in its own right -- the relations read it rather than reusing
+/// ambient.
+///
+/// Two descriptions differing in the feed temperature and in nothing else, the
+/// ambient identical between them. A structure that reached for ambient where
+/// the relation names the feed would produce the same trajectory twice, which is
+/// the substitution this exists to refuse -- and it is a substitution that would
+/// look right on this machine, whose tank stands in the same room the ambient
+/// describes.
+///
+/// Then the same displacement applied to the other one. Both bite, which is what
+/// makes them two coefficients rather than one, and under a draw this size the
+/// feed bites far harder: what carries energy away with the water is a volume
+/// rate times a heat capacity, and what carries it to the room is a loss
+/// coefficient an order smaller. A structure using one figure for both could not
+/// produce two different numbers here, let alone these two.
+static void test_the_feed_temperature_is_read_rather_than_ambient(void)
+{
+    static const double DISPLACEMENT = 20.0;
+
+    const double nominal = settled_casting_with(I_WATER_FEED, NOMINAL[I_WATER_FEED].value);
+    const double warmer_feed =
+        settled_casting_with(I_WATER_FEED, NOMINAL[I_WATER_FEED].value + DISPLACEMENT);
+    const double warmer_room =
+        settled_casting_with(I_AMBIENT, NOMINAL[I_AMBIENT].value + DISPLACEMENT);
+
+    const double moved_by_feed = warmer_feed - nominal;
+    const double moved_by_room = warmer_room - nominal;
+    char message[240];
+
+    (void)snprintf(message, sizeof(message),
+                   "%.9g K on the feed moved the casting %.9g K; the same on the room moved it "
+                   "%.9g K",
+                   DISPLACEMENT, moved_by_feed, moved_by_room);
+
+    /* Warmer water arriving means less energy leaving with it, so the casting
+     * settles higher -- in that direction and not the other. */
+    TEST_ASSERT_TRUE_MESSAGE(moved_by_feed > 1.0, message);
+    TEST_ASSERT_TRUE_MESSAGE(moved_by_room > 0.0, message);
+    TEST_ASSERT_TRUE_MESSAGE(moved_by_feed > 4.0 * moved_by_room, message);
+
+    /* And the figure the balance gives for the feed's share, so this is the
+     * coefficient's magnitude rather than only its presence. The room's share is
+     * the loss coefficient's and the feed's is the drawn rate times the heat
+     * capacity, over the sum of the two. */
+    const double carried_w_per_k =
+        NOMINAL[I_PUMP_FLOW].value * NOMINAL[I_WATER_HEAT_CAPACITY].value;
+    const double expected =
+        DISPLACEMENT * carried_w_per_k / (NOMINAL[I_BREW_LOSS].value + carried_w_per_k);
+    TEST_ASSERT_TRUE_MESSAGE(fabs(moved_by_feed - expected) < 0.1, message);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C7: The heat a unit of drawn water carries is a
+/// described coefficient -- the volumetric heat capacity of water, converting a
+/// volume rate into an energy flux.
+///
+/// The term's shape read straight off one step. The casting is placed at ambient
+/// with the element off, so the loss to the room is exactly nothing and the only
+/// thing moving it is the water; the water leaving is placed above the feed by a
+/// known amount. What the casting does over that step is then the drawn rate
+/// times the volumetric heat capacity times that difference, divided by the
+/// thermal mass, and nothing else -- so a coefficient per unit mass, a factor
+/// folded into the drawn rate, or a difference taken against ambient instead of
+/// the feed all land somewhere this comparison refuses.
+static void test_the_drawn_power_is_the_volume_rate_times_the_heat_capacity(void)
+{
+    static const double CAPACITIES[] = {4.15, 3.0};
+    static const double OUTLET_C = 70.0;
+
+    for (size_t c = 0u; c < sizeof(CAPACITIES) / sizeof(CAPACITIES[0]); c++) {
+        double values[COEFFICIENT_COUNT];
+        plant_model_t model;
+
+        nominal_values(values);
+        values[I_WATER_HEAT_CAPACITY] = CAPACITIES[c];
+        model_from(&model, values);
+        place(&model, (float)values[I_AMBIENT], (float)OUTLET_C);
+
+        const plant_actuation_t drawing_only = commanding(0u, ACTUATION_FULL_SCALE);
+        const uint32_t interval_ms = 1u;
+        TEST_ASSERT_TRUE(plant_model_step(&model, &drawing_only, interval_ms));
+
+        const double seconds = (double)interval_ms / 1000.0;
+        const double removed_w = values[I_PUMP_FLOW] * CAPACITIES[c] *
+                                 (OUTLET_C - values[I_WATER_FEED]);
+        const double expected = values[I_AMBIENT] - (removed_w * seconds) / values[I_BREW_MASS];
+        const double got = (double)heated_mass(&model);
+
+        /*
+         * A step of a millisecond, so the difference between the rate at the
+         * start of it and the exact traverse across it is far below the
+         * tolerance -- what is being compared is the term's magnitude and not
+         * the integration, which the coupled-step test covers on its own.
+         */
+        if (!(fabs(got - expected) < 1.0e-4)) {
+            char message[240];
+            (void)snprintf(message, sizeof(message),
+                           "at %.9g J/(mL K): the casting reached %.9g, the drawn power gives %.9g",
+                           CAPACITIES[c], got, expected);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C8: The stepped structure stays admissible with
+/// a draw open -- stepping with the pump commanded closed to full scale against
+/// a cold casting leaves every state finite and non-diverging across the seam's
+/// declared interval.
+///
+/// Separate from the range validation above, and separate from the check that an
+/// interval and an actuation are admissible, neither of which has any notion of
+/// where a state is. What is asked here is about the trajectory: a step taken as
+/// though the rate held across it does not merely lose accuracy on a long
+/// interval -- it alternates sign and grows without bound -- and the coupled
+/// pair has two modes to do that in rather than one.
+///
+/// The pump is driven closed to full scale and back every step, which is the
+/// worst thing a caller can do to a relation whose time constant depends on the
+/// commanded rate: every step changes what the pair is. The casting starts cold,
+/// which is where a machine starts and where the draw's contribution is largest
+/// against the element's. Every interval the seam accepts is covered, from a
+/// millisecond to a minute.
+///
+/// Non-diverging is asserted against a band the coefficients fix rather than
+/// against a number: the casting cannot end up hotter than the element alone
+/// would hold it nor colder than the coldest thing feeding it, and the water
+/// cannot end up outside the range the casting travelled. The band is widened by
+/// its own width to admit the overshoot these relations genuinely produce, which
+/// is a property of the pair rather than of the integration.
+static void test_a_toggling_draw_against_a_cold_casting_stays_bounded(void)
+{
+    static const uint32_t INTERVALS_MS[] = {1u, 10u, 100u, 1000u, 60000u};
+    static const int STEPS = 500;
+
+    double values[COEFFICIENT_COUNT];
+
+    nominal_values(values);
+
+    const double coldest = fmin(values[I_AMBIENT], values[I_WATER_FEED]);
+    const double hottest = values[I_AMBIENT] + values[I_BREW_POWER] / values[I_BREW_LOSS];
+    const double width = hottest - coldest;
+    const double floor_c = coldest - width;
+    const double ceiling_c = hottest + width;
+
+    for (size_t i = 0u; i < sizeof(INTERVALS_MS) / sizeof(INTERVALS_MS[0]); i++) {
+        plant_model_t model;
+
+        model_from(&model, values);
+
+        for (int step = 0; step < STEPS; step++) {
+            const plant_actuation_t actuation =
+                commanding(ACTUATION_FULL_SCALE, (step % 2 == 0) ? ACTUATION_FULL_SCALE
+                                                                 : (uint16_t)0u);
+            TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, INTERVALS_MS[i]));
+
+            float states[PLANT_STATE_COUNT];
+            read_all_states(&model, states);
+            for (int s = 0; s < PLANT_STATE_COUNT; s++) {
+                char message[240];
+
+                (void)snprintf(message, sizeof(message),
+                               "at %u ms, step %d: state %d reached %.9g, outside [%.9g, %.9g]",
+                               (unsigned)INTERVALS_MS[i], step, s, (double)states[s], floor_c,
+                               ceiling_c);
+                TEST_ASSERT_TRUE_MESSAGE(isfinite(states[s]), message);
+                /* The two pressures are in bar and are bounded by their own
+                 * relations, which this test is not about; the three
+                 * temperatures are what the draw reaches. */
+                if (s == (int)PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C ||
+                    s == (int)PLANT_STATE_BREW_OUTLET_TEMPERATURE_C) {
+                    TEST_ASSERT_TRUE_MESSAGE((double)states[s] > floor_c, message);
+                    TEST_ASSERT_TRUE_MESSAGE((double)states[s] < ceiling_c, message);
+                }
+            }
+        }
+    }
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C10: The description states the relations flow
+/// now enters.
+///
+/// Which coefficients the statement has to name is already asked by the build
+/// check beside it, and asking it again here would be a second implementation of
+/// that. What is asked here is the part a name check cannot reach: that the
+/// relations themselves are written down, with the drawn rate and the two water
+/// properties in them, and that the difference driving the loss is between the
+/// water leaving and the water arriving rather than between the casting and
+/// anything. A statement listing four new coefficients in a table and leaving
+/// the relation they enter unstated would pass the build and leave a reader with
+/// four numbers and no equation.
+static void test_the_statement_writes_out_the_relation_flow_enters(void)
+{
+    char statement[STATEMENT_MAX];
+    (void)read_named_file(REFERENCE_STATEMENT_PATH, statement, sizeof(statement));
+
+    bool relation_is_written = false;
+    bool residence_time_is_written = false;
+    bool integration_error_is_stated = false;
+
+    for (char *block = strtok(statement, "\n"); block != NULL; block = strtok(NULL, "\n")) {
+        if (strstr(block, "flow") != NULL && strstr(block, "T_outlet") != NULL &&
+            strstr(block, "T_feed") != NULL) {
+            relation_is_written = true;
+        }
+        if (strstr(block, "flow") != NULL && strstr(block, "V_held") != NULL) {
+            residence_time_is_written = true;
+        }
+        if (strstr(block, "truncation") != NULL && strstr(block, "single precision") != NULL) {
+            integration_error_is_stated = true;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(relation_is_written,
+                             "no line of the statement writes the loss the drawn water carries as "
+                             "a relation between the water leaving and the water arriving");
+    TEST_ASSERT_TRUE_MESSAGE(residence_time_is_written,
+                             "no line of the statement writes the outlet's time constant against "
+                             "the drawn rate and the held volume");
+    TEST_ASSERT_TRUE_MESSAGE(integration_error_is_stated,
+                             "the statement says nothing about what the coupled step costs, so a "
+                             "reader of the error budget beside it cannot tell whether the "
+                             "integration adds to the figures there");
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C11: The description records that the outlet
+/// coefficient has become reachable rather than identified.
+///
+/// Two halves, and the second is what stops the first being overclaimed. The
+/// statement has to say that the casting's own reading now depends on the outlet
+/// coefficients -- and it has to have stopped saying the opposite, which is why
+/// the old sentence is searched for and required to be gone rather than merely
+/// outnumbered. And it has to go on saying that what it carries about those
+/// coefficients is an assumed error and nothing else, because reachable is not
+/// identified and nothing has been on a bench.
+static void test_the_statement_records_the_outlet_coefficients_as_reachable(void)
+{
+    char statement[STATEMENT_MAX];
+    (void)read_named_file(REFERENCE_STATEMENT_PATH, statement, sizeof(statement));
+
+    TEST_ASSERT_NULL_MESSAGE(
+        strstr(statement, "nothing the sensor reads depends on that coefficient"),
+        "the statement still says nothing the machine senses depends on the outlet coefficient, "
+        "which the flow term has made untrue");
+
+    char *const copy = statement;
+    bool reachability_is_stated = false;
+    bool identification_is_disclaimed = false;
+
+    for (char *block = strtok(copy, "\n"); block != NULL; block = strtok(NULL, "\n")) {
+        if (strstr(block, "brew sensor") != NULL && strstr(block, "residual") != NULL) {
+            reachability_is_stated = true;
+        }
+        if (strstr(block, "assumed error and nothing else") != NULL) {
+            identification_is_disclaimed = true;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(reachability_is_stated,
+                             "no line of the statement says the reading the machine takes now "
+                             "carries information about the outlet coefficients");
+    TEST_ASSERT_TRUE_MESSAGE(identification_is_disclaimed,
+                             "the statement no longer says that what it carries about those "
+                             "coefficients is an assumed error and nothing else, which is the "
+                             "difference between reachable and identified");
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C13: The outlet coefficient's superseded
+/// declaration is re-derived rather than carried over.
+///
+/// Three separate things, and a description can do any two of them and still
+/// have carried the old judgement forward.
+///
+/// The superseded coefficient is gone from both files rather than left beside
+/// its replacements. A value nothing reads is a value nobody maintains, and it
+/// would go on carrying an account of a residence time the drawn-rate relation
+/// now computes -- two statements of one quantity, which is the arrangement
+/// these files exist to prevent.
+///
+/// Each replacement carries its own declared error rather than the old figure
+/// split or copied. That is asserted next door, against the shipped budget.
+///
+/// And the claim about which fraction is the widest is re-judged against the new
+/// figures rather than asserted unchanged. The statement makes that claim in
+/// prose and the figures are in the description, so the two can disagree without
+/// either being obviously wrong on its own -- which is exactly the failure a
+/// rationale carried forward past the numbers it was written about produces.
+/// Here the figures are asked which coefficient is widest and the statement is
+/// required to be making its claim about that one.
+static void test_the_superseded_outlet_declaration_was_re_derived(void)
+{
+    /* The name that went. Written out rather than derived, because what is being
+     * asserted is that nothing derives it any more. */
+    static const char SUPERSEDED[] = "brew.outlet_time_constant_s";
+
+    char values[REFERENCE_MAX];
+    char statement[STATEMENT_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    const size_t used = read_named_file(REFERENCE_DESCRIPTION_PATH, values, sizeof(values));
+    (void)read_named_file(REFERENCE_STATEMENT_PATH, statement, sizeof(statement));
+
+    TEST_ASSERT_NULL_MESSAGE(strstr(values, SUPERSEDED),
+                             "the description still declares the outlet time constant the drawn "
+                             "rate now supplies, so one quantity is written down twice");
+    TEST_ASSERT_NULL_MESSAGE(strstr(statement, SUPERSEDED),
+                             "the statement still accounts for the outlet time constant, so a "
+                             "reader is being given the reasoning behind a value nothing reads");
+
+    /*
+     * Which coefficient the figures make the widest. Read from the shipped
+     * description rather than assumed, so this asks the two files to agree
+     * rather than asking either to match something written here.
+     */
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(values, used, &budget, &fault));
+
+    const char *widest = NULL;
+    float widest_fraction = -1.0f;
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        float assumed = -1.0f;
+
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, NOMINAL[i].name, &assumed));
+        if (assumed > widest_fraction) {
+            widest_fraction = assumed;
+            widest = NOMINAL[i].name;
+        }
+    }
+    TEST_ASSERT_NOT_NULL(widest);
+
+    /*
+     * And the prose is making its claim about that one. The bullet names the
+     * coefficient in words rather than by its identifier -- the accounting
+     * section is written for a reader and not for a parser -- so what is matched
+     * is the word that distinguishes it, which is the thing the replacement
+     * stands for and the old one did not.
+     */
+    static const struct {
+        const char *name;
+        const char *word;
+    } NAMED_IN_PROSE[] = {
+        {"brew.outlet_conduction_time_constant_s", "conduction constant"},
+        {"brew.outlet_held_volume_ml", "held volume"},
+    };
+
+    const char *word = NULL;
+    for (size_t i = 0u; i < sizeof(NAMED_IN_PROSE) / sizeof(NAMED_IN_PROSE[0]); i++) {
+        if (strcmp(widest, NAMED_IN_PROSE[i].name) == 0) {
+            word = NAMED_IN_PROSE[i].word;
+        }
+    }
+
+    char message[260];
+    (void)snprintf(message, sizeof(message),
+                   "the widest declared fraction in the description belongs to '%s' (%.9g), and "
+                   "no paragraph of the statement claims the widest fraction for it",
+                   widest, (double)widest_fraction);
+    TEST_ASSERT_NOT_NULL_MESSAGE(word, message);
+
+    bool re_judged = false;
+    for (char *block = strtok(statement, "\n"); block != NULL; block = strtok(NULL, "\n")) {
+        if (strstr(block, "widest fraction") != NULL && strstr(block, word) != NULL) {
+            re_judged = true;
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(re_judged, message);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C12: The omissions this slice does not close
+/// remain stated.
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C14: The description states how completely the
+/// drawn water is assumed to equilibrate.
+///
+/// The arrival of a flow term is exactly the event that makes a reader stop
+/// looking, so what the statement still leaves out has to survive it in the
+/// place a reader goes to find out. Each of these is required to appear after
+/// the heading the omissions are under, not merely somewhere in the file -- a
+/// puck mentioned in a relation is not a puck recorded as absent.
+static void test_the_omissions_the_flow_term_does_not_close_are_still_recorded(void)
+{
+    /* Each entry is a phrase, and a short description of what its absence would
+     * mean, so a failure names the omission rather than the string. */
+    static const struct {
+        const char *phrase;
+        const char *what;
+    } STILL_OPEN[] = {
+        {"puck", "the puck"},
+        {"flow-versus-pressure", "the pump's flow-versus-pressure characteristic"},
+        {"three-way valve", "the contention between the two destinations one block serves"},
+        {"latent heat", "what a steam draw costs the steam mass"},
+        {"equilibrate", "how completely the drawn water is assumed to equilibrate"},
+    };
+
+    char statement[STATEMENT_MAX];
+    (void)read_named_file(REFERENCE_STATEMENT_PATH, statement, sizeof(statement));
+
+    const char *const omissions = strstr(statement, "What this description leaves out");
+    TEST_ASSERT_NOT_NULL_MESSAGE(omissions,
+                                 "the statement has no section recording what it leaves out");
+
+    for (size_t i = 0u; i < sizeof(STILL_OPEN) / sizeof(STILL_OPEN[0]); i++) {
+        char message[240];
+
+        (void)snprintf(message, sizeof(message),
+                       "%s is not recorded as an omission any more, so a reader who has just seen "
+                       "a flow term arrive has nothing telling them it is still absent",
+                       STILL_OPEN[i].what);
+        TEST_ASSERT_NOT_NULL_MESSAGE(strstr(omissions, STILL_OPEN[i].phrase), message);
+    }
+
+    /*
+     * And the equilibration omission specifically says which way it is wrong.
+     * "Not modelled" would be a weaker statement than the criterion asks for:
+     * these relations overstate what the group receives and overstate the droop
+     * together, and a reader sizing a margin needs the direction.
+     */
+    bool direction_is_stated = false;
+    char *const copy = statement;
+    for (char *block = strtok(copy, "\n"); block != NULL; block = strtok(NULL, "\n")) {
+        if (strstr(block, "equilibrate") != NULL && strstr(block, "droop") != NULL) {
+            direction_is_stated = true;
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(direction_is_stated,
+                             "the equilibration omission does not say which way the relations are "
+                             "wrong, so nothing tells a reader whether it is optimistic");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -3880,7 +5138,7 @@ int main(void)
     RUN_TEST(test_every_state_carries_the_quantity_it_names);
     RUN_TEST(test_a_state_read_that_cannot_be_answered_is_refused_and_writes_nothing);
     RUN_TEST(test_the_unreported_state_is_reachable_through_the_seam_alone);
-    RUN_TEST(test_the_outlet_time_constant_has_an_enforced_admissible_range);
+    RUN_TEST(test_the_flow_terms_coefficients_carry_enforced_admissible_ranges);
     RUN_TEST(test_the_shipped_description_declares_an_assumed_error_for_the_new_coefficient);
     RUN_TEST(test_the_statement_and_the_variant_carry_every_coefficient);
     RUN_TEST(test_the_statement_warns_that_the_two_pump_coefficients_exclude_each_other);
@@ -3956,6 +5214,22 @@ int main(void)
     RUN_TEST(test_the_drawn_rate_is_unmoved_by_the_heaters);
     RUN_TEST(test_the_shipped_description_declares_an_assumed_error_for_the_drawn_rate);
     RUN_TEST(test_the_drawn_rate_is_reached_end_to_end_through_the_seam);
+    RUN_TEST(test_a_draw_cools_the_heated_mass_faster_than_no_draw);
+    RUN_TEST(test_the_settled_droop_is_the_energy_balance_the_coefficients_state);
+    RUN_TEST(test_the_steam_mass_gains_no_term_from_the_draw);
+    RUN_TEST(test_the_casting_depends_on_where_the_water_leaving_sits);
+    RUN_TEST(test_the_outlet_time_constant_reaches_the_casting_only_under_a_draw);
+    RUN_TEST(test_the_coupled_step_matches_the_pair_integrated_independently);
+    RUN_TEST(test_the_pair_lands_in_the_same_place_however_the_step_is_cut);
+    RUN_TEST(test_the_outlet_settles_faster_the_harder_the_draw);
+    RUN_TEST(test_a_closed_pump_relaxes_at_the_conduction_constant);
+    RUN_TEST(test_the_feed_temperature_is_read_rather_than_ambient);
+    RUN_TEST(test_the_drawn_power_is_the_volume_rate_times_the_heat_capacity);
+    RUN_TEST(test_a_toggling_draw_against_a_cold_casting_stays_bounded);
+    RUN_TEST(test_the_statement_writes_out_the_relation_flow_enters);
+    RUN_TEST(test_the_statement_records_the_outlet_coefficients_as_reachable);
+    RUN_TEST(test_the_superseded_outlet_declaration_was_re_derived);
+    RUN_TEST(test_the_omissions_the_flow_term_does_not_close_are_still_recorded);
     RUN_TEST(test_a_written_state_is_what_the_next_step_advances_from);
     return UNITY_END();
 }

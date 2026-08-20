@@ -16,6 +16,7 @@
  * suites carry theirs.
  */
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <unity.h>
@@ -52,6 +53,8 @@ static const char DESCRIPTION[] = "ambient_temperature_c = 20.0\n"
                                   "pump.pressure_bar = 15.0\n"
                                   "pump.flow_ml_per_s = 7.0\n"
                                   "brew.pressure_time_constant_s = 0.8\n"
+                                  "water.feed_temperature_c = 18.0\n"
+                                  "water.heat_capacity_j_per_ml_k = 4.15\n"
                                   "steam.saturation_temperature_c = 100.0\n"
                                   "steam.pressure_bar_per_k = 0.036\n";
 
@@ -72,6 +75,12 @@ static const char DESCRIPTION[] = "ambient_temperature_c = 20.0\n"
 #define VESSEL_MASS_J_PER_K 900.0f
 #define VESSEL_HEATER_W 1400.0f
 #define VESSEL_LOSS_W_PER_K 2.0f
+#define PUMP_FLOW_ML_PER_S 7.0f
+/* Below the ambient the vessel starts at, deliberately: a feed at ambient would
+ * let a drawn-energy term that read ambient instead of the feed pass unnoticed,
+ * and the two are separate quantities in the description for that reason. */
+#define FEED_TEMPERATURE_C 18.0f
+#define WATER_J_PER_ML_K 4.15f
 #define SATURATION_C 100.0f
 #define STEAM_BAR_PER_K 0.036f
 
@@ -220,18 +229,33 @@ static void test_the_pump_drives_the_brew_pressure_and_leaves_the_vessel_alone(v
     TEST_ASSERT_TRUE(value > 7.0f);
 
     /*
-     * The pump is not a heater. Driving it moves neither temperature quantity
-     * nor the steam pressure that follows the vessel -- the two paths share one
-     * vessel in this architecture, but they do not share the pump.
+     * The pump is not a heater, and what it does to the vessel is the opposite
+     * of heating it: the water it draws out is replaced by water arriving at the
+     * feed temperature, which on this description is below where the vessel is
+     * sitting, so the vessel goes down while the pump runs. It goes down, never
+     * up -- a term entered with the wrong sign would warm a vessel by pumping
+     * cold water through it, and that is the failure worth naming here rather
+     * than a bare inequality.
+     *
+     * Both temperature quantities are the one vessel on this architecture, so
+     * they have to have moved together; a pump that cooled one of them would
+     * have made two bodies of water out of one.
      */
     float after[PLANT_QUANTITY_COUNT];
     read_all(&model, after);
-    TEST_ASSERT_EQUAL_FLOAT(before[PLANT_QUANTITY_BREW_TEMPERATURE_C],
-                            after[PLANT_QUANTITY_BREW_TEMPERATURE_C]);
-    TEST_ASSERT_EQUAL_FLOAT(before[PLANT_QUANTITY_STEAM_TEMPERATURE_C],
+    TEST_ASSERT_TRUE(after[PLANT_QUANTITY_BREW_TEMPERATURE_C] <
+                     before[PLANT_QUANTITY_BREW_TEMPERATURE_C]);
+    TEST_ASSERT_EQUAL_FLOAT(after[PLANT_QUANTITY_BREW_TEMPERATURE_C],
                             after[PLANT_QUANTITY_STEAM_TEMPERATURE_C]);
+    /* And it does not go below what it is being fed, which is what the vessel
+     * is relaxing towards rather than a bound the equations impose. */
+    TEST_ASSERT_TRUE(after[PLANT_QUANTITY_BREW_TEMPERATURE_C] > FEED_TEMPERATURE_C);
+
+    /* Steam pressure still follows the vessel and not the pump: the vessel is
+     * far below saturation throughout, so it is nothing before and after. */
     TEST_ASSERT_EQUAL_FLOAT(before[PLANT_QUANTITY_STEAM_PRESSURE_BAR],
                             after[PLANT_QUANTITY_STEAM_PRESSURE_BAR]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, after[PLANT_QUANTITY_STEAM_PRESSURE_BAR]);
 }
 
 /// SOL-PLANT-STRUCTURE-SEAM-SECOND-STRUCTURE.C1: ...a step with no actuation
@@ -526,6 +550,8 @@ static void test_a_vessel_that_loses_nothing_heats_at_the_rate_its_power_implies
                                    "pump.pressure_bar = 15.0\n"
                                    "pump.flow_ml_per_s = 7.0\n"
                                    "brew.pressure_time_constant_s = 0.8\n"
+                                   "water.feed_temperature_c = 18.0\n"
+                                   "water.heat_capacity_j_per_ml_k = 4.15\n"
                                    "steam.saturation_temperature_c = 100.0\n"
                                    "steam.pressure_bar_per_k = 0.036\n";
 
@@ -663,6 +689,8 @@ static const char ANNOTATED[] = "ambient_temperature_c = 20.0 ~ 0.25\n"
                                 "pump.pressure_bar = 15.0 ~ 0.35\n"
                                 "pump.flow_ml_per_s = 7.0 ~ 0.45\n"
                                 "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
+                                "water.feed_temperature_c = 18.0 ~ 0.5\n"
+                                "water.heat_capacity_j_per_ml_k = 4.15 ~ 0.03\n"
                                 "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
                                 "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
 
@@ -677,6 +705,8 @@ static const struct {
     {"pump.pressure_bar", 0.35f},
     {"pump.flow_ml_per_s", 0.45f},
     {"brew.pressure_time_constant_s", 0.5f},
+    {"water.feed_temperature_c", 0.5f},
+    {"water.heat_capacity_j_per_ml_k", 0.03f},
     {"steam.saturation_temperature_c", 0.02f},
     {"steam.pressure_bar_per_k", 0.3f},
 };
@@ -741,6 +771,8 @@ static void test_an_assumed_error_that_cannot_stand_is_refused_here_too(void)
                                    "pump.pressure_bar = 15.0 ~ 0.35\n"
                                    "pump.flow_ml_per_s = 7.0 ~ 0.45\n"
                                    "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
+                                   "water.feed_temperature_c = 18.0 ~ 0.5\n"
+                                   "water.heat_capacity_j_per_ml_k = 4.15 ~ 0.03\n"
                                    "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
                                    "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
     static const char EMPTY[] = "ambient_temperature_c = 20.0 ~\n"
@@ -750,6 +782,8 @@ static void test_an_assumed_error_that_cannot_stand_is_refused_here_too(void)
                                 "pump.pressure_bar = 15.0 ~ 0.35\n"
                                 "pump.flow_ml_per_s = 7.0 ~ 0.45\n"
                                 "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
+                                "water.feed_temperature_c = 18.0 ~ 0.5\n"
+                                "water.heat_capacity_j_per_ml_k = 4.15 ~ 0.03\n"
                                 "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
                                 "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
     plant_parameters_t untouched;
@@ -1082,6 +1116,245 @@ static void test_the_drawn_rate_follows_the_commanded_pump_level(void)
     }
 }
 
+/* --- The energy the drawn water carries out of the vessel ----------------- */
+
+/* A command on the vessel's heater and the pump, in parts per thousand of each. */
+static plant_actuation_t commanding(uint16_t heater_permille, uint16_t pump_permille)
+{
+    plant_actuation_t actuation = {{0u}};
+
+    actuation.level_permille[HEATING_CHANNEL] = heater_permille;
+    actuation.level_permille[ACTUATION_CHANNEL_PUMP] = pump_permille;
+    return actuation;
+}
+
+/* The one temperature this architecture keeps, read through the seam. */
+static float vessel(const plant_model_t *model)
+{
+    float value = 0.0f;
+
+    TEST_ASSERT_TRUE(
+        plant_model_state(model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, &value));
+    return value;
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C1: The casting loses energy to the water drawn
+/// through it, and every structure that answers the pump channel carries that
+/// term rather than only the reference one.
+///
+/// This architecture answers the pump channel, so it owes the term. Two
+/// instances of one description, started together above ambient with the element
+/// off and stepped side by side with the pump the only difference: the one being
+/// drawn through falls faster at every step, and ends far lower. A term added to
+/// the reference structure and not to this one would leave these two identical,
+/// which is the failure this test is written against -- and it is not a
+/// hypothetical one, since it is precisely what a change made in one file rather
+/// than in both would produce.
+static void test_a_draw_cools_the_vessel_faster_than_no_draw(void)
+{
+    plant_model_t drawn;
+    plant_model_t undrawn;
+
+    initialise(&drawn);
+    initialise(&undrawn);
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&drawn, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 90.0f));
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&undrawn, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 90.0f));
+
+    const plant_actuation_t with_draw = commanding(0u, ACTUATION_FULL_SCALE);
+    const plant_actuation_t without_draw = commanding(0u, 0u);
+
+    float previous_drawn = 90.0f;
+    float previous_undrawn = 90.0f;
+
+    for (int step = 0; step < SETTLE_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &with_draw, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &without_draw, STEP_MS));
+
+        const float now_drawn = vessel(&drawn);
+        const float now_undrawn = vessel(&undrawn);
+
+        /* Both cooling, so what is compared is two falls rather than a fall
+         * against a rise. */
+        TEST_ASSERT_TRUE(now_drawn < previous_drawn);
+        TEST_ASSERT_TRUE(now_undrawn < previous_undrawn);
+        TEST_ASSERT_TRUE((previous_drawn - now_drawn) > (previous_undrawn - now_undrawn));
+
+        previous_drawn = now_drawn;
+        previous_undrawn = now_undrawn;
+    }
+
+    TEST_ASSERT_TRUE(previous_undrawn - previous_drawn > 5.0f);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C1: The casting loses energy to the water drawn
+/// through it -- with the heater holding, the droop under draw is larger than the
+/// model produces with no draw.
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C7: The heat a unit of drawn water carries is a
+/// described coefficient -- a volumetric heat capacity, since the rate it
+/// multiplies is a volume per unit time.
+///
+/// Held under a constant element and a constant draw until it stops moving, the
+/// vessel settles where the balance puts it: what the element delivers equals
+/// what the loss coefficient carries to the room plus what the drawn volume
+/// carries away above the temperature the water arrived at. The figure is
+/// arithmetic from this suite's own coefficients, so a heat capacity per unit
+/// mass, or a difference taken against ambient rather than against the feed,
+/// lands somewhere this refuses.
+static void test_the_vessel_settles_where_the_drawn_energy_balance_puts_it(void)
+{
+    plant_model_t model;
+    const plant_actuation_t working = commanding(ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE);
+
+    initialise(&model);
+    /* Long against this vessel's own time constant under a draw, which is what
+     * settling means for a mass this size against a rate this large. */
+    for (int step = 0; step < 4000; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, STEP_MS));
+    }
+
+    const double carried_w_per_k = (double)PUMP_FLOW_ML_PER_S * (double)WATER_J_PER_ML_K;
+    const double settled = ((double)VESSEL_HEATER_W + (double)VESSEL_LOSS_W_PER_K * (double)AMBIENT_C +
+                            carried_w_per_k * (double)FEED_TEMPERATURE_C) /
+                           ((double)VESSEL_LOSS_W_PER_K + carried_w_per_k);
+    const double got = (double)vessel(&model);
+
+    if (!(fabs(got - settled) < 0.05)) {
+        char message[220];
+        (void)snprintf(message, sizeof(message), "settled at %.9g, the balance gives %.9g", got,
+                       settled);
+        TEST_FAIL_MESSAGE(message);
+    }
+
+    /* And far below where the same element holds the same vessel with the pump
+     * closed, which is the droop the term exists to produce. */
+    TEST_ASSERT_TRUE(got < (double)AMBIENT_C +
+                               (double)VESSEL_HEATER_W / (double)VESSEL_LOSS_W_PER_K - 100.0);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C1: The casting loses energy to the water drawn
+/// through it, and the term joins the ambient loss the vessel already carries.
+///
+/// Joining it means more than being added to the power: what the vessel is
+/// relaxing towards and how fast it gets there are both set by the two
+/// coefficients together, so the correction a long step is made for has to be
+/// computed from their sum. Over the short steps the rest of this suite takes,
+/// that correction is within a part in ten thousand of unity and an alteration
+/// to it moves nothing any tolerance would notice. Here the step is comparable
+/// with the vessel's time constant under a draw -- which the draw has shortened
+/// from four hundred and fifty seconds to about thirty -- and a correction
+/// computed from the ambient coefficient alone, or from a difference of the two,
+/// misses by tens of degrees or drives the vessel clean past what it is relaxing
+/// towards.
+static void test_a_long_step_under_a_draw_is_corrected_for_both_losses(void)
+{
+    plant_model_t model;
+    /* Ten seconds against a time constant of about thirty. */
+    const uint32_t interval_ms = 10000u;
+    const float start_c = 90.0f;
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, start_c));
+
+    const plant_actuation_t drawing_only = commanding(0u, ACTUATION_FULL_SCALE);
+    TEST_ASSERT_TRUE(plant_model_step(&model, &drawing_only, interval_ms));
+
+    const float seconds = (float)interval_ms / 1000.0f;
+    const float drawn_w_per_k = PUMP_FLOW_ML_PER_S * WATER_J_PER_ML_K;
+    const float settling_w_per_k = VESSEL_LOSS_W_PER_K + drawn_w_per_k;
+    /* Where the two losses together put it, and how fast the two together take
+     * it there -- the closed form, in the form the implementation does not
+     * use. */
+    const float settles_at =
+        (VESSEL_LOSS_W_PER_K * AMBIENT_C + drawn_w_per_k * FEED_TEMPERATURE_C) / settling_w_per_k;
+    const float time_constant_s = VESSEL_MASS_J_PER_K / settling_w_per_k;
+    const float expected = settles_at + (start_c - settles_at) * expf(-seconds / time_constant_s);
+    const float got = vessel(&model);
+
+    /*
+     * Above what it is relaxing towards and below where it started, asserted
+     * outright: a relaxation cannot pass its own settling value however long the
+     * step, and a step taken as though the rate held across this one would go
+     * straight through it and out the far side.
+     */
+    TEST_ASSERT_FALSE(isnan(got));
+    TEST_ASSERT_TRUE(got > settles_at);
+    TEST_ASSERT_TRUE(got < start_c);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2f, expected, got);
+}
+
+/// SOL-PLANT-FLOW-ENERGY-BALANCE.C1: The energy the drawn water removes is the
+/// drawn rate against the temperature difference across the vessel.
+///
+/// The term's shape read off one short step, at three vessel temperatures. On
+/// this architecture the difference is taken at the vessel itself, and that is
+/// the architecture rather than a shortcut: there is no state between the mass
+/// and what leaves it here, because the water on its way out is the water in the
+/// vessel -- which is exactly why this structure refuses the outlet state the
+/// other one keeps. The reference structure's rule that the difference must not
+/// be taken at the casting is a rule about a machine with two bodies of water,
+/// and this one has one.
+///
+/// The middle of the three temperatures is the feed itself, where the drawn term
+/// contributes exactly nothing however hard the pump is driven. A term written
+/// against ambient instead of the feed removes energy there and fails; so does
+/// one that took a difference the wrong way round, since the coldest of the
+/// three sits below the feed and has to gain rather than lose.
+static void test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed(void)
+{
+    static const float STARTS[] = {5.0f, FEED_TEMPERATURE_C, 95.0f};
+    static const uint32_t INTERVAL_MS = 1u;
+
+    for (size_t i = 0u; i < sizeof(STARTS) / sizeof(STARTS[0]); i++) {
+        plant_model_t model;
+
+        initialise(&model);
+        TEST_ASSERT_TRUE(
+            plant_model_set_state(&model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, STARTS[i]));
+
+        const plant_actuation_t drawing_only = commanding(0u, ACTUATION_FULL_SCALE);
+        TEST_ASSERT_TRUE(plant_model_step(&model, &drawing_only, INTERVAL_MS));
+
+        const double seconds = (double)INTERVAL_MS / 1000.0;
+        const double start = (double)STARTS[i];
+        const double lost_w =
+            (double)VESSEL_LOSS_W_PER_K * (start - (double)AMBIENT_C) +
+            (double)PUMP_FLOW_ML_PER_S * (double)WATER_J_PER_ML_K *
+                (start - (double)FEED_TEMPERATURE_C);
+        const double expected = start - (lost_w * seconds) / (double)VESSEL_MASS_J_PER_K;
+        const double got = (double)vessel(&model);
+
+        /*
+         * A step of a millisecond against a vessel whose shortest time constant
+         * is tens of seconds, so the difference between the rate at the start of
+         * the step and the exact traverse across it is far below this tolerance.
+         * What is compared is the term's magnitude, not the integration.
+         */
+        if (!(fabs(got - expected) < 1.0e-5)) {
+            char message[240];
+            (void)snprintf(message, sizeof(message),
+                           "from %.9g: the vessel reached %.9g, the two losses give %.9g", start,
+                           got, expected);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
+
+    /* And at the feed temperature the pump costs the vessel nothing at all: what
+     * moved it there is the room, and it moved by what the room alone gives. */
+    plant_model_t at_feed;
+    initialise(&at_feed);
+    TEST_ASSERT_TRUE(plant_model_set_state(&at_feed, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C,
+                                           FEED_TEMPERATURE_C));
+    const plant_actuation_t drawing_only = commanding(0u, ACTUATION_FULL_SCALE);
+    TEST_ASSERT_TRUE(plant_model_step(&at_feed, &drawing_only, INTERVAL_MS));
+    /* Ambient is above the feed on this description, so the room is warming it
+     * -- upwards, which a drawn term written against ambient could not leave
+     * alone. */
+    TEST_ASSERT_TRUE(vessel(&at_feed) > FEED_TEMPERATURE_C);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1110,6 +1383,10 @@ int main(void)
     RUN_TEST(test_the_suites_own_description_declares_no_assumed_error);
     RUN_TEST(test_this_structure_answers_the_writes_it_answers_the_reads_for);
     RUN_TEST(test_writing_either_temperature_moves_the_one_vessel);
+    RUN_TEST(test_a_draw_cools_the_vessel_faster_than_no_draw);
+    RUN_TEST(test_the_vessel_settles_where_the_drawn_energy_balance_puts_it);
+    RUN_TEST(test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed);
+    RUN_TEST(test_a_long_step_under_a_draw_is_corrected_for_both_losses);
     RUN_TEST(test_the_estimator_refuses_this_architecture);
     return UNITY_END();
 }

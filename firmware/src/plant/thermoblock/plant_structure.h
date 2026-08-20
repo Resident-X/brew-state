@@ -10,14 +10,16 @@
  * outside it that names them.
  *
  * The equations are the thinnest set that expresses this architecture: two
- * independently heated thermal masses, each losing to ambient; the water on its
- * way to the group following the coffee block's temperature through a lag,
- * because a low-mass flow-through system puts real dynamics between the metal
- * and the stream; brew pressure driven by the pump; and steam pressure
- * following the steam mass above saturation. Whether they describe any real
- * machine cannot be settled until there is one to measure against; what they
- * establish here is that the numbers and the equations are separable and
- * replaceable.
+ * independently heated thermal masses, each losing to ambient; the coffee block
+ * additionally losing whatever the water drawn through it carries away, because
+ * a flow-through casting heats the stream out of its own store; the water on its
+ * way to the group following that casting's temperature through a lag whose
+ * length is set by how fast the water is being displaced, because a low-mass
+ * flow-through system puts real dynamics between the metal and the stream; brew
+ * pressure driven by the pump; and steam pressure following the steam mass above
+ * saturation. Whether they describe any real machine cannot be settled until
+ * there is one to measure against; what they establish here is that the numbers
+ * and the equations are separable and replaceable.
  */
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H
@@ -68,7 +70,8 @@ typedef struct {
     float brew_thermal_mass_j_per_k;
     float brew_heater_power_w;
     float brew_loss_w_per_k;
-    float brew_outlet_time_constant_s;
+    float brew_outlet_held_volume_ml;
+    float brew_outlet_conduction_time_constant_s;
 
     float steam_thermal_mass_j_per_k;
     float steam_heater_power_w;
@@ -77,6 +80,16 @@ typedef struct {
     float pump_pressure_bar;
     float pump_flow_ml_per_s;
     float brew_pressure_time_constant_s;
+
+    /*
+     * Properties of the water rather than of the machine, which is why they sit
+     * apart from the coefficients above rather than under a path's name. What a
+     * millilitre of water costs to raise by a kelvin belongs to water, and the
+     * temperature it arrives at belongs to whatever feeds the machine -- a tank
+     * standing in the room on this one, and a cold main on the next one.
+     */
+    float water_feed_temperature_c;
+    float water_heat_capacity_j_per_ml_k;
 
     float steam_saturation_temperature_c;
     float steam_pressure_bar_per_k;
@@ -96,9 +109,11 @@ typedef struct {
  * least entitled to make.
  *
  * The outlet is the state worth reconstructing precisely because no quantity
- * carries it. Nothing downstream of the casting feeds back into these equations,
- * so it is also a state nothing here can identify from a reading -- see the
- * omissions in params/thermoblock.md.
+ * carries it. It is no longer a state nothing here could be identified from: the
+ * energy the drawn water removes from the casting is written at this
+ * temperature, so with a draw open the casting the machine does read moves
+ * differently depending on where the water leaving it sits. That is reachability
+ * and not identification -- see the omissions in params/thermoblock.md.
  *
  * Steam pressure is not integrated -- it follows the steam mass -- but it is
  * kept here so a read costs no arithmetic.
@@ -137,8 +152,13 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
  * Advance both thermal masses over `seconds` under the given actuation, and the
  * water on its way to the group with them. Each mass takes in what its heater
  * delivers at the commanded duty and gives up what its loss coefficient carries
- * to ambient; the water relaxes towards the casting it has just passed through,
- * with the structure's outlet time constant.
+ * to ambient; the coffee block gives up, on top of that, what the water drawn
+ * through it carries out, and the water relaxes towards the casting it has just
+ * passed through over a residence time that shortens as the draw grows.
+ *
+ * The casting and the water are advanced as one pair rather than one after the
+ * other: each now appears in the other's equation, so neither has a closed form
+ * of its own to be exact against.
  */
 void thermoblock_advance_temperatures(plant_model_t *model,
                                       const plant_actuation_t *actuation,

@@ -19,10 +19,20 @@
 /*
  * The admissible ranges are the ones outside which these equations stop
  * describing a machine of this architecture rather than describing an unusual
- * one: a mass or a time constant at or below zero divides, a negative loss
- * coefficient makes a mass run away from ambient, and a negative power or
- * pressure drives the wrong way. The upper bounds are where a value stops
- * being an espresso machine and starts being a data-entry error.
+ * one: a mass, a held volume or a time constant at or below zero divides, a
+ * negative loss coefficient makes a mass run away from ambient, and a negative
+ * power or pressure drives the wrong way. The upper bounds are where a value
+ * stops being an espresso machine and starts being a data-entry error.
+ *
+ * The two water properties are bounded on a different footing from the rest,
+ * because they are not this machine's figures. Feed water is admitted from
+ * freezing to a warm tank and no further: below zero it is not water, and above
+ * that band a machine is being fed from something this description has no
+ * account of. Its heat capacity is bounded around water's, close enough that a
+ * figure for some other fluid is refused here rather than quietly changing what
+ * a millilitre costs -- these equations convert a volume rate into an energy
+ * flux with it, and that conversion is the one place a wrong substance would
+ * look like a plausible machine.
  */
 static const plant_parameter_spec_t SPECS[] = {
     {"ambient_temperature_c", -40.0f, 60.0f, offsetof(plant_parameters_t, ambient_temperature_c)},
@@ -31,8 +41,10 @@ static const plant_parameter_spec_t SPECS[] = {
      offsetof(plant_parameters_t, brew_thermal_mass_j_per_k)},
     {"brew.heater_power_w", 0.0f, 10000.0f, offsetof(plant_parameters_t, brew_heater_power_w)},
     {"brew.loss_w_per_k", 0.0f, 1000.0f, offsetof(plant_parameters_t, brew_loss_w_per_k)},
-    {"brew.outlet_time_constant_s", 0.001f, 100.0f,
-     offsetof(plant_parameters_t, brew_outlet_time_constant_s)},
+    {"brew.outlet_held_volume_ml", 0.1f, 1000.0f,
+     offsetof(plant_parameters_t, brew_outlet_held_volume_ml)},
+    {"brew.outlet_conduction_time_constant_s", 0.001f, 1000.0f,
+     offsetof(plant_parameters_t, brew_outlet_conduction_time_constant_s)},
 
     {"steam.thermal_mass_j_per_k", 1.0f, 100000.0f,
      offsetof(plant_parameters_t, steam_thermal_mass_j_per_k)},
@@ -43,6 +55,11 @@ static const plant_parameter_spec_t SPECS[] = {
     {"pump.flow_ml_per_s", 0.0f, 100.0f, offsetof(plant_parameters_t, pump_flow_ml_per_s)},
     {"brew.pressure_time_constant_s", 0.001f, 100.0f,
      offsetof(plant_parameters_t, brew_pressure_time_constant_s)},
+
+    {"water.feed_temperature_c", 0.0f, 60.0f,
+     offsetof(plant_parameters_t, water_feed_temperature_c)},
+    {"water.heat_capacity_j_per_ml_k", 1.0f, 10.0f,
+     offsetof(plant_parameters_t, water_heat_capacity_j_per_ml_k)},
 
     {"steam.saturation_temperature_c", 0.0f, 300.0f,
      offsetof(plant_parameters_t, steam_saturation_temperature_c)},
@@ -123,65 +140,6 @@ static float advanced_temperature(float temperature_c, float ambient_c, float he
 }
 
 /*
- * The water on its way to the group after `seconds`, having entered the step at
- * `outlet_c` while the casting travelled from `block_from_c` to `block_to_c`.
- *
- * The heater does not appear here. It acts on the casting, and the only way it
- * reaches the water is through this relaxation -- which is the whole of what
- * distinguishes these two states from one state read twice.
- *
- * Exact for a block that traverses the step linearly, rather than for one held
- * at either end of it. Relaxing towards a fixed value is what the pressure path
- * does, and it is exact there because the pump's command really is constant
- * across a step; the block's temperature is not, and taking either end of its
- * traverse as though it were leaves an error first order in the step length --
- * every other integration in this structure is exact for its own step, and one
- * that is not would be the one a shorter step was needed to hide.
- *
- * The two library expressions are the ones already used above: how far a
- * relaxation travels in the step, and the same per time constant elapsed. That
- * second one is what carries the block's traverse, and it is why the result
- * reduces to the ordinary relaxation when the block does not move.
- */
-static float advanced_outlet(float outlet_c, float block_from_c, float block_to_c,
-                             float time_constant_s, float seconds)
-{
-    const float steps_of_time_constant = seconds / time_constant_s;
-    const float settled = settled_fraction(steps_of_time_constant);
-    const float carried = relaxation_factor(steps_of_time_constant);
-    return block_to_c - (block_to_c - block_from_c) * carried +
-           (outlet_c - block_from_c) * (1.0f - settled);
-}
-
-void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuation_t *actuation,
-                                      float seconds)
-{
-    if (model == NULL || actuation == NULL) {
-        return;
-    }
-
-    const plant_parameters_t *p = &model->coefficients;
-
-    const float casting_before_c = model->brew_temperature_c;
-
-    model->brew_temperature_c = advanced_temperature(
-        casting_before_c, p->ambient_temperature_c, p->brew_heater_power_w,
-        actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] / PERMILLE_FULL_SCALE,
-        p->brew_loss_w_per_k,
-        p->brew_thermal_mass_j_per_k, seconds);
-
-    model->brew_outlet_temperature_c =
-        advanced_outlet(model->brew_outlet_temperature_c, casting_before_c,
-                        model->brew_temperature_c, p->brew_outlet_time_constant_s, seconds);
-
-    model->steam_temperature_c = advanced_temperature(
-        model->steam_temperature_c, p->ambient_temperature_c, p->steam_heater_power_w,
-        actuation->level_permille[ACTUATION_CHANNEL_STEAM_HEATER] / PERMILLE_FULL_SCALE,
-        p->steam_loss_w_per_k,
-        p->steam_thermal_mass_j_per_k, seconds);
-}
-
-/*
  * The rate the pump was commanded to move water at, from the level it was
  * commanded with. Linear in that level and zero when it is zero, which is the
  * whole of the relation: what the water is being pushed through does not enter
@@ -194,6 +152,219 @@ static float commanded_flow_ml_per_s(const plant_parameters_t *p,
 {
     return p->pump_flow_ml_per_s *
            (actuation->level_permille[ACTUATION_CHANNEL_PUMP] / PERMILLE_FULL_SCALE);
+}
+
+/*
+ * How fast the water on its way to the group approaches the casting, as a rate
+ * rather than as a time constant.
+ *
+ * Two paths reach the same water and they add as rates because they act at the
+ * same time: displacement, which replaces the held volume once every time the
+ * drawn rate has moved that volume through, and conduction, which acts on
+ * whatever is sitting there whether or not anything is moving. Adding the rates
+ * is combining the time constants as reciprocals, and it is why nothing here
+ * needs a guard at a closed pump: at no draw the first term is exactly zero and
+ * what is left is the conduction rate, which is a coefficient with a positive
+ * range and so never zero. A relation written in time constants would have had
+ * to divide by the drawn rate and then say what to do at zero, and whatever it
+ * said would have been a discontinuity where a coefficient crossed it.
+ */
+static float outlet_approach_per_s(const plant_parameters_t *p, float drawn_ml_per_s)
+{
+    return drawn_ml_per_s / p->brew_outlet_held_volume_ml +
+           1.0f / p->brew_outlet_conduction_time_constant_s;
+}
+
+/*
+ * The two weights the coupled step is built from, for a pair whose two modes sit
+ * either side of `mean_rate` by a separation the `discriminant` sets, and whose
+ * rates multiply to `product_rate`.
+ *
+ * The casting and the water now appear in each other's equations, so neither
+ * has a closed form of its own any more. What the pair does have is linearity
+ * and, across one step of constant actuation, constant coefficients -- so the
+ * exact answer is the matrix exponential of the pair, and for a two-state pair
+ * that exponential is a pair of scalars: the state after the step is where it
+ * started, plus `kappa` times the rate it was leaving at, plus `sigma` times the
+ * rate that rate was itself changing at. Both reduce to the familiar figures as
+ * the step vanishes -- kappa to the step and sigma to half its square, which is
+ * the first two terms of the traverse anything would write down -- and both are
+ * exact for the whole of it however long it is.
+ *
+ * The discriminant decides which of two shapes the pair's own dynamics has, and
+ * the split below is that fact rather than a numerical threshold. Above zero the
+ * two modes decay at separate rates and the answer is built from them; below it
+ * they are one decay carrying an oscillation, which is what writing the loss at
+ * the water's temperature makes possible -- the casting gives up heat according
+ * to where the water is, and the water is behind, so a fast enough draw against
+ * a light enough casting overshoots and comes back. The two expressions agree
+ * where they meet, at the repeated eigenvalue, which is the case that would
+ * divide by nothing if it were reached from the oscillating side.
+ *
+ * Everything is written so that no expression here subtracts two nearly equal
+ * numbers. The decay of the slower mode is recovered from the product of the two
+ * rather than by subtracting the separation from the mean, so it is never a
+ * cancelled zero; the exponential over the separation is taken through the same
+ * settled fraction the single-mass step uses, so a step far shorter than either
+ * mode keeps its leading digits. That is the same care `settled_fraction` exists
+ * for, applied to a pair.
+ */
+static void coupled_step_weights(float mean_rate, float discriminant, float product_rate,
+                                 float seconds, float *kappa, float *sigma)
+{
+    /*
+     * The decay of the pair's mean mode over the step, and how far the two modes
+     * separate over it. Both are dimensionless; both are non-negative, the first
+     * because the pair always loses energy and the second by construction.
+     */
+    const float decay = mean_rate * seconds;
+    const float separation_squared = discriminant * seconds * seconds;
+
+    float carried;
+    float second_order;
+
+    if (separation_squared >= 0.0f) {
+        const float separation = sqrtf(separation_squared);
+        /*
+         * The two modes, as the decay each carries over the step. The faster one
+         * is the sum, which cannot cancel. The slower one is the product of the
+         * two divided by it, and the product is handed in already multiplied out
+         * rather than recovered from the mean and the separation, because taking
+         * the difference directly is what would leave nothing but rounding when
+         * the pair is nearly one mode.
+         */
+        const float fast = decay + separation;
+        const float slow = (product_rate * seconds * seconds) / fast;
+        /*
+         * How much of the step the pair's average mode carries. Written through
+         * the slower mode and the separation rather than through the mean and a
+         * hyperbolic sine, because the slower mode's decay is bounded and the
+         * separation's sine is not: on a stiff pair the two would overflow and
+         * cancel back to a number well inside the range.
+         */
+        carried = expf(-slow) * relaxation_factor(separation + separation);
+        second_order = (relaxation_factor(slow) - carried) / fast;
+    } else {
+        /*
+         * One decay with a turn on it. The turn is what the pair does when the
+         * casting is chasing water that is behind it, and the step is exact
+         * across however many turns it contains.
+         */
+        const float turn = sqrtf(-separation_squared);
+        const float half_turn = sinf(turn * 0.5f);
+        const float decayed = expf(-decay);
+        carried = decayed * (sinf(turn) / turn);
+        second_order = (settled_fraction(decay) + (decayed + decayed) * half_turn * half_turn -
+                        decay * carried) /
+                       (decay * decay + turn * turn);
+    }
+
+    *kappa = seconds * (carried + (decay + decay) * second_order);
+    *sigma = seconds * seconds * second_order;
+}
+
+/*
+ * The casting and the water on its way to the group, advanced together over
+ * `seconds` at a constant duty and a constant drawn rate.
+ *
+ * The casting takes in what the element delivers, gives up what its loss
+ * coefficient carries to ambient, and gives up what the water carries out of it:
+ * a volume rate times what a volume of water costs per kelvin, times how much
+ * hotter that water is than the water arriving to replace it. The difference is
+ * taken at the water leaving rather than at the casting, because that is where
+ * the energy actually goes -- and it is what makes the casting the machine reads
+ * depend on a state nothing on the machine reads.
+ *
+ * The water relaxes towards the casting at the rate above. The heater still does
+ * not appear in that second relation: it acts on the casting, and the only way
+ * it reaches the water is through this relaxation.
+ *
+ * The two are advanced as one pair. Each is in the other's equation now, so
+ * advancing one and then the other would be exact for neither -- and this
+ * structure's standard is that every integration in it is exact for its own
+ * step, not that it is close enough if the step is kept short.
+ */
+static void advanced_casting_and_outlet(const plant_parameters_t *p, float duty,
+                                        float drawn_ml_per_s, float seconds, float *casting_c,
+                                        float *outlet_c)
+{
+    const float carried_w_per_k = drawn_ml_per_s * p->water_heat_capacity_j_per_ml_k;
+    const float casting_before_c = *casting_c;
+    const float outlet_before_c = *outlet_c;
+
+    /*
+     * The three rates the pair is made of, each per second: how fast the casting
+     * relaxes towards ambient, how fast the water leaving pulls on the casting,
+     * and how fast the water approaches the casting.
+     */
+    const float to_ambient_per_s = p->brew_loss_w_per_k / p->brew_thermal_mass_j_per_k;
+    const float to_water_per_s = carried_w_per_k / p->brew_thermal_mass_j_per_k;
+    const float approach_per_s = outlet_approach_per_s(p, drawn_ml_per_s);
+
+    /* Where each state is heading as the step opens. */
+    const float casting_rate =
+        (p->brew_heater_power_w * duty -
+         p->brew_loss_w_per_k * (casting_before_c - p->ambient_temperature_c) -
+         carried_w_per_k * (outlet_before_c - p->water_feed_temperature_c)) /
+        p->brew_thermal_mass_j_per_k;
+    const float outlet_rate = approach_per_s * (casting_before_c - outlet_before_c);
+
+    /* And how fast each of those is itself changing, which is the same pair of
+     * equations read again with the rates in place of the temperatures. */
+    const float casting_curvature = -to_ambient_per_s * casting_rate - to_water_per_s * outlet_rate;
+    const float outlet_curvature = approach_per_s * (casting_rate - outlet_rate);
+
+    /*
+     * The pair's mean decay rate, and the discriminant that says whether its two
+     * modes are separate decays or one decay with a turn on it. The discriminant
+     * is written as the difference of the two rates rather than as the mean
+     * squared less the product, so that a pair with no draw -- where the two are
+     * simply the casting's own rate and the water's own rate -- comes out
+     * exactly non-negative rather than as the rounding of a cancellation.
+     */
+    const float mean_rate = (to_ambient_per_s + approach_per_s) * 0.5f;
+    const float difference = to_ambient_per_s - approach_per_s;
+    const float discriminant =
+        (difference * difference - 4.0f * approach_per_s * to_water_per_s) * 0.25f;
+    /* The product of the two modes, multiplied out here rather than recovered
+     * from the two above, for the same reason: it is a sum of positive terms in
+     * this form and the difference of two nearly equal ones in the other. */
+    const float product_rate = approach_per_s * (to_ambient_per_s + to_water_per_s);
+
+    float kappa;
+    float sigma;
+    coupled_step_weights(mean_rate, discriminant, product_rate, seconds, &kappa, &sigma);
+
+    *casting_c = casting_before_c + kappa * casting_rate + sigma * casting_curvature;
+    *outlet_c = outlet_before_c + kappa * outlet_rate + sigma * outlet_curvature;
+}
+
+void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuation_t *actuation,
+                                      float seconds)
+{
+    if (model == NULL || actuation == NULL) {
+        return;
+    }
+
+    const plant_parameters_t *p = &model->coefficients;
+
+    advanced_casting_and_outlet(
+        p, actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] / PERMILLE_FULL_SCALE,
+        commanded_flow_ml_per_s(p, actuation), seconds, &model->brew_temperature_c,
+        &model->brew_outlet_temperature_c);
+
+    /*
+     * The steam mass keeps the single-mass step, and keeps it because nothing is
+     * drawn through it in these equations. What a steam draw costs that mass is
+     * among the omissions in params/thermoblock.md, and giving it a term here
+     * from the brew path's drawn rate would be the coffee side's water leaving
+     * through the steam wand.
+     */
+    model->steam_temperature_c = advanced_temperature(
+        model->steam_temperature_c, p->ambient_temperature_c, p->steam_heater_power_w,
+        actuation->level_permille[ACTUATION_CHANNEL_STEAM_HEATER] / PERMILLE_FULL_SCALE,
+        p->steam_loss_w_per_k,
+        p->steam_thermal_mass_j_per_k, seconds);
 }
 
 void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,

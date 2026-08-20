@@ -232,10 +232,20 @@ static void test_the_reconstruction_converges_on_the_models_own_truth(void)
 
     TEST_ASSERT_TRUE(plant_model_init(&truth, &parameters));
 
-    /* Displace the truth from where an estimator would start: both settle at
-     * the declared ambient, so run the truth away from it first. */
+    /*
+     * Displace the truth from where an estimator would start: both settle at
+     * the declared ambient, so run the truth away from it first.
+     *
+     * This stretch is longer than it once was, and the reason is in the plant
+     * rather than here. The state being displaced is the water on its way to the
+     * group, and with the pump closed the only thing bringing it up is now
+     * conduction from the casting -- a far slower path than the residence time
+     * the description used to carry a single constant for. Four seconds of
+     * heating no longer moves it a degree. Nothing about what this test asserts
+     * changed; it just has to wait for the machine it is asserting about.
+     */
     const plant_actuation_t actuation = heating();
-    for (int i = 0; i < 400; i++) {
+    for (int i = 0; i < 2000; i++) {
         TEST_ASSERT_TRUE(plant_model_step(&truth, &actuation, STEP_INTERVAL_MS));
     }
 
@@ -251,9 +261,18 @@ static void test_the_reconstruction_converges_on_the_models_own_truth(void)
     const float displaced = fabsf(truth_outlet - estimated_outlet);
     TEST_ASSERT_TRUE_MESSAGE(displaced > 1.0f, "the estimator did not start away from the truth");
 
+    /*
+     * And the run has to be long enough for the slowest path the correction
+     * reaches this state through. The sensor is on the casting; the water is
+     * brought to the casting by conduction while nothing is drawn, and that is
+     * the constant the error decays on once the casting itself is right. A run
+     * of a few of those constants is what "converged" can be asserted over, and
+     * the settling stretch below is half of it for the same reason.
+     */
+    static const int STEPS = 12000;
     float worst_after_settling = 0.0f;
     float error = displaced;
-    for (int step = 0; step < 4000; step++) {
+    for (int step = 0; step < STEPS; step++) {
         TEST_ASSERT_TRUE(plant_model_step(&truth, &actuation, STEP_INTERVAL_MS));
         report_from(&truth);
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
@@ -267,7 +286,7 @@ static void test_the_reconstruction_converges_on_the_models_own_truth(void)
 
         /* Once past the settling stretch, the error must stay down rather than
          * dip through the truth and climb out the far side. */
-        if (step >= 2000 && error > worst_after_settling) {
+        if (step >= STEPS / 2 && error > worst_after_settling) {
             worst_after_settling = error;
         }
     }
