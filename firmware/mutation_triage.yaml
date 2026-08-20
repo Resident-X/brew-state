@@ -187,7 +187,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:77:31:
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:78:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
@@ -197,7 +197,7 @@ survivors:
       product is a zero, and a zero of either sign compares equal to the literal
       and behaves identically in everything downstream.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:78:31:
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:79:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`

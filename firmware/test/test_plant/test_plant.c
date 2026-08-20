@@ -52,6 +52,7 @@ static const coefficient_t NOMINAL[] = {
     {"steam.heater_power_w", 1400.0},
     {"steam.loss_w_per_k", 2.2},
     {"pump.pressure_bar", 9.0},
+    {"pump.flow_ml_per_s", 6.0},
     {"brew.pressure_time_constant_s", 0.8},
     {"steam.saturation_temperature_c", 100.0},
     {"steam.pressure_bar_per_k", 0.035},
@@ -190,10 +191,23 @@ static double signature(plant_model_t *model, const plant_actuation_t *actuation
 
     for (int i = 0; i < steps; i++) {
         float states[PLANT_STATE_COUNT];
+        float quantities[PLANT_QUANTITY_COUNT];
         TEST_ASSERT_TRUE(plant_model_step(model, actuation, STEP_MS));
         read_all_states(model, states);
         for (int state = 0; state < PLANT_STATE_COUNT; state++) {
             total += states[state];
+        }
+        /*
+         * The quantities as well as the states, because the two vocabularies
+         * do not cover each other. A structure may produce a quantity from
+         * something it never integrates -- the rate water is drawn is exactly
+         * that, being a function of the commanded pump level and of no state --
+         * so a signature taken over the states alone is blind to any
+         * coefficient reaching only such a quantity, and would report it inert.
+         */
+        read_all(model, quantities);
+        for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+            total += quantities[quantity];
         }
     }
     return total;
@@ -1572,13 +1586,25 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
      * change did not touch -- which is what makes keeping the recording a claim
      * rather than a convenience. A recording retaken from the build that moved
      * the equations would have compared the change with itself.
+     *
+     * Kept again, on the same reasoning, when the seam gained the rate water is
+     * drawn. The four recorded columns are unchanged byte for byte: that rate
+     * enters none of the relations that produce them, so a description carrying
+     * the coefficient behind it gives the same trajectory as one without it,
+     * and any movement in those columns would be the change reaching somewhere
+     * it was not supposed to. The fifth column is not a recording and was not
+     * read off a run. It is arithmetic a reader can do: the coefficient below
+     * is 8 mL/s, the pump is commanded at half scale under WORKING and at
+     * nothing under the other two, so the rate is exactly 4 and exactly 0, and
+     * both are exact in binary. A figure that had to be read off a run would
+     * have been the change checking itself.
      */
     static const float EXPECTED[][PLANT_QUANTITY_COUNT] = {
-        {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f},
-        {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f},
-        {0x1.c8693p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f},
-        {0x1.6a718ap+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f},
-        {0x1.28fbf8p+8f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f},
+        {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
+        {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
+        {0x1.c8693p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
+        {0x1.6a718ap+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f, 0x1p+2f},
+        {0x1.28fbf8p+8f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
     };
     static const int STEPS[] = {0, 10, 30, 60, 1100};
     static const plant_actuation_t *const UNDER[] = {&AT_REST, &AT_REST, &HEATING, &WORKING,
@@ -1601,6 +1627,7 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
                                       "steam.heater_power_w = 1400\n"
                                       "steam.loss_w_per_k = 2.2\n"
                                       "pump.pressure_bar = 9\n"
+                                      "pump.flow_ml_per_s = 8\n"
                                       "brew.pressure_time_constant_s = 0.8\n"
                                       "steam.saturation_temperature_c = 100\n"
                                       "steam.pressure_bar_per_k = 0.035\n";
@@ -3096,9 +3123,51 @@ static void test_the_state_vocabulary_carries_what_the_quantities_cannot(void)
     const float SENTINEL = -4321.0f;
     plant_model_t model;
 
-    /* Compared as counts rather than as enumerators: they are two vocabularies,
-     * and a compiler is right to object to one being weighed against the other. */
-    TEST_ASSERT_TRUE((int)PLANT_STATE_COUNT > (int)PLANT_QUANTITY_COUNT);
+    /*
+     * The claim is about membership rather than size, and it is asserted that
+     * way. It was once written as a count -- more states than quantities --
+     * which held while every quantity was read from a state and the outlet was
+     * the only member either vocabulary had to itself. It stopped holding when
+     * the seam gained the rate water is drawn, which is a quantity no state
+     * carries: the counts are now equal and the substance is unchanged, and a
+     * test comparing them would have reported the split had closed at the
+     * moment it widened. The two vocabularies overlap; neither contains the
+     * other; and that is what is checked below, once in each direction.
+     *
+     * The state no quantity carries, checked by putting a value into the
+     * outlet that nothing else holds and finding it in no quantity.
+     */
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, SENTINEL));
+    {
+        float quantities[PLANT_QUANTITY_COUNT];
+        read_all(&model, quantities);
+        for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+            TEST_ASSERT_NOT_EQUAL_FLOAT(SENTINEL, quantities[quantity]);
+        }
+    }
+
+    /*
+     * And the quantity no state carries. The rate water is drawn is produced
+     * from what the pump was commanded rather than from anything integrated, so
+     * no member of the state vocabulary answers with it -- checked by
+     * commanding a draw, reading the rate back, and finding it in no state.
+     * Guarded on the rate being non-zero first, since a rate of zero would find
+     * itself absent from the states for the wrong reason.
+     */
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+    {
+        float drawn = 0.0f;
+        float states[PLANT_STATE_COUNT];
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+        TEST_ASSERT_TRUE(drawn > 0.0f);
+        read_all_states(&model, states);
+        for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+            TEST_ASSERT_NOT_EQUAL_FLOAT(drawn, states[state]);
+        }
+    }
 
     /* Enumerated from zero and dense, so a caller may walk the vocabulary
      * rather than having to know the names in it. */
@@ -3536,6 +3605,267 @@ static void test_a_written_state_is_what_the_next_step_advances_from(void)
     TEST_ASSERT_TRUE(advanced > 5.0f);
 }
 
+/// SOL-PLANT-FLOW-REPORTED.C1: The plant seam names the rate water is drawn as
+/// a reported quantity.
+///
+/// The enumerator exists, sits inside the vocabulary's own count, and is
+/// distinct from every other member -- so a consumer can walk the vocabulary
+/// and reach it rather than having to know the name. A quantity added to the
+/// enum and left out of the count, or duplicated onto another member's value,
+/// would be unreachable that way and is what this refuses.
+static void test_the_seam_names_the_drawn_rate_as_a_quantity(void)
+{
+    TEST_ASSERT_TRUE((int)PLANT_QUANTITY_BREW_FLOW_ML_PER_S >= 0);
+    TEST_ASSERT_TRUE((int)PLANT_QUANTITY_BREW_FLOW_ML_PER_S < (int)PLANT_QUANTITY_COUNT);
+
+    const plant_quantity_t others[] = {
+        PLANT_QUANTITY_BREW_TEMPERATURE_C,
+        PLANT_QUANTITY_STEAM_TEMPERATURE_C,
+        PLANT_QUANTITY_BREW_PRESSURE_BAR,
+        PLANT_QUANTITY_STEAM_PRESSURE_BAR,
+    };
+    for (size_t i = 0u; i < sizeof(others) / sizeof(others[0]); i++) {
+        TEST_ASSERT_TRUE(others[i] != PLANT_QUANTITY_BREW_FLOW_ML_PER_S);
+    }
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C2: Every plant structure answers the flow quantity.
+///
+/// Answered rather than refused, on the reference structure. A quantity is the
+/// machine's vocabulary and not a structure's, so unlike a state there is no
+/// case in which a structure may decline it -- and a consumer that had to test
+/// for it before reading is the negotiation the two vocabularies exist to
+/// prevent. Checked from rest as well as under a draw, since a structure that
+/// answered only once something was commanded would be refusing it in the case
+/// a consumer meets first.
+static void test_the_reference_structure_answers_the_drawn_rate(void)
+{
+    plant_model_t model;
+    float drawn = -1.0f;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_TRUE(drawn > 0.0f);
+}
+
+/* The nominal value the shared description gives one coefficient, by name.
+ * Read from the table the description is generated from, so a test comparing
+ * against it cannot drift from what was loaded -- and so that no test has to
+ * name a field of the structure to find out what it was given. */
+static double nominal_value(const char *name)
+{
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        if (strcmp(NOMINAL[i].name, name) == 0) {
+            return NOMINAL[i].value;
+        }
+    }
+    TEST_FAIL_MESSAGE("no such coefficient in the nominal description");
+    return 0.0;
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C3: The reported rate follows the pump's commanded
+/// level.
+///
+/// Linear across the range and zero at zero, read against the record's own full
+/// scale and the coefficient naming the rate at that full scale. Every level is
+/// checked against the figure arithmetic gives rather than against the
+/// neighbouring level, so a relation that was monotonic but not proportional --
+/// a curve, a dead band, a saturation short of full scale -- fails here rather
+/// than passing as "it goes up".
+static void test_the_drawn_rate_follows_the_commanded_pump_level(void)
+{
+    static const uint16_t LEVELS[] = {0u, 1u, ACTUATION_FULL_SCALE / 4u,
+                                      ACTUATION_FULL_SCALE / 2u, ACTUATION_FULL_SCALE};
+
+    for (size_t i = 0u; i < sizeof(LEVELS) / sizeof(LEVELS[0]); i++) {
+        plant_model_t model;
+        plant_actuation_t actuation = {{0u}};
+        float drawn = -1.0f;
+
+        actuation.level_permille[ACTUATION_CHANNEL_PUMP] = LEVELS[i];
+        TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+
+        const float expected = (float)nominal_value("pump.flow_ml_per_s") *
+                               ((float)LEVELS[i] / (float)ACTUATION_FULL_SCALE);
+        TEST_ASSERT_EQUAL_FLOAT(expected, drawn);
+    }
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C3: A commanded level of zero reports zero.
+///
+/// Called out on its own because it is the case a consumer reasons about
+/// hardest -- a pump commanded off must not be reported as moving water, or
+/// anything watching for a pump that has failed to prime is watching a figure
+/// that never reaches zero. Checked after a draw as well as from rest, so a
+/// rate that was latched from the previous step rather than recomputed is
+/// caught: nothing here carries over.
+static void test_a_pump_commanded_off_reports_no_flow(void)
+{
+    plant_model_t model;
+    float drawn = -1.0f;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_TRUE(drawn > 0.0f);
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C3: The rate is the pump's alone.
+///
+/// Commanding both heaters at full scale beside the pump reports the same rate
+/// as commanding the pump by itself. The relation reads one channel, and a
+/// change that fed it from a temperature, a pressure or a second channel would
+/// pass every proportionality check above while being wrong about what the
+/// figure means.
+static void test_the_drawn_rate_is_unmoved_by_the_heaters(void)
+{
+    plant_model_t pump_only_model;
+    plant_model_t everything_model;
+    plant_actuation_t pump_only = {{0u}};
+    float alone = -1.0f;
+    float alongside = -2.0f;
+
+    pump_only.level_permille[ACTUATION_CHANNEL_PUMP] =
+        WORKING.level_permille[ACTUATION_CHANNEL_PUMP];
+
+    TEST_ASSERT_TRUE(plant_model_init(&pump_only_model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_init(&everything_model, &parameters));
+
+    /* Many steps, so a dependence on a state that has had time to move is
+     * reached rather than being sat out at the value both start from. */
+    for (int i = 0; i < SHORT_STEPS; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&pump_only_model, &pump_only, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&everything_model, &WORKING, STEP_MS));
+    }
+
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&pump_only_model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &alone));
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&everything_model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &alongside));
+    TEST_ASSERT_EQUAL_FLOAT(alone, alongside);
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C4: The rate the pump moves water at full scale is a
+/// described coefficient.
+///
+/// The shipped description declares an assumed error for it, as every value
+/// there does. A coefficient added to the parameter table and left out of the
+/// error budget reads as exact, which is a claim nobody is entitled to make
+/// about a figure estimated for a pump type from no stated delivery rate. The
+/// figure itself is argued in the statement beside the description and is not
+/// pinned here.
+static void test_the_shipped_description_declares_an_assumed_error_for_the_drawn_rate(void)
+{
+    char text[DESCRIPTION_MAX * 4];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+    float assumed = -1.0f;
+
+    const size_t used = read_named_file(REFERENCE_DESCRIPTION_PATH, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        plant_parameter_budget_for(&budget, "pump.flow_ml_per_s", &assumed),
+        "the shipped description declares no assumed error for pump.flow_ml_per_s");
+    TEST_ASSERT_TRUE(isfinite(assumed));
+    TEST_ASSERT_TRUE(assumed > 0.0f);
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C6: The reported rate is exercised end to end on the
+/// host tier.
+///
+/// A description is loaded as text, a model is initialised from it, the pump is
+/// commanded, and the rate is read back through the seam -- the whole path a
+/// consumer takes, with no structure field named anywhere in it. The value that
+/// comes back is the one the description's own coefficient gives, so a build
+/// reading the coefficient from anywhere but the description fails here.
+static void test_the_drawn_rate_is_reached_end_to_end_through_the_seam(void)
+{
+    static const char DESCRIPTION[] = "ambient_temperature_c = 20\n"
+                                      "brew.thermal_mass_j_per_k = 420\n"
+                                      "brew.heater_power_w = 1200\n"
+                                      "brew.loss_w_per_k = 1.5\n"
+                                      "brew.outlet_time_constant_s = 1.2\n"
+                                      "steam.thermal_mass_j_per_k = 900\n"
+                                      "steam.heater_power_w = 1400\n"
+                                      "steam.loss_w_per_k = 2.2\n"
+                                      "pump.pressure_bar = 9\n"
+                                      "pump.flow_ml_per_s = 8\n"
+                                      "brew.pressure_time_constant_s = 0.8\n"
+                                      "steam.saturation_temperature_c = 100\n"
+                                      "steam.pressure_bar_per_k = 0.035\n";
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    plant_actuation_t half_scale = {{0u}};
+    float drawn = -1.0f;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+    half_scale.level_permille[ACTUATION_CHANNEL_PUMP] = ACTUATION_FULL_SCALE / 2u;
+    TEST_ASSERT_TRUE(plant_model_step(&model, &half_scale, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+
+    /* Eight at full scale, commanded at half: exact in binary, so compared as
+     * stored rather than within a tolerance. */
+    TEST_ASSERT_EQUAL_FLOAT(4.0f, drawn);
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C4: The rate the pump moves water at full scale is a
+/// described coefficient.
+///
+/// The statement puts the two pump coefficients together in one place and says
+/// they cannot both hold. `pump.pressure_bar` is what the pump makes against a
+/// closed outlet and `pump.flow_ml_per_s` is what it delivers into an open
+/// path: opposite ends of one characteristic, so a model at full duty reports a
+/// pressure and a rate no machine produces together. Each is individually
+/// plausible, which is what makes the pair worth a warning -- a reader checking
+/// them one at a time finds nothing wrong, and a margin sized against both at
+/// once is sized against a case this machine has not got.
+///
+/// Checked as one line naming both rather than as a phrase, because the wording
+/// is the description's to choose and the placement is not: before the rate
+/// existed no line named both, so a statement carrying them in separate places
+/// has lost the only thing that relates them. Prose in these statements is not
+/// hard-wrapped, so one line is one paragraph -- which is why splitting on the
+/// newline is splitting on the paragraph.
+static void test_the_statement_warns_that_the_two_pump_coefficients_exclude_each_other(void)
+{
+    char statement[DESCRIPTION_MAX * 16];
+    (void)read_named_file(REFERENCE_STATEMENT_PATH, statement, sizeof(statement));
+
+    bool paragraph_names_both = false;
+    for (char *block = strtok(statement, "\n"); block != NULL; block = strtok(NULL, "\n")) {
+        if (strstr(block, "pump.pressure_bar") != NULL &&
+            strstr(block, "pump.flow_ml_per_s") != NULL) {
+            paragraph_names_both = true;
+            break;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(paragraph_names_both,
+                             "no paragraph of the statement names both pump coefficients, so "
+                             "nothing there says they are ends of one characteristic and cannot "
+                             "both be reached");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -3553,6 +3883,7 @@ int main(void)
     RUN_TEST(test_the_outlet_time_constant_has_an_enforced_admissible_range);
     RUN_TEST(test_the_shipped_description_declares_an_assumed_error_for_the_new_coefficient);
     RUN_TEST(test_the_statement_and_the_variant_carry_every_coefficient);
+    RUN_TEST(test_the_statement_warns_that_the_two_pump_coefficients_exclude_each_other);
     RUN_TEST(test_the_model_advances_over_a_sequence_of_steps);
     RUN_TEST(test_a_step_at_rest_changes_nothing);
     RUN_TEST(test_many_steps_at_rest_change_nothing);
@@ -3618,6 +3949,13 @@ int main(void)
     RUN_TEST(test_every_state_this_structure_keeps_takes_a_write);
     RUN_TEST(test_writing_one_state_leaves_the_others_where_they_were);
     RUN_TEST(test_a_state_written_to_an_instance_that_cannot_take_it_is_refused);
+    RUN_TEST(test_the_seam_names_the_drawn_rate_as_a_quantity);
+    RUN_TEST(test_the_reference_structure_answers_the_drawn_rate);
+    RUN_TEST(test_the_drawn_rate_follows_the_commanded_pump_level);
+    RUN_TEST(test_a_pump_commanded_off_reports_no_flow);
+    RUN_TEST(test_the_drawn_rate_is_unmoved_by_the_heaters);
+    RUN_TEST(test_the_shipped_description_declares_an_assumed_error_for_the_drawn_rate);
+    RUN_TEST(test_the_drawn_rate_is_reached_end_to_end_through_the_seam);
     RUN_TEST(test_a_written_state_is_what_the_next_step_advances_from);
     return UNITY_END();
 }

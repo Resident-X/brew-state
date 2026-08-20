@@ -50,6 +50,7 @@ static const char DESCRIPTION[] = "ambient_temperature_c = 20.0\n"
                                   "vessel.heater_power_w = 1400.0\n"
                                   "vessel.loss_w_per_k = 2.0\n"
                                   "pump.pressure_bar = 15.0\n"
+                                  "pump.flow_ml_per_s = 7.0\n"
                                   "brew.pressure_time_constant_s = 0.8\n"
                                   "steam.saturation_temperature_c = 100.0\n"
                                   "steam.pressure_bar_per_k = 0.036\n";
@@ -523,6 +524,7 @@ static void test_a_vessel_that_loses_nothing_heats_at_the_rate_its_power_implies
                                    "vessel.heater_power_w = 1400.0\n"
                                    "vessel.loss_w_per_k = 0.0\n"
                                    "pump.pressure_bar = 15.0\n"
+                                   "pump.flow_ml_per_s = 7.0\n"
                                    "brew.pressure_time_constant_s = 0.8\n"
                                    "steam.saturation_temperature_c = 100.0\n"
                                    "steam.pressure_bar_per_k = 0.036\n";
@@ -659,6 +661,7 @@ static const char ANNOTATED[] = "ambient_temperature_c = 20.0 ~ 0.25\n"
                                 "vessel.heater_power_w = 1400.0 ~ 0.2\n"
                                 "vessel.loss_w_per_k = 2.0 ~ 0.6\n"
                                 "pump.pressure_bar = 15.0 ~ 0.35\n"
+                                "pump.flow_ml_per_s = 7.0 ~ 0.45\n"
                                 "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
                                 "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
                                 "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
@@ -672,6 +675,7 @@ static const struct {
     {"vessel.heater_power_w", 0.2f},
     {"vessel.loss_w_per_k", 0.6f},
     {"pump.pressure_bar", 0.35f},
+    {"pump.flow_ml_per_s", 0.45f},
     {"brew.pressure_time_constant_s", 0.5f},
     {"steam.saturation_temperature_c", 0.02f},
     {"steam.pressure_bar_per_k", 0.3f},
@@ -735,6 +739,7 @@ static void test_an_assumed_error_that_cannot_stand_is_refused_here_too(void)
                                    "vessel.heater_power_w = 1400.0 ~ 0.2\n"
                                    "vessel.loss_w_per_k = 2.0 ~ 0.6\n"
                                    "pump.pressure_bar = 15.0 ~ 0.35\n"
+                                   "pump.flow_ml_per_s = 7.0 ~ 0.45\n"
                                    "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
                                    "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
                                    "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
@@ -743,6 +748,7 @@ static void test_an_assumed_error_that_cannot_stand_is_refused_here_too(void)
                                 "vessel.heater_power_w = 1400.0 ~ 0.2\n"
                                 "vessel.loss_w_per_k = 2.0 ~ 0.6\n"
                                 "pump.pressure_bar = 15.0 ~ 0.35\n"
+                                "pump.flow_ml_per_s = 7.0 ~ 0.45\n"
                                 "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
                                 "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
                                 "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
@@ -1014,9 +1020,73 @@ static void test_the_estimator_refuses_this_architecture(void)
     TEST_ASSERT_FALSE(estimator_step(&estimator, &idle, 100u));
 }
 
+/// SOL-PLANT-FLOW-REPORTED.C2: Every plant structure answers the flow quantity.
+///
+/// The single-vessel structure answers the rate water is drawn, and answers it
+/// from rest as well as under a draw. This is the structure that refuses a
+/// state -- the water on its way to the group, which it does not model -- so it
+/// is the one where the difference between the two vocabularies is visible: a
+/// state may be declined and a quantity may not, and a structure that treated
+/// the rate like the outlet would be refusing something the seam promises every
+/// consumer can read.
+static void test_the_single_vessel_structure_answers_the_drawn_rate(void)
+{
+    plant_model_t model;
+    plant_actuation_t drawing = {{0u}};
+    float drawn = -1.0f;
+    float refused_state = 0.0f;
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    /* The state it declines, for contrast: the refusal is a property of the
+     * state vocabulary and reaches no quantity. */
+    TEST_ASSERT_FALSE(
+        plant_model_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &refused_state));
+
+    drawing.level_permille[ACTUATION_CHANNEL_PUMP] = ACTUATION_FULL_SCALE;
+    TEST_ASSERT_TRUE(plant_model_step(&model, &drawing, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_TRUE(drawn > 0.0f);
+}
+
+/// SOL-PLANT-FLOW-REPORTED.C3: The reported rate follows the pump's commanded
+/// level.
+///
+/// Held on this structure as well as on the reference one, against the
+/// coefficient this description gives rather than against the other's. Two
+/// structures answering the same quantity from the same commanded level is what
+/// makes the quantity the machine's rather than a structure's, and a structure
+/// that scaled it differently would give a consumer a figure whose meaning
+/// depended on which build it was talking to.
+static void test_the_drawn_rate_follows_the_commanded_pump_level(void)
+{
+    static const uint16_t LEVELS[] = {0u, ACTUATION_FULL_SCALE / 4u, ACTUATION_FULL_SCALE / 2u,
+                                      ACTUATION_FULL_SCALE};
+    /* The figure this suite's own description gives for the rate at full scale. */
+    static const float AT_FULL_SCALE = 7.0f;
+
+    for (size_t i = 0u; i < sizeof(LEVELS) / sizeof(LEVELS[0]); i++) {
+        plant_model_t model;
+        plant_actuation_t actuation = {{0u}};
+        float drawn = -1.0f;
+
+        actuation.level_permille[ACTUATION_CHANNEL_PUMP] = LEVELS[i];
+        initialise(&model);
+        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+
+        TEST_ASSERT_EQUAL_FLOAT(
+            AT_FULL_SCALE * ((float)LEVELS[i] / (float)ACTUATION_FULL_SCALE), drawn);
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_the_single_vessel_structure_answers_the_drawn_rate);
+    RUN_TEST(test_the_drawn_rate_follows_the_commanded_pump_level);
     RUN_TEST(test_an_instance_runs_a_whole_sequence_through_the_seam);
     RUN_TEST(test_the_declared_channels_are_the_ones_this_architecture_has);
     RUN_TEST(test_the_pump_drives_the_brew_pressure_and_leaves_the_vessel_alone);

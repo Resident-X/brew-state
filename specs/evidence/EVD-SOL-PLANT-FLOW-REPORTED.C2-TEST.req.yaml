@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-REPORTED.C2-TEST
+type: evidence
+title: Every plant structure answers the flow quantity (SOL-PLANT-FLOW-REPORTED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T10:38:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_narrow/test_plant_narrow.c::test_the_structure_describing_no_machine_answers_the_drawn_rate_as_zero
+text: |-
+  All three structures answer the rate rather than refusing it, each checked at rest and under a draw in its own suite: test_the_reference_structure_answers_the_drawn_rate, test_the_single_vessel_structure_answers_the_drawn_rate (which refuses a state in the same test for contrast), and test_the_structure_describing_no_machine_answers_the_drawn_rate_as_zero (which drives its accumulator well off zero first, so a structure answering the rate from it fails). Dropping the default label from each structure's quantity switch makes a future unanswered quantity a compile error under -Werror=switch rather than a silent refusal; confirmed by injecting a sixth quantity.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED.C2
+    type: satisfies

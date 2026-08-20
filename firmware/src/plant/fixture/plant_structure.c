@@ -92,10 +92,36 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
     case PLANT_QUANTITY_STEAM_PRESSURE_BAR:
         *value = model->accumulated;
         return true;
+    /*
+     * The drawn rate answers zero rather than the accumulator, and is the one
+     * quantity here that does. The others stand for nothing in particular, so
+     * the accumulator is as good an answer as any; a rate is different, because
+     * this structure answers no pump channel at all. There is no commanded
+     * level for a rate to be derived from, and reporting the accumulator would
+     * claim water was moving on a structure that cannot be told to move any.
+     * Refusing it is not open either -- a quantity is the machine's vocabulary
+     * and every structure answers every one -- so the answer is the honest
+     * quantity, which is none.
+     */
+    case PLANT_QUANTITY_BREW_FLOW_ML_PER_S:
+        *value = 0.0f;
+        return true;
+    /*
+     * Not a quantity, so there is nothing to answer with. No default label
+     * beside it, and that absence is deliberate: -Wall gives -Wswitch and this
+     * is built under -Werror, so a quantity added to the machine's vocabulary
+     * fails the build here rather than being quietly refused by every
+     * structure. A quantity is the machine's and not a structure's -- the seam
+     * promises every consumer that every structure answers every one -- so
+     * silently refusing a new one would break that promise in the one way no
+     * consumer can test for.
+     */
     case PLANT_QUANTITY_COUNT:
-    default:
         return false;
     }
+
+    /* Reached only by a value that is not in the vocabulary at all. */
+    return false;
 }
 
 bool plant_model_state(const plant_model_t *model, plant_state_t state, float *value)

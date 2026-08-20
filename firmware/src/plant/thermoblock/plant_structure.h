@@ -75,6 +75,7 @@ typedef struct {
     float steam_loss_w_per_k;
 
     float pump_pressure_bar;
+    float pump_flow_ml_per_s;
     float brew_pressure_time_constant_s;
 
     float steam_saturation_temperature_c;
@@ -111,6 +112,18 @@ typedef struct {
     float steam_temperature_c;
     float brew_pressure_bar;
     float steam_pressure_bar;
+
+    /*
+     * The rate water was drawn at over the step just taken. It is held here so
+     * that reading it costs no arithmetic and so that the seam can answer it
+     * without being handed the actuation again -- not because it is a state.
+     * Nothing integrates it and nothing carries over from one step to the next:
+     * it is a function of the commanded pump level alone, recomputed whole
+     * every step, which is why it appears in no state vocabulary and why a
+     * consumer reaches it through plant_model_quantity rather than
+     * plant_model_state.
+     */
+    float brew_flow_ml_per_s;
 } plant_model_t;
 
 /*

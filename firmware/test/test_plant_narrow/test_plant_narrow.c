@@ -150,8 +150,10 @@ static void test_a_command_on_an_unanswered_channel_refuses_and_moves_nothing(vo
 static void test_a_refused_command_is_not_applied_with_the_unanswered_channel_dropped(void)
 {
     plant_model_t refused_instance;
+    plant_model_t untouched_instance;
     plant_model_t stepped_instance;
     float refused_values[PLANT_QUANTITY_COUNT];
+    float untouched_values[PLANT_QUANTITY_COUNT];
     float stepped_values[PLANT_QUANTITY_COUNT];
     plant_step_error_t refusal;
     plant_actuation_t answered_only = {{0u}};
@@ -174,9 +176,40 @@ static void test_a_refused_command_is_not_applied_with_the_unanswered_channel_dr
     /*
      * The instance that was refused must be where it started, not where the
      * command would have taken it with the unanswered channel quietly dropped.
+     * That is checked against an instance that was never stepped at all: the
+     * refused one must read identically to it on every quantity, and the
+     * stepped one must have moved off it somewhere.
+     *
+     * It was once checked by requiring the refused and stepped instances to
+     * differ on every quantity, which held while every quantity here answered
+     * from the accumulator. This structure answers no pump channel, so it
+     * reports the rate water is drawn as a constant zero -- a quantity that
+     * cannot differ between any two instances, and one that would make the old
+     * form fail without anything being wrong. A constant is not evidence either
+     * way, and asking it to be is what the form below avoids.
+     */
+    initialise(&untouched_instance);
+    read_all(&untouched_instance, untouched_values);
+
+    for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+        TEST_ASSERT_EQUAL_FLOAT(untouched_values[quantity], refused_values[quantity]);
+    }
+
+    /*
+     * The accepted step moved every quantity that can move. Only the drawn rate
+     * is excluded, and only because this structure answers no pump channel and
+     * so reports it as a constant zero -- a figure that cannot differ between
+     * any two instances and is therefore evidence of nothing either way.
+     * Excluding the one constant rather than asking merely that something
+     * moved, because a structure that advanced one quantity and froze the rest
+     * is exactly what this is here to catch.
      */
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
-        TEST_ASSERT_TRUE(stepped_values[quantity] != refused_values[quantity]);
+        if (quantity == (int)PLANT_QUANTITY_BREW_FLOW_ML_PER_S) {
+            TEST_ASSERT_EQUAL_FLOAT(untouched_values[quantity], stepped_values[quantity]);
+            continue;
+        }
+        TEST_ASSERT_TRUE(stepped_values[quantity] != untouched_values[quantity]);
     }
 }
 
@@ -522,9 +555,55 @@ static void test_the_estimator_refuses_a_structure_without_the_state_it_reconstr
     TEST_ASSERT_FALSE(estimator_residual(&estimator, HW_SENSOR_BREW_TEMPERATURE, &residual));
 }
 
+/// SOL-PLANT-FLOW-REPORTED.C2: Every plant structure answers the flow quantity.
+///
+/// The structure that describes no machine answers it too, and answers zero.
+/// It is the case the contract is hardest on: this structure answers no pump
+/// channel, so there is no commanded level for a rate to be derived from and
+/// nothing it could honestly report as moving. Refusing is still not open to
+/// it -- a quantity is the machine's vocabulary and every structure answers
+/// every one -- so the answer is the honest figure, which is none.
+///
+/// Checked under a command as well as at rest, and after a refusal, so a
+/// structure that reported the accumulator here rather than nothing is caught
+/// wherever the accumulator has moved.
+static void test_the_structure_describing_no_machine_answers_the_drawn_rate_as_zero(void)
+{
+    plant_model_t model;
+    plant_actuation_t answered = {{0u}};
+    plant_actuation_t unanswered = {{0u}};
+    plant_step_error_t refusal;
+    float drawn = -1.0f;
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    /* Driven hard on the channel it does answer, so the accumulator is well
+     * away from zero: a structure answering the rate from it fails here. */
+    answered.level_permille[answered_channel()] = ACTUATION_FULL_SCALE;
+    for (int i = 0; i < 20; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &answered, STEP_MS));
+    }
+
+    float accumulated = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &accumulated));
+    TEST_ASSERT_TRUE(accumulated != 0.0f);
+
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    /* And after a refused command, which advances nothing. */
+    unanswered.level_permille[unanswered_channel()] = ACTUATION_FULL_SCALE;
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &unanswered, STEP_MS, &refusal));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_the_structure_describing_no_machine_answers_the_drawn_rate_as_zero);
     RUN_TEST(test_the_seam_reports_a_narrower_set_than_the_machine_has);
     RUN_TEST(test_a_structure_keeping_fewer_states_answers_some_and_refuses_others);
     RUN_TEST(test_a_state_read_before_initialisation_is_refused);

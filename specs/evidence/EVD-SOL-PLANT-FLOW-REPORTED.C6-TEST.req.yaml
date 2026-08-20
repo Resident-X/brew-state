@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-FLOW-REPORTED.C6-TEST
+type: evidence
+title: The reported rate is exercised end to end on the host tier (SOL-PLANT-FLOW-REPORTED.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T10:38:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_drawn_rate_is_reached_end_to_end_through_the_seam
+text: |-
+  A description is loaded as text, a model initialised from it, the pump commanded at half scale and the rate read back through plant_model_quantity, giving exactly the figure the description's coefficient implies. No structure field is named on that path; check_plant_encapsulation reports all sources clean, and it rejected an earlier draft of these tests for naming a structure field directly. The native application reports the quantity through the loop it already runs over every quantity, observed under sanitizers via task fw:run printing quantity 4 for the thermoblock and boiler builds and zero for the fixture. No hardware sensor channel was added.
+links:
+  - target: SOL-PLANT-FLOW-REPORTED.C6
+    type: satisfies

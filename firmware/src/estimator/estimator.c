@@ -36,41 +36,107 @@
  * placed against it, the other is what it has -- and this is the correspondence
  * between them, stated rather than assumed from the order they happen to be
  * declared in.
+ *
+ * A switch with no default label rather than a table indexed by the channel,
+ * for the reason the pairing below is one: a channel added to the hardware seam
+ * without being answered for here would have taken the zeroth entry of such a
+ * table, which is a real quantity, so a new channel would have read as the brew
+ * casting's temperature and been corrected against the state that produces it.
+ * That is the same silent wrong answer the pairing below exists to refuse, one
+ * lookup earlier in the same two-hop walk, and refusing it in one place and not
+ * the other would leave the walk exactly as reachable as before.
  */
-static const plant_quantity_t QUANTITY_FOR_CHANNEL[HW_SENSOR_CHANNEL_COUNT] = {
-    [HW_SENSOR_BREW_TEMPERATURE] = PLANT_QUANTITY_BREW_TEMPERATURE_C,
-    [HW_SENSOR_STEAM_TEMPERATURE] = PLANT_QUANTITY_STEAM_TEMPERATURE_C,
-    [HW_SENSOR_BREW_PRESSURE] = PLANT_QUANTITY_BREW_PRESSURE_BAR,
-    [HW_SENSOR_STEAM_PRESSURE] = PLANT_QUANTITY_STEAM_PRESSURE_BAR,
-};
+static bool quantity_measured_by(hw_sensor_channel_t channel, plant_quantity_t *quantity)
+{
+    switch (channel) {
+    case HW_SENSOR_BREW_TEMPERATURE:
+        *quantity = PLANT_QUANTITY_BREW_TEMPERATURE_C;
+        return true;
+    case HW_SENSOR_STEAM_TEMPERATURE:
+        *quantity = PLANT_QUANTITY_STEAM_TEMPERATURE_C;
+        return true;
+    case HW_SENSOR_BREW_PRESSURE:
+        *quantity = PLANT_QUANTITY_BREW_PRESSURE_BAR;
+        return true;
+    case HW_SENSOR_STEAM_PRESSURE:
+        *quantity = PLANT_QUANTITY_STEAM_PRESSURE_BAR;
+        return true;
+    /* Not a channel, and so a measurement of nothing. */
+    case HW_SENSOR_CHANNEL_COUNT:
+        return false;
+    }
+
+    /* Reached only by a value that is not in the vocabulary at all. */
+    return false;
+}
 
 /*
- * Which state a disagreement about a quantity is taken out of. A quantity is
- * produced by the states a structure keeps, and this names the one that most
- * directly produces it -- the only place a correction can be applied without
- * the seam telling the estimator how the equations are wired, which it
- * deliberately does not.
+ * The state each quantity is observed from, or a refusal. Written as a switch
+ * over the vocabulary with no default label rather than as a table indexed by
+ * the quantity, and that shape is the whole mechanism: -Wall gives -Wswitch,
+ * the shipping target compiles this under -Werror, and so a quantity added to
+ * the vocabulary without being answered for here fails the build. It replaced a
+ * table filled by designated initialiser, which was the same statement made in
+ * a form that could not fail -- an unlisted quantity took the zeroth entry, and
+ * the zeroth entry is a real state, so the omission read as an observation of
+ * the brew casting rather than as an omission. Sizing an assertion against the
+ * quantity count would not have caught it either: such a table is sized by that
+ * count and so stays exactly the right size at the moment an entry goes
+ * missing.
+ *
+ * This is also the only path from a quantity to a state. There is no table left
+ * for a caller to subscript instead, so a quantity that observes nothing cannot
+ * reach a state by any route rather than merely by convention.
+ *
+ * The failure being closed is not a crash. It is the estimator correcting the
+ * wrong state against a reading and going on running, reporting residuals that
+ * look ordinary -- which presents as a machine that has drifted rather than as
+ * a miswiring, and telling those two apart is what the residual exists for.
+ *
+ * The pairing this expresses carries a demand on any structure that arrives
+ * later: where a quantity is observed, it has to be that state, in that state's
+ * unit, and not a blend of several. Subtracting a disagreement measured in one
+ * unit from a state held in another is dimensionally meaningless and has no
+ * symptom. Every structure in the tree satisfies it today; one that did not
+ * would need the seam to say how its quantities are produced, which it
+ * deliberately does not, so such a structure is a reason to revisit this
+ * correspondence rather than something to absorb here.
  *
  * A structure whose equations recompute one of these from another on every step
  * will overwrite the correction, and that is the structure's answer rather than
  * an error here: the correction was offered and the equations decided.
- *
- * This pairing carries a demand on any structure that arrives later: the
- * quantity has to be that state, in that state's unit, and not a blend of
- * several. Subtracting a disagreement measured in one unit from a state held in
- * another is dimensionally meaningless and has no symptom -- the estimator goes
- * on running and reports residuals that look ordinary. Every structure in the
- * tree satisfies it today. A structure that did not would need the seam to say
- * how its quantities are produced, which it deliberately does not, so a
- * structure of that shape is a reason to revisit this correspondence rather
- * than something to be absorbed here.
  */
-static const plant_state_t STATE_FOR_QUANTITY[PLANT_QUANTITY_COUNT] = {
-    [PLANT_QUANTITY_BREW_TEMPERATURE_C] = PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C,
-    [PLANT_QUANTITY_STEAM_TEMPERATURE_C] = PLANT_STATE_STEAM_TEMPERATURE_C,
-    [PLANT_QUANTITY_BREW_PRESSURE_BAR] = PLANT_STATE_BREW_PRESSURE_BAR,
-    [PLANT_QUANTITY_STEAM_PRESSURE_BAR] = PLANT_STATE_STEAM_PRESSURE_BAR,
-};
+static bool state_observed_by(plant_quantity_t quantity, plant_state_t *state)
+{
+    switch (quantity) {
+    case PLANT_QUANTITY_BREW_TEMPERATURE_C:
+        *state = PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C;
+        return true;
+    case PLANT_QUANTITY_STEAM_TEMPERATURE_C:
+        *state = PLANT_STATE_STEAM_TEMPERATURE_C;
+        return true;
+    case PLANT_QUANTITY_BREW_PRESSURE_BAR:
+        *state = PLANT_STATE_BREW_PRESSURE_BAR;
+        return true;
+    case PLANT_QUANTITY_STEAM_PRESSURE_BAR:
+        *state = PLANT_STATE_STEAM_PRESSURE_BAR;
+        return true;
+    /*
+     * The rate water is drawn is refused deliberately rather than by omission.
+     * No structure keeps it as a state -- it is produced from what the pump was
+     * commanded rather than integrated -- so there is no state a reading of it
+     * could correct, and a reader can see that was decided here.
+     */
+    case PLANT_QUANTITY_BREW_FLOW_ML_PER_S:
+        return false;
+    /* Not a quantity, and so observed by nothing. */
+    case PLANT_QUANTITY_COUNT:
+        return false;
+    }
+
+    /* Reached only by a value that is not in the vocabulary at all. */
+    return false;
+}
 
 /* Which state of the model each state this seam answers for is held as. */
 static const plant_state_t STATE_FOR_RECONSTRUCTION[ESTIMATOR_STATE_COUNT] = {
@@ -179,8 +245,15 @@ static void forget_residuals(estimator_t *estimator)
 static bool correct_against(estimator_t *estimator, hw_sensor_channel_t channel,
                             int32_t observed_milli)
 {
-    const plant_quantity_t quantity = QUANTITY_FOR_CHANNEL[channel];
-    const plant_state_t corrected = STATE_FOR_QUANTITY[quantity];
+    plant_quantity_t quantity = PLANT_QUANTITY_COUNT;
+    if (!quantity_measured_by(channel, &quantity)) {
+        return false;
+    }
+
+    plant_state_t corrected = PLANT_STATE_COUNT;
+    if (!state_observed_by(quantity, &corrected)) {
+        return false;
+    }
 
     float predicted = 0.0f;
     if (!plant_model_quantity(&estimator->model, quantity, &predicted)) {
