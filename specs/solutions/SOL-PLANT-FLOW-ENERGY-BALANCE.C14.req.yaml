@@ -1,0 +1,18 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C14
+type: criterion
+title: The description states how completely the drawn water is assumed to equilibrate
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The relation the outlet state relaxes toward is the heated mass's temperature, unchanged by this slice,
+  so the water is modelled as reaching that temperature completely given enough time no matter how fast it
+  is drawn. A real block equilibrates less completely as flow rises, which means these relations overstate
+  both the temperature delivered and the droop the casting shows at high draw — in the regime the flow term
+  exists to represent. The description states that assumption in its omissions, so a reader is not left to
+  infer from the arrival of a flow term that completeness of equilibration was also addressed. Modelling
+  the dependence itself is out of scope and is what the omission records as still absent.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

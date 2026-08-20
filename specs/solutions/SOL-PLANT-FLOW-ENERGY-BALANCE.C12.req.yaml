@@ -6,10 +6,12 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The steam draw's energy cost, the puck and the pump's flow-versus-pressure characteristic, and the
-  contention between two destinations drawing on one block each remain in the description's omissions
-  list, worded so that the arrival of a flow term is not read as having closed them. The rate entering
-  the relations is the commanded rate, and the description says so. Closing any of these is out of scope.
+  The puck, the pump's flow-versus-pressure characteristic, and the contention between two destinations
+  drawing on one block are each left unclosed by this slice, and the description continues to say so — the
+  rate entering these relations is the commanded rate, and the arrival of a flow term must not be readable
+  as having closed them. The steam draw's energy cost is likewise not closed here, and this slice makes no
+  assertion about whether it remains open elsewhere: a sibling task carries it, and whichever lands first
+  owns that passage. Closing any of these is out of scope.
 links:
   - target: SOL-PLANT-FLOW-ENERGY-BALANCE
     type: criterion-of

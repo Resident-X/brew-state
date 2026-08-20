@@ -30,12 +30,13 @@ text: |
   that substitution introduces is declared rather than assumed away.
 
   The lag moves with the draw as well. A residence time is a held volume divided by a rate, so the
-  outlet's time constant shortens as water is pulled through faster. At no draw the water is not
-  displaced at all and reaches the casting by conduction instead, which is what the present fixed
-  constant already describes — so the constant is not replaced but re-read as the no-draw limit, with the
-  residence time taking over as the draw opens. That keeps the coefficient the description has already
-  declared an error against, and keeps the relation defined at zero without a guard bolted on to avoid a
-  division.
+  outlet's constant shortens as water is pulled through faster, and at no draw the water is not displaced
+  at all and reaches the metal by conduction instead. The two combine as reciprocals, which leaves the
+  relation defined at zero without a guard and without a branch. The existing fixed constant is not
+  carried into either role. Its declared origin is a residence time at the flow a shot is drawn at — the
+  quantity the rate now supplies — so reusing it as the no-draw limit would assert a basis these relations
+  have stopped using. The held volume and the conduction constant are each declared afresh, and the
+  description's error rationale for the outlet lag is rewritten around them.
 
   Two coefficients arrive with the term. The water has to enter at some temperature, and there is no
   such coefficient today — ambient is the only temperature in the parameter set. The energy the water
@@ -61,13 +62,14 @@ rationale: |
   identify it. The parent task is explicit that a lag which merely varied with the rate would not close
   that gap either. The coupling is therefore the deliverable, and the droop is a consequence of it.
 
-  Re-reading the existing outlet constant as the no-draw limit, rather than replacing it with a pure
-  residence time, keeps two things that would otherwise be lost. The relation stays defined at zero draw
-  without a special case, which matters because zero draw is the state the machine spends nearly all its
-  time in. And the coefficient keeps the error fraction and the origin already declared against it,
-  rather than being retired in favour of a new one that would have to declare both from nothing. The
-  physical reading is honest: with no water moving, the tube equilibrates by conduction, and that is what
-  a fixed constant describes.
+  Splitting the outlet lag into a residence time and a conduction limit, rather than scaling the existing
+  constant, is what keeps the description honest about where its numbers came from. That coefficient's
+  origin is explicit that it is a block's internal volume against the flow a shot is drawn at, rounded up
+  for mixing and for the run of tube to the group. Two of those three things are now computed rather than
+  assumed, and the third — stagnant water in the tube — relaxes toward the room rather than toward the
+  metal, so it does not belong in a conduction limit either. Keeping the number and changing its meaning
+  would have been the cheap move and would have left the widest declared error in the description
+  attached to a basis nothing uses.
 
   Inlet temperature is a coefficient of its own rather than a reuse of ambient. The two are numerically
   close in a warm kitchen, which is exactly what makes conflating them attractive and wrong — they are
@@ -77,12 +79,14 @@ rationale: |
   The cost of keeping them apart is one coefficient with a wide declared error; the cost of merging them
   is a model whose feed-water assumption is invisible.
 
-  The closed forms are given up deliberately rather than patched. Keeping them would mean advancing the
-  casting with an expression that assumes its only loss is to ambient, then subtracting the flow term
-  afterwards — which is a first-order splitting whose error grows with exactly the quantity this slice
-  exists to represent, and grows fastest during the extraction the model is being trusted for. A coupled
-  step over the declared interval is more work and is the only version whose declared error survives
-  contact with a large draw.
+  The closed forms are given up but exactness is not. Keeping them would mean advancing the casting under
+  an ambient-only loss and subtracting the flow term afterwards, a splitting whose error grows with exactly
+  the quantity this slice exists to represent and grows fastest during the extraction the model is trusted
+  for. The alternative is not an approximate coupled step: over a step of constant actuation the pair is
+  linear and time-invariant, so it has a closed solution of its own, and the structure's own standard is
+  that every integration in it is exact for its own step because an inexact one is the one a shorter step
+  would be needed to hide. The exact coupled solution is therefore what is required, not a bounded
+  approximation that would have been easier to write and would have quietly lowered that standard.
 
   What is not claimed is that the outlet coefficient has been identified. Reachability and identification
   are different statements, and only the first is settled by relations. The second needs a machine, a
@@ -90,6 +94,8 @@ rationale: |
   the limit is closed rather than reachable would be the kind of overclaim the description's omissions
   list exists to make impossible.
 links:
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by
   - target: DEL-SIM-FLOW-TERM.C1
     type: derives-from
   - target: DEL-SIM-FLOW-TERM.C3
@@ -98,7 +104,5 @@ links:
     type: derives-from
   - target: REQ-PLANT-DESCRIPTION-001.C1
     type: targets
-  - target: DEC-PROFILE-COMMANDS-FLOW
-    type: justified-by
   - target: SOL-PLANT-FLOW-REPORTED
     type: depends-on

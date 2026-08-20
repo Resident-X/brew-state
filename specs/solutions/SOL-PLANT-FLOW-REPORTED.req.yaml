@@ -76,13 +76,17 @@ rationale: |
   carried. Reporting a commanded rate as though it were a measured one would be the more useful-looking
   and less honest option, and the description is the place that distinction has to survive.
 links:
+  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
+    type: justified-by
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by
   - target: DEL-SIM-FLOW-TERM.C2
     type: derives-from
   - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
     type: targets
   - target: REQ-PLANT-DESCRIPTION-001.C1
     type: targets
-  - target: DEC-MODEL-STRUCTURE-AT-BUILD-TIME
-    type: justified-by
-  - target: DEC-PROFILE-COMMANDS-FLOW
+  - target: DEL-SIM-FLOW-TERM.C4
+    type: derives-from
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
     type: justified-by

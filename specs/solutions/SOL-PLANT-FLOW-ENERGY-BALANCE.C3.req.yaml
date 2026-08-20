@@ -6,11 +6,13 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  The two states are integrated together over the interval the seam declares, replacing the two
-  independent closed forms — one exact for a mass losing heat only to ambient, one exact for a block
-  traversed linearly — which stop being exact once each state enters the other's equation. The scheme
-  is chosen so its truncation error over the declared interval is bounded and stated. Adapting or
-  subdividing the interval at run time is out of scope; the interval remains the one the seam declares.
+  Because each state now enters the other's equation, the two independent closed forms stop being exact —
+  one was exact for a mass losing heat only to ambient, the other for a block traversed linearly. The pair
+  is linear and time-invariant over a step of constant actuation, so it is advanced by the exact solution
+  of the coupled system rather than by a bounded approximation, holding the standard the structure already
+  sets: every other integration in it is exact for its own step, and one that is not would be the one a
+  shorter step was needed to hide. Adapting or subdividing the interval at run time is out of scope; the
+  interval remains the one the seam declares.
 links:
   - target: SOL-PLANT-FLOW-ENERGY-BALANCE
     type: criterion-of

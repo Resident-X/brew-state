@@ -6,11 +6,13 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The passage recording that nothing the machine senses depends on the outlet time constant is replaced
-  by one stating that the casting's own reading now depends on it, so a prediction error against the
-  brew sensor carries information about it. It states reachability, not identification: no claim is made
-  that the coefficient has been estimated from data, and identifying it against a real machine stays
-  outside this slice and outside the simulation track entirely.
+  The passage recording that nothing the machine senses depends on the outlet time constant is replaced by
+  one stating that the casting's own reading now depends on it, so a prediction error against the brew
+  sensor carries information about it. Reachability is what is stated, and the size of the effect is not:
+  the outlet settles far faster than the casting, so the sensitivity is small, and how small is a question
+  for the sensitivity analysis rather than for this slice. Claiming the coefficient has been estimated
+  from data is out of scope, and identifying it against a real machine stays outside the simulation track
+  entirely.
 links:
   - target: SOL-PLANT-FLOW-ENERGY-BALANCE
     type: criterion-of

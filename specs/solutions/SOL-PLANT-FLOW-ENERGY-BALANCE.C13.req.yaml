@@ -1,0 +1,20 @@
+id: SOL-PLANT-FLOW-ENERGY-BALANCE.C13
+type: criterion
+title: The outlet coefficient's superseded declaration is re-derived rather than carried over
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The existing outlet coefficient's declared error was written for a fixed residence time at the flow a
+  shot is drawn at — the very quantity the drawn-rate term now computes — so leaving that declaration
+  standing would leave the description asserting a basis the relations no longer use. It is re-derived
+  rather than reused: the held volume and the no-draw conduction constant each carry their own value,
+  declared error and recorded origin, and the description's error rationale for the outlet lag is rewritten
+  to explain the two coefficients that now set it and how wide each is. The passage's claim that this is
+  the widest fraction in the description is re-judged against whatever the new figures are rather than
+  carried over unexamined. Whether any of the new figures is right for the reference machine is out of
+  scope until a bench measures it.
+links:
+  - target: SOL-PLANT-FLOW-ENERGY-BALANCE
+    type: criterion-of

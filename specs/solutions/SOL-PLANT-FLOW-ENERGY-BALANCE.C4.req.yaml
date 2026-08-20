@@ -6,10 +6,11 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  The constant becomes a held volume divided by the drawn rate, so a larger draw produces a faster
-  outlet response, verified by comparing settling behaviour at two draw rates. The held volume is a
-  described coefficient. Relating that volume to any measurement of the physical machine is out of
-  scope — establishing it on the bench belongs to the physical track and is not waited on here.
+  The constant becomes a held volume divided by the drawn rate, so a larger draw produces a faster outlet
+  response, verified by comparing settling behaviour at two draw rates. The held volume is a coefficient
+  in the parameter record carrying its own declared error fraction and recorded origin. Relating that
+  volume to any measurement of the physical machine is out of scope — establishing it on the bench belongs
+  to the physical track and is not waited on here.
 links:
   - target: SOL-PLANT-FLOW-ENERGY-BALANCE
     type: criterion-of

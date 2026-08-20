@@ -6,11 +6,13 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  At zero drawn rate the residence time is unbounded, so the constant is bounded above by the existing
-  fixed outlet coefficient, re-read as the no-draw limit in which the water is not displaced and
-  reaches the casting by conduction. Stepping the structure with the pump commanded to zero produces
-  the same outlet behaviour the present relations produce, with no division by zero and no special-case
-  branch. Retiring or renaming that coefficient is out of scope: it keeps its declared error and origin.
+  At zero drawn rate the residence time is unbounded, so the effective constant is bounded above by a
+  no-draw constant combined with it as reciprocals, giving a relation defined at zero with no guard and no
+  special-case branch. Stepping the structure with the pump commanded to zero produces the no-draw
+  constant exactly. That constant is a newly declared coefficient describing conduction into water that is
+  not being displaced, not the existing outlet coefficient reused — the existing one's origin is a
+  residence time at shot flow, which is the quantity the drawn-rate term now supplies. Choosing its value
+  by measurement is out of scope; it is declared as estimated.
 links:
   - target: SOL-PLANT-FLOW-ENERGY-BALANCE
     type: criterion-of

@@ -6,10 +6,13 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  The admissibility check the seam already applies holds across the working range with the pump
-  commanded from closed to full scale: no state leaves its declared range, and none diverges when the
-  largest draw the machine can command is opened against a cold casting. Behaviour outside the declared
-  coefficient ranges is out of scope — the check's contract is over the declared ranges.
+  Two checks are asserted and they are not the same one. The parameter record's load-time range validation
+  continues to accept every coefficient this slice adds, each declared with a range as the existing
+  coefficients are. Separately, and newly, stepping the structure with the pump commanded from closed to
+  full scale against a cold casting leaves every state finite and non-diverging across the interval the
+  seam declares — the existing step-admissibility check tests actuation and interval validity and has no
+  notion of state, so this is an addition rather than a reuse. Behaviour outside the declared coefficient
+  ranges is out of scope.
 links:
   - target: SOL-PLANT-FLOW-ENERGY-BALANCE
     type: criterion-of

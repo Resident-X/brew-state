@@ -1,16 +1,19 @@
 id: SOL-PLANT-FLOW-REPORTED.C5
 type: criterion
-title: A quantity with no state mapping fails the build rather than defaulting silently
+title: A quantity no state observes cannot read as the first state
 status: active
 version: 1
 measurement_type: binary
 verification: test
 text: |
-  The estimator's table mapping each quantity to the state that observes it is sized by the quantity
-  count and filled by designated initialiser, so a quantity added without an entry reads as the first
-  state with no diagnostic. A compile-time assertion over that table's completeness is added, making
-  the omission a build failure. Scope is that table and any other in the estimator keyed on the same
-  count; a sweep of unrelated designated-initialiser tables elsewhere in the firmware is not in scope.
+  A quantity that no state observes must not read as the first state. The estimator's table mapping each
+  quantity to its observing state is sized by the quantity count and filled by designated initialiser, so
+  an unlisted quantity resolves to the zeroth entry with no diagnostic — and the drawn rate is exactly
+  such a quantity, since it is deliberately not given a state. The table therefore gains an explicit
+  entry for it that cannot be mistaken for an observing state, and the reachability of the wrong-state
+  reading is closed by construction rather than by assertion: no path from a quantity to a state may
+  return a state the quantity does not actually observe. A blanket audit of unrelated
+  designated-initialiser tables elsewhere in the firmware is out of scope.
 links:
   - target: SOL-PLANT-FLOW-REPORTED
     type: criterion-of
