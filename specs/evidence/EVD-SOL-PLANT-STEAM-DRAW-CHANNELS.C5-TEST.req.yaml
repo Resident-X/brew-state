@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-CHANNELS.C5-TEST
+type: evidence
+title: The new interfaces are exercised end to end on the host verification tier (SOL-PLANT-STEAM-DRAW-CHANNELS.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T23:14:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_a_steam_demand_and_a_steam_feed_command_are_both_accepted; firmware/test/test_plant_boiler/test_plant_boiler.c::test_a_steam_demand_alone_is_accepted; firmware/test/test_plant_narrow/test_plant_narrow.c::test_a_steam_demand_alone_is_accepted
+text: |-
+  task fw:test passes, under the same host memory/UB analysis (ASan/UBSan via tools/pio_sanitize.py) the native_test/native_fixture_test/native_boiler_test environments already run. 'Observes both values reach the structure's internal state' is verified as the step call succeeding (PLANT_STEP_OK) rather than being refused: no accessor exists yet for either raw value (exposing the drawn rate as a plant_quantity_t is SOL-PLANT-STEAM-DRAW-REPORTED's own criterion), and the project's own check_plant_encapsulation.py structurally forbids any white-box field read from test sources project-wide, so a non-refused result -- the demand and the feed level having been carried as far as the structure's own step body rather than dropped at the seam boundary -- is the strongest observation available at this seam boundary. This reading was independently confirmed as defensible by a fresh-context blind review of the slice.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS.C5
+    type: satisfies

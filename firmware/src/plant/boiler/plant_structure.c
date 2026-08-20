@@ -215,7 +215,8 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
 }
 
 bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *actuation,
-                                uint32_t interval_millis, plant_step_error_t *error)
+                                float steam_demand_ml_per_s, uint32_t interval_millis,
+                                plant_step_error_t *error)
 {
     if (error == NULL) {
         return false;
@@ -229,6 +230,10 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
                                error)) {
         return false;
     }
+
+    /* This architecture has no steam-side feed pump and no relation yet that
+     * reads the drawn rate, so the demand is accepted and not acted on. */
+    (void)steam_demand_ml_per_s;
 
     const float seconds = interval_millis / MILLIS_PER_SECOND;
 

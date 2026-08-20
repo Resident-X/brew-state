@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-CHANNELS.C4-TEST
+type: evidence
+title: Every existing actuation channel behaves unchanged on every structure (SOL-PLANT-STEAM-DRAW-CHANNELS.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T23:14:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_pump_drives_the_brew_pressure_and_leaves_the_vessel_alone,test_heat_raises_the_temperatures_and_lowers_no_quantity; firmware/test/test_plant_narrow/test_plant_narrow.c::test_zeroing_an_unanswered_channel_gives_the_same_trajectory
+text: |-
+  task fw:test passes with all 200 pre-existing plant/control/estimator test cases green after the mechanical addition of the demand argument to every call site (verified by -Werror build succeeding, since a missed or misordered call site is a compile error). BREW_HEATER, STEAM_HEATER and PUMP are each exercised with exact numeric/byte-for-byte assertions on the structure(s) that answer them, and none moved.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS.C4
+    type: satisfies

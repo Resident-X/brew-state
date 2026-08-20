@@ -246,7 +246,7 @@ static void test_the_reconstruction_converges_on_the_models_own_truth(void)
      */
     const plant_actuation_t actuation = heating();
     for (int i = 0; i < 2000; i++) {
-        TEST_ASSERT_TRUE(plant_model_step(&truth, &actuation, STEP_INTERVAL_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&truth, &actuation, 0.0f, STEP_INTERVAL_MS));
     }
 
     report_from(&truth);
@@ -273,7 +273,7 @@ static void test_the_reconstruction_converges_on_the_models_own_truth(void)
     float worst_after_settling = 0.0f;
     float error = displaced;
     for (int step = 0; step < STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&truth, &actuation, STEP_INTERVAL_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&truth, &actuation, 0.0f, STEP_INTERVAL_MS));
         report_from(&truth);
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
 
@@ -390,7 +390,7 @@ static void test_the_reported_residual_is_the_one_the_correction_used(void)
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, OBSERVED[i]);
 
         const plant_actuation_t actuation = heating();
-        TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, STEP_INTERVAL_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, 0.0f, STEP_INTERVAL_MS));
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
 
         float predicted = 0.0f;
@@ -528,7 +528,7 @@ static void test_every_channel_reports_its_own_difference(void)
      * difference is known before the estimator is asked for it.
      */
     const plant_actuation_t actuation = heating();
-    TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, STEP_INTERVAL_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, 0.0f, STEP_INTERVAL_MS));
 
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         float predicted = 0.0f;
@@ -582,7 +582,7 @@ static void test_a_channels_correction_lands_on_its_own_state_and_no_other(void)
     /* Only the brew temperature is observed; every other channel stays silent. */
     float predicted_brew = 0.0f;
     const plant_actuation_t actuation = heating();
-    TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, STEP_INTERVAL_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, 0.0f, STEP_INTERVAL_MS));
     TEST_ASSERT_TRUE(
         plant_model_quantity(&uncorrected, PLANT_QUANTITY_BREW_TEMPERATURE_C, &predicted_brew));
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true,
@@ -790,7 +790,7 @@ static void test_a_state_stays_usable_across_a_gap_in_what_it_depends_on(void)
 
     for (unsigned step = 0u; step < 20u; step++) {
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
-        TEST_ASSERT_TRUE(plant_model_step(&predicted, &actuation, STEP_INTERVAL_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&predicted, &actuation, 0.0f, STEP_INTERVAL_MS));
     }
 
     float reconstructed = 0.0f;

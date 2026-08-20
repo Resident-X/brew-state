@@ -349,7 +349,12 @@ bool estimator_step(estimator_t *estimator, const plant_actuation_t *actuation,
      */
     forget_residuals(estimator);
 
-    if (!plant_model_step(&estimator->model, actuation, interval_millis)) {
+    /*
+     * The estimator reconstructs state from the actuation record and the
+     * sensors it reads, neither of which carries the operator's wand
+     * position, so it has no demand of its own to report.
+     */
+    if (!plant_model_step(&estimator->model, actuation, 0.0f, interval_millis)) {
         return false;
     }
 

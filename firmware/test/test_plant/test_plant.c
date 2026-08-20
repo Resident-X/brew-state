@@ -179,7 +179,7 @@ static void run(plant_model_t *model, const plant_actuation_t *actuation, int st
                 float out[PLANT_QUANTITY_COUNT])
 {
     for (int i = 0; i < steps; i++) {
-        TEST_ASSERT_TRUE(plant_model_step(model, actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(model, actuation, 0.0f, STEP_MS));
     }
     read_all(model, out);
 }
@@ -215,7 +215,7 @@ static double signature(plant_model_t *model, const plant_actuation_t *actuation
     for (int i = 0; i < steps; i++) {
         float states[PLANT_STATE_COUNT];
         float quantities[PLANT_QUANTITY_COUNT];
-        TEST_ASSERT_TRUE(plant_model_step(model, actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(model, actuation, 0.0f, STEP_MS));
         read_all_states(model, states);
         for (int state = 0; state < PLANT_STATE_COUNT; state++) {
             total += states[state];
@@ -292,7 +292,7 @@ static void test_a_step_at_rest_changes_nothing(void)
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     read_all(&model, before);
-    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, 0.0f, STEP_MS));
     read_all(&model, after);
 
     TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
@@ -348,7 +348,7 @@ static void test_heat_raises_the_temperatures_and_lowers_nothing(void)
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     read_all(&model, before);
-    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
     read_all(&model, after);
 
     TEST_ASSERT_TRUE(after[PLANT_QUANTITY_BREW_TEMPERATURE_C] >
@@ -391,7 +391,7 @@ static void test_an_actuation_beyond_full_scale_is_refused_and_changes_nothing(v
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     read_all(&model, before);
-    TEST_ASSERT_FALSE(plant_model_step(&model, &over_scale, STEP_MS));
+    TEST_ASSERT_FALSE(plant_model_step(&model, &over_scale, 0.0f, STEP_MS));
     read_all(&model, after);
 
     TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
@@ -405,11 +405,11 @@ static void test_an_uninitialised_instance_and_a_zero_step_are_refused(void)
     float value = 0.0f;
 
     memset(&model, 0, sizeof(model));
-    TEST_ASSERT_FALSE(plant_model_step(&model, &HEATING, STEP_MS));
+    TEST_ASSERT_FALSE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
     TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &value));
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
-    TEST_ASSERT_FALSE(plant_model_step(&model, &HEATING, 0u));
+    TEST_ASSERT_FALSE(plant_model_step(&model, &HEATING, 0.0f, 0u));
     TEST_ASSERT_FALSE(plant_model_quantity(&model, PLANT_QUANTITY_COUNT, &value));
 }
 
@@ -1177,7 +1177,7 @@ static void test_rest_stays_at_rest_across_the_declared_range(void)
         TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
         TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
         read_all(&model, before);
-        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, 0.0f, STEP_MS));
         read_all(&model, after);
 
         if (memcmp(before, after, sizeof(before)) != 0) {
@@ -1368,11 +1368,11 @@ static void test_a_step_matches_the_closed_form_across_the_declared_range(void)
             /* Off the equilibrium first: at rest the closed form is trivially
              * matched by any step, so it would establish nothing. */
             for (int warm = 0; warm < 5; warm++) {
-                TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 100u));
+                TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 0.0f, 100u));
             }
             read_all(&model, before);
             for (int n = 0; n < ACCUMULATION_STEPS; n++) {
-                TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, intervals_ms[k]));
+                TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 0.0f, intervals_ms[k]));
             }
             read_all(&model, after);
 
@@ -1473,7 +1473,7 @@ static void test_a_short_step_against_a_long_time_constant_stays_accurate(void)
 
     read_all(&model, before);
     for (int n = 0; n < ACCUMULATION_STEPS; n++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 10u));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 0.0f, 10u));
     }
     read_all(&model, after);
 
@@ -1517,7 +1517,7 @@ static void test_the_corners_of_the_declared_range_stay_at_rest(void)
         TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
         TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
         read_all(&model, before);
-        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, 0.0f, STEP_MS));
         read_all(&model, after);
         TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
     }
@@ -1556,14 +1556,18 @@ static void test_the_actuation_channels_are_one_enumerated_set(void)
     at_scale.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = ACTUATION_FULL_SCALE;
     beyond_scale.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = ACTUATION_FULL_SCALE + 1u;
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
-    TEST_ASSERT_TRUE(plant_model_step(&model, &at_scale, STEP_MS));
-    TEST_ASSERT_FALSE(plant_model_step(&model, &beyond_scale, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &at_scale, 0.0f, STEP_MS));
+    TEST_ASSERT_FALSE(plant_model_step(&model, &beyond_scale, 0.0f, STEP_MS));
 }
 
 /// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C2: The plant-model seam carries each
 /// structure's statement of the channels it answers.
 /// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C3: Every structure behind the seam
 /// declares which actuation channels it answers.
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C3: A dedicated actuation channel commands
+/// thermoblock's steam-side feed pump. This loop is written over the whole
+/// vocabulary rather than over a fixed list, so the steam-side feed pump
+/// channel is exercised here without the test having named it.
 static void test_the_structure_states_which_channels_it_answers(void)
 {
     const actuation_channel_set_t answered = plant_structure_actuation_channels();
@@ -1590,13 +1594,48 @@ static void test_the_structure_states_which_channels_it_answers(void)
 
         TEST_ASSERT_NOT_EQUAL(0u, answered & ACTUATION_CHANNEL_BIT(channel));
         one_channel.level_permille[channel] = ACTUATION_FULL_SCALE;
-        TEST_ASSERT_TRUE(plant_model_step_reporting(&model, &one_channel, STEP_MS, &refusal));
+        TEST_ASSERT_TRUE(plant_model_step_reporting(&model, &one_channel, 0.0f, STEP_MS, &refusal));
         TEST_ASSERT_EQUAL(PLANT_STEP_OK, refusal.fault);
     }
 }
 
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C1: Every plant structure's step accepts a
+/// steam-demand rate the control law never sets.
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C5: The new interfaces are exercised end to
+/// end on the host verification tier.
+static void test_a_steam_demand_and_a_steam_feed_command_are_both_accepted(void)
+{
+    plant_model_t model;
+    plant_step_error_t refusal;
+    plant_actuation_t feeding = {{0u}};
+
+    /*
+     * A non-zero level on the new channel, commanded alongside a non-zero
+     * demand. Neither has a relation reading it yet -- that is
+     * SOL-PLANT-STEAM-DRAW-ENERGY's and SOL-PLANT-STEAM-DRAW-REPORTED's work --
+     * so what this test can show is that both reach as far as the structure's
+     * own step: the call is accepted rather than refused at the boundary, which
+     * is the only outcome the seam's admissibility check ties either value to
+     * this early. A demand on a channel the actuation record has no member for
+     * cannot be refused there, so acceptance here is that value reaching the
+     * structure's internal state; the feed channel reaching it is what the
+     * admissibility check passing on a level thermoblock now declares in
+     * PLANT_STRUCTURE_ACTUATION_CHANNELS demonstrates.
+     */
+    feeding.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] = ACTUATION_FULL_SCALE / 2u;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(
+        plant_model_step_reporting(&model, &feeding, 250.0f, STEP_MS, &refusal));
+    TEST_ASSERT_EQUAL(PLANT_STEP_OK, refusal.fault);
+}
+
 /// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7: The structures and the control
 /// logic behave identically after the vocabulary is unified.
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C2: The demand input defaults to zero and
+/// changes no existing behaviour when unset.
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C4: Every existing actuation channel behaves
+/// unchanged on every structure.
 static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified(void)
 {
     /*
@@ -1631,6 +1670,14 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
      * claim was that flow entered none of these relations, and it now enters two
      * of them. Keeping the recording would have been asserting the change did
      * nothing, which is the opposite of what it is for.
+     *
+     * Kept again when the step gained the steam-demand argument and thermoblock
+     * gained the steam-side feed channel. Every row below is driven with the
+     * demand at zero -- the fixtures below command no other channel -- and the
+     * new channel is not among AT_REST, HEATING or WORKING's commanded levels
+     * either, so on the same reasoning as the rate drawn before it, neither
+     * enters any relation these figures come from. Both are wired only as far
+     * as being accepted; nothing yet reads either.
      *
      * What the retaken figures have to be read against, row by row, because the
      * rows are not all in the same position:
@@ -1720,7 +1767,7 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
 
     for (size_t checkpoint = 0u; checkpoint < sizeof(STEPS) / sizeof(STEPS[0]); checkpoint++) {
         for (int i = 0; i < STEPS[checkpoint]; i++) {
-            TEST_ASSERT_TRUE(plant_model_step(&model, UNDER[checkpoint], STEP_MS));
+            TEST_ASSERT_TRUE(plant_model_step(&model, UNDER[checkpoint], 0.0f, STEP_MS));
         }
         read_all(&model, values);
         /*
@@ -2791,7 +2838,7 @@ static void test_the_reference_description_is_admissible_and_advances_a_model(vo
     read_all(&model, initial);
 
     for (int i = 0; i < TRAJECTORY_STEPS; i++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, 0.0f, STEP_MS));
     }
 
     /* And it answers every quantity the seam enumerates, with a number. */
@@ -3032,7 +3079,7 @@ static void test_the_water_on_its_way_to_the_group_trails_the_heated_mass(void)
     for (int step = 0; step < SHORT_STEPS; step++) {
         const float previous_water = water;
 
-        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 0.0f, STEP_MS));
         water = outlet(&model);
         TEST_ASSERT_TRUE(
             plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &reported));
@@ -3114,7 +3161,7 @@ static void test_the_water_follows_the_casting_by_its_own_time_constant(void)
     int taken = 0;
     for (size_t s = 0u; s < sizeof(SAMPLES_AT) / sizeof(SAMPLES_AT[0]); s++) {
         while (taken < SAMPLES_AT[s]) {
-            TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, interval_ms));
+            TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 0.0f, interval_ms));
             taken++;
         }
 
@@ -3191,7 +3238,7 @@ static void test_a_shorter_outlet_time_constant_brings_the_water_closer(void)
         TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
 
         for (int step = 0; step < SHORT_STEPS; step++) {
-            TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, STEP_MS));
+            TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 0.0f, STEP_MS));
         }
         gaps[t] = (double)heated_mass(&model) - (double)outlet(&model);
 
@@ -3255,7 +3302,7 @@ static void test_the_state_vocabulary_carries_what_the_quantities_cannot(void)
      * itself absent from the states for the wrong reason.
      */
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
-    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, 0.0f, STEP_MS));
     {
         float drawn = 0.0f;
         float states[PLANT_STATE_COUNT];
@@ -3316,7 +3363,7 @@ static void test_every_state_carries_the_quantity_it_names(void)
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     for (int step = 0; step < TRAJECTORY_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &working, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, 0.0f, STEP_MS));
     }
     read_all_states(&model, states);
     read_all(&model, quantities);
@@ -3406,7 +3453,7 @@ static void test_the_unreported_state_is_reachable_through_the_seam_alone(void)
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
     for (int step = 0; step < SHORT_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &brew_only, 0.0f, STEP_MS));
     }
 
     const float water = outlet(&model);
@@ -3739,8 +3786,8 @@ static void test_a_written_state_is_what_the_next_step_advances_from(void)
     TEST_ASSERT_TRUE(plant_model_init(&untouched, &parameters));
 
     TEST_ASSERT_TRUE(plant_model_set_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, 5.0f));
-    TEST_ASSERT_TRUE(plant_model_step(&model, &heating, 100u));
-    TEST_ASSERT_TRUE(plant_model_step(&untouched, &heating, 100u));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &heating, 0.0f, 100u));
+    TEST_ASSERT_TRUE(plant_model_step(&untouched, &heating, 0.0f, 100u));
 
     float advanced = 0.0f;
     float unwritten = 0.0f;
@@ -3797,11 +3844,11 @@ static void test_the_reference_structure_answers_the_drawn_rate(void)
     TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
     TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
 
-    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, 0.0f, STEP_MS));
     TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
     TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
 
-    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, 0.0f, STEP_MS));
     TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
     TEST_ASSERT_TRUE(drawn > 0.0f);
 }
@@ -3842,7 +3889,7 @@ static void test_the_drawn_rate_follows_the_commanded_pump_level(void)
 
         actuation.level_permille[ACTUATION_CHANNEL_PUMP] = LEVELS[i];
         TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
-        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 0.0f, STEP_MS));
         TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
 
         const float expected = (float)nominal_value("pump.flow_ml_per_s") *
@@ -3865,11 +3912,11 @@ static void test_a_pump_commanded_off_reports_no_flow(void)
     float drawn = -1.0f;
 
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
-    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, 0.0f, STEP_MS));
     TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
     TEST_ASSERT_TRUE(drawn > 0.0f);
 
-    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
     TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
     TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
 }
@@ -3898,8 +3945,8 @@ static void test_the_drawn_rate_is_unmoved_by_the_heaters(void)
     /* Many steps, so a dependence on a state that has had time to move is
      * reached rather than being sat out at the value both start from. */
     for (int i = 0; i < SHORT_STEPS; i++) {
-        TEST_ASSERT_TRUE(plant_model_step(&pump_only_model, &pump_only, STEP_MS));
-        TEST_ASSERT_TRUE(plant_model_step(&everything_model, &WORKING, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&pump_only_model, &pump_only, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&everything_model, &WORKING, 0.0f, STEP_MS));
     }
 
     TEST_ASSERT_TRUE(
@@ -3973,7 +4020,7 @@ static void test_the_drawn_rate_is_reached_end_to_end_through_the_seam(void)
     TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
 
     half_scale.level_permille[ACTUATION_CHANNEL_PUMP] = ACTUATION_FULL_SCALE / 2u;
-    TEST_ASSERT_TRUE(plant_model_step(&model, &half_scale, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&model, &half_scale, 0.0f, STEP_MS));
     TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
 
     /* Eight at full scale, commanded at half: exact in binary, so compared as
@@ -4094,8 +4141,8 @@ static void test_a_draw_cools_the_heated_mass_faster_than_no_draw(void)
     float previous_undrawn = 90.0f;
 
     for (int step = 0; step < SHORT_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&drawn, &with_draw, STEP_MS));
-        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &without_draw, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &with_draw, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &without_draw, 0.0f, STEP_MS));
 
         const float now_drawn = heated_mass(&drawn);
         const float now_undrawn = heated_mass(&undrawn);
@@ -4157,7 +4204,7 @@ static void test_the_settled_droop_is_the_energy_balance_the_coefficients_state(
          * point on a transient. */
         const plant_actuation_t working = commanding(ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE);
         for (int step = 0; step < SETTLED_STEPS; step++) {
-            TEST_ASSERT_TRUE(plant_model_step(&model, &working, STEP_MS));
+            TEST_ASSERT_TRUE(plant_model_step(&model, &working, 0.0f, STEP_MS));
         }
 
         const double drawn = values[I_PUMP_FLOW];
@@ -4208,8 +4255,8 @@ static void test_the_steam_mass_gains_no_term_from_the_draw(void)
     const plant_actuation_t without_draw = {{ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, 0u}};
 
     for (int step = 0; step < TRAJECTORY_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&drawn, &with_draw, STEP_MS));
-        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &without_draw, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &with_draw, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &without_draw, 0.0f, STEP_MS));
     }
 
     float steam_drawn = 0.0f;
@@ -4256,8 +4303,8 @@ static void test_the_casting_depends_on_where_the_water_leaving_sits(void)
 
         const plant_actuation_t actuation =
             commanding(0u, drawing ? ACTUATION_FULL_SCALE : (uint16_t)0u);
-        TEST_ASSERT_TRUE(plant_model_step(&cool_outlet, &actuation, STEP_MS));
-        TEST_ASSERT_TRUE(plant_model_step(&warm_outlet, &actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&cool_outlet, &actuation, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&warm_outlet, &actuation, 0.0f, STEP_MS));
 
         const float after_cool = heated_mass(&cool_outlet);
         const float after_warm = heated_mass(&warm_outlet);
@@ -4316,7 +4363,7 @@ static void test_the_outlet_time_constant_reaches_the_casting_only_under_a_draw(
                 ACTUATION_FULL_SCALE, drawing ? (uint16_t)(ACTUATION_FULL_SCALE / 10u)
                                               : (uint16_t)0u);
             for (int step = 0; step < TRANSIENT_STEPS; step++) {
-                TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+                TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 0.0f, STEP_MS));
             }
             castings[t] = heated_mass(&model);
         }
@@ -4459,7 +4506,7 @@ static void test_the_coupled_step_matches_the_pair_integrated_independently(void
 
             const double seconds = (double)INTERVALS_MS[i] / 1000.0;
             for (int step = 0; step < 8; step++) {
-                TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, INTERVALS_MS[i]));
+                TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 0.0f, INTERVALS_MS[i]));
                 reference = integrated(values, duty, drawn, reference, seconds, 4000);
             }
 
@@ -4511,7 +4558,7 @@ static void test_the_pair_lands_in_the_same_place_however_the_step_is_cut(void)
         place(&model, 30.0f, 22.0f);
         /* Ten seconds, cut three ways. */
         for (int repeat = 0; repeat < REPEATS[i] * 10; repeat++) {
-            TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, INTERVALS_MS[i]));
+            TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 0.0f, INTERVALS_MS[i]));
         }
         castings[i] = heated_mass(&model);
         outlets[i] = outlet(&model);
@@ -4560,7 +4607,7 @@ static double gap_closed_at(uint16_t pump_permille, double seconds, double *effe
     const plant_actuation_t actuation = commanding(0u, pump_permille);
     const int steps = (int)((seconds * 1000.0) / (double)STEP_MS);
     for (int step = 0; step < steps; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 0.0f, STEP_MS));
     }
 
     if (effective_tau_s != NULL) {
@@ -4690,7 +4737,7 @@ static double settled_casting_with(size_t index, double value)
     values[index] = value;
     model_from(&model, values);
     for (int step = 0; step < SETTLED_STEPS; step++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &working, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, 0.0f, STEP_MS));
     }
     return (double)heated_mass(&model);
 }
@@ -4776,7 +4823,7 @@ static void test_the_drawn_power_is_the_volume_rate_times_the_heat_capacity(void
 
         const plant_actuation_t drawing_only = commanding(0u, ACTUATION_FULL_SCALE);
         const uint32_t interval_ms = 1u;
-        TEST_ASSERT_TRUE(plant_model_step(&model, &drawing_only, interval_ms));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &drawing_only, 0.0f, interval_ms));
 
         const double seconds = (double)interval_ms / 1000.0;
         const double removed_w = values[I_PUMP_FLOW] * CAPACITIES[c] *
@@ -4849,7 +4896,7 @@ static void test_a_toggling_draw_against_a_cold_casting_stays_bounded(void)
             const plant_actuation_t actuation =
                 commanding(ACTUATION_FULL_SCALE, (step % 2 == 0) ? ACTUATION_FULL_SCALE
                                                                  : (uint16_t)0u);
-            TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, INTERVALS_MS[i]));
+            TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 0.0f, INTERVALS_MS[i]));
 
             float states[PLANT_STATE_COUNT];
             read_all_states(&model, states);
@@ -5129,6 +5176,7 @@ int main(void)
     UNITY_BEGIN();
     RUN_TEST(test_the_actuation_channels_are_one_enumerated_set);
     RUN_TEST(test_the_structure_states_which_channels_it_answers);
+    RUN_TEST(test_a_steam_demand_and_a_steam_feed_command_are_both_accepted);
     RUN_TEST(test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified);
     RUN_TEST(test_the_coefficient_indices_name_what_they_claim);
     RUN_TEST(test_the_water_on_its_way_to_the_group_trails_the_heated_mass);

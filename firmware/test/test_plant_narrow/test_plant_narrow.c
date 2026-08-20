@@ -119,6 +119,51 @@ static void test_the_seam_reports_a_narrower_set_than_the_machine_has(void)
     TEST_ASSERT_TRUE(count < (unsigned)ACTUATION_CHANNEL_COUNT);
 }
 
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C6: Boiler and fixture correctly refuse the
+/// new steam-feed channel.
+static void test_the_steam_feed_channel_is_refused_here_too(void)
+{
+    plant_model_t model;
+    plant_step_error_t refusal;
+    plant_actuation_t feeding = {{0u}};
+
+    /*
+     * This structure describes no machine and answers only the one channel a
+     * heater acts on; the steam-side feed pump the new channel commands is
+     * not among what it declares, and its answered-channel macro is not
+     * extended to include it, so the same mechanism that already refuses
+     * every other channel this structure leaves unanswered refuses this one.
+     */
+    TEST_ASSERT_EQUAL_UINT32(0u, answered & ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_STEAM_PUMP));
+
+    feeding.level_permille[ACTUATION_CHANNEL_STEAM_PUMP] = ACTUATION_FULL_SCALE;
+    initialise(&model);
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &feeding, 0.0f, STEP_MS, &refusal));
+    TEST_ASSERT_EQUAL(PLANT_STEP_CHANNEL_UNANSWERED, refusal.fault);
+    TEST_ASSERT_EQUAL(ACTUATION_CHANNEL_STEAM_PUMP, refusal.channel);
+}
+
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C1: Every plant structure's step accepts a
+/// steam-demand rate the control law never sets.
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C5: The new interfaces are exercised end to
+/// end on the host verification tier.
+static void test_a_steam_demand_alone_is_accepted(void)
+{
+    plant_model_t model;
+    plant_step_error_t refusal;
+    plant_actuation_t idle = {{0u}};
+
+    /*
+     * No channel commanded, so the only thing this step could be refused for
+     * is the demand itself -- and nothing refuses it, whatever this structure
+     * answers, because it is a step argument rather than a member of the
+     * actuation record admissibility checks against.
+     */
+    initialise(&model);
+    TEST_ASSERT_TRUE(plant_model_step_reporting(&model, &idle, 250.0f, STEP_MS, &refusal));
+    TEST_ASSERT_EQUAL(PLANT_STEP_OK, refusal.fault);
+}
+
 /// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C4: A non-zero command on an
 /// unanswered channel is refused and the model does not advance.
 static void test_a_command_on_an_unanswered_channel_refuses_and_moves_nothing(void)
@@ -133,13 +178,13 @@ static void test_a_command_on_an_unanswered_channel_refuses_and_moves_nothing(vo
     /* Away from the initial state, so a step that ran would be visible. */
     actuation.level_permille[answered_channel()] = ACTUATION_FULL_SCALE;
     for (int i = 0; i < SETTLE_STEPS; i++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &actuation, 0.0f, STEP_MS));
     }
     read_all(&model, before);
 
     /* The same command, plus a level on a channel this structure does not answer. */
     actuation.level_permille[unanswered_channel()] = ACTUATION_FULL_SCALE;
-    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &actuation, STEP_MS, &refusal));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &actuation, 0.0f, STEP_MS, &refusal));
 
     read_all(&model, after);
     TEST_ASSERT_EQUAL_MEMORY(before, after, sizeof(before));
@@ -167,8 +212,8 @@ static void test_a_refused_command_is_not_applied_with_the_unanswered_channel_dr
     initialise(&stepped_instance);
 
     TEST_ASSERT_FALSE(
-        plant_model_step_reporting(&refused_instance, &with_unanswered, STEP_MS, &refusal));
-    TEST_ASSERT_TRUE(plant_model_step(&stepped_instance, &answered_only, STEP_MS));
+        plant_model_step_reporting(&refused_instance, &with_unanswered, 0.0f, STEP_MS, &refusal));
+    TEST_ASSERT_TRUE(plant_model_step(&stepped_instance, &answered_only, 0.0f, STEP_MS));
 
     read_all(&refused_instance, refused_values);
     read_all(&stepped_instance, stepped_values);
@@ -225,7 +270,7 @@ static void test_a_refusal_names_the_channel_that_had_nowhere_to_land(void)
     initialise(&model);
     actuation.level_permille[absent] = 1u;
 
-    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &actuation, STEP_MS, &refusal));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &actuation, 0.0f, STEP_MS, &refusal));
     TEST_ASSERT_EQUAL(PLANT_STEP_CHANNEL_UNANSWERED, refusal.fault);
     TEST_ASSERT_EQUAL(absent, refusal.channel);
 }
@@ -243,23 +288,23 @@ static void test_an_unanswered_channel_is_told_apart_from_the_other_refusals(voi
     runnable.level_permille[answered_channel()] = ACTUATION_FULL_SCALE;
     over_scale.level_permille[answered_channel()] = ACTUATION_FULL_SCALE + 1u;
 
-    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &runnable, 0u, &refusal));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &runnable, 0.0f, 0u, &refusal));
     TEST_ASSERT_EQUAL(PLANT_STEP_ZERO_INTERVAL, refusal.fault);
     TEST_ASSERT_EQUAL(ACTUATION_CHANNEL_COUNT, refusal.channel);
 
-    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, NULL, STEP_MS, &refusal));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, NULL, 0.0f, STEP_MS, &refusal));
     TEST_ASSERT_EQUAL(PLANT_STEP_NOT_STEPPABLE, refusal.fault);
     TEST_ASSERT_EQUAL(ACTUATION_CHANNEL_COUNT, refusal.channel);
 
-    TEST_ASSERT_FALSE(plant_model_step_reporting(NULL, &runnable, STEP_MS, &refusal));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(NULL, &runnable, 0.0f, STEP_MS, &refusal));
     TEST_ASSERT_EQUAL(PLANT_STEP_NOT_STEPPABLE, refusal.fault);
 
-    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &over_scale, STEP_MS, &refusal));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &over_scale, 0.0f, STEP_MS, &refusal));
     TEST_ASSERT_EQUAL(PLANT_STEP_LEVEL_OVER_SCALE, refusal.fault);
     TEST_ASSERT_EQUAL(answered_channel(), refusal.channel);
 
     /* A step that runs says so rather than leaving the record from last time. */
-    TEST_ASSERT_TRUE(plant_model_step_reporting(&model, &runnable, STEP_MS, &refusal));
+    TEST_ASSERT_TRUE(plant_model_step_reporting(&model, &runnable, 0.0f, STEP_MS, &refusal));
     TEST_ASSERT_EQUAL(PLANT_STEP_OK, refusal.fault);
 }
 
@@ -278,7 +323,7 @@ static void test_a_command_with_two_faults_reports_the_same_one_every_time(void)
     for (int repeat = 0; repeat < 8; repeat++) {
         plant_step_error_t refusal;
         memset(&refusal, 0xFF, sizeof(refusal));
-        TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &actuation, STEP_MS, &refusal));
+        TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &actuation, 0.0f, STEP_MS, &refusal));
         TEST_ASSERT_EQUAL(PLANT_STEP_LEVEL_OVER_SCALE, refusal.fault);
         TEST_ASSERT_EQUAL(absent, refusal.channel);
     }
@@ -286,6 +331,16 @@ static void test_a_command_with_two_faults_reports_the_same_one_every_time(void)
 
 /// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C6: A zero level on an unanswered
 /// channel advances the model normally.
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C2: The demand input defaults to zero and
+/// changes no existing behaviour when unset. Both instances below are driven
+/// with the demand argument at zero and land on the same trajectory, which is
+/// what this structure's existing behaviour already was.
+/// SOL-PLANT-STEAM-DRAW-CHANNELS.C4: Every existing actuation channel behaves
+/// unchanged on every structure. This loop zeroes every unanswered channel
+/// this structure has, over the whole vocabulary rather than a fixed list, so
+/// the new steam-feed channel -- unanswered here, the same as it was before
+/// this structure had one more channel to leave unanswered -- is already
+/// among them without the test having named it.
 static void test_zeroing_an_unanswered_channel_gives_the_same_trajectory(void)
 {
     plant_model_t zeroed_instance;
@@ -321,9 +376,9 @@ static void test_zeroing_an_unanswered_channel_gives_the_same_trajectory(void)
 
     for (int i = 0; i < SETTLE_STEPS; i++) {
         plant_step_error_t refusal;
-        TEST_ASSERT_TRUE(plant_model_step_reporting(&zeroed_instance, &zeroed, STEP_MS, &refusal));
+        TEST_ASSERT_TRUE(plant_model_step_reporting(&zeroed_instance, &zeroed, 0.0f, STEP_MS, &refusal));
         TEST_ASSERT_EQUAL(PLANT_STEP_OK, refusal.fault);
-        TEST_ASSERT_TRUE(plant_model_step(&untouched_instance, &untouched, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&untouched_instance, &untouched, 0.0f, STEP_MS));
     }
 
     read_all(&zeroed_instance, zeroed_values);
@@ -350,12 +405,12 @@ static void test_the_form_without_a_record_refuses_exactly_what_the_reporting_fo
 
     for (int i = 0; i < SETTLE_STEPS; i++) {
         plant_step_error_t refusal;
-        TEST_ASSERT_FALSE(plant_model_step(&plain_instance, &unanswered, STEP_MS));
+        TEST_ASSERT_FALSE(plant_model_step(&plain_instance, &unanswered, 0.0f, STEP_MS));
         TEST_ASSERT_FALSE(
-            plant_model_step_reporting(&reporting_instance, &unanswered, STEP_MS, &refusal));
-        TEST_ASSERT_TRUE(plant_model_step(&plain_instance, &runnable, STEP_MS));
+            plant_model_step_reporting(&reporting_instance, &unanswered, 0.0f, STEP_MS, &refusal));
+        TEST_ASSERT_TRUE(plant_model_step(&plain_instance, &runnable, 0.0f, STEP_MS));
         TEST_ASSERT_TRUE(
-            plant_model_step_reporting(&reporting_instance, &runnable, STEP_MS, &refusal));
+            plant_model_step_reporting(&reporting_instance, &runnable, 0.0f, STEP_MS, &refusal));
     }
 
     read_all(&plain_instance, plain_values);
@@ -363,7 +418,7 @@ static void test_the_form_without_a_record_refuses_exactly_what_the_reporting_fo
     TEST_ASSERT_EQUAL_MEMORY(reporting_values, plain_values, sizeof(reporting_values));
 
     /* A null record is refused rather than written through. */
-    TEST_ASSERT_FALSE(plant_model_step_reporting(&reporting_instance, &runnable, STEP_MS, NULL));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&reporting_instance, &runnable, 0.0f, STEP_MS, NULL));
 }
 
 /// SOL-PLANT-RECONSTRUCTABLE-STATE.C3: Every plant structure answers the state
@@ -391,7 +446,7 @@ static void test_a_structure_keeping_fewer_states_answers_some_and_refuses_other
 
     initialise(&model);
     for (int i = 0; i < SETTLE_STEPS; i++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &driving, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &driving, 0.0f, STEP_MS));
     }
 
     for (int state = 0; state < PLANT_STATE_COUNT; state++) {
@@ -583,7 +638,7 @@ static void test_the_structure_describing_no_machine_answers_the_drawn_rate_as_z
      * away from zero: a structure answering the rate from it fails here. */
     answered.level_permille[answered_channel()] = ACTUATION_FULL_SCALE;
     for (int i = 0; i < 20; i++) {
-        TEST_ASSERT_TRUE(plant_model_step(&model, &answered, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &answered, 0.0f, STEP_MS));
     }
 
     float accumulated = 0.0f;
@@ -595,7 +650,7 @@ static void test_the_structure_describing_no_machine_answers_the_drawn_rate_as_z
 
     /* And after a refused command, which advances nothing. */
     unanswered.level_permille[unanswered_channel()] = ACTUATION_FULL_SCALE;
-    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &unanswered, STEP_MS, &refusal));
+    TEST_ASSERT_FALSE(plant_model_step_reporting(&model, &unanswered, 0.0f, STEP_MS, &refusal));
     TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn));
     TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
 }
@@ -605,6 +660,8 @@ int main(void)
     UNITY_BEGIN();
     RUN_TEST(test_the_structure_describing_no_machine_answers_the_drawn_rate_as_zero);
     RUN_TEST(test_the_seam_reports_a_narrower_set_than_the_machine_has);
+    RUN_TEST(test_the_steam_feed_channel_is_refused_here_too);
+    RUN_TEST(test_a_steam_demand_alone_is_accepted);
     RUN_TEST(test_a_structure_keeping_fewer_states_answers_some_and_refuses_others);
     RUN_TEST(test_a_state_read_before_initialisation_is_refused);
     RUN_TEST(test_a_command_on_an_unanswered_channel_refuses_and_moves_nothing);
