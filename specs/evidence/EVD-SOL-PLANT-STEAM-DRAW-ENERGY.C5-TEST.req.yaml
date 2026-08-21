@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-ENERGY.C5-TEST
+type: evidence
+title: The stepped structure stays admissible with a draw open (SOL-PLANT-STEAM-DRAW-ENERGY.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-21T11:26:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_structure_stays_admissible_with_a_draw_open,test_a_draw_the_path_cannot_supply_stops_at_nothing,test_a_demand_that_is_not_a_draw_is_read_as_no_draw,test_the_steam_draws_coefficients_carry_enforced_admissible_ranges; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_structure_stays_admissible_with_a_draw_open,test_a_draw_the_path_cannot_supply_stops_at_nothing,test_a_demand_that_is_not_a_draw_is_read_as_no_draw,test_this_structure_declares_and_enforces_the_steam_draws_ranges
+text: |-
+  Property sweep over sampled/corner coefficient descriptions x 40 steps at 50 mL/s stays finite with pressure >= 0. A demand the path cannot supply drives the pressure floor to exactly zero without the block going cold, and reverts fully afterward. Negative, NaN, +/-INFINITY demand are all read as no draw via an isfinite() guard (uniform across NaN/+INF/-INF rather than relying on fmax's NaN-only semantics), verified against a byte-exact zero-demand baseline.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY.C5
+    type: satisfies

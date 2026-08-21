@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-ENERGY.C7-TEST
+type: evidence
+title: The pressure-divergence-rate coefficient is a described coefficient with a declared origin and error (SOL-PLANT-STEAM-DRAW-ENERGY.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-21T11:26:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_steam_draws_coefficients_carry_enforced_admissible_ranges,test_the_steam_draws_coefficients_declare_an_origin_and_an_error; firmware/test/test_plant_boiler/test_plant_boiler.c::test_this_structure_declares_and_enforces_the_steam_draws_ranges; firmware/params/thermoblock.params:60; firmware/params/thermoblock-variant.params
+text: |-
+  steam.pressure_fall_bar_per_ml is declared in thermoblock.params as 0.05 ~ 0.7 @estimated (first-principles account: no vapour reservoir, cost set by replacement-water boil rate, order fixed by the saturation-slope and latent-heat coefficients above it), with an enforced admissible range [0,10] in SPECS[]. boiler.params/boiler-variant.params (describes-no-machine) carry the bare value. Verified the origin+error is read through the seam and the shipped description carries marker, kind, and account.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY.C7
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-ENERGY.C6-TEST
+type: evidence
+title: The new arithmetic survives the mutation sweep the plant model is held to (SOL-PLANT-STEAM-DRAW-ENERGY.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-21T11:26:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:sweep (firmware/tools/pio_mutation.py) over firmware/src/plant/thermoblock/plant_structure.c and firmware/src/plant/boiler/plant_structure.c, triaged in firmware/mutation_triage.yaml
+text: |-
+  259 mutants, 248 killed (96%), 11 survivors all accounted for as equivalent (8) or analysis (3) in mutation_triage.yaml -- no unaccounted survivors from the new latent-heat or pressure-integration arithmetic. Independently confirmed by a fresh-context reviewer, who verified the two triaged entries touching the new code (steam_pressure_at's saturation-slope comparison on both structures) are line-number bumps with unchanged, still-true equivalence reasoning, and that the deficit-reset mutant (> to >=) is correctly killed rather than triaged away.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY.C6
+    type: satisfies

@@ -32,7 +32,10 @@
  * figure for some other fluid is refused here rather than quietly changing what
  * a millilitre costs -- these equations convert a volume rate into an energy
  * flux with it, and that conversion is the one place a wrong substance would
- * look like a plausible machine.
+ * look like a plausible machine. Its latent heat is bounded on exactly those
+ * terms and for exactly that reason, around the enthalpy of vaporisation of
+ * water; a floor above zero because a millilitre of steam that cost nothing to
+ * make is not water and not any other fluid either.
  */
 static const plant_parameter_spec_t SPECS[] = {
     {"ambient_temperature_c", -40.0f, 60.0f, offsetof(plant_parameters_t, ambient_temperature_c)},
@@ -60,11 +63,15 @@ static const plant_parameter_spec_t SPECS[] = {
      offsetof(plant_parameters_t, water_feed_temperature_c)},
     {"water.heat_capacity_j_per_ml_k", 1.0f, 10.0f,
      offsetof(plant_parameters_t, water_heat_capacity_j_per_ml_k)},
+    {"water.latent_heat_j_per_ml", 500.0f, 5000.0f,
+     offsetof(plant_parameters_t, water_latent_heat_j_per_ml)},
 
     {"steam.saturation_temperature_c", 0.0f, 300.0f,
      offsetof(plant_parameters_t, steam_saturation_temperature_c)},
     {"steam.pressure_bar_per_k", 0.0f, 10.0f,
      offsetof(plant_parameters_t, steam_pressure_bar_per_k)},
+    {"steam.pressure_fall_bar_per_ml", 0.0f, 10.0f,
+     offsetof(plant_parameters_t, steam_pressure_fall_bar_per_ml)},
 };
 
 actuation_channel_set_t plant_structure_actuation_channels(void)
@@ -124,19 +131,68 @@ static float relaxation_factor(float x)
 }
 
 /*
- * One mass's temperature after `seconds` of heating at `duty` and losing to
- * ambient. Exact for a constant actuation over the step, and stable for any
- * step length at any admissible coefficients.
+ * The rate steam is actually leaving the machine, from the rate the step was
+ * handed.
+ *
+ * A demand below zero is steam arriving rather than leaving, which is not a case
+ * this machine has and not one these relations carry a term for. It is read as
+ * no draw rather than run backwards through them, which would put energy into
+ * the steam mass and pressure into the steam path out of nothing at all.
+ *
+ * A demand that is not a finite rate is read the same way, and that guard earns
+ * its place separately from the one above. An unbounded or undefined rate does
+ * not merely give a wrong answer here: every relation it enters stops producing
+ * a number, and so does every quantity downstream of them, and a comparison
+ * against one of those is false whichever way it is written -- so nothing that
+ * inspects the model afterwards can see what happened. The seam refuses nothing
+ * about the demand, deliberately, which leaves this the place it is answered.
+ */
+static float drawn_steam_ml_per_s(float steam_demand_ml_per_s)
+{
+    return isfinite(steam_demand_ml_per_s) ? fmaxf(steam_demand_ml_per_s, 0.0f) : 0.0f;
+}
+
+/*
+ * What the steam being drawn costs the mass it is drawn from, as a power.
+ *
+ * A volume rate times what a millilitre costs to turn into vapour, and nothing
+ * else. There is no temperature difference in it, because there is no second
+ * temperature to take one against: what leaves the wand is vapour, and this
+ * structure has no state for where it leaves at. That is the substantive
+ * difference from the coffee side's flow term, which is a difference across two
+ * temperatures both of which this structure keeps.
+ *
+ * The rate is the volume of water turned to steam rather than the volume the
+ * vapour occupies, which is what puts it in the same unit as the coffee side's
+ * drawn rate and lets one coefficient per millilitre stand against both.
+ */
+static float drawn_steam_power_w(const plant_parameters_t *p, float drawn_ml_per_s)
+{
+    return p->water_latent_heat_j_per_ml * drawn_ml_per_s;
+}
+
+/*
+ * One mass's temperature after `seconds` of heating at `duty`, losing to ambient
+ * and giving up `drawn_w` to whatever is being taken out of it. Exact for a
+ * constant actuation over the step, and stable for any step length at any
+ * admissible coefficients.
+ *
+ * `drawn_w` is a power and not a coefficient per kelvin, so it moves where the
+ * mass is heading without changing how fast it gets there -- which is why it
+ * enters the balance beside the delivered power and stays out of the relaxation
+ * the step is corrected by. A loss that did depend on the mass's own temperature
+ * would have to enter both, the way the coffee side's drawn term does.
  */
 static float advanced_temperature(float temperature_c, float ambient_c, float heater_power_w,
-                                   float duty, float loss_w_per_k, float thermal_mass_j_per_k,
-                                   float seconds)
+                                   float duty, float drawn_w, float loss_w_per_k,
+                                   float thermal_mass_j_per_k, float seconds)
 {
     const float delivered_w = heater_power_w * duty;
     const float lost_w = loss_w_per_k * (temperature_c - ambient_c);
     const float steps_of_time_constant = (seconds * loss_w_per_k) / thermal_mass_j_per_k;
     const float effective_seconds = seconds * relaxation_factor(steps_of_time_constant);
-    return temperature_c + ((delivered_w - lost_w) * effective_seconds) / thermal_mass_j_per_k;
+    return temperature_c +
+           ((delivered_w - lost_w - drawn_w) * effective_seconds) / thermal_mass_j_per_k;
 }
 
 /*
@@ -340,7 +396,7 @@ static void advanced_casting_and_outlet(const plant_parameters_t *p, float duty,
 }
 
 void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuation_t *actuation,
-                                      float seconds)
+                                      float steam_demand_ml_per_s, float seconds)
 {
     if (model == NULL || actuation == NULL) {
         return;
@@ -354,21 +410,27 @@ void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuatio
         &model->brew_outlet_temperature_c);
 
     /*
-     * The steam mass keeps the single-mass step, and keeps it because nothing is
-     * drawn through it in these equations. What a steam draw costs that mass is
-     * among the omissions in params/thermoblock.md, and giving it a term here
-     * from the brew path's drawn rate would be the coffee side's water leaving
-     * through the steam wand.
+     * The steam mass keeps the single-mass step, and keeps it under a draw as
+     * well as without one: what the steam takes away is a power fixed by the
+     * rate, so the mass has one temperature and one relaxation whether or not the
+     * wand is open.
+     *
+     * The rate comes from the step's own argument and not from the brew path.
+     * Giving this mass a term from the pump's drawn rate would be the coffee
+     * side's water leaving through the steam wand, and giving the coffee side a
+     * term from this one would be the reverse; the two draws reach the two
+     * masses and neither reaches both, which is what this machine's two
+     * separately fed blocks mean.
      */
     model->steam_temperature_c = advanced_temperature(
         model->steam_temperature_c, p->ambient_temperature_c, p->steam_heater_power_w,
         actuation->level_permille[ACTUATION_CHANNEL_STEAM_HEATER] / PERMILLE_FULL_SCALE,
-        p->steam_loss_w_per_k,
+        drawn_steam_power_w(p, drawn_steam_ml_per_s(steam_demand_ml_per_s)), p->steam_loss_w_per_k,
         p->steam_thermal_mass_j_per_k, seconds);
 }
 
 void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,
-                                   float seconds)
+                                   float steam_demand_ml_per_s, float seconds)
 {
     if (model == NULL || actuation == NULL) {
         return;
@@ -386,7 +448,43 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
     const float settled = settled_fraction(seconds / p->brew_pressure_time_constant_s);
     model->brew_pressure_bar += (commanded_bar - model->brew_pressure_bar) * settled;
 
-    model->steam_pressure_bar = steam_pressure_at(p, model->steam_temperature_c);
+    /*
+     * What the steam mass alone would put in the steam path, which is where the
+     * pressure sits whenever nothing is being drawn out of it.
+     */
+    const float at_saturation_bar = steam_pressure_at(p, model->steam_temperature_c);
+    const float drawn_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
+
+    if (drawn_ml_per_s > 0.0f) {
+        /*
+         * A draw is open, so the pressure is no longer that relation's to fix. It
+         * carries on down from wherever the last step left it, by what this
+         * step's draw takes out of the path -- a gap that accumulates while the
+         * wand is held rather than a fresh answer each step, which is the whole
+         * difference between a state and a function of the temperature.
+         *
+         * The gap stops at the pressure there was to lose. Below that the path is
+         * at the room's pressure and there is nothing left for a further draw to
+         * take, and a gauge pressure driven past it would be this model claiming
+         * a vacuum the wand cannot pull.
+         */
+        model->steam_pressure_deficit_bar =
+            fminf(model->steam_pressure_deficit_bar +
+                      p->steam_pressure_fall_bar_per_ml * drawn_ml_per_s * seconds,
+                  at_saturation_bar);
+    } else {
+        /*
+         * Nothing is being drawn, so nothing holds the path below the relation
+         * and the gap is gone rather than closing. What is left is the relation's
+         * own answer, bit for bit, on this step and not several steps later --
+         * this structure claims that the two come apart while a draw is open, and
+         * claims nothing whatever about a recovery, which would be a second
+         * property of the machine that nobody here has established.
+         */
+        model->steam_pressure_deficit_bar = 0.0f;
+    }
+
+    model->steam_pressure_bar = at_saturation_bar - model->steam_pressure_deficit_bar;
 }
 
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
@@ -414,6 +512,12 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->steam_temperature_c = parameters->ambient_temperature_c;
     model->brew_pressure_bar = 0.0f;
     model->brew_flow_ml_per_s = 0.0f;
+    /* Nothing has been drawn, so the steam path is exactly where the saturation
+     * relation puts it and the gap below it is nothing. Stated rather than left
+     * to the clearing above, because an instance that started with a gap in it
+     * would report a pressure its own equations would not have produced -- the
+     * same defect the initial temperatures are chosen to avoid. */
+    model->steam_pressure_deficit_bar = 0.0f;
     model->steam_pressure_bar = steam_pressure_at(parameters, model->steam_temperature_c);
     model->initialised = true;
     return true;
@@ -436,23 +540,23 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
         return false;
     }
 
-    /*
-     * No relation these equations compute yet reads the drawn rate or the
-     * steam-side feed channel's commanded level: what either costs or drives
-     * is a later relation's term, not this one's. Accepting them here, ahead
-     * of that term existing, is what lets it be added without every caller of
-     * this seam changing again.
-     */
-    (void)steam_demand_ml_per_s;
-
     const float seconds = interval_millis / MILLIS_PER_SECOND;
 
     /*
      * Temperatures first, then pressures: steam pressure follows the steam
-     * mass, so within one step it reflects where that mass has just arrived.
+     * mass, so within one step it reflects where that mass has just arrived --
+     * including the ground the mass has just lost to the draw the same rate is
+     * about to be read for again.
+     *
+     * The drawn rate is handed to both of them. The steam-side feed channel's
+     * commanded level, which arrived alongside it, is still read by no relation
+     * these equations compute: what a replacing feed does to the steam block is
+     * a later relation's term, not this one's. Accepting it here, ahead of that
+     * term existing, is what lets it be added without every caller of this seam
+     * changing again.
      */
-    thermoblock_advance_temperatures(model, actuation, seconds);
-    thermoblock_advance_pressures(model, actuation, seconds);
+    thermoblock_advance_temperatures(model, actuation, steam_demand_ml_per_s, seconds);
+    thermoblock_advance_pressures(model, actuation, steam_demand_ml_per_s, seconds);
 
     /*
      * The rate drawn over the step just taken. It is recomputed whole rather

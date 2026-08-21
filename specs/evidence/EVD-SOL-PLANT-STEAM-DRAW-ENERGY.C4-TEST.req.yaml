@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-ENERGY.C4-TEST
+type: evidence
+title: Steam pressure reverts to the affine relation the instant demand returns to zero (SOL-PLANT-STEAM-DRAW-ENERGY.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-21T11:26:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops,test_a_closed_draw_leaves_no_trace_a_later_step_can_see; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops
+text: |-
+  The deficit state is reset to exactly 0.0f (not decayed) the step demand returns to zero, so pressure = at_saturation - 0.0f is bit-exact with the affine relation. Verified with TEST_ASSERT_EQUAL_MEMORY (byte-exact, not tolerance-based) and by re-opening a draw afterward and requiring exactly one step's worth of gap, which kills a decayed-rather-than-discarded implementation.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY.C4
+    type: satisfies

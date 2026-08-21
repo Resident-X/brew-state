@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-ENERGY.C2-TEST
+type: evidence
+title: The latent-heat coefficient is a described coefficient with a declared origin and error (SOL-PLANT-STEAM-DRAW-ENERGY.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-21T11:26:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_steam_draws_coefficients_carry_enforced_admissible_ranges,test_the_steam_draws_coefficients_declare_an_origin_and_an_error; firmware/test/test_plant_boiler/test_plant_boiler.c::test_this_structure_declares_and_enforces_the_steam_draws_ranges; firmware/params/thermoblock.params:59; firmware/params/thermoblock-variant.params
+text: |-
+  water.latent_heat_j_per_ml is declared in thermoblock.params as 2160.0 ~ 0.05 @document (IAPWS-IF97 saturation-line enthalpy x density at 100C), with an enforced admissible range [500,5000] in SPECS[]. boiler.params/boiler-variant.params (describes-no-machine) carry the bare value consistent with every other coefficient in those files. Verified the origin+error is read through the seam and the shipped description carries the required marker, kind, and non-empty account.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY.C2
+    type: satisfies

@@ -55,8 +55,10 @@ static const char DESCRIPTION[] = "ambient_temperature_c = 20.0\n"
                                   "brew.pressure_time_constant_s = 0.8\n"
                                   "water.feed_temperature_c = 18.0\n"
                                   "water.heat_capacity_j_per_ml_k = 4.15\n"
+                                  "water.latent_heat_j_per_ml = 2200.0\n"
                                   "steam.saturation_temperature_c = 100.0\n"
-                                  "steam.pressure_bar_per_k = 0.036\n";
+                                  "steam.pressure_bar_per_k = 0.036\n"
+                                  "steam.pressure_fall_bar_per_ml = 0.03\n";
 
 /* The channel the vessel's one heater is driven by. */
 #define HEATING_CHANNEL ACTUATION_CHANNEL_BREW_HEATER
@@ -81,8 +83,21 @@ static const char DESCRIPTION[] = "ambient_temperature_c = 20.0\n"
  * and the two are separate quantities in the description for that reason. */
 #define FEED_TEMPERATURE_C 18.0f
 #define WATER_J_PER_ML_K 4.15f
+/* What a millilitre costs to boil, which is the whole of what a steam draw costs
+ * this vessel. Far from the figure above it on purpose: the two are separate
+ * coefficients and a suite whose numbers were close together would let a
+ * structure reading the wrong one pass. */
+#define WATER_LATENT_J_PER_ML 2200.0f
 #define SATURATION_C 100.0f
 #define STEAM_BAR_PER_K 0.036f
+/* What a draw costs the steam path in pressure, per millilitre drawn. */
+#define STEAM_FALL_BAR_PER_ML 0.03f
+
+/* The rate the tests below hold the wand open at, and one no machine of this
+ * description could sustain -- two millilitres a second is four and a half
+ * kilowatts of latent heat against a fourteen-hundred-watt element. Chosen so
+ * the term moves the vessel by far more than the arithmetic's own resolution. */
+#define STEAM_DRAW_ML_PER_S 2.0f
 
 static void read_all(const plant_model_t *model, float out[PLANT_QUANTITY_COUNT])
 {
@@ -609,8 +624,10 @@ static void test_a_vessel_that_loses_nothing_heats_at_the_rate_its_power_implies
                                    "brew.pressure_time_constant_s = 0.8\n"
                                    "water.feed_temperature_c = 18.0\n"
                                    "water.heat_capacity_j_per_ml_k = 4.15\n"
+                                   "water.latent_heat_j_per_ml = 2200.0\n"
                                    "steam.saturation_temperature_c = 100.0\n"
-                                   "steam.pressure_bar_per_k = 0.036\n";
+                                   "steam.pressure_bar_per_k = 0.036\n"
+                                   "steam.pressure_fall_bar_per_ml = 0.03\n";
 
     plant_parameters_t lossless;
     plant_parameter_error_t fault;
@@ -748,8 +765,10 @@ static const char ANNOTATED[] = "ambient_temperature_c = 20.0 ~ 0.25\n"
                                 "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
                                 "water.feed_temperature_c = 18.0 ~ 0.5\n"
                                 "water.heat_capacity_j_per_ml_k = 4.15 ~ 0.03\n"
+                                "water.latent_heat_j_per_ml = 2200.0 ~ 0.05\n"
                                 "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
-                                "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
+                                "steam.pressure_bar_per_k = 0.036 ~ 0.3\n"
+                                "steam.pressure_fall_bar_per_ml = 0.03 ~ 0.65\n";
 
 static const struct {
     const char *name;
@@ -764,8 +783,10 @@ static const struct {
     {"brew.pressure_time_constant_s", 0.5f},
     {"water.feed_temperature_c", 0.5f},
     {"water.heat_capacity_j_per_ml_k", 0.03f},
+    {"water.latent_heat_j_per_ml", 0.05f},
     {"steam.saturation_temperature_c", 0.02f},
     {"steam.pressure_bar_per_k", 0.3f},
+    {"steam.pressure_fall_bar_per_ml", 0.65f},
 };
 
 #define ASSUMED_COUNT (sizeof(ASSUMED) / sizeof(ASSUMED[0]))
@@ -830,8 +851,10 @@ static void test_an_assumed_error_that_cannot_stand_is_refused_here_too(void)
                                    "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
                                    "water.feed_temperature_c = 18.0 ~ 0.5\n"
                                    "water.heat_capacity_j_per_ml_k = 4.15 ~ 0.03\n"
+                                   "water.latent_heat_j_per_ml = 2200.0 ~ 0.05\n"
                                    "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
-                                   "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
+                                   "steam.pressure_bar_per_k = 0.036 ~ 0.3\n"
+                                   "steam.pressure_fall_bar_per_ml = 0.03 ~ 0.65\n";
     static const char EMPTY[] = "ambient_temperature_c = 20.0 ~\n"
                                 "vessel.thermal_mass_j_per_k = 900.0 ~ 0.4\n"
                                 "vessel.heater_power_w = 1400.0 ~ 0.2\n"
@@ -841,8 +864,10 @@ static void test_an_assumed_error_that_cannot_stand_is_refused_here_too(void)
                                 "brew.pressure_time_constant_s = 0.8 ~ 0.5\n"
                                 "water.feed_temperature_c = 18.0 ~ 0.5\n"
                                 "water.heat_capacity_j_per_ml_k = 4.15 ~ 0.03\n"
+                                "water.latent_heat_j_per_ml = 2200.0 ~ 0.05\n"
                                 "steam.saturation_temperature_c = 100.0 ~ 0.02\n"
-                                "steam.pressure_bar_per_k = 0.036 ~ 0.3\n";
+                                "steam.pressure_bar_per_k = 0.036 ~ 0.3\n"
+                                "steam.pressure_fall_bar_per_ml = 0.03 ~ 0.65\n";
     plant_parameters_t untouched;
     plant_parameters_t before;
     plant_parameter_error_t fault;
@@ -1412,6 +1437,487 @@ static void test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed(void)
     TEST_ASSERT_TRUE(vessel(&at_feed) > FEED_TEMPERATURE_C);
 }
 
+/* --- What the steam drawn off the vessel costs it ------------------------- */
+
+/* The steam path's pressure, read through the seam. */
+static float steam_pressure(const plant_model_t *model)
+{
+    float value = 0.0f;
+
+    TEST_ASSERT_TRUE(plant_model_quantity(model, PLANT_QUANTITY_STEAM_PRESSURE_BAR, &value));
+    return value;
+}
+
+/* What the saturation relation alone gives at a vessel temperature, written the
+ * way this architecture states it rather than the way the source spells it. */
+static float saturation_pressure(float vessel_temperature_c)
+{
+    const float above = vessel_temperature_c - SATURATION_C;
+    return above > 0.0f ? STEAM_BAR_PER_K * above : 0.0f;
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C1: The steam-side state each structure keeps
+/// loses energy to drawn steam through its latent heat, independent of any
+/// existing loss term.
+///
+/// This architecture keeps one state for both sides, so the steam-side state it
+/// keeps is the vessel -- and the vessel owes the term. Asserted against the
+/// closed form of its own balance with the wand open: the loss coefficient sets
+/// how fast it relaxes and the latent power sets where it is relaxing to. The
+/// pump is shut throughout, so the only two things acting are the room and the
+/// wand, and a term of the wrong size, of the wrong sign, or one that entered
+/// the relaxation instead of the balance lands somewhere this refuses.
+static void test_the_vessel_pays_the_latent_heat_of_what_is_drawn_off_it(void)
+{
+    static const float STARTS[] = {40.0f, 95.0f, 150.0f};
+    static const uint32_t INTERVAL_MS = 100u;
+
+    for (size_t i = 0u; i < sizeof(STARTS) / sizeof(STARTS[0]); i++) {
+        plant_model_t model;
+        const plant_actuation_t idle = commanding(0u, 0u);
+
+        initialise(&model);
+        TEST_ASSERT_TRUE(plant_model_set_state(
+            &model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, STARTS[i]));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &idle, STEAM_DRAW_ML_PER_S, INTERVAL_MS));
+
+        const double seconds = (double)INTERVAL_MS / 1000.0;
+        const double drawn_w = (double)WATER_LATENT_J_PER_ML * (double)STEAM_DRAW_ML_PER_S;
+        const double settles_at = (double)AMBIENT_C - drawn_w / (double)VESSEL_LOSS_W_PER_K;
+        const double time_constant_s =
+            (double)VESSEL_MASS_J_PER_K / (double)VESSEL_LOSS_W_PER_K;
+        const double expected =
+            settles_at + ((double)STARTS[i] - settles_at) * exp(-seconds / time_constant_s);
+        const double got = (double)vessel(&model);
+
+        if (!(fabs(got - expected) < 1.0e-3)) {
+            char message[240];
+            (void)snprintf(message, sizeof(message),
+                           "from %.9g: the vessel reached %.9g, the balance with the wand open "
+                           "gives %.9g",
+                           (double)STARTS[i], got, expected);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C1: ...through its latent heat, independent of
+/// any existing loss term.
+///
+/// The shape of the term rather than its size, and what separates a latent heat
+/// from the sensible-heat difference this structure already writes for the water
+/// its pump draws out. What the wand costs is a power the rate alone fixes, so
+/// the difference between a step with it open and the same step with it shut is
+/// the same number wherever the vessel is sitting -- and stays the same number
+/// with the pump open beside it, which is the independence the two terms are
+/// required to have. A steam term written as a difference against the feed, or
+/// folded into the drawn-water coefficient, changes with both.
+static void test_what_the_wand_costs_is_the_same_wherever_the_vessel_sits(void)
+{
+    static const float STARTS[] = {60.0f, 150.0f};
+    static const uint16_t PUMPS[] = {0u, ACTUATION_FULL_SCALE};
+    static const uint32_t INTERVAL_MS = 100u;
+
+    float costs[sizeof(STARTS) / sizeof(STARTS[0])][sizeof(PUMPS) / sizeof(PUMPS[0])];
+
+    for (size_t i = 0u; i < sizeof(STARTS) / sizeof(STARTS[0]); i++) {
+        for (size_t j = 0u; j < sizeof(PUMPS) / sizeof(PUMPS[0]); j++) {
+            plant_model_t drawn;
+            plant_model_t undrawn;
+            const plant_actuation_t actuation = commanding(0u, PUMPS[j]);
+
+            initialise(&drawn);
+            initialise(&undrawn);
+            TEST_ASSERT_TRUE(plant_model_set_state(
+                &drawn, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, STARTS[i]));
+            TEST_ASSERT_TRUE(plant_model_set_state(
+                &undrawn, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, STARTS[i]));
+
+            TEST_ASSERT_TRUE(plant_model_step(&drawn, &actuation, STEAM_DRAW_ML_PER_S,
+                                              INTERVAL_MS));
+            TEST_ASSERT_TRUE(plant_model_step(&undrawn, &actuation, 0.0f, INTERVAL_MS));
+
+            costs[i][j] = vessel(&undrawn) - vessel(&drawn);
+        }
+    }
+
+    /*
+     * With the pump shut the cost is a power over a thermal mass over a step,
+     * the relaxation across so short a step being within a part in ten thousand
+     * of unity. With the pump open the vessel's own relaxation is faster, so the
+     * step carries a slightly smaller share of the same power -- which is the
+     * relaxation the two losses share and not the two terms interacting. The
+     * tolerance below admits that share and nothing like the tens of kelvin a
+     * difference-shaped steam term would put between the two temperatures.
+     */
+    const float seconds = (float)INTERVAL_MS / 1000.0f;
+    const float expected =
+        (WATER_LATENT_J_PER_ML * STEAM_DRAW_ML_PER_S * seconds) / VESSEL_MASS_J_PER_K;
+
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-3f, expected, costs[0][0]);
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f, costs[0][0], costs[1][0]);
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-2f, costs[0][1], costs[1][1]);
+    /* The premise: the wand did something. */
+    TEST_ASSERT_TRUE(costs[0][0] > 0.4f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C1: ...independent of any existing loss term --
+/// at no demand nothing that was here before moves, the brew-flow loss included.
+///
+/// The existing drawn-water term is the one this slice was most able to break,
+/// because the new term sits in the same balance and the two are one edit apart
+/// in the source. A run under a full pump with the wand shut, checked against the
+/// two-loss closed form the suite already holds that term to, is what says the
+/// arithmetic that was here is untouched -- and the same run with the wand open
+/// has to come apart from it, or the comparison is a coefficient nothing reads.
+static void test_with_the_wand_shut_the_brew_flow_loss_is_what_it_was(void)
+{
+    plant_model_t shut;
+    plant_model_t open;
+    /* Ten seconds against a time constant of about thirty, so the relaxation
+     * correction is doing real work rather than sitting at unity. */
+    const uint32_t interval_ms = 10000u;
+    const float start_c = 90.0f;
+    const plant_actuation_t drawing_only = commanding(0u, ACTUATION_FULL_SCALE);
+
+    initialise(&shut);
+    initialise(&open);
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&shut, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, start_c));
+    TEST_ASSERT_TRUE(
+        plant_model_set_state(&open, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, start_c));
+
+    TEST_ASSERT_TRUE(plant_model_step(&shut, &drawing_only, 0.0f, interval_ms));
+    TEST_ASSERT_TRUE(plant_model_step(&open, &drawing_only, STEAM_DRAW_ML_PER_S, interval_ms));
+
+    const float seconds = (float)interval_ms / 1000.0f;
+    const float drawn_w_per_k = PUMP_FLOW_ML_PER_S * WATER_J_PER_ML_K;
+    const float settling_w_per_k = VESSEL_LOSS_W_PER_K + drawn_w_per_k;
+    const float settles_at =
+        (VESSEL_LOSS_W_PER_K * AMBIENT_C + drawn_w_per_k * FEED_TEMPERATURE_C) / settling_w_per_k;
+    const float time_constant_s = VESSEL_MASS_J_PER_K / settling_w_per_k;
+    const float expected = settles_at + (start_c - settles_at) * expf(-seconds / time_constant_s);
+
+    TEST_ASSERT_FLOAT_WITHIN(1e-2f, expected, vessel(&shut));
+
+    /*
+     * And with the wand open the same run lands lower, by the latent power over
+     * the same relaxation. Written out rather than merely asserted to be lower:
+     * the two losses sum without interacting, so the steam term shifts where the
+     * vessel is heading by exactly its power over the settling coefficient and
+     * changes nothing about how fast it gets there.
+     */
+    const float steam_w = WATER_LATENT_J_PER_ML * STEAM_DRAW_ML_PER_S;
+    const float settles_lower = settles_at - steam_w / settling_w_per_k;
+    const float expected_open =
+        settles_lower + (start_c - settles_lower) * expf(-seconds / time_constant_s);
+    TEST_ASSERT_FLOAT_WITHIN(1e-2f, expected_open, vessel(&open));
+    TEST_ASSERT_TRUE(vessel(&open) < vessel(&shut) - 5.0f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C3: Steam pressure is driven by an integrated
+/// state once a draw is open, rather than derived fresh from temperature every
+/// step.
+///
+/// The distinction stated as arithmetic, on this architecture as on the other
+/// one. At every step the gap between what the saturation relation gives for the
+/// vessel the model has just advanced and what it reports for the pressure is
+/// read off, and required to be the whole of what the draw has taken since it
+/// opened. A pressure derived fresh from the vessel each step, with the draw's
+/// cost applied to that fresh answer, leaves the gap at one step's worth for the
+/// whole run.
+static void test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it(void)
+{
+    plant_model_t model;
+    const plant_actuation_t heating_only = heating();
+
+    initialise(&model);
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &heating_only, 0.0f, STEP_MS));
+    }
+    TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
+
+    const double seconds = (double)STEP_MS / 1000.0;
+    const double per_step_bar =
+        (double)STEAM_FALL_BAR_PER_ML * (double)STEAM_DRAW_ML_PER_S * seconds;
+    TEST_ASSERT_TRUE(per_step_bar > 0.0);
+
+    for (int step = 1; step <= 10; step++) {
+        TEST_ASSERT_TRUE(
+            plant_model_step(&model, &heating_only, STEAM_DRAW_ML_PER_S, STEP_MS));
+
+        const double relation = (double)saturation_pressure(vessel(&model));
+        const double reported = (double)steam_pressure(&model);
+        const double gap = relation - reported;
+        const double expected = per_step_bar * (double)step;
+
+        if (!(fabs(gap - expected) < 1.0e-5)) {
+            char message[240];
+            (void)snprintf(message, sizeof(message),
+                           "after %d steps of draw the path sits %.9g bar below the relation, and "
+                           "the draw has taken %.9g",
+                           step, gap, expected);
+            TEST_FAIL_MESSAGE(message);
+        }
+        TEST_ASSERT_TRUE(reported > 0.0);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C4: Steam pressure reverts to the affine relation
+/// the instant demand returns to zero.
+///
+/// Held below the relation while the wand is open; the relation itself, byte for
+/// byte, on the very next step with nothing drawn -- a tolerance would accept a
+/// reversion that had merely started, which is a different claim; and a fresh
+/// draw afterwards starting from nothing rather than from where the last one
+/// stopped, which is what "no leftover offset" means and what a gap that decayed
+/// towards the relation rather than being discarded would fail.
+static void test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops(void)
+{
+    plant_model_t model;
+    const plant_actuation_t heating_only = heating();
+
+    initialise(&model);
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &heating_only, 0.0f, STEP_MS));
+    }
+    for (int step = 0; step < 10; step++) {
+        TEST_ASSERT_TRUE(
+            plant_model_step(&model, &heating_only, STEAM_DRAW_ML_PER_S, STEP_MS));
+    }
+
+    const float under_draw = steam_pressure(&model);
+    TEST_ASSERT_TRUE(under_draw < saturation_pressure(vessel(&model)) - 0.01f);
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &heating_only, 0.0f, STEP_MS));
+    const float reverted = steam_pressure(&model);
+    const float relation = saturation_pressure(vessel(&model));
+    TEST_ASSERT_EQUAL_MEMORY(&relation, &reverted, sizeof(float));
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &heating_only, STEAM_DRAW_ML_PER_S, STEP_MS));
+    const double seconds = (double)STEP_MS / 1000.0;
+    const double one_step_bar =
+        (double)STEAM_FALL_BAR_PER_ML * (double)STEAM_DRAW_ML_PER_S * seconds;
+    const double gap =
+        (double)saturation_pressure(vessel(&model)) - (double)steam_pressure(&model);
+    TEST_ASSERT_TRUE(fabs(gap - one_step_bar) < 1.0e-5);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: The stepped structure stays admissible with a
+/// draw open.
+///
+/// Every quantity stays a number and the steam path's gauge pressure stays at or
+/// above nothing, under both draws at once and at a rate no machine of this
+/// description could sustain. On this architecture that is a sharper question
+/// than on the other one: the pump and the wand are pulling on the same vessel,
+/// so a run like this takes it a long way below where anything settles, and the
+/// pressure relation is asked for an answer well below saturation while the gap
+/// is being driven the other way.
+static void test_the_structure_stays_admissible_with_a_draw_open(void)
+{
+    plant_model_t model;
+    const plant_actuation_t working = commanding(ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE);
+
+    initialise(&model);
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        float quantities[PLANT_QUANTITY_COUNT];
+
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, 50.0f, STEP_MS));
+        read_all(&model, quantities);
+
+        for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
+            char message[200];
+            (void)snprintf(message, sizeof(message),
+                           "step %d: quantity %d left the finite range under a draw", step,
+                           quantity);
+            TEST_ASSERT_TRUE_MESSAGE(isfinite(quantities[quantity]), message);
+        }
+        TEST_ASSERT_TRUE(quantities[PLANT_QUANTITY_STEAM_PRESSURE_BAR] >= 0.0f);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: ...with a draw open, including one the path
+/// cannot supply.
+///
+/// The floor asserted where it is reached rather than only where it is not. A
+/// draw asking for more pressure than the vessel has to give takes the path to
+/// exactly nothing and leaves it there however long it is held; a gap that went
+/// on accumulating past the pressure there was to lose would report a negative
+/// gauge pressure, and one that stopped short would leave the path holding
+/// pressure through a draw nothing could supply. The floor has to be the gap's
+/// doing rather than the vessel having gone cold, so the relation is required to
+/// still have pressure in it, and closing the wand has to hand the whole of that
+/// back on the next step.
+static void test_a_draw_the_path_cannot_supply_stops_at_nothing(void)
+{
+    /* A path that sags far harder per millilitre than this suite's own
+     * description, because the floor is otherwise unreachable: at the ordinary
+     * figure the vessel goes cold long before the path empties, and a floor
+     * reached that way would establish nothing about the gap. */
+    static const char STEEP[] = "ambient_temperature_c = 20.0\n"
+                                "vessel.thermal_mass_j_per_k = 900.0\n"
+                                "vessel.heater_power_w = 1400.0\n"
+                                "vessel.loss_w_per_k = 2.0\n"
+                                "pump.pressure_bar = 15.0\n"
+                                "pump.flow_ml_per_s = 7.0\n"
+                                "brew.pressure_time_constant_s = 0.8\n"
+                                "water.feed_temperature_c = 18.0\n"
+                                "water.heat_capacity_j_per_ml_k = 4.15\n"
+                                "water.latent_heat_j_per_ml = 2200.0\n"
+                                "steam.saturation_temperature_c = 100.0\n"
+                                "steam.pressure_bar_per_k = 0.036\n"
+                                "steam.pressure_fall_bar_per_ml = 10.0\n";
+
+    plant_parameters_t steep;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    const plant_actuation_t heating_only = heating();
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(STEEP, sizeof(STEEP) - 1u, &steep, &fault));
+    TEST_ASSERT_EQUAL(PLANT_PARAMETER_OK, fault.fault);
+    TEST_ASSERT_TRUE(plant_model_init(&model, &steep));
+
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &heating_only, 0.0f, STEP_MS));
+    }
+    TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
+
+    for (int step = 0; step < 20; step++) {
+        TEST_ASSERT_TRUE(
+            plant_model_step(&model, &heating_only, STEAM_DRAW_ML_PER_S, STEP_MS));
+        TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+    }
+
+    TEST_ASSERT_TRUE(saturation_pressure(vessel(&model)) > 0.0f);
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &heating_only, 0.0f, STEP_MS));
+    const float reverted = steam_pressure(&model);
+    const float relation = saturation_pressure(vessel(&model));
+    TEST_ASSERT_EQUAL_MEMORY(&relation, &reverted, sizeof(float));
+    TEST_ASSERT_TRUE(reverted > 0.0f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: ...with a draw open -- including a demand
+/// that is not one.
+///
+/// The seam accepts the demand as a plain step argument and refuses nothing
+/// about it. What this structure does with a figure that is not a draw is its own
+/// business, and it reads it as no draw: steam arriving rather than leaving is
+/// not a case a machine of this architecture has either, and a figure that is not
+/// a finite rate would make every quantity downstream stop being one -- which no
+/// comparison in this suite could see, since a comparison against one of those is
+/// false either way. Both an undefined rate and an unbounded one are offered,
+/// because they fail differently: the first poisons the arithmetic at once, the
+/// second takes the vessel to an infinity it never comes back from.
+static void test_a_demand_that_is_not_a_draw_is_read_as_no_draw(void)
+{
+    static const float NOT_A_DRAW[] = {-1.0f, -500.0f, NAN, INFINITY, -INFINITY};
+
+    for (size_t i = 0u; i < sizeof(NOT_A_DRAW) / sizeof(NOT_A_DRAW[0]); i++) {
+        plant_model_t offered;
+        plant_model_t shut;
+        float from_offered[PLANT_QUANTITY_COUNT];
+        float from_shut[PLANT_QUANTITY_COUNT];
+        const plant_actuation_t heating_only = heating();
+
+        initialise(&offered);
+        initialise(&shut);
+        for (int step = 0; step < SETTLE_STEPS; step++) {
+            TEST_ASSERT_TRUE(
+                plant_model_step(&offered, &heating_only, NOT_A_DRAW[i], STEP_MS));
+            TEST_ASSERT_TRUE(plant_model_step(&shut, &heating_only, 0.0f, STEP_MS));
+        }
+
+        read_all(&offered, from_offered);
+        read_all(&shut, from_shut);
+        TEST_ASSERT_EQUAL_MEMORY(from_shut, from_offered, sizeof(from_shut));
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C2: The latent-heat coefficient is a described
+/// coefficient...
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C7: The pressure-divergence-rate coefficient is a
+/// described coefficient...
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: The stepped structure stays admissible with a
+/// draw open -- this architecture declares its own range for each new
+/// coefficient and enforces it at load.
+///
+/// Neither coefficient is inherited from the other structure: a structure reads
+/// its own parameter table, so the ranges are declared here as well and a
+/// description offering a value outside one is refused rather than run. What a
+/// millilitre costs to boil has a floor above zero, because a millilitre that
+/// cost nothing to vaporise is not water and would make a steam draw free again.
+/// What a draw costs the path in pressure may be nothing -- a vessel that sags
+/// not at all is odd rather than inadmissible -- and may not be less.
+static void test_this_structure_declares_and_enforces_the_steam_draws_ranges(void)
+{
+    static const struct {
+        const char *line;
+        bool admissible;
+    } OFFERED[] = {
+        {"water.latent_heat_j_per_ml = 0.0\n", false},
+        {"water.latent_heat_j_per_ml = -2200.0\n", false},
+        {"water.latent_heat_j_per_ml = 1.0e9\n", false},
+        {"water.latent_heat_j_per_ml = 2200.0\n", true},
+        {"steam.pressure_fall_bar_per_ml = -0.03\n", false},
+        {"steam.pressure_fall_bar_per_ml = 1.0e9\n", false},
+        {"steam.pressure_fall_bar_per_ml = 0.0\n", true},
+        {"steam.pressure_fall_bar_per_ml = 0.03\n", true},
+    };
+
+    for (size_t i = 0u; i < sizeof(OFFERED) / sizeof(OFFERED[0]); i++) {
+        char text[sizeof(DESCRIPTION) + 64];
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        char message[200];
+
+        /*
+         * The suite's own description with one line appended, which the loader
+         * refuses as a repeated name unless the original is dropped -- so the
+         * original is dropped by rebuilding the text without it.
+         */
+        const char *const name_end = strchr(OFFERED[i].line, ' ');
+        TEST_ASSERT_NOT_NULL(name_end);
+        const size_t name_length = (size_t)(name_end - OFFERED[i].line);
+        char name[64];
+        TEST_ASSERT_TRUE(name_length < sizeof(name));
+        memcpy(name, OFFERED[i].line, name_length);
+        name[name_length] = '\0';
+
+        size_t used = 0u;
+        const char *cursor = DESCRIPTION;
+        while (*cursor != '\0') {
+            const char *const line_end = strchr(cursor, '\n');
+            const size_t line_length = (size_t)(line_end - cursor) + 1u;
+
+            if (strncmp(cursor, OFFERED[i].line, name_length) != 0) {
+                memcpy(text + used, cursor, line_length);
+                used += line_length;
+            }
+            cursor = line_end + 1;
+        }
+        const size_t replacement = strlen(OFFERED[i].line);
+        memcpy(text + used, OFFERED[i].line, replacement);
+        used += replacement;
+        TEST_ASSERT_TRUE(used < sizeof(text));
+
+        memset(&fault, 0, sizeof(fault));
+        const bool accepted = plant_parameters_load(text, used, &loaded, &fault);
+        (void)snprintf(message, sizeof(message), "offering '%.*s'",
+                       (int)(replacement - 1u), OFFERED[i].line);
+        if (OFFERED[i].admissible) {
+            TEST_ASSERT_TRUE_MESSAGE(accepted, message);
+        } else {
+            TEST_ASSERT_FALSE_MESSAGE(accepted, message);
+            TEST_ASSERT_EQUAL_MESSAGE(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault, message);
+            /* And the refusal names the coefficient that was out of range rather
+             * than a neighbour of it. */
+            TEST_ASSERT_EQUAL_STRING_MESSAGE(name, fault.parameter, message);
+        }
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1446,6 +1952,15 @@ int main(void)
     RUN_TEST(test_the_vessel_settles_where_the_drawn_energy_balance_puts_it);
     RUN_TEST(test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed);
     RUN_TEST(test_a_long_step_under_a_draw_is_corrected_for_both_losses);
+    RUN_TEST(test_the_vessel_pays_the_latent_heat_of_what_is_drawn_off_it);
+    RUN_TEST(test_what_the_wand_costs_is_the_same_wherever_the_vessel_sits);
+    RUN_TEST(test_with_the_wand_shut_the_brew_flow_loss_is_what_it_was);
+    RUN_TEST(test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it);
+    RUN_TEST(test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops);
+    RUN_TEST(test_the_structure_stays_admissible_with_a_draw_open);
+    RUN_TEST(test_a_draw_the_path_cannot_supply_stops_at_nothing);
+    RUN_TEST(test_a_demand_that_is_not_a_draw_is_read_as_no_draw);
+    RUN_TEST(test_this_structure_declares_and_enforces_the_steam_draws_ranges);
     RUN_TEST(test_the_estimator_refuses_this_architecture);
     return UNITY_END();
 }

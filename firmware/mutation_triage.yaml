@@ -85,6 +85,34 @@
 # matter with the pump open -- and it was closed by a test rather than recorded,
 # the way the others before it were.
 
+# Both steam-pressure judgements were re-made at new lines again when the steam
+# side started paying for what is drawn off it. Neither expression moved relative
+# to anything it depends on: the thermoblock's was pushed down by its parameter
+# table gaining two entries and by the note above that table growing a sentence
+# about the latent heat's bounds, and the boiler's by the same table gaining two
+# and by that structure's note growing a paragraph about its three water
+# properties. The comparison at each new line is character for character the one
+# the judgement was written about.
+#
+# What it is about is untouched by any of it, and that is worth being exact about
+# rather than asserting, because this is the first change to reach the steam
+# pressure relation itself. The judgement is that a gauge pressure is nothing
+# below saturation whether the comparison is written `>` or `>=`, since the two
+# differ only at exactly zero where the product and the literal are the same
+# value. The draw does not enter that expression: it is applied to the expression's
+# answer afterwards, as a gap subtracted from it, and the gap is bounded above by
+# that same answer -- so at exactly saturation the mutant and the original hand
+# the same zero to the same subtraction of a gap that is itself clamped to zero.
+#
+# The arithmetic the draw did add produced mutants of its own in both structures,
+# and the suites killed every one of them; none of it is recorded here, which is
+# what that means. The comparison that decides whether a draw is open is the one
+# that would most plausibly have survived -- widening it to `>=` changes nothing
+# at a fresh instance, since the gap it then fails to clear is already nothing --
+# and it is killed by the tests that close a draw and require the pressure to be
+# the saturation relation again on the next step, which is the only place a gap
+# left standing at no demand is visible.
+
 # Every judgement about plant_parameters.c was re-made at a new line a second
 # time, when the grammar grew the error the design assumes for a value. The
 # loader gained a second annotation to read, a helper both of its public loaders
@@ -206,7 +234,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:95:31:
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:102:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
@@ -216,7 +244,7 @@ survivors:
       product is a zero, and a zero of either sign compares equal to the literal
       and behaves identically in everything downstream.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:84:31:
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:94:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`
