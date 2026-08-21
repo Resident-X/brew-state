@@ -41,6 +41,8 @@ brew.pressure_time_constant_s = 0.8
 
 water.feed_temperature_c = 20.0
 water.heat_capacity_j_per_ml_k = 4.15
+water.latent_heat_j_per_ml = 2160.0
 
 steam.saturation_temperature_c = 100.0
 steam.pressure_bar_per_k = 0.036
+steam.pressure_fall_bar_per_ml = 0.02

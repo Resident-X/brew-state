@@ -30,6 +30,12 @@
  * coefficient makes the vessel run away from ambient, and a negative power or
  * pressure drives the wrong way. The upper bounds are where a value stops being
  * an espresso machine and starts being a data-entry error.
+ *
+ * The three water properties are bounded around water's own figures rather than
+ * around this machine's, because they are not this machine's numbers: a heat
+ * capacity or a latent heat outside those bands describes some other fluid, and
+ * these equations turn a volume rate into an energy flux with both, which is
+ * where a wrong substance would look like a plausible machine.
  */
 static const plant_parameter_spec_t SPECS[] = {
     {"ambient_temperature_c", -40.0f, 60.0f, offsetof(plant_parameters_t, ambient_temperature_c)},
@@ -49,11 +55,15 @@ static const plant_parameter_spec_t SPECS[] = {
      offsetof(plant_parameters_t, water_feed_temperature_c)},
     {"water.heat_capacity_j_per_ml_k", 1.0f, 10.0f,
      offsetof(plant_parameters_t, water_heat_capacity_j_per_ml_k)},
+    {"water.latent_heat_j_per_ml", 500.0f, 5000.0f,
+     offsetof(plant_parameters_t, water_latent_heat_j_per_ml)},
 
     {"steam.saturation_temperature_c", 0.0f, 300.0f,
      offsetof(plant_parameters_t, steam_saturation_temperature_c)},
     {"steam.pressure_bar_per_k", 0.0f, 10.0f,
      offsetof(plant_parameters_t, steam_pressure_bar_per_k)},
+    {"steam.pressure_fall_bar_per_ml", 0.0f, 10.0f,
+     offsetof(plant_parameters_t, steam_pressure_fall_bar_per_ml)},
 };
 
 actuation_channel_set_t plant_structure_actuation_channels(void)
@@ -122,7 +132,47 @@ static float commanded_flow_ml_per_s(const plant_parameters_t *p,
            (actuation->level_permille[ACTUATION_CHANNEL_PUMP] / PERMILLE_FULL_SCALE);
 }
 
-void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuation, float seconds)
+/*
+ * The rate steam is actually leaving the machine, from the rate the step was
+ * handed.
+ *
+ * A demand below zero is steam arriving rather than leaving, which is not a case
+ * a machine of this architecture has and not one these relations carry a term
+ * for. It is read as no draw rather than run backwards through them, which would
+ * put energy into the vessel and pressure into the steam path out of nothing at
+ * all.
+ *
+ * A demand that is not a finite rate is read the same way, and for a reason of
+ * its own: an unbounded or undefined rate stops every relation it enters
+ * producing a number, and every quantity downstream with them, and a comparison
+ * against one of those is false whichever way it is written -- so nothing
+ * inspecting the model afterwards can see what happened. On this architecture
+ * that reaches further than on the other one, because the single vessel answers
+ * both temperature quantities.
+ */
+static float drawn_steam_ml_per_s(float steam_demand_ml_per_s)
+{
+    return isfinite(steam_demand_ml_per_s) ? fmaxf(steam_demand_ml_per_s, 0.0f) : 0.0f;
+}
+
+/*
+ * What the steam being drawn costs the vessel, as a power: a volume rate times
+ * what a millilitre costs to turn into vapour, and nothing else.
+ *
+ * No temperature enters it, and that is the difference from the drawn-water term
+ * beside it rather than an omission. Water leaving as liquid leaves at a
+ * temperature, so what it costs is a difference against the temperature it
+ * arrived at; water leaving as vapour has no such second temperature on this
+ * structure, and the enthalpy it takes is what a millilitre costs to boil
+ * whatever the vessel then settles at.
+ */
+static float drawn_steam_power_w(const plant_parameters_t *p, float drawn_ml_per_s)
+{
+    return p->water_latent_heat_j_per_ml * drawn_ml_per_s;
+}
+
+void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuation,
+                           float steam_demand_ml_per_s, float seconds)
 {
     if (model == NULL || actuation == NULL) {
         return;
@@ -167,12 +217,24 @@ void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuat
         (seconds * settling_w_per_k) / p->vessel_thermal_mass_j_per_k;
     const float effective_seconds = seconds * relaxation_factor(steps_of_time_constant);
 
+    /*
+     * And a third loss, which is neither of the two above and is written beside
+     * them rather than folded into either. What the steam leaving takes is a
+     * power the rate alone sets: it does not depend on where the vessel has got
+     * to, so it moves what the vessel is heading for without changing how fast it
+     * gets there, and it stays out of the settling coefficient for that reason.
+     * With the wand closed it is exactly zero and this is the step it always was.
+     */
+    const float steam_drawn_w =
+        drawn_steam_power_w(p, drawn_steam_ml_per_s(steam_demand_ml_per_s));
+
     model->vessel_temperature_c +=
-        ((delivered_w - lost_w) * effective_seconds) / p->vessel_thermal_mass_j_per_k;
+        ((delivered_w - lost_w - steam_drawn_w) * effective_seconds) /
+        p->vessel_thermal_mass_j_per_k;
 }
 
 void boiler_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,
-                              float seconds)
+                              float steam_demand_ml_per_s, float seconds)
 {
     if (model == NULL || actuation == NULL) {
         return;
@@ -186,7 +248,36 @@ void boiler_advance_pressures(plant_model_t *model, const plant_actuation_t *act
     const float settled = settled_fraction(seconds / p->brew_pressure_time_constant_s);
     model->brew_pressure_bar += (commanded_bar - model->brew_pressure_bar) * settled;
 
-    model->steam_pressure_bar = steam_pressure_at(p, model->vessel_temperature_c);
+    /* Where the vessel alone puts the steam path, which is where the pressure
+     * sits whenever nothing is being drawn out of it. */
+    const float at_saturation_bar = steam_pressure_at(p, model->vessel_temperature_c);
+    const float drawn_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
+
+    if (drawn_ml_per_s > 0.0f) {
+        /*
+         * A draw is open, so the pressure is no longer the vessel's to fix. It
+         * carries on down from wherever the last step left it, by what this
+         * step's draw takes out of the path -- a gap that accumulates while the
+         * wand is held rather than a fresh answer each step, which is the
+         * difference between a state and a function of the temperature.
+         *
+         * The gap stops at the pressure there was to lose: below that the path is
+         * at the room's pressure and a further draw has nothing left to take.
+         */
+        model->steam_pressure_deficit_bar =
+            fminf(model->steam_pressure_deficit_bar +
+                      p->steam_pressure_fall_bar_per_ml * drawn_ml_per_s * seconds,
+                  at_saturation_bar);
+    } else {
+        /*
+         * Nothing is being drawn, so nothing holds the path below the vessel and
+         * the gap is gone rather than closing. What is left is the vessel's own
+         * relation, bit for bit, on this step rather than several steps later.
+         */
+        model->steam_pressure_deficit_bar = 0.0f;
+    }
+
+    model->steam_pressure_bar = at_saturation_bar - model->steam_pressure_deficit_bar;
 }
 
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
@@ -209,6 +300,11 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->vessel_temperature_c = parameters->ambient_temperature_c;
     model->brew_pressure_bar = 0.0f;
     model->brew_flow_ml_per_s = 0.0f;
+    /* Nothing has been drawn, so the steam path is where the vessel's own
+     * relation puts it and the gap below it is nothing. Stated rather than left
+     * to the clearing above, because an instance carrying a gap would report a
+     * pressure its own equations would not have produced. */
+    model->steam_pressure_deficit_bar = 0.0f;
     model->steam_pressure_bar = steam_pressure_at(parameters, model->vessel_temperature_c);
     model->initialised = true;
     return true;
@@ -231,18 +327,22 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
         return false;
     }
 
-    /* This architecture has no steam-side feed pump and no relation yet that
-     * reads the drawn rate, so the demand is accepted and not acted on. */
-    (void)steam_demand_ml_per_s;
-
+    /*
+     * This architecture has no steam-side feed pump -- the channel that commands
+     * one is not among the ones it answers, and a non-zero level on it was
+     * refused above. The drawn rate is a different matter and is read by both of
+     * the advances below: a machine of this kind has one wand like any other, and
+     * what that wand takes comes out of the one vessel.
+     */
     const float seconds = interval_millis / MILLIS_PER_SECOND;
 
     /*
      * The vessel first, then the pressures: steam pressure follows the vessel,
-     * so within one step it reflects where the vessel has just arrived.
+     * so within one step it reflects where the vessel has just arrived -- and the
+     * vessel has just given up what this step's draw took out of it.
      */
-    boiler_advance_vessel(model, actuation, seconds);
-    boiler_advance_pressures(model, actuation, seconds);
+    boiler_advance_vessel(model, actuation, steam_demand_ml_per_s, seconds);
+    boiler_advance_pressures(model, actuation, steam_demand_ml_per_s, seconds);
 
     /* Recomputed whole rather than advanced, so where in the step it is set
      * does not matter; it is set here rather than inside either advance

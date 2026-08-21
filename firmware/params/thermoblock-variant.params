@@ -11,12 +11,12 @@
 # accounting for its values: there is no origin to record for a number chosen
 # because it differs, and requiring one would only produce a form of words.
 #
-# The other fifteen values are the reference description's, and the account of
+# The other seventeen values are the reference description's, and the account of
 # where each came from is there rather than here -- deliberately, because this
 # file must stay one coefficient away from that one for the check to conclude
 # anything from the pair. So quote thermoblock.params, never this file: a figure
 # read out of here has had its provenance stripped by design, and one value of
-# the sixteen is not the machine's at all.
+# the eighteen is not the machine's at all.
 
 @describes-no-machine
 
@@ -38,6 +38,8 @@ brew.pressure_time_constant_s = 0.8
 
 water.feed_temperature_c = 20.0
 water.heat_capacity_j_per_ml_k = 4.15
+water.latent_heat_j_per_ml = 2160.0
 
 steam.saturation_temperature_c = 100.0
 steam.pressure_bar_per_k = 0.036
+steam.pressure_fall_bar_per_ml = 0.05

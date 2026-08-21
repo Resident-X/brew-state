@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-ENERGY.C1-TEST
+type: evidence
+title: The steam-side state each structure keeps loses energy to drawn steam through latent heat (SOL-PLANT-STEAM-DRAW-ENERGY.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-21T11:26:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_steam_block_pays_the_latent_heat_of_what_is_drawn_off_it,test_what_a_draw_costs_the_block_does_not_depend_on_where_it_sits,test_with_the_wand_shut_the_latent_coefficient_reaches_nothing,test_a_steam_draw_leaves_the_coffee_side_alone; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_vessel_pays_the_latent_heat_of_what_is_drawn_off_it,test_what_the_wand_costs_is_the_same_wherever_the_vessel_sits,test_with_the_wand_shut_the_brew_flow_loss_is_what_it_was
+text: |-
+  Both structures' steam-side thermal state loses energy to drawn steam via a latent-heat term (drawn_steam_power_w = latent_heat_j_per_ml * demand), added independently alongside existing loss terms. Verified: the cost is temperature-independent (identical 60-90K apart, discriminating latent from sensible heat), zero at zero demand, and boiler's existing brew-flow loss term is unchanged.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY.C1
+    type: satisfies

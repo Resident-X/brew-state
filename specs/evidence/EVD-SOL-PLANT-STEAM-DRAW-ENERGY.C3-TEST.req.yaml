@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-ENERGY.C3-TEST
+type: evidence
+title: Steam pressure is driven by an integrated state once a draw is open (SOL-PLANT-STEAM-DRAW-ENERGY.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-21T11:26:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it
+text: |-
+  Both structures carry a steam_pressure_deficit_bar state that accumulates fall_rate * demand * seconds each step while demand > 0. Verified over 10 steps that the gap below the freshly-computed affine relation equals n steps' worth, which a per-step recomputation could not produce.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-ENERGY.C3
+    type: satisfies

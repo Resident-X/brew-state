@@ -64,8 +64,17 @@ static const coefficient_t NOMINAL[] = {
      */
     {"water.feed_temperature_c", 18.0},
     {"water.heat_capacity_j_per_ml_k", 4.15},
+    /*
+     * Deliberately not the shipped figure either, and deliberately a long way
+     * from the heat capacity above it: what a millilitre costs to boil and what
+     * it costs to warm by a kelvin are separate coefficients, and a table that
+     * put them near one another would let a structure reading the wrong one pass
+     * an assertion made against the right one.
+     */
+    {"water.latent_heat_j_per_ml", 2000.0},
     {"steam.saturation_temperature_c", 100.0},
     {"steam.pressure_bar_per_k", 0.035},
+    {"steam.pressure_fall_bar_per_ml", 0.02},
 };
 
 #define COEFFICIENT_COUNT (sizeof(NOMINAL) / sizeof(NOMINAL[0]))
@@ -185,6 +194,25 @@ static void run(plant_model_t *model, const plant_actuation_t *actuation, int st
 }
 
 /*
+ * The rate every signature below is taken with the steam wand open at.
+ *
+ * Not zero, and that is the whole reason it is named. Two of this structure's
+ * coefficients are read by no relation at all with the wand shut -- what the
+ * steam drawn off the block costs it, and what that draw costs the steam path in
+ * pressure -- so a signature taken at no demand would report both as
+ * coefficients nothing reads, which is a wrong conclusion drawn from a true
+ * observation about the run that was made.
+ *
+ * The figure is small on purpose. A large draw holds the steam mass below
+ * saturation for the whole of the runs these signatures are taken over, and the
+ * pressure relation is then sitting on its floor throughout -- so the pressure
+ * coefficient would still reach nothing, for a second reason. At this rate the
+ * mass passes saturation part-way through the longer runs and both coefficients
+ * are in the trajectory.
+ */
+#define SIGNATURE_STEAM_DEMAND_ML_PER_S 0.1f
+
+/*
  * A number standing for the whole trajectory rather than its endpoint.
  *
  * Every quantity at every step is folded in, because a coefficient can matter
@@ -215,7 +243,8 @@ static double signature(plant_model_t *model, const plant_actuation_t *actuation
     for (int i = 0; i < steps; i++) {
         float states[PLANT_STATE_COUNT];
         float quantities[PLANT_QUANTITY_COUNT];
-        TEST_ASSERT_TRUE(plant_model_step(model, actuation, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(
+            plant_model_step(model, actuation, SIGNATURE_STEAM_DEMAND_ML_PER_S, STEP_MS));
         read_all_states(model, states);
         for (int state = 0; state < PLANT_STATE_COUNT; state++) {
             total += states[state];
@@ -254,14 +283,25 @@ static double signature_of(const char *text, size_t length, const plant_actuatio
  * A description in which every coefficient is an admissible placeholder except
  * the one at `index`, which is written out verbatim. Used to drive a single
  * coefficient's value through the parser without disturbing the others.
+ *
+ * The placeholder is each coefficient's own nominal value rather than one number
+ * standing in for all of them. It used to be a bare 1.0, which worked only while
+ * every coefficient in the table had a range containing it -- and what a
+ * millilitre of water costs to boil does not, because that range is drawn around
+ * water's own figure and a millilitre that cost one joule to vaporise is not
+ * water. A shared placeholder is a quiet dependency of the whole bound-discovery
+ * machinery on a property no coefficient owes.
  */
 static size_t describe_with(size_t index, const char *token, char *out, size_t capacity)
 {
     size_t used = 0u;
 
     for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        char placeholder[32];
+        TEST_ASSERT_TRUE(
+            snprintf(placeholder, sizeof(placeholder), "%.17g", NOMINAL[i].value) > 0);
         const int written = snprintf(out + used, capacity - used, "%s = %s\n", NOMINAL[i].name,
-                                     i == index ? token : "1.0");
+                                     i == index ? token : placeholder);
         TEST_ASSERT_TRUE(written > 0);
         used += (size_t)written;
         TEST_ASSERT_TRUE(used < capacity);
@@ -964,7 +1004,12 @@ static bool accepts(size_t index, double value)
             written = snprintf(text + used, sizeof(text) - used, "%s = %.17g\n", NOMINAL[i].name,
                                value);
         } else {
-            written = snprintf(text + used, sizeof(text) - used, "%s = 1.0\n", NOMINAL[i].name);
+            /* Each coefficient's own nominal value, for the reason describe_with
+             * above gives: no single placeholder is inside every declared range,
+             * and one that happened to be would be an accident this machinery
+             * should not rest on. */
+            written = snprintf(text + used, sizeof(text) - used, "%s = %.17g\n", NOMINAL[i].name,
+                               NOMINAL[i].value);
         }
         TEST_ASSERT_TRUE(written > 0);
         used += (size_t)written;
@@ -1295,9 +1340,15 @@ static void test_the_corners_of_the_declared_range_stay_finite(void)
 #define I_BREW_LOSS 3u
 #define I_BREW_HELD_VOLUME 4u
 #define I_BREW_CONDUCTION_TAU 5u
+#define I_STEAM_MASS 6u
+#define I_STEAM_LOSS 8u
 #define I_PUMP_FLOW 10u
 #define I_WATER_FEED 12u
 #define I_WATER_HEAT_CAPACITY 13u
+#define I_WATER_LATENT_HEAT 14u
+#define I_STEAM_SATURATION 15u
+#define I_STEAM_BAR_PER_K 16u
+#define I_STEAM_PRESSURE_FALL 17u
 
 /* Long enough that a per-step error becomes visible in the distance travelled. */
 #define ACCUMULATION_STEPS 200
@@ -1679,6 +1730,21 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
      * enters any relation these figures come from. Both are wired only as far
      * as being accepted; nothing yet reads either.
      *
+     * And kept a third time -- unchanged byte for byte, and this is the strongest
+     * claim the recording has made yet -- when the steam side gained a term for
+     * what a draw costs it and the steam path's pressure gained a state of its
+     * own. The demand is still zero on every row, and at zero demand both of
+     * those are required to be exactly the equations that were here before: the
+     * latent term is a coefficient multiplied by an exact zero, and the pressure
+     * is the saturation relation less a gap that a step with nothing drawn sets
+     * to nothing rather than decays. If either reduced only nearly, or if the
+     * gap survived a step at no demand, the steam column of the last three rows
+     * would move -- so this recording is now also where the reversion the whole
+     * pressure change turns on would be caught having failed. The two
+     * coefficients those relations read are in the description below at values
+     * that would be visible if anything read them, which is what makes the rows
+     * being unchanged mean something.
+     *
      * What the retaken figures have to be read against, row by row, because the
      * rows are not all in the same position:
      *
@@ -1755,8 +1821,10 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
                                       "brew.pressure_time_constant_s = 0.8\n"
                                       "water.feed_temperature_c = 18\n"
                                       "water.heat_capacity_j_per_ml_k = 4.15\n"
+                                      "water.latent_heat_j_per_ml = 2000\n"
                                       "steam.saturation_temperature_c = 100\n"
-                                      "steam.pressure_bar_per_k = 0.035\n";
+                                      "steam.pressure_bar_per_k = 0.035\n"
+                                      "steam.pressure_fall_bar_per_ml = 0.02\n";
     plant_parameters_t recorded;
     plant_parameter_error_t fault;
 
@@ -3498,6 +3566,13 @@ static void test_the_coefficient_indices_name_what_they_claim(void)
     TEST_ASSERT_EQUAL_STRING("water.feed_temperature_c", NOMINAL[I_WATER_FEED].name);
     TEST_ASSERT_EQUAL_STRING("water.heat_capacity_j_per_ml_k",
                              NOMINAL[I_WATER_HEAT_CAPACITY].name);
+    TEST_ASSERT_EQUAL_STRING("steam.thermal_mass_j_per_k", NOMINAL[I_STEAM_MASS].name);
+    TEST_ASSERT_EQUAL_STRING("steam.loss_w_per_k", NOMINAL[I_STEAM_LOSS].name);
+    TEST_ASSERT_EQUAL_STRING("water.latent_heat_j_per_ml", NOMINAL[I_WATER_LATENT_HEAT].name);
+    TEST_ASSERT_EQUAL_STRING("steam.saturation_temperature_c", NOMINAL[I_STEAM_SATURATION].name);
+    TEST_ASSERT_EQUAL_STRING("steam.pressure_bar_per_k", NOMINAL[I_STEAM_BAR_PER_K].name);
+    TEST_ASSERT_EQUAL_STRING("steam.pressure_fall_bar_per_ml",
+                             NOMINAL[I_STEAM_PRESSURE_FALL].name);
 }
 
 /* --- What the description says about the new coefficient ------------------ */
@@ -4007,8 +4082,10 @@ static void test_the_drawn_rate_is_reached_end_to_end_through_the_seam(void)
                                       "brew.pressure_time_constant_s = 0.8\n"
                                       "water.feed_temperature_c = 18\n"
                                       "water.heat_capacity_j_per_ml_k = 4.15\n"
+                                      "water.latent_heat_j_per_ml = 2000\n"
                                       "steam.saturation_temperature_c = 100\n"
-                                      "steam.pressure_bar_per_k = 0.035\n";
+                                      "steam.pressure_bar_per_k = 0.035\n"
+                                      "steam.pressure_fall_bar_per_ml = 0.02\n";
     plant_parameters_t loaded;
     plant_parameter_error_t fault;
     plant_model_t model;
@@ -5132,7 +5209,16 @@ static void test_the_omissions_the_flow_term_does_not_close_are_still_recorded(v
         {"puck", "the puck"},
         {"flow-versus-pressure", "the pump's flow-versus-pressure characteristic"},
         {"three-way valve", "the contention between the two destinations one block serves"},
-        {"latent heat", "what a steam draw costs the steam mass"},
+        /*
+         * What a steam draw costs the steam mass used to be on this list and is
+         * not any more, because it is now a relation the description writes out
+         * rather than an absence it records. What is still absent on that side is
+         * the steam itself -- how much of it there is and what state it is in --
+         * and that is what stands here in its place. The entry was replaced
+         * rather than deleted, because a slice that closed an omission and left
+         * the list one shorter would look identical to one that lost an entry.
+         */
+        {"steam quality", "how much steam there is and what state it is in"},
         {"equilibrate", "how completely the drawn water is assumed to equilibrate"},
     };
 
@@ -5169,6 +5255,699 @@ static void test_the_omissions_the_flow_term_does_not_close_are_still_recorded(v
     TEST_ASSERT_TRUE_MESSAGE(direction_is_stated,
                              "the equilibration omission does not say which way the relations are "
                              "wrong, so nothing tells a reader whether it is optimistic");
+}
+
+/* --- What the steam drawn off the block costs it -------------------------- */
+
+/*
+ * The rate the tests below hold the wand open at, and a step to hold it for.
+ *
+ * Two millilitres a second is a hard draw against this description's steam
+ * block -- four kilowatts of latent heat against a fourteen-hundred-watt element
+ * -- and it is meant to be. The point of these tests is that the term is there
+ * and is the size the coefficients say, so a rate that moved the mass by less
+ * than the arithmetic's own resolution would be testing the resolution.
+ */
+#define STEAM_DRAW_ML_PER_S 2.0f
+
+/* Enough steps under both elements to carry the steam block well past
+ * saturation, so the pressure relation is exercised above its floor. */
+#define BOIL_STEPS 900
+
+/* The steam block, which this structure keeps as a state of its own. */
+static float steam_mass(const plant_model_t *model)
+{
+    float value = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_state(model, PLANT_STATE_STEAM_TEMPERATURE_C, &value));
+    return value;
+}
+
+/* The steam path's pressure, read through the seam like everything else. */
+static float steam_pressure(const plant_model_t *model)
+{
+    float value = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_quantity(model, PLANT_QUANTITY_STEAM_PRESSURE_BAR, &value));
+    return value;
+}
+
+/* What the saturation relation alone gives at a steam temperature, written the
+ * way the description states it rather than the way the source spells it. */
+static float saturation_pressure(float steam_temperature_c)
+{
+    const float above = steam_temperature_c - (float)NOMINAL[I_STEAM_SATURATION].value;
+    return above > 0.0f ? (float)NOMINAL[I_STEAM_BAR_PER_K].value * above : 0.0f;
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C1: The steam-side state each structure keeps
+/// loses energy to drawn steam through its latent heat, independent of any
+/// existing loss term.
+///
+/// The size of the term, against the closed form of the steam block's own
+/// balance rather than against the source's spelling of it. With the wand open
+/// the block is a mass losing to ambient and paying a constant power out
+/// besides, so it relaxes towards a settling temperature the two together fix
+/// and the step has a closed form: the loss coefficient sets how fast it gets
+/// there and the latent power sets where it is going. A term of the wrong size,
+/// of the wrong sign, or one that entered the relaxation instead of the balance
+/// lands somewhere this refuses.
+static void test_the_steam_block_pays_the_latent_heat_of_what_is_drawn_off_it(void)
+{
+    static const float STARTS[] = {40.0f, 120.0f, 190.0f};
+    double values[COEFFICIENT_COUNT];
+
+    nominal_values(values);
+
+    for (size_t i = 0u; i < sizeof(STARTS) / sizeof(STARTS[0]); i++) {
+        plant_model_t model;
+        const plant_actuation_t idle = {{0u, 0u, 0u}};
+
+        model_from(&model, values);
+        TEST_ASSERT_TRUE(
+            plant_model_set_state(&model, PLANT_STATE_STEAM_TEMPERATURE_C, STARTS[i]));
+        TEST_ASSERT_TRUE(plant_model_step(&model, &idle, STEAM_DRAW_ML_PER_S, STEP_MS));
+
+        const double seconds = (double)STEP_MS / 1000.0;
+        const double loss = values[I_STEAM_LOSS];
+        const double mass = values[I_STEAM_MASS];
+        const double drawn_w = values[I_WATER_LATENT_HEAT] * (double)STEAM_DRAW_ML_PER_S;
+        /* Where the block is heading with the element off and the wand open, and
+         * how far along the way one step carries it. */
+        const double settles_at = values[I_AMBIENT] - drawn_w / loss;
+        const double expected =
+            settles_at + ((double)STARTS[i] - settles_at) * exp(-(loss * seconds) / mass);
+        const double got = (double)steam_mass(&model);
+
+        if (!(fabs(got - expected) < 1.0e-3)) {
+            char message[240];
+            (void)snprintf(message, sizeof(message),
+                           "from %.9g: the steam block reached %.9g, the balance with the draw "
+                           "gives %.9g",
+                           (double)STARTS[i], got, expected);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C1: ...through its latent heat, independent of
+/// any existing loss term.
+///
+/// The shape of the term rather than its size, and the assertion that separates
+/// a latent heat from the sensible-heat difference the coffee side uses. What a
+/// draw costs the block is a power the rate alone fixes, so the difference
+/// between a step taken with the wand open and the same step taken with it shut
+/// is the same number wherever the block happens to be sitting. A term written
+/// as a difference against the feed, against ambient, or against saturation --
+/// each of which is a plausible thing to write and each of which the size test
+/// above could be made to pass by re-tuning the coefficient -- gives a different
+/// number at each of these temperatures, sixty kelvin apart.
+static void test_what_a_draw_costs_the_block_does_not_depend_on_where_it_sits(void)
+{
+    static const float STARTS[] = {130.0f, 190.0f};
+    double values[COEFFICIENT_COUNT];
+    float costs[sizeof(STARTS) / sizeof(STARTS[0])];
+
+    nominal_values(values);
+
+    for (size_t i = 0u; i < sizeof(STARTS) / sizeof(STARTS[0]); i++) {
+        plant_model_t drawn;
+        plant_model_t undrawn;
+        const plant_actuation_t idle = {{0u, 0u, 0u}};
+
+        model_from(&drawn, values);
+        model_from(&undrawn, values);
+        TEST_ASSERT_TRUE(plant_model_set_state(&drawn, PLANT_STATE_STEAM_TEMPERATURE_C, STARTS[i]));
+        TEST_ASSERT_TRUE(
+            plant_model_set_state(&undrawn, PLANT_STATE_STEAM_TEMPERATURE_C, STARTS[i]));
+
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &idle, STEAM_DRAW_ML_PER_S, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &idle, 0.0f, STEP_MS));
+
+        costs[i] = steam_mass(&undrawn) - steam_mass(&drawn);
+    }
+
+    /* What the draw is worth, from the coefficients and not from a run: a power
+     * over a thermal mass over a step, with the relaxation across so short a
+     * step within a part in ten thousand of unity. */
+    const float seconds = (float)STEP_MS / 1000.0f;
+    const float expected = ((float)NOMINAL[I_WATER_LATENT_HEAT].value * STEAM_DRAW_ML_PER_S *
+                            seconds) /
+                           (float)NOMINAL[I_STEAM_MASS].value;
+
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-3f, expected, costs[0]);
+    /* And the same cost at the other temperature, to far inside what a
+     * difference-shaped term would have put between them. */
+    TEST_ASSERT_FLOAT_WITHIN(1.0e-4f, costs[0], costs[1]);
+    /* The premise: the draw did something, so the equality above is two equal
+     * costs rather than two absent ones. */
+    TEST_ASSERT_TRUE(costs[0] > 0.4f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C1: ...independent of any existing loss term --
+/// at no demand the term is exactly zero and nothing that was here before moves.
+///
+/// Two descriptions differing only in what a millilitre costs to boil, one of
+/// them at the top of the range the structure declares admissible, run through a
+/// long trajectory with the wand shut and compared byte for byte. A term that
+/// leaked in through a near-zero rather than an exact zero, or one written from
+/// the pump's drawn rate rather than from the demand, would separate them. The
+/// same pair with the wand open has to come apart, or the comparison above is
+/// two runs of a coefficient nothing reads.
+static void test_with_the_wand_shut_the_latent_coefficient_reaches_nothing(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    char nominal_text[DESCRIPTION_MAX];
+    char extreme_text[DESCRIPTION_MAX];
+
+    all_bounds(low, high);
+
+    const size_t nominal_used = describe_with_one(nominal_text, sizeof(nominal_text),
+                                                  I_WATER_LATENT_HEAT,
+                                                  NOMINAL[I_WATER_LATENT_HEAT].value);
+    const size_t extreme_used = describe_with_one(extreme_text, sizeof(extreme_text),
+                                                  I_WATER_LATENT_HEAT, high[I_WATER_LATENT_HEAT]);
+
+    plant_parameters_t as_nominal;
+    plant_parameters_t as_extreme;
+    plant_parameter_error_t fault;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(nominal_text, nominal_used, &as_nominal, &fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(extreme_text, extreme_used, &as_extreme, &fault));
+
+    for (int drawing = 0; drawing < 2; drawing++) {
+        const float demand = drawing ? STEAM_DRAW_ML_PER_S : 0.0f;
+        plant_model_t ordinary;
+        plant_model_t extreme;
+        float from_ordinary[PLANT_QUANTITY_COUNT];
+        float from_extreme[PLANT_QUANTITY_COUNT];
+
+        TEST_ASSERT_TRUE(plant_model_init(&ordinary, &as_nominal));
+        TEST_ASSERT_TRUE(plant_model_init(&extreme, &as_extreme));
+
+        for (int step = 0; step < TRANSIENT_STEPS; step++) {
+            TEST_ASSERT_TRUE(plant_model_step(&ordinary, &HEATING, demand, STEP_MS));
+            TEST_ASSERT_TRUE(plant_model_step(&extreme, &HEATING, demand, STEP_MS));
+        }
+        read_all(&ordinary, from_ordinary);
+        read_all(&extreme, from_extreme);
+
+        if (drawing) {
+            TEST_ASSERT_TRUE(from_extreme[PLANT_QUANTITY_STEAM_TEMPERATURE_C] <
+                             from_ordinary[PLANT_QUANTITY_STEAM_TEMPERATURE_C] - 10.0f);
+        } else {
+            TEST_ASSERT_EQUAL_MEMORY(from_ordinary, from_extreme, sizeof(from_ordinary));
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C1: ...the steam-side state each structure keeps
+/// -- and only that state.
+///
+/// The converse of the test that keeps the pump's drawn rate off the steam mass.
+/// This machine has two separately fed blocks, so the wand reaches one of them
+/// and the group reaches the other; a draw that moved the coffee block would be
+/// steam leaving through the group. Compared byte for byte, because the two
+/// sides share no arithmetic and a difference of one bit would mean they had
+/// started to.
+static void test_a_steam_draw_leaves_the_coffee_side_alone(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t drawn;
+    plant_model_t undrawn;
+
+    nominal_values(values);
+    model_from(&drawn, values);
+    model_from(&undrawn, values);
+
+    for (int step = 0; step < TRANSIENT_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &WORKING, STEAM_DRAW_ML_PER_S, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&undrawn, &WORKING, 0.0f, STEP_MS));
+    }
+
+    const float casting_drawn = heated_mass(&drawn);
+    const float casting_undrawn = heated_mass(&undrawn);
+    const float outlet_drawn = outlet(&drawn);
+    const float outlet_undrawn = outlet(&undrawn);
+
+    TEST_ASSERT_EQUAL_MEMORY(&casting_undrawn, &casting_drawn, sizeof(float));
+    TEST_ASSERT_EQUAL_MEMORY(&outlet_undrawn, &outlet_drawn, sizeof(float));
+
+    /* And the steam side did move, so the equalities above are the coffee side
+     * being left alone rather than the draw doing nothing at all. */
+    TEST_ASSERT_TRUE(steam_mass(&drawn) < steam_mass(&undrawn) - 10.0f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C3: Steam pressure is driven by an integrated
+/// state once a draw is open, rather than derived fresh from temperature every
+/// step.
+///
+/// The distinction stated as arithmetic. At every step the gap between what the
+/// saturation relation gives for the temperature the block has just reached and
+/// what the model reports for the pressure is read off, and required to be the
+/// whole of what the draw has taken since it opened -- one step's worth after
+/// one step, ten steps' worth after ten. A pressure derived fresh from the
+/// temperature each step, with the draw's cost applied to that fresh answer,
+/// would leave that gap at one step's worth for the whole of the run, which is
+/// exactly the relation this criterion replaces.
+static void test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+
+    nominal_values(values);
+    model_from(&model, values);
+
+    /* Above saturation before the wand opens, so there is a pressure for the
+     * draw to take from. */
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
+    }
+    TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
+
+    const double seconds = (double)STEP_MS / 1000.0;
+    const double per_step_bar =
+        values[I_STEAM_PRESSURE_FALL] * (double)STEAM_DRAW_ML_PER_S * seconds;
+    TEST_ASSERT_TRUE(per_step_bar > 0.0);
+
+    for (int step = 1; step <= 10; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEAM_DRAW_ML_PER_S, STEP_MS));
+
+        const double relation = (double)saturation_pressure(steam_mass(&model));
+        const double reported = (double)steam_pressure(&model);
+        const double gap = relation - reported;
+        const double expected = per_step_bar * (double)step;
+
+        if (!(fabs(gap - expected) < 1.0e-5)) {
+            char message[240];
+            (void)snprintf(message, sizeof(message),
+                           "after %d steps of draw the path sits %.9g bar below the relation, and "
+                           "the draw has taken %.9g",
+                           step, gap, expected);
+            TEST_FAIL_MESSAGE(message);
+        }
+        /* The floor is not what is being measured here, so the run has to stay
+         * off it. */
+        TEST_ASSERT_TRUE(reported > 0.0);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C4: Steam pressure reverts to the affine relation
+/// the instant demand returns to zero.
+///
+/// Three things, and a model can do the first two and still be carrying the
+/// draw's residue. The pressure has to be below the relation while the wand is
+/// held; it has to be the relation exactly on the very next step with nothing
+/// drawn -- compared byte for byte, because a reversion that merely started
+/// would satisfy any tolerance and is a different claim from this one; and
+/// opening the wand again has to start from nothing rather than from where the
+/// last draw left off, which is what "no leftover offset" means and what a state
+/// that decayed towards the relation instead of being discarded would fail.
+static void test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+
+    nominal_values(values);
+    model_from(&model, values);
+
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
+    }
+    for (int step = 0; step < 10; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEAM_DRAW_ML_PER_S, STEP_MS));
+    }
+
+    /* Held down while the wand is open, and by a margin rather than by a bit. */
+    const float under_draw = steam_pressure(&model);
+    TEST_ASSERT_TRUE(under_draw < saturation_pressure(steam_mass(&model)) - 0.01f);
+
+    /* And the relation itself on the first step with nothing drawn. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
+    const float reverted = steam_pressure(&model);
+    const float relation = saturation_pressure(steam_mass(&model));
+    TEST_ASSERT_EQUAL_MEMORY(&relation, &reverted, sizeof(float));
+
+    /*
+     * And the next draw starts from the relation rather than from where the last
+     * one stopped. One step at the same rate has to cost exactly one step's
+     * worth; a gap that had been decayed rather than discarded would show here
+     * as a deeper one.
+     */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEAM_DRAW_ML_PER_S, STEP_MS));
+    const double seconds = (double)STEP_MS / 1000.0;
+    const double one_step_bar =
+        values[I_STEAM_PRESSURE_FALL] * (double)STEAM_DRAW_ML_PER_S * seconds;
+    const double gap = (double)saturation_pressure(steam_mass(&model)) -
+                       (double)steam_pressure(&model);
+    TEST_ASSERT_TRUE(fabs(gap - one_step_bar) < 1.0e-5);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C4: ...the affine relation, which is the one the
+/// structure already had.
+///
+/// Reversion stated without restating the formula. An instance that has just had
+/// a draw closed and an instance that has never had one, brought to the same
+/// steam temperature and stepped identically with nothing drawn, report the same
+/// pressure to the bit. Nothing here writes down what that pressure should be,
+/// so the assertion cannot be satisfied by a test and an implementation agreeing
+/// about a wrong relation.
+static void test_a_closed_draw_leaves_no_trace_a_later_step_can_see(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t drawn;
+    plant_model_t untouched;
+
+    nominal_values(values);
+    model_from(&drawn, values);
+    model_from(&untouched, values);
+
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &HEATING, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&untouched, &HEATING, 0.0f, STEP_MS));
+    }
+    for (int step = 0; step < 20; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&drawn, &HEATING, STEAM_DRAW_ML_PER_S, STEP_MS));
+    }
+
+    /* The draw took the block down as well as the path, so the two are brought
+     * back to one temperature before the comparison -- what is being compared is
+     * the pressure at a temperature, not two temperatures. */
+    const float shared_c = steam_mass(&untouched);
+    TEST_ASSERT_TRUE(plant_model_set_state(&drawn, PLANT_STATE_STEAM_TEMPERATURE_C, shared_c));
+
+    const plant_actuation_t idle = {{0u, 0u, 0u}};
+    TEST_ASSERT_TRUE(plant_model_step(&drawn, &idle, 0.0f, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_set_state(&untouched, PLANT_STATE_STEAM_TEMPERATURE_C, shared_c));
+    TEST_ASSERT_TRUE(plant_model_step(&untouched, &idle, 0.0f, STEP_MS));
+
+    const float after_draw = steam_pressure(&drawn);
+    const float never_drawn = steam_pressure(&untouched);
+    TEST_ASSERT_EQUAL_MEMORY(&never_drawn, &after_draw, sizeof(float));
+    /* And there was a pressure to compare, rather than two floors. */
+    TEST_ASSERT_TRUE(never_drawn > 0.5f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: The stepped structure stays admissible with a
+/// draw open.
+///
+/// The same question the rest of this file asks of the coefficient space, asked
+/// again with the wand held open, because that is a case none of those runs
+/// reaches: they are all driven at no demand, so the two relations the draw
+/// enters are absent from every one of them. Sampled across the declared range
+/// and at both corners of it, with a draw far harder than any machine of this
+/// description could sustain, every quantity has to stay a number and the steam
+/// path's gauge pressure has to stay at or above nothing -- a draw that pulled it
+/// negative would be this model claiming a vacuum the wand cannot make.
+static void test_the_structure_stays_admissible_with_a_draw_open(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+
+    all_bounds(low, high);
+    rng_seed(PROPERTY_SEED);
+
+    for (int c = 0; c < PROPERTY_CASES + 2; c++) {
+        plant_parameters_t loaded;
+        plant_parameter_error_t fault;
+        plant_model_t model;
+        size_t used;
+
+        if (c == 0) {
+            used = describe_corner(low, high, false, text, sizeof(text));
+        } else if (c == 1) {
+            used = describe_corner(low, high, true, text, sizeof(text));
+        } else {
+            used = describe_sampled(low, high, text, sizeof(text));
+        }
+
+        memset(&fault, 0, sizeof(fault));
+        TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+        TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+        for (int step = 0; step < SHORT_STEPS; step++) {
+            float quantities[PLANT_QUANTITY_COUNT];
+
+            TEST_ASSERT_TRUE(plant_model_step(&model, &WORKING, 50.0f, STEP_MS));
+            read_all(&model, quantities);
+
+            for (int q = 0; q < PLANT_QUANTITY_COUNT; q++) {
+                if (!isfinite(quantities[q])) {
+                    char message[240];
+                    (void)snprintf(message, sizeof(message),
+                                   "case %d step %d: quantity %d left the finite range under a "
+                                   "draw; description was:\n%s",
+                                   c, step, q, text);
+                    TEST_FAIL_MESSAGE(message);
+                }
+            }
+            if (quantities[PLANT_QUANTITY_STEAM_PRESSURE_BAR] < 0.0f) {
+                char message[240];
+                (void)snprintf(message, sizeof(message),
+                               "case %d step %d: a draw carried the steam path to %.9g bar gauge; "
+                               "description was:\n%s",
+                               c, step, (double)quantities[PLANT_QUANTITY_STEAM_PRESSURE_BAR],
+                               text);
+                TEST_FAIL_MESSAGE(message);
+            }
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: ...with a draw open, including one the path
+/// cannot supply.
+///
+/// The floor asserted where it is reached rather than only where it is not. A
+/// draw that takes more pressure than the block has to give carries the path to
+/// exactly nothing and leaves it there however long it is held, which is a steam
+/// path venting to the room; a gap that went on accumulating past the pressure
+/// there was to lose would report a negative gauge pressure, and one that
+/// stopped short would leave the path holding pressure through a draw nothing
+/// could supply.
+///
+/// A description whose path sags far harder per millilitre than the shipped one,
+/// because the floor is otherwise unreachable and the test would be asserting
+/// about a case it never produced: at the nominal coefficients the block goes
+/// cold long before the path empties, and a floor reached by the block falling
+/// below saturation would establish nothing about the gap at all.
+static void test_a_draw_the_path_cannot_supply_stops_at_nothing(void)
+{
+    double values[COEFFICIENT_COUNT];
+    plant_model_t model;
+
+    nominal_values(values);
+    /* The top of the declared range, which is far enough that a single step of an
+     * ordinary draw asks for more pressure than the block has to give. */
+    values[I_STEAM_PRESSURE_FALL] = 10.0;
+    model_from(&model, values);
+
+    for (int step = 0; step < BOIL_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
+    }
+    TEST_ASSERT_TRUE(steam_pressure(&model) > 0.5f);
+
+    for (int step = 0; step < 20; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, STEAM_DRAW_ML_PER_S, STEP_MS));
+        TEST_ASSERT_EQUAL_FLOAT(0.0f, steam_pressure(&model));
+    }
+
+    /* And the floor is the draw's doing rather than the block having gone cold:
+     * the relation still has pressure in it at the temperature the block is at,
+     * and the path is reporting none of it. */
+    TEST_ASSERT_TRUE(saturation_pressure(steam_mass(&model)) > 0.0f);
+
+    /* Closing the wand hands the whole of that back on the next step, which is
+     * the reversion holding at the floor as well as away from it. */
+    TEST_ASSERT_TRUE(plant_model_step(&model, &HEATING, 0.0f, STEP_MS));
+    const float reverted = steam_pressure(&model);
+    const float relation = saturation_pressure(steam_mass(&model));
+    TEST_ASSERT_EQUAL_MEMORY(&relation, &reverted, sizeof(float));
+    TEST_ASSERT_TRUE(reverted > 0.0f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: ...with a draw open -- including a demand
+/// that is not one.
+///
+/// The seam accepts the demand as a plain step argument and refuses nothing
+/// about it, which is deliberate and settled elsewhere. What this structure does
+/// with a figure that is not a draw is its own business, and it reads it as no
+/// draw: steam arriving rather than leaving is not a case this machine has, and
+/// running the relations backwards would put energy into the block and pressure
+/// into the path out of nothing. A figure that is not a finite rate is read the
+/// same way, and that one matters more than it looks -- arithmetic on it would
+/// make every quantity downstream stop being a number too, and a comparison
+/// against one of those is false either way, so nothing else in this file would
+/// notice. Both ends of that are offered, because they fail differently: an
+/// undefined rate poisons the arithmetic immediately, while an unbounded one
+/// takes the block to an infinity it then never returns from. Compared byte for
+/// byte against a step at no demand, because "close to unaffected" is not the
+/// claim.
+static void test_a_demand_that_is_not_a_draw_is_read_as_no_draw(void)
+{
+    static const float NOT_A_DRAW[] = {-1.0f, -500.0f, NAN, INFINITY, -INFINITY};
+    double values[COEFFICIENT_COUNT];
+
+    nominal_values(values);
+
+    for (size_t i = 0u; i < sizeof(NOT_A_DRAW) / sizeof(NOT_A_DRAW[0]); i++) {
+        plant_model_t offered;
+        plant_model_t shut;
+        float from_offered[PLANT_QUANTITY_COUNT];
+        float from_shut[PLANT_QUANTITY_COUNT];
+
+        model_from(&offered, values);
+        model_from(&shut, values);
+
+        for (int step = 0; step < TRANSIENT_STEPS; step++) {
+            TEST_ASSERT_TRUE(plant_model_step(&offered, &HEATING, NOT_A_DRAW[i], STEP_MS));
+            TEST_ASSERT_TRUE(plant_model_step(&shut, &HEATING, 0.0f, STEP_MS));
+        }
+
+        read_all(&offered, from_offered);
+        read_all(&shut, from_shut);
+        TEST_ASSERT_EQUAL_MEMORY(from_shut, from_offered, sizeof(from_shut));
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C2: The latent-heat coefficient is a described
+/// coefficient...
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C7: The pressure-divergence-rate coefficient is a
+/// described coefficient...
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C5: The stepped structure stays admissible with a
+/// draw open -- load-time range validation accepts and refuses each new
+/// coefficient at the edge of the range the structure declares for it.
+///
+/// Each is checked for the shape its own relation needs rather than for a range
+/// in general. What a millilitre costs to boil is a property of water and is
+/// bounded around water's own figure, with a floor above zero: a millilitre that
+/// cost nothing to vaporise is not water and would make a steam draw free again,
+/// which is the state this slice exists to leave. What a draw costs the path in
+/// pressure is a property of the machine and may be nothing -- a description of a
+/// path that sags not at all is odd rather than inadmissible -- but may not be
+/// less than nothing, because a draw that raised the pressure is the relation
+/// running backwards.
+static void test_the_steam_draws_coefficients_carry_enforced_admissible_ranges(void)
+{
+    static const size_t BOTH[] = {I_WATER_LATENT_HEAT, I_STEAM_PRESSURE_FALL};
+
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+
+    all_bounds(low, high);
+
+    /* What a millilitre costs to boil never reaches zero from below. */
+    TEST_ASSERT_TRUE_MESSAGE(low[I_WATER_LATENT_HEAT] > 0.0,
+                             "water.latent_heat_j_per_ml admits a millilitre that costs nothing "
+                             "to boil, which makes a steam draw free again");
+    /* And it is bounded around water's own figure rather than merely bounded --
+     * a fluid an order of magnitude away from water is refused. */
+    TEST_ASSERT_TRUE(low[I_WATER_LATENT_HEAT] > 100.0);
+    TEST_ASSERT_TRUE(high[I_WATER_LATENT_HEAT] < 100000.0);
+
+    /* A path that sags not at all is admissible; one that gains pressure under a
+     * draw is not. */
+    TEST_ASSERT_TRUE_MESSAGE(low[I_STEAM_PRESSURE_FALL] == 0.0,
+                             "steam.pressure_fall_bar_per_ml does not admit a path that sags not "
+                             "at all, or admits one that gains pressure under a draw");
+
+    for (size_t i = 0u; i < sizeof(BOTH) / sizeof(BOTH[0]); i++) {
+        const size_t index = BOTH[i];
+        const double minimum = low[index];
+        const double maximum = high[index];
+        char message[160];
+
+        (void)snprintf(message, sizeof(message), "%s: bounds [%.17g, %.17g]", NOMINAL[index].name,
+                       minimum, maximum);
+        TEST_ASSERT_TRUE_MESSAGE(maximum > minimum, message);
+        TEST_ASSERT_TRUE_MESSAGE(isfinite(maximum), message);
+
+        for (int side = 0; side < 2; side++) {
+            char text[DESCRIPTION_MAX];
+            plant_parameters_t loaded;
+            plant_parameter_error_t fault;
+            const double outside =
+                side == 0 ? minimum - (maximum - minimum) : maximum + (maximum - minimum);
+
+            const size_t used = describe_with_one(text, sizeof(text), index, outside);
+            memset(&fault, 0, sizeof(fault));
+            TEST_ASSERT_FALSE_MESSAGE(plant_parameters_load(text, used, &loaded, &fault), message);
+            TEST_ASSERT_EQUAL(PLANT_PARAMETER_OUT_OF_RANGE, fault.fault);
+            TEST_ASSERT_EQUAL_STRING(NOMINAL[index].name, fault.parameter);
+        }
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C2: The latent-heat coefficient is a described
+/// coefficient with a declared origin and error.
+/// SOL-PLANT-STEAM-DRAW-ENERGY.C7: The pressure-divergence-rate coefficient is a
+/// described coefficient with a declared origin and error.
+///
+/// Both halves, against the description the build hands this suite. The error is
+/// kept by the loader, so it is read back through the seam. The origin is not
+/// kept -- which values are accounted for is a question about a file -- so that
+/// half is read out of the file's own text: the line for each coefficient has to
+/// carry the marker, a kind the vocabulary declares, and an account after it. A
+/// line carrying a marker and a kind and nothing else would pass a check that
+/// only looked for the word, and would leave a reader a provenance with no
+/// provenance in it.
+static void test_the_steam_draws_coefficients_declare_an_origin_and_an_error(void)
+{
+    static const char *const REQUIRED[] = {
+        "water.latent_heat_j_per_ml",
+        "steam.pressure_fall_bar_per_ml",
+    };
+    /* The words plant_origin.h declares, spelled out here because a suite that
+     * read them from that header would name a vocabulary the seam already
+     * carries into the description as text. */
+    static const char *const KINDS[] = {"@document ", "@estimated ", "@measured "};
+
+    char text[REFERENCE_MAX];
+    plant_parameter_budget_t budget;
+    plant_parameter_error_t fault;
+
+    const size_t used = read_named_file(REFERENCE_DESCRIPTION_PATH, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(text, used, &budget, &fault));
+
+    for (size_t i = 0u; i < sizeof(REQUIRED) / sizeof(REQUIRED[0]); i++) {
+        char message[200];
+        float assumed = -1.0f;
+
+        (void)snprintf(message, sizeof(message),
+                       "the shipped description declares no assumed error for %s", REQUIRED[i]);
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_for(&budget, REQUIRED[i], &assumed),
+                                 message);
+        TEST_ASSERT_TRUE_MESSAGE(isfinite(assumed), message);
+        /* Above zero: a declared error of nothing is a claim that the figure is
+         * exact, and neither of these is. Neither figure itself is pinned here --
+         * choosing them is a judgement argued in the statement beside the
+         * description. */
+        TEST_ASSERT_TRUE_MESSAGE(assumed > 0.0f, message);
+
+        /* And the line carries an account of where the figure came from. */
+        const char *const line = strstr(text, REQUIRED[i]);
+        (void)snprintf(message, sizeof(message), "the shipped description does not name %s",
+                       REQUIRED[i]);
+        TEST_ASSERT_NOT_NULL_MESSAGE(line, message);
+
+        const char *const end = strchr(line, '\n');
+        (void)snprintf(message, sizeof(message),
+                       "the line for %s carries no origin of a declared kind with an account "
+                       "behind it",
+                       REQUIRED[i]);
+
+        bool accounted = false;
+        for (size_t k = 0u; k < sizeof(KINDS) / sizeof(KINDS[0]); k++) {
+            const char *const marker = strstr(line, KINDS[k]);
+            if (marker != NULL && (end == NULL || marker < end) &&
+                marker[strlen(KINDS[k])] != '\0' && marker[strlen(KINDS[k])] != '\n') {
+                accounted = true;
+            }
+        }
+        TEST_ASSERT_TRUE_MESSAGE(accounted, message);
+    }
 }
 
 int main(void)
@@ -5278,6 +6057,18 @@ int main(void)
     RUN_TEST(test_the_statement_records_the_outlet_coefficients_as_reachable);
     RUN_TEST(test_the_superseded_outlet_declaration_was_re_derived);
     RUN_TEST(test_the_omissions_the_flow_term_does_not_close_are_still_recorded);
+    RUN_TEST(test_the_steam_block_pays_the_latent_heat_of_what_is_drawn_off_it);
+    RUN_TEST(test_what_a_draw_costs_the_block_does_not_depend_on_where_it_sits);
+    RUN_TEST(test_with_the_wand_shut_the_latent_coefficient_reaches_nothing);
+    RUN_TEST(test_a_steam_draw_leaves_the_coffee_side_alone);
+    RUN_TEST(test_the_steam_pressure_accumulates_the_draw_rather_than_recomputing_it);
+    RUN_TEST(test_the_steam_pressure_is_the_relation_again_the_step_the_draw_stops);
+    RUN_TEST(test_a_closed_draw_leaves_no_trace_a_later_step_can_see);
+    RUN_TEST(test_the_structure_stays_admissible_with_a_draw_open);
+    RUN_TEST(test_a_draw_the_path_cannot_supply_stops_at_nothing);
+    RUN_TEST(test_a_demand_that_is_not_a_draw_is_read_as_no_draw);
+    RUN_TEST(test_the_steam_draws_coefficients_carry_enforced_admissible_ranges);
+    RUN_TEST(test_the_steam_draws_coefficients_declare_an_origin_and_an_error);
     RUN_TEST(test_a_written_state_is_what_the_next_step_advances_from);
     return UNITY_END();
 }
