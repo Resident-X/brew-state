@@ -56,7 +56,8 @@
 #define PLANT_STRUCTURE_ACTUATION_CHANNELS                                        \
     (ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER) |                       \
      ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_STEAM_HEATER) |                      \
-     ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_PUMP))
+     ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_PUMP) |                              \
+     ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_STEAM_PUMP))
 
 /*
  * Every coefficient this structure uses. There is no number in the equations

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-CHANNELS.C3-TEST
+type: evidence
+title: A dedicated channel commands thermoblock's steam-side feed pump (SOL-PLANT-STEAM-DRAW-CHANNELS.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T23:14:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_structure_states_which_channels_it_answers
+text: |-
+  task fw:test passes. This test loops over the whole actuation vocabulary rather than a fixed list, so ACTUATION_CHANNEL_STEAM_PUMP is exercised as an answered, steppable channel on thermoblock without being named explicitly; task fw:check's check_actuation_declaration confirms 3 structures now state which of 4 channels they answer.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS.C3
+    type: satisfies

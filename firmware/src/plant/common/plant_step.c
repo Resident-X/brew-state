@@ -66,9 +66,10 @@ bool plant_step_admissible(const plant_actuation_t *actuation, uint32_t interval
 }
 
 bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
-                      uint32_t interval_millis)
+                      float steam_demand_ml_per_s, uint32_t interval_millis)
 {
     plant_step_error_t discarded;
 
-    return plant_model_step_reporting(model, actuation, interval_millis, &discarded);
+    return plant_model_step_reporting(model, actuation, steam_demand_ml_per_s, interval_millis,
+                                      &discarded);
 }

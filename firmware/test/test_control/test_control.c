@@ -583,8 +583,8 @@ static void test_the_estimator_is_advanced_by_the_interval_that_elapsed(void)
     hw_sim_advance_millis(LATE_BY);
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
 
-    TEST_ASSERT_TRUE(plant_model_step(&by_elapsed, &commanded, LATE_BY));
-    TEST_ASSERT_TRUE(plant_model_step(&by_nominal, &commanded, CONTROL_STEP_INTERVAL_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&by_elapsed, &commanded, 0.0f, LATE_BY));
+    TEST_ASSERT_TRUE(plant_model_step(&by_nominal, &commanded, 0.0f, CONTROL_STEP_INTERVAL_MS));
 
     float elapsed_says = 0.0f;
     float nominal_says = 0.0f;
@@ -625,7 +625,7 @@ static void test_the_first_accepted_step_is_advanced_by_the_declared_interval(vo
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS * 500u);
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
 
-    TEST_ASSERT_TRUE(plant_model_step(&by_declared, &commanded, CONTROL_STEP_INTERVAL_MS));
+    TEST_ASSERT_TRUE(plant_model_step(&by_declared, &commanded, 0.0f, CONTROL_STEP_INTERVAL_MS));
 
     float expected = 0.0f;
     TEST_ASSERT_TRUE(
@@ -740,7 +740,7 @@ static void test_a_late_step_still_drives_the_heater_and_advances_the_estimator(
     TEST_ASSERT_TRUE(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) > 0u);
     TEST_ASSERT_FALSE(state.faulted);
 
-    TEST_ASSERT_TRUE(plant_model_step(&by_elapsed, &commanded, LATE_BY));
+    TEST_ASSERT_TRUE(plant_model_step(&by_elapsed, &commanded, 0.0f, LATE_BY));
     float expected = 0.0f;
     TEST_ASSERT_TRUE(
         plant_model_state(&by_elapsed, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &expected));

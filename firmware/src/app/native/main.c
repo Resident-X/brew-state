@@ -273,7 +273,7 @@ static void exercise_plant(const plant_parameters_t *parameters)
                                                           : ACTUATION_FULL_SCALE;
     }
     for (int i = 0; i < EXERCISE_STEPS; i++) {
-        expect(plant_model_step(&model, &heating, PLANT_STEP_INTERVAL_MS),
+        expect(plant_model_step(&model, &heating, 0.0f, PLANT_STEP_INTERVAL_MS),
                "a plant step was refused");
     }
 
@@ -281,11 +281,12 @@ static void exercise_plant(const plant_parameters_t *parameters)
     plant_actuation_t over_scale = {{0u}};
     over_scale.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = ACTUATION_FULL_SCALE + 1u;
     plant_step_error_t refusal;
-    expect(!plant_model_step_reporting(&model, &over_scale, PLANT_STEP_INTERVAL_MS, &refusal),
+    expect(!plant_model_step_reporting(&model, &over_scale, 0.0f, PLANT_STEP_INTERVAL_MS,
+                                       &refusal),
            "an out-of-scale actuation was accepted");
     expect(refusal.fault == PLANT_STEP_LEVEL_OVER_SCALE,
            "an out-of-scale actuation was refused for the wrong reason");
-    expect(!plant_model_step(&model, &heating, 0u), "a zero-length step was accepted");
+    expect(!plant_model_step(&model, &heating, 0.0f, 0u), "a zero-length step was accepted");
 
     /*
      * The unanswered-channel path, on the artefacts whose structure leaves one
@@ -298,7 +299,8 @@ static void exercise_plant(const plant_parameters_t *parameters)
         }
         plant_actuation_t unanswered = {{0u}};
         unanswered.level_permille[channel] = ACTUATION_FULL_SCALE;
-        expect(!plant_model_step_reporting(&model, &unanswered, PLANT_STEP_INTERVAL_MS, &refusal),
+        expect(!plant_model_step_reporting(&model, &unanswered, 0.0f, PLANT_STEP_INTERVAL_MS,
+                                           &refusal),
                "a command on an unanswered channel was accepted");
         expect(refusal.fault == PLANT_STEP_CHANNEL_UNANSWERED &&
                    (unsigned)refusal.channel == channel,

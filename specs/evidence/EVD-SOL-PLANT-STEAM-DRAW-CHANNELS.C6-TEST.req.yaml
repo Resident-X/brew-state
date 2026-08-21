@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-CHANNELS.C6-TEST
+type: evidence
+title: Boiler and fixture correctly refuse the new steam-feed channel (SOL-PLANT-STEAM-DRAW-CHANNELS.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-20T23:14:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_steam_feed_channel_is_refused_here_too; firmware/test/test_plant_narrow/test_plant_narrow.c::test_the_steam_feed_channel_is_refused_here_too
+text: |-
+  task fw:test passes. Commanding a non-zero level on ACTUATION_CHANNEL_STEAM_PUMP against boiler or fixture is refused by plant_step_admissible() with PLANT_STEP_CHANNEL_UNANSWERED naming the channel, through the same PLANT_STRUCTURE_ACTUATION_CHANNELS mechanism already refusing ACTUATION_CHANNEL_STEAM_HEATER on boiler -- no boiler- or fixture-specific refusal code was added.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS.C6
+    type: satisfies

@@ -130,8 +130,15 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
 actuation_channel_set_t plant_structure_actuation_channels(void);
 
 /*
- * Advance the instance by `interval_millis` under the given actuation, and
- * report why if it is refused.
+ * Advance the instance by `interval_millis` under the given actuation and
+ * steam demand, and report why if it is refused.
+ *
+ * `steam_demand_ml_per_s` is the rate steam is being drawn from the machine --
+ * set by the operator's wand, not by the control law, and carried as a step
+ * argument rather than a channel of the actuation record because nothing
+ * commands it. It defaults to zero, and a step taken with it at zero changes
+ * no existing behaviour: no relation this seam's structures compute yet reads
+ * it. A caller with no demand to report passes zero.
  *
  * Returns false and changes nothing when an argument is null, when the instance
  * was never initialised, when the interval is zero, when a channel exceeds
@@ -151,10 +158,12 @@ actuation_channel_set_t plant_structure_actuation_channels(void);
  * plant_step_fault_t.
  *
  * The same instance, advanced over the same intervals under the same
- * actuations from the same initial state, reproduces the same trajectory.
+ * actuations and demand from the same initial state, reproduces the same
+ * trajectory.
  */
 bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *actuation,
-                                uint32_t interval_millis, plant_step_error_t *error);
+                                float steam_demand_ml_per_s, uint32_t interval_millis,
+                                plant_step_error_t *error);
 
 /*
  * Advance the instance, for a caller that only needs to know whether it moved.
@@ -166,7 +175,7 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
  * reporting form.
  */
 bool plant_model_step(plant_model_t *model, const plant_actuation_t *actuation,
-                      uint32_t interval_millis);
+                      float steam_demand_ml_per_s, uint32_t interval_millis);
 
 /*
  * Whether an actuation and an interval are ones a structure answering
