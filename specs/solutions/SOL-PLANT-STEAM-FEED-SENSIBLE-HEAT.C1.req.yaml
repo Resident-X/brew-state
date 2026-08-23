@@ -1,0 +1,16 @@
+id: SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C1
+type: criterion
+title: Both structures' steam-side loss term sums latent and sensible heat against the feed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `drawn_steam_power_w()` (or its per-structure equivalent) in both `firmware/src/plant/thermoblock/plant_structure.c`
+  and `firmware/src/plant/boiler/plant_structure.c` sums the existing `water_latent_heat_j_per_ml * drawn_ml_per_s`
+  term with `water_heat_capacity_j_per_ml_k * (steam_saturation_temperature_c - water_feed_temperature_c) *
+  drawn_ml_per_s`. At zero draw the combined term is exactly zero, matching today's boundary. Identifying either
+  coefficient from bench data is out of scope; only the missing relation is added.
+links:
+  - target: SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT
+    type: criterion-of

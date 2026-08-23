@@ -1,0 +1,54 @@
+id: SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT
+type: deliverable
+category: solution
+title: The steam-side energy balance charges a draw the sensible heat of raising the replacement feed to saturation
+status: active
+version: 1
+text: |
+  Both structures' steam-side energy balance charges a draw only the latent heat of turning the
+  replacement water to vapour: `drawn_steam_power_w()` in `firmware/src/plant/thermoblock/plant_structure.c`
+  and `firmware/src/plant/boiler/plant_structure.c` returns `water_latent_heat_j_per_ml * drawn_ml_per_s`
+  and nothing else, called from each structure's steam-side advance at line 428 (thermoblock) and 229
+  (boiler). The replacement water arrives at `water_feed_temperature_c` and has to be raised to
+  `steam_saturation_temperature_c` before any of that latent heat is owed on it, and no term in either
+  structure's relations debits that sensible heat. This description already states the gap in its own
+  declared omissions (`firmware/params/thermoblock.md`, the steam energy relation section): "It charges
+  the block for turning water into vapour and does not charge it for bringing that water up to the
+  temperature it turns at... the steam side droops less under a draw here than it would on a real block,
+  by the sensible heat of the replacement, and that gap widens with a colder feed."
+
+  This slice adds the missing term to `drawn_steam_power_w()` (or its equivalent per structure), summing
+  the existing latent-heat product with `water_heat_capacity_j_per_ml_k * (steam_saturation_temperature_c
+  - water_feed_temperature_c) * drawn_ml_per_s`, on both `thermoblock` and `boiler`. At zero draw the added
+  term is exactly zero and today's behaviour is unchanged, matching the existing term's own boundary. The
+  declared omission in each structure's params doc is rewritten to match: the sensible-heat gap moves from
+  an open omission to a closed relation, the way `SOL-PLANT-STEAM-DRAW-DESCRIBED` already did for the terms
+  that slice introduced.
+
+  Out of scope: identifying either coefficient from real data, which needs a machine on a bench and is
+  unchanged by this correction; the steam-feed actuation channel being unread, which is a separate defect
+  with its own trace; and any change to the pressure-divergence relation, which this term does not touch.
+rationale: |
+  SOL-PLANT-STEAM-DRAW-ENERGY's own rationale excludes a temperature-difference term by arguing steam
+  "leaves as vapour with no measurable outlet temperature to write a difference through" -- correct against
+  the water side's outlet-relaxation formulation, which needs an outlet temperature that the steam side does
+  not have. But the missing term here needs no outlet temperature: it is the difference between the known
+  `steam_saturation_temperature_c` the water arrives to become vapour at, and the known
+  `water_feed_temperature_c` it starts from -- the same two constants the existing latent-heat term already
+  reads, just entering through a heat-capacity coefficient instead of a latent-heat one. The solution's own
+  rationale never engages this version of the term, so the omission reads as a reasoning gap in an otherwise
+  deliberate choice rather than a considered trade-off, and the description's own doc names the same gap in
+  the same words this maintenance item corrects.
+
+  Targeting REQ-PLANT-DESCRIPTION-001.C1 rather than superseding DEL-SIM-STEAM-DRAW-TERM.C1: that criterion's
+  own text already defines the term as "the enthalpy of the steam drawn measured against the feed that
+  replaces it," and enthalpy taken against a reference state is latent plus sensible heat to reach it by
+  definition. The criterion did not under-specify what was owed; the solution that derived from it did.
+  Restoring the behaviour a live criterion already asked for is what DEL-MAINTENANCE holds, per
+  DEC-MAINTENANCE-CONTINUOUS-LANE -- the requirement chain needs no correction, only the plant description
+  does.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
