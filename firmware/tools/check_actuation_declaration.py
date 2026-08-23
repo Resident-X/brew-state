@@ -142,6 +142,34 @@ def second_list_problems(include_dir: str, channels: list[str]) -> list[str]:
     return problems
 
 
+def channels_named(value: str, channels: list[str]) -> list[str]:
+    """The channels one declaration names, in the order it names them.
+
+    Read off the macro's replacement text rather than off the set it evaluates
+    to, because the set is a number and this has to answer which channels went
+    into it. A name that is not a channel of the shared vocabulary is not one of
+    these; what to say about it is the caller's question, and the two callers
+    ask different things of the answer.
+    """
+    return [name for name in _IDENTIFIER.findall(value) if name in channels]
+
+
+def channels_answered(source: str, channels: list[str]) -> list[str]:
+    """The channels a structure's header declares it answers, or none.
+
+    None is the answer for a header that declares no set or declares more than
+    one, because neither states an architecture a reader could act on. Saying so
+    by returning nothing keeps this readable by a caller that is not the one
+    reporting on the declaration itself -- that caller gets its own failure from
+    the check whose subject that is, and would otherwise get two reports of one
+    fault worded differently.
+    """
+    declared = definitions(source, DECLARATION_MACRO)
+    if len(declared) != 1:
+        return []
+    return channels_named(declared[0][1], channels)
+
+
 def structure_problems(header: str, channels: list[str]) -> list[str]:
     """Every way one structure fails to state the channels it answers."""
     with open(header, "r", encoding="utf-8") as handle:
@@ -164,7 +192,7 @@ def structure_problems(header: str, channels: list[str]) -> list[str]:
     lineno, value, _ = declared[0]
     problems: list[str] = []
     named = _IDENTIFIER.findall(value)
-    answered = [name for name in named if name in channels]
+    answered = channels_named(value, channels)
     # Which channels are named through the operation that makes a set of one.
     through_the_operation = _CHANNEL_OF_BIT.findall(value)
 
