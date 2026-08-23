@@ -8,11 +8,13 @@ apiece includes them. The rendered files are never checked in, because a copy of
 a description is a second description -- two records answering the same question,
 diverging the moment either is corrected.
 
-There are two of them, and an environment built through this script declares
-both or neither. An artefact carrying a description of a machine and no
+There are three of them, and an environment built through this script declares
+all of them or none. An artefact carrying a description of a machine and no
 statement of what a reading off that machine may plausibly be would either
-believe every reading or believe none, and neither is a state anybody would
-choose deliberately -- so half a declaration is refused here rather than built.
+believe every reading or believe none; one carrying both and no band would come
+up with a control law holding its deliveries to nothing. None of those is a
+state anybody would choose deliberately -- so a partial declaration is refused
+here rather than built.
 
 Which files those are is read off the environment rather than named here, so a
 second board declaring its own is covered without this script being edited.
@@ -80,6 +82,11 @@ sources = [
         build_environments.EMBEDDED_LIMITS_OPTION,
         named[0].embedded_limits,
     ),
+    (
+        embedded_description.TOLERANCE,
+        build_environments.EMBEDDED_TOLERANCE_OPTION,
+        named[0].embedded_tolerance,
+    ),
 ]
 
 stated = [entry for entry in sources if entry[2]]
@@ -94,18 +101,21 @@ if not stated:
     env.Exit(2)  # noqa: F821
 
 if unstated:
-    # Half a declaration. The artefact would compile and would be wrong in a way
-    # nothing on the running machine reports: a description with no limits beside
-    # it leaves the estimator correcting against every reading a broken channel
-    # can produce, and limits with no description leaves it correcting a model of
-    # nothing towards them. Neither has a symptom that distinguishes it from a
-    # machine that has merely drifted.
+    # A partial declaration. The artefact would compile and would be wrong in a
+    # way nothing on the running machine reports: a description with no limits
+    # beside it leaves the estimator correcting against every reading a broken
+    # channel can produce, limits with no description leave it correcting a model
+    # of nothing towards them, and either without the band leaves the control
+    # path with nothing to hold a delivery to and so unable to come up at all.
+    # None of those has a symptom that distinguishes it from a machine that has
+    # merely drifted.
     sys.stderr.write(
         f"pio_embed_description: '{environment_name}' declares "
         f"{', '.join(option for _, option, _ in stated)} but no "
         f"{', '.join(option for _, option, _ in unstated)}. An artefact carrying a "
         "description of a machine and no statement of what a reading off it may plausibly be "
-        "would either believe every reading or believe none, so the two travel together or "
+        "would either believe every reading or believe none, and one carrying neither a band "
+        "nor a way to learn it holds its deliveries to nothing, so they travel together or "
         "not at all\n"
     )
     env.Exit(2)  # noqa: F821

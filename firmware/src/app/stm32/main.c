@@ -15,18 +15,27 @@
  * fact about a machine and its sensors rather than about the software, so it
  * belongs to the machine the description names and comes up with it.
  *
- * Both are read through the seam's own loader rather than through a reader
+ * The tolerance declaration travels the same way and answers a different kind
+ * of question. It is not a statement about this machine at all: it says how far
+ * from the temperature it was asked for a delivery may sit before the cup is no
+ * longer the one that was ordered, which reads the same whatever the water was
+ * heated in. It is carried because the control path is given the band rather
+ * than compiling it in, and because there is no filesystem here to open it from.
+ *
+ * All three are read through their own loaders rather than through readers
  * written for the target. A second parser accepts a slightly different language
  * sooner or later -- a whitespace rule, an annotation quietly skipped -- and
  * then the machine is running numbers the host tier never saw, out of a file
  * both claim to read. One parser cannot disagree with itself.
  */
 #include "control.h"
+#include "delivery_tolerance.h"
 #include "estimator_limits.h"
 #include "hw_stm32.h"
 #include "plant_model.h"
 #include "reference_description.h"
 #include "reference_limits.h"
+#include "reference_tolerance.h"
 
 int main(void)
 {
@@ -35,6 +44,8 @@ int main(void)
     plant_parameter_error_t description_fault;
     estimator_limits_t limits;
     estimator_limits_error_t limits_fault;
+    delivery_tolerance_t tolerance;
+    delivery_tolerance_error_t tolerance_fault;
 
     if (!hw_stm32_init()) {
         /*
@@ -82,14 +93,35 @@ int main(void)
         }
     }
 
+    if (!delivery_tolerance_load(reference_tolerance, reference_tolerance_length, &tolerance,
+                                 &tolerance_fault)) {
+        /*
+         * The tolerance declaration this artefact carries is not one the loader
+         * accepts, so nothing says how close to the temperature it was asked for
+         * a delivery has to be. Stop for the same reason a refused description
+         * or refused bounds stop the machine, though what goes wrong is of
+         * another kind: a band nothing declared is not a wide band, it is a
+         * criterion nothing holds a delivery to. The loop would drive, the
+         * machine would make coffee, and every cup would be within tolerance
+         * because there is no tolerance to be outside of -- a claim that reads
+         * as success from every direction and rests on nothing. Continuing on a
+         * partly-filled record would be the same failure wearing a number:
+         * a band nobody supplied, held to as though somebody had. What the
+         * machine should do about being left without one, beyond not proceeding,
+         * is a fault-response concern answered elsewhere.
+         */
+        for (;;) {
+        }
+    }
+
     /*
-     * Both records go in through the control path rather than reaching the
+     * All three records go in through the control path rather than reaching the
      * estimator by a route of their own, so the machine drives from the same
-     * description and the same bounds it was verified against. A refusal here
-     * leaves the heater commanded off and the fault latched, and the loop below
-     * keeps it there.
+     * description, the same bounds and the same band it was verified against. A
+     * refusal here leaves the heater commanded off and the fault latched, and
+     * the loop below keeps it there.
      */
-    (void)control_init(&state, &parameters, &limits);
+    (void)control_init(&state, &parameters, &limits, &tolerance);
 
     for (;;) {
         (void)control_step(&state);

@@ -14,7 +14,17 @@ checks that ran before it passed, and the maths those equations call into stops
 being needed, so a toolchain that could never have resolved it answers nothing
 and appears to have answered. That is why this asks the artefact rather than
 the build: the operations the seam declares are present in it, and the bytes it
-carries are the description the tier verified and no other.
+carries are the files the tier verified and no others.
+
+There is more than one such file, and each is asked the same question by the
+same code. The description says what the machine is, the limits declaration says
+what a reading off it may plausibly be, and the tolerance declaration says how
+far from the temperature it was asked for a delivery may sit. A gate written to
+ask about the first alone would leave the ones that arrived after it uncovered,
+and an artefact missing either of those is silent in the same way: bounds nobody
+supplied leave the estimator correcting toward a state the machine cannot be in,
+and a band nobody supplied leaves every cup inside a tolerance that does not
+exist.
 
 Which operations to look for is read out of the seam header through the same
 module the build step that retains them reads, so the two cannot come to
@@ -30,6 +40,8 @@ import argparse
 import os
 import subprocess
 import sys
+from collections.abc import Callable
+from typing import NamedTuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -41,6 +53,50 @@ LISTERS = (["nm"], ["llvm-nm"])
 
 #: What a parameter description is called.
 DESCRIPTION_SUFFIX = ".params"
+
+#: What a limits declaration is called.
+LIMITS_SUFFIX = ".limits"
+
+#: What the declarations that are not about a machine are called. The tolerance
+#: declaration is one of several files under this suffix, and that is the point
+#: of searching by it rather than a reason not to -- see TOLERANCE below.
+DECLARATION_SUFFIX = ".declaration"
+
+
+class Carried(NamedTuple):
+    """One file an artefact has to be carrying, and how to find a rival to it."""
+
+    #: What the file is, in words, for a message a reader has to act on.
+    what: str
+    #: What the verification tier is pinned to, read off the whole build.
+    pinned_by: Callable[
+        [list[build_environments.Environment]], tuple[str, list[str]]
+    ]
+    #: The suffix the tree writes files of this kind with, so a second one being
+    #: carried can be found.
+    siblings: str
+
+
+#: Everything the artefact is asked about, in the order it is reported on.
+CARRIED = (
+    Carried("description", build_environments.pinned_description, DESCRIPTION_SUFFIX),
+    Carried("limits declaration", build_environments.pinned_limits, LIMITS_SUFFIX),
+    # The tolerance declaration is searched against the whole of its suffix, and
+    # the files it shares that suffix with are the reason rather than an
+    # obstacle. The tree holds exactly one statement of what a delivery is held
+    # to, so a second file under this suffix turning up inside an artefact is
+    # one of two things, and both are findings. Either a rival tolerance file
+    # has been embedded beside the pinned one, in which case which band the
+    # machine holds its deliveries to is settled by neither the build nor
+    # anything readable off the machine -- and the pinned one would go on
+    # reading as authoritative. Or one of the declarations that is not meant to
+    # be embedded at all has reached the image: nothing in the tree puts the
+    # cadence, control or robustness declaration into an artefact, so an
+    # artefact carrying one is a build that has started embedding files nobody
+    # decided to embed, which is exactly the sort of thing a reader wants told
+    # to them while it is still one file rather than a habit.
+    Carried("tolerance declaration", build_environments.pinned_tolerance, DECLARATION_SUFFIX),
+)
 
 
 def defined_symbols(artefact: str) -> set[str]:
@@ -73,14 +129,20 @@ def defined_symbols(artefact: str) -> set[str]:
     raise SystemExit(f"check_target_carries_model: no symbol lister could inspect {artefact}")
 
 
-def descriptions_in(params_dir: str) -> list[str]:
-    """Every parameter description in the tree, by path."""
-    if not os.path.isdir(params_dir):
+def files_in(params_dir: str, suffix: str) -> list[str]:
+    """Every file of one kind in the tree, by path.
+
+    An empty suffix answers nothing rather than everything, so that a kind with
+    no rival to look for cannot be turned into a search matching every file in
+    the directory -- which is how a check acquires findings about files nobody
+    claimed the artefact was carrying.
+    """
+    if not suffix or not os.path.isdir(params_dir):
         return []
     return [
         os.path.join(params_dir, entry)
         for entry in sorted(os.listdir(params_dir))
-        if entry.endswith(DESCRIPTION_SUFFIX)
+        if entry.endswith(suffix)
     ]
 
 
@@ -99,14 +161,40 @@ def check(project: str, include_dir: str, params_dir: str) -> tuple[list[str], l
             "cover and would report success having inspected nothing"
         ], []
 
-    pinned, problems = build_environments.pinned_description(declared)
+    # What the tier is pinned to, for every file an artefact carries, before any
+    # artefact is asked about. All of them are resolved before any is read, so a
+    # tree that has forgotten two of them says so once rather than a run at a
+    # time.
+    problems: list[str] = []
+    resolved: list[tuple[Carried, str, bytes]] = []
+    for carried in CARRIED:
+        pinned, pin_problems = carried.pinned_by(declared)
+        if pin_problems:
+            problems.extend(pin_problems)
+            continue
+
+        pinned_path = os.path.join(project, pinned)
+        if not os.path.isfile(pinned_path):
+            problems.append(
+                f"the verification tier is pinned to the {carried.what} {pinned}, which is "
+                "not there"
+            )
+            continue
+
+        verified = read_bytes(pinned_path)
+        if not verified:
+            # Every image contains an empty run of bytes, so a file with nothing
+            # in it would be found in each of them and the gate would report on
+            # nothing while appearing to have looked.
+            problems.append(
+                f"the {carried.what} {pinned} is empty, so every artefact carries it and this "
+                "would report on nothing"
+            )
+            continue
+
+        resolved.append((carried, pinned, verified))
     if problems:
         return problems, []
-
-    pinned_path = os.path.join(project, pinned)
-    if not os.path.isfile(pinned_path):
-        return [f"the verification tier is pinned to {pinned}, which is not there"], []
-    verified = read_bytes(pinned_path)
 
     operations = plant_seam_operations.operations(include_dir)
 
@@ -130,30 +218,25 @@ def check(project: str, include_dir: str, params_dir: str) -> tuple[list[str], l
             )
 
         image = read_bytes(artefact)
-        if not verified:
-            problems.append(
-                f"{pinned} is empty, so every artefact carries it and this would report on "
-                "nothing"
-            )
-            continue
-        if image.count(verified) != 1:
-            problems.append(
-                f"{artefact}: carries the {len(verified)} bytes of {pinned} "
-                f"{image.count(verified)} time(s), not once"
-            )
-        for other in descriptions_in(os.path.join(project, params_dir)):
-            if os.path.abspath(other) == os.path.abspath(pinned_path):
-                continue
-            # An empty description is in every image. Reading that as a second
-            # description carried would fail the gate for a file with nothing in
-            # it, naming the artefact rather than the empty file.
-            other_bytes = read_bytes(other)
-            if other_bytes and other_bytes in image:
+        for carried, pinned, verified in resolved:
+            if image.count(verified) != 1:
                 problems.append(
-                    f"{artefact}: also carries {os.path.relpath(other, project)}, so which "
-                    "description the machine is running on is settled by neither the build "
-                    "nor anything readable off the machine"
+                    f"{artefact}: carries the {len(verified)} bytes of the {carried.what} "
+                    f"{pinned} {image.count(verified)} time(s), not once"
                 )
+            for other in files_in(os.path.join(project, params_dir), carried.siblings):
+                if os.path.abspath(other) == os.path.abspath(os.path.join(project, pinned)):
+                    continue
+                # An empty file is in every image. Reading that as a second one
+                # carried would fail the gate for a file with nothing in it,
+                # naming the artefact rather than the empty file.
+                other_bytes = read_bytes(other)
+                if other_bytes and other_bytes in image:
+                    problems.append(
+                        f"{artefact}: also carries {os.path.relpath(other, project)}, so which "
+                        f"{carried.what} the machine is running on is settled by neither the "
+                        "build nor anything readable off the machine"
+                    )
 
     return problems, inspected
 
@@ -188,7 +271,8 @@ def main(argv: list[str]) -> int:
 
     print(
         f"check_target_carries_model: {', '.join(inspected)} define every operation the plant "
-        "seam declares and carry the pinned description once and no other"
+        f"seam declares and carry the pinned {', '.join(entry.what for entry in CARRIED)} once "
+        "each and no others"
     )
     return 0
 

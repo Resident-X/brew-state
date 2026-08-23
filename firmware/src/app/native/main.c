@@ -29,6 +29,16 @@
  * files belong together, and it goes on producing a plausible answer after
  * somebody renames one of them.
  *
+ * The tolerance declaration is not named on the command line, and the
+ * difference is the point. The two files above vary with the machine the
+ * exercise is run against -- a different casting has different coefficients and
+ * its sensors have different plausible ranges -- so which of them to read is a
+ * decision the caller makes per run. How far from the temperature it was asked
+ * for a delivery may sit does not vary that way: it is what the drink demands,
+ * and it would read the same on a machine of another kind entirely. So the path
+ * to it is fixed at build time, and an exercise cannot be run against a band
+ * nobody declared by leaving an argument off.
+ *
  * Nothing here names a plant structure. Whether the control path comes up at
  * all is therefore something this exercise observes rather than assumes: a
  * structure that keeps no state for the estimator to reconstruct is one the
@@ -41,6 +51,7 @@
 #include <string.h>
 
 #include "control.h"
+#include "delivery_tolerance.h"
 #include "estimator_limits.h"
 #include "hw_sim.h"
 #include "plant_model.h"
@@ -50,6 +61,18 @@
 
 /* The interval each modelled step advances the plant by. */
 #define PLANT_STEP_INTERVAL_MS 100u
+
+/*
+ * The temperature this exercise asks the machine for, in degrees Celsius.
+ *
+ * There is no setpoint compiled into the control logic: what a delivery is
+ * driven toward is state a caller sets, so an exercise that wants the loop to
+ * drive has to ask for something. The figure is this exercise's own choice of
+ * an ordinary brew temperature and is not a claim about what any drink wants --
+ * a machine asked for nothing correctly drives nothing, which is a path this
+ * run also walks below rather than one it works around.
+ */
+#define EXERCISE_TARGET_C 93.0f
 
 static int failures;
 
@@ -61,9 +84,33 @@ static void expect(bool condition, const char *what)
     }
 }
 
+/*
+ * A machine nobody has asked for a drink drives nothing and says so, and the
+ * run walks that before asking for anything. It is the ordinary condition of a
+ * machine between deliveries rather than a fault, so what has to hold is that
+ * the outputs are off, the path is not latched, and the step is still counted --
+ * a control path that latched here would need clearing before the next drink.
+ */
+static void exercise_untargeted_steps(control_state_t *state)
+{
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+
+    for (int i = 0; i < EXERCISE_STEPS; i++) {
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        expect(control_step(state) == CONTROL_STEP_NO_TARGET,
+               "a machine asked for nothing drove toward something");
+    }
+    expect(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) == 0u,
+           "the heater was driven with no temperature commanded");
+    expect(hw_sim_output(ACTUATION_CHANNEL_PUMP) == 0u,
+           "the pump was driven with no temperature commanded");
+}
+
 static void exercise_actuating_steps(control_state_t *state)
 {
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    expect(control_command_temperature(state, EXERCISE_TARGET_C),
+           "the exercise's target was refused");
 
     for (int i = 0; i < EXERCISE_STEPS; i++) {
         hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
@@ -106,13 +153,17 @@ static void exercise_invalid_sensor(control_state_t *state)
 }
 
 static void exercise_refused_output(const plant_parameters_t *parameters,
-                                    const estimator_limits_t *limits)
+                                    const estimator_limits_t *limits,
+                                    const delivery_tolerance_t *tolerance)
 {
     control_state_t state;
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
-    expect(control_init(&state, parameters, limits), "the control path could not be initialised");
+    expect(control_init(&state, parameters, limits, tolerance),
+           "the control path could not be initialised");
+    expect(control_command_temperature(&state, EXERCISE_TARGET_C),
+           "the exercise's target was refused");
     hw_sim_set_output_refused(true);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     expect(control_step(&state) == CONTROL_STEP_OUTPUT_REFUSED,
@@ -371,15 +422,41 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    /*
+     * The band, from the path this build was compiled with rather than from an
+     * argument. It is opened and read through the same reader the two files
+     * above go through, so a declaration that cannot be opened stops the
+     * exercise here rather than reaching the control path as an absence.
+     */
+    size_t tolerance_length = 0u;
+    char *band = read_file(REFERENCE_TOLERANCE_PATH, &tolerance_length);
+    if (band == NULL) {
+        return 1;
+    }
+
+    delivery_tolerance_t tolerance;
+    delivery_tolerance_error_t tolerance_error;
+    const bool tolerance_loaded =
+        delivery_tolerance_load(band, tolerance_length, &tolerance, &tolerance_error);
+    free(band);
+
+    if (!tolerance_loaded) {
+        (void)fprintf(stderr,
+                      "host exercise: tolerance declaration refused: %s (fault %d, line %u)\n",
+                      tolerance_error.name, (int)tolerance_error.fault, tolerance_error.line);
+        return 1;
+    }
+
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
 
-    if (control_init(&state, &parameters, &limits)) {
+    if (control_init(&state, &parameters, &limits, &tolerance)) {
         (void)printf("host exercise: control path reconstructs its brew temperature\n");
+        exercise_untargeted_steps(&state);
         exercise_actuating_steps(&state);
         exercise_early_step(&state);
         exercise_invalid_sensor(&state);
-        exercise_refused_output(&parameters, &limits);
+        exercise_refused_output(&parameters, &limits, &tolerance);
     } else {
         (void)printf("host exercise: this structure keeps no state to reconstruct\n");
         exercise_refused_reconstruction(&state);

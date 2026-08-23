@@ -1,0 +1,53 @@
+# How far a delivery may sit from the temperature it was asked for.
+#
+# This file says what the drink demands. It does not say what any machine does:
+# a band is the same whether the water is heated by a thermoblock, a boiler or
+# a fixture that heats nothing, because it is a property of the cup rather than
+# of the casting. That is why it is declared here rather than in a plant
+# description -- three structures each carrying one would be three statements of
+# one fact, free to drift apart, and the tolerance would then vary with the
+# machine it was measured on rather than with the drink it exists for.
+#
+# It carries values, unlike the cadence declaration beside it. Those figures are
+# compiled into a loop that runs at one rate on every machine, and their account
+# lives here because the value has one home in the source. A band is different:
+# it is the criterion trajectories are held against, and what a design costs is
+# found out by varying it. A requirement that can only be varied by editing and
+# recompiling a source file is one nobody varies, and a claim nobody has tested
+# the sensitivity of is a claim nobody has actually established.
+#
+# Each line is `name = milli-degrees @kind account`. A band is a half-width: the
+# delivery is inside it when the water is no further than this from the
+# temperature commanded, in either direction. The vocabulary the kind is drawn
+# from is the one every description in this project accounts for its values in,
+# declared in ../include/plant_origin.h and nowhere else.
+#
+# tools/check_control_declaration.py refuses a band that is declared nowhere,
+# one that is accounted for with no origin or no account behind its kind, and a
+# band that has grown a second home as a definition in the source -- which is
+# the failure this file exists to prevent, because a band spelled in two places
+# goes on reading as declared here while the software holds deliveries to the
+# other one.
+#
+# What is settled here is that the band is stated, sourced and read. What its
+# value should finally be is not: no machine has been on a bench, and the figure
+# below is what the design is currently working to rather than what the built
+# machine has been shown to hold.
+
+# The window either side of the commanded brew temperature within which the
+# water reaching the coffee is still the drink that was ordered.
+#
+# One degree either side, which is the two-degree span the extraction literature
+# treats as the point where a difference in the cup becomes tasteable rather
+# than merely measurable. The figure is written as the half-width because that
+# is what a band is here, and stating a span in a field read as a half-width
+# would declare something twice as loose as the account behind it -- which is
+# the way a recorded origin stops supporting its own value.
+#
+# It is well inside what an unregulated machine of this kind does, which swings
+# by considerably more than this across a shot; that is the whole reason a
+# control law is being built. It is not the tightest band this design could
+# eventually be held to. A machine characterised on a bench may support a
+# narrower one, and the honest way to find that out is to narrow this figure and
+# see which trajectories stop being accepted.
+brew-temperature-band-milli-c = 1000 @document Taken from the extraction literature's treatment of two degrees Celsius as the span across which a difference in the cup becomes tasteable rather than only measurable, and recorded here as the half-width that span implies rather than as the span itself. It is a statement about the drink and not a measurement of this machine, which has never been on a bench; what the built machine can actually hold is a bench question and is not claimed here.

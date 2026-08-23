@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
 """Fail when a machine would be built carrying bytes nobody verified.
 
-An artefact carries two files compiled in: the description of what the machine
-is, and the declaration of what a reading off that machine may plausibly be.
-Both are the one thing about the model that cannot be read back off the running
-machine. Generating them from the files removes the obvious way for them to go
-stale, but it does not establish that the artefact and the host verification
-tier are pinned to the same files. A build naming a different description, a
-generated file left behind by an incremental build, and a second description
-sitting alongside the intended one each produce a target carrying something the
-tier never saw.
+An artefact carries three files compiled in: the description of what the machine
+is, the declaration of what a reading off that machine may plausibly be, and the
+band a delivery off it is held to. Each is one of the things about the machine's
+behaviour that cannot be read back off it once it is running. Generating them
+from the files removes the obvious way for them to go stale, but it does not
+establish that the artefact and the host verification tier are pinned to the
+same files. A build naming a different description, a generated file left behind
+by an incremental build, and a second description sitting alongside the intended
+one each produce a target carrying something the tier never saw.
 
 None of those has a symptom. A machine predicting from coefficients that
 describe a different variant is wrong in exactly the way a machine that has
 drifted is wrong, and the residual that would eventually surface it cannot tell
 the two apart. A machine believing readings a different machine's sensors could
-produce is wrong the same way and just as quietly. So this is a build failure
-and not a warning, and it runs before anything is compiled rather than against
-the artefact afterwards: an artefact that should not exist is not made better by
-being inspected.
+produce is wrong the same way and just as quietly. A machine holding its
+deliveries to a band nobody verified is quieter still: it makes coffee, and the
+only evidence is in the cup. So this is a build failure and not a warning, and
+it runs before anything is compiled rather than against the artefact afterwards:
+an artefact that should not exist is not made better by being inspected.
 
-Both embeddings are asked the same questions by the same code, and every message
-names which of the two it is about. Written as two checks they would answer
-differently: the description would keep its refusals and the limits declaration
-would quietly acquire fewer.
+Every embedding is asked the same questions by the same code, and every message
+names which one it is about. Written as separate checks they would answer
+differently: the description would keep its refusals and the files that arrived
+later would quietly acquire fewer.
 
 What the tier is pinned to is read through the module that reads the build, and
 what the artefact carries is read through the module that wrote it. This check
@@ -86,6 +87,12 @@ SUBJECTS = (
         lambda environment: environment.embedded_limits,
         build_environments.pinned_limits,
     ),
+    Subject(
+        embedded_description.TOLERANCE,
+        build_environments.EMBEDDED_TOLERANCE_OPTION,
+        lambda environment: environment.embedded_tolerance,
+        build_environments.pinned_tolerance,
+    ),
 )
 
 
@@ -135,9 +142,9 @@ def check(project: str, generated: dict[str, str]) -> tuple[list[str], list[str]
     declared = build_environments.load(project)
 
     # What the tier is pinned to, for each thing an artefact carries, before any
-    # artefact is asked about. Both are resolved before either is compared: a run
-    # that stopped at the first unresolved pin would report one omission and
-    # leave the reader to discover the other on the next run.
+    # artefact is asked about. All of them are resolved before any is compared: a
+    # run that stopped at the first unresolved pin would report one omission and
+    # leave the reader to discover the rest one run at a time.
     problems: list[str] = []
     pins: list[tuple[Subject, str]] = []
     for subject in SUBJECTS:

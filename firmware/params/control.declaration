@@ -1,0 +1,54 @@
+# Where the control logic's numbers came from.
+#
+# Every figure the control law rests on is a choice somebody made, and a choice
+# nobody wrote down is indistinguishable from a number that was always there.
+# These are not coefficients of a machine: a gain describes what the design does
+# about a casting rather than what the casting is, and it is the same on every
+# machine this software is compiled for. That is why they are not carried in a
+# plant description, and why the check that inspects descriptions cannot see
+# them -- it derives its subjects from what each structure declares, and a
+# controller gain is a coefficient of no structure.
+#
+# They live as single definitions in the source, and this file is where each
+# one accounts for itself. It carries no values, deliberately: a value written
+# here as well as there would be the second site the arrangement exists to
+# prevent, and it is the one that goes stale silently, because nothing compiles
+# this file.
+#
+# The cadence figures are not here. They account for themselves beside each
+# other in cadence.declaration, because what they answer for is the rate the
+# loop runs at rather than what it does at that rate, and a figure accounted for
+# in two places has two accounts that will eventually disagree.
+#
+# tools/check_control_declaration.py refuses a definition in the control logic
+# that accounts for itself in neither this file nor the cadence declaration, a
+# figure accounted for here and defined nowhere, a figure with more than one
+# home, and a figure arriving with no origin or with a kind and no account.
+# Every one of those is the same failure at a different point: a number the
+# design rests on that nobody can challenge, because there is nothing to
+# challenge it against.
+#
+# The vocabulary is the one every description in this project accounts for its
+# values in. What these figures are estimated from is the reference description
+# and the behaviour asked of the loop -- not a measurement, because no machine
+# has been on a bench. They are the design's own choices, and the accounts below
+# say what the choices were made against so that a later characterisation
+# revises a recorded assumption rather than an anonymous constant.
+
+# --- The coefficients the brew loop rests on --------------------------------
+
+CONTROL_PROPORTIONAL_PERMILLE_PER_K @estimated Estimated from the reference description's brew path as a gain that leaves usable phase margin in the condition where the loop has least of it. Thirty permille per kelvin is thirty watts per kelvin against the element's rating, and against a casting of 320 J/K that alone would be an integrator crossing over near a tenth of a radian per second. The loop the controller actually closes is that integrator behind the conduction lag between the casting and the water leaving it, and it crosses over nearer six hundredths of a radian per second -- above the lag's own corner rather than below it, so the lag contributes most of the phase at crossover rather than little of it, and what remains is around thirty degrees once the integral term below has taken its share. That lag is the binding one and it is not fixed: it runs to twenty seconds on a machine at rest and shortens to under two while water is being drawn, so the gain is chosen against the rested case. Whether the margin survives the error the description declares is the robustness verification's question and is not claimed here; at the far corners of that declared error it is materially smaller. Nothing here is a measurement.
+
+CONTROL_INTEGRAL_PERMILLE_PER_K_PER_S @estimated Estimated as an integral time well above the reciprocal of the chosen crossover, so that removing the steady error costs the loop little of the phase margin the proportional gain was chosen to keep. It is deliberately slow: the feedforward term below is what answers a draw, and the integral is left to trim the residue that the feedforward's own assumptions leave behind rather than to carry the disturbance itself. A faster one would take back the margin the rested case needs.
+
+CONTROL_COLD_REFERENCE_C @estimated Estimated from the reference description, whose declared feed-water temperature and declared ambient are the same figure: this is the temperature the machine draws both its water and its air from, and therefore the origin the two load coefficients below are measured from. It is one figure rather than two because nothing in this design distinguishes them and a second would imply a distinction nobody has made. A machine plumbed to a supply materially colder than its room, which is an ordinary situation in a cold climate, is one this single figure describes badly, and the bench is where that would be found out.
+
+CONTROL_STANDING_PERMILLE_PER_K @estimated Estimated from the reference description as the casting's declared loss per kelvin divided by the brew element's rating: the duty that answers what the machine gives up to the room for each kelvin it is held above the temperature it sits in. It is stated per kelvin rather than as a duty at one brew temperature so that the term follows the target a caller names. Neither the loss figure nor the ambient has been measured; both are the description's own estimates.
+
+CONTROL_DRAWN_PERMILLE_PER_K_PER_PUMP_PERMILLE @estimated Estimated from the reference description as the pump's full-scale flow times the heat capacity of water, divided by the brew element's rating and by full pump scale: the duty that answers the energy a commanded draw carries away, per kelvin of rise and per permille of pump level. Every figure in it is one the description supplies and none has been measured. It is stated on those two axes rather than as a duty at one operating point because the load genuinely varies on both, and a coefficient fixed at one target and one flow would be exact there and wrong by a growing amount everywhere else -- with the residue falling to an integral slow enough that a delivery would end before it had trimmed much of it. What it does still assume is the pump's flow-versus-level relation, which the description states as a single full-scale figure and which no measurement has established as linear.
+
+# --- Figures that bound a buffer rather than the loop ------------------------
+
+DELIVERY_TOLERANCE_NAME_MAX @estimated Estimated as room for the longest band name this grammar admits, with a wide margin beyond the one name declared so far, so that a name too long to fit is a declaration somebody has to look at rather than a fault report naming a band the reader cannot recognise. It bounds the copy that carries a band's name into a refusal, and refusing an over-long name is what keeps that copy inside the record the caller was handed. It answers for this grammar alone: the limits loader and the parameter vocabulary bound their own name copies with figures of the same size under their own names, because one unqualified name defined in three files would be three homes for what reads as one figure.
+
+DELIVERY_FIGURE_TEXT_MAX @estimated Estimated as the number of characters a 32-bit integer spells, with room well beyond it, so that a token this long is a declaration that needs looking at rather than a number to read. It bounds the copy that terminates a token while a tolerance declaration is being parsed, and refusing an over-long token early is what keeps that copy inside the buffer. It answers for this grammar alone: the limits loader bounds its own copy with a figure of the same size under its own name, because one unqualified name defined in two files would be two homes for what reads as one figure.

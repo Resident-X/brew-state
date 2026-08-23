@@ -69,6 +69,22 @@ LIMITS_VARIANT = (
 )
 
 
+#: The declaration that travels beside both: how far from the temperature it was
+#: asked for a delivery may sit. Unlike the two above it says nothing about a
+#: machine, which is why the fixture writes it under a name carrying no
+#: structure's.
+TOLERANCE = (
+    "# A synthetic tolerance declaration.\n"
+    "some-band-milli-c = 2000 @document From nothing in particular.\n"
+)
+
+#: A second band, for the tree that has acquired one beside the intended one.
+TOLERANCE_VARIANT = (
+    "# A synthetic variant tolerance declaration.\n"
+    "some-band-milli-c = 3000 @document From nothing in particular either.\n"
+)
+
+
 def target_environment(structure: str | None = None, **options):
     """One environment building for a board, as the build file would declare it."""
     terms = ["+<control/>", "+<plant/common/>", "+<hw/board/>", "+<app/board/>"]
@@ -80,15 +96,16 @@ def target_environment(structure: str | None = None, **options):
 
 
 def carrying_environment(structure: str | None = None, **options):
-    """A board environment declaring both of the things an artefact carries.
+    """A board environment declaring everything an artefact carries.
 
-    The pair is what a build is entitled to declare, so the fixture declares the
-    pair. A test about one of them overrides that one, which is what makes the
-    tests that leave one out visibly about leaving it out.
+    The whole set is what a build is entitled to declare, so the fixture
+    declares the whole set. A test about one of them overrides that one, which
+    is what makes the tests that leave one out visibly about leaving it out.
     """
     declared = {
         "custom_embedded_description": "params/thermoblock.params",
         "custom_embedded_limits": "params/thermoblock.limits",
+        "custom_embedded_tolerance": "params/tolerance.declaration",
     }
     declared.update(options)
     return target_environment(structure, **declared)
@@ -98,19 +115,27 @@ def host_test_environment(
     structure: str,
     description: str,
     limits: str = "params/thermoblock.limits",
+    tolerance: str = "params/tolerance.declaration",
     **options,
 ):
     """The host environment that pins the tier to a description, as the build file has it.
 
-    It pins the limits declaration on the same terms and in the same place,
-    because that is where the build states it: the two are named separately so
-    that a build pinning one and forgetting the other is a state a gate can see.
+    It pins the limits declaration and the tolerance declaration on the same
+    terms and in the same place, because that is where the build states them:
+    each is named separately so that a build pinning some and forgetting one is
+    a state a gate can see. Each is defaulted and each can be emptied, which is
+    how a test asks about exactly one omission at a time.
     """
     declared = {
         "platform": "native",
         "build_src_filter": f"+<control/> +<plant/common/> +<plant/{structure}/> +<app/native/>",
         "build_flags": f"-O1 -D REFERENCE_DESCRIPTION_PATH='\"$PROJECT_DIR/{description}\"'"
-        + (f" -D REFERENCE_LIMITS_PATH='\"$PROJECT_DIR/{limits}\"'" if limits else ""),
+        + (f" -D REFERENCE_LIMITS_PATH='\"$PROJECT_DIR/{limits}\"'" if limits else "")
+        + (
+            f" -D REFERENCE_TOLERANCE_PATH='\"$PROJECT_DIR/{tolerance}\"'"
+            if tolerance
+            else ""
+        ),
         "test_build_src": "yes",
     }
     declared.update(options)
@@ -128,6 +153,7 @@ class TargetModelTree:
         os.makedirs(self.params, exist_ok=True)
         self.describe("thermoblock.params", DESCRIPTION)
         self.describe("thermoblock.limits", LIMITS)
+        self.describe("tolerance.declaration", TOLERANCE)
         # The directory every structure shares. It carries no structure header,
         # which is what makes it shared rather than a structure, and the real
         # tree keeps the parameter loader in it.
@@ -175,15 +201,20 @@ class TargetModelTree:
         data: bytes | None = None,
         limits_source: str = "params/thermoblock.limits",
         limits_data: bytes | None = None,
+        tolerance_source: str = "params/tolerance.declaration",
+        tolerance_data: bytes | None = None,
     ) -> str:
-        """Render both embeddings and answer the directory they went into.
+        """Render every embedding and answer the directory they went into.
 
-        Both, because a build renders both and a fixture rendering one would be
-        exercising the gate against a state no build produces. The directory is
-        what the gate is offered, so it is what this hands back.
+        Every one, because a build renders every one and a fixture rendering
+        some would be exercising the gate against a state no build produces. The
+        directory is what the gate is offered, so it is what this hands back.
         """
         self.render(environment, embedded_description.DESCRIPTION, source, data)
         self.render(environment, embedded_description.LIMITS, limits_source, limits_data)
+        self.render(
+            environment, embedded_description.TOLERANCE, tolerance_source, tolerance_data
+        )
         return self.generated(environment)
 
     def cleanup(self) -> None:
@@ -527,9 +558,9 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
     SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3: the description travels in the artefact rather than being read from a path.
 
     Each way an artefact's bytes can diverge from what the tier verified, asked
-    of both of the things an artefact carries. The two are the same mechanism
-    twice, and the reason each refusal is driven for each of them is that the
-    second one acquiring fewer refusals than the first is exactly what a shared
+    of every one of the things an artefact carries. They are the same mechanism
+    repeated, and the reason each refusal is driven for each of them is that a
+    later one acquiring fewer refusals than the first is exactly what a shared
     implementation is supposed to prevent and would not announce.
     """
 
@@ -548,21 +579,22 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         options.update(board_options or {})
         self.tree.declare([("board", options), ("native_test", self.pinned)])
 
-    def test_both_embeddings_matching_what_is_pinned_pass(self):
+    def test_every_embedding_matching_what_is_pinned_passes(self):
         self.declare()
         generated = self.tree.generate("board")
         result = self.check(f"board={generated}")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("byte for byte", result.stdout)
 
-    def test_the_success_line_names_both_of_the_things_it_inspected(self):
-        """A line naming one while having compared two would misreport its own coverage."""
+    def test_the_success_line_names_every_one_of_the_things_it_inspected(self):
+        """A line naming two while having compared three would misreport its own coverage."""
         self.declare()
         generated = self.tree.generate("board")
         result = self.check(f"board={generated}")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("board's parameter description", result.stdout)
         self.assertIn("board's limits declaration", result.stdout)
+        self.assertIn("board's tolerance declaration", result.stdout)
 
     def test_a_build_declaring_a_different_description_fails(self):
         """The first divergence: a build naming a description the tier never saw."""
@@ -585,6 +617,19 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("thermoblock-variant.limits", result.stderr)
         self.assertIn("limits declaration the tier never verified", result.stderr)
 
+    def test_a_build_declaring_a_different_tolerance_declaration_fails(self):
+        """A machine held to a band the tier never saw is a machine whose only
+        evidence of being wrong ends up in the cup."""
+        self.tree.describe("tolerance-variant.declaration", TOLERANCE_VARIANT)
+        self.declare({"custom_embedded_tolerance": "params/tolerance-variant.declaration"})
+        generated = self.tree.generate(
+            "board", tolerance_source="params/tolerance-variant.declaration"
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("tolerance-variant.declaration", result.stderr)
+        self.assertIn("tolerance declaration the tier never verified", result.stderr)
+
     def test_an_embedding_left_stale_by_an_incremental_build_fails(self):
         """The second: the description moved on and the rendered bytes did not."""
         self.declare()
@@ -605,6 +650,15 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("bytes of limits declaration", result.stderr)
         self.assertIn("disagree about what the machine is", result.stderr)
 
+    def test_a_tolerance_left_stale_by_an_incremental_build_fails(self):
+        """The band was narrowed and the artefact went on carrying the old one."""
+        self.declare()
+        generated = self.tree.generate("board", tolerance_data=TOLERANCE.encode("utf-8"))
+        self.tree.describe("tolerance.declaration", TOLERANCE_VARIANT)
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of tolerance declaration", result.stderr)
+
     def test_an_embedding_rendered_from_a_second_description_fails(self):
         """The third: a variant sitting beside the intended one is what got carried."""
         self.tree.describe("thermoblock-variant.params", VARIANT)
@@ -624,6 +678,17 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("generated from params/thermoblock-variant.limits", result.stderr)
         self.assertIn("pinned limits declaration", result.stderr)
+
+    def test_a_tolerance_rendered_from_a_second_declaration_fails(self):
+        self.tree.describe("tolerance-variant.declaration", TOLERANCE_VARIANT)
+        self.declare()
+        generated = self.tree.generate(
+            "board", tolerance_source="params/tolerance-variant.declaration"
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("generated from params/tolerance-variant.declaration", result.stderr)
+        self.assertIn("pinned tolerance declaration", result.stderr)
 
     def test_an_embedding_carrying_two_descriptions_fails(self):
         """Two definitions leave which one the machine carries to the compiler."""
@@ -646,7 +711,9 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
                 (
                     "board",
                     target_environment(
-                        "thermoblock", custom_embedded_limits="params/thermoblock.limits"
+                        "thermoblock",
+                        custom_embedded_limits="params/thermoblock.limits",
+                        custom_embedded_tolerance="params/tolerance.declaration",
                     ),
                 ),
                 ("native_test", self.pinned),
@@ -666,6 +733,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
                     target_environment(
                         "thermoblock",
                         custom_embedded_description="params/thermoblock.params",
+                        custom_embedded_tolerance="params/tolerance.declaration",
                     ),
                 ),
                 ("native_test", self.pinned),
@@ -676,6 +744,28 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("custom_embedded_limits", result.stderr)
         self.assertIn("limits declaration its artefact carries", result.stderr)
+
+    def test_a_machine_build_declaring_no_tolerance_fails(self):
+        """A control path with no band holds every delivery to nothing, and says so
+        nowhere: the machine comes up, drives, and reports success."""
+        self.tree.declare(
+            [
+                (
+                    "board",
+                    target_environment(
+                        "thermoblock",
+                        custom_embedded_description="params/thermoblock.params",
+                        custom_embedded_limits="params/thermoblock.limits",
+                    ),
+                ),
+                ("native_test", self.pinned),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("custom_embedded_tolerance", result.stderr)
+        self.assertIn("tolerance declaration its artefact carries", result.stderr)
 
     def test_a_build_pinning_no_description_fails(self):
         """A tier pinned to nothing has verified against nothing in particular."""
@@ -703,6 +793,28 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("REFERENCE_LIMITS_PATH", result.stderr)
         self.assertIn("no limits declaration the verification tier is pinned to", result.stderr)
+
+    def test_a_build_pinning_no_tolerance_fails(self):
+        """A tier that pins the machine's files and forgets the band verifies its
+        deliveries against nothing in particular."""
+        self.tree.declare(
+            [
+                ("board", carrying_environment("thermoblock")),
+                (
+                    "native_test",
+                    host_test_environment(
+                        "thermoblock", "params/thermoblock.params", tolerance=""
+                    ),
+                ),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("REFERENCE_TOLERANCE_PATH", result.stderr)
+        self.assertIn(
+            "no tolerance declaration the verification tier is pinned to", result.stderr
+        )
 
     def test_a_build_pinning_two_descriptions_fails(self):
         self.tree.describe("thermoblock-variant.params", VARIANT)
@@ -747,6 +859,29 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("more than one limits declaration is named", result.stderr)
         self.assertIn("thermoblock-variant.limits by other_test", result.stderr)
 
+    def test_a_build_pinning_two_tolerance_declarations_fails(self):
+        """Two bands is not a wider band; it is two answers to what the drink demands."""
+        self.tree.describe("tolerance-variant.declaration", TOLERANCE_VARIANT)
+        self.tree.declare(
+            [
+                ("board", carrying_environment("thermoblock")),
+                ("native_test", self.pinned),
+                (
+                    "other_test",
+                    host_test_environment(
+                        "thermoblock",
+                        "params/thermoblock.params",
+                        tolerance="params/tolerance-variant.declaration",
+                    ),
+                ),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("more than one tolerance declaration is named", result.stderr)
+        self.assertIn("tolerance-variant.declaration by other_test", result.stderr)
+
     def test_a_pinned_description_that_is_not_there_fails(self):
         self.declare()
         generated = self.tree.generate("board")
@@ -762,6 +897,15 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("pinned to the limits declaration", result.stderr)
+        self.assertIn("nothing for an artefact to be compared against", result.stderr)
+
+    def test_a_pinned_tolerance_declaration_that_is_not_there_fails(self):
+        self.declare()
+        generated = self.tree.generate("board")
+        os.remove(os.path.join(self.tree.root, "params", "tolerance.declaration"))
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("pinned to the tolerance declaration", result.stderr)
         self.assertIn("nothing for an artefact to be compared against", result.stderr)
 
     def test_an_embedding_offered_for_something_that_is_not_a_machine_build_fails(self):
@@ -786,6 +930,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("no generated embedding of the parameter description", result.stderr)
         self.assertIn("no generated embedding of the limits declaration", result.stderr)
+        self.assertIn("no generated embedding of the tolerance declaration", result.stderr)
 
     def test_a_machine_build_whose_limits_alone_were_never_rendered_fails(self):
         """Half a rendering is the state an added embedding arrives through."""
@@ -799,6 +944,20 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("no generated embedding of the limits declaration", result.stderr)
+
+    def test_a_machine_build_whose_tolerance_alone_was_never_rendered_fails(self):
+        """The state an embedding added later arrives through, on the newest one."""
+        self.declare()
+        self.tree.generate("board")
+        os.remove(
+            os.path.join(
+                self.tree.generated("board"),
+                embedded_description.TOLERANCE.generated_name,
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no generated embedding of the tolerance declaration", result.stderr)
 
     def test_a_generated_directory_inside_the_source_tree_is_refused(self):
         """A rendered file kept in the tree is the second copy this exists to prevent."""
@@ -854,6 +1013,18 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("limits declaration", result.stderr)
         self.assertIn("description-source:", result.stderr)
 
+    def test_a_generated_tolerance_file_that_is_not_an_embedding_fails(self):
+        self.declare()
+        generated = self.tree.generate("board")
+        write(
+            os.path.join(generated, embedded_description.TOLERANCE.generated_name),
+            "const char reference_tolerance[] = { 0x00 };\n",
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("tolerance declaration", result.stderr)
+        self.assertIn("description-source:", result.stderr)
+
     def test_a_second_board_declaring_the_wrong_description_is_caught(self):
         self.tree.describe("thermoblock-variant.params", VARIANT)
         self.tree.declare(
@@ -888,6 +1059,11 @@ class TheArtefactCarriesTheModel(TargetModelCase):
     """SOL-ONBOARD-PLANT-MODEL-IDENTITY.C8: the artefact a machine would run retains the plant model's operations.
 
     SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3: the description travels in the artefact, read back out of the artefact itself.
+
+    Everything the artefact carries is asked about, not the description alone.
+    The linker treats them all the same way, and a file that reached the artefact
+    through this mechanism after the gate was written would otherwise be the one
+    thing nothing established had survived.
 
     SOL-ONBOARD-PLANT-MODEL-IDENTITY.C7: the target build links the maths the plant sources call into. That criterion is
     established by the build itself, as its own text says -- but only while the
@@ -928,33 +1104,46 @@ class TheArtefactCarriesTheModel(TargetModelCase):
         self.tree.declare(environments)
 
     def link(self, environment: str, *, operations=("plant_model_init", "plant_model_step"),
-             descriptions=("params/thermoblock.params",)):
+             descriptions=("params/thermoblock.params",),
+             limits=("params/thermoblock.limits",),
+             tolerances=("params/tolerance.declaration",)):
         """Link an artefact defining the given operations and carrying the given bytes.
 
-        The description goes in through the same rendering the build uses, so
-        what a real artefact would carry is what is compiled here rather than a
-        restatement of it.
+        Each file goes in through the same rendering the build uses, so what a
+        real artefact would carry is what is compiled here rather than a
+        restatement of it. Each is given as a list because carrying none and
+        carrying two are both states an artefact can be in, and they are the two
+        this gate exists to report.
+
+        Every array is referred to from `main`, because a linker discards what
+        nothing reaches -- which is the failure the gate is about, and a fixture
+        that let it happen by accident would be exercising the gate against
+        something other than what it claims to have built.
         """
         directory = os.path.join(self.tree.root, ".pio", "build", environment)
         os.makedirs(directory, exist_ok=True)
         artefact = os.path.join(directory, "firmware.elf")
 
         parts = []
-        for index, description in enumerate(descriptions):
-            with open(os.path.join(self.tree.root, description), "rb") as handle:
-                rendered = embedded_description.render(description, handle.read())
-            parts.append(
-                rendered.replace(
-                    f"const char {embedded_description.DESCRIPTION.symbol}[]",
-                    f"const char {embedded_description.DESCRIPTION.symbol}_{index}[]",
+        symbols = []
+        for embedding, carried in (
+            (embedded_description.DESCRIPTION, descriptions),
+            (embedded_description.LIMITS, limits),
+            (embedded_description.TOLERANCE, tolerances),
+        ):
+            for index, path in enumerate(carried):
+                with open(os.path.join(self.tree.root, path), "rb") as handle:
+                    rendered = embedded_description.render(path, handle.read(), embedding)
+                symbol = f"{embedding.symbol}_{index}"
+                symbols.append(symbol)
+                parts.append(
+                    rendered.replace(
+                        f"const char {embedding.symbol}[]", f"const char {symbol}[]"
+                    )
                 )
-            )
         parts.extend(f"int {name}(void) {{ return 0; }}\n" for name in operations)
         used = "".join(f"    total += {name}();\n" for name in operations)
-        used += "".join(
-            f"    total += {embedded_description.DESCRIPTION.symbol}_{index}[0];\n"
-            for index in range(len(descriptions))
-        )
+        used += "".join(f"    total += {symbol}[0];\n" for symbol in symbols)
         parts.append(f"int main(void) {{\n    int total = 0;\n{used}    return total;\n}}\n")
 
         source = os.path.join(self.tree.root, f"{environment}.c")
@@ -984,6 +1173,70 @@ class TheArtefactCarriesTheModel(TargetModelCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("0 time(s)", result.stderr)
 
+    def test_an_artefact_carrying_no_limits_fails(self):
+        """Bounds the linker dropped leave the estimator correcting against
+        whatever a broken channel reports, which looks like drift."""
+        self.declare("board")
+        self.link("board", limits=())
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of the limits declaration", result.stderr)
+        self.assertIn("0 time(s)", result.stderr)
+
+    def test_an_artefact_carrying_no_tolerance_fails(self):
+        """A band the linker dropped is not a wider band. It is a machine that
+        makes coffee and holds it to nothing, reporting success throughout."""
+        self.declare("board")
+        self.link("board", tolerances=())
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of the tolerance declaration", result.stderr)
+        self.assertIn("0 time(s)", result.stderr)
+
+    def test_an_artefact_carrying_the_band_twice_fails(self):
+        """Two copies leave which one the running machine is held to unanswerable
+        from the artefact, which is the one place it can still be asked."""
+        self.declare("board")
+        self.link(
+            "board",
+            tolerances=("params/tolerance.declaration", "params/tolerance.declaration"),
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of the tolerance declaration", result.stderr)
+        self.assertIn("2 time(s)", result.stderr)
+
+    def test_an_artefact_carrying_a_second_limits_declaration_fails(self):
+        """Another machine's bounds beside the intended ones is the same
+        ambiguity a second description is, and just as quiet."""
+        self.tree.describe("thermoblock-variant.limits", LIMITS_VARIANT)
+        self.declare("board")
+        self.link(
+            "board",
+            limits=("params/thermoblock.limits", "params/thermoblock-variant.limits"),
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("thermoblock-variant.limits", result.stderr)
+        self.assertIn("limits declaration the machine is running on", result.stderr)
+
+    def test_a_declaration_nothing_meant_to_embed_reaching_the_artefact_is_caught(self):
+        """Nothing in the tree puts the cadence declaration into an image. One
+        that arrives there is a build that has begun embedding files nobody
+        decided to embed, and it is found by the same search that would find a
+        rival band -- which is why that search covers the whole suffix rather
+        than being given up because the suffix is shared."""
+        self.tree.describe("cadence.declaration", "# Another declaration entirely.\n")
+        self.declare("board")
+        self.link(
+            "board",
+            tolerances=("params/tolerance.declaration", "params/cadence.declaration"),
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("cadence.declaration", result.stderr)
+        self.assertIn("tolerance declaration the machine is running on", result.stderr)
+
     def test_an_artefact_carrying_a_second_description_fails(self):
         """Two descriptions in one image leaves the machine's numbers unsettled."""
         self.tree.describe("thermoblock-variant.params", VARIANT)
@@ -995,6 +1248,7 @@ class TheArtefactCarriesTheModel(TargetModelCase):
         result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("thermoblock-variant.params", result.stderr)
+        self.assertIn("description the machine is running on", result.stderr)
 
     def test_an_artefact_that_has_not_been_built_fails(self):
         self.declare("board")
@@ -1116,18 +1370,19 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
             self.tree.root, ".pio", "build", environment, "generated", embedding.generated_name
         )
 
-    def test_both_embeddings_are_rendered(self):
+    def test_every_embedding_is_rendered(self):
         self.declare()
         result = self.embed()
         self.assertEqual(0, result.returncode, result.stderr)
-        for embedding, content in (
-            (embedded_description.DESCRIPTION, DESCRIPTION),
-            (embedded_description.LIMITS, LIMITS),
+        for embedding, content, named in (
+            (embedded_description.DESCRIPTION, DESCRIPTION, "params/thermoblock"),
+            (embedded_description.LIMITS, LIMITS, "params/thermoblock"),
+            (embedded_description.TOLERANCE, TOLERANCE, "params/tolerance"),
         ):
             with open(self.rendered(embedding), "r", encoding="utf-8") as handle:
                 source, carried = embedded_description.decode(handle.read(), embedding)
             self.assertEqual(content.encode("utf-8"), carried)
-            self.assertIn("params/thermoblock", source)
+            self.assertIn(named, source)
 
     def test_the_generated_directory_goes_on_the_include_path_once(self):
         """Twice would be the same answer on the path twice, and one of them
@@ -1165,7 +1420,9 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
                 (
                     "board",
                     target_environment(
-                        "thermoblock", custom_embedded_limits="params/thermoblock.limits"
+                        "thermoblock",
+                        custom_embedded_limits="params/thermoblock.limits",
+                        custom_embedded_tolerance="params/tolerance.declaration",
                     ),
                 ),
                 ("native_test", self.pinned),
@@ -1183,11 +1440,38 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
         self.assertEqual(2, result.returncode)
         self.assertIn("declares neither", result.stderr)
 
+    def test_a_build_declaring_the_machines_files_and_no_band_is_refused(self):
+        """The artefact would come up with a control law holding its deliveries to
+        nothing, which is the one omission of the three that produces coffee."""
+        self.tree.declare(
+            [
+                (
+                    "board",
+                    target_environment(
+                        "thermoblock",
+                        custom_embedded_description="params/thermoblock.params",
+                        custom_embedded_limits="params/thermoblock.limits",
+                    ),
+                ),
+                ("native_test", self.pinned),
+            ]
+        )
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("custom_embedded_tolerance", result.stderr)
+        self.assertFalse(os.path.exists(self.rendered(embedded_description.DESCRIPTION)))
+
     def test_a_declared_limits_file_that_is_not_there_is_refused(self):
         self.declare({"custom_embedded_limits": "params/nowhere.limits"})
         result = self.embed()
         self.assertEqual(2, result.returncode)
         self.assertIn("no limits declaration at", result.stderr)
+
+    def test_a_declared_tolerance_file_that_is_not_there_is_refused(self):
+        self.declare({"custom_embedded_tolerance": "params/nowhere.declaration"})
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no tolerance declaration at", result.stderr)
 
     def test_an_unchanged_declaration_is_not_rewritten(self):
         """Restamping the rendered file would rebuild the translation unit that
@@ -1220,7 +1504,8 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
 class TheEmbeddedFormSurvivesBeingReadBack(unittest.TestCase):
     """SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3: the bytes rendered into the artefact are the description's own, whatever they are.
 
-    Rendering and reading are two halves of one format, so they are driven together.
+    Rendering and reading are two halves of one format, so they are driven
+    together, and every file the format carries is driven through both halves.
     """
 
     def test_every_byte_value_round_trips(self):
@@ -1232,8 +1517,8 @@ class TheEmbeddedFormSurvivesBeingReadBack(unittest.TestCase):
         self.assertEqual(data, carried)
 
     def test_every_embedding_round_trips_under_its_own_symbol(self):
-        """Two embeddings, one format. A second symbol reading back through the
-        first would decode whichever file happened to be looked at."""
+        """Several embeddings, one format. A second symbol reading back through
+        the first would decode whichever file happened to be looked at."""
         data = bytes(range(256))
         for embedding in embedded_description.EMBEDDINGS:
             rendered = embedded_description.render("params/x", data, embedding)
@@ -1243,14 +1528,19 @@ class TheEmbeddedFormSurvivesBeingReadBack(unittest.TestCase):
             self.assertEqual(data, carried)
 
     def test_one_embedding_is_not_read_back_as_another(self):
-        """Reading the limits file through the description's symbol would find no
-        definition, which is the refusal that keeps the two from being swapped."""
-        rendered = embedded_description.render(
-            "params/x.limits", b"data", embedded_description.LIMITS
-        )
-        with self.assertRaises(embedded_description.MalformedEmbedding) as raised:
-            embedded_description.decode(rendered, embedded_description.DESCRIPTION)
-        self.assertIn(embedded_description.DESCRIPTION.symbol, str(raised.exception))
+        """Reading one file through another's symbol would find no definition,
+        which is the refusal that keeps them from being swapped. Every pair is
+        driven, because a symbol that happened to be a prefix of another would be
+        found by the reader looking for the shorter one and nothing else would
+        say so."""
+        for rendered_as in embedded_description.EMBEDDINGS:
+            rendered = embedded_description.render("params/x", b"data", rendered_as)
+            for read_as in embedded_description.EMBEDDINGS:
+                if read_as is rendered_as:
+                    continue
+                with self.assertRaises(embedded_description.MalformedEmbedding) as raised:
+                    embedded_description.decode(rendered, read_as)
+                self.assertIn(read_as.symbol, str(raised.exception))
 
     def test_an_empty_description_is_refused_rather_than_rendered(self):
         """An empty initialiser is not C every compiler accepts, and an empty

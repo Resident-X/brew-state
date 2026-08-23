@@ -188,6 +188,18 @@ tasks:
       - python3 tools/check_robustness_declaration.py --include-dir include --declaration params/robustness.declaration
       - python3 tools/check_estimator_limits.py --include-dir include --plant-root src/plant --params-dir params
       - python3 tools/check_cadence_declaration.py --include-dir include --source-dir src --declaration params/cadence.declaration
+      # The figures the control law itself rests on, and the band a delivery is
+      # held to. Separate from the cadence check because the two answer
+      # different questions about the loop -- the rate it runs at, and what it
+      # does at that rate -- and because the band is the one figure here that
+      # lives as data rather than as a definition, so it is checked from the
+      # opposite direction: present in the declaration, absent from the source.
+      # The delivery loader's header is named alongside its sources, because a
+      # bound it declares is a figure of that loader wherever the file happens
+      # to sit; the include directory as a whole is not scanned, because the
+      # rest of what it holds answers for a machine or for another loader under
+      # its own check.
+      - python3 tools/check_control_declaration.py --include-dir include --source-dir src/control --source-dir src/delivery --source-header include/delivery_tolerance.h --declaration params/control.declaration --tolerance params/tolerance.declaration --tree-dir src --tree-dir include
       # The vocabulary both seams draw the machine's actuation channels from,
       # and every structure's statement of which of them it answers.
       - python3 tools/check_plant_header.py include/machine_actuation.h --plant-root src/plant --include-dir include --vocabulary-only

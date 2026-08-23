@@ -44,12 +44,14 @@ GENERATED_DIRECTORY = "generated"
 class Embedding(NamedTuple):
     """One file an artefact carries compiled in.
 
-    An artefact carries more than one: the description of the machine, and the
-    declaration of what a reading off that machine may plausibly be. They are
-    the same mechanism twice rather than two mechanisms, so the parts that
-    differ between them -- the symbol defined and the file rendered to -- are
-    named here and everything else is shared. A second copy of the renderer for
-    the second file is how the two formats would come to differ.
+    An artefact carries more than one: the description of the machine, the
+    declaration of what a reading off that machine may plausibly be, and the
+    band a delivery off it is held to. They are the same mechanism repeated
+    rather than three mechanisms, so the parts that differ between them -- the
+    symbol defined and the file rendered to -- are named here and everything
+    else is shared. A second copy of the renderer for a second file is how the
+    formats would come to differ, and each copy after the first is a place the
+    drift can start from without anything reporting it.
     """
 
     #: The symbol the generated array is defined as. The checked-in declaration
@@ -76,8 +78,18 @@ LIMITS = Embedding(
     description="limits declaration",
 )
 
-#: Both, in the order a build renders them.
-EMBEDDINGS = (DESCRIPTION, LIMITS)
+#: The tolerance declaration: how far from the temperature it was asked for a
+#: delivery off the machine may sit. It travels with the other two and is unlike
+#: them: they say what this machine is and what its sensors could report, and
+#: this says what the drink demands whatever machine it was made on.
+TOLERANCE = Embedding(
+    symbol="reference_tolerance",
+    generated_name="reference_tolerance_bytes.h",
+    description="tolerance declaration",
+)
+
+#: All of them, in the order a build renders them.
+EMBEDDINGS = (DESCRIPTION, LIMITS, TOLERANCE)
 
 #: How many bytes go on one line. Narrow enough to read, wide enough that a
 #: description of a few kilobytes does not become a file of a few thousand

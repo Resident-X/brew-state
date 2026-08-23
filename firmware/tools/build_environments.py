@@ -107,6 +107,16 @@ EMBEDDED_DESCRIPTION_OPTION = "custom_embedded_description"
 #: reading or believe none, so the two travel together or not at all.
 EMBEDDED_LIMITS_OPTION = "custom_embedded_limits"
 
+#: The same declaration again, for the tolerance declaration that travels beside
+#: both. It is not a statement about the machine at all -- it is how far from
+#: the temperature it was asked for a delivery may sit -- but it reaches the
+#: artefact by the same route and for the same reason: the control path cannot
+#: come up without it, and a target has no filesystem to open it from. An
+#: artefact carrying a description and bounds but no band would have a control
+#: law with nothing to hold a delivery to, which is not a wider band but an
+#: absent criterion.
+EMBEDDED_TOLERANCE_OPTION = "custom_embedded_tolerance"
+
 #: The macro a build names the description its artefact and its tests are
 #: exercised against with. An environment naming one is pinning the host
 #: verification tier to that description: it is the file the model's own tests
@@ -125,6 +135,13 @@ REFERENCE_MACRO = "REFERENCE_DESCRIPTION_PATH"
 #: worth being able to see.
 REFERENCE_LIMITS_MACRO = "REFERENCE_LIMITS_PATH"
 
+#: The same, for the tolerance declaration the host tier is pinned to. Named on
+#: its own terms rather than derived from either of the others, because it is
+#: not a file that varies with the machine: one declaration states what every
+#: delivery is held to, and a build naming a second one is a build in which two
+#: answers to that exist.
+REFERENCE_TOLERANCE_MACRO = "REFERENCE_TOLERANCE_PATH"
+
 #: The flag options a reference description can be named in.
 _FLAG_OPTIONS = ("build_flags", "build_src_flags")
 
@@ -132,6 +149,9 @@ _FLAG_OPTIONS = ("build_flags", "build_src_flags")
 _REFERENCE_FLAG = re.compile(r"-D\s*" + REFERENCE_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*")
 _REFERENCE_LIMITS_FLAG = re.compile(
     r"-D\s*" + REFERENCE_LIMITS_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*"
+)
+_REFERENCE_TOLERANCE_FLAG = re.compile(
+    r"-D\s*" + REFERENCE_TOLERANCE_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*"
 )
 
 #: `${section.option}`, the build file's own reference to another value.
@@ -275,6 +295,19 @@ class Environment:
         return _project_relative(self.get(EMBEDDED_LIMITS_OPTION).strip())
 
     @property
+    def embedded_tolerance(self) -> str:
+        """The tolerance declaration this artefact carries compiled in, or empty.
+
+        Declared in its own right, like the two beside it. The band is the one
+        of the three that says nothing about this machine -- it is what the
+        drink demands -- and it is declared here anyway, because which file an
+        artefact carries is a fact about the artefact whatever the file happens
+        to be about, and a build is entitled to be read rather than reasoned
+        about.
+        """
+        return _project_relative(self.get(EMBEDDED_TOLERANCE_OPTION).strip())
+
+    @property
     def reference_descriptions(self) -> list[str]:
         """Every description this environment names as the one it is exercised
         against, as paths relative to the project, in the order they appear.
@@ -300,6 +333,19 @@ class Environment:
         found: list[str] = []
         for option in _FLAG_OPTIONS:
             for match in _REFERENCE_LIMITS_FLAG.finditer(self.get(option)):
+                path = _project_relative(match.group(1))
+                if path not in found:
+                    found.append(path)
+        return found
+
+    @property
+    def reference_tolerance(self) -> list[str]:
+        """Every tolerance declaration this environment names as the one it is
+        exercised against, on the same terms as the two above.
+        """
+        found: list[str] = []
+        for option in _FLAG_OPTIONS:
+            for match in _REFERENCE_TOLERANCE_FLAG.finditer(self.get(option)):
                 path = _project_relative(match.group(1))
                 if path not in found:
                     found.append(path)
@@ -602,4 +648,25 @@ def pinned_limits(environments: list[Environment]) -> tuple[str, list[str]]:
         lambda environment: environment.reference_limits,
         REFERENCE_LIMITS_MACRO,
         "limits declaration",
+    )
+
+
+def pinned_tolerance(environments: list[Environment]) -> tuple[str, list[str]]:
+    """The one tolerance declaration the build pins its verification to, and what
+    went wrong.
+
+    Asked separately from the two above because it answers a separate question.
+    Those two say what this machine is and what its sensors could report; this
+    says how far from the temperature it was asked for a delivery may sit, which
+    is a property of the drink and would read the same on a machine of another
+    kind entirely. A build pinning the machine's files and leaving this one
+    unnamed has a verification tier holding deliveries to nothing in particular,
+    and a control path that cannot come up at all on the target -- which is the
+    omission worth being able to see before an artefact exists.
+    """
+    return _pinned(
+        environments,
+        lambda environment: environment.reference_tolerance,
+        REFERENCE_TOLERANCE_MACRO,
+        "tolerance declaration",
     )
