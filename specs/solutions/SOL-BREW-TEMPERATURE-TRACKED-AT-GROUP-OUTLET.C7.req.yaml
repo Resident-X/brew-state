@@ -1,0 +1,18 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C7
+type: criterion
+title: The control law's coefficients are declared data carrying their origin rather than literals in the source
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every gain and time constant the law introduces is recorded in a control-side declaration carrying
+  its origin, in the manner the step interval's cadence declaration already is, and is checked by a
+  gate of that same shape rather than by the plant's parameter-origin gate — that gate derives its
+  subjects from what each structure declares, and a controller gain is a coefficient of no machine. A
+  literal added beside the declaration fails the gate rather than passing unnoticed. Declaring an
+  assumed error for a coefficient the design has not been established over is out of scope; the
+  origins recorded here are the design's own choices, not measurements of the physical machine.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

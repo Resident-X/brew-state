@@ -1,0 +1,18 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C6
+type: criterion
+title: Tracking holds for a whole extraction from a thermal state the machine did not start rested in
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The plant is placed away from rest through the state-setting entry point the model seam provides,
+  and tracking is then asserted across the whole draw — sampled from first flow to last rather than
+  at a settled instant, with early transients inside the band rather than exempted for being early.
+  An average on target with a wandering trajectory fails, which is what makes this stronger than a
+  settling check. Producing that disturbed state by running a modelled preceding delivery is out of
+  scope: the hot water draw that would leave the machine there is deferred, so the starting state
+  is set directly.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

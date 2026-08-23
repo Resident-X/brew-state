@@ -1,0 +1,16 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C8
+type: criterion
+title: The control suite exercises the loop against the shipped description rather than coefficients of its own
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The host tests load the reference description and limits through the compile-time paths the plant
+  and estimator suites already use, so a drift between the description and what the loop was tuned
+  against surfaces as a failing control test rather than passing silently. Carrying a private copy
+  of the coefficients inside the suite is what this excludes. Running the loop on the target, or
+  under firmware-binary emulation, is out of scope: this slice is verified on the host tier alone.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

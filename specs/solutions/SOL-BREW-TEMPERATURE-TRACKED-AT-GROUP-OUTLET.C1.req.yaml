@@ -1,0 +1,21 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1
+type: criterion
+title: Brew temperature's tolerance band is described data with a recorded origin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The band is declared in its own right, alongside the cadence and robustness declarations, rather
+  than inside a plant description's limits: it states what the drink demands, not what a particular
+  model does, and three plant structures each carrying a limits file would otherwise each declare a
+  band and be free to differ. It carries a recorded origin in the manner those declarations do, and
+  the control unit reads it from there rather than compiling it in. Changing the declared band alone
+  changes which trajectories the control suite accepts, with no edit to any source file, and a band
+  left undeclared fails the gate rather than quietly defaulting. Fixing the value the physical machine
+  will finally be held to is out of scope: what is settled here is that the band is stated, sourced
+  and read, so a bench measurement later revises a recorded assumption rather than an anonymous
+  constant.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

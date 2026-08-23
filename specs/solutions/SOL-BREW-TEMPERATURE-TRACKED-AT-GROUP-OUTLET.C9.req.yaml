@@ -1,0 +1,20 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C9
+type: criterion
+title: The host harness closes the loop through a truth plant the estimator does not share
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control suite advances a plant instance of its own under the actuation the law commands each
+  step and injects its brew temperature through the hardware seam, so the reading the estimator
+  corrects against comes from a model the estimator does not own. The simulated hardware returns
+  whatever a caller last set, and the only model presently inside the loop is the estimator's, so a
+  tracking assertion made against that arrangement compares the estimator with itself and passes for
+  free. Perturbing the truth instance's coefficients away from the estimator's degrades tracking
+  rather than leaving it untouched, which is the check that the two are genuinely distinct. Driving
+  the loop from recorded bench data, and running it under firmware-binary emulation, are out of scope:
+  the harness built here is the host tier's.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of
