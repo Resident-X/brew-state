@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C6-TEST
+type: evidence
+title: Tracking holds for a whole extraction from an unrested state (SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T08:17:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_tracking_holds_across_a_whole_extraction_from_a_disturbed_state
+text: |-
+  The machine is placed away from rest through the model seam's state-setting entry point, with its casting above the water leaving it and both moving, and a thirty-second draw is run at three commanded temperatures either side of the one the load coefficients were derived at. Every sample from first flow to last is asserted inside the declared band, with early transients included rather than exempted, so an average on target with a wandering trajectory fails. The band is read from the shipped declaration, so tightening it alone decides which trajectories are accepted.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C6
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2-TEST
+type: evidence
+title: The commanded target is an input the control law reads (SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T08:17:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_two_targets_in_one_binary_produce_two_duty_trajectories
+text: |-
+  Two targets commanded in one binary from one machine state produce two duty trajectories, which a compiled-in destination cannot express. A machine with no target commanded drives neither output, reports that as its own result rather than a latched fault, goes on counting steps and advancing the estimator, and drives the moment it is asked. A target that is not a temperature is refused while a finite but unreachable one is accepted, since refusing what the machine cannot reach is a different question this slice does not answer. Accumulated intent is discarded on a change of target and kept when the same target is restated.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2
+    type: satisfies
