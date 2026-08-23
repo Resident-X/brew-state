@@ -1,0 +1,21 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C4
+type: criterion
+title: Duty rises with the commanded flow rather than after the outlet temperature falls
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pump level a delivery commands is written into the actuation record the estimator is advanced
+  under, as well as driven through the hardware seam. Without both, the estimator models a still
+  machine while water is moving, and the one state no sensor observes drifts exactly when it matters —
+  the failure this slice exists to prevent, arriving through the back door. That level is fed forward
+  into the heater command, so the response begins in the control step the flow is commanded in rather
+  than once the reconstruction has fallen. Commanding a step of flow with the loop closed moves duty
+  ahead of any change in the reconstruction, and removing the feedforward term alone deepens the dip
+  that follows — the two together are what distinguish this from a well-tuned reactive loop. Acting on
+  a commanded course over a horizon is out of scope and stays open as a criterion of the parent epic:
+  the input taken here is the flow commanded now, which advances that criterion without discharging it.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

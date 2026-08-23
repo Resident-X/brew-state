@@ -1,0 +1,20 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C5
+type: criterion
+title: Accumulated intent does not outlive the actuator limit
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Full duty is this machine's ordinary condition rather than an exception, so integration is made
+  conditional on the actuator not being saturated rather than unwound after the fact. The assertion is
+  structural and does not rest on the coefficients being right: holding the loop in saturation and
+  then removing the demand produces no overshoot attributable to that interval, and lengthening the
+  saturated interval does not deepen the overshoot — a bare integrator fails the second check even
+  where it passes the first. The robustness declaration places this behaviour among those that must
+  survive an arbitrarily wrong model, which is why it is established this way rather than by sweeping
+  the declared error range, a test that would establish only the weaker claim. The loop's stability
+  margin across that range is out of scope and belongs to the verification of the loop once it exists.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

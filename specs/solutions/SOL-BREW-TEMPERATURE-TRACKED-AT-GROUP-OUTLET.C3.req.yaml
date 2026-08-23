@@ -1,0 +1,18 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C3
+type: criterion
+title: The loop's objective is shown to be the reconstructed water temperature rather than the sensed one
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The control unit already forms its error against the estimator's reconstruction of the water leaving
+  the block rather than against the brew sensor channel, so what is established here is that the
+  property is asserted rather than incidental, and that the two quantities are not related by a fixed
+  offset. Perturbing the outlet conduction time constant alone changes the duty the loop commands,
+  which a law closed on the sensed heated-mass temperature could not do, and that dependence is the
+  analysis. Instrumenting the group directly is out of scope: the parent requirement leaves how the
+  value is obtained open.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

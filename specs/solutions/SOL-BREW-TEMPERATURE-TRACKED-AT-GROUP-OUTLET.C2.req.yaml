@@ -1,0 +1,16 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2
+type: criterion
+title: The commanded target is an input the control law reads rather than a constant compiled into it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The single setpoint the control header defines today is removed and the target becomes state the
+  caller sets, so a delivery names the temperature it wants. Two targets commanded in one test
+  binary produce two duty trajectories, which a compiled-in destination cannot express. A target
+  that varies through a delivery, and refusal of a target the machine cannot reach, are out of
+  scope — both wait on the profile surface the parent epic defers.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: criterion-of

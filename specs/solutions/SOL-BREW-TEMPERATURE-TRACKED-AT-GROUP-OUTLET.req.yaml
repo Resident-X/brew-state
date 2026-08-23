@@ -1,0 +1,114 @@
+id: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+type: deliverable
+category: solution
+title: The brew loop holds the water reaching the coffee to a declared band for a whole extraction
+status: active
+version: 1
+text: |
+  The control law that holds brew temperature is built here, in host simulation against the plant
+  description, replacing the proportional skeleton the control unit carries today. That skeleton
+  exists to establish separability rather than performance: it drives the brew heater at a fixed gain
+  from a single setpoint compiled into its header, and the header says in as many words that tuning
+  the control law is a separate deliverable that does not live there yet. This is that deliverable.
+
+  The variable the loop regulates is the temperature of the water on its way to the group. No sensor
+  reports it — the brew sensor reads the heated mass — and the estimator already reconstructs it as a
+  state of its own. The distance between the two is not a fixed offset: the outlet time constant moves
+  with what is being drawn, so the two diverge exactly when a delivery is under way. Closing the loop
+  on the sensed quantity and assuming the water follows would introduce an error invisible to the
+  controller, which is the failure this slice exists to prevent.
+
+  Closing the loop at all requires a harness that does not yet exist. The simulated hardware returns
+  whatever a caller last set and is not a plant, so the only model presently inside the loop is the
+  estimator's own, and a tracking assertion made against that arrangement would compare the estimator
+  with itself. A truth plant advanced under the commanded actuation, injected through the hardware
+  seam and kept distinct from the estimator's instance, is built here and is what gives every other
+  assertion in this slice its content.
+
+  The tolerance the loop is held to becomes described data with a recorded origin, declared in its own
+  right rather than inside a plant description. It states what the drink demands rather than what a
+  particular model does, and a per-description band would be declared once per plant structure and
+  free to differ between them. It is stated nowhere today: the requirement's criterion is a threshold
+  that speaks of a band without naming it, and the robustness declaration already classifies holding a
+  setpoint to a stated tolerance as a behaviour permitted to degrade — a declaration naming a quantity
+  that nothing declares.
+
+  The loop is not reactive. On a block with little stored energy the temperature dip from incoming
+  flow arrives faster than feedback can answer it, and the flow a delivery commands is known at the
+  moment it is commanded rather than discovered as it arrives. Duty therefore rises with the command,
+  and the commanded pump level is carried in the actuation record the estimator is advanced under so
+  that the reconstruction does not model a still machine while water is moving. The control unit
+  reaches the plant and the hardware only through the interfaces those seams already name, and the
+  loop's coefficients are declared data rather than literals, so a second plant structure remains a
+  different build rather than a negotiation with the controller.
+
+  Out of scope: the profile command surface and the end condition it states, refusing a target the
+  machine cannot reach, and reporting departure from a commanded course — each is a criterion of the
+  parent epic whose premise this slice does not establish. Acting on a commanded course over a horizon
+  also stays open: the feedforward built here takes the flow a delivery commands now, which advances
+  that criterion without discharging it. The hot water draw and the contention between two deliveries
+  on the shared heated mass are likewise deferred, so the disturbed starting state this slice tracks
+  from is set directly rather than produced by a modelled preceding delivery. Establishing that the
+  loop keeps its guarantees across the declared range of model error is a claim that can only be made
+  once the loop exists, and is not made here. Extending the mutation sweep beyond the plant sources to
+  cover this law is out of scope and remains where the sweep's own solutions left it. The puck and the
+  pump's flow-versus-pressure characteristic remain absent from the model.
+rationale: |
+  The controlled variable and the loop that tracks it are built as one unit because the second is
+  stated against the first. A tracking law authored while the regulated quantity was still open would
+  have to guess at what it was closing on, and the parent epic draws the distinction deliberately:
+  where the machine senses and where the drink is sensitive are different points, and the distance
+  between them is the substance of this loop rather than an offset to be trimmed out.
+
+  The host harness is carried here rather than assumed because the arrangement it replaces would let
+  every other assertion pass for free. Simulated readings are whatever a caller last set, so a loop
+  tested against them is a loop tested against its own estimator. Stating the truth plant as work,
+  distinct from the estimator's instance, is what makes tracking, feedforward and anti-windup
+  falsifiable rather than merely green.
+
+  Declaring the tolerance here rather than leaving it to the requirement follows the practice the
+  graph already sets for numbers whose value depends on the machine actually built: the requirement
+  states that a band is held, and a declaration states what the band is, carrying its origin so a
+  later bench measurement revises a recorded assumption rather than an anonymous constant. It is
+  declared on its own rather than inside a plant description because it is a property of what the
+  drink demands, not of any one model — the wrong axis would make the tolerance vary with the
+  structure the machine was built against. Leaving it undeclared would have left a threshold criterion
+  with no threshold, which is the shape of an assumption nothing asserts.
+
+  Feedforward is taken from the commanded flow rather than left for feedback to discover, because the
+  decision that puts flow on the commanded side of the machine names the thermal feedforward as one of
+  the two things needing flow to be predictable, and the decision governing this loop rejects a
+  reactive thermal controller outright for a reason that holds whether or not a profile exists: the
+  dip arrives faster than the loop can answer. What that second decision names as the future input is
+  a commanded profile, which the machine cannot yet be given, so the input used here is the one the
+  machine does possess, and widening the coupling to a profile is an addition to this loop rather than
+  a rebuild of it.
+
+  The anti-windup obligation is not a refinement deferred to tuning. The robustness declaration
+  already classifies surrendering accumulated intent at the actuator limit among the behaviours that
+  must survive an arbitrarily wrong model, and full duty is this machine's ordinary condition rather
+  than an exception. That classification is also why the obligation is met structurally rather than by
+  sweeping the declared error range: a sweep would establish the weaker, bounded claim. The skeleton
+  being replaced has no integral term and so nothing to accumulate; the moment one is added the
+  obligation is live, which is why it is asserted in the same slice that adds it.
+links:
+  - target: DEC-PROFILE-FEEDS-THE-HORIZON
+    type: justified-by
+  - target: DEL-SIM-BREW-LOOP.C1
+    type: derives-from
+  - target: DEL-SIM-BREW-LOOP.C2
+    type: derives-from
+  - target: DEL-SIM-ESTIMATOR
+    type: depends-on
+  - target: DEL-SIM-FLOW-TERM
+    type: depends-on
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: depends-on
+  - target: REQ-BREW-TEMP-001.C1
+    type: targets
+  - target: REQ-BREW-TEMP-001.C2
+    type: targets
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by
+  - target: REQ-BREW-TEMP-001.C5
+    type: targets
