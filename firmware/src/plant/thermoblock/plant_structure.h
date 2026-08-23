@@ -16,10 +16,14 @@
  * way to the group following that casting's temperature through a lag whose
  * length is set by how fast the water is being displaced, because a low-mass
  * flow-through system puts real dynamics between the metal and the stream; the
- * steam block additionally losing the latent heat of whatever steam is drawn off
- * it, because vapour leaving carries away far more than its temperature suggests;
- * brew pressure driven by the pump; and steam pressure following the steam mass
- * above saturation except while a draw carries it below that relation. Whether
+ * steam block additionally losing what the feed replacing whatever steam is
+ * drawn off it costs to bring to the boil and then boil, because vapour leaving
+ * carries away far more than its temperature suggests and the water standing in
+ * its place arrives cold; that draw bounded by the rate the steam side's own
+ * feed pump is commanded to supply it at, because a block holding no reservoir
+ * makes steam no faster than it is given water to make it from; brew pressure
+ * driven by the pump; and steam pressure following the steam mass above
+ * saturation except while a draw carries it below that relation. Whether
  * they describe any real machine cannot be settled until
  * there is one to measure against; what they establish here is that the numbers
  * and the equations are separable and replaceable.
@@ -112,6 +116,15 @@ typedef struct {
      * plumbing and not the steam tables.
      */
     float steam_pressure_fall_bar_per_ml;
+    /*
+     * The rate this side's own feed pump pushes replacement water in at, at full
+     * duty. It sits with the steam path's figures rather than beside the brew
+     * pump's because what it bounds is how fast this block can make steam, and
+     * that is a property of the path it feeds as much as of the pump itself: a
+     * block holding no reservoir makes vapour out of what has just been pushed
+     * into it and out of nothing else.
+     */
+    float steam_feed_flow_ml_per_s;
 } plant_parameters_t;
 
 /*
@@ -214,11 +227,15 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
  * relaxes towards the casting it has just passed through over a residence time
  * that shortens as the draw grows.
  *
- * The steam mass gives up, on top of its own loss to ambient, what the steam
- * leaving it takes as latent heat. That term is independent of the loss beside
- * it: it is a power set by the rate alone and does not depend on where the mass
- * has got to, so it neither replaces the ambient loss nor changes how fast the
- * mass settles towards it. At no draw it is exactly zero.
+ * The steam mass gives up, on top of its own loss to ambient, what the feed
+ * replacing the steam leaving it costs to carry to saturation and then boil --
+ * and it gives it up for the lower of the rate asked for and the rate this side's
+ * own feed pump is commanded to supply, because a block holding no reservoir
+ * makes steam out of what has just been pushed into it and out of nothing else.
+ * That term is independent of the loss beside it: it is a power set by the rate
+ * alone and does not depend on where the mass has got to, so it neither replaces
+ * the ambient loss nor changes how fast the mass settles towards it. At no draw,
+ * and at no feed, it is exactly zero.
  *
  * The casting and the water are advanced as one pair rather than one after the
  * other: each now appears in the other's equation, so neither has a closed form
@@ -236,10 +253,12 @@ void thermoblock_advance_temperatures(plant_model_t *model,
  *
  * Steam pressure follows the steam mass above saturation and is zero below it
  * whenever nothing is being drawn. While something is, it is carried below that
- * relation at a rate the demand sets, and never below nothing at all. The
- * departure is discarded rather than unwound the moment the draw stops, so the
- * relation is exact again on the first step with no demand rather than several
- * steps later.
+ * relation, and never below nothing at all. What holds it there is the demand and
+ * what sets how fast it goes further is the steam actually being made, so a feed
+ * commanded shut mid-draw stops the departure widening without handing any of it
+ * back. The departure is discarded rather than unwound the moment the draw stops,
+ * so the relation is exact again on the first step with no demand rather than
+ * several steps later.
  */
 void thermoblock_advance_pressures(plant_model_t *model,
                                    const plant_actuation_t *actuation,

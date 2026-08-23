@@ -157,18 +157,47 @@ static float drawn_steam_ml_per_s(float steam_demand_ml_per_s)
 
 /*
  * What the steam being drawn costs the vessel, as a power: a volume rate times
- * what a millilitre costs to turn into vapour, and nothing else.
+ * what a millilitre of feed costs to bring to the boil and then boil.
  *
- * No temperature enters it, and that is the difference from the drawn-water term
- * beside it rather than an omission. Water leaving as liquid leaves at a
- * temperature, so what it costs is a difference against the temperature it
- * arrived at; water leaving as vapour has no such second temperature on this
- * structure, and the enthalpy it takes is what a millilitre costs to boil
- * whatever the vessel then settles at.
+ * Both halves are owed on the replacement rather than on what left. What left is
+ * gone; what the vessel has to make good is the feed standing in its place, and
+ * that arrives at the temperature the supply delivers it at and has to reach
+ * saturation before any of the latent cost falls due.
+ *
+ * The vessel's own temperature enters neither half, and that is the difference
+ * from the drawn-water term beside it rather than an omission. Water leaving as
+ * liquid leaves at the vessel's temperature, so what it costs is a difference
+ * taken against it, and it belongs in the settling coefficient for that reason.
+ * Water leaving as vapour has no such second temperature on this structure: the
+ * sensible half is taken between two coefficients of the water and its supply,
+ * so the whole term is a power the rate alone sets whatever the vessel then
+ * settles at.
+ *
+ * The lift is taken to saturation and not to the vessel, and on this
+ * architecture that is a simplification rather than a definition. A vessel above
+ * saturation is holding water hotter than the temperature it boils at, so feed
+ * mixing into it is in truth carried the whole way to where the vessel sits, not
+ * merely to where it turns. Charging to saturation is the phase change and
+ * nothing beyond it; what is left out is the superheat, which at the reference
+ * figures is a few percent of the term at the hottest the vessel is run. It is
+ * written here rather than among a set of declared omissions because this
+ * structure has none -- it describes no machine and says so in its own header --
+ * and an assumption of this size stated nowhere is worse than one stated in the
+ * only place there is.
+ *
+ * The sensible half stops at nothing rather than going below it. A description
+ * whose feed arrives above its own saturation temperature is admissible -- the
+ * two coefficients are bounded separately and no relation ties them -- and taken
+ * literally it would have a draw warm the vessel, which is the something out of
+ * nothing the guard above refuses a negative demand for.
  */
 static float drawn_steam_power_w(const plant_parameters_t *p, float drawn_ml_per_s)
 {
-    return p->water_latent_heat_j_per_ml * drawn_ml_per_s;
+    const float to_saturation_k =
+        fmaxf(p->steam_saturation_temperature_c - p->water_feed_temperature_c, 0.0f);
+    const float per_ml_j =
+        p->water_latent_heat_j_per_ml + p->water_heat_capacity_j_per_ml_k * to_saturation_k;
+    return per_ml_j * drawn_ml_per_s;
 }
 
 void boiler_advance_vessel(plant_model_t *model, const plant_actuation_t *actuation,

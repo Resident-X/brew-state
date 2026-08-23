@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-FEED-PUMP-WIRED.C2-TEST
+type: evidence
+title: A sufficient feed leaves behaviour unchanged and the pump-characteristic omission matches (SOL-PLANT-STEAM-FEED-PUMP-WIRED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T04:51:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_a_draw_the_feed_can_supply_is_honoured_whole, firmware/test/test_plant/test_plant.c::test_the_gaps_the_feed_relations_close_are_no_longer_recorded_as_omissions, firmware/test/test_plant/test_plant.c::test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
+text: |-
+  A draw the feed can supply is bit-identical across a feed commanded well above it and one commanded barely above it, so the feed's level is out of the arithmetic whenever the demand is the smaller figure. The recorded trajectory is unchanged byte for byte, its rows being driven at no demand. The document test refuses the sentence claiming the steam feed has everything missing and requires the coefficient the new relation reads to be named where the relations are stated. Run under task fw:verify.
+links:
+  - target: SOL-PLANT-STEAM-FEED-PUMP-WIRED.C2
+    type: satisfies

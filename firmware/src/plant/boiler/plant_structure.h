@@ -183,7 +183,8 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
  * is being drawn. The vessel takes in what its one heater delivers at the
  * commanded duty, gives up what its loss coefficient carries to ambient, gives
  * up what the water drawn out of it carries away above the temperature the water
- * arrived at, and gives up what the steam drawn off it takes as latent heat.
+ * arrived at, and gives up what the feed replacing the steam drawn off it costs to
+ * carry to saturation and then boil.
  * There is one state to write the third loss at, because on a machine of this
  * architecture the water leaving is the water in the vessel.
  *
