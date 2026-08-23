@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C9-TEST
+type: evidence
+title: The harness closes the loop through a truth plant the estimator does not share (SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T08:17:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_machine_unlike_the_estimators_model_degrades_tracking
+text: |-
+  The control suite advances a plant instance of its own under the actuation the law commands each step and injects its temperature through the hardware seam, so the reading the estimator corrects against comes from a model it does not own. Perturbing that instance's pump flow away from the estimator's description degrades tracking rather than leaving it untouched, which is the check that the two are genuinely distinct. A disturbance applied to the machine alone, by a route the estimator is not told about, reaches the reconstruction, which is impossible unless the reading comes from a model the estimator does not own.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C9
+    type: satisfies

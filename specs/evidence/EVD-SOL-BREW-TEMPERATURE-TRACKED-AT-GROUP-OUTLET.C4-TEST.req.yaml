@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C4-TEST
+type: evidence
+title: Duty rises with the commanded flow rather than after the outlet falls (SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T08:17:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_duty_rises_in_the_step_the_flow_is_commanded_in
+text: |-
+  With the loop settled and closed through a truth plant, commanding a step of flow raises duty in that same step while the reconstruction is separately asserted not to have fallen, so the rise cannot be a fast reaction. The same physical draw applied to the machine without being commanded to the loop dips further than the announced one. The commanded level is asserted to reach both the hardware seam and the actuation record the estimator is advanced under, compared against a model advanced as though the machine were still.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C4
+    type: satisfies

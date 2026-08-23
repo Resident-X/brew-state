@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C3-TEST
+type: evidence
+title: The loop's objective is the reconstructed water temperature (SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T08:17:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_perturbing_the_outlet_time_constant_alone_changes_the_duty
+text: |-
+  Two runs are driven with an identical injected reading sequence, differing only in the outlet conduction time constant the estimator reconstructs with. The commanded duty differs between them. A law closed on the sensed heated-mass temperature is handed the same numbers in both runs and could not produce a different duty, so that dependence is what establishes both that the objective is the reconstructed water temperature and that the two quantities are not related by a fixed offset.
+links:
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C3
+    type: satisfies

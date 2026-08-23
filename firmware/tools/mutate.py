@@ -145,6 +145,22 @@ CADENCE_DECLARATION = [
     "--include-dir", "include", "--source-dir", "src",
     "--declaration", "params/cadence.declaration",
 ]
+CONTROL_DECLARATION = [
+    sys.executable, "tools/check_control_declaration.py",
+    "--include-dir", "include", "--source-dir", "src/control", "--source-dir", "src/delivery",
+    "--source-header", "include/delivery_tolerance.h",
+    "--declaration", "params/control.declaration",
+    "--tolerance", "params/tolerance.declaration",
+    "--tree-dir", "src", "--tree-dir", "include",
+]
+#: The control law's own suite, which is what holds trajectories to the declared
+#: band. It is named here rather than left to the gate above because the two
+#: answer different questions about the same figure: the gate asks whether the
+#: band is declared and accounted for, and the suite asks whether the declared
+#: band is the one the software actually holds a delivery to. A band that has
+#: quietly stopped reaching the loop passes the first and fails the second, and
+#: it is the second that the arrangement exists for.
+CONTROL_TESTS = [PIO, "test", "-e", "native_test", "-f", "test_control"]
 ANALYSIS = [
     sys.executable, "tools/check_sanitizers.py", "--project", ".",
 ]
@@ -196,6 +212,8 @@ LABELS = {
     tuple(ROBUSTNESS_DECLARATION): "the robustness declaration check",
     tuple(ESTIMATOR_LIMITS): "the limits declaration check",
     tuple(CADENCE_DECLARATION): "the cadence declaration check",
+    tuple(CONTROL_DECLARATION): "the control declaration check",
+    tuple(CONTROL_TESTS): "the control law's tests",
     tuple(ANALYSIS): "the host tier's analysis check",
     tuple(MACHINE_SETTINGS): "the check that a machine build keeps its warning settings",
     tuple(MACHINE_STRUCTURE): "the check that a machine build carries a machine's equations",
@@ -473,8 +491,8 @@ MUTATIONS = (
                "carrying none -- which the settings check notices as the model no longer "
                "arriving under the settings at all",
         "file": "platformio.ini",
-        "find": "build_src_filter = ${common.control_sources} ${common.estimator_sources} ${common.plant_sources} +<hw/stm32/> +<app/stm32/>",
-        "replace": "build_src_filter = ${common.control_sources} ${common.estimator_sources} +<hw/stm32/> +<app/stm32/>",
+        "find": "build_src_filter = ${common.control_sources} ${common.delivery_sources} ${common.estimator_sources} ${common.plant_sources} +<hw/stm32/> +<app/stm32/>",
+        "replace": "build_src_filter = ${common.control_sources} ${common.delivery_sources} ${common.estimator_sources} +<hw/stm32/> +<app/stm32/>",
         "command": MACHINE_SETTINGS,
     },
     {
@@ -825,6 +843,32 @@ MUTATIONS = (
         "find": "respecting-the-supply-budget = invariant",
         "replace": "respecting-the-supply-budget = invariant degrading",
         "command": ROBUSTNESS_DECLARATION,
+    },
+    {
+        "name": "the-declared-band-narrowed-past-what-the-loop-can-hold",
+        "why": "the band trajectories are accepted against is narrowed in the declaration "
+               "alone, with no edit to any source, and every delivery the suite drives is "
+               "still accepted. That is the whole claim the band being data rather than a "
+               "constant rests on, and it is the one a check watching for a macro name "
+               "cannot make: rename the macro and the name scan is satisfied, while the "
+               "figure the software holds deliveries to is whatever the last person "
+               "compiled. What establishes it is the declaration alone deciding which "
+               "trajectories stop being accepted",
+        "file": "params/tolerance.declaration",
+        "find": "brew-temperature-band-milli-c = 1000 @document",
+        "replace": "brew-temperature-band-milli-c = 100 @document",
+        "command": CONTROL_TESTS,
+    },
+    {
+        "name": "a-band-of-nothing-declared",
+        "why": "the band is declared as zero, which is not a tight tolerance but a criterion "
+               "no delivery could ever meet -- and the loader refuses it, so this is a "
+               "declaration the machine does not come up on while the gate goes on reporting "
+               "the band as declared",
+        "file": "params/tolerance.declaration",
+        "find": "brew-temperature-band-milli-c = 1000 @document",
+        "replace": "brew-temperature-band-milli-c = 0 @document",
+        "command": CONTROL_DECLARATION,
     },
     {
         "name": "a-negative-assumed-error-accepted",
