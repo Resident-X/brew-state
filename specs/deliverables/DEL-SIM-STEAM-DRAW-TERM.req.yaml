@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: Steam carries energy away in the plant model, and a draw is something the operator opens, not something the machine commands
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |
