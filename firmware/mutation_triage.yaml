@@ -234,7 +234,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:102:31:
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:104:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two

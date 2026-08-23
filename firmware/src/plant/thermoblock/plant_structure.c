@@ -72,6 +72,8 @@ static const plant_parameter_spec_t SPECS[] = {
      offsetof(plant_parameters_t, steam_pressure_bar_per_k)},
     {"steam.pressure_fall_bar_per_ml", 0.0f, 10.0f,
      offsetof(plant_parameters_t, steam_pressure_fall_bar_per_ml)},
+    {"steam.feed_flow_ml_per_s", 0.0f, 100.0f,
+     offsetof(plant_parameters_t, steam_feed_flow_ml_per_s)},
 };
 
 actuation_channel_set_t plant_structure_actuation_channels(void)
@@ -155,12 +157,32 @@ static float drawn_steam_ml_per_s(float steam_demand_ml_per_s)
 /*
  * What the steam being drawn costs the mass it is drawn from, as a power.
  *
- * A volume rate times what a millilitre costs to turn into vapour, and nothing
- * else. There is no temperature difference in it, because there is no second
- * temperature to take one against: what leaves the wand is vapour, and this
- * structure has no state for where it leaves at. That is the substantive
- * difference from the coffee side's flow term, which is a difference across two
- * temperatures both of which this structure keeps.
+ * Two costs against the one rate, and the block owes both. A millilitre leaving
+ * as vapour is made good by a millilitre of feed arriving in its place, and that
+ * replacement has to be carried from the temperature it arrives at up to the
+ * temperature it turns at before any of the latent cost is owed on it. Charging
+ * the second alone charges the block for the boiling and not for the heating
+ * that has to happen first.
+ *
+ * Neither part is taken against this mass's own temperature, which is what keeps
+ * the whole term a power the rate alone fixes. The sensible part is a difference
+ * between two coefficients -- where the feed starts and where it turns -- and
+ * both belong to the water and to whatever supplies it rather than to the block.
+ * So it stays out of the relaxation the step is corrected by exactly as the
+ * latent part does, and unlike the coffee side's drawn term, which is a
+ * difference across two temperatures this structure itself keeps.
+ *
+ * That difference stops at nothing rather than going below it. A description
+ * whose feed arrives above its own saturation temperature is admissible -- the
+ * two coefficients are bounded separately and no relation ties them -- and read
+ * literally it would have a draw warm the block, which is the same something out
+ * of nothing the guard above refuses a negative demand for. Water arriving past
+ * boiling costs nothing to bring to it, and that is the reading taken.
+ *
+ * What is still absent is any temperature for where the vapour goes: it leaves
+ * as vapour and this structure keeps no state for the wand, so nothing here is
+ * taken against one, and a hot block gives up the same per millilitre as a cool
+ * one.
  *
  * The rate is the volume of water turned to steam rather than the volume the
  * vapour occupies, which is what puts it in the same unit as the coffee side's
@@ -168,7 +190,11 @@ static float drawn_steam_ml_per_s(float steam_demand_ml_per_s)
  */
 static float drawn_steam_power_w(const plant_parameters_t *p, float drawn_ml_per_s)
 {
-    return p->water_latent_heat_j_per_ml * drawn_ml_per_s;
+    const float to_saturation_k =
+        fmaxf(p->steam_saturation_temperature_c - p->water_feed_temperature_c, 0.0f);
+    const float per_ml_j =
+        p->water_latent_heat_j_per_ml + p->water_heat_capacity_j_per_ml_k * to_saturation_k;
+    return per_ml_j * drawn_ml_per_s;
 }
 
 /*
@@ -208,6 +234,51 @@ static float commanded_flow_ml_per_s(const plant_parameters_t *p,
 {
     return p->pump_flow_ml_per_s *
            (actuation->level_permille[ACTUATION_CHANNEL_PUMP] / PERMILLE_FULL_SCALE);
+}
+
+/*
+ * The rate the steam side's feed pump was commanded to push replacement water in
+ * at, from the level it was commanded with. The same shape as the brew path's
+ * flow relation above and for the same reasons: linear in the level, zero when
+ * it is zero, and carrying no resistance term, so what the water is being pushed
+ * into makes no difference to the figure. It is a second pump on a second path
+ * and not the brew pump under another name, which is why it reads a channel of
+ * its own.
+ */
+static float commanded_steam_feed_ml_per_s(const plant_parameters_t *p,
+                                           const plant_actuation_t *actuation)
+{
+    return p->steam_feed_flow_ml_per_s *
+           (actuation->level_permille[ACTUATION_CHANNEL_STEAM_PUMP] / PERMILLE_FULL_SCALE);
+}
+
+/*
+ * The rate steam is actually made at, which is the lower of what is being asked
+ * for and what the feed is being commanded to replace.
+ *
+ * This block holds no reservoir. Every millilitre that leaves as vapour is a
+ * millilitre the feed pump has just pushed in, so the feed is not a supply the
+ * draw happens to lean on but the whole of what there is to draw from -- and a
+ * demand beyond it is a demand for steam out of water the machine has not been
+ * given. Taking the lower of the two is that fact and nothing more: it is a
+ * bound on the rate, not a characteristic of the pump, and the pump's own
+ * pressure-versus-flow behaviour is as absent here as it is on the brew side.
+ *
+ * With the feed commanded shut this is zero however hard the wand is opened,
+ * which is the case worth being explicit about, because it is the one that reads
+ * oddest and is the one this architecture actually has: opening a wand on a block
+ * nothing is feeding vents whatever the path is holding, and the block gives up
+ * nothing to make good, because nothing is being made. What the venting does to
+ * the path's pressure is the deficit relation's business and is unaffected --
+ * that relation reads this rate, so a draw the feed cannot supply costs the path
+ * nothing either, and the pressure the block's own temperature puts there stands.
+ */
+static float honoured_steam_ml_per_s(const plant_parameters_t *p,
+                                     const plant_actuation_t *actuation,
+                                     float steam_demand_ml_per_s)
+{
+    return fminf(drawn_steam_ml_per_s(steam_demand_ml_per_s),
+                 commanded_steam_feed_ml_per_s(p, actuation));
 }
 
 /*
@@ -415,18 +486,18 @@ void thermoblock_advance_temperatures(plant_model_t *model, const plant_actuatio
      * rate, so the mass has one temperature and one relaxation whether or not the
      * wand is open.
      *
-     * The rate comes from the step's own argument and not from the brew path.
-     * Giving this mass a term from the pump's drawn rate would be the coffee
-     * side's water leaving through the steam wand, and giving the coffee side a
-     * term from this one would be the reverse; the two draws reach the two
-     * masses and neither reaches both, which is what this machine's two
-     * separately fed blocks mean.
+     * The rate is the step's own argument bounded by this side's own feed, and
+     * not anything of the brew path's. Giving this mass a term from the pump's
+     * drawn rate would be the coffee side's water leaving through the steam wand,
+     * and giving the coffee side a term from this one would be the reverse; the
+     * two draws reach the two masses and neither reaches both, which is what this
+     * machine's two separately fed blocks mean.
      */
     model->steam_temperature_c = advanced_temperature(
         model->steam_temperature_c, p->ambient_temperature_c, p->steam_heater_power_w,
         actuation->level_permille[ACTUATION_CHANNEL_STEAM_HEATER] / PERMILLE_FULL_SCALE,
-        drawn_steam_power_w(p, drawn_steam_ml_per_s(steam_demand_ml_per_s)), p->steam_loss_w_per_k,
-        p->steam_thermal_mass_j_per_k, seconds);
+        drawn_steam_power_w(p, honoured_steam_ml_per_s(p, actuation, steam_demand_ml_per_s)),
+        p->steam_loss_w_per_k, p->steam_thermal_mass_j_per_k, seconds);
 }
 
 void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t *actuation,
@@ -453,9 +524,31 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
      * pressure sits whenever nothing is being drawn out of it.
      */
     const float at_saturation_bar = steam_pressure_at(p, model->steam_temperature_c);
-    const float drawn_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
+    /*
+     * Two rates, and the deficit relation needs both because they answer
+     * different halves of it.
+     *
+     * What opens and closes the gap is the wand. A path with the wand shut is
+     * tied to its block's temperature and a path with the wand open is not, and
+     * that is a fact about whether there is a way out of the path -- it does not
+     * become untrue because the pump feeding the block has been turned down.
+     *
+     * What sets how fast the gap widens is the steam actually being made, which
+     * is the bounded rate the energy relation is charged for. The two costs are
+     * two halves of one event: a description whose pressure fell for steam the
+     * block was never charged for making would have the path emptying out of
+     * nothing.
+     *
+     * Reading the reversion off the made rate instead would have shutting the
+     * feed mid-draw hand the whole accumulated gap back in one step -- the
+     * pressure rising because the pump stopped, and the only handle a steam loop
+     * has reading as a pressure-raising actuator. What the feed can do is stop
+     * the gap growing. It cannot undo it.
+     */
+    const float demanded_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
+    const float made_ml_per_s = honoured_steam_ml_per_s(p, actuation, steam_demand_ml_per_s);
 
-    if (drawn_ml_per_s > 0.0f) {
+    if (demanded_ml_per_s > 0.0f) {
         /*
          * A draw is open, so the pressure is no longer that relation's to fix. It
          * carries on down from wherever the last step left it, by what this
@@ -470,7 +563,7 @@ void thermoblock_advance_pressures(plant_model_t *model, const plant_actuation_t
          */
         model->steam_pressure_deficit_bar =
             fminf(model->steam_pressure_deficit_bar +
-                      p->steam_pressure_fall_bar_per_ml * drawn_ml_per_s * seconds,
+                      p->steam_pressure_fall_bar_per_ml * made_ml_per_s * seconds,
                   at_saturation_bar);
     } else {
         /*
@@ -568,11 +661,22 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
      */
     model->brew_flow_ml_per_s = commanded_flow_ml_per_s(&model->coefficients, actuation);
     /*
-     * The rate steam was drawn at over the same step, taken through the same
-     * guard the two advances above read the demand through rather than from the
-     * argument directly. Reading it the same way is what keeps the rate a
-     * consumer can see and the rate the equations acted on from ever being two
-     * different numbers.
+     * The rate steam was asked for over the same step, taken through the same
+     * guard the two advances read the demand through rather than from the
+     * argument directly, so that a demand the structure refuses reads as no draw
+     * here as well as there.
+     *
+     * It is the demand as that guard leaves it and nothing else: this quantity
+     * passes the step's own input through, and deriving it from anything besides
+     * that input is outside what the quantity was named to do. The feed bound is
+     * such a derivation -- it reads the actuation record -- so it stays out of
+     * this line even though it is in both relations above.
+     *
+     * The consequence is that the figure reported and the figure the relations
+     * spent energy against are the same number whenever the feed can keep up and
+     * come apart when it cannot. That is a real gap in what a consumer can see
+     * and it is recorded as one in params/thermoblock.md, rather than closed here
+     * by reporting one of the two under the other's name.
      */
     model->steam_draw_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
     return true;

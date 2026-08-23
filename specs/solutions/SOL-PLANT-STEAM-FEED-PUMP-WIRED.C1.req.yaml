@@ -2,14 +2,17 @@ id: SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1
 type: criterion
 title: Thermoblock's steam energy and pressure terms clamp to the commanded feed rate
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
   `thermoblock_advance_temperatures()` and `thermoblock_advance_pressures()` read
-  `actuation->level_permille[ACTUATION_CHANNEL_STEAM_PUMP]`, scale it by a described full-scale feed-rate
-  coefficient, and clamp the effective draw the energy and pressure terms see to whichever is lower of
-  `steam_demand_ml_per_s` and that commanded feed rate. `boiler` is unaffected -- it does not answer the channel
+  `actuation->level_permille[ACTUATION_CHANNEL_STEAM_PUMP]`, scale it by a described full-scale
+  feed-rate coefficient, and clamp the effective draw the energy and pressure terms see to whichever
+  is lower of `steam_demand_ml_per_s` and that commanded feed rate. The bound sets how fast the steam
+  path's departure from its saturation relation widens and does not decide whether there is one,
+  which stays the demand's to settle: a feed shut while a draw is open holds the departure already
+  accumulated rather than handing it back. `boiler` is unaffected -- it does not answer the channel
   and continues refusing it through the existing admissibility check.
 links:
   - target: SOL-PLANT-STEAM-FEED-PUMP-WIRED

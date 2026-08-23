@@ -2,7 +2,7 @@ id: SOL-PLANT-STEAM-DRAW-REPORTED.C1
 type: criterion
 title: The plant seam names the steam-draw rate as a reported quantity
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 scope: pass-through reporting only; no derivation
@@ -11,9 +11,12 @@ text: |
   plant_model_quantity() returns the steam_demand_ml_per_s value SOL-PLANT-STEAM-DRAW-CHANNELS's
   step input carries, as the selected structure's own admissibility guard leaves it: a demand
   below zero, or one that is not a number, reads back as no draw, which is what that structure's
-  relations acted on over the same step. Out of scope: deriving the value from anything other
-  than passing through the step's own input, and refusing anything at the seam, which accepts
-  whatever rate the caller supplies.
+  relations acted on for a demand of that kind over the same step. The quantity answers for what
+  was asked and not for what a structure afterwards made of it: one whose relations bound the
+  demand further -- against a supply the demand outruns, say -- still reports the demand here, and
+  declaring that gap is that structure's own business. Out of scope: deriving the value from
+  anything other than passing through the step's own input, and refusing anything at the seam,
+  which accepts whatever rate the caller supplies.
 links:
   - target: SOL-PLANT-STEAM-DRAW-REPORTED
     type: criterion-of

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1-TEST
+type: evidence
+title: Thermoblock's steam energy and pressure terms are bounded by the commanded feed rate (SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T04:51:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_a_draw_beyond_the_commanded_feed_is_honoured_at_the_feed, firmware/test/test_plant/test_plant.c::test_a_draw_with_the_feed_shut_costs_the_block_and_the_path_nothing, firmware/test/test_plant/test_plant.c::test_the_commanded_feed_is_proportional_to_the_level, firmware/test/test_plant/test_plant.c::test_shutting_the_feed_mid_draw_holds_the_departure_rather_than_returning_it, firmware/test/test_plant/test_plant.c::test_the_reported_draw_is_the_demand_even_where_the_feed_bounds_it, firmware/test/test_plant/test_plant.c::test_every_coefficient_reaches_the_equations, firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_steam_feed_channel_is_refused_here_too
+text: |-
+  Both advance functions read the steam-pump channel through one feed relation and take the lower of the demand and the commanded rate. A draw beyond the feed is held bit-identical to a draw at the feed on both the block and the path; the feed relation is proportional to the commanded level across a swept range including zero; a feed shut mid-draw holds the pressure departure rather than handing it back, which is what keeps the wand and not the pump the thing that decides whether the path is tied to its block. The reported draw quantity stays the demand, as the criterion that named it requires. boiler still refuses the channel. Run under task fw:verify.
+links:
+  - target: SOL-PLANT-STEAM-FEED-PUMP-WIRED.C1
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C2-TEST
+type: evidence
+title: The sensible-heat gap is no longer among thermoblock's declared omissions (SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T04:51:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_gaps_the_feed_relations_close_are_no_longer_recorded_as_omissions, firmware/test/test_plant/test_plant.c::test_the_omissions_the_flow_term_does_not_close_are_still_recorded
+text: |-
+  The criterion declares inspection; it is verified by test instead. The suite reads firmware/params/thermoblock.md through the path the build names and refuses the sentence that claimed the block is charged only for turning water to vapour, while requiring the omissions the relations do not close to still stand. boiler carries no declared-error document and is unchanged, as the criterion states. Run under task fw:verify.
+links:
+  - target: SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C2
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C1-TEST
+type: evidence
+title: Both structures charge a draw the latent and sensible heat of its replacement feed (SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T04:51:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_steam_block_pays_the_heat_of_what_is_drawn_off_it, firmware/test/test_plant/test_plant.c::test_what_a_draw_costs_the_block_does_not_depend_on_where_it_sits, firmware/test/test_plant/test_plant.c::test_the_cost_of_a_draw_follows_the_temperature_the_feed_arrives_at, firmware/test/test_plant/test_plant.c::test_a_feed_arriving_past_boiling_costs_a_draw_nothing_extra, firmware/test/test_plant/test_plant.c::test_with_the_wand_shut_the_latent_coefficient_reaches_nothing, firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_vessel_pays_the_heat_of_what_is_drawn_off_it, firmware/test/test_plant_boiler/test_plant_boiler.c::test_what_the_wand_costs_is_the_same_wherever_the_vessel_sits, firmware/test/test_plant_boiler/test_plant_boiler.c::test_a_feed_arriving_past_boiling_costs_the_wand_nothing_extra, firmware/test/test_plant_boiler/test_plant_boiler.c::test_with_the_wand_shut_the_brew_flow_loss_is_what_it_was
+text: |-
+  Both structures' drawn_steam_power_w() sums the latent heat with the heat capacity times the lift from the feed temperature to saturation, and the tests hold the sum against the closed form of each structure's own balance. The half this slice added is isolated by moving the feed temperature alone; the shape of the term is pinned by the cost being the same wherever the block sits, which separates a difference between coefficients from one taken against the state; the zero-draw boundary and the feed-above-saturation floor are compared byte for byte. Run under task fw:verify with the mutation sweep clean.
+links:
+  - target: SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C1
+    type: satisfies
