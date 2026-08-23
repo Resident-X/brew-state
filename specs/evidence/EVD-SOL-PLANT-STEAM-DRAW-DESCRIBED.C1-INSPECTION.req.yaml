@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-DESCRIBED.C1-INSPECTION
+type: evidence
+title: The description states the enthalpy-loss and pressure-divergence relations (SOL-PLANT-STEAM-DRAW-DESCRIBED.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-23T02:16:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/params/thermoblock.md::What the steam block gives up to the steam drawn off it; firmware/params/thermoblock.md::What a draw does to that pressure; firmware/params/thermoblock.md::The states the structure integrates
+text: |-
+  thermoblock.md gains two relation entries in the form the water side's flow-energy relations are stated in: a bolded entry, an equation, a coefficient table naming what each symbol enters as, and the decisions behind it set out separately. The enthalpy loss is stated as C.dT_steam/dt = P.duty - k.(T_steam - T_ambient) - draw.L with water.latent_heat_j_per_ml entering as L. The pressure state is stated as p_saturation = max(0, slope.(T_steam - T_sat)), p_steam = p_saturation - deficit, with the deficit's own relation d(deficit)/dt = steam.pressure_fall_bar_per_ml.draw bounded above by p_saturation while draw > 0 and zero while draw = 0. steam_pressure_deficit_bar is added to the states the structure integrates, with why it is a state rather than a function and why the shared state vocabulary does not name it. Verified against firmware/src/plant/thermoblock/plant_structure.c (drawn_steam_power_w, and the steam pressure section) and the boiler's mirror of both, line by line, by a blind reviewer with no context from the implementation: every equation and ordering claim matches the arithmetic. No build-time check can judge whether prose states a relation, so this is inspection; the coefficients the relations name are held in place by the existing statement rule in check_parameter_origins.py.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-DESCRIBED.C1
+    type: satisfies

@@ -1930,6 +1930,10 @@ ACCOUNTED = (
 
 QUANTITIES = ("PLANT_QUANTITY_HEAT_C", "PLANT_QUANTITY_SQUEEZE_BAR")
 ALPHA_COEFFICIENTS = ("alpha.one", "alpha.two")
+#: The channels the synthetic structure declares it answers. The vocabulary
+#: carries a second one it does not, which is what lets a test tell "names every
+#: channel the machine has" from "names every channel this structure answers".
+ALPHA_CHANNELS = ("ACTUATION_CHANNEL_HEATER",)
 
 
 class OriginTree(SyntheticTree):
@@ -1963,8 +1967,12 @@ class OriginTree(SyntheticTree):
             "static const plant_parameter_spec_t SPECS[] = {\n" + entries + "};\n",
         )
 
-    def complete_statement(self, structure: str, coefficients, quantities) -> None:
-        named = "\n".join(f"- `{name}`" for name in list(coefficients) + list(quantities))
+    def complete_statement(
+        self, structure: str, coefficients, quantities, channels=ALPHA_CHANNELS
+    ) -> None:
+        named = "\n".join(
+            f"- `{name}`" for name in list(coefficients) + list(quantities) + list(channels)
+        )
         self._write(
             os.path.join(self.params, f"{structure}.md"),
             f"# What {structure} represents\n\n{named}\n",
@@ -2255,6 +2263,58 @@ class TheStatementNamesWhatTheDescriptionCarries(OriginTreeCase):
         # It fails for having inspected nothing, not for the absent statement.
         self.assertEqual(1, result.returncode)
         self.assertNotIn("no statement at", result.stderr)
+
+
+class TheStatementNamesTheChannelsTheStructureAnswers(OriginTreeCase):
+    """SOL-PLANT-STEAM-DRAW-DESCRIBED.C2: the description states the feed channel as one of the plant's new external interfaces.
+
+    The channel half of that criterion only. The other half -- that the
+    statement names the demand the step is handed -- is not checked here and is
+    not checked anywhere, because the demand is neither a coefficient, a
+    quantity nor a channel, and no vocabulary this check reads contains it.
+    Claiming the whole criterion in a trace over these four tests would say a
+    regression is caught that is not.
+    """
+
+    def test_a_statement_that_omits_a_channel_the_structure_answers_fails_and_names_it(self):
+        # The drift this catches, and the reason it is worth a check of its own:
+        # a channel arrives on a structure, the structure answers it, and the
+        # statement goes on reading as a complete account of what drives the
+        # machine. Nothing about it looks unfinished to a reader, which is the
+        # one failure a reviewer cannot be relied on to see.
+        self.tree.complete_statement("alpha", ALPHA_COEFFICIENTS, QUANTITIES, ())
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("ACTUATION_CHANNEL_HEATER", result.stderr)
+
+    def test_a_channel_the_structure_does_not_answer_need_not_be_named(self):
+        # The requirement follows the structure's own declaration rather than
+        # the machine's vocabulary. Asking for every channel would make a
+        # narrower architecture owe an account of actuators it does not have.
+        #
+        # The two assertions are what make this a test rather than a tautology:
+        # the machine has a channel this structure does not answer, and the
+        # statement under inspection is silent about it. Both are read off what
+        # was written rather than off the constant they were written from.
+        with open(os.path.join(self.tree.include, "machine_actuation.h")) as handle:
+            self.assertIn("ACTUATION_CHANNEL_PUMP", handle.read())
+        with open(os.path.join(self.tree.params, "alpha.md")) as handle:
+            self.assertNotIn("ACTUATION_CHANNEL_PUMP", handle.read())
+        result = self.check(project=self.build_naming("alpha.params"))
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_structure_declaring_no_channels_is_left_to_the_check_that_owns_it(self):
+        # Two reports of one fault, worded differently, is worse than one. The
+        # structure declaring nothing is the actuation check's finding; this one
+        # asks only that the omission does not become an unstated demand here.
+        header = os.path.join(self.tree.plant, "alpha", "plant_structure.h")
+        with open(header, "r", encoding="utf-8") as handle:
+            source = handle.read()
+        with open(header, "w", encoding="utf-8") as handle:
+            handle.write(source.replace("#define PLANT_STRUCTURE_ACTUATION_CHANNELS", "#define UNUSED_CHANNELS"))
+        self.tree.complete_statement("alpha", ALPHA_COEFFICIENTS, QUANTITIES, ())
+        result = self.check(project=self.build_naming("alpha.params"))
+        self.assertEqual(0, result.returncode, result.stderr)
 
 
 class TheCheckStopsRatherThanReportingSuccess(OriginTreeCase):

@@ -26,10 +26,14 @@ Five things are checked, because each can pass while another is broken:
     behind it,
   * a description exempts itself only by saying so, in the file, in the words
     the vocabulary declares for it,
-  * the statement of what a description represents names every coefficient and
-    every quantity, so that adding a coefficient to a structure and leaving the
-    statement behind fails here rather than silently leaving a reader without a
-    unit or a relation for it, and
+  * the statement of what a description represents names every coefficient,
+    every quantity and every actuation channel the structure answers, so that
+    adding one to a structure and leaving the statement behind fails here rather
+    than silently leaving a reader without a unit or a relation for it. The
+    channels are asked for on the same footing as the values because they are
+    the other half of what a description has to state: a channel the machine
+    commands and the statement does not mention is one a reader cannot tell from
+    a channel this architecture does not have, and
   * something was actually inspected. A tree in which every description exempts
     itself has established nothing, and neither has one with no descriptions in
     it at all.
@@ -52,6 +56,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import build_environments  # noqa: E402
+from check_actuation_declaration import VOCABULARY_HEADER as ACTUATION_HEADER  # noqa: E402
+from check_actuation_declaration import channels_answered  # noqa: E402
+from check_actuation_declaration import vocabulary as actuation_vocabulary  # noqa: E402
+from check_support_status import Uninspectable  # noqa: E402
 from structure_symbols import discover  # noqa: E402
 
 #: The header the origin vocabulary is declared in, relative to the include directory.
@@ -332,9 +340,21 @@ def inspect(description: Description, coefficients: list[str], vocabulary: Vocab
 
 
 def check_statement(
-    structure: str, coefficients: list[str], quantities: list[str], params_directory: str
+    structure: str,
+    coefficients: list[str],
+    quantities: list[str],
+    channels: list[str],
+    params_directory: str,
 ) -> list[str]:
-    """The statement of what a description represents names everything it carries."""
+    """The statement of what a description represents names everything it carries.
+
+    The channels are held to the same requirement as the values, and are asked
+    for separately from them because they fail differently. A missing
+    coefficient leaves a reader without a unit; a missing channel leaves them
+    unable to tell a command this architecture does not take from one it takes
+    and the statement forgot -- and the second reads as a complete description
+    rather than as an incomplete one, which is why nothing but a check finds it.
+    """
     path = os.path.join(params_directory, structure + STATEMENT_SUFFIX)
     if not os.path.isfile(path):
         return [
@@ -343,13 +363,21 @@ def check_statement(
             "check against one"
         ]
     statement = read(path)
+    problems = []
     missing = [name for name in coefficients + quantities if name not in statement]
     if missing:
-        return [
+        problems.append(
             f"{path}: names nothing for {missing}. A quantity the statement omits is one a "
             "reader has no unit or relation for, and cannot tell from an oversight"
-        ]
-    return []
+        )
+    unstated = [name for name in channels if name not in statement]
+    if unstated:
+        problems.append(
+            f"{path}: says nothing about {unstated}, which this structure answers. A channel "
+            "the machine commands and the statement leaves out is one a reader cannot tell "
+            "from a channel this architecture does not have"
+        )
+    return problems
 
 
 def main(argv: list[str]) -> int:
@@ -428,6 +456,25 @@ def main(argv: list[str]) -> int:
         )
         return 1
 
+    #
+    # The channels are read out of the shared vocabulary, through the reader the
+    # check whose subject they are already uses. A second reader of the same
+    # header would be a second answer to which channels exist, kept in step by
+    # nothing, and a statement could then satisfy one of them and not the other.
+    #
+    try:
+        channels = actuation_vocabulary(os.path.join(args.include_dir, ACTUATION_HEADER))
+    except Uninspectable as absent:
+        print(f"check_parameter_origins: {absent}", file=sys.stderr)
+        return 1
+    if not channels:
+        print(
+            "check_parameter_origins: the actuation vocabulary declares no channel, so what a "
+            "statement has to name cannot be established",
+            file=sys.stderr,
+        )
+        return 1
+
     references = references_named_by_the_build(args.project) if args.project else {}
 
     findings: list[str] = []
@@ -459,8 +506,11 @@ def main(argv: list[str]) -> int:
             accounted.add(os.path.basename(path))
             inspected += 1
         if claiming:
+            answered = channels_answered(read(structure.header), channels)
             findings.extend(
-                check_statement(structure.name, coefficients, quantities, args.params_dir)
+                check_statement(
+                    structure.name, coefficients, quantities, answered, args.params_dir
+                )
             )
 
     for name, environment in sorted(references.items()):

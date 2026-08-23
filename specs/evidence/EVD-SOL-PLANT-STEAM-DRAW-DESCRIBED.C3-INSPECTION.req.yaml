@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-DESCRIBED.C3-INSPECTION
+type: evidence
+title: The description's stated omissions still name what remains uncaptured once steam draw enters it (SOL-PLANT-STEAM-DRAW-DESCRIBED.C3)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-23T02:16:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/params/thermoblock.md::What this description leaves out
+text: |-
+  The omissions list is restated against the relations the draw entered, and no bullet is added beyond those the parent task's own out-of-scope list names. Coupling between the two sides now says what the absence concretely permits: two pumps drawing on one tank and two elements on one mains, a steam draw and an extraction run at once with each delivering full commanded rate, and nothing arbitrating or reporting the collision. The pump characteristic entry is corrected for a side where the draw is told rather than commanded and where the feed is commanded and read by nothing, so it has not a characteristic missing but everything missing. The steam quality entry is corrected on a point that had become false: it claimed the description has no notion of a delivered quantity, which stopped being true when the draw rate became a reported quantity, so it now separates the rate it does report from the quality it does not. The puck and the mechanical cap are unchanged and still named. Judged by a blind reviewer against each criterion's out-of-scope clause; the two facts stated outside the omissions list -- the uncharged sensible heat of replacement feed, and no figure bounding how much steam the machine can make -- sit at the relation and in the corrected pump entry rather than as new bullets. No build-time check can judge whether an omission is still accurate, so this is inspection.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-DESCRIBED.C3
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-DESCRIBED.C2-TEST
+type: evidence
+title: The description states the demand input and the feed channel as the plant's new external interfaces (SOL-PLANT-STEAM-DRAW-DESCRIBED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T02:16:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::TheStatementNamesTheChannelsTheStructureAnswers; firmware/tools/check_parameter_origins.py::check_statement; firmware/params/thermoblock.md::What drives it
+text: |-
+  thermoblock.md's drives section now separates the two kinds of thing that drive the description: four commanded actuation channels, ACTUATION_CHANNEL_STEAM_PUMP among them, and one rate that is not commanded at all. steam_demand_ml_per_s is named as arriving from outside the control law with no coefficient behind it and no relation deriving it, which is what distinguishes it from the feed. The channel half is machine-checked: check_parameter_origins.check_statement now requires the statement to name every actuation channel the structure answers, reading the channels through check_actuation_declaration's own reader rather than a second one. It caught the missing ACTUATION_CHANNEL_STEAM_PUMP on first run against the real tree, and a blind reviewer independently reproduced that by renaming the mention out of a copied params tree. Four tests cover it: an omitted channel fails and is named, a channel the structure does not answer need not be named, and a structure declaring no channels is left to the check that owns that fault. The demand half is inspection only, and deliberately so: steam_demand_ml_per_s is neither a coefficient, a quantity nor a channel, so no vocabulary this check reads contains it, and the test class's trace says so rather than claiming the whole criterion.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-DESCRIBED.C2
+    type: satisfies
