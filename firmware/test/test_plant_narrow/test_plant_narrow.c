@@ -227,11 +227,13 @@ static void test_a_refused_command_is_not_applied_with_the_unanswered_channel_dr
      *
      * It was once checked by requiring the refused and stepped instances to
      * differ on every quantity, which held while every quantity here answered
-     * from the accumulator. This structure answers no pump channel, so it
-     * reports the rate water is drawn as a constant zero -- a quantity that
-     * cannot differ between any two instances, and one that would make the old
-     * form fail without anything being wrong. A constant is not evidence either
-     * way, and asking it to be is what the form below avoids.
+     * from the accumulator. Two of them no longer do, each for its own reason:
+     * this structure answers no pump channel, so the rate water is drawn is a
+     * constant zero, and it models nothing a draw could act on, so the rate
+     * steam is drawn is a constant zero as well however large a demand a step
+     * is given. Neither can differ between two instances, and either would make
+     * the old form fail without anything being wrong. A constant is not
+     * evidence either way, and asking it to be is what the form below avoids.
      */
     initialise(&untouched_instance);
     read_all(&untouched_instance, untouched_values);
@@ -241,16 +243,22 @@ static void test_a_refused_command_is_not_applied_with_the_unanswered_channel_dr
     }
 
     /*
-     * The accepted step moved every quantity that can move. Only the drawn rate
-     * is excluded, and only because this structure answers no pump channel and
-     * so reports it as a constant zero -- a figure that cannot differ between
-     * any two instances and is therefore evidence of nothing either way.
-     * Excluding the one constant rather than asking merely that something
-     * moved, because a structure that advanced one quantity and froze the rest
-     * is exactly what this is here to catch.
+     * The accepted step moved every quantity that can move. Only the two rates
+     * are excluded, and only because this structure reports each of them as a
+     * constant zero -- a figure that cannot differ between any two instances and
+     * is therefore evidence of nothing either way. They are named one by one
+     * rather than skipped as a class, and the excluded ones are still required
+     * to be equal rather than merely passed over: a structure that began
+     * answering either rate from its accumulator would be caught here, which is
+     * the whole reason the exclusion is not simply a gap.
+     *
+     * Excluding the constants rather than asking merely that something moved,
+     * because a structure that advanced one quantity and froze the rest is
+     * exactly what this is here to catch.
      */
     for (int quantity = 0; quantity < PLANT_QUANTITY_COUNT; quantity++) {
-        if (quantity == (int)PLANT_QUANTITY_BREW_FLOW_ML_PER_S) {
+        if (quantity == (int)PLANT_QUANTITY_BREW_FLOW_ML_PER_S ||
+            quantity == (int)PLANT_QUANTITY_STEAM_DRAW_ML_PER_S) {
             TEST_ASSERT_EQUAL_FLOAT(untouched_values[quantity], stepped_values[quantity]);
             continue;
         }
@@ -655,10 +663,52 @@ static void test_the_structure_describing_no_machine_answers_the_drawn_rate_as_z
     TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
 }
 
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C2: Every plant structure answers the
+/// steam-draw quantity, the fixture included.
+///
+/// The structure that describes no machine answers it too, and answers zero. It
+/// reaches that answer from the opposite direction to the water rate beside it:
+/// that one has no commanded level to be derived from, whereas this structure is
+/// handed a demand on every step, because the demand is a step argument every
+/// structure takes whatever it models. What it does with the demand is nothing --
+/// it has no mass for a draw to cool and no path for one to vent -- so no steam
+/// leaves it however hard a caller asks.
+///
+/// Driven hard on the channel it does answer and given a large demand at the same
+/// time, so both plausible wrong answers are live: a structure reporting its
+/// accumulator fails on the first, and one echoing the demand it was handed fails
+/// on the second. Refusing is not open to it either, which is what the returned
+/// true asserts.
+static void test_the_structure_describing_no_machine_answers_the_steam_draw_rate_as_zero(void)
+{
+    plant_model_t model;
+    plant_actuation_t answered = {{0u}};
+    float drawn = -1.0f;
+    float accumulated = 0.0f;
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    answered.level_permille[answered_channel()] = ACTUATION_FULL_SCALE;
+    for (int i = 0; i < 20; i++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &answered, 9.0f, STEP_MS));
+    }
+
+    /* The accumulator is well away from zero by now, so a structure answering
+     * the rate from it is caught rather than passing by coincidence. */
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &accumulated));
+    TEST_ASSERT_TRUE(accumulated != 0.0f);
+
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_the_structure_describing_no_machine_answers_the_drawn_rate_as_zero);
+    RUN_TEST(test_the_structure_describing_no_machine_answers_the_steam_draw_rate_as_zero);
     RUN_TEST(test_the_seam_reports_a_narrower_set_than_the_machine_has);
     RUN_TEST(test_the_steam_feed_channel_is_refused_here_too);
     RUN_TEST(test_a_steam_demand_alone_is_accepted);

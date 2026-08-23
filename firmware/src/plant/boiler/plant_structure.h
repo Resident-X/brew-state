@@ -153,6 +153,22 @@ typedef struct {
      * why no state vocabulary names it.
      */
     float brew_flow_ml_per_s;
+
+    /*
+     * The rate steam was drawn at over the step just taken, held so the seam can
+     * answer it without being handed the demand again, and no more a state than
+     * the rate above: each step replaces it whole with the demand that step was
+     * given.
+     *
+     * It is that demand as this structure's admissibility guard leaves it rather
+     * than the argument as it arrived, so what a consumer reads is the rate the
+     * step's own relations acted on. A rate below zero, and any rate that is not
+     * finite -- a number that is not one, and an unbounded one alike -- is no draw
+     * here exactly as it is no draw in the vessel and pressure relations; handing the argument back untouched would return a value those
+     * relations refused to a consumer that has no way to tell it apart from one
+     * they used.
+     */
+    float steam_draw_ml_per_s;
 } plant_model_t;
 
 /*

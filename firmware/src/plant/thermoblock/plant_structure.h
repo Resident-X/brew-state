@@ -178,6 +178,24 @@ typedef struct {
      * plant_model_state.
      */
     float brew_flow_ml_per_s;
+
+    /*
+     * The rate steam was drawn at over the step just taken, held here for the
+     * reasons the rate above is and refused a place in the state vocabulary for
+     * the same ones: nothing integrates it, and each step replaces it whole with
+     * the demand that step was handed.
+     *
+     * It is that demand as this structure's admissibility guard leaves it, and
+     * not the argument as it arrived. A rate below zero, and any rate that is not
+     * finite -- a number that is not one, and an unbounded one alike -- is
+     * answered here exactly as it is answered in the relations: as no draw. Handing the argument back untouched would put a value the equations
+     * themselves refused into the quantity vocabulary, and an unbounded or
+     * undefined one makes every comparison against it false whichever way it is
+     * written -- so a consumer inspecting the model afterwards could not see
+     * that anything had happened. The guard is where that is answered, which
+     * makes the guarded rate the only one this quantity can honestly carry.
+     */
+    float steam_draw_ml_per_s;
 } plant_model_t;
 
 /*

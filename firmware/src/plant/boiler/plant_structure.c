@@ -300,6 +300,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->vessel_temperature_c = parameters->ambient_temperature_c;
     model->brew_pressure_bar = 0.0f;
     model->brew_flow_ml_per_s = 0.0f;
+    model->steam_draw_ml_per_s = 0.0f;
     /* Nothing has been drawn, so the steam path is where the vessel's own
      * relation puts it and the gap below it is nothing. Stated rather than left
      * to the clearing above, because an instance carrying a gap would report a
@@ -334,7 +335,7 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
      * the advances below: a machine of this kind has one wand like any other, and
      * what that wand takes comes out of the one vessel.
      */
-    const float seconds = interval_millis / MILLIS_PER_SECOND;
+    const float seconds = (float)interval_millis / MILLIS_PER_SECOND;
 
     /*
      * The vessel first, then the pressures: steam pressure follows the vessel,
@@ -348,6 +349,13 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
      * does not matter; it is set here rather than inside either advance
      * because it is neither the vessel nor a pressure. */
     model->brew_flow_ml_per_s = commanded_flow_ml_per_s(&model->coefficients, actuation);
+    /*
+     * The rate steam was drawn at over the same step, taken through the guard the
+     * two advances above read the demand through rather than from the argument
+     * directly, so the rate a consumer reads and the rate this structure's
+     * equations acted on are one number and not two.
+     */
+    model->steam_draw_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
     return true;
 }
 
@@ -377,6 +385,9 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
         return true;
     case PLANT_QUANTITY_BREW_FLOW_ML_PER_S:
         *value = model->brew_flow_ml_per_s;
+        return true;
+    case PLANT_QUANTITY_STEAM_DRAW_ML_PER_S:
+        *value = model->steam_draw_ml_per_s;
         return true;
     /*
      * Not a quantity, so there is nothing to answer with. No default label

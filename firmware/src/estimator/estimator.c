@@ -129,6 +129,18 @@ static bool state_observed_by(plant_quantity_t quantity, plant_state_t *state)
      */
     case PLANT_QUANTITY_BREW_FLOW_ML_PER_S:
         return false;
+    /*
+     * The rate steam is drawn is refused on the same grounds, and the grounds are
+     * restated rather than shared because the two rates reach the model by
+     * different routes and only the conclusion is common. This one is not derived
+     * from a commanded level at all -- it is supplied from outside the machine,
+     * the wand being opened by hand -- but it is no more accumulated for that. No
+     * structure keeps a state that integrates it, so there is no state a reading
+     * of it could correct, and the refusal is written here so that a reader can
+     * see it was decided rather than overlooked.
+     */
+    case PLANT_QUANTITY_STEAM_DRAW_ML_PER_S:
+        return false;
     /* Not a quantity, and so observed by nothing. */
     case PLANT_QUANTITY_COUNT:
         return false;

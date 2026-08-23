@@ -1918,10 +1918,155 @@ static void test_this_structure_declares_and_enforces_the_steam_draws_ranges(voi
     }
 }
 
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C2: Every plant structure answers the
+/// steam-draw quantity.
+///
+/// The single-vessel structure answers it, from rest as well as with a draw
+/// open. This is the structure that refuses a state -- the water on its way to
+/// the group, which it does not model -- so it is where the difference between
+/// the two vocabularies shows: a state may be declined and a quantity may not.
+/// A structure treating the draw rate the way it treats that state would be
+/// refusing something the seam promises every consumer can read, on the one
+/// architecture where refusing anything is already routine.
+static void test_the_single_vessel_structure_answers_the_steam_draw_rate(void)
+{
+    plant_model_t model;
+    plant_actuation_t at_rest = {{0u}};
+    float drawn = -1.0f;
+    float refused_state = 0.0f;
+
+    initialise(&model);
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    /* The state it declines, for contrast: the refusal is a property of the
+     * state vocabulary and reaches no quantity. */
+    TEST_ASSERT_FALSE(
+        plant_model_state(&model, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &refused_state));
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &at_rest, 2.0f, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+    TEST_ASSERT_TRUE(drawn > 0.0f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C1: ...and plant_model_quantity returns the
+/// value the step's own input carried, for whichever structure the build
+/// selected.
+///
+/// Held on this structure as well as on the reference one, and compared at a
+/// delta of nothing -- TEST_ASSERT_EQUAL_FLOAT admits a relative tolerance, and
+/// a structure scaling the demand by a part in a million would pass it, which
+/// is exactly the derivation this quantity is not entitled to make.
+/// Two structures answering the same demand with the same figure is what makes
+/// the quantity the machine's rather than a structure's; one that scaled it, or
+/// that reported the vessel's own store in its place, would hand a consumer a
+/// number whose meaning depended on which build it was talking to -- and this
+/// structure is the one where that is easiest to get wrong, since a single
+/// vessel serves both paths and both rates pass through it.
+static void test_the_reported_steam_draw_rate_is_the_demand_the_step_was_given(void)
+{
+    static const float DEMANDS[] = {0.0f, 0.05f, 0.5f, 2.0f, 7.5f, 0.0f};
+    plant_model_t model;
+    plant_actuation_t at_rest = {{0u}};
+
+    initialise(&model);
+    for (size_t i = 0u; i < sizeof(DEMANDS) / sizeof(DEMANDS[0]); i++) {
+        float drawn = -1.0f;
+        char message[96];
+
+        TEST_ASSERT_TRUE(plant_model_step(&model, &at_rest, DEMANDS[i], STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+
+        (void)snprintf(message, sizeof(message), "a demand of %f was reported as %f",
+                       (double)DEMANDS[i], (double)drawn);
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.0f, DEMANDS[i], drawn, message);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C1: ...the value the step's own input carries,
+/// as this structure's own admissibility guard leaves it.
+///
+/// The same refusal the reference structure makes, made here for the same reason
+/// and checked separately because each structure carries its own guard: a rate
+/// below zero, and any rate that is not finite, is no draw in the relations, so
+/// it cannot be a draw in the quantity read back from them. Reported alongside the vessel
+/// temperature, which sits at ambient with nothing heating it and would have
+/// moved had the demand been acted on.
+static void test_an_inadmissible_steam_demand_is_reported_as_no_draw(void)
+{
+    static const float REFUSED[] = {-1.0f, -0.0001f, NAN, INFINITY, -INFINITY};
+
+    for (size_t i = 0u; i < sizeof(REFUSED) / sizeof(REFUSED[0]); i++) {
+        plant_model_t model;
+        plant_actuation_t at_rest = {{0u}};
+        float drawn = -1.0f;
+        float vessel_before = 0.0f;
+        float vessel_after = 0.0f;
+        char message[96];
+
+        initialise(&model);
+        TEST_ASSERT_TRUE(
+            plant_model_quantity(&model, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &vessel_before));
+
+        TEST_ASSERT_TRUE(plant_model_step(&model, &at_rest, REFUSED[i], STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+
+        (void)snprintf(message, sizeof(message), "a demand of %f was reported rather than refused",
+                       (double)REFUSED[i]);
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.0f, 0.0f, drawn, message);
+
+        TEST_ASSERT_TRUE(
+            plant_model_quantity(&model, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &vessel_after));
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.0f, vessel_before, vessel_after, message);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C4: The reported steam-draw quantity is
+/// exercised end to end on the host tier, on both structures that describe a
+/// machine.
+///
+/// The whole path a consumer takes, taken against this architecture's own
+/// description: loaded as text, initialised from it, a draw commanded through
+/// the step and the rate read back through the seam. The pump is commanded on
+/// the same step and its rate read beside the draw, so a structure answering one
+/// rate from the other's store fails here -- the case that passes each
+/// quantity's own test and is visible only when both are non-zero and different.
+static void test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam(void)
+{
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    plant_actuation_t pumping = {{0u}};
+    float drawn_steam = -1.0f;
+    float drawn_water = -1.0f;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+    pumping.level_permille[ACTUATION_CHANNEL_PUMP] = ACTUATION_FULL_SCALE / 2u;
+    TEST_ASSERT_TRUE(plant_model_step(&model, &pumping, 1.25f, STEP_MS));
+
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn_steam));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn_water));
+
+    /* The demand as it was commanded, and this description's own seven at half
+     * scale. Both are exact in binary, so both are compared at a delta of
+     * nothing rather than through the relative tolerance TEST_ASSERT_EQUAL_FLOAT
+     * applies. */
+    TEST_ASSERT_FLOAT_WITHIN(0.0f, 1.25f, drawn_steam);
+    TEST_ASSERT_FLOAT_WITHIN(0.0f, 3.5f, drawn_water);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_the_single_vessel_structure_answers_the_drawn_rate);
+    RUN_TEST(test_the_single_vessel_structure_answers_the_steam_draw_rate);
+    RUN_TEST(test_the_reported_steam_draw_rate_is_the_demand_the_step_was_given);
+    RUN_TEST(test_an_inadmissible_steam_demand_is_reported_as_no_draw);
+    RUN_TEST(test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam);
     RUN_TEST(test_the_drawn_rate_follows_the_commanded_pump_level);
     RUN_TEST(test_an_instance_runs_a_whole_sequence_through_the_seam);
     RUN_TEST(test_the_declared_channels_are_the_ones_this_architecture_has);

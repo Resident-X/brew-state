@@ -3895,7 +3895,17 @@ static void test_the_seam_names_the_drawn_rate_as_a_quantity(void)
         PLANT_QUANTITY_STEAM_TEMPERATURE_C,
         PLANT_QUANTITY_BREW_PRESSURE_BAR,
         PLANT_QUANTITY_STEAM_PRESSURE_BAR,
+        PLANT_QUANTITY_STEAM_DRAW_ML_PER_S,
     };
+
+    /* Every other quantity is listed, not merely a few. A quantity added to the
+     * vocabulary and left out of this array escapes the distinctness check
+     * silently, and an array that has stopped covering the vocabulary looks
+     * exactly like one that passed. */
+    TEST_ASSERT_EQUAL_INT_MESSAGE((int)PLANT_QUANTITY_COUNT - 1,
+                                  (int)(sizeof(others) / sizeof(others[0])),
+                                  "a quantity exists that this array does not name");
+
     for (size_t i = 0u; i < sizeof(others) / sizeof(others[0]); i++) {
         TEST_ASSERT_TRUE(others[i] != PLANT_QUANTITY_BREW_FLOW_ML_PER_S);
     }
@@ -5950,6 +5960,207 @@ static void test_the_steam_draws_coefficients_declare_an_origin_and_an_error(voi
     }
 }
 
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C1: The plant seam names the steam-draw rate
+/// as a reported quantity.
+///
+/// The enumerator exists, sits inside the vocabulary's own count, and is
+/// distinct from every other member -- the rate above it most of all, which is
+/// the one it shares a unit with and the one a hand-written initialiser would
+/// most plausibly collide with. A quantity outside the count is unreachable to a
+/// consumer walking the vocabulary, and one sharing another member's value is a
+/// second name for that member rather than a quantity of its own.
+static void test_the_seam_names_the_steam_draw_rate_as_a_quantity(void)
+{
+    TEST_ASSERT_TRUE((int)PLANT_QUANTITY_STEAM_DRAW_ML_PER_S >= 0);
+    TEST_ASSERT_TRUE((int)PLANT_QUANTITY_STEAM_DRAW_ML_PER_S < (int)PLANT_QUANTITY_COUNT);
+
+    const plant_quantity_t others[] = {
+        PLANT_QUANTITY_BREW_TEMPERATURE_C,
+        PLANT_QUANTITY_STEAM_TEMPERATURE_C,
+        PLANT_QUANTITY_BREW_PRESSURE_BAR,
+        PLANT_QUANTITY_STEAM_PRESSURE_BAR,
+        PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
+    };
+
+    /* Every other quantity is listed, not merely a few. A quantity added to the
+     * vocabulary and left out of this array escapes the distinctness check
+     * silently, and an array that has stopped covering the vocabulary looks
+     * exactly like one that passed. */
+    TEST_ASSERT_EQUAL_INT_MESSAGE((int)PLANT_QUANTITY_COUNT - 1,
+                                  (int)(sizeof(others) / sizeof(others[0])),
+                                  "a quantity exists that this array does not name");
+
+    for (size_t i = 0u; i < sizeof(others) / sizeof(others[0]); i++) {
+        TEST_ASSERT_TRUE(others[i] != PLANT_QUANTITY_STEAM_DRAW_ML_PER_S);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C2: Every plant structure answers the
+/// steam-draw quantity.
+///
+/// Answered rather than refused on the reference structure, from rest as well as
+/// with a draw open. From rest is the case that matters most for this rate: the
+/// demand arrives from outside the machine and nothing inside it commands one,
+/// so a structure that began answering only once something had been drawn would
+/// be refusing the quantity in exactly the state a consumer meets it in first --
+/// and a refusal is indistinguishable to that consumer from a structure that
+/// does not answer the quantity at all.
+static void test_the_reference_structure_answers_the_steam_draw_rate(void)
+{
+    plant_model_t model;
+    float drawn = -1.0f;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, 0.0f, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, 1.5f, STEP_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+    TEST_ASSERT_TRUE(drawn > 0.0f);
+}
+
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C1: ...and plant_model_quantity returns the
+/// value the step's own input carried, derived from nothing else.
+///
+/// Swept across the range rather than checked at one value, and compared exactly
+/// rather than within a tolerance -- TEST_ASSERT_FLOAT_WITHIN at a delta of
+/// nothing, because TEST_ASSERT_EQUAL_FLOAT admits a relative tolerance and a
+/// structure scaling the demand by a part in a million would pass it. There is
+/// no coefficient between the demand and the report, so any tolerance at all
+/// would admit a scaling this quantity is not entitled to. A structure that multiplied the demand by anything, or that
+/// reported a volume integrated over the step in place of the rate, fails here at
+/// every value but zero.
+///
+/// Each value is read after its own step, and the sweep ends back at nothing: the
+/// rate is replaced whole every step rather than accumulated, so a structure
+/// carrying it over would report the largest demand it had ever been given and
+/// would pass a sweep that only ever rose.
+static void test_the_reported_steam_draw_rate_is_the_demand_the_step_was_given(void)
+{
+    static const float DEMANDS[] = {0.0f, 0.05f, 0.5f, 2.0f, 7.5f, 0.0f};
+    plant_model_t model;
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    for (size_t i = 0u; i < sizeof(DEMANDS) / sizeof(DEMANDS[0]); i++) {
+        float drawn = -1.0f;
+        char message[96];
+
+        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, DEMANDS[i], STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+
+        (void)snprintf(message, sizeof(message), "a demand of %f was reported as %f",
+                       (double)DEMANDS[i], (double)drawn);
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.0f, DEMANDS[i], drawn, message);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C1: ...the value the step's own input carries,
+/// as this structure's own admissibility guard leaves it.
+///
+/// A demand below zero, and any demand that is not finite, is no draw in this
+/// structure's relations -- the seam deliberately refuses nothing about the
+/// demand, which leaves the structure the place it is answered. The quantity has
+/// to answer it the same way, and the failure if it does not is the one that
+/// hides itself: an unbounded or undefined rate handed back through the seam
+/// makes every comparison against it false whichever way it is written, so a
+/// consumer asking whether a draw is open is told neither open nor closed, and
+/// anything computed from it stops being a number with nothing to say so.
+///
+/// The steam mass is read either side of the step to show the two agree. It sits
+/// at ambient with nothing heating it and nothing drawn from it, so a demand that
+/// had been acted on would have moved it; a report of anything but nothing beside
+/// a mass that did not move is the quantity contradicting the model it was read
+/// from.
+static void test_an_inadmissible_steam_demand_is_reported_as_no_draw(void)
+{
+    static const float REFUSED[] = {-1.0f, -0.0001f, NAN, INFINITY, -INFINITY};
+
+    for (size_t i = 0u; i < sizeof(REFUSED) / sizeof(REFUSED[0]); i++) {
+        plant_model_t model;
+        float drawn = -1.0f;
+        float steam_before = 0.0f;
+        float steam_after = 0.0f;
+        char message[96];
+
+        TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+        TEST_ASSERT_TRUE(
+            plant_model_quantity(&model, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &steam_before));
+
+        TEST_ASSERT_TRUE(plant_model_step(&model, &AT_REST, REFUSED[i], STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn));
+
+        (void)snprintf(message, sizeof(message), "a demand of %f was reported rather than refused",
+                       (double)REFUSED[i]);
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.0f, 0.0f, drawn, message);
+
+        TEST_ASSERT_TRUE(
+            plant_model_quantity(&model, PLANT_QUANTITY_STEAM_TEMPERATURE_C, &steam_after));
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.0f, steam_before, steam_after, message);
+    }
+}
+
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C4: The reported steam-draw quantity is
+/// exercised end to end on the host tier.
+///
+/// A description is loaded as text, a model is initialised from it, a draw is
+/// commanded through the step, and the rate is read back through the seam -- the
+/// whole path a consumer takes, with no structure field named anywhere along it.
+///
+/// The pump is commanded on the same step and its rate read back beside the
+/// draw. The two rates share a unit and a shape, and each is held in its own
+/// store recomputed whole every step; a structure answering one of them from the
+/// other's store is the mistake that passes both quantities' own tests and is
+/// visible only when both are non-zero at once and different.
+static void test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam(void)
+{
+    static const char DESCRIPTION[] = "ambient_temperature_c = 20\n"
+                                      "brew.thermal_mass_j_per_k = 420\n"
+                                      "brew.heater_power_w = 1200\n"
+                                      "brew.loss_w_per_k = 1.5\n"
+                                      "brew.outlet_held_volume_ml = 6\n"
+                                      "brew.outlet_conduction_time_constant_s = 15\n"
+                                      "steam.thermal_mass_j_per_k = 900\n"
+                                      "steam.heater_power_w = 1400\n"
+                                      "steam.loss_w_per_k = 2.2\n"
+                                      "pump.pressure_bar = 9\n"
+                                      "pump.flow_ml_per_s = 8\n"
+                                      "brew.pressure_time_constant_s = 0.8\n"
+                                      "water.feed_temperature_c = 18\n"
+                                      "water.heat_capacity_j_per_ml_k = 4.15\n"
+                                      "water.latent_heat_j_per_ml = 2000\n"
+                                      "steam.saturation_temperature_c = 100\n"
+                                      "steam.pressure_bar_per_k = 0.035\n"
+                                      "steam.pressure_fall_bar_per_ml = 0.02\n";
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    plant_actuation_t pumping = {{0u}};
+    float drawn_steam = -1.0f;
+    float drawn_water = -1.0f;
+
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+    pumping.level_permille[ACTUATION_CHANNEL_PUMP] = ACTUATION_FULL_SCALE / 2u;
+    TEST_ASSERT_TRUE(plant_model_step(&model, &pumping, 1.25f, STEP_MS));
+
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_STEAM_DRAW_ML_PER_S, &drawn_steam));
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &drawn_water));
+
+    /* The demand as it was commanded, and the pump's own eight at half scale.
+     * Both are exact in binary, so both are compared at a delta of nothing
+     * rather than through the relative tolerance TEST_ASSERT_EQUAL_FLOAT
+     * applies. */
+    TEST_ASSERT_FLOAT_WITHIN(0.0f, 1.25f, drawn_steam);
+    TEST_ASSERT_FLOAT_WITHIN(0.0f, 4.0f, drawn_water);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -6041,6 +6252,11 @@ int main(void)
     RUN_TEST(test_the_drawn_rate_is_unmoved_by_the_heaters);
     RUN_TEST(test_the_shipped_description_declares_an_assumed_error_for_the_drawn_rate);
     RUN_TEST(test_the_drawn_rate_is_reached_end_to_end_through_the_seam);
+    RUN_TEST(test_the_seam_names_the_steam_draw_rate_as_a_quantity);
+    RUN_TEST(test_the_reference_structure_answers_the_steam_draw_rate);
+    RUN_TEST(test_the_reported_steam_draw_rate_is_the_demand_the_step_was_given);
+    RUN_TEST(test_an_inadmissible_steam_demand_is_reported_as_no_draw);
+    RUN_TEST(test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam);
     RUN_TEST(test_a_draw_cools_the_heated_mass_faster_than_no_draw);
     RUN_TEST(test_the_settled_droop_is_the_energy_balance_the_coefficients_state);
     RUN_TEST(test_the_steam_mass_gains_no_term_from_the_draw);

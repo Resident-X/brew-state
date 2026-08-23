@@ -67,6 +67,32 @@ typedef enum {
      * them represented; each structure's description says so.
      */
     PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
+    /*
+     * The rate steam is being drawn off the machine, as the volume of water
+     * turned to vapour per unit time -- the same unit the rate above is in, so
+     * that one figure per millilitre stands against both and neither has to be
+     * read against how much room the vapour then takes up.
+     *
+     * It is a quantity for the same reason the drawn water rate is: a consumer
+     * has to reach it without knowing which structure it was built against. A
+     * loop that must hold its targets through a draw reads this to know one is
+     * open, and a later bench measurement of a real draw has a modelled figure
+     * to be set against. What such a comparison would establish is how far this
+     * model's account of a draw sits from the machine's; no comparability with
+     * any instrument is claimed in advance, and the rate above claims none
+     * either. No structure keeps it as a state, and it is not merely un-integrated
+     * the way the rate above is -- it does not originate inside the machine at
+     * all. The wand is opened by hand, so the rate arrives at the step from
+     * outside and nothing the control law writes sets it.
+     *
+     * What it reports is the rate the step was told steam is leaving at, as the
+     * structure's own admissibility guard leaves it: the rate that structure's
+     * relations acted on over the step just taken. A rate below zero, and any
+     * rate that is not finite, is reported as no draw, which is what those
+     * relations spent. It is not a measurement of
+     * what a wand passed, and no structure claims the two agree.
+     */
+    PLANT_QUANTITY_STEAM_DRAW_ML_PER_S,
     PLANT_QUANTITY_COUNT
 } plant_quantity_t;
 
