@@ -1057,6 +1057,15 @@ static void test_a_window_or_a_distance_outside_what_it_admits_is_refused(void)
 /// SOL-PLANT-FLOW-REPORTED.C5: A quantity no state observes cannot read as the
 /// first state.
 ///
+/// SOL-PLANT-STEAM-DRAW-REPORTED.C3: ...and the rate steam is drawn is refused
+/// on the same grounds. Every channel correcting its own state is the
+/// behavioural half of that refusal: a channel paired with a quantity the
+/// estimator declines would stop correcting and report no residual, which is
+/// what this catches. The static half -- that the refusal is written down, is
+/// reasoned, and covers a quantity no channel measures -- is held by
+/// tools/check_estimator_pairing.py, because a refusal no channel reaches
+/// cannot be reached from a test either.
+///
 /// The failure this guards is not a crash. A quantity paired with a state it is
 /// not read from leaves the estimator correcting the wrong state against a
 /// reading and going on running: the reported residual looks ordinary, the
@@ -1100,6 +1109,14 @@ static void test_each_channel_corrects_the_state_its_own_reading_is_measured_aga
         {HW_SENSOR_BREW_PRESSURE, 5000, true},
         {HW_SENSOR_STEAM_PRESSURE, 5000, false},
     };
+
+    /* Every channel the machine has is driven, not merely the ones listed. A
+     * channel added to the vocabulary and not to this table would otherwise be
+     * the one channel nobody checks, and its absence would look exactly like a
+     * channel that passed. */
+    TEST_ASSERT_EQUAL_INT_MESSAGE((int)HW_SENSOR_CHANNEL_COUNT,
+                                  (int)(sizeof(DRIVEN) / sizeof(DRIVEN[0])),
+                                  "a sensor channel exists that this test does not drive");
 
     for (size_t i = 0u; i < sizeof(DRIVEN) / sizeof(DRIVEN[0]); i++) {
         estimator_t estimator;

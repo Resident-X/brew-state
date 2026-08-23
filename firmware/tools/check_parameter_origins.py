@@ -105,6 +105,7 @@ KIND_COUNT = "PLANT_ORIGIN_KIND_COUNT"
 
 _ENUM_BODY = re.compile(r"\benum\b[^;{]*\{([^}]*)\}\s*%s\s*;", re.DOTALL)
 _ENUMERATOR = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)")
+_COMMENT = re.compile(r"/\*.*?\*/|//[^\n]*", re.DOTALL)
 _DEFINE_STRING = re.compile(
     r'^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]*)"\s*$', re.MULTILINE
 )
@@ -119,12 +120,28 @@ def read(path: str) -> str:
 
 
 def enumerators(source: str, type_name: str) -> list[str]:
-    """The enumerators of the named enum type, in declaration order."""
+    """The enumerators of the named enum type, in declaration order.
+
+    Comments come out before the body is split, and taking them out is what
+    makes the answer right rather than merely tidy. An enumerator in these
+    headers is documented by a comment above it, and prose has commas in it:
+    split with the comments still there and every clause of every sentence
+    becomes an entry, while the enumerator each comment documents is swallowed
+    into the fragment ahead of it and never appears at all.
+
+    That failure does not announce itself. The fragments are ordinary English
+    words -- 'as', 'and', 'the' -- and every caller here asks whether a name
+    appears somewhere in a document written in English, so each fragment is
+    found wherever it is looked for and the enumerator that went missing is
+    never asked about. The check goes on passing while it has stopped
+    inspecting anything, which is the one result a gate must not be able to
+    produce.
+    """
     body = re.search(_ENUM_BODY.pattern % re.escape(type_name), source, re.DOTALL)
     if body is None:
         return []
     found = []
-    for entry in body.group(1).split(","):
+    for entry in _COMMENT.sub(" ", body.group(1)).split(","):
         name = _ENUMERATOR.match(entry)
         if name is not None:
             found.append(name.group(1))

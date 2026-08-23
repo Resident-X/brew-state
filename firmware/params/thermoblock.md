@@ -28,7 +28,7 @@ The coffee side carries two temperatures because on this architecture they are t
 
 ## The quantities the seam exposes
 
-These are what a consumer can read back through `plant_model_quantity`. Most are answered from exactly one state, in the same unit; the exception is noted under the table and is the reason the wording is not stronger.
+These are what a consumer can read back through `plant_model_quantity`. Most are answered from exactly one state, in the same unit; the exceptions are noted under the table and are the reason the wording is not stronger.
 
 | Quantity | Answered from | Unit |
 |---|---|---|
@@ -37,10 +37,15 @@ These are what a consumer can read back through `plant_model_quantity`. Most are
 | `PLANT_QUANTITY_BREW_PRESSURE_BAR` | `brew_pressure_bar` | bar, gauge |
 | `PLANT_QUANTITY_STEAM_PRESSURE_BAR` | `steam_pressure_bar` | bar, gauge |
 | `PLANT_QUANTITY_BREW_FLOW_ML_PER_S` | no state — the commanded pump level | mL/s |
+| `PLANT_QUANTITY_STEAM_DRAW_ML_PER_S` | no state — the demand the step was given | mL/s |
 
-Four of the five are read from a state. `PLANT_QUANTITY_BREW_FLOW_ML_PER_S` is not, and it is the one entry in this table that is a function of what was commanded rather than of what the structure integrated: the relation below turns the pump's commanded level into a rate, and nothing accumulates. Volume per unit time rather than mass per unit time, because a flow meter reads volume and the coefficient behind it is written in those terms — anything downstream needing a mass rate converts, and a visible conversion is worth more than a quantity nobody can hold an instrument against.
+Four of the six are read from a state. The two rates are not, and they are the entries in this table that stand for something other than what the structure integrated — but they stand for two different things, and the difference is worth the space.
 
-The correspondence runs the other way too, and unevenly. There are five states and five quantities and they are not the same five. `brew_outlet_temperature_c` is a state with no quantity against it, which is the point of carrying it: it is the temperature the design most wants and the one the machine does not report, so it is what work reconstructing an unmeasured state has to reconstruct. The drawn rate is the converse — a quantity with no state against it — and that is equally deliberate, because nothing about it needs integrating and giving it a state would invite something to correct it against a reading. Reading a state is a separate operation from reading a quantity — `plant_model_state`, over the vocabulary below — because the quantities are the machine's and the states are this structure's, and a structure of another architecture answers a different set.
+`PLANT_QUANTITY_BREW_FLOW_ML_PER_S` is a function of what was commanded: the relation below turns the pump's commanded level into a rate, and nothing accumulates. Volume per unit time rather than mass per unit time, because a flow meter reads volume and the coefficient behind it is written in those terms — anything downstream needing a mass rate converts, and a visible conversion is worth more than a quantity nobody can hold an instrument against.
+
+`PLANT_QUANTITY_STEAM_DRAW_ML_PER_S` is not a function of anything the machine commands at all. The wand is opened by hand, so the rate arrives at the step from outside and the model is told it rather than working it out; nothing here derives it, and no coefficient stands behind it. What the quantity reports back is that figure as this structure's own admissibility guard leaves it, which is the rate the relations above actually spent energy against: a rate below zero is no draw here and is reported as none, and so is any rate that is not finite -- a number that is not one, and an unbounded one alike. The model does not hand back a figure its own equations refused, because a reader comparing the two would have no way to tell which of them the machine had been run on. It is in the same unit as the rate above — the volume of water turned to vapour, not the volume the vapour then occupies — so one figure per millilitre stands against both.
+
+The correspondence runs the other way too, and unevenly. There are five states and six quantities, and they do not line up. `brew_outlet_temperature_c` is a state with no quantity against it, which is the point of carrying it: it is the temperature the design most wants and the one the machine does not report, so it is what work reconstructing an unmeasured state has to reconstruct. The two rates are the converse — quantities with no state against them — and that is equally deliberate, because nothing about either needs integrating, and giving one a state would invite something to correct it against a reading it was never measured by. Reading a state is a separate operation from reading a quantity — `plant_model_state`, over the vocabulary below — because the quantities are the machine's and the states are this structure's, and a structure of another architecture answers a different set.
 
 | State reachable through `plant_model_state` | Answered from |
 |---|---|

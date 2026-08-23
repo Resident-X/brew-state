@@ -1,0 +1,15 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-REPORTED.C5-TEST
+type: evidence
+title: The quantity-to-state pairing is enforced at build time (SOL-PLANT-STEAM-DRAW-REPORTED.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T01:16:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_estimator_pairing_checks.py::PairingHolds, firmware/tools/tests/test_estimator_pairing_checks.py::PairingIsCaught, firmware/tools/tests/test_estimator_pairing_checks.py::ParsingIsNotDefeatedByFormatting, firmware/tools/tests/test_estimator_pairing_checks.py::NothingToInspect
+links:
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED.C5
+    type: satisfies

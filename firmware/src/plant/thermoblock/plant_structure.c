@@ -512,6 +512,7 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
     model->steam_temperature_c = parameters->ambient_temperature_c;
     model->brew_pressure_bar = 0.0f;
     model->brew_flow_ml_per_s = 0.0f;
+    model->steam_draw_ml_per_s = 0.0f;
     /* Nothing has been drawn, so the steam path is exactly where the saturation
      * relation puts it and the gap below it is nothing. Stated rather than left
      * to the clearing above, because an instance that started with a gap in it
@@ -540,7 +541,7 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
         return false;
     }
 
-    const float seconds = interval_millis / MILLIS_PER_SECOND;
+    const float seconds = (float)interval_millis / MILLIS_PER_SECOND;
 
     /*
      * Temperatures first, then pressures: steam pressure follows the steam
@@ -566,6 +567,14 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
      * that function's name a smaller truth than its body.
      */
     model->brew_flow_ml_per_s = commanded_flow_ml_per_s(&model->coefficients, actuation);
+    /*
+     * The rate steam was drawn at over the same step, taken through the same
+     * guard the two advances above read the demand through rather than from the
+     * argument directly. Reading it the same way is what keeps the rate a
+     * consumer can see and the rate the equations acted on from ever being two
+     * different numbers.
+     */
+    model->steam_draw_ml_per_s = drawn_steam_ml_per_s(steam_demand_ml_per_s);
     return true;
 }
 
@@ -590,6 +599,9 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
         return true;
     case PLANT_QUANTITY_BREW_FLOW_ML_PER_S:
         *value = model->brew_flow_ml_per_s;
+        return true;
+    case PLANT_QUANTITY_STEAM_DRAW_ML_PER_S:
+        *value = model->steam_draw_ml_per_s;
         return true;
     /*
      * Not a quantity, so there is nothing to answer with. No default label

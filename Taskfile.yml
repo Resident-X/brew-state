@@ -157,6 +157,13 @@ tasks:
       # Wherever the control logic is compiled, the estimator it drives from is
       # compiled beside it. The environments are discovered from the build file.
       - python3 tools/check_estimator_compiled.py --project .
+      # The estimator pairs each quantity with the state that observes it, or
+      # refuses it outright. Which quantities are paired must be exactly which
+      # ones a channel measures: a refused quantity a channel reaches is never
+      # corrected against and reports that identically to a channel nobody
+      # reads, and a paired quantity nothing measures is a claim no test can
+      # reach until an instrument is fitted and makes it wrong.
+      - python3 tools/check_estimator_pairing.py --estimator src/estimator/estimator.c --include-dir include
       - python3 tools/check_plant_header.py include/plant_types.h --plant-root src/plant --include-dir include --vocabulary-only
       - python3 tools/check_plant_header.py include/plant_support.h --plant-root src/plant --include-dir include --vocabulary-only
       # The vocabulary a value's origin is recorded in, and every description

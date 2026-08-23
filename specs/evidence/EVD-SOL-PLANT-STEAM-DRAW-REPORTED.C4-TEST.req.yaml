@@ -1,0 +1,15 @@
+id: EVD-SOL-PLANT-STEAM-DRAW-REPORTED.C4-TEST
+type: evidence
+title: The reported steam-draw quantity is exercised end to end on the host tier (SOL-PLANT-STEAM-DRAW-REPORTED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-23T01:16:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam, firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam
+links:
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED.C4
+    type: satisfies

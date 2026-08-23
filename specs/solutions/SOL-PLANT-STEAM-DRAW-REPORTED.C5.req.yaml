@@ -1,0 +1,20 @@
+id: SOL-PLANT-STEAM-DRAW-REPORTED.C5
+type: criterion
+title: The pairing between quantities and the states that observe them is enforced at build time
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A build-time gate reads the estimator's quantity-to-state pairing and fails the build
+  when a quantity the vocabulary declares is answered by neither a state nor a refusal,
+  when the switch carries a default label that would swallow a quantity added later, when
+  a quantity it refuses is one a sensor channel measures, or when a quantity it pairs with
+  a state is measured by no channel at all. It covers every refused quantity rather than
+  only the rate this solution adds, since the refusal being protected is the same one in
+  each case. Out of scope: the estimator's own correction behaviour, which the gate reads
+  rather than runs, and any pairing for a quantity no channel measures yet -- the gate
+  requires such a quantity to stay refused rather than anticipating the instrument.
+links:
+  - target: SOL-PLANT-STEAM-DRAW-REPORTED
+    type: criterion-of

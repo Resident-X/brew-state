@@ -75,7 +75,7 @@ bool plant_model_step_reporting(plant_model_t *model, const plant_actuation_t *a
      * could act on, so the demand is accepted and not acted on. */
     (void)steam_demand_ml_per_s;
 
-    fixture_accumulate(model, actuation, interval_millis / MILLIS_PER_SECOND);
+    fixture_accumulate(model, actuation, (float)interval_millis / MILLIS_PER_SECOND);
     return true;
 }
 
@@ -109,6 +109,22 @@ bool plant_model_quantity(const plant_model_t *model, plant_quantity_t quantity,
      * quantity, which is none.
      */
     case PLANT_QUANTITY_BREW_FLOW_ML_PER_S:
+        *value = 0.0f;
+        return true;
+    /*
+     * The rate steam is drawn answers zero as well, and arrives there from the
+     * opposite direction to the rate above. That one has no commanded level to be
+     * derived from; this one is handed a demand on every step, because the demand
+     * is a step argument every structure takes whatever it models. What this
+     * structure does with it is nothing -- it has no mass for a draw to cool and
+     * no path for one to vent, so no steam leaves it however hard a caller asks.
+     *
+     * Echoing the demand back would therefore report a draw that did not happen,
+     * on the one structure whose whole purpose is to have no machine behind it.
+     * The two rates answer zero for one reason underneath: the honest rate for a
+     * structure that moves nothing is none.
+     */
+    case PLANT_QUANTITY_STEAM_DRAW_ML_PER_S:
         *value = 0.0f;
         return true;
     /*
