@@ -1,0 +1,17 @@
+id: SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT.C2
+type: criterion
+title: Thermoblock's declared omissions no longer list the sensible-heat gap
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  `firmware/params/thermoblock.md` no longer lists the sensible-heat gap as an open omission once the term
+  above lands -- the same rewrite `SOL-PLANT-STEAM-DRAW-DESCRIBED` gave the terms it introduced. `boiler`
+  carries no equivalent declared-error doc -- it models no real machine and is published unverified against
+  hardware, per its own header -- so only `thermoblock.md` changes. Coefficient origin and error notes for
+  `water_heat_capacity_j_per_ml_k` and `steam_saturation_temperature_c` are unaffected and stay as declared;
+  only the omissions section changes.
+links:
+  - target: SOL-PLANT-STEAM-FEED-SENSIBLE-HEAT
+    type: criterion-of

@@ -1,0 +1,49 @@
+id: SOL-PLANT-STEAM-FEED-PUMP-WIRED
+type: deliverable
+category: solution
+title: The steam-feed actuation channel actually bounds how fast a draw can be honoured
+status: active
+version: 1
+text: |
+  `thermoblock`'s `PLANT_STRUCTURE_ACTUATION_CHANNELS` macro (`firmware/src/plant/thermoblock/plant_structure.h:63`)
+  declares `ACTUATION_CHANNEL_STEAM_PUMP` answered, but no function in
+  `firmware/src/plant/thermoblock/plant_structure.c` reads `actuation->level_permille[ACTUATION_CHANNEL_STEAM_PUMP]`
+  -- only `ACTUATION_CHANNEL_PUMP`, `ACTUATION_CHANNEL_BREW_HEATER`, and `ACTUATION_CHANNEL_STEAM_HEATER` are ever
+  read. The steam-side energy and pressure terms are driven entirely by the exogenous `steam_demand_ml_per_s`
+  step argument, which is honoured at whatever rate it carries with nothing in the arithmetic bounding it. This
+  description already states the gap in its own declared omissions (`firmware/params/thermoblock.md`, the pump
+  characteristic section): "the steam feed has not a characteristic missing but everything missing... A draw is
+  honoured at whatever rate it is asked for, indefinitely, and the pump that would have to keep up with it is not
+  in the arithmetic."
+
+  This slice wires the channel: `thermoblock_advance_temperatures()` and `thermoblock_advance_pressures()` read
+  `actuation->level_permille[ACTUATION_CHANNEL_STEAM_PUMP]`, scale it by a described full-scale feed-rate
+  coefficient the way the water side's flow term scales `ACTUATION_CHANNEL_PUMP`, and clamp the enthalpy and
+  pressure terms' effective draw to whichever is lower of `steam_demand_ml_per_s` and the commanded feed rate --
+  so a draw can no longer be honoured faster than the feed pump the machine actually carries could supply it.
+  At a fully commanded feed channel the clamp never binds and today's behaviour is unchanged. The description's
+  declared omission is rewritten to match: the feed moves from "everything missing" to a bounded rate, the same
+  way `SOL-PLANT-STEAM-DRAW-DESCRIBED` closed the gaps the other three steam-draw slices opened.
+
+  Out of scope: identifying the new feed-rate coefficient from bench data; the sensible-heat energy-balance gap,
+  which is a separate defect with its own trace; and giving `boiler` a steam-feed channel, which
+  `SOL-PLANT-STEAM-DRAW-CHANNELS` already ruled out as asserting an actuator that architecture does not have.
+rationale: |
+  `SOL-PLANT-STEAM-DRAW-CHANNELS.C3` reads "A dedicated actuation channel commands thermoblock's steam-side feed
+  pump" and is marked satisfied, but the channel it added is declared admissible and consumed nowhere -- commanding
+  it changes nothing the plant computes. That is a behaviour shortfall against a criterion the graph already
+  carries correctly, not a defect in what the criterion asked for; DEL-SIM-STEAM-DRAW-TERM.C6 ("The feed replacing
+  drawn steam is commanded on its own channel") means commanded to have an effect, the way every other channel in
+  the same actuation record does, not commanded to exist in an enum. Restoring that is DEL-MAINTENANCE's work per
+  DEC-MAINTENANCE-CONTINUOUS-LANE, targeting REQ-MODEL-STRUCTURE-SEAM-001.C2 as SOL-PLANT-STEAM-DRAW-CHANNELS
+  itself did, rather than superseding either criterion.
+
+  Kept separate from the sensible-heat maintenance item despite touching the same feed-side code: one is an
+  energy-balance correction (an existing relation is missing a term), the other is a wiring defect (a declared
+  interface has no consumer). They fail independently, are tested independently, and a reviewer checking one
+  learns nothing about whether the other is fixed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets

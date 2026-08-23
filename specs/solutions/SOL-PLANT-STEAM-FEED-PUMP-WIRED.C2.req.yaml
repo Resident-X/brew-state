@@ -1,0 +1,15 @@
+id: SOL-PLANT-STEAM-FEED-PUMP-WIRED.C2
+type: criterion
+title: A fully commanded feed channel leaves existing behaviour unchanged, and the declared omission matches
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  At a fully commanded steam-feed channel the clamp never binds, so every existing test and today's behaviour at
+  full feed are unchanged. `firmware/params/thermoblock.md`'s pump-characteristic omission is rewritten from "the
+  steam feed has not a characteristic missing but everything missing" to state the new full-scale coefficient and
+  the bound it now gives the draw.
+links:
+  - target: SOL-PLANT-STEAM-FEED-PUMP-WIRED
+    type: criterion-of
