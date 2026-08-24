@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C5-TEST
+type: evidence
+title: The control suite exercises the profile surface through the existing seams (SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T04:14:25Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_profile_commanded_delivery_drives_the_truth_plant_through_the_pump_seam
+text: |-
+  The profile surface is exercised in firmware/test/test_control against the truth plant the brew loop's harness already stands up, reaching the plant and the hardware only through plant_model.h and hw_sim. A delivery commanded as a profile drives the pump through hw_sim_output(ACTUATION_CHANNEL_PUMP) — the same read the existing held-level tests assert against — at the level the seam's own figure implies, and the truth plant's outlet temperature responds, so the level the profile computed was actually driven onto the machine rather than merely recorded. No new path into the plant or the hardware is opened: check_plant_encapsulation reports every source clean, and the evaluator now sits under src/control where check_control_identical compares it byte-for-byte between the host and target builds.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C5
+    type: satisfies

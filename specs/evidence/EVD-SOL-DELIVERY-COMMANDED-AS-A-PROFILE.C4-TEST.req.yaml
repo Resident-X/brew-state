@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4-TEST
+type: evidence
+title: A delivery ends when its own end condition is met, on the control cadence — control suite (SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T04:14:25Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_delivery_ends_on_the_step_the_condition_is_first_met,test_moving_the_end_condition_moves_the_ending,test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count,test_boundary_end_conditions_at_zero_and_uint32_max
+text: |-
+  The end condition is evaluated every control step and the delivery ends on the step it is first met. A course running nominally to five seconds with a condition met at 350 ms ends at step 35, not at the course's finish, and the ending is asserted at that step rather than merely eventually. Moving the condition moves the ending: two deliveries running the identical course and differing only in where the condition sits end at step 20 and step 40, so a path that latched a fixed step count would fail while still passing the first test. The delivery is timed by the interval that actually elapsed — the same one the estimator is advanced by — so a late step is asserted to end the delivery by elapsed milliseconds rather than by number of steps. A condition at zero ends immediately; one at the counter's maximum is admitted and ends only once reached.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4
+    type: satisfies

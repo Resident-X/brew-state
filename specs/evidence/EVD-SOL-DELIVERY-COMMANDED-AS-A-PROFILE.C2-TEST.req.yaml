@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C2-TEST
+type: evidence
+title: The commanded rate reaches the pump through the plant's declared figure — control suite (SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T04:13:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_commanded_rate_converts_through_the_plant_seams_flow_figure,test_control_command_delivery_refuses_a_structure_that_draws_nothing,test_the_pump_relation_is_linear_over_the_range_a_conversion_assumes
+text: |-
+  A commanded rate produces the actuation level the plant's declared figure implies, with the expectation computed independently through the seam rather than against the production arithmetic. A description declaring a different pump figure moves the level with no edit to the profile source: the same points and the same end condition are handed to a control path brought up against a machine that draws differently, and only the machine changed. The figure is probed once through plant_model_quantity rather than named as a coefficient, so check_plant_encapsulation passes and no duplicate figure exists anywhere in the control or profile source. A structure that draws nothing at full pump is refused rather than divided by. The linearity the conversion assumes is asserted through the seam at half scale, so a nonlinear structure fails loudly rather than delivering silently wrong rates.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C2
+    type: satisfies

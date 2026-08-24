@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1-TEST
+type: evidence
+title: A delivery is commanded as a course of flow — control suite (SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T04:13:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_delivery_profile_samples_the_course_piecewise_linearly,test_two_profiles_of_different_shape_drive_different_trajectories,test_mid_ramp_level_matches_the_interpolated_rate_through_the_control_path,test_duty_rises_in_the_step_a_profile_delivery_is_commanded_in,test_control_command_flow_still_sets_the_level_directly,test_a_held_level_set_while_a_delivery_runs_is_overwritten_next_step,test_a_fault_mid_delivery_ends_the_delivery,test_control_command_delivery_refuses_null_arguments
+text: |-
+  The profile type ships under firmware/include and expresses a delivery as a piecewise-linear course of commanded flow in millilitres per second. Two profiles of different shape, run in one binary, drive two different commanded-flow trajectories, and a mid-ramp step is asserted against the interpolated rate so a wrong-axis interpolation cannot pass. control_command_flow is retained unchanged as the actuation-level entry point: its own behaviour is pinned afresh, the nine already-attested tests calling it pass unchanged, and a level set directly while a delivery runs is overwritten by the delivery's own next step. Duty rises in the step a profile delivery is commanded in, with the reconstruction not yet fallen, so the profile's rate reaches the heater feedforward in the same step.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1
+    type: satisfies
