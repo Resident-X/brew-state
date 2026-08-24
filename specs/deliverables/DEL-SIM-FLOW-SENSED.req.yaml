@@ -1,0 +1,57 @@
+id: DEL-SIM-FLOW-SENSED
+type: deliverable
+category: task
+title: The rate that actually moved reaches the control unit
+status: active
+level: task
+version: 1
+text: |
+  The control unit commands a rate of water and never learns what moved. Flow is a quantity the plant
+  reports back from what the pump was told to do, the hardware seam carries no channel for it among
+  the temperatures and pressures it senses, and the machine's own fitted meter is wired to the
+  controller this project replaces. So a rate can be asked for and cannot be checked, which leaves the
+  obligation to report departure from a commanded course with nothing to compare, and a loop on rate
+  open where it was meant to close.
+
+  Flow becomes a sensed channel the control unit reads through the same seam the temperatures arrive
+  through. On the machine that reading comes from the fitted meter; in simulation it is injected at
+  the seam exactly as the truth plant's temperature already is, which is what makes a delivered rate
+  that differs from the commanded one something a test can arrange without the plant model growing a
+  term to produce it. A machine with no meter fitted answers the channel as absent rather than
+  silently returning the command, so a caller can tell a reading from an assumption. Absence here is a
+  property of the hardware seam and not of a plant structure: the rate the plant reports stays a
+  quantity every structure answers.
+
+  Out of scope: modelling what resists the water. The puck's resistance moves with the grind, the dose
+  and the age of the coffee and again within a single extraction, nothing on the machine or in the
+  graph pins it, and the decision governing this work rules that departure is observed rather than
+  reproduced — it stays a stated omission of the plant description. Also out of scope: closing a
+  control loop on the reading, reporting departure from a commanded course, and ending a delivery on
+  delivered volume. Each of those consumes this channel and is built where it belongs; this task makes
+  the reading reach the control unit. Establishing what the fitted meter measures, where it sits and
+  what it resolves is the bench's, and is not assumed here. Distinguishing an absent channel from one
+  that sampled and failed needs more than the single trustworthiness flag a reading carries today, and
+  that representation is shared by the channels already sensed: the consumers reading it in work
+  already attested are revisited with the change rather than left to interpret a widened value as the
+  flag they were written against.
+rationale: |
+  Built in the simulation phase rather than waiting on the bench because what it adds is a seam, not a
+  figure. The channel, its absent case and the injection path can all be exercised with no hardware,
+  and the bench work that establishes what the fitted meter actually measures displaces nothing built
+  here — it fills the channel with a real reading rather than changing its shape.
+
+  Separated from the loops that consume it because three different obligations wait on the same
+  reading, and building it inside whichever one came first would put a machine-wide channel behind one
+  consumer's schedule. It is the same reason the actuation vocabulary belongs to the machine rather
+  than to the structure that answers it.
+links:
+  - target: DEC-DEPARTURE-OBSERVED-NOT-MODELLED
+    type: justified-by
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
+    type: justified-by
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: REQ-MEASUREMENT-001.C5
+    type: targets

@@ -1,0 +1,13 @@
+id: DEL-SIM-DELIVERY-TOPOLOGY.C1
+type: criterion
+title: A structure states the delivery points it serves and the heated mass behind each
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The plant seam gains a declaration naming the delivery points a structure serves and which heated mass feeds each, answered by every structure the way the actuation channels already are. A test asserts each shipped structure answers it, and that a structure serving two points from one mass is distinguishable from one serving two points from two. What a consumer does with the answer is out of scope.
+links:
+  - target: DEL-SIM-DELIVERY-TOPOLOGY
+    type: criterion-of

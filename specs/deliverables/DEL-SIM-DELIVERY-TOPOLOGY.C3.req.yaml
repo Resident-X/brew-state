@@ -1,0 +1,13 @@
+id: DEL-SIM-DELIVERY-TOPOLOGY.C3
+type: criterion
+title: A consumer can ask whether two deliveries contend without knowing which structure it holds
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  A consumer asks the seam whether two delivery points share a heated mass and gets an answer that does not depend on which structure is built in. A test asserts the same query returns contention for a shared-mass structure and no contention for an independent-mass one, with no consumer change between them. Resolving the contention is out of scope and belongs to the loop that serves the deliveries.
+links:
+  - target: DEL-SIM-DELIVERY-TOPOLOGY
+    type: criterion-of

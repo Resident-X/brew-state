@@ -2,13 +2,19 @@ id: REQ-HOT-WATER-001.C4
 type: criterion
 title: Demands on a shared heated mass are serialised by the machine, and a deferred demand proceeds once conditions return
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  One water channel serves both hot water and extraction, so the two are mutually exclusive whatever the electrical budget permits. Arbitrating power alone does not arbitrate this.
+  Where one water channel serves both hot water and extraction, the two are mutually exclusive whatever
+  the electrical budget permits, and arbitrating power alone does not arbitrate this. The obligation
+  holds wherever that arrangement holds rather than assuming it everywhere: a machine serving each
+  delivery point from its own heated mass has nothing to serialise here, and the arrangement is a
+  property of the machine rather than something this requirement fixes.
 
-  Deferral rather than refusal is the required behaviour: a drink whose two halves both need the same mass is a drink the machine is required to serve, so it waits for conditions to return and then proceeds.
+  Deferral rather than refusal is the required behaviour: a drink whose two halves both need the same
+  mass is a drink the machine is required to serve, so it waits for conditions to return and then
+  proceeds.
 links:
   - target: REQ-HOT-WATER-001
     type: criterion-of

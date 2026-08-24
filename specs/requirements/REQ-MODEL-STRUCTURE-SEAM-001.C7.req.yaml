@@ -1,0 +1,19 @@
+id: REQ-MODEL-STRUCTURE-SEAM-001.C7
+type: criterion
+title: A structure declares the delivery points it serves and which heated mass serves each
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The machine names its delivery points the way it names its actuation channels, and which of them a
+  given architecture serves — and from which heated mass — is a property of that architecture rather
+  than something a caller reconstructs from behaviour. Two points fed from one mass and two points fed
+  from two are different equations, and no set of parameters bridges them.
+
+  A consumer that has to know whether one demand contends with another can then ask, rather than assume
+  the arrangement of the machine its author happened to own. Silent on how the declaration is expressed
+  and on what a consumer does with the answer.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001
+    type: criterion-of

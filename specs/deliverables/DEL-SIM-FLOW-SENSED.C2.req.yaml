@@ -1,0 +1,13 @@
+id: DEL-SIM-FLOW-SENSED.C2
+type: criterion
+title: A simulated reading is injected at the same seam a real one arrives through
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The host harness sets the flow reading the way it already sets the sensed temperatures, so a test arranges a delivered rate that differs from the commanded one without the plant model gaining a term to produce it. A test asserts an injected rate below the commanded one is what the control unit sees. Modelling what would cause that difference on a real machine is out of scope and remains a stated omission.
+links:
+  - target: DEL-SIM-FLOW-SENSED
+    type: criterion-of

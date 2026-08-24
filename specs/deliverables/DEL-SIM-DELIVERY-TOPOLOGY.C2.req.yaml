@@ -1,0 +1,13 @@
+id: DEL-SIM-DELIVERY-TOPOLOGY.C2
+type: criterion
+title: The reference machine's own arrangement is stated by its description rather than assumed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |-
+  The reference machine's description states that its coffee casting feeds both the group and the hot water spout, so the shared arrangement the graph currently asserts in prose is carried by the structure that has it. A test asserts the reference structure reports both points against one mass. Whether a diverter or any other mechanism routes between them is out of scope — what is declared is which mass serves each point.
+links:
+  - target: DEL-SIM-DELIVERY-TOPOLOGY
+    type: criterion-of
