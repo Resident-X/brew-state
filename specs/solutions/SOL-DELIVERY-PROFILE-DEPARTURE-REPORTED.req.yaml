@@ -3,18 +3,23 @@ type: deliverable
 category: solution
 title: A delivery that does not follow its commanded course reports the departure while it is still running
 status: active
-version: 1
+version: 2
 text: |
-  The comparison between what a delivery was asked for and what it actually moved is built here, in
+  The comparison between what a delivery was asked for and what it actually moved is completed here, in
   host simulation against the plant description. The profile surface already commands a course of flow
   and drives the pump from it, and the hardware seam already carries a flow channel, fitted with a
-  meter on the machine and injected at the same seam in simulation. Nothing reads it. The estimator
-  sweeps every channel as it advances but declines flow as a corrector, because no state integrates it
-  and a residual is only recorded where a correction actually landed, so the estimator reports nothing
-  for the channel. The control unit has never read a sensor directly at all. So the machine can be
-  told a rate, can move a different one, and has no way to say so.
+  meter on the machine and injected at the same seam in simulation. The control unit already reads that
+  channel on each step a delivery runs and reports a step whose reading disagrees with the command. What
+  it does not do is give an account of the delivery: the gap is computed, reduced to a step result and
+  discarded, so a delivery that ran short reports nothing once it has finished and nothing distinguishes
+  a machine that measured agreement from one that measured nothing at all. The estimator sweeps every
+  channel as it advances but declines flow as a corrector, because no state integrates it and a residual
+  is only recorded where a correction actually landed, so the estimator reports nothing for the channel
+  either. And the tolerance declaration states every band in millidegrees, which is a grammar a band in
+  thousandths of a millilitre per second cannot be read by. So the machine can be told a rate, can move
+  a different one, and has no way to say so afterwards.
 
-  The control unit reads the channel. On each control step while a delivery is running, the flow
+  The reading becomes an account. On each control step while a delivery is running, the flow
   channel is read alongside the estimator advance, and the reading — carried in thousandths of a
   millilitre per second, as the seam states every channel — is compared against the rate the profile
   commanded for that same interval. The difference is the departure, and it is a subtraction and
@@ -102,13 +107,15 @@ rationale: |
   that as its own assertion is what keeps a later rate loop from being added without anyone noticing
   that this criterion stopped being met.
 links:
-  - target: DEL-SIM-BREW-LOOP.C6
-    type: derives-from
-  - target: REQ-DELIVERY-PROFILE-001.C4
-    type: targets
   - target: DEC-DEPARTURE-OBSERVED-NOT-MODELLED
     type: justified-by
+  - target: DEL-SIM-BREW-LOOP.C6
+    type: derives-from
   - target: DEL-SIM-FLOW-SENSED
     type: depends-on
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: targets
   - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
     type: depends-on
+  - target: DEC-READING-ANSWERS-FOR-THE-ELAPSED-INTERVAL
+    type: justified-by

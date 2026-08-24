@@ -2,11 +2,11 @@ id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2
 type: criterion
 title: The departure a delivery reports is the commanded rate less the measured one
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  The control state gains a departure figure in thousandths of a millilitre per second and the elapsed delivery time it was seen at, computed on each step a delivery runs as the rate the profile states for the elapsed time, converted to thousandths, less the seam's reading — the same sign convention the estimator uses for a residual, commanded minus observed, so a shortfall is positive. The subtraction is the whole mechanism: no filter, no model, no term describing what resists the water. A test commands a flat 2.0 mL/s course, injects 1.2 mL/s at the seam, and asserts a departure of 800 milli-mL/s within one least count of the seam's unit. Out of scope: modelling the puck or a fixed restriction to reproduce the shortfall, which the governing decision rules out permanently rather than defers; also out of scope is attributing a departure to a cause — the record says how far off it was and when, not why.
+  The control state gains a departure figure in thousandths of a millilitre per second and the elapsed delivery time it was seen at, computed on each step a delivery runs as the rate the course was commanding over the interval the seam's reading measures, converted to thousandths, less that reading — the same sign convention the estimator uses for a residual, commanded minus observed, so a shortfall is positive. The interval is the one that has just elapsed, per the decision governing what a sensed reading answers for, so the figure compared against is the one the machine was actually following while the rate was being measured rather than the one being issued for the interval coming; the elapsed time reported is the point on the course that figure was taken from. A delivery's first step has no interval behind it under its own command and yields no observation rather than reporting the whole commanded rate as a shortfall. The subtraction is the whole mechanism: no filter, no model, no term describing what resists the water. A test commands a flat 2.0 mL/s course, holds 1.2 mL/s at the seam, and asserts a departure of 800 milli-mL/s within one least count of the seam's unit. Out of scope: modelling the puck or a fixed restriction to reproduce the shortfall, which the governing decision rules out permanently rather than defers; also out of scope is attributing a departure to a cause — the record says how far off it was and when, not why.
 links:
   - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
     type: criterion-of

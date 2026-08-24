@@ -1,0 +1,78 @@
+id: DEC-READING-ANSWERS-FOR-THE-ELAPSED-INTERVAL
+type: decision
+title: A sensed reading answers for the interval just elapsed
+status: active
+version: 1
+text: |
+  A sensed reading answers for the interval that has just elapsed, not for the instant it was
+  sampled and not for the interval about to begin. Whatever a consumer compares that reading
+  against must therefore be the figure that was in force during that same interval: the command
+  the machine was actually following while the quantity was being measured, rather than the one
+  being issued for the interval coming.
+
+  This is the convention the reconstruction already runs on. The estimator is advanced under the
+  levels commanded over the interval just gone and corrected toward what the machine reports at
+  the end of it, while what the control law commands next answers for the interval ahead. Until
+  now that convention lived only in the estimator's own account of itself, and every other
+  consumer of the seam was free to pick its own reading of what a measurement covers.
+
+  It applies to every consumer of a sensed channel and not only to the one that prompted it:
+  comparing a delivered rate against a commanded course, closing a loop on a measured quantity,
+  ending a delivery on an integrated one, judging whether a commanded actuation produced the
+  response the model predicted, and recording input and output together for the plant model to
+  be identified from.
+
+  A first reading of a run has no interval behind it under the figure the consumer is about to
+  compare against. That is an absence of evidence rather than a disagreement, and the consumer
+  reports it as nothing observed rather than as the whole commanded quantity having gone missing.
+rationale: |
+  Context: The machine senses quantities through one hardware seam and several behaviours compare
+  what a channel reports against what the machine was asked for. Nothing in the graph has ever
+  said what stretch of time a reading covers. The seam declares each channel's unit and its
+  trustworthiness and is silent on its interval, so each consumer has been free to assume one,
+  and the assumption only becomes visible when a comparison starts producing figures nobody
+  expected. Reporting departure from a commanded course is the first behaviour where the
+  assumption is load-bearing rather than incidental, which is what brought the question up.
+
+  Trade-offs: Answering for the interval just elapsed is what the measurement physically is -- a
+  quantity is observed over a stretch of time, and the stretch that has finished is the only one
+  anything can be known about. It costs a consumer one figure of memory, the command that was in
+  force, and it makes the first step of any run report nothing rather than something wrong.
+  Answering for the instant of sampling reads as the simplest option and is the one a reader
+  assumes when nothing says otherwise, but for any quantity observed over an interval it is a
+  fiction, and it puts the reading half an interval away from whichever command it is compared
+  against. Answering for the interval about to begin is the only option needing no extra state,
+  and it is wrong in a way that is hard to see: it compares a measurement of one interval against
+  a command issued for the next, which reports a disagreement at the start of every run where the
+  machine had not yet been asked for anything, leaves a standing error on any course whose figure
+  is still moving, and pairs each measurement with the wrong input in any record kept for
+  identification. That last one is the expensive failure, because it does not announce itself --
+  it emerges as a transport delay or a gain error in coefficients somebody then defends.
+
+  Reversibility: Cheap to state and expensive to have left unstated. Each consumer that already
+  compares a reading against a command holds the alignment in its own arithmetic, so changing the
+  convention later means revisiting each of them and every figure identified from data they
+  recorded. Nothing about this forecloses a channel whose hardware reports an instantaneous
+  sample rather than an interval average: such a channel still answers for the interval it was
+  read across, and a description that eventually distinguishes the two would refine this rather
+  than reverse it.
+
+  Consequences: Any consumer comparing a reading against a commanded figure keeps the figure that
+  was in force over the measured interval, and reports nothing observed until one interval has
+  elapsed under it. A loop later closed on a sensed quantity inherits a known one-interval
+  alignment rather than an unexamined one, so the delay it is tuned against is the delay it has.
+  Bench records that pair an input with an output pair them across the same interval, which is
+  what makes the plant model identified from them the model of the machine rather than of the
+  recording. And the distinction between a quantity nothing has observed yet and one observed to
+  disagree stays available to every consumer, rather than each collapsing it in its own way.
+options_considered:
+  - option: A reading answers for the interval just elapsed
+    reason_rejected: ""
+  - option: A reading answers for the instant it was sampled
+    reason_rejected: For a quantity observed over a stretch of time this is a fiction, and it leaves the reading half an interval from whichever command it is compared against.
+  - option: A reading answers for the interval about to begin
+    reason_rejected: 'Compares a measurement of one interval against the command issued for the next: a disagreement reported at the start of every run, a standing error on any course still moving, and every recorded input paired with the wrong output for identification.'
+chosen: A reading answers for the interval just elapsed
+links:
+  - target: REQ-MEASUREMENT-001.C5
+    type: addresses
