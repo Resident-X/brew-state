@@ -186,6 +186,7 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
     memset(&staging, 0, sizeof(staging));
 
     bool brew_given = false;
+    bool flow_given = false;
 
     const char *cursor = text;
     const char *limit = text + length;
@@ -241,11 +242,19 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
         const char *figure_end = origin_begin;
         trim(&figure_begin, &figure_end);
 
-        if (!spans_word(name_begin, name_end, DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD)) {
+        int32_t *slot = NULL;
+        bool *given = NULL;
+        if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD)) {
+            slot = &staging.brew_temperature_band_milli_c;
+            given = &brew_given;
+        } else if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD)) {
+            slot = &staging.flow_departure_band_milli_ml_per_s;
+            given = &flow_given;
+        } else {
             report(error, DELIVERY_TOLERANCE_UNKNOWN, line_number, name_begin, name_length);
             return false;
         }
-        if (brew_given) {
+        if (*given) {
             report(error, DELIVERY_TOLERANCE_DUPLICATE, line_number, name_begin, name_length);
             return false;
         }
@@ -280,13 +289,18 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
             return false;
         }
 
-        staging.brew_temperature_band_milli_c = (int32_t)figure;
-        brew_given = true;
+        *slot = (int32_t)figure;
+        *given = true;
     }
 
     if (!brew_given) {
         report(error, DELIVERY_TOLERANCE_MISSING, 0u, DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD,
                strlen(DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD));
+        return false;
+    }
+    if (!flow_given) {
+        report(error, DELIVERY_TOLERANCE_MISSING, 0u, DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD,
+               strlen(DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD));
         return false;
     }
 

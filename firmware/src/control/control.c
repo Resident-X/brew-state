@@ -530,6 +530,8 @@ control_step_result_t control_step(control_state_t *state)
      * again: every delivery reaching this branch has a figure to divide the
      * commanded rate by.
      */
+    bool departed = false;
+
     if (state->delivery_running) {
         state->delivery_elapsed_millis += advance;
 
@@ -542,6 +544,27 @@ control_step_result_t control_step(control_state_t *state)
             const float permille =
                 (rate_ml_per_s / state->full_scale_flow_ml_per_s) * (float)ACTUATION_FULL_SCALE;
             state->commanded_pump_permille = as_drive_level(permille);
+
+            /*
+             * The delivered flow is compared against the same commanded rate
+             * that just drove the pump, on the same cadence the profile is
+             * evaluated -- not a figure read back from the plant model, which
+             * would compare the command against itself. Per
+             * DEC-DEPARTURE-OBSERVED-NOT-MODELLED, departure is observed by
+             * measuring what moved rather than reproduced by modelling what
+             * resisted it, so an absent or failed reading is not compared
+             * against anything: nothing arrived to have moved differently
+             * from what was asked.
+             */
+            const hw_reading_t flow = hw_sensor_read(HW_SENSOR_FLOW);
+            if (flow.status == HW_READING_VALID) {
+                const float commanded_milli_ml_per_s = rate_ml_per_s * 1000.0f;
+                const float gap = (float)flow.value_milli - commanded_milli_ml_per_s;
+                const float gap_magnitude = gap < 0.0f ? -gap : gap;
+                if (gap_magnitude > (float)state->tolerance.flow_departure_band_milli_ml_per_s) {
+                    departed = true;
+                }
+            }
         }
     }
 
@@ -565,5 +588,17 @@ control_step_result_t control_step(control_state_t *state)
     }
     state->driven_pump_permille = state->commanded_pump_permille;
 
-    return late ? CONTROL_STEP_LATE : CONTROL_STEP_ACTUATED;
+    /*
+     * Lateness is reported ahead of departure where both are true of the same
+     * cycle: CONTROL_STEP_LATE is the pre-existing, more urgent signal -- a
+     * caller that has fallen behind on cadence needs to learn that before
+     * anything else -- and CONTROL_STEP_DELIVERY_DEPARTED is additive scope
+     * layered on top of an otherwise-ordinary cycle, not a replacement for it.
+     * A cycle that is both late and departed is still, first and foremost,
+     * late.
+     */
+    if (late) {
+        return CONTROL_STEP_LATE;
+    }
+    return departed ? CONTROL_STEP_DELIVERY_DEPARTED : CONTROL_STEP_ACTUATED;
 }

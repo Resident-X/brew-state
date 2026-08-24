@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-DEPARTURE-REPORTED.C1-TEST
+type: evidence
+title: Delivered flow is compared against the commanded rate each cycle — control suite (SOL-DELIVERY-DEPARTURE-REPORTED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T09:12:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_delivered_flow_is_compared_against_the_commanded_rate_each_cycle,test_a_departed_delivery_still_runs_to_its_own_completion
+text: |-
+  control_step reads hw_sensor_read(HW_SENSOR_FLOW) and compares it against the commanded rate on every cycle a delivery is running, gated on HW_READING_VALID. The agreement test proves the comparison against a matching reading; the 34-step departure test proves the comparison runs every cycle, not just once.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED.C1
+    type: satisfies

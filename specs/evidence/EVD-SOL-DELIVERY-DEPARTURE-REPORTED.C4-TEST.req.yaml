@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-DEPARTURE-REPORTED.C4-TEST
+type: evidence
+title: An absent or failed flow reading does not itself report departure — control suite (SOL-DELIVERY-DEPARTURE-REPORTED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T09:12:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c
+text: |-
+  With hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_ABSENT, ...) and separately HW_READING_FAILED, both planting a value that would depart if treated as valid (800 against a 2000 commanded rate, 300 band), control_step does not return CONTROL_STEP_DELIVERY_DEPARTED on that cycle. Per DEC-DEPARTURE-OBSERVED-NOT-MODELLED, no reading is not evidence of a departed one.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED.C4
+    type: satisfies

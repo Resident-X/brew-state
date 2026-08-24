@@ -51,3 +51,18 @@
 # narrower one, and the honest way to find that out is to narrow this figure and
 # see which trajectories stop being accepted.
 brew-temperature-band-milli-c = 1000 @document Taken from the extraction literature's treatment of two degrees Celsius as the span across which a difference in the cup becomes tasteable rather than only measurable, and recorded here as the half-width that span implies rather than as the span itself. It is a statement about the drink and not a measurement of this machine, which has never been on a bench; what the built machine can actually hold is a bench question and is not claimed here.
+
+# How far the flow a delivery actually moves may sit from the rate its
+# profile is commanding before the gap is reported as departure rather than
+# absorbed into whatever the delivery ends up producing.
+#
+# Three hundred thousandths of a millilitre per second either side, which is
+# roughly a sixth of a typical shot's mid-course commanded rate -- loose
+# enough that the ordinary settling a step in the commanded course produces is
+# not itself reported as departure, tight enough that a stalled or badly
+# short pump is caught well before the delivery has run to its own end
+# condition. No meter has been fitted to a bench and no trajectory has been
+# recorded from one; this is what the design is currently working to rather
+# than a figure a built machine has been shown to hold, on the same footing
+# the temperature band above is in.
+flow-departure-band-milli-ml-s = 300 @estimated No meter has been fitted to a bench yet, so this is not read off a recorded trajectory. It is sized against the commanded rates the shipped delivery profiles use -- a fraction loose enough that ordinary settling around a step in the commanded course is not itself reported as departure -- and is expected to be narrowed once a real meter's noise floor and a real pump's step response are known.

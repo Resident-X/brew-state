@@ -39,6 +39,16 @@
  */
 #define DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD "brew-temperature-band-milli-c"
 
+/*
+ * How far the flow a delivery actually moves may sit from the rate its
+ * profile is commanding before that gap is reported as departure rather than
+ * absorbed. Declared for the same reason the temperature band is: what a
+ * delivery is held to is a criterion the control suite tests trajectories
+ * against, and a design that can only be loosened or tightened by editing and
+ * recompiling a source file is one nobody varies to find out what it costs.
+ */
+#define DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD "flow-departure-band-milli-ml-s"
+
 /* The longest a band's name may be in a fault report, terminator included. */
 #define DELIVERY_TOLERANCE_NAME_MAX 48
 
@@ -55,6 +65,14 @@
  */
 typedef struct {
     int32_t brew_temperature_band_milli_c;
+    /*
+     * A half-width in thousandths of a millilitre per second, on the same
+     * reasoning the temperature band above is symmetric: what the delivery is
+     * held to is distance from the rate that was commanded, in either
+     * direction, and nothing here has established that moving faster than
+     * asked is more acceptable than moving slower.
+     */
+    int32_t flow_departure_band_milli_ml_per_s;
 } delivery_tolerance_t;
 
 /* Why a tolerance declaration was refused. */

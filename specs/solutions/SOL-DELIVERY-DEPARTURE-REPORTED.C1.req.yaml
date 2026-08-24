@@ -1,0 +1,18 @@
+id: SOL-DELIVERY-DEPARTURE-REPORTED.C1
+type: criterion
+title: Delivered flow is compared against the commanded rate on every control cycle a delivery is running
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `control_step` (firmware/src/control/control.c, delivery-advance block) reads
+  `hw_sensor_read(HW_SENSOR_FLOW)` on every cycle a delivery is running and compares its
+  `value_milli` against the profile's commanded rate for that cycle (the same
+  `delivery_profile_rate_ml_per_s` result that already drives `commanded_pump_permille`),
+  but only when the reading's `status` is `HW_READING_VALID`. Out of scope: correcting the
+  commanded rate from the comparison -- this criterion only establishes the comparison
+  exists, not a closed loop on it.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED
+    type: criterion-of

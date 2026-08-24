@@ -1,0 +1,18 @@
+id: SOL-DELIVERY-DEPARTURE-REPORTED.C2
+type: criterion
+title: Departure beyond the declared tolerance surfaces as a distinct control-step result rather than being absorbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `control_step_result_t` (firmware/src/control/control.h) gains a new enumerator
+  (e.g. `CONTROL_STEP_DELIVERY_DEPARTED`), following the same idiom as the existing
+  `CONTROL_STEP_LATE` / `CONTROL_STEP_NO_TARGET` results, returned from `control_step`
+  instead of `CONTROL_STEP_ACTUATED` on a cycle where the delivered/commanded gap from the
+  prior criterion exceeds the declared flow-departure tolerance. The delivery keeps running
+  to completion on a departed cycle -- reporting departure is distinct from ending the
+  delivery early or refusing it, both out of scope here.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED
+    type: criterion-of

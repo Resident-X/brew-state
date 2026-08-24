@@ -872,6 +872,21 @@ MUTATIONS = (
         "command": CONTROL_DECLARATION,
     },
     {
+        "name": "the-flow-departure-band-narrowed-past-what-deliveries-actually-hold-to",
+        "why": "the band a delivery's flow is held against is narrowed in the declaration "
+               "alone, with no edit to any source, and a reading the shipped suite plants "
+               "as an ordinary in-band gap is still accepted. That is the whole claim the "
+               "band being data rather than a constant rests on, and it is the one a check "
+               "watching for a macro name cannot make: rename the macro and the name scan "
+               "is satisfied, while the gap the software reports as departure is whatever "
+               "the last person compiled. What establishes it is the declaration alone "
+               "deciding which deliveries stop being accepted",
+        "file": "params/tolerance.declaration",
+        "find": "flow-departure-band-milli-ml-s = 300 @estimated",
+        "replace": "flow-departure-band-milli-ml-s = 30 @estimated",
+        "command": CONTROL_TESTS,
+    },
+    {
         "name": "a-negative-assumed-error-accepted",
         "why": "an error below zero is delivered rather than refused, so a figure that means "
                "nothing reaches whatever sizes a margin from it",

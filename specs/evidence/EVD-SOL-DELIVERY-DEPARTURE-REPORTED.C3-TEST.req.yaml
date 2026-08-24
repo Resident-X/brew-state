@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-DEPARTURE-REPORTED.C3-TEST
+type: evidence
+title: The flow-departure tolerance is declared data with a recorded origin — control suite (SOL-DELIVERY-DEPARTURE-REPORTED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T09:12:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/src/delivery/delivery_tolerance.c,firmware/params/tolerance.declaration,firmware/tools/check_control_declaration.py,firmware/tools/tests/test_control_declaration_checks.py,firmware/tools/mutate.py::the-flow-departure-band-narrowed-past-what-deliveries-actually-hold-to
+text: |-
+  flow-departure-band-milli-ml-s is declared in params/tolerance.declaration with an @estimated origin, parsed into delivery_tolerance_t.flow_departure_band_milli_ml_per_s by the generalised name-to-slot loader, and validated by check_control_declaration.py's BANDS table the same way the brew-temperature band is validated (missing/duplicate/no-origin/second-home all refused, on both the C loader and the Python gate). A mutant narrowing the declared value from 300 to 30 is caught by the control suite, confirming the value is genuinely read from the declaration rather than compiled in.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED.C3
+    type: satisfies
