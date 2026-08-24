@@ -110,9 +110,21 @@ ACCOUNTED_ELSEWHERE = {
 #: instead. Named here rather than discovered, for the reason the origin check
 #: names its kinds: a check reading its list of what must be declared out of the
 #: thing it is inspecting would agree with any edit to it.
+#: Each band's entry carries the identifier fragment that would spell it if
+#: somebody defined it in the source instead, the word for the unit it is stated
+#: in, and the widest half-width it may be declared at.
+#:
+#: The unit and the bound restate what the loader in
+#: src/delivery/delivery_tolerance.c holds. That restatement is deliberate and is
+#: the same one this module already makes about whole numbers and about zero: the
+#: point of the gate is to refuse at build time exactly what the machine would
+#: refuse at start-up, and a gate that had to be told the answer by the thing it
+#: is checking could not fail before the machine did. The two are held together
+#: by the tests below, which run this check against declarations the C loader is
+#: separately required to refuse.
 BANDS = {
-    "brew-temperature-band-milli-c": "TEMPERATURE_BAND",
-    "flow-departure-band-milli-ml-s": "FLOW_DEPARTURE_BAND",
+    "brew-temperature-band": ("TEMPERATURE_BAND", "milli-c", 20000),
+    "flow-departure-band": ("FLOW_DEPARTURE_BAND", "milli-ml-s", 7000),
 }
 
 #: What the source is scanned for.
@@ -148,11 +160,6 @@ _COMMENT = re.compile(r"/\*.*?\*/|//[^\n]*|/\*.*", re.DOTALL)
 #: loader reading this same file in C does not, and would let a figure through
 #: the gate that the machine then refuses to start on.
 _WHOLE_NUMBER = re.compile(r"^-?[0-9]+$")
-
-#: The widest band the software can carry. A band lives in the record as a
-#: signed 32-bit count of millidegrees, and a figure past that is not a generous
-#: tolerance -- it is a declaration the loader refuses outright.
-_BAND_MAX_MILLI_C = 2**31 - 1
 
 _SOURCE_SUFFIXES = (".c", ".h")
 
@@ -329,20 +336,42 @@ def unusable_band(name: str, figure: str) -> str | None:
     is the reason.
 
     What is refused is what the loader refuses, for the reasons the loader gives.
-    A figure that is not a whole number of millidegrees cannot be read at all. A
-    band of nothing is not a tight tolerance but a criterion no delivery could
-    ever meet, which is why the loader refuses it rather than holding every cup
-    to it. A negative band is not a distance. And a band wider than the integer
-    carrying it does not survive being read into the record.
+    A value that is not a whole number followed by the word for its unit cannot
+    be read at all. A unit that is not the one this build holds the band in is a
+    figure measuring the wrong quantity, and reading it would hold deliveries to
+    a band orders of magnitude away from the one declared. A band of nothing is
+    not a tight tolerance but a criterion no delivery could ever meet, which is
+    why the loader refuses it rather than holding every cup to it. A negative
+    band is not a distance. And a band wider than its own bound has stopped being
+    a criterion at all, because it accepts everything the machine can do.
 
     What a good band would be is still not judged. Whether one degree is the
     right window for this drink is a bench question, and the account beside the
     figure is what lets a reader challenge it.
     """
+    _, expected_unit, widest = BANDS[name]
+
+    parts = figure.split()
+    if len(parts) != 2:
+        return (
+            f"'{name}' is declared as '{figure}', which is not a whole number followed by "
+            f"the word for its unit. The loader refuses a band it cannot read, so this is "
+            "a band reading as declared here on a machine that never comes up"
+        )
+
+    figure, unit = parts
+    if unit != expected_unit:
+        return (
+            f"'{name}' is declared in '{unit}', but this build holds it in "
+            f"'{expected_unit}'. A figure in the wrong unit is not a loose band, it is a "
+            "band measuring the wrong quantity, and the loader refuses it rather than "
+            "holding deliveries to it"
+        )
+
     if not _WHOLE_NUMBER.match(figure):
         return (
             f"'{name}' is declared as '{figure}', which is not a whole number of "
-            "millidegrees. The loader refuses a band it cannot read, so this is a band "
+            f"{expected_unit}. The loader refuses a band it cannot read, so this is a band "
             "reading as declared here on a machine that never comes up"
         )
 
@@ -359,12 +388,13 @@ def unusable_band(name: str, figure: str) -> str | None:
             "direction, and there is no distance from the temperature that was asked for "
             "that is less than none"
         )
-    if milli_c > _BAND_MAX_MILLI_C:
+    if milli_c > widest:
         return (
-            f"'{name}' is declared as {milli_c}, which is wider than the signed 32-bit "
-            f"count of millidegrees the record carries a band in. Past {_BAND_MAX_MILLI_C} "
-            "the loader refuses the declaration outright, so a band nobody could exceed "
-            "becomes a machine that will not start"
+            f"'{name}' is declared as {milli_c} {expected_unit}, which is wider than the "
+            f"{widest} the loader admits for it. Past that a band has stopped being a "
+            "criterion -- it accepts everything the machine can do -- so the loader "
+            "refuses the declaration outright and a band nobody could exceed becomes a "
+            "machine that will not start"
         )
     return None
 
@@ -441,7 +471,7 @@ def bands(path: str, origin_words: frozenset[str], defined: dict[str, list[str]]
                 "band, it is a criterion nothing holds a delivery to"
             )
 
-    for name, fragment in sorted(BANDS.items()):
+    for name, (fragment, _unit, _widest) in sorted(BANDS.items()):
         offenders = sorted(
             {path for macro, paths in defined.items() if fragment in macro for path in paths}
         )

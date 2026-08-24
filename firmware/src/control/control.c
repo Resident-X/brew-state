@@ -235,6 +235,114 @@ static float heater_command(control_state_t *state, float reconstruction_c, floa
  * previous level, and recording zero would state it is off when nothing
  * established that.
  */
+/*
+ * Round a signed figure in thousandths to the whole thousandth, away from zero.
+ *
+ * Written without the standard library's rounding for the reason as_drive_level
+ * above is: this translation unit is compiled byte-identically for the host and
+ * the target, and reaching for math.h reaches a different implementation on
+ * each. Away from zero rather than toward it, so a gap is never reported as
+ * smaller than it was -- rounding a departure down toward the band is the one
+ * direction that could quietly bring a reportable gap inside it.
+ */
+static int32_t as_milli(float value)
+{
+    return (int32_t)(value >= 0.0f ? value + 0.5f : value - 0.5f);
+}
+
+/*
+ * Forget what the last delivery had to say about following its course.
+ *
+ * A report belongs to one delivery. Carrying it into the next would have a
+ * machine answer for a shot that has already been poured, and the caller has no
+ * way to tell that from the shot it is actually asking about.
+ */
+static void forget_departure(control_state_t *state)
+{
+    state->delivery_commanded_rate_ml_per_s = 0.0f;
+    state->delivery_commanded_at_millis = 0u;
+    state->delivery_rate_commanded = false;
+    state->departure.rate_observed = false;
+    state->departure.departed = false;
+    state->departure.largest_milli_ml_per_s = 0;
+    state->departure.at_millis = 0u;
+}
+
+/*
+ * Compare what the meter says moved over the interval just elapsed against the
+ * rate this delivery was commanding during it, and fold any departure into the
+ * delivery's report. Answers whether this step departed.
+ *
+ * The reading is taken on every step a delivery runs, which is what makes the
+ * control unit a reader of the seam rather than of its own commands. It is used
+ * only when the seam marks it trustworthy and its value lies inside the
+ * plausible span the description declares for the channel: a disconnected or
+ * shorted meter produces figures that are arithmetically fine and physically
+ * absurd, and reporting one as departure would have the machine give an account
+ * of a rate it never plausibly saw -- a very large one at that, which would
+ * then stand as the worst departure the delivery ever showed.
+ *
+ * Nothing is judged until one interval has elapsed under this delivery's
+ * command. On the first step there is no such interval: the meter is reporting
+ * what moved before the delivery was asked for anything, and comparing the new
+ * command against it would report the whole commanded rate as a shortfall on
+ * every delivery ever run.
+ */
+static bool judge_the_interval_just_elapsed(control_state_t *state)
+{
+    const hw_reading_t flow = hw_sensor_read(HW_SENSOR_FLOW);
+
+    if (!state->delivery_rate_commanded) {
+        return false;
+    }
+    if (flow.status != HW_READING_VALID ||
+        flow.value_milli < state->estimator.limits.low_milli[HW_SENSOR_FLOW] ||
+        flow.value_milli > state->estimator.limits.high_milli[HW_SENSOR_FLOW]) {
+        return false;
+    }
+
+    /*
+     * That the rate was observed at all is recorded separately from what the
+     * observation found. A delivery nobody measured must not come back
+     * reporting that it followed its course: it would be asserting agreement
+     * never observed, which reads exactly like a delivery that went perfectly.
+     */
+    state->departure.rate_observed = true;
+
+    /*
+     * Commanded less measured, so a shortfall is positive -- the sign
+     * convention the estimator already uses for a residual. The subtraction is
+     * the whole mechanism: departure is observed by measuring what moved rather
+     * than reproduced by modelling what resisted it, so there is no filter
+     * here, no term for the puck, and nothing for anybody to tune.
+     */
+    const float commanded_milli_ml_per_s = state->delivery_commanded_rate_ml_per_s * 1000.0f;
+    const int32_t gap = as_milli(commanded_milli_ml_per_s - (float)flow.value_milli);
+    const int32_t gap_magnitude = gap < 0 ? -gap : gap;
+
+    if (gap_magnitude <= state->tolerance.flow_departure_band_milli_ml_per_s) {
+        return false;
+    }
+
+    /*
+     * The widest gap this delivery has shown is what it is reported by, kept
+     * with its sign so a delivery that ran under its course is not reported as
+     * one that ran over it. Compared by distance from the command because the
+     * band is a half-width and either direction is a departure. The time
+     * reported is the point on the course the departed command was taken from,
+     * not the step the reading arrived on -- the reading answers for that
+     * earlier interval.
+     */
+    const int32_t largest = state->departure.largest_milli_ml_per_s;
+    const int32_t largest_magnitude = largest < 0 ? -largest : largest;
+    if (!state->departure.departed || gap_magnitude > largest_magnitude) {
+        state->departure.largest_milli_ml_per_s = gap;
+        state->departure.at_millis = state->delivery_commanded_at_millis;
+    }
+    state->departure.departed = true;
+    return true;
+}
+
 static void command_everything_off(control_state_t *state)
 {
     if (hw_output_set(ACTUATION_CHANNEL_BREW_HEATER, 0u)) {
@@ -263,6 +371,7 @@ static void command_everything_off(control_state_t *state)
     state->commanded_pump_permille = 0u;
     state->delivery_running = false;
     state->delivery_elapsed_millis = 0u;
+    forget_departure(state);
 }
 
 /* Latch the fault and command the outputs off. */
@@ -553,6 +662,7 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     state->full_scale_flow_ml_per_s = 0.0f;
     state->delivery_running = false;
     state->delivery_elapsed_millis = 0u;
+    forget_departure(state);
 
     /*
      * The description is put into the state before anything can refuse, on the
@@ -677,6 +787,7 @@ bool control_command_delivery_reporting(control_state_t *state, const delivery_p
     state->delivery = *profile;
     state->delivery_running = true;
     state->delivery_elapsed_millis = 0u;
+    forget_departure(state);
     return true;
 }
 
@@ -699,6 +810,16 @@ bool control_temperature_band(const control_state_t *state, int32_t *band_milli_
     }
 
     *band_milli_c = state->tolerance.brew_temperature_band_milli_c;
+    return true;
+}
+
+bool control_delivery_departure(const control_state_t *state, control_departure_t *departure)
+{
+    if (state == NULL || departure == NULL) {
+        return false;
+    }
+
+    *departure = state->departure;
     return true;
 }
 
@@ -826,6 +947,14 @@ control_step_result_t control_step(control_state_t *state)
         state->delivery_elapsed_millis += advance;
 
         if (delivery_profile_ended(&state->delivery, state->delivery_elapsed_millis)) {
+            /*
+             * The interval that has just elapsed ran under this delivery's
+             * command and is judged like any other, so the last stretch of a
+             * delivery is not the one stretch nothing accounts for. Only the
+             * report is written: the step's own result stays the ordinary one,
+             * because what this step is reporting is that the delivery ended.
+             */
+            (void)judge_the_interval_just_elapsed(state);
             state->delivery_running = false;
             state->commanded_pump_permille = 0u;
         } else {
@@ -846,15 +975,16 @@ control_step_result_t control_step(control_state_t *state)
              * against anything: nothing arrived to have moved differently
              * from what was asked.
              */
-            const hw_reading_t flow = hw_sensor_read(HW_SENSOR_FLOW);
-            if (flow.status == HW_READING_VALID) {
-                const float commanded_milli_ml_per_s = rate_ml_per_s * 1000.0f;
-                const float gap = (float)flow.value_milli - commanded_milli_ml_per_s;
-                const float gap_magnitude = gap < 0.0f ? -gap : gap;
-                if (gap_magnitude > (float)state->tolerance.flow_departure_band_milli_ml_per_s) {
-                    departed = true;
-                }
-            }
+            departed = judge_the_interval_just_elapsed(state);
+
+            /*
+             * What was commanded on this step is what the next step's reading
+             * will answer for, so it is kept here after the judgement above has
+             * used the one before it.
+             */
+            state->delivery_commanded_rate_ml_per_s = rate_ml_per_s;
+            state->delivery_commanded_at_millis = state->delivery_elapsed_millis;
+            state->delivery_rate_commanded = true;
         }
     }
 

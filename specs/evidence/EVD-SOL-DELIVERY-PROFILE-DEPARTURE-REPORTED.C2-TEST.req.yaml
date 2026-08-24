@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2-TEST
+type: evidence
+title: Departure is the commanded rate less the measured one — control suite (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T23:39:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_departure_reported_is_the_commanded_rate_less_the_measured_one
+text: |-
+  A flat 2.0 mL/s course against 1.2 mL/s at the seam reports 800 milli-mL/s within one least count, positive for a shortfall, judged against the command in force over the interval the reading measures. The exclusive band boundary was verified by widening the comparison from greater-than to greater-or-equal and confirming test_a_gap_exactly_at_the_tolerance_does_not_depart fails; that test also asserts one least count beyond the band does depart, so it pins a boundary rather than a comparison that never fires.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2
+    type: satisfies

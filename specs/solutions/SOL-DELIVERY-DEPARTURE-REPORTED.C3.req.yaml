@@ -1,7 +1,7 @@
 id: SOL-DELIVERY-DEPARTURE-REPORTED.C3
 type: criterion
 title: The flow-departure tolerance is declared data with a recorded origin rather than a compiled literal
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

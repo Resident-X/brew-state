@@ -1,4 +1,4 @@
-# How far a delivery may sit from the temperature it was asked for.
+# How far a delivery may sit from what it was asked for.
 #
 # This file says what the drink demands. It does not say what any machine does:
 # a band is the same whether the water is heated by a thermoblock, a boiler or
@@ -16,11 +16,30 @@
 # recompiling a source file is one nobody varies, and a claim nobody has tested
 # the sensitivity of is a claim nobody has actually established.
 #
-# Each line is `name = milli-degrees @kind account`. A band is a half-width: the
-# delivery is inside it when the water is no further than this from the
-# temperature commanded, in either direction. The vocabulary the kind is drawn
-# from is the one every description in this project accounts for its values in,
-# declared in ../include/plant_origin.h and nowhere else.
+# Each line is `name = figure unit @kind account`. A band is a half-width: the
+# delivery is inside it when what was delivered is no further than this from
+# what was commanded, in either direction.
+#
+# The unit is written on the line rather than assumed. This file once stated
+# every band in millidegrees and said so here, which worked for exactly as long
+# as temperature was the only thing a delivery was held to; a band in
+# thousandths of a millilitre per second cannot be read by a grammar that knows
+# only one unit, and a grammar that guessed from the band's name would be
+# trusting a spelling nothing checks. So the unit is its own word, drawn from a
+# vocabulary the loader holds, and it is checked against the unit this build
+# actually keeps that band in -- which is what makes a figure written in the
+# wrong quantity a refusal rather than a band a hundred times looser than
+# anybody intended. The words are `milli-c` and `milli-ml-s`, declared in
+# ../include/delivery_tolerance.h and nowhere else.
+#
+# Each figure is range-checked as a quantity of its own unit, against a bound
+# stated per band rather than one distance shared by all of them. A single
+# shared bound would have to be the loosest band's, and would then wave through
+# for the tightest one every figure it most needed to refuse.
+#
+# The vocabulary the kind is drawn from is the one every description in this
+# project accounts for its values in, declared in ../include/plant_origin.h and
+# nowhere else.
 #
 # tools/check_control_declaration.py refuses a band that is declared nowhere,
 # one that is accounted for with no origin or no account behind its kind, and a
@@ -29,10 +48,10 @@
 # goes on reading as declared here while the software holds deliveries to the
 # other one.
 #
-# What is settled here is that the band is stated, sourced and read. What its
-# value should finally be is not: no machine has been on a bench, and the figure
-# below is what the design is currently working to rather than what the built
-# machine has been shown to hold.
+# What is settled here is that each band is stated, sourced and read. What their
+# values should finally be is not: no machine has been on a bench, and the
+# figures below are what the design is currently working to rather than what the
+# built machine has been shown to hold.
 
 # The window either side of the commanded brew temperature within which the
 # water reaching the coffee is still the drink that was ordered.
@@ -50,19 +69,21 @@
 # eventually be held to. A machine characterised on a bench may support a
 # narrower one, and the honest way to find that out is to narrow this figure and
 # see which trajectories stop being accepted.
-brew-temperature-band-milli-c = 1000 @document Taken from the extraction literature's treatment of two degrees Celsius as the span across which a difference in the cup becomes tasteable rather than only measurable, and recorded here as the half-width that span implies rather than as the span itself. It is a statement about the drink and not a measurement of this machine, which has never been on a bench; what the built machine can actually hold is a bench question and is not claimed here.
+brew-temperature-band = 1000 milli-c @document Taken from the extraction literature's treatment of two degrees Celsius as the span across which a difference in the cup becomes tasteable rather than only measurable, and recorded here as the half-width that span implies rather than as the span itself. It is a statement about the drink and not a measurement of this machine, which has never been on a bench; what the built machine can actually hold is a bench question and is not claimed here.
 
 # How far the flow a delivery actually moves may sit from the rate its
 # profile is commanding before the gap is reported as departure rather than
 # absorbed into whatever the delivery ends up producing.
 #
-# Three hundred thousandths of a millilitre per second either side, which is
-# roughly a sixth of a typical shot's mid-course commanded rate -- loose
-# enough that the ordinary settling a step in the commanded course produces is
-# not itself reported as departure, tight enough that a stalled or badly
-# short pump is caught well before the delivery has run to its own end
-# condition. No meter has been fitted to a bench and no trajectory has been
-# recorded from one; this is what the design is currently working to rather
-# than a figure a built machine has been shown to hold, on the same footing
-# the temperature band above is in.
-flow-departure-band-milli-ml-s = 300 @estimated No meter has been fitted to a bench yet, so this is not read off a recorded trajectory. It is sized against the commanded rates the shipped delivery profiles use -- a fraction loose enough that ordinary settling around a step in the commanded course is not itself reported as departure -- and is expected to be narrowed once a real meter's noise floor and a real pump's step response are known.
+# Two hundred thousandths of a millilitre per second either side, which is
+# about three per cent of the 7.0 mL/s the reference description declares the
+# pump draws at full scale. It is chosen to sit in the gap between two figures:
+# above the ripple a vane meter shows on a vibratory pump, so the meter's own
+# unsteadiness is not reported as the machine departing from its course; and
+# below the shortfall a puck produces when it chokes, so the departure the band
+# exists to catch is still caught. Neither of those two figures has been
+# measured. No meter has been fitted to a bench and no trajectory has been
+# recorded from one, so this is what the design is currently working to rather
+# than a figure a built machine has been shown to hold -- the same footing the
+# temperature band above is in.
+flow-departure-band = 200 milli-ml-s @estimated No meter has been fitted to a bench yet, so this is not read off a recorded trajectory. It is placed between two figures neither of which has been measured: above the ripple a vane meter is expected to show on a vibratory pump, and below the shortfall a choked puck is expected to produce, which puts it at about three per cent of the 7.0 mL/s the reference description declares at full pump scale. It is expected to be revised once a real meter's noise floor and a real pump's step response have been recorded from a bench.

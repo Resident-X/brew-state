@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5-TEST
+type: evidence
+title: The pump follows the course rather than chasing the measured rate — control suite (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T23:39:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees
+text: |-
+  The same flat course is run to its end twice, once with the meter agreeing and once with it reporting four tenths of what moved. Every commanded pump level of both runs is recorded and compared element by element, and the step counts are asserted equal, so a correction of any size on any step fails. Departure is asserted reported in the second run and not the first, which keeps the comparison from passing on a path that never read the channel.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5
+    type: satisfies

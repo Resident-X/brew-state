@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3-TEST
+type: evidence
+title: The departure tolerance is declared data carrying its own unit — control and gate suites (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T23:39:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_both_bands_come_back_in_their_own_units
+text: |-
+  Both bands come back in their own units from the shipped declaration; a declaration whose two bands are given each other's units is refused; a band carrying no unit is refused; rewriting the departure band in the declaration alone moves the reporting threshold with no source edit. The per-band admissible range was verified by collapsing both bounds to one shared constant and confirming test_the_flow_departure_band_is_required_and_validated fails. test_a_band_declared_in_another_bands_unit_is_refused and test_a_band_carrying_no_unit_is_refused cover the build-time gate, and the mutant the-two-bands-given-each-others-units is caught.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3
+    type: satisfies

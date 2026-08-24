@@ -52,6 +52,37 @@ static const char *const ORIGIN_WORDS[] = PLANT_ORIGIN_KIND_WORDS;
 _Static_assert(sizeof(ORIGIN_WORDS) / sizeof(ORIGIN_WORDS[0]) == (size_t)PLANT_ORIGIN_KIND_COUNT,
                "every origin kind declares a word, and no word belongs to no kind");
 
+static const char *const UNIT_WORDS[] = DELIVERY_TOLERANCE_UNIT_WORDS;
+
+_Static_assert(sizeof(UNIT_WORDS) / sizeof(UNIT_WORDS[0]) == (size_t)DELIVERY_TOLERANCE_UNIT_COUNT,
+               "every unit declares a word, and no word belongs to no unit");
+
+/*
+ * The widest half-width each band may be declared at.
+ *
+ * These bound what the grammar will admit; they are not the bands, and nothing
+ * holds a delivery to them. The band itself has one home and it is the
+ * declaration -- what is written here is only the point past which a figure has
+ * stopped being a statement about the drink at all, which is a property of the
+ * quantity rather than of the design and so cannot live in the file whose
+ * figures it is checking.
+ *
+ * They are stated per band because the two bands measure different quantities.
+ * A single shared bound could only ever be the looser of them, and would then
+ * admit for the tighter band every figure it most needed refusing -- which is
+ * how a declaration in the wrong unit reads as merely a generous one.
+ *
+ * Twenty degrees, as a half-width, is a forty-degree span: water anywhere in it
+ * is not the drink that was ordered under any account of extraction, and an
+ * unregulated machine of this kind swings by considerably less. Seven
+ * millilitres a second is what the reference description declares the pump
+ * draws at full scale, so a half-width there or beyond accepts every rate the
+ * machine can physically produce -- a band that reports nothing, which is the
+ * failure the flow band exists to prevent rather than a loose setting of it.
+ */
+#define BREW_TEMPERATURE_WIDEST_ADMISSIBLE_MILLI_C 20000
+#define FLOW_DEPARTURE_WIDEST_ADMISSIBLE_MILLI_ML_PER_S 7000
+
 static bool is_blank(char c)
 {
     return c == ' ' || c == '\t' || c == '\r' || c == '\v' || c == '\f';
@@ -244,12 +275,18 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
 
         int32_t *slot = NULL;
         bool *given = NULL;
+        delivery_tolerance_unit_t stated_in = DELIVERY_TOLERANCE_UNIT_COUNT;
+        long widest = 0;
         if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD)) {
             slot = &staging.brew_temperature_band_milli_c;
             given = &brew_given;
+            stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_C;
+            widest = (long)BREW_TEMPERATURE_WIDEST_ADMISSIBLE_MILLI_C;
         } else if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD)) {
             slot = &staging.flow_departure_band_milli_ml_per_s;
             given = &flow_given;
+            stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_ML_PER_S;
+            widest = (long)FLOW_DEPARTURE_WIDEST_ADMISSIBLE_MILLI_ML_PER_S;
         } else {
             report(error, DELIVERY_TOLERANCE_UNKNOWN, line_number, name_begin, name_length);
             return false;
@@ -271,9 +308,60 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
             return false;
         }
 
-        long figure = 0;
-        if (!parse_figure(figure_begin, figure_end, &figure)) {
+        /*
+         * The figure region carries the number and then the word for the unit
+         * it is in. They are split at the last run of blanks rather than the
+         * first, so that the number token is exactly what parse_figure would
+         * have been handed before the unit existed: a region with a second
+         * number in it still reaches parse_figure with both, and is still
+         * refused as malformed rather than quietly reading the first and
+         * taking the second for a unit.
+         */
+        const char *unit_begin = figure_end;
+        while (unit_begin > figure_begin && !is_blank(*(unit_begin - 1))) {
+            unit_begin--;
+        }
+        const char *number_end = unit_begin;
+        while (number_end > figure_begin && is_blank(*(number_end - 1))) {
+            number_end--;
+        }
+
+        /*
+         * Nothing at all between the separator and the origin is a line that
+         * states no quantity to have a unit for, and is malformed on the same
+         * terms it was before units existed -- reporting it as a unit fault
+         * would send a reader looking for a word that was never the point.
+         */
+        if (figure_begin == figure_end) {
             report(error, DELIVERY_TOLERANCE_MALFORMED, line_number, name_begin, name_length);
+            return false;
+        }
+
+        /*
+         * One token where two were wanted is a band declared with a number and
+         * no unit, or with a unit and no number. Either way the quantity is
+         * not stated, and what is missing from it is the unit.
+         */
+        if (unit_begin == figure_begin || number_end == figure_begin) {
+            report(error, DELIVERY_TOLERANCE_UNIT_MISMATCH, line_number, name_begin, name_length);
+            return false;
+        }
+
+        /*
+         * The number is read before the unit word is judged, so that a region
+         * carrying two figures is still refused as malformed rather than as a
+         * unit fault: what is wrong with `2000 milli-c 3000` is the second
+         * number, and reporting the unit would send a reader to check a word
+         * that is spelled correctly and sitting in the wrong place.
+         */
+        long figure = 0;
+        if (!parse_figure(figure_begin, number_end, &figure)) {
+            report(error, DELIVERY_TOLERANCE_MALFORMED, line_number, name_begin, name_length);
+            return false;
+        }
+
+        if (!spans_word(unit_begin, figure_end, UNIT_WORDS[stated_in])) {
+            report(error, DELIVERY_TOLERANCE_UNIT_MISMATCH, line_number, name_begin, name_length);
             return false;
         }
 
@@ -283,8 +371,14 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
          * including the ones the design is working. Refused here rather than
          * left to fail every assertion downstream, where it would read as a
          * broken control law rather than as a band nobody meant to declare.
+         *
+         * The upper bound is this band's own, not one distance shared by all of
+         * them: a figure is judged as a quantity of the unit it was just
+         * checked to be stated in. A band wider than its own bound has stopped
+         * being a criterion -- it accepts everything the machine can do -- and
+         * that point sits at a different number for each quantity.
          */
-        if (figure <= 0 || figure > (long)INT32_MAX) {
+        if (figure <= 0 || figure > widest) {
             report(error, DELIVERY_TOLERANCE_OUT_OF_RANGE, line_number, name_begin, name_length);
             return false;
         }

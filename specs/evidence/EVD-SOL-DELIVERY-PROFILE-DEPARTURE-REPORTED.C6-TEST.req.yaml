@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6-TEST
+type: evidence
+title: A machine with no flow meter reports no account rather than agreement — control suite (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T23:39:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_delivery_nothing_measured_reports_no_account
+text: |-
+  An absent channel and a failed one are each held across a whole delivery and both come back reporting that the rate was never observed, which is separate from reporting no departure. test_a_failed_reading_that_recovers_resumes_the_comparison holds a failed reading for part of a delivery, recovers it, departs the rate, and requires the departure reported, so a path that stopped reading after a failure fails. test_a_reading_outside_the_plausible_span_is_no_observation covers a reading outside the declared span as no observation rather than as a departure.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6
+    type: satisfies

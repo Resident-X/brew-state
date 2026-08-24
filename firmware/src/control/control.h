@@ -213,6 +213,42 @@ typedef struct {
     uint32_t at_millis;
 } control_admission_t;
 
+/*
+ * What a delivery has to say about how closely it followed the course it was
+ * commanded.
+ *
+ * Two answers rather than one, because "no departure was seen" and "the rate
+ * was never observed" are different states of knowledge and a single flag
+ * cannot tell them apart. A machine with no meter fitted, or one whose meter
+ * failed for the whole delivery, has observed nothing and must not report that
+ * the delivery agreed with its command -- that would be asserting agreement
+ * nobody measured, which is precisely the silence the reporting obligation
+ * exists to prevent. So `rate_observed` says whether there was ever anything to
+ * compare, and `departed` says what the comparison found.
+ *
+ * `largest_milli_ml_per_s` is the commanded rate less the measured one, so a
+ * shortfall is positive -- the same sign convention the estimator uses for a
+ * residual. It is the largest by distance from the command in either direction,
+ * carrying its sign, so a delivery that ran under its course and a delivery
+ * that ran over it are not reported as the same number. It and `at_millis` are
+ * meaningful only when `departed` is set, and are zero otherwise: zero is a
+ * legitimate elapsed time, so it is read against `departed` rather than on its
+ * own, exactly as the admission bound's own `at_millis` asks to be read.
+ *
+ * It is latched for the life of the delivery and deliberately unlike the
+ * estimator's residuals, which are forgotten at the top of every step so a
+ * stale one is never mistaken for fresh. That is right for a correction signal
+ * and wrong for an account of a delivery: what a delivery owes is an answer to
+ * whether this shot followed what it was asked for, and that answer is not the
+ * state of the last step.
+ */
+typedef struct {
+    bool rate_observed;
+    bool departed;
+    int32_t largest_milli_ml_per_s;
+    uint32_t at_millis;
+} control_departure_t;
+
 typedef struct {
     uint32_t last_step_millis;
     uint32_t step_count;
@@ -312,6 +348,39 @@ typedef struct {
      * reconstruction it is driving alongside.
      */
     uint32_t delivery_elapsed_millis;
+    /*
+     * The rate this delivery was commanding over the interval that has just
+     * elapsed, and the point on its course that rate was taken from.
+     *
+     * A flow reading answers for the interval it was measured over, and the
+     * command in force during that interval is the one issued on the step
+     * before -- the same convention the estimator beside it already runs on,
+     * where the model is advanced under the levels commanded over the interval
+     * just gone while what is commanded next answers for the interval coming.
+     * Comparing a measurement of one interval against the command for the next
+     * would be an off-by-one: it reports a departure at the start of every
+     * delivery, where the machine had not yet been asked for anything, and
+     * leaves a standing error on any course whose rate is still moving. It
+     * would also misalign the input and output records the plant model is to
+     * be identified from, which is how a timing artefact becomes a coefficient
+     * somebody defends.
+     *
+     * `delivery_rate_commanded` is false until one interval has elapsed under
+     * this delivery's command, which is why the first step of a delivery
+     * observes nothing rather than reporting the whole commanded rate as a
+     * shortfall.
+     */
+    float delivery_commanded_rate_ml_per_s;
+    uint32_t delivery_commanded_at_millis;
+    bool delivery_rate_commanded;
+    /*
+     * What the running delivery has so far had to say about following its
+     * course. Cleared when a delivery is commanded and when everything is
+     * commanded off, and otherwise only ever added to -- see
+     * control_departure_t for why it is latched rather than recomputed each
+     * step, and control_delivery_departure for reading it.
+     */
+    control_departure_t departure;
 } control_state_t;
 
 /*
@@ -515,6 +584,28 @@ bool control_delivery_running(const control_state_t *state);
  * Returns false, writing nothing, for a null state or a null destination.
  */
 bool control_temperature_band(const control_state_t *state, int32_t *band_milli_c);
+
+/*
+ * What the delivery under way -- or the last one to run -- had to say about
+ * following the course it was commanded.
+ *
+ * The report is latched across the whole delivery and survives its end, so a
+ * caller asks this once the delivery has finished rather than having to watch
+ * every step go by. A departure seen on one step and gone on the next is still
+ * reported here, because a delivery that briefly stopped following its course
+ * is a delivery that did not follow its course.
+ *
+ * It is cleared when the next delivery is commanded and when the machine is
+ * commanded off, so what comes back always belongs to the delivery the caller
+ * last asked for and never to the one before it.
+ *
+ * Reading it before any delivery has run reports nothing observed and nothing
+ * departed, which is the honest answer: a machine that has moved no water has
+ * measured no rate to compare.
+ *
+ * Returns false, writing nothing, for a null state or a null destination.
+ */
+bool control_delivery_departure(const control_state_t *state, control_departure_t *departure);
 
 /*
  * Advance the control path by one step: the estimator is advanced under the

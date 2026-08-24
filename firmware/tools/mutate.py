@@ -856,8 +856,8 @@ MUTATIONS = (
                "compiled. What establishes it is the declaration alone deciding which "
                "trajectories stop being accepted",
         "file": "params/tolerance.declaration",
-        "find": "brew-temperature-band-milli-c = 1000 @document",
-        "replace": "brew-temperature-band-milli-c = 100 @document",
+        "find": "brew-temperature-band = 1000 milli-c @document",
+        "replace": "brew-temperature-band = 100 milli-c @document",
         "command": CONTROL_TESTS,
     },
     {
@@ -867,8 +867,8 @@ MUTATIONS = (
                "declaration the machine does not come up on while the gate goes on reporting "
                "the band as declared",
         "file": "params/tolerance.declaration",
-        "find": "brew-temperature-band-milli-c = 1000 @document",
-        "replace": "brew-temperature-band-milli-c = 0 @document",
+        "find": "brew-temperature-band = 1000 milli-c @document",
+        "replace": "brew-temperature-band = 0 milli-c @document",
         "command": CONTROL_DECLARATION,
     },
     {
@@ -882,8 +882,22 @@ MUTATIONS = (
                "the last person compiled. What establishes it is the declaration alone "
                "deciding which deliveries stop being accepted",
         "file": "params/tolerance.declaration",
-        "find": "flow-departure-band-milli-ml-s = 300 @estimated",
-        "replace": "flow-departure-band-milli-ml-s = 30 @estimated",
+        "find": "flow-departure-band = 200 milli-ml-s @estimated",
+        "replace": "flow-departure-band = 20 milli-ml-s @estimated",
+        "command": CONTROL_TESTS,
+    },
+    {
+        "name": "the-two-bands-given-each-others-units",
+        "why": "each band goes on carrying a figure the loader will read, and each is "
+               "written in the other's unit -- a temperature band stated in thousandths of "
+               "a millilitre per second and a flow band in millidegrees. Nothing about "
+               "either line is malformed, and a grammar that took the unit from the band's "
+               "name, or assumed one unit for every band, would read both and hold "
+               "deliveries to a flow band a hundred times looser than anybody declared. "
+               "What establishes the unit is actually read is the loader refusing this",
+        "file": "params/tolerance.declaration",
+        "find": "brew-temperature-band = 1000 milli-c @document",
+        "replace": "brew-temperature-band = 1000 milli-ml-s @document",
         "command": CONTROL_TESTS,
     },
     {
