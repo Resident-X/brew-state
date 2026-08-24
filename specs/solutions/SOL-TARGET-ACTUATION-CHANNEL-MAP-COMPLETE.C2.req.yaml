@@ -1,0 +1,12 @@
+id: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C2
+type: criterion
+title: The pins the outputs are driven on cover every channel the table maps
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Completing the table is not the whole correction. The alternate-function pin configuration that brings the output stage up names three pins where the table will name four outputs, so an entry added without the matching pin gives the steam feed pump a compare register whose pin is left in its reset state — the command stops moving the brew heater and starts moving nothing, still silently, still reported as having succeeded. The pin mask gains the fourth pin, and the mask and the table are made to answer to one another: the count of pins configured for the timer's alternate function equals the count of channels mapped, asserted where both are declared rather than in a comment beside them. Out of scope: pin selection itself, which follows from the part's alternate-function assignment and from the board, not from this software.
+links:
+  - target: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE
+    type: criterion-of

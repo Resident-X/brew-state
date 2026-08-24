@@ -1,0 +1,30 @@
+id: REQ-PREENERGISATION-VERIFICATION-001.C6
+type: criterion
+title: Every output the control logic can command is shown to be separately addressable before energisation
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Before anything is energised, each actuation the control logic can address is established to act on an
+  output of its own: no two commands reach the same one, and none reaches nothing.
+
+  This is the second of the two error classes this requirement separates, in its most basic form. The law
+  can be right, the description can be right, and the artefact carrying them to the machine can still
+  address the wrong thing. An output that answers to a name it does not own is not a degraded version of
+  the right behaviour — it is a different device moving, and on this machine the devices are pumps and
+  heating elements.
+
+  Nothing about it is visible from the behaviour the design was verified against, because that verification
+  never leaves the seam: a command is issued, a model responds, and which output the command would have
+  reached is a question neither side is asked. Exercising both sides against the same plant model does not
+  reach it either, for the same reason — the addressing sits below where that comparison is taken. So it has
+  to be established rather than inferred, once per output the control logic can command, and before the
+  outputs can do harm.
+
+  Out of scope: whether the output a command reaches is connected to the device the machine's own wiring
+  intends, which is a question about how the machine was built and is settled against the machine rather
+  than against this artefact. What is settled here is that the addressing is one-to-one and complete.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001
+    type: criterion-of

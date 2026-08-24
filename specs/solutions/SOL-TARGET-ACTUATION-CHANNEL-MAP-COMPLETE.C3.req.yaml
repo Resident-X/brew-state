@@ -1,0 +1,30 @@
+id: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3
+type: criterion
+title: An incomplete mapping stops the build, and the refusal names the assertion that stopped it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The assertions above are compile-time, so a channel appended to the actuation vocabulary without a
+  matching output and pin stops the build rather than resolving to whichever output zero denotes. That the
+  build actually stops is established rather than assumed, and it is established where this project already
+  proves a misconfigured build is refused: a target environment declares that it must be refused, and a
+  gated check drives it, requires the build to fail, requires no artefact to be left behind, and requires
+  the output to name the reason it stopped.
+
+  That last requirement is the one that matters here, and it is why the negative case is not expressed as a
+  source mutation instead. A mutation entry is scored on an exit code, and a build that could not run at all
+  exits much as a build that refused does — so an entry of that shape reports a broken toolchain as a fault
+  caught, which is the objection a previous item in this lane raised when it declined to add one. Requiring
+  the refusal to name the assertion separates the two: a toolchain that never got as far as the assertion
+  does not print it. Extending the existing check to carry the marker each refused environment expects,
+  rather than the one structure-selection marker it names today, is part of this work.
+
+  Out of scope: a run-time guard rejecting an unmapped channel, which converts a fault that can be made
+  impossible into one that must be handled and reports it at the moment of command rather than at the moment
+  the vocabulary changed; and the on-demand mutation sweep, which sits outside the gate by intention and is
+  not made to carry this case.
+links:
+  - target: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE
+    type: criterion-of

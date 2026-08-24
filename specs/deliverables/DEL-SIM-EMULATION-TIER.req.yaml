@@ -28,3 +28,5 @@ links:
     type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C5
     type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C6
+    type: targets
