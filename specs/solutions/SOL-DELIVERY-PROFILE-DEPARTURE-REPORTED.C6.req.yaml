@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6
+type: criterion
+title: A machine with no flow meter reports no account rather than perfect agreement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seam already answers three ways about a reading — nothing is fitted, a sample was attempted and cannot be trusted, or a sample can be trusted — and this slice reads that answer rather than reducing it. A reading of either untrusted kind, which is what the target's hardware layer returns for the flow channel today because no meter is wired to this controller, leaves the departure report answering that none was seen and sets no departure; a second answer states whether the rate was observed at all, so a delivery nothing measured is told apart from one that measurably followed its course. Reporting zero departure on an unread channel would be the machine asserting agreement it never observed, which is the same silence the criterion exists to prevent. The two untrusted answers report identically because neither is evidence about the rate, and they are not thereby collapsed: nothing more is expected of an absent channel, while a channel that sampled and failed is read again on the following step and a trusted reading there resumes the comparison — asserted by a test that injects a failed reading for part of a delivery, departs the rate after it recovers, and requires the departure to be reported. Two further tests hold an absent reading and a failed reading across a whole delivery and require both answers to come back accordingly, and one requires a reading whose value falls outside the description's plausible span to be treated as no observation rather than as a departure. Out of scope: acting on the difference between the two untrusted answers — faulting, retry policy, or refusing to start a delivery on a machine with no meter — none of which any criterion asks for while nothing is fitted.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: criterion-of

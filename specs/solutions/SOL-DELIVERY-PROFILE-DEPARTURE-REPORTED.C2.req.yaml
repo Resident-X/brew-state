@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2
+type: criterion
+title: The departure a delivery reports is the commanded rate less the measured one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control state gains a departure figure in thousandths of a millilitre per second and the elapsed delivery time it was seen at, computed on each step a delivery runs as the rate the profile states for the elapsed time, converted to thousandths, less the seam's reading — the same sign convention the estimator uses for a residual, commanded minus observed, so a shortfall is positive. The subtraction is the whole mechanism: no filter, no model, no term describing what resists the water. A test commands a flat 2.0 mL/s course, injects 1.2 mL/s at the seam, and asserts a departure of 800 milli-mL/s within one least count of the seam's unit. Out of scope: modelling the puck or a fixed restriction to reproduce the shortfall, which the governing decision rules out permanently rather than defers; also out of scope is attributing a departure to a cause — the record says how far off it was and when, not why.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: criterion-of

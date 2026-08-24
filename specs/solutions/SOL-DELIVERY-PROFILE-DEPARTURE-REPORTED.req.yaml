@@ -1,0 +1,114 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+type: deliverable
+category: solution
+title: A delivery that does not follow its commanded course reports the departure while it is still running
+status: active
+version: 1
+text: |
+  The comparison between what a delivery was asked for and what it actually moved is built here, in
+  host simulation against the plant description. The profile surface already commands a course of flow
+  and drives the pump from it, and the hardware seam already carries a flow channel, fitted with a
+  meter on the machine and injected at the same seam in simulation. Nothing reads it. The estimator
+  sweeps every channel as it advances but declines flow as a corrector, because no state integrates it
+  and a residual is only recorded where a correction actually landed, so the estimator reports nothing
+  for the channel. The control unit has never read a sensor directly at all. So the machine can be
+  told a rate, can move a different one, and has no way to say so.
+
+  The control unit reads the channel. On each control step while a delivery is running, the flow
+  channel is read alongside the estimator advance, and the reading — carried in thousandths of a
+  millilitre per second, as the seam states every channel — is compared against the rate the profile
+  commanded for that same interval. The difference is the departure, and it is a subtraction and
+  nothing more. The decision governing this work rules that departure is observed rather than
+  reproduced: the puck's resistance moves with grind, dose, distribution and age and again within one
+  extraction, nothing pins it, and a coefficient chosen to make a model behave is not evidence. So the
+  plant sources gain no resistance term, no pump characteristic and no restriction, and the way a test
+  produces a departure is the way the machine produces one — a reading at the seam that disagrees with
+  the command.
+
+  A departure is only worth reporting when it exceeds what the arrangement can resolve. The tolerance
+  becomes described data in the tolerance declaration, beside the temperature band already declared
+  there, and carried in the tolerance record the control state already holds. That is a widening of
+  the declaration rather than a line added under an existing one: the grammar states a band as a whole
+  number of millidegrees, the loader range-checks it as a distance in those terms, the record carries
+  one field of that unit, and the file's own account of itself says each line reads that way. A band
+  in thousandths of a millilitre per second means the unit stops being a property of the grammar and
+  becomes a property of the band — which the declaration, the loader, the record and that account each
+  have to say. It carries its origin like every other figure in this project, so a bench measurement
+  of what the fitted meter actually resolves revises a recorded assumption rather than an anonymous
+  constant.
+
+  Reported rather than absorbed is the whole of the obligation, and it has two halves that pull
+  against each other. The report has to survive: a departure found on one step and cleared on the next
+  is a departure nobody sees, so it is latched for the life of the delivery and readable when the
+  delivery ends, unlike the estimator's residuals which are deliberately forgotten each step. And the
+  loop must not quietly make it go away: the pump level stays what the course says, the measured rate
+  does not enter the pump command path, and a delivery that ran forty per cent under command from
+  start to finish ends having commanded exactly the course it was given and having reported the
+  shortfall.
+
+  Out of scope: closing a control loop on the measured rate. That consumes the same channel and is a
+  different obligation — none of this epic's criteria ask for it, and building it here would discharge
+  the reporting obligation by removing the thing to report. Ending a delivery on delivered volume is
+  likewise out of scope and stays refused where the profile is constructed: it needs the reading
+  integrated and kept as a state, which no structure does. Modelling the puck, a fixed restriction, or
+  the pump's flow-versus-pressure characteristic is ruled out permanently rather than deferred. A
+  channel with nothing fitted and one that sampled and could not be trusted are already told apart at
+  the seam, whose reading status has answered absent, failed or valid since it was written and says in
+  as many words why a flag was refused for the job. This slice reads that status rather than widening
+  it, and treats the two the same in what it reports — neither is evidence of agreement, so both leave
+  the delivery with no account of its rate — while keeping the difference the seam drew: nothing is
+  expected of an absent channel again, and a channel that failed is read again on the next step, where
+  a valid reading resumes the comparison. Establishing what the fitted meter measures, where it sits
+  and what it resolves is the bench's. And temperature departure is not this: the water leaving the
+  group is held to the declared temperature band by the tracking criterion, and reporting on that band
+  is not restated here.
+rationale: |
+  The comparison is made in the control unit rather than in the estimator because the estimator has
+  already decided, deliberately and in writing, that flow is not something it corrects against. No
+  state integrates the quantity, so the estimator's correction step refuses the channel and records no
+  residual, and the pairing check that enforces that refusal exists precisely so a reading cannot be
+  quietly wired to the wrong state. Reaching for the residual anyway would mean either weakening that
+  refusal or adding a state nothing observes, and both are worse than the control unit reading a
+  channel — which is what the decision governing this work says happens: flow becomes a sensed
+  quantity the control unit reads through the hardware seam. It does make the control unit the first
+  consumer to read the seam outside the estimator, and that is worth naming rather than sliding past,
+  because until now the estimator has been the seam's only reader.
+
+  Departure is a subtraction and not a prediction. The alternative was to make the model produce the
+  shortfall, and the decision rejected both forms of that: the puck cannot be validated, and a fixed
+  restriction is validatable but buys only the pump-saturation case at a lower ceiling. The
+  consequence for this slice is a simplification rather than a compromise — there is no term to tune,
+  no coefficient to defend, and the same comparison holds on the bench and on the host because the
+  reading arrives through one seam in both.
+
+  Latching the departure rather than reporting it per step is where this deliberately differs from the
+  estimator's residual convention. The estimator forgets residuals at the top of every step because a
+  stale residual read as fresh would report a disagreement the machine is no longer in — correct for a
+  correction signal, wrong for an account of a delivery. What a delivery owes is an answer to "did
+  this shot follow what it was asked for", and that answer is not the state of the last ten
+  milliseconds. So the two conventions coexist and the difference between them is stated where it is
+  easy to misread.
+
+  The band is declared rather than chosen in the source for the reason the temperature band was: a
+  criterion nobody can vary without recompiling is a criterion nobody varies, and a sensitivity nobody
+  has tested is a claim nobody has established. It also has the honest property that its right value
+  is unknown — it should be the resolution of the fitted meter plus the pump's own ripple, and neither
+  has been measured, so what the declaration records is what the design is currently working to.
+
+  The obligation "reported rather than absorbed" is asserted twice on purpose, once as the report
+  existing and once as the loop not chasing it. Only the second falsifies the failure the criterion
+  names. A machine that measures the shortfall, corrects the pump up to close it, and reports nothing
+  has technically read the sensor and has produced exactly the drink nobody can reproduce. Writing
+  that as its own assertion is what keeps a later rate loop from being added without anyone noticing
+  that this criterion stopped being met.
+links:
+  - target: DEL-SIM-BREW-LOOP.C6
+    type: derives-from
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: targets
+  - target: DEC-DEPARTURE-OBSERVED-NOT-MODELLED
+    type: justified-by
+  - target: DEL-SIM-FLOW-SENSED
+    type: depends-on
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: depends-on

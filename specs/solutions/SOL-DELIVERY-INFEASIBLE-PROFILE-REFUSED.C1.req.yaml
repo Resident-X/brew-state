@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C1
+type: criterion
+title: A delivery is admitted or refused before anything is driven
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The call that commands a delivery gains a reporting sibling that writes a typed admission record, in the shape the plant seam already sets where a step reports why it could not be taken. The existing entry point stays and answers true exactly when that record reports admission. On refusal the call writes nothing to the control state: no delivery is marked running, elapsed delivery time stays at zero, and the commanded pump level is left where it was. That the refusal armed nothing is asserted past the call itself: the control suite steps the loop on afterwards and requires the pump to be driven at the level it was driven at before, where a refusal that recorded the course while declining it would show up as the refused course being driven on the next step. The check runs when the delivery is commanded rather than on the control step, so a refusal costs nothing from the 10 ms step interval the cadence declaration states. Out of scope: deferring a delivery that cannot be achieved yet and starting it once conditions return — that is DEL-SIM-BREW-LOOP.C8 and REQ-HOT-WATER-001.C4, and no admission outcome here means "later"; also out of scope is stopping a running delivery whose conditions have changed, which the fault latch already covers.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: criterion-of

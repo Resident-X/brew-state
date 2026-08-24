@@ -1,0 +1,144 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+type: deliverable
+category: solution
+title: A delivery beyond what the machine can ever achieve is refused before it begins
+status: active
+version: 1
+text: |
+  The admission check a delivery passes before it starts is built here, in host simulation against the
+  plant description. Today nothing compares what a caller asks for against what the machine can do.
+  The call that commands a delivery refuses a null profile and a course that draws nothing, and admits
+  everything else; the call that sets a target temperature refuses only a value that is not a
+  temperature. A profile asking for four millilitres a second at ninety-three degrees is accepted,
+  run, and abandoned to a temperature that falls out of band part way through — the coffee and the
+  operator's time already spent.
+
+  What was missing when the profile surface was built was a figure to admit against. The plant
+  description carries one flow figure and its own account forbids reading it as the rate a shot is
+  pulled at, and the control law's load coefficients are literals in the control source describing the
+  reference description rather than whatever machine is linked. Neither is a bound. The figure that
+  does exist is the structure itself: the plant seam already answers where a machine is heading under
+  a given actuation from a single step, and one step long enough — an hour of simulated time in one
+  call — arrives at where it settles, because the equations integrate as a matrix exponential rather
+  than by small forward steps. So the check probes rather than calculates. It stands up a throwaway
+  plant instance under the parameter record the control unit was initialised with, drives the brew
+  heater at full scale with the pump at the level the profile's peak rate implies, steps it that far
+  forward, and reads back the temperature the water leaves at. If that settled temperature is below
+  the target the caller named, no amount of heater the machine has will reach it at that draw, and the
+  delivery is refused. This is the arrangement the control unit already uses to obtain the full-scale
+  flow figure, and it keeps the control unit on its side of the seam: no coefficient is ever read by
+  name, so the bound follows whichever structure is linked instead of describing one of them. What it
+  follows is the description the control unit was initialised with rather than the machine on the
+  bench — the harness deliberately allows those two to differ — so admission is a judgement against
+  what the loop believes it is driving, which is the only thing it has before anything moves.
+
+  Two further bounds are one-sided and honest as such. A commanded rate above the machine's own
+  full-scale flow can never be delivered whatever the path resists, so that figure is admissible as a
+  ceiling even though it is not admissible as a promise. And a target at or above the temperature
+  water boils at where this machine stands is not a temperature liquid water arrives at the group at,
+  however much authority the element has. That second ceiling is imposed rather than probed: these
+  structures carry no phase change and will go on reporting liquid water well past boiling, so nothing
+  can be asked of the seam about it. It is declared once on the delivery side, with its origin
+  recorded beside the loop's other declared figures, as a statement about what a delivery of water
+  means rather than a behaviour read off any machine.
+
+  Refusal names what could not be met. Answering only true or false tells an operator to guess, and
+  the requirement asks for the opposite. A typed admission record ships in the shape the plant seam's
+  step error and the tolerance loader's error record already set, carrying which bound was crossed,
+  the figure asked for, the figure available, and the point in the course where the profile crossed
+  it. The commanding calls gain reporting siblings in the shape the plant seam's reporting step
+  already sets, so the existing entry points that answer only true or false keep working and the tests
+  already attested against them keep passing.
+
+  **Out of scope, and stated first because it is the half of the target criteria this slice does not
+  discharge: deferring a delivery that cannot be achieved *yet*, and resuming it once conditions
+  return, is not built here.** Both requirement criteria this slice targets state two outcomes —
+  refuse what can never be achieved, defer what cannot be achieved yet because a preceding demand left
+  the shared heated mass somewhere else. This slice builds the first outcome only. The second belongs
+  to the parent epic's contention criterion and to the hot water requirement's deferral criterion,
+  each of which turns on two deliveries competing for one heated mass; there is no hot water draw in
+  the machine today, nothing serialises demands, and no structure exists to hold a demand and start it
+  later. Nothing here may stand in for that: the check is deliberately built against the description's
+  steady-state authority rather than against the reconstruction the machine is presently at, so that a
+  cold machine or one still recovering from a draw is admitted rather than refused. Both target
+  criteria therefore close later by attestation, once the deferral half exists, and this slice is a
+  contributing input to them rather than their discharge.
+
+  Also out of scope: modelling the puck or any resistance downstream of the pump, which the plant
+  description keeps as a stated omission and which the decision on departure rules out permanently;
+  transient authority, meaning the dip a delivery admissible in steady state may still take on the way
+  there, which is the tracking criterion's question and is held by the declared temperature band
+  rather than by admission; refusing on pressure, which is capped mechanically rather than commanded;
+  and anything on the steam side, which this machine's brew path admission has no view of.
+rationale: |
+  Admission is built by probing the structure rather than by reading its coefficients because the
+  control unit is not entitled to read them. A parameter record is declared per structure and only
+  that structure knows the names of its fields; the vocabulary the seam shares carries the assumed
+  error and nothing else. A check written against a heater power and a standing loss named directly
+  would compile against one structure and be a build error against the next, which is the negotiation
+  with the command surface the plant seam exists to prevent. Probing asks the same physical question —
+  what does this machine settle at, held at full heater under this draw — in the seam's own terms, and
+  the answer follows the description rather than restating it.
+
+  That also settles the objection the profile slice deferred admission on. Its account said no
+  declared bound on deliverable rate exists, and that is true and remains true: there is no figure
+  anywhere saying how fast a shot can be pulled. But the bound refusal actually needs is not a flow
+  bound. It is a joint bound on the pair a caller names — a target temperature and a draw — and the
+  machine already answers that pair exactly. Reading the deferral forward as "wait for a measured flow
+  capability" would have kept the criterion open on a premise it does not need.
+
+  The decision that feeds the profile into the horizon says a refused delivery should be refused on
+  the same evidence the horizon uses, so refusal and control answer the same question. This slice
+  honours the intent and departs from the letter. The horizon's evidence today is the feedforward's
+  load coefficients, carried as literals in the control source, whose own account states they are the
+  reference description's figures divided through the reference element's rating. Admitting against
+  those literals would have the check agree with the controller on the reference machine and disagree
+  with the machine on every other, which is the failure mode the decision was guarding against rather
+  than the arrangement it wanted. Probing evaluates the same energy balance on whichever machine is
+  described. That the feedforward's own literals therefore carry the reference description's figures
+  on a machine that is not it is noted here in passing and is not addressed by this slice: it predates
+  this work, nothing here turns on it, and admission is correct whichever way it is eventually
+  settled.
+
+  The full-scale flow figure is used as a ceiling and only as a ceiling. Its account forbids reading
+  it as a delivery rate because the model carries no resistance and a real path through a puck passes
+  roughly a third of it, but that account bounds the figure from one side only — a rate above it is
+  unreachable however the path behaves. A necessary condition is worth having even when the sufficient
+  one is missing, provided nothing downstream mistakes the two, which is why admitting a rate below it
+  is stated as no promise about the cup.
+
+  Saturation is a bound the admission check imposes rather than one the model discovers, and that is
+  the reason it is not reached the way the authority bound is. The equations carry no phase change: a
+  thermoblock described this way will happily report a hundred and forty degrees of liquid water if
+  the element is left on, so a probe would report such a target as reachable and would be right about
+  the model while being wrong about water. Nor can the figure be read: the temperature water boils at
+  sits in each structure's own parameter record, under that structure's own spelling, on the steam
+  side of it, and reaching for it by name is the thing this node refuses to do everywhere else.
+
+  So the ceiling is a figure of this control path's own, defined once and accounted for beside the
+  loop's other declared figures, carrying the same documented origin the steam tables give it. That
+  costs the property the other two bounds have — it does not follow the linked structure, and a
+  machine run pressurised above atmosphere would need it revisited rather than inheriting a new value
+  — and it is worth the cost, because the alternative is a bound that is either wrong or reaches
+  across the seam. It is a statement about what a delivery of water means, and it is written where
+  statements of that kind can be challenged.
+
+  The two-outcome shape of the target criteria is the reason this node's scope statement is as loud as
+  it is. A criterion that says refuse-or-defer, met by a slice that only refuses, is the exact shape
+  of work that later reads as done. Refusal is separable and buildable now; deferral is not, because
+  it needs a second delivery contending for the mass and there is no second delivery. Rather than
+  invent a deferral nothing exercises, the check is built so that the case deferral will own is
+  visibly admitted and visibly not handled — a cold machine passes admission and runs, and the
+  departure report is the only account it gives. That is a state a later slice replaces rather than
+  one it has to unpick.
+links:
+  - target: DEL-SIM-BREW-LOOP.C5
+    type: derives-from
+  - target: REQ-BREW-TEMP-001.C3
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C3
+    type: targets
+  - target: DEC-PROFILE-FEEDS-THE-HORIZON
+    type: justified-by
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: depends-on

@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C5
+type: criterion
+title: A target above the declared saturation temperature is refused
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The call that sets a target temperature gains the same reporting sibling, and refuses as beyond saturation a target at or above 100.0 °C, the temperature water boils at under one atmosphere. Unlike the other two bounds this one is neither probed nor read from the machine, and the criterion says so plainly: the structures carry no phase change and will report 140 °C of liquid water if the element is left on, so a probe would call such a target reachable, and the figure the descriptions do carry sits in each structure's own parameter record under that structure's own spelling, on the steam side, where the control unit is not entitled to reach. The ceiling is therefore a figure of the delivery path's own: defined once in the control sources, accounting for itself among the loop's declared figures with a documented origin naming the saturation line of the standard steam tables, so that the declaration check refuses it a second home and a reader can challenge it. A test refuses 100.0 °C and 130.0 °C, admits 99.0 °C and the suite's 93.0 °C, shows the refusal standing unchanged under both the thermoblock and the boiler descriptions because it belongs to neither, and asserts the already-attested tests of the temperature command in the control suite are unchanged. Out of scope: pressurised operation above saturation, which no requirement asks for and which is the case this fixed figure would have to be revisited for; steam-side targets, which this path does not command; and the low end, where a target below ambient is not refused because a machine that cannot cool is not thereby wrong to be asked.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4
+type: criterion
+title: A target the machine cannot hold against the profile's peak draw is refused
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Admission probes the structure instead of reading its coefficients, because the parameter record is declared per structure and the control unit knows none of its field names. Beside the full-scale flow probe, the control unit stands up a throwaway plant instance from the parameter record it was initialised with, drives the brew heater channel at full scale with the pump at the level the profile's peak rate implies, steps it once by an interval long enough to settle — one hour of simulated time in a single call, exact because the structures integrate as a matrix exponential — and reads back the temperature the water leaves the group at. A settled temperature below the commanded target refuses the delivery as beyond the machine's authority, with the settled figure carried as the figure available. Under the thermoblock description at the 93.0 °C the suite targets, the balance of 1000 W against 1.2 W/K of standing loss and 4.15 J/mL/K of feed water admits draws up to about 3.0 mL/s and refuses above it; under the boiler description, 1400 W against 2.0 W/K admits about 4.1 mL/s. A test asserts both boundaries move when the declared heater power is rewritten through the suite's description helper, with no edit to the control source. The record the probe is built from is the one the control unit was initialised with, which the harness deliberately allows to differ from the machine the truth plant is: a test rewriting only the truth machine's heater power leaves the admission boundary where it was, because admission is a judgement against the description the loop holds and not against a machine nothing has measured. Out of scope: transient authority — a draw admissible in steady state may still dip out of the declared temperature band on the way there, which the tracking criterion and that declared band hold rather than admission; the steam side is out of scope with it.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: criterion-of

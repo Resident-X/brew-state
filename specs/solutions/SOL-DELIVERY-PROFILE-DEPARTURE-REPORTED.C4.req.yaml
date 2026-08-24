@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C4
+type: criterion
+title: A departure found on one step is still reportable when the delivery ends
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control unit answers, on request, whether a departure past the declared band has been seen during this delivery, and if so with the largest departure and the elapsed time it occurred at. It is latched for the life of the delivery and cleared only when a new delivery is commanded or everything is commanded off — deliberately unlike the estimator's residuals, which are forgotten at the top of every step so that a stale one is never read as fresh. A delivery's account is not the state of the last 10 ms. A test injects a single departed step at 300 ms into a 5000 ms course, returns the seam to the commanded rate, runs the delivery to its end condition, and requires the report to still stand afterwards naming 300 ms. Out of scope: persisting the report beyond the next delivery, any log or ring buffer, and any operator-facing surface — this is a value a caller reads, not a record the machine keeps.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: criterion-of

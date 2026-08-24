@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C3
+type: criterion
+title: A commanded rate above the machine's full-scale flow is refused as unreachable
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The peak rate across the profile's points is compared against the full-scale flow figure the control unit already probes from the linked structure — 7.0 mL/s under both the thermoblock and the boiler descriptions — and a peak above it is refused as beyond the pump. The figure is used strictly as a ceiling and never as an admission floor: the plant's flow relation carries no resistance term, and the description's own account says a pump of this class passes roughly a third of the open-path rate through a puck, so admitting 6.9 mL/s asserts only that the pump is not the thing that makes it impossible. The rate ceiling is evaluated before the machine's thermal authority is probed, so a course beyond the pump is reported as beyond the pump rather than as a target the machine cannot hold. A test in the control suite refuses a course peaking at 7.5 mL/s and admits one peaking at 6.9 mL/s, both commanded at a target of 40.0 °C — low enough that the pump is the only bound in play, since the thermoblock description holds about 53 °C at its full-scale draw and a target under that leaves the authority bound slack, where the same courses at the suite's 93.0 °C would be refused for thermal authority instead and would establish nothing about the pump. It then — using the suite's existing helper for rewriting one figure of a description, to put the declared open-path rate at 4.0 mL/s — shows the boundary move with the description and not with the control source. Out of scope: any claim that an admitted rate is a rate the machine can pull a shot at, and any bound derived from a puck or a restriction, which the decision on departure rules out permanently.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3
+type: criterion
+title: A departure is reported only past a tolerance declared as described data
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A second band is declared in the tolerance declaration beside the brew temperature band, as a departure band of 200 thousandths of a millilitre per second carrying an estimated origin and its account, reaching the control state through the initialisation argument that already carries the tolerance record. It is a half-width like the temperature band. Getting it there is a generalisation of the declaration rather than one more line under the existing one, and the criterion is met only when all of it is done: the grammar stops treating millidegrees as the unit every band is stated in and carries the unit with the band; the loader's admissible range is stated per band rather than as one distance, so a band of the new unit is range-checked as its own quantity and a figure of the wrong unit is refused rather than read; the record gains a field named in the new unit; and the declaration file's account of its own grammar is rewritten to describe what it now accepts, since a file describing a grammar it no longer has is the way a declared figure quietly stops being checkable. Two hundred thousandths of a millilitre per second is about three per cent of the 7.0 mL/s the reference description declares at full scale, chosen to sit above the ripple a vane meter shows on a vibratory pump and below the shortfall a puck produces; the account records that neither figure has been measured. The declaration checker must accept the new band and must still refuse it a second home as a literal in the source. A test loads the shipped declaration, asserts both bands come back in their own units, shows the reporting threshold move when the departure band is rewritten, and requires a declaration whose two bands have been given each other's units to be refused rather than read. Out of scope: fixing the final value, which is a bench question; and any temperature-departure band, which the declared brew temperature band already covers.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: criterion-of
