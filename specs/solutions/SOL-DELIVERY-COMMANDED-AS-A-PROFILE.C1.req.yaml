@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1
+type: criterion
+title: A delivery is commanded as a course of flow rather than one level held throughout
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The profile type ships under firmware/include and expresses a delivery as a course of commanded flow, in the volume-per-unit-time the plant reports in, with a stated beginning and end. The control unit accepts a delivery by being given one. control_command_flow is retained as the actuation-level entry point the heater command's feedforward reads in the same step, and stops being how a delivery is commanded: the profile drives it rather than callers setting it directly, and the already-attested tests that call it keep passing unchanged. Two profiles of different shape, run in one test binary, produce two different commanded-flow trajectories, which a level held throughout cannot express. Refusing a profile the machine cannot deliver is out of scope — no declared bound on deliverable rate exists to refuse against.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C5
+type: criterion
+title: The control suite exercises the profile surface through the seams the control unit already uses
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The profile surface is exercised in firmware/test/test_control against the truth plant the brew loop's harness already stands up, reaching the plant and the hardware only through the interfaces those seams name. No new path into the plant or the hardware is opened for the profile surface. A test asserts a delivery commanded as a profile drives the truth plant through the same seam the held-level command drove, so a second plant structure remains a different build rather than a negotiation with the command surface. Emulation-tier and on-target execution are out of scope.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: criterion-of
