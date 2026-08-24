@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C7-TEST
+type: evidence
+title: The harness injects at the seam the truth plant uses — control suite (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T23:39:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_harness_publishes_the_truth_plants_flow_at_the_seam
+text: |-
+  The harness routine that publishes what the machine reads carries the truth plant's own brew flow quantity onto the seam's flow channel, asserted at two different pump levels so a harness publishing a constant fails, and once more through the file-scope factor the departed cases scale it by. Every other test in the suite runs with the channel populated and passes unchanged.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C7
+    type: satisfies

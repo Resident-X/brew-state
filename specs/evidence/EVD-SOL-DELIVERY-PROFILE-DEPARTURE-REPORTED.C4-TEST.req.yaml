@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C4-TEST
+type: evidence
+title: A departure found on one step is still reportable when the delivery ends — control suite (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T23:39:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_departure_found_on_one_step_is_still_reportable_when_the_delivery_ends
+text: |-
+  A single departed interval at 300 ms into a 5000 ms course, with the meter returned to the command for every interval after it, still stands when the delivery reaches its own end condition and names 300 ms. test_the_departure_report_belongs_to_one_delivery asserts both clearing paths -- a new delivery commanded, and everything commanded off via a refused drive -- and that all four report fields reset.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C4
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1-TEST
+type: evidence
+title: The control unit reads the delivered rate from the hardware seam — control suite (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T23:39:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_departure_reported_is_the_commanded_rate_less_the_measured_one
+text: |-
+  test_delivered_flow_is_compared_against_the_commanded_rate_each_cycle, test_a_departed_delivery_still_runs_to_its_own_completion, test_the_departure_reported_is_the_commanded_rate_less_the_measured_one and test_a_reading_outside_the_plausible_span_is_no_observation all pass. The channel is read on every step a delivery runs, in thousandths, and used only when the seam marks it valid and its value lies inside the declared plausible span. The span clause was verified by deleting both limits comparisons and confirming test_a_reading_outside_the_plausible_span_is_no_observation fails, rather than by observing a green suite.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1
+    type: satisfies
