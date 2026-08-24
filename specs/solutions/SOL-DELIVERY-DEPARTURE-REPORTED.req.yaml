@@ -2,7 +2,7 @@ id: SOL-DELIVERY-DEPARTURE-REPORTED
 type: deliverable
 category: solution
 title: Delivered flow is compared against the commanded profile and departure is reported
-status: active
+status: deprecated
 version: 1
 text: |
   The control unit compares the delivered flow rate DEL-SIM-FLOW-SENSED puts on its input against the

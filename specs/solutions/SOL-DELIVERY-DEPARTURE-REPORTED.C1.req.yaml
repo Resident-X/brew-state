@@ -1,7 +1,7 @@
 id: SOL-DELIVERY-DEPARTURE-REPORTED.C1
 type: criterion
 title: Delivered flow is compared against the commanded rate on every control cycle a delivery is running
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

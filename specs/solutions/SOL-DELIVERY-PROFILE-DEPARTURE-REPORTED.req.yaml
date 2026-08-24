@@ -109,6 +109,8 @@ rationale: |
 links:
   - target: DEC-DEPARTURE-OBSERVED-NOT-MODELLED
     type: justified-by
+  - target: DEC-READING-ANSWERS-FOR-THE-ELAPSED-INTERVAL
+    type: justified-by
   - target: DEL-SIM-BREW-LOOP.C6
     type: derives-from
   - target: DEL-SIM-FLOW-SENSED
@@ -117,5 +119,5 @@ links:
     type: targets
   - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
     type: depends-on
-  - target: DEC-READING-ANSWERS-FOR-THE-ELAPSED-INTERVAL
-    type: justified-by
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED
+    type: supersedes

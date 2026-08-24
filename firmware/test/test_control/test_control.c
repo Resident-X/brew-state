@@ -2398,7 +2398,7 @@ static void test_a_fault_mid_delivery_ends_the_delivery(void)
 
 /* --- Departure from the commanded profile is reported, not absorbed ------- */
 
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C1: control_step reads HW_SENSOR_FLOW on
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1: control_step reads HW_SENSOR_FLOW on
 /// every cycle a delivery is running and compares it against the rate the
 /// course was commanding.
 ///
@@ -2434,7 +2434,7 @@ static void test_delivered_flow_is_compared_against_the_commanded_rate_each_cycl
     }
 }
 
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C2: A gap beyond the declared flow-departure
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2: A gap beyond the declared flow-departure
 /// band surfaces as CONTROL_STEP_DELIVERY_DEPARTED in place of
 /// CONTROL_STEP_ACTUATED, and a gap that stays inside the band does not.
 ///
@@ -2481,7 +2481,7 @@ static void test_departure_beyond_the_band_surfaces_and_agreement_does_not(void)
     TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
 }
 
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C2: A gap beyond the declared flow-departure
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2: A gap beyond the declared flow-departure
 /// band surfaces as CONTROL_STEP_DELIVERY_DEPARTED in place of
 /// CONTROL_STEP_ACTUATED, and a gap that stays inside the band does not.
 ///
@@ -2542,10 +2542,10 @@ static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
                               "departure, so the boundary assertion above proves nothing");
 }
 
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C1: Delivered flow is compared against the
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1: Delivered flow is compared against the
 /// commanded rate on every control cycle a delivery is running.
 ///
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C2: A delivery that departs keeps running to
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5: A delivery that departs keeps running to
 /// its own end condition rather than being ended or refused by the departure.
 ///
 /// Every one of the 34 steps before the delivery ends is asserted departed in
@@ -2652,7 +2652,7 @@ static void test_late_takes_priority_over_departed_on_the_same_cycle(void)
                              "is supposed to do");
 }
 
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C4: An absent or a failed flow reading does
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6: An absent or a failed flow reading does
 /// not itself report departure, per DEC-DEPARTURE-OBSERVED-NOT-MODELLED --
 /// departure is observed by measurement, and a cycle with nothing trustworthy
 /// to measure has no evidence to report.
@@ -2691,13 +2691,10 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 }
 
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C3: The flow-departure tolerance is
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: The flow-departure tolerance is
 /// declared data with a recorded origin rather than a compiled literal --
-/// changing only the declaration moves what counts as departure, with no edit
-/// to any source file.
-///
-/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: Rewriting the departure band in
-/// the declaration alone moves the reporting threshold.
+/// rewriting the band in the declaration alone moves what counts as departure,
+/// with no edit to any source file.
 ///
 /// The same commanded rate and the same injected gap are held fixed across
 /// both halves; only the declared band moves, from wide enough to absorb the
@@ -2762,14 +2759,11 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
                               "absorbed");
 }
 
-/// SOL-DELIVERY-DEPARTURE-REPORTED.C3: The flow-departure band is required
-/// rather than assumed, is refused where it is not a usable distance, and
-/// cannot grow a second home by being declared twice -- the same discipline
-/// the temperature band beside it is held to.
-///
-/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: The loader's admissible range is
-/// stated per band rather than as one shared distance, so a figure is judged as
-/// a quantity of the unit it is written in.
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: The flow-departure band is
+/// required rather than assumed, is refused where it is not a usable distance,
+/// cannot grow a second home by being declared twice, and has its admissible
+/// range stated per band rather than as one shared distance -- so a figure is
+/// judged as a quantity of the unit it is written in.
 static void test_the_flow_departure_band_is_required_and_validated(void)
 {
     static const struct {

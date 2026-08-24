@@ -1,7 +1,7 @@
 id: SOL-DELIVERY-DEPARTURE-REPORTED.C2
 type: criterion
 title: Departure beyond the declared tolerance surfaces as a distinct control-step result rather than being absorbed
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
