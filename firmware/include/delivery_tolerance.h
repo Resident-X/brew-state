@@ -36,8 +36,16 @@
  * The name each band is written as in the declaration. A band is reached by
  * name rather than by position, so a declaration may state them in any order
  * and a band added later does not move the ones already there.
+ *
+ * A name does not spell the unit its band is stated in. The unit is written on
+ * the line as its own word and checked against the one this build holds that
+ * band in, so it has a single home that the loader actually reads. A unit
+ * carried in the name would be a second statement of the same fact that no
+ * check could enforce: renaming the band to say millilitres would go on being
+ * read as whatever the record's field happened to be, and the declaration
+ * would claim one unit while the software held deliveries to another.
  */
-#define DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD "brew-temperature-band-milli-c"
+#define DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD "brew-temperature-band"
 
 /*
  * How far the flow a delivery actually moves may sit from the rate its
@@ -47,7 +55,35 @@
  * against, and a design that can only be loosened or tightened by editing and
  * recompiling a source file is one nobody varies to find out what it costs.
  */
-#define DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD "flow-departure-band-milli-ml-s"
+#define DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD "flow-departure-band"
+
+/*
+ * The units a band may be stated in.
+ *
+ * Enumerated rather than free text for the reason the origin kinds are: a unit
+ * the loader does not know is a unit nothing can range-check, and a band whose
+ * quantity is unknown cannot be told apart from one whose figure is wrong. Each
+ * band is held in exactly one of these, and a declaration stating it in another
+ * is refused rather than read -- which is the whole point of writing the unit
+ * down, since 200 is a reasonable band in thousandths of a millilitre per
+ * second and an absurd one in millidegrees.
+ */
+typedef enum {
+    DELIVERY_TOLERANCE_UNIT_MILLI_C = 0,      /* thousandths of a degree Celsius */
+    DELIVERY_TOLERANCE_UNIT_MILLI_ML_PER_S,   /* thousandths of a millilitre per second */
+    DELIVERY_TOLERANCE_UNIT_COUNT
+} delivery_tolerance_unit_t;
+
+/*
+ * The word each unit is written as on a declaration line, in the order the
+ * enumeration above declares them. Paired with that enumeration by a static
+ * assertion in the loader, so a unit added without a word -- or a word left
+ * behind by a unit removed -- fails the build rather than the declaration.
+ */
+#define DELIVERY_TOLERANCE_UNIT_WORDS                                                              \
+    {                                                                                              \
+        "milli-c", "milli-ml-s"                                                                    \
+    }
 
 /* The longest a band's name may be in a fault report, terminator included. */
 #define DELIVERY_TOLERANCE_NAME_MAX 48
@@ -86,8 +122,12 @@ typedef enum {
     /* A band is given more than once, so which one applies is unclear. */
     DELIVERY_TOLERANCE_DUPLICATE,
     /*
-     * A band is not a distance a delivery could be held to: nothing, negative,
-     * or wider than the integer that carries it.
+     * A band is not a distance a delivery could be held to. The span that
+     * settles this is stated per band rather than once for all of them,
+     * because the bands are quantities of different kinds: what counts as an
+     * absurdly wide temperature band is an unremarkable flow band written in
+     * the same digits. One shared span could only ever be the loosest of them,
+     * and would admit every figure the tighter band actually needed refusing.
      */
     DELIVERY_TOLERANCE_OUT_OF_RANGE,
     /*
@@ -98,6 +138,18 @@ typedef enum {
      * broken control law rather than as a missing declaration.
      */
     DELIVERY_TOLERANCE_MISSING,
+    /*
+     * A band carries no unit, a unit that is not one of the declared words, or
+     * a unit that is not the one this build holds that band in.
+     *
+     * Separate from OUT_OF_RANGE because a figure of the wrong unit is not a
+     * band that is too wide or too narrow -- it is a band measuring the wrong
+     * quantity, and reporting it as a range fault would send a reader to
+     * re-argue a value that was never the problem. Separate from MALFORMED for
+     * the same reason ORIGIN is: the line reads perfectly well, and what is
+     * wrong is what it claims.
+     */
+    DELIVERY_TOLERANCE_UNIT_MISMATCH,
     /*
      * A band carries no origin, a kind that is not one of the declared words,
      * or a kind with no account behind it.
@@ -125,12 +177,19 @@ typedef struct {
 /*
  * Read a tolerance declaration into the record above.
  *
- * The grammar is a band's name, an equals sign, a whole number of millidegrees,
- * and the origin annotation every declared figure in this project carries: a
- * kind from the vocabulary in plant_origin.h and an account of what the figure
- * was arrived at from. Both are required. A band with a kind and no account can
- * be neither reproduced nor challenged, which is the state a load-bearing
- * number is in just before everybody starts treating it as settled.
+ * The grammar is a band's name, an equals sign, a whole number, the word for
+ * the unit that number is in, and the origin annotation every declared figure
+ * in this project carries: a kind from the vocabulary in plant_origin.h and an
+ * account of what the figure was arrived at from. All are required. A band with
+ * a kind and no account can be neither reproduced nor challenged, which is the
+ * state a load-bearing number is in just before everybody starts treating it as
+ * settled; and a band with no unit is a number whose meaning rests on the
+ * reader already knowing which quantity it measures.
+ *
+ * The unit is checked against the one this build holds that band in, and the
+ * figure is range-checked as a quantity of that unit. A declaration whose bands
+ * have been given each other's units is refused rather than read, so the file
+ * cannot go on claiming one quantity while the record carries another.
  *
  * The record is assembled aside and copied out only once the whole declaration
  * is known to be admissible, so a refusal leaves the caller with what it had
@@ -139,8 +198,8 @@ typedef struct {
  *
  * Returns false, writing the fault into `error`, when the text or the record is
  * null, when a line cannot be read, when a band is named twice or not at all,
- * when a band is not a distance a delivery could be held to, or when a band is
- * not accounted for. Returns false and writes nothing when `error` is null,
+ * when a band is stated in the wrong unit, when a band is not a distance a
+ * delivery could be held to, or when a band is not accounted for. Returns false and writes nothing when `error` is null,
  * since a caller that cannot be told what was wrong must not be told the
  * declaration was fine.
  */

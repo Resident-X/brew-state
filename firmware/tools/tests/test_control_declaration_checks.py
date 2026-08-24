@@ -62,7 +62,7 @@ ACCOUNTED = (
 )
 
 BAND = (
-    "brew-temperature-band-milli-c = 2000 @document Taken from the extraction literature's "
+    "brew-temperature-band = 2000 milli-c @document Taken from the extraction literature's "
     "treatment of two degrees as the span across which a difference becomes tasteable.\n"
 )
 
@@ -71,7 +71,7 @@ BAND = (
 #: substituted for or withdrawn by the cases below that are about it
 #: specifically.
 FLOW_BAND = (
-    "flow-departure-band-milli-ml-s = 300 @estimated Sized against the commanded rates the "
+    "flow-departure-band = 300 milli-ml-s @estimated Sized against the commanded rates the "
     "shipped delivery profiles use.\n"
 )
 
@@ -371,7 +371,7 @@ class ControlDeclarationGate(unittest.TestCase):
         self.tolerance("# nothing declared here\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
-        self.assertIn("brew-temperature-band-milli-c", result.stderr)
+        self.assertIn("brew-temperature-band", result.stderr)
         self.assertIn("declared nowhere", result.stderr)
 
     def test_an_absent_tolerance_declaration_is_refused(self):
@@ -383,14 +383,14 @@ class ControlDeclarationGate(unittest.TestCase):
 
     def test_a_band_with_no_origin_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: the band carries a recorded origin the way the declarations beside it do."""
-        self.tolerance("brew-temperature-band-milli-c = 2000\n")
+        self.tolerance("brew-temperature-band = 2000 milli-c\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("records no origin", result.stderr)
 
     def test_a_band_with_a_kind_and_no_account_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a recorded origin is a kind and what the figure was arrived at from."""
-        self.tolerance("brew-temperature-band-milli-c = 2000 @document\n")
+        self.tolerance("brew-temperature-band = 2000 milli-c @document\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("no account", result.stderr)
@@ -411,44 +411,64 @@ class ControlDeclarationGate(unittest.TestCase):
 
     def test_a_band_that_is_not_a_number_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a band the loader cannot read is not a band that has been declared."""
-        self.tolerance("brew-temperature-band-milli-c = wide @document Taken from a feeling.\n")
+        self.tolerance("brew-temperature-band = wide milli-c @document Taken from a feeling.\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
-        self.assertIn("not a whole number of millidegrees", result.stderr)
+        self.assertIn("not a whole number of milli-c", result.stderr)
 
     def test_a_band_of_nothing_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a band of zero is a criterion no delivery could meet, and the loader refuses it."""
-        self.tolerance("brew-temperature-band-milli-c = 0 @document Taken from nothing.\n")
+        self.tolerance("brew-temperature-band = 0 milli-c @document Taken from nothing.\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("declared as nothing at all", result.stderr)
 
     def test_a_negative_band_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a band is a half-width, and no delivery sits less than no distance from what was asked for."""
-        self.tolerance("brew-temperature-band-milli-c = -100 @document Taken from nothing.\n")
+        self.tolerance("brew-temperature-band = -100 milli-c @document Taken from nothing.\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("declared as -100", result.stderr)
 
-    def test_a_band_wider_than_the_record_carries_is_refused(self):
-        """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a figure the record cannot hold is a declaration the machine will not start on."""
+    def test_a_band_wider_than_its_own_bound_is_refused(self):
+        """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a band that accepts everything the machine can do is a declaration the machine will not start on."""
         self.tolerance(
-            "brew-temperature-band-milli-c = 2147483648 @document Taken from nothing.\n"
+            "brew-temperature-band = 2147483648 milli-c @document Taken from nothing.\n"
         )
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
-        self.assertIn("wider than the signed 32-bit", result.stderr)
+        self.assertIn("wider than the 20000 the loader admits", result.stderr)
+
+    def test_a_band_declared_in_another_bands_unit_is_refused(self):
+        """SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: a figure in the wrong unit is a band measuring the wrong quantity, not a loose one."""
+        self.tolerance(
+            "brew-temperature-band = 1000 milli-ml-s @document Taken from nothing.\n"
+            "flow-departure-band = 200 milli-c @estimated Taken from nothing either.\n"
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("is declared in 'milli-ml-s', but this build holds it in 'milli-c'",
+                      result.stderr)
+        self.assertIn("is declared in 'milli-c', but this build holds it in 'milli-ml-s'",
+                      result.stderr)
+
+    def test_a_band_carrying_no_unit_is_refused(self):
+        """SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: a number with no unit rests on the reader already knowing which quantity it measures."""
+        self.tolerance("brew-temperature-band = 1000 @document Taken from nothing.\n")
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("not a whole number followed by the word for its unit", result.stderr)
 
     def test_a_tolerance_line_that_is_not_a_band_and_a_value_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a line the loader cannot read declares nothing, however much it looks like a band."""
-        self.tolerance("brew-temperature-band-milli-c 2000 @document No separator.\n")
+        self.tolerance("brew-temperature-band 2000 @document No separator.\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("is not a band and a value", result.stderr)
 
     def test_a_band_with_an_empty_value_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: a band named with nothing after the equals sign holds a delivery to nothing at all."""
-        self.tolerance("brew-temperature-band-milli-c =  @document Taken from nothing.\n")
+        self.tolerance("brew-temperature-band =  @document Taken from nothing.\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("carries no value", result.stderr)
@@ -474,7 +494,7 @@ class ControlDeclarationGate(unittest.TestCase):
         self.tolerance(BAND)
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
-        self.assertIn("flow-departure-band-milli-ml-s", result.stderr)
+        self.assertIn("flow-departure-band", result.stderr)
         self.assertIn("declared nowhere", result.stderr)
 
     def test_the_second_band_compiled_into_the_control_logic_is_refused(self):
@@ -486,7 +506,7 @@ class ControlDeclarationGate(unittest.TestCase):
 
     def test_the_second_band_with_no_origin_is_refused(self):
         """SOL-DELIVERY-DEPARTURE-REPORTED.C3: the second band carries a recorded origin on the same terms the first does."""
-        self.tolerance(BAND + "flow-departure-band-milli-ml-s = 300\n")
+        self.tolerance(BAND + "flow-departure-band = 300 milli-ml-s\n")
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("records no origin", result.stderr)

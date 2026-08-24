@@ -969,12 +969,44 @@ static float truth_state(plant_state_t which)
     return value;
 }
 
-/* What the machine's sensor reports, which is its heated mass and not its outlet. */
+/*
+ * How the meter reports, relative to what the machine actually moved.
+ *
+ * A delivery that follows its course needs no arrangement at all: the factor is
+ * one and the status is valid, so the channel carries the plant's own brew flow
+ * and the loop sees a meter agreeing with the machine. A departed delivery is
+ * one assignment -- a factor of 0.4 is a meter reporting four tenths of what
+ * moved -- and a delivery with no trustworthy reading is the other, a status of
+ * absent or failed.
+ *
+ * Scaling what the plant actually moved, rather than planting a figure, is what
+ * keeps the departure a disagreement between the seam and the command instead
+ * of between two constants written in this file. Both are reset by
+ * bring_the_loop_up, so no test inherits the previous one's meter.
+ */
+static float delivered_flow_factor = 1.0f;
+static hw_reading_status_t delivered_flow_status = HW_READING_VALID;
+
+/*
+ * What the machine's sensors report: its heated mass rather than its outlet,
+ * and the flow it actually moved rather than the flow it was commanded to.
+ *
+ * The flow channel is populated from the truth plant's own brew flow quantity,
+ * through the same injection point the simulated hardware already offers for
+ * every other channel -- so a departure is produced the way the machine
+ * produces one, by a reading at the seam that disagrees with the command, and
+ * not by the plant model growing a term to resist the water.
+ */
 static void report_what_the_machine_reads(void)
 {
     const float mass = truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C);
 
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, (int32_t)lroundf(mass * 1000.0f));
+
+    float moved = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_quantity(&truth, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &moved));
+    hw_sim_set_sensor(HW_SENSOR_FLOW, delivered_flow_status,
+                      (int32_t)lroundf(moved * delivered_flow_factor * 1000.0f));
 }
 
 /*
@@ -997,6 +1029,8 @@ static void bring_the_loop_up(const plant_parameters_t *estimator_reconstructs_f
         plant_model_set_state(&truth, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, mass_c));
     TEST_ASSERT_TRUE(
         plant_model_set_state(&truth, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, outlet_c));
+    delivered_flow_factor = 1.0f;
+    delivered_flow_status = HW_READING_VALID;
     report_what_the_machine_reads();
 
     TEST_ASSERT_TRUE(control_init(&state, estimator_reconstructs_from, &limits, &tolerance));
@@ -1123,9 +1157,9 @@ static void test_the_band_the_loop_holds_is_the_one_the_declaration_carries(void
 static void test_a_different_declaration_changes_the_band_with_no_source_edit(void)
 {
     static const char TIGHTER[] =
-        "brew-temperature-band-milli-c = 400 @document Taken from a machine that has been "
+        "brew-temperature-band = 400 milli-c @document Taken from a machine that has been "
         "characterised, for the purpose of asking what the design costs at a narrower band.\n"
-        "flow-departure-band-milli-ml-s = 300 @estimated Carried unchanged from the shipped "
+        "flow-departure-band = 200 milli-ml-s @estimated Carried unchanged from the shipped "
         "declaration; this test is about the temperature band, not this one.\n";
     delivery_tolerance_t narrowed;
     delivery_tolerance_error_t fault;
@@ -1160,21 +1194,21 @@ static void test_the_loader_refuses_a_declaration_that_settles_nothing(void)
         {"# nothing but a comment\n", DELIVERY_TOLERANCE_MISSING,
          "a declaration carrying no band was accepted"},
         {"", DELIVERY_TOLERANCE_MISSING, "an empty declaration was accepted"},
-        {"brew-temperature-band-milli-c = 2000\n", DELIVERY_TOLERANCE_ORIGIN,
+        {"brew-temperature-band = 2000 milli-c\n", DELIVERY_TOLERANCE_ORIGIN,
          "a band with no origin was accepted"},
-        {"brew-temperature-band-milli-c = 2000 @document\n", DELIVERY_TOLERANCE_ORIGIN,
+        {"brew-temperature-band = 2000 milli-c @document\n", DELIVERY_TOLERANCE_ORIGIN,
          "a kind with no account behind it was accepted"},
-        {"brew-temperature-band-milli-c = 2000 @guessed Arrived at by feel.\n",
+        {"brew-temperature-band = 2000 milli-c @guessed Arrived at by feel.\n",
          DELIVERY_TOLERANCE_ORIGIN, "a kind outside the vocabulary was accepted"},
-        {"brew-temperature-band-milli-c = 0 @document Nothing at all.\n",
+        {"brew-temperature-band = 0 milli-c @document Nothing at all.\n",
          DELIVERY_TOLERANCE_OUT_OF_RANGE, "a band of nothing was accepted"},
-        {"brew-temperature-band-milli-c = -500 @document Below nothing.\n",
+        {"brew-temperature-band = -500 milli-c @document Below nothing.\n",
          DELIVERY_TOLERANCE_OUT_OF_RANGE, "a negative band was accepted"},
-        {"brew-temperature-band-milli-c = 2000 5000 @document Two figures.\n",
+        {"brew-temperature-band = 2000 milli-c 5000 @document Two figures.\n",
          DELIVERY_TOLERANCE_MALFORMED, "a line carrying two figures was accepted"},
-        {"brew-temperature-band-milli-c = wide @document Not a number.\n",
+        {"brew-temperature-band = wide milli-c @document Not a number.\n",
          DELIVERY_TOLERANCE_MALFORMED, "a band that is not a number was accepted"},
-        {"brew-temperature-band-milli-c = @document Nothing before the origin.\n",
+        {"brew-temperature-band = @document Nothing before the origin.\n",
          DELIVERY_TOLERANCE_MALFORMED, "a band carrying no figure at all was accepted"},
         /*
          * Longer than the buffer the figure is copied into before it is read.
@@ -1182,26 +1216,40 @@ static void test_the_loader_refuses_a_declaration_that_settles_nothing(void)
          * truncated, because a truncated token is a different number read as
          * though it were the one written.
          */
-        {"brew-temperature-band-milli-c = 200000000000000000000000000000000000000 @document "
+        {"brew-temperature-band = 200000000000000000000000000000000000000 milli-c @document "
          "Longer than the buffer.\n",
          DELIVERY_TOLERANCE_MALFORMED, "a figure longer than the buffer was accepted"},
         /*
          * Inside that buffer and inside what a long holds where long is
-         * sixty-four bits, and outside what the record's int32 carries. The two
-         * bounds differ on such a host and coincide on the target, so a check
-         * that only refused what a long could not hold would admit this here
-         * and narrow it silently.
+         * sixty-four bits, and far outside what this band is admitted at. A
+         * loader that only refused what its integer type could not hold would
+         * read this on a sixty-four-bit host and narrow it silently on the
+         * target, which is why the bound is the band's own rather than the
+         * type's.
          */
-        {"brew-temperature-band-milli-c = 3000000000 @document Beyond an int32.\n",
-         DELIVERY_TOLERANCE_OUT_OF_RANGE, "a band beyond what the record carries was accepted"},
-        {"brew-temperature-band-milli-c 2000 @document No separator.\n",
+        {"brew-temperature-band = 3000000000 milli-c @document Beyond its own bound.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE, "a band beyond its own admissible bound was accepted"},
+        /*
+         * The unit cases. A band with no unit reads as a bare number whose
+         * meaning rests on the reader already knowing the quantity; a band in
+         * another band's unit reads perfectly and measures the wrong thing.
+         * Neither is malformed, which is why they answer their own fault.
+         */
+        {"brew-temperature-band = 1000 @document No unit at all.\n",
+         DELIVERY_TOLERANCE_UNIT_MISMATCH, "a band carrying no unit was accepted"},
+        {"brew-temperature-band = 1000 milli-ml-s @document The flow band's unit.\n",
+         DELIVERY_TOLERANCE_UNIT_MISMATCH, "a temperature band in the flow band's unit was "
+                                           "accepted"},
+        {"brew-temperature-band = 1000 milli-k @document Not a unit anything declares.\n",
+         DELIVERY_TOLERANCE_UNIT_MISMATCH, "a band in a unit outside the vocabulary was accepted"},
+        {"brew-temperature-band 2000 @document No separator.\n",
          DELIVERY_TOLERANCE_MALFORMED, "a line with no separator was accepted"},
         {"= 2000 @document No name.\n", DELIVERY_TOLERANCE_MALFORMED,
          "a line naming no band was accepted"},
         {"steam-dryness-band-permille = 50 @document Nothing reads this.\n",
          DELIVERY_TOLERANCE_UNKNOWN, "a band nothing holds a delivery to was accepted"},
-        {"brew-temperature-band-milli-c = 2000 @document First.\n"
-         "brew-temperature-band-milli-c = 3000 @document Second.\n",
+        {"brew-temperature-band = 2000 milli-c @document First.\n"
+         "brew-temperature-band = 3000 milli-c @document Second.\n",
          DELIVERY_TOLERANCE_DUPLICATE, "a band declared twice was accepted"},
     };
 
@@ -1225,7 +1273,7 @@ static void test_the_loader_refuses_a_declaration_that_settles_nothing(void)
 /// memory, and the second kind passes quietly.
 static void test_a_refused_declaration_leaves_the_record_as_it_was(void)
 {
-    static const char REFUSED[] = "brew-temperature-band-milli-c = 400 @document Fine.\n"
+    static const char REFUSED[] = "brew-temperature-band = 400 milli-c @document Fine.\n"
                                   "steam-dryness-band-permille = 50 @document Not read.\n";
     delivery_tolerance_t held = {.brew_temperature_band_milli_c = 1234};
     delivery_tolerance_error_t fault;
@@ -2370,8 +2418,8 @@ static void test_delivered_flow_is_compared_against_the_commanded_rate_each_cycl
     TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
+    /* The meter agrees with the machine, so no arrangement is needed at all. */
     for (unsigned step = 0u; step < 10u; step++) {
-        hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 2000);
         TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
     }
 }
@@ -2397,18 +2445,29 @@ static void test_departure_beyond_the_band_surfaces_and_agreement_does_not(void)
     TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
-    /* Commanded is 2000 milli-ml/s; the shipped band is 300, so 800 diverges. */
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 800);
+    /*
+     * A meter reporting four tenths of what moved, against a shipped band of
+     * 200. The first step of a delivery judges nothing -- no interval has yet
+     * elapsed under its command -- so the departure lands on the step after.
+     */
+    delivered_flow_factor = 0.4f;
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
     TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
     TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
                              "a departed cycle ended the delivery, which is out of scope for "
                              "this criterion");
     TEST_ASSERT_EQUAL_UINT16(pump_level_for(rate), state.commanded_pump_permille);
 
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 2100);
+    /*
+     * Back within the band. The meter reading published on a step describes the
+     * interval that step just ran, so a change of factor is seen immediately --
+     * it is only the command the reading is judged against that comes from the
+     * step before.
+     */
+    delivered_flow_factor = 1.05f;
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1250);
+    delivered_flow_factor = 0.625f;
     TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
 }
 
@@ -2435,12 +2494,19 @@ static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
-     * Commanded is 2000 milli-ml/s; the shipped band is 300, so 1700 sits
-     * exactly on the boundary rather than inside or outside it.
+     * Commanded is 2000 milli-ml/s, so a reading the shipped band's width below
+     * it sits exactly on the boundary rather than inside or outside it.
+     *
+     * Planted directly and stepped without the harness meter, unlike the cases
+     * around it: what is being asserted is the comparison at one exact figure,
+     * and a meter scaled off the plant lands near that figure rather than on
+     * it -- which would make this boundary assertion turn on pump quantisation
+     * rather than on the comparison it exists to pin.
      */
     hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID,
                       2000 - (int32_t)tolerance.flow_departure_band_milli_ml_per_s);
-    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, closed_loop_step(-1),
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, control_step(&state),
                               "a gap exactly at the declared tolerance reported departure -- the "
                               "boundary is not exclusive as coded");
 }
@@ -2476,14 +2542,23 @@ static void test_a_departed_delivery_still_runs_to_its_own_completion(void)
 
     unsigned ended_at_step = 0u;
     unsigned departed_steps = 0u;
+    /* A meter reporting nothing at all, against a commanded 2 ml/s. */
+    delivered_flow_factor = 0.0f;
     for (unsigned step = 1u; step <= 500u; step++) {
-        hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 0);
         const control_step_result_t result = closed_loop_step(-1);
         if (control_delivery_running(&state)) {
-            /* The comparison ran this step, so a reading of nothing against a
-             * commanded 2 ml/s departs the shipped band by a wide margin. */
-            TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, result);
-            departed_steps++;
+            /*
+             * The comparison ran this step, so a reading of nothing against a
+             * commanded 2 ml/s departs the shipped band by a wide margin --
+             * every step but the first, which has no elapsed interval under
+             * the delivery's command to judge.
+             */
+            if (step == 1u) {
+                TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, result);
+            } else {
+                TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, result);
+                departed_steps++;
+            }
         } else if (ended_at_step == 0u) {
             /* The step the delivery ends on evaluates the end condition
              * before the comparison, so it reports ordinarily rather than
@@ -2497,7 +2572,7 @@ static void test_a_departed_delivery_still_runs_to_its_own_completion(void)
 
     TEST_ASSERT_TRUE_MESSAGE(ended_at_step > 0u, "the delivery never ended");
     TEST_ASSERT_EQUAL_UINT32(35u, ended_at_step);
-    TEST_ASSERT_EQUAL_UINT32(34u, departed_steps);
+    TEST_ASSERT_EQUAL_UINT32(33u, departed_steps);
     TEST_ASSERT_EQUAL_UINT16(0u, state.commanded_pump_permille);
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
 }
@@ -2535,7 +2610,7 @@ static void test_late_takes_priority_over_departed_on_the_same_cycle(void)
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
 
-    /* Commanded is 2000 milli-ml/s; the shipped band is 300, so 800 diverges. */
+    /* Commanded is 2000 milli-ml/s; the shipped band is 200, so 800 diverges. */
     hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 800);
     hw_sim_advance_millis((CONTROL_STEP_INTERVAL_MS * CONTROL_STEP_LATE_MULTIPLE) + 1u);
     TEST_ASSERT_EQUAL_MESSAGE(
@@ -2569,10 +2644,10 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
     TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_ABSENT, 0);
+    delivered_flow_status = HW_READING_ABSENT;
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_FAILED, 0);
+    delivered_flow_status = HW_READING_FAILED;
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
     /*
@@ -2580,7 +2655,8 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
      * behind a failed status, does not report it -- so this is not merely a
      * control path that never departs when the reading is zero.
      */
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_FAILED, 800);
+    delivered_flow_status = HW_READING_FAILED;
+    delivered_flow_factor = 0.4f;
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 }
 
@@ -2596,14 +2672,14 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
 static void test_a_different_declaration_changes_what_counts_as_departure(void)
 {
     static const char WIDE[] =
-        "brew-temperature-band-milli-c = 1000 @document Carried unchanged from the shipped "
+        "brew-temperature-band = 1000 milli-c @document Carried unchanged from the shipped "
         "declaration; this test is about the flow band, not this one.\n"
-        "flow-departure-band-milli-ml-s = 900 @estimated Wide enough that the gap this test "
+        "flow-departure-band = 900 milli-ml-s @estimated Wide enough that the gap this test "
         "injects is absorbed rather than reported.\n";
     static const char NARROW[] =
-        "brew-temperature-band-milli-c = 1000 @document Carried unchanged from the shipped "
+        "brew-temperature-band = 1000 milli-c @document Carried unchanged from the shipped "
         "declaration; this test is about the flow band, not this one.\n"
-        "flow-departure-band-milli-ml-s = 100 @estimated Narrow enough that the gap this test "
+        "flow-departure-band = 100 milli-ml-s @estimated Narrow enough that the gap this test "
         "injects is reported rather than absorbed.\n";
 
     delivery_tolerance_t wide_tolerance;
@@ -2629,6 +2705,10 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    /* The first step commands the rate; the second judges the interval it ran. */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1500);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1500);
     TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, control_step(&state),
                               "the wide declaration did not absorb the gap it was built to");
@@ -2639,6 +2719,9 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1500);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1500);
     TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_DELIVERY_DEPARTED, control_step(&state),
                               "the narrow declaration did not report the same gap the wide one "
@@ -2656,20 +2739,20 @@ static void test_the_flow_departure_band_is_required_and_validated(void)
         delivery_tolerance_fault_t fault;
         const char *why;
     } REFUSED[] = {
-        {"brew-temperature-band-milli-c = 1000 @document Only the temperature band.\n",
+        {"brew-temperature-band = 1000 milli-c @document Only the temperature band.\n",
          DELIVERY_TOLERANCE_MISSING, "a declaration missing the flow-departure band was accepted"},
-        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
-         "flow-departure-band-milli-ml-s = 300\n",
+        {"brew-temperature-band = 1000 milli-c @document Fine.\n"
+         "flow-departure-band = 300 milli-ml-s\n",
          DELIVERY_TOLERANCE_ORIGIN, "a flow-departure band with no origin was accepted"},
-        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
-         "flow-departure-band-milli-ml-s = 0 @estimated Nothing at all.\n",
+        {"brew-temperature-band = 1000 milli-c @document Fine.\n"
+         "flow-departure-band = 0 milli-ml-s @estimated Nothing at all.\n",
          DELIVERY_TOLERANCE_OUT_OF_RANGE, "a flow-departure band of nothing was accepted"},
-        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
-         "flow-departure-band-milli-ml-s = -50 @estimated Below nothing.\n",
+        {"brew-temperature-band = 1000 milli-c @document Fine.\n"
+         "flow-departure-band = -50 milli-ml-s @estimated Below nothing.\n",
          DELIVERY_TOLERANCE_OUT_OF_RANGE, "a negative flow-departure band was accepted"},
-        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
-         "flow-departure-band-milli-ml-s = 300 @estimated First.\n"
-         "flow-departure-band-milli-ml-s = 400 @estimated Second.\n",
+        {"brew-temperature-band = 1000 milli-c @document Fine.\n"
+         "flow-departure-band = 300 milli-ml-s @estimated First.\n"
+         "flow-departure-band = 400 milli-ml-s @estimated Second.\n",
          DELIVERY_TOLERANCE_DUPLICATE, "a flow-departure band declared twice was accepted"},
     };
 
@@ -3570,6 +3653,401 @@ static void test_an_admissible_delivery_reaches_the_machine_exactly_as_before(vo
     }
 }
 
+/* --- The account a delivery gives of how it followed its course ----------- */
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1: The control unit reads the
+/// delivered rate from the hardware seam.
+///
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2: The departure a delivery reports
+/// is the commanded rate less the measured one.
+///
+/// A flat 2.0 ml/s course with 1.2 ml/s planted at the seam has to report 800
+/// thousandths short. The figure is what makes this an assertion about the
+/// reading rather than about the command: a control path that compared the
+/// command against itself would report nothing, and one that reported a bare
+/// "departed" flag could not be told apart from one that had read the wrong
+/// channel. The sign is asserted too -- commanded less measured, so a shortfall
+/// is positive, the same convention the estimator uses for a residual. A path
+/// that subtracted the other way round would report -800 and still look like it
+/// had measured something.
+static void test_the_departure_reported_is_the_commanded_rate_less_the_measured_one(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 4000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    /*
+     * The first step commands 2.0 ml/s and judges nothing; the second reads the
+     * meter for the interval that command was in force over.
+     */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1200);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1200);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, control_step(&state));
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_TRUE_MESSAGE(report.rate_observed, "the rate was measured and reported unobserved");
+    TEST_ASSERT_TRUE(report.departed);
+    TEST_ASSERT_INT32_WITHIN_MESSAGE(1, 800, report.largest_milli_ml_per_s,
+                                     "the departure is not the commanded rate less the measured "
+                                     "one, to within the seam's least count");
+}
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1: A reading is used only when it
+/// lies inside the plausible span the description's limits declare.
+///
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6: A reading outside that span is
+/// treated as no observation rather than as a departure.
+///
+/// A shorted or disconnected meter produces figures that are arithmetically
+/// fine and physically absurd. Reporting one as departure would be the machine
+/// giving an account of a rate it never plausibly saw -- and a very large one
+/// at that, which reads as the most severe departure the delivery ever showed.
+/// So the reading is refused as evidence in either direction: nothing departed,
+/// and nothing observed.
+static void test_a_reading_outside_the_plausible_span_is_no_observation(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 4000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    /*
+     * Far above the high limit the shipped description declares for the
+     * channel, and marked valid -- so what refuses it is the span check and not
+     * the seam's own status.
+     */
+    TEST_ASSERT_TRUE(900000 > limits.high_milli[HW_SENSOR_FLOW]);
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 900000);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, control_step(&state),
+                              "an implausible reading was reported as departure");
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_FALSE(report.departed);
+    TEST_ASSERT_FALSE_MESSAGE(report.rate_observed,
+                              "an implausible reading was counted as having observed the rate");
+}
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C4: A departure found on one step is
+/// still reportable when the delivery ends.
+///
+/// A single departed step early in a long course, with the meter back on the
+/// command for every step after it, and the delivery run all the way to its own
+/// end condition. The report has to still stand afterwards and has to name the
+/// elapsed time the departure happened at. This is the assertion that separates
+/// a latched account from the estimator's residual convention beside it: a
+/// per-step result forgotten at the top of the next step would report nothing
+/// here, and a departure nobody can see afterwards is a departure nobody sees.
+static void test_a_departure_found_on_one_step_is_still_reportable_when_the_delivery_ends(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    bool ever_departed = false;
+    while (control_delivery_running(&state)) {
+        /*
+         * One departed interval: the one the course commanded at 300 ms, and
+         * no other. The meter reports it on the step after, which is where the
+         * report picks it up -- naming 300 ms, the point on the course the
+         * departed command was taken from.
+         */
+        const bool departing = state.delivery_elapsed_millis == 300u;
+        delivered_flow_factor = departing ? 0.4f : 1.0f;
+
+        const control_step_result_t result = closed_loop_step(-1);
+        if (result == CONTROL_STEP_DELIVERY_DEPARTED) {
+            ever_departed = true;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(ever_departed, "the arranged step never reported departure at all");
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_TRUE_MESSAGE(report.departed,
+                             "the departure did not survive to the end of the delivery");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(300u, report.at_millis,
+                                     "the report does not name the elapsed time the departure "
+                                     "was seen at");
+    TEST_ASSERT_TRUE(report.rate_observed);
+    TEST_ASSERT_TRUE_MESSAGE(report.largest_milli_ml_per_s > 0,
+                             "a delivery that ran short reported a departure that was not a "
+                             "shortfall");
+}
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C4: The report is cleared when a new
+/// delivery is commanded and when everything is commanded off, so what comes
+/// back always belongs to the delivery the caller last asked for.
+///
+/// A report carried across deliveries would have the machine answer for a shot
+/// that has already been poured, and a caller has no way to tell that from the
+/// one it is actually asking about. Both clearing paths are asserted, because
+/// only one of them is on the route a caller usually takes.
+static void test_the_departure_report_belongs_to_one_delivery(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 4000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    delivered_flow_factor = 0.4f;
+    /*
+     * The first step of a delivery judges nothing -- no interval has yet
+     * elapsed under its command -- so the departure lands on the second.
+     */
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_TRUE(report.departed);
+
+    /* Commanding the next delivery forgets what the last one had to say. */
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_FALSE_MESSAGE(report.departed,
+                              "the new delivery inherited the previous one's departure");
+    TEST_ASSERT_FALSE(report.rate_observed);
+    TEST_ASSERT_EQUAL_INT32(0, report.largest_milli_ml_per_s);
+    TEST_ASSERT_EQUAL_UINT32(0u, report.at_millis);
+
+    /*
+     * And so does bringing the machine down. A refused drive command is the
+     * shortest route to command_everything_off, which is the path every
+     * shutdown takes.
+     */
+    delivered_flow_factor = 0.4f;
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_TRUE(report.departed);
+
+    hw_sim_set_output_refused(true);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_OUTPUT_REFUSED, control_step(&state));
+    TEST_ASSERT_FALSE(control_delivery_running(&state));
+
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_FALSE_MESSAGE(report.departed,
+                              "a machine commanded off kept the last delivery's departure");
+    hw_sim_set_output_refused(false);
+}
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5: The pump command follows the
+/// course rather than chasing the measured rate back to it.
+///
+/// This is the half of the obligation that can actually fail. A machine that
+/// measures a shortfall, drives the pump up to close it and says nothing has
+/// read the sensor and still produced the drink nobody can reproduce -- and
+/// every other test here would still pass.
+///
+/// The same course is run twice to its end: once with the meter agreeing and
+/// once with it reporting four tenths of what moved. Every pump level of the
+/// two runs is recorded and compared step for step, so a correction of any size
+/// on any step fails this, not merely a large one on the first. The departure
+/// is asserted to be reported in the second run and not the first, which is
+/// what keeps this from passing on a control path that simply never read the
+/// channel.
+static void test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees(void)
+{
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+
+    uint16_t agreeing[64];
+    uint16_t departed[64];
+    size_t agreeing_steps = 0u;
+    size_t departed_steps = 0u;
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    while (control_delivery_running(&state) && agreeing_steps < 64u) {
+        (void)closed_loop_step(-1);
+        agreeing[agreeing_steps++] = state.commanded_pump_permille;
+    }
+    control_departure_t agreeing_report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &agreeing_report));
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    delivered_flow_factor = 0.4f;
+    while (control_delivery_running(&state) && departed_steps < 64u) {
+        (void)closed_loop_step(-1);
+        departed[departed_steps++] = state.commanded_pump_permille;
+    }
+    control_departure_t departed_report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &departed_report));
+
+    TEST_ASSERT_TRUE_MESSAGE(agreeing_steps > 1u, "the agreeing delivery never ran");
+    TEST_ASSERT_EQUAL_size_t_MESSAGE(agreeing_steps, departed_steps,
+                                     "the departed delivery ran a different number of steps, so "
+                                     "the measured rate reached something it should not have");
+    for (size_t step = 0u; step < agreeing_steps; step++) {
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(agreeing[step], departed[step],
+                                         "the pump was driven differently on a step where only "
+                                         "the meter differed -- the loop is chasing the measured "
+                                         "rate");
+    }
+
+    TEST_ASSERT_FALSE_MESSAGE(agreeing_report.departed,
+                              "the agreeing delivery reported a departure");
+    TEST_ASSERT_TRUE_MESSAGE(departed_report.departed,
+                             "the departed delivery reported none, so this comparison proves "
+                             "nothing about the pump");
+}
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6: A machine with no flow meter
+/// reports no account rather than perfect agreement.
+///
+/// An absent channel and a failed one are held for a whole delivery, and both
+/// have to come back saying the rate was never observed. Reporting "no
+/// departure" alone would be the machine asserting agreement it never measured
+/// -- indistinguishable, to a caller, from a delivery that tracked its course
+/// perfectly. The two untrusted answers report identically here because neither
+/// is evidence about the rate; that they are still told apart at the seam is
+/// what the following test turns on.
+static void test_a_delivery_nothing_measured_reports_no_account(void)
+{
+    static const hw_reading_status_t UNTRUSTED[] = {HW_READING_ABSENT, HW_READING_FAILED};
+
+    for (size_t which = 0u; which < sizeof(UNTRUSTED) / sizeof(UNTRUSTED[0]); which++) {
+        bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+        const float rate = 2.0f;
+        const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+        const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                              .elapsed_millis = 5000u};
+        delivery_profile_t profile;
+        TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+        TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+        delivered_flow_status = UNTRUSTED[which];
+        while (control_delivery_running(&state)) {
+            TEST_ASSERT_NOT_EQUAL_MESSAGE(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1),
+                                          "a channel with nothing trustworthy on it reported a "
+                                          "departure");
+        }
+
+        control_departure_t report;
+        TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+        TEST_ASSERT_FALSE(report.departed);
+        TEST_ASSERT_FALSE_MESSAGE(report.rate_observed,
+                                  "a delivery nothing measured reported that the rate had been "
+                                  "observed, which is agreement nobody saw");
+    }
+}
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6: A channel that sampled and
+/// failed is read again on the following step, and a trusted reading there
+/// resumes the comparison.
+///
+/// Absent and failed report the same thing about the rate and are still not the
+/// same channel: nothing more is expected of an absent one, while a failed one
+/// may report on the next step. This holds a failed reading for the first part
+/// of a delivery, recovers it, departs the rate after the recovery, and requires
+/// the departure to be reported -- which a control path that stopped reading the
+/// channel after a failure, or that latched the failure into "no account", would
+/// not do.
+static void test_a_failed_reading_that_recovers_resumes_the_comparison(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    delivered_flow_status = HW_READING_FAILED;
+    for (unsigned step = 0u; step < 5u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+
+    control_departure_t during_the_failure;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &during_the_failure));
+    TEST_ASSERT_FALSE(during_the_failure.rate_observed);
+
+    /* The channel recovers, and reports a rate well short of the command. */
+    delivered_flow_status = HW_READING_VALID;
+    delivered_flow_factor = 0.4f;
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1),
+                              "a channel that failed and then recovered was never read again");
+
+    control_departure_t after;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &after));
+    TEST_ASSERT_TRUE(after.departed);
+    TEST_ASSERT_TRUE(after.rate_observed);
+}
+
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: A departure is reported only past
+/// a tolerance declared as described data, and each band comes back in its own
+/// unit.
+///
+/// The shipped declaration is the one the loop is actually held to, so it is
+/// read here rather than restated. Both bands are asserted in their own units --
+/// a grammar that still read every band as millidegrees would return the flow
+/// band as a temperature and nothing downstream would notice, because the record
+/// field is an integer either way.
+static void test_both_bands_come_back_in_their_own_units(void)
+{
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(1000, tolerance.brew_temperature_band_milli_c,
+                                    "the shipped temperature band is not what the declaration "
+                                    "states");
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(200, tolerance.flow_departure_band_milli_ml_per_s,
+                                    "the shipped flow-departure band is not what the declaration "
+                                    "states");
+
+    /*
+     * The same two figures with their units exchanged. Nothing about either
+     * line is malformed and both figures are readable, so a loader that took
+     * the unit from the band's name -- or assumed one unit for every band --
+     * would accept this and hold deliveries to a flow band a hundred times
+     * looser than anybody declared.
+     */
+    static const char EXCHANGED[] =
+        "brew-temperature-band = 1000 milli-ml-s @document The flow band's unit.\n"
+        "flow-departure-band = 200 milli-c @estimated The temperature band's unit.\n";
+    delivery_tolerance_t built;
+    delivery_tolerance_error_t fault;
+    TEST_ASSERT_FALSE_MESSAGE(
+        delivery_tolerance_load(EXCHANGED, sizeof(EXCHANGED) - 1u, &built, &fault),
+        "a declaration whose two bands were given each other's units was read");
+    TEST_ASSERT_EQUAL(DELIVERY_TOLERANCE_UNIT_MISMATCH, fault.fault);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -3637,6 +4115,14 @@ int main(void)
     RUN_TEST(test_an_absent_or_failed_flow_reading_does_not_report_departure);
     RUN_TEST(test_a_different_declaration_changes_what_counts_as_departure);
     RUN_TEST(test_the_flow_departure_band_is_required_and_validated);
+    RUN_TEST(test_the_departure_reported_is_the_commanded_rate_less_the_measured_one);
+    RUN_TEST(test_a_reading_outside_the_plausible_span_is_no_observation);
+    RUN_TEST(test_a_departure_found_on_one_step_is_still_reportable_when_the_delivery_ends);
+    RUN_TEST(test_the_departure_report_belongs_to_one_delivery);
+    RUN_TEST(test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees);
+    RUN_TEST(test_a_delivery_nothing_measured_reports_no_account);
+    RUN_TEST(test_a_failed_reading_that_recovers_resumes_the_comparison);
+    RUN_TEST(test_both_bands_come_back_in_their_own_units);
     RUN_TEST(test_a_delivery_on_an_untargeted_machine_does_not_advance);
     RUN_TEST(test_an_unevaluable_end_condition_ends_the_delivery_immediately);
     RUN_TEST(test_boundary_end_conditions_at_zero_and_uint32_max);
