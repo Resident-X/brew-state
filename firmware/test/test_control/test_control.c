@@ -2399,9 +2399,16 @@ static void test_a_fault_mid_delivery_ends_the_delivery(void)
 /* --- Departure from the commanded profile is reported, not absorbed ------- */
 
 /// SOL-DELIVERY-DEPARTURE-REPORTED.C1: control_step reads HW_SENSOR_FLOW on
-/// every cycle a delivery is running and compares it against the same
-/// delivery_profile_rate_ml_per_s figure that is driving commanded_pump_permille
-/// that cycle.
+/// every cycle a delivery is running and compares it against the rate the
+/// course was commanding.
+///
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1: The control unit reads the
+/// delivered rate from the hardware seam.
+///
+/// The rate compared against is the one in force over the interval the reading
+/// measures, which is the step before -- not, as this comment once said, the
+/// same figure driving commanded_pump_permille on this cycle. See the decision
+/// governing what a sensed reading answers for.
 ///
 /// A flow reading planted exactly on the commanded rate produces an ordinary
 /// actuated step; a control path that never read the channel at all, or read
