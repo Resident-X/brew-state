@@ -312,9 +312,9 @@ static bool judge_the_interval_just_elapsed(control_state_t *state)
     /*
      * Commanded less measured, so a shortfall is positive -- the sign
      * convention the estimator already uses for a residual. The subtraction is
-     * the whole mechanism: per DEC-DEPARTURE-OBSERVED-NOT-MODELLED departure is
-     * observed by measuring what moved, so there is no filter here, no term for
-     * what resisted the water, and nothing for anybody to tune.
+     * the whole mechanism: departure is observed by measuring what moved rather
+     * than reproduced by modelling what resisted it, so there is no filter
+     * here, no term for the puck, and nothing for anybody to tune.
      */
     const float commanded_milli_ml_per_s = state->delivery_commanded_rate_ml_per_s * 1000.0f;
     const int32_t gap = as_milli(commanded_milli_ml_per_s - (float)flow.value_milli);

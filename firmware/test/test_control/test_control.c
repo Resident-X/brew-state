@@ -1134,6 +1134,9 @@ static float flow_at_full_scale_for(const plant_parameters_t *machine)
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: Brew temperature's
 /// tolerance band is described data with a recorded origin.
 ///
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: A band carrying no unit, or one
+/// written in another band's unit, is refused rather than read.
+///
 /// The band the loop was brought up with is the one the shipped declaration
 /// carries, and the control logic answers it back rather than the suite reading
 /// the file twice. Two readers of one declaration can disagree about it; a
@@ -2503,12 +2506,33 @@ static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
      * it -- which would make this boundary assertion turn on pump quantisation
      * rather than on the comparison it exists to pin.
      */
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID,
-                      2000 - (int32_t)tolerance.flow_departure_band_milli_ml_per_s);
+    const int32_t exactly_at_the_band =
+        2000 - (int32_t)tolerance.flow_departure_band_milli_ml_per_s;
+
+    /*
+     * The first step commands the rate and judges nothing; the second is the
+     * one that actually compares. Asserting only the first would pass with the
+     * comparison deleted altogether, which is the opposite of what a boundary
+     * test is for.
+     */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, exactly_at_the_band);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, exactly_at_the_band);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, control_step(&state),
                               "a gap exactly at the declared tolerance reported departure -- the "
                               "boundary is not exclusive as coded");
+
+    /*
+     * And one least count beyond it does depart, so the assertion above is
+     * pinning an exclusive boundary rather than a comparison that never fires.
+     */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, exactly_at_the_band - 1);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_DELIVERY_DEPARTED, control_step(&state),
+                              "a gap one least count past the declared tolerance did not report "
+                              "departure, so the boundary assertion above proves nothing");
 }
 
 /// SOL-DELIVERY-DEPARTURE-REPORTED.C1: Delivered flow is compared against the
@@ -2665,6 +2689,9 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
 /// changing only the declaration moves what counts as departure, with no edit
 /// to any source file.
 ///
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: Rewriting the departure band in
+/// the declaration alone moves the reporting threshold.
+///
 /// The same commanded rate and the same injected gap are held fixed across
 /// both halves; only the declared band moves, from wide enough to absorb the
 /// gap to narrow enough to report it. A band compiled into control.c would
@@ -2732,6 +2759,10 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
 /// rather than assumed, is refused where it is not a usable distance, and
 /// cannot grow a second home by being declared twice -- the same discipline
 /// the temperature band beside it is held to.
+///
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C3: The loader's admissible range is
+/// stated per band rather than as one shared distance, so a figure is judged as
+/// a quantity of the unit it is written in.
 static void test_the_flow_departure_band_is_required_and_validated(void)
 {
     static const struct {
@@ -2754,6 +2785,19 @@ static void test_the_flow_departure_band_is_required_and_validated(void)
          "flow-departure-band = 300 milli-ml-s @estimated First.\n"
          "flow-departure-band = 400 milli-ml-s @estimated Second.\n",
          DELIVERY_TOLERANCE_DUPLICATE, "a flow-departure band declared twice was accepted"},
+        /*
+         * Wider than the full-scale flow the reference description declares, so
+         * it accepts every rate the machine can produce and reports nothing --
+         * and comfortably inside the temperature band's own bound, which is why
+         * this case is what tells the two bounds apart. A loader sharing one
+         * distance across both bands would read this.
+         */
+        {"brew-temperature-band = 1000 milli-c @document Fine.\n"
+         "flow-departure-band = 8000 milli-ml-s @estimated Wider than the pump can draw.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE,
+         "a flow-departure band wider than full-scale flow was accepted, so the admissible "
+         "range is not stated per band"},
+
     };
 
     for (size_t i = 0u; i < sizeof(REFUSED) / sizeof(REFUSED[0]); i++) {
@@ -2765,6 +2809,22 @@ static void test_the_flow_departure_band_is_required_and_validated(void)
                                   REFUSED[i].why);
         TEST_ASSERT_EQUAL_MESSAGE(REFUSED[i].fault, fault.fault, REFUSED[i].why);
     }
+    /*
+     * The mirror of the over-wide flow band above: the same figure as a
+     * temperature band is ordinary and must still be read. Without this, a
+     * loader that simply refused 8000 everywhere would pass the case above
+     * while proving nothing about the range being stated per band.
+     */
+    static const char ADMISSIBLE[] =
+        "brew-temperature-band = 8000 milli-c @document Loose, and well inside its own bound.\n"
+        "flow-departure-band = 200 milli-ml-s @estimated Carried from the shipped declaration.\n";
+    delivery_tolerance_t wide_temperature;
+    delivery_tolerance_error_t admissible_fault;
+    TEST_ASSERT_TRUE_MESSAGE(
+        delivery_tolerance_load(ADMISSIBLE, sizeof(ADMISSIBLE) - 1u, &wide_temperature,
+                                &admissible_fault),
+        "a temperature band of 8000 was refused, so the bound is shared rather than per band");
+    TEST_ASSERT_EQUAL_INT32(8000, wide_temperature.brew_temperature_band_milli_c);
 }
 
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2: A machine nobody has
@@ -3732,6 +3792,16 @@ static void test_a_reading_outside_the_plausible_span_is_no_observation(void)
      * the seam's own status.
      */
     TEST_ASSERT_TRUE(900000 > limits.high_milli[HW_SENSOR_FLOW]);
+
+    /*
+     * Two steps, not one. The first commands the rate and judges nothing --
+     * no interval has yet elapsed under it -- so a single step would return
+     * before the span comparison was ever reached and would pass just as well
+     * with the comparison deleted.
+     */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 900000);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
     hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 900000);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, control_step(&state),
@@ -4048,6 +4118,52 @@ static void test_both_bands_come_back_in_their_own_units(void)
     TEST_ASSERT_EQUAL(DELIVERY_TOLERANCE_UNIT_MISMATCH, fault.fault);
 }
 
+/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C7: The control suite produces a
+/// departure by injecting a reading at the seam the truth plant uses.
+///
+/// The harness routine that publishes what the machine reads puts the truth
+/// plant's own brew flow onto the seam's flow channel, scaled by the file-scope
+/// factor the departed cases use. This asserts the channel actually carries the
+/// plant's quantity rather than a figure this file made up: the reading is
+/// compared against the plant's brew flow read back through the plant seam, at
+/// two different pump levels so a harness publishing a constant fails, and once
+/// more through a factor so the one assignment a departed case makes is shown
+/// to reach the channel.
+///
+/// Without this, the harness could quietly stop publishing the channel
+/// altogether and every departure test would go on passing on whatever
+/// hw_sim_reset left behind.
+static void test_the_harness_publishes_the_truth_plants_flow_at_the_seam(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    static const uint16_t LEVELS[] = {250u, 700u};
+    for (size_t i = 0u; i < sizeof(LEVELS) / sizeof(LEVELS[0]); i++) {
+        (void)closed_loop_step((int32_t)LEVELS[i]);
+
+        float moved = 0.0f;
+        TEST_ASSERT_TRUE(plant_model_quantity(&truth, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &moved));
+        TEST_ASSERT_TRUE_MESSAGE(moved > 0.0f, "the plant moved nothing at a driven pump level");
+
+        const hw_reading_t seen = hw_sensor_read(HW_SENSOR_FLOW);
+        TEST_ASSERT_EQUAL(HW_READING_VALID, seen.status);
+        TEST_ASSERT_INT32_WITHIN_MESSAGE(1, (int32_t)lroundf(moved * 1000.0f), seen.value_milli,
+                                         "the flow channel does not carry the truth plant's own "
+                                         "brew flow quantity");
+    }
+
+    /* And the one assignment a departed case makes reaches the channel. */
+    delivered_flow_factor = 0.4f;
+    (void)closed_loop_step((int32_t)LEVELS[1]);
+
+    float moved = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_quantity(&truth, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &moved));
+    const hw_reading_t departed = hw_sensor_read(HW_SENSOR_FLOW);
+    TEST_ASSERT_INT32_WITHIN_MESSAGE(1, (int32_t)lroundf(moved * 0.4f * 1000.0f),
+                                     departed.value_milli,
+                                     "the departure factor does not scale what the seam carries");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -4123,6 +4239,7 @@ int main(void)
     RUN_TEST(test_a_delivery_nothing_measured_reports_no_account);
     RUN_TEST(test_a_failed_reading_that_recovers_resumes_the_comparison);
     RUN_TEST(test_both_bands_come_back_in_their_own_units);
+    RUN_TEST(test_the_harness_publishes_the_truth_plants_flow_at_the_seam);
     RUN_TEST(test_a_delivery_on_an_untargeted_machine_does_not_advance);
     RUN_TEST(test_an_unevaluable_end_condition_ends_the_delivery_immediately);
     RUN_TEST(test_boundary_end_conditions_at_zero_and_uint32_max);

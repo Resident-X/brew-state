@@ -199,9 +199,9 @@ typedef struct {
  * Returns false, writing the fault into `error`, when the text or the record is
  * null, when a line cannot be read, when a band is named twice or not at all,
  * when a band is stated in the wrong unit, when a band is not a distance a
- * delivery could be held to, or when a band is not accounted for. Returns false and writes nothing when `error` is null,
- * since a caller that cannot be told what was wrong must not be told the
- * declaration was fine.
+ * delivery could be held to, or when a band is not accounted for. Returns false
+ * and writes nothing when `error` is null, since a caller that cannot be told
+ * what was wrong must not be told the declaration was fine.
  */
 bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance_t *tolerance,
                              delivery_tolerance_error_t *error);
