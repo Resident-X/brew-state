@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C7
+type: criterion
+title: An admissible delivery reaches the machine exactly as it did before the check existed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The whole control suite passes unchanged, including every test already attested for the profile command surface and for the brew loop's tracking, with no edit to those tests' expectations. The delivery command and the temperature command keep their existing shapes and their existing refusal behaviour for the null and out-of-range cases they already reject, and an admitted delivery drives the same pump trajectory through the actuation seam that it drove before — asserted by replaying the existing piecewise-linear course test and comparing the driven levels step for step. The strict build the suite compiles under, with warnings as errors and conversion, shadow and double-promotion checks live, admits the new declaration and the probe without suppression. Out of scope: the suites that exercise plant structures rather than the control law, and on-target or emulation-tier execution, which this slice's harness is not.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: criterion-of

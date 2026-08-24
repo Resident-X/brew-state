@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1
+type: criterion
+title: The control unit reads the delivered rate from the hardware seam
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On each control step while a delivery is running, the control unit reads the hardware seam's flow channel, making it the seam's first reader outside the estimator's advance. The reading arrives in thousandths of a millilitre per second, as the seam states every channel, and is used only when it is marked valid and its value lies inside the plausible span the description's limits declare for the channel — minus 1.0 to 20.0 millilitres a second, already loaded into the limits record the control state holds. A test in the control suite injects at the seam a rate that differs from the commanded course and shows the control unit reporting from the reading rather than from the level it commanded — what it drives is a separate criterion's question and does not move. The plant sources gain nothing: no resistance term, no pump flow-versus-pressure characteristic, no restriction coefficient, and no plant description gains a coefficient. Out of scope: correcting any estimator state against the reading — the estimator declines flow as a corrector because no state integrates it, and that refusal is not weakened here; also out of scope is reading the channel while no delivery is running.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: criterion-of

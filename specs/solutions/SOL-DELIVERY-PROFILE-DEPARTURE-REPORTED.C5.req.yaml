@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5
+type: criterion
+title: The pump command follows the course rather than chasing the measured rate back to it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The measured rate reaches the departure report and nothing else: no path runs from the seam's flow reading to the commanded pump level, which stays the value the profile's rate and the declared full-scale flow figure produce for the current elapsed time. This is the half of the obligation that can actually fail — a machine that measures a shortfall, drives the pump up to close it and says nothing has read the sensor and still produced the drink nobody can reproduce. A test runs a flat 2.0 mL/s course to its end with the seam reporting 1.2 mL/s throughout and asserts the pump channel is driven step for step identically to the same course run with the seam agreeing, while the departure is reported in the first case and not the second. Out of scope: closing a control loop on rate, which consumes the same channel and is a separate obligation no criterion of this epic asks for; and ending a delivery on delivered volume, which profile construction still refuses because nothing integrates the reading into a state.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C2
+type: criterion
+title: A refusal names the bound that was crossed rather than returning a bare false
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The admission record is declared in its own right, following the typed error records the plant seam and the tolerance loader already carry. It states which bound was crossed — nothing wrong at all, no profile given, no machine described, a rate beyond the pump, a target beyond saturation, or a target beyond the machine's authority — together with the figure asked for, the figure available, and the elapsed point in the course at which the profile crossed the bound. The two figures are carried in the unit the crossed bound is stated in, millilitres a second for a rate bound and degrees Celsius for a temperature bound, and the elapsed point names the profile point that crossed it, so an operator can move that point rather than guess at the course. A test drives one profile per bound and asserts all four fields, including that a refusal never reports the record's admitting value and that an admission never populates a figure. Out of scope: operator-facing text, translation, or any print surface — the record is a value a caller reads; also out of scope is a bound value meaning deferral, which would be a placeholder for behaviour this slice does not build.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: criterion-of

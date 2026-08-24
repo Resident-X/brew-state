@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C6
+type: criterion
+title: A machine merely not yet at temperature is admitted rather than refused
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every bound above is evaluated against the description's settled authority and never against the estimator's reconstruction of the temperature the machine is presently at. A test brings the loop up cold, at 20 °C in both the truth plant and the estimator, commands 93.0 °C and a 2.0 mL/s course, and requires admission — nothing about sitting at 20 °C is permanent, and refusing it would deny a drink the machine will reach in about four minutes. This is the boundary that keeps this slice out of its deferred sibling's territory. What the machine then does with that admitted delivery while cold — holding it until the shared heated mass returns, and starting it then — is DEL-SIM-BREW-LOOP.C8 and REQ-HOT-WATER-001.C4 and is explicitly out of scope: today the delivery proceeds immediately and the reported departure from the profile is the only account given. Out of scope with it: any admission outcome meaning "later", any queue of held deliveries, and any interaction with a second delivery on the shared mass, none of which exist.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: criterion-of

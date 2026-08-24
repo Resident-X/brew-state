@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C7
+type: criterion
+title: The control suite produces a departure by injecting a reading at the seam the truth plant uses
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The harness routine that publishes what the machine reads is extended to put the truth plant's brew flow quantity into the seam's flow channel in thousandths, alongside the brew temperature it already publishes, with a file-scope factor the departed cases scale it by — so an agreeing delivery needs no special arrangement and a departed one is one assignment. Nothing new reaches the plant or the hardware: the harness uses the quantity read the plant seam already names and the injection point the simulated hardware already offers. Every test already attested for the profile command surface and for the brew loop's tracking passes unchanged with the channel now populated. Out of scope: emulation-tier and on-target execution, and driving the loop from recorded bench data — the harness extended here is the host tier's.
+links:
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: criterion-of
