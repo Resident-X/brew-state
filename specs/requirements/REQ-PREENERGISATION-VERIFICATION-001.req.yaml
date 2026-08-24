@@ -4,11 +4,13 @@ category: functional
 title: Control behaviour is verified against a plant model before anything is energised
 status: active
 priority: must
-version: 3
+version: 4
 text: |
   Two distinct classes of error have to be caught before hardware is involved: a control law that is wrong, and a correct control law implemented wrongly on the target. They have different fixes and are far cheaper to separate than to untangle after the fact.
 
   Neither is fully visible by reading source. Both need the behaviour exercised in time, and exercising it anywhere other than on the machine establishes something about the machine only so far as the two agree.
+
+  The second class is not exhausted by behaviour, and the part of it that is not reaches further down than a plant model goes. An implementation can compute the right answer and address the wrong output, and no comparison taken at the seam between two computations of the same equations will show it, because both sides of that comparison sit above the addressing. What that part needs establishing against is the artefact and the peripherals it drives, not the model it drives them from.
 rationale: |
   Separates design error from implementation error as a requirement rather than leaving it to whatever the verification approach happens to catch. Verifying only the finished product on hardware leaves the two indistinguishable, and the debugging cost of that confusion falls on a single builder with no colleague to divide it with.
 

@@ -1,0 +1,74 @@
+id: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE
+type: deliverable
+category: solution
+title: Every actuation channel the seam admits addresses a distinct output on the target
+status: active
+version: 1
+text: |
+  The target's hardware layer maps each actuation channel to the output that drives it, and to the pin that
+  output is brought out on. Both are written by hand against a channel vocabulary that has since grown, and
+  both are one short: they name the brew heater, the steam heater and the pump, while the vocabulary carries
+  a fourth channel, the steam feed pump.
+
+  The shortfall is silent in the worst way. A table given fewer initialisers than its declared size fills
+  the remainder with zero, and the value denoting the first output is itself zero, so the fourth channel
+  resolves to the first one's output — the brew heater's. Bringing the outputs up walks the whole
+  vocabulary, so the brew heater's output is configured and started twice and the steam feed pump's is never
+  started. A command addressed to the steam feed pump then passes the bounds check, because the channel is a
+  member of the vocabulary, and writes the brew heater's duty. The write succeeds. The caller is told it
+  succeeded. The machine has been asked for one thing and given another, and nothing anywhere reports it.
+
+  Completing the table alone would not finish the correction, and this is the part worth being exact about:
+  the fourth output is brought out on a pin the alternate-function configuration does not name. An entry
+  added without the pin moves the fault rather than removing it — the command stops driving the brew heater
+  and starts driving nothing, just as silently. So the table and the pin mask are corrected together and
+  made to answer to one another.
+
+  Neither consequence is reachable today. No control-side caller commands the steam feed pump: the channel
+  is read by the plant model and written by nothing, so the fault is latent and becomes live the moment the
+  steam side is given a controller. It is corrected now because the failure it produces is a heating element
+  brought on by a command that named a pump, because the layer it sits in is compiled by the target build
+  this project's checks already run, and because the tier that would otherwise surface it — the one that
+  exercises this artefact against the plant model — is not built.
+
+  What the correction leaves behind is a construction that cannot fail this way again. The table's length is
+  derived from what was written rather than declared, so the vocabulary and the map cannot drift apart
+  without stopping the build. Correcting the sensor-side input map is out of scope: it carries a deliberate
+  absence for a channel no instrument is wired to, which is a stated intention where this was neither.
+rationale: |
+  This is the second of the two error classes the pre-energisation requirement separates: the control law is
+  right, the description is right, and the artefact carrying them to the machine addresses the wrong thing.
+  The criterion it serves asks that every output the control logic can command be shown to reach its own
+  device before energisation, and that property was assumed here rather than established — which is exactly
+  how a vocabulary of four channels came to sit against a map of three without anything noticing.
+
+  The correction is taken now rather than left to the tier that would surface it. The emulation tier models a
+  peripheral for every channel the control logic reaches through the seam, and a command landing on the wrong
+  output is precisely what such a model makes visible, but that tier is not built. Against that, the fault is
+  known, the layer is compiled by a build this project already runs, and the behaviour it produces is a
+  heating element energised by a command that named a pump. Waiting would be choosing to meet a known fault
+  later and on hardware.
+
+  The checks are compile-time rather than run-time, and that is a deliberate trade. A run-time guard
+  rejecting an unmapped channel would turn a fault that can be made impossible into one that has to be
+  handled, and would report at the moment of command rather than at the moment the vocabulary changed. The
+  cost of the compile-time route is that the array has to be re-declared unsized for its length to mean
+  anything — an assertion over an explicitly-sized array is a tautology, which is the trap this correction
+  would otherwise walk into while appearing to be guarded.
+
+  The criteria are stated as inspection and as a negative compilation case rather than as host tests, because
+  this translation unit is compiled only by the target build. Every host environment substitutes the
+  simulated implementation of the seam, and that substitution is fixed at build time by decision. Specifying
+  a host test over this file would have required a stand-in for the vendor's hardware layer, a new host
+  environment and its admission to the existing gates — real work, unnamed and uncosted, and close to the
+  re-expression of the shipped artefact that the emulation tier exists to rule out.
+
+  What this does not establish is that any channel reaches the device its name claims. That is a question
+  about how the machine was wired, answerable only with an instrument against the machine, and the criterion
+  this serves scopes it out for the same reason. This slice establishes that distinct commands reach distinct
+  outputs, that none is left unreachable, and that the map cannot silently fall behind the vocabulary again.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C6
+    type: targets

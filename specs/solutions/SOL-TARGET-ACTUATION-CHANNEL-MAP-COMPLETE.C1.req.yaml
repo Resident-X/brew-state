@@ -1,0 +1,12 @@
+id: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C1
+type: criterion
+title: Every actuation channel the vocabulary admits addresses an output of its own
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The target's channel-to-output table gains the entry the steam feed pump is missing, so the four channels the actuation vocabulary declares map to four distinct compare outputs in vocabulary order. Distinctness is what is asserted, not the particular assignment. Because the table is declared at the size the vocabulary gives it, a shortfall in initialisers is invisible to any check taken over its length: the array is re-declared unsized so its length is derived from what was actually written, and a static assertion requires that derived length to equal the channel count. The assertion fails today, which is what makes it worth having. A second assertion requires the mapped outputs to be pairwise distinct, so a duplicated entry cannot pass either. Out of scope: which physical device any channel finally reaches, which is a question about how the machine was wired and is answered against the machine.
+links:
+  - target: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE
+    type: criterion-of
