@@ -142,6 +142,39 @@ typedef enum {
 } plant_state_t;
 
 /*
+ * The points a delivery can arrive at. This is the machine's vocabulary rather
+ * than any one structure's, on the same reasoning the actuation channels are:
+ * a structure of a given architecture will not necessarily serve every point
+ * in it, and which ones it does serve is something it states rather than
+ * something a consumer infers from the channels it answers.
+ */
+typedef enum {
+    PLANT_DELIVERY_POINT_GROUP = 0,
+    PLANT_DELIVERY_POINT_HOT_WATER_SPOUT,
+    PLANT_DELIVERY_POINT_COUNT
+} plant_delivery_point_t;
+
+/*
+ * A set of delivery points, one bit per point -- the same shape as
+ * actuation_channel_set_t and for the same reason: the question asked of it is
+ * always whether one point is in it.
+ */
+typedef uint32_t plant_delivery_point_set_t;
+
+/* The set containing one delivery point. */
+#define PLANT_DELIVERY_POINT_BIT(point) ((plant_delivery_point_set_t)1u << (unsigned)(point))
+
+/*
+ * A structure's own name for the heated mass backing one of its delivery
+ * points. It is opaque and structure-local rather than a machine-wide
+ * vocabulary: what is asked of it is only whether two of a structure's own
+ * points name the same one, never which physical mass a value refers to, so a
+ * second structure numbering its masses independently of the first is not a
+ * collision.
+ */
+typedef uint8_t plant_heated_mass_id_t;
+
+/*
  * What is applied to the plant over one step, in parts per thousand of full
  * scale on each channel. The levels are indexed by the machine's actuation
  * channels, so a level and the channel it is for are one thing rather than a

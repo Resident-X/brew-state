@@ -2164,6 +2164,28 @@ static void test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam(void
     TEST_ASSERT_FLOAT_WITHIN(0.0f, 3.5f, drawn_water);
 }
 
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C1: this architecture declares no delivery
+/// point, since nothing establishes how its one vessel's outlet is routed and
+/// stating one would be asserting an arrangement nothing requires of it.
+static void test_the_single_vessel_structure_declares_no_delivery_point(void)
+{
+    TEST_ASSERT_EQUAL_UINT32(0u, (uint32_t)plant_structure_delivery_points());
+}
+
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C2: with no delivery point declared, the
+/// mass accessor refuses both the group and the spout rather than answering a
+/// mass for a point this architecture never claimed.
+static void test_the_single_vessel_structure_refuses_both_delivery_point_masses(void)
+{
+    plant_heated_mass_id_t mass = 0xFFu;
+
+    TEST_ASSERT_FALSE(plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_GROUP, &mass));
+    TEST_ASSERT_EQUAL_UINT8(0xFFu, mass);
+    TEST_ASSERT_FALSE(
+        plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, &mass));
+    TEST_ASSERT_EQUAL_UINT8(0xFFu, mass);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -2213,5 +2235,7 @@ int main(void)
     RUN_TEST(test_a_demand_that_is_not_a_draw_is_read_as_no_draw);
     RUN_TEST(test_this_structure_declares_and_enforces_the_steam_draws_ranges);
     RUN_TEST(test_the_estimator_refuses_this_architecture);
+    RUN_TEST(test_the_single_vessel_structure_declares_no_delivery_point);
+    RUN_TEST(test_the_single_vessel_structure_refuses_both_delivery_point_masses);
     return UNITY_END();
 }

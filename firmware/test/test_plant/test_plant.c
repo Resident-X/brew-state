@@ -6705,6 +6705,70 @@ static void test_the_steam_draw_rate_is_reached_end_to_end_through_the_seam(void
     TEST_ASSERT_FLOAT_WITHIN(0.0f, 4.0f, drawn_water);
 }
 
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C1, C3: A structure declares the delivery
+/// points it serves through the seam vocabulary, and the thermoblock structure
+/// declares the group and spout served from its one casting.
+static void test_the_thermoblock_declares_both_the_group_and_the_spout(void)
+{
+    plant_delivery_point_set_t served = plant_structure_delivery_points();
+
+    TEST_ASSERT_TRUE((served & PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_GROUP)) != 0u);
+    TEST_ASSERT_TRUE(
+        (served & PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT)) != 0u);
+}
+
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C2, C3: A structure names the heated mass
+/// backing each delivery point it serves, and the thermoblock names the same
+/// one for both -- the one casting a diverter routes between them.
+static void test_the_thermoblock_answers_the_same_mass_for_both_points(void)
+{
+    plant_heated_mass_id_t group_mass = 0xFFu;
+    plant_heated_mass_id_t spout_mass = 0xFEu;
+
+    TEST_ASSERT_TRUE(
+        plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_GROUP, &group_mass));
+    TEST_ASSERT_TRUE(
+        plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, &spout_mass));
+    TEST_ASSERT_EQUAL_UINT8(group_mass, spout_mass);
+}
+
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C4: A consumer queries whether two delivery
+/// points share a mass without knowing the structure, and gets true for a pair
+/// that share the thermoblock's one casting.
+static void test_the_group_and_the_spout_are_reported_as_sharing_a_mass(void)
+{
+    bool share = false;
+
+    TEST_ASSERT_TRUE(plant_delivery_points_share_mass(
+        PLANT_DELIVERY_POINT_GROUP, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, &share));
+    TEST_ASSERT_TRUE(share);
+}
+
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C1, C2, C4: A point the structure does not
+/// serve is refused by both the mass accessor and the contention query, rather
+/// than answered as though it shared or did not share a mass.
+static void test_a_delivery_point_the_thermoblock_does_not_serve_is_refused(void)
+{
+    const plant_delivery_point_t unserved = (plant_delivery_point_t)PLANT_DELIVERY_POINT_COUNT;
+    plant_heated_mass_id_t mass = 0xFFu;
+    bool share = true;
+
+    TEST_ASSERT_FALSE(plant_structure_delivery_point_mass(unserved, &mass));
+    TEST_ASSERT_EQUAL_UINT8(0xFFu, mass);
+    TEST_ASSERT_FALSE(
+        plant_delivery_points_share_mass(PLANT_DELIVERY_POINT_GROUP, unserved, &share));
+    TEST_ASSERT_TRUE(share);
+}
+
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C2, C4: The mass accessor and the contention
+/// query refuse a null output argument rather than writing through it.
+static void test_the_delivery_queries_refuse_null_output_arguments(void)
+{
+    TEST_ASSERT_FALSE(plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_GROUP, NULL));
+    TEST_ASSERT_FALSE(plant_delivery_points_share_mass(
+        PLANT_DELIVERY_POINT_GROUP, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, NULL));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -6839,5 +6903,10 @@ int main(void)
     RUN_TEST(test_the_steam_draws_coefficients_carry_enforced_admissible_ranges);
     RUN_TEST(test_the_steam_draws_coefficients_declare_an_origin_and_an_error);
     RUN_TEST(test_a_written_state_is_what_the_next_step_advances_from);
+    RUN_TEST(test_the_thermoblock_declares_both_the_group_and_the_spout);
+    RUN_TEST(test_the_thermoblock_answers_the_same_mass_for_both_points);
+    RUN_TEST(test_the_group_and_the_spout_are_reported_as_sharing_a_mass);
+    RUN_TEST(test_a_delivery_point_the_thermoblock_does_not_serve_is_refused);
+    RUN_TEST(test_the_delivery_queries_refuse_null_output_arguments);
     return UNITY_END();
 }

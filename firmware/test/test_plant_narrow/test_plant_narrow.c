@@ -704,6 +704,46 @@ static void test_the_structure_describing_no_machine_answers_the_steam_draw_rate
     TEST_ASSERT_EQUAL_FLOAT(0.0f, drawn);
 }
 
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C1, C4: no shipped structure serves its
+/// delivery points from separate masses, so the structure written for the
+/// tests carries the independent-mass arrangement instead. It declares both
+/// points, as any structure serving them must.
+static void test_the_structure_describing_no_machine_declares_both_delivery_points(void)
+{
+    plant_delivery_point_set_t served = plant_structure_delivery_points();
+
+    TEST_ASSERT_TRUE((served & PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_GROUP)) != 0u);
+    TEST_ASSERT_TRUE(
+        (served & PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT)) != 0u);
+}
+
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C2: the two points answer distinct mass
+/// identifiers -- independent reservoirs rather than one shared casting.
+static void test_the_structure_describing_no_machine_answers_distinct_masses(void)
+{
+    plant_heated_mass_id_t group_mass = 0u;
+    plant_heated_mass_id_t spout_mass = 0u;
+
+    TEST_ASSERT_TRUE(
+        plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_GROUP, &group_mass));
+    TEST_ASSERT_TRUE(
+        plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, &spout_mass));
+    TEST_ASSERT_TRUE(group_mass != spout_mass);
+}
+
+/// SOL-DELIVERY-TOPOLOGY-DECLARED.C4: the independent-mass arrangement is what
+/// proves the query can answer no-contention at all -- no shipped structure
+/// could be shown to fail this the way the thermoblock's shared casting could
+/// only ever pass it.
+static void test_the_structure_describing_no_machine_answers_no_contention(void)
+{
+    bool share = true;
+
+    TEST_ASSERT_TRUE(plant_delivery_points_share_mass(
+        PLANT_DELIVERY_POINT_GROUP, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, &share));
+    TEST_ASSERT_FALSE(share);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -724,5 +764,8 @@ int main(void)
     RUN_TEST(test_a_structure_keeping_fewer_states_answers_some_writes_and_refuses_others);
     RUN_TEST(test_a_state_written_before_initialisation_is_refused);
     RUN_TEST(test_the_estimator_refuses_a_structure_without_the_state_it_reconstructs);
+    RUN_TEST(test_the_structure_describing_no_machine_declares_both_delivery_points);
+    RUN_TEST(test_the_structure_describing_no_machine_answers_distinct_masses);
+    RUN_TEST(test_the_structure_describing_no_machine_answers_no_contention);
     return UNITY_END();
 }

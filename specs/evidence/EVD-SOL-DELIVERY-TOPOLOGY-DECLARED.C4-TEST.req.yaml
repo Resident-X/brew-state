@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-TOPOLOGY-DECLARED.C4-TEST
+type: evidence
+title: Contention query answers share/no-share and refuses unserved points (SOL-DELIVERY-TOPOLOGY-DECLARED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T06:15:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_group_and_the_spout_are_reported_as_sharing_a_mass,test_a_delivery_point_the_thermoblock_does_not_serve_is_refused,test_the_delivery_queries_refuse_null_output_arguments; firmware/test/test_plant_narrow/test_plant_narrow.c::test_the_structure_describing_no_machine_answers_no_contention
+text: |-
+  task fw:test passes. plant_delivery_points_share_mass() answers true for the thermoblock's group/spout pair, false for the fixture's independent-mass pair, and refuses an unserved point or a null output argument without writing through it.
+links:
+  - target: SOL-DELIVERY-TOPOLOGY-DECLARED.C4
+    type: satisfies

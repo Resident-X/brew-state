@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-TOPOLOGY-DECLARED.C2-TEST
+type: evidence
+title: Heated-mass-per-point declaration and refusal tests (SOL-DELIVERY-TOPOLOGY-DECLARED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T06:15:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_thermoblock_answers_the_same_mass_for_both_points,test_the_delivery_queries_refuse_null_output_arguments; firmware/test/test_plant_narrow/test_plant_narrow.c::test_the_structure_describing_no_machine_answers_distinct_masses; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_single_vessel_structure_refuses_both_delivery_point_masses
+text: |-
+  task fw:test passes. plant_structure_delivery_point_mass() answers the same mass for the thermoblock's two points, distinct masses for the fixture's two points, refuses a null output argument without writing through it, and refuses both points where the boiler declares none served.
+links:
+  - target: SOL-DELIVERY-TOPOLOGY-DECLARED.C2
+    type: satisfies
