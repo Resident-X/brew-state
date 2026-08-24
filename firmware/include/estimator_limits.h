@@ -2,14 +2,15 @@
  * What a description declares about readings the estimator can believe, and
  * about how long it may go without one.
  *
- * A reading arrives through hw_interface.h carrying a flag that answers one
- * question: whether the implementation could obtain a sample. That is not the
- * same question as whether the sample is possible. A thermocouple reading nine
+ * A reading arrives through hw_interface.h carrying a status that answers one
+ * question: whether the implementation obtained a sample, and if not, whether
+ * anything is fitted to have sampled. That is not the same question as whether
+ * the sample is possible. A thermocouple reading nine
  * hundred degrees is obtainable and absurd, and an estimator that corrects
  * against it is dragged toward a temperature the machine cannot be at. The two
  * failures are opposite -- one is no reading, the other is a confident wrong
- * one -- and a single flag pressed into service for both has to choose which of
- * them to get wrong.
+ * one -- and no status this seam reports says anything about the second, which
+ * is why the admissible span is declared rather than inferred.
  *
  * So the admissible span of each channel is declared per description, here in
  * shape and in a file beside the description in value. Per description because
@@ -53,6 +54,7 @@
 #define ESTIMATOR_LIMITS_STEAM_TEMPERATURE_WORD "steam-temperature"
 #define ESTIMATOR_LIMITS_BREW_PRESSURE_WORD "brew-pressure"
 #define ESTIMATOR_LIMITS_STEAM_PRESSURE_WORD "steam-pressure"
+#define ESTIMATOR_LIMITS_FLOW_WORD "flow"
 
 /*
  * Every channel word, in the order the channels are enumerated in, so that a
@@ -64,7 +66,8 @@
 #define ESTIMATOR_LIMITS_CHANNEL_WORDS                                                             \
     {                                                                                              \
         ESTIMATOR_LIMITS_BREW_TEMPERATURE_WORD, ESTIMATOR_LIMITS_STEAM_TEMPERATURE_WORD,           \
-            ESTIMATOR_LIMITS_BREW_PRESSURE_WORD, ESTIMATOR_LIMITS_STEAM_PRESSURE_WORD              \
+            ESTIMATOR_LIMITS_BREW_PRESSURE_WORD, ESTIMATOR_LIMITS_STEAM_PRESSURE_WORD,             \
+            ESTIMATOR_LIMITS_FLOW_WORD                                                             \
     }
 
 /*

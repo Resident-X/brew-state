@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Fail when a machine would be built with a sensor channel nobody bounded.
 
-A reading arrives through the hardware seam carrying a flag that says whether a
-sample could be obtained. It does not say whether the sample is possible, and
-those are different failures with opposite consequences: a channel that reports
-nothing costs a correction, and a channel that reports nine hundred degrees
-drags the reconstruction toward a state the machine cannot be in. The second has
-no symptom -- the estimator goes on running and the residual it reports looks
+A reading arrives through the hardware seam carrying a status that says whether
+a sample was obtained, and if not, whether anything is fitted to have sampled.
+It does not say whether the sample is possible, and those are different
+failures with opposite consequences: a channel that reports nothing costs a
+correction, and a channel that reports nine hundred degrees drags the
+reconstruction toward a state the machine cannot be in. The second has no
+symptom -- the estimator goes on running and the residual it reports looks
 ordinary -- so what a reading may plausibly be is declared per machine, beside
 the description of that machine, and this is the check that the declaration is
 complete.

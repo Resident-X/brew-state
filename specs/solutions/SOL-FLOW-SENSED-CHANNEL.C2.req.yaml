@@ -1,0 +1,12 @@
+id: SOL-FLOW-SENSED-CHANNEL.C2
+type: criterion
+title: The sim harness injects a flow reading through the same call already used for temperature and pressure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `hw_sim_set_sensor` (firmware/src/hw/sim/hw_sim.c) accepts `HW_SENSOR_FLOW` as a channel, storing the injected reading exactly as it does for the existing four channels. A test sets an injected rate below the commanded pump rate and asserts `hw_sensor_read(HW_SENSOR_FLOW)` returns exactly that value, with no change to the plant model's flow computation. Injecting readings through a real hardware acquisition path is out of scope; only the simulation harness is touched here.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL
+    type: criterion-of

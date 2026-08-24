@@ -1,0 +1,17 @@
+id: EVD-SOL-FLOW-SENSED-CHANNEL.C3-TEST
+type: evidence
+title: Widened trustworthiness status migrates the sole existing consumer without regression (SOL-FLOW-SENSED-CHANNEL.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T07:56:19Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_an_absent_reading_and_a_failed_one_are_both_skipped
+text: |-
+  test_an_absent_reading_and_a_failed_one_are_both_skipped passes. Runs three estimators in lockstep differing only in one channel's reading status; HW_READING_ABSENT and HW_READING_FAILED both leave the reconstructed state identical to each other and distinct from HW_READING_VALID, proving estimator.c's migrated skip condition (status != HW_READING_VALID) preserves the old valid=false skip behaviour for both cases. The full existing temperature and pressure test suites (295 host test cases across test_estimator, test_control, test_plant, test_plant_narrow, test_plant_boiler) pass unchanged after the hw_reading_t migration.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL.C3
+    type: satisfies

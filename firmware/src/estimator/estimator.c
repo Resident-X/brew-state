@@ -61,6 +61,18 @@ static bool quantity_measured_by(hw_sensor_channel_t channel, plant_quantity_t *
     case HW_SENSOR_STEAM_PRESSURE:
         *quantity = PLANT_QUANTITY_STEAM_PRESSURE_BAR;
         return true;
+    /*
+     * The rate water moves through the brew path is read at this seam and is
+     * not offered to the correction, because there is no state for it to
+     * correct: no structure integrates that rate -- it is produced from what
+     * the pump was commanded -- so a reading of it has nothing to be measured
+     * against here. Naming the quantity would pair a channel with a rate the
+     * model recomputes whole on every step, which would silently discard the
+     * correction and report that as agreement. What the reading is for is a
+     * consumer asking what actually moved, which reads the channel directly.
+     */
+    case HW_SENSOR_FLOW:
+        return false;
     /* Not a channel, and so a measurement of nothing. */
     case HW_SENSOR_CHANNEL_COUNT:
         return false;
@@ -371,16 +383,20 @@ bool estimator_step(estimator_t *estimator, const plant_actuation_t *actuation,
     }
 
     /*
-     * Which channels actually fed the estimate this step. A reading the seam
-     * could not obtain and a reading it obtained that is absurd take the same
-     * path -- the prediction advances, the correction is skipped, no residual
-     * is reported -- because in both cases there is nothing here worth
-     * correcting toward.
+     * Which channels actually fed the estimate this step. A channel with
+     * nothing fitted to it, a reading the seam attempted and could not trust,
+     * and a reading it obtained that is absurd all take the same path -- the
+     * prediction advances, the correction is skipped, no residual is reported --
+     * because in none of the three is there anything here worth correcting
+     * toward. The seam distinguishes the first two for consumers that can act
+     * on the difference; this loop is not one of them, and treating an unfitted
+     * channel as a gap in observation would starve a state on the machine that
+     * was built without the instrument.
      */
     estimator_observation_set_t usable = 0u;
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         const hw_reading_t observed = hw_sensor_read((hw_sensor_channel_t)channel);
-        if (!observed.valid) {
+        if (observed.status != HW_READING_VALID) {
             continue;
         }
         if (!reading_is_plausible(estimator, (hw_sensor_channel_t)channel, observed.value_milli)) {

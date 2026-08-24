@@ -46,3 +46,10 @@ embedder:
 
 # Default actor for authoring mutations
 default_actor: david
+
+# Governance profile for `staircase seal`: this project runs solo (single
+# operator; self-seal admissible). The engine does not yet read a
+# project-level default for this from config -- every `seal` invocation
+# supplies --profile explicitly (the CLI flag itself already defaults to
+# "solo"). This comment records the project's chosen profile; it is
+# documentation only, not an enforced setting.

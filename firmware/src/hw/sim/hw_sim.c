@@ -1,7 +1,7 @@
 #include "hw_sim.h"
 
 typedef struct {
-    bool valid;
+    hw_reading_status_t status;
     int32_t value_milli;
 } sim_channel_t;
 
@@ -29,8 +29,15 @@ static bool output_channel_in_range(hw_output_channel_t channel)
 
 void hw_sim_reset(void)
 {
+    /*
+     * Every channel comes up with nothing fitted to it rather than with a
+     * failed sample, because that is what a harness that has said nothing about
+     * a channel is entitled to claim: a sample cannot have failed on an
+     * instrument nobody stood up. A suite wanting a channel that samples and
+     * cannot be trusted asks for it.
+     */
     for (int i = 0; i < (int)HW_SENSOR_CHANNEL_COUNT; i++) {
-        sim_sensors[i].valid = false;
+        sim_sensors[i].status = HW_READING_ABSENT;
         sim_sensors[i].value_milli = 0;
     }
     for (int i = 0; i < (int)ACTUATION_CHANNEL_COUNT; i++) {
@@ -41,12 +48,13 @@ void hw_sim_reset(void)
     sim_output_refused = false;
 }
 
-void hw_sim_set_sensor(hw_sensor_channel_t channel, bool valid, int32_t value_milli)
+void hw_sim_set_sensor(hw_sensor_channel_t channel, hw_reading_status_t status,
+                       int32_t value_milli)
 {
     if (!sensor_channel_in_range(channel)) {
         return;
     }
-    sim_sensors[channel].valid = valid;
+    sim_sensors[channel].status = status;
     sim_sensors[channel].value_milli = value_milli;
 }
 
@@ -78,14 +86,21 @@ void hw_sim_set_output_refused(bool refused)
 
 hw_reading_t hw_sensor_read(hw_sensor_channel_t channel)
 {
-    hw_reading_t reading = { false, 0 };
+    hw_reading_t reading = { HW_READING_ABSENT, 0 };
 
     if (!sensor_channel_in_range(channel)) {
         return reading;
     }
 
-    reading.valid = sim_sensors[channel].valid;
-    reading.value_milli = sim_sensors[channel].valid ? sim_sensors[channel].value_milli : 0;
+    /*
+     * The value is carried only by a reading that has one. A channel standing
+     * absent or failed reports zero rather than whatever was last injected, so
+     * that no consumer can read a stale figure out of a reading that is not
+     * offering one.
+     */
+    reading.status = sim_sensors[channel].status;
+    reading.value_milli =
+        (sim_sensors[channel].status == HW_READING_VALID) ? sim_sensors[channel].value_milli : 0;
     return reading;
 }
 

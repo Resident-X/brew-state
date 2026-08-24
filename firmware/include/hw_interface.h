@@ -32,12 +32,32 @@
  */
 #include "machine_actuation.h"
 
-/* Sensor channels the control logic can read. */
+/*
+ * Sensor channels the control logic can read.
+ *
+ * The set is what a reading can be taken of, not what a given machine has
+ * fitted. A channel no instrument is wired to is still enumerated here and
+ * answers -- it answers that nothing is there, which is a different sentence
+ * from a sample that was attempted and could not be trusted, and the status
+ * below is where that difference is carried. Enumerating only the fitted
+ * channels would put that difference in the vocabulary instead, where a
+ * consumer could not ask the question at all.
+ */
 typedef enum {
     HW_SENSOR_BREW_TEMPERATURE = 0,
     HW_SENSOR_STEAM_TEMPERATURE,
     HW_SENSOR_BREW_PRESSURE,
     HW_SENSOR_STEAM_PRESSURE,
+    /*
+     * The rate water moves through the brew path. It is a channel of this seam
+     * rather than a figure taken from the plant model deliberately: the model
+     * answers what the pump was commanded to move, and what a meter placed in
+     * the path reports is a separate thing that may disagree with it. Reading
+     * the commanded figure as though it were the measured one would make that
+     * disagreement unobservable, which is the whole reason a meter would be
+     * fitted.
+     */
+    HW_SENSOR_FLOW,
     HW_SENSOR_CHANNEL_COUNT
 } hw_sensor_channel_t;
 
@@ -50,19 +70,45 @@ typedef enum {
 typedef actuation_channel_t hw_output_channel_t;
 
 /*
+ * How far a reading can be trusted.
+ *
+ * Three answers rather than two, because "no trustworthy sample" covers two
+ * conditions a caller can act on differently and a flag cannot tell apart. A
+ * channel nothing is fitted to will never report, however long it is waited
+ * on, and a channel that sampled and came back untrustworthy may report on the
+ * next step. A flag pressed into service for both makes an unfitted instrument
+ * indistinguishable from a broken one -- and on a machine where an instrument
+ * is optional, that is the difference between a variant built without it and a
+ * variant whose wiring has come off.
+ *
+ * Absent is the zeroth answer so that an implementation which has established
+ * nothing about a channel reports the reading it can defend: nothing is there
+ * until something says otherwise.
+ */
+typedef enum {
+    HW_READING_ABSENT = 0, /* nothing is fitted to this channel, so none is coming */
+    HW_READING_FAILED,     /* a sample was attempted and cannot be trusted */
+    HW_READING_VALID       /* a sample was obtained and can be trusted */
+} hw_reading_status_t;
+
+/*
  * A sensor reading in thousandths of the channel's unit -- millidegrees Celsius
- * for a temperature channel, millibar for a pressure channel. `valid` is false
- * when the implementation could not obtain a trustworthy sample; `value_milli`
- * is then meaningless and the control logic must not use it.
+ * for a temperature channel, millibar for a pressure channel, millilitres per
+ * second in thousandths for a flow channel. `value_milli` carries a measurement
+ * only when `status` is HW_READING_VALID; under either other status it is
+ * meaningless and the control logic must not use it. It is not a reading of
+ * zero, and nothing here ever substitutes a commanded figure for a measured
+ * one: a channel that reports nothing reports nothing.
  */
 typedef struct {
-    bool valid;
+    hw_reading_status_t status;
     int32_t value_milli;
 } hw_reading_t;
 
 /*
- * Sample a sensor channel. An out-of-range channel yields an invalid reading
- * rather than undefined behaviour.
+ * Sample a sensor channel. A channel outside the enumerated set reports
+ * HW_READING_ABSENT rather than undefined behaviour: nothing this seam knows of
+ * is there to have been sampled.
  */
 hw_reading_t hw_sensor_read(hw_sensor_channel_t channel);
 

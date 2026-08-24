@@ -129,7 +129,7 @@ static estimator_limits_t limits_from(const char *text)
 static void withdraw_every_reading(void)
 {
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
-        hw_sim_set_sensor((hw_sensor_channel_t)channel, false, 0);
+        hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_FAILED, 0);
     }
 }
 
@@ -162,7 +162,7 @@ static void place_reconstruction_at(int32_t milli_c)
 {
     const float degrees = (float)milli_c / 1000.0f;
 
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, milli_c);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, milli_c);
     TEST_ASSERT_TRUE(plant_model_set_state(
         &state.estimator.model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, degrees));
     TEST_ASSERT_TRUE(plant_model_set_state(&state.estimator.model,
@@ -172,7 +172,7 @@ static void place_reconstruction_at(int32_t milli_c)
 void setUp(void)
 {
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     load_the_reference_description();
     load_the_reference_limits();
     load_the_reference_tolerance();
@@ -255,13 +255,14 @@ static void test_drive_level_stays_within_full_scale_at_extremes(void)
                                           "steam-temperature = -2147483647 .. 2147483647\n"
                                           "brew-pressure = -2147483647 .. 2147483647\n"
                                           "steam-pressure = -2147483647 .. 2147483647\n"
+                                          "flow = -2147483647 .. 2147483647\n"
                                           "loss-tolerance-window-ms = 4000000000\n"
                                           "excursion-bound-milli-c = 2147483647\n";
     const int32_t readings[] = { INT32_MIN, -1000000, 0, BREW_TARGET_MILLI_C, INT32_MAX };
     const estimator_limits_t permissive = limits_from(ADMITS_ANYTHING);
 
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(control_init(&state, &parameters, &permissive, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
 
@@ -294,7 +295,7 @@ static void test_a_brief_gap_in_the_reading_does_not_latch_a_fault(void)
      * machine down on the first missing reading and latch a fault nothing in
      * the tree clears.
      */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
     for (unsigned step = 0u; step < 10u; step++) {
         hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
         TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
@@ -318,7 +319,7 @@ static void test_a_brief_gap_in_the_reading_does_not_latch_a_fault(void)
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 
     /* And a good reading afterwards still does not un-latch the fault. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
@@ -401,7 +402,7 @@ static void test_null_state_is_refused_rather_than_dereferenced(void)
 static void test_out_of_range_channels_are_refused_by_the_seam(void)
 {
     const hw_reading_t reading = hw_sensor_read((hw_sensor_channel_t)HW_SENSOR_CHANNEL_COUNT);
-    TEST_ASSERT_FALSE(reading.valid);
+    TEST_ASSERT_EQUAL_INT(HW_READING_ABSENT, reading.status);
 
     TEST_ASSERT_FALSE(hw_output_set((hw_output_channel_t)ACTUATION_CHANNEL_COUNT, 0u));
     TEST_ASSERT_FALSE(hw_output_set(ACTUATION_CHANNEL_PUMP, ACTUATION_FULL_SCALE + 1u));
@@ -519,7 +520,7 @@ static void test_the_control_logic_drives_what_it_drove_before_the_vocabulary_wa
      * window does the estimator stop supporting the state and the heater come
      * down.
      */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
     uint32_t steps_driven_through_the_gap = 0u;
     bool brought_down = false;
     while (!brought_down) {
@@ -567,7 +568,7 @@ static void test_the_drive_level_follows_the_reconstruction_and_not_the_reading(
     const float at_setpoint = BREW_TARGET_C;
 
     /* The mass the sensor sits on is at the setpoint; the water leaving is not. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, BREW_TARGET_MILLI_C);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, BREW_TARGET_MILLI_C);
     TEST_ASSERT_TRUE(plant_model_set_state(
         &state.estimator.model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, at_setpoint));
     TEST_ASSERT_TRUE(plant_model_set_state(&state.estimator.model,
@@ -577,7 +578,7 @@ static void test_the_drive_level_follows_the_reconstruction_and_not_the_reading(
     TEST_ASSERT_EQUAL_UINT16(ACTUATION_FULL_SCALE, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 
     /* And the other way round, so neither answer can come from a stuck level. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(plant_model_set_state(
         &state.estimator.model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 20.0f));
     TEST_ASSERT_TRUE(plant_model_set_state(&state.estimator.model,
@@ -608,7 +609,7 @@ static void test_the_drive_level_follows_the_reconstruction_and_not_the_reading(
 static void test_an_untrustworthy_reading_reaches_the_estimator_and_not_the_drive(void)
 {
     place_reconstruction_at(20000);
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
 
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
@@ -722,7 +723,7 @@ static void test_the_first_accepted_step_is_advanced_by_the_declared_interval(vo
     hw_sim_reset();
     load_the_reference_description();
     load_the_reference_limits();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
@@ -973,7 +974,7 @@ static void report_what_the_machine_reads(void)
 {
     const float mass = truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C);
 
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, (int32_t)lroundf(mass * 1000.0f));
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, (int32_t)lroundf(mass * 1000.0f));
 }
 
 /*
@@ -1131,7 +1132,7 @@ static void test_a_different_declaration_changes_the_band_with_no_source_edit(vo
     TEST_ASSERT_TRUE(delivery_tolerance_load(TIGHTER, sizeof(TIGHTER) - 1u, &narrowed, &fault));
 
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &narrowed));
     TEST_ASSERT_TRUE(control_temperature_band(&state, &band));
 
@@ -1244,7 +1245,7 @@ static void test_the_band_is_required_rather_than_assumed(void)
     TEST_ASSERT_FALSE(delivery_tolerance_load("x", 1u, &built, NULL));
 
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_FALSE(control_init(&state, &parameters, &limits, NULL));
     TEST_ASSERT_TRUE(state.faulted);
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
@@ -1266,7 +1267,7 @@ static void test_two_targets_in_one_binary_produce_two_duty_trajectories(void)
 
     for (unsigned run = 0u; run < 2u; run++) {
         hw_sim_reset();
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 80000);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 80000);
         TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
         TEST_ASSERT_TRUE(control_command_temperature(&state, targets[run]));
         place_reconstruction_at(80000);
@@ -1292,7 +1293,7 @@ static void test_two_targets_in_one_binary_produce_two_duty_trajectories(void)
 static void test_a_machine_with_no_target_commanded_drives_nothing(void)
 {
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
     place_reconstruction_at(20000);
 
@@ -1381,7 +1382,7 @@ static void test_perturbing_the_outlet_time_constant_alone_changes_the_duty(void
             description_with("brew.outlet_conduction_time_constant_s", CONSTANTS[run]));
 
         hw_sim_reset();
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
         TEST_ASSERT_TRUE(control_init(&state, &perturbed, &limits, &tolerance));
         TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
         TEST_ASSERT_TRUE(plant_model_set_state(
@@ -1395,7 +1396,7 @@ static void test_perturbing_the_outlet_time_constant_alone_changes_the_duty(void
          * water leaving it is reckoned to follow is not.
          */
         for (unsigned step = 0u; step < 100u; step++) {
-            hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 88000);
+            hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 88000);
             hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
             TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
         }
@@ -2344,7 +2345,7 @@ static void test_a_fault_mid_delivery_ends_the_delivery(void)
 static void test_a_delivery_on_an_untargeted_machine_does_not_advance(void)
 {
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);

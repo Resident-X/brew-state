@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The rate that actually moved reaches the control unit
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |

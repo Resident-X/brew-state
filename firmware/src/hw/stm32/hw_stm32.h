@@ -15,7 +15,7 @@
 /*
  * Bring up the clocks, port pins, converter and timer the implementation uses.
  * Returns false if any peripheral refuses initialisation, in which case the
- * seam's operations will report invalid readings and refuse drive commands
+ * seam's operations will report untrustworthy readings and refuse drive commands
  * rather than act on an uninitialised peripheral.
  */
 bool hw_stm32_init(void);

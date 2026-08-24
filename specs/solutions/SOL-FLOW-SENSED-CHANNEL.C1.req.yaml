@@ -1,0 +1,12 @@
+id: SOL-FLOW-SENSED-CHANNEL.C1
+type: criterion
+title: The hardware seam gains a flow channel the control unit reads independently of the plant's commanded-flow quantity
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `hw_sensor_channel_t` (firmware/include/hw_interface.h) gains `HW_SENSOR_FLOW` alongside the existing temperature and pressure channels, and `hw_sensor_read(HW_SENSOR_FLOW)` returns the seam-level reading rather than deriving it from `PLANT_QUANTITY_BREW_FLOW_ML_PER_S` (computed in firmware/src/plant/*/plant_structure.c). A test injects a sensed rate that differs from the commanded pump rate and asserts the control unit's view of what moved follows the injected reading while the plant's reported commanded-flow quantity is unchanged. Modelling what would cause that difference on real hardware, and closing any control loop on the reading, are out of scope.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL
+    type: criterion-of

@@ -93,7 +93,7 @@ static void expect(bool condition, const char *what)
  */
 static void exercise_untargeted_steps(control_state_t *state)
 {
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
 
     for (int i = 0; i < EXERCISE_STEPS; i++) {
         hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
@@ -108,7 +108,7 @@ static void exercise_untargeted_steps(control_state_t *state)
 
 static void exercise_actuating_steps(control_state_t *state)
 {
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     expect(control_command_temperature(state, EXERCISE_TARGET_C),
            "the exercise's target was refused");
 
@@ -136,7 +136,7 @@ static void exercise_early_step(control_state_t *state)
  */
 static void exercise_invalid_sensor(control_state_t *state)
 {
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
 
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     expect(control_step(state) == CONTROL_STEP_ACTUATED,
@@ -159,7 +159,7 @@ static void exercise_refused_output(const plant_parameters_t *parameters,
     control_state_t state;
 
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     expect(control_init(&state, parameters, limits, tolerance),
            "the control path could not be initialised");
     expect(control_command_temperature(&state, EXERCISE_TARGET_C),
@@ -448,7 +448,7 @@ int main(int argc, char **argv)
     }
 
     hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
 
     if (control_init(&state, &parameters, &limits, &tolerance)) {
         (void)printf("host exercise: control path reconstructs its brew temperature\n");

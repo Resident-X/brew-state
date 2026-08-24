@@ -581,6 +581,7 @@ static const char LIMITS_DECLARATION[] = "@describes-no-machine\n"
                                          "steam-temperature = -10000 .. 250000\n"
                                          "brew-pressure = -1000 .. 20000\n"
                                          "steam-pressure = -1000 .. 20000\n"
+                                         "flow = -1000 .. 20000\n"
                                          "loss-tolerance-window-ms = 500\n"
                                          "excursion-bound-milli-c = 15000\n";
 

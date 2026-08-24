@@ -19,11 +19,25 @@
 
 #include "hw_interface.h"
 
-/* Return every channel to its power-on condition: no valid readings, no drive, clock at zero. */
+/*
+ * Return every channel to its power-on condition: every sensor channel absent,
+ * no drive, clock at zero. Absent rather than failed, because a harness that
+ * has stood nothing up has established that nothing is there rather than that
+ * a sample was tried.
+ */
 void hw_sim_reset(void);
 
-/* Stand a reading up on a channel. An out-of-range channel is ignored. */
-void hw_sim_set_sensor(hw_sensor_channel_t channel, bool valid, int32_t value_milli);
+/*
+ * Stand a reading up on a channel, under the status a caller reading it should
+ * see. Every status the seam declares can be injected, so a suite can put a
+ * channel into each of the conditions a machine can present it in -- nothing
+ * fitted, a sample that failed, or a trustworthy figure -- rather than only the
+ * last of them and a single catch-all for the rest. The value is kept whatever
+ * the status, and reaches a reader only under HW_READING_VALID. An out-of-range
+ * channel is ignored.
+ */
+void hw_sim_set_sensor(hw_sensor_channel_t channel, hw_reading_status_t status,
+                       int32_t value_milli);
 
 /* The level last accepted on a channel, or zero for an out-of-range channel. */
 uint16_t hw_sim_output(hw_output_channel_t channel);

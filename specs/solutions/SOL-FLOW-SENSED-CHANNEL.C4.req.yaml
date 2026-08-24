@@ -1,0 +1,12 @@
+id: SOL-FLOW-SENSED-CHANNEL.C4
+type: criterion
+title: A flow reading is told apart as absent, failed, zero, or equal to the command
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  With no meter fitted the sim harness marks `HW_SENSOR_FLOW` absent rather than injecting a value, and a sampled-and-failed status is injectable independently of absence; both are distinguishable from a genuine zero reading and from a reading equal to the commanded rate. A test drives all four cases and asserts each is told apart at `hw_sensor_read(HW_SENSOR_FLOW)`, and that none of them return the commanded rate as if it were a measurement. Determining whether a real machine variant has a flow meter fitted is the bench's concern and out of scope here — this criterion covers only the simulated, injectable representation.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL
+    type: criterion-of
