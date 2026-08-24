@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include "control.h"
+#include "delivery_profile.h"
 #include "delivery_tolerance.h"
 #include "estimator.h"
 #include "estimator_limits.h"
@@ -1072,6 +1073,27 @@ static uint16_t pump_level_for(float ml_per_s)
                              (float)ACTUATION_FULL_SCALE);
 }
 
+/*
+ * What full pump scale draws on a machine the suite names, rather than the one
+ * the shipped description names. The delivery-profile suite needs this against
+ * a perturbed description, to show a conversion moves with it; the parameter
+ * `full_scale_flow_ml_per_s` above is left untouched rather than rewritten to
+ * take one, since every existing caller of it wants the shipped machine and
+ * none of them should have to say so at every call site.
+ */
+static float flow_at_full_scale_for(const plant_parameters_t *machine)
+{
+    plant_model_t asking;
+    plant_actuation_t everything = {{0u}};
+    float flow = 0.0f;
+
+    TEST_ASSERT_TRUE(plant_model_init(&asking, machine));
+    everything.level_permille[ACTUATION_CHANNEL_PUMP] = (uint16_t)ACTUATION_FULL_SCALE;
+    TEST_ASSERT_TRUE(plant_model_step(&asking, &everything, 0.0f, CONTROL_STEP_INTERVAL_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(&asking, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &flow));
+    return flow;
+}
+
 /* --- The band is described data ------------------------------------------- */
 
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: Brew temperature's
@@ -1856,6 +1878,776 @@ static void test_a_disturbance_to_the_machine_alone_reaches_the_estimator(void)
                              "does not own");
 }
 
+/* --- A delivery commanded as a profile ------------------------------------ */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: A delivery is expressed as a course
+/// of commanded flow, and the control unit accepts one by being given it.
+///
+/// Sampled at the points a piecewise-linear course actually bends at, so a
+/// regression that collapsed the interpolation to, say, the nearest point's
+/// rate rather than the value between two of them would move one of these
+/// assertions without moving the others -- and a regression that always
+/// returned the first or last point's rate would fail every mid-course
+/// assertion at once.
+static void test_delivery_profile_samples_the_course_piecewise_linearly(void)
+{
+    const delivery_profile_point_t points[] = {
+        {0u, 0.0f},
+        {1000u, 2.0f},
+        {3000u, 2.0f},
+        {4000u, 0.0f},
+    };
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 4000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 4u, end));
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, delivery_profile_rate_ml_per_s(&profile, 0u));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 1.0f, delivery_profile_rate_ml_per_s(&profile, 500u));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 2.0f, delivery_profile_rate_ml_per_s(&profile, 1000u));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 2.0f, delivery_profile_rate_ml_per_s(&profile, 2000u));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 1.0f, delivery_profile_rate_ml_per_s(&profile, 3500u));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, delivery_profile_rate_ml_per_s(&profile, 4000u));
+    /* Beyond the course's last point, the last point's rate is held rather than dropped. */
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, delivery_profile_rate_ml_per_s(&profile, 10000u));
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: Two profiles of different shape,
+/// run in one binary, produce two different commanded-flow trajectories.
+///
+/// A control path that ignored the profile and drove some fixed level instead
+/// -- the state control_command_flow left lying around, say -- would pass a
+/// test that ran only one profile. Running two different shapes back to back
+/// and comparing the recorded trajectories is what a regression collapsing
+/// the profile to a constant, or reading only its first point, cannot pass.
+static void test_two_profiles_of_different_shape_drive_different_trajectories(void)
+{
+    const delivery_profile_point_t flat_points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_end_condition_t flat_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                               .elapsed_millis = 2000u};
+    delivery_profile_t flat;
+    TEST_ASSERT_TRUE(delivery_profile_init(&flat, flat_points, 2u, flat_end));
+
+    const delivery_profile_point_t ramp_points[] = {{0u, 0.0f}, {2000u, 4.0f}};
+    const delivery_end_condition_t ramp_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                               .elapsed_millis = 2000u};
+    delivery_profile_t ramp;
+    TEST_ASSERT_TRUE(delivery_profile_init(&ramp, ramp_points, 2u, ramp_end));
+
+    uint16_t flat_trajectory[50];
+    uint16_t ramp_trajectory[50];
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_delivery_running(&state) == false);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &flat));
+    TEST_ASSERT_TRUE(control_delivery_running(&state));
+    for (unsigned step = 0u; step < 50u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        flat_trajectory[step] = state.commanded_pump_permille;
+    }
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &ramp));
+    for (unsigned step = 0u; step < 50u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        ramp_trajectory[step] = state.commanded_pump_permille;
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        memcmp(flat_trajectory, ramp_trajectory, sizeof(flat_trajectory)) != 0,
+        "two profiles of different shape produced the same commanded-flow trajectory, so "
+        "the profile is not what is driving the pump");
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C2: Turning a commanded rate into an
+/// actuation level reads the flow figure the plant description already
+/// carries, through the plant seam, rather than a duplicate figure of its own.
+///
+/// The expectation is computed independently, through the same seam
+/// full_scale_flow_ml_per_s asks and on the same terms pump_level_for already
+/// established for control_command_flow -- so this is not asserting the
+/// production code against itself. A regression that hard-coded a flow figure
+/// into control.c or delivery_profile.c, rather than reading the seam, would
+/// pass this against the shipped description by coincidence and fail the
+/// second half below the moment the description changed.
+static void test_a_commanded_rate_converts_through_the_plant_seams_flow_figure(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_EQUAL_UINT16(pump_level_for(2.0f), state.commanded_pump_permille);
+
+    /*
+     * A description declaring a different pump figure moves the level with no
+     * edit to the profile above: the same points and the same end condition
+     * are handed to a control path brought up against a machine that draws
+     * differently, and only the machine changed.
+     */
+    const plant_parameters_t machine =
+        parameters_from(description_with("pump.flow_ml_per_s", "10.5"));
+    bring_the_loop_up(&machine, &machine, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    const uint16_t moved_level = state.commanded_pump_permille;
+    TEST_ASSERT_NOT_EQUAL_UINT16(pump_level_for(2.0f), moved_level);
+
+    const float expected_permille =
+        (2.0f / flow_at_full_scale_for(&machine)) * (float)ACTUATION_FULL_SCALE;
+    TEST_ASSERT_EQUAL_UINT16((uint16_t)lroundf(expected_permille), moved_level);
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C2: A structure that draws nothing at
+/// full pump is handled honestly rather than divided by.
+///
+/// Without the refusal in control_command_delivery, this would either divide
+/// by zero or silently command a nonsense level the first time a delivery was
+/// asked of a machine with no usable pump figure -- exactly the case a
+/// zero-flow description exists to exercise, and one the tests driving the
+/// shipped description could never reach.
+static void test_control_command_delivery_refuses_a_structure_that_draws_nothing(void)
+{
+    control_state_t local_state;
+    const plant_parameters_t no_flow = parameters_from(description_with("pump.flow_ml_per_s", "0"));
+    TEST_ASSERT_TRUE(control_init(&local_state, &no_flow, &limits, &tolerance));
+
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 500u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+
+    TEST_ASSERT_FALSE(control_command_delivery(&local_state, &profile));
+    TEST_ASSERT_FALSE(control_delivery_running(&local_state));
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: control_command_delivery refuses a
+/// null state or a null profile, changing nothing.
+static void test_control_command_delivery_refuses_null_arguments(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 500u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+
+    TEST_ASSERT_FALSE(control_command_delivery(NULL, &profile));
+    TEST_ASSERT_FALSE(control_command_delivery(&state, NULL));
+    TEST_ASSERT_FALSE(control_delivery_running(NULL));
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3: Construction refuses an end
+/// condition stated in delivered volume, and refuses a value outside the
+/// enumeration.
+///
+/// A regression that let delivery_profile_init accept any quantity value --
+/// treating the enumeration as decorative -- would pass every test that only
+/// tries elapsed time. Trying the one quantity this build is named as
+/// carrying but cannot evaluate, and a value the enumeration does not name at
+/// all, is what a construction check that merely checked "is this a small
+/// integer" could not distinguish from a real refusal.
+static void test_construction_refuses_end_conditions_it_cannot_evaluate(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
+
+    const delivery_end_condition_t volume_end = {.quantity = DELIVERY_END_DELIVERED_VOLUME_ML,
+                                                 .delivered_volume_ml = 30.0f};
+    delivery_profile_t refused_by_volume;
+    TEST_ASSERT_FALSE(delivery_profile_init(&refused_by_volume, points, 2u, volume_end));
+
+    const delivery_end_condition_t out_of_range_end = {
+        .quantity = (delivery_end_quantity_t)DELIVERY_END_QUANTITY_COUNT, .elapsed_millis = 500u};
+    delivery_profile_t refused_by_range;
+    TEST_ASSERT_FALSE(delivery_profile_init(&refused_by_range, points, 2u, out_of_range_end));
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3: Construction refuses a course that
+/// is not a shape a delivery could run: fewer than two points, a first point
+/// not at zero elapsed, times that do not strictly increase, and a rate that
+/// is negative or not a number.
+///
+/// Each of these is a distinct way the shape could be malformed, and a check
+/// collapsed to only one of them -- catching a short course but not a
+/// backwards one, say -- would pass some of these and fail others. Trying
+/// them all in one test is what keeps a narrowed check from reading as
+/// complete coverage.
+static void test_construction_refuses_a_course_that_is_not_a_shape(void)
+{
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 500u};
+    delivery_profile_t profile;
+
+    const delivery_profile_point_t single_point[] = {{0u, 1.0f}};
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, single_point, 1u, end));
+
+    const delivery_profile_point_t not_starting_at_zero[] = {{10u, 1.0f}, {1000u, 1.0f}};
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, not_starting_at_zero, 2u, end));
+
+    const delivery_profile_point_t repeated_time[] = {{0u, 1.0f}, {500u, 2.0f}, {500u, 3.0f}};
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, repeated_time, 3u, end));
+
+    const delivery_profile_point_t backwards_time[] = {{0u, 1.0f}, {500u, 2.0f}, {200u, 3.0f}};
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, backwards_time, 3u, end));
+
+    const delivery_profile_point_t negative_rate[] = {{0u, -1.0f}, {1000u, 1.0f}};
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, negative_rate, 2u, end));
+
+    const delivery_profile_point_t not_a_number_rate[] = {{0u, NAN}, {1000u, 1.0f}};
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, not_a_number_rate, 2u, end));
+
+    const delivery_profile_point_t infinite_rate[] = {{0u, 1.0f}, {1000u, INFINITY}};
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, infinite_rate, 2u, end));
+
+    /* And a course this build validated is admitted, to show the refusals above are real. */
+    const delivery_profile_point_t admissible[] = {{0u, 1.0f}, {1000u, 1.0f}};
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, admissible, 2u, end));
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4: The delivery ends on the step its
+/// end condition is first met, not at the course's nominal finish.
+///
+/// The course here runs nominally to 5000 ms; the end condition is met at
+/// 350 ms. A control path that ran the delivery to the course's last point
+/// regardless of the condition -- reading the condition only to decide
+/// whether to admit the profile, say, and never again afterwards -- would run
+/// this delivery for 500 steps and never see it end within the window this
+/// test allows.
+static void test_the_delivery_ends_on_the_step_the_condition_is_first_met(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 350u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    unsigned ended_at_step = 0u;
+    for (unsigned step = 1u; step <= 500u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        if (!control_delivery_running(&state) && ended_at_step == 0u) {
+            ended_at_step = step;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(ended_at_step > 0u, "the delivery never ended");
+    TEST_ASSERT_EQUAL_UINT32(35u, ended_at_step);
+    TEST_ASSERT_EQUAL_UINT16(0u, state.commanded_pump_permille);
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4: Moving the end condition moves the
+/// ending.
+///
+/// Two deliveries run the identical course and differ only in where the end
+/// condition is set; the second ends later by exactly the difference between
+/// the two conditions. A control path that latched some fixed number of steps
+/// the first time it was exercised -- rather than reading the condition each
+/// run -- would end both deliveries at the same step and fail this test while
+/// still passing the one above.
+static void test_moving_the_end_condition_moves_the_ending(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    const delivery_end_condition_t end_a = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                            .elapsed_millis = 200u};
+    delivery_profile_t profile_a;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile_a, points, 2u, end_a));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile_a));
+
+    unsigned ended_a = 0u;
+    for (unsigned step = 1u; step <= 500u && ended_a == 0u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        if (!control_delivery_running(&state)) {
+            ended_a = step;
+        }
+    }
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    const delivery_end_condition_t end_b = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                            .elapsed_millis = 400u};
+    delivery_profile_t profile_b;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile_b, points, 2u, end_b));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile_b));
+
+    unsigned ended_b = 0u;
+    for (unsigned step = 1u; step <= 500u && ended_b == 0u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        if (!control_delivery_running(&state)) {
+            ended_b = step;
+        }
+    }
+
+    TEST_ASSERT_EQUAL_UINT32(20u, ended_a);
+    TEST_ASSERT_EQUAL_UINT32(40u, ended_b);
+    TEST_ASSERT_TRUE_MESSAGE(ended_b > ended_a,
+                             "moving the end condition later did not move the ending later");
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C5: A delivery commanded as a profile
+/// drives the truth plant through the same seam the held-level command drove.
+///
+/// hw_sim_output(ACTUATION_CHANNEL_PUMP) is the same read the existing
+/// control_command_flow tests assert against, and the truth plant this steps
+/// is the same one closed_loop_step and bring_the_loop_up stand up for every
+/// other test in this file. A profile driven through a path of its own --
+/// writing to the hardware seam directly rather than through
+/// commanded_pump_permille and control_step -- would not move this reading,
+/// and the outlet temperature would not respond to a draw nothing told it
+/// about.
+static void test_a_profile_commanded_delivery_drives_the_truth_plant_through_the_pump_seam(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    const float outlet_before = truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C);
+
+    for (unsigned step = 0u; step < 100u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        TEST_ASSERT_EQUAL_UINT16(pump_level_for(rate), hw_sim_output(ACTUATION_CHANNEL_PUMP));
+    }
+
+    const float outlet_after = truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C);
+    TEST_ASSERT_TRUE_MESSAGE(outlet_after != outlet_before,
+                             "the truth plant's outlet never moved, so the pump level the "
+                             "profile computed was never actually driven onto the machine");
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: control_command_flow is retained
+/// unchanged as the actuation-level entry point: it still sets the commanded
+/// level directly, and still refuses only a null state or an over-scale
+/// level.
+///
+/// This is the regression the whole slice turns on: nine already-attested
+/// tests call control_command_flow directly and must keep passing unchanged.
+/// This one is written fresh against the same behaviour those nine exercise
+/// piecemeal, so a change to control_command_flow's own refusal or assignment
+/// -- as opposed to a change in what calls it -- fails here first.
+static void test_control_command_flow_still_sets_the_level_directly(void)
+{
+    TEST_ASSERT_TRUE(control_command_flow(&state, 250u));
+    TEST_ASSERT_EQUAL_UINT16(250u, state.commanded_pump_permille);
+
+    TEST_ASSERT_FALSE(control_command_flow(&state, (uint16_t)ACTUATION_FULL_SCALE + 1u));
+    TEST_ASSERT_EQUAL_UINT16(250u, state.commanded_pump_permille);
+
+    TEST_ASSERT_FALSE(control_command_flow(NULL, 100u));
+}
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: A level set through
+/// control_command_flow while a delivery is running holds only until the
+/// delivery's own next step, which is what makes the profile the thing
+/// driving the pump rather than whatever was last set directly.
+///
+/// This is the defensible-answer test for the interaction the design brief
+/// asks about. Without it, a control path where a direct call permanently
+/// overrode the profile -- silently ending the delivery's authority over the
+/// pump without ending the delivery itself -- would look identical to this
+/// one on every other test here, since none of the others call
+/// control_command_flow while a delivery runs.
+static void test_a_held_level_set_while_a_delivery_runs_is_overwritten_next_step(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    const uint16_t profile_level = state.commanded_pump_permille;
+
+    TEST_ASSERT_TRUE(control_command_flow(&state, 5u));
+    TEST_ASSERT_EQUAL_UINT16(5u, state.commanded_pump_permille);
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "commanding a level directly ended the delivery, which is not the "
+                             "behaviour under test");
+
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_EQUAL_UINT16(profile_level, state.commanded_pump_permille);
+}
+
+/* --- A machine commanded off has no outstanding delivery ------------------ */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: The control unit accepts a
+/// delivery by being given one, and answers whether it is still running.
+///
+/// A fault latching mid-delivery used to leave control_delivery_running
+/// answering true for ever afterwards, because nothing cleared it once the
+/// outputs were commanded off. That is an outstanding request the caller
+/// never withdrew and the machine can no longer fulfil, so this asserts the
+/// query goes false the step the fault latches and stays false on every step
+/// after -- the same shape test_initialisation_without_a_record_leaves_the_
+/// heater_off_and_latched already asserts of the heater output.
+static void test_a_fault_mid_delivery_ends_the_delivery(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    for (unsigned step = 0u; step < 5u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "the delivery was not still running, so a fault ending it proves "
+                             "nothing");
+
+    hw_sim_set_output_refused(true);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_OUTPUT_REFUSED, control_step(&state));
+    TEST_ASSERT_TRUE(state.faulted);
+    TEST_ASSERT_FALSE_MESSAGE(control_delivery_running(&state),
+                             "a delivery survived the fault that latched, so it would go on "
+                             "answering running for ever afterwards");
+
+    for (int i = 0; i < 4; i++) {
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+        TEST_ASSERT_FALSE_MESSAGE(control_delivery_running(&state),
+                                 "the delivery came back running on a later faulted step");
+    }
+}
+
+/// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2: A machine nobody has
+/// asked for a drink drives nothing.
+///
+/// A delivery commanded and then left to run against an untargeted machine
+/// used to burn its whole course against the clock while no water moved, then
+/// report itself finished having delivered nothing -- the elapsed clock and
+/// the end-condition evaluation do not know the pump was never actually
+/// driven. This asserts the opposite: the delivery's clock does not move and
+/// it is still reported running after every untargeted step, and it resumes
+/// exactly where it was once a target is named again.
+static void test_a_delivery_on_an_untargeted_machine_does_not_advance(void)
+{
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
+    place_reconstruction_at(20000);
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {500u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 500u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    /*
+     * The target is withdrawn without ever having stepped the loop, so the
+     * delivery has never advanced its clock past zero and every step that
+     * follows is one with nothing targeted.
+     */
+    state.targeted = false;
+
+    for (unsigned step = 0u; step < 100u; step++) {
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_NO_TARGET, control_step(&state));
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+    }
+
+    TEST_ASSERT_FALSE_MESSAGE(control_delivery_running(&state),
+                             "an untargeted machine still reported a delivery running -- "
+                             "command_everything_off did not end it");
+}
+
+/* --- An end condition that cannot be evaluated stops the delivery --------- */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3: The end condition is a field of
+/// the profile, and a quantity this build cannot evaluate is refused at
+/// construction.
+///
+/// delivery_profile_init refuses a delivered-volume end condition, so the
+/// only way to reach delivery_profile_ended's unevaluable branch is to
+/// assemble the struct directly -- done here on purpose, to reach the branch
+/// the constructor exists to keep a caller of control_command_delivery away
+/// from. The regression this catches is the one the branch used to have: a
+/// condition it cannot read reported "not yet ended", so a delivery built
+/// this way would have the pump driven from its course indefinitely rather
+/// than stopped by the first thing that noticed it could not be evaluated.
+static void test_an_unevaluable_end_condition_ends_the_delivery_immediately(void)
+{
+    delivery_profile_t profile;
+    memset(&profile, 0, sizeof(profile));
+    profile.points[0] = (delivery_profile_point_t){0u, 1.0f};
+    profile.points[1] = (delivery_profile_point_t){1000u, 1.0f};
+    profile.point_count = 2u;
+    profile.end.quantity = DELIVERY_END_DELIVERED_VOLUME_ML;
+    profile.end.delivered_volume_ml = 30.0f;
+
+    TEST_ASSERT_TRUE_MESSAGE(delivery_profile_ended(&profile, 0u),
+                             "an end condition this build cannot evaluate did not end the "
+                             "delivery on its first step");
+    TEST_ASSERT_TRUE_MESSAGE(delivery_profile_ended(&profile, 100u),
+                             "an unevaluable end condition let the delivery go on running past "
+                             "its first step");
+}
+
+/* --- Boundary end conditions ------------------------------------------------ */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4: A delivery ends when its own end
+/// condition is met, evaluated on the control cadence.
+///
+/// Zero and UINT32_MAX are the two ends of what an elapsed-milliseconds
+/// figure can name, and neither is refused at construction: zero is still a
+/// whole number of milliseconds, and there is no shorter delivery than one
+/// that is over before it starts, so the defensible reading is to end on the
+/// very first evaluation rather than to invent a construction refusal nothing
+/// in the type states. UINT32_MAX is likewise just a very large, perfectly
+/// representable figure, and this file has no basis for picking some smaller
+/// value as the true limit of what a caller may ask for -- so it is admitted
+/// and ends only once the elapsed clock actually reaches it.
+static void test_boundary_end_conditions_at_zero_and_uint32_max(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
+
+    const delivery_end_condition_t ends_immediately = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                                        .elapsed_millis = 0u};
+    delivery_profile_t immediate;
+    TEST_ASSERT_TRUE(delivery_profile_init(&immediate, points, 2u, ends_immediately));
+    TEST_ASSERT_TRUE_MESSAGE(delivery_profile_ended(&immediate, 0u),
+                             "an end condition of zero elapsed milliseconds did not end "
+                             "immediately");
+
+    const delivery_end_condition_t ends_at_uint32_max = {
+        .quantity = DELIVERY_END_ELAPSED_MILLIS, .elapsed_millis = UINT32_MAX};
+    delivery_profile_t nearly_unending;
+    TEST_ASSERT_TRUE(delivery_profile_init(&nearly_unending, points, 2u, ends_at_uint32_max));
+    TEST_ASSERT_FALSE_MESSAGE(
+        delivery_profile_ended(&nearly_unending, UINT32_MAX - 1u),
+        "a course admitted with an end condition of UINT32_MAX ended before the clock reached "
+        "it");
+    TEST_ASSERT_TRUE_MESSAGE(delivery_profile_ended(&nearly_unending, UINT32_MAX),
+                             "a course with an end condition of UINT32_MAX never ended, even at "
+                             "the elapsed figure that names it");
+}
+
+/* --- The documented refusals ----------------------------------------------- */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3: The end condition is a field of
+/// the profile, stated in elapsed delivery time -- and construction refuses
+/// what delivery_profile.h documents it refuses.
+///
+/// Only point_count below two was exercised before this. The upper bound is
+/// the dangerous half of that same clause to leave untested: the course is
+/// copied in with a memcpy sized by point_count, so a regression that dropped
+/// the upper-bound check would not merely admit a profile it should have
+/// refused, it would write past the end of the fixed-capacity destination
+/// array -- a stack buffer overrun rather than a bad delivery. The null
+/// checks are added alongside it because all three refusals are one
+/// documented clause and a test exercising only the count would leave the
+/// other two unverified by name.
+static void test_construction_refuses_the_documented_null_and_bound_cases(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 500u};
+    delivery_profile_t profile;
+
+    TEST_ASSERT_FALSE(delivery_profile_init(NULL, points, 2u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, NULL, 2u, end));
+
+    delivery_profile_point_t too_many[DELIVERY_PROFILE_POINT_MAX + 1u];
+    for (size_t index = 0u; index < DELIVERY_PROFILE_POINT_MAX + 1u; index++) {
+        too_many[index].at_millis = (uint32_t)index * 100u;
+        too_many[index].rate_ml_per_s = 1.0f;
+    }
+    TEST_ASSERT_FALSE_MESSAGE(
+        delivery_profile_init(&profile, too_many, DELIVERY_PROFILE_POINT_MAX + 1u, end),
+        "a point_count past DELIVERY_PROFILE_POINT_MAX was admitted rather than refused");
+
+    /* Exactly at the bound is still admitted, to show the refusal above is real. */
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, too_many, DELIVERY_PROFILE_POINT_MAX, end));
+}
+
+/* --- Same-step feedforward for a profile-commanded delivery ---------------- */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: control_command_flow is retained
+/// as the actuation-level entry point the heater command's feedforward reads
+/// in the same step, and a delivery drives that same entry point.
+///
+/// test_duty_rises_in_the_step_the_flow_is_commanded_in proves the same-step
+/// feedforward for a level set directly through control_command_flow. This is
+/// its profile analogue: a profile-commanded delivery has to reach the
+/// feedforward through the same field on the same step, or the argument that
+/// commanding a delivery is commanding flow -- rather than a second,
+/// disconnected mechanism -- is only established for one of its two entry
+/// points. The reconstruction is checked to have not fallen, on the same
+/// reasoning the flow-commanded version checks it: a duty rise that followed
+/// a fall would be reaction with a short delay rather than a feedforward.
+static void test_duty_rises_in_the_step_a_profile_delivery_is_commanded_in(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    for (unsigned step = 0u; step < 200u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+
+    const uint16_t settled = hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
+    const float before = reconstruction();
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) > settled,
+                             "duty did not rise in the step the profile delivery was commanded "
+                             "in");
+    TEST_ASSERT_TRUE_MESSAGE(reconstruction() >= before - 0.05f,
+                             "the reconstruction had already fallen, so the rise in duty is a "
+                             "reaction rather than a feedforward");
+}
+
+/* --- Mid-ramp level through the control path -------------------------------- */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1: Two profiles of different shape
+/// produce two different commanded-flow trajectories, which requires the
+/// interpolation itself to be right rather than merely present.
+///
+/// test_two_profiles_of_different_shape_drive_different_trajectories only
+/// asks whether the two trajectories differ, which a wrong-axis interpolation
+/// -- taking a fraction of the whole course's duration rather than a fraction
+/// of the segment the elapsed time actually falls in -- would still pass,
+/// since it would still produce numbers that differ from a flat profile's.
+/// This asserts a specific mid-ramp step's commanded_pump_permille against a
+/// rate computed independently, from a course with two segments of different
+/// length so that the course-fraction and the segment-fraction give different
+/// answers at the sampled instant: a wrong-axis bug is what this distinguishes
+/// from a correct one, which the shape-comparison test above cannot.
+static void test_mid_ramp_level_matches_the_interpolated_rate_through_the_control_path(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const delivery_profile_point_t points[] = {
+        {0u, 0.0f},
+        {500u, 1.0f},
+        {2000u, 2.0f},
+    };
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 3000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    /*
+     * 125 steps of ten milliseconds each lands elapsed time at 1250 ms, inside
+     * the second segment (500 ms to 2000 ms) rather than at an endpoint or on
+     * the short first segment. A fraction of the whole course -- 1250 / 3000,
+     * the wrong axis -- and a fraction of the segment it actually falls in --
+     * (1250 - 500) / (2000 - 500) -- give different rates here.
+     */
+    for (unsigned step = 0u; step < 125u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+
+    const float expected_rate = 1.0f + ((1250.0f - 500.0f) / (2000.0f - 500.0f)) * (2.0f - 1.0f);
+    TEST_ASSERT_EQUAL_UINT16(pump_level_for(expected_rate), state.commanded_pump_permille);
+}
+
+/* --- The pump relation is linear, as the conversion assumes ---------------- */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C2: Turning a commanded rate into an
+/// actuation level reads the flow figure the plant description carries
+/// through the plant seam, rather than a duplicate figure of its own.
+///
+/// That conversion divides a rate by what full scale draws and scales the
+/// result by full scale, which only recovers the level that asked for a given
+/// rate if flow rises in proportion to level -- probed once, at full scale,
+/// and trusted to hold everywhere below it. Both shipped structures happen to
+/// be built that way, but nothing in the plant seam's contract requires it.
+/// This asks a model of the machine directly, at half scale, and would fail
+/// loudly against a structure whose flow-versus-level curve bent, rather than
+/// the loop silently commanding the wrong rate for that structure for as long
+/// as it shipped.
+static void test_the_pump_relation_is_linear_over_the_range_a_conversion_assumes(void)
+{
+    const float full_scale = full_scale_flow_ml_per_s();
+
+    plant_model_t half;
+    plant_actuation_t half_scale = {{0u}};
+    half_scale.level_permille[ACTUATION_CHANNEL_PUMP] = (uint16_t)ACTUATION_FULL_SCALE / 2u;
+
+    TEST_ASSERT_TRUE(plant_model_init(&half, &parameters));
+    TEST_ASSERT_TRUE(plant_model_step(&half, &half_scale, 0.0f, CONTROL_STEP_INTERVAL_MS));
+
+    float half_scale_flow = 0.0f;
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&half, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &half_scale_flow));
+
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(
+        full_scale * 0.01f, full_scale / 2.0f, half_scale_flow,
+        "half-scale pump level did not draw half the full-scale flow, so the conversion this "
+        "delivery mechanism rests on assumes a linearity this structure does not have");
+}
+
+/* --- A late step times the delivery by elapsed milliseconds ---------------- */
+
+/// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4: A delivery ends when its own end
+/// condition is met, evaluated on the control cadence -- against the interval
+/// that actually elapsed rather than the number of steps that ran.
+///
+/// Every other delivery test in this file runs on a clock that never falls
+/// behind, so a control path that counted accepted steps and multiplied by
+/// the nominal interval, instead of summing what actually elapsed, would pass
+/// every one of them. One step driven directly, late by more than three
+/// cadences, is what such a path could not survive: its own elapsed figure
+/// would fall behind the real clock by exactly how late the step was, and the
+/// delivery would still be running here where a delivery timed honestly has
+/// already ended.
+static void test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 40u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "the delivery ended before the late step, so the late step proves "
+                             "nothing");
+
+    const uint32_t LATE_BY = (CONTROL_STEP_INTERVAL_MS * CONTROL_STEP_LATE_MULTIPLE) + 5u;
+    hw_sim_advance_millis(LATE_BY);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_LATE, control_step(&state));
+
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_delivery_running(&state),
+        "a delivery whose end condition the elapsed clock had already passed was still running "
+        "after a late step, so it is being timed by something other than elapsed milliseconds");
+    TEST_ASSERT_EQUAL_UINT16(0u, state.commanded_pump_permille);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1902,5 +2694,26 @@ int main(void)
     RUN_TEST(test_the_suite_runs_against_the_shipped_declarations);
     RUN_TEST(test_a_machine_unlike_the_estimators_model_degrades_tracking);
     RUN_TEST(test_a_disturbance_to_the_machine_alone_reaches_the_estimator);
+    RUN_TEST(test_delivery_profile_samples_the_course_piecewise_linearly);
+    RUN_TEST(test_two_profiles_of_different_shape_drive_different_trajectories);
+    RUN_TEST(test_a_commanded_rate_converts_through_the_plant_seams_flow_figure);
+    RUN_TEST(test_control_command_delivery_refuses_a_structure_that_draws_nothing);
+    RUN_TEST(test_control_command_delivery_refuses_null_arguments);
+    RUN_TEST(test_construction_refuses_end_conditions_it_cannot_evaluate);
+    RUN_TEST(test_construction_refuses_a_course_that_is_not_a_shape);
+    RUN_TEST(test_the_delivery_ends_on_the_step_the_condition_is_first_met);
+    RUN_TEST(test_moving_the_end_condition_moves_the_ending);
+    RUN_TEST(test_a_profile_commanded_delivery_drives_the_truth_plant_through_the_pump_seam);
+    RUN_TEST(test_control_command_flow_still_sets_the_level_directly);
+    RUN_TEST(test_a_held_level_set_while_a_delivery_runs_is_overwritten_next_step);
+    RUN_TEST(test_a_fault_mid_delivery_ends_the_delivery);
+    RUN_TEST(test_a_delivery_on_an_untargeted_machine_does_not_advance);
+    RUN_TEST(test_an_unevaluable_end_condition_ends_the_delivery_immediately);
+    RUN_TEST(test_boundary_end_conditions_at_zero_and_uint32_max);
+    RUN_TEST(test_construction_refuses_the_documented_null_and_bound_cases);
+    RUN_TEST(test_duty_rises_in_the_step_a_profile_delivery_is_commanded_in);
+    RUN_TEST(test_mid_ramp_level_matches_the_interpolated_rate_through_the_control_path);
+    RUN_TEST(test_the_pump_relation_is_linear_over_the_range_a_conversion_assumes);
+    RUN_TEST(test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count);
     return UNITY_END();
 }

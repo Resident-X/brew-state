@@ -30,6 +30,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "delivery_profile.h"
 #include "delivery_tolerance.h"
 #include "estimator.h"
 
@@ -124,6 +125,38 @@ typedef struct {
      * path up without an allocator -- which the target build does not have.
      */
     estimator_t estimator;
+    /*
+     * What full pump scale draws on the machine this instance was brought up
+     * against, in millilitres per second -- probed once, at control_init, and
+     * kept here rather than asked of the plant seam on every step a delivery
+     * is running. It is what turns a course's commanded rate into a permille
+     * the pump can be driven at: dividing the rate by this figure and scaling
+     * by full scale is the only place that conversion happens, so a delivery
+     * profile never carries a flow figure of its own to disagree with it.
+     *
+     * Zero means the probe found nothing to divide by: a structure that draws
+     * no water at full pump. control_command_delivery refuses to start a
+     * delivery in that state rather than dividing by it, which is why nothing
+     * downstream of this field has to check it again.
+     */
+    float full_scale_flow_ml_per_s;
+    /*
+     * The delivery currently under way, held by value for the reason the
+     * estimator above is: no allocator exists to point at one instead. It is
+     * meaningful only while `delivery_running` is set; a profile copied in
+     * and then finished is left in place rather than cleared, since nothing
+     * reads it once running has gone false.
+     */
+    delivery_profile_t delivery;
+    bool delivery_running;
+    /*
+     * How long the running delivery has been under way, advanced each step by
+     * the same interval the estimator is advanced by -- see control_step --
+     * so a step that arrived late advances both by the same honest amount
+     * rather than the delivery running ahead of, or behind, the
+     * reconstruction it is driving alongside.
+     */
+    uint32_t delivery_elapsed_millis;
 } control_state_t;
 
 /*
@@ -143,6 +176,20 @@ typedef struct {
  * No temperature is commanded here. A machine that has just been brought up has
  * not been asked for a drink, and starting to drive toward a temperature nobody
  * named would be the control path deciding what the caller wanted.
+ *
+ * What full pump scale draws on this machine is also established here, by
+ * stepping a model of it -- built from the same parameter record, kept aside
+ * for the purpose and discarded once read -- at full pump for one interval and
+ * reading back what moved, through the plant seam's own quantity rather than a
+ * coefficient reached for by name. It is asked once, here, rather than by
+ * every step a delivery runs: the figure is a property of the compiled
+ * structure and the record it was brought up with, neither of which changes
+ * between steps, and asking the seam again on every one of them would be
+ * paying for an answer this file already has. A structure that draws nothing
+ * at full pump leaves the figure at zero, which is not treated as a fault of
+ * initialisation -- a machine with no pump channel wired is not an
+ * untrustworthy reading -- but is read by control_command_delivery as "no
+ * delivery can be commanded", rather than divided by later.
  *
  * Returns false when the interface refuses an off command, when no usable
  * record is given, or when the estimator refuses the structure this build
@@ -176,11 +223,21 @@ bool control_command_temperature(control_state_t *state, float celsius);
 /*
  * Command the level the pump is to be driven at, in permille of full scale.
  *
- * This is what a delivery asks for, and the control path both drives it and
- * feeds it forward into the heater command. The second is the point: the water
- * a delivery draws is known at the moment it is commanded rather than
- * discovered as it arrives, and a loop that waited to see the temperature fall
- * would be answering a disturbance it had been told about in advance.
+ * This is the actuation-level entry point the heater feedforward reads in the
+ * same step, and it stays that: what commands it now is ordinarily a running
+ * delivery profile rather than a caller setting a held level directly, but the
+ * signature, the refusal and the feed-forward reading of it are unchanged, and
+ * every caller that held a level this way before goes on being able to.
+ *
+ * Calling this while a delivery is running is not refused, because refusing it
+ * would be a change to what this function has always accepted, and there is a
+ * defensible reading of what it does instead: the level it sets here holds
+ * only until the delivery's own next step, which recomputes
+ * commanded_pump_permille from the course and overwrites it -- so the caller
+ * has, at most, borrowed the pump for the step in between. A caller that wants
+ * to hold a level for longer than that has to stop the delivery first, which
+ * is not a mechanism this file adds, because nothing about it needs one: a
+ * later call to control_command_delivery simply replaces what is running.
  *
  * Returns false, changing nothing, for a null state or a level beyond full
  * scale. A level is not applied to the machine here -- it takes effect on the
@@ -188,6 +245,56 @@ bool control_command_temperature(control_state_t *state, float celsius);
  * two reach the machine together.
  */
 bool control_command_flow(control_state_t *state, uint16_t pump_permille);
+
+/*
+ * Start a delivery, given as a profile.
+ *
+ * The profile is copied into the state by value, on the same reasoning every
+ * other by-value member here is: no allocator exists to hold a pointer to a
+ * caller's own copy instead. It begins with elapsed time at zero regardless of
+ * anything a previous delivery reached, because a course is stated from its
+ * own beginning and has no other beginning to resume from.
+ *
+ * A delivery already running is replaced rather than refused, on the same
+ * terms control_command_temperature replaces a target already named: a caller
+ * that names a new course meant to say what should be happening now, and a
+ * control path that went on running the old one until some other call told it
+ * to stop would be honouring an intent the caller has already withdrawn.
+ *
+ * Returns false, changing nothing, for a null state or profile, or when the
+ * figure control_init probed for what full pump scale draws on this machine
+ * was nothing -- a structure that draws no water at full pump has no level
+ * that could ask for any commanded rate, and starting a delivery in that state
+ * would leave every step dividing by a figure that is not there rather than
+ * saying plainly that no delivery can be commanded.
+ */
+bool control_command_delivery(control_state_t *state, const delivery_profile_t *profile);
+
+/*
+ * Whether a delivery commanded through control_command_delivery is still
+ * running.
+ *
+ * A query rather than a value a caller reaches for on the state directly,
+ * for the reason every other read here goes through a function: what counts
+ * as running is this file's own bookkeeping -- set on control_command_delivery,
+ * cleared by control_step the moment the end condition is met, and cleared the
+ * same way whenever the machine is commanded off -- and a caller reading the
+ * field itself would be reaching around the one place that bookkeeping is
+ * kept honest.
+ *
+ * A machine that has been shut down, has just faulted, or has nothing
+ * targeted has no outstanding delivery to resume, on the same reasoning it has
+ * no held pump level to resume: command_everything_off clears this flag
+ * alongside the outputs it drives to nothing. Without that, a delivery would
+ * survive a latched fault and answer true for ever afterwards, or would go on
+ * being timed against a machine that had stopped moving water, ending having
+ * delivered nothing.
+ *
+ * Returns false for a null state, which is the same answer as "no delivery is
+ * running" and is safe for the same reason: nothing is running for a state
+ * that does not exist.
+ */
+bool control_delivery_running(const control_state_t *state);
 
 /*
  * How far from the commanded temperature a delivery may sit, in millidegrees.
@@ -217,6 +324,30 @@ bool control_temperature_band(const control_state_t *state, int32_t *band_milli_
  * this machine's description says it may, and only its refusal to support the
  * state any longer brings the heater down -- so a single dropped sample is no
  * longer made indistinguishable from a burnt-out sensor.
+ *
+ * A running delivery's elapsed time is advanced here too, by the same interval
+ * the estimator is advanced by rather than by the cadence the loop is meant to
+ * run at, for the reason `advance` is computed that way in control.c: a late
+ * step is a step over an interval that genuinely was longer, and a delivery
+ * timed against the nominal cadence instead would end early or late by exactly
+ * how late the loop had fallen. The end condition is evaluated against that
+ * advanced figure, and a delivery whose condition is met on this step ends on
+ * this step -- the pump commanded to zero -- rather than running on to see
+ * whether some later step notices. This happens after the estimator has been
+ * advanced, because what the delivery commands next has to answer for the
+ * interval that is coming, not correct the one just gone; below the check for
+ * a targeted machine, because a delivery only ever advances on a step that
+ * actually drives the machine; and before the heater command is computed,
+ * because the feedforward it carries reads commanded_pump_permille in this
+ * same step, and a delivery's commanded rate has to be sitting there before
+ * it is read, not after.
+ *
+ * A delivery does not outlive the machine driving it. Whenever this step
+ * commands everything off -- nothing targeted, a refused drive command, or a
+ * fault an earlier step already latched -- command_everything_off clears
+ * delivery_running and its elapsed clock along with the outputs, so a
+ * delivery is never left running against a machine that has stopped moving
+ * water, and control_delivery_running answers false from that step on.
  */
 control_step_result_t control_step(control_state_t *state);
 

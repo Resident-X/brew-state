@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3-TEST
+type: evidence
+title: The end condition is a field of the profile, stated in elapsed delivery time — control suite (SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T04:14:03Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_construction_refuses_end_conditions_it_cannot_evaluate,test_construction_refuses_a_course_that_is_not_a_shape,test_construction_refuses_the_documented_null_and_bound_cases,test_an_unevaluable_end_condition_ends_the_delivery_immediately
+text: |-
+  The end condition is carried by delivery_profile_t itself rather than passed alongside it, so a delivery cannot be commanded without one. It carries the quantity it is stated in, and construction refuses a condition naming a quantity the machine cannot evaluate while the delivery runs: an endpoint in delivered volume is named in the enumeration and rejected at delivery_profile_init, as is a value outside the enumeration entirely, so a check that merely tested for a small integer could not pass. The documented refusals are pinned — a null profile, null points, and a point count above the fixed capacity, the last of which would otherwise be a stack overrun in the copy. A hand-assembled profile bypassing the constructor and carrying an unevaluable quantity ends on its first step rather than running on, so the unevaluable case errs toward stillness.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3
+    type: satisfies

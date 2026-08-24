@@ -149,6 +149,7 @@ CONTROL_DECLARATION = [
     sys.executable, "tools/check_control_declaration.py",
     "--include-dir", "include", "--source-dir", "src/control", "--source-dir", "src/delivery",
     "--source-header", "include/delivery_tolerance.h",
+    "--source-header", "include/delivery_profile.h",
     "--declaration", "params/control.declaration",
     "--tolerance", "params/tolerance.declaration",
     "--tree-dir", "src", "--tree-dir", "include",
