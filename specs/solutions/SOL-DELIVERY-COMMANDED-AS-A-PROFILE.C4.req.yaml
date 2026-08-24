@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4
+type: criterion
+title: A delivery ends when its own end condition is met, evaluated on the control cadence
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The end condition is evaluated every control step against the quantity it names, and the delivery ends on the step the condition is first met. A test drives a profile whose end condition is reached partway along the course and asserts the delivery ended there rather than running the course to its nominal finish; a second test moves the end condition and asserts the ending moves with it. Ending for any other reason — a fault, an abort, an operator stop — is out of scope, since those paths already exist and are not changed here.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: criterion-of

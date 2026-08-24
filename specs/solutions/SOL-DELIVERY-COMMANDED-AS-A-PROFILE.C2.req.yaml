@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C2
+type: criterion
+title: The commanded rate reaches the pump through the plant's declared figure rather than a second one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Turning a commanded rate into an actuation level reads the flow figure the plant description already carries — the asymptote its flow relation is built on — through the plant seam, rather than introducing a duplicate figure in the control or profile source. A test asserts a commanded rate produces the actuation level that figure implies, and that a plant description declaring a different figure moves the level with no edit to the profile source. Reading that figure as a bound on what a delivery can be sustained at is out of scope and is not done here: its own account states it is the open-path rate rather than the rate a shot is pulled at.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: criterion-of

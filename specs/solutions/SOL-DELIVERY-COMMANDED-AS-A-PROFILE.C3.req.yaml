@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3
+type: criterion
+title: The end condition is a field of the profile, stated in elapsed delivery time
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The end condition is carried by the profile type itself rather than passed alongside it, so a delivery cannot be commanded without one. It carries the quantity it is stated in, and elapsed delivery time — which the control cadence already gives the machine — is the quantity built here; an end condition naming a quantity the machine cannot evaluate while the delivery runs is rejected when the profile is constructed rather than when it is run. A test asserts construction refuses such a condition. An endpoint stated in delivered volume is out of scope: the plant reports the rate the pump was commanded to move, no structure keeps it as a state and nothing integrates it, so it waits on the fitted meter's reading reaching the controller and is added beside elapsed time rather than replacing it.
+links:
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: criterion-of

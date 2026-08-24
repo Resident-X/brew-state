@@ -1,0 +1,98 @@
+id: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+type: deliverable
+category: solution
+title: A delivery is commanded as a course of flow that states its own end condition
+status: active
+version: 1
+text: |
+  The command surface a delivery is given is built here, in host simulation against the plant
+  description. Today the control unit is told a delivery in two independent held scalars — a
+  temperature and a pump level — each set once and held until something else sets it. Neither
+  expresses a course and neither carries an end, so a delivery is something the machine is steered
+  through rather than something it is asked for.
+
+  A profile commands flow. The decision that settles the quantity puts flow on the commanded side of
+  the machine and caps pressure mechanically, so what a profile states is a course of commanded flow
+  from the beginning of a delivery to its end, in the volume-per-unit-time the plant already reports
+  in. The course is the command rather than an adjustment applied to one: two profiles of different
+  shape produce two different commanded-flow trajectories, which a level held throughout cannot
+  express. Reaching the pump means turning that rate into an actuation level, and the plant
+  description already carries the figure that relation is built on, so the conversion reads what is
+  declared rather than introducing a second flow figure beside it.
+
+  The end condition is part of the profile rather than a separate thing that stops it. An endpoint
+  that lives outside the course can disagree with the course, and a delivery with no stated end is
+  stopped by whatever notices first. It is stated in elapsed delivery time, which the control cadence
+  already gives the machine, and is evaluated on that cadence, so ending is a decision the delivery
+  makes about itself rather than one imposed from outside. An endpoint stated in delivered volume is
+  the one the graph ultimately wants and is not available yet: the rate the plant reports is the rate
+  the pump was commanded to move rather than the rate a cup received, no structure keeps it as a
+  state, and nothing integrates it. The end condition carries the quantity it is stated in, so a
+  second measured quantity is added beside elapsed time rather than replacing it once the fitted
+  meter's reading reaches the controller.
+
+  Out of scope: refusing a delivery the machine cannot achieve. Refusal has to compare what a profile
+  asks for against what the machine can actually deliver, and no such figure exists. The control law
+  is held to no declared flow capability — it reads no field of the plant parameters it is handed, and
+  the constants its feedforward uses are declared as describing the design rather than the machine.
+  The one flow figure the plant description carries is the rate the brew path draws at full duty into
+  an open path, and its own account says a pump of this class delivers roughly a third of it through a
+  puck at working pressure, that the equations carry no resistance term to tell those cases apart, and
+  that reading it as the rate a shot is pulled at would be reading it for the case the model does not
+  represent. Admission against that figure would admit the profiles refusal exists to reject. What is
+  missing is a declared bound on what a delivery can actually be sustained at, established by
+  measurement rather than assumed from a pump's rating — the same standard the description already
+  holds its other one-sided figures to. It is a criterion of the parent epic, deferred until that
+  bound exists.
+
+  Also out of scope: reporting departure from the commanded course, which needs a delivered rate that
+  can differ from the commanded one — there is no flow sensor among the sensed channels, and the puck,
+  the pump's flow-versus-pressure characteristic and the mechanical cap are none of them represented
+  in the plant model, so a comparison built now would compare the commanded rate against itself.
+  Feeding the commanded course forward into the horizon model is likewise deferred: the feedforward
+  already built takes the flow commanded now, and widening it to a course waits on the course
+  existing. Hot water delivery and the contention between two deliveries on the shared heated mass
+  remain deferred at the parent epic.
+rationale: |
+  The profile and its end condition are built as one leaf because a profile with no end condition is
+  not a complete command — the endpoint is what makes it a command rather than a preference the
+  machine consults. Nothing smaller than the two together is a coherent thing to build.
+
+  The admission check was argued for this leaf and left out. It reads as part of the same command
+  contract, and it is, but its premise is a declared bound on what the machine can deliver, and that
+  figure does not exist anywhere in the description or the control law. The nearest candidate is an
+  open-path asymptote whose own account forbids reading it as a delivery rate, and building admission
+  against it would produce a gate that passes the profiles it exists to stop — a test that cannot fail
+  standing as evidence that the criterion is met. Deferring it names the missing bound instead, which
+  is what lets it be established by measurement rather than invented here.
+
+  Flow is what the profile commands because the decision that settles the quantity has already been
+  taken, and it names the endpoint and the thermal feedforward as the two things needing flow to be
+  predictable. The conversion from a commanded rate to an actuation level reads the plant's own figure
+  rather than declaring a second one, which is the use that figure was written for: it is the
+  asymptote the plant's flow relation is built on, and the account that forbids reading it as a
+  delivery rate is not a bar on using it for the relation it defines.
+
+  Elapsed time is the endpoint quantity because it is the only one the machine measures today. The
+  requirement deliberately keeps the endpoint expressible without fixing which quantity states it, so
+  carrying the quantity on the end condition rather than assuming one is what lets delivered volume
+  join it later without the surface being rebuilt.
+links:
+  - target: DEL-SIM-BREW-LOOP.C4
+    type: derives-from
+  - target: REQ-DELIVERY-PROFILE-001.C1
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C2
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C5
+    type: targets
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by
+  - target: DEC-PROFILE-FEEDS-THE-HORIZON
+    type: justified-by
+  - target: DEL-SIM-FLOW-TERM
+    type: depends-on
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET
+    type: depends-on
