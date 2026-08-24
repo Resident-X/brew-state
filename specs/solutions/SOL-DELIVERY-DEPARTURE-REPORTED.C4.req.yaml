@@ -1,0 +1,17 @@
+id: SOL-DELIVERY-DEPARTURE-REPORTED.C4
+type: criterion
+title: An absent or failed flow reading does not itself report departure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When `hw_sensor_read(HW_SENSOR_FLOW).status` is `HW_READING_ABSENT` or
+  `HW_READING_FAILED`, `control_step` does not evaluate or return
+  `CONTROL_STEP_DELIVERY_DEPARTED` on that cycle -- no reading is not evidence of a departed
+  one. Per DEC-DEPARTURE-OBSERVED-NOT-MODELLED, departure is observed by measurement, not
+  inferred; falling back to a modelled/predicted flow estimate when no reading exists is out
+  of scope.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED
+    type: criterion-of

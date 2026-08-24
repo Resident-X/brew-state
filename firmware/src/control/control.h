@@ -69,6 +69,10 @@ typedef enum {
      * control law asked for, and a caller that has fallen behind should learn
      * it here rather than from the coffee. Being late is not a reason to stop
      * controlling, so the step is not refused.
+     *
+     * Takes priority over CONTROL_STEP_DELIVERY_DEPARTED when both are true of
+     * the same cycle: lateness is the pre-existing, more urgent signal, and a
+     * caller must still learn of it even on a cycle whose flow also departed.
      */
     CONTROL_STEP_LATE,
     /*
@@ -83,7 +87,28 @@ typedef enum {
      * caller can clear. Refusing a target the machine cannot reach is a
      * different answer to a different question and is not this one.
      */
-    CONTROL_STEP_NO_TARGET
+    CONTROL_STEP_NO_TARGET,
+    /*
+     * The step ran and drove the outputs, but the flow a running delivery is
+     * actually moving sits further from the rate its profile is commanding
+     * than the declared flow-departure band tolerates. It is its own result
+     * rather than an actuated one for the same reason CONTROL_STEP_LATE is:
+     * a delivery that has come apart from its course is a different outcome
+     * from one that is tracking it, and a caller should learn that here
+     * rather than from the cup. Departure does not stop the delivery -- it
+     * keeps running to its own end condition, and this result is reported on
+     * every cycle the gap stays outside the band, not only the first.
+     *
+     * Never returned when the flow reading is HW_READING_ABSENT or
+     * HW_READING_FAILED: an unread channel is not evidence of departure, so a
+     * cycle with nothing trustworthy to compare against reports whatever it
+     * would have reported anyway.
+     *
+     * Yields to CONTROL_STEP_LATE when both are true of the same cycle: this
+     * result is additive scope layered on top of an otherwise-ordinary cycle,
+     * not a replacement for the pre-existing, more urgent lateness signal.
+     */
+    CONTROL_STEP_DELIVERY_DEPARTED
 } control_step_result_t;
 
 typedef struct {
@@ -348,6 +373,16 @@ bool control_temperature_band(const control_state_t *state, int32_t *band_milli_
  * delivery_running and its elapsed clock along with the outputs, so a
  * delivery is never left running against a machine that has stopped moving
  * water, and control_delivery_running answers false from that step on.
+ *
+ * On a step that advances a still-running delivery, the flow channel is read
+ * and compared against the rate the course is commanding for that step. A gap
+ * wider than the declared flow-departure band is reported through
+ * CONTROL_STEP_DELIVERY_DEPARTED in place of the ordinary result; the
+ * delivery is not ended or corrected by it, only reported. A reading that is
+ * absent or failed is not compared against anything, on the same reasoning
+ * the brew-temperature reconstruction is carried on prediction rather than
+ * treated as evidence of a fault: no reading is not evidence of a departed
+ * one.
  */
 control_step_result_t control_step(control_state_t *state);
 

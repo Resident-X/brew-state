@@ -1,0 +1,30 @@
+id: SOL-DELIVERY-DEPARTURE-REPORTED
+type: deliverable
+category: solution
+title: Delivered flow is compared against the commanded profile and departure is reported
+status: active
+version: 1
+text: |
+  The control unit compares the delivered flow rate DEL-SIM-FLOW-SENSED puts on its input against the
+  commanded rate the active profile is asking for at that instant, on the same cadence the profile is
+  evaluated. A difference beyond the declared tolerance is reported as departure rather than silently
+  absorbed into whatever the delivery ends up producing.
+
+  The comparison follows DEC-DEPARTURE-OBSERVED-NOT-MODELLED: departure is observed by measuring what
+  moved, not reproduced by modelling what resisted it. In simulation the delivered reading is injected
+  at the same seam a real one arrives through, so the same comparison exercises identically on the bench
+  and in the harness.
+rationale: |
+  Sliced now because both of its premises are already real: DEL-SIM-FLOW-SENSED is sealed and puts a
+  delivered-rate reading on the seam this solution reads, and DEC-DEPARTURE-OBSERVED-NOT-MODELLED already
+  rules on how departure is to be observed rather than reproduced. No unbuilt or unpinned seam stands
+  between this solution and the criteria it targets.
+links:
+  - target: DEC-DEPARTURE-OBSERVED-NOT-MODELLED
+    type: justified-by
+  - target: DEL-SIM-BREW-LOOP.C6
+    type: derives-from
+  - target: DEL-SIM-FLOW-SENSED
+    type: depends-on
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: targets

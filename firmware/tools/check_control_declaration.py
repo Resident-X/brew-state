@@ -112,6 +112,7 @@ ACCOUNTED_ELSEWHERE = {
 #: thing it is inspecting would agree with any edit to it.
 BANDS = {
     "brew-temperature-band-milli-c": "TEMPERATURE_BAND",
+    "flow-departure-band-milli-ml-s": "FLOW_DEPARTURE_BAND",
 }
 
 #: What the source is scanned for.

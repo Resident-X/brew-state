@@ -66,6 +66,15 @@ BAND = (
     "treatment of two degrees as the span across which a difference becomes tasteable.\n"
 )
 
+#: The second band the tolerance declaration is required to carry, on the same
+#: footing BAND above is: present in every fixture that is meant to pass, and
+#: substituted for or withdrawn by the cases below that are about it
+#: specifically.
+FLOW_BAND = (
+    "flow-departure-band-milli-ml-s = 300 @estimated Sized against the commanded rates the "
+    "shipped delivery profiles use.\n"
+)
+
 #: A header belonging to one of the sources under inspection, carrying no figure
 #: of its own. It sits in the shared include directory because a caller has to
 #: see it, which is exactly the arrangement that lets a figure in a header go
@@ -97,7 +106,7 @@ class ControlDeclarationGate(unittest.TestCase):
         self.header(LOADER_HEADER)
         self.source(CONTROL_SOURCE)
         self.declaration(ACCOUNTED)
-        self.tolerance(BAND)
+        self.tolerance(BAND + FLOW_BAND)
 
     @staticmethod
     def write(path: str, content: str) -> None:
@@ -454,6 +463,37 @@ class ControlDeclarationGate(unittest.TestCase):
     def test_a_band_declared_twice_is_refused(self):
         """SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: two bands for one delivery are two criteria, and which applies is whichever the eye landed on."""
         self.tolerance(BAND + BAND)
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("already declared", result.stderr)
+
+    # --- A second band lives in data on the same terms the first does ------
+
+    def test_the_second_band_left_undeclared_is_refused(self):
+        """SOL-DELIVERY-DEPARTURE-REPORTED.C3: a second band is required exactly as the first is -- the gate is not satisfied by any one of the bands it holds a delivery to."""
+        self.tolerance(BAND)
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("flow-departure-band-milli-ml-s", result.stderr)
+        self.assertIn("declared nowhere", result.stderr)
+
+    def test_the_second_band_compiled_into_the_control_logic_is_refused(self):
+        """SOL-DELIVERY-DEPARTURE-REPORTED.C3: a second band with a second home in the source is the one the software would hold deliveries to, the same fault the first band's second home is."""
+        self.source(CONTROL_SOURCE + "#define CONTROL_FLOW_DEPARTURE_BAND_MILLI_ML_S 300\n")
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("compiled in cannot be varied", result.stderr)
+
+    def test_the_second_band_with_no_origin_is_refused(self):
+        """SOL-DELIVERY-DEPARTURE-REPORTED.C3: the second band carries a recorded origin on the same terms the first does."""
+        self.tolerance(BAND + "flow-departure-band-milli-ml-s = 300\n")
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("records no origin", result.stderr)
+
+    def test_the_second_band_declared_twice_is_refused(self):
+        """SOL-DELIVERY-DEPARTURE-REPORTED.C3: two declarations of the second band are two criteria, the same fault two declarations of the first band are."""
+        self.tolerance(BAND + FLOW_BAND + FLOW_BAND)
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("already declared", result.stderr)

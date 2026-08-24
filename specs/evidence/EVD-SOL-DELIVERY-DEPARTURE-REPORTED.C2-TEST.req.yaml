@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-DEPARTURE-REPORTED.C2-TEST
+type: evidence
+title: Departure surfaces as a distinct control-step result without ending the delivery — control suite (SOL-DELIVERY-DEPARTURE-REPORTED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T09:12:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_departure_beyond_the_band_surfaces_and_agreement_does_not,test_a_departed_delivery_still_runs_to_its_own_completion,test_late_takes_priority_over_departed_on_the_same_cycle,test_a_gap_exactly_at_the_tolerance_does_not_depart
+text: |-
+  control_step_result_t gains CONTROL_STEP_DELIVERY_DEPARTED, returned instead of CONTROL_STEP_ACTUATED when the delivered/commanded gap exceeds the declared tolerance; the exact-tolerance boundary is exclusive (>, not >=); CONTROL_STEP_LATE takes priority over it on a cycle where both hold; and the delivery keeps running to its own completion on a departed cycle rather than being ended or corrected.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED.C2
+    type: satisfies

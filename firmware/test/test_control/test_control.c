@@ -1124,7 +1124,9 @@ static void test_a_different_declaration_changes_the_band_with_no_source_edit(vo
 {
     static const char TIGHTER[] =
         "brew-temperature-band-milli-c = 400 @document Taken from a machine that has been "
-        "characterised, for the purpose of asking what the design costs at a narrower band.\n";
+        "characterised, for the purpose of asking what the design costs at a narrower band.\n"
+        "flow-departure-band-milli-ml-s = 300 @estimated Carried unchanged from the shipped "
+        "declaration; this test is about the temperature band, not this one.\n";
     delivery_tolerance_t narrowed;
     delivery_tolerance_error_t fault;
     int32_t band = 0;
@@ -2332,6 +2334,345 @@ static void test_a_fault_mid_delivery_ends_the_delivery(void)
     }
 }
 
+/* --- Departure from the commanded profile is reported, not absorbed ------- */
+
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C1: control_step reads HW_SENSOR_FLOW on
+/// every cycle a delivery is running and compares it against the same
+/// delivery_profile_rate_ml_per_s figure that is driving commanded_pump_permille
+/// that cycle.
+///
+/// A flow reading planted exactly on the commanded rate produces an ordinary
+/// actuated step; a control path that never read the channel at all, or read
+/// it and compared against the wrong quantity, could not be told apart from
+/// this by any test that only injects a divergent reading -- so this asserts
+/// the agreeing case is unaffected before the tests below assert the
+/// diverging one is not.
+static void test_delivered_flow_is_compared_against_the_commanded_rate_each_cycle(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    for (unsigned step = 0u; step < 10u; step++) {
+        hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 2000);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+}
+
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C2: A gap beyond the declared flow-departure
+/// band surfaces as CONTROL_STEP_DELIVERY_DEPARTED in place of
+/// CONTROL_STEP_ACTUATED, and a gap that stays inside the band does not.
+///
+/// The delivered reading is planted far below the commanded rate for the first
+/// half and back on it for the second, on the same course and the same
+/// commanded rate throughout, so a control path that latched departure once
+/// and never cleared it -- or one that ignored the channel and always
+/// actuated -- would fail one half or the other.
+static void test_departure_beyond_the_band_surfaces_and_agreement_does_not(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 4000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    /* Commanded is 2000 milli-ml/s; the shipped band is 300, so 800 diverges. */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 800);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "a departed cycle ended the delivery, which is out of scope for "
+                             "this criterion");
+    TEST_ASSERT_EQUAL_UINT16(pump_level_for(rate), state.commanded_pump_permille);
+
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 2100);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1250);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
+}
+
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C2: A gap beyond the declared flow-departure
+/// band surfaces as CONTROL_STEP_DELIVERY_DEPARTED in place of
+/// CONTROL_STEP_ACTUATED, and a gap that stays inside the band does not.
+///
+/// The comparison in control.c is a strict greater-than, so the band is
+/// exclusive: a gap sitting exactly on the declared tolerance is still inside
+/// it. This plants a reading exactly the shipped band's width from the
+/// commanded rate and asserts the ordinary result -- a future edit that
+/// widened the comparison to >= would report departure here and fail this,
+/// even though nothing above it exercises that exact boundary.
+static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 4000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    /*
+     * Commanded is 2000 milli-ml/s; the shipped band is 300, so 1700 sits
+     * exactly on the boundary rather than inside or outside it.
+     */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID,
+                      2000 - (int32_t)tolerance.flow_departure_band_milli_ml_per_s);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, closed_loop_step(-1),
+                              "a gap exactly at the declared tolerance reported departure -- the "
+                              "boundary is not exclusive as coded");
+}
+
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C1: Delivered flow is compared against the
+/// commanded rate on every control cycle a delivery is running.
+///
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C2: A delivery that departs keeps running to
+/// its own end condition rather than being ended or refused by the departure.
+///
+/// Every one of the 34 steps before the delivery ends is asserted departed in
+/// the loop below, which is what proves the comparison runs every cycle rather
+/// than once: the agreement test above only shows one cycle unaffected, and a
+/// control path that compared on the first cycle and then stopped, or compared
+/// only intermittently, would fail this by falling short of 34.
+///
+/// The course here is the same one
+/// test_the_delivery_ends_on_the_step_the_condition_is_first_met ends at step
+/// 35; every one of those steps is forced to depart here, and the delivery is
+/// still asserted to end on exactly the same step with the pump commanded to
+/// zero -- the only difference from that test is what control_step reports
+/// along the way.
+static void test_a_departed_delivery_still_runs_to_its_own_completion(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 350u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    unsigned ended_at_step = 0u;
+    unsigned departed_steps = 0u;
+    for (unsigned step = 1u; step <= 500u; step++) {
+        hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 0);
+        const control_step_result_t result = closed_loop_step(-1);
+        if (control_delivery_running(&state)) {
+            /* The comparison ran this step, so a reading of nothing against a
+             * commanded 2 ml/s departs the shipped band by a wide margin. */
+            TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, result);
+            departed_steps++;
+        } else if (ended_at_step == 0u) {
+            /* The step the delivery ends on evaluates the end condition
+             * before the comparison, so it reports ordinarily rather than
+             * departed. */
+            TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, result);
+        }
+        if (!control_delivery_running(&state) && ended_at_step == 0u) {
+            ended_at_step = step;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(ended_at_step > 0u, "the delivery never ended");
+    TEST_ASSERT_EQUAL_UINT32(35u, ended_at_step);
+    TEST_ASSERT_EQUAL_UINT32(34u, departed_steps);
+    TEST_ASSERT_EQUAL_UINT16(0u, state.commanded_pump_permille);
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+}
+
+/// SOL-USABLE-ESTIMATE-EVERY-STEP.C9: A control step arriving later than the
+/// cadence tolerates is reported rather than absorbed.
+///
+/// A step can be late and its delivery departed at once, and the two results
+/// share one enumerator's worth of return value -- so one of them has to give
+/// way. This plants a flow reading far enough from the commanded rate to
+/// depart the band on the same step the elapsed interval is pushed past the
+/// tolerable multiple, and asserts CONTROL_STEP_LATE, not
+/// CONTROL_STEP_DELIVERY_DEPARTED, comes back: lateness is the pre-existing,
+/// more urgent signal C9 already promises a caller, and departure is scope
+/// layered on top of it rather than a replacement for it. A control path that
+/// let departure override lateness would silently break that promise on
+/// exactly the cycle a caller needs it most -- one that is both behind on
+/// cadence and off course.
+static void test_late_takes_priority_over_departed_on_the_same_cycle(void)
+{
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 4000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    /*
+     * A first ordinary step so the loop is `started` before lateness is
+     * measured against it -- the very first step accepted is never late, by
+     * construction, so a late+departed cycle has to be the second one.
+     */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 2000);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
+
+    /* Commanded is 2000 milli-ml/s; the shipped band is 300, so 800 diverges. */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 800);
+    hw_sim_advance_millis((CONTROL_STEP_INTERVAL_MS * CONTROL_STEP_LATE_MULTIPLE) + 1u);
+    TEST_ASSERT_EQUAL_MESSAGE(
+        CONTROL_STEP_LATE, control_step(&state),
+        "a departed reading on a late cycle reported departure instead of lateness");
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "the late/departed cycle ended the delivery, which neither result "
+                             "is supposed to do");
+}
+
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C4: An absent or a failed flow reading does
+/// not itself report departure, per DEC-DEPARTURE-OBSERVED-NOT-MODELLED --
+/// departure is observed by measurement, and a cycle with nothing trustworthy
+/// to measure has no evidence to report.
+///
+/// The commanded rate here is the same one the diverging cases above use, and
+/// nothing about the course changed -- only the reading's status did, from
+/// HW_READING_VALID with a divergent figure to HW_READING_ABSENT and then
+/// HW_READING_FAILED. A control path that treated "no reading" as "the worst
+/// possible reading" would report departure on both and fail this; one that
+/// forgot to check status at all would already have failed the tests above.
+static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_ABSENT, 0);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_FAILED, 0);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    /*
+     * The same gap that was actually reported as departure above, planted
+     * behind a failed status, does not report it -- so this is not merely a
+     * control path that never departs when the reading is zero.
+     */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_FAILED, 800);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+}
+
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C3: The flow-departure tolerance is
+/// declared data with a recorded origin rather than a compiled literal --
+/// changing only the declaration moves what counts as departure, with no edit
+/// to any source file.
+///
+/// The same commanded rate and the same injected gap are held fixed across
+/// both halves; only the declared band moves, from wide enough to absorb the
+/// gap to narrow enough to report it. A band compiled into control.c would
+/// answer the same result to both.
+static void test_a_different_declaration_changes_what_counts_as_departure(void)
+{
+    static const char WIDE[] =
+        "brew-temperature-band-milli-c = 1000 @document Carried unchanged from the shipped "
+        "declaration; this test is about the flow band, not this one.\n"
+        "flow-departure-band-milli-ml-s = 900 @estimated Wide enough that the gap this test "
+        "injects is absorbed rather than reported.\n";
+    static const char NARROW[] =
+        "brew-temperature-band-milli-c = 1000 @document Carried unchanged from the shipped "
+        "declaration; this test is about the flow band, not this one.\n"
+        "flow-departure-band-milli-ml-s = 100 @estimated Narrow enough that the gap this test "
+        "injects is reported rather than absorbed.\n";
+
+    delivery_tolerance_t wide_tolerance;
+    delivery_tolerance_t narrow_tolerance;
+    delivery_tolerance_error_t fault;
+    TEST_ASSERT_TRUE(delivery_tolerance_load(WIDE, sizeof(WIDE) - 1u, &wide_tolerance, &fault));
+    TEST_ASSERT_TRUE(
+        delivery_tolerance_load(NARROW, sizeof(NARROW) - 1u, &narrow_tolerance, &fault));
+    TEST_ASSERT_NOT_EQUAL_INT32(wide_tolerance.flow_departure_band_milli_ml_per_s,
+                                narrow_tolerance.flow_departure_band_milli_ml_per_s);
+
+    const float rate = 2.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+
+    /* The commanded rate is 2000 milli-ml/s; the injected reading is 500 short of it. */
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &wide_tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
+    place_reconstruction_at(20000);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1500);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_ACTUATED, control_step(&state),
+                              "the wide declaration did not absorb the gap it was built to");
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &narrow_tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
+    place_reconstruction_at(20000);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1500);
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_STEP_DELIVERY_DEPARTED, control_step(&state),
+                              "the narrow declaration did not report the same gap the wide one "
+                              "absorbed");
+}
+
+/// SOL-DELIVERY-DEPARTURE-REPORTED.C3: The flow-departure band is required
+/// rather than assumed, is refused where it is not a usable distance, and
+/// cannot grow a second home by being declared twice -- the same discipline
+/// the temperature band beside it is held to.
+static void test_the_flow_departure_band_is_required_and_validated(void)
+{
+    static const struct {
+        const char *text;
+        delivery_tolerance_fault_t fault;
+        const char *why;
+    } REFUSED[] = {
+        {"brew-temperature-band-milli-c = 1000 @document Only the temperature band.\n",
+         DELIVERY_TOLERANCE_MISSING, "a declaration missing the flow-departure band was accepted"},
+        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
+         "flow-departure-band-milli-ml-s = 300\n",
+         DELIVERY_TOLERANCE_ORIGIN, "a flow-departure band with no origin was accepted"},
+        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
+         "flow-departure-band-milli-ml-s = 0 @estimated Nothing at all.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE, "a flow-departure band of nothing was accepted"},
+        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
+         "flow-departure-band-milli-ml-s = -50 @estimated Below nothing.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE, "a negative flow-departure band was accepted"},
+        {"brew-temperature-band-milli-c = 1000 @document Fine.\n"
+         "flow-departure-band-milli-ml-s = 300 @estimated First.\n"
+         "flow-departure-band-milli-ml-s = 400 @estimated Second.\n",
+         DELIVERY_TOLERANCE_DUPLICATE, "a flow-departure band declared twice was accepted"},
+    };
+
+    for (size_t i = 0u; i < sizeof(REFUSED) / sizeof(REFUSED[0]); i++) {
+        delivery_tolerance_t built;
+        delivery_tolerance_error_t fault;
+
+        TEST_ASSERT_FALSE_MESSAGE(delivery_tolerance_load(REFUSED[i].text,
+                                                          strlen(REFUSED[i].text), &built, &fault),
+                                  REFUSED[i].why);
+        TEST_ASSERT_EQUAL_MESSAGE(REFUSED[i].fault, fault.fault, REFUSED[i].why);
+    }
+}
+
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2: A machine nobody has
 /// asked for a drink drives nothing.
 ///
@@ -2708,6 +3049,14 @@ int main(void)
     RUN_TEST(test_control_command_flow_still_sets_the_level_directly);
     RUN_TEST(test_a_held_level_set_while_a_delivery_runs_is_overwritten_next_step);
     RUN_TEST(test_a_fault_mid_delivery_ends_the_delivery);
+    RUN_TEST(test_delivered_flow_is_compared_against_the_commanded_rate_each_cycle);
+    RUN_TEST(test_departure_beyond_the_band_surfaces_and_agreement_does_not);
+    RUN_TEST(test_a_gap_exactly_at_the_tolerance_does_not_depart);
+    RUN_TEST(test_a_departed_delivery_still_runs_to_its_own_completion);
+    RUN_TEST(test_late_takes_priority_over_departed_on_the_same_cycle);
+    RUN_TEST(test_an_absent_or_failed_flow_reading_does_not_report_departure);
+    RUN_TEST(test_a_different_declaration_changes_what_counts_as_departure);
+    RUN_TEST(test_the_flow_departure_band_is_required_and_validated);
     RUN_TEST(test_a_delivery_on_an_untargeted_machine_does_not_advance);
     RUN_TEST(test_an_unevaluable_end_condition_ends_the_delivery_immediately);
     RUN_TEST(test_boundary_end_conditions_at_zero_and_uint32_max);

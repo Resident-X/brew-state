@@ -1,0 +1,19 @@
+id: SOL-DELIVERY-DEPARTURE-REPORTED.C3
+type: criterion
+title: The flow-departure tolerance is declared data with a recorded origin rather than a compiled literal
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A new tolerance word is added to `firmware/include/delivery_tolerance.h` /
+  `firmware/src/delivery/delivery_tolerance.c` and declared in
+  `firmware/params/tolerance.declaration`, following the existing
+  `delivery_tolerance_t` / `DELIVERY_TOLERANCE_*_WORD` pattern the brew-temperature band
+  already uses -- not a `#define` literal in `control.c`. `tools/check_control_declaration.py`
+  validates the new declared line the same way it validates the existing bands. Out of scope:
+  choosing the tolerance's numeric value from measured data -- it is declared with an
+  `@estimated` origin here, and moving it to a measured origin is a separate slice.
+links:
+  - target: SOL-DELIVERY-DEPARTURE-REPORTED
+    type: criterion-of
