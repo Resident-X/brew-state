@@ -2,8 +2,10 @@
 
 #include <stddef.h>
 
+#include "delivery_profile.h"
 #include "estimator.h"
 #include "hw_interface.h"
+#include "plant_model.h"
 
 /*
  * The three coefficients the law rests on. Each accounts for itself in
@@ -225,8 +227,18 @@ static void command_everything_off(control_state_t *state)
      * start again at that level the moment a temperature was next commanded,
      * which is water moving because of something the caller asked for minutes
      * ago and has not repeated.
+     *
+     * A running delivery is exactly such an outstanding request, and is ended
+     * here alongside it rather than left to go on counting. Every path that
+     * reaches this function -- shutting down, a fault latching, and a step
+     * with nothing targeted -- is a machine that has stopped driving water, so
+     * a delivery still marked running past this point would burn the rest of
+     * its course against the clock while nothing moved, and report itself
+     * finished having delivered nothing.
      */
     state->commanded_pump_permille = 0u;
+    state->delivery_running = false;
+    state->delivery_elapsed_millis = 0u;
 }
 
 /* Latch the fault and command the outputs off. */
@@ -235,6 +247,46 @@ static control_step_result_t shut_down(control_state_t *state, control_step_resu
     state->faulted = true;
     command_everything_off(state);
     return reason;
+}
+
+/*
+ * What full pump scale draws on the machine a parameter record describes, in
+ * millilitres per second.
+ *
+ * Asked through the plant seam's own vocabulary -- a model of this machine
+ * kept aside, stepped once at full pump, and read back for what it says is
+ * moving -- rather than by reaching for the structure's coefficient by name.
+ * A coefficient named here would tie this file to the thermoblock's own
+ * spelling of it, which is exactly what the plant encapsulation check refuses
+ * of every consumer under src/control and src/delivery: the next structure
+ * this software is compiled against may not call the same figure the same
+ * thing, or may not carry it as a single coefficient at all, and this file
+ * has to go on working against it unchanged.
+ *
+ * Zero is the honest answer for a record that fails to initialise a model, a
+ * step that is refused, or a structure that genuinely draws nothing at full
+ * pump -- and it is left for the caller to decide what a figure of nothing
+ * means, rather than this function treating any of those as its own fault.
+ */
+static float probe_full_scale_flow_ml_per_s(const plant_parameters_t *parameters)
+{
+    plant_model_t probe;
+    plant_actuation_t everything = {{0u}};
+    float flow = 0.0f;
+
+    if (!plant_model_init(&probe, parameters)) {
+        return 0.0f;
+    }
+
+    everything.level_permille[ACTUATION_CHANNEL_PUMP] = (uint16_t)ACTUATION_FULL_SCALE;
+    if (!plant_model_step(&probe, &everything, 0.0f, CONTROL_STEP_INTERVAL_MS)) {
+        return 0.0f;
+    }
+    if (!plant_model_quantity(&probe, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &flow) || !(flow > 0.0f)) {
+        return 0.0f;
+    }
+
+    return flow;
 }
 
 bool control_init(control_state_t *state, const plant_parameters_t *parameters,
@@ -254,6 +306,9 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     state->integral_permille = 0.0f;
     state->started = false;
     state->faulted = false;
+    state->full_scale_flow_ml_per_s = 0.0f;
+    state->delivery_running = false;
+    state->delivery_elapsed_millis = 0u;
 
     /*
      * The band is put into the state before anything can refuse, so that an
@@ -295,6 +350,14 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
         return false;
     }
 
+    /*
+     * Probed once the estimator has accepted the same record, rather than
+     * before: a record the estimator refuses is not a machine this instance
+     * is going anywhere with, and probing it anyway would be answering a
+     * question about a structure this instance is about to report unusable.
+     */
+    state->full_scale_flow_ml_per_s = probe_full_scale_flow_ml_per_s(parameters);
+
     return off;
 }
 
@@ -320,6 +383,23 @@ bool control_command_flow(control_state_t *state, uint16_t pump_permille)
 
     state->commanded_pump_permille = pump_permille;
     return true;
+}
+
+bool control_command_delivery(control_state_t *state, const delivery_profile_t *profile)
+{
+    if (state == NULL || profile == NULL || !(state->full_scale_flow_ml_per_s > 0.0f)) {
+        return false;
+    }
+
+    state->delivery = *profile;
+    state->delivery_running = true;
+    state->delivery_elapsed_millis = 0u;
+    return true;
+}
+
+bool control_delivery_running(const control_state_t *state)
+{
+    return state != NULL && state->delivery_running;
 }
 
 bool control_temperature_band(const control_state_t *state, int32_t *band_milli_c)
@@ -415,11 +495,54 @@ control_step_result_t control_step(control_state_t *state)
      * estimator has already been advanced above, so the reconstruction goes on
      * following the machine while it waits, and the delivery that arrives next
      * starts from a state that has been kept rather than from one that stopped.
+     *
+     * command_everything_off clears a running delivery as part of commanding
+     * everything else off, so a step that reaches this branch ends whatever
+     * delivery was running rather than leaving it for the block below to go on
+     * advancing against a machine that is not driving water.
      */
     if (!state->targeted) {
         state->integral_permille = 0.0f;
         command_everything_off(state);
         return CONTROL_STEP_NO_TARGET;
+    }
+
+    /*
+     * A running delivery is advanced here: after the estimator, because what
+     * it commands next answers for the interval that is coming rather than
+     * correcting the one just gone; below the no-target branch above, because
+     * a delivery only ever advances on a step that actually drives the
+     * machine -- a step with nothing targeted has already ended it, by way of
+     * command_everything_off, and advancing its clock and its commanded rate
+     * regardless would have it run against the course while nothing moved;
+     * and above the heater command below, because the feedforward it carries
+     * reads commanded_pump_permille in this same step, and a delivery's
+     * commanded rate has to be sitting there before it is read, not after.
+     *
+     * `advance` is the interval that actually elapsed, the same one the
+     * estimator was just advanced by. Timing the delivery against the nominal
+     * cadence instead would have it end early or late by exactly how far a
+     * late step had fallen behind -- the same dishonesty the estimator's own
+     * advance is written to avoid.
+     *
+     * control_command_delivery refuses to start a delivery unless
+     * full_scale_flow_ml_per_s is usable, so nothing here has to check it
+     * again: every delivery reaching this branch has a figure to divide the
+     * commanded rate by.
+     */
+    if (state->delivery_running) {
+        state->delivery_elapsed_millis += advance;
+
+        if (delivery_profile_ended(&state->delivery, state->delivery_elapsed_millis)) {
+            state->delivery_running = false;
+            state->commanded_pump_permille = 0u;
+        } else {
+            const float rate_ml_per_s =
+                delivery_profile_rate_ml_per_s(&state->delivery, state->delivery_elapsed_millis);
+            const float permille =
+                (rate_ml_per_s / state->full_scale_flow_ml_per_s) * (float)ACTUATION_FULL_SCALE;
+            state->commanded_pump_permille = as_drive_level(permille);
+        }
     }
 
     const float interval_s = (float)advance / 1000.0f;
