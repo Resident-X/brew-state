@@ -130,6 +130,46 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
 actuation_channel_set_t plant_structure_actuation_channels(void);
 
 /*
+ * The delivery points the structure this build compiles serves.
+ *
+ * The delivery-point vocabulary is the machine's, so a structure of a given
+ * architecture need not serve every point in it. Which ones it does serve is
+ * something the structure states, and this is where a consumer reads that
+ * statement -- through the seam, exactly as plant_structure_actuation_channels
+ * is for actuation.
+ */
+plant_delivery_point_set_t plant_structure_delivery_points(void);
+
+/*
+ * The heated mass backing one delivery point the structure this build compiles
+ * serves.
+ *
+ * Returns false and writes nothing when `point` is not one the structure
+ * serves -- a caller has to be able to tell "this structure does not serve
+ * that point" from "this point shares a mass with itself", and reading a mass
+ * identifier for a point the structure never declared would answer neither
+ * question honestly. `mass` may not be null.
+ */
+bool plant_structure_delivery_point_mass(plant_delivery_point_t point,
+                                         plant_heated_mass_id_t *mass);
+
+/*
+ * Whether two delivery points the structure this build compiles serves are
+ * backed by the same heated mass.
+ *
+ * Composed from plant_structure_delivery_points and
+ * plant_structure_delivery_point_mass alone, so a consumer decides contention
+ * from the seam without knowing which concrete structure is linked in, and a
+ * structure gains this answer by declaring its points and their masses rather
+ * than by implementing a third function.
+ *
+ * Returns false and writes nothing when either point is not one the structure
+ * serves. `share` may not be null.
+ */
+bool plant_delivery_points_share_mass(plant_delivery_point_t a, plant_delivery_point_t b,
+                                      bool *share);
+
+/*
  * Advance the instance by `interval_millis` under the given actuation and
  * steam demand, and report why if it is refused.
  *

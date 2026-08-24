@@ -71,6 +71,13 @@
      ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_PUMP))
 
 /*
+ * No delivery point is declared for this architecture: nothing establishes how
+ * this vessel's outlet is routed, and stating a point here would be asserting
+ * an arrangement nothing requires of it.
+ */
+#define PLANT_STRUCTURE_DELIVERY_POINTS ((plant_delivery_point_set_t)0u)
+
+/*
  * Every coefficient this structure uses. There is no number in the equations
  * that is not read from here, apart from unit conversions and the constants of
  * the integration itself, which are properties of the equations rather than of

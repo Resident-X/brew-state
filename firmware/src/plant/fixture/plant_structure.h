@@ -51,6 +51,16 @@
  */
 #define PLANT_STRUCTURE_ACTUATION_CHANNELS ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_BREW_HEATER)
 
+/*
+ * Both points, backed by two distinct masses -- the arrangement no shipped
+ * structure carries. Declaring it here rather than inventing a shipped
+ * two-casting machine is what proves the no-contention case without
+ * describing hardware nobody has.
+ */
+#define PLANT_STRUCTURE_DELIVERY_POINTS                                          \
+    (PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_GROUP) |                      \
+     PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT))
+
 /* The one coefficient this structure reads. It means nothing. */
 typedef struct {
     float fixture_gain;

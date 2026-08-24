@@ -1,0 +1,16 @@
+id: SOL-DELIVERY-TOPOLOGY-DECLARED.C2
+type: criterion
+title: A structure names the heated mass backing each delivery point it serves
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each delivery point it serves, a structure answers a new `plant_structure_delivery_point_mass()`
+  accessor in `plant_model.h` with a per-structure heated-mass identifier. Two delivery points
+  answering the same identifier are fed from one reservoir; two answering different identifiers are
+  fed from independent reservoirs. Out of scope: any consumer acting on that identifier beyond reading
+  it — deciding, serialising, or refusing a delivery stays with the loop that owns those deliveries.
+links:
+  - target: SOL-DELIVERY-TOPOLOGY-DECLARED
+    type: criterion-of

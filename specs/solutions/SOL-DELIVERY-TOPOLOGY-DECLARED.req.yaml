@@ -1,0 +1,57 @@
+id: SOL-DELIVERY-TOPOLOGY-DECLARED
+type: deliverable
+category: solution
+title: The plant seam declares delivery points and the mass behind each
+status: active
+version: 1
+text: |
+  The plant seam gains a delivery-point vocabulary alongside its existing actuation-channel
+  vocabulary. A new `plant_delivery_point_t` enum declares the machine-wide set of delivery points a
+  structure may serve, paired with a `plant_delivery_point_set_t` bitset, mirroring the shape
+  `actuation_channel_t` / `actuation_channel_set_t` already establish for actuation in
+  `machine_actuation.h`. Each structure declares its own subset through a
+  `PLANT_STRUCTURE_DELIVERY_POINTS` macro, read by a new `plant_structure_delivery_points()` accessor
+  in `plant_model.h`, exactly as `plant_structure_actuation_channels()` already works for channels.
+
+  Alongside the points it serves, a structure names the heated mass backing each one: a new
+  `plant_structure_delivery_point_mass()` accessor returns a per-structure mass identifier for a given
+  delivery point. Two points answering the same identifier draw on one reservoir; two points
+  answering different identifiers draw on separate reservoirs. `plant_model.h` composes these into one
+  query, `plant_delivery_points_share_mass()`, so a consumer decides contention from the seam alone,
+  without knowing which concrete structure it holds.
+
+  The reference machine's thermoblock structure declares both the group and the hot water spout as
+  served by its one casting mass, stating in code the diverter arrangement DEC-DELIVERY-TOPOLOGY-DECLARED
+  already rules on. Because no shipped structure serves its delivery points from separate masses, the
+  independent-mass arrangement the query must also answer correctly is carried by the existing
+  fixture structure — the test-only structure that already exists to give the build's checks something
+  to fail against — rather than by a shipped one: it declares both points backed by two distinct mass
+  identifiers, giving the "no contention" case something to prove itself against.
+
+  Out of scope: resolving contention once it is known (serialising, deferring, refusing a demand), any
+  hot water delivery path in the control unit, and any change to which actuation channels the existing
+  thermoblock, boiler, or fixture structures answer.
+rationale: |
+  Delegates the concrete design to DEC-DELIVERY-TOPOLOGY-DECLARED, which already rules that topology
+  is declared through the plant structure seam rather than inferred by consumers or carried as
+  plant-description values. This solution is the seam-side implementation of that decision: it mirrors
+  the actuation-channel vocabulary's enum+bitset+accessor shape because that shape is the seam's own
+  established pattern for "declare a set of X, and every structure answers its subset," and inventing
+  a second shape for a second declaration would be exactly the kind of consumer-side guessing the
+  decision rejects.
+
+  A dedicated test-only structure is chosen over inventing a shipped two-mass machine because no
+  machine this project describes serves its delivery points from separate masses; authoring one to
+  prove the negative case would describe hardware nobody has, which DEL-SIM-DELIVERY-TOPOLOGY's own
+  text names as out of scope.
+links:
+  - target: DEC-DELIVERY-TOPOLOGY-DECLARED
+    type: justified-by
+  - target: DEL-SIM-DELIVERY-TOPOLOGY.C1
+    type: derives-from
+  - target: DEL-SIM-DELIVERY-TOPOLOGY.C2
+    type: derives-from
+  - target: DEL-SIM-DELIVERY-TOPOLOGY.C3
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C7
+    type: targets

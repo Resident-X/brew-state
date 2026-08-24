@@ -1,0 +1,18 @@
+id: SOL-DELIVERY-TOPOLOGY-DECLARED.C4
+type: criterion
+title: A consumer queries whether two delivery points share a mass without knowing the structure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `plant_model.h` gains `plant_delivery_points_share_mass()`, taking two `plant_delivery_point_t`
+  values and answering from `plant_structure_delivery_point_mass()` alone, with no structure-specific
+  code in the caller. Because no shipped structure serves independent masses, the existing fixture
+  structure — already test-only and describing no machine — declares two points backed by two
+  distinct mass identifiers, and a test asserts the query answers no-contention for that pair while
+  answering contention for the thermoblock's group/spout pair. Out of scope: what a consumer does once
+  contention is known.
+links:
+  - target: SOL-DELIVERY-TOPOLOGY-DECLARED
+    type: criterion-of

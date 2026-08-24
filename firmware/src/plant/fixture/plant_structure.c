@@ -42,6 +42,26 @@ actuation_channel_set_t plant_structure_actuation_channels(void)
     return PLANT_STRUCTURE_ACTUATION_CHANNELS;
 }
 
+plant_delivery_point_set_t plant_structure_delivery_points(void)
+{
+    return PLANT_STRUCTURE_DELIVERY_POINTS;
+}
+
+/* Each point answers a different identifier: they draw on independent masses. */
+bool plant_structure_delivery_point_mass(plant_delivery_point_t point,
+                                         plant_heated_mass_id_t *mass)
+{
+    if (mass == NULL) {
+        return false;
+    }
+    if ((PLANT_STRUCTURE_DELIVERY_POINTS & PLANT_DELIVERY_POINT_BIT(point)) == 0u) {
+        return false;
+    }
+
+    *mass = (point == PLANT_DELIVERY_POINT_GROUP) ? 0u : 1u;
+    return true;
+}
+
 bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters)
 {
     if (model == NULL || parameters == NULL) {

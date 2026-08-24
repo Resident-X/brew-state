@@ -1,0 +1,30 @@
+id: EVD-REQ-MODEL-STRUCTURE-SEAM-001.C7-ATTEST
+type: evidence
+title: Attestation of REQ-MODEL-STRUCTURE-SEAM-001.C7
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-24T06:17:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-MODEL-STRUCTURE-SEAM-001.C7","synthesised_at":"2026-08-24T06:17:53.898094Z","entries":[{"input_id":"DEL-SIM-DELIVERY-TOPOLOGY","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-DELIVERY-TOPOLOGY-DECLARED","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_plant/test_plant.c::test_the_thermoblock_declares_both_the_group_and_the_spout; firmware/test/test_plant_narrow/test_plant_narrow.c::test_the_structure_describing_no_machine_declares_both_delivery_points; firmware/test/test_plant_boiler/test_plant_boiler.c::test_the_single_vessel_structure_declares_no_delivery_point"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-MODEL-STRUCTURE-SEAM-001.C7.
+
+  Final-state intent: a structure declares the delivery points it serves and which heated mass serves each, as a property of its architecture rather than something a consumer reconstructs from behaviour, so a consumer deciding whether two demands contend can ask rather than assume. The criterion is silent on how the declaration is expressed and on what a consumer does with the answer.
+
+  Composition: SOL-DELIVERY-TOPOLOGY-DECLARED with active evidence EVD-SOL-DELIVERY-TOPOLOGY-DECLARED.C1-TEST, .C2-TEST, .C3-TEST, .C4-TEST. DEL-SIM-DELIVERY-TOPOLOGY contributes as the decompose-parent with no direct evidence of its own, correctly, since it closes by cascade over SOL-DELIVERY-TOPOLOGY-DECLARED.
+
+  Intent fit: plant_structure_delivery_points() and plant_structure_delivery_point_mass() let every plant structure (thermoblock, boiler, fixture) declare its served points and the mass identifier behind each as compiled-in architecture, not runtime inference. plant_delivery_points_share_mass() composes the two into a query a consumer calls without knowing which structure is linked in, matching the criterion's silence on expression and on downstream use. Verified against source: thermoblock declares both group and hot-water-spout points from one casting mass (EVD.C3), the fixture declares them from two distinct masses to prove the negative case (EVD.C1, .C4), the boiler declares neither since nothing establishes its outlet routing (EVD.C1, .C2), and refusal/null-argument paths are explicitly tested (EVD.C2, .C4) -- a blind review agent independently confirmed the cited tests exist, assert the specific clauses, and that the boiler's empty declaration is a justified absence of assumed fact rather than a gap.
+
+  Acknowledged scope boundary: SOL-DELIVERY-TOPOLOGY-DECLARED explicitly defers resolving contention once known (serialising, deferring, refusing a demand -- the brew loop's concern), any hot water delivery path in the control unit, and any change to which actuation channels existing structures answer. All three are outside this criterion's own text, which is silent on consumer behaviour once the declaration is read.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C7
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

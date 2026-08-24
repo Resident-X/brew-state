@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-TOPOLOGY-DECLARED.C3-TEST
+type: evidence
+title: Thermoblock declares group+spout from its one casting (SOL-DELIVERY-TOPOLOGY-DECLARED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T06:15:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_the_thermoblock_declares_both_the_group_and_the_spout,test_the_thermoblock_answers_the_same_mass_for_both_points
+text: |-
+  task fw:test passes. The thermoblock structure sets both PLANT_DELIVERY_POINT_GROUP and PLANT_DELIVERY_POINT_HOT_WATER_SPOUT and answers the same mass identifier for both, stating the reference machine's one-casting diverter arrangement in code.
+links:
+  - target: SOL-DELIVERY-TOPOLOGY-DECLARED.C3
+    type: satisfies

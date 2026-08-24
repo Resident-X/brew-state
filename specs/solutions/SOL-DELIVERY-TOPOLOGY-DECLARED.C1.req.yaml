@@ -1,0 +1,18 @@
+id: SOL-DELIVERY-TOPOLOGY-DECLARED.C1
+type: criterion
+title: A structure declares the delivery points it serves through the seam vocabulary
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `plant_types.h` (or a new header beside `machine_actuation.h`) declares `plant_delivery_point_t`,
+  the machine-wide enum of delivery points a structure may serve, and `plant_delivery_point_set_t`,
+  a bitset over it — mirroring `actuation_channel_t` / `actuation_channel_set_t`. A structure states
+  its subset through a `PLANT_STRUCTURE_DELIVERY_POINTS` macro, read by a new
+  `plant_structure_delivery_points()` accessor in `plant_model.h`, exactly as
+  `plant_structure_actuation_channels()` already reads a structure's channel subset. Out of scope:
+  any change to which actuation channels an existing structure answers.
+links:
+  - target: SOL-DELIVERY-TOPOLOGY-DECLARED
+    type: criterion-of

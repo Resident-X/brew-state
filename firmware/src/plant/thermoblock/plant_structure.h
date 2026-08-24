@@ -67,6 +67,15 @@
      ACTUATION_CHANNEL_BIT(ACTUATION_CHANNEL_STEAM_PUMP))
 
 /*
+ * Both the group and the hot water spout, because the reference machine's own
+ * arrangement is one coffee casting whose outlet a diverter routes to either.
+ * Both points are declared here rather than assumed by a consumer.
+ */
+#define PLANT_STRUCTURE_DELIVERY_POINTS                                          \
+    (PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_GROUP) |                      \
+     PLANT_DELIVERY_POINT_BIT(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT))
+
+/*
  * Every coefficient this structure uses. There is no number in the equations
  * that is not read from here, apart from unit conversions and the constants of
  * the integration itself, which are properties of the equations rather than of

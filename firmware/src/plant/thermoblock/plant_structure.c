@@ -81,6 +81,29 @@ actuation_channel_set_t plant_structure_actuation_channels(void)
     return PLANT_STRUCTURE_ACTUATION_CHANNELS;
 }
 
+plant_delivery_point_set_t plant_structure_delivery_points(void)
+{
+    return PLANT_STRUCTURE_DELIVERY_POINTS;
+}
+
+/*
+ * Both delivery points answer the same identifier: they are the same casting,
+ * routed by a diverter this structure does not itself model.
+ */
+bool plant_structure_delivery_point_mass(plant_delivery_point_t point,
+                                         plant_heated_mass_id_t *mass)
+{
+    if (mass == NULL) {
+        return false;
+    }
+    if ((PLANT_STRUCTURE_DELIVERY_POINTS & PLANT_DELIVERY_POINT_BIT(point)) == 0u) {
+        return false;
+    }
+
+    *mass = 0u;
+    return true;
+}
+
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
 {
     if (count != NULL) {

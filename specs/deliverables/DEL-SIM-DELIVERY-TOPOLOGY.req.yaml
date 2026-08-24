@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: A structure says where its deliveries arrive and what heats them
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |

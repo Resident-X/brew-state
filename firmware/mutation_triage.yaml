@@ -234,7 +234,7 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:104:31:
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:127:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
@@ -244,7 +244,18 @@ survivors:
       product is a zero, and a zero of either sign compares equal to the literal
       and behaves identically in everything downstream.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:94:31:
+  cxx_eq_to_ne:src/plant/boiler/plant_structure.c:82:14:
+    verdict: equivalent
+    reason: >-
+      The null-output guard in `plant_structure_delivery_point_mass`,
+      `mass == NULL` inverted to `!=`. This architecture declares no delivery
+      point, so `PLANT_STRUCTURE_DELIVERY_POINTS` is empty and the very next
+      guard -- the point not being in that empty set -- refuses every call
+      before the null check's outcome could reach a caller either way. No
+      admissible argument, null or not, distinguishes the two forms while this
+      structure serves no delivery point.
+
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:114:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`

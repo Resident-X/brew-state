@@ -1,0 +1,16 @@
+id: SOL-DELIVERY-TOPOLOGY-DECLARED.C3
+type: criterion
+title: The thermoblock structure declares the group and spout served from its one casting
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `thermoblock/plant_structure.c` sets both the group and hot water spout points in its
+  `PLANT_STRUCTURE_DELIVERY_POINTS` set and answers `plant_structure_delivery_point_mass()` with the
+  same casting identifier for both, putting into code the diverter arrangement
+  DEC-DELIVERY-TOPOLOGY-DECLARED already rules on. Out of scope: modelling the diverter's actuation or
+  any other thermoblock behaviour.
+links:
+  - target: SOL-DELIVERY-TOPOLOGY-DECLARED
+    type: criterion-of
