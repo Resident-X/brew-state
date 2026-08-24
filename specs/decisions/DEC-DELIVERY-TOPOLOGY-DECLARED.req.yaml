@@ -1,0 +1,44 @@
+id: DEC-DELIVERY-TOPOLOGY-DECLARED
+type: decision
+title: Delivery topology is declared by the plant structure rather than inferred by its consumers
+status: active
+version: 1
+rationale: |
+  Context: The machine names its actuation channels and the quantities its structures report, and a
+  structure states which of those channels it answers. Where a delivery arrives is not covered by
+  either vocabulary. A machine may serve extraction and hot water from one heated mass through a
+  diverter, or from two masses independently, and the difference decides whether two demands contend
+  for the same stored energy. Nothing in the graph requires that arrangement to be stated, and one
+  requirement already asserts a single shared channel as background fact while nothing establishes it.
+
+  Trade-offs: Declaring topology through the structure seam puts it where the architecture already
+  lives — two points fed from one mass and two points fed from two are different equations, which is
+  the split the seam exists to draw, and it costs one more thing every structure must state. Carrying
+  topology as values in the plant description would make it parameters, but parameters are the numbers
+  a shared architecture varies by, and a shared mass is not a number. Letting consumers infer topology
+  from the channels a structure answers is free and wrong: a structure answering one pump says nothing
+  about whether that pump feeds one outlet or two, so the consumer that most needs the answer -- the
+  one deciding whether a demand must wait -- would be guessing from a vocabulary that cannot express it.
+
+  Reversibility: Reversible while the declaration has one consumer. Once contention, refusal and the
+  hot water path are all reading it, moving the topology elsewhere means revisiting each, and any
+  structure written by an adopter against the seam would have to be revised rather than merely
+  recompiled.
+
+  Consequences: A consumer asks the structure rather than assuming the arrangement of the machine its
+  author owned, which is what keeps a differently-plumbed machine a second structure rather than a
+  fork. The requirement asserting one shared water channel can rest on something stated instead of on
+  its own prose. Contention between deliveries becomes conditional on what the structure declares
+  rather than unconditional, and a structure serving two masses independently is entitled to answer
+  that no contention exists.
+options_considered:
+  - option: Declare delivery topology through the plant structure seam
+    reason_rejected: ""
+  - option: Carry delivery topology as values in the plant description
+    reason_rejected: Parameters are the numbers a shared architecture varies by; a shared heated mass is a difference in equations, not a value
+  - option: Let consumers infer topology from the actuation channels a structure answers
+    reason_rejected: A structure answering one pump says nothing about whether that pump feeds one outlet or two, so the consumer deciding contention would be guessing
+chosen: Declare delivery topology through the plant structure seam
+links:
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C7
+    type: addresses

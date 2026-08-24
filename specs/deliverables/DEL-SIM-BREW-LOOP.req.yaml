@@ -4,7 +4,7 @@ category: epic
 title: The coffee side holds its targets in simulation across both deliveries it serves
 status: active
 level: epic
-version: 4
+version: 5
 text: |
   In simulation against the plant description, the coffee side holds both of the deliveries it serves. Water arriving at the group tracks the commanded temperature for a whole extraction from whatever thermal state the preceding demand left behind, hot water is dispensed within the drinking-temperature band with rate yielding to temperature, and contention between the two for the shared heated mass is resolved by the machine. The commanded course is acted on before its effect reaches the water rather than after the error it
   leaves behind, so the loop is exercised against a known future input rather than as a reactive loop
@@ -21,6 +21,8 @@ links:
     type: justified-by
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
+  - target: DEL-SIM-DELIVERY-TOPOLOGY
+    type: depends-on
   - target: DEL-SIM-ESTIMATOR
     type: depends-on
   - target: DEL-SIM-FLOW-TERM
@@ -61,3 +63,5 @@ links:
     type: targets
   - target: REQ-SEQUENCE-CONSISTENCY-001.C2
     type: targets
+  - target: DEL-SIM-FLOW-SENSED
+    type: depends-on

@@ -1,0 +1,13 @@
+id: DEL-SIM-FLOW-SENSED.C1
+type: criterion
+title: Flow is a channel the control unit senses rather than a quantity it only commands
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The hardware seam gains a flow channel alongside the temperatures and pressures it already senses, and the control unit reads what moved from that channel. This is a different quantity from the rate the plant reports, which is produced from what the pump was commanded and stays exactly as it is: the sensed channel says what the water did, the plant quantity says what was asked of it, and a consumer that needs one must not be able to reach for the other by accident. A test drives the two apart and asserts the control unit's view of what moved follows the sensed channel while the plant's reported rate still follows the command. Closing a loop on the reading is out of scope and belongs to the consumers of this channel.
+links:
+  - target: DEL-SIM-FLOW-SENSED
+    type: criterion-of

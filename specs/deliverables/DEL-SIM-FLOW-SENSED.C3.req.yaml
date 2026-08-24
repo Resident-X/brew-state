@@ -1,0 +1,13 @@
+id: DEL-SIM-FLOW-SENSED.C3
+type: criterion
+title: A machine with no flow meter answers the channel as absent rather than as the command
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Where no meter is fitted the channel reports absence, so a caller can tell a reading from an assumption and never receives the commanded rate dressed as a measurement. Absence is distinguishable from a channel that was sampled and failed, not merely from a zero: a machine that never had a meter and one whose meter stopped answering call for different responses, and a single untrustworthy-sample flag collapses them. A test asserts all four cases are told apart — absent, failed, zero, and equal to the command. What a caller does about an absent channel is out of scope.
+links:
+  - target: DEL-SIM-FLOW-SENSED
+    type: criterion-of

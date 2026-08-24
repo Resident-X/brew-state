@@ -1,0 +1,49 @@
+id: DEC-DEPARTURE-OBSERVED-NOT-MODELLED
+type: decision
+title: Departure from commanded flow is observed by measuring flow rather than reproduced by modelling what resists it
+status: active
+version: 1
+rationale: |
+  Context: A delivery is commanded as a course of flow, and the machine is required to report departure
+  from that course rather than absorb it. In the model the delivered rate is the commanded rate: what
+  the pump is told to move is what the path passes, and the description records the puck, the pump's
+  flow-versus-pressure characteristic and the mechanical cap as omissions that remain stated. Something
+  has to make commanded and delivered come apart before the obligation can be met, and the choice is
+  whether the machine reproduces the shortfall or observes it.
+
+  Trade-offs: Measuring flow makes the shortfall an observation rather than a prediction, which is what
+  the graph already requires of water movement and what the fitted meter already makes possible; the
+  machine reads what actually moved and compares it against what it asked for, and the same comparison
+  holds on the bench and in simulation because a simulated reading is injected at the same seam a real
+  one arrives through. Modelling the puck would reproduce the dominant cause and cannot be validated:
+  its resistance moves with grind, dose, distribution and age, moves again during a single extraction,
+  and nothing in the graph or on the machine pins it, so the coefficient would be chosen to make the
+  model behave. Modelling a fixed restriction against the pump's characteristic is validatable but
+  buys almost nothing: with the restriction static the delivered rate is a deterministic function of
+  duty, so the controller reaches any rate below the intersection and the only departure the model can
+  produce is the pump saturating -- the same single case a bare pressure clamp gives, at a lower
+  ceiling.
+
+  Reversibility: Reversible in the sense that a later description may add resistance downstream without
+  its consumers changing, and the comparison built here would keep working against it. What this
+  forecloses cheaply is the reverse: a departure story resting on a modelled puck would have to be
+  unpicked from every assertion made against it once a meter contradicted it.
+
+  Consequences: Flow becomes a sensed quantity the control unit reads through the hardware seam rather
+  than a number it only ever commands, which is what closing a loop on rate requires and what an
+  endpoint stated in delivered volume waits on. The puck stays a stated omission permanently rather
+  than provisionally, and the plant description's account of what it leaves out stands as written. The
+  model does not grow: no resistance term, no characteristic, no coefficient anyone would have to
+  defend. Departure is exercised in simulation by injecting a reading that differs from the command,
+  which is the arrangement the truth plant already uses for temperature.
+options_considered:
+  - option: Measure the flow that actually moved and compare it against the command
+    reason_rejected: ""
+  - option: Model the puck
+    reason_rejected: Its resistance moves with grind, dose, distribution and age and again within a single extraction, and nothing pins it, so the coefficient would be chosen to make the model behave
+  - option: Model a fixed restriction against the pump's characteristic
+    reason_rejected: With the restriction static the delivered rate is a deterministic function of duty, so the only departure the model produces is the pump saturating
+chosen: Measure the flow that actually moved and compare it against the command
+links:
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: addresses

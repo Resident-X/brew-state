@@ -1,0 +1,46 @@
+id: DEL-SIM-DELIVERY-TOPOLOGY
+type: deliverable
+category: task
+title: A structure says where its deliveries arrive and what heats them
+status: active
+level: task
+version: 1
+text: |
+  A structure states which actuation channels it answers and which quantities it reports, and says
+  nothing about where a delivery arrives. That silence is why one requirement asserts a single shared
+  water channel as background prose: the arrangement is real on the machine this design was built
+  against, and nothing in the model can be asked about it. A consumer deciding whether one demand has
+  to wait for another is deciding a question about topology, and today it can only assume.
+
+  The structure seam gains the delivery points a structure serves and the heated mass behind each, so
+  a consumer asks rather than assumes. Two points fed from one mass and two fed from two are different
+  arrangements and the difference decides whether contention exists at all: a machine whose group and
+  hot water spout draw from one casting must serialise them, and one with a mass apiece need not. The
+  reference machine's own arrangement — one coffee casting whose outlet a diverter routes to either
+  the group or the spout — becomes something its description states rather than something the graph
+  assumes on its behalf.
+
+  Out of scope: resolving the contention itself. What a consumer does once it knows two deliveries
+  share a mass — serialise, defer, refuse — is the brew loop's to build, and this task only makes the
+  question answerable. Also out of scope: any hot water delivery path in the control unit, and any
+  change to which channels the existing structures answer. The independent-mass arrangement the
+  criteria contrast against is carried by a structure written for the tests rather than by a shipped
+  one: no machine this project describes serves its delivery points from separate masses, and
+  inventing a shipped structure to prove the declaration works would be authoring hardware nobody has.
+rationale: |
+  Authored as its own task rather than folded into the brew loop because the declaration is a property of
+  the plant seam that every structure answers, and the loop is one consumer of it. Building it inside the
+  consumer that needs it first would put a machine-wide vocabulary behind one loop's schedule.
+
+  Kept separate from the restriction task despite both touching the seam: one adds a relation to what a
+  structure computes, the other adds a statement about what a structure is. They fail independently and
+  a machine may need either without the other.
+links:
+  - target: DEC-DELIVERY-TOPOLOGY-DECLARED
+    type: justified-by
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C7
+    type: targets
