@@ -2,11 +2,15 @@ id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C7
 type: criterion
 title: An admissible delivery reaches the machine exactly as it did before the check existed
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  The whole control suite passes unchanged, including every test already attested for the profile command surface and for the brew loop's tracking, with no edit to those tests' expectations. The delivery command and the temperature command keep their existing shapes and their existing refusal behaviour for the null and out-of-range cases they already reject, and an admitted delivery drives the same pump trajectory through the actuation seam that it drove before — asserted by replaying the existing piecewise-linear course test and comparing the driven levels step for step. The strict build the suite compiles under, with warnings as errors and conversion, shadow and double-promotion checks live, admits the new declaration and the probe without suppression. Out of scope: the suites that exercise plant structures rather than the control law, and on-target or emulation-tier execution, which this slice's harness is not.
+  The whole control suite passes, including every test already attested for the profile command surface and for the brew loop's tracking. No assertion in any of those tests is relaxed: what a test required before, it still requires. Two of them are handed a different input, and both are admitted here rather than left to be discovered in the diff — one asserted that a 400 °C target is accepted, which the saturation criterion beside this one directly contradicts and which is superseded there; the other ran a course ramping to 4.0 mL/s at 93.0 °C, a draw asking the brew path for more than a kilowatt and therefore a delivery the reference machine cannot make, so the course it runs is brought within what the machine can hold. That the profile surface shipped an infeasible course is a finding this slice surfaces rather than a cost it imposes. An input replaced because it was never achievable is admissible; a weakened expectation is not, and none is made.
+
+  The delivery command and the temperature command keep their existing shapes and their existing refusal behaviour for the null and out-of-range cases they already reject, each becoming its reporting sibling with the record discarded. An admitted delivery drives the same pump trajectory through the actuation seam that it drove before, asserted step for step against the conversion computed independently from the profile and the seam's own flow figure rather than read back out of the control path. The admission probe leaves the reconstruction the loop drives from untouched, which is what distinguishes a model stood up for the purpose from the estimator's own. The strict build the suite compiles under, with warnings as errors and conversion, shadow and double-promotion checks live, admits the new declaration and the probe without suppression.
+
+  Out of scope: the suites that exercise plant structures rather than the control law, and on-target or emulation-tier execution, which this slice's harness is not.
 links:
   - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
     type: criterion-of

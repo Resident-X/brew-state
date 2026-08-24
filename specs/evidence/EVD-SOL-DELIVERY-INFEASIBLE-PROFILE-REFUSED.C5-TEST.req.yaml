@@ -1,0 +1,23 @@
+id: EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C5-TEST
+type: evidence
+title: The saturation ceiling is declared here and belongs to no structure (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T13:12:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_target_above_the_saturation_ceiling_is_refused
+text: |-
+  test_a_target_above_the_saturation_ceiling_is_refused passes. The temperature command gained the reporting sibling; 130.0 C and the ceiling itself are refused as beyond saturation, and the ceiling less one degree and the suite's 93.0 C are admitted. A refused target leaves the one the loop was driving to standing, so a call that refused but wrote the target first would fail here. The ceiling is read back out of the refusal record rather than written into the suite, so no second copy of the declared figure exists to go stale.
+
+  That it belongs to no structure is established by perturbation rather than by inspection. The shipped description carries steam.saturation_temperature_c at the same hundred degrees, so the two agreeing proves nothing while they agree; the test rewrites the description's copy to 90.0 and requires both that the refusal still reports the declared ceiling and that a 95.0 C target -- above the description's figure, below the declared ceiling -- is still admitted. Any implementation that had begun reading the description's steam figure refuses 95.0 there.
+
+  CONTROL_SATURATION_C is defined once in the control sources and accounts for itself in params/control.declaration with a document origin naming the saturation line of the standard steam tables, stating what it assumes: a machine open to atmosphere at roughly sea level, with altitude and pressurised operation both named as cases needing it revisited rather than inheriting a new value. check_control_declaration confirms one home for it and refuses a second.
+
+  The one pre-existing temperature-command test this criterion contradicts -- which asserted a 400 C target is accepted, its own comment recording reachability as work that did not yet exist -- now asserts a temperature water can be delivered as. The criterion that test serves, that the target is an input rather than a compiled-in constant, is still fully exercised. Every other attested test of the temperature command is unchanged.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C5
+    type: satisfies

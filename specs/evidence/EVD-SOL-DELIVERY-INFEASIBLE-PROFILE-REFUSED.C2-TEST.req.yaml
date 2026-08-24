@@ -1,0 +1,19 @@
+id: EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C2-TEST
+type: evidence
+title: The admission record names the bound and carries both figures (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T13:12:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_refusal_names_the_bound_it_crossed_and_the_figures
+text: |-
+  test_a_refusal_names_the_bound_it_crossed_and_the_figures passes. One profile is driven per bound and all four fields are asserted each time: the rate ceiling reports the peak asked for and the full-scale figure available in millilitres a second, the authority bound reports the target and the settled temperature in degrees Celsius, and both name the elapsed point on the course the profile crossed at -- a course peaking in its middle, so a check that always reported the first or last point's time would disagree. The admitted case has all four fields poisoned before the call and is required to report the admitting value with every figure back at nothing, so an admission never populates a figure. A value that is not a temperature is its own bound and the not-a-number is not carried into the record, asserted on all four fields. Nothing given to judge and no machine described are distinct values, exercised through a null profile, a null state on each of the two commanding calls, and a description whose pump draws nothing. A null record is refused rather than the command being reported fine.
+
+  The enumeration ships exactly the seven values the criterion names, following the shape of the plant seam's step error and the tolerance loader's error record. Nothing-given is one value rather than one per argument, and the criterion now says why: a null state and a null profile are the same bug in the same calling code, and a target names no profile for a value spelled after that argument to be honest about.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C2
+    type: satisfies

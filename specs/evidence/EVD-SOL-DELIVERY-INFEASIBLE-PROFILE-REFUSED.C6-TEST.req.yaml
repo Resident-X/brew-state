@@ -1,0 +1,19 @@
+id: EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C6-TEST
+type: evidence
+title: A machine not yet at temperature is admitted (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T13:13:20Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused
+text: |-
+  test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused passes. The loop is brought up with both the truth plant and the estimator standing at 20, 40, 60, 88 and 93 degrees in turn, and a 2.0 mL/s course at 93.0 C is required to be admitted every time and to start running. A check that had reached for the estimator's reconstruction of where the machine presently is -- the obvious wrong implementation, and the one that reads as the more careful -- would refuse the cold ones and pass any test that only ever commanded from a machine already hot. Nothing about sitting at 20 C is permanent, and refusing it would deny a drink the machine reaches in about four minutes.
+
+  The admission is not the check having been switched off for cold machines: the same cold machine is still refused a course peaking at twice what full pump scale draws, reported as beyond the pump. What the machine then does with an admitted delivery while cold -- holding it until the shared heated mass returns, and starting it then -- is out of scope here and belongs to DEL-SIM-BREW-LOOP.C8 and REQ-HOT-WATER-001.C4. Today the delivery proceeds immediately and the reported departure from the profile is the only account given. No admission outcome means later, and no queue of held deliveries exists.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C6
+    type: satisfies

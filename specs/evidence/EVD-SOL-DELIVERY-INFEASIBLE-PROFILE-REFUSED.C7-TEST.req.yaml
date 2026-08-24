@@ -1,0 +1,21 @@
+id: EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C7-TEST
+type: evidence
+title: An admissible delivery reaches the machine unchanged (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T13:13:20Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_an_admissible_delivery_reaches_the_machine_exactly_as_before
+text: |-
+  test_an_admissible_delivery_reaches_the_machine_exactly_as_before passes and the control suite is green at 80 of 80. Three separate ways the check could have changed an admissible delivery are asserted against, because each can break while the others hold. The reconstruction the loop drives from is unmoved by the command, where a probe that had reached for the estimator's own model rather than standing one up would leave it where an hour at full heater puts it -- hundreds of degrees away. Neither output moved, the target and the accumulated intent are untouched, and the elapsed clock is at zero. The course then drives the pump, step for step over a hundred steps, at exactly the levels the conversion has always produced -- computed in the test from the profile's own rate at each elapsed time and the flow figure asked of the plant seam, not read back out of the control path, so a path that had started rounding, clamping or delaying the conversion differently fails rather than agreeing with itself.
+
+  Both commanding calls keep their signatures and their existing refusals for the null and out-of-range cases they already rejected, each becoming its reporting sibling with the record discarded. The strict build admits the new declaration and the probe with no suppression: native, native_fixture, native_boiler and the stm32 target all build under -Werror -Wconversion -Wshadow -Wdouble-promotion.
+
+  No assertion in any attested test is relaxed. Two pre-existing tests are handed a different input, and the criterion now names both. One asserted that a 400 C target is accepted, which the saturation criterion beside it directly contradicts and supersedes. The other ran a course ramping to 4.0 mL/s at 93.0 C -- a draw asking the brew path for more than a kilowatt, and therefore a delivery the reference machine cannot make, which admission correctly refuses; its ramp is brought to 2.5 mL/s and it still discriminates every regression it names. That the profile surface shipped an infeasible course is a finding this slice surfaced.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C7
+    type: satisfies
