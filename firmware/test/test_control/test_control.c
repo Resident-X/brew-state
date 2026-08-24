@@ -1320,10 +1320,14 @@ static void test_a_machine_with_no_target_commanded_drives_nothing(void)
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2: The commanded target is an
 /// input the control law reads rather than a constant compiled into it.
 ///
-/// What is refused is what is not a temperature at all. Whether the machine can
-/// reach a finite one is a different question asked by work that does not exist
-/// yet, so a target far outside anything this machine could deliver is accepted
-/// here rather than refused for a reason nothing has established.
+/// What is refused here is what is not a temperature at all. Any temperature
+/// water can actually arrive at the group as is accepted, however far it sits
+/// from what a shot is usually pulled at, because the target is an input rather
+/// than a setting this file has an opinion about. That a target above what
+/// water can be delivered as is now refused, and on what evidence, is asserted
+/// by the admission tests further down; this one no longer asks for four
+/// hundred degrees, which the work below establishes is not a delivery of
+/// water at all.
 static void test_a_target_that_is_not_a_temperature_is_refused(void)
 {
     TEST_ASSERT_FALSE(control_command_temperature(&state, NAN));
@@ -1331,8 +1335,8 @@ static void test_a_target_that_is_not_a_temperature_is_refused(void)
     TEST_ASSERT_FALSE(control_command_temperature(NULL, BREW_TARGET_C));
     TEST_ASSERT_EQUAL_FLOAT(BREW_TARGET_C, state.target_c);
 
-    TEST_ASSERT_TRUE(control_command_temperature(&state, 400.0f));
-    TEST_ASSERT_EQUAL_FLOAT(400.0f, state.target_c);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 40.0f));
+    TEST_ASSERT_EQUAL_FLOAT(40.0f, state.target_c);
 }
 
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C2: The commanded target is an
@@ -1923,6 +1927,13 @@ static void test_delivery_profile_samples_the_course_piecewise_linearly(void)
 /// test that ran only one profile. Running two different shapes back to back
 /// and comparing the recorded trajectories is what a regression collapsing
 /// the profile to a constant, or reading only its first point, cannot pass.
+///
+/// The ramp's peak is what the machine can hold the target against, because
+/// what this test is about is the shape reaching the pump rather than what the
+/// element can answer. It used to ramp to four millilitres a second, which at
+/// this target asks the brew path for more than a kilowatt and is a delivery
+/// the reference machine cannot make -- admission refuses it now, and rightly.
+/// Nothing about the two shapes differing needed a draw that large.
 static void test_two_profiles_of_different_shape_drive_different_trajectories(void)
 {
     const delivery_profile_point_t flat_points[] = {{0u, 2.0f}, {2000u, 2.0f}};
@@ -1931,7 +1942,7 @@ static void test_two_profiles_of_different_shape_drive_different_trajectories(vo
     delivery_profile_t flat;
     TEST_ASSERT_TRUE(delivery_profile_init(&flat, flat_points, 2u, flat_end));
 
-    const delivery_profile_point_t ramp_points[] = {{0u, 0.0f}, {2000u, 4.0f}};
+    const delivery_profile_point_t ramp_points[] = {{0u, 0.0f}, {2000u, 2.5f}};
     const delivery_end_condition_t ramp_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                .elapsed_millis = 2000u};
     delivery_profile_t ramp;
@@ -2990,6 +3001,575 @@ static void test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count
     TEST_ASSERT_EQUAL_UINT16(0u, state.commanded_pump_permille);
 }
 
+/* --- A delivery beyond the machine is refused before it begins ------------- */
+
+/*
+ * A course that rises to a peak and comes back down, so that the point a bound
+ * is crossed at is somewhere in the middle rather than at either end -- which
+ * is what makes the reported course position falsifiable. A check that always
+ * reported the first point's time, or the last, would agree with a flat course
+ * and disagree with this one.
+ */
+static delivery_profile_t course_peaking_at(float peak_ml_per_s)
+{
+    const delivery_profile_point_t points[] = {
+        {0u, 0.5f},
+        {1000u, peak_ml_per_s},
+        {2000u, 0.5f},
+    };
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end));
+    return profile;
+}
+
+/*
+ * A course that holds one rate throughout, for the cases where the shape is
+ * not what is under test and a peak in the middle would only be noise.
+ */
+static delivery_profile_t course_holding(float ml_per_s)
+{
+    const delivery_profile_point_t points[] = {{0u, ml_per_s}, {2000u, ml_per_s}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    return profile;
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C1: A delivery is admitted or
+/// refused before anything is driven.
+///
+/// The assertion is about *when*, not merely about the answer. A refused
+/// delivery must leave the machine exactly as the command found it: nothing
+/// driven, no course held, the elapsed clock never started -- and the loop
+/// must go on stepping afterwards as a machine with no delivery, rather than
+/// having half-started one. A check that ran at the first step instead would
+/// pass a bare "was it refused" assertion and fail every one of these, because
+/// by then the pump would already have been commanded from the course.
+static void test_a_delivery_is_admitted_or_refused_before_anything_is_driven(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const uint16_t heater_before = hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
+    const uint16_t pump_before = hw_sim_output(ACTUATION_CHANNEL_PUMP);
+    const uint32_t steps_before = state.step_count;
+
+    const delivery_profile_t beyond = course_peaking_at(full_scale_flow_ml_per_s() * 2.0f);
+    TEST_ASSERT_FALSE(control_command_delivery(&state, &beyond));
+
+    TEST_ASSERT_FALSE_MESSAGE(control_delivery_running(&state),
+                              "a refused delivery was left running");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0u, state.delivery_elapsed_millis,
+                                     "a refused delivery started its clock");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(heater_before,
+                                     hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER),
+                                     "refusing a delivery drove the heater");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(pump_before, hw_sim_output(ACTUATION_CHANNEL_PUMP),
+                                     "refusing a delivery drove the pump");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(steps_before, state.step_count,
+                                     "refusing a delivery stepped the loop");
+    TEST_ASSERT_FALSE_MESSAGE(state.faulted,
+                              "a delivery the machine cannot make latched a fault, which is not "
+                              "a condition a caller can clear");
+
+    /*
+     * And the machine goes on running as one with nothing delivering: the
+     * step drives the heater toward the target and commands the pump nothing,
+     * rather than picking the refused course up.
+     */
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_EQUAL_UINT16(0u, state.commanded_pump_permille);
+    TEST_ASSERT_FALSE(control_delivery_running(&state));
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C2: A refusal names the bound that
+/// was crossed rather than returning a bare false.
+///
+/// Every bound is tried in one test, with the figures and the course position
+/// checked against what was actually asked for, because a record that reported
+/// one bound for everything -- or that named the bound and left the figures at
+/// nothing -- would pass a test that only tried one case and only read the
+/// enumeration. The figures are compared against quantities this suite works
+/// out for itself through the seam, so this is not the record being asserted
+/// against itself.
+static void test_a_refusal_names_the_bound_it_crossed_and_the_figures(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float full_scale = full_scale_flow_ml_per_s();
+    control_admission_t admission;
+
+    /*
+     * Admitted, and the record says so rather than being left as it was found
+     * -- and populates no figure at all, so a caller cannot read a bound's
+     * worth of meaning off a record that refused nothing. The fields are
+     * poisoned before the call, because a record left untouched would agree
+     * with these assertions by accident.
+     */
+    admission.bound = CONTROL_ADMISSION_TARGET_OVER_SATURATION;
+    admission.requested = 1.0f;
+    admission.available = 2.0f;
+    admission.at_millis = 3u;
+    const delivery_profile_t ordinary = course_holding(2.0f);
+    TEST_ASSERT_TRUE(control_command_delivery_reporting(&state, &ordinary, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, admission.requested,
+                                    "an admitted command populated a figure");
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, admission.available,
+                                    "an admitted command populated a figure");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0u, admission.at_millis,
+                                     "an admitted command named a point on the course");
+
+    /* A rate no pump level could ask for. */
+    const float unreachable_rate = full_scale * 1.5f;
+    const delivery_profile_t too_fast = course_peaking_at(unreachable_rate);
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &too_fast, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_RATE_OVER_FULL_SCALE, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(unreachable_rate, admission.requested);
+    TEST_ASSERT_EQUAL_FLOAT(full_scale, admission.available);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(1000u, admission.at_millis,
+                                     "the refusal did not name the point on the course where the "
+                                     "rate ceiling was crossed");
+
+    /* A target the heater cannot hold against a draw near full scale. */
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    const delivery_profile_t heavy = course_peaking_at(full_scale * 0.9f);
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &heavy, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(BREW_TARGET_C, admission.requested);
+    TEST_ASSERT_TRUE_MESSAGE(admission.available < BREW_TARGET_C,
+                             "the refusal reported a reachable temperature as the reason a "
+                             "target could not be reached");
+    TEST_ASSERT_TRUE_MESSAGE(admission.available > 0.0f,
+                             "the refusal left the figure the machine can hold at nothing");
+    TEST_ASSERT_EQUAL_UINT32(1000u, admission.at_millis);
+
+    /* A target above what water is delivered as at all. */
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, 105.0f, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_OVER_SATURATION, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(105.0f, admission.requested);
+    TEST_ASSERT_TRUE_MESSAGE(admission.available < 105.0f && admission.available > 50.0f,
+                             "the saturation ceiling reported is not a temperature water boils "
+                             "anywhere near");
+
+    /*
+     * A value that is not a temperature is its own answer, not a crossed
+     * bound -- and the not-a-number is not carried into the record, since a
+     * caller comparing or printing `requested` would be handed back the very
+     * thing that was refused.
+     */
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, NAN, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_NOT_A_TEMPERATURE, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, admission.requested);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, admission.available);
+    TEST_ASSERT_EQUAL_UINT32(0u, admission.at_millis);
+
+    /*
+     * A machine that draws nothing at full pump is a different answer from a
+     * caller that handed nothing in. The two are repaired by different people
+     * from different sources -- one is a description, the other is a bug in
+     * the calling code -- so collapsing them into one value would leave an
+     * operator unable to tell which had happened.
+     */
+    control_state_t drawless;
+    const plant_parameters_t no_flow = parameters_from(description_with("pump.flow_ml_per_s", "0"));
+    TEST_ASSERT_TRUE(control_init(&drawless, &no_flow, &limits, &tolerance));
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&drawless, &ordinary, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_NO_MACHINE_DESCRIBED, admission.bound);
+
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, NULL, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_NOTHING_GIVEN, admission.bound);
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(NULL, &ordinary, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_NOTHING_GIVEN, admission.bound);
+
+    /*
+     * The temperature command answers the same way given no state. It names no
+     * profile, which is why the value is named for what is missing rather than
+     * for which argument was: a bound spelled "no profile given" would be
+     * answering a question this call was never asked.
+     */
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(NULL, BREW_TARGET_C, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_NOTHING_GIVEN, admission.bound);
+
+    /* A caller that cannot be told what was wrong is not told the command was fine. */
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &ordinary, NULL));
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, BREW_TARGET_C, NULL));
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C3: A commanded rate above the
+/// machine's full-scale flow is refused as unreachable.
+///
+/// Both sides of the boundary are tried, and the boundary is then moved by
+/// changing the machine rather than the profile. A refusal wired to some
+/// figure of its own -- a literal rate typed into the control source -- would
+/// agree with the shipped description by coincidence and would go on refusing
+/// at the same rate after the description's pump was corrected; here the same
+/// course is admitted by one machine and refused by another, and only the
+/// machine changed. A ceiling that had been collapsed to "any rate is fine"
+/// fails the refusals, and one collapsed to "refuse everything" fails the
+/// admissions.
+static void test_a_rate_above_full_scale_flow_is_refused_as_unreachable(void)
+{
+    /*
+     * Forty degrees, not the ninety-three the rest of the suite targets. The
+     * thermoblock description holds about fifty-three degrees at its full-scale
+     * draw, so a target under that leaves the authority bound slack and the
+     * pump is the only thing in play. At ninety-three both courses below would
+     * be refused for authority instead, and would establish nothing whatever
+     * about the pump.
+     */
+    static const float PUMP_IS_THE_ONLY_BOUND_C = 40.0f;
+    const float full_scale = full_scale_flow_ml_per_s();
+    control_admission_t admission;
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(7.0f, full_scale,
+                                    "the shipped description no longer draws what this test's "
+                                    "chosen rates are placed either side of");
+
+    const delivery_profile_t just_under = course_peaking_at(6.9f);
+    const delivery_profile_t just_over = course_peaking_at(7.5f);
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, PUMP_IS_THE_ONLY_BOUND_C));
+    TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &just_under, &admission),
+                             "a rate just below what full pump scale draws was refused");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &just_over, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_RATE_OVER_FULL_SCALE, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(7.5f, admission.requested);
+    TEST_ASSERT_EQUAL_FLOAT(full_scale, admission.available);
+
+    /*
+     * The ceiling follows whichever machine the loop was brought up against.
+     * A description declaring an open-path rate of four millilitres a second
+     * refuses the course the shipped one admitted, with no edit to the course
+     * and none to the control source.
+     */
+    const plant_parameters_t slower =
+        parameters_from(description_with("pump.flow_ml_per_s", "4.0"));
+    bring_the_loop_up(&slower, &slower, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, PUMP_IS_THE_ONLY_BOUND_C));
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(4.0f, flow_at_full_scale_for(&slower),
+                                    "the rewritten description does not draw what it declares");
+    TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &just_under, &admission),
+                              "the rate ceiling did not move with the description, so it is a "
+                              "figure the control source carries rather than the machine's");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_RATE_OVER_FULL_SCALE, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(4.0f, admission.available);
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4: A target the machine cannot
+/// hold against the profile's peak draw is refused.
+///
+/// The whole content of this criterion is that the bound is on the *pair*. One
+/// target is tried against two courses and one course against two targets, so
+/// a check collapsed to either half alone -- refusing the target whatever the
+/// draw, or refusing the draw whatever the target -- fails here while passing
+/// any test that varied only one of them. The peak is what is judged rather
+/// than the mean: a course that spends most of its length gentle and asks for
+/// a heavy draw briefly is refused, which an averaged check would admit.
+static void test_a_target_beyond_the_authority_at_the_peak_draw_is_refused(void)
+{
+    const float full_scale = full_scale_flow_ml_per_s();
+    control_admission_t admission;
+
+    /* One target, two courses: heavy draw refused, light draw admitted. */
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    const delivery_profile_t heavy = course_holding(full_scale * 0.9f);
+    const delivery_profile_t light = course_holding(full_scale * 0.1f);
+
+    TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &heavy, &admission),
+                              "a target the machine cannot hold against the course's draw was "
+                              "admitted");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
+    TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &light, &admission),
+                             "the same target was refused against a draw the machine holds it "
+                             "at comfortably, so the bound is not on the pair");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    /* One course, two targets: the heavy draw admits a modest target. */
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 45.0f));
+    TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &heavy, &admission),
+                             "a draw the machine holds a modest target against was refused, so "
+                             "the bound is on the draw alone rather than on the pair");
+
+    /*
+     * A brief peak is what is judged, not the average. This course is gentle
+     * for all but a moment; a check taking the mean would find it comfortably
+     * within authority.
+     */
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    const delivery_profile_t brief_peak = course_peaking_at(full_scale * 0.9f);
+    TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &brief_peak, &admission),
+                              "a course whose peak draw the machine cannot hold the target "
+                              "against was admitted because most of it is gentle");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
+
+    /*
+     * The pair is judged whichever order the two commands arrive in. A target
+     * named while a heavy delivery is already running is the same ask as a
+     * heavy delivery commanded against a named target, and is refused on the
+     * same evidence -- otherwise commanding the flow first would be a way
+     * round the bound entirely.
+     */
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 45.0f));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &heavy));
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_command_temperature_reporting(&state, BREW_TARGET_C, &admission),
+        "a target beyond the machine's authority was accepted because the delivery had been "
+        "commanded first");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(45.0f, state.target_c,
+                                    "a refused target was written into the state anyway");
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4: The authority boundary is
+/// probed from the description rather than written into the control source,
+/// and it is the description the loop holds that decides it.
+///
+/// This is the falsifiable half of the criterion and the reason the check
+/// probes at all. An implementation that had written the boundary down --
+/// "this machine holds ninety-three degrees up to three millilitres a second"
+/// -- passes every assertion about which courses are refused, and fails here
+/// the moment the element the description declares is rewritten. Both
+/// directions are tried, because a boundary wired to move only one way is
+/// still not a boundary that follows the machine.
+///
+/// The last quarter records the property rather than stresses it, and is worth
+/// being honest about. The loop is brought up with the estimator
+/// reconstructing from one description and the truth plant built from a
+/// stronger one, and the boundary must not move -- admission is a judgement
+/// against the description the loop holds, not against a machine nothing has
+/// measured. But no implementable wrong version fails it: the control unit has
+/// no channel to the truth description at all, so there is nothing there for a
+/// mistake to reach through. It is kept because the property is load-bearing
+/// and costs nothing to state, not because it is falsifiable.
+static void test_the_authority_boundary_follows_the_description_the_loop_holds(void)
+{
+    /* Either side of the shipped machine's boundary, which sits near 3.0 mL/s. */
+    const delivery_profile_t within = course_holding(2.8f);
+    const delivery_profile_t beyond = course_holding(3.5f);
+    control_admission_t admission;
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &within, &admission),
+                             "the shipped machine refused a draw it can hold the target at, so "
+                             "the boundary is not where this test places it");
+    TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &beyond, &admission),
+                              "the shipped machine admitted a draw beyond its element");
+
+    /* A stronger element moves the boundary up: the refused course is admitted. */
+    const plant_parameters_t stronger =
+        parameters_from(description_with("brew.heater_power_w", "2000.0"));
+    bring_the_loop_up(&stronger, &stronger, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &beyond, &admission),
+                             "doubling the declared element did not move the authority boundary, "
+                             "so the bound is a figure the control source carries rather than "
+                             "one probed from the description");
+
+    /* A weaker one moves it down: the admitted course is refused. */
+    const plant_parameters_t weaker =
+        parameters_from(description_with("brew.heater_power_w", "500.0"));
+    bring_the_loop_up(&weaker, &weaker, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &within, &admission),
+                              "halving the declared element did not move the authority boundary");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
+
+    /*
+     * And the boundary follows the description the loop was initialised with,
+     * not the machine on the bench. Here only the truth plant gets the stronger
+     * element; the loop still reconstructs from the shipped description, and
+     * still refuses.
+     */
+    bring_the_loop_up(&parameters, &stronger, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_command_delivery_reporting(&state, &beyond, &admission),
+        "a stronger element on the machine alone moved the admission boundary, so admission is "
+        "judging a machine nothing has measured rather than the description the loop holds");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C5: A target above the declared
+/// saturation temperature is refused.
+///
+/// The ceiling is read out of the refusal record rather than written here, so
+/// this suite carries no second copy of a figure the control path declares --
+/// which is the failure the declaration exists to prevent, and a copy here
+/// would go on passing after the declared figure moved. Both sides of it are
+/// tried, and the refusal is shown to leave the previous target standing: a
+/// check that refused the command but wrote the target first would drive the
+/// machine at a temperature it had just said no to.
+static void test_a_target_above_the_saturation_ceiling_is_refused(void)
+{
+    control_admission_t admission;
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, 130.0f, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_OVER_SATURATION, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(130.0f, admission.requested);
+
+    const float ceiling = admission.available;
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(BREW_TARGET_C, state.target_c,
+                                    "a refused target replaced the one the loop was driving to");
+
+    /* At the ceiling itself, water is no longer what would be delivered. */
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, ceiling, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_OVER_SATURATION, admission.bound);
+
+    /* Below it, it is a temperature this call has no view on. */
+    TEST_ASSERT_TRUE_MESSAGE(control_command_temperature_reporting(&state, ceiling - 1.0f,
+                                                                  &admission),
+                             "a target below the saturation ceiling was refused by it");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(ceiling - 1.0f, state.target_c);
+
+    TEST_ASSERT_TRUE_MESSAGE(control_command_temperature_reporting(&state, BREW_TARGET_C,
+                                                                   &admission),
+                             "the temperature this suite pulls its shots at was refused as steam");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    /*
+     * The ceiling belongs to the control path and to no structure, and this is
+     * where that is established rather than asserted. The shipped description
+     * carries a saturation temperature of its own, on the steam side, at the
+     * same hundred degrees -- so the two figures agreeing proves nothing while
+     * they agree. Rewriting the description's copy to ninety and requiring the
+     * refusal to stand at the old figure is what separates a ceiling this file
+     * declares from one it has quietly started reading across the seam. Without
+     * this, the two could silently begin tracking each other and every other
+     * assertion here would go on passing.
+     */
+    const plant_parameters_t boils_lower =
+        parameters_from(description_with("steam.saturation_temperature_c", "90.0"));
+    bring_the_loop_up(&boils_lower, &boils_lower, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, 130.0f, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_OVER_SATURATION, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ceiling, admission.available,
+                                    "the saturation ceiling followed the description's own steam "
+                                    "figure, which it is declared on this side of the seam "
+                                    "precisely so as not to");
+    TEST_ASSERT_TRUE_MESSAGE(control_command_temperature_reporting(&state, 95.0f, &admission),
+                             "a target above the description's steam saturation figure but below "
+                             "the declared ceiling was refused, so the bound is being read from "
+                             "the machine");
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C6: A machine merely not yet at
+/// temperature is admitted rather than refused.
+///
+/// This is the case the deferral half of the requirement will own, and it is
+/// asserted here as visibly admitted rather than left to be inferred. The same
+/// delivery is commanded against machines standing at everything from stone
+/// cold to fully up to temperature, and the answer has to be identical every
+/// time: a check that had reached for the reconstruction the estimator
+/// currently holds -- the obvious wrong implementation, and the one that reads
+/// as more careful -- would refuse the cold ones and pass any test that only
+/// ever commanded from a machine already hot.
+static void test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused(void)
+{
+    static const float STANDING_AT[] = {20.0f, 40.0f, 60.0f, 88.0f, 93.0f};
+    const delivery_profile_t ordinary = course_holding(2.0f);
+
+    for (size_t at = 0u; at < sizeof(STANDING_AT) / sizeof(STANDING_AT[0]); at++) {
+        control_admission_t admission;
+
+        bring_the_loop_up(&parameters, &parameters, STANDING_AT[at], STANDING_AT[at]);
+        TEST_ASSERT_TRUE_MESSAGE(
+            control_command_delivery_reporting(&state, &ordinary, &admission),
+            "a delivery the machine can make was refused because the machine had not got there "
+            "yet");
+        TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+        TEST_ASSERT_TRUE(control_delivery_running(&state));
+    }
+
+    /*
+     * And a machine that is cold is still refused what it could never do, so
+     * the admission above is not the check having been switched off for cold
+     * machines.
+     */
+    control_admission_t admission;
+    bring_the_loop_up(&parameters, &parameters, 20.0f, 20.0f);
+    const delivery_profile_t beyond = course_holding(full_scale_flow_ml_per_s() * 2.0f);
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &beyond, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_RATE_OVER_FULL_SCALE, admission.bound);
+}
+
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C7: An admissible delivery reaches
+/// the machine exactly as it did before the check existed.
+///
+/// Three separate ways the check could have changed an admissible delivery are
+/// asserted against, because each can break while the others hold. The probe
+/// stands a model up of its own, and a probe that had reached for the
+/// estimator's model instead -- the cheap implementation -- would leave the
+/// reconstruction the loop drives from sitting at where an hour at full heater
+/// puts it, which is hundreds of degrees away. The command must drive nothing.
+/// And the trajectory the course produces afterwards must be the one the
+/// conversion has always produced, computed here from the profile and the
+/// seam's own flow figure rather than read back out of the control path.
+static void test_an_admissible_delivery_reaches_the_machine_exactly_as_before(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float reconstruction_before = reconstruction();
+    const uint16_t heater_before = hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
+    const uint16_t pump_before = hw_sim_output(ACTUATION_CHANNEL_PUMP);
+    const float target_before = state.target_c;
+    const float integral_before = state.integral_permille;
+
+    const delivery_profile_point_t points[] = {{0u, 0.0f}, {1000u, 2.0f}, {2000u, 2.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end));
+
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(reconstruction_before, reconstruction(),
+                                    "admitting a delivery moved the reconstruction the loop "
+                                    "drives from, so the probe is not standing up a model of "
+                                    "its own");
+    TEST_ASSERT_EQUAL_UINT16(heater_before, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_EQUAL_UINT16(pump_before, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+    TEST_ASSERT_EQUAL_FLOAT(target_before, state.target_c);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(integral_before, state.integral_permille,
+                                    "admitting a delivery disturbed the accumulated intent");
+    TEST_ASSERT_EQUAL_UINT32(0u, state.delivery_elapsed_millis);
+
+    /*
+     * The course then drives the pump at the levels the conversion has always
+     * produced. The expectation is worked out here from the profile's own rate
+     * at the elapsed time each step lands on and the flow figure asked of the
+     * seam, so a control path that had started rounding, clamping or delaying
+     * the conversion differently would fail this rather than agreeing with
+     * itself.
+     */
+    for (unsigned step = 1u; step <= 100u; step++) {
+        const control_step_result_t result = closed_loop_step(-1);
+        const uint32_t elapsed = step * CONTROL_STEP_INTERVAL_MS;
+
+        if (delivery_profile_ended(&profile, elapsed)) {
+            TEST_ASSERT_FALSE(control_delivery_running(&state));
+            TEST_ASSERT_EQUAL_UINT16(0u, state.commanded_pump_permille);
+            continue;
+        }
+
+        TEST_ASSERT_TRUE(result == CONTROL_STEP_ACTUATED ||
+                         result == CONTROL_STEP_DELIVERY_DEPARTED);
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+            pump_level_for(delivery_profile_rate_ml_per_s(&profile, elapsed)),
+            state.commanded_pump_permille,
+            "an admitted delivery drove the pump at a level the conversion did not produce");
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -3065,5 +3645,13 @@ int main(void)
     RUN_TEST(test_mid_ramp_level_matches_the_interpolated_rate_through_the_control_path);
     RUN_TEST(test_the_pump_relation_is_linear_over_the_range_a_conversion_assumes);
     RUN_TEST(test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count);
+    RUN_TEST(test_a_delivery_is_admitted_or_refused_before_anything_is_driven);
+    RUN_TEST(test_a_refusal_names_the_bound_it_crossed_and_the_figures);
+    RUN_TEST(test_a_rate_above_full_scale_flow_is_refused_as_unreachable);
+    RUN_TEST(test_a_target_beyond_the_authority_at_the_peak_draw_is_refused);
+    RUN_TEST(test_the_authority_boundary_follows_the_description_the_loop_holds);
+    RUN_TEST(test_a_target_above_the_saturation_ceiling_is_refused);
+    RUN_TEST(test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused);
+    RUN_TEST(test_an_admissible_delivery_reaches_the_machine_exactly_as_before);
     return UNITY_END();
 }

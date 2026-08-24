@@ -2,11 +2,15 @@ id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C2
 type: criterion
 title: A refusal names the bound that was crossed rather than returning a bare false
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  The admission record is declared in its own right, following the typed error records the plant seam and the tolerance loader already carry. It states which bound was crossed — nothing wrong at all, no profile given, no machine described, a rate beyond the pump, a target beyond saturation, or a target beyond the machine's authority — together with the figure asked for, the figure available, and the elapsed point in the course at which the profile crossed the bound. The two figures are carried in the unit the crossed bound is stated in, millilitres a second for a rate bound and degrees Celsius for a temperature bound, and the elapsed point names the profile point that crossed it, so an operator can move that point rather than guess at the course. A test drives one profile per bound and asserts all four fields, including that a refusal never reports the record's admitting value and that an admission never populates a figure. Out of scope: operator-facing text, translation, or any print surface — the record is a value a caller reads; also out of scope is a bound value meaning deferral, which would be a placeholder for behaviour this slice does not build.
+  The admission record is declared in its own right, following the typed error records the plant seam and the tolerance loader already carry. It states which bound was crossed — nothing wrong at all, nothing given to judge, no machine described, a value that is not a temperature, a rate beyond the pump, a target beyond saturation, or a target beyond the machine's authority — together with the figure asked for, the figure available, and the elapsed point in the course at which the profile crossed the bound. The two figures are carried in the unit the crossed bound is stated in, millilitres a second for a rate bound and degrees Celsius for a temperature bound, and the elapsed point names the profile point that crossed it, so an operator can move that point rather than guess at the course.
+
+  Nothing given to judge is one value and not one per argument, because a caller responds to all of them the same way: a null state and a null profile are the same bug in the same calling code, and a target names no profile for a value spelled after that argument to be honest about. A value that is not a temperature is a bound in its own right rather than a refusal reported some other way, because the commanding call has always rejected a not-a-number target and the reporting sibling has to say so; the value itself is not carried into the record, since a caller comparing or printing the figure asked for would be handed back the very thing that was refused.
+
+  A test drives one profile per bound and asserts all four fields, including that a refusal never reports the record's admitting value and that an admission never populates a figure. Out of scope: operator-facing text, translation, or any print surface — the record is a value a caller reads; also out of scope is a bound value meaning deferral, which would be a placeholder for behaviour this slice does not build.
 links:
   - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
     type: criterion-of

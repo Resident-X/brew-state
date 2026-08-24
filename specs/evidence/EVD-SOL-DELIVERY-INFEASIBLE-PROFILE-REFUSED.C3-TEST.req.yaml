@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C3-TEST
+type: evidence
+title: The rate ceiling is the machine's full-scale flow and follows the description (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T13:12:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_rate_above_full_scale_flow_is_refused_as_unreachable
+text: |-
+  test_a_rate_above_full_scale_flow_is_refused_as_unreachable passes. A course peaking at 7.5 mL/s is refused as beyond the pump and one peaking at 6.9 mL/s is admitted, both commanded at 40.0 C -- low enough that the pump is the only bound in play, since the thermoblock description holds about 53 C at its full-scale draw. At the suite's usual 93.0 C both courses would be refused for thermal authority instead and would establish nothing about the pump, and the test says so in as many words. The boundary is then moved by rewriting pump.flow_ml_per_s to 4.0 through the suite's description helper: the same 6.9 mL/s course the shipped machine admitted is refused, with no edit to the course and none to the control source, and the record reports 4.0 as the figure available. Two guard assertions pin the literals the test carries to what the seam actually answers, so description drift fails loudly with an explanation rather than silently changing what the test means. The ceiling is evaluated before authority is probed, so a course beyond the pump reports as beyond the pump rather than as a target the machine cannot hold. Nothing here claims an admitted rate is one the machine can pull a shot at.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C3
+    type: satisfies

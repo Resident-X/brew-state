@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C1-TEST
+type: evidence
+title: Admission runs at the command, not at the step (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T13:12:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_delivery_is_admitted_or_refused_before_anything_is_driven
+text: |-
+  test_a_delivery_is_admitted_or_refused_before_anything_is_driven passes. A course peaking at twice what full pump scale draws is refused, and the assertion is about when rather than merely about the answer: no delivery is left running, the elapsed delivery clock is still at zero, neither output moved, the step count did not advance and no fault latched. The loop is then stepped on past the refusal and required to command the pump at nothing, where a refusal that recorded the course while declining it would show up as the refused course being driven on the next step. The check runs in the commanding call and not in control_step, so it costs nothing from the ten-millisecond step interval. The bool-returning entry point answers false exactly when the record reports a crossed bound, since it is that call with the record discarded. No admission outcome means later.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C1
+    type: satisfies

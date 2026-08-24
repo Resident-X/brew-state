@@ -111,6 +111,108 @@ typedef enum {
     CONTROL_STEP_DELIVERY_DEPARTED
 } control_step_result_t;
 
+/*
+ * Which bound a command crossed, or that it crossed none.
+ *
+ * These are bounds on what the machine can *ever* do, not on what it is doing
+ * at the moment it is asked. A machine still cold, or still recovering from
+ * the last draw, has crossed nothing: it will arrive, and refusing it would be
+ * refusing a delivery that is merely early. What is named here is the set of
+ * asks no amount of waiting satisfies.
+ *
+ * The order they are checked in is fixed rather than left to the
+ * implementation, on the same terms the plant seam fixes the order of its step
+ * faults: a command with more than one thing wrong with it names the same bound
+ * every time. Each entry point states its own order, because the two ask
+ * different questions. A delivery is judged as nothing-to-evaluate, then the
+ * ceiling on a rate, then the machine's authority against the draw asked for. A
+ * target is judged as nothing-to-evaluate, then not-a-temperature, then the
+ * ceiling water itself imposes, then that same authority bound where a course
+ * is already running to be held against.
+ */
+typedef enum {
+    /* Nothing was crossed; the command was taken. */
+    CONTROL_ADMISSION_OK = 0,
+    /*
+     * Nothing was handed in to judge: a null state, or a null profile where a
+     * command required one. It is the caller's own mistake rather than anything
+     * about the machine, which is why it is separate from the value below --
+     * the two are repaired by different people from different sources, on the
+     * same reasoning the parameter loader separates a damaged file from an
+     * unaccounted figure.
+     *
+     * It is named for what is missing rather than for which argument was
+     * missing. A target names no profile, so a value spelled "no profile given"
+     * would be answering a question the temperature command was never asked;
+     * and splitting it per argument would multiply values that no caller
+     * responds to differently, since every one of them is the same bug in the
+     * same calling code.
+     */
+    CONTROL_ADMISSION_NOTHING_GIVEN,
+    /*
+     * There is a caller and a course but no machine the pair could be judged
+     * against: full pump scale draws nothing on the linked structure, so no
+     * level asks for any commanded rate. It is the refusal
+     * control_command_delivery has always answered with, given a name rather
+     * than given a new meaning.
+     */
+    CONTROL_ADMISSION_NO_MACHINE_DESCRIBED,
+    /* The value named as a target is not a temperature -- see is_a_temperature. */
+    CONTROL_ADMISSION_NOT_A_TEMPERATURE,
+    /*
+     * The course asks, at some point along it, for water faster than full pump
+     * scale draws on this machine. Used as a ceiling and only as a ceiling: a
+     * rate above it is unreachable however the path downstream behaves, and a
+     * rate below it is no promise at all about what a cup receives -- the puck,
+     * the pump's flow-versus-pressure characteristic and the mechanical
+     * pressure cap all sit between the two and none of them is represented.
+     */
+    CONTROL_ADMISSION_RATE_OVER_FULL_SCALE,
+    /*
+     * The target is at or above the temperature water boils at where this
+     * machine stands. It is a bound this control path declares rather than one
+     * the plant description discovers: the structures behind the seam carry no
+     * phase change and will go on reporting liquid water well past boiling, so
+     * a probe would call such a target reachable and would be right about the
+     * model while being wrong about water.
+     */
+    CONTROL_ADMISSION_TARGET_OVER_SATURATION,
+    /*
+     * The machine has not the heater authority to hold the target against the
+     * draw the course asks for at its peak. Established by probing the plant
+     * description -- see control.c -- rather than by reading any coefficient of
+     * it by name, so the bound follows whichever structure is linked instead of
+     * describing one of them.
+     */
+    CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY
+} control_admission_bound_t;
+
+/*
+ * What a command was refused for, and by how much.
+ *
+ * Answering only true or false tells an operator to guess. `requested` is the
+ * figure the caller asked for and `available` the figure the machine has, both
+ * in the unit of the bound named -- millilitres per second for the rate
+ * ceiling, degrees Celsius for the two temperature bounds. Both are zero for a
+ * bound that compares no pair of figures, and for CONTROL_ADMISSION_OK -- an
+ * admitted command populates no figure at all, so a caller cannot read one off
+ * a record that refused nothing. A value that is not a temperature is reported
+ * as no figure rather than as itself, since a not-a-number written into
+ * `requested` would be a figure nobody can compare or print.
+ *
+ * `at_millis` is the time on the course at which the bound was crossed. It is
+ * meaningful only for a bound a course names a point for, and is zero
+ * otherwise -- read it against `bound` rather than on its own, exactly as the
+ * plant seam's step error asks its channel to be read, since zero is also a
+ * legitimate point on a course.
+ */
+typedef struct {
+    control_admission_bound_t bound;
+    float requested;
+    float available;
+    uint32_t at_millis;
+} control_admission_t;
+
 typedef struct {
     uint32_t last_step_millis;
     uint32_t step_count;
@@ -165,6 +267,34 @@ typedef struct {
      * downstream of this field has to check it again.
      */
     float full_scale_flow_ml_per_s;
+    /*
+     * The description this instance was brought up against, held by value on
+     * the same terms the estimator above is: no allocator exists to point at a
+     * caller's copy instead, and a caller's copy is not promised to outlive the
+     * call that handed it in.
+     *
+     * It is kept because admission asks a question of the machine that the
+     * flow figure above cannot answer on its own. What full pump scale draws is
+     * one number and does not change; whether the heater can hold a given
+     * target against a given draw is a different question for every pair a
+     * caller names, so it is asked when the pair arrives rather than answered
+     * once here. Asking it means standing a model up from this record, which
+     * means having the record.
+     *
+     * The estimator beside it holds a copy of the same description and cannot
+     * serve instead. That copy is inside its own model instance, which is
+     * carrying the reconstruction the loop is driving from and must not be
+     * stepped an hour forward to answer a question; and the seam offers no way
+     * to read a description back out of a model, deliberately -- reaching into
+     * one for its coefficients is exactly what the plant encapsulation check
+     * refuses.
+     *
+     * What it describes is what the loop believes it is driving rather than the
+     * machine on the bench -- the harness deliberately allows the two to
+     * differ -- and admission is a judgement against the former, which is the
+     * only thing available before anything moves.
+     */
+    plant_parameters_t parameters;
     /*
      * The delivery currently under way, held by value for the reason the
      * estimator above is: no allocator exists to point at one instead. It is
@@ -238,12 +368,33 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
  * making any more. The proportional and feedforward terms answer the new target
  * immediately, so nothing is lost but the wind-up.
  *
- * Returns false, changing nothing, for a null state or a temperature that is
- * not a finite number. Whether the machine can actually reach a finite target
- * is a different question, asked by work that does not exist yet; this refuses
- * only what is not a temperature at all.
+ * Returns false, changing nothing, for a null state, for a temperature that is
+ * not a finite number, and for one at or above the temperature water boils at
+ * where this machine stands. That last is a delivery of steam rather than a
+ * delivery of water however much authority the element has, and it is the one
+ * ceiling here that is declared rather than probed -- see CONTROL_SATURATION_C
+ * in control.c and its account in params/control.declaration. Whether the
+ * machine can hold a target below it against a particular draw is a different
+ * question, asked of the pair when a delivery names one.
+ *
+ * It is that pair, and not this call, that the machine's own authority is
+ * asked about: a target alone names no draw, and the same target is reachable
+ * at rest and out of reach under a draw.
  */
 bool control_command_temperature(control_state_t *state, float celsius);
+
+/*
+ * Name the temperature, and be told which bound a refusal crossed.
+ *
+ * The same operation as control_command_temperature with the record kept
+ * rather than discarded -- it is written once here and that one calls it --
+ * on the terms the plant seam's reporting step already set. `admission` may
+ * not be null, and is set to CONTROL_ADMISSION_OK on a target that is taken.
+ * A caller given only true or false has to guess which ceiling it met; a
+ * caller given this can say so.
+ */
+bool control_command_temperature_reporting(control_state_t *state, float celsius,
+                                           control_admission_t *admission);
 
 /*
  * Command the level the pump is to be driven at, in permille of full scale.
@@ -292,8 +443,40 @@ bool control_command_flow(control_state_t *state, uint16_t pump_permille);
  * that could ask for any commanded rate, and starting a delivery in that state
  * would leave every step dividing by a figure that is not there rather than
  * saying plainly that no delivery can be commanded.
+ *
+ * It also returns false, changing nothing, for a delivery beyond what this
+ * machine can ever do: a course asking at any point for water faster than full
+ * pump scale draws, or a target the heater has not the authority to hold
+ * against the draw the course asks for at its peak. Both are judged before
+ * anything is driven, because a delivery admitted and then abandoned part way
+ * through has already spent the coffee and the operator's time.
+ *
+ * A machine that is merely not there yet is admitted. Both bounds are asked of
+ * where the description says the machine settles, not of the reconstruction it
+ * is presently at, so a cold machine and one still recovering from the last
+ * draw both start -- which is deliberate, and is the case a later slice, the
+ * one that defers a delivery until the heated mass is free, will own. Until
+ * then such a delivery runs and the departure report is the only account it
+ * gives.
  */
 bool control_command_delivery(control_state_t *state, const delivery_profile_t *profile);
+
+/*
+ * Start a delivery, and be told which bound a refusal crossed.
+ *
+ * The reporting sibling of control_command_delivery on the same terms
+ * control_command_temperature_reporting is that call's: the operation is
+ * written once here, that one is this with the record discarded, and
+ * `admission` may not be null. It is set to CONTROL_ADMISSION_OK on a delivery
+ * that starts.
+ *
+ * The target's own ceiling is not re-asked here. A target at or above
+ * saturation is refused where it is named, so no state a delivery is commanded
+ * against can be carrying one, and asking again would be a second site of the
+ * same judgement.
+ */
+bool control_command_delivery_reporting(control_state_t *state, const delivery_profile_t *profile,
+                                        control_admission_t *admission);
 
 /*
  * Whether a delivery commanded through control_command_delivery is still

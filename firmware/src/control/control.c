@@ -53,6 +53,30 @@
 #define CONTROL_DRAWN_PERMILLE_PER_K_PER_PUMP_PERMILLE 0.02905f
 
 /*
+ * The two figures admission rests on. They account for themselves beside the
+ * coefficients above and are separated from them because they are not
+ * coefficients of the control law: neither is multiplied by an error or added
+ * to a duty. One is a statement about what a delivery of water means and the
+ * other is how a question is put to the plant seam, and a reader challenging
+ * either is challenging something different from a gain.
+ */
+
+/*
+ * The temperature water boils at where this machine stands, in degrees Celsius.
+ * It is declared here rather than read through the plant seam because the
+ * structures carry no phase change and the figure they do carry sits on the
+ * steam side of a record this file may not read by name.
+ */
+#define CONTROL_SATURATION_C 100.0f
+
+/*
+ * How far forward a model is stepped to arrive at where it settles, in
+ * milliseconds. One step and not a sequence of them: the structures integrate
+ * an interval exactly rather than by small forward steps.
+ */
+#define CONTROL_SETTLING_INTERVAL_MS 3600000u
+
+/*
  * What was commanded over the interval just elapsed, for the estimator to
  * advance under.
  *
@@ -289,6 +313,226 @@ static float probe_full_scale_flow_ml_per_s(const plant_parameters_t *parameters
     return flow;
 }
 
+/*
+ * Where the water leaves a machine this record describes, once it has stopped
+ * moving, with the heater held at full scale and the pump held at a level.
+ *
+ * This is the question admission is really asking: not what the machine is at
+ * now, but what it arrives at and stays at if given everything the element has
+ * against a stated draw. A target above that figure is one no amount of
+ * waiting reaches, which is the only kind of unreachable this file refuses.
+ *
+ * Asked of a model stood up for the purpose and discarded, in the plant seam's
+ * own vocabulary, on the same terms probe_full_scale_flow_ml_per_s asks its
+ * question and for the same reason: a heater rating and a standing loss reached
+ * for by name would tie this file to one structure's spelling of them, and
+ * would compile against that structure and fail to build against the next.
+ * Probing puts the same physical question in terms every structure answers.
+ *
+ * The temperature asked for is the water on its way to the group. A structure
+ * that heats the water in the vessel it delivers from keeps no such state --
+ * there is nothing between the mass and what leaves it -- and refuses that
+ * read; on such a machine the temperature the water leaves at is the brew
+ * temperature the machine has, which every structure answers as a quantity. So
+ * the state is asked for first and the quantity stands in where the
+ * architecture has no state to give, rather than either being assumed.
+ *
+ * Returns false, writing nothing, when the record will not stand a model up,
+ * when the step is refused -- which a structure answering no pump channel does
+ * the moment one is commanded -- or when neither read is answered. A caller
+ * that cannot be told where the machine settles has established no bound, and
+ * this file admits what it cannot refuse on evidence.
+ */
+static bool probe_settled_brew_c(const plant_parameters_t *parameters, uint16_t pump_permille,
+                                 float *settled_c)
+{
+    plant_model_t probe;
+    plant_actuation_t held = {{0u}};
+
+    if (!plant_model_init(&probe, parameters)) {
+        return false;
+    }
+
+    held.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = (uint16_t)ACTUATION_FULL_SCALE;
+    held.level_permille[ACTUATION_CHANNEL_PUMP] = pump_permille;
+    if (!plant_model_step(&probe, &held, 0.0f, CONTROL_SETTLING_INTERVAL_MS)) {
+        return false;
+    }
+
+    if (plant_model_state(&probe, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, settled_c)) {
+        return true;
+    }
+    return plant_model_quantity(&probe, PLANT_QUANTITY_BREW_TEMPERATURE_C, settled_c);
+}
+
+/*
+ * The fastest a course ever asks for water, and when it asks.
+ *
+ * The points are what is examined rather than the course sampled at some
+ * cadence, because a piecewise-linear course takes its extremes at its own
+ * bends: nothing between two points is faster than the faster of the two, and
+ * nothing past the last point is faster than the last, since the last rate is
+ * held rather than extended. Sampling would be slower and would still miss a
+ * peak that fell between two samples.
+ */
+static float peak_rate_ml_per_s(const delivery_profile_t *profile, uint32_t *at_millis)
+{
+    const size_t counted = (profile->point_count < (size_t)DELIVERY_PROFILE_POINT_MAX)
+                               ? profile->point_count
+                               : (size_t)DELIVERY_PROFILE_POINT_MAX;
+    float peak = 0.0f;
+
+    *at_millis = 0u;
+    for (size_t at = 0u; at < counted; at++) {
+        if (profile->points[at].rate_ml_per_s > peak) {
+            peak = profile->points[at].rate_ml_per_s;
+            *at_millis = profile->points[at].at_millis;
+        }
+    }
+    return peak;
+}
+
+/*
+ * Refuse a target that is beyond what the machine can hold against a draw,
+ * writing the bound and both figures into the record. A record already
+ * carrying a crossed bound is never reached with this: each caller asks only
+ * where nothing has been crossed yet.
+ *
+ * The peak and the point it occurs at are passed in rather than scanned here,
+ * so that a caller which has already found them -- the delivery admission
+ * below has, to compare the same peak against the pump's own ceiling -- does
+ * not scan the course twice and cannot end up with the two scans disagreeing.
+ *
+ * The pair is what is judged, never either half alone: the same target is
+ * comfortably held at rest and out of reach under a draw, so a bound on the
+ * target that did not name a draw would be a bound on nothing. The draw taken
+ * is the course's peak rather than its mean, because a delivery that falls out
+ * of band for the seconds it is drawing hardest is a delivery that failed --
+ * an average that stayed in band would be a statement about arithmetic rather
+ * than about the cup.
+ *
+ * Nothing here reads the machine's present condition. Where the water settles
+ * is a property of the description and the draw, so a cold machine and a
+ * machine at temperature receive the same answer, which is what keeps this a
+ * refusal of the impossible rather than a refusal of the early.
+ */
+static void refuse_if_beyond_the_authority(const control_state_t *state, float peak_ml_per_s,
+                                           uint32_t at_millis, float target_c,
+                                           control_admission_t *admission)
+{
+    const uint16_t peak_level = as_drive_level((peak_ml_per_s / state->full_scale_flow_ml_per_s) *
+                                               (float)ACTUATION_FULL_SCALE);
+    float settled_c = 0.0f;
+
+    /*
+     * A probe that could not be taken establishes no bound, and this file
+     * admits what it cannot refuse on evidence. A machine settling exactly at
+     * the target is held to reach it, so the comparison is strict.
+     */
+    if (!probe_settled_brew_c(&state->parameters, peak_level, &settled_c) ||
+        !(settled_c < target_c)) {
+        return;
+    }
+
+    admission->bound = CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY;
+    admission->requested = target_c;
+    admission->available = settled_c;
+    admission->at_millis = at_millis;
+}
+
+/*
+ * Whether this machine can ever do what a delivery asks of it, and what it
+ * crossed if not.
+ */
+static control_admission_t admit_delivery(const control_state_t *state,
+                                          const delivery_profile_t *profile)
+{
+    control_admission_t admission = {CONTROL_ADMISSION_OK, 0.0f, 0.0f, 0u};
+
+    if (state == NULL || profile == NULL) {
+        admission.bound = CONTROL_ADMISSION_NOTHING_GIVEN;
+        return admission;
+    }
+    if (!(state->full_scale_flow_ml_per_s > 0.0f)) {
+        admission.bound = CONTROL_ADMISSION_NO_MACHINE_DESCRIBED;
+        return admission;
+    }
+
+    uint32_t at_millis = 0u;
+    const float peak = peak_rate_ml_per_s(profile, &at_millis);
+
+    if (peak > state->full_scale_flow_ml_per_s) {
+        admission.bound = CONTROL_ADMISSION_RATE_OVER_FULL_SCALE;
+        admission.requested = peak;
+        admission.available = state->full_scale_flow_ml_per_s;
+        admission.at_millis = at_millis;
+        return admission;
+    }
+
+    /*
+     * A machine with no target named has been asked for a rate and nothing
+     * else, so there is no pair for the authority bound to be a bound on. The
+     * target it is given afterwards is judged where it is named, against the
+     * course running by then -- which is why that call asks this same question
+     * of a delivery already under way rather than leaving the ordering of the
+     * two commands to decide whether the pair is ever examined.
+     */
+    if (state->targeted) {
+        refuse_if_beyond_the_authority(state, peak, at_millis, state->target_c, &admission);
+    }
+    return admission;
+}
+
+/*
+ * Whether this machine can ever be driven to a target, and what it crossed if
+ * not.
+ *
+ * A target names no draw of its own, so the only ceiling it always meets is
+ * the one water itself imposes. Where a delivery is already running, the
+ * course it is running is the draw this target will have to be held against,
+ * and the pair is judged here on exactly the terms it would have been judged
+ * on had the two commands arrived the other way round.
+ */
+static control_admission_t admit_target(const control_state_t *state, float celsius)
+{
+    control_admission_t admission = {CONTROL_ADMISSION_OK, 0.0f, 0.0f, 0u};
+
+    if (state == NULL) {
+        admission.bound = CONTROL_ADMISSION_NOTHING_GIVEN;
+        return admission;
+    }
+    /*
+     * The value is not carried into the record. What was asked for here is a
+     * not-a-number or an infinity, and writing one into a field a caller will
+     * compare or print would be handing on the very thing that was refused.
+     */
+    if (!is_a_temperature(celsius)) {
+        admission.bound = CONTROL_ADMISSION_NOT_A_TEMPERATURE;
+        return admission;
+    }
+
+    /*
+     * Written as a negated comparison, so a target that is somehow not a number
+     * lands on the refusal rather than sailing past it. is_a_temperature has
+     * already refused that above; the guard costs a branch and removes the
+     * class.
+     */
+    if (!(celsius < CONTROL_SATURATION_C)) {
+        admission.bound = CONTROL_ADMISSION_TARGET_OVER_SATURATION;
+        admission.requested = celsius;
+        admission.available = CONTROL_SATURATION_C;
+        return admission;
+    }
+
+    if (state->delivery_running && (state->full_scale_flow_ml_per_s > 0.0f)) {
+        uint32_t at_millis = 0u;
+        const float peak = peak_rate_ml_per_s(&state->delivery, &at_millis);
+
+        refuse_if_beyond_the_authority(state, peak, at_millis, celsius, &admission);
+    }
+    return admission;
+}
+
 bool control_init(control_state_t *state, const plant_parameters_t *parameters,
                   const estimator_limits_t *limits, const delivery_tolerance_t *tolerance)
 {
@@ -309,6 +553,26 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     state->full_scale_flow_ml_per_s = 0.0f;
     state->delivery_running = false;
     state->delivery_elapsed_millis = 0u;
+
+    /*
+     * The description is put into the state before anything can refuse, on the
+     * same terms the band below is: an instance that failed to come up answers
+     * with a record of nothing rather than with whatever the memory it was
+     * declared in contained. A record of nothing describes no machine any
+     * probe could learn anything from, which is the honest state for an
+     * instance that never accepted one -- and every path that would reach for
+     * it has already been refused by then.
+     *
+     * Copied from a zeroed instance of the type rather than assigned field by
+     * field: which fields a description carries is the linked structure's own
+     * business, and this file is not entitled to know their names.
+     */
+    static const plant_parameters_t NOTHING;
+
+    state->parameters = NOTHING;
+    if (parameters != NULL) {
+        state->parameters = *parameters;
+    }
 
     /*
      * The band is put into the state before anything can refuse, so that an
@@ -361,9 +625,15 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     return off;
 }
 
-bool control_command_temperature(control_state_t *state, float celsius)
+bool control_command_temperature_reporting(control_state_t *state, float celsius,
+                                           control_admission_t *admission)
 {
-    if (state == NULL || !is_a_temperature(celsius)) {
+    if (admission == NULL) {
+        return false;
+    }
+
+    *admission = admit_target(state, celsius);
+    if (admission->bound != CONTROL_ADMISSION_OK) {
         return false;
     }
 
@@ -373,6 +643,13 @@ bool control_command_temperature(control_state_t *state, float celsius)
     state->target_c = celsius;
     state->targeted = true;
     return true;
+}
+
+bool control_command_temperature(control_state_t *state, float celsius)
+{
+    control_admission_t discarded;
+
+    return control_command_temperature_reporting(state, celsius, &discarded);
 }
 
 bool control_command_flow(control_state_t *state, uint16_t pump_permille)
@@ -385,9 +662,15 @@ bool control_command_flow(control_state_t *state, uint16_t pump_permille)
     return true;
 }
 
-bool control_command_delivery(control_state_t *state, const delivery_profile_t *profile)
+bool control_command_delivery_reporting(control_state_t *state, const delivery_profile_t *profile,
+                                        control_admission_t *admission)
 {
-    if (state == NULL || profile == NULL || !(state->full_scale_flow_ml_per_s > 0.0f)) {
+    if (admission == NULL) {
+        return false;
+    }
+
+    *admission = admit_delivery(state, profile);
+    if (admission->bound != CONTROL_ADMISSION_OK) {
         return false;
     }
 
@@ -395,6 +678,13 @@ bool control_command_delivery(control_state_t *state, const delivery_profile_t *
     state->delivery_running = true;
     state->delivery_elapsed_millis = 0u;
     return true;
+}
+
+bool control_command_delivery(control_state_t *state, const delivery_profile_t *profile)
+{
+    control_admission_t discarded;
+
+    return control_command_delivery_reporting(state, profile, &discarded);
 }
 
 bool control_delivery_running(const control_state_t *state)

@@ -1,0 +1,23 @@
+id: EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4-TEST
+type: evidence
+title: Authority is probed from the description the loop holds (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T13:12:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_target_beyond_the_authority_at_the_peak_draw_is_refused,firmware/test/test_control/test_control.c::test_the_authority_boundary_follows_the_description_the_loop_holds
+text: |-
+  Two tests pass. test_a_target_beyond_the_authority_at_the_peak_draw_is_refused establishes the bound is on the pair and not on either half: one target against two courses (a draw near full scale refused, a tenth of it admitted), one course against two targets (93.0 C refused, 45.0 C admitted), and a course gentle for all but a moment refused on its brief peak, which an averaged check would admit. It then commands the two in the other order -- a heavy course started against a modest target, then 93.0 C named while it runs -- and requires the same refusal on the same evidence, with the previous target left standing. Without that, commanding the flow first is a way past the bound entirely.
+
+  test_the_authority_boundary_follows_the_description_the_loop_holds is the falsifiable half. Against the shipped description a 2.8 mL/s course is admitted at 93.0 C and a 3.5 mL/s course refused, placing the boundary near 3.0 mL/s as the criterion states. Rewriting brew.heater_power_w to 2000.0 through the suite's description helper admits the refused course; rewriting it to 500.0 refuses the admitted one. This was checked by construction rather than assumed: replacing the probe with a hardcoded linear bound leaves 79 of 80 tests passing and fails exactly this one, so it is the only thing standing between a literal and a green suite.
+
+  The last quarter -- estimator on the shipped description, truth plant on the stronger one, boundary required not to move -- records the property rather than stressing it, and the test says so. The control unit has no channel to the truth description, so no implementable mistake reaches through it. It is kept because the property is load-bearing and costs nothing to state.
+
+  The probe stands up a throwaway plant instance from the parameter record, drives the brew heater channel at full scale with the pump at the level the peak rate implies, steps it once by an hour of simulated time, and reads back the temperature the water leaves at -- through the plant seam's own vocabulary, with no coefficient named. The outlet state is asked for first and the brew temperature quantity stands in where a single-vessel architecture keeps no such state. The plant encapsulation check confirms the seam is respected: 23 sources clean against 77 names owned by 3 structures, and the control sources build unchanged against the fixture structure whose parameter record carries one meaningless coefficient.
+links:
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4
+    type: satisfies
