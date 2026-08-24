@@ -1,0 +1,17 @@
+id: EVD-SOL-FLOW-SENSED-CHANNEL.C1-TEST
+type: evidence
+title: Flow channel reads independently of the plant's commanded quantity (SOL-FLOW-SENSED-CHANNEL.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T07:56:08Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_the_flow_channel_reports_the_meter_and_not_the_command
+text: |-
+  test_the_flow_channel_reports_the_meter_and_not_the_command passes. Injects a flow reading below the commanded pump rate and asserts hw_sensor_read(HW_SENSOR_FLOW) follows the injected value while PLANT_QUANTITY_BREW_FLOW_ML_PER_S remains at the commanded value, unaffected by the injection.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL.C1
+    type: satisfies

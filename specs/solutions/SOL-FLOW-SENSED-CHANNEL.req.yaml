@@ -1,0 +1,19 @@
+id: SOL-FLOW-SENSED-CHANNEL
+type: deliverable
+category: solution
+title: Ratified slice covering DEL-SIM-FLOW-SENSED.C1, DEL-SIM-FLOW-SENSED.C2, DEL-SIM-FLOW-SENSED.C3, REQ-MEASUREMENT-001.C5
+status: active
+version: 1
+text: |
+  Adds a flow sensor channel to the hardware seam so the control unit can read what moved rather than only command it, sourced independently of the plant's already-computed commanded-flow quantity. The simulation harness injects a flow reading through the same call already used for temperature and pressure. The seam's trustworthiness flag widens from a single boolean to a status that tells an absent channel apart from one that sampled and failed, applied uniformly across every sensed channel so the existing consumer is migrated rather than left to misread a widened value.
+rationale: |
+  Flow is added at the seam level, not the plant level, because the plant already answers a commanded-flow quantity (SOL-PLANT-FLOW-REPORTED) and the two must stay distinguishable: the sensed channel says what the water did, the plant quantity says what was asked of it. Widening the trustworthiness flag rather than giving flow its own richer type keeps one representation for every channel, so a future channel does not have to choose between two absence vocabularies; the cost is migrating the one existing consumer, which is small next to that ongoing consistency.
+links:
+  - target: DEL-SIM-FLOW-SENSED.C1
+    type: derives-from
+  - target: DEL-SIM-FLOW-SENSED.C2
+    type: derives-from
+  - target: DEL-SIM-FLOW-SENSED.C3
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C5
+    type: targets

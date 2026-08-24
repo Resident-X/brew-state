@@ -43,6 +43,24 @@ brew-pressure = -1000 .. 20000 @estimated Estimated from the pump's dead-head pr
 # The steam path is bounded on the same reasoning as the brew path.
 steam-pressure = -1000 .. 20000 @estimated Estimated on the same basis as the brew pressure channel, with the same margin above the highest pressure the machine can develop. No sensor has been selected, so this is not a part's declared range.
 
+# The rate water moves through the brew path, in thousandths of a millilitre per
+# second. A meter is fitted to this machine but wired to the OEM controller this
+# project replaces, and its part, position and resolvable range are not yet
+# established -- so the span below is not read off a datasheet, but it is
+# declared all the same, on the same terms as every other channel, because a
+# channel carrying no bounds is the failure worth preventing whether or not
+# anything is reading it today. It is not conditional on the instrument, and a
+# fitting slice that found this file silent would be the slice least placed to
+# notice.
+#
+# The high is well above the rate the pump commands into an open path and the
+# low is below zero, because a path relaxing at the end of a delivery can push a
+# little water back past a meter and a span that refused that would refuse the
+# machine behaving correctly. What the span is for is the disconnected meter
+# reading full scale and the seized one reading nothing, not for judging whether
+# a delivery is running fast.
+flow = -1000 .. 20000 @estimated Estimated from the rate the brew pump is taken to command into an open path -- pump.flow_ml_per_s in thermoblock.params, 7 ml/s, itself a judgement rather than a reading -- with the high set at nearly three times it so that no rate this machine can develop is refused, and the low set below zero to admit the small reverse movement a brew path shows as it relaxes. The fitted meter's part, position and resolution are not yet established, so this is not the range of a chosen part and it is not a measurement of anything.
+
 # How long a reconstructed state may go with no usable observation among the
 # channels it depends on before the estimator stops answering for it.
 #

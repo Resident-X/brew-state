@@ -76,12 +76,21 @@ static void report_from(const plant_model_t *model)
         [HW_SENSOR_STEAM_TEMPERATURE] = PLANT_QUANTITY_STEAM_TEMPERATURE_C,
         [HW_SENSOR_BREW_PRESSURE] = PLANT_QUANTITY_BREW_PRESSURE_BAR,
         [HW_SENSOR_STEAM_PRESSURE] = PLANT_QUANTITY_STEAM_PRESSURE_BAR,
+        /*
+         * A meter reporting exactly what the model was commanded to move. That
+         * is this helper's job -- it stands every channel up from the model, so
+         * a suite not interested in the difference has one -- and it is not a
+         * claim that the two agree on a machine. Where they come apart is
+         * asserted separately, by injecting a rate that differs from the
+         * command.
+         */
+        [HW_SENSOR_FLOW] = PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
     };
 
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         float value = 0.0f;
         TEST_ASSERT_TRUE(plant_model_quantity(model, QUANTITY_FOR_CHANNEL[channel], &value));
-        hw_sim_set_sensor((hw_sensor_channel_t)channel, true, (int32_t)lroundf(value * 1000.0f));
+        hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_VALID, (int32_t)lroundf(value * 1000.0f));
     }
 }
 
@@ -123,7 +132,7 @@ static void test_a_state_no_channel_reports_is_reconstructed(void)
     TEST_ASSERT_TRUE(estimator_init(&estimator, &parameters, &limits));
 
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
-        hw_sim_set_sensor((hw_sensor_channel_t)channel, true, 80000);
+        hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_VALID, 80000);
     }
 
     const plant_actuation_t actuation = heating();
@@ -136,7 +145,7 @@ static void test_a_state_no_channel_reports_is_reconstructed(void)
 
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         const hw_reading_t reading = hw_sensor_read((hw_sensor_channel_t)channel);
-        TEST_ASSERT_TRUE(reading.valid);
+        TEST_ASSERT_EQUAL_INT(HW_READING_VALID, reading.status);
         TEST_ASSERT_NOT_EQUAL(reading.value_milli, (int32_t)lroundf(reconstructed * 1000.0f));
     }
 }
@@ -314,7 +323,7 @@ static void test_the_residual_follows_the_imposed_discrepancy(void)
 
         /* The model settles at the declared ambient of 20 degrees; the reading
          * is stood up either side of it. */
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, OBSERVED[i]);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, OBSERVED[i]);
 
         const plant_actuation_t actuation = idle();
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
@@ -342,7 +351,7 @@ static void test_a_channel_not_corrected_against_reports_no_residual(void)
     float predicted = 0.0f;
     TEST_ASSERT_TRUE(
         plant_model_quantity(&estimator.model, PLANT_QUANTITY_BREW_TEMPERATURE_C, &predicted));
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, (int32_t)lroundf(predicted * 1000.0f));
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, (int32_t)lroundf(predicted * 1000.0f));
 
     const plant_actuation_t actuation = idle();
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
@@ -387,7 +396,7 @@ static void test_the_reported_residual_is_the_one_the_correction_used(void)
         hw_sim_reset();
         TEST_ASSERT_TRUE(estimator_init(&estimator, &parameters, &limits));
         TEST_ASSERT_TRUE(plant_model_init(&uncorrected, &parameters));
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, OBSERVED[i]);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, OBSERVED[i]);
 
         const plant_actuation_t actuation = heating();
         TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, 0.0f, STEP_INTERVAL_MS));
@@ -428,19 +437,19 @@ static void test_a_step_that_corrects_nothing_reports_no_residual(void)
     int32_t residual = 0;
 
     TEST_ASSERT_TRUE(estimator_init(&estimator, &parameters, &limits));
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 15000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 15000);
 
     const plant_actuation_t actuation = idle();
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
     TEST_ASSERT_TRUE(estimator_residual(&estimator, HW_SENSOR_BREW_TEMPERATURE, &residual));
 
     /* The reading is withdrawn: the model still advances, and corrects nothing. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 15000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 15000);
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
     TEST_ASSERT_FALSE(estimator_residual(&estimator, HW_SENSOR_BREW_TEMPERATURE, &residual));
 
     /* And a step the seam refuses leaves none behind either. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 15000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 15000);
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
     TEST_ASSERT_TRUE(estimator_residual(&estimator, HW_SENSOR_BREW_TEMPERATURE, &residual));
     TEST_ASSERT_FALSE(estimator_step(&estimator, &actuation, 0u));
@@ -461,7 +470,7 @@ static void test_the_reconstruction_survives_a_withdrawn_reading(void)
     float after = 0.0f;
 
     TEST_ASSERT_TRUE(estimator_init(&estimator, &parameters, &limits));
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
 
     /*
      * Kept inside the declared tolerance window, which is what makes this a
@@ -506,12 +515,29 @@ static void test_every_channel_reports_its_own_difference(void)
         [HW_SENSOR_STEAM_TEMPERATURE] = 9000,
         [HW_SENSOR_BREW_PRESSURE] = -2500,
         [HW_SENSOR_STEAM_PRESSURE] = 750,
+        [HW_SENSOR_FLOW] = -1200,
     };
     static const plant_quantity_t QUANTITY_FOR_CHANNEL[HW_SENSOR_CHANNEL_COUNT] = {
         [HW_SENSOR_BREW_TEMPERATURE] = PLANT_QUANTITY_BREW_TEMPERATURE_C,
         [HW_SENSOR_STEAM_TEMPERATURE] = PLANT_QUANTITY_STEAM_TEMPERATURE_C,
         [HW_SENSOR_BREW_PRESSURE] = PLANT_QUANTITY_BREW_PRESSURE_BAR,
         [HW_SENSOR_STEAM_PRESSURE] = PLANT_QUANTITY_STEAM_PRESSURE_BAR,
+        [HW_SENSOR_FLOW] = PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
+    };
+    /*
+     * Whether each channel is one a residual can exist for at all. Every
+     * channel is still driven -- a channel left undriven here would be one
+     * nothing in this suite stands away from its prediction -- but a channel
+     * nothing is corrected against reports no difference rather than a wrong
+     * one, and requiring a residual of it would fail this test for a property
+     * it is not asserting.
+     */
+    static const bool CORRECTED_AGAINST[HW_SENSOR_CHANNEL_COUNT] = {
+        [HW_SENSOR_BREW_TEMPERATURE] = true,
+        [HW_SENSOR_STEAM_TEMPERATURE] = true,
+        [HW_SENSOR_BREW_PRESSURE] = true,
+        [HW_SENSOR_STEAM_PRESSURE] = true,
+        [HW_SENSOR_FLOW] = false,
     };
 
     estimator_t estimator;
@@ -535,7 +561,7 @@ static void test_every_channel_reports_its_own_difference(void)
         TEST_ASSERT_TRUE(
             plant_model_quantity(&uncorrected, QUANTITY_FOR_CHANNEL[channel], &predicted));
         predicted_milli[channel] = (int32_t)lroundf(predicted * 1000.0f);
-        hw_sim_set_sensor((hw_sensor_channel_t)channel, true,
+        hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_VALID,
                           predicted_milli[channel] - OFFSET_MILLI[channel]);
     }
 
@@ -544,6 +570,15 @@ static void test_every_channel_reports_its_own_difference(void)
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         char message[96];
         int32_t residual = 0;
+
+        if (!CORRECTED_AGAINST[channel]) {
+            (void)snprintf(message, sizeof(message),
+                           "channel %u reported a residual with nothing corrected against it",
+                           channel);
+            TEST_ASSERT_FALSE_MESSAGE(
+                estimator_residual(&estimator, (hw_sensor_channel_t)channel, &residual), message);
+            continue;
+        }
 
         (void)snprintf(message, sizeof(message), "channel %u reported no residual", channel);
         TEST_ASSERT_TRUE_MESSAGE(
@@ -585,7 +620,7 @@ static void test_a_channels_correction_lands_on_its_own_state_and_no_other(void)
     TEST_ASSERT_TRUE(plant_model_step(&uncorrected, &actuation, 0.0f, STEP_INTERVAL_MS));
     TEST_ASSERT_TRUE(
         plant_model_quantity(&uncorrected, PLANT_QUANTITY_BREW_TEMPERATURE_C, &predicted_brew));
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true,
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID,
                       (int32_t)lroundf(predicted_brew * 1000.0f) + 6000);
 
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
@@ -675,7 +710,7 @@ static estimator_limits_t limits_from(const char *text)
 static void report_everything_at(int32_t milli)
 {
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
-        hw_sim_set_sensor((hw_sensor_channel_t)channel, true, milli);
+        hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_VALID, milli);
     }
 }
 
@@ -700,11 +735,11 @@ static void test_a_reading_outside_its_declared_bounds_is_not_corrected_against(
     for (unsigned step = 0u; step < 8u; step++) {
         report_everything_at(40000);
         /* Far above the declared high for a temperature channel. */
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 900000);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 900000);
         TEST_ASSERT_TRUE(estimator_step(&dragged, &actuation, STEP_INTERVAL_MS));
 
         report_everything_at(40000);
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
         TEST_ASSERT_TRUE(estimator_step(&withheld, &actuation, STEP_INTERVAL_MS));
     }
 
@@ -734,6 +769,7 @@ static void test_each_declared_bound_is_believed_and_the_step_beyond_it_is_not(v
                                       "steam-temperature = -10000 .. 250000\n"
                                       "brew-pressure = -1000 .. 20000\n"
                                       "steam-pressure = -1000 .. 20000\n"
+                                      "flow = -1000 .. 20000\n"
                                       "loss-tolerance-window-ms = 500\n"
                                       "excursion-bound-milli-c = 15000\n";
     static const struct {
@@ -755,7 +791,7 @@ static void test_each_declared_bound_is_believed_and_the_step_beyond_it_is_not(v
         int32_t residual = 0;
 
         TEST_ASSERT_TRUE(estimator_init(&estimator, &parameters, &narrow));
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, CASES[i].reading);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, CASES[i].reading);
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
 
         const bool corrected =
@@ -783,10 +819,10 @@ static void test_a_state_stays_usable_across_a_gap_in_what_it_depends_on(void)
     const plant_actuation_t actuation = heating();
 
     /* Withdrawn for a run well inside the shipped window of five hundred. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
-    hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, false, 0);
-    hw_sim_set_sensor(HW_SENSOR_BREW_PRESSURE, false, 0);
-    hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
+    hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_FAILED, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_PRESSURE, HW_READING_FAILED, 0);
+    hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_FAILED, 0);
 
     for (unsigned step = 0u; step < 20u; step++) {
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
@@ -818,13 +854,13 @@ static void test_a_gap_in_a_channel_the_state_does_not_depend_on_leaves_it_answe
 
     const plant_actuation_t actuation = heating();
 
-    hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, false, 0);
-    hw_sim_set_sensor(HW_SENSOR_BREW_PRESSURE, false, 0);
-    hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_FAILED, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_PRESSURE, HW_READING_FAILED, 0);
+    hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_FAILED, 0);
 
     /* Far beyond the window, so a channel-keyed rule would certainly have fired. */
     for (unsigned step = 0u; step < 200u; step++) {
-        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 40000);
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 40000);
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
     }
 
@@ -850,6 +886,7 @@ static void test_the_reconstruction_is_refused_past_its_declared_excursion_bound
                                       "steam-temperature = -10000 .. 250000\n"
                                       "brew-pressure = -1000 .. 20000\n"
                                       "steam-pressure = -1000 .. 20000\n"
+                                      "flow = -1000 .. 20000\n"
                                       "loss-tolerance-window-ms = 4000000\n"
                                       "excursion-bound-milli-c = 250\n";
     const estimator_limits_t tight = limits_from(DECLARATION);
@@ -867,7 +904,7 @@ static void test_the_reconstruction_is_refused_past_its_declared_excursion_bound
 
     /* Then the observations stop and the heater stays on. */
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
-        hw_sim_set_sensor((hw_sensor_channel_t)channel, false, 0);
+        hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_FAILED, 0);
     }
 
     bool refused = false;
@@ -932,6 +969,7 @@ static void test_a_state_becomes_unusable_past_the_window_and_recovers_after_it(
                                       "steam-temperature = -10000 .. 250000\n"
                                       "brew-pressure = -1000 .. 20000\n"
                                       "steam-pressure = -1000 .. 20000\n"
+                                      "flow = -1000 .. 20000\n"
                                       "loss-tolerance-window-ms = 100\n"
                                       "excursion-bound-milli-c = 250000\n";
     const estimator_limits_t brief = limits_from(DECLARATION);
@@ -943,7 +981,7 @@ static void test_a_state_becomes_unusable_past_the_window_and_recovers_after_it(
     const plant_actuation_t actuation = idle();
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
 
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, false, 0);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
 
     /* Ten steps of ten milliseconds is exactly the window, and still answered. */
     float value = 0.0f;
@@ -959,7 +997,7 @@ static void test_a_state_becomes_unusable_past_the_window_and_recovers_after_it(
     TEST_ASSERT_FALSE(estimator_state(&estimator, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &value));
 
     /* Restored, and the next accepted observation clears it. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 20000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
     TEST_ASSERT_TRUE(estimator_state(&estimator, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &value));
 
@@ -986,7 +1024,7 @@ static void test_a_persistently_implausible_reading_starves_the_state_too(void)
     TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
 
     /* Arriving intact every step, and absurd every step. */
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, true, 900000);
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 900000);
     for (unsigned step = 0u; step < 60u; step++) {
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
     }
@@ -1040,6 +1078,7 @@ static void test_a_window_or_a_distance_outside_what_it_admits_is_refused(void)
                        "steam-temperature = -10000 .. 250000\n"
                        "brew-pressure = -1000 .. 20000\n"
                        "steam-pressure = -1000 .. 20000\n"
+                       "flow = -1000 .. 20000\n"
                        "%s",
                        CASES[i].figures);
 
@@ -1094,6 +1133,7 @@ static void test_each_channel_corrects_the_state_its_own_reading_is_measured_aga
     struct driven {
         hw_sensor_channel_t channel;
         int32_t reading_milli;
+        bool corrected_against;
         bool correction_sticks;
     };
 
@@ -1104,10 +1144,20 @@ static void test_each_channel_corrects_the_state_its_own_reading_is_measured_aga
      * passing for the wrong reason.
      */
     static const struct driven DRIVEN[] = {
-        {HW_SENSOR_BREW_TEMPERATURE, 60000, true},
-        {HW_SENSOR_STEAM_TEMPERATURE, 60000, true},
-        {HW_SENSOR_BREW_PRESSURE, 5000, true},
-        {HW_SENSOR_STEAM_PRESSURE, 5000, false},
+        {HW_SENSOR_BREW_TEMPERATURE, 60000, true, true},
+        {HW_SENSOR_STEAM_TEMPERATURE, 60000, true, true},
+        {HW_SENSOR_BREW_PRESSURE, 5000, true, true},
+        {HW_SENSOR_STEAM_PRESSURE, 5000, true, false},
+        /*
+         * The flow channel is corrected against nothing, and that is the
+         * assertion rather than an exemption: the rate the brew path draws is
+         * recomputed whole by the equations on every step from what the pump
+         * was commanded, so there is no state a reading of it could correct.
+         * A residual appearing here would mean a correction had been applied
+         * to a state that does not accumulate it, which the next step would
+         * silently throw away while reporting agreement.
+         */
+        {HW_SENSOR_FLOW, 3000, false, false},
     };
 
     /* Every channel the machine has is driven, not merely the ones listed. A
@@ -1127,11 +1177,18 @@ static void test_each_channel_corrects_the_state_its_own_reading_is_measured_aga
         /* One channel at a time, so no other channel's correction can move the
          * prediction this one is being measured against. */
         hw_sim_reset();
-        hw_sim_set_sensor(DRIVEN[i].channel, true, DRIVEN[i].reading_milli);
+        hw_sim_set_sensor(DRIVEN[i].channel, HW_READING_VALID, DRIVEN[i].reading_milli);
 
         TEST_ASSERT_TRUE(estimator_step(&estimator, &actuation, STEP_INTERVAL_MS));
 
         int32_t first = 0;
+        if (!DRIVEN[i].corrected_against) {
+            TEST_ASSERT_FALSE_MESSAGE(
+                estimator_residual(&estimator, DRIVEN[i].channel, &first),
+                "a channel nothing is corrected against reported a residual");
+            continue;
+        }
+
         TEST_ASSERT_TRUE_MESSAGE(estimator_residual(&estimator, DRIVEN[i].channel, &first),
                                  "a channel reporting a plausible reading produced no residual");
         TEST_ASSERT_TRUE_MESSAGE(first != 0, "the reading was chosen to disagree and did not");
@@ -1154,6 +1211,270 @@ static void test_each_channel_corrects_the_state_its_own_reading_is_measured_aga
                            "channel %d: correcting left its own disagreement at %ld of %ld",
                            (int)DRIVEN[i].channel, (long)closed, (long)opened);
             TEST_ASSERT_TRUE_MESSAGE(closed < opened, message);
+        }
+    }
+}
+
+/*
+ * The rate the model is commanded to move water at over one step, and the model
+ * it was commanded on. Both are needed together in the tests below: what a meter
+ * reports is only interesting against what was asked for, and a test that
+ * hard-coded the commanded figure would stop being about the reference machine
+ * the moment its pump coefficient changed.
+ */
+static int32_t commanded_flow_milli(plant_model_t *model, const plant_actuation_t *actuation)
+{
+    float commanded = 0.0f;
+
+    TEST_ASSERT_TRUE(plant_model_step(model, actuation, 0.0f, STEP_INTERVAL_MS));
+    TEST_ASSERT_TRUE(plant_model_quantity(model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &commanded));
+    return (int32_t)lroundf(commanded * 1000.0f);
+}
+
+/*
+ * The pump commanded at full duty, which is what makes the commanded rate large
+ * enough for a meter to be stood well below it and still report a rate the
+ * machine could be at.
+ */
+static plant_actuation_t pumping(void)
+{
+    plant_actuation_t actuation = {{0u}};
+
+    actuation.level_permille[ACTUATION_CHANNEL_PUMP] = ACTUATION_FULL_SCALE;
+    return actuation;
+}
+
+/// SOL-FLOW-SENSED-CHANNEL.C1: What moved is read at the hardware seam and is
+/// not the quantity the plant was commanded.
+///
+/// The two are driven apart on purpose: the pump is commanded at full duty and
+/// the meter reports a rate well below what that commands. What a consumer reads
+/// through the seam has to follow the meter, and what the model reports as the
+/// commanded rate has to be untouched by the meter having reported anything at
+/// all. A seam that answered the flow channel out of the model would pass every
+/// other test in this suite and fail this one, which is the whole reason it is
+/// written this way round: a machine whose meter disagrees with its command is
+/// indistinguishable from one whose meter agrees, otherwise.
+static void test_the_flow_channel_reports_the_meter_and_not_the_command(void)
+{
+    plant_model_t model;
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    const plant_actuation_t actuation = pumping();
+    const int32_t commanded_milli = commanded_flow_milli(&model, &actuation);
+    TEST_ASSERT_TRUE_MESSAGE(commanded_milli > 3000,
+                             "the commanded rate is too small to stand a meter below it");
+
+    /*
+     * A puck the equations carry no term for is one reason a real machine's two
+     * figures come apart; which reason it is does not matter here, only that the
+     * seam is able to carry the difference at all.
+     */
+    const int32_t sensed_milli = commanded_milli - 2500;
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, sensed_milli);
+
+    const hw_reading_t reading = hw_sensor_read(HW_SENSOR_FLOW);
+    TEST_ASSERT_EQUAL_INT(HW_READING_VALID, reading.status);
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(sensed_milli, reading.value_milli,
+                                    "the seam did not report what the meter reported");
+    TEST_ASSERT_TRUE_MESSAGE(reading.value_milli != commanded_milli,
+                             "the seam reported the commanded rate as a measurement");
+
+    /*
+     * And the model's own account of what it was commanded to move is exactly
+     * where it was, so the two are independent rather than merely different
+     * once.
+     */
+    float after = 0.0f;
+    TEST_ASSERT_TRUE(plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &after));
+    TEST_ASSERT_EQUAL_INT32(commanded_milli, (int32_t)lroundf(after * 1000.0f));
+}
+
+/// SOL-FLOW-SENSED-CHANNEL.C2: A rate is injected into the flow channel through
+/// the same seam call every other channel is injected through.
+///
+/// Exact readback rather than approximate: the harness is not a model and does
+/// nothing to a figure on its way through, so a rate that arrived rounded or
+/// scaled would mean a suite could not state what the machine had been told. The
+/// injected rate is below the commanded one, which is the direction a real path
+/// with resistance in it comes apart, and the model's computation of the
+/// commanded rate is asserted to be untouched by the injection.
+static void test_a_rate_below_the_command_is_injected_and_read_back_exactly(void)
+{
+    plant_model_t model;
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    const plant_actuation_t actuation = pumping();
+    const int32_t commanded_milli = commanded_flow_milli(&model, &actuation);
+
+    const int32_t injected_milli = commanded_milli / 3;
+    TEST_ASSERT_TRUE_MESSAGE(injected_milli < commanded_milli,
+                             "the injected rate was not below the commanded one");
+
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, injected_milli);
+
+    const hw_reading_t reading = hw_sensor_read(HW_SENSOR_FLOW);
+    TEST_ASSERT_EQUAL_INT(HW_READING_VALID, reading.status);
+    TEST_ASSERT_EQUAL_INT32(injected_milli, reading.value_milli);
+
+    /*
+     * Read twice, because a harness that consumed the injected value on the
+     * first read would leave a second consumer with nothing and would look
+     * exactly like a meter that had stopped.
+     */
+    const hw_reading_t again = hw_sensor_read(HW_SENSOR_FLOW);
+    TEST_ASSERT_EQUAL_INT(HW_READING_VALID, again.status);
+    TEST_ASSERT_EQUAL_INT32(injected_milli, again.value_milli);
+
+    float commanded_now = 0.0f;
+    TEST_ASSERT_TRUE(
+        plant_model_quantity(&model, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &commanded_now));
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(commanded_milli, (int32_t)lroundf(commanded_now * 1000.0f),
+                                    "injecting a reading moved the model's commanded rate");
+}
+
+/// SOL-FLOW-SENSED-CHANNEL.C3: A channel with nothing fitted and a channel whose
+/// sample failed are both left out of the correction, exactly as one flag's
+/// false was.
+///
+/// Widening the flag into a status widened what the seam can say without
+/// widening what this consumer does about it, and the failure worth catching is
+/// a correction that now runs on one of the two. Three instances are advanced
+/// identically and differ only in what the brew temperature channel says:
+/// nothing fitted, a failed sample, and a reading. The first two must end in the
+/// same place and report no residual; the third must end somewhere else, or this
+/// would pass on an estimator that had stopped correcting altogether.
+static void test_an_absent_reading_and_a_failed_one_are_both_skipped(void)
+{
+    estimator_t unfitted;
+    estimator_t failed;
+    estimator_t reading;
+
+    TEST_ASSERT_TRUE(estimator_init(&unfitted, &parameters, &limits));
+    TEST_ASSERT_TRUE(estimator_init(&failed, &parameters, &limits));
+    TEST_ASSERT_TRUE(estimator_init(&reading, &parameters, &limits));
+
+    const plant_actuation_t actuation = heating();
+
+    for (unsigned step = 0u; step < 8u; step++) {
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_ABSENT, 0);
+        TEST_ASSERT_TRUE(estimator_step(&unfitted, &actuation, STEP_INTERVAL_MS));
+
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_FAILED, 0);
+        TEST_ASSERT_TRUE(estimator_step(&failed, &actuation, STEP_INTERVAL_MS));
+
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 90000);
+        TEST_ASSERT_TRUE(estimator_step(&reading, &actuation, STEP_INTERVAL_MS));
+    }
+
+    int32_t residual = 0;
+    TEST_ASSERT_FALSE_MESSAGE(estimator_residual(&unfitted, HW_SENSOR_BREW_TEMPERATURE, &residual),
+                              "a channel with nothing fitted was corrected against");
+    TEST_ASSERT_FALSE_MESSAGE(estimator_residual(&failed, HW_SENSOR_BREW_TEMPERATURE, &residual),
+                              "a channel whose sample failed was corrected against");
+    TEST_ASSERT_TRUE_MESSAGE(estimator_residual(&reading, HW_SENSOR_BREW_TEMPERATURE, &residual),
+                             "a channel reporting a plausible reading was not corrected against");
+
+    float from_absent = 0.0f;
+    float from_failed = 0.0f;
+    float from_reading = 0.0f;
+    TEST_ASSERT_TRUE(estimator_state(&unfitted, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &from_absent));
+    TEST_ASSERT_TRUE(estimator_state(&failed, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &from_failed));
+    TEST_ASSERT_TRUE(estimator_state(&reading, ESTIMATOR_STATE_BREW_TEMPERATURE_C, &from_reading));
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(from_absent, from_failed,
+                                    "the two untrustworthy statuses were not skipped alike");
+    TEST_ASSERT_TRUE_MESSAGE(fabsf(from_reading - from_absent) > 0.0f,
+                             "correcting against a reading changed nothing, so this test would "
+                             "pass on an estimator that had stopped correcting");
+}
+
+/// SOL-FLOW-SENSED-CHANNEL.C4: Nothing fitted, a failed sample, a genuine zero
+/// and a rate equal to the command are four distinguishable answers on the flow
+/// channel.
+///
+/// They are the four conditions a machine can actually present, and collapsing
+/// any pair of them is a real defect with no symptom: a variant built without a
+/// meter would read as a broken one, a stopped path would read as an unfitted
+/// channel, and a commanded rate substituted for a measured one would make the
+/// very disagreement a meter is fitted to reveal unobservable. Each case is
+/// asserted against the other three rather than against a description of itself,
+/// so no two can become the same answer without this failing.
+static void test_the_flow_channel_tells_its_four_conditions_apart(void)
+{
+    struct condition {
+        const char *what;
+        hw_reading_status_t injected; /* what the harness stands the channel at */
+        int32_t injected_milli;
+        bool inject; /* false: nothing is stood up at all */
+        hw_reading_status_t expected;
+        int32_t expected_milli;
+    };
+
+    plant_model_t model;
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+
+    const plant_actuation_t actuation = pumping();
+    const int32_t commanded_milli = commanded_flow_milli(&model, &actuation);
+    TEST_ASSERT_TRUE_MESSAGE(commanded_milli != 0,
+                             "the commanded rate is zero, so a genuine zero could not be told "
+                             "apart from a reading equal to the command");
+
+    /*
+     * The unfitted case is not injected. What a machine built without a meter
+     * presents is what the harness reports having been told nothing about the
+     * channel, so standing "absent" up explicitly would test the injection
+     * rather than the condition.
+     */
+    const struct condition CONDITIONS[] = {
+        {"nothing fitted", HW_READING_ABSENT, 0, false, HW_READING_ABSENT, 0},
+        {"a failed sample", HW_READING_FAILED, 0, true, HW_READING_FAILED, 0},
+        {"a genuine zero", HW_READING_VALID, 0, true, HW_READING_VALID, 0},
+        {"the commanded rate", HW_READING_VALID, commanded_milli, true, HW_READING_VALID,
+         commanded_milli},
+    };
+    const size_t count = sizeof(CONDITIONS) / sizeof(CONDITIONS[0]);
+    hw_reading_t seen[sizeof(CONDITIONS) / sizeof(CONDITIONS[0])];
+
+    for (size_t i = 0u; i < count; i++) {
+        char message[128];
+
+        hw_sim_reset();
+        if (CONDITIONS[i].inject) {
+            hw_sim_set_sensor(HW_SENSOR_FLOW, CONDITIONS[i].injected,
+                              CONDITIONS[i].injected_milli);
+        }
+
+        seen[i] = hw_sensor_read(HW_SENSOR_FLOW);
+
+        (void)snprintf(message, sizeof(message), "%s was not reported as itself",
+                       CONDITIONS[i].what);
+        TEST_ASSERT_EQUAL_INT_MESSAGE((int)CONDITIONS[i].expected, (int)seen[i].status, message);
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(CONDITIONS[i].expected_milli, seen[i].value_milli, message);
+
+        /*
+         * No condition but the last hands back the commanded rate as though it
+         * had been measured.
+         */
+        if (CONDITIONS[i].expected_milli != commanded_milli) {
+            (void)snprintf(message, sizeof(message), "%s reported the commanded rate",
+                           CONDITIONS[i].what);
+            TEST_ASSERT_FALSE_MESSAGE(
+                seen[i].status == HW_READING_VALID && seen[i].value_milli == commanded_milli,
+                message);
+        }
+    }
+
+    /* And every pair differs in the status, in the value, or in both. */
+    for (size_t i = 0u; i < count; i++) {
+        for (size_t j = i + 1u; j < count; j++) {
+            char message[128];
+
+            (void)snprintf(message, sizeof(message), "%s and %s are the same answer",
+                           CONDITIONS[i].what, CONDITIONS[j].what);
+            TEST_ASSERT_FALSE_MESSAGE(
+                seen[i].status == seen[j].status && seen[i].value_milli == seen[j].value_milli,
+                message);
         }
     }
 }
@@ -1184,5 +1505,9 @@ int main(void)
     RUN_TEST(test_a_state_becomes_unusable_past_the_window_and_recovers_after_it);
     RUN_TEST(test_a_persistently_implausible_reading_starves_the_state_too);
     RUN_TEST(test_a_window_or_a_distance_outside_what_it_admits_is_refused);
+    RUN_TEST(test_the_flow_channel_reports_the_meter_and_not_the_command);
+    RUN_TEST(test_a_rate_below_the_command_is_injected_and_read_back_exactly);
+    RUN_TEST(test_an_absent_reading_and_a_failed_one_are_both_skipped);
+    RUN_TEST(test_the_flow_channel_tells_its_four_conditions_apart);
     return UNITY_END();
 }

@@ -1,0 +1,17 @@
+id: EVD-SOL-FLOW-SENSED-CHANNEL.C4-TEST
+type: evidence
+title: Flow reading told apart as absent, failed, zero, or equal to the command (SOL-FLOW-SENSED-CHANNEL.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T07:56:19Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_the_flow_channel_tells_its_four_conditions_apart
+text: |-
+  test_the_flow_channel_tells_its_four_conditions_apart passes. Table-driven over {unfitted (sim-reset default), sampled-and-failed, genuine zero, equal to commanded rate}; asserts each reads back as itself at hw_sensor_read(HW_SENSOR_FLOW), and pairwise that no two (status, value) answers collide, so none of the first three cases can be mistaken for a measurement equal to the command.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL.C4
+    type: satisfies

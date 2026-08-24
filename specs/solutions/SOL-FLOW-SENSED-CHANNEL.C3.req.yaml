@@ -1,0 +1,12 @@
+id: SOL-FLOW-SENSED-CHANNEL.C3
+type: criterion
+title: The seam's trustworthiness flag widens to tell an absent channel apart from one that sampled and failed, with every existing consumer migrated
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `hw_reading_t` (firmware/include/hw_interface.h) replaces its single `bool valid` field with a status that tells an absent channel apart from one that sampled and failed, applied uniformly across `HW_SENSOR_BREW_TEMPERATURE`, `HW_SENSOR_STEAM_TEMPERATURE`, `HW_SENSOR_BREW_PRESSURE`, `HW_SENSOR_STEAM_PRESSURE`, and the new flow channel alike. `estimator.c`'s `estimator_step` loop, the sole existing consumer of the flag, is updated so absent and failed readings both continue to be skipped exactly as `valid=false` did, and the existing temperature and pressure test suites pass unchanged after the migration. Giving temperature and pressure a caller-facing distinction beyond skip-vs-use is out of scope — the wider status exists to make flow's absent case distinguishable, not to change how the pre-existing channels are consumed.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL
+    type: criterion-of

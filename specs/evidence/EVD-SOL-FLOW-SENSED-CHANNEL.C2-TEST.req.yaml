@@ -1,0 +1,17 @@
+id: EVD-SOL-FLOW-SENSED-CHANNEL.C2-TEST
+type: evidence
+title: Sim harness injects a flow reading through the existing seam call (SOL-FLOW-SENSED-CHANNEL.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-24T07:56:08Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_a_rate_below_the_command_is_injected_and_read_back_exactly
+text: |-
+  test_a_rate_below_the_command_is_injected_and_read_back_exactly passes. Injects a rate below the commanded pump rate via hw_sim_set_sensor(HW_SENSOR_FLOW, ...) and asserts hw_sensor_read(HW_SENSOR_FLOW) returns exactly that value on repeated reads, with no change to the plant's own flow computation.
+links:
+  - target: SOL-FLOW-SENSED-CHANNEL.C2
+    type: satisfies

@@ -19,12 +19,29 @@
 
 #include "hw_interface.h"
 
+/*
+ * What a channel this board carries no input for is written as, so that such a
+ * channel is stated rather than left to the zeroth entry of the table below --
+ * which is a real converter input, and would make an unwired channel report the
+ * brew casting's temperature under another name.
+ */
+#define SENSOR_INPUT_NONE 0xFFFFFFFFu
+
 /* Analogue inputs backing the sensor channels, in hw_sensor_channel_t order. */
 static const uint32_t sensor_adc_channel[HW_SENSOR_CHANNEL_COUNT] = {
-    ADC_CHANNEL_0, /* HW_SENSOR_BREW_TEMPERATURE */
-    ADC_CHANNEL_1, /* HW_SENSOR_STEAM_TEMPERATURE */
-    ADC_CHANNEL_2, /* HW_SENSOR_BREW_PRESSURE */
-    ADC_CHANNEL_3  /* HW_SENSOR_STEAM_PRESSURE */
+    ADC_CHANNEL_0,    /* HW_SENSOR_BREW_TEMPERATURE */
+    ADC_CHANNEL_1,    /* HW_SENSOR_STEAM_TEMPERATURE */
+    ADC_CHANNEL_2,    /* HW_SENSOR_BREW_PRESSURE */
+    ADC_CHANNEL_3,    /* HW_SENSOR_STEAM_PRESSURE */
+    /*
+     * The machine's flow meter is wired to the OEM controller this project
+     * replaces, not to this board, so the channel is carried with no input
+     * behind it and reports that it is absent. Pointing it at a converter
+     * input nothing is wired to would make it report a number -- whatever an
+     * unconnected pin floats at -- and a number is exactly what a consumer
+     * must not get from an instrument that is not there.
+     */
+    SENSOR_INPUT_NONE /* HW_SENSOR_FLOW */
 };
 
 /* Timer compare channels backing the output channels, in hw_output_channel_t order. */
@@ -138,10 +155,25 @@ bool hw_stm32_init(void)
 
 hw_reading_t hw_sensor_read(hw_sensor_channel_t channel)
 {
-    hw_reading_t reading = { false, 0 };
+    /*
+     * Failed rather than absent is what every refusal below reports: the
+     * peripherals, the converter and the count are all things that went wrong
+     * while sampling a channel this board does have an input for. The one
+     * condition that is genuinely absence is the channel with no input behind
+     * it, and it is answered before any of them.
+     */
+    hw_reading_t reading = { HW_READING_FAILED, 0 };
     ADC_ChannelConfTypeDef selection = { 0 };
 
-    if (!peripherals_ready || (unsigned)channel >= (unsigned)HW_SENSOR_CHANNEL_COUNT) {
+    if ((unsigned)channel >= (unsigned)HW_SENSOR_CHANNEL_COUNT) {
+        reading.status = HW_READING_ABSENT;
+        return reading;
+    }
+    if (sensor_adc_channel[channel] == SENSOR_INPUT_NONE) {
+        reading.status = HW_READING_ABSENT;
+        return reading;
+    }
+    if (!peripherals_ready) {
         return reading;
     }
 
@@ -167,7 +199,7 @@ hw_reading_t hw_sensor_read(hw_sensor_channel_t channel)
         return reading;
     }
 
-    reading.valid = true;
+    reading.status = HW_READING_VALID;
     reading.value_milli =
         (int32_t)((counts * (uint32_t)SENSOR_FULL_SCALE_MILLI) / (uint32_t)ADC_FULL_SCALE_COUNTS);
     return reading;
