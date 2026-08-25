@@ -48,7 +48,8 @@ static const uint32_t sensor_adc_channel[HW_SENSOR_CHANNEL_COUNT] = {
 static const uint32_t output_timer_channel[ACTUATION_CHANNEL_COUNT] = {
     TIM_CHANNEL_1, /* ACTUATION_CHANNEL_BREW_HEATER */
     TIM_CHANNEL_2, /* ACTUATION_CHANNEL_STEAM_HEATER */
-    TIM_CHANNEL_3  /* ACTUATION_CHANNEL_PUMP */
+    TIM_CHANNEL_3, /* ACTUATION_CHANNEL_PUMP */
+    TIM_CHANNEL_4  /* ACTUATION_CHANNEL_STEAM_PUMP */
 };
 
 /* Full-scale count of the converter, used to scale a raw sample to milli-units. */
@@ -100,7 +101,7 @@ static bool init_outputs(void)
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_TIM3_CLK_ENABLE();
 
-    pins.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8;
+    pins.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
     pins.Mode = GPIO_MODE_AF_PP;
     pins.Pull = GPIO_NOPULL;
     pins.Speed = GPIO_SPEED_FREQ_LOW;

@@ -260,6 +260,26 @@ tasks:
       # analysed for nothing.
       - python3 tools/run_host_artefacts.py --project . --plant-root src/plant --include-dir include --params-dir params
 
+  fw:emulate:provision:
+    desc: Fetch the emulator and the register description the emulation tier runs against, pinned by digest, into .tooling (ignored by git)
+    dir: "{{.FW_DIR}}"
+    cmds:
+      # Neither is committed: one is a platform-specific build far larger than
+      # this repository, the other is the vendor's and carries terms this
+      # repository does not hold. What makes the fetch reproducible is the
+      # digest each is pinned to, not where it is kept.
+      - python3 emulation/tools/provision.py
+
+  fw:emulate:
+    desc: Run the target build's own artefact under emulation and require every hardware-seam channel to have a peripheral model behind it that only its own commands reach
+    dir: "{{.FW_DIR}}"
+    cmds:
+      # The build is run by the check itself rather than named as a dependency
+      # here, because what the check has to establish is that the artefact it
+      # emulated is the one that build just wrote -- and a build run separately
+      # leaves that a matter of the order two lines happen to be in.
+      - python3 -m unittest discover -s emulation/tests {{.CLI_ARGS}}
+
   fw:mutate:
     desc: Break each guarded property on purpose and require its check to notice — on demand, not part of the gate
     dir: "{{.FW_DIR}}"
@@ -275,12 +295,18 @@ tasks:
       - python3 tools/mull_sweep.py --project . --plant-root src/plant --include-dir include --pio {{.PIO}} {{.CLI_ARGS}}
 
   fw:verify:
-    desc: The full firmware gate — build every environment, run every check, run the tests, run the host executables, sweep the plant model's arithmetic
+    desc: The full firmware gate — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic
     cmds:
       - task: fw:build
       - task: fw:check
       - task: fw:test
       - task: fw:run
+      # The tier below the host one: the artefact itself, executed, against
+      # models of the peripherals it drives. It is here rather than left to be
+      # remembered because the class of defect it nets -- a command addressing
+      # the wrong peripheral, or none -- is invisible to every gate above it,
+      # which all sit above the addressing.
+      - task: fw:emulate
       # Last because it is the longest and because it asks the hardest question:
       # not whether the checks pass, but whether the tests would notice the model
       # being wrong. It needs an LLVM toolchain matching the mutation plugin, so

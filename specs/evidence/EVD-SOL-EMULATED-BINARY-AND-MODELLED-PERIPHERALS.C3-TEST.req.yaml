@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C3-TEST
+type: evidence
+title: Register-level TIM3 model proves every output channel is separately addressable (SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T04:59:17Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_emulation_check.py::OutputChannelsAreSeparatelyAddressable
+text: |-
+  task fw:emulate drives each of the 4 output channels the hardware seam declares to a distinct nonzero level, one at a time, through the compiled firmware.elf running under Renode, against a register-level model of TIM3 (compare-register value and write count per channel, offsets cross-checked against the vendored STM32F407 SVD). After each command, every channel's modelled state is read back: the addressed channel's compare value took the commanded level and its write count advanced by exactly one; every other channel's value and count are unchanged. Refusal paths (out-of-range channel, level exceeding full scale) are confirmed to move nothing. This directly targets REQ-PREENERGISATION-VERIFICATION-001.C6. The run also independently confirms the fix to firmware/src/hw/stm32/hw_stm32.c: pre-fix, ACTUATION_CHANNEL_STEAM_PUMP silently aliased onto ACTUATION_CHANNEL_BREW_HEATER's compare register via zero-initialisation of a 3-element array against a 4-channel enum (TIM_CHANNEL_1 == 0) -- reverting the fix and re-running this suite fails 21 of 33 tests. Post-fix all 4 channels are confirmed independently addressable. 12 tests, all passing.
+links:
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C3
+    type: satisfies
