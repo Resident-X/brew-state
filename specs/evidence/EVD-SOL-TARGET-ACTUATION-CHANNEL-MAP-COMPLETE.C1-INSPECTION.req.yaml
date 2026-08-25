@@ -1,0 +1,17 @@
+id: EVD-SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C1-INSPECTION
+type: evidence
+title: Actuation channel table re-derived unsized, length and distinctness compile-time asserted (SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-25T07:12:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/src/hw/stm32/hw_stm32.c::output_timer_channel
+text: |-
+  output_timer_channel is declared unsized and carries two _Static_assert checks: its derived length equals ACTUATION_CHANNEL_COUNT, and the four TIM_CHANNEL_* values are pairwise distinct. pio run -e stm32 builds and links firmware.bin clean against the four-entry table.
+links:
+  - target: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C1
+    type: satisfies

@@ -1153,7 +1153,47 @@ class SelectionRefusedCheck(unittest.TestCase):
         # A build that fails to compile is not a build that refused to select.
         result = self.check(self.fake_pio('echo "undefined reference to plant_model_init"\nexit 1\n'))
         self.assertEqual(1, result.returncode)
-        self.assertIn("some reason other than structure selection", result.stderr)
+        self.assertIn("some reason other than the declared", result.stderr)
+
+    def declare_with_marker(self, name: str, marker: str) -> None:
+        declare_environments(
+            self.project.name,
+            [
+                ("native", host_environment("alpha")),
+                (
+                    name,
+                    host_environment(
+                        None,
+                        custom_must_not_build="its table is one entry short",
+                        custom_must_not_build_marker=marker,
+                    ),
+                ),
+            ],
+        )
+
+    def test_an_environment_naming_its_own_marker_is_not_passed_by_the_structure_ones(self):
+        """SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3: a build stopping on the
+        structure-selection check's own marker has not exercised the different
+        check this environment declares its refusal for -- the default marker
+        must not stand in for a declared one."""
+        self.declare_with_marker("native_actuation_incomplete", "table_incomplete")
+        result = self.check(
+            self.fake_pio('echo "check_structure_selection: names no structure"\nexit 1\n'),
+            env="native_actuation_incomplete",
+        )
+        self.assertEqual(1, result.returncode)
+        self.assertIn("some reason other than the declared 'table_incomplete'", result.stderr)
+
+    def test_an_environment_naming_its_own_marker_passes_when_the_build_names_it(self):
+        """SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3: the gate requires the
+        refusal to name the assertion that stopped it, so a build stopping on
+        this environment's own declared marker is read as the right refusal."""
+        self.declare_with_marker("native_actuation_incomplete", "table_incomplete")
+        result = self.check(
+            self.fake_pio('echo "static assertion failed: table_incomplete: too few entries"\nexit 1\n'),
+            env="native_actuation_incomplete",
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
 
     def test_an_artefact_left_behind_fails_the_check(self):
         build_dir = os.path.join(self.project.name, ".pio", "build", "native_no_structure")

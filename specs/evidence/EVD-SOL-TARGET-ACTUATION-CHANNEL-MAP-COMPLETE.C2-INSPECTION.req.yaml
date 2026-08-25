@@ -1,0 +1,17 @@
+id: EVD-SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C2-INSPECTION
+type: evidence
+title: Alternate-function pin table re-derived unsized, count asserted equal to channel count (SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-25T07:12:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/src/hw/stm32/hw_stm32.c::output_pin
+text: |-
+  output_pin is declared unsized and carries a _Static_assert that its derived length equals ACTUATION_CHANNEL_COUNT, replacing the previous hardcoded three-pin OR mask (GPIO_PIN_6|7|8) with a four-entry table (adds GPIO_PIN_9) folded into the alternate-function mask at init_outputs() via a loop over the table. pio run -e stm32 builds and links firmware.bin clean.
+links:
+  - target: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C2
+    type: satisfies

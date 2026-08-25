@@ -78,6 +78,19 @@ TEST_OPTION = "test_build_src"
 #: these would be demanding the opposite of what the build is for.
 MUST_NOT_BUILD_OPTION = "custom_must_not_build"
 
+#: An environment that must be refused rather than built may declare here what
+#: its own refusal names in the build output. A refusal driven by the wrong
+#: check reads the same as one driven by the right one on exit code alone, so
+#: the gate that drives these environments tells them apart by this marker
+#: rather than by whether the build merely failed.
+MUST_NOT_BUILD_MARKER_OPTION = "custom_must_not_build_marker"
+
+#: The marker every misconfigured environment named this before an environment
+#: first needed one of its own. Environments declaring no marker of their own
+#: are read as expecting this one, so the structure-selection environments
+#: already in the build file did not have to be revisited to name it themselves.
+DEFAULT_MUST_NOT_BUILD_MARKER = "check_structure_selection"
+
 #: An environment that cannot scope compiler flags to this project's sources
 #: alone declares it here, and the value is the reason. It is only honoured on
 #: an environment that genuinely compiles foreign sources through the same
@@ -246,6 +259,19 @@ class Environment:
     def must_not_build_reason(self) -> str:
         """Why this environment is required to be refused, or empty if it is not."""
         return self.get(MUST_NOT_BUILD_OPTION).strip()
+
+    @property
+    def must_not_build_marker(self) -> str:
+        """What this environment's own refusal must name in the build output.
+
+        Declared per environment because more than one check can stop a build,
+        and a gate accepting any failure as the right one would keep passing
+        after the check it means to exercise stopped running at all. An
+        environment naming none is read as expecting the marker the
+        structure-selection check has always printed, which is what every
+        misconfigured environment declared before this option existed.
+        """
+        return self.get(MUST_NOT_BUILD_MARKER_OPTION).strip() or DEFAULT_MUST_NOT_BUILD_MARKER
 
     @property
     def strict_flags_exemption(self) -> str:

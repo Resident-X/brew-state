@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Fail when a build that names the wrong number of plant structures succeeds.
+"""Fail when a build declared to be refused instead succeeds.
 
-The selection check refuses a build naming none and a build naming two. That
-refusal is itself a property of the build, and a property nothing exercises is
-a property that quietly stops holding -- a mis-wired pre-script, a check that
-returns zero on the path nobody takes, and the refusal is gone with no symptom.
+Several checks stop a build for their own reasons: naming the wrong number of
+plant structures is one, an actuation channel table falling short of the
+vocabulary it maps is another. Each refusal is itself a property of the
+build, and a property nothing exercises is a property that quietly stops
+holding -- a mis-wired pre-script, a check that returns zero on the path
+nobody takes, and the refusal is gone with no symptom.
 
-So the two configurations exist in the build file and this drives them. Each
-must stop the build, and each must leave no artefact behind: a build that
-reports failure while still producing something linkable has not refused, it
-has complained.
+So the misconfigured environments exist in the build file and this drives
+them. Each must stop the build, must leave no artefact behind, and must stop
+for its own declared reason rather than some other one: a build that reports
+failure while still producing something linkable has not refused, it has
+complained, and a build that stops for a different check's reason has not
+established the check this environment exists to exercise.
 
 The environments are named rather than discovered, because a name forgotten
 here fails loudly: a configuration that must not build and is never driven is
@@ -67,11 +71,12 @@ def main(argv: list[str]) -> int:
         print(f"check_selection_refused: {error}", file=sys.stderr)
         return 2
 
-    undriven = [
-        environment.name
-        for environment in build_environments.refused_environments(declared)
-        if environment.name not in args.envs
-    ]
+    by_name = {environment.name: environment for environment in declared}
+    refused = {
+        environment.name: environment for environment in build_environments.refused_environments(declared)
+    }
+
+    undriven = [name for name in refused if name not in args.envs]
     if undriven:
         print(
             "check_selection_refused: these environments declare they must be refused, which "
@@ -105,10 +110,11 @@ def main(argv: list[str]) -> int:
                 f"{environment}: left an artefact behind ({', '.join(os.path.basename(p) for p in remaining)})"
             )
 
+        marker = by_name[environment].must_not_build_marker
         combined = f"{result.stdout}\n{result.stderr}"
-        if "check_structure_selection" not in combined:
+        if marker not in combined:
             problems.append(
-                f"{environment}: stopped for some reason other than structure selection"
+                f"{environment}: stopped for some reason other than the declared {marker!r}"
             )
 
     if problems:

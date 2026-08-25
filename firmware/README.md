@@ -383,7 +383,7 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_plant_encapsulation.py` | Anything outside `src/plant/` includes a structure's own header or names a field or function a structure owns. Runs inside every build. |
 | `check_structure_selection.py` | A build that compiles the plant model names no structure, or names more than one. Runs inside every build, before anything is compiled. |
 | `check_structure_exclusive.py` | A linked artefact is missing the structure it was built for, or carries a symbol belonging to another one — or a structure in the tree is built by no environment at all, and so is checked by nothing. Covers every structure. |
-| `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, or naming two — builds anyway, or leaves an artefact behind. |
+| `check_selection_refused.py` | A deliberately misconfigured environment — naming no structure, naming two, or mapping an actuation channel table short of the vocabulary it maps — builds anyway, leaves an artefact behind, or stops for a reason other than the one it declares. |
 | `check_parameters_are_data.py` | One unchanged artefact run against two descriptions differing in a single coefficient produces the same trajectory twice, which is what a compiled-in coefficient does. |
 | `check_actuation_declaration.py` | A structure declares no set of actuation channels, declares more than one, declares an empty one, or names a channel the machine's shared vocabulary does not carry. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_parameter_origins.py` | A description that claims a real machine carries a value with no origin, an origin of a kind the vocabulary does not declare, or a kind with no account behind it; a coefficient the structure requires is absent from it; or its statement of what it represents has fallen behind the coefficients and quantities it has to name. Also fails a vocabulary that no longer separates an estimate from a measurement, and a tree in which every description exempts itself, since that inspects nothing. Runs inside every build, over every description in the tree rather than the one the build runs against. |
@@ -450,6 +450,15 @@ sources, and so cannot scope the warning settings to ours alone; and
 artefact carries compiled in. The exemption is honoured only on an environment
 that really does compile foreign sources that way, so it cannot become a way of
 turning the settings off where they could be kept.
+
+A configuration required to be refused may also declare
+`custom_must_not_build_marker`, naming what its own refusal has to print. More
+than one check can stop a build, and a marker-blind gate would keep passing
+after the check an environment exists to exercise stopped running at all —
+`check_selection_refused.py` reads each environment's own marker rather than
+one shared string. An environment naming none is read as expecting
+`check_structure_selection`, which is what every misconfigured environment
+declared before this option existed.
 
 Four gates keep their named subjects, because there the names are the content of
 the check rather than a list to forget: the two plant-header checks (one header

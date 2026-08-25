@@ -257,6 +257,47 @@ class EnvironmentClassification(unittest.TestCase):
         self.assertEqual("host_refused", refused.name)
         self.assertIn("names no structure", refused.must_not_build_reason)
 
+    def test_a_refused_environment_naming_no_marker_expects_the_structure_selection_ones(self):
+        """SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3: an environment declaring
+        `custom_must_not_build` and nothing else about the marker is read as
+        expecting the marker the structure-selection check has always printed --
+        the environments already in the build file before this option existed
+        never had to be revisited to name it themselves."""
+        (refused,) = build_environments.refused_environments(self.environments)
+        self.assertEqual(
+            build_environments.DEFAULT_MUST_NOT_BUILD_MARKER, refused.must_not_build_marker
+        )
+
+    def test_a_refused_environment_naming_its_own_marker_is_read_as_declared(self):
+        """SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3: an environment's own
+        declared marker is read back distinctly from a sibling's default one."""
+        declare_environments(
+            self.project.name,
+            [
+                (
+                    "host_refused",
+                    host_environment(None, custom_must_not_build="it names no structure"),
+                ),
+                (
+                    "host_refused_elsewhere",
+                    host_environment(
+                        None,
+                        custom_must_not_build="its own table is one entry short",
+                        custom_must_not_build_marker="table_incomplete",
+                    ),
+                ),
+            ],
+        )
+        environments = build_environments.load(self.project.name)
+        by_name = {environment.name: environment for environment in environments}
+        self.assertEqual("table_incomplete", by_name["host_refused_elsewhere"].must_not_build_marker)
+        # The sibling declared with no marker of its own still falls back to the
+        # shared default rather than picking up this one.
+        self.assertEqual(
+            build_environments.DEFAULT_MUST_NOT_BUILD_MARKER,
+            by_name["host_refused"].must_not_build_marker,
+        )
+
     def test_only_environments_linking_the_host_entry_point_produce_an_artefact(self):
         self.assertEqual(
             ["host", "host_second"],
