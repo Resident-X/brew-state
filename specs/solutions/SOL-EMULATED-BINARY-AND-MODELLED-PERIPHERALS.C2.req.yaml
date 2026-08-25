@@ -1,0 +1,18 @@
+id: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C2
+type: criterion
+title: A peripheral model exists for every sensor channel the hardware seam declares
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each sensor channel the hardware interface enumerates, the emulation harness backs the
+  corresponding peripheral with a model that can be driven into every reading status the interface
+  defines -- a channel with nothing fitted, a sample that failed, and a trustworthy value -- and the
+  firmware under emulation reads back exactly the status and figure the model was put into. Out of
+  scope: whether the modelled figures correspond to any particular machine's real sensor readings,
+  which is a plant-model concern carried by the criterion governing what drives the emulated firmware
+  and what it drives in turn.
+links:
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS
+    type: criterion-of

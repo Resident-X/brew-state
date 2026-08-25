@@ -1,0 +1,19 @@
+id: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C3
+type: criterion
+title: Every output channel the hardware seam declares is modelled and separately addressable
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  For each output channel the hardware interface enumerates, the emulation harness backs the
+  corresponding peripheral with a model that records only the level last commanded on that channel.
+  Commanding one output channel while observing every modelled channel shows that only the addressed
+  channel's recorded state changes: no two channels share a model and no command is silently absorbed
+  by none. This demonstrates, for the emulation tier, that every output the control logic can command
+  is shown separately addressable before anything is energised. Out of scope: whether the channel a
+  command reaches on emulated hardware corresponds to the device a real machine's wiring intends, which
+  is a property of the finished machine rather than of the emulation harness.
+links:
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS
+    type: criterion-of

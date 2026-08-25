@@ -1,0 +1,18 @@
+id: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C1
+type: criterion
+title: The binary running under emulation is the target build's own compiled artefact
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The emulation harness loads the same compiled image the target environment produces for the
+  microcontroller, rather than compiling the control logic, the hardware-seam implementation, or any
+  other firmware source separately for the emulator. Provenance is established by comparing the
+  artefact loaded into the harness against the target build's own output for the same commit, not by
+  re-deriving equivalent behaviour from source. Out of scope: whether the artefact's timing matches the
+  real microcontroller's electrical behaviour, which is a property the on-target tier establishes
+  rather than a property of what is loaded here.
+links:
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS
+    type: criterion-of
