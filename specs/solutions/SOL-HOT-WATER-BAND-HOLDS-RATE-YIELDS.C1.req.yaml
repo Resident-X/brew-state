@@ -1,0 +1,23 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1
+type: criterion
+title: The drinking-temperature window is declared data with a recorded origin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  It is carried as two edges rather than as one half-width, so the tolerance grammar that states every
+  band as a distance from a command gains the ability to state an absolute one, and the loader
+  range-checks each edge against an admissible bound of its own rather than against one shared with the
+  bands beside it. Each edge carries its own account, because each answers a different fact: the floor
+  what the drink stops being once it is in the cup, the ceiling what may be handed to a person and what
+  the brew path can still deliver as liquid water. The control path reads both back through the tolerance
+  record it already reads the other bands from, so a run held to the window is held to the figures the
+  declaration ships rather than to figures a suite wrote; rewriting either edge alone changes which runs
+  are accepted with no source edit, and a declaration omitting one is refused rather than defaulting to
+  zero or to a band beside it. Fixing what the two edges should finally be is out of scope -- they are a
+  statement about the drink taken from the serving-temperature literature, not a measurement of this
+  machine, and a later measurement revises a recorded assumption rather than an anonymous constant.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of

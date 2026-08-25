@@ -1,0 +1,25 @@
+id: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C3
+type: criterion
+title: The drawn-load term is scaled by the rate the course will be at rather than the rate it is at
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On each step of a running delivery the rate read out of the course is the one it states at the elapsed
+  time plus the lead, and it scales the same drawn-load coefficient on the same two axes as before. Nothing
+  else in the law changes: the proportional gain, the integral time and the condition it accumulates under
+  at the actuator limit, the standing term, and the way both load terms follow the target a caller named are
+  all as they were. What reaches the pump does not change either: no path runs from the lead to the pump
+  command, so absent an active rate yield the level driven on each step is still the rate the course states
+  at the elapsed time, and where a yield is reducing that level -- which the slice holding hot water inside
+  its window commands, on its own gate and by its own coefficient -- the level driven is that reduced rate
+  and reading ahead neither deepens the reduction nor withdraws it. Either way a delivery is not brought
+  forward by being led, and neither the delivered volume nor the instant the course ends is changed by the
+  lead. A course that steps up part-way through
+  has duty rise ahead of the driven pump level by about the lead, which is a gap no law reading a single
+  instant of the course can open. Retuning the loop, and changing which quantity it regulates, are out of
+  scope: this is the argument to one term rather than a new law.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: criterion-of

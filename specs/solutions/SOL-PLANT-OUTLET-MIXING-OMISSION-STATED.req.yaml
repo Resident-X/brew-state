@@ -1,0 +1,27 @@
+id: SOL-PLANT-OUTLET-MIXING-OMISSION-STATED
+type: deliverable
+category: solution
+title: The description states that its outlet relation mixes the held water rather than passing it through in order
+status: active
+version: 1
+text: |
+  The machine's description carries the water on its way to the group as a first-order relaxation towards the casting, over a time constant that shortens as the draw increases: displacement and conduction add as rates, so the held volume turns over once every time the draw has moved that volume through it. Turning over is a well-mixed lump. It begins answering a change at the casting on the first step, at a rate the draw sets, and there is no interval in which it answers nothing at all.
+
+  A narrow bore holding four millilitres between the casting and the group is closer to a queue than to a stirred pot. Water that has already passed the casting carries what the casting was doing when it passed, so a change at the casting reaches the group only once the water in front of it has been pushed out — a dead time of the held volume divided by the draw, which is around two seconds at the rate a shot is drawn and grows without bound as the draw falls away. Neither shape is established for this machine, and this is not a claim that the queue is the right one. What is at issue is that the description takes one of them and does not say so.
+
+  Which it is matters where the description is used. A relaxation and a delay of similar length look alike in how long they take to settle and are not alike at all in what they cost a loop: a delay spends phase and attenuates nothing, so a lag read off these relations is optimistic as a bound on how hard the loop may be driven by however much of it is really transport. The design already reasons against this lag as the one that binds the brew loop, and the lead a delivery is acted on ahead by is taken from the same two coefficients, so the figure is load-bearing rather than incidental.
+
+  This slice writes the assumption and its consequence into the omissions `firmware/params/thermoblock.md` already states, in the shape the entries beside it take: what is assumed, which way the error runs, and what a reader must not conclude from these relations.
+
+  Out of scope: adding a transport delay to the outlet relation or to the structures behind the seam, which changes what the model represents rather than what it declares; any figure for how much of the held volume behaves each way, which needs a bench and a group instrumented to see it; re-establishing the loop's margin or the lead against a delayed plant, which is the robustness verification's; and the assumed-error section, which says how wrong each value may be rather than what the relations leave out.
+rationale: |
+  Targeting REQ-PLANT-DESCRIPTION-001.C1 rather than amending the relations. That criterion already says what a description leaves out matters as much as what it carries, and this is left out and unstated. The relation itself is not wrong — a well-mixed lump is a legitimate description of a held volume and may be the better one for a channel cut through a casting — so nothing here says the model should change. What fell short is the description's account of itself: the slice that introduced the two outlet coefficients was required to make the declared omissions match the relations once flow entered them, and it stated how completely the drawn water equilibrates while leaving the shape of the lag unstated.
+
+  Maintenance rather than a new criterion because the work it corrects is closed. The relation, its coefficients and the omissions written beside them were built, evidenced and attested, and the requirement criterion whose behaviour this restores stands satisfied against a description that does not carry this. Per DEC-MAINTENANCE-CONTINUOUS-LANE that is a child of the lane tracing to the requirement criterion it restores rather than a criterion of its own.
+
+  Stated rather than closed because closing it costs a coefficient nobody has. How much of four millilitres between a casting and a group behaves as a queue and how much as a stirred pot is a property of a bore and a path length nobody has measured, and a delay written in now would be a figure invented to look like physics — the same objection this description already makes to writing a recovery time constant into the steam path. What a reader is owed in the meantime is knowing the choice was made.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets

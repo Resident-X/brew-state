@@ -1,0 +1,181 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+type: deliverable
+category: solution
+title: Hot water is held inside a declared window by giving up commanded rate rather than temperature
+status: active
+version: 1
+text: |
+  The trade between rate and temperature is made here, in host simulation against the plant description.
+  The loop already holds the water leaving the machine to a commanded target across a whole draw, and
+  that target is an input a caller names rather than a constant, so a lower target is nothing new to it.
+  Three things are missing. Nothing states what temperature counts as drinkable, so a criterion about a
+  band names a band nothing declares. Nothing tells a delivery served at the hot water spout apart from
+  one served at the group, so both would be held to whatever was asked for. And the loop has nothing to
+  give up: with the heater already at full scale and the water still short of where it was asked to be,
+  the machine goes on moving water at the rate the course states and delivers it cool. That is the trade
+  a machine makes by default and the one this requirement exists to reverse.
+
+  What counts as drinkable becomes described data, declared beside the bands the delivery tolerance
+  already carries and read back through the same record. It is stated as two edges rather than as a
+  half-width, and that is the substance of it rather than a detail of the grammar: a half-width is a
+  distance from whatever was commanded, so a window declared that way would follow a caller who named a
+  lukewarm target instead of refusing him. A floor and a ceiling are declared instead, each with its own
+  account and its own admissible bound, and each answering a different fact -- the floor what the drink
+  stops being once it is in the cup, the ceiling what may be handed to a person and what the brew path
+  can still deliver as liquid water. The tolerance grammar states every band as a distance from a command
+  today, and gains the ability to carry an absolute edge here.
+
+  A delivery served at the drinking point is admitted only if the target it will be held to lies inside
+  that window. That is one bound added to the admission record the machine already answers with, in the
+  shape that record already sets -- which bound was crossed, what was asked for, what was available --
+  and the bounds already there are not revisited: a rate above full scale, a target above saturation, and
+  a target beyond the authority the description gives under the course's peak draw all go on being
+  answered exactly as they are.
+
+  Holding the window is the loop already built, with nothing added to it. Its two load coefficients
+  answer a load per kelvin of rise above the temperature the machine draws from and per permille of
+  commanded pump, so they follow the target a caller names rather than describing one operating point; a
+  drinking target asks a smaller rise than a brew target and the same two figures answer it. No gain, no
+  integral time, no mode and no second setpoint is introduced for hot water. The point a delivery is
+  served at decides which window it is judged against and nothing else about how it is driven, and that
+  point is stated by the profile -- SOL-BREW-RECOVERS-AFTER-DRAW builds it for reasons of its own, and
+  this slice reads it rather than building a second way to ask the same question.
+
+  The yield is what is genuinely new. On each step of a delivery served at the drinking point the machine
+  asks two questions rather than one: whether the heater is at its limit, and whether the reconstructed
+  temperature of the water leaving the machine is below the window's floor. Only when both are true has
+  it run out of authority, and only then is the rate reduced. The reduction follows how far below the
+  floor the water is, through a single declared coefficient, and it is withdrawn as the water comes back,
+  so a delivery that dipped once does not spend the rest of its course slowed. The reduced level reaches
+  the pump by the path the course already drives it through rather than by a second route around it.
+  What the heater's feedforward makes of that reduction is the second thing this slice owes, and it is
+  not a reading taken on the same step: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT, which this slice
+  depends on, has the drawn-load term scaled by the rate the course states a lead into the future, and
+  that slice's own scope leaves what a lead should read on a delivery that has given up rate to be
+  settled here. It is settled by having the led read carry whatever reduction the yield is holding on
+  this step, so the term answers the draw the machine will actually be making rather than the one the
+  course asked for and the delivery has already stopped attempting -- the yield and the loop answer one
+  draw rather than pulling against each other.
+
+  That this can happen at all to a delivery admission accepted is the point, and is where this slice's
+  obligation begins and the admission check's ends. Admission asks where a machine settles when it is
+  given everything the element has against the course's peak draw, on the description the loop was
+  brought up with: a question about the end state of a machine that is believed, asked once, before
+  anything moves. A delivery that passes it can still fall out of the window while it runs. It may start
+  from a machine nowhere near settled; the description the loop believes may sit anywhere inside the
+  error it declares against the machine actually moving the water; and the peak may last longer than the
+  casting's stored energy covers. Refusal answers what may be started, and the yield answers what happens
+  once it has been.
+
+  A yield is a departure from the commanded course, deliberately made, and it is not allowed to hide
+  behind having been deliberate. What the delivery is judged against stays the course the caller asked
+  for, so a yielded delivery reports its shortfall exactly as a choked path would; and what the machine
+  chose to give up is readable in its own right, so a caller can tell a machine that decided from a world
+  that intervened. Nothing here puts a measured rate into the pump command path: what moves the command
+  is the reconstruction, so the separation between commanding a course and observing what followed it
+  stands where the departure report left it.
+
+  The scenario the whole slice is verified against is a draw the machine cannot hold. A hot water
+  delivery of the volume a served long black asks for -- of the order of two hundred millilitres, minutes
+  of continuous flow rather than the seconds an extraction takes -- is commanded at a rate above what the
+  machine can sustain at its target, against a truth plant the estimator does not share and from a state
+  the machine did not start settled in. Every sample is asserted inside the window rather than the
+  average, and the delivered rate is asserted to have fallen below the course. The second half is what
+  makes it a test of the trade rather than of tracking: a run that stayed in band without ever slowing
+  would only have shown the draw was sustainable after all.
+
+  Out of scope, and stated first because it is what an operator would notice: a delivery that yields
+  still ends on the condition its profile states, which is elapsed time, so it delivers less water in the
+  same wait rather than the same water after a longer one. Making the operator wait instead needs an
+  endpoint in delivered volume, which the profile surface refuses because it names a quantity the
+  machine cannot evaluate as the delivery runs. Half of what that refusal was waiting on has since
+  arrived: the rate that actually moved now reaches the control unit through the hardware seam, so an
+  instantaneous reading is no longer the thing missing. What is still missing is a delivered quantity --
+  no state accumulates that reading into a running total of what has left the machine -- so the
+  refusal stands on the narrower ground, and nothing here supplies the integrator that would lift it.
+  Also out of scope: serialising two demands on one heated mass,
+  deferring one and resuming it once conditions return, which is a sibling criterion's, as is what a draw
+  leaves behind for the demand that follows it. Driving the diverter is not modelled -- no actuation
+  channel exists for the valve that sends flow to the spout rather than the group, and none is added, so
+  a delivery is served at a point it declares rather than at one the machine is switched to. Whether the
+  window holds across the range of model error the description declares is the robustness verification's
+  claim and is not made here. The steam side stays where its own omissions leave it, and the whole slice
+  is verified on the host tier: neither the target build nor firmware-binary emulation runs it.
+rationale: |
+  Hot water is held by the loop already built rather than by a law of its own because a second law would
+  be a second answer to a question the first one already answers, and the two would go on disagreeing
+  quietly. The coefficients that loop rests on were deliberately stated on two axes -- per kelvin of rise
+  and per permille of commanded pump -- rather than as a duty at one operating point, precisely so they
+  would follow a target a caller names. A drinking target is that case and not a new one. A gain
+  introduced for it would put a second set of figures in front of the same physics, which is what this
+  project's gate on the control declaration exists to catch.
+
+  The rate a machine could sustain at a given target is computable two ways, and both were rejected in
+  favour of acting on the shortfall. Inverting the loop's own load coefficients gives the figure
+  directly, and those coefficients describe the design against the reference description rather than
+  whatever structure is linked -- the admission check made exactly that argument when it probed the seam
+  instead of reading them, and a yield built on them would agree with the machine they were derived from
+  and be wrong about every other. Probing the seam mid-delivery answers a different question from the one
+  a yield asks: a probe says where a machine settles, and by the time the water is short of the floor
+  what matters is how short it is now, which the reconstruction already answers and no probe improves on.
+  Reducing the rate in proportion to the shortfall needs one figure, uses a state the loop already
+  carries, and is the same arithmetic on every structure.
+
+  Gating that reduction on the heater being at its limit, rather than on the error alone, is where the
+  distinction is actually drawn. The requirement names a trade between two things that cannot both be
+  met, and while the loop still has authority they can both be met -- it simply has not finished yet. A
+  yield triggered on error would give up the operator's time in exchange for nothing on every delivery
+  that started from a machine on its way up. The line goes where the consequence lands rather than where
+  the error is: what decides is whether there is anything left to trade.
+
+  Declaring the window as two edges rather than as a distance from the command guards the same failure
+  from the other side. A half-width is a statement about tracking -- how close the machine got to what it
+  was told -- and it is the right shape for the brew band, where what was asked for is a recipe. What the
+  drink demands of hot water is not a statement about tracking at all: it is a floor below which the cup
+  is wrong however faithfully the machine tracked, and a half-width around the command would be met in
+  full by a machine holding forty degrees perfectly.
+
+  The line between refusing before and yielding during is not one mechanism doing the same job at two
+  moments. Admission is a judgement about a description: it asks where the machine believed settles under
+  the peak draw, and answers what may ever be started. The yield is a judgement about a machine: it acts
+  on the reconstruction of what the water is actually at, and answers what happens when the belief and
+  the machine come apart -- which the harness deliberately allows and which the declared model error says
+  will happen. A yield that consulted the description instead would refuse the deliveries admission
+  already refuses and stay silent about the ones it admitted, which is the whole set this criterion is
+  about.
+
+  The yield is reported because DEC-PROFILE-FEEDS-THE-HORIZON rules that the horizon's confidence rests
+  on the profile being followed, and that a machine quietly deviating from it is a machine whose
+  predictions have quietly stopped meaning anything. A deliberate deviation is still a deviation, and it
+  is the one most tempting to absorb, because the machine can account for it. Reporting the yield apart
+  from the departure is what stops the two collapsing into one number: a shortfall the machine chose and
+  a shortfall the world imposed have different remedies, and a caller told only the total cannot tell
+  which it is holding.
+
+  That a yielded delivery gives a smaller cup rather than a longer wait is stated rather than solved, and
+  stating it is deliberate. The journey this requirement derives from says the operator waits, and
+  waiting is an endpoint in delivered volume. The profile surface refused that endpoint on two counts:
+  the machine had no reading of the rate that actually moved, and no state that accumulated one. The
+  first has been discharged since -- the fitted meter's reading reaches the control unit through the
+  hardware seam, and the slice that reports departure from a commanded course consumes it -- but the
+  second has not, and that slice restates the refusal for exactly that reason: nothing integrates the
+  reading into a state. So a delivered quantity is still not something the machine can evaluate while
+  the delivery runs, and building a wait on an endpoint the machine cannot evaluate would be worse than
+  not building it. Naming the gap precisely is the point of stating it: what a later slice has to supply
+  is the accumulation, not the sensing. What is settled here is the
+  direction of the trade, which is what these criteria ask for; what is left open is the quantity
+  delivered, and it is left where a reader meets it rather than where a later slice would have to
+  discover it.
+links:
+  - target: DEC-PROFILE-FEEDS-THE-HORIZON
+    type: justified-by
+  - target: DEL-SIM-BREW-LOOP.C7
+    type: derives-from
+  - target: REQ-HOT-WATER-001.C1
+    type: targets
+  - target: REQ-HOT-WATER-001.C2
+    type: targets
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: depends-on
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: depends-on

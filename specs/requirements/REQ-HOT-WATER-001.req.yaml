@@ -4,7 +4,7 @@ category: functional
 title: Hot water is delivered at temperature, with rate yielding to temperature
 status: active
 priority: must
-version: 2
+version: 3
 text: |
   Hot water is the heaviest sustained demand on whichever heated mass serves it, which on the reference machine is the coffee side. It asks for a large volume at temperature with no opportunity to recover partway, unlike an extraction which is small, brief and bounded.
 

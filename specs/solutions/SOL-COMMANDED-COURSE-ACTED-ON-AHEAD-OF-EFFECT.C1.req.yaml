@@ -1,0 +1,22 @@
+id: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C1
+type: criterion
+title: The lead the course is read ahead by comes from the machine's description rather than from the loop
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The question is put at the plant seam on the terms the full-scale flow figure and the settled-temperature
+  bound are already put on: a model stood up from the record the control path was initialised with and
+  discarded afterwards, its heated mass and the water leaving it parted, advanced under a stated draw, and
+  read back for how far the water closed on the mass. That gives the rate the water follows the mass at,
+  and the lead is its reciprocal. No coefficient of any structure is named anywhere in the arithmetic.
+  Perturbing the held volume the description declares, and nothing else, moves the lead -- which is what
+  shows it followed the description rather than a figure carried in the control logic. A structure that
+  keeps no state between its heated mass and what leaves it refuses the read and is given a lead of
+  nothing, so the law falls back to the term already built rather than to an invented interval. Identifying
+  either outlet coefficient from measured data is out of scope: nothing has been on a bench, and what is
+  claimed is that the lead follows the description, not that the description is right about the machine.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: criterion-of

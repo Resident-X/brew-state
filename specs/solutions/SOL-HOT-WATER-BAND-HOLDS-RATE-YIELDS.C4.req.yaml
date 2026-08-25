@@ -1,0 +1,22 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4
+type: criterion
+title: The commanded rate is reduced only once the heater has no authority left
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Two conditions gate it and neither is sufficient alone: the heater is at full scale, and the
+  reconstructed temperature of the water leaving the machine is below the window's floor. A delivery
+  merely on its way up, with duty still short of the limit, keeps the rate its course states -- giving up
+  the operator's time there would buy nothing, since both can still be met. The reduction follows the
+  distance below the floor rather than switching between two rates, and it is withdrawn as the water
+  returns into the window, so a delivery that dipped once is not slowed for the rest of its course. The
+  reduced level reaches the pump by the path the course already drives it through rather than by a second
+  route around it; what the heater's feedforward makes of that reduction is a sibling criterion's and is
+  out of scope here. It acts on a delivery served at the drinking point alone: an extraction's course is
+  its recipe, holding one to its commanded rate is the brew criterion's, and applying this to an
+  extraction is out of scope.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of

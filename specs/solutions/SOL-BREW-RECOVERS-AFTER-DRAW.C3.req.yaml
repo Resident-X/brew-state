@@ -1,0 +1,20 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW.C3
+type: criterion
+title: The state a draw leaves is carried into the delivery that follows rather than restarted
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Both deliveries run on one control instance, so the reconstruction is advanced without interruption
+  across the end of the draw and the start of what follows and the second delivery begins from the
+  casting and outlet the first left. It is asserted by reading the reconstruction on the last step of the
+  draw and the first step of the delivery after it and requiring the two to differ by no more than one
+  step's advance; bringing the control path up again between them -- the obvious wrong implementation,
+  and the one that reads as tidier -- puts them tens of degrees apart and fails here. How long the caller
+  waits between the two is not bounded by anything here: back to back and a minute apart are both
+  admitted, and all that changes is where the second one starts from. Carrying a reconstruction across a
+  power cycle is out of scope; nothing in this build stores one.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: criterion-of

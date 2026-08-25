@@ -1,0 +1,21 @@
+id: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C6
+type: criterion
+title: A course shaped like a hot water draw is led by the same term an extraction is
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The comparison is run a second time on a course of the shape a hot water delivery takes -- of the order of
+  two hundred millilitres at a sustained rate over minutes, rather than the seconds an extraction lasts --
+  and the led run's deepest excursion below target is again the smaller. Nothing about which point a
+  delivery is served at reaches the lead: it reads the course and the description alone, and it sits in the
+  single heater command both deliveries are driven by, so what the second run establishes is that a long
+  sustained draw is led as a short shaped one is rather than that a second arrangement was made for it. The
+  window a delivery served at the drinking point is held to, and the trade it makes with rate at the limit,
+  are a sibling criterion's and are out of scope. The lead neither reads a serving point nor needs one to
+  exist: what is exercised here is a course's shape and not its destination, and the comparison stands
+  unchanged whether or not the profile the course is carried on names where the delivery is served.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: criterion-of

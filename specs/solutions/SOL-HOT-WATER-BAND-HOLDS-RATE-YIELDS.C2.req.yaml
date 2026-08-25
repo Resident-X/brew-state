@@ -1,0 +1,19 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C2
+type: criterion
+title: A target outside the declared window is refused for a delivery served at the drinking point
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The refusal arrives as one more bound in the admission record the machine already answers with, naming
+  which bound was crossed, the target asked for and the edge it crossed, so a caller is told what to
+  change rather than handed a bare false. It is asked only of a delivery whose profile states the
+  drinking point: an extraction is judged by the bounds already there and gains nothing from this one,
+  and a target inside the window is admitted or refused on those same existing bounds exactly as it is
+  today. Refusing a rate above full scale, a target above saturation and a target beyond the authority
+  the description gives under the peak draw are not revisited here, and deferring a delivery that cannot
+  be achieved yet stays out of scope in this slice as it was in the one that built the check.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of

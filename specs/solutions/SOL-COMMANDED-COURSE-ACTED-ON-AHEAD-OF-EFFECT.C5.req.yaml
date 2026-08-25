@@ -1,0 +1,21 @@
+id: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5
+type: criterion
+title: Reading ahead stops at the delivery's end condition rather than holding the last rate on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The rate read at the elapsed time plus the lead is taken as no draw once that instant is at or past the
+  condition the profile states its delivery ends on. A course holds its last stated rate for any time beyond
+  its last point and an end condition may fall on either side of that point, so a lead read past the end
+  asks the heater for the energy of a draw that will have stopped -- heat applied for water that never
+  arrives, which the requirement on confirming actuation names as the condition this machine survives least
+  well. A course run to within less than the lead of its end has duty coming off before its last step rather
+  than on it, and a course whose end condition falls short of its last point is treated exactly as one whose
+  end falls beyond it. Withdrawing heat already fed forward when a commanded draw fails to arrive part-way
+  through a delivery is out of scope and stays with that requirement, which needs the flow reading treated
+  as a confirmation rather than compared for departure.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: criterion-of

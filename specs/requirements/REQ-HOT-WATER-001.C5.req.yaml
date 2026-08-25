@@ -1,0 +1,18 @@
+id: REQ-HOT-WATER-001.C5
+type: criterion
+title: A delivery that gave up rate still delivers the quantity that was asked for
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Time is the only thing the operator can be asked for at this limit. A cup that arrives short has taken the shortfall out of the drink itself, where nothing downstream can put it back, and it looks from the outside exactly like a cup that was asked for smaller.
+
+  This is deliberately the opposite of the trade the steam side makes. Steam is drawn against a jug the operator is working and ends when they stop working it; hot water is asked for as a quantity, and a quantity delivered short is a different drink rather than a shorter one.
+
+  What is asked for is the quantity within a stated tolerance, not to the drop. A band is what the machine can be held to and a band is what the drink needs, in the same way the temperature this requirement asks for is a band rather than a figure; what the tolerance finally is belongs with the other declared bands rather than here.
+
+  A delivery that ends after the same interval however slowly it ran meets this only on the runs where it never slowed, so what ends a hot water delivery has to follow what has actually left the machine.
+links:
+  - target: REQ-HOT-WATER-001
+    type: criterion-of
