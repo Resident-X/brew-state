@@ -1,0 +1,17 @@
+id: EVD-SOL-STM32-INTERRUPT-VECTORS-DEFINED.C1-TEST
+type: evidence
+title: SysTick_Handler advances the tick counter under emulation (SOL-STM32-INTERRUPT-VECTORS-DEFINED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T06:10:27Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_emulation_check.py::SysTickAdvancesTheTickCounter.test_the_tick_counter_advances_while_the_core_runs
+text: |-
+  Under Renode emulation of the target build's own .elf, HAL_GetTick() is read before and after 5,000,000 single-stepped instructions with SysTick live; the tick advances (0 -> 1+). Confirmed to catch a real regression: HAL_IncTick() was temporarily commented out of SysTick_Handler, the suite re-run, and this test failed as expected (tick stayed 0 across the full step budget) before the fix was restored byte-identical.
+links:
+  - target: SOL-STM32-INTERRUPT-VECTORS-DEFINED.C1
+    type: satisfies

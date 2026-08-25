@@ -181,4 +181,55 @@ report_outputs("after-refused-channel", 500, 0)
 print("EMU refusal level %d" % call("hw_output_set", [0, 1001]))
 report_outputs("after-refused-level", 1001, 0)
 
+# SOL-STM32-INTERRUPT-VECTORS-DEFINED. Whether SysTick_Handler calls
+# HAL_IncTick, read directly rather than inferred from some other HAL
+# timeout's behaviour: the modelled ADC completes every conversion it is
+# asked for, so hw_sensor_read's own poll never actually waits on the tick,
+# and a check that leaned on it would not be evidence about SysTick at all.
+TICK_STEP_BUDGET = 5000000
+
+tick_before = call("HAL_GetTick", [])
+taken = 0
+while call("HAL_GetTick", []) == tick_before and taken < TICK_STEP_BUDGET:
+    cpu.Step(1)
+    taken += 1
+tick_after = call("HAL_GetTick", [])
+print("EMU tick %d %d %d" % (tick_before, tick_after, taken))
+
+# Every vector this build does not otherwise give a purposeful handler is
+# wired to a shared trap that records itself before halting, rather than left
+# on the vendor startup file's silent Default_Handler. WWDG's is exercised
+# here because nothing in this seam ever enables or services it, so pending it
+# through the NVIC directly is a command reaching a vector by no route this
+# firmware would ever take on its own.
+NVIC_BASE = 0xE000E000
+NVIC_ISER0 = NVIC_BASE + 0x100
+NVIC_ISPR0 = NVIC_BASE + 0x200
+WWDG_IRQ_NUMBER = 0
+FAULT_STEP_BUDGET = 2000000
+
+marker_address = bus.GetSymbolAddress("hw_stm32_unhandled_vector_marker")
+print("EMU fault-marker-before %d" % bus.ReadDoubleWord(marker_address))
+
+bus.WriteDoubleWord(NVIC_ISER0, 1 << WWDG_IRQ_NUMBER)
+bus.WriteDoubleWord(NVIC_ISPR0, 1 << WWDG_IRQ_NUMBER)
+taken = 0
+while bus.ReadDoubleWord(marker_address) == 0 and taken < FAULT_STEP_BUDGET:
+    cpu.Step(1)
+    taken += 1
+print("EMU fault-marker-after %d %d" % (bus.ReadDoubleWord(marker_address), taken))
+
+# The vendor's own silent default -- the loop every vector fell into before
+# this solution -- is linked as a strong symbol and cannot be shadowed by
+# redefining its name; it can only be left unreferenced by overriding every
+# alias that pointed at it. If any vector still pointed there, the linker
+# would keep the symbol live. Its absence from the linked image is therefore
+# evidence about every vector at once, not just the one exercised above.
+try:
+    bus.GetSymbolAddress("Default_Handler")
+    default_handler_present = 1
+except Exception:
+    default_handler_present = 0
+print("EMU default-handler-present %d" % default_handler_present)
+
 print("EMU done")
