@@ -1,0 +1,81 @@
+// The machine the target build's artefact is executed on under emulation.
+//
+// It is written out here rather than taken from the emulator's own STM32F4
+// description, because what this tier establishes is which peripheral a command
+// reached -- and that conclusion is only as good as the certainty that nothing
+// else in the address space could have absorbed it. Every peripheral below is
+// one this firmware brings up or one the vendor library reaches through while
+// doing so. An access landing anywhere else lands on nothing and is reported by
+// the emulator as an access to an unmapped address, which is the answer this
+// tier wants for a command that reached no output.
+//
+// The converter and the timer are modelled in Python rather than taken from the
+// emulator's library, because the question asked of them is not what a real
+// converter would report: it is which input the firmware selected and which
+// compare register it wrote. Those models are the peripherals behind the
+// hardware seam's sensor and output channels respectively.
+//
+// One thing is left out of this file: where those two models are on the machine
+// running the check. The emulator resolves a peripheral model's path against its
+// own installation directory and nothing else, so a description naming them
+// relative to this project cannot be loaded at all. The runner fills the
+// placeholder in and writes the finished description into the build directory.
+// That is what the .in suffix means here -- the description, minus the one fact
+// about the host running it that a file checked into a repository cannot know.
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4"
+    nvic: nvic
+
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    priorityMask: 0xF0
+    systickFrequency: 16000000
+    IRQ -> cpu@0
+
+flash: Memory.MappedMemory @ sysbus 0x08000000
+    size: 0x100000
+
+sram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x20000
+
+// Core-coupled memory. It is on the part and this firmware's linker script
+// places nothing in it, which is why the harness uses it for the scratch it
+// needs -- a return address to trap on, and somewhere for a called function to
+// write a returned structure. Borrowing a region the part does not have would
+// make the platform a fiction in the one place the harness touches directly.
+ccmram: Memory.MappedMemory @ sysbus 0x10000000
+    size: 0x10000
+
+rcc: Miscellaneous.STM32F4_RCC @ sysbus 0x40023800
+    rtcPeripheral: rtc
+
+rtc: Timers.STM32F4_RTC @ sysbus 0x40002800
+
+pwr: Miscellaneous.STM32_PWR @ sysbus 0x40007000
+
+flash_controller: MTD.STM32F4_FlashController @ {
+        sysbus 0x40023C00;
+        sysbus new Bus.BusMultiRegistration { address: 0x1FFFC000; size: 0x100; region: "optionBytes" }
+    }
+    flash: flash
+
+// PA0..PA3 carry the four converter inputs the seam samples.
+gpioPortA: GPIOPort.STM32_GPIOPort @ sysbus <0x40020000, +0x400>
+    modeResetValue: 0xA8000000
+    outputSpeedResetValue: 0x0C000000
+    pullUpPullDownResetValue: 0x64000000
+    numberOfAFs: 16
+
+// PC6..PC9 carry the four timer compare outputs the seam drives.
+gpioPortC: GPIOPort.STM32_GPIOPort @ sysbus <0x40020800, +0x400>
+    numberOfAFs: 16
+
+adc1: Python.PythonPeripheral @ sysbus <0x40012000, +0x400>
+    size: 0x400
+    initable: true
+    filename: "{{PERIPHERALS}}/adc1.py"
+
+tim3: Python.PythonPeripheral @ sysbus <0x40000400, +0x400>
+    size: 0x400
+    initable: true
+    filename: "{{PERIPHERALS}}/tim3.py"

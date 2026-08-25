@@ -247,12 +247,27 @@ after that both build offline.
 Everything runs from the repository root through the task runner:
 
 ```sh
-task fw:verify     # build every environment, run every check, run the tests, run the host builds, sweep the arithmetic
+task fw:verify     # build every environment, run every check, run the tests, run the host builds, run the emulation tier, sweep the arithmetic
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
 task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
 task fw:run        # every host executable, against the descriptions its structure ships
+task fw:emulate    # the target build's own artefact, executed against models of the peripherals it drives
 ```
+
+The emulation tier needs an emulator and the vendor's register description,
+neither of which is committed. They are fetched, pinned by digest, into
+`.tooling` by:
+
+```sh
+task fw:emulate:provision
+```
+
+`fw:emulate` provisions on its own if they are not there, so the separate task
+is for fetching ahead of time — on a machine that will be offline later, or in a
+job that wants the download in its own step. What the tier establishes, how the
+peripheral models are written, and why a run is only evidence about the artefact
+the target build wrote are all in [`emulation/README.md`](emulation/README.md).
 
 One more runs on demand rather than in the gate:
 

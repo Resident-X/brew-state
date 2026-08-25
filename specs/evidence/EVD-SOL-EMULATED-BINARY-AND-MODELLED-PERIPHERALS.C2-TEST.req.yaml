@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C2-TEST
+type: evidence
+title: Register-level ADC1 model behind every sensor channel, including all three reading statuses (SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T04:59:02Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_emulation_check.py::SensorChannelsAreModelled
+text: |-
+  task fw:emulate injects distinct conversion values into a Renode PythonPeripheral model of ADC1 (register offsets cross-checked against the vendored STM32F407 SVD) and confirms the compiled firmware.elf reads back exactly the figure and status the model was put into, for all 4 wired sensor channels. All three reading statuses the seam declares are driven and distinguished: HW_READING_VALID (injected in-scale count), HW_READING_ABSENT (HW_SENSOR_FLOW, which has no ADC input wired on this board revision and is asserted to cause no conversion at all), and HW_READING_FAILED (an out-of-scale injected count, the seam's own documented failure path -- the initially-planned withheld-EOC route was found to hang indefinitely because this firmware's image has no SysTick handler, so HAL_GetTick never advances and no HAL timeout can expire under emulation; recorded as a known limitation of what this tier can exercise). Header-parity tests (ChannelSetsAreTheSeamsOwn) prove the suite's channel set is read from hw_interface.h itself, not hand-copied, verified by a fault-injection proof that a spurious channel added to the real header makes the suite fail loudly. 13 tests, all passing.
+links:
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C2
+    type: satisfies

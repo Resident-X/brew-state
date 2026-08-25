@@ -1,0 +1,46 @@
+{
+  "_comment": [
+    "Everything the emulation tier needs that this repository does not contain, named by",
+    "the exact bytes it must be rather than by a version that can be republished. A digest",
+    "is what makes the fetch reproducible; a version number is not, and a copy checked into",
+    "the tree would carry a licence this repository does not hold. See ../README.md.",
+    "",
+    "Renode is the emulator this tier is committed to. It is distributed as a portable",
+    "build per platform, so a platform is picked by what the provisioning script finds",
+    "it is running on.",
+    "",
+    "The register description is ST's, redistributed by the cmsis-svd project. It is pinned",
+    "to a commit rather than to a branch, and its licence file is fetched alongside it",
+    "because ST's terms require every copy to carry the notice."
+  ],
+  "renode": {
+    "version": "1.16.1",
+    "license": "MIT",
+    "platforms": {
+      "darwin-arm64": {
+        "url": "https://github.com/renode/renode/releases/download/v1.16.1/renode-1.16.1-dotnet.osx-arm64-portable.dmg",
+        "sha256": "99b8ae5897b8926ef179868d39a504fe5296555dc9c9b973718ddf3ab09175d9",
+        "format": "dmg"
+      },
+      "linux-x86_64": {
+        "url": "https://github.com/renode/renode/releases/download/v1.16.1/renode-1.16.1.linux-portable-dotnet.tar.gz",
+        "sha256": "00e113cdbd0f5354cf2f64bbe3f5a070d8958409542fca66e45ac97d982938c0",
+        "format": "tar.gz"
+      },
+      "linux-aarch64": {
+        "url": "https://github.com/renode/renode/releases/download/v1.16.1/renode-1.16.1.linux-arm64-portable-dotnet.tar.gz",
+        "sha256": "fff3a098c96ed0a4ffbdff3f028c9c5fde432db09587c7bd7c99406180f90007",
+        "format": "tar.gz"
+      }
+    }
+  },
+  "svd": {
+    "device": "STM32F407",
+    "source": "cmsis-svd/cmsis-svd-data @ 56849fb18de50fe166b188749ba0a32e276ef6d4",
+    "license": "STMicroelectronics End User Licence Agreement for the CMSIS-SVD deliverables (see licence_file)",
+    "url": "https://raw.githubusercontent.com/cmsis-svd/cmsis-svd-data/56849fb18de50fe166b188749ba0a32e276ef6d4/data/STMicro/STM32F407.svd",
+    "sha256": "e2afca4f03f654225886d8508551cb7ac8f3c95ee28f18953aad466ecb56e6d6",
+    "licence_url": "https://raw.githubusercontent.com/cmsis-svd/cmsis-svd-data/56849fb18de50fe166b188749ba0a32e276ef6d4/data/STMicro/License.html",
+    "licence_sha256": "7f36fa94bb169e6f67c8571e792cd0637dacffd54488b4b45cb8519774690006"
+  }
+}

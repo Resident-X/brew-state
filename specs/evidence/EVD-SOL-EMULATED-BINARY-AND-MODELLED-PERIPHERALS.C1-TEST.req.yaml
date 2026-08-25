@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C1-TEST
+type: evidence
+title: Renode emulation of the target .elf establishes binary identity (SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T04:58:50Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_emulation_check.py::BinaryUnderEmulationIsTheTargetBuildsOwnArtefact
+text: |-
+  task fw:emulate loads the literal .pio/build/stm32/firmware.elf PlatformIO's env:stm32 produces into Renode (never LoadBinary), hashes the same PT_LOAD window independently on both the emulator and host sides before a single instruction runs, and proves the comparison is non-circular (a single flipped byte moves the digest). A second test confirms the artefact's own startup code (1044 instructions) brought the core to main, and a third confirms the file's SHA-256 is unchanged across the run. 6 tests, all passing.
+links:
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C1
+    type: satisfies

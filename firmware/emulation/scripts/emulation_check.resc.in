@@ -1,0 +1,29 @@
+# The emulation run, as the emulator is given it.
+#
+# The absolute paths below are filled in by the runner and written beside the
+# artefact in the build directory, so the finished script names the artefact it
+# loaded rather than describing where one might be found. Running that finished
+# script by hand reproduces the run exactly; nothing here depends on the runner
+# still being present.
+
+# Everything the emulator notices, kept. An access to an address no peripheral
+# answers is reported here and nowhere else, and that is the record showing a
+# command that reached nothing.
+logFile @{{LOG}} true
+logLevel 0
+
+mach create "brew-state-emulation"
+
+machine LoadPlatformDescription @{{PLATFORM}}
+
+# The artefact itself. No compilation, no relinking, no conversion: this is the
+# file the target build wrote, handed to the emulator as it stands.
+sysbus LoadELF @{{ELF}}
+
+# The register description, applied so that every access the run logs is named
+# by the register it lands on rather than by an address alone.
+sysbus ApplySVD @{{SVD}}
+
+include @{{EXERCISE}}
+
+quit
