@@ -1,0 +1,23 @@
+id: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS
+type: deliverable
+category: solution
+title: The plant model agrees between the host tier's closed loop and the emulation tier's closed loop
+status: active
+version: 1
+text: |
+  Drives an identical commanded draw sequence through the two closed loops that already exist and already share the plant model's source — the host tier's simulated-hardware closed loop, where the control logic is linked against the plant model through the host-simulated implementation of the hardware seam, and the emulation tier's closed loop, where the compiled target firmware runs under emulation against the same plant model bridged through the register-modelled peripherals. Both loops already run the identical plant equations; sharing a source file is not the same as producing the same numbers, because each closed loop compiles that source through its own independent build path and reaches it through a different route — direct linkage on the host side, a register round-trip through the modelled peripherals on the emulation side. This slice adds the side-by-side run and the tolerance-bounded comparison between them, closing the gap a shared-source argument alone cannot: an interval or unit mismatch the register round-trip introduces, a build-configuration difference between the two independently-compiled copies of the model, or a stale copy of the source in either build path.
+rationale: |
+  Split from SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT deliberately: that solution's own C1 states that whether the host-tier and emulation-tier plant instances agree numerically is out of scope for it, naming this criterion as the place that question belongs. Binary identity of the source (established there) and numerical agreement of what two independent builds of that source compute (established here) are different claims with different failure modes — a shared source file rules out re-implementation drift but says nothing about a build-configuration or register-precision difference between the two paths that reach it.
+
+  The comparison is only meaningful if it can fail. A tolerance wide enough to always pass would make the criterion decorative, so the solution also has to show the comparison catches a deliberately introduced divergence — otherwise a passing result and a vacuous one look identical.
+
+  The tolerance itself is derived from the floating-point precision the identical model equations accumulate under two independently-compiled copies of the same source, not from the machine's brew or flow delivery-tolerance bands. Those bands answer how far a delivered drink may sit from what was commanded — a question about the machine's acceptable output — not how far two computations of the same equations from the same inputs may sit from each other, which is a much tighter question and would be hidden behind a delivery-tolerance-sized band.
+links:
+  - target: DEL-SIM-EMULATION-TIER.C4
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: targets
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+    type: depends-on
+  - target: DEC-CROSS-TIER-CADENCE-EXOGENOUS
+    type: justified-by

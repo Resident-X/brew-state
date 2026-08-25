@@ -20,6 +20,7 @@ sys.path.insert(0, TOOLS)
 import build_plant_library  # noqa: E402
 import register_map  # noqa: E402
 import run_closed_loop_check as runner  # noqa: E402
+import seam_channels  # noqa: E402
 
 FINDINGS = None
 
@@ -64,15 +65,6 @@ def _enum_member_order(header_path, enum_name):
     return members
 
 
-def _c_define_value(source_path, macro_name):
-    with open(source_path, encoding="utf-8") as handle:
-        source = handle.read()
-    match = re.search(r"#define\s+%s\s+(\d+)" % re.escape(macro_name), source)
-    if not match:
-        raise AssertionError("%s declares no #define %s" % (source_path, macro_name))
-    return int(match.group(1))
-
-
 CONTROL_STEP_ACTUATED = 0
 CONTROL_STEP_TOO_SOON = 1
 CONTROL_STEP_SENSOR_INVALID = 2
@@ -97,7 +89,7 @@ MINIMUM_BREW_RISE_C = 2.0
 
 def setUpModule():
     global FINDINGS
-    FINDINGS = runner.run()
+    FINDINGS = runner.run_once()
 
 
 class PlantModelIsTheHostTiersOwnImplementation(unittest.TestCase):
@@ -166,6 +158,12 @@ class PlantModelIsTheHostTiersOwnImplementation(unittest.TestCase):
             plant_bridge.ACTUATION_CHANNEL_PUMP, members.index("ACTUATION_CHANNEL_PUMP"),
             "the bridge's pump channel index has drifted from actuation_channel_t's own order")
         self.assertEqual(
+            plant_bridge.ACTUATION_CHANNEL_BREW_HEATER,
+            members.index("ACTUATION_CHANNEL_BREW_HEATER"),
+            "the bridge's brew heater channel index has drifted from actuation_channel_t's "
+            "own order, so the level a run reports the heater was driven at is another "
+            "channel's")
+        self.assertEqual(
             plant_bridge.ACTUATION_CHANNEL_COUNT, members.index("ACTUATION_CHANNEL_COUNT"),
             "the bridge's channel count has drifted from actuation_channel_t's own order")
 
@@ -196,10 +194,10 @@ class PlantModelIsTheHostTiersOwnImplementation(unittest.TestCase):
     def test_the_bridges_converter_scale_matches_hw_stm32cs_own(self):
         self.assertEqual(
             plant_bridge.ADC_FULL_SCALE_COUNTS,
-            _c_define_value(HW_STM32_SOURCE, "ADC_FULL_SCALE_COUNTS"))
+            seam_channels.defined_value(HW_STM32_SOURCE, "ADC_FULL_SCALE_COUNTS"))
         self.assertEqual(
             plant_bridge.SENSOR_FULL_SCALE_MILLI,
-            _c_define_value(HW_STM32_SOURCE, "SENSOR_FULL_SCALE_MILLI"))
+            seam_channels.defined_value(HW_STM32_SOURCE, "SENSOR_FULL_SCALE_MILLI"))
 
 
 class ActuationReachesThePlantModelEveryInterval(unittest.TestCase):
@@ -256,6 +254,10 @@ class SensorReadingsReflectThePostActuationState(unittest.TestCase):
     def test_the_control_law_actually_commanded_the_delivery_this_run_measured(self):
         self.assertTrue(FINDINGS["command"], "control_command_temperature was refused")
         self.assertTrue(FINDINGS["control_init"], "control_init was refused")
+        self.assertEqual(
+            FINDINGS["flow_refusals"], 0,
+            "%s of the draw's flow commands were refused, so the water this run reports "
+            "moving was not the water it asked for" % FINDINGS["flow_refusals"])
 
 
 class ClosedLoopRunsAFullSimulatedDraw(unittest.TestCase):

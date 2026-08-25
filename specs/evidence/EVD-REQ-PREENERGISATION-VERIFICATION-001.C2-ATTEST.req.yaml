@@ -1,0 +1,30 @@
+id: EVD-REQ-PREENERGISATION-VERIFICATION-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-PREENERGISATION-VERIFICATION-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-25T12:30:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-PREENERGISATION-VERIFICATION-001.C2","synthesised_at":"2026-08-25T12:30:55.725001Z","entries":[{"input_id":"DEL-SIM-EMULATION-TIER","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/emulation/tests/test_closed_loop.py::PlantModelIsTheHostTiersOwnImplementation"},{"input_id":"SOL-PLANT-MODEL-AGREES-ACROSS-TIERS","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/emulation/tests/test_cross_tier.py::TheTwoLoopsReportTheSamePlantTrajectory (task fw:emulate, 70 tests OK)"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-PREENERGISATION-VERIFICATION-001.C2.
+
+  Final-state intent: the compiled firmware, exercised under emulation, is exercised against literally the same plant model the design-stage host tier used -- not a re-derivation that could silently drift from the design's own model.
+
+  Composition: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT with active evidence EVD-SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C1-TEST through .C4-TEST; SOL-PLANT-MODEL-AGREES-ACROSS-TIERS with active evidence EVD-SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1-TEST and .C2-TEST.
+
+  Intent fit: the first solution establishes the emulated plant model is the host tier's own compiled source, not a Python re-implementation (source identity). The second establishes that two independent compilations of that shared source, driven through matching closed loops on an identical commanded draw, report bit-identical trajectories across all four sensed quantities at every control interval, well inside a tolerance derived from first principles -- and that the comparison is demonstrably sensitive to a real divergence, not vacuous. Together these close both halves of "same plant model": same source, and same computed behaviour under two independent build paths -- the gap source-sharing alone cannot rule out.
+
+  Acknowledged scope boundary: none. This criterion's intent is fully reached by the cited composition.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 2

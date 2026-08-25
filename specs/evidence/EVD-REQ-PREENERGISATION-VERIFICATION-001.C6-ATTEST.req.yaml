@@ -1,0 +1,30 @@
+id: EVD-REQ-PREENERGISATION-VERIFICATION-001.C6-ATTEST
+type: evidence
+title: Attestation of REQ-PREENERGISATION-VERIFICATION-001.C6
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-25T12:31:23Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-PREENERGISATION-VERIFICATION-001.C6","synthesised_at":"2026-08-25T12:31:23.303751Z","entries":[{"input_id":"DEL-SIM-EMULATION-TIER","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/emulation/tests/test_emulation_check.py::OutputChannelsAreSeparatelyAddressable"},{"input_id":"SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/src/hw/stm32/hw_stm32.c::output_timer_channel"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-PREENERGISATION-VERIFICATION-001.C6.
+
+  Final-state intent: every output the control logic can command is shown, before energisation, to be separately addressable -- distinguishable from every other output rather than aliased to it.
+
+  Composition: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS with active evidence EVD-SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C1-TEST through .C3-TEST; SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE with active evidence EVD-SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C1-INSPECTION, .C2-INSPECTION, and .C3-TEST.
+
+  Intent fit: the first solution models a distinct, separately-addressable output for every channel the hardware seam declares. The second establishes that every actuation channel the seam admits addresses a distinct output on the target, closing the gap between the seam's declared channel set and the target's real wiring. Together these show the full set of outputs the control logic can command is both modelled and separately addressable, matching the criterion's text directly.
+
+  Acknowledged scope boundary: none stated. All contributing evidence verified present on disk (result pass, status active) as part of this session's cascade closure; this criterion's composition is unrelated to and unmodified by this session's own build.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C6
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

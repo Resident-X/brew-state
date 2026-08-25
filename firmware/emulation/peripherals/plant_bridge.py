@@ -78,6 +78,7 @@ SENSOR_QUANTITY_BY_CONVERTER_INPUT = {
 # (control.c always writes the brew heater before the pump, on every path),
 # which is what makes a write landing here the signal that one control
 # interval's actuation is now fully written and ready to be stepped.
+ACTUATION_CHANNEL_BREW_HEATER = 0
 ACTUATION_CHANNEL_PUMP = 2
 
 
@@ -143,6 +144,34 @@ class PlantBridge(object):
         self.step_count = 0
         self.last_step_ok = True
         self._refresh_injected_counts()
+
+    def restart(self):
+        """Return the model to the state it came up in, and report what it lost.
+
+        The seam's own bring-up writes the timer's compare registers before the
+        control law has commanded anything -- switching the outputs on at zero
+        is still a write -- and this bridge reads a compare write as an
+        interval's actuation. So by the time a driving script has brought the
+        artefact up, the model has already been advanced by intervals nothing
+        asked for.
+
+        That does not matter to a run asking whether the loop closes, which is
+        why nothing needed this before. It matters to a run asking whether this
+        model and another agree, because the two would then be started from
+        different places and the comparison would be reporting the bring-up
+        rather than the models. A driving script says here that the draw begins
+        with the model as initialised; the count of steps discarded is returned
+        so a run that meant to discard nothing can see what it discarded.
+        """
+        if not self._lib.plant_model_init(self._model, self._parameters):
+            raise RuntimeError("plant_bridge: the plant model could not be re-initialised")
+
+        discarded = self.step_count
+        self.actuation_levels = [0] * ACTUATION_CHANNEL_COUNT
+        self.step_count = 0
+        self.last_step_ok = True
+        self._refresh_injected_counts()
+        return discarded
 
     def _bind(self):
         lib = self._lib

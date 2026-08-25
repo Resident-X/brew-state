@@ -32,6 +32,39 @@ PLANT_PARAMETERS = os.path.join(FIRMWARE_DIR, "params", "thermoblock.params")
 
 _UNANSWERED = re.compile(r"[Ww]rite.*?to non existing peripheral.*?0x([0-9A-Fa-f]+)")
 
+#: The names the plant model's sensed quantities are reported under, in the order
+#: everything downstream compares them in. Both loops print them under these
+#: names -- the emulated one from closed_loop.py, the host one from
+#: cross_tier_draw.c -- and a run that stopped printing one fails where it is
+#: looked for rather than shifting the columns after it.
+QUANTITY_KEYS = ("brew-c", "steam-c", "brew-bar", "steam-bar")
+
+
+class Unkeyed(RuntimeError):
+    """A reported line does not carry a field something needs off it."""
+
+
+def keyed(parts):
+    """The `name=value` fields of a reported line, as a mapping.
+
+    Anything before the first field is skipped, so the line's own kind can lead
+    it. A field is what carries an `=`; nothing else on the line is read.
+    """
+    fields = {}
+    for part in parts:
+        name, separator, value = part.partition("=")
+        if separator:
+            fields[name] = value
+    return fields
+
+
+def quantities_of(fields, where):
+    """The four sensed quantities off one reported line, in the compared order."""
+    missing = [key for key in QUANTITY_KEYS if key not in fields]
+    if missing:
+        raise Unkeyed("%s reports no %s" % (where, ", ".join(missing)))
+    return [float(fields[key]) for key in QUANTITY_KEYS]
+
 
 def parse_findings(output):
     """Turn closed_loop.py's `EMU ` lines into the record the suite reads."""
@@ -39,6 +72,11 @@ def parse_findings(output):
         "image": None,
         "baseline_brew_c": None,
         "final_brew_c": None,
+        "target_brew_c": None,
+        "pre_draw_steps": None,
+        "pre_draw_quantities": [],
+        "trajectory_baseline": [],
+        "trajectory": [],
         "startup": None,
         "init": None,
         "parameters_loaded": None,
@@ -50,6 +88,7 @@ def parse_findings(output):
         "draw_steps": None,
         "draw_results": [],
         "draw_actuated_count": None,
+        "flow_refusals": None,
         "plant_step_count": None,
         "plant_last_step_ok": None,
         "completed": False,
@@ -67,6 +106,31 @@ def parse_findings(output):
             findings["baseline_brew_c"] = float(parts[1])
         elif kind == "final-brew-c":
             findings["final_brew_c"] = float(parts[1])
+        elif kind == "target-brew-c":
+            findings["target_brew_c"] = float(parts[1])
+        elif kind == "pre-draw-steps":
+            findings["pre_draw_steps"] = int(parts[1])
+        elif kind == "pre-draw-quantities":
+            findings["pre_draw_quantities"] = quantities_of(
+                keyed(parts[1:]), "the emulated loop's pre-draw reading")
+        elif kind == "trajectory-baseline":
+            findings["trajectory_baseline"] = quantities_of(
+                keyed(parts[1:]), "the emulated loop's baseline")
+        elif kind == "trajectory":
+            fields = keyed(parts[1:])
+            where = "the emulated loop's trajectory line %d" % len(findings["trajectory"])
+            for name in ("interval", "result", "clock", "pump", "heater", "steps"):
+                if name not in fields:
+                    raise Unkeyed("%s reports no %s" % (where, name))
+            findings["trajectory"].append({
+                "interval": int(fields["interval"]),
+                "result": int(fields["result"]),
+                "clock_millis": int(fields["clock"]),
+                "pump_permille": int(fields["pump"]),
+                "heater_permille": int(fields["heater"]),
+                "plant_steps": int(fields["steps"]),
+                "quantities": quantities_of(fields, where),
+            })
         elif kind == "startup":
             findings["startup"] = int(parts[1])
         elif kind == "init":
@@ -89,6 +153,8 @@ def parse_findings(output):
             findings["draw_results"] = [int(v) for v in parts[1].split(",")]
         elif kind == "draw-actuated-count":
             findings["draw_actuated_count"] = int(parts[1])
+        elif kind == "flow-refusals":
+            findings["flow_refusals"] = int(parts[1])
         elif kind == "plant-step-count":
             findings["plant_step_count"] = int(parts[1])
         elif kind == "plant-last-step-ok":
@@ -157,6 +223,25 @@ def run(pio=base.DEFAULT_PIO, build=True):
     findings["expected_image_fnv1a64"] = base.fnv1a64(
         base.image_of(artefact["path"], expected["base"], expected["length"]))
     return findings
+
+
+_FINDINGS = None
+
+
+def run_once(**arguments):
+    """The findings of one closed-loop run, shared by everything that asks.
+
+    Emulating a full draw is the most expensive thing this tier does, and it is
+    one exercise of one artefact -- so a second suite wanting to read what that
+    run produced reads the same run rather than paying for another one that
+    would, being the same artefact against the same model, say the same thing.
+    The first caller decides the arguments; a caller wanting a run of its own
+    calls `run` directly.
+    """
+    global _FINDINGS
+    if _FINDINGS is None:
+        _FINDINGS = run(**arguments)
+    return _FINDINGS
 
 
 def main(argv):

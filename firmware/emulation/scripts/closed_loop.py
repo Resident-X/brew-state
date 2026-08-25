@@ -18,9 +18,19 @@
 # distinct piece of work from SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.
 #
 # main() never commands a delivery -- nothing on the machine has been asked to
-# yet -- so control_command_temperature is unreached from main()'s own call
-# graph and the linker would ordinarily discard it. tools/pio_retain_closed_loop_entry.py
-# keeps it in the artefact for exactly this script to call from outside.
+# yet -- so control_command_temperature and control_command_flow are both
+# unreached from main()'s own call graph and the linker would ordinarily discard
+# them. tools/pio_retain_closed_loop_entry.py keeps them in the artefact for
+# exactly this script to call from outside.
+#
+# Both are commanded here, because a draw is both. A temperature alone leaves
+# the pump off, which leaves the brew path's pressure where it came up and
+# leaves the water on its way to the group reaching the block by conduction
+# alone -- and over a draw short enough to emulate, that leaves the control law
+# holding the heater at its limit on every single interval. A loop at its limit
+# throughout is one whose converter reading makes no difference to what it
+# commands next, so a comparison drawn across such a run is a comparison of two
+# open loops however exactly the two agree.
 #
 # Advancing simulated time between control_step calls is done by writing the
 # HAL's own millisecond counter (uwTick) directly rather than by letting the
@@ -81,7 +91,48 @@ ORDINARY_STEP_RESULTS = (CONTROL_STEP_ACTUATED, CONTROL_STEP_TOO_SOON, CONTROL_S
 # time to run under Renode's functional core model.
 DRAW_STEPS = 300
 
-TARGET_BREW_C = 93.0
+# The draw is a shape and not a held level: nothing drawn while the block comes
+# up, a ramp onto the puck, a hold, a taper off, and then the machine standing
+# with the shot finished. The five phases add to DRAW_STEPS, which a check in
+# tests/test_cross_tier.py holds them to -- a course shorter or longer than the
+# draw would leave intervals commanding something nobody wrote down.
+#
+# It is stated as levels the pump is driven at rather than as a rate in
+# millilitres per second, because a level is what the control path's flow entry
+# point takes and what the heater's own feedforward reads in the same step. A
+# course stated as a rate would be turned into a level by dividing by what full
+# pump scale draws on this machine, which is probed at bring-up -- so the two
+# loops being compared would each be commanding the result of their own probe
+# rather than the same figure.
+PRE_INFUSION_STEPS = 40
+RAMP_STEPS = 30
+HOLD_STEPS = 120
+TAPER_STEPS = 30
+REST_STEPS = 80
+
+# What the hold is drawn at, in permille of full pump scale. Well onto the pump
+# rather than a trickle, because what the brew path's pressure relation has to
+# be asked is where it settles as well as that it moves, and the settling point
+# is proportional to the level.
+PEAK_PUMP_PERMILLE = 600
+
+# The temperature the draw asks for, in degrees Celsius.
+#
+# Below a brew temperature, and deliberately. A cold thermoblock reaches the
+# neighbourhood of a brew temperature in something over a minute of simulated
+# time, and a minute of this loop is many thousands of intervals single-stepped
+# through the core -- so a draw commanding one would spend the whole of any
+# affordable run at full heater duty, where the loop is holding the element at
+# its limit rather than controlling, and where what the converter reported makes
+# no difference to what is commanded next. What this run has to be is a loop
+# that is actually closing; what it is not is a claim about a drinkable shot.
+TARGET_BREW_C = 50.0
+
+# Nine significant digits, which is what round-trips an IEEE-754 single
+# precision value exactly. The quantities are single precision on both sides of
+# any comparison drawn against this run, so a narrower format would be the
+# printing introducing a disagreement rather than reporting one.
+QUANTITY_FORMAT = "%.9g"
 
 
 def to_bits(value):
@@ -130,6 +181,60 @@ import plant_bridge  # noqa: E402
 bridge = plant_bridge.get()
 baseline_brew_c = bridge.quantity(plant_bridge.PLANT_QUANTITY_BREW_TEMPERATURE_C)
 print("EMU baseline-brew-c %f" % baseline_brew_c)
+
+# The quantities this machine's sensor channels read, in the order the sensor
+# seam enumerates the channels that have a converter input behind them, each
+# under the name it is reported by. The whole set is reported at every interval
+# rather than the brew temperature alone, because a run reporting one quantity
+# leaves anything drawn from it saying nothing about the other three.
+#
+# Named rather than left to be read off by position, because this run reports a
+# field the loop it is compared against has nothing to say about -- what its
+# clock read -- so a reader counting columns has to know that separately for each
+# of the two. The names are the ones the host loop's own draw prints, and a check
+# in tests/test_cross_tier.py holds the two lists to each other.
+TRAJECTORY_QUANTITIES = (
+    ("brew-c", plant_bridge.PLANT_QUANTITY_BREW_TEMPERATURE_C),
+    ("steam-c", plant_bridge.PLANT_QUANTITY_STEAM_TEMPERATURE_C),
+    ("brew-bar", plant_bridge.PLANT_QUANTITY_BREW_PRESSURE_BAR),
+    ("steam-bar", plant_bridge.PLANT_QUANTITY_STEAM_PRESSURE_BAR),
+)
+
+
+def quantities():
+    return " ".join(
+        ("%s=" + QUANTITY_FORMAT) % (key, bridge.quantity(q))
+        for key, q in TRAJECTORY_QUANTITIES)
+
+
+def pump_permille(step_index):
+    """The level the pump is asked for on one interval of the draw.
+
+    The course written out as a function of the interval rather than as a table,
+    so that the phases above are the single statement of the shape and the two
+    loops are handed the levels this produces rather than each evaluating a
+    course of its own.
+    """
+    at = step_index
+    if at < PRE_INFUSION_STEPS:
+        return 0
+    at -= PRE_INFUSION_STEPS
+    if at < RAMP_STEPS:
+        return int(round(PEAK_PUMP_PERMILLE * float(at + 1) / RAMP_STEPS))
+    at -= RAMP_STEPS
+    if at < HOLD_STEPS:
+        return PEAK_PUMP_PERMILLE
+    at -= HOLD_STEPS
+    if at < TAPER_STEPS:
+        return int(round(PEAK_PUMP_PERMILLE * (1.0 - float(at + 1) / TAPER_STEPS)))
+    return 0
+
+
+# Taken here, before a single instruction of the artefact has run, so that it is
+# the state the model came up in rather than a state something during bring-up
+# moved it to.
+baseline_quantities = quantities()
+print("EMU trajectory-baseline %s" % baseline_quantities)
 
 # The image as the emulator holds it, before a single instruction has run --
 # the same check exercise.py opens with, so a run of this script is also
@@ -186,17 +291,67 @@ print("EMU control-init %d" % control_init_ok)
 command_ok = call("control_command_temperature", [STATE_SCRATCH, to_bits(TARGET_BREW_C)])
 print("EMU command %d" % command_ok)
 
+# What this run asked the machine for, reported rather than left to be read out
+# of this file by anything that wants to put the same draw somewhere else. A
+# second reader of the figure is a second answer waiting to disagree with this
+# one.
+print(("EMU target-brew-c " + QUANTITY_FORMAT) % TARGET_BREW_C)
+
+# Everything above this line drove the machine before the draw began: bringing
+# the peripherals up switches the timer's compare outputs on, and bringing the
+# control path up commands every output off. Both are compare writes, and a
+# compare write is an interval's actuation as far as the bridge is concerned --
+# so the model has already been advanced by intervals nothing asked for.
+#
+# The draw starts from the model as it came up, because that is a place another
+# tier's copy of the same model can also start from and wherever bring-up
+# happened to leave it is not. What the model reads at this moment is reported
+# first, unrounded, so that whether bring-up moved it at all is a finding rather
+# than an assumption: these figures standing where the baseline stands is what
+# says the discarded intervals commanded nothing.
+print("EMU pre-draw-quantities %s" % quantities())
+print("EMU pre-draw-steps %d" % bridge.restart())
+
 uwtick_address = bus.GetSymbolAddress("uwTick")
 
 results = []
 checkpoints = []
+trajectory = []
+flow_refusals = 0
 checkpoint_marks = (DRAW_STEPS // 3, 2 * DRAW_STEPS // 3)
 for step_index in range(DRAW_STEPS):
     tick = bus.ReadDoubleWord(uwtick_address)
     bus.WriteDoubleWord(uwtick_address, tick + CONTROL_STEP_INTERVAL_MS)
+    # What the counter reads at the instant the step is entered, kept because
+    # the interval the estimator is advanced by is the one that actually
+    # elapsed rather than the one the loop is meant to run at -- so a run whose
+    # cadence drifted is a run whose model was integrated over something else,
+    # and that is not readable from the step's own result.
+    ran_at = bus.ReadDoubleWord(uwtick_address)
+    # The flow the course asks for is commanded before the step and not after
+    # it: the heater's feedforward reads the commanded level within the same
+    # step, so a level arriving afterwards would be one the heater answered for
+    # an interval late.
+    asked_for = pump_permille(step_index)
+    if not call("control_command_flow", [STATE_SCRATCH, asked_for]):
+        flow_refusals += 1
     results.append(call("control_step", [STATE_SCRATCH]))
+    # The level the heater was actually driven at over this interval, read off
+    # the compare register the seam wrote it to rather than worked out here. It
+    # is what says whether the loop was controlling or merely holding the
+    # element at its limit, and a run pinned at the limit throughout is one
+    # whose converter reading changed nothing it did.
+    driven = bridge.actuation_levels[plant_bridge.ACTUATION_CHANNEL_BREW_HEATER]
+    trajectory.append((ran_at, asked_for, driven, bridge.step_count, quantities()))
     if step_index in checkpoint_marks:
         checkpoints.append(bridge.quantity(plant_bridge.PLANT_QUANTITY_BREW_TEMPERATURE_C))
+
+for index in range(len(trajectory)):
+    ran_at, asked_for, driven, taken, values = trajectory[index]
+    print("EMU trajectory interval=%d result=%d clock=%d pump=%d heater=%d steps=%d %s"
+          % (index, results[index], ran_at, asked_for, driven, taken, values))
+
+print("EMU flow-refusals %d" % flow_refusals)
 
 print("EMU checkpoints %s" % ",".join("%f" % value for value in checkpoints))
 print("EMU draw-steps %d" % len(results))

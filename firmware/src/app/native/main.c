@@ -45,16 +45,33 @@
  * control path refuses to start against, and that refusal is a path worth
  * walking on the artefacts built against such a structure. Both outcomes are
  * exercised, and which one happened is printed.
+ *
+ * Given a draw to run instead, this executable runs that and only that. The
+ * draw is cross_tier_draw.c's, and it is reached from here rather than from an
+ * executable of its own because it needs exactly what this one is already
+ * linked from -- the control logic, the simulated hardware seam and the plant
+ * model -- and a second host artefact carrying the same three would be a second
+ * build of the same tier for no question the first cannot answer. The two modes
+ * do not share a run: the exercise deliberately drives the loop into faults and
+ * refusals, and a draw begun after that would be a draw of a machine somebody
+ * had already broken.
  */
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "control.h"
+#include "cross_tier_draw.h"
 #include "delivery_tolerance.h"
 #include "estimator_limits.h"
 #include "hw_sim.h"
+#include "machine_actuation.h"
 #include "plant_model.h"
+
+/* What names the draw mode on the command line, and how many arguments follow it. */
+#define DRAW_OPTION "--cross-tier-draw"
+#define DRAW_ARGUMENTS 4
 
 /* Steps to run in each phase of the exercise. */
 #define EXERCISE_STEPS 64
@@ -203,6 +220,7 @@ static char *read_file(const char *path, size_t *length)
     size_t used = 0u;
     char *buffer = malloc(capacity);
     if (buffer == NULL) {
+        (void)fprintf(stderr, "host exercise: no room to read %s\n", path);
         (void)fclose(handle);
         return NULL;
     }
@@ -212,6 +230,7 @@ static char *read_file(const char *path, size_t *length)
             capacity *= 2u;
             char *grown = realloc(buffer, capacity);
             if (grown == NULL) {
+                (void)fprintf(stderr, "host exercise: no room to read the whole of %s\n", path);
                 free(buffer);
                 (void)fclose(handle);
                 return NULL;
@@ -228,6 +247,189 @@ static char *read_file(const char *path, size_t *length)
     (void)fclose(handle);
     *length = used;
     return buffer;
+}
+
+/*
+ * The course a draw is run along: one line per control interval, each carrying
+ * the milliseconds the clock advances before that interval and the permille the
+ * pump is asked for during it. The count of lines decides how many intervals the
+ * draw runs for.
+ *
+ * A file of figures rather than a pair of figures repeated, and for two separate
+ * reasons. The cadence is a sequence because a loop closed through an emulated
+ * machine does not keep a perfectly even one, and the control logic advances its
+ * estimator by the interval that actually elapsed rather than the one the loop is
+ * meant to run at -- so reproducing another loop's draw means reproducing what
+ * that loop's clock did. The flow is a sequence because a draw is a shape:
+ * nothing moves while the block is coming up, water is drawn once it is, and a
+ * level held at one figure for the whole run would leave the brew path's pressure
+ * settled after its first few intervals and asked nothing further.
+ *
+ * The two travel in one file rather than two, so that a draw cannot be run with a
+ * cadence of one length against a course of another -- which is not a run with a
+ * mistake in it but two different draws, and neither loop would be able to say
+ * which one it had been given.
+ *
+ * Returns NULL and reports why on any file that cannot be opened, holds something
+ * that is not a whole number of milliseconds, asks the pump for a level beyond
+ * full scale, leaves an interval without a level, or holds no interval at all --
+ * a draw of no intervals is not a short draw, it is not a draw. The caller frees
+ * both arrays it writes.
+ */
+static bool grow_the_course(uint32_t **intervals, uint16_t **levels, size_t *capacity)
+{
+    const size_t wanted = *capacity * 2u;
+
+    /* Each is taken only where it was obtained, so a pair where one grew and the
+     * other did not still frees exactly what it holds rather than the address it
+     * used to hold. */
+    uint32_t *grown_intervals = realloc(*intervals, wanted * sizeof(**intervals));
+    if (grown_intervals != NULL) {
+        *intervals = grown_intervals;
+    }
+    uint16_t *grown_levels = realloc(*levels, wanted * sizeof(**levels));
+    if (grown_levels != NULL) {
+        *levels = grown_levels;
+    }
+    if (grown_intervals == NULL || grown_levels == NULL) {
+        return false;
+    }
+
+    *capacity = wanted;
+    return true;
+}
+
+static bool read_the_course(const char *path, uint32_t **interval_millis,
+                            uint16_t **pump_permille, uint32_t *count)
+{
+    FILE *handle = fopen(path, "r");
+    if (handle == NULL) {
+        (void)fprintf(stderr, "host exercise: cannot open %s\n", path);
+        return false;
+    }
+
+    size_t capacity = 256u;
+    size_t used = 0u;
+    uint32_t *intervals = malloc(capacity * sizeof(*intervals));
+    uint16_t *levels = malloc(capacity * sizeof(*levels));
+    if (intervals == NULL || levels == NULL) {
+        (void)fprintf(stderr, "host exercise: no room to read the course in %s\n", path);
+        free(intervals);
+        free(levels);
+        (void)fclose(handle);
+        return false;
+    }
+
+    bool readable = true;
+    bool ended = false;
+    while (readable && !ended) {
+        unsigned long millis = 0uL;
+        unsigned long level = 0uL;
+        const int read_millis = fscanf(handle, "%lu", &millis);
+
+        if (read_millis == EOF) {
+            ended = true;
+        } else if (read_millis != 1 || millis == 0uL || millis > 0xFFFFFFFFuL) {
+            (void)fprintf(stderr, "host exercise: %s holds something that is not an interval\n",
+                          path);
+            readable = false;
+        } else if (fscanf(handle, "%lu", &level) != 1 ||
+                   level > (unsigned long)ACTUATION_FULL_SCALE) {
+            (void)fprintf(stderr,
+                          "host exercise: the interval on line %lu of %s carries no level the "
+                          "pump can be asked for\n",
+                          (unsigned long)used + 1uL, path);
+            readable = false;
+        } else if (used == capacity && !grow_the_course(&intervals, &levels, &capacity)) {
+            (void)fprintf(stderr, "host exercise: no room to read the whole course in %s\n", path);
+            readable = false;
+        } else {
+            intervals[used] = (uint32_t)millis;
+            levels[used] = (uint16_t)level;
+            used++;
+        }
+    }
+
+    (void)fclose(handle);
+
+    if (readable && used == 0u) {
+        (void)fprintf(stderr, "host exercise: %s declares no interval to run\n", path);
+        readable = false;
+    }
+    if (!readable) {
+        free(intervals);
+        free(levels);
+        return false;
+    }
+
+    *interval_millis = intervals;
+    *pump_permille = levels;
+    *count = (uint32_t)used;
+    return true;
+}
+
+/*
+ * Run the draw the command line asked for, and nothing else.
+ *
+ * Every figure is taken from the arguments rather than compiled in. The target
+ * and the course are what the draw is; the converter's full scale is a fact
+ * about a board this tier does not have, and a run comparing this loop against
+ * one closed through a real converter has to hold both to the same reporting.
+ */
+static int run_the_draw(char **arguments, const plant_parameters_t *parameters,
+                        const estimator_limits_t *limits,
+                        const delivery_tolerance_t *tolerance)
+{
+    cross_tier_draw_t draw = {0.0f, NULL, NULL, 0u, 0u, 0u};
+    char *end = NULL;
+
+    draw.target_c = strtof(arguments[0], &end);
+    if (end == arguments[0] || *end != '\0') {
+        (void)fprintf(stderr, "host exercise: '%s' is not a temperature to draw toward\n",
+                      arguments[0]);
+        return 2;
+    }
+
+    const unsigned long counts = strtoul(arguments[1], &end, 10);
+    if (end == arguments[1] || *end != '\0' || counts == 0uL || counts > 0xFFFFFFFFuL) {
+        (void)fprintf(stderr, "host exercise: '%s' is not a converter full scale\n",
+                      arguments[1]);
+        return 2;
+    }
+
+    /*
+     * Bounded by what a reading is carried in and not merely by what the figure
+     * is stored in. The hardware seam reports a reading as a signed figure in
+     * thousandths, so a full scale beyond what that holds is a scale no reading
+     * off it could be reported at -- refused here, where a caller can be told
+     * which argument was wrong, rather than folded over silently in the
+     * converter arithmetic.
+     */
+    const unsigned long milli = strtoul(arguments[2], &end, 10);
+    if (end == arguments[2] || *end != '\0' || milli == 0uL ||
+        milli > (unsigned long)INT32_MAX) {
+        (void)fprintf(stderr, "host exercise: '%s' is not a full scale in milli-units\n",
+                      arguments[2]);
+        return 2;
+    }
+
+    draw.converter_full_scale_counts = (uint32_t)counts;
+    draw.converter_full_scale_milli = (uint32_t)milli;
+
+    uint32_t intervals = 0u;
+    uint32_t *cadence = NULL;
+    uint16_t *levels = NULL;
+    if (!read_the_course(arguments[3], &cadence, &levels, &intervals)) {
+        return 1;
+    }
+    draw.interval_millis = cadence;
+    draw.pump_permille = levels;
+    draw.interval_count = intervals;
+
+    const int outcome = cross_tier_draw_run(parameters, limits, tolerance, &draw);
+    free(cadence);
+    free(levels);
+    return outcome;
 }
 
 /*
@@ -379,9 +581,17 @@ int main(int argc, char **argv)
 {
     control_state_t state;
 
-    if (argc != 3) {
-        (void)fprintf(stderr, "usage: %s <parameter-description> <limits-declaration>\n",
-                      argc > 0 ? argv[0] : "program");
+    const bool draw_requested = argc > 3;
+
+    if (argc < 3 ||
+        (draw_requested &&
+         (strcmp(argv[3], DRAW_OPTION) != 0 || argc != 4 + DRAW_ARGUMENTS))) {
+        (void)fprintf(stderr,
+                      "usage: %s <parameter-description> <limits-declaration>\n"
+                      "       %s <parameter-description> <limits-declaration> "
+                      DRAW_OPTION " <target-c> <converter-full-scale-counts> "
+                      "<converter-full-scale-milli> <course-file>\n",
+                      argc > 0 ? argv[0] : "program", argc > 0 ? argv[0] : "program");
         return 2;
     }
 
@@ -445,6 +655,10 @@ int main(int argc, char **argv)
                       "host exercise: tolerance declaration refused: %s (fault %d, line %u)\n",
                       tolerance_error.name, (int)tolerance_error.fault, tolerance_error.line);
         return 1;
+    }
+
+    if (draw_requested) {
+        return run_the_draw(&argv[4], &parameters, &limits, &tolerance);
     }
 
     hw_sim_reset();

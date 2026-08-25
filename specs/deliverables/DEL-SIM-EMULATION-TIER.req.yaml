@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The emulation tier exercises the shipping firmware binary with no hardware present
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 2
 text: |
