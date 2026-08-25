@@ -1,0 +1,23 @@
+id: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+type: deliverable
+category: solution
+title: The emulated firmware closes the loop with the plant model it drives, with no hardware present
+status: active
+version: 2
+text: |
+  Bridges the Renode PythonPeripheral models behind TIM3 and ADC1 to the plant model implementation the host tier already exercises (plant_step_admissible in firmware/src/plant/common/plant_step.c), replacing the one-shot ADC1 seeding and write-only TIM3 counters SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS built with a per-interval read-step-write cycle: a TIM3 compare write becomes that interval's actuation, plant_step_admissible advances the plant state, and the result refreshes the ADC1 inject window for the firmware's next read. The bridge calls the existing C implementation rather than re-deriving plant physics in Python, per DEC-EMULATION-TIER-RENODE.
+rationale: |
+  Split from SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS because that solution establishes that the peripheral models exist and are separately addressable — it deliberately stopped short of closing the loop between them (firmware/emulation/README.md states this explicitly). Closing the loop is a distinct piece of work with its own failure modes (interval mismatch, stale readback) and depends on nothing beyond DEL-SIM-SEAMS-HARNESS, already built, so it can proceed now rather than waiting on DEL-SIM-EMULATION-TIER.C4, whose cross-tier agreement question is a separate, harder claim this solution does not attempt to settle.
+links:
+  - target: DEL-SIM-EMULATION-TIER.C3
+    type: derives-from
+  - target: DEL-SIM-SEAMS-HARNESS
+    type: depends-on
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C5
+    type: targets
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS
+    type: depends-on
+  - target: DEC-EMULATION-TIER-RENODE
+    type: justified-by
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: targets

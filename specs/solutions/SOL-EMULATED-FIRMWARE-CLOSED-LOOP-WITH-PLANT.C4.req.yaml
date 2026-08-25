@@ -1,0 +1,12 @@
+id: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C4
+type: criterion
+title: The closed loop runs a full simulated draw with no target hardware present
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  firmware/emulation/scripts/exercise.py drives the emulated core through a full draw-length sequence of TIM3 writes and ADC1 reads with the loop closed per .C2 and .C3, completing without a target board, ST-LINK, or any physical peripheral attached — the sequence REQ-PREENERGISATION-VERIFICATION-001.C5 relies on to bind the machine's eventual behaviour pre-energisation. Multi-draw sequences and the steam-side loop are out of scope.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+    type: criterion-of

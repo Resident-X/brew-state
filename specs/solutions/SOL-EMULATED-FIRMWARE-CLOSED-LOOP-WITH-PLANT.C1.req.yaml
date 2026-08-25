@@ -1,0 +1,12 @@
+id: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C1
+type: criterion
+title: The plant model driven under emulation is the host tier's own implementation, not a re-expression of it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The Renode PythonPeripheral scripts backing TIM3 and ADC1 call plant_step_admissible in firmware/src/plant/common/plant_step.c directly, the same entry point firmware/src/hw/sim/hw_sim.c already drives on the host tier, rather than a Python re-implementation of the plant physics. Register decoding and SVD-derived addressing stay in Python; the plant model's own math does not. Whether the host-tier and emulation-tier plant instances agree numerically is out of scope — that is DEL-SIM-EMULATION-TIER.C4.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+    type: criterion-of
