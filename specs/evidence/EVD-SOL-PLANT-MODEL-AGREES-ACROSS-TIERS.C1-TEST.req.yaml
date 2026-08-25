@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1-TEST
+type: evidence
+title: Cross-tier suite — host and emulation closed loops report the same plant trajectory (SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T12:27:27Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::TheTwoLoopsReportTheSamePlantTrajectory (task fw:emulate, 70 tests OK)
+text: |-
+  The host tier's simulated-hardware closed loop and the emulation tier's closed loop are driven through an identical commanded draw (temperature + pump course, 300 intervals) and compared at every interval across all four sensed quantities. Measured worst separation is 0.000e+00 on all four quantities (bit-identical), well inside the 1.0e-3 tolerance. Varying the ADC/converter full-scale changes the trajectory (5.2e-3 / 1.3e-3 diffs, both exceeding tolerance), independently confirming the sensing round-trip is load-bearing rather than decorative. Verified by two independent blind-review passes, including hand re-derivation of the tolerance and re-running the converter-scale experiment.
+links:
+  - target: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1
+    type: satisfies

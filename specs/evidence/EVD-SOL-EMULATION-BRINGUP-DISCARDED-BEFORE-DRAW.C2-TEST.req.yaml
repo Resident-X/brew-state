@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C2-TEST
+type: evidence
+title: Cross-tier suite — discarded bring-up interval count is reported (SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T12:27:27Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::test_the_draw_began_with_both_models_where_they_came_up (task fw:emulate, 70 tests OK)
+text: |-
+  Both loops report a positive pre_draw_steps count alongside their trajectory, and the suite asserts each is greater than zero on both tiers, confirming the pre-draw window is reported rather than assumed empty.
+links:
+  - target: SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C2
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C2
+type: criterion
+title: The discarded bring-up interval count is reported so a run can confirm its pre-draw state is unperturbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  How many bring-up compare-writes were discarded before the draw's first commanded interval is reported alongside a run's trajectory, so a test can assert the discarded window moved nothing rather than assuming it. Reporting anything about the draw's own commanded intervals is out of scope — this criterion covers only the pre-draw count.
+links:
+  - target: SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW
+    type: criterion-of

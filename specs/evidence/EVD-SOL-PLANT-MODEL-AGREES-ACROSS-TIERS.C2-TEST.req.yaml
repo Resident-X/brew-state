@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C2-TEST
+type: evidence
+title: Cross-tier suite — deliberate divergences fail the comparison (SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T12:27:27Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::ADeliberateDivergenceFailsTheComparison (task fw:emulate, 70 tests OK)
+text: |-
+  Two independent perturbations of one build path are shown to fail the comparison: a 0.05% heater-power mismatch (worst 4.2e-3 on brew temperature, 234 divergent intervals) and a 0.07% pump-pressure mismatch (worst 4.9e-3 on brew pressure only, 231 divergent intervals, exactly zero on the other three quantities). A step-count/length mismatch between the two loops is also shown to fail. Both perturbation results were independently re-run and confirmed exact by a second blind-review pass.
+links:
+  - target: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C2
+    type: satisfies

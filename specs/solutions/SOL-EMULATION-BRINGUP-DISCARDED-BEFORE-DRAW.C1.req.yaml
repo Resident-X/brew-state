@@ -1,0 +1,12 @@
+id: SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C1
+type: criterion
+title: Whatever a draw's bring-up moves the plant model by is undone before the draw starts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Whatever a timer's own bring-up or the command-everything-off write moves the plant model by before the commanded draw begins is undone before the draw starts, so the model a draw starts from is the one the firmware initialised rather than one already displaced by pre-draw writes. Distinguishing a legitimate zero-level actuation issued after the draw starts from a pre-draw write is out of scope — only the pre-draw window is affected.
+links:
+  - target: SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW
+    type: criterion-of

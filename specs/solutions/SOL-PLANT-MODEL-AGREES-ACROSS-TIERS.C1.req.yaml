@@ -1,0 +1,20 @@
+id: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1
+type: criterion
+title: The host tier's closed loop and the emulation tier's closed loop report the same plant trajectory for an identical commanded draw
+status: active
+version: 2
+measurement_type: threshold
+verification: test
+text: |
+  Driving the host tier's simulated-hardware closed loop and the emulation tier's closed loop through an identical commanded draw sequence, the plant model's four sensed quantities — brew and steam temperature and pressure — stay within a stated numerical tolerance of each other at every control interval across a full simulated draw.
+
+  The sequence commands a flow as well as a temperature, and the draw holds the heater below full scale over part of its length. A sequence commanding no flow leaves the brew path's pressure where it came up, and a heater held at full scale throughout is one whose sensed reading cannot change what is commanded next — so the register round trip that is the only difference between the two routes would take no part in the result, and what was compared would be two open loops.
+
+  Two of the four quantities stand still for the whole of such a draw, and the comparison claims only that the two loops agree about them. Nothing a draw of water commands reaches the steam mass on this machine, so its temperature and the pressure that follows from it remain at their bring-up values whatever the draw asks for. Moving them needs a draw of steam, which this control path offers no way to command and which is not in scope here.
+
+  The tolerance is derived from the floating-point precision the identical model equations accumulate under two independently-compiled copies of the same source, not from the machine's brew or flow delivery-tolerance bands, which answer a different question and are looser than a same-computation comparison warrants.
+
+  Comparing timing, memory safety, or either tier's own peripheral-interaction defect coverage is out of scope — the tiers' existing criteria already own those.
+links:
+  - target: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS
+    type: criterion-of

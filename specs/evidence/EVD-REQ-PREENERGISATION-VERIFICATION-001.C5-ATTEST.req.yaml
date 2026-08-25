@@ -1,0 +1,30 @@
+id: EVD-REQ-PREENERGISATION-VERIFICATION-001.C5-ATTEST
+type: evidence
+title: Attestation of REQ-PREENERGISATION-VERIFICATION-001.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-25T12:31:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-PREENERGISATION-VERIFICATION-001.C5","synthesised_at":"2026-08-25T12:31:11.625855Z","entries":[{"input_id":"DEL-SIM-EMULATION-TIER","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/emulation/tests/test_closed_loop.py::PlantModelIsTheHostTiersOwnImplementation"},{"input_id":"SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/emulation/tests/test_cross_tier.py::test_the_draw_began_with_both_models_where_they_came_up (task fw:emulate, 70 tests OK)"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-PREENERGISATION-VERIFICATION-001.C5.
+
+  Final-state intent: verification carried out away from the machine binds the machine's behaviour -- the same description and the same inputs must produce the same answer, judged across the whole behaviour rather than only at its end.
+
+  Composition: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT with active evidence EVD-SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C1-TEST through .C4-TEST; SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW with active evidence EVD-SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C1-TEST and .C2-TEST.
+
+  Intent fit: the first solution closes the loop for a full simulated draw, with actuation and sensing bound to the plant model at every control interval -- judgement across the behaviour, not only at its end. The second removes a defect discovered while building the cross-tier comparison: pre-draw peripheral bring-up writes were being read as genuine actuation, displacing the plant model's state before a run's first commanded interval. A verification method whose starting point silently drifted from a clean initialisation would be binding a different behaviour than the one the firmware actually exhibits from power-on -- exactly the "same inputs, different answer" gap the criterion's text names. With that fixed and reported (a run can now assert the discarded window moved nothing), the emulation tier's own contribution to this binding is intact start to end.
+
+  Acknowledged scope boundary: whether the emulated behaviour resembles a real, energised machine is explicitly out of scope for this criterion by its own text ("no amount of agreement between two computations of the same equations can establish" that) and is the separate, not-yet-built on-target tier's concern. No other solution currently targets this criterion (confirmed via inbound targets links).
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C5
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

@@ -1,0 +1,29 @@
+id: DEC-CROSS-TIER-CADENCE-EXOGENOUS
+type: decision
+category: strategic
+title: The host loop's cadence is held exogenous to the emulation tier's measured drift
+status: active
+version: 1
+text: |
+  The emulation tier's control interval does not land on its nominal duration on every step: SysTick advances while Renode single-steps the core rather than in real time, so a portion of a run's intervals measure a few milliseconds longer than the cadence the control law is meant to run at. The control law advances its estimator by the interval that actually elapsed rather than by the nominal one, so a comparison holding the host loop to the nominal cadence while the emulation loop actually ran a drifted one would integrate the two loops over different durations on exactly those intervals -- a difference the comparison would attribute to the plant model when its real source is emulator timing.
+
+  The host loop's cadence is held exogenous: the emulation run's own measured per-interval duration is captured and handed to the host loop, so both loops are asked to integrate over the same interval on every step regardless of what caused either duration. Neither loop observes or reacts to the other while it runs; only the recorded course of intervals crosses between them, so both closed loops stay independently closed.
+rationale: |
+  Context: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS needs the two closed loops driven by an identical commanded sequence so that any difference the comparison finds is attributable to the plant model rather than to what each loop was asked to do. Cadence drift under Renode single-stepping was not anticipated by any existing criterion; it surfaced only once a real side-by-side run was built.
+
+  Trade-offs: forcing Renode to advance SysTick at exactly the nominal interval would remove the drift at its source, but doing so changes what is being emulated -- timing fidelity under single-stepping is not a property this tier's existing criteria claim, and DEC-SIM-VERIFICATION-TOOLCHAIN's own tiering leaves timing measurement to the on-target tier. Ignoring the drift and driving the host loop at the nominal cadence regardless was rejected because the control law integrates its estimator over the interval that actually elapsed, so a host run held to the nominal duration would silently diverge from the emulation run on every drifted interval for a reason having nothing to do with the plant model -- corrupting the comparison the whole solution exists to make trustworthy. Measuring the emulation run's actual cadence and handing it to the host loop removes cadence as a variable between the two without asserting anything new about real-hardware timing.
+
+  Reversibility: the cadence figures are data carried alongside the commanded course, not a structural coupling between the two tiers' code; a future tier that closed the drift at its source could stop populating them without changing how either loop is driven.
+
+  Consequences: DEL-SIM-EMULATION-TIER.C4 and SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1 both exclude timing comparison from what the plant-model-agreement check claims -- this decision is why that exclusion is safe rather than a gap: timing is held equal by construction, not left to coincide.
+options_considered:
+  - option: Hold the host loop's cadence exogenous, driven by the emulation run's own measured per-interval timing
+    reason_rejected: ""
+  - option: Force Renode to advance SysTick at exactly the nominal interval
+    reason_rejected: changes what is being emulated and is not a timing-fidelity claim this tier's criteria make
+  - option: Drive the host loop at the nominal cadence regardless of measured drift
+    reason_rejected: the control law integrates over the interval that actually elapsed, so this would silently diverge the two loops for a reason unrelated to the plant model
+chosen: Hold the host loop's cadence exogenous, driven by the emulation run's own measured per-interval timing
+links:
+  - target: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1
+    type: addresses

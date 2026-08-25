@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C1-TEST
+type: evidence
+title: Cross-tier suite — a draw begins from the plant model as initialised, not as bring-up left it (SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T12:27:27Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::test_the_draw_began_with_both_models_where_they_came_up (task fw:emulate, 70 tests OK)
+text: |-
+  Both loops' pre-draw plant quantities equal their own trajectory_baseline (the state as initialised), and the two loops' baselines agree with each other, confirming a draw begins from the model as initialised on both tiers rather than one displaced by pre-draw bring-up writes. Verified against the actual mechanism (re-initialisation after counting, not a discard) by a second blind-review pass; the criterion text was corrected to describe the outcome rather than an inaccurate mechanism.
+links:
+  - target: SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW.C1
+    type: satisfies

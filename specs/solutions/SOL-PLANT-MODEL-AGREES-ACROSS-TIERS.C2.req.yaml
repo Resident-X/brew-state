@@ -1,0 +1,12 @@
+id: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C2
+type: criterion
+title: A deliberate divergence between the two closed loops fails the comparison
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Deliberately mismatching the two closed loops — a stale or edited copy of the plant source in one build path, or a parameter file that differs between the two — fails the trajectory comparison in .C1 rather than passing it, demonstrating that the check is sensitive to a real divergence and not a tolerance so loose it passes regardless of input. This is a property of the comparison harness itself, exercised once as a controlled negative case; it is not a claim that either build path is expected to drift in normal operation. Timing divergence and peripheral-register divergence are out of scope, exactly as .C1 excludes them.
+links:
+  - target: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS
+    type: criterion-of

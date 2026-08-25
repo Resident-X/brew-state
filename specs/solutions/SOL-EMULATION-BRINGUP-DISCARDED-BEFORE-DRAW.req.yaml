@@ -1,0 +1,19 @@
+id: SOL-EMULATION-BRINGUP-DISCARDED-BEFORE-DRAW
+type: deliverable
+category: solution
+title: A draw begins from the plant model as initialised, not as bring-up left it
+status: active
+version: 1
+text: |
+  The emulation tier's peripheral bridge stepped the plant model on every compare-write it saw, including the ones a timer's own bring-up issues and the firmware's own command-everything-off write, before the commanded draw begins. Neither is a real actuation, but the bridge could not tell the difference, so a run's plant state going into its first commanded interval already carried whatever those bring-up writes moved it by, rather than starting from the model exactly as initialised. This surfaced while building a comparison that needs both tiers' pre-draw state to agree exactly, but the defect sits in the bridge that an already-finished solution shipped, not in the comparison itself.
+rationale: |
+  REQ-PREENERGISATION-VERIFICATION-001.C5 requires that verification carried out away from the machine bind the machine's behaviour, and says explicitly that the agreement required is judged across the behaviour rather than at its end. A run whose initial state is displaced by bring-up artefacts is judging a different starting point than the one the firmware actually reaches from a clean initialisation — exactly the "same description, same inputs, different answer" gap the criterion exists to catch, just at the run's beginning rather than partway through it.
+
+  The fix belongs in the maintenance lane rather than as a new criterion on the sealed solution: nothing in SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT's own criteria promised that bring-up writes would be excluded from actuation, so this is a shortfall in delivered behaviour against the requirement it targets, not a gap in what that solution's own criteria required of themselves.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C5
+    type: targets
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+    type: depends-on
