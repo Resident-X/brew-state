@@ -166,6 +166,10 @@ def parse_findings(output):
         "conversions": {},
         "compare": [],
         "refusals": {},
+        "tick": None,
+        "fault_marker_before": None,
+        "fault_marker_after": None,
+        "default_handler_present": None,
         "completed": False,
     }
     for line in output.splitlines():
@@ -198,6 +202,16 @@ def parse_findings(output):
             })
         elif kind == "refusal":
             findings["refusals"][parts[1]] = int(parts[2]) != 0
+        elif kind == "tick":
+            findings["tick"] = {
+                "before": int(parts[1]), "after": int(parts[2]), "steps_taken": int(parts[3])}
+        elif kind == "fault-marker-before":
+            findings["fault_marker_before"] = int(parts[1])
+        elif kind == "fault-marker-after":
+            findings["fault_marker_after"] = {
+                "value": int(parts[1]), "steps_taken": int(parts[2])}
+        elif kind == "default-handler-present":
+            findings["default_handler_present"] = int(parts[1]) != 0
         elif kind == "done":
             findings["completed"] = True
     return findings

@@ -1,0 +1,17 @@
+id: EVD-SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2-TEST
+type: evidence
+title: Every other vector traps to a defined, observable fault state under emulation (SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T06:10:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_emulation_check.py::UnhandledVectorTrapsToADefinedFaultState
+text: |-
+  Under Renode emulation of the target build's own .elf: (1) pending WWDG's interrupt directly through the NVIC -- a vector this seam never enables or services -- reaches a tagged, vector-numbered marker (0xFA170010) rather than looping silently; (2) the marker's tag and low 9 bits correctly identify WWDG's own exception number (16); (3) the vendor's Default_Handler symbol is absent from the linked artefact entirely, which is only possible if every one of the vendor startup file's ~90 weak-aliased vectors was individually overridden, not just the one exercised. Confirmed to catch a real regression: the WWDG_IRQHandler override was temporarily removed from the handler list, the suite re-run, and all three tests failed for the expected reasons (marker never set, Default_Handler still present) before the fix was restored byte-identical.
+links:
+  - target: SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2
+    type: satisfies

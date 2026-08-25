@@ -737,5 +737,99 @@ class ChannelSetsAreTheSeamsOwn(unittest.TestCase):
                 "no_such_type_t", seam_channels.OUTPUT_COUNT)
 
 
+class SysTickAdvancesTheTickCounter(unittest.TestCase):
+    """SOL-STM32-INTERRUPT-VECTORS-DEFINED.C1: The SysTick interrupt runs a
+    real handler that advances the tick counter.
+
+    Verification and regression protection are the same assertion here: a
+    SysTick_Handler that does not call HAL_IncTick() -- reverted, or replaced
+    by a future change that forgets it -- makes tick_after equal tick_before
+    regardless of how many instructions run in between, which is exactly what
+    the single test below checks and what this criterion requires. A
+    forgotten call was confirmed to fail this test before it was written back
+    in, so no second test is needed to cover the same regression a different
+    way.
+    """
+
+    # SOL-STM32-INTERRUPT-VECTORS-DEFINED.C1: The SysTick interrupt runs a
+    # real handler that advances the tick counter.
+    def test_the_tick_counter_advances_while_the_core_runs(self):
+        tick = FINDINGS["tick"]
+        self.assertGreater(
+            tick["after"], tick["before"],
+            "HAL_GetTick() did not advance across %d single-stepped "
+            "instructions; SysTick_Handler is not calling HAL_IncTick()"
+            % tick["steps_taken"])
+
+
+class UnhandledVectorTrapsToADefinedFaultState(unittest.TestCase):
+    """SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2: An interrupt reaching any other
+    unhandled vector traps to a defined fault state, not a silent lockup.
+    """
+
+    #: The high halfword the trap writes, chosen to be recognisable rather
+    #: than a value uninitialised memory could plausibly hold.
+    FAULT_MARKER_TAG = 0xFA170000
+
+    #: WWDG's own exception number under the Cortex-M core's ICSR.VECTACTIVE
+    #: numbering: external IRQ0 is exception 16.
+    WWDG_EXCEPTION_NUMBER = 16
+
+    # SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2: An interrupt reaching any other
+    # unhandled vector traps to a defined fault state.
+    def test_pending_an_unused_vector_reaches_the_fault_marker(self):
+        """WWDG is pended directly through the NVIC.
+
+        Nothing in this seam enables or services the watchdog, so this is a
+        vector reached by no route the firmware would ever take on its own --
+        which is exactly the situation an unhandled vector is: an interrupt
+        this build gave no purposeful handler, arriving anyway.
+        """
+        self.assertEqual(
+            FINDINGS["fault_marker_before"], 0,
+            "the fault marker was non-zero before any vector was pended, so "
+            "the value after pending one is not evidence about this test's "
+            "own pend")
+        after = FINDINGS["fault_marker_after"]
+        self.assertNotEqual(
+            after["value"], 0,
+            "pending WWDG's interrupt through the NVIC did not reach the "
+            "fault marker within %d instructions" % after["steps_taken"])
+
+    # SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2: ... not a silent lockup -- the
+    # trap records which vector reached it rather than merely halting.
+    def test_the_marker_names_the_vector_that_trapped(self):
+        after = FINDINGS["fault_marker_after"]["value"]
+        self.assertEqual(
+            after & 0xFFFF0000, self.FAULT_MARKER_TAG,
+            "the fault marker's tag does not match the value the trap "
+            "deliberately writes, so this may be leftover memory rather than "
+            "the trap having run")
+        self.assertEqual(
+            after & 0x1FF, self.WWDG_EXCEPTION_NUMBER,
+            "the fault marker does not name WWDG's own exception number, so "
+            "whatever produced it was not this test's pend")
+
+    # SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2: An interrupt reaching any other
+    # unhandled vector traps to a defined fault state, not a silent lockup.
+    def test_the_vendor_default_handler_is_absent_from_the_linked_image(self):
+        """Evidence about every vector at once, not just the one pended above.
+
+        The vendor startup file links Default_Handler as a strong symbol and
+        weak-aliases every otherwise-unhandled vector to it; that strong
+        symbol cannot be redefined; overriding a vector means overriding that
+        vector's own alias instead. A vector this build forgot would leave
+        its alias pointing at Default_Handler, which would keep that symbol
+        reachable and so present in the linked image. Its absence is only
+        possible if every alias was overridden -- this is what makes the
+        claim "any other unhandled vector", not just WWDG's.
+        """
+        self.assertFalse(
+            FINDINGS["default_handler_present"],
+            "Default_Handler is still present in the linked artefact, so at "
+            "least one vector still falls through to the vendor's silent "
+            "loop")
+
+
 if __name__ == "__main__":
     unittest.main()

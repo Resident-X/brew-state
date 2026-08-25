@@ -1,0 +1,30 @@
+id: EVD-OBL-REALTIME-DISCIPLINE-001.C4-ATTEST
+type: evidence
+title: Attestation of OBL-REALTIME-DISCIPLINE-001.C4
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-25T06:14:23Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"OBL-REALTIME-DISCIPLINE-001.C4","synthesised_at":"2026-08-25T06:14:23.134041Z","entries":[{"input_id":"SOL-STM32-INTERRUPT-VECTORS-DEFINED","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/emulation/tests/test_emulation_check.py::UnhandledVectorTrapsToADefinedFaultState"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of OBL-REALTIME-DISCIPLINE-001.C4.
+
+  Final-state intent: work with unbounded duration (allocation, blocking transfers, unbounded iteration) does not occur inside any path the control loop's timing budget depends on.
+
+  Composition: SOL-STM32-INTERRUPT-VECTORS-DEFINED with active evidence EVD-SOL-STM32-INTERRUPT-VECTORS-DEFINED.C1-TEST, EVD-SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2-TEST.
+
+  Intent fit: before this solution, every interrupt vector -- including SysTick -- fell through to the vendor default handler, an infinite loop with no exit; because that vector table covers every possible interrupt arrival, this was unbounded-duration work reachable from inside the control path's deadline by construction, not merely a defect in one code path. The fix makes SysTick_Handler O(1) bounded (calls HAL_IncTick and returns) and wires every other otherwise-unhandled vector to a deliberate, interrupts-disabled terminal fault state rather than the vendor default. That terminal state is a designed halt distinguishable via a memory marker, not resumed work inside a deadline path, so it does not itself violate C4 -- the criterion targets unbounded work competing for latency budget, not a deliberate cessation of scheduling. An independent adversarial pass over every file actually compiled into the target build (src/control, src/estimator, src/delivery, src/hw/stm32, src/plant/common) found: no dynamic allocation anywhere in the tree; every loop either fixed-count-bounded or, for the parser-style while loops in estimator_limits.c/delivery_tolerance.c/plant_parameters.c, reachable only from init-time loaders never called from control_step; and exactly one blocking HAL call in the target build's seam, HAL_ADC_PollForConversion with a real bounded ADC_CONVERSION_TIMEOUT_MS=10u constant, whose bound is only meaningful because HAL_GetTick() actually advances -- which this solution is what makes true. The graph's own inbound-links check confirms SOL-STM32-INTERRUPT-VECTORS-DEFINED is the sole node targeting this criterion, and no other DEC/REQ/OBL node records a separate rest-of-codebase sweep for this property.
+
+  Acknowledged scope boundary: the interrupt-driven scheduler this project will eventually need (zero-cross timing, flow-pulse counting, watchdog heartbeat) is explicitly out of this solution's scope per its own text -- that is future work building on top of a now-defined vector table, not a residual gap against C4's current intent, since no such scheduler exists yet to be unbounded.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001.C4
+    type: satisfies
+attributes:
+  attested_criterion_version: 1
