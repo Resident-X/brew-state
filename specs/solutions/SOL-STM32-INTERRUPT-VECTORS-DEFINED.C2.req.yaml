@@ -1,0 +1,24 @@
+id: SOL-STM32-INTERRUPT-VECTORS-DEFINED.C2
+type: criterion
+title: An interrupt reaching any other unhandled vector traps to a defined fault state, not a silent lockup
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every vector this build does not give a purposeful handler -- every entry that currently resolves to
+  the CMSIS default handler -- is instead wired to a handler that reaches an observable, defined state
+  distinguishable from ordinary operation, rather than an infinite loop indistinguishable from a normal,
+  healthy wait. Verified two ways: statically, by confirming no vector in the linked artefact's table
+  still resolves to the CMSIS default handler's address, so the universal claim is checked against every
+  entry rather than sampled; and dynamically, by forcing an interrupt on a formerly-unhandled vector
+  under emulation and observing the defined state is reached rather than execution simply never
+  returning.
+
+  Out of scope: what the defined state does beyond being observable and distinct (logging, halting,
+  signalling a fault) -- that behaviour is this solution's design choice, not a property this criterion
+  constrains, and it is not the interrupt-driven scheduler the control loop will eventually build on top
+  of this vector table.
+links:
+  - target: SOL-STM32-INTERRUPT-VECTORS-DEFINED
+    type: criterion-of

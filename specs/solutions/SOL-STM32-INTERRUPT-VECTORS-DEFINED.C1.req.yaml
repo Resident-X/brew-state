@@ -1,0 +1,19 @@
+id: SOL-STM32-INTERRUPT-VECTORS-DEFINED.C1
+type: criterion
+title: The SysTick interrupt runs a real handler that advances the tick counter
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  SysTick_Handler calls HAL_IncTick, so HAL_GetTick advances and every HAL timeout the hardware seam
+  already depends on -- the ADC conversion-complete poll among them -- can actually expire on the target
+  build. Verified by driving the target artefact under emulation and observing the tick counter advance
+  across real instruction execution, not merely reading the vector table.
+
+  Out of scope: whether HAL_GetTick's advance is accurate enough for any specific timeout's tolerance, or
+  whether any consumer of it meets a real-time deadline -- OBL-REALTIME-DISCIPLINE-001's own criteria
+  cover timing correctness once the tick exists at all. This criterion only establishes that it exists.
+links:
+  - target: SOL-STM32-INTERRUPT-VECTORS-DEFINED
+    type: criterion-of

@@ -1,0 +1,77 @@
+id: SOL-STM32-INTERRUPT-VECTORS-DEFINED
+type: deliverable
+category: solution
+title: The target build's interrupt vectors reach a defined state instead of an unhandled lockup
+status: active
+version: 1
+text: |
+  The target build's interrupt vector table currently routes every interrupt -- SysTick included -- to
+  the same weak default handler, an infinite loop with no exit. Confirmed by disassembling the linked
+  target artefact (.pio/build/stm32/firmware.elf, env:stm32): SysTick_Handler, every TIMx_IRQHandler,
+  ADC_IRQHandler, every EXTIx_IRQHandler and the rest of the vector table all resolve to the same
+  address, the CMSIS startup file's Default_Handler. HAL_Init already calls HAL_InitTick, which
+  configures and enables the SysTick interrupt, so the vector is live from the first instruction the
+  control logic runs. Nothing in the source tree overrides it; HAL_IncTick does not appear anywhere in
+  the linked image. On the target, this means the tick counter never advances -- every HAL timeout in
+  the hardware seam is inert -- and the first SysTick interrupt after HAL_Init, on the order of a
+  millisecond after boot, enters the default handler's loop and never returns.
+
+  This solution wires the vector table to a defined response instead of the unhandled default. At
+  minimum: a real SysTick_Handler that calls HAL_IncTick, so the tick counter advances and every HAL
+  timeout the seam already relies on can actually expire. More broadly: an interrupt reaching any vector
+  this build does not yet give a purposeful handler lands in a defined fault state -- observable and
+  distinct from ordinary operation -- rather than in the silent infinite loop every currently-unhandled
+  vector shares. What that fault state does is this solution's own decision to make and record; that it
+  is deliberately chosen and reached on purpose, rather than arrived at by falling through to the
+  default handler's silent loop, is what the criteria below require.
+
+  Out of scope: the interrupt-driven scheduler the machine's control loop will eventually need (zero-cross
+  timing, flow-pulse counting, watchdog heartbeat) -- this solution establishes that an interrupt reaching
+  the vector table behaves on purpose, not the scheduling architecture built on top of it. Also out of
+  scope: the independent hardware protective response to a hung controller. OBL-ELECTRICAL-THERMAL-SAFETY-001.C2
+  requires that response to come from outside the controller precisely because a controller cannot elect
+  its own safe state -- so it holds regardless of whether this firmware defect is ever fixed, and this
+  solution neither substitutes for it nor depends on it.
+rationale: |
+  Context: discovered while building SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS, which loads the real
+  target .elf under Renode to prove every hardware-seam channel is separately addressable. Driving the
+  emulation harness's ADC-failure path (necessary for that solution's own C2) hung the emulator for
+  2,000,000+ instructions with no return; tracing it down to a firmware property rather than a harness bug
+  led to the vector-table finding above, independently confirmed against the linked artefact with
+  arm-none-eabi-nm and arm-none-eabi-objdump rather than taken from the emulator's behaviour alone. This
+  solution depends on that one: its criteria verify under emulation, so it cannot be built ahead of the
+  harness that makes emulation-based verification possible.
+
+  The affected code -- firmware/src/hw/stm32/hw_stm32.c and the stm32_base PlatformIO environment --
+  shipped under SOL-CONTROL-HARDWARE-SEAM-HOST-SIM (commit 91578be), whose criteria are attested and its
+  readiness finished. That solution's own six criteria cover the seam's header neutrality, host-executable
+  build, and call-site directness; C2's own text says cross-compilation for the target device is out of
+  scope for it. None of the six required the target's own interrupt infrastructure to be correct, so this
+  is a genuine defect in already-shipped work rather than scope this repository ever asked that solution to
+  cover -- exactly what DEL-MAINTENANCE exists for.
+
+  Targets OBL-REALTIME-DISCIPLINE-001.C1, .C2 and .C4. The defect is a path with no worst-case duration at
+  all -- .C1's "known worst-case duration" is not established because there is no worst case, only
+  non-termination; .C2's "defined behaviour rather than undefined consequence" names the unhandled default
+  directly; .C4's "work with unbounded duration does not occur where latency is bounded" is the closest
+  literal description of an interrupt handler that is an infinite loop with no exit, since the entire
+  handler is unbounded work sitting inside every deadline this project has. All three are targeted rather
+  than picking one, because the defect is simultaneously an unknown bound, an undefined consequence, and
+  unbounded work in a bounded path -- the three criteria describe the same defect from three angles rather
+  than competing for it. OBL-ELECTRICAL-THERMAL-SAFETY-001.C2 was considered and rejected as a target: it
+  requires the independent hardware protective chain to de-energise on a hung controller, which is a
+  different, already-covered concern that holds regardless of whether this firmware defect is ever fixed.
+
+  Reversibility: fully reversible: firmware-only, adds interrupt handlers, changes no seam or plant-model
+  behaviour, no wiring or physical dependency.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-REALTIME-DISCIPLINE-001.C1
+    type: targets
+  - target: OBL-REALTIME-DISCIPLINE-001.C2
+    type: targets
+  - target: OBL-REALTIME-DISCIPLINE-001.C4
+    type: targets
+  - target: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS
+    type: depends-on
