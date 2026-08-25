@@ -1,0 +1,20 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C5
+type: criterion
+title: The rate the machine gave up is reported rather than absorbed into the delivery
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The comparison a delivery is judged by stays the rate its profile commanded rather than the reduced
+  one, so a yielded delivery reports its shortfall exactly as a choked path would and cannot come back
+  claiming it followed its course. Alongside that, how much was given up and when is readable in its own
+  right, so a caller can tell a machine that decided from a world that intervened -- one number covering
+  both would have a failing pump and a correct yield report the same thing. The measured rate still never
+  enters the pump command path: what moves the command here is the reconstruction, which is what keeps
+  this from becoming the rate loop the departure report was written to exclude. The width of the
+  departure band, how the report is latched across a delivery and when it is cleared are unchanged and
+  out of scope.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of

@@ -1,0 +1,21 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C7
+type: criterion
+title: The coefficient the yield rests on is declared data carrying its origin rather than a literal
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  It accounts for itself beside the coefficients the loop already rests on, in the control declaration
+  rather than in a plant description, because it states what the design does about a machine rather than
+  what any casting is and is the same figure on every structure this software is compiled against. The
+  check run as part of the build refuses it as a bare number: a definition in the control logic
+  accounting for itself nowhere, and a figure accounted for with no origin behind its kind, are build
+  failures rather than review findings. Its account states what it was chosen against -- how fast the
+  rate backs off per kelvin the water sits below the floor, why an aggressive figure would stall a
+  delivery that dipped once, and why a timid one would go on delivering cool water -- so a later bench
+  run revises a recorded choice. What its value should finally be is a bench question and is out of scope
+  here, on the same footing as every other figure in that declaration.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of

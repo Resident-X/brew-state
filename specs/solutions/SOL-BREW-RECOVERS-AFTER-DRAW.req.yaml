@@ -1,0 +1,109 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW
+type: deliverable
+category: solution
+title: A demand following a hot water draw is served within a declared distance of the same demand from rest
+status: active
+version: 1
+text: |
+  The brew loop already tracks the water reaching the coffee across a whole extraction, and already tracks
+  it from a machine that did not start rested. What has never happened is the draw that leaves it unrested.
+  The disturbed state that slice tracks from is written into the model directly, and its own text says so:
+  the hot water draw that would have produced it was deferred. This slice runs that draw, and asserts what
+  the demand following it receives.
+
+  The reference machine serves both deliveries from one casting. Its outlet passes through a three-way
+  valve that sends flow either to the group or to the hot water arm, so the casting cannot tell the two
+  apart -- what it sees is water being drawn through it, and hot water is the heaviest and longest such
+  draw the machine takes. A draw is therefore expressed here as the thermal event the casting actually
+  experiences: a commanded course of flow through the pump channel that already exists, at a volume and a
+  duration a served drink asks for. Nothing new is added to the plant for it. The energy drawn water
+  carries out of the casting is already in the model, written through the temperature of the water leaving
+  rather than the casting's own, and a long draw depletes the casting through exactly that term.
+
+  Whether the demand that follows is affected at all is asked of the plant seam rather than assumed. A
+  delivery states the point it is served at, drawn from the machine-wide vocabulary the seam already
+  declares, and the control path asks whether that point and the group are backed by one heated mass. The
+  declaration exists and has no consumer today; this is its first. A machine serving its two points from
+  two masses answers that they do not contend, and owes no recovery -- which is what keeps this a statement
+  about an arrangement rather than about one kitchen.
+
+  Recovery itself is driven by the loop that is already built. The commanded target stands across the end
+  of a delivery, so the heater goes on being driven while nothing is being delivered, and the drawn
+  component of the feedforward falls away with the pump so the loop stops answering a draw that has ended.
+  The proportional and integral terms carry the casting back under the conditional integration already
+  established, and no gain, time constant or mode is introduced for the post-draw case. That is deliberate:
+  a second law for recovery would be a second answer to the question the first one already answers, and the
+  two would go on disagreeing quietly.
+
+  How far a demand following a draw may sit from the same demand from rest becomes described data, declared
+  beside the two bands the delivery tolerance already carries, in its own unit and with its own admissible
+  range and a recorded origin. It states what the drink demands rather than what a casting does, so it is
+  declared where the other bands are rather than inside a plant description.
+
+  Out of scope: holding the dispensed water itself inside the drinking-temperature band, and yielding rate
+  to temperature when both cannot be met -- what this slice claims is only about what the draw leaves
+  behind, and the draw's own quality is a sibling criterion of the parent epic. Serialising two demands on
+  one mass, deferring one until conditions return, and refusing one on a readiness answer are likewise a
+  sibling criterion's -- and so is the readiness answer itself. Whether the mass behind a named delivery
+  point has returned to where the commanded target can be held is a question this slice could compute from
+  the reconstruction it already carries, and it is deliberately not computed here: nothing among these
+  criteria consumes it, and the only thing that would is the contention criterion of the parent epic, which
+  has no solution yet. Building it now would settle the shape of that answer -- what it is asked about, and
+  what it is asked for -- before the slice that has to act on it exists to choose. A demand asked for before
+  the mass has returned still runs and still gives its departure report as its only account. A second draw path
+  in the plant, so that two destinations could draw one casting down independently, stays absent -- the
+  description cannot represent it and this slice does not add it. The steam side stays where its own
+  omissions leave it. Establishing that this holds across the declared range of model error is the
+  robustness verification's claim and is not made here, and the whole slice is verified on the host tier:
+  neither the target build nor firmware-binary emulation runs it.
+rationale: |
+  The draw is run rather than the state written, because a state written in is a state whoever wrote the
+  test chose. The criterion is about a demand that follows a draw, and the whole content of it is that the
+  casting, the pump and the element between them leave the machine somewhere a rested start does not
+  describe. A run that set that state directly would pass every assertion about tracking and would
+  establish nothing about a draw -- which is precisely why the sibling slice, which does set it directly,
+  said so in its own scope boundary rather than letting the reader assume otherwise.
+
+  Asking the seam whether the two points share a mass, rather than compiling in what this machine's
+  plumbing does, follows the decision that put topology on the structure. That decision anticipated this
+  reader by name: it lists the hot water path and contention among the consumers the declaration was made
+  for, and observes that a consumer inferring the arrangement from the channels a structure answers would
+  be guessing from a vocabulary that cannot express it. It matters here more than it looks. Recovery after
+  a draw is a consequence of two deliveries sharing stored energy, not of hot water as such, and a slice
+  that hard-coded the sharing would be describing one machine's diverter rather than the condition that
+  produces the behaviour.
+
+  Recovery is carried by the loop already built because the parent epic's own account of this machine is
+  that the coffee side is the constrained side and that the contention between its two deliveries is the
+  hard part. The loop that holds the casting under a draw is the loop that has to bring it back after one;
+  the load it is answering is the same load with the sign of the flow term changed. Introducing a
+  post-draw gain would put a second set of coefficients in front of the same physics, and this project's
+  own gate on the control declaration exists to stop a figure arriving that accounts for itself nowhere.
+
+  A readiness answer -- whether the mass behind a delivery point is back where the target can be held -- is
+  left unbuilt rather than reported here, and the reason is that it would have no consumer. Neither of the
+  two requirement criteria this slice serves asks for it: both ask what a demand following a draw receives,
+  which the slice answers by running the draw and holding the run that follows to a declared distance from a
+  rested one. The one thing that would consume a readiness answer is refusing or deferring a demand on it,
+  which is the contention criterion of the parent epic and has no solution yet. Reporting it anyway would be
+  this project's own rule against work with no current consumer running backwards -- and worse than a stub,
+  because a report has a shape: what it is asked about, over what course, and whether it answers yes or a
+  distance. Whoever builds the deferral has to make those choices against the decision they are actually
+  serving, and finding them already made would be finding a constraint nobody weighed. It stays a genuine
+  discovery of this slice rather than a silent one, which is why the boundary says so in as many words.
+
+  The band is declared rather than fixed here on the practice the graph already sets for figures whose
+  value depends on a machine nobody has measured. What is settled by this slice is that a post-draw run is
+  held to a stated distance from a rested one, sourced and read from the declaration; what that distance
+  finally is, is a bench question. Leaving it undeclared would have left a threshold criterion with no
+  threshold, which is the shape of an assumption nothing asserts -- the failure this graph has produced
+  before.
+links:
+  - target: DEC-DELIVERY-TOPOLOGY-DECLARED
+    type: justified-by
+  - target: DEL-SIM-BREW-LOOP.C3
+    type: derives-from
+  - target: REQ-BREW-TEMP-001.C4
+    type: targets
+  - target: REQ-HOT-WATER-001.C3
+    type: targets

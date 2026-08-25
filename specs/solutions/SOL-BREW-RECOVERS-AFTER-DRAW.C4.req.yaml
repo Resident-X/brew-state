@@ -1,0 +1,22 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW.C4
+type: criterion
+title: Recovery between deliveries is driven by the loop already built rather than by a second law
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The casting is brought back by the same proportional, integral and feedforward terms an extraction is
+  held by, with no gain, time constant or mode introduced for the post-draw case -- a second set of
+  coefficients in front of the same physics is a second answer that would go on disagreeing with the
+  first, and the control declaration's own gate refuses a figure in the control logic that accounts for
+  itself nowhere. The commanded target stands across the end of a delivery, so the heater goes on being
+  driven while nothing is being delivered rather than waiting for the next command; and the drawn
+  component of the feedforward falls away with the pump, so the loop stops answering a draw that has
+  ended. Removing that dependence on the commanded pump level leaves the machine overshooting after the
+  draw instead of returning to the target, which is what makes this more than a restatement of the loop's
+  existing tuning. Retuning the coefficients the loop already carries is out of scope: this behaviour is
+  required at the figures the declaration ships.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: criterion-of

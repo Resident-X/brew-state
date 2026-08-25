@@ -1,0 +1,20 @@
+id: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C4
+type: criterion
+title: A rising course droops less when the law is led than when it answers the present instant
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Two runs against the same truth plant the estimator does not share, from the same unsettled starting
+  state, on the same course, differing in the lead alone -- once at the lead this slice establishes and once
+  at nothing, which is the law as it stands. The deepest excursion of the water leaving the machine below
+  the commanded target is the smaller in the led run. The course ramps rather than steps, because a step is
+  answered nearly as well by a term reading the present instant -- the casting begins rising the moment the
+  draw is commanded -- while a ramp is the case where that term is behind for the whole delivery, and a
+  comparison that could not separate the two would be evidence for neither. How much smaller is not claimed
+  and no bound on the improvement is asserted, only its direction. Whether the improvement survives the
+  range of model error the description declares is the robustness verification's claim and is out of scope.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: criterion-of

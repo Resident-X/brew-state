@@ -1,0 +1,24 @@
+id: SOL-PLANT-OUTLET-MIXING-OMISSION-STATED.C1
+type: criterion
+title: The outlet lag's mixing assumption is stated among what the description leaves out
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  `firmware/params/thermoblock.md` gains an entry in its omissions section saying that the outlet
+  relation treats the water held between the casting and the group as one well-mixed volume rather
+  than as a column leaving in the order it entered, so the relation carries no transport delay and
+  begins answering a change at the casting on the first step whatever the draw. The entry states
+  which way the error runs — a real path answers nothing for about the time the draw takes to
+  displace the held volume, so the description understates the phase a loop works against and
+  overstates how hard that loop may be driven — and says that a lag read off these relations is not
+  a bound on delay. It sits beside the existing entries in the shape they take, and the entry
+  naming how completely the drawn water equilibrates is left standing rather than folded into it,
+  since incomplete equilibration and the order water leaves in are different absences. Out of
+  scope: any change to the relation or its coefficients, any figure for how the held volume
+  actually divides between the two behaviours, and the assumed-error section, which states how
+  wrong each value may be and not what the relations omit.
+links:
+  - target: SOL-PLANT-OUTLET-MIXING-OMISSION-STATED
+    type: criterion-of

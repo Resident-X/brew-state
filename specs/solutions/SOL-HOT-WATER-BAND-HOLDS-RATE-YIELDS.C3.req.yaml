@@ -1,0 +1,21 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3
+type: criterion
+title: Hot water is held by the loop already built rather than by a second control law
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control declaration gains no proportional gain, no integral time and no cold reference of its own
+  for the drinking case, and the control path gains no second mode: the point a delivery states decides
+  which window it is judged against and nothing about how the heater is driven. What makes that possible
+  is that the two load coefficients are stated per kelvin of rise above the temperature the machine draws
+  from and per permille of commanded pump, so a lower target asks a smaller rise and the same two figures
+  answer it. A hot water target is therefore driven through the same entry points on the same cadence,
+  and duty under a drinking target is shown to follow the same relation to commanded flow that a brew
+  target produces, at more than one target so the claim is not a calibration holding where it was
+  calibrated. The one coefficient this slice does add acts on the commanded rate rather than on the
+  heater command, which puts it out of scope for this criterion and into the one that declares it.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of

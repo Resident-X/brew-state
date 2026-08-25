@@ -1,0 +1,142 @@
+id: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+type: deliverable
+category: solution
+title: The commanded course is read a machine lag ahead rather than at the rate it states now
+status: active
+version: 1
+text: |
+  The loop that holds the water reaching the coffee already answers a commanded draw before feedback
+  could have discovered it, and it answers the draw commanded now. That is the whole of what it takes:
+  the pump level standing in the control state on the step being taken scales the drawn-load term. The
+  brew loop's own account says so and says what it leaves open -- acting on a commanded course over a
+  horizon is a criterion of the parent epic that the present-instant term advances without discharging.
+  This slice is that criterion, built in host simulation against the plant description.
+
+  What separates the two is a lag, and the lag is in this description rather than assumed about the
+  machine. The water on its way to the group is a state of its own that follows the casting rather than
+  being it, and it closes on the casting at a rate set by how fast it is displaced plus how fast it
+  conducts: four millilitres held between the casting and the group against a twenty-second conduction
+  limit, so a rested machine carries what the casting is doing to the water over tens of seconds, and a
+  machine drawing at the two-and-a-bit millilitres a second a shot takes carries it in under two. Both
+  figures are the description's own estimates and both carry among its widest declared errors. The
+  design already reasons against that lag: the account beside the proportional gain names it as the lag
+  that binds the crossover and says in as many words that it runs to twenty seconds at rest and shortens
+  to under two under a draw. What it has never been is a figure the law reads. Duty raised the instant a
+  draw is commanded is duty whose effect reaches the water one of those lags later, so a present-instant
+  term answers the load at the moment it arrives and delivers the answer late by exactly the interval
+  this slice exists to close.
+
+  The law is fed the course at the instant its action will land rather than at the instant the action is
+  taken. On each step of a running delivery the drawn-load term is scaled by the rate the course states
+  at the elapsed time plus a lead, not at the elapsed time itself. Nothing else in the law moves: the
+  same proportional gain, the same integral time and the same condition it accumulates under at the
+  actuator limit, the same two load coefficients on the same two axes, and the same standing term
+  following the target a caller named. What reaches the pump does not move either -- water is still
+  drawn at the rate the course states now -- so reading ahead changes the heater and never the delivery.
+
+  The lead is a property of the machine and is taken from the machine's own description rather than
+  declared beside the gains. A figure written on the control side would be a machine's number living
+  where the design's numbers live, which is the split the control declaration exists to keep, and it
+  would be silently wrong on the first machine with a different held volume. A coefficient reached for
+  by name would fail differently and worse, because the next structure may keep no state between its
+  heated mass and what leaves it and a control law naming one would not build against it. The question
+  is put at the plant seam instead, in the seam's own vocabulary and on the terms the full-scale flow
+  figure and the settled-temperature bound are already put on: a model stood up from the same record and
+  discarded, its heated mass and its water parted, advanced under a stated draw, and read back for how
+  far the water closed on the mass. A structure that keeps nothing between the two answers no such state
+  and is given a lead of nothing, which is the honest lead for a machine with no distance for an effect
+  to travel.
+
+  The draw the lead is taken at is the course's own peak, which is the draw admission already puts its
+  question at. Sharing that scan keeps the two from disagreeing about which draw a delivery is about,
+  and the peak is also the conservative end of the course: it is the fastest the water is ever displaced
+  and therefore the shortest lag the course visits, so the lead is never longer than the machine's
+  response anywhere along it. A lead that ran long would command the coming draw's duty before the
+  machine could spend it and leave an overshoot for the integral to take back, which is the failure a
+  lead is only worth having if it avoids.
+
+  The end of a delivery is where reading ahead has to stop. A course holds its last stated rate for any
+  time past its last point, and an end condition may fall before that point or after it, so a lead read
+  past the end asks the heater for the energy of a draw that will have stopped. Heat applied for water
+  that never arrives is the case this machine is least able to survive quietly, and the requirement on
+  confirming actuation says so directly. The rate read ahead is therefore taken as no draw once the
+  instant it is read at is at or past the condition the delivery ends on. The beginning needs no such
+  treatment: the whole course is given when the delivery is commanded, so the first step already has a
+  lead to read and there is no stretch of course the law is blind to. What the machine does not get is
+  notice before the delivery starts, and nothing here manufactures it -- a delivery begins when it is
+  commanded, and a course wanting the machine warmed before water moves states a leading segment at no
+  flow, which the course grammar already admits.
+
+  Neither delivery is treated differently, because the lead reads the course and the description and
+  nothing else. It sits in the one heater command a delivery at the group and a delivery at the drinking
+  point are both driven by, so a hot water draw is led by being a course like any other rather than by a
+  second arrangement made for it.
+
+  Out of scope, and stated first because the vocabulary invites the confusion: no horizon in the sense
+  the definition beside this work gives that word is built here. Nothing evaluates a run of future
+  actions against a prediction and commits the first of them; what is built is a lead on one term of a
+  law that is otherwise the one already there, and the criterion asks that action precede effect rather
+  than that it be optimised. Also out of scope: withdrawing heat already fed forward when a commanded
+  draw fails to arrive, which needs the flow reading treated as a confirmation rather than compared for
+  departure and stays with the requirement on confirming actuation; a lead that moves as the course runs
+  rather than one taken once when the delivery is admitted; and whether the lead still earns its keep
+  across the range of model error the description declares, which is the robustness verification's
+  claim. What a lead should read where a delivery gives up commanded rate part-way through is the
+  yielding slice's question and is not settled here. The puck, the pump's flow-versus-pressure
+  characteristic and the mechanical cap remain absent from the model, so the course the lead reads is
+  the commanded one throughout, and everything here is verified on the host tier: neither the target
+  build nor firmware-binary emulation runs it.
+rationale: |
+  The parent epic asks that the loop be exercised against a known future input rather than as a reactive
+  loop that happens to pass a nominal test, and the loop as built passes a nominal test on a term that
+  knows only the present. That is not a criticism of it. A present-instant feedforward is a large
+  improvement on feedback alone and the brew loop demonstrated it against a draw the loop was never told
+  about; it is also the whole of what a machine can do when the only future it has been handed is one
+  step long. Once a delivery is a course commanded up front, the machine holds minutes of its own future,
+  and a term still reading one instant of it is a machine declining to use what it has. What distinguishes
+  acting ahead from acting quickly is an interval, so the interval has to become something the law reads
+  rather than something a declaration argues about.
+
+  Probing the lead rather than declaring it follows from what kind of fact it is. How long the water takes
+  to carry what the casting is doing out to the group is a property of a casting, a bore and a run of
+  tube; it is not a property of the design, and the two coefficients it is built from carry among the
+  widest declared errors in the reference description. A lead written beside the gains would put a
+  machine's number where the design's numbers live, which is the arrangement the control declaration was
+  split to prevent, and it would be silently wrong on the first machine with a different held volume.
+  Reaching for the coefficients by name would fail worse: the next structure may keep no state between its
+  heated mass and what leaves it, and a control law that named one would not build against it. Putting the
+  question at the seam is what lets a structure answer in whatever terms it has, including by answering
+  that it has no such distance at all.
+
+  The peak draw is chosen over an average, and over a figure recomputed as the course runs, because of
+  which direction the error falls in. Under-leading degrades continuously toward the term already built,
+  which is a working loop. Over-leading commands duty for a load that has not arrived and leaves an
+  overshoot behind it, which is a worse machine than the one that started. The peak is the shortest lag
+  the course visits, so it is the one choice that cannot over-lead anywhere along it. That it is also the
+  draw admission already scans for means the two answer one question about a delivery rather than two
+  that can come apart.
+
+  Clipping the read at the end condition, rather than letting the course hold its last rate, applies to
+  heat the same argument the profile surface already makes about stopping. A course holding its last
+  point's rate is a convenience of interpolation and says nothing about what the machine will do; the end
+  condition says what it will do. Reading past it would have the heater answering a draw the delivery is
+  about to stop making, and the graph already names heat fed forward for flow that does not arrive as the
+  case this machine survives least well. There is no symmetric problem at the start, because a course is
+  complete the moment it is commanded -- but there is also no notice at the start, and inventing some by
+  delaying a delivery would spend the operator's time on a transient he did not ask to avoid. The course
+  grammar already lets a caller buy that lead deliberately by opening at no flow, which puts the choice
+  where it belongs.
+
+  The claim is established by comparison rather than by a tracking assertion. A course gentle enough and
+  a machine rested enough will hold band under any of these laws, so a run that stays in tolerance
+  establishes nothing about which law produced it. Two runs against the same truth plant from the same
+  state, differing in the lead alone, is what makes the difference attributable -- and a ramping course
+  rather than a step, because a step is answered nearly as well by a present-instant term while a ramp is
+  the case where that term is behind for the whole of the delivery.
+links:
+  - target: DEL-SIM-BREW-LOOP.C9
+    type: derives-from
+  - target: REQ-SEQUENCE-CONSISTENCY-001.C2
+    type: targets
+  - target: DEC-PROFILE-FEEDS-THE-HORIZON
+    type: justified-by

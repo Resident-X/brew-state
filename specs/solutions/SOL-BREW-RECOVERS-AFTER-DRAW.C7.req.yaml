@@ -1,0 +1,21 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW.C7
+type: criterion
+title: The disturbed state is produced by running the draw through the closed loop rather than by writing plant state
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The suite commands the draw as an ordinary delivery and advances the truth plant under what the loop
+  actually drove, step by step, through the same closed-loop harness the existing whole-extraction runs
+  use -- so the state the following delivery starts from is a consequence of the casting, the pump and the
+  element rather than a figure the suite chose. Writing that state directly through the model seam's
+  state-setting entry point is what this excludes, and it is how the existing tracking run reaches an
+  unrested machine, so the distinction has to be asserted rather than assumed: a run that set the state
+  instead would satisfy every assertion about tracking and establish nothing about a draw. The truth plant
+  stays the one the estimator does not share, so the recovery being measured is the machine's rather than
+  the reconstruction agreeing with itself. Driving the sequence from recorded bench data, and running it
+  under firmware-binary emulation, are out of scope: the harness extended here is the host tier's.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: criterion-of

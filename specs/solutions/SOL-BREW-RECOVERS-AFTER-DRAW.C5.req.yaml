@@ -1,0 +1,21 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW.C5
+type: criterion
+title: Whether the mass behind a delivery point has returned to where the target can be held is reported
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The answer is computed from the reconstruction the loop is already carrying and the description it was
+  brought up with, and names a delivery point: whether the heated mass behind that point is back where
+  the commanded target can be held against the course being asked for. It is a question about the state
+  the machine is presently in, and so a different question from the admission bounds already built, which
+  are asked of where the description says the machine settles and answer what the machine can ever do; a
+  machine that is merely not there yet crosses no admission bound and is reported here as not yet
+  returned. Reporting is all it does. A demand asked for before the mass has returned still runs, and the
+  departure report is still the only account it gives. Serialising two demands on one mass, deferring one
+  until conditions return, and refusing one on this answer are out of scope and stay with the contention
+  criterion of the parent epic, which is where the consequence of acting on it lands.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: criterion-of

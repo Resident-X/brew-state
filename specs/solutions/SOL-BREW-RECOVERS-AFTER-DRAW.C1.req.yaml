@@ -1,0 +1,23 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW.C1
+type: criterion
+title: The distance a post-draw demand may sit from the same demand from rest is declared data with a recorded origin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The figure is declared beside the brew-temperature and flow-departure bands the delivery tolerance
+  already carries, in thousandths of a degree, with the unit written on its own line and range-checked
+  against an admissible bound of its own rather than one shared with the temperature band -- a shared
+  bound could only be the looser of the two and would then admit for this band every figure it most
+  needed to refuse. The control path reads it back through the same tolerance record it already reads
+  the other two from, so a run held to it is held to the figure the declaration carries rather than one
+  written into a suite. Rewriting that figure alone changes which post-draw runs are accepted with no
+  source edit, and a declaration omitting it is refused rather than defaulting to zero or to the
+  temperature band. The figure shipped is half the brew-temperature band -- two extractions differing by
+  less than half the band each is individually held to are not different drinks -- and fixing the value
+  the built machine will finally be held to is out of scope: no machine has been on a bench, and a
+  measurement later revises a recorded assumption rather than an anonymous constant.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: criterion-of

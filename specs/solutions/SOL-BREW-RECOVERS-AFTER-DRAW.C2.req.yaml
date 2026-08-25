@@ -1,0 +1,22 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW.C2
+type: criterion
+title: Which heated mass a delivery draws from is asked of the plant seam rather than assumed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The point is carried on the profile rather than passed beside it, and a profile built without one is
+  refused where it is built, on the same terms an end condition naming a quantity this build cannot
+  evaluate is already refused there -- a course with no destination is not a delivery, and defaulting it
+  to the group would be the control path deciding what the caller meant. Which heated mass stands behind
+  that point is asked of the plant seam, through the declaration every structure already answers, rather
+  than compiled in from the reference machine's diverter. A structure declaring its two points on
+  separate masses answers that they do not contend and is owed no recovery account, which is the check
+  that this is a question asked rather than an arrangement assumed, and it is exercised against the
+  test-only structure that already declares two masses. Routing the water is out of scope: no diverter
+  valve is driven here, and no structure behind the seam represents two destinations drawing one casting
+  down independently.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: criterion-of

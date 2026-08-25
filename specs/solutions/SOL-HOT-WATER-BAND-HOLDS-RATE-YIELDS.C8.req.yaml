@@ -1,0 +1,16 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8
+type: criterion
+title: The rate read ahead of the delivery carries whatever reduction the yield is holding
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The drawn-load term is scaled by the rate the course states a lead into the future, and on a delivery that has given up rate the figure it is scaled by is that rate carrying the same reduction in force on this step. The reduction is carried as the proportion of the commanded rate the yield is presently allowing, applied to the rate the course states a lead ahead, and not as the difference in rate subtracted from it -- the two are the same figure only where the course is flat, and they part on every ramp. What the term answers is therefore the draw the machine will actually be making, not the one the course asked for and the delivery has already stopped attempting.
+
+  Holding the reduction across the lead rather than predicting when it will be withdrawn is the conservative reading, and the direction of the error is why. A lead that under-reads falls back toward the present-instant term the loop already had, which is a working loop; a lead reading an unreduced course on a delivery that has just slowed asks the element for the energy of water that will not arrive, which is the case this machine survives least well. Carrying the reduction as a proportion rather than as a difference follows the same argument one step further. On a course rising into the lead, a difference carried forward leaves a larger share of the command standing than the machine is actually honouring, which under-reduces exactly where the draw the term is answering is growing; the proportion does not. On a course falling into the lead, the proportion reads below the rate presently being driven, which is the benign direction. The reduction leaves the read on the same step it leaves the pump, as the water comes back into the window, so a delivery that dipped once does not go on being led short.
+
+  Out of scope: forecasting how far into the lead a reduction will last, which needs a prediction of the machine's own recovery that nothing here carries; the reduction's own gate and coefficient, which are sibling criteria's; and how the lead is obtained and which draw it is taken at, both of which stay with the slice that establishes them.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of

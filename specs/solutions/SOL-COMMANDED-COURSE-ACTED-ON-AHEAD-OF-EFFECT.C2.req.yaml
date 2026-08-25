@@ -1,0 +1,21 @@
+id: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C2
+type: criterion
+title: The lead is taken at the draw the course peaks at
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  It is taken from the peak the admission check already scans the course for, so a delivery is led against
+  the same draw it was judged admissible against and the two cannot come apart about which draw a course is
+  about. The peak is the fastest the water is ever displaced along that course and therefore the shortest
+  lag it visits, which is the direction that matters: a lead longer than the machine's own response commands
+  the coming draw's duty before the machine can spend it and leaves an overshoot for the integral to take
+  back, while a lead shorter than it degrades continuously toward the term already built. A course peaking
+  briefly above a long low stretch is therefore led by the peak's short lag rather than the low stretch's
+  long one, and two courses sharing a peak but differing in shape are led by the same interval. The lead is
+  taken once, when the delivery is admitted; a lead recomputed as the course runs is out of scope and would
+  stand a fresh model up on every control step.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: criterion-of

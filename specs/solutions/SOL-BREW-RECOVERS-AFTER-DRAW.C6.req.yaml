@@ -1,0 +1,23 @@
+id: SOL-BREW-RECOVERS-AFTER-DRAW.C6
+type: criterion
+title: An extraction following a hot water draw stays within the declared distance of one pulled from rest
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Two runs against one machine description: the same extraction from the settled machine, and that
+  extraction commanded after a hot water draw of the volume a served long black asks for -- of the order
+  of two hundred millilitres, some minutes of continuous flow rather than the seconds an extraction takes
+  -- at the largest rate the machine can hold its drinking-temperature target against, taken from the same
+  probe admission already uses rather than written into the suite. Both runs are sampled at every step
+  from first flow to last and compared point by point, and no sample may sit further from its counterpart
+  than the declared band, so a post-draw run that averages onto the rested one while wandering fails --
+  the same reason tracking is asserted across a whole draw rather than at a settled instant. Each run must
+  also stay inside the brew-temperature band on its own account, so this cannot be met by two runs that
+  are equally wrong. Whether the water leaving the spout during the draw was itself at drinking
+  temperature is out of scope and is a sibling criterion's: what is claimed here is only about what the
+  draw leaves behind.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: criterion-of

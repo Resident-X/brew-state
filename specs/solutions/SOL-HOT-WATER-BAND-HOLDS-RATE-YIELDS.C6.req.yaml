@@ -1,0 +1,21 @@
+id: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C6
+type: criterion
+title: A draw beyond what the machine can sustain ends inside the window with the rate having fallen
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  One run against the plant description: a hot water delivery of the volume a served long black asks for
+  -- of the order of two hundred millilitres, minutes of continuous flow rather than the seconds an
+  extraction takes -- commanded at a rate above what the machine can sustain at its target, from a state
+  it did not start settled in, against a truth plant the estimator does not share. Every sample from
+  first flow to last is asserted inside the declared window rather than the average, so a run that starts
+  hot and finishes cool fails. The delivered rate is asserted to have fallen below the course, which is
+  the half that makes this a test of the trade rather than of tracking: a run that stayed in band without
+  ever slowing shows only that the draw was sustainable, and would pass a tracking assertion on its own.
+  Establishing that the window still holds across the range of model error the description declares is
+  the robustness verification's claim and is out of scope here; this run is on the host tier alone.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: criterion-of
