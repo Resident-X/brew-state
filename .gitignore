@@ -23,5 +23,8 @@ __pycache__/
 
 # External tooling the emulation tier fetches and pins by digest rather than
 # carries: the emulator itself, and the vendor's register description, whose
-# licence this repository does not hold. Provisioned by `task fw:emulate:provision`.
-/.tooling/
+# licence this repository does not hold. Provisioned by `task fw:emulate:provision`
+# as a symlink into a machine-global cache, not a directory, so this pattern
+# carries no trailing slash — a trailing slash matches directories only and
+# would silently stop ignoring it now that it is a symlink.
+/.tooling

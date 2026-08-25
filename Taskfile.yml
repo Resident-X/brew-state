@@ -261,14 +261,28 @@ tasks:
       - python3 tools/run_host_artefacts.py --project . --plant-root src/plant --include-dir include --params-dir params
 
   fw:emulate:provision:
-    desc: Fetch the emulator and the register description the emulation tier runs against, pinned by digest, into .tooling (ignored by git)
-    dir: "{{.FW_DIR}}"
+    desc: Fetch the emulator and the register description the emulation tier runs against, pinned by digest, into .tooling (ignored by git), sharing the fetch across worktrees via a machine-global cache
     cmds:
       # Neither is committed: one is a platform-specific build far larger than
       # this repository, the other is the vendor's and carries terms this
       # repository does not hold. What makes the fetch reproducible is the
-      # digest each is pinned to, not where it is kept.
-      - python3 emulation/tools/provision.py
+      # digest each is pinned to, not where it is kept — so .tooling (which
+      # provision.py always resolves relative to the repo root, regardless of
+      # cwd) can be a symlink into a cache shared by every worktree, the same
+      # pattern sc:embed uses for the query embedder, instead of a per-worktree
+      # copy.
+      - |
+        set -euo pipefail
+        cache="${FW_TOOLING_CACHE:-$HOME/.cache/brew-state/firmware-tooling}"
+        mkdir -p "$cache"
+        # Re-point unconditionally when .tooling is already a symlink (so a
+        # changed FW_TOOLING_CACHE takes effect, matching sc:embed's ln -sfn),
+        # but never touch a pre-existing real directory.
+        if [ -L .tooling ] || [ ! -e .tooling ]; then
+          ln -sfn "$cache" .tooling
+        fi
+      - |
+        cd "{{.FW_DIR}}" && python3 emulation/tools/provision.py
 
   fw:emulate:
     desc: Run the target build's own artefact under emulation and require every hardware-seam channel to have a peripheral model behind it that only its own commands reach

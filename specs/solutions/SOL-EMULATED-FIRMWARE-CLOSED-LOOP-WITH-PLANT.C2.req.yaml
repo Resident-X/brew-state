@@ -1,0 +1,12 @@
+id: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C2
+type: criterion
+title: Actuation the firmware commands through TIM3 reaches the plant model every control interval
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each TIM3 compare-register write the firmware performs is read by the peripheral model and passed into plant_step_admissible as that interval's actuation, replacing the one-shot ADC1 seeding and write-only TIM3 counters the open-loop build uses. The interval boundary is the emulation core's own step, not a fixed wall-clock tick. Peripheral channels the hardware seam does not declare are out of scope.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+    type: criterion-of

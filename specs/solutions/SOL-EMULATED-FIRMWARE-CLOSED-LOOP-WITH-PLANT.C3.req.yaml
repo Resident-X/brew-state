@@ -1,0 +1,12 @@
+id: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C3
+type: criterion
+title: Sensor readings the firmware receives via ADC1 reflect the plant model's state after the actuation that produced them
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The ADC1 inject window refreshes from plant_step_admissible's output state after each step, rather than being seeded once before the run starts, so a reading the firmware takes reflects what it most recently commanded through TIM3 instead of a fixture value. Whether the loop's timing matches real hardware is out of scope; DEL-SIM-EMULATION-TIER.C4 covers cross-tier plant-model agreement.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+    type: criterion-of
