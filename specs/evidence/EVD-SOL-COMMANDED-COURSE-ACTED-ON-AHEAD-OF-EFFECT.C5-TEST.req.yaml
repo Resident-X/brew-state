@@ -1,0 +1,17 @@
+id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5-TEST
+type: evidence
+title: Reading ahead stops at the end condition rather than holding the last rate on (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T23:24:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_reading_ahead_stops_at_the_end_condition
+text: |-
+  Two identical courses differing only in their end instant, sampled at a step where one course's lead-adjusted read has crossed its own stop and the other's has not, show the near-ending course's heater duty is lower -- the clip to no draw is engaging rather than the course's last rate being held on. Passes under pio test -e native_test.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5
+    type: satisfies

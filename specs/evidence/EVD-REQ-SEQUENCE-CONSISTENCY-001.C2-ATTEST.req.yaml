@@ -1,0 +1,34 @@
+id: EVD-REQ-SEQUENCE-CONSISTENCY-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-SEQUENCE-CONSISTENCY-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-25T23:28:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-SEQUENCE-CONSISTENCY-001.C2","synthesised_at":"2026-08-25T23:28:37.28788Z","entries":[{"input_id":"DEL-SIM-BREW-LOOP","kind":"deliverable","state":"partial","breakdown":[{"criterion_id":"DEL-SIM-BREW-LOOP.C1","state":"satisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C2","state":"satisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C3","state":"unsatisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C4","state":"satisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C5","state":"satisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C6","state":"satisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C7","state":"unsatisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C8","state":"unsatisfied"},{"criterion_id":"DEL-SIM-BREW-LOOP.C9","state":"satisfied"}],"status":"active","artifact_version":null},{"input_id":"SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_lead_is_read_from_the_machines_description"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-SEQUENCE-CONSISTENCY-001.C2.
+
+  Final-state intent: demand that is known in advance is acted on before its effect appears -- not merely reacted to at the instant it arrives, but timed so the response precedes it.
+
+  Composition: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT, with active evidence EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C1-TEST through .C6-TEST. DEL-SIM-BREW-LOOP appears in the composition as the epic that targets this criterion via its own C9 criterion; it carries no evidence of its own for this criterion and contributes by cascade rather than by delivery.
+
+  Intent fit: for the flow a delivery's own course commands -- the dominant disturbance this requirement's own rationale names -- the drawn-load feedforward term now reads the course at a lead computed from the machine's own description (the water-transport time constant between the casting and the group), so the heater answers a coming change in flow before that flow arrives rather than at the instant it does. The C3/C4 evidence measures this directly: two otherwise-identical trajectories differing only in whether the lead is applied show the led one closer to target at a fixed early instant into a rising course, which is the observable signature of acting before the effect appears rather than at the same instant. The C6 evidence extends the same mechanism to a hot-water-shaped course.
+
+  Acknowledged scope boundary, and it is not narrow:
+  (1) Host-simulation tier only. The SOL's own text says so directly: everything here is verified on the host tier, neither the target build nor firmware-binary emulation runs it. Hardware verification is not this criterion's evidence to carry -- DEL-BREW-STATE-DELIVERY.C3 and .C4 are the later roadmap-phase criteria that own validating the model against measured reality and verifying on target before energisation, and neither is targeted by this SOL.
+  (2) The lead probe's model omits the puck, the pump's flow-versus-pressure characteristic and the mechanical pressure cap -- named directly in the SOL's own out-of-scope section -- so acting before the effect appears is demonstrated against the model's own account of the transport lag, not a bench measurement of it.
+  (3) A lead that moves as the course runs, and withdrawing already-fed-forward heat when a commanded draw departs, are both named out of scope by the SOL and remain open elsewhere in the graph -- the departed-draw case stays with the requirement on confirming actuation, per the SOL's own text.
+  (4) A commanded flow course is one source of known-in-advance demand this requirement's rationale names; a caller naming a new target temperature is a different one, and this SOL does not touch that path at all -- it continues to answer through the proportional and integral terms exactly as before. That is not a gap this SOL was scoped to close, since its own six criteria name the drawn-load term specifically, but it bounds what this attestation covers.
+
+  Decision: attest, at the scope named above.
+links:
+  - target: REQ-SEQUENCE-CONSISTENCY-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

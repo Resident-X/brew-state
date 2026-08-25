@@ -1,0 +1,17 @@
+id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C3-TEST
+type: evidence
+title: The drawn-load term is scaled by the future rate, not the present one (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T23:24:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_rising_course_droops_less_when_the_law_is_led
+text: |-
+  Two runs of the same rising course, differing only in whether the delivery_lead_millis field admission established is left in place or zeroed immediately afterwards -- both otherwise driven through control_command_delivery and the same delivery-running branch of drawn_load_pump_permille -- show the led run closer to target at a fixed early instant. Confirmed to be a genuine lead-isolating comparison by mutation: forcing the lead to always be zero fails this and the other four lead tests with an explicit diagnostic. Passes under pio test -e native_test.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C3
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C6-TEST
+type: evidence
+title: A hot-water-shaped course is led by the same term an extraction is (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T23:24:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_hot_water_shaped_course_is_led_by_the_same_term_an_extraction_is
+text: |-
+  The same led-vs-present-instant shortfall comparison as C4, repeated on a sustained ~200 mL, 2.5 ml/s hot-water-shaped course rather than a short shot-like ramp: the led run again closes more of the shortfall by the same sampled instant, run through the same control path with no delivery-point-specific handling anywhere in it. Passes under pio test -e native_test.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C6
+    type: satisfies

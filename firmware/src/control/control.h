@@ -349,6 +349,16 @@ typedef struct {
      */
     uint32_t delivery_elapsed_millis;
     /*
+     * How far ahead of delivery_elapsed_millis the drawn-load term reads this
+     * delivery's course, in milliseconds -- established once, when the
+     * delivery was admitted, against the machine's own description and the
+     * course's own peak, and held fixed for the delivery's life. Meaningful
+     * only while delivery_running is set, on the same terms delivery itself
+     * is: a value left over from a finished delivery is never read, because
+     * nothing reads either field once running has gone false.
+     */
+    uint32_t delivery_lead_millis;
+    /*
      * The rate this delivery was commanding over the interval that has just
      * elapsed, and the point on its course that rate was taken from.
      *
@@ -637,9 +647,10 @@ bool control_delivery_departure(const control_state_t *state, control_departure_
  * interval that is coming, not correct the one just gone; below the check for
  * a targeted machine, because a delivery only ever advances on a step that
  * actually drives the machine; and before the heater command is computed,
- * because the feedforward it carries reads commanded_pump_permille in this
- * same step, and a delivery's commanded rate has to be sitting there before
- * it is read, not after.
+ * because the feedforward it carries reads the delivery's own elapsed clock
+ * and commanded rate in this same step -- a lead ahead of the clock while a
+ * delivery is running -- and both have to be sitting there before either is
+ * read, not after.
  *
  * A delivery does not outlive the machine driving it. Whenever this step
  * commands everything off -- nothing targeted, a refused drive command, or a
