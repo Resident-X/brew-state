@@ -17,6 +17,12 @@ agree about a channel that was commanded and a channel that was written — even
 when those are two different channels. Only something that watches the registers
 can tell them apart.
 
+A third, distinct question is answered by the closed-loop run described below:
+does the artefact's own control law, actuating and sensing through those same
+two models, actually close the loop with the plant model those channels are
+addressed against — not merely address it correctly, but move it, and read back
+what moving it produced.
+
 ## Running it
 
 ```
@@ -25,20 +31,25 @@ task fw:emulate
 ```
 
 `fw:emulate` builds the target environment, hands the emulator the artefact that
-build wrote, exercises every channel, and asserts. It is also part of
-`task fw:verify`.
+build wrote, exercises every channel, runs the closed-loop check, and asserts
+both. It is also part of `task fw:verify`.
 
-To re-run a single exercise by hand without the suite, the run leaves a complete
-emulator script beside the artefact:
+To re-run a single exercise by hand without the suite, each run leaves a
+complete emulator script beside the artefact:
 
 ```
 .tooling/renode-*/…/renode --console --disable-xwt \
     firmware/.pio/build/stm32/emulation/emulation_check.resc
+.tooling/renode-*/…/renode --console --disable-xwt \
+    firmware/.pio/build/stm32/emulation/closed_loop.resc
 ```
 
-That script names absolute paths and depends on nothing else, so it reproduces
-the run exactly. The emulator's own log of the run is beside it, in
-`emulation_check.log`.
+Both scripts name absolute paths and depend on nothing else, so each reproduces
+its run exactly. The emulator's own log of a run is beside its script, in
+`emulation_check.log` or `closed_loop.log`. The closed-loop run additionally
+needs `BREW_STATE_PLANT_LIBRARY`, `BREW_STATE_PLANT_PARAMETERS` and
+`BREW_STATE_EMULATION_PERIPHERALS_DIR` set in its environment — see
+`tools/run_closed_loop_check.py`, which sets all three before launching it.
 
 ## What is here
 
@@ -47,13 +58,19 @@ the run exactly. The emulator's own log of the run is beside it, in
 | `platform/brew_state_stm32f407.repl.in` | the emulated machine, with the location of the two peripheral models left to the runner to fill in |
 | `peripherals/adc1.py` | the converter behind the seam's sensor channels, as a register model |
 | `peripherals/tim3.py` | the timer behind the seam's output channels, as a register model |
-| `scripts/emulation_check.resc.in` | the run, as the emulator is given it |
-| `scripts/exercise.py` | what is done to the artefact once loaded; it observes and reports, and asserts nothing |
+| `peripherals/plant_bridge.py` | closes the loop between the two register models and the plant model, over the closed-loop run's own environment variables |
+| `scripts/emulation_check.resc.in` | the channel-addressing run, as the emulator is given it |
+| `scripts/exercise.py` | what is done to the artefact once loaded, for the channel-addressing run; it observes and reports, and asserts nothing |
+| `scripts/closed_loop.resc.in` | the closed-loop run, as the emulator is given it |
+| `scripts/closed_loop.py` | drives the artefact's own control path through a simulated draw, against the plant bridge |
 | `tools/provision.py` | fetches the emulator and the register description, each pinned by digest |
-| `tools/run_emulation_check.py` | builds the target, renders the two templates, runs the emulator, gathers findings |
+| `tools/run_emulation_check.py` | builds the target, renders the two templates, runs the channel-addressing check, gathers findings |
+| `tools/run_closed_loop_check.py` | the same, for the closed-loop check, plus building the plant model's shared library |
+| `tools/build_plant_library.py` | compiles the plant model — `src/plant/common` and the thermoblock structure `env:stm32` links — to a host-native shared library the bridge calls through ctypes |
 | `tools/register_map.py` | reads the models' own register offsets, and the part's, so the two can be compared |
 | `tools/pins.json` | the exact bytes of everything fetched |
-| `tests/test_emulation_check.py` | what the findings have to say before they count as evidence |
+| `tests/test_emulation_check.py` | what the channel-addressing findings have to say before they count as evidence |
+| `tests/test_closed_loop.py` | what the closed-loop findings have to say before they count as evidence |
 
 The models observe and record; the exercise observes and reports; only the suite
 judges. Keeping those apart is deliberate — a component that both produces
@@ -105,10 +122,37 @@ The suite checks against the vendor's description that none of these windows
 covers a register the part actually declares, so a model can never shadow real
 hardware.
 
+## The closed loop
+
+`closed_loop.py` calls the artefact's own `control_init`, `control_command_temperature`
+and `control_step` directly by symbol, entering the compiled image exactly as
+`exercise.py` enters `hw_sensor_read` and `hw_output_set` — the artefact is
+executed, not interpreted, and every call reaches a symbol the target build
+produced. `control_command_temperature` is unreached from `main()`'s own call
+graph — nothing on the machine has been asked for a delivery yet — so
+`tools/pio_retain_closed_loop_entry.py` keeps it in the linked artefact for
+this one caller from outside it.
+
+Each control interval, `tim3.py` reports a compare-register write to
+`plant_bridge.py`, which steps the plant model — `src/plant/common` and the
+thermoblock structure, called through `ctypes` against the shared library
+`tools/build_plant_library.py` compiles, not re-derived in Python — and
+refreshes the converter counts `adc1.py` reads back. Simulated time between
+steps is advanced by writing the HAL's own millisecond counter directly rather
+than by free-running the core for the interval, which is also possible but
+costs minutes rather than seconds for a run this tier's gate can afford.
+
+Both harnesses are opt-in on the same two environment variables: the
+channel-addressing run configures neither, so `tim3.py` and `adc1.py` are the
+same pure register models on that run they always were.
+
 ## What this tier does not answer
 
-Whether the emulated peripherals behave in time as the real parts would, and
-whether the artefact driven this way agrees with the plant model, are different
-questions carried by different criteria. Nothing here claims either. The models
-answer which input was selected and which register was written; they say nothing
-about how long a conversion takes or what a converter would really have read.
+Whether the emulated peripherals behave in time as the real parts would is a
+different question, carried by a different criterion — nothing here claims it.
+The closed-loop run advances simulated time by writing the tick counter
+directly rather than by executing real cycles, so nothing about the closed
+loop's timing, either, claims anything about a real microcontroller's
+electrical behaviour. The models answer which input was selected and which
+register was written; they say nothing about how long a conversion takes or
+what a converter would really have read.

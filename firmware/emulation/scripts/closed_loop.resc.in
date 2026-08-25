@@ -1,0 +1,19 @@
+# The closed-loop run, as the emulator is given it. The runner fills in the
+# same placeholders emulation_check.resc.in does, against the same platform
+# description -- this run differs in which script it hands the core to, not in
+# what the core is.
+
+logFile @{{LOG}} true
+logLevel 0
+
+mach create "brew-state-closed-loop"
+
+machine LoadPlatformDescription @{{PLATFORM}}
+
+sysbus LoadELF @{{ELF}}
+
+sysbus ApplySVD @{{SVD}}
+
+include @{{EXERCISE}}
+
+quit

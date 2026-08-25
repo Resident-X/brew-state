@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C1-TEST
+type: evidence
+title: Closed-loop suite — plant model is the host tier's own implementation (SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T09:21:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_closed_loop.py::PlantModelIsTheHostTiersOwnImplementation
+text: |-
+  PlantModelIsTheHostTiersOwnImplementation (5 tests) passes: the bridge's shared library compiles exactly src/plant/common and src/plant/thermoblock (matched against the tree, not a snapshot), is freshly compiled from those bytes, every step it takes is admissible under the seam's own check, and its pump-channel/quantity-index/converter-scale constants are cross-checked against machine_actuation.h, plant_types.h and hw_stm32.c rather than hand-maintained independently.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C1
+    type: satisfies
