@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C2-TEST
+type: evidence
+title: Closed-loop suite — actuation reaches the plant model every interval (SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T09:21:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_closed_loop.py::ActuationReachesThePlantModelEveryInterval
+text: |-
+  ActuationReachesThePlantModelEveryInterval (2 tests) passes: every actuating control interval produced at least one plant-model step (plant_step_count >= draw_actuated_count > 0), and two mid-draw checkpoints show the brew-temperature quantity rising monotonically across the draw rather than moving once and then going silent.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C2
+    type: satisfies

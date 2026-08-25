@@ -25,10 +25,34 @@
 # The compare registers themselves are read back through their own offsets,
 # which are the part's, so the modelled level of a channel is read where the
 # firmware wrote it.
+#
+# A write landing on a compare register is also, on the terms
+# SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT builds, an interval's actuation
+# for the plant model to act on -- see plant_bridge.py. That is opt-in: it
+# fires only when the closed-loop runner has pointed BREW_STATE_PLANT_LIBRARY
+# at a built model, through BREW_STATE_EMULATION_PERIPHERALS_DIR on the import
+# path. The channel-addressing run this tier's own tests exercise sets neither,
+# so this model is the same pure register model on that run that it always was.
+
+import os
 
 CCR1 = 0x34
 COUNT_BASE = 0x100
 COMPARE_CHANNELS = 4
+
+_BRIDGE_PERIPHERALS_DIR_ENV = "BREW_STATE_EMULATION_PERIPHERALS_DIR"
+
+
+def _plant_bridge():
+    peripherals_dir = os.environ.get(_BRIDGE_PERIPHERALS_DIR_ENV)
+    if not peripherals_dir:
+        return None
+    import sys
+    if peripherals_dir not in sys.path:
+        sys.path.insert(0, peripherals_dir)
+    import plant_bridge
+    return plant_bridge.get()
+
 
 if request.IsInit:
     registers = {}
@@ -43,6 +67,9 @@ elif request.IsWrite:
         if CCR1 <= offset < CCR1 + 4 * COMPARE_CHANNELS and (offset - CCR1) % 4 == 0:
             index = (offset - CCR1) // 4
             writes[index] = writes[index] + 1
+            bridge = _plant_bridge()
+            if bridge is not None:
+                bridge.on_compare_write(index, request.Value)
 
 elif request.IsRead:
     offset = request.Offset

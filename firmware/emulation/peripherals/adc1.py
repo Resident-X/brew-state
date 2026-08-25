@@ -32,6 +32,15 @@
 # failing, but the seam waits for one against a clock this firmware never
 # advances under emulation, so a model that withheld completion would hang the
 # run instead of being reported by it.
+#
+# A converter input's figure is drawn from the plant bridge instead of the
+# injected window, on the terms SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT
+# builds -- see plant_bridge.py -- when the closed-loop runner has configured
+# one. It is opt-in on the same terms tim3.py's own bridge call is: the
+# channel-addressing run this tier's own tests exercise configures no bridge,
+# so INJECT_BASE stays exactly what the harness wrote there on that run.
+
+import os
 
 SR = 0x00
 CR1 = 0x04
@@ -47,6 +56,20 @@ CR2_SWSTART = 1 << 30
 INJECT_BASE = 0x3F0
 COUNT_BASE = 0x3E0
 PORT_INPUTS = 4
+
+_BRIDGE_PERIPHERALS_DIR_ENV = "BREW_STATE_EMULATION_PERIPHERALS_DIR"
+
+
+def _plant_bridge():
+    peripherals_dir = os.environ.get(_BRIDGE_PERIPHERALS_DIR_ENV)
+    if not peripherals_dir:
+        return None
+    import sys
+    if peripherals_dir not in sys.path:
+        sys.path.insert(0, peripherals_dir)
+    import plant_bridge
+    return plant_bridge.get()
+
 
 if request.IsInit:
     registers = {}
@@ -93,6 +116,10 @@ elif request.IsRead:
         # the part, so it is what clears it here. An input outside the four this
         # board wires reads as nothing rather than as another input's figure.
         registers[SR] = registers.get(SR, 0) & ~SR_EOC
-        request.Value = injected[selected] if selected < PORT_INPUTS else 0
+        bridge = _plant_bridge()
+        if bridge is not None and selected < PORT_INPUTS:
+            request.Value = bridge.injected_counts.get(selected, 0)
+        else:
+            request.Value = injected[selected] if selected < PORT_INPUTS else 0
     else:
         request.Value = registers.get(offset, 0)

@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C3-TEST
+type: evidence
+title: Closed-loop suite — ADC1 readings reflect post-actuation plant state (SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T09:21:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_closed_loop.py::SensorReadingsReflectThePostActuationState
+text: |-
+  SensorReadingsReflectThePostActuationState (2 tests) passes: the brew-temperature reading ADC1 hands back rose by at least 2.0C over the draw's baseline (a run reached ~9.3C in practice), and control_init/control_command_temperature were both accepted, so the movement is the control law's own commanded delivery being read back rather than a figure the harness injected independently.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C3
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C4-TEST
+type: evidence
+title: Closed-loop suite — the loop runs a full simulated draw with no target hardware (SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T09:21:11Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_closed_loop.py::ClosedLoopRunsAFullSimulatedDraw
+text: |-
+  ClosedLoopRunsAFullSimulatedDraw (4 tests) passes: all 300 commanded control intervals ran, every interval reported an ordinary (non-fault, non-refused) control_step result, at least 299 of 300 intervals actually actuated, and the emulated artefact is confirmed byte-identical to the target build's own ELF output -- the run is evidence about the real artefact, entered and driven with no target hardware present.
+links:
+  - target: SOL-EMULATED-FIRMWARE-CLOSED-LOOP-WITH-PLANT.C4
+    type: satisfies
