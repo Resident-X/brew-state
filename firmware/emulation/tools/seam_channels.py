@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
-"""The channels the hardware seam declares, read out of the headers themselves.
+"""What the hardware seam declares, read out of its own source.
 
-The emulation run and the suite that judges it both work from a list of
-channels. Written down and left there, that list is a copy of the headers'
-enumerations, and a copy of an enumeration is a thing that eventually disagrees
-with it: a channel added to the seam without a converter input or a compare
-register behind it -- exactly the defect this tier exists to catch -- would be a
-channel the run never reaches and the suite never misses, and every assertion
-would pass over the smaller, older set.
+The emulation run and the suites that judge it work from figures the seam
+declares: the channels it enumerates, and the scale the converter behind those
+channels reports at. Written down and left there, each of those is a copy, and a
+copy is a thing that eventually disagrees with the original -- a channel added to
+the seam without a converter input or a compare register behind it, exactly the
+defect this tier exists to catch, would be a channel the run never reaches and
+the suite never misses, and every assertion would pass over the smaller, older
+set.
 
-So the enumerations are read here, and the suite asserts its own list against
-what this returns. The reading follows the same convention as the build-time
-header checks beside it (`firmware/tools/check_actuation_declaration.py`):
+So the declarations are read here, and the callers assert their own figures
+against what this returns. The reading follows the same convention as the
+build-time header checks beside it (`firmware/tools/check_actuation_declaration.py`):
 comments and string literals are stripped first, the enum body is found by the
 type it names, and the terminating count is named rather than taken as "the last
 one", so a channel appended after the count is reported instead of silently
 becoming the terminator.
 
-A header that cannot be read, or that declares no such enumeration, raises
-rather than returning an empty list. A check that inspects nothing must not
-report success.
+A source that cannot be read, or that declares no such enumeration or no such
+macro, raises rather than returning an empty list or a stand-in figure. A check
+that inspects nothing must not report success.
 """
 
 import os
@@ -50,7 +51,27 @@ _ENUMERATOR = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)")
 
 
 class Unreadable(RuntimeError):
-    """The header is not there, or declares no such enumeration."""
+    """The source is not there, or declares no such enumeration or macro."""
+
+
+def defined_value(path, macro):
+    """The whole number a source file defines a macro as.
+
+    Written once here rather than in each caller, because two of them already
+    ask this of the same file about the same pair of macros -- the converter's
+    full scale -- and two readers of one declaration are what eventually
+    disagree about it. Deliberately narrow: it reads a decimal figure and
+    nothing else, so a macro defined as an expression is reported as absent
+    rather than guessed at.
+    """
+    if not os.path.isfile(path):
+        raise Unreadable("no source at %s to read %s out of" % (path, macro))
+
+    with open(path, "r", encoding="utf-8") as handle:
+        found = re.search(r"#define\s+%s\s+(\d+)\b" % re.escape(macro), handle.read())
+    if found is None:
+        raise Unreadable("%s declares no #define %s" % (path, macro))
+    return int(found.group(1))
 
 
 def declared(path, type_name, count_name):
