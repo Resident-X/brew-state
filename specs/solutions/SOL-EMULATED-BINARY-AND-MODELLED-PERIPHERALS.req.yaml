@@ -1,0 +1,43 @@
+id: SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS
+type: deliverable
+category: solution
+title: The target build's compiled firmware runs under emulation with a peripheral model behind every hardware-seam channel
+status: active
+version: 1
+text: |
+  This solution stands up an emulation harness that loads and executes the exact firmware binary
+  produced by the target build -- the same instruction image the microcontroller would run -- against
+  peripheral models substituting for the peripherals the hardware-seam implementation drives. A model
+  exists for every channel the hardware seam declares: each sensor channel the control logic can read,
+  and each output channel it can command. Driving one output channel is shown to move only the state
+  modelled for that channel, establishing that no two commands reach the same output and none reaches
+  nothing.
+
+  The emulation harness runs with no target hardware present, alongside the host tier and ahead of any
+  on-target timing measurement. Out of scope: the plant model's physics and any claim that the
+  emulated peripheral timing matches the real part's electrical behaviour -- those are carried by the
+  criteria governing what drives the emulated firmware and what it drives in turn, and by cross-tier
+  agreement, neither of which this slice targets.
+rationale: |
+  Binary identity and full-channel peripheral coverage are decomposed together in this slice because
+  neither is meaningful evidence without the other: an emulator running a re-expression of the control
+  logic proves nothing about the artefact that ships, and an emulator running the real binary against
+  only some channels leaves the addressing of the rest unverified before energisation. Both properties
+  are established against the same peripheral-model surface the hardware seam already declares, which is
+  also what lets the third criterion demonstrate separate output addressability directly rather than
+  inferring it from behaviour observed elsewhere -- the addressing question sits below where a
+  plant-model comparison is taken, so it has to be shown at the interface the firmware actually drives.
+
+  Timing agreement with the real microcontroller and cross-tier plant-model agreement are left to the
+  sibling criteria of the parent deliverable that name them, so this slice does not reach for them: this
+  solution answers what the parent's binary-identity and peripheral-modelling criteria ask, plus the
+  addressability the targeted requirement criterion asks, and stops there.
+links:
+  - target: DEL-SIM-EMULATION-TIER.C1
+    type: derives-from
+  - target: DEL-SIM-EMULATION-TIER.C2
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C6
+    type: targets
+  - target: DEC-EMULATION-TIER-RENODE
+    type: justified-by

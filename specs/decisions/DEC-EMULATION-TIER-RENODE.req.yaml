@@ -1,0 +1,35 @@
+id: DEC-EMULATION-TIER-RENODE
+type: decision
+category: strategic
+title: The emulation tier's peripheral models run in Renode via PythonPeripheral against SVD-derived STM32F4 register maps
+status: active
+version: 1
+text: |
+  The emulation tier runs the shipping firmware binary under Renode, an open-source, MIT-licensed embedded-systems emulator, with peripheral behaviour modelled through Renode's PythonPeripheral mechanism against SVD-derived STM32F4 register maps. Peripheral models are written in Python so they can call the same plant-model implementation the host tier already exercises, rather than a second, re-implemented model.
+rationale: |
+  Context: DEC-SIM-VERIFICATION-TOOLCHAIN commits the emulation tier to running the compiled firmware binary in "an emulator" against modelled peripherals, deliberately leaving the specific tool open because each tier is defined by the class of defect it nets, not the tool. That left the tier's implementer with no graph-recorded tool choice to build against. The only concrete precedent anywhere in the repository was a non-authoritative working-notes file naming Renode with a PythonPeripheral-based approach — a load-bearing fact stated in prose and required by nothing, the exact pattern this project's own authoring discipline warns against. This decision closes that gap before DEL-SIM-EMULATION-TIER's first solution is implemented.
+
+  Trade-offs: Renode is free and open-source (MIT), matching the whole-toolchain constraint DEC-SIM-VERIFICATION-TOOLCHAIN already set and PER-BUILDER-001's no-paid-licence constraint. It has built-in support for the STM32F4 family DEC-PREHARDWARE-TARGET-FAMILY nominated, so no bespoke chip model is needed. Its PythonPeripheral mechanism lets a peripheral model call into the project's existing Python plant model directly, so the plant model is reused rather than re-implemented a second time for the emulator — re-implementing it would risk exactly the kind of re-expression-not-verification DEC-SIM-VERIFICATION-TOOLCHAIN already rejected for the control law itself. QEMU was considered and rejected: its STM32 peripheral support is thin relative to Renode's SVD-driven register-level models, which would understate peripheral-interaction defects, the exact class this tier exists to net. Wokwi was considered and rejected: it does have a scriptable CLI and CI action, so unattended use is not the disqualifier, but its CI usage is metered against a free allowance with paid tiers beyond it, which fails PER-BUILDER-001's no-paid-tooling constraint the same way a paid toolchain would.
+
+  Reversibility: Consistent with DEC-SIM-VERIFICATION-TOOLCHAIN's own reversibility framing, only this tier's tool is committed here; the peripheral models are Python code written against Renode's PythonPeripheral interface, so swapping emulators later means rewriting the peripheral-model bridge, not the plant model or the control firmware.
+
+  Consequences: The emulation tier's peripheral models are authored as Renode PythonPeripheral scripts driven by SVD-derived STM32F4 register maps, calling the existing plant model rather than a re-implementation of it. Any future addition to the modelled channel set is expected to extend those same Python peripherals. Wiring this tier into continuous integration is left to the solutions that build it, not fixed by this decision.
+options_considered:
+  - option: Renode with PythonPeripheral models against SVD-derived STM32F4 register maps, reusing the existing plant model
+    reason_rejected: ""
+  - option: QEMU
+    reason_rejected: STM32 peripheral support is thin relative to Renode's SVD-driven register-level models, understating peripheral-interaction defects
+  - option: Wokwi
+    reason_rejected: has a scriptable CLI/CI path so unattended use isn't the disqualifier, but its CI usage is metered with paid tiers beyond a free allowance, failing the no-paid-tooling constraint
+  - option: A hand-rolled instruction-set simulator
+    reason_rejected: rebuilds general-purpose emulator infrastructure the open-source ecosystem already provides, for no gain over Renode
+chosen: Renode with PythonPeripheral models against SVD-derived STM32F4 register maps, reusing the existing plant model
+links:
+  - target: DEC-SIM-VERIFICATION-TOOLCHAIN
+    type: addresses
+  - target: DEL-SIM-EMULATION-TIER.C1
+    type: addresses
+  - target: DEL-SIM-EMULATION-TIER.C2
+    type: addresses
+  - target: DEL-SIM-EMULATION-TIER.C3
+    type: addresses
