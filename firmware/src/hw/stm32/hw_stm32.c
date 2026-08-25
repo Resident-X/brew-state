@@ -15,6 +15,8 @@
  */
 #include "hw_stm32.h"
 
+#include <stddef.h>
+
 #include "stm32f4xx_hal.h"
 
 #include "hw_interface.h"
@@ -44,13 +46,55 @@ static const uint32_t sensor_adc_channel[HW_SENSOR_CHANNEL_COUNT] = {
     SENSOR_INPUT_NONE /* HW_SENSOR_FLOW */
 };
 
-/* Timer compare channels backing the output channels, in hw_output_channel_t order. */
-static const uint32_t output_timer_channel[ACTUATION_CHANNEL_COUNT] = {
+/*
+ * Timer compare channels backing the output channels, in hw_output_channel_t
+ * order. Declared unsized so its length is what was actually written rather
+ * than what the vocabulary was believed to hold when the table was last
+ * edited -- a table declared at the vocabulary's size would let a channel
+ * added to the vocabulary and forgotten here pass every check taken over that
+ * length, because the length would already agree with itself.
+ */
+static const uint32_t output_timer_channel[] = {
     TIM_CHANNEL_1, /* ACTUATION_CHANNEL_BREW_HEATER */
     TIM_CHANNEL_2, /* ACTUATION_CHANNEL_STEAM_HEATER */
     TIM_CHANNEL_3, /* ACTUATION_CHANNEL_PUMP */
     TIM_CHANNEL_4  /* ACTUATION_CHANNEL_STEAM_PUMP */
 };
+
+/* Every channel the vocabulary admits must address an output of its own: the
+ * table's own length has to agree with the vocabulary's, and no two channels
+ * may be given the same compare output. */
+_Static_assert(sizeof(output_timer_channel) / sizeof(output_timer_channel[0])
+                    == (size_t)ACTUATION_CHANNEL_COUNT,
+               "actuation_channel_map_incomplete: the actuation channel table has fewer "
+               "entries than the vocabulary declares");
+_Static_assert(
+    TIM_CHANNEL_1 != TIM_CHANNEL_2 && TIM_CHANNEL_1 != TIM_CHANNEL_3 &&
+        TIM_CHANNEL_1 != TIM_CHANNEL_4 && TIM_CHANNEL_2 != TIM_CHANNEL_3 &&
+        TIM_CHANNEL_2 != TIM_CHANNEL_4 && TIM_CHANNEL_3 != TIM_CHANNEL_4,
+    "actuation_channel_map_incomplete: two actuation channels are mapped to the same "
+    "timer compare output");
+
+/*
+ * Alternate-function pins bringing each timer compare output out of the
+ * package, in the same order as the table above. Declared unsized for the
+ * same reason: a pin added to the mask above without a matching entry here
+ * would leave the newest channel's output configured but never brought out,
+ * and nothing taken over the mask's bit count would notice.
+ */
+static const uint16_t output_pin[] = {
+    GPIO_PIN_6, /* ACTUATION_CHANNEL_BREW_HEATER  -- TIM3 channel 1 */
+    GPIO_PIN_7, /* ACTUATION_CHANNEL_STEAM_HEATER -- TIM3 channel 2 */
+    GPIO_PIN_8, /* ACTUATION_CHANNEL_PUMP         -- TIM3 channel 3 */
+    GPIO_PIN_9  /* ACTUATION_CHANNEL_STEAM_PUMP   -- TIM3 channel 4 */
+};
+
+/* The pins the outputs are driven on must cover every channel the table
+ * maps: the count of pins configured for the timer's alternate function has
+ * to equal the count of channels mapped, asserted where both are declared. */
+_Static_assert(sizeof(output_pin) / sizeof(output_pin[0]) == (size_t)ACTUATION_CHANNEL_COUNT,
+               "actuation_channel_map_incomplete: the alternate-function pin table has "
+               "fewer entries than the actuation channel table");
 
 /* Full-scale count of the converter, used to scale a raw sample to milli-units. */
 #define ADC_FULL_SCALE_COUNTS 4095
@@ -101,7 +145,12 @@ static bool init_outputs(void)
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_TIM3_CLK_ENABLE();
 
-    pins.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
+    uint32_t pin_mask = 0;
+    for (int i = 0; i < (int)ACTUATION_CHANNEL_COUNT; i++) {
+        pin_mask |= output_pin[i];
+    }
+
+    pins.Pin = pin_mask;
     pins.Mode = GPIO_MODE_AF_PP;
     pins.Pull = GPIO_NOPULL;
     pins.Speed = GPIO_SPEED_FREQ_LOW;

@@ -1,0 +1,17 @@
+id: EVD-SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3-TEST
+type: evidence
+title: An incomplete actuation channel mapping is shown to stop the build, naming its own assertion (SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T07:12:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_selection_refused.py -e stm32_actuation_map_incomplete; firmware/tools/tests/test_plant_checks.py::SelectionRefusedCheck; firmware/tools/tests/test_gate_coverage.py::EnvironmentClassification
+text: |-
+  New PlatformIO environment stm32_actuation_map_incomplete compiles firmware/src/hw/stm32_actuation_incomplete/hw_stm32_actuation_incomplete.c (a table one entry short) in place of hw_stm32.c's own table. check_selection_refused.py drives it and asserts: non-zero exit, no artefact left in .pio/build/stm32_actuation_map_incomplete/, and the output names the environment's own declared marker (actuation_channel_map_incomplete) via the new per-environment custom_must_not_build_marker option in build_environments.py, rather than falling back to the shared check_structure_selection marker the sibling misconfigured environments use. Verified live: pio run -e stm32_actuation_map_incomplete fails at compile with only the static_assert error (no other reason), leaves no artefact, and check_selection_refused.py reports '6 misconfigured build(s) refused'. Regression-tested by 4 new unit tests (2 in test_plant_checks.py::SelectionRefusedCheck, 2 in test_gate_coverage.py::EnvironmentClassification) proving the marker is read per-environment and does not fall back silently. Full python suite (639 tests) and the emulation tier (37 tests) pass.
+links:
+  - target: SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE.C3
+    type: satisfies
