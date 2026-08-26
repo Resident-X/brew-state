@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-READINESS-GATE.C3-TEST
+type: evidence
+title: Withholding feed holds the pressure deficit rather than letting an open wand widen it (SOL-SIM-STEAM-READINESS-GATE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T14:56:59Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_withheld_feed_holds_an_existing_deficit_against_an_open_wand
+text: |-
+  pio test -e native_test -f test_steam_control passes. A nonzero deficit is first primed against the truth plant by feeding directly (bypassing the gate) with the wand open; feed is then driven only through the gate under test, which withholds it (pressure stays below the declared threshold throughout), and measured pressure is asserted not to fall further, within a tolerance an order of magnitude below the drift a still-growing deficit would show over the same steps.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE.C3
+    type: satisfies

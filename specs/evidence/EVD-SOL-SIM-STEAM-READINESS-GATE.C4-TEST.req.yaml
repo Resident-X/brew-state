@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-READINESS-GATE.C4-TEST
+type: evidence
+title: The ready threshold is declared data with a recorded origin, read by the control law rather than compiled into it (SOL-SIM-STEAM-READINESS-GATE.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T14:56:59Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_declared_threshold_moves_the_feed_boundary,test_declaration_loader_refuses_malformed_declarations
+text: |-
+  pio test -e native_test -f test_steam_control passes. Two gates brought up from two runtime-loaded declarations differing only in the threshold disagree about the same pressure reading, with no rebuild -- the threshold is read through steam_control_declaration_load's name=value-unit-@origin-account grammar (params/steam_control.declaration), not a compiled #define. The loader's own refusals (malformed, unknown, duplicate, out of range, wrong unit, missing origin/kind, missing figure) are table-driven and confirmed to reject.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE.C4
+    type: satisfies

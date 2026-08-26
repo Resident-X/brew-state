@@ -203,7 +203,7 @@ tasks:
       # under src/control now that the evaluator it declares is control logic
       # reached by control_step on every step, and delivery_tolerance.h's
       # stays under src/delivery beside the loader it declares.
-      - python3 tools/check_control_declaration.py --include-dir include --source-dir src/control --source-dir src/delivery --source-header include/delivery_tolerance.h --source-header include/delivery_profile.h --declaration params/control.declaration --tolerance params/tolerance.declaration --tree-dir src --tree-dir include
+      - python3 tools/check_control_declaration.py --include-dir include --source-dir src/control --source-dir src/delivery --source-header include/delivery_tolerance.h --source-header include/delivery_profile.h --source-header include/steam_control_declaration.h --declaration params/control.declaration --tolerance params/tolerance.declaration --tree-dir src --tree-dir include
       # The vocabulary both seams draw the machine's actuation channels from,
       # and every structure's statement of which of them it answers.
       - python3 tools/check_plant_header.py include/machine_actuation.h --plant-root src/plant --include-dir include --vocabulary-only
