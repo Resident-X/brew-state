@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C4-TEST
+type: evidence
+title: Recovery between deliveries is driven by the loop already built (SOL-BREW-RECOVERS-AFTER-DRAW.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T01:45:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_recovery_after_a_draw_needs_no_law_beyond_the_loop
+text: |
+  Two cases pass. The commanded target stands across the end of a delivery: after the draw ends the target is unchanged and still named, the pump is driven at nothing, and the heater goes on being driven -- a control path that dropped the target would command everything off and leave the casting to cool until somebody asked for something. And the drawn component of the feedforward falls away with the pump: the same machine and the same draw are run twice, once letting the loop recover and once telling it a pump level is still commanded while the machine draws nothing, which is exactly a loop whose drawn term did not fall away. The first comes back to the target; the second is still climbing past it by many times the band the delivery is held to. No gain, time constant or mode was added for the post-draw case -- the control declaration's build-time gate refuses a figure in the control logic accounting for itself nowhere, and it passes unchanged. The counterfactual was checked to be fair rather than assumed: patching drawn_load_pump_permille to answer no draw when idle -- removing the dependence the criterion names -- makes the test fail with its own message.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C4
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C3-TEST
+type: evidence
+title: The state a draw leaves is carried into the delivery that follows (SOL-BREW-RECOVERS-AFTER-DRAW.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T01:45:21Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_state_a_draw_leaves_is_carried_into_the_next_delivery
+text: |
+  test_the_state_a_draw_leaves_is_carried_into_the_next_delivery passes. A long black's worth of hot water is drawn through the closed loop and the reconstruction is read on the draw's last step and on the first step of the delivery commanded straight after it, back to back with nothing in between. The two are required to differ by no more than a single step's advance, where that bound is the largest movement any one step of the draw itself produced -- taken off the machine rather than written into the suite, and asserted non-zero so it cannot bound nothing. The casting is separately required to have ended outside the brew-temperature band, so the comparison is about a disturbed machine rather than two readings of a rested one. Bringing the control path up again between the two deliveries, which is the obvious wrong implementation, puts the readings tens of degrees apart. Run under pio test -e native_test.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C3
+    type: satisfies

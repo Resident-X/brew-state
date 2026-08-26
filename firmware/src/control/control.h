@@ -596,6 +596,49 @@ bool control_delivery_running(const control_state_t *state);
 bool control_temperature_band(const control_state_t *state, int32_t *band_milli_c);
 
 /*
+ * How far a delivery asked for after a hot water draw may sit from the same
+ * delivery asked for from rest, in millidegrees.
+ *
+ * Read back from the same record the band above is, and for the same reason: a
+ * caller holding a pair of runs to a distance is holding them to the distance
+ * the loop was given rather than to one it read out of a file for itself. It is
+ * a separate figure rather than a reading of the band above, because the two
+ * answer different questions -- how far one cup may be from what was ordered,
+ * and how far two cups ordered the same way may be from each other -- and a
+ * machine can meet either while failing the other.
+ *
+ * Returns false, writing nothing, for a null state or a null destination.
+ */
+bool control_post_draw_match_band(const control_state_t *state, int32_t *band_milli_c);
+
+/*
+ * Whether a delivery served at the point its profile names draws the same
+ * heated mass the group draws.
+ *
+ * Asked of the plant seam, from the point the profile carries, rather than
+ * compiled in from what the reference machine's plumbing does. Two deliveries
+ * backed by one mass contend for stored energy, so one of them leaves the other
+ * somewhere a rested machine does not describe and there is a recovery to
+ * account for between them; two deliveries backed by separate masses do not,
+ * and nothing is owed. Which of those a machine is, is a property of the
+ * structure a build compiles and not of hot water -- a consumer that inferred
+ * it from the channels a structure answers would be guessing from a vocabulary
+ * that cannot express it.
+ *
+ * It takes the profile rather than the control state because the question is
+ * about a delivery and about the machine this build compiled, and neither is a
+ * property of an instance: the same profile put to the same build gets the same
+ * answer whether a loop has been brought up or not.
+ *
+ * Returns false, writing nothing, for a null profile or destination, and for a
+ * profile naming a point the linked structure does not serve -- a caller has to
+ * be able to tell "this machine does not serve that point" from "that point does
+ * not contend with the group", and answering the second for the first would be a
+ * statement about contention on a machine that cannot make the delivery at all.
+ */
+bool control_delivery_contends_with_the_group(const delivery_profile_t *profile, bool *contends);
+
+/*
  * What the delivery under way -- or the last one to run -- had to say about
  * following the course it was commanded.
  *

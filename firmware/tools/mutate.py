@@ -887,6 +887,22 @@ MUTATIONS = (
         "command": CONTROL_TESTS,
     },
     {
+        "name": "the-post-draw-match-band-narrowed-past-what-a-recovered-machine-holds",
+        "why": "the distance a demand following a hot water draw may sit from the same "
+               "demand from rest is narrowed in the declaration alone, with no edit to any "
+               "source, and the pair of runs the shipped suite drives is still accepted. It "
+               "is mutated separately from the two bands above for the reason each of those "
+               "is mutated separately from the other: the claim that a band is data rather "
+               "than a constant is a claim about the declaration alone deciding which runs "
+               "stop being accepted, and it has to be made per band. A loader reading two "
+               "bands out of the file and the third out of a figure somebody compiled would "
+               "satisfy every check that watches for a macro name",
+        "file": "params/tolerance.declaration",
+        "find": "post-draw-match-band = 500 milli-c @estimated",
+        "replace": "post-draw-match-band = 5 milli-c @estimated",
+        "command": CONTROL_TESTS,
+    },
+    {
         "name": "the-two-bands-given-each-others-units",
         "why": "each band goes on carrying a figure the loader will read, and each is "
                "written in the other's unit -- a temperature band stated in thousandths of "

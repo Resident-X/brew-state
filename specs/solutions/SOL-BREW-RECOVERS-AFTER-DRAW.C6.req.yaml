@@ -2,22 +2,38 @@ id: SOL-BREW-RECOVERS-AFTER-DRAW.C6
 type: criterion
 title: An extraction following a hot water draw stays within the declared distance of one pulled from rest
 status: active
-version: 1
+version: 2
 measurement_type: threshold
 verification: test
 text: |
   Two runs against one machine description: the same extraction from the settled machine, and that
-  extraction commanded after a hot water draw of the volume a served long black asks for -- of the order
-  of two hundred millilitres, some minutes of continuous flow rather than the seconds an extraction takes
-  -- at the largest rate the machine can hold its drinking-temperature target against, taken from the same
-  probe admission already uses rather than written into the suite. Both runs are sampled at every step
-  from first flow to last and compared point by point, and no sample may sit further from its counterpart
-  than the declared band, so a post-draw run that averages onto the rested one while wandering fails --
-  the same reason tracking is asserted across a whole draw rather than at a settled instant. Each run must
-  also stay inside the brew-temperature band on its own account, so this cannot be met by two runs that
-  are equally wrong. Whether the water leaving the spout during the draw was itself at drinking
-  temperature is out of scope and is a sibling criterion's: what is claimed here is only about what the
-  draw leaves behind.
+  extraction asked for after a hot water draw of the volume a served long black asks for -- of the order of
+  two hundred millilitres -- at the largest rate the machine can hold its drinking-temperature target
+  against, taken from the same probe admission already uses rather than written into the suite. Those two
+  fix how long the draw runs, and it is not a third figure to be chosen beside them: what the contrast
+  demands is a draw an order of magnitude longer than the extraction that follows, on a casting with no
+  opportunity to recover part way through, and the volume and the rate deliver one. A description whose
+  machine holds its target at a higher rate pours the same volume in less time and is still the draw this
+  asks for.
+
+  The second demand follows the draw after an ordinary gap between deliveries rather than in the same
+  breath, and how long that gap has to be is reported rather than fixed here. It is a property of the
+  machine and not of the loop -- a casting recovering through its own transport lag, at figures the
+  declaration ships -- so a criterion naming an interval would be naming one description's answer. What is
+  required is that the interval is one an operator would actually leave between putting the hot water down
+  and locking in a basket, and that whatever this description needs is recorded where the slice that
+  defers a demand until conditions return can find it.
+
+  Both runs are sampled at every step from first flow to last and compared point by point, and no sample
+  may sit further from its counterpart than the declared band, so a post-draw run that averages onto the
+  rested one while wandering fails -- the same reason tracking is asserted across a whole draw rather than
+  at a settled instant. Each run must also stay inside the brew-temperature band on its own account, so
+  this cannot be met by two runs that are equally wrong.
+
+  Whether the water leaving the spout during the draw was itself at drinking temperature is out of scope
+  and is a sibling criterion's: what is claimed here is only about what the draw leaves behind. Refusing or
+  deferring the second demand on how far the machine has recovered is out of scope too, and is the parent
+  epic's contention criterion: what this asks for is the figure, not an act taken on it.
 links:
   - target: SOL-BREW-RECOVERS-AFTER-DRAW
     type: criterion-of

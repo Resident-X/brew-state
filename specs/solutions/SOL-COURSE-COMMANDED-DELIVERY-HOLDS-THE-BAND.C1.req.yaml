@@ -1,0 +1,24 @@
+id: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C1
+type: criterion
+title: A course rising to its commanded rate does not carry the water reaching the coffee above the declared band
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The stretch at issue is the one where the course is still climbing towards the rate it asks for, which on
+  this description is the first few seconds of any delivery that does not begin at full rate. The machine
+  starts rested at the commanded temperature and the reconstruction agrees with it, so nothing but the
+  course itself is disturbing anything. The band is read back from the loop rather than written into the
+  suite, and it is asserted at every step rather than at a settled instant, so a run that climbs above it
+  and comes back fails on the way rather than passing at the end.
+
+  More than one shape of rise is run, because a step to the rate and a ramp to it put different demands on a
+  term read ahead of the present instant, and a shape tested alone leaves the other unestablished.
+
+  Out of scope: what the same course does from a state the machine did not start rested in, which has its
+  own criterion already; and the departure report about the flow that actually moved, which is a separate
+  account of the same delivery.
+links:
+  - target: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND
+    type: criterion-of

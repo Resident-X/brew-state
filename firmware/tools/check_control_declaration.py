@@ -2,8 +2,8 @@
 """Fail when a figure the control logic rests on is not accounted for.
 
 The control law rests on numbers nobody has measured: a proportional gain, an
-integral gain, a feedforward gain, and the band a delivery is held to. Each is a
-choice somebody made against the reference description and the behaviour asked
+integral gain, a feedforward gain, and the bands a delivery is held to. Each is
+a choice somebody made against the reference description and the behaviour asked
 of the loop, and a choice nobody wrote down is indistinguishable from a number
 that was always there. The failure this prevents is not a wrong figure -- no
 reading of the source can tell a good gain from a bad one -- but a figure with
@@ -23,11 +23,11 @@ Three things are checked, because each can pass while another is broken:
     means the declaration describes software that does not exist; a figure
     defined twice stops agreeing with itself the first time either site is
     touched, and nothing about the running machine says which one it ran on,
-  * the band a delivery is held to is declared, carries an origin, and has not
-    grown a second home in the source. It is the one figure here that lives as
-    data rather than as a definition, because it is the criterion trajectories
-    are accepted against and a requirement that can only be varied by
-    recompiling is one nobody varies. A definition spelling it would go on
+  * every band a delivery is held to is declared, carries an origin, and has
+    not grown a second home in the source. They are the figures here that live
+    as data rather than as definitions, because they are the criteria
+    trajectories are accepted against and a requirement that can only be varied
+    by recompiling is one nobody varies. A definition spelling one would go on
     reading as declared in the tolerance file while the software held deliveries
     to the other one.
 
@@ -125,6 +125,7 @@ ACCOUNTED_ELSEWHERE = {
 BANDS = {
     "brew-temperature-band": ("TEMPERATURE_BAND", "milli-c", 20000),
     "flow-departure-band": ("FLOW_DEPARTURE_BAND", "milli-ml-s", 7000),
+    "post-draw-match-band": ("POST_DRAW_MATCH_BAND", "milli-c", 2000),
 }
 
 #: What the source is scanned for.
@@ -385,8 +386,8 @@ def unusable_band(name: str, figure: str) -> str | None:
     if milli_c < 0:
         return (
             f"'{name}' is declared as {milli_c}. A band is a half-width rather than a "
-            "direction, and there is no distance from the temperature that was asked for "
-            "that is less than none"
+            "direction, and there is no distance from the figure a band is measured "
+            "against that is less than none"
         )
     if milli_c > widest:
         return (

@@ -67,10 +67,15 @@ _Static_assert(sizeof(UNIT_WORDS) / sizeof(UNIT_WORDS[0]) == (size_t)DELIVERY_TO
  * quantity rather than of the design and so cannot live in the file whose
  * figures it is checking.
  *
- * They are stated per band because the two bands measure different quantities.
- * A single shared bound could only ever be the looser of them, and would then
- * admit for the tighter band every figure it most needed refusing -- which is
- * how a declaration in the wrong unit reads as merely a generous one.
+ * They are stated per band rather than once for all of them. Two of these bands
+ * measure different quantities outright, and the third measures the same
+ * quantity as the first while being about something else entirely -- the
+ * distance between two deliveries rather than between a delivery and its
+ * command -- so sharing a unit is not sharing a bound. A single shared bound
+ * could only ever be the loosest of the three, and would then admit for the
+ * tighter ones every figure they most needed refusing: which is how a
+ * declaration in the wrong unit reads as merely a generous one, and how a band
+ * that has stopped being a criterion reads as a relaxed one.
  *
  * Twenty degrees, as a half-width, is a forty-degree span: water anywhere in it
  * is not the drink that was ordered under any account of extraction, and an
@@ -79,9 +84,20 @@ _Static_assert(sizeof(UNIT_WORDS) / sizeof(UNIT_WORDS[0]) == (size_t)DELIVERY_TO
  * draws at full scale, so a half-width there or beyond accepts every rate the
  * machine can physically produce -- a band that reports nothing, which is the
  * failure the flow band exists to prevent rather than a loose setting of it.
+ *
+ * Two degrees is where two extractions have stopped being the same drink: it is
+ * the span the extraction literature treats as the point a difference in the
+ * cup becomes tasteable rather than merely measurable, and a post-draw run that
+ * far from a rested one is a different cup by the same account the brew band
+ * itself rests on. It sits an order of magnitude below the temperature bound
+ * above even though both are in thousandths of a degree, which is the whole
+ * reason the two are separate figures: one shared bound could only be the
+ * looser, and would then admit for this band every figure it most needs to
+ * refuse.
  */
 #define BREW_TEMPERATURE_WIDEST_ADMISSIBLE_MILLI_C 20000
 #define FLOW_DEPARTURE_WIDEST_ADMISSIBLE_MILLI_ML_PER_S 7000
+#define POST_DRAW_MATCH_WIDEST_ADMISSIBLE_MILLI_C 2000
 
 static bool is_blank(char c)
 {
@@ -218,6 +234,7 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
 
     bool brew_given = false;
     bool flow_given = false;
+    bool post_draw_given = false;
 
     const char *cursor = text;
     const char *limit = text + length;
@@ -287,6 +304,11 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
             given = &flow_given;
             stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_ML_PER_S;
             widest = (long)FLOW_DEPARTURE_WIDEST_ADMISSIBLE_MILLI_ML_PER_S;
+        } else if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD)) {
+            slot = &staging.post_draw_match_band_milli_c;
+            given = &post_draw_given;
+            stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_C;
+            widest = (long)POST_DRAW_MATCH_WIDEST_ADMISSIBLE_MILLI_C;
         } else {
             report(error, DELIVERY_TOLERANCE_UNKNOWN, line_number, name_begin, name_length);
             return false;
@@ -395,6 +417,19 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
     if (!flow_given) {
         report(error, DELIVERY_TOLERANCE_MISSING, 0u, DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD,
                strlen(DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD));
+        return false;
+    }
+    /*
+     * Its own fault rather than a zero band or the temperature band standing in
+     * for it. Zero would hold two runs to agreeing exactly, which no pair of
+     * trajectories from a real machine ever does; the temperature band would be
+     * twice as loose as the design intends and would go on reading as declared
+     * here while nothing had declared it. Both turn a file somebody forgot to
+     * write into a criterion nobody chose.
+     */
+    if (!post_draw_given) {
+        report(error, DELIVERY_TOLERANCE_MISSING, 0u, DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD,
+               strlen(DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD));
         return false;
     }
 

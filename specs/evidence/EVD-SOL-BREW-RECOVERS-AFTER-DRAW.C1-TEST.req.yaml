@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C1-TEST
+type: evidence
+title: The post-draw match band is declared data with a recorded origin (SOL-BREW-RECOVERS-AFTER-DRAW.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T01:45:21Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_post_draw_band_is_required_and_bounded_on_its_own_terms
+text: |
+  The band is declared in params/tolerance.declaration as `post-draw-match-band = 500 milli-c`, with a recorded origin deriving it from the brew-temperature band, an admissible bound of its own at two degrees, and no home in the source. Four cases in the control suite pass: the loop answers back the figure the shipped declaration carries and it is half the brew-temperature band; rewriting that one line to 250 changes what the loop is held to with no source edit and leaves the temperature band where it was; a declaration omitting the band is refused as MISSING rather than read back as zero or filled in from the temperature band, alongside refusals for zero, negative, wrong unit, missing origin and duplicate; and twenty degrees is refused for this band while the identical figure is admitted for the temperature band, which is what establishes the bound is the band's own rather than one shared by unit. test_every_band_comes_back_in_its_own_unit reads all three bands from the shipped record. The build-time gate is held to the same answers by five cases in tools/tests/test_control_declaration_checks.py, and tools/mutate.py narrows the declared band alone and the control suite catches it. Run under pio test -e native_test and python3 -m unittest discover -s firmware/tools/tests.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C1
+    type: satisfies

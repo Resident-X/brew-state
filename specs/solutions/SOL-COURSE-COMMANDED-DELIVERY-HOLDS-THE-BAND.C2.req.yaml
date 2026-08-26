@@ -1,0 +1,26 @@
+id: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2
+type: criterion
+title: A course still drawing as its end condition arrives does not carry the water reaching the coffee below the declared band
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The stretch at issue is the final lead-interval of a course whose end condition arrives while water is
+  still being drawn, which is every course that is cut at a rate rather than tapered to nothing. Reaching it
+  means correcting behaviour a criterion of the read-ahead slice states in as many words and carries
+  evidence for, so this is a change to what that slice established rather than a repair of something that
+  drifted: whoever takes it has to weigh what that slice was protecting against -- heat fed forward for
+  water that never arrives -- against a band that applies from first drop to last. Leaving that unweighed is
+  what produced this.
+
+  The band is read back from the loop and asserted at every step of the course, and a course that ends at a
+  non-zero rate is the case that has to be run: one tapered to nothing before its end condition never
+  reaches the stretch.
+
+  Out of scope: withdrawing heat already fed forward when a commanded draw fails to arrive part-way through
+  a delivery, which is a different question about a delivery that went wrong rather than one that ended; and
+  what the machine does after the delivery is over, which no band covers.
+links:
+  - target: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND
+    type: criterion-of
