@@ -16,9 +16,11 @@
 # recompiling a source file is one nobody varies, and a claim nobody has tested
 # the sensitivity of is a claim nobody has actually established.
 #
-# Each line is `name = figure unit @kind account`. A band is a half-width: the
-# delivery is inside it when what was delivered is no further than this from
-# what was commanded, in either direction.
+# Each line is `name = figure unit @kind account`. A band is a half-width: what
+# it is about is inside it when it sits no further than this from the figure it
+# is compared against, in either direction. What each band compares is stated
+# beside it -- the first two hold a delivery against what it was commanded, and
+# the third holds one delivery against another.
 #
 # The unit is written on the line rather than assumed. This file once stated
 # every band in millidegrees and said so here, which worked for exactly as long
@@ -87,3 +89,34 @@ brew-temperature-band = 1000 milli-c @document Taken from the extraction literat
 # than a figure a built machine has been shown to hold -- the same footing the
 # temperature band above is in.
 flow-departure-band = 200 milli-ml-s @estimated No meter has been fitted to a bench yet, so this is not read off a recorded trajectory. It is placed between two figures neither of which has been measured: above the ripple a vane meter is expected to show on a vibratory pump, and below the shortfall a choked puck is expected to produce, which puts it at about three per cent of the 7.0 mL/s the reference description declares at full pump scale. It is expected to be revised once a real meter's noise floor and a real pump's step response have been recorded from a bench.
+
+# How far a delivery asked for after a hot water draw may sit from the same
+# delivery asked for from rest.
+#
+# The band above says how far one cup may be from the temperature that was
+# ordered. This says how far two cups ordered the same way may be from each
+# other, which is a different question with a different answer: two extractions
+# sitting at opposite edges of that band are each acceptable on their own and are
+# plainly not the same drink. A machine that met the first and failed this would
+# be one whose coffee depended on whether somebody had drawn hot water first,
+# which is the thing this figure exists to refuse.
+#
+# Half a degree either side, which is half the brew-temperature band above. Two
+# extractions differing by less than half the band each of them is individually
+# held to are not different drinks -- the difference is inside the spread the
+# band already admits as one drink, so calling it a second drink would be
+# claiming a resolution the band itself does not have. It is deliberately not
+# read off the band above at run time: this is a statement about a pair of
+# deliveries and that one is a statement about a single delivery, and a figure
+# derived from the other would move whenever the other was retuned for reasons
+# that have nothing to do with this claim.
+#
+# It is range-checked against a bound of its own rather than the temperature
+# band's, and the two are far apart: the temperature band admits up to twenty
+# degrees, and past two degrees this band has stopped saying that two runs are
+# the same drink at all. A shared bound could only have been the looser of them.
+#
+# No machine has been on a bench, so this is what the design is currently
+# working to rather than a figure a built machine has been shown to hold -- the
+# same footing both bands above are in.
+post-draw-match-band = 500 milli-c @estimated Derived from the brew-temperature band above as half of it, and not measured: no machine has been on a bench and no pair of trajectories has been recorded from one. The reasoning is that two extractions differing by less than half the band each is individually held to are inside the spread that band already admits as one drink, so treating them as two would claim a resolution the band itself does not have. It is written out here rather than computed from the other band, so that retuning what a single delivery is held to does not silently move what a pair of them is held to. A bench that records a rested and a post-draw extraction from the same machine is what would displace it.

@@ -3,8 +3,11 @@
  *
  * Nothing here reaches the plant model or the hardware seam. Turning a
  * commanded rate into a drive level is the control path's question, asked
- * through the plant seam at the moment a step is taken; this file only ever
- * answers questions about the shape of the course itself.
+ * through the plant seam at the moment a step is taken, and asking which heated
+ * mass stands behind the point a delivery names is the control path's question
+ * asked of the same seam. This file only ever answers questions about the
+ * course itself, and about whether the point it names is one the machine's
+ * vocabulary carries at all.
  *
  * It sits under src/control rather than beside the delivery loaders in
  * src/delivery, because it is not a loader: it reaches nothing from the
@@ -72,13 +75,31 @@ static bool end_condition_is_admissible(delivery_end_condition_t end)
     return end.quantity == DELIVERY_END_ELAPSED_MILLIS;
 }
 
+/*
+ * Whether the point named is one the machine's vocabulary carries.
+ *
+ * Written as a comparison against the count, on the same terms the end
+ * condition above is written as a comparison against the one quantity this
+ * build evaluates: PLANT_DELIVERY_POINT_COUNT and anything past it are values
+ * the vocabulary does not carry, and a caller that named nothing arrives here
+ * with exactly that. Whether the linked structure serves the point is not
+ * asked -- see the account in delivery_profile.h -- because a profile records
+ * what a caller asked for and not what one machine happens to be able to do.
+ */
+static bool delivery_point_is_admissible(plant_delivery_point_t served_at)
+{
+    return served_at < PLANT_DELIVERY_POINT_COUNT;
+}
+
 bool delivery_profile_init(delivery_profile_t *profile, const delivery_profile_point_t *points,
-                           size_t point_count, delivery_end_condition_t end)
+                           size_t point_count, delivery_end_condition_t end,
+                           plant_delivery_point_t served_at)
 {
     if (profile == NULL) {
         return false;
     }
-    if (!course_is_admissible(points, point_count) || !end_condition_is_admissible(end)) {
+    if (!course_is_admissible(points, point_count) || !end_condition_is_admissible(end) ||
+        !delivery_point_is_admissible(served_at)) {
         return false;
     }
 
@@ -94,6 +115,7 @@ bool delivery_profile_init(delivery_profile_t *profile, const delivery_profile_p
     memcpy(staging.points, points, point_count * sizeof(*points));
     staging.point_count = point_count;
     staging.end = end;
+    staging.served_at = served_at;
 
     *profile = staging;
     return true;

@@ -1,5 +1,6 @@
 /*
- * How far a delivery may sit from the temperature it was asked for.
+ * How far a delivery may sit from what it was asked for, and from the same
+ * delivery asked for at a better moment.
  *
  * This is a statement about the drink and not about the machine. What a
  * particular casting does when its element is switched on belongs in that
@@ -58,6 +59,24 @@
 #define DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD "flow-departure-band"
 
 /*
+ * How far a delivery asked for after a hot water draw may sit from the same
+ * delivery asked for from rest.
+ *
+ * It is a statement about two drinks rather than about one: the band above says
+ * how far a cup may be from the temperature that was ordered, and this says how
+ * far two cups ordered the same way may be from each other. A machine can meet
+ * the first and fail this -- two extractions at opposite edges of the
+ * temperature band are each acceptable and are not the same drink -- which is
+ * why it is its own figure rather than a reading of that one.
+ *
+ * Declared here beside the other two for the reason they are declared at all:
+ * what a delivery is held to is the criterion trajectories are tested against,
+ * and a design whose tolerance can only be varied by recompiling is one nobody
+ * varies to find out what it costs.
+ */
+#define DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD "post-draw-match-band"
+
+/*
  * The units a band may be stated in.
  *
  * Enumerated rather than free text for the reason the origin kinds are: a unit
@@ -91,13 +110,18 @@ typedef enum {
 /*
  * The bands a delivery is held to.
  *
- * A band is a half-width: the delivery is within it when the reconstructed
- * temperature is no further than this from the temperature commanded, in either
- * direction. It is symmetric because what the drink is sensitive to is distance
- * from the temperature that was asked for -- water above it over-extracts and
- * water below it under-extracts, and neither is the drink that was ordered.
- * An asymmetric band would be a claim that one of those is more acceptable than
- * the other, which is a claim nothing here has established.
+ * Every one of them is a half-width: the delivery is inside a band when the
+ * quantity that band is about is no further than this from the figure it is
+ * compared against, in either direction. They are symmetric because what the
+ * drink is sensitive to is distance -- water above the commanded temperature
+ * over-extracts and water below it under-extracts, and neither is the drink
+ * that was ordered. An asymmetric band would be a claim that one direction is
+ * more acceptable than the other, which is a claim nothing here has
+ * established.
+ *
+ * What each band compares differs, and is stated on the field. The first two
+ * hold a delivery against what it was commanded; the third holds one delivery
+ * against another.
  */
 typedef struct {
     int32_t brew_temperature_band_milli_c;
@@ -109,6 +133,17 @@ typedef struct {
      * asked is more acceptable than moving slower.
      */
     int32_t flow_departure_band_milli_ml_per_s;
+    /*
+     * A half-width in thousandths of a degree Celsius, and the one band here
+     * whose two sides are two deliveries rather than a delivery and a command:
+     * a demand following a hot water draw is inside it when the water reaching
+     * the coffee is no further than this from what the same demand from rest
+     * would have received, in either direction. Symmetric on the same footing
+     * the temperature band is -- a post-draw run above the rested one is as
+     * much a different drink as one below it, and nothing here has established
+     * otherwise.
+     */
+    int32_t post_draw_match_band_milli_c;
 } delivery_tolerance_t;
 
 /* Why a tolerance declaration was refused. */

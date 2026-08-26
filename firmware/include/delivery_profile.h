@@ -1,14 +1,23 @@
 /*
- * A delivery expressed as a course of commanded flow.
+ * A delivery expressed as a course of commanded flow, and the point that flow
+ * arrives at.
  *
- * This is pure data: it carries no dependency on the plant model and no flow
- * figure of its own. What a caller states here is a shape -- a rate to move
- * water at, changing over the time since the delivery began, with a stated
- * beginning and end -- and nothing about what that shape draws from any
- * particular machine. Turning a point on the course into a level the pump can
- * be driven at is a question the control path answers through the plant seam,
- * because the figure that answers it belongs to the machine description and
- * this type would otherwise be a second, disagreeing copy of it.
+ * It carries no flow figure of its own and no coefficient of any machine. What
+ * a caller states here is a shape -- a rate to move water at, changing over the
+ * time since the delivery began, with a stated beginning and end -- and nothing
+ * about what that shape draws from any particular machine. Turning a point on
+ * the course into a level the pump can be driven at is a question the control
+ * path answers through the plant seam, because the figure that answers it
+ * belongs to the machine description and this type would otherwise be a second,
+ * disagreeing copy of it.
+ *
+ * It does reach the plant seam for one thing, and this file said it reached it
+ * for nothing until a delivery had somewhere to arrive: the vocabulary of
+ * points a delivery can be served at. That vocabulary is the machine's rather
+ * than any structure's -- the same footing the actuation channels are on -- so
+ * naming it here is what stops a second spelling of it growing up beside the
+ * seam's. Which heated mass stands behind a named point is still the seam's
+ * answer and not this type's: nothing here knows it, and nothing here asks.
  *
  * The course is piecewise-linear points rather than piecewise-constant steps,
  * because piecewise-linear is the more general of the two: a step is a course
@@ -30,6 +39,15 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+/*
+ * For plant_delivery_point_t alone -- the machine's vocabulary of places a
+ * delivery arrives at. This is the seam's vocabulary header rather than the
+ * seam itself: it declares no operation, holds no equation and names no
+ * structure, so nothing about which machine a build compiles reaches this file
+ * through it.
+ */
+#include "plant_types.h"
 
 /*
  * The most points a course may carry.
@@ -100,20 +118,28 @@ typedef struct {
 } delivery_end_condition_t;
 
 /*
- * A delivery: a course of commanded flow, and the condition it ends on.
+ * A delivery: a course of commanded flow, the condition it ends on, and the
+ * point it is served at.
  *
  * The end condition is carried inside the profile rather than passed beside
  * it, so that a delivery cannot be commanded without one -- a course with
  * nowhere to stop is not a delivery, and a caller supplying the two
- * separately could supply one and forget the other. `point_count` is how much
- * of `points` is meaningful, on the same reasoning the plant seam's parameter
- * budget carries its own count: the array is sized for the largest course
- * this build admits, not for the one a particular caller built.
+ * separately could supply one and forget the other. The delivery point is
+ * carried here for exactly that reason and not a different one: a course with
+ * no destination is not a delivery either, and a point passed alongside the
+ * profile could be passed to one call and left off the next, with the control
+ * path free to decide what the caller meant.
+ *
+ * `point_count` is how much of `points` is meaningful, on the same reasoning
+ * the plant seam's parameter budget carries its own count: the array is sized
+ * for the largest course this build admits, not for the one a particular
+ * caller built.
  */
 typedef struct {
     delivery_profile_point_t points[DELIVERY_PROFILE_POINT_MAX];
     size_t point_count;
     delivery_end_condition_t end;
+    plant_delivery_point_t served_at;
 } delivery_profile_t;
 
 /*
@@ -143,14 +169,39 @@ typedef struct {
  * it was never a deliverable profile, and saying so at the moment a caller
  * tried to build one is what stops it reaching a delivery already under way.
  *
+ * `served_at` is refused on exactly those terms: a value outside the machine's
+ * vocabulary of delivery points is refused here, where the profile is built,
+ * rather than being carried into a delivery for something downstream to
+ * interpret. PLANT_DELIVERY_POINT_COUNT is the value a caller with nothing to
+ * name arrives with, and it is refused like any other value the vocabulary does
+ * not carry -- there is no separate spelling for "unset", because a delivery
+ * with no destination and a delivery to somewhere this machine has never heard
+ * of are the same thing to everybody downstream. No point is chosen for a caller
+ * that names none: a course with no destination is not a delivery, and
+ * defaulting it to the group would be this file deciding what the caller meant.
+ *
+ * That is a promise about profiles built through this call rather than about the
+ * type. The group is the zero of the vocabulary, so a delivery_profile_t a caller
+ * zeroed or aggregate-initialised for itself reads as a group delivery, and
+ * nothing downstream examines the point again. The end condition is in exactly
+ * that position for exactly that reason -- elapsed time is its enumeration's zero
+ * too -- and the answer is the same for both: a profile is built here, or the
+ * caller answers for what it assembled.
+ *
+ * Whether the structure a build compiles actually serves the named point is a
+ * different question and is not asked here: it is asked of the plant seam by
+ * whoever needs the answer, and a profile is a statement of what was asked for
+ * rather than of what one machine can do.
+ *
  * Returns false, leaving `profile` unusable, for a null `profile` or `points`,
- * for a `point_count` outside [2, DELIVERY_PROFILE_POINT_MAX], for a course or
- * an end condition that fails the checks above. Nothing is written on a
- * refusal: a caller left with a half-built profile could go on to command a
- * delivery whose end nothing had validated.
+ * for a `point_count` outside [2, DELIVERY_PROFILE_POINT_MAX], for a course, an
+ * end condition or a delivery point that fails the checks above. Nothing is
+ * written on a refusal: a caller left with a half-built profile could go on to
+ * command a delivery whose end nothing had validated.
  */
 bool delivery_profile_init(delivery_profile_t *profile, const delivery_profile_point_t *points,
-                           size_t point_count, delivery_end_condition_t end);
+                           size_t point_count, delivery_end_condition_t end,
+                           plant_delivery_point_t served_at);
 
 /*
  * The rate the course commands at a given time since the delivery began.

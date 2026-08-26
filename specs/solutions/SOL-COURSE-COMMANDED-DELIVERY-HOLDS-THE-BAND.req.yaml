@@ -1,0 +1,58 @@
+id: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND
+type: deliverable
+category: solution
+title: A delivery commanded as a course holds the water reaching the coffee inside the declared band across the whole of it
+status: active
+version: 1
+text: |
+  A delivery commanded as a course leaves the declared brew-temperature band twice on a rested machine, at
+  opposite ends of the course, and nothing today notices. The loop reads the commanded course a lead ahead
+  of the present instant so that the heater answers a draw before the water carrying it away arrives. Where
+  the course rises to its rate, the term answers a draw that has not started yet and the water reaching the
+  group climbs above the band; where the lead runs past the course's own end condition the term is taken as
+  no draw at all, and for that last stretch the heater is commanded as though nothing were moving while the
+  pump is still drawing, so the water reaching the group falls below it.
+
+  Both were measured against the reference description with the estimator and the truth plant agreeing, so
+  neither is a reconstruction error and neither depends on the machine having started anywhere unusual. A
+  course holding two millilitres a second for thirty seconds, on a machine rested at the commanded
+  temperature, sits on target for the whole of it and then falls one and a third degrees below in the final
+  two seconds -- the lead this description probes -- against a band of one degree. A course ramping from
+  nothing to that rate over three seconds instead climbs one and four fifths of a degree above the target
+  about five seconds in, and takes most of the remaining half minute to come back, again against a band of
+  one degree.
+
+  The same demand held as a pump level rather than commanded as a course meets the band comfortably, which
+  is what places the shortfall in how the course is read rather than in what the loop can do. How it is
+  answered -- reading the course differently at its two ends, taking the lead against the draw actually
+  running rather than the one commanded, or something else -- is not settled here.
+
+  Out of scope: what a delivery does from a state the machine did not start rested in, which is asserted
+  elsewhere already; the departure report the same delivery gives about the flow it moved; and anything new
+  asked of a delivery held as a pump level, which already meets the band and is not what falls short.
+rationale: |
+  It is here rather than fixed inside the slice that found it because the behaviour is not an omission from
+  that slice. The slice that runs a hot water draw and holds the extraction after it to a declared distance
+  from a rested one found this while choosing how to command its extraction, and it commands that extraction
+  as a held pump level -- which is what the whole-extraction run it extends already did, and which meets the
+  band. Nothing about the draw or the recovery it asserts turns on the course-commanded case.
+
+  It is also not simply a defect with a known fix, and saying so is the point of writing it down. The
+  behaviour at the end of a course is exactly what a criterion of the read-ahead slice states, in as many
+  words, and that criterion carries evidence and a test that would fail if the behaviour were removed. So
+  the correction is a change to what that slice established rather than a repair of something that drifted
+  away from it, and whoever takes this has two things to weigh rather than one: what the read-ahead slice
+  was protecting against -- heat fed forward for water that never arrives, which this machine survives least
+  well -- and what the band criterion asks for, which is that the band applies from first drop to last with
+  early transients not exempt. Those two have never been weighed against each other; the second was written
+  long before the first existed, and the first was reasoned about at its own end of the course rather than
+  at the cup.
+
+  The trace is to the band criterion rather than to the read-ahead one because what needs restoring is the
+  behaviour the band names. A trace to the criterion that describes the mechanism would make this item read
+  as a correction of a mechanism that is doing what it says, which is not what is wrong.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BREW-TEMP-001.C1
+    type: targets

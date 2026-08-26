@@ -75,6 +75,15 @@ FLOW_BAND = (
     "shipped delivery profiles use.\n"
 )
 
+#: The third band, on the same footing as the two above. It is stated in the
+#: same unit as the first and bounded far more tightly, which is the case that
+#: distinguishes a bound held per band from a bound shared by unit: a figure this
+#: band must refuse is one the first band admits without complaint.
+POST_DRAW_BAND = (
+    "post-draw-match-band = 500 milli-c @estimated Taken as half the brew-temperature band, "
+    "since two runs inside half of it are not different drinks.\n"
+)
+
 #: A header belonging to one of the sources under inspection, carrying no figure
 #: of its own. It sits in the shared include directory because a caller has to
 #: see it, which is exactly the arrangement that lets a figure in a header go
@@ -106,7 +115,7 @@ class ControlDeclarationGate(unittest.TestCase):
         self.header(LOADER_HEADER)
         self.source(CONTROL_SOURCE)
         self.declaration(ACCOUNTED)
-        self.tolerance(BAND + FLOW_BAND)
+        self.tolerance(BAND + FLOW_BAND + POST_DRAW_BAND)
 
     @staticmethod
     def write(path: str, content: str) -> None:
@@ -491,7 +500,7 @@ class ControlDeclarationGate(unittest.TestCase):
 
     def test_the_second_band_left_undeclared_is_refused(self):
         """SOL-DELIVERY-DEPARTURE-REPORTED.C3: a second band is required exactly as the first is -- the gate is not satisfied by any one of the bands it holds a delivery to."""
-        self.tolerance(BAND)
+        self.tolerance(BAND + POST_DRAW_BAND)
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("flow-departure-band", result.stderr)
@@ -513,10 +522,63 @@ class ControlDeclarationGate(unittest.TestCase):
 
     def test_the_second_band_declared_twice_is_refused(self):
         """SOL-DELIVERY-DEPARTURE-REPORTED.C3: two declarations of the second band are two criteria, the same fault two declarations of the first band are."""
-        self.tolerance(BAND + FLOW_BAND + FLOW_BAND)
+        self.tolerance(BAND + FLOW_BAND + FLOW_BAND + POST_DRAW_BAND)
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("already declared", result.stderr)
+
+    # --- The band holding two deliveries against each other ----------------
+
+    def test_the_post_draw_band_left_undeclared_is_refused(self):
+        """SOL-BREW-RECOVERS-AFTER-DRAW.C1: a declaration omitting the post-draw band is refused rather than defaulting to zero or to the temperature band."""
+        self.tolerance(BAND + FLOW_BAND)
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("post-draw-match-band", result.stderr)
+        self.assertIn("declared nowhere", result.stderr)
+
+    def test_the_post_draw_band_is_bounded_apart_from_the_temperature_band(self):
+        """SOL-BREW-RECOVERS-AFTER-DRAW.C1: the post-draw band is range-checked against an admissible bound of its own rather than one shared with the temperature band."""
+        shared = "20000 milli-c @document Taken from nothing."
+        self.tolerance(
+            f"brew-temperature-band = {shared}\n"
+            + FLOW_BAND
+            + f"post-draw-match-band = {shared}\n"
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        # The identical figure, admitted for one band and refused for the other.
+        self.assertIn("wider than the 2000 the loader admits", result.stderr)
+        self.assertNotIn("wider than the 20000 the loader admits", result.stderr)
+
+    def test_the_post_draw_band_with_no_origin_is_refused(self):
+        """SOL-BREW-RECOVERS-AFTER-DRAW.C1: the post-draw band carries a recorded origin on the same terms the bands beside it do."""
+        self.tolerance(BAND + FLOW_BAND + "post-draw-match-band = 500 milli-c\n")
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("records no origin", result.stderr)
+
+    def test_the_post_draw_band_compiled_into_the_control_logic_is_refused(self):
+        """SOL-BREW-RECOVERS-AFTER-DRAW.C1: a post-draw band with a second home in the source is the one the software would hold a pair of runs to."""
+        self.source(CONTROL_SOURCE + "#define CONTROL_POST_DRAW_MATCH_BAND_MILLI_C 500\n")
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("compiled in cannot be varied", result.stderr)
+
+    def test_the_post_draw_band_in_another_unit_is_refused(self):
+        """SOL-BREW-RECOVERS-AFTER-DRAW.C1: the post-draw band is held in thousandths of a degree, and a figure in another quantity is refused rather than read."""
+        self.tolerance(
+            BAND
+            + FLOW_BAND
+            + "post-draw-match-band = 500 milli-ml-s @estimated Taken from nothing.\n"
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn(
+            "'post-draw-match-band' is declared in 'milli-ml-s', but this build holds it in "
+            "'milli-c'",
+            result.stderr,
+        )
 
 
 if __name__ == "__main__":

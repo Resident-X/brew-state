@@ -1131,6 +1131,26 @@ static float flow_at_full_scale_for(const plant_parameters_t *machine)
 
 /* --- The band is described data ------------------------------------------- */
 
+/*
+ * The bands a case is not about, carried into the declarations the cases below
+ * write for themselves.
+ *
+ * Every band the loader holds a delivery to has to be present before a
+ * declaration is accepted at all, so a case about one band states the others
+ * rather than accidentally becoming a case about their absence as well. The
+ * figures are the shipped ones; a case that wants a different figure for a band
+ * writes that band's line itself instead of carrying it from here.
+ */
+#define CARRIED_TEMPERATURE_BAND                                                                   \
+    "brew-temperature-band = 1000 milli-c @document Carried unchanged from the shipped "           \
+    "declaration; this case is about another band.\n"
+#define CARRIED_FLOW_BAND                                                                          \
+    "flow-departure-band = 200 milli-ml-s @estimated Carried unchanged from the shipped "          \
+    "declaration; this case is about another band.\n"
+#define CARRIED_MATCH_BAND                                                                         \
+    "post-draw-match-band = 500 milli-c @estimated Carried unchanged from the shipped "            \
+    "declaration; this case is about another band.\n"
+
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: Brew temperature's
 /// tolerance band is described data with a recorded origin.
 ///
@@ -1162,8 +1182,7 @@ static void test_a_different_declaration_changes_the_band_with_no_source_edit(vo
     static const char TIGHTER[] =
         "brew-temperature-band = 400 milli-c @document Taken from a machine that has been "
         "characterised, for the purpose of asking what the design costs at a narrower band.\n"
-        "flow-departure-band = 200 milli-ml-s @estimated Carried unchanged from the shipped "
-        "declaration; this test is about the temperature band, not this one.\n";
+        CARRIED_FLOW_BAND CARRIED_MATCH_BAND;
     delivery_tolerance_t narrowed;
     delivery_tolerance_error_t fault;
     int32_t band = 0;
@@ -1958,7 +1977,7 @@ static void test_delivery_profile_samples_the_course_piecewise_linearly(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 4u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 4u, end, PLANT_DELIVERY_POINT_GROUP));
 
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, delivery_profile_rate_ml_per_s(&profile, 0u));
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 1.0f, delivery_profile_rate_ml_per_s(&profile, 500u));
@@ -1991,13 +2010,15 @@ static void test_two_profiles_of_different_shape_drive_different_trajectories(vo
     const delivery_end_condition_t flat_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                .elapsed_millis = 2000u};
     delivery_profile_t flat;
-    TEST_ASSERT_TRUE(delivery_profile_init(&flat, flat_points, 2u, flat_end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&flat, flat_points, 2u, flat_end,
+                                           PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_profile_point_t ramp_points[] = {{0u, 0.0f}, {2000u, 2.5f}};
     const delivery_end_condition_t ramp_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                .elapsed_millis = 2000u};
     delivery_profile_t ramp;
-    TEST_ASSERT_TRUE(delivery_profile_init(&ramp, ramp_points, 2u, ramp_end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&ramp, ramp_points, 2u, ramp_end,
+                                           PLANT_DELIVERY_POINT_GROUP));
 
     uint16_t flat_trajectory[50];
     uint16_t ramp_trajectory[50];
@@ -2043,7 +2064,7 @@ static void test_a_commanded_rate_converts_through_the_plant_seams_flow_figure(v
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
@@ -2087,7 +2108,7 @@ static void test_control_command_delivery_refuses_a_structure_that_draws_nothing
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 500u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
     TEST_ASSERT_FALSE(control_command_delivery(&local_state, &profile));
     TEST_ASSERT_FALSE(control_delivery_running(&local_state));
@@ -2101,7 +2122,7 @@ static void test_control_command_delivery_refuses_null_arguments(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 500u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
     TEST_ASSERT_FALSE(control_command_delivery(NULL, &profile));
     TEST_ASSERT_FALSE(control_command_delivery(&state, NULL));
@@ -2125,12 +2146,14 @@ static void test_construction_refuses_end_conditions_it_cannot_evaluate(void)
     const delivery_end_condition_t volume_end = {.quantity = DELIVERY_END_DELIVERED_VOLUME_ML,
                                                  .delivered_volume_ml = 30.0f};
     delivery_profile_t refused_by_volume;
-    TEST_ASSERT_FALSE(delivery_profile_init(&refused_by_volume, points, 2u, volume_end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&refused_by_volume, points, 2u, volume_end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_end_condition_t out_of_range_end = {
         .quantity = (delivery_end_quantity_t)DELIVERY_END_QUANTITY_COUNT, .elapsed_millis = 500u};
     delivery_profile_t refused_by_range;
-    TEST_ASSERT_FALSE(delivery_profile_init(&refused_by_range, points, 2u, out_of_range_end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&refused_by_range, points, 2u, out_of_range_end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 }
 
 /// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C3: Construction refuses a course that
@@ -2150,29 +2173,37 @@ static void test_construction_refuses_a_course_that_is_not_a_shape(void)
     delivery_profile_t profile;
 
     const delivery_profile_point_t single_point[] = {{0u, 1.0f}};
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, single_point, 1u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, single_point, 1u, end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_profile_point_t not_starting_at_zero[] = {{10u, 1.0f}, {1000u, 1.0f}};
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, not_starting_at_zero, 2u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, not_starting_at_zero, 2u, end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_profile_point_t repeated_time[] = {{0u, 1.0f}, {500u, 2.0f}, {500u, 3.0f}};
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, repeated_time, 3u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, repeated_time, 3u, end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_profile_point_t backwards_time[] = {{0u, 1.0f}, {500u, 2.0f}, {200u, 3.0f}};
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, backwards_time, 3u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, backwards_time, 3u, end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_profile_point_t negative_rate[] = {{0u, -1.0f}, {1000u, 1.0f}};
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, negative_rate, 2u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, negative_rate, 2u, end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_profile_point_t not_a_number_rate[] = {{0u, NAN}, {1000u, 1.0f}};
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, not_a_number_rate, 2u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, not_a_number_rate, 2u, end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     const delivery_profile_point_t infinite_rate[] = {{0u, 1.0f}, {1000u, INFINITY}};
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, infinite_rate, 2u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, infinite_rate, 2u, end,
+                                            PLANT_DELIVERY_POINT_GROUP));
 
     /* And a course this build validated is admitted, to show the refusals above are real. */
     const delivery_profile_point_t admissible[] = {{0u, 1.0f}, {1000u, 1.0f}};
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, admissible, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, admissible, 2u, end,
+                                           PLANT_DELIVERY_POINT_GROUP));
 }
 
 /// SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C4: The delivery ends on the step its
@@ -2192,7 +2223,7 @@ static void test_the_delivery_ends_on_the_step_the_condition_is_first_met(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 350u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     unsigned ended_at_step = 0u;
@@ -2226,7 +2257,8 @@ static void test_moving_the_end_condition_moves_the_ending(void)
     const delivery_end_condition_t end_a = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                             .elapsed_millis = 200u};
     delivery_profile_t profile_a;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile_a, points, 2u, end_a));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile_a, points, 2u, end_a,
+                                           PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile_a));
 
     unsigned ended_a = 0u;
@@ -2241,7 +2273,8 @@ static void test_moving_the_end_condition_moves_the_ending(void)
     const delivery_end_condition_t end_b = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                             .elapsed_millis = 400u};
     delivery_profile_t profile_b;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile_b, points, 2u, end_b));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile_b, points, 2u, end_b,
+                                           PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile_b));
 
     unsigned ended_b = 0u;
@@ -2278,7 +2311,7 @@ static void test_a_profile_commanded_delivery_drives_the_truth_plant_through_the
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     const float outlet_before = truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C);
@@ -2334,7 +2367,7 @@ static void test_a_held_level_set_while_a_delivery_runs_is_overwritten_next_step
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
@@ -2370,7 +2403,7 @@ static void test_a_fault_mid_delivery_ends_the_delivery(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     for (unsigned step = 0u; step < 5u; step++) {
@@ -2425,7 +2458,7 @@ static void test_delivered_flow_is_compared_against_the_commanded_rate_each_cycl
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /* The meter agrees with the machine, so no arrangement is needed at all. */
@@ -2452,7 +2485,7 @@ static void test_departure_beyond_the_band_surfaces_and_agreement_does_not(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
@@ -2500,7 +2533,7 @@ static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
@@ -2568,7 +2601,7 @@ static void test_a_departed_delivery_still_runs_to_its_own_completion(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 350u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     unsigned ended_at_step = 0u;
@@ -2629,7 +2662,7 @@ static void test_late_takes_priority_over_departed_on_the_same_cycle(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
@@ -2672,7 +2705,7 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     delivered_flow_status = HW_READING_ABSENT;
@@ -2703,15 +2736,13 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
 static void test_a_different_declaration_changes_what_counts_as_departure(void)
 {
     static const char WIDE[] =
-        "brew-temperature-band = 1000 milli-c @document Carried unchanged from the shipped "
-        "declaration; this test is about the flow band, not this one.\n"
+        CARRIED_TEMPERATURE_BAND
         "flow-departure-band = 900 milli-ml-s @estimated Wide enough that the gap this test "
-        "injects is absorbed rather than reported.\n";
+        "injects is absorbed rather than reported.\n" CARRIED_MATCH_BAND;
     static const char NARROW[] =
-        "brew-temperature-band = 1000 milli-c @document Carried unchanged from the shipped "
-        "declaration; this test is about the flow band, not this one.\n"
+        CARRIED_TEMPERATURE_BAND
         "flow-departure-band = 100 milli-ml-s @estimated Narrow enough that the gap this test "
-        "injects is reported rather than absorbed.\n";
+        "injects is reported rather than absorbed.\n" CARRIED_MATCH_BAND;
 
     delivery_tolerance_t wide_tolerance;
     delivery_tolerance_t narrow_tolerance;
@@ -2727,7 +2758,7 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
     /* The commanded rate is 2000 milli-ml/s; the injected reading is 500 short of it. */
     hw_sim_reset();
@@ -2818,7 +2849,7 @@ static void test_the_flow_departure_band_is_required_and_validated(void)
      */
     static const char ADMISSIBLE[] =
         "brew-temperature-band = 8000 milli-c @document Loose, and well inside its own bound.\n"
-        "flow-departure-band = 200 milli-ml-s @estimated Carried from the shipped declaration.\n";
+        CARRIED_FLOW_BAND CARRIED_MATCH_BAND;
     delivery_tolerance_t wide_temperature;
     delivery_tolerance_error_t admissible_fault;
     TEST_ASSERT_TRUE_MESSAGE(
@@ -2850,7 +2881,7 @@ static void test_a_delivery_on_an_untargeted_machine_does_not_advance(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 500u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
@@ -2924,7 +2955,8 @@ static void test_boundary_end_conditions_at_zero_and_uint32_max(void)
     const delivery_end_condition_t ends_immediately = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                         .elapsed_millis = 0u};
     delivery_profile_t immediate;
-    TEST_ASSERT_TRUE(delivery_profile_init(&immediate, points, 2u, ends_immediately));
+    TEST_ASSERT_TRUE(delivery_profile_init(&immediate, points, 2u, ends_immediately,
+                                           PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE_MESSAGE(delivery_profile_ended(&immediate, 0u),
                              "an end condition of zero elapsed milliseconds did not end "
                              "immediately");
@@ -2932,7 +2964,8 @@ static void test_boundary_end_conditions_at_zero_and_uint32_max(void)
     const delivery_end_condition_t ends_at_uint32_max = {
         .quantity = DELIVERY_END_ELAPSED_MILLIS, .elapsed_millis = UINT32_MAX};
     delivery_profile_t nearly_unending;
-    TEST_ASSERT_TRUE(delivery_profile_init(&nearly_unending, points, 2u, ends_at_uint32_max));
+    TEST_ASSERT_TRUE(delivery_profile_init(&nearly_unending, points, 2u, ends_at_uint32_max,
+                                           PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_FALSE_MESSAGE(
         delivery_profile_ended(&nearly_unending, UINT32_MAX - 1u),
         "a course admitted with an end condition of UINT32_MAX ended before the clock reached "
@@ -2964,8 +2997,8 @@ static void test_construction_refuses_the_documented_null_and_bound_cases(void)
                                           .elapsed_millis = 500u};
     delivery_profile_t profile;
 
-    TEST_ASSERT_FALSE(delivery_profile_init(NULL, points, 2u, end));
-    TEST_ASSERT_FALSE(delivery_profile_init(&profile, NULL, 2u, end));
+    TEST_ASSERT_FALSE(delivery_profile_init(NULL, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, NULL, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
     delivery_profile_point_t too_many[DELIVERY_PROFILE_POINT_MAX + 1u];
     for (size_t index = 0u; index < DELIVERY_PROFILE_POINT_MAX + 1u; index++) {
@@ -2973,11 +3006,13 @@ static void test_construction_refuses_the_documented_null_and_bound_cases(void)
         too_many[index].rate_ml_per_s = 1.0f;
     }
     TEST_ASSERT_FALSE_MESSAGE(
-        delivery_profile_init(&profile, too_many, DELIVERY_PROFILE_POINT_MAX + 1u, end),
+        delivery_profile_init(&profile, too_many, DELIVERY_PROFILE_POINT_MAX + 1u, end,
+                              PLANT_DELIVERY_POINT_GROUP),
         "a point_count past DELIVERY_PROFILE_POINT_MAX was admitted rather than refused");
 
     /* Exactly at the bound is still admitted, to show the refusal above is real. */
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, too_many, DELIVERY_PROFILE_POINT_MAX, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, too_many, DELIVERY_PROFILE_POINT_MAX, end,
+                                           PLANT_DELIVERY_POINT_GROUP));
 }
 
 /* --- Same-step feedforward for a profile-commanded delivery ---------------- */
@@ -3010,7 +3045,7 @@ static void test_duty_rises_in_the_step_a_profile_delivery_is_commanded_in(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
@@ -3050,7 +3085,7 @@ static void test_mid_ramp_level_matches_the_interpolated_rate_through_the_contro
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 3000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
@@ -3126,7 +3161,7 @@ static void test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 40u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
@@ -3165,7 +3200,7 @@ static delivery_profile_t course_peaking_at(float peak_ml_per_s)
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
 
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end, PLANT_DELIVERY_POINT_GROUP));
     return profile;
 }
 
@@ -3180,7 +3215,7 @@ static delivery_profile_t course_holding(float ml_per_s)
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
 
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     return profile;
 }
 
@@ -3242,7 +3277,8 @@ static void test_the_lead_is_taken_at_the_courses_peak(void)
     const delivery_end_condition_t held_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                .elapsed_millis = 2000u};
     delivery_profile_t held_at_the_peak;
-    TEST_ASSERT_TRUE(delivery_profile_init(&held_at_the_peak, held_points, 2u, held_end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&held_at_the_peak, held_points, 2u, held_end,
+                                           PLANT_DELIVERY_POINT_GROUP));
 
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &shot_shaped));
@@ -3327,7 +3363,7 @@ static void test_a_rising_course_droops_less_when_the_law_is_led(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 3000u};
     delivery_profile_t ramp;
-    TEST_ASSERT_TRUE(delivery_profile_init(&ramp, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&ramp, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
     const float led_shortfall = shortfall_after_running(&ramp, 100u, true);
     const float unled_shortfall = shortfall_after_running(&ramp, 100u, false);
@@ -3361,7 +3397,8 @@ static void test_reading_ahead_stops_at_the_end_condition(void)
         const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                               .elapsed_millis = ENDS[run]};
         delivery_profile_t course;
-        TEST_ASSERT_TRUE(delivery_profile_init(&course, points, 2u, end));
+        TEST_ASSERT_TRUE(delivery_profile_init(&course, points, 2u, end,
+                                               PLANT_DELIVERY_POINT_GROUP));
 
         bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
         TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
@@ -3391,18 +3428,20 @@ static void test_reading_ahead_stops_at_the_end_condition(void)
 /// runs, repeated on a course of the shape a hot water delivery takes rather
 /// than a shot's: a sustained draw at a steady rate, run long enough to move
 /// the couple of hundred millilitres a hot water delivery asks for, rather
-/// than a short ramp. Nothing in the control path names which delivery point
-/// a course is bound for or how long it runs; the led run closes more of the
-/// shortfall here on exactly the same terms it does on a shot-shaped ramp,
-/// which is what shows the two share one term rather than a second
-/// arrangement built for hot water.
+/// than a short ramp. The course names the spout it is bound for, and the
+/// read-ahead term does not read that: what the lead is taken against is the
+/// course and the machine's own transport. So the led run closes more of the
+/// shortfall here on exactly the same terms it does on a shot-shaped ramp
+/// commanded at the group, which is what shows the two share one term rather
+/// than a second arrangement built for hot water.
 static void test_a_hot_water_shaped_course_is_led_by_the_same_term_an_extraction_is(void)
 {
     const delivery_profile_point_t points[] = {{0u, 0.0f}, {3000u, 2.5f}, {80000u, 2.5f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 80000u};
     delivery_profile_t hot_water_shaped;
-    TEST_ASSERT_TRUE(delivery_profile_init(&hot_water_shaped, points, 3u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&hot_water_shaped, points, 3u, end,
+                                           PLANT_DELIVERY_POINT_HOT_WATER_SPOUT));
 
     const float led_shortfall = shortfall_after_running(&hot_water_shaped, 100u, true);
     const float unled_shortfall = shortfall_after_running(&hot_water_shaped, 100u, false);
@@ -3904,7 +3943,7 @@ static void test_an_admissible_delivery_reaches_the_machine_exactly_as_before(vo
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 3u, end, PLANT_DELIVERY_POINT_GROUP));
 
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
@@ -3972,7 +4011,7 @@ static void test_the_departure_reported_is_the_commanded_rate_less_the_measured_
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
@@ -4016,7 +4055,7 @@ static void test_a_reading_outside_the_plausible_span_is_no_observation(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
@@ -4066,7 +4105,7 @@ static void test_a_departure_found_on_one_step_is_still_reportable_when_the_deli
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     bool ever_departed = false;
@@ -4118,7 +4157,7 @@ static void test_the_departure_report_belongs_to_one_delivery(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
     delivered_flow_factor = 0.4f;
@@ -4186,7 +4225,7 @@ static void test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees(
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
     uint16_t agreeing[64];
     uint16_t departed[64];
@@ -4252,7 +4291,8 @@ static void test_a_delivery_nothing_measured_reports_no_account(void)
         const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                               .elapsed_millis = 5000u};
         delivery_profile_t profile;
-        TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+        TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end,
+                                               PLANT_DELIVERY_POINT_GROUP));
         TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
         delivered_flow_status = UNTRUSTED[which];
@@ -4291,7 +4331,7 @@ static void test_a_failed_reading_that_recovers_resumes_the_comparison(void)
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
     delivery_profile_t profile;
-    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end));
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     delivered_flow_status = HW_READING_FAILED;
@@ -4320,11 +4360,17 @@ static void test_a_failed_reading_that_recovers_resumes_the_comparison(void)
 /// unit.
 ///
 /// The shipped declaration is the one the loop is actually held to, so it is
-/// read here rather than restated. Both bands are asserted in their own units --
-/// a grammar that still read every band as millidegrees would return the flow
+/// read here rather than restated. Every band is asserted in its own unit -- a
+/// grammar that still read every band as millidegrees would return the flow
 /// band as a temperature and nothing downstream would notice, because the record
 /// field is an integer either way.
-static void test_both_bands_come_back_in_their_own_units(void)
+///
+/// It reads every band the record carries rather than the two this criterion
+/// arrived with, so a band added later is either asserted here or fails here:
+/// the unit fault is raised per line, before the loader ever reaches the check
+/// for a band nobody declared, so a case that named only some of the bands would
+/// go on passing for a reason that has nothing to do with units.
+static void test_every_band_comes_back_in_its_own_unit(void)
 {
     TEST_ASSERT_EQUAL_INT32_MESSAGE(1000, tolerance.brew_temperature_band_milli_c,
                                     "the shipped temperature band is not what the declaration "
@@ -4332,22 +4378,29 @@ static void test_both_bands_come_back_in_their_own_units(void)
     TEST_ASSERT_EQUAL_INT32_MESSAGE(200, tolerance.flow_departure_band_milli_ml_per_s,
                                     "the shipped flow-departure band is not what the declaration "
                                     "states");
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(500, tolerance.post_draw_match_band_milli_c,
+                                    "the shipped post-draw match band is not what the declaration "
+                                    "states");
 
     /*
-     * The same two figures with their units exchanged. Nothing about either
-     * line is malformed and both figures are readable, so a loader that took
+     * The same figures with their units exchanged, band for band. Nothing about
+     * any line is malformed and every figure is readable, so a loader that took
      * the unit from the band's name -- or assumed one unit for every band --
      * would accept this and hold deliveries to a flow band a hundred times
-     * looser than anybody declared.
+     * looser than anybody declared. The two bands stated in the same unit are
+     * exchanged with each other rather than with the flow band, so the case
+     * still turns on the unit written on the line rather than on a figure
+     * landing somewhere absurd.
      */
     static const char EXCHANGED[] =
         "brew-temperature-band = 1000 milli-ml-s @document The flow band's unit.\n"
-        "flow-departure-band = 200 milli-c @estimated The temperature band's unit.\n";
+        "flow-departure-band = 200 milli-c @estimated The temperature band's unit.\n"
+        "post-draw-match-band = 500 milli-ml-s @estimated The flow band's unit.\n";
     delivery_tolerance_t built;
     delivery_tolerance_error_t fault;
     TEST_ASSERT_FALSE_MESSAGE(
         delivery_tolerance_load(EXCHANGED, sizeof(EXCHANGED) - 1u, &built, &fault),
-        "a declaration whose two bands were given each other's units was read");
+        "a declaration whose bands were given each other's units was read");
     TEST_ASSERT_EQUAL(DELIVERY_TOLERANCE_UNIT_MISMATCH, fault.fault);
 }
 
@@ -4395,6 +4448,821 @@ static void test_the_harness_publishes_the_truth_plants_flow_at_the_seam(void)
     TEST_ASSERT_INT32_WITHIN_MESSAGE(1, (int32_t)lroundf(moved * 0.4f * 1000.0f),
                                      departed.value_milli,
                                      "the departure factor does not scale what the seam carries");
+}
+
+/* --- A demand following a hot water draw ---------------------------------- *
+ *
+ * Everything in this section runs against one machine description through the
+ * harness above: the truth plant the estimator does not own, advanced under
+ * what the loop actually drove. The disturbed state the runs below start their
+ * extraction from is produced by drawing water through that plant, and never by
+ * writing a temperature into it -- see the criterion tests for why the
+ * distinction has to be asserted rather than assumed.
+ */
+
+/*
+ * The volume a served long black asks for, in millilitres.
+ *
+ * Two hundred millilitres is the water a long black is built on before the shot
+ * goes into it, and it is this suite's own figure rather than one the software
+ * carries -- nothing in the control path knows what drink a course is for.
+ *
+ * How long that takes to pour is not a third figure to be chosen: it is this
+ * volume divided by the largest rate the machine can hold its target against,
+ * and on this description that comes to sixty-six seconds. Worth stating exactly
+ * because the criterion this run answers describes the draw as some minutes of
+ * continuous flow, and sixty-six seconds is not minutes -- the three quantities
+ * it names cannot all hold at once on a casting that gives up its target above
+ * three millilitres a second. The volume and the rate are the two that are
+ * independently grounded, so they are what is honoured here, and the duration is
+ * reported as what they imply. The contrast the criterion was drawing does
+ * survive: a minute of continuous draw against the half-minute an extraction
+ * takes, on a casting with no opportunity to recover part way through.
+ */
+#define LONG_BLACK_HOT_WATER_ML 200.0f
+
+/*
+ * The extraction both runs are judged on: a steady two millilitres a second for
+ * thirty seconds, which is a long shot rather than a short one, held as a level
+ * rather than run as a course.
+ *
+ * It is the same demand test_tracking_holds_across_a_whole_extraction_from_a_
+ * disturbed_state holds the loop to, driven the same way and sampled the same
+ * way, so that what differs between that run and these is only what the machine
+ * was doing beforehand.
+ */
+#define EXTRACTION_RATE_ML_PER_S 2.0f
+#define EXTRACTION_STEPS 3000u
+
+/*
+ * The temperature the hot water draw is commanded at.
+ *
+ * The criterion this run answers sets the draw's rate at the largest the machine
+ * can hold its drinking-temperature target against. There is no
+ * drinking-temperature target in this build: what a dispensed cup of hot water
+ * has to arrive at is the sibling slice's to declare, and until it does, a figure
+ * invented here would be a second answer waiting to disagree with it. So the
+ * brew target stands in for it, and this name says so rather than letting
+ * BREW_TARGET_C appear at the draw's call sites as though it were the figure the
+ * criterion named.
+ *
+ * The substitution is admissible on this machine because both deliveries come
+ * out of one casting driven toward one commanded temperature, and ninety-three
+ * degrees is a drinking temperature for dispensed water as much as it is a brew
+ * temperature. It also keeps the pair of runs the criterion compares differing
+ * only in whether a draw happened: a second temperature commanded between them
+ * would put a change of target in the way of the recovery being measured, which
+ * is a different disturbance and a different criterion's subject.
+ */
+#define DRINKING_TARGET_C BREW_TARGET_C
+
+/*
+ * How long the machine is left standing before a run begins, and how long the
+ * operator takes between putting the hot water down and locking in the
+ * portafilter, both at the declared cadence.
+ *
+ * The first is twenty seconds and settles nothing on a machine already at its
+ * target: it is there so both runs enter their extraction from a state produced
+ * by the same number of closed-loop steps rather than from one the harness
+ * placed and the other worked for.
+ *
+ * The second is ninety seconds, and it is the one number here that could be
+ * chosen to make this pass, so it is worth saying plainly what it is, what it is
+ * not, and what was measured.
+ *
+ * It is the gap an operator actually leaves: grinding, dosing, distributing,
+ * tamping and locking in a basket is a minute and a half of work on a domestic
+ * machine with a separate grinder. It is not a figure the loop needs told about,
+ * and nothing waits on it -- the machine is driven by the same loop throughout,
+ * and a caller is free to ask for the next delivery whenever it likes.
+ *
+ * What is measured is that this description needs about eighty-five seconds of
+ * it. Below that the extraction sits further from the rested one than the
+ * declared band admits, and not because the machine is still climbing back: the
+ * approach rings rather than settling monotonically, so a gap of sixty seconds
+ * is further out than one of thirty. What is happening is that the loop drives
+ * the casting well past the target to bring the water on its way to the group
+ * back through a twenty-second transport lag, and the next draw then pulls the
+ * outlet up to whatever the casting is at. Ninety seconds is past the ring-down
+ * with about a ninth of it in hand.
+ *
+ * That figure is the machine's rather than the loop's, and it is what a slice
+ * deferring a demand until conditions return would have to act on. It is
+ * recorded in the graph beside the evidence for this run rather than only here.
+ */
+#define SETTLING_STEPS 2000u
+#define OPERATORS_GAP_STEPS 9000u
+
+/*
+ * Where the water reaching the coffee was on every step of an extraction, for
+ * the rested run and for the run that follows a draw.
+ *
+ * At file scope rather than on the stack because they are twelve kilobytes
+ * each, and the target this suite's subject compiles for has neither the stack
+ * for that nor an allocator to put them anywhere else -- the suite does not run
+ * there, but there is no reason for it to be shaped as though it could not.
+ */
+static float rested_extraction_c[EXTRACTION_STEPS];
+static float post_draw_extraction_c[EXTRACTION_STEPS];
+
+/*
+ * A course holding one rate for a stated time, arriving at a stated point.
+ */
+static delivery_profile_t steady_course_of(float rate_ml_per_s, uint32_t for_millis,
+                                           plant_delivery_point_t served_at)
+{
+    const delivery_profile_point_t points[] = {{0u, rate_ml_per_s}, {for_millis, rate_ml_per_s}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = for_millis};
+    delivery_profile_t course;
+
+    TEST_ASSERT_TRUE(delivery_profile_init(&course, points, 2u, end, served_at));
+    return course;
+}
+
+/*
+ * The largest rate this machine can hold a stated target against, in
+ * millilitres per second.
+ *
+ * Asked of admission rather than worked out here. Admission already puts
+ * exactly this question to the plant description -- it stands a model up, holds
+ * the heater at full scale against the draw a course asks for, and refuses the
+ * pair when the water settles below the target -- so the largest admitted rate
+ * is the largest the machine holds, by the same probe and the same comparison
+ * the machine itself would make. A figure written into this file instead would
+ * be a second answer to that question, and would go on being drawn after the
+ * description's element or pump was corrected.
+ *
+ * The search is a bisection between a rate that draws nothing, which is
+ * admitted on any machine, and full pump scale, which settles far below any
+ * drinking temperature and is refused. Each trial is put to a copy of a
+ * brought-up instance so the search leaves nothing behind on the one the run
+ * will use.
+ */
+static float largest_rate_the_machine_holds(float target_c)
+{
+    control_state_t asking;
+
+    TEST_ASSERT_TRUE(control_init(&asking, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&asking, target_c));
+
+    float admitted = 0.0f;
+    float refused = full_scale_flow_ml_per_s();
+
+    /*
+     * Enough halvings of the pump's full-scale range to settle the answer well
+     * inside a thousandth of a millilitre per second, which is finer than the
+     * permille the level is eventually quantised to.
+     */
+    for (unsigned narrowing = 0u; narrowing < 24u; narrowing++) {
+        const float rate = (admitted + refused) * 0.5f;
+        control_state_t trying = asking;
+        control_admission_t admission;
+        delivery_profile_t trial =
+            steady_course_of(rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+        if (control_command_delivery_reporting(&trying, &trial, &admission)) {
+            admitted = rate;
+        } else {
+            TEST_ASSERT_EQUAL_MESSAGE(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound,
+                                      "the search was stopped by a bound other than the machine's "
+                                      "authority against the draw, so it is not measuring what it "
+                                      "claims to");
+            refused = rate;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(admitted > 0.0f,
+                             "this machine holds its target against no draw at all, so there is no "
+                             "hot water delivery to run");
+    return admitted;
+}
+
+/* How long a long black's worth of water takes to pour at a given rate. */
+static uint32_t long_black_draw_millis(float rate_ml_per_s)
+{
+    return (uint32_t)lroundf((LONG_BLACK_HOT_WATER_ML / rate_ml_per_s) * 1000.0f);
+}
+
+/*
+ * Bring the loop up on a rested machine at the brew target and leave it
+ * standing.
+ *
+ * Rested means what it says: the casting and the water on its way to the group
+ * both at the temperature that was asked for, which is where a machine that has
+ * been switched on and left alone ends up, and where a machine that has just
+ * poured anything does not.
+ */
+static void stand_the_machine_rested(void)
+{
+    bring_the_loop_up(&parameters, &parameters, BREW_TARGET_C, BREW_TARGET_C);
+    for (unsigned step = 0u; step < SETTLING_STEPS; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+}
+
+/*
+ * Draw a long black's worth of hot water through the closed loop, and answer
+ * how much of it the machine actually moved.
+ *
+ * The draw is commanded as an ordinary delivery and advanced step by step
+ * through the same harness every other run here uses, so what it leaves behind
+ * is a consequence of the casting, the pump and the element rather than a
+ * figure this file chose. The volume is accumulated from the plant's own
+ * reported flow rather than from the course, because the course is what was
+ * asked for and the question is what moved.
+ *
+ * The seam is asked, before anything is commanded, whether a delivery at the
+ * point this course names draws the mass the group draws. That answer is what
+ * says a recovery is owed at all: against a structure serving its two points
+ * from two masses it comes back false, and a run built on it would be measuring
+ * a recovery from nothing. It is asserted here rather than left to the unit
+ * cases, so the question is load-bearing in the run that carries the claim and
+ * not only in the tests written about the question itself.
+ */
+static float draw_hot_water_through_the_loop(float rate_ml_per_s)
+{
+    delivery_profile_t draw =
+        steady_course_of(rate_ml_per_s, long_black_draw_millis(rate_ml_per_s),
+                         PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    float moved_ml = 0.0f;
+    bool contends = false;
+
+    TEST_ASSERT_TRUE(control_delivery_contends_with_the_group(&draw, &contends));
+    TEST_ASSERT_TRUE_MESSAGE(contends,
+                             "the seam answers that a draw at this point does not touch the mass "
+                             "the group draws, so there is no recovery for the run that follows "
+                             "to be about");
+
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &draw));
+    while (control_delivery_running(&state)) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+        float flow_ml_per_s = 0.0f;
+        TEST_ASSERT_TRUE(
+            plant_model_quantity(&truth, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, &flow_ml_per_s));
+        moved_ml += flow_ml_per_s * ((float)CONTROL_STEP_INTERVAL_MS / 1000.0f);
+    }
+
+    return moved_ml;
+}
+
+/*
+ * Run the extraction and record where the water reaching the coffee was on
+ * every step of it, from first flow to last.
+ */
+static void extract_and_sample(float *outlet_c)
+{
+    const uint16_t drawing = pump_level_for(EXTRACTION_RATE_ML_PER_S);
+
+    TEST_ASSERT_TRUE(control_command_flow(&state, drawing));
+    for (unsigned step = 0u; step < EXTRACTION_STEPS; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        TEST_ASSERT_EQUAL_UINT16(drawing, hw_sim_output(ACTUATION_CHANNEL_PUMP));
+        outlet_c[step] = truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C);
+    }
+    TEST_ASSERT_TRUE(control_command_flow(&state, 0u));
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C1: The distance a post-draw demand may sit
+/// from the same demand from rest is declared data with a recorded origin.
+///
+/// The figure the control path holds a pair of runs to is the one the shipped
+/// declaration carries, answered back by the loop rather than read out of the
+/// file a second time by the suite -- two readers of one declaration can
+/// disagree about it, and a reader and the thing it is asking about cannot.
+///
+/// The shipped value is asserted against the brew-temperature band it was
+/// derived from rather than against a figure written here, so a declaration
+/// that tightened one and left the other reads as the change it is.
+static void test_the_post_draw_band_the_loop_holds_is_the_one_the_declaration_carries(void)
+{
+    int32_t band = 0;
+    int32_t brew_band = 0;
+
+    TEST_ASSERT_TRUE(control_post_draw_match_band(&state, &band));
+    TEST_ASSERT_EQUAL_INT32(tolerance.post_draw_match_band_milli_c, band);
+
+    TEST_ASSERT_TRUE(control_temperature_band(&state, &brew_band));
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(brew_band / 2, band,
+                                    "the shipped post-draw band is no longer half the "
+                                    "brew-temperature band its account derives it from");
+
+    TEST_ASSERT_FALSE(control_post_draw_match_band(NULL, &band));
+    TEST_ASSERT_FALSE(control_post_draw_match_band(&state, NULL));
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C1: The distance a post-draw demand may sit
+/// from the same demand from rest is declared data with a recorded origin.
+///
+/// Rewriting that one line changes which post-draw runs are accepted with no
+/// edit to any source file, and changes nothing about the other two bands. A
+/// figure compiled in would answer the same to both of these; a figure read off
+/// the temperature band would move with it instead of on its own.
+static void test_a_different_declaration_changes_the_post_draw_band_alone(void)
+{
+    static const char TIGHTER[] =
+        CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND
+        "post-draw-match-band = 250 milli-c @estimated Taken from a machine that has been "
+        "characterised, for the purpose of asking what the design costs at a narrower band.\n";
+    delivery_tolerance_t narrowed;
+    delivery_tolerance_error_t fault;
+    int32_t band = 0;
+    int32_t brew_band = 0;
+
+    TEST_ASSERT_TRUE(delivery_tolerance_load(TIGHTER, sizeof(TIGHTER) - 1u, &narrowed, &fault));
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &narrowed));
+    TEST_ASSERT_TRUE(control_post_draw_match_band(&state, &band));
+    TEST_ASSERT_TRUE(control_temperature_band(&state, &brew_band));
+
+    TEST_ASSERT_EQUAL_INT32(250, band);
+    TEST_ASSERT_NOT_EQUAL_INT32(tolerance.post_draw_match_band_milli_c, band);
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(1000, brew_band,
+                                    "narrowing the post-draw band moved the temperature band as "
+                                    "well, so the two are not separate figures");
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C1: The distance a post-draw demand may sit
+/// from the same demand from rest is declared data with a recorded origin.
+///
+/// The refusals that make it declared data rather than a figure with a default.
+/// A declaration omitting it is refused outright: not read back as nothing,
+/// which would hold two runs to agreeing exactly, and not filled in from the
+/// temperature band, which would be twice as loose as the design intends while
+/// still reading as declared. The over-wide case is the one that shows the
+/// admissible range is the band's own -- twenty degrees is an ordinary
+/// temperature band and is not a statement that two runs are the same drink, so
+/// a loader sharing one bound across the two would read it here.
+static void test_the_post_draw_band_is_required_and_bounded_on_its_own_terms(void)
+{
+    static const struct {
+        const char *text;
+        delivery_tolerance_fault_t fault;
+        const char *why;
+    } REFUSED[] = {
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND, DELIVERY_TOLERANCE_MISSING,
+         "a declaration missing the post-draw band was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND "post-draw-match-band = 500 milli-c\n",
+         DELIVERY_TOLERANCE_ORIGIN, "a post-draw band with no origin was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND
+         "post-draw-match-band = 0 milli-c @estimated Nothing at all.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE, "a post-draw band of nothing was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND
+         "post-draw-match-band = -250 milli-c @estimated Below nothing.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE, "a negative post-draw band was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND
+         "post-draw-match-band = 500 milli-ml-s @estimated The flow band's unit.\n",
+         DELIVERY_TOLERANCE_UNIT_MISMATCH, "a post-draw band in the flow band's unit was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND
+         "post-draw-match-band = 500 milli-c @estimated First.\n"
+         "post-draw-match-band = 400 milli-c @estimated Second.\n",
+         DELIVERY_TOLERANCE_DUPLICATE, "a post-draw band declared twice was accepted"},
+        /*
+         * Comfortably inside the temperature band's own bound and far outside
+         * this one, which is what tells the two bounds apart. A loader sharing
+         * one distance across both would read this and hold a pair of runs to a
+         * figure that admits every pair the temperature band already admits.
+         */
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND
+         "post-draw-match-band = 20000 milli-c @estimated Twenty degrees between two cups.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE,
+         "a post-draw band of twenty degrees was accepted, so the admissible range is not stated "
+         "per band"},
+    };
+
+    for (size_t which = 0u; which < sizeof(REFUSED) / sizeof(REFUSED[0]); which++) {
+        delivery_tolerance_t built;
+        delivery_tolerance_error_t fault;
+
+        TEST_ASSERT_FALSE_MESSAGE(
+            delivery_tolerance_load(REFUSED[which].text, strlen(REFUSED[which].text), &built,
+                                    &fault),
+            REFUSED[which].why);
+        TEST_ASSERT_EQUAL_MESSAGE(REFUSED[which].fault, fault.fault, REFUSED[which].why);
+    }
+
+    /*
+     * The mirror of the over-wide case above: the same twenty degrees as a
+     * temperature band is ordinary and must still be read, or a loader that
+     * simply refused the figure everywhere would pass the case above while
+     * establishing nothing about the bound being the band's own.
+     */
+    static const char ADMISSIBLE[] =
+        "brew-temperature-band = 20000 milli-c @document At the widest the grammar admits.\n"
+        CARRIED_FLOW_BAND CARRIED_MATCH_BAND;
+    delivery_tolerance_t wide_temperature;
+    delivery_tolerance_error_t admissible_fault;
+    TEST_ASSERT_TRUE_MESSAGE(
+        delivery_tolerance_load(ADMISSIBLE, sizeof(ADMISSIBLE) - 1u, &wide_temperature,
+                                &admissible_fault),
+        "a temperature band of 20000 was refused, so the post-draw band's bound is shared rather "
+        "than its own");
+    TEST_ASSERT_EQUAL_INT32(20000, wide_temperature.brew_temperature_band_milli_c);
+    TEST_ASSERT_EQUAL_INT32(500, wide_temperature.post_draw_match_band_milli_c);
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C2: Which heated mass a delivery draws from is
+/// asked of the plant seam rather than assumed.
+///
+/// The point is carried on the profile, and a profile built without one is
+/// refused where it is built rather than defaulted to the group. The value a
+/// caller with nothing to name arrives with is the vocabulary's own count, and
+/// it is refused on exactly the terms an end condition naming a quantity this
+/// build cannot evaluate already is: nothing is written, so a caller cannot go
+/// on to command a delivery whose destination nothing validated.
+static void test_a_profile_carries_its_delivery_point_and_is_refused_without_one(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 1000u};
+    delivery_profile_t profile;
+
+    TEST_ASSERT_TRUE(
+        delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT));
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, profile.served_at);
+
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_GROUP, profile.served_at);
+
+    /*
+     * Refused, and the profile left exactly as the admitted call above put it.
+     * A refusal that had written the course and left the destination behind
+     * would be a profile pointing at the group because zero is what the memory
+     * held, which is the default this refusal exists to prevent.
+     */
+    TEST_ASSERT_FALSE_MESSAGE(
+        delivery_profile_init(&profile, points, 2u, end,
+                              (plant_delivery_point_t)PLANT_DELIVERY_POINT_COUNT),
+        "a profile naming no delivery point was built rather than refused");
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_GROUP, profile.served_at);
+    TEST_ASSERT_FALSE(delivery_profile_init(&profile, points, 2u, end,
+                                            (plant_delivery_point_t)(PLANT_DELIVERY_POINT_COUNT +
+                                                                     3u)));
+
+    /* And the point survives being commanded: the control path holds what it was given. */
+    delivery_profile_t at_the_spout;
+    TEST_ASSERT_TRUE(delivery_profile_init(&at_the_spout, points, 2u, end,
+                                           PLANT_DELIVERY_POINT_HOT_WATER_SPOUT));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &at_the_spout));
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, state.delivery.served_at);
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C2: Which heated mass a delivery draws from is
+/// asked of the plant seam rather than assumed.
+///
+/// Against the structure this environment compiles, which routes both its
+/// delivery points out of one casting: the group and the spout are answered as
+/// contending, so a draw at one leaves the other somewhere a rested machine is
+/// not and there is a recovery to account for. The answer is put to the seam
+/// from the point the profile carries, so a build against a structure that
+/// declares its points on separate masses answers otherwise -- which is what
+/// the suite running against that structure asserts, and is why this is a
+/// question asked rather than an arrangement compiled in.
+///
+/// A point the linked structure does not serve is refused rather than answered.
+/// A caller has to be able to tell "this machine does not serve that point"
+/// from "that point does not contend with the group", because the second is a
+/// statement about contention on a machine that cannot make the delivery at
+/// all.
+static void test_contention_with_the_group_is_asked_of_the_seam(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 1000u};
+    delivery_profile_t at_the_spout;
+    delivery_profile_t at_the_group;
+    bool contends = false;
+
+    TEST_ASSERT_TRUE(delivery_profile_init(&at_the_spout, points, 2u, end,
+                                           PLANT_DELIVERY_POINT_HOT_WATER_SPOUT));
+    TEST_ASSERT_TRUE(
+        delivery_profile_init(&at_the_group, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+
+    TEST_ASSERT_TRUE(control_delivery_contends_with_the_group(&at_the_spout, &contends));
+    TEST_ASSERT_TRUE_MESSAGE(contends,
+                             "this structure serves both points from one casting, and the control "
+                             "path was told they do not contend");
+
+    TEST_ASSERT_TRUE(control_delivery_contends_with_the_group(&at_the_group, &contends));
+    TEST_ASSERT_TRUE_MESSAGE(contends, "the group does not contend with itself");
+
+    /*
+     * The answer follows the seam and not a value written here: a structure's
+     * own report of which mass stands behind each point is what
+     * control_delivery_contends_with_the_group composes its answer from.
+     */
+    plant_heated_mass_id_t group_mass = 0u;
+    plant_heated_mass_id_t spout_mass = 0u;
+    TEST_ASSERT_TRUE(plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_GROUP, &group_mass));
+    TEST_ASSERT_TRUE(
+        plant_structure_delivery_point_mass(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, &spout_mass));
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(group_mass, spout_mass,
+                                    "the structure declares two masses, so the contending answer "
+                                    "above did not come from it");
+
+    TEST_ASSERT_FALSE(control_delivery_contends_with_the_group(NULL, &contends));
+    TEST_ASSERT_FALSE(control_delivery_contends_with_the_group(&at_the_group, NULL));
+
+    /*
+     * A profile assembled without the constructor, naming a point outside the
+     * vocabulary and therefore one no structure serves. It is the only way to
+     * reach the refusal, because delivery_profile_init admits no such point --
+     * which is the point of asserting it here rather than assuming the two
+     * refusals cover each other.
+     */
+    delivery_profile_t nowhere = at_the_group;
+    nowhere.served_at = (plant_delivery_point_t)PLANT_DELIVERY_POINT_COUNT;
+    TEST_ASSERT_FALSE_MESSAGE(control_delivery_contends_with_the_group(&nowhere, &contends),
+                              "a point this structure does not serve was answered rather than "
+                              "refused");
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C3: The state a draw leaves is carried into the
+/// delivery that follows rather than restarted.
+///
+/// The reconstruction is read on the last step of the draw and on the first
+/// step of the delivery commanded straight after it, and the two may differ by
+/// no more than a single step's advance -- measured as the largest movement any
+/// one step of the draw itself produced, so the bound comes off the machine
+/// rather than out of this file.
+///
+/// The obvious wrong implementation is the one that reads as tidier: bringing
+/// the control path up again between the two deliveries. That puts the two
+/// readings tens of degrees apart, because a fresh instance starts from
+/// whatever the sensor says the casting is rather than from the water on its
+/// way to the group, and it is asserted against here.
+static void test_the_state_a_draw_leaves_is_carried_into_the_next_delivery(void)
+{
+    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
+    stand_the_machine_rested();
+
+    delivery_profile_t draw = steady_course_of(rate, long_black_draw_millis(rate),
+                                             PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &draw));
+
+    float previous_c = reconstruction();
+    float largest_single_step_c = 0.0f;
+    while (control_delivery_running(&state)) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+        const float now_c = reconstruction();
+        const float moved_c = fabsf(now_c - previous_c);
+        if (moved_c > largest_single_step_c) {
+            largest_single_step_c = moved_c;
+        }
+        previous_c = now_c;
+    }
+
+    const float at_the_draws_last_step_c = previous_c;
+    TEST_ASSERT_TRUE_MESSAGE(largest_single_step_c > 0.0f,
+                             "the reconstruction never moved during the draw, so a bound taken "
+                             "from its movement bounds nothing");
+
+    /*
+     * Back to back: the next delivery is commanded on the same instance with
+     * nothing else in between, which is the case the criterion names as
+     * admissible and the one that makes the comparison below sharpest.
+     */
+    delivery_profile_t shot =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 30000u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &shot));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    const float at_the_next_deliverys_first_step_c = reconstruction();
+    char message[200];
+    (void)snprintf(message, sizeof(message),
+                   "the reconstruction moved %.4f degrees across the end of the draw, against a "
+                   "single step's advance of %.4f, so the delivery that followed did not start "
+                   "from the state the draw left",
+                   (double)fabsf(at_the_next_deliverys_first_step_c - at_the_draws_last_step_c),
+                   (double)largest_single_step_c);
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(largest_single_step_c, at_the_draws_last_step_c,
+                                     at_the_next_deliverys_first_step_c, message);
+
+    /*
+     * And the state carried across is one a rested machine is not in, so this
+     * is a statement about a draw having happened rather than about two
+     * readings of an undisturbed machine agreeing.
+     */
+    int32_t band_milli_c = 0;
+    TEST_ASSERT_TRUE(control_temperature_band(&state, &band_milli_c));
+    TEST_ASSERT_TRUE_MESSAGE(
+        fabsf(truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C) - BREW_TARGET_C) >
+            (float)band_milli_c / 1000.0f,
+        "the draw left the casting inside the band it started in, so nothing was carried across "
+        "that a rested start would not also have given");
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C4: Recovery between deliveries is driven by
+/// the loop already built rather than by a second law.
+///
+/// The commanded target stands across the end of a delivery, so the heater goes
+/// on being driven while nothing is being delivered rather than waiting for the
+/// next command. A control path that forgot the target when a delivery ended
+/// would leave the casting to cool until somebody asked for something, which is
+/// the arrangement this rules out.
+static void test_the_target_stands_and_the_heater_is_driven_between_deliveries(void)
+{
+    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
+    stand_the_machine_rested();
+    (void)draw_hot_water_through_the_loop(rate);
+
+    TEST_ASSERT_TRUE_MESSAGE(state.targeted,
+                             "the end of a delivery took the commanded target away with it");
+    TEST_ASSERT_EQUAL_FLOAT(BREW_TARGET_C, state.target_c);
+    TEST_ASSERT_FALSE(control_delivery_running(&state));
+
+    for (unsigned step = 0u; step < 500u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_PUMP),
+                                         "the pump went on being driven after the delivery ended");
+    }
+    TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER) > 0u,
+                             "the heater was not being driven between deliveries, so nothing is "
+                             "bringing the casting back");
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C4: Recovery between deliveries is driven by
+/// the loop already built rather than by a second law.
+///
+/// The drawn component of the feedforward falls away with the pump, so the loop
+/// stops answering a draw that has ended. The counterfactual is the whole
+/// content of this test: the same machine, the same draw, and then the loop
+/// told a pump level is still commanded while the machine draws nothing --
+/// which is exactly a loop whose drawn term did not fall away. That run leaves
+/// the machine climbing past its target instead of returning to it, by many
+/// times the band it is held to, which is what makes the dependence more than a
+/// restatement of the loop's existing tuning.
+///
+/// No coefficient is introduced for the post-draw case, and none is needed:
+/// both runs here are driven by the same proportional, integral and feedforward
+/// terms an extraction is held by, and what separates them is only what the
+/// feedforward is told about the pump. That there is no second law to find is
+/// held by the control declaration's own gate, which refuses a figure in the
+/// control logic accounting for itself nowhere; this asserts the behaviour that
+/// makes the absence sufficient.
+static void test_recovery_after_a_draw_needs_no_law_beyond_the_loop(void)
+{
+    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    const uint16_t drawn_level = pump_level_for(rate);
+    float highest_c[2] = {-1000.0f, -1000.0f};
+    float ended_at_c[2] = {0.0f, 0.0f};
+
+    for (unsigned run = 0u; run < 2u; run++) {
+        const bool go_on_answering_the_draw = (run == 1u);
+
+        stand_the_machine_rested();
+        (void)draw_hot_water_through_the_loop(rate);
+
+        for (unsigned step = 0u; step < OPERATORS_GAP_STEPS; step++) {
+            if (go_on_answering_the_draw) {
+                TEST_ASSERT_TRUE(control_command_flow(&state, drawn_level));
+            }
+
+            /*
+             * The machine draws nothing in either run: the draw is over. What
+             * differs is only what the loop believes about the pump.
+             */
+            TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(0));
+
+            const float outlet_c = truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C);
+            if (outlet_c > highest_c[run]) {
+                highest_c[run] = outlet_c;
+            }
+            ended_at_c[run] = outlet_c;
+        }
+    }
+
+    int32_t band_milli_c = 0;
+    TEST_ASSERT_TRUE(control_temperature_band(&state, &band_milli_c));
+    const float band_c = (float)band_milli_c / 1000.0f;
+
+    /*
+     * What is asserted of the ordinary run is that it comes back to the target,
+     * not that it never passes above it on the way. Between deliveries the
+     * machine is delivering nothing, so the band a delivery is held to is not a
+     * claim about this stretch: a loop bringing a depleted casting back through
+     * a twenty-second transport lag goes above the target and comes down again,
+     * and holding that stretch to the delivery band would be asserting
+     * something no criterion asks for. Where it has to be inside that band is
+     * the extraction that follows, which the run below holds it to.
+     */
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(band_c, BREW_TARGET_C, ended_at_c[0],
+                                     "the loop had not brought the machine back to the target by "
+                                     "the time the next demand would be asked for");
+    TEST_ASSERT_TRUE_MESSAGE(ended_at_c[1] > BREW_TARGET_C + (5.0f * band_c),
+                             "a loop that went on answering a draw that had ended still came back "
+                             "to the target, so the drawn term's dependence on the commanded pump "
+                             "level is doing nothing");
+    TEST_ASSERT_TRUE_MESSAGE(highest_c[1] > highest_c[0] + (5.0f * band_c),
+                             "the run that went on answering the ended draw climbed no further "
+                             "past the target than the one that stopped answering it");
+}
+
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C6: An extraction following a hot water draw
+/// stays within the declared distance of one pulled from rest.
+///
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C7: The disturbed state is produced by running
+/// the draw through the closed loop rather than by writing plant state.
+///
+/// Two runs against one machine description: the same extraction from the
+/// settled machine, and that extraction after a long black's worth of hot water
+/// has been drawn through the closed loop at the largest rate this machine can
+/// hold its target against. Both are sampled at every step from first flow to
+/// last and compared point by point, so a post-draw run that averages onto the
+/// rested one while wandering fails -- and each is held to the brew-temperature
+/// band on its own account, so this cannot be met by two runs that are equally
+/// wrong.
+///
+/// Every figure the draw rests on comes from somewhere other than this file.
+/// The rate is the largest admission will accept against the commanded target,
+/// which is the same probe of the same description the machine itself uses to
+/// refuse a delivery it cannot make; the volume is what a served long black
+/// asks for; the duration is what the two of them imply, a little over a minute
+/// of continuous flow rather than the half-minute an extraction takes. The band
+/// is read back from the loop rather than written here, so tightening the
+/// declaration alone decides which pairs of runs this accepts.
+///
+/// The draw is commanded as an ordinary delivery and advanced step by step
+/// against the truth plant the estimator does not own, which is what makes the
+/// state the extraction starts from a consequence of the casting, the pump and
+/// the element. Writing that state through the model seam instead would satisfy
+/// every assertion below about tracking and would establish nothing about a
+/// draw, so the volume the machine actually moved is checked against the volume
+/// that was asked for: a run that had not really drawn anything would still be
+/// disturbed by whatever had been written into it, and would not have moved two
+/// hundred millilitres.
+static void test_an_extraction_after_a_draw_matches_one_pulled_from_rest(void)
+{
+    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    int32_t match_band_milli_c = 0;
+    int32_t brew_band_milli_c = 0;
+
+    stand_the_machine_rested();
+    TEST_ASSERT_TRUE(control_post_draw_match_band(&state, &match_band_milli_c));
+    TEST_ASSERT_TRUE(control_temperature_band(&state, &brew_band_milli_c));
+    const float match_band_c = (float)match_band_milli_c / 1000.0f;
+    const float brew_band_c = (float)brew_band_milli_c / 1000.0f;
+    extract_and_sample(rested_extraction_c);
+
+    stand_the_machine_rested();
+    const float moved_ml = draw_hot_water_through_the_loop(rate);
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1.0f, LONG_BLACK_HOT_WATER_ML, moved_ml,
+                                     "the machine did not move the water the draw asked for, so "
+                                     "the state the extraction follows was not produced by a draw");
+
+    /*
+     * The casting is left somewhere a rested machine is not, which is what the
+     * extraction that follows has to be served from. Asserted rather than
+     * assumed: a draw that left the machine exactly where it found it would
+     * make everything below pass for free.
+     */
+    TEST_ASSERT_TRUE_MESSAGE(
+        fabsf(truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C) - BREW_TARGET_C) >
+            brew_band_c,
+        "the draw left the casting inside the band, so there is no disturbance for the run below "
+        "to recover from");
+
+    for (unsigned step = 0u; step < OPERATORS_GAP_STEPS; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+    extract_and_sample(post_draw_extraction_c);
+
+    float furthest_apart_c = 0.0f;
+    for (unsigned step = 0u; step < EXTRACTION_STEPS; step++) {
+        char message[220];
+
+        const float apart_c = fabsf(post_draw_extraction_c[step] - rested_extraction_c[step]);
+        if (apart_c > furthest_apart_c) {
+            furthest_apart_c = apart_c;
+        }
+
+        (void)snprintf(message, sizeof(message),
+                       "at step %u of the extraction, the run following the draw was %.4f degrees "
+                       "from the rested one, against a declared distance of %.4f",
+                       step, (double)apart_c, (double)match_band_c);
+        TEST_ASSERT_TRUE_MESSAGE(apart_c <= match_band_c, message);
+
+        (void)snprintf(message, sizeof(message),
+                       "at step %u the rested run was %.4f degrees from the target and the run "
+                       "following the draw was %.4f, against a band of %.4f",
+                       step, (double)fabsf(rested_extraction_c[step] - BREW_TARGET_C),
+                       (double)fabsf(post_draw_extraction_c[step] - BREW_TARGET_C),
+                       (double)brew_band_c);
+        TEST_ASSERT_TRUE_MESSAGE(fabsf(rested_extraction_c[step] - BREW_TARGET_C) <= brew_band_c,
+                                 message);
+        TEST_ASSERT_TRUE_MESSAGE(fabsf(post_draw_extraction_c[step] - BREW_TARGET_C) <= brew_band_c,
+                                 message);
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(furthest_apart_c > 0.0f,
+                             "the two runs were identical at every step, so the draw reached "
+                             "nothing the extraction after it depends on");
 }
 
 int main(void)
@@ -4471,7 +5339,7 @@ int main(void)
     RUN_TEST(test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees);
     RUN_TEST(test_a_delivery_nothing_measured_reports_no_account);
     RUN_TEST(test_a_failed_reading_that_recovers_resumes_the_comparison);
-    RUN_TEST(test_both_bands_come_back_in_their_own_units);
+    RUN_TEST(test_every_band_comes_back_in_its_own_unit);
     RUN_TEST(test_the_harness_publishes_the_truth_plants_flow_at_the_seam);
     RUN_TEST(test_a_delivery_on_an_untargeted_machine_does_not_advance);
     RUN_TEST(test_an_unevaluable_end_condition_ends_the_delivery_immediately);
@@ -4494,5 +5362,14 @@ int main(void)
     RUN_TEST(test_a_target_above_the_saturation_ceiling_is_refused);
     RUN_TEST(test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused);
     RUN_TEST(test_an_admissible_delivery_reaches_the_machine_exactly_as_before);
+    RUN_TEST(test_the_post_draw_band_the_loop_holds_is_the_one_the_declaration_carries);
+    RUN_TEST(test_a_different_declaration_changes_the_post_draw_band_alone);
+    RUN_TEST(test_the_post_draw_band_is_required_and_bounded_on_its_own_terms);
+    RUN_TEST(test_a_profile_carries_its_delivery_point_and_is_refused_without_one);
+    RUN_TEST(test_contention_with_the_group_is_asked_of_the_seam);
+    RUN_TEST(test_the_state_a_draw_leaves_is_carried_into_the_next_delivery);
+    RUN_TEST(test_the_target_stands_and_the_heater_is_driven_between_deliveries);
+    RUN_TEST(test_recovery_after_a_draw_needs_no_law_beyond_the_loop);
+    RUN_TEST(test_an_extraction_after_a_draw_matches_one_pulled_from_rest);
     return UNITY_END();
 }

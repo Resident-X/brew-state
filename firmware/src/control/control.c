@@ -868,13 +868,21 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     }
 
     /*
-     * The band is put into the state before anything can refuse, so that an
+     * The bands are put into the state before anything can refuse, so that an
      * instance which failed to come up still answers what it was given rather
      * than whatever the memory it was declared in contained. Given none it
      * answers nothing, which is the honest answer and is why the refusal below
      * follows rather than a band being assumed.
+     *
+     * Copied from a zeroed instance of the type rather than field by field, on
+     * the same terms the description above is: which bands the record carries
+     * grows as the deliveries this software serves are held to more things, and
+     * a list of assignments here is the one that goes on compiling while a band
+     * added later answers with whatever the memory contained.
      */
-    state->tolerance.brew_temperature_band_milli_c = 0;
+    static const delivery_tolerance_t NOTHING_DECLARED;
+
+    state->tolerance = NOTHING_DECLARED;
     if (tolerance != NULL) {
         state->tolerance = *tolerance;
     }
@@ -1002,6 +1010,33 @@ bool control_temperature_band(const control_state_t *state, int32_t *band_milli_
 
     *band_milli_c = state->tolerance.brew_temperature_band_milli_c;
     return true;
+}
+
+bool control_post_draw_match_band(const control_state_t *state, int32_t *band_milli_c)
+{
+    if (state == NULL || band_milli_c == NULL) {
+        return false;
+    }
+
+    *band_milli_c = state->tolerance.post_draw_match_band_milli_c;
+    return true;
+}
+
+bool control_delivery_contends_with_the_group(const delivery_profile_t *profile, bool *contends)
+{
+    if (profile == NULL || contends == NULL) {
+        return false;
+    }
+
+    /*
+     * Put to the seam rather than answered here. This machine routes both its
+     * deliveries out of one casting through a diverter, so an answer written
+     * into this file would be right about this machine and would go on being
+     * given on a machine with two heated masses, where the two deliveries do
+     * not contend at all and no recovery is owed between them.
+     */
+    return plant_delivery_points_share_mass(profile->served_at, PLANT_DELIVERY_POINT_GROUP,
+                                            contends);
 }
 
 bool control_delivery_departure(const control_state_t *state, control_departure_t *departure)
