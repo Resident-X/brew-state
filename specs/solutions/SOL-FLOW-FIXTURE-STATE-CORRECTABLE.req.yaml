@@ -1,0 +1,23 @@
+id: SOL-FLOW-FIXTURE-STATE-CORRECTABLE
+type: deliverable
+category: solution
+title: The brew-temperature state flow_fixture reconstructs is the one the estimator corrects against
+status: active
+version: 1
+text: |
+  `native_flow_fixture`'s host exercise (`firmware/src/app/native/main.c`) fails `task fw:run` on a clean `origin/main` checkout with "81 expectation(s) unmet", reproduced independently of any other in-flight work. The failure traces to a state-lookup mismatch between two paths that are meant to answer for the same reconstructed quantity.
+
+  `control_init` accepts `flow_fixture` because its up-front reachability check (`estimator_init`, probing `STATE_FOR_RECONSTRUCTION[ESTIMATOR_STATE_BREW_TEMPERATURE_C]`, which is `PLANT_STATE_BREW_OUTLET_TEMPERATURE_C`) finds a state `flow_fixture`'s `plant_model_state` answers. The estimator's own per-step correction (`correct_against`, via `state_observed_by(PLANT_QUANTITY_BREW_TEMPERATURE_C)`) reads back a different state for the identical reconstructed quantity, `PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C`, which `flow_fixture`'s `plant_model_state` explicitly refuses. This is not `flow_fixture` alone failing to answer what every other structure answers: `fixture` and `boiler` each answer only `PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C` and deliberately refuse `PLANT_STATE_BREW_OUTLET_TEMPERATURE_C`, which is why `control_init`'s own reachability check -- which probes for the outlet state -- cleanly refuses both of them at start-up rather than admitting them into a run that later faults; `thermoblock` is the only structure that answers both. `flow_fixture` is the sole structure that answers the outlet state alone and refuses the heated-mass state -- the mirror image of `fixture`/`boiler` -- which is exactly the one combination the reachability check cannot catch, because it only ever probes the outlet side.
+
+  The consequence: `correct_against` returns false on every step run against `flow_fixture`, so the estimator never records the brew-temperature channel as observed, however many valid readings the sensor supplies. The unobserved duration grows without bound; once it exceeds `flow_fixture.limits`' declared loss-tolerance window of 500ms (50 steps at the 10ms control interval), the reconstructed state starts reporting unusable and the control step latches a fault that nothing in a run ever clears. From that point every subsequent control step reports fault-latched regardless of the sensor, which is what the host exercise's cascading failures (an actuating step that never actuates, a heater never driven, a single missing reading reported as bringing the machine down, and a reading gone for good ridden indefinitely) all trace back to.
+
+  What has to hold once this is corrected: a structure `control_init` accepts as able to reconstruct a state answers that same state consistently to every consumer path that reads it, so a continuously valid required sensor reading is actually incorporated by the estimator's correction rather than silently discarded, and does not by itself run the machine into a fault it can never leave. Which of the plant-structure interface, the estimator's quantity-to-state correspondence, or `flow_fixture`'s own implementation is the right place to restore that consistency is not decided here.
+rationale: |
+  Recorded as a maintenance item rather than fixed in place because the defect was found while investigating an unrelated worktree's pre-existing `task fw:run` failure, and per this project's discipline a mid-build finding is durably recorded in the graph rather than left to PR prose. The defect is real and reproducible on `origin/main` with none of that branch's changes applied.
+
+  Left open which layer restores the consistency (the shared interface's state surface, the estimator's channel-to-state table, or `flow_fixture`'s own implementation) because more than one closes the gap and none was evaluated here: this node's job is to make the finding durable and traceable to the requirement criterion it violates, not to choose an implementation. That choice belongs to whoever picks this item up.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
