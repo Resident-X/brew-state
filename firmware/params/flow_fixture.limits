@@ -18,6 +18,7 @@ steam-temperature = -10000 .. 250000
 brew-pressure = -1000 .. 20000
 steam-pressure = -1000 .. 20000
 flow = -1000 .. 20000
+steam-knob = 0 .. 1000
 
 loss-tolerance-window-ms = 500
 excursion-bound-milli-c = 15000

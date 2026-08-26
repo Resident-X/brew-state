@@ -85,10 +85,27 @@ static void report_from(const plant_model_t *model)
          * command.
          */
         [HW_SENSOR_FLOW] = PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
+        /*
+         * The steam knob's channel measures no quantity, so there is none to
+         * stand it up from and it is answered here with the count rather than
+         * left to take the zeroth entry -- which is a real quantity, and would
+         * have the knob report the brew casting's temperature. The loop below
+         * skips exactly that entry and stands the channel up at the seam's own
+         * cleared value instead: a suite that has not turned the knob has a
+         * machine whose knob is not turned, which is a different statement
+         * from a channel nobody stood up.
+         */
+        [HW_SENSOR_STEAM_KNOB] = PLANT_QUANTITY_COUNT,
     };
 
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         float value = 0.0f;
+
+        if (QUANTITY_FOR_CHANNEL[channel] == PLANT_QUANTITY_COUNT) {
+            hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_VALID,
+                              HW_READING_DISCRETE_CLEAR);
+            continue;
+        }
         TEST_ASSERT_TRUE(plant_model_quantity(model, QUANTITY_FOR_CHANNEL[channel], &value));
         hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_VALID, (int32_t)lroundf(value * 1000.0f));
     }
@@ -516,6 +533,15 @@ static void test_every_channel_reports_its_own_difference(void)
         [HW_SENSOR_BREW_PRESSURE] = -2500,
         [HW_SENSOR_STEAM_PRESSURE] = 750,
         [HW_SENSOR_FLOW] = -1200,
+        /*
+         * The knob's channel is offset by nothing, because there is nothing it
+         * could be offset from: it carries one of two answers rather than a
+         * figure, and moving it a little would produce a reading the seam does
+         * not admit rather than a discrepancy. It is still driven below, at the
+         * seam's cleared value, so it is not the one channel this test leaves
+         * alone.
+         */
+        [HW_SENSOR_STEAM_KNOB] = 0,
     };
     static const plant_quantity_t QUANTITY_FOR_CHANNEL[HW_SENSOR_CHANNEL_COUNT] = {
         [HW_SENSOR_BREW_TEMPERATURE] = PLANT_QUANTITY_BREW_TEMPERATURE_C,
@@ -523,6 +549,13 @@ static void test_every_channel_reports_its_own_difference(void)
         [HW_SENSOR_BREW_PRESSURE] = PLANT_QUANTITY_BREW_PRESSURE_BAR,
         [HW_SENSOR_STEAM_PRESSURE] = PLANT_QUANTITY_STEAM_PRESSURE_BAR,
         [HW_SENSOR_FLOW] = PLANT_QUANTITY_BREW_FLOW_ML_PER_S,
+        /*
+         * Answered with the count rather than left to take the zeroth entry,
+         * which is a real quantity: the knob's channel measures none, and the
+         * loop below reads that answer and stands the channel up at the seam's
+         * own cleared value instead of at a prediction that does not exist.
+         */
+        [HW_SENSOR_STEAM_KNOB] = PLANT_QUANTITY_COUNT,
     };
     /*
      * Whether each channel is one a residual can exist for at all. Every
@@ -538,6 +571,7 @@ static void test_every_channel_reports_its_own_difference(void)
         [HW_SENSOR_BREW_PRESSURE] = true,
         [HW_SENSOR_STEAM_PRESSURE] = true,
         [HW_SENSOR_FLOW] = false,
+        [HW_SENSOR_STEAM_KNOB] = false,
     };
 
     estimator_t estimator;
@@ -558,6 +592,13 @@ static void test_every_channel_reports_its_own_difference(void)
 
     for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
         float predicted = 0.0f;
+
+        if (QUANTITY_FOR_CHANNEL[channel] == PLANT_QUANTITY_COUNT) {
+            predicted_milli[channel] = HW_READING_DISCRETE_CLEAR;
+            hw_sim_set_sensor((hw_sensor_channel_t)channel, HW_READING_VALID,
+                              HW_READING_DISCRETE_CLEAR);
+            continue;
+        }
         TEST_ASSERT_TRUE(
             plant_model_quantity(&uncorrected, QUANTITY_FOR_CHANNEL[channel], &predicted));
         predicted_milli[channel] = (int32_t)lroundf(predicted * 1000.0f);
@@ -770,6 +811,7 @@ static void test_each_declared_bound_is_believed_and_the_step_beyond_it_is_not(v
                                       "brew-pressure = -1000 .. 20000\n"
                                       "steam-pressure = -1000 .. 20000\n"
                                       "flow = -1000 .. 20000\n"
+                                      "steam-knob = 0 .. 1000\n"
                                       "loss-tolerance-window-ms = 500\n"
                                       "excursion-bound-milli-c = 15000\n";
     static const struct {
@@ -887,6 +929,7 @@ static void test_the_reconstruction_is_refused_past_its_declared_excursion_bound
                                       "brew-pressure = -1000 .. 20000\n"
                                       "steam-pressure = -1000 .. 20000\n"
                                       "flow = -1000 .. 20000\n"
+                                      "steam-knob = 0 .. 1000\n"
                                       "loss-tolerance-window-ms = 4000000\n"
                                       "excursion-bound-milli-c = 250\n";
     const estimator_limits_t tight = limits_from(DECLARATION);
@@ -970,6 +1013,7 @@ static void test_a_state_becomes_unusable_past_the_window_and_recovers_after_it(
                                       "brew-pressure = -1000 .. 20000\n"
                                       "steam-pressure = -1000 .. 20000\n"
                                       "flow = -1000 .. 20000\n"
+                                      "steam-knob = 0 .. 1000\n"
                                       "loss-tolerance-window-ms = 100\n"
                                       "excursion-bound-milli-c = 250000\n";
     const estimator_limits_t brief = limits_from(DECLARATION);
@@ -1079,6 +1123,7 @@ static void test_a_window_or_a_distance_outside_what_it_admits_is_refused(void)
                        "brew-pressure = -1000 .. 20000\n"
                        "steam-pressure = -1000 .. 20000\n"
                        "flow = -1000 .. 20000\n"
+                       "steam-knob = 0 .. 1000\n"
                        "%s",
                        CASES[i].figures);
 
@@ -1158,6 +1203,17 @@ static void test_each_channel_corrects_the_state_its_own_reading_is_measured_aga
          * silently throw away while reporting agreement.
          */
         {HW_SENSOR_FLOW, 3000, false, false},
+        /*
+         * The steam knob's channel is corrected against nothing either, and
+         * for a reason that could never stop applying, unlike the flow
+         * channel's above: it reports that a contact is made rather than how
+         * much of a quantity there is, so there is no state for a correction
+         * to land on and no unit the subtraction would be in. It is driven at
+         * the seam's own set value, which is inside the span the limits
+         * declaration admits for it, so what is asserted here is the absence
+         * of a residual rather than the refusal of an implausible reading.
+         */
+        {HW_SENSOR_STEAM_KNOB, HW_READING_DISCRETE_SET, false, false},
     };
 
     /* Every channel the machine has is driven, not merely the ones listed. A

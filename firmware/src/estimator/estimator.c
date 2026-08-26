@@ -73,6 +73,19 @@ static bool quantity_measured_by(hw_sensor_channel_t channel, plant_quantity_t *
      */
     case HW_SENSOR_FLOW:
         return false;
+    /*
+     * Whether the steam knob is turned is not a measurement of a quantity at
+     * all, so it is offered to no correction. The vocabulary behind the plant
+     * seam carries quantities a machine has in some amount, and the answer
+     * this channel gives is that a thing is so or is not -- there is no state
+     * it could be subtracted from, and no unit the subtraction would be in.
+     * The refusal is therefore of a different kind from the flow channel's
+     * above, which does name a quantity and is refused only because nothing
+     * integrates it: an instrument fitted later could give that one a state to
+     * correct, and no instrument could ever give this one one.
+     */
+    case HW_SENSOR_STEAM_KNOB:
+        return false;
     /* Not a channel, and so a measurement of nothing. */
     case HW_SENSOR_CHANNEL_COUNT:
         return false;

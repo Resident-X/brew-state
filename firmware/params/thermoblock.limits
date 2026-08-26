@@ -61,6 +61,22 @@ steam-pressure = -1000 .. 20000 @estimated Estimated on the same basis as the br
 # a delivery is running fast.
 flow = -1000 .. 20000 @estimated Estimated from the rate the brew pump is taken to command into an open path -- pump.flow_ml_per_s in thermoblock.params, 7 ml/s, itself a judgement rather than a reading -- with the high set at nearly three times it so that no rate this machine can develop is refused, and the low set below zero to admit the small reverse movement a brew path shows as it relaxes. The fitted meter's part, position and resolution are not yet established, so this is not the range of a chosen part and it is not a measurement of anything.
 
+# Whether the steam control knob is turned, as the microswitch behind it
+# reports it. A contact is either made or not, so the two ends of the span are
+# the two answers the seam spells for a discrete channel and there is nothing
+# between them to admit or refuse -- unlike every channel above, where the span
+# is drawn wide around a quantity that genuinely varies.
+#
+# It is declared all the same, on the same terms as every other channel,
+# because a channel carrying no bounds is the failure worth preventing whether
+# or not a reading could plausibly land outside them: an implementation that
+# reported a contact as half made would be reporting something the seam does
+# not admit, and a span that stopped at the two answers is what refuses it at
+# the same place every other absurd reading is refused. Which of the two
+# answers means the knob is turned is the seam's own vocabulary rather than
+# this file's, so nothing here says it.
+steam-knob = 0 .. 1000 @estimated Read off the hardware seam's own spelling of a discrete reading rather than estimated from anything about this machine: the low end is the seam's cleared value and the high end its set value. The microswitch itself has not been on a bench, its part is not established, and where in the knob's travel it closes is not established either -- none of which this span depends on, since a contact reports one of two answers whatever the travel that produced it.
+
 # How long a reconstructed state may go with no usable observation among the
 # channels it depends on before the estimator stops answering for it.
 #
