@@ -1,0 +1,17 @@
+id: EVD-SOL-PLANT-OUTLET-MIXING-OMISSION-STATED.C1-INSPECTION
+type: evidence
+title: Outlet lag's mixing assumption stated in thermoblock.md omissions (SOL-PLANT-OUTLET-MIXING-OMISSION-STATED.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-26T22:05:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'firmware/params/thermoblock.md#what-this-description-leaves-out (bullet: ''Whether the held water leaves in the order it entered'')'
+text: |-
+  Inspected firmware/params/thermoblock.md. A new omissions-section entry states that the outlet relation carries the held water as one well-mixed volume rather than a column leaving in entry order, that it therefore carries no transport delay and answers a change at the casting on the first step whatever the draw, states which way the error runs (a real path answers nothing for about the displacement time, so the description understates the phase a loop is working against and overstates how hard it may be driven), states that a lag read off these relations is not a bound on delay, and explicitly distinguishes itself from the existing 'how completely the drawn water equilibrates' entry, which is left standing rather than folded in. Reviewed via a fresh-context blind review against the criterion text, the parent solution's rationale, and the surrounding document for voice and scope fit; two correctness/clarity fixes from that review were applied before recording this evidence.
+links:
+  - target: SOL-PLANT-OUTLET-MIXING-OMISSION-STATED.C1
+    type: satisfies
