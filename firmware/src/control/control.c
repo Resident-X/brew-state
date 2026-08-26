@@ -77,6 +77,33 @@
 #define CONTROL_SETTLING_INTERVAL_MS 3600000u
 
 /*
+ * The three figures the read-ahead lead probe rests on. Like the two above,
+ * neither is a coefficient of the control law: none is multiplied by an error
+ * or added to a duty, and all three answer a question about how the probe puts
+ * its question to the plant seam rather than about what the loop does with the
+ * answer.
+ */
+
+/*
+ * The artificial gap the probe parts the heated mass and the water on its way
+ * to the group by, in degrees Celsius, before reading how fast it closes.
+ */
+#define CONTROL_LEAD_PROBE_OFFSET_C 10.0f
+
+/*
+ * The fraction of that gap still outstanding once the probe calls it closed --
+ * the ordinary definition of a first-order system's own time constant, and not
+ * one this file declares for itself.
+ */
+#define CONTROL_LEAD_PROBE_CLOSED_FRACTION 0.367879441f
+
+/*
+ * How long the probe is willing to go on stepping before it gives up and
+ * answers with no lead, in milliseconds.
+ */
+#define CONTROL_LEAD_PROBE_MAX_MS 60000u
+
+/*
  * What was commanded over the interval just elapsed, for the estimator to
  * advance under.
  *
@@ -144,6 +171,60 @@ static uint16_t as_drive_level(float permille)
 }
 
 /*
+ * The pump level the drawn-load term is scaled by for this step.
+ *
+ * A running delivery's course is read a lead ahead of where the delivery
+ * actually is, rather than at the elapsed time the pump is actually being
+ * driven at this step. The lead is the one probe_read_ahead_lead_millis
+ * established when the delivery was admitted and does not move as the course
+ * runs, so it is read from the state rather than probed again here.
+ *
+ * A machine with no delivery running has no course to read ahead of: what
+ * commands the pump is a level a caller set directly, which carries no future
+ * for a lead to be taken against, so the level fed to the term is the one
+ * presently commanded -- the same read this file always made before this
+ * term existed.
+ *
+ * The read is clipped at the delivery's own end condition rather than left to
+ * hold the course's last rate on: a lead read past the end asks the heater
+ * for the energy of a draw that will have stopped, which is the case this
+ * machine is least able to survive quietly.
+ */
+static uint16_t drawn_load_pump_permille(const control_state_t *state)
+{
+    if (!state->delivery_running) {
+        return state->commanded_pump_permille;
+    }
+
+    /*
+     * Saturated rather than wrapped: an elapsed clock within one lead of
+     * wrapping is a delivery that has been running for weeks, which nothing
+     * else in this file anticipates either, but a wrapped sum would read as
+     * early in the course rather than past its end -- the one outcome the
+     * clip below exists to rule out.
+     *
+     * The widest value is written out rather than reached for as UINT32_MAX,
+     * on the same terms is_a_temperature and as_milli above already refuse
+     * the standard library for: this file is compiled byte-identically for
+     * the host and the target, and stdint.h's own widest-value macro is not
+     * the same text on both.
+     */
+    const uint32_t read_at_millis =
+        (state->delivery_lead_millis > (0xFFFFFFFFu - state->delivery_elapsed_millis))
+            ? 0xFFFFFFFFu
+            : state->delivery_elapsed_millis + state->delivery_lead_millis;
+
+    if (delivery_profile_ended(&state->delivery, read_at_millis)) {
+        return 0u;
+    }
+
+    const float rate_ml_per_s = delivery_profile_rate_ml_per_s(&state->delivery, read_at_millis);
+    const float permille =
+        (rate_ml_per_s / state->full_scale_flow_ml_per_s) * (float)ACTUATION_FULL_SCALE;
+    return as_drive_level(permille);
+}
+
+/*
  * The heater command for one step, and the accumulated intent it leaves behind.
  *
  * The feedforward term is added before the loop looks at the error rather than
@@ -206,7 +287,7 @@ static float heater_command(control_state_t *state, float reconstruction_c, floa
     const float feedforward =
         rise_k * (CONTROL_STANDING_PERMILLE_PER_K +
                   (CONTROL_DRAWN_PERMILLE_PER_K_PER_PUMP_PERMILLE *
-                   (float)state->commanded_pump_permille));
+                   (float)drawn_load_pump_permille(state)));
 
     const float before = proportional + state->integral_permille + feedforward;
     const bool pushing_past_full = (before >= (float)ACTUATION_FULL_SCALE) && (error_k > 0.0f);
@@ -371,6 +452,7 @@ static void command_everything_off(control_state_t *state)
     state->commanded_pump_permille = 0u;
     state->delivery_running = false;
     state->delivery_elapsed_millis = 0u;
+    state->delivery_lead_millis = 0u;
     forget_departure(state);
 }
 
@@ -475,6 +557,100 @@ static bool probe_settled_brew_c(const plant_parameters_t *parameters, uint16_t 
 }
 
 /*
+ * How long the water on its way to the group takes to close on what the
+ * heated mass is doing, under a stated draw -- the lead the drawn-load term
+ * is to be read ahead by.
+ *
+ * Asked of a model stood up for the purpose and discarded, in the plant
+ * seam's own vocabulary, on the same terms probe_full_scale_flow_ml_per_s and
+ * probe_settled_brew_c ask theirs: a held volume and a conduction figure
+ * reached for by name would tie this file to the thermoblock's own spelling
+ * of them, and the next structure may keep no such state at all.
+ * `full_scale_ml_per_s` is the figure control_init already probed for this
+ * same record rather than a second one asked here, on the same reasoning the
+ * peak this is called with is admission's own scan and not a second one of
+ * that either.
+ *
+ * The model is left exactly where plant_model_init puts it -- at rest, the
+ * heater off -- rather than driven toward the target first. What is measured
+ * is the free response of the transport lag alone: two states pulled apart by
+ * CONTROL_LEAD_PROBE_OFFSET_C and let close on each other under the draw,
+ * with nothing else acting on either. Bringing the heater up first would put
+ * most of the initial gap in the mass's own slow approach to a driven
+ * setpoint -- a mode an order of magnitude slower than the transport lag this
+ * probe exists to measure -- and have the close-enough threshold reached, if
+ * ever, by that unrelated mode rather than by the one under test. At rest the
+ * gap sits almost entirely in the fast, transport mode, so what closes it is
+ * what the lead is meant to answer for.
+ *
+ * The probe advances the model under the peak draw in the loop's own step
+ * interval, and reads back how long the gap takes to close to
+ * CONTROL_LEAD_PROBE_CLOSED_FRACTION of what it started at -- the ordinary
+ * definition of a first-order lag's own time constant, asked by watching the
+ * gap close rather than by assuming the relation is linear and solving for
+ * it. A structure that keeps no such state -- PLANT_STATE_BREW_OUTLET_TEMPERATURE_C
+ * refused -- has no distance for an effect to travel and is given a lead of
+ * nothing, which is the honest lead for it.
+ *
+ * Returns 0u -- no lead -- for a peak draw of nothing, for a record that will
+ * not stand a model up, for a structure with no separated outlet state, or
+ * for a probe that has not closed within CONTROL_LEAD_PROBE_MAX_MS: the same
+ * honesty the other probes answer an unreachable question with, and the same
+ * direction of error the design already prefers -- see the rationale beside
+ * heater_command.
+ */
+static uint32_t probe_read_ahead_lead_millis(const plant_parameters_t *parameters,
+                                             float full_scale_ml_per_s, float peak_ml_per_s)
+{
+    plant_model_t probe;
+    plant_actuation_t drawing = {{0u}};
+    float mass_c = 0.0f;
+
+    if (!(peak_ml_per_s > 0.0f) || !(full_scale_ml_per_s > 0.0f)) {
+        return 0u;
+    }
+
+    if (!plant_model_init(&probe, parameters) ||
+       !plant_model_state(&probe, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, &mass_c)) {
+        return 0u;
+    }
+
+    /*
+     * A structure with no separated outlet state refuses this write on the
+     * same terms it refuses the read, which is exactly the case that is to be
+     * given no lead -- probed rather than inferred from which structure is
+     * linked.
+     */
+    if (!plant_model_set_state(&probe, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C,
+                               mass_c - CONTROL_LEAD_PROBE_OFFSET_C)) {
+        return 0u;
+    }
+
+    drawing.level_permille[ACTUATION_CHANNEL_PUMP] =
+        as_drive_level((peak_ml_per_s / full_scale_ml_per_s) * (float)ACTUATION_FULL_SCALE);
+
+    for (uint32_t elapsed = 0u; elapsed < CONTROL_LEAD_PROBE_MAX_MS;
+        elapsed += CONTROL_STEP_INTERVAL_MS) {
+        if (!plant_model_step(&probe, &drawing, 0.0f, CONTROL_STEP_INTERVAL_MS)) {
+            return 0u;
+        }
+
+        float outlet_c = 0.0f;
+        if (!plant_model_state(&probe, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, &mass_c) ||
+           !plant_model_state(&probe, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &outlet_c)) {
+            return 0u;
+        }
+
+        const float gap_c = mass_c - outlet_c;
+        const float gap_magnitude = gap_c < 0.0f ? -gap_c : gap_c;
+        if (gap_magnitude <= (CONTROL_LEAD_PROBE_OFFSET_C * CONTROL_LEAD_PROBE_CLOSED_FRACTION)) {
+            return elapsed + CONTROL_STEP_INTERVAL_MS;
+        }
+    }
+    return 0u;
+}
+
+/*
  * The fastest a course ever asks for water, and when it asks.
  *
  * The points are what is examined rather than the course sampled at some
@@ -551,12 +727,17 @@ static void refuse_if_beyond_the_authority(const control_state_t *state, float p
 
 /*
  * Whether this machine can ever do what a delivery asks of it, and what it
- * crossed if not.
+ * crossed if not -- and the course's own peak, so a caller admitting a
+ * delivery is not left to scan the course a second time for a figure this
+ * call has already found.
  */
 static control_admission_t admit_delivery(const control_state_t *state,
-                                          const delivery_profile_t *profile)
+                                          const delivery_profile_t *profile,
+                                          float *peak_ml_per_s)
 {
     control_admission_t admission = {CONTROL_ADMISSION_OK, 0.0f, 0.0f, 0u};
+
+    *peak_ml_per_s = 0.0f;
 
     if (state == NULL || profile == NULL) {
         admission.bound = CONTROL_ADMISSION_NOTHING_GIVEN;
@@ -569,6 +750,7 @@ static control_admission_t admit_delivery(const control_state_t *state,
 
     uint32_t at_millis = 0u;
     const float peak = peak_rate_ml_per_s(profile, &at_millis);
+    *peak_ml_per_s = peak;
 
     if (peak > state->full_scale_flow_ml_per_s) {
         admission.bound = CONTROL_ADMISSION_RATE_OVER_FULL_SCALE;
@@ -662,6 +844,7 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     state->full_scale_flow_ml_per_s = 0.0f;
     state->delivery_running = false;
     state->delivery_elapsed_millis = 0u;
+    state->delivery_lead_millis = 0u;
     forget_departure(state);
 
     /*
@@ -779,7 +962,8 @@ bool control_command_delivery_reporting(control_state_t *state, const delivery_p
         return false;
     }
 
-    *admission = admit_delivery(state, profile);
+    float peak_ml_per_s = 0.0f;
+    *admission = admit_delivery(state, profile, &peak_ml_per_s);
     if (admission->bound != CONTROL_ADMISSION_OK) {
         return false;
     }
@@ -787,6 +971,13 @@ bool control_command_delivery_reporting(control_state_t *state, const delivery_p
     state->delivery = *profile;
     state->delivery_running = true;
     state->delivery_elapsed_millis = 0u;
+    /*
+     * Taken once, here, against the peak admission has already found, rather
+     * than recomputed as the course runs -- see drawn_load_pump_permille,
+     * which reads it back.
+     */
+    state->delivery_lead_millis = probe_read_ahead_lead_millis(
+        &state->parameters, state->full_scale_flow_ml_per_s, peak_ml_per_s);
     forget_departure(state);
     return true;
 }
@@ -927,8 +1118,10 @@ control_step_result_t control_step(control_state_t *state)
      * command_everything_off, and advancing its clock and its commanded rate
      * regardless would have it run against the course while nothing moved;
      * and above the heater command below, because the feedforward it carries
-     * reads commanded_pump_permille in this same step, and a delivery's
-     * commanded rate has to be sitting there before it is read, not after.
+     * reads the delivery's own elapsed clock and its commanded rate in this
+     * same step -- a lead ahead of the clock while a delivery is running,
+     * commanded_pump_permille directly otherwise -- and both have to be
+     * sitting there before either is read, not after.
      *
      * `advance` is the interval that actually elapsed, the same one the
      * estimator was just advanced by. Timing the delivery against the nominal

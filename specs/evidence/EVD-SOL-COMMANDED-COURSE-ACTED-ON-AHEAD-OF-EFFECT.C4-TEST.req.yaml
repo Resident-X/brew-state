@@ -1,0 +1,17 @@
+id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C4-TEST
+type: evidence
+title: A rising course droops less when the law is led than present-instant (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T23:24:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_rising_course_droops_less_when_the_law_is_led
+text: |-
+  From the same disturbed start test_tracking_holds_across_a_whole_extraction_from_a_disturbed_state begins a delivery from, the led run's shortfall against target one second into a 2.7 ml/s ramp is smaller than the present-instant run's, sampled from otherwise-identical trajectories differing only in the lead. Passes under pio test -e native_test.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C4
+    type: satisfies

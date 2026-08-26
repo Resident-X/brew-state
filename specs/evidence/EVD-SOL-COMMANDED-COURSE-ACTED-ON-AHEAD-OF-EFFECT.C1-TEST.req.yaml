@@ -1,0 +1,17 @@
+id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C1-TEST
+type: evidence
+title: The lead follows the machine's description, not the loop (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T23:24:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_lead_is_read_from_the_machines_description
+text: |-
+  Admitting the same course against two machines differing only in the outlet conduction time constant produces two different, correctly-ordered leads (faster-conducting machine gets the shorter lead). A compiled-in lead would answer both admissions the same; it does not. Passes under pio test -e native_test.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C1
+    type: satisfies

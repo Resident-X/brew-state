@@ -1,0 +1,17 @@
+id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C2-TEST
+type: evidence
+title: The lead is taken at the course's peak, once, at admission (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-25T23:24:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_lead_is_taken_at_the_courses_peak
+text: |-
+  Two courses of different shape sharing one peak rate answer with the same lead; a course with a higher peak answers with a shorter lead; the lead is read back unchanged after fifty steps of the course running, showing it was fixed once at admission rather than re-taken per step. Passes under pio test -e native_test.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C2
+    type: satisfies

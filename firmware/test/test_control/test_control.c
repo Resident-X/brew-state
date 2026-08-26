@@ -3184,6 +3184,238 @@ static delivery_profile_t course_holding(float ml_per_s)
     return profile;
 }
 
+/* --- Reading the course a lead ahead of the present instant ---------------- */
+
+/// SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C1: The lead the course is
+/// read ahead by comes from the machine's description rather than from the
+/// loop.
+///
+/// The same course, admitted twice against two machines that differ in
+/// exactly the coefficient the lead is taken from -- how fast the water
+/// between the casting and the group conducts when nothing is being drawn. A
+/// lead compiled into the loop would answer both admissions the same; this
+/// one does not, which is what shows the figure was asked of the description
+/// rather than declared beside the gains. The faster-conducting machine
+/// answers with the shorter lead, which is the direction closing the gap
+/// faster has to move it in and rules out the relation running backwards.
+static void test_the_lead_is_read_from_the_machines_description(void)
+{
+    const delivery_profile_t course = course_holding(2.0f);
+    uint32_t leads[2] = {0u, 0u};
+    static const char *const CONSTANTS[] = {"1.0", "8.0"};
+
+    for (unsigned run = 0u; run < 2u; run++) {
+        const plant_parameters_t perturbed = parameters_from(
+            description_with("brew.outlet_conduction_time_constant_s", CONSTANTS[run]));
+
+        bring_the_loop_up(&perturbed, &perturbed, 93.0f, BREW_TARGET_C);
+        TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+        leads[run] = state.delivery_lead_millis;
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(leads[0] > 0u && leads[1] > 0u,
+                             "no lead was established against a machine that keeps the state a "
+                             "lead is taken from");
+    TEST_ASSERT_TRUE_MESSAGE(leads[0] < leads[1],
+                             "the faster-conducting machine did not answer with the shorter "
+                             "lead, so the relation between the description and the lead runs "
+                             "backwards or not at all");
+}
+
+/// SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C2: The lead is taken at the
+/// draw the course peaks at.
+///
+/// Two courses of different shape but the same peak rate are admitted
+/// against the same machine, and answer with the same lead: what the probe
+/// is asked against is the one figure the two courses share. A third course
+/// whose peak is higher answers with a shorter lead, because the water
+/// crossing more of its held volume each second closes on the casting
+/// faster -- which is what shows the peak is the figure read, and not the
+/// course's average or its first point. The lead is also read back
+/// unchanged after the course has been running a while, which is what shows
+/// it was taken once against the peak at admission rather than re-taken
+/// against wherever the course happens to be on a later step.
+static void test_the_lead_is_taken_at_the_courses_peak(void)
+{
+    const delivery_profile_t shot_shaped = course_peaking_at(2.0f);
+    const delivery_profile_point_t held_points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_end_condition_t held_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                               .elapsed_millis = 2000u};
+    delivery_profile_t held_at_the_peak;
+    TEST_ASSERT_TRUE(delivery_profile_init(&held_at_the_peak, held_points, 2u, held_end));
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &shot_shaped));
+    const uint32_t lead_shot_shaped = state.delivery_lead_millis;
+    TEST_ASSERT_TRUE_MESSAGE(lead_shot_shaped > 0u, "no lead was established to compare");
+
+    for (unsigned step = 0u; step < 50u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(lead_shot_shaped, state.delivery_lead_millis,
+                                     "the lead changed as the course ran, so it is being re-taken "
+                                     "on later steps rather than fixed once at admission");
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &held_at_the_peak));
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(lead_shot_shaped, state.delivery_lead_millis,
+                                     "two courses sharing a peak answered with different leads, "
+                                     "so the probe is not reading the peak alone");
+
+    const delivery_profile_t faster_peak = course_peaking_at(2.5f);
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &faster_peak));
+    TEST_ASSERT_TRUE_MESSAGE(state.delivery_lead_millis < lead_shot_shaped,
+                             "a higher peak did not shorten the lead, so the peak is not what "
+                             "the probe is reading");
+}
+
+/*
+ * Run a course to a chosen step from the same disturbed start
+ * test_tracking_holds_across_a_whole_extraction_from_a_disturbed_state
+ * begins a delivery from -- both states moving, the water reaching the
+ * coffee already short of target, which is where a delivery started on a
+ * machine still catching up from the last one actually begins -- and answer
+ * how far short of target the water reaching the coffee still sits.
+ *
+ * Both runs are commanded through control_command_delivery and take the same
+ * delivery-running branch of drawn_load_pump_permille; the caller reads the
+ * lead admission established back and, for the present-instant run, zeroes
+ * it immediately afterwards. That is the one field the two runs differ in --
+ * not which entry point drove the pump, which a manual reproduction through
+ * control_command_flow would leave a second, disconnected path free to
+ * disagree about. A defect confined to the delivery branch that merely
+ * strengthens the drawn-load term regardless of the lead would move both
+ * readings together and leave a comparison built that way unable to tell the
+ * runs apart; this one cannot, because the runs are otherwise identical.
+ */
+static float shortfall_after_running(const delivery_profile_t *course, unsigned steps, bool led)
+{
+    bring_the_loop_up(&parameters, &parameters, BREW_TARGET_C + 0.8f, BREW_TARGET_C - 0.6f);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, course));
+    TEST_ASSERT_TRUE_MESSAGE(state.delivery_lead_millis > 200u,
+                             "the lead against the shipped machine at this peak was too short "
+                             "for this test to tell the two runs apart");
+    if (!led) {
+        state.delivery_lead_millis = 0u;
+    }
+
+    for (unsigned step = 0u; step <= steps; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    }
+
+    return BREW_TARGET_C - truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C);
+}
+
+/// SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C3: The drawn-load term is
+/// scaled by the rate the course will be at rather than the rate it is at.
+///
+/// SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C4: A rising course droops
+/// less when the law is led than when it answers the present instant.
+///
+/// The same ramp, run twice through shortfall_after_running, differing in
+/// the lead alone: a led run has already been asking the heater for a rate
+/// the course has not reached yet, so it has been closing the shortfall for
+/// longer, and closes more of it by the same instant. A ramp is used rather
+/// than a step because a step is answered nearly as well by a present-instant
+/// term, and the case a lead earns its keep on is the one where that term is
+/// behind for the whole delivery.
+static void test_a_rising_course_droops_less_when_the_law_is_led(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 0.0f}, {3000u, 2.7f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 3000u};
+    delivery_profile_t ramp;
+    TEST_ASSERT_TRUE(delivery_profile_init(&ramp, points, 2u, end));
+
+    const float led_shortfall = shortfall_after_running(&ramp, 100u, true);
+    const float unled_shortfall = shortfall_after_running(&ramp, 100u, false);
+
+    TEST_ASSERT_TRUE_MESSAGE(led_shortfall > 0.0f && unled_shortfall > 0.0f,
+                             "a run had already reached target by the sampled instant, so there "
+                             "is no shortfall left for a lead to have closed more of");
+    TEST_ASSERT_TRUE_MESSAGE(led_shortfall < unled_shortfall,
+                             "the led run was no closer to target than the present-instant run "
+                             "at the same point in the ramp, so reading the course ahead is not "
+                             "reducing the shortfall a rising course leaves");
+}
+
+/// SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5: Reading ahead stops at
+/// the delivery's end condition rather than holding the last rate on.
+///
+/// Two courses hold the same rate for the same stretch and differ only in
+/// where they say the delivery ends: one right where the sampled step falls,
+/// the other a long way past it. Held forever were reading ahead never
+/// clipped, both would ask the heater for the same load at that step; they do
+/// not, because the near-ending course's lead has already crossed a stop the
+/// far one has not reached, and the load it asks for there drops to nothing
+/// rather than holding the course's last rate on.
+static void test_reading_ahead_stops_at_the_end_condition(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 2.0f}, {6000u, 2.0f}};
+    uint16_t heater[2] = {0u, 0u};
+    static const uint32_t ENDS[] = {6000u, 60000u};
+
+    for (unsigned run = 0u; run < 2u; run++) {
+        const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                              .elapsed_millis = ENDS[run]};
+        delivery_profile_t course;
+        TEST_ASSERT_TRUE(delivery_profile_init(&course, points, 2u, end));
+
+        bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+        TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+        TEST_ASSERT_TRUE_MESSAGE(state.delivery_lead_millis > 200u,
+                                 "the lead against the shipped machine at this rate was too short "
+                                 "for this test to tell clipping apart from noise");
+
+        /* Comfortably inside the near-ending course's own stop, and clipped there. */
+        const uint32_t sample_at = ENDS[0] - (state.delivery_lead_millis / 2u);
+        for (uint32_t elapsed = 0u; elapsed < sample_at; elapsed += CONTROL_STEP_INTERVAL_MS) {
+            TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        }
+        heater[run] = hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(heater[0] < heater[1],
+                             "the course whose lead had crossed its own end condition asked for "
+                             "no less duty than the one whose end was still far off, so reading "
+                             "ahead is holding the course's last rate on rather than stopping at "
+                             "the end");
+}
+
+/// SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C6: A course shaped like a
+/// hot water draw is led by the same term an extraction is.
+///
+/// The same comparison test_a_rising_course_droops_less_when_the_law_is_led
+/// runs, repeated on a course of the shape a hot water delivery takes rather
+/// than a shot's: a sustained draw at a steady rate, run long enough to move
+/// the couple of hundred millilitres a hot water delivery asks for, rather
+/// than a short ramp. Nothing in the control path names which delivery point
+/// a course is bound for or how long it runs; the led run closes more of the
+/// shortfall here on exactly the same terms it does on a shot-shaped ramp,
+/// which is what shows the two share one term rather than a second
+/// arrangement built for hot water.
+static void test_a_hot_water_shaped_course_is_led_by_the_same_term_an_extraction_is(void)
+{
+    const delivery_profile_point_t points[] = {{0u, 0.0f}, {3000u, 2.5f}, {80000u, 2.5f}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 80000u};
+    delivery_profile_t hot_water_shaped;
+    TEST_ASSERT_TRUE(delivery_profile_init(&hot_water_shaped, points, 3u, end));
+
+    const float led_shortfall = shortfall_after_running(&hot_water_shaped, 100u, true);
+    const float unled_shortfall = shortfall_after_running(&hot_water_shaped, 100u, false);
+
+    TEST_ASSERT_TRUE_MESSAGE(led_shortfall > 0.0f && unled_shortfall > 0.0f,
+                             "a run had already reached target by the sampled instant, so there "
+                             "is no shortfall left for a lead to have closed more of");
+    TEST_ASSERT_TRUE_MESSAGE(led_shortfall < unled_shortfall,
+                             "the led run was no closer to target than the present-instant run "
+                             "on a hot-water-shaped course, so leading is not the one term both "
+                             "deliveries share");
+}
+
 /// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C1: A delivery is admitted or
 /// refused before anything is driven.
 ///
@@ -4246,6 +4478,11 @@ int main(void)
     RUN_TEST(test_boundary_end_conditions_at_zero_and_uint32_max);
     RUN_TEST(test_construction_refuses_the_documented_null_and_bound_cases);
     RUN_TEST(test_duty_rises_in_the_step_a_profile_delivery_is_commanded_in);
+    RUN_TEST(test_the_lead_is_read_from_the_machines_description);
+    RUN_TEST(test_the_lead_is_taken_at_the_courses_peak);
+    RUN_TEST(test_a_rising_course_droops_less_when_the_law_is_led);
+    RUN_TEST(test_reading_ahead_stops_at_the_end_condition);
+    RUN_TEST(test_a_hot_water_shaped_course_is_led_by_the_same_term_an_extraction_is);
     RUN_TEST(test_mid_ramp_level_matches_the_interpolated_rate_through_the_control_path);
     RUN_TEST(test_the_pump_relation_is_linear_over_the_range_a_conversion_assumes);
     RUN_TEST(test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count);
