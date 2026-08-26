@@ -1,0 +1,17 @@
+id: EVD-SOL-SHARED-MASS-CONTENTION-SERIALISED.C6-TEST
+type: evidence
+title: A held demand's elapsed course counts from its own admission (SOL-SHARED-MASS-CONTENTION-SERIALISED.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T09:25:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_held_deliverys_elapsed_time_begins_at_its_own_admission
+text: |-
+  A hot water demand held across many control steps before the extraction it contends with ends starts with elapsed time at zero, not with however long it waited -- one control step after it starts, its elapsed time reads exactly one step's worth, the same as any delivery commanded directly.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED.C6
+    type: satisfies

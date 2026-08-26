@@ -1,0 +1,30 @@
+id: EVD-REQ-HOT-WATER-001.C4-ATTEST
+type: evidence
+title: Attestation of REQ-HOT-WATER-001.C4
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-26T09:27:47Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-HOT-WATER-001.C4","synthesised_at":"2026-08-26T09:27:47.769415Z","entries":[{"input_id":"DEL-SIM-BREW-LOOP","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-SHARED-MASS-CONTENTION-SERIALISED","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_a_demand_sharing_the_mass_with_what_is_running_is_held; firmware/test/test_control/test_control.c::test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_latches"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-HOT-WATER-001.C4.
+
+  Final-state intent: where one water channel serves both hot water and extraction, the two are mutually exclusive on the shared heated mass regardless of electrical/heater authority, and a demand that cannot be served yet is deferred rather than refused, proceeding once the mass frees; a machine serving each point from its own mass has nothing to serialise.
+
+  Composition: SOL-SHARED-MASS-CONTENTION-SERIALISED with active evidence EVD-SOL-SHARED-MASS-CONTENTION-SERIALISED.C1-TEST through .C7-TEST; DEL-SIM-BREW-LOOP contributes via cascade (no direct evidence -- its own C8 criterion closes through this same solution).
+
+  Intent fit: control_command_delivery_reporting runs admit_delivery's power/authority-based bounds first and independently; the mass-contention hold is a separate, unconditional check asked afterward via plant_delivery_points_share_mass against whatever is actually running (EVD.C1, EVD.C3) -- so a demand with full heater authority to run is still held on the transient mass-sharing signal alone, matching 'whatever the electrical budget permits ... arbitrating power alone does not arbitrate this' precisely, not just in spirit. Deferral rather than refusal is verified directly: a held demand is never refused, only started later with no operator action once the contending delivery ends (EVD.C2), on the control cadence already tracking delivery_running. A demand for a point not sharing a mass with what is running is admitted immediately, unaffected -- proving the 'nothing to serialise' branch for a two-mass arrangement end to end (EVD.C3, on a real two-mass pump-capable structure, not just the underlying predicate). Verified against both a shared-mass and a separate-mass description (EVD.C7).
+
+  Acknowledged scope boundary: this requirement's own text and this project's graph name exactly two delivery points (hot water and extraction) sharing one channel; the solution's single-held-slot design (EVD.C4) is not a narrowing of the requirement's own two-way scope, it is the correct shape for it. A held demand is discarded rather than resumed if a fault latches while it waits (EVD.C1) -- an acknowledged, reasoned exclusion (a faulted/untargeted machine has nothing left to defer toward), not an unstated gap.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-HOT-WATER-001.C4
+    type: satisfies
+attributes:
+  attested_criterion_version: 2

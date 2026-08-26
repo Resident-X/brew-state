@@ -1,0 +1,17 @@
+id: EVD-SOL-SHARED-MASS-CONTENTION-SERIALISED.C7-TEST
+type: evidence
+title: Control suite exercises holding/resuming against shared- and separate-mass descriptions (SOL-SHARED-MASS-CONTENTION-SERIALISED.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T09:25:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_held_demand_resumes_unassisted_once_the_running_delivery_ends; firmware/test/test_control_narrow/test_control_narrow.c::test_the_two_points_this_structure_serves_never_share_a_mass
+text: |-
+  Against the structure serving both delivery points from one casting, a second delivery is held then resumes unassisted once the first ends. Against the structure whose two points answer separate masses, no hold ever occurs -- both proven on the host tier this epic already verifies on.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED.C7
+    type: satisfies

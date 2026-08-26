@@ -3,6 +3,8 @@ type: deliverable
 category: epic
 title: The coffee side holds its targets in simulation across both deliveries it serves
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: epic
 version: 6
 text: |
@@ -59,11 +61,11 @@ links:
     type: targets
   - target: REQ-HOT-WATER-001.C4
     type: targets
+  - target: REQ-HOT-WATER-001.C5
+    type: targets
   - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
     type: targets
   - target: REQ-PREENERGISATION-VERIFICATION-001.C1
     type: targets
   - target: REQ-SEQUENCE-CONSISTENCY-001.C2
-    type: targets
-  - target: REQ-HOT-WATER-001.C5
     type: targets

@@ -1,0 +1,17 @@
+id: EVD-SOL-SHARED-MASS-CONTENTION-SERIALISED.C1-TEST
+type: evidence
+title: Contending demand held, and discarded on fault (SOL-SHARED-MASS-CONTENTION-SERIALISED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T09:25:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_demand_sharing_the_mass_with_what_is_running_is_held; firmware/test/test_control/test_control.c::test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_latches
+text: |-
+  A demand for a point sharing a mass with the delivery already running is held rather than starting it, leaving the running delivery's own course entirely untouched, and a held demand is discarded (never spuriously resumed) if a fault latches while it waits.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED.C1
+    type: satisfies
