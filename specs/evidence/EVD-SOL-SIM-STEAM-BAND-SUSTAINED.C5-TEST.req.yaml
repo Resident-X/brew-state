@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C5-TEST
+type: evidence
+title: Measured pressure holds the declared band for draws of every duration across the declared model error (SOL-SIM-STEAM-BAND-SUSTAINED.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_pressure_holds_the_band_for_draws_of_every_duration_across_the_declared_error
+text: |-
+  Passes. Twelve runs: draws of 3, 10, 30 and 60 seconds, each against three machines -- the description's own figure for how far a draw drags the steam path down, and that figure at both ends of the error the description declares on it. The assumed error is read from the description's own budget through plant_parameter_budget_for rather than typed, and the perturbed descriptions go back through the same loader, so every machine run against is one the structure admits. The band is asserted on every step from the first steam actually delivered to the end of the draw, which is the window the criterion now states and which the margin-building criterion forces. Sabotage check: removing the feedforward fails the 30 second draw at the high end of the declared sag; removing the margin delay fails the 3 second draw at the low end.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C5
+    type: satisfies

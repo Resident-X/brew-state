@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C11-TEST
+type: evidence
+title: Feed is never raised to chase demand beyond the declared sustainable rate (SOL-SIM-STEAM-BAND-SUSTAINED.C11)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_feed_is_never_raised_to_chase_demand_beyond_the_sustainable_rate
+text: |-
+  Passes. A demand far beyond anything the block could sustain is put behind the wand; pressure is asserted inside the declared band throughout the delivered part of the draw, and the settled feed is asserted never past the declared rate. That the rate actually delivered does not climb is asserted at the seam rather than from the commanded level: two runs whose demands differ by a factor of twenty are required to produce pressure traces identical step for step, which they can only do if nothing downstream of the cap ever saw the larger demand -- the plant charges its pressure relation against the steam actually made. A third arm with a demand below the cap is required to produce a different trace, which is what keeps the identical pair from being explicable by a model that ignores demand altogether.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C11
+    type: satisfies

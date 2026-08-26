@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C10-TEST
+type: evidence
+title: The steam knob's microswitch reaches the control unit as a discrete reading (SOL-SIM-STEAM-BAND-SUSTAINED.C10)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_the_steam_knob_reaches_the_seam_as_a_discrete_reading, firmware/test/test_steam_control/test_steam_control.c::test_only_a_trustworthy_set_knob_reading_is_taken_for_a_draw
+text: |-
+  Both pass. The channel is asserted to carry the same present-or-absent and valid-or-failed discipline every other channel on this seam does: nothing stood up reports absent rather than a knob that is not turned, a failed sample carries no value, and a trustworthy sample reports each of the two discrete answers the seam spells. Standing the knob up is asserted to move no other channel, which is what makes it a channel of its own rather than folded into an analogue one. The second test puts every condition the seam can present to the law and reads back the law's own report of whether it has a draw: only a trustworthy set reading is one. A reading between the two answers is refused rather than rounded. Interpreting the bit as a demand rate is out of scope and nothing here does it.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C10
+    type: satisfies

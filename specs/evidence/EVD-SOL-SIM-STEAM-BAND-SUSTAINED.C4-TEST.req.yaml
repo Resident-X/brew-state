@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C4-TEST
+type: evidence
+title: The band and the loop's gains are inputs it reads rather than constants compiled into it (SOL-SIM-STEAM-BAND-SUSTAINED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:12Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_a_declared_gain_moves_the_pass_fail_boundary, firmware/test/test_steam_control/test_steam_control.c::test_the_declaration_grammar_refuses_what_it_must
+text: |-
+  Passes. Two arms differing in exactly one declared figure -- the feedforward gain answering the commanded feed -- against the same machine, the same draw, the same duration and the same band: at the shipped figure the draw stays inside the band, and at five times the load it answers the loop drives the block past what the band admits and the identical run fails. No control law is rebuilt between the arms; both declarations are read at runtime through the same loader. The grammar test covers the same criterion from the refusal side, including a gain declared in the wrong unit and one declared as nothing.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C4
+    type: satisfies

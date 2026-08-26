@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C1-TEST
+type: evidence
+title: The controlled variable switches to pressure on the step the draw begins (SOL-SIM-STEAM-BAND-SUSTAINED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:12Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_the_controlled_variable_switches_on_the_step_the_draw_begins, firmware/test/test_steam_control/test_steam_control.c::test_duty_answers_temperature_while_idle_and_pressure_while_drawing
+text: |-
+  Both tests pass. The first asserts the loop's own projection of which variable governs flips to pressure on the same step the wand's microswitch reports a draw, and back to temperature on the step it reports the draw ended -- the projection is read rather than the duty because the margin-building interval pins the element at its ceiling whichever variable is in force. The second is the behavioural half: in each phase one reading is moved while the other is held exactly where it was, and the duty is required to answer the variable that phase drives to and not the other. Draw-phase probes are taken past the margin interval and past the feed's rise, so the level being fed forward is identical at both, and a difference can only come from the variable under test. Sabotage check: making the loop always drive to temperature fails the behavioural test while the projection test still passes, which is why both are recorded.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C1
+    type: satisfies

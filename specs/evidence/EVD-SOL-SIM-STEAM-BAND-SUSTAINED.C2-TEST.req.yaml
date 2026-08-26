@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C2-TEST
+type: evidence
+title: An implausible steam pressure reading mid-draw is rejected rather than acted on (SOL-SIM-STEAM-BAND-SUSTAINED.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:12Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_an_implausible_pressure_reading_mid_draw_is_rejected_rather_than_acted_on
+text: |-
+  Passes. A draw is brought to a settled duty and feed, then each untrustworthy condition is injected in turn: a reading below the declared low bound, one above the declared high bound, a sample the seam reports failed, and a channel reporting nothing fitted. In every case both the heater duty and the commanded feed are asserted unchanged from the step before, and the step reports itself sensor-invalid rather than ordinary. The pair of assertions is the point: a law that abandoned its last trusted value would drive toward the absurd figure, and one that cut feed on a single bad sample would chop the operator's draw off and back on. Sabotage check: acting on the absurd reading instead of the last trusted one fails this test (expected 661, was 1000).
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C2
+    type: satisfies

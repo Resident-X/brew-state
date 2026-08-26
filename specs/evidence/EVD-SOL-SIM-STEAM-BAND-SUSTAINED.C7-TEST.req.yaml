@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C7-TEST
+type: evidence
+title: Recovery after a draw is the same ready-holding control continuing (SOL-SIM-STEAM-BAND-SUSTAINED.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_recovery_is_the_ready_holding_law_continuing, firmware/test/test_steam_control/test_steam_control.c::test_recovery_holds_its_bound_across_the_declared_model_error
+text: |-
+  Both pass. One instance, brought up once, does three things in sequence with nothing reinitialised and no second entry point called: reaches the ready target from a genuinely cold machine -- stood up at the ambient the description declares, asserted to be more than fifty degrees below the target -- then holds a draw, then reaches the target again from wherever that draw left the block. Feed is asserted cut on the step the wand shuts. A third arm disturbs the truth plant alone to put the block below its target and requires the same continuing law to carry it back up. The second test claims the recovery bound across the declared error on the two coefficients that decide it, the steam block's thermal mass and its loss to the room, each taken to both ends of its declared error. Both directions are covered because, on this model, a draw leaves the block above its target rather than below -- recorded in the solution's rationale.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C7
+    type: satisfies

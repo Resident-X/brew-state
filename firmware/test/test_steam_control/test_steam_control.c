@@ -1144,6 +1144,30 @@ static void test_feed_is_never_raised_to_chase_demand_beyond_the_sustainable_rat
                                         "a demand twenty times larger moved the path, so the rate "
                                         "actually delivered climbed to meet it");
     }
+
+    /*
+     * A third arm, below the cap rather than above it, which is what keeps
+     * the two identical traces above from being explicable by a plant that
+     * ignores demand altogether. Both arms above sit above the declared
+     * sustainable rate, so the rate delivered is the cap in each and the
+     * traces would also match on a model that never read the demand at all.
+     * A demand under the cap is the case where the demand is what binds, and
+     * the path is required to differ -- less steam made, so less pressure
+     * given up.
+     */
+    const float under_the_cap = 0.02f;
+    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    hold_ready_for(SETTLE_SECONDS);
+    draw_for(30u, under_the_cap);
+
+    bool differed = false;
+    for (size_t step = 0u; step < recorded && step < sample_count; step++) {
+        differed = differed || samples[step].pressure_milli_bar != trace[0][step];
+    }
+    TEST_ASSERT_TRUE_MESSAGE(differed,
+                             "a demand below the declared sustainable rate produced the same path "
+                             "as one far above it, so nothing downstream reads the demand and the "
+                             "identical traces above establish nothing about the cap");
 }
 
 /// SOL-SIM-STEAM-BAND-SUSTAINED.C8: Heater leads and feed lags by a declared
@@ -1182,6 +1206,31 @@ static void test_the_heater_leads_and_the_feed_lags_by_the_declared_interval(voi
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, samples[0].feed_permille,
                                      "feed engaged on the first step of the draw, so it does not "
                                      "lag");
+
+    /*
+     * That the element leads is asserted a second time, against a draw
+     * beginning with the path already in the middle of its band. The
+     * assertion just above cannot tell leading apart from ordinary tracking:
+     * a draw beginning from a correctly held ready state starts most of a
+     * band-width below the draw target, and the proportional term alone
+     * saturates the element there without any sequencing doing it -- so that
+     * assertion would go on passing with the sequencing removed. With the
+     * error at nothing the tracking law commands little more than the
+     * declared standing load, and a ceiling can only have come from the
+     * heater being made to lead.
+     */
+    steam_control_state_t leading_only;
+    const int32_t at_draw_target = (declaration.draw_pressure_floor_milli_bar +
+                                    declaration.draw_pressure_ceiling_milli_bar) /
+                                   2;
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&leading_only, &limits, &declaration));
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+        (uint16_t)ACTUATION_FULL_SCALE,
+        step_with(&leading_only, true, at_draw_target, declaration.ready_temperature_milli_c),
+        "the element was not driven to its ceiling on a draw beginning already in band, so what "
+        "saturates it on an ordinary draw is the tracking error rather than the heater leading");
 
     const sample_t *const with_margin = first_delivery();
     TEST_ASSERT_NOT_NULL_MESSAGE(with_margin, "the draw never fed anything");
@@ -1344,12 +1393,26 @@ static uint32_t millis_to_reach_ready(const steam_control_declaration_t *figures
 /// question this model cannot settle.
 static void test_recovery_is_the_ready_holding_law_continuing(void)
 {
-    bring_the_loop_up(&parameters, &declaration, truth_quantity(PLANT_QUANTITY_STEAM_TEMPERATURE_C));
+    /*
+     * A genuinely cold machine: the block is stood up at the ambient the
+     * description declares the machine sits in, read out of that description
+     * rather than assumed, and well below the ready target. Reading the
+     * starting temperature off the truth plant instead would take whatever the
+     * previous test in this file happened to leave behind -- which is warm, and
+     * would make this arm a cool-down that passes without the loop heating
+     * anything.
+     */
+    const float ambient_c = nominal_of("ambient_temperature_c");
+    TEST_ASSERT_TRUE_MESSAGE(ambient_c < ready_target_c(&declaration) - 50.0f,
+                             "the declared ambient is not a cold start for this target");
 
-    /* A cold machine, reached by the ready-holding law from a cold start. */
+    bring_the_loop_up(&parameters, &declaration, ambient_c);
+
     const uint32_t from_cold = millis_to_reach_ready(&declaration);
     TEST_ASSERT_TRUE_MESSAGE(from_cold < RECOVERY_BOUND_SECONDS * 1000u,
                              "the loop never reached the ready target from a cold start");
+    TEST_ASSERT_TRUE_MESSAGE(from_cold > 0u,
+                             "the block was already at its target, so nothing was heated");
 
     hold_ready_for(SETTLE_SECONDS);
     draw_for(60u, 1.0f);
@@ -1722,9 +1785,22 @@ static void test_withheld_feed_holds_an_existing_deficit_against_an_open_wand(vo
      * turned throughout. A tolerance rather than exact equality because the
      * block goes on losing a little to ambient with the element undriven; it
      * is an order of magnitude below the drift a still-growing deficit would
-     * show over the same steps at this priming rate.
+     * show over the same steps at this priming rate, and it is a comparison
+     * against the step before rather than against the start, so a long run
+     * does not accumulate into it.
+     *
+     * The run is deliberately longer than the margin-building interval and
+     * the feed's rise put together. A shorter one would hold feed at nothing
+     * whether the readiness threshold existed or not -- the sequencing alone
+     * withholds it for the first few seconds of any draw -- and would go on
+     * passing with the withhold deleted, which is the one thing this test is
+     * about.
      */
-    for (int step = 0; step < 5; step++) {
+    const uint32_t withheld_steps =
+        ((uint32_t)declaration.margin_interval_millis +
+         (uint32_t)declaration.feed_rise_millis) / STEP_INTERVAL_MS + 5u;
+
+    for (uint32_t step = 0u; step < withheld_steps; step++) {
         hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID,
                           (int32_t)lroundf(primed_bar * 1000.0f));
         hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_VALID, 115000);
@@ -1800,21 +1876,34 @@ static void test_declared_threshold_moves_the_feed_boundary(void)
     }
 }
 
-/// SOL-SIM-STEAM-READINESS-GATE.C6: The control law is exercised against the
-/// plant model in host simulation before any hardware exists.
+/// SOL-SIM-STEAM-READINESS-GATE.C5: The feed-withhold policy is exercised in
+/// host simulation against the plant model before any hardware exists.
 ///
 /// The law builds into a host executable with no target dependency present,
 /// initialises and steps against the simulated implementation alone, and
-/// drives both steam channels. Every other test in this file is closed through
-/// the plant model on the same terms; this is the one that says so directly.
+/// drives both channels from what the plant model reports. Every other test in
+/// this file is closed through the plant model on the same terms; this is the
+/// one that says so directly.
+///
+/// Both channels are asserted at figures only a machine could have produced. A
+/// block held below the ready target is one the loop has to answer with more
+/// duty than the declared standing-load feedforward alone -- which is what it
+/// would command if the error were nothing -- and with no draw reported there
+/// is nothing for it to feed. The pair is asserted rather than either alone,
+/// because a pump at rest is the correct answer here and would also be the
+/// answer of a law that never ran at all.
 static void test_the_law_runs_against_the_simulated_implementation_with_no_target_dependency(void)
 {
-    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    bring_the_loop_up(&parameters, &declaration, BELOW_READY_C);
 
     TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_ACTUATED, closed_loop_step());
-    TEST_ASSERT_TRUE_MESSAGE(hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER) > 0u ||
-                                 hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP) == 0u,
-                             "the law drove neither channel against the simulated implementation");
+    TEST_ASSERT_TRUE_MESSAGE(
+        hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER) >
+            (uint16_t)declaration.standing_load_permille,
+        "a block below the ready target was not answered with more duty than the standing load "
+        "alone, so nothing was driven from what the plant model reported");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                     "feed was commanded with no draw reported");
 }
 
 /// SOL-SIM-STEAM-READINESS-GATE.C1: Steam feed is withheld while measured
@@ -1926,6 +2015,53 @@ static void test_output_refused_is_reported_rather_than_folded_into_actuated(voi
     TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_OUTPUT_REFUSED, steam_control_step(&state));
 }
 
+/// Regression protection for the half-driven machine: a step whose heater
+/// command is refused does not leave the feed pump running.
+///
+/// This is the case the ordering of the two drive calls cannot answer, because
+/// the pump was already running before the step began. Mid-draw the feed is at
+/// the declared sustainable rate, and a refused heater command leaves the
+/// element at a level nothing established -- so water goes on being pushed
+/// into a block whose element may be at nothing, which is precisely the wet
+/// start the margin-building sequencing exists to prevent, arriving by the one
+/// path that bypasses that sequencing. control_step brings the brew side down
+/// in the same situation and for the same reason.
+///
+/// Only the heater channel is refused, not both: under a blanket refusal the
+/// off command would be refused too, and a pump that stayed where it was could
+/// not be told from one nothing tried to move.
+static void test_a_refused_heater_command_does_not_leave_the_feed_running(void)
+{
+    steam_control_state_t state;
+    const int32_t in_band = (declaration.draw_pressure_floor_milli_bar +
+                             declaration.draw_pressure_ceiling_milli_bar) /
+                            2;
+    const uint32_t settled_at =
+        (uint32_t)declaration.margin_interval_millis + (uint32_t)declaration.feed_rise_millis;
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+
+    for (uint32_t elapsed = 0u; elapsed <= settled_at; elapsed += STEP_INTERVAL_MS) {
+        (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
+    }
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)declaration.sustainable_feed_permille,
+                                     hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                     "the draw was not feeding, so a refused heater command has "
+                                     "nothing to have left running");
+
+    hw_sim_set_output_channel_refused(ACTUATION_CHANNEL_STEAM_HEATER, true);
+    hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID, in_band);
+    hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_VALID,
+                      declaration.ready_temperature_milli_c);
+    hw_sim_set_sensor(HW_SENSOR_STEAM_KNOB, HW_READING_VALID, HW_READING_DISCRETE_SET);
+
+    TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_OUTPUT_REFUSED, steam_control_step(&state));
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP),
+                                     "a refused heater command left the feed pump running into a "
+                                     "block whose element is at a level nothing established");
+}
+
 /// Regression protection for steam_control_init's own refusal of the initial
 /// off commands: the instance is still handed back usable -- a subsequent step
 /// is not treated as uninitialised -- but the return value itself is false, on
@@ -2019,6 +2155,7 @@ int main(void)
     RUN_TEST(test_init_is_refused_and_leaves_both_channels_off_without_either_record);
     RUN_TEST(test_the_accessors_refuse_nowhere_to_answer);
     RUN_TEST(test_output_refused_is_reported_rather_than_folded_into_actuated);
+    RUN_TEST(test_a_refused_heater_command_does_not_leave_the_feed_running);
     RUN_TEST(test_init_reports_a_refused_off_command_but_leaves_the_loop_usable);
     RUN_TEST(test_a_reopened_draw_earns_its_margin_again);
     return UNITY_END();

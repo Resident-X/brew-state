@@ -54,4 +54,22 @@ void hw_sim_advance_millis(uint32_t delta_millis);
  */
 void hw_sim_set_output_refused(bool refused);
 
+/*
+ * Make every subsequent hw_output_set on one channel refuse, leaving the rest
+ * accepting. An out-of-range channel is ignored.
+ *
+ * The blanket refusal above cannot produce the condition that matters most to
+ * a control law driving more than one channel: one command accepted and
+ * another refused, which leaves the machine half-driven in a way neither
+ * outcome of the blanket flag reaches. A loop that answers a refusal by
+ * commanding its other channels off can only be shown to do so against an
+ * interface where those other commands still land -- under the blanket flag
+ * they are refused as well, and a channel that stayed where it was is then
+ * indistinguishable from one nothing tried to move.
+ *
+ * The two are independent: a channel refuses when either this or the blanket
+ * flag says so, and hw_sim_reset clears both.
+ */
+void hw_sim_set_output_channel_refused(hw_output_channel_t channel, bool refused);
+
 #endif /* HW_SIM_H */

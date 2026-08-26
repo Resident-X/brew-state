@@ -34,6 +34,14 @@
  * and the same reliance on no environment here passing -ffinite-math-only,
  * under which both comparisons would be licensed to fold to true and the
  * refusal would disappear without a diagnostic.
+ *
+ * Nothing this loop presently reads can reach it. Every error it judges is
+ * built from range-checked declaration fields and from readings the seam
+ * carries as whole thousandths, so all of them are finite by construction and
+ * no test can drive this branch. It is kept on the same terms control.c keeps
+ * the negated comparison in its own as_drive_level: the guard costs a branch
+ * and removes the whole class, so a later figure arriving as a float, or a
+ * quantity read through the plant seam, cannot reintroduce it quietly.
  */
 static bool is_a_figure(float value)
 {
@@ -465,18 +473,31 @@ steam_control_step_result_t steam_control_step(steam_control_state_t *state)
             : 0u;
 
     /*
-     * The heater is driven before the feed, so that a machine which accepts
-     * one command and refuses the other is left with the element commanded and
-     * the pump not, rather than the other way about: water pushed into a block
-     * whose element was never commanded is the wet start this whole sequencing
-     * exists to avoid.
+     * A machine that accepts one of the two commands and refuses the other is
+     * brought down rather than left half-driven, on exactly the terms
+     * control_step's own refused-drive path brings the brew side down. The
+     * case that makes it necessary is the refused heater: the feed pump is
+     * still at whatever the step before commanded, which mid-draw is water
+     * being pushed into a block whose element is at a level nothing
+     * established -- the wet start this whole sequencing exists to prevent,
+     * arriving through the one path that bypasses the sequencing entirely.
+     * Ordering the two calls cannot answer that, because the pump was already
+     * running before this step began; only commanding it off can.
+     *
+     * The off commands are issued through the same call that may itself have
+     * just refused, so they may refuse too. That is why command_everything_off
+     * records what the interface accepted rather than what it was asked for --
+     * a channel whose off command was refused is still at its previous level,
+     * and this state must not claim otherwise.
      */
     if (!hw_output_set(ACTUATION_CHANNEL_STEAM_HEATER, level)) {
+        (void)command_everything_off(state);
         return STEAM_CONTROL_STEP_OUTPUT_REFUSED;
     }
     state->heater_permille = level;
 
     if (!hw_output_set(ACTUATION_CHANNEL_STEAM_PUMP, feed)) {
+        (void)command_everything_off(state);
         return STEAM_CONTROL_STEP_OUTPUT_REFUSED;
     }
     state->feed_permille = feed;

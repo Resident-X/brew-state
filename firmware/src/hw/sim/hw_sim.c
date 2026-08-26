@@ -10,6 +10,7 @@ static uint16_t sim_outputs[ACTUATION_CHANNEL_COUNT];
 static uint32_t sim_output_writes[ACTUATION_CHANNEL_COUNT];
 static uint32_t sim_millis;
 static bool sim_output_refused;
+static bool sim_output_channel_refused[ACTUATION_CHANNEL_COUNT];
 
 /*
  * The enumerations have no negative enumerator, so a compiler is free to give
@@ -43,6 +44,7 @@ void hw_sim_reset(void)
     for (int i = 0; i < (int)ACTUATION_CHANNEL_COUNT; i++) {
         sim_outputs[i] = 0u;
         sim_output_writes[i] = 0u;
+        sim_output_channel_refused[i] = false;
     }
     sim_millis = 0u;
     sim_output_refused = false;
@@ -84,6 +86,14 @@ void hw_sim_set_output_refused(bool refused)
     sim_output_refused = refused;
 }
 
+void hw_sim_set_output_channel_refused(hw_output_channel_t channel, bool refused)
+{
+    if (!output_channel_in_range(channel)) {
+        return;
+    }
+    sim_output_channel_refused[channel] = refused;
+}
+
 hw_reading_t hw_sensor_read(hw_sensor_channel_t channel)
 {
     hw_reading_t reading = { HW_READING_ABSENT, 0 };
@@ -109,7 +119,7 @@ bool hw_output_set(hw_output_channel_t channel, uint16_t level_permille)
     if (!output_channel_in_range(channel) || level_permille > ACTUATION_FULL_SCALE) {
         return false;
     }
-    if (sim_output_refused) {
+    if (sim_output_refused || sim_output_channel_refused[channel]) {
         return false;
     }
 

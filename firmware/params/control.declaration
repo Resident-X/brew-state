@@ -105,9 +105,9 @@ STEAM_CONTROL_DECLARATION_DRAW_INTEGRAL_GAIN_HIGH_MILLI @estimated Estimated as 
 
 STEAM_CONTROL_DECLARATION_FEED_LOAD_GAIN_LOW_MILLI @estimated Chosen as nothing, and admitting it as a real answer rather than only refusing what is past it, unlike either tracking gain's low bound: a design that has decided to answer the feed's load out of feedback alone has made a choice rather than omitted a term, and it is the choice a suite has to be able to declare to establish what the feedforward buys. Nothing here is a measurement.
 
-STEAM_CONTROL_DECLARATION_STANDING_LOAD_LOW_PERMILLE @estimated Chosen as nothing, and admitting it as a real answer rather than only refusing what is past it, on the same reasoning the feedforward gain's own low bound rests on: a design answering the block's standing loss out of feedback alone has made a choice rather than omitted a term. It is its own figure rather than a reading of that bound because the two bound different things -- one a gain against a commanded level, the other a level -- and either may be revised without the other silently moving with it. Nothing here is a measurement.
-
 STEAM_CONTROL_DECLARATION_FEED_LOAD_GAIN_HIGH_MILLI @estimated Estimated as a thousand permille of element per permille of commanded feed, at which one permille of feed asks for the whole element and the machine could not command a millilitre of feed without saturating. It bounds what the grammar will read rather than what the gain should be, and nothing here is a measurement.
+
+STEAM_CONTROL_DECLARATION_STANDING_LOAD_LOW_PERMILLE @estimated Chosen as nothing, and admitting it as a real answer rather than only refusing what is past it, on the same reasoning the feedforward gain's own low bound rests on: a design answering the block's standing loss out of feedback alone has made a choice rather than omitted a term. It is its own figure rather than a reading of that bound because the two bound different things -- one a gain against a commanded level, the other a level -- and either may be revised without the other silently moving with it. Nothing here is a measurement.
 
 # --- The figures admission rests on ------------------------------------------
 

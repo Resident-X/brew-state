@@ -84,11 +84,20 @@ typedef enum {
  * Which quantity the loop is presently driving to.
  *
  * Projected rather than left implicit because the switch between the two is a
- * property of the law worth being able to observe on the step it happens,
- * and because it is not always visible in the duty: during the
- * margin-building interval the heater is at its ceiling whichever variable is
- * in force, since with feed still at nothing the path's pressure is still the
- * one its temperature implies and driving to either is driving to the other.
+ * property of the law worth being able to observe on the step it happens, and
+ * because it is not visible in the duty on that step: the margin-building
+ * interval pins the element at its ceiling whichever variable is in force, so
+ * a caller watching only what was driven cannot tell a loop that switched from
+ * one that did not until that interval has elapsed.
+ *
+ * That the duty is the same across the switch is a consequence of the pinning
+ * and not of the two variables agreeing. They do not agree here: the ready
+ * target is a temperature whose rested pressure is the readiness threshold,
+ * and the draw-time target is the middle of a band declared deliberately above
+ * that threshold -- so at the instant a draw begins the temperature error is
+ * nothing while the pressure error is the whole distance from ready up into
+ * the band. Climbing that distance before any steam is made out of the block
+ * is exactly what the margin-building interval is for.
  */
 typedef enum {
     STEAM_CONTROL_VARIABLE_TEMPERATURE = 0,
