@@ -1,0 +1,17 @@
+id: EVD-SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C2-TEST
+type: evidence
+title: A brief gap in the brew reading against native_flow_fixture rides through; only a sustained one latches (SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T22:33:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'firmware/test/test_control_flow_fixture/test_control_flow_fixture.c::test_a_brief_gap_rides_through_and_only_a_sustained_one_brings_the_machine_down; task fw:run (native_flow_fixture exercise_invalid_sensor: 0 unmet expectations)'
+text: |-
+  task fw:run's exercise_invalid_sensor against native_flow_fixture now passes: a single missed step rides through and a sustained absence latches the fault, matching every other structure. test_a_brief_gap_rides_through_and_only_a_sustained_one_brings_the_machine_down covers the finer-grained case exercise_invalid_sensor does not: a gap that recovers inside the declared 500ms/50-step loss-tolerance window never latches at all, proving the recovery is actually incorporated rather than the fault arriving regardless of recovery.
+links:
+  - target: SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C2
+    type: satisfies

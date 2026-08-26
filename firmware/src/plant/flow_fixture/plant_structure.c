@@ -176,21 +176,46 @@ bool plant_model_state(const plant_model_t *model, plant_state_t state, float *v
     /*
      * Narrower than the quantities above, and narrower than the vocabulary --
      * this structure describes no machine, so it is free to keep whatever
-     * state it likes. The one it answers is the accumulator, under the name
-     * of the water on its way out, because that is the one state
-     * ESTIMATOR_STATE_BREW_TEMPERATURE_C reconstructs -- see estimator.c's
-     * STATE_FOR_RECONSTRUCTION -- and control_init refuses to come up
-     * against a structure that does not keep it. Nothing here claims it is a
-     * temperature of anything real. The other four states remain refused:
-     * this structure keeps no separate mass state, no steam-side state and no
-     * pressure state, because it answers no channel any of them would come
-     * from.
+     * state it likes. What it keeps is the one accumulator, answered under two
+     * names: the water on its way out, and the mass that heated it.
+     *
+     * Both, because the estimator reaches a structure by two routes for the
+     * one reconstruction and asks a different name down each. Its up-front
+     * reachability check asks for the state ESTIMATOR_STATE_BREW_TEMPERATURE_C
+     * is held as -- see estimator.c's STATE_FOR_RECONSTRUCTION, which names the
+     * water leaving -- and control_init refuses to come up against a structure
+     * that does not keep it. Its per-step correction asks for the state the
+     * brew temperature quantity is observed at -- see state_observed_by, which
+     * names the heated mass, because a sensor can be placed on the mass far
+     * more readily than in the stream leaving it. A structure answering only
+     * the first is admitted at start-up and then never corrected: every reading
+     * arrives, every correction is dropped for want of a state to apply it to,
+     * and the reconstruction is withdrawn once the declared loss-tolerance
+     * window elapses -- a machine brought down for a missing observation that
+     * was there the whole time.
+     *
+     * Answering both from the one accumulator is not a claim that the water
+     * leaving is the mass it left. It is the same conflation the quantities
+     * above already make, for the same reason: there is no machine here for the
+     * two to differ in, and no equation for the water to follow the mass by. A
+     * structure that describes a machine holds them apart and lets its own
+     * equations carry the one to the other; this one has neither the difference
+     * to hold nor the equations to carry it, so a second name for the
+     * accumulator is the honest answer rather than a shortcut.
+     *
+     * The other three states remain refused: PLANT_STATE_STEAM_TEMPERATURE_C
+     * and PLANT_STATE_STEAM_PRESSURE_BAR, because this structure answers no
+     * steam channel at all, and PLANT_STATE_BREW_PRESSURE_BAR, because it
+     * answers no channel a pressure figure would come from either. Steam
+     * pressure falls under both reasons at once -- a steam-side quantity and
+     * a pressure quantity together -- rather than needing a third category
+     * of its own.
      */
     switch (state) {
     case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
         *value = model->accumulated;
         return true;
-    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
     case PLANT_STATE_STEAM_TEMPERATURE_C:
     case PLANT_STATE_BREW_PRESSURE_BAR:
     case PLANT_STATE_STEAM_PRESSURE_BAR:
@@ -207,16 +232,22 @@ bool plant_model_set_state(plant_model_t *model, plant_state_t state, float valu
     }
 
     /*
-     * The same one state the read answers, and the same refusals for the
+     * The same two states the read answers, and the same refusals for the
      * rest. A structure that answered a write it would not answer a read for
      * could be written to and then not read back, which is a worse thing to
      * be than narrow.
+     *
+     * The pairing carries more weight here than that alone: the estimator
+     * writes the state its sensor observed and its caller reads back the state
+     * the control law works from, so it is a write under the one name and a
+     * read under the other that have to meet on this accumulator for a
+     * correction to reach the reconstruction at all.
      */
     switch (state) {
     case PLANT_STATE_BREW_OUTLET_TEMPERATURE_C:
+    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
         model->accumulated = value;
         return true;
-    case PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C:
     case PLANT_STATE_STEAM_TEMPERATURE_C:
     case PLANT_STATE_BREW_PRESSURE_BAR:
     case PLANT_STATE_STEAM_PRESSURE_BAR:
