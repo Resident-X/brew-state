@@ -1,0 +1,17 @@
+id: EVD-SOL-SUPPORT-CITATION-SUBSTANCE.C2-TEST
+type: evidence
+title: A citation naming a machine and an action is accepted; unverified structures stay undisturbed (SOL-SUPPORT-CITATION-SUBSTANCE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:16:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::CitationIdentifiesWhatWasRunAgainstWhat
+text: |-
+  The acceptance side of CitationIdentifiesWhatWasRunAgainstWhat in firmware/tools/tests/test_plant_checks.py confirms lacks_substance() still passes a citation naming something alongside a generic affirmation, and a citation naming a machine plus a date (digits excluded from the count but not from the citation, so a genuine timestamped citation still clears the floor). test_unverified_structures_are_undisturbed_by_the_substance_floor asserts a PLANT_SUPPORT_UNVERIFIED structure carrying any EVIDENCE macro -- including a bare generic word -- is refused only for the pre-existing reason (carrying evidence at all) and never by the new substance message, so the undisturbed clause holds. Full suite: python3 -m unittest discover -s tools/tests from firmware/ -- 666 tests pass. Real project tree confirmed unaffected (all shipped structures PLANT_SUPPORT_UNVERIFIED, check exits 0).
+links:
+  - target: SOL-SUPPORT-CITATION-SUBSTANCE.C2
+    type: satisfies

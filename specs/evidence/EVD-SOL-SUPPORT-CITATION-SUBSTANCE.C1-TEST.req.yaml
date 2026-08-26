@@ -1,0 +1,17 @@
+id: EVD-SOL-SUPPORT-CITATION-SUBSTANCE.C1-TEST
+type: evidence
+title: Citation-substance check refuses vacant/padded/homoglyph/digit-only citations on both surfaces (SOL-SUPPORT-CITATION-SUBSTANCE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:16:22Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_plant_checks.py::CitationIdentifiesWhatWasRunAgainstWhat
+text: |-
+  The refusal side of CitationIdentifiesWhatWasRunAgainstWhat in firmware/tools/tests/test_plant_checks.py drives check_support_status.py's new lacks_substance() heuristic on both cross-checked surfaces -- the PLANT_STRUCTURE_SUPPORT_EVIDENCE header macro and the README support-status table. Covers: a single generic-word citation (header and documentation surfaces separately), several affirmations strung together (padding), a single non-generic word, a non-ASCII homoglyph that must not fragment into extra tokens, a digit-only citation (date/serial with no named machine or action), and a realistic vague hedge phrase. All refused with the 'says nothing about what was run against what' / 'cites nothing an adopter can read' messages. Full suite: python3 -m unittest discover -s tools/tests from firmware/ -- 666 tests pass. Real project tree (firmware/src/plant, firmware/README.md) unaffected: all 4 shipped structures are PLANT_SUPPORT_UNVERIFIED, so the HARDWARE_VERIFIED-only heuristic never engages against them, confirmed by running check_support_status.py directly against the real tree (exit 0).
+links:
+  - target: SOL-SUPPORT-CITATION-SUBSTANCE.C1
+    type: satisfies
