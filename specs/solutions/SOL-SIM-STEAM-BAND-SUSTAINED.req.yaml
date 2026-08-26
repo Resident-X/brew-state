@@ -1,0 +1,49 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED
+type: deliverable
+category: solution
+title: The steam control law holds temperature at ready, pressure during a draw, and recovers unattended
+status: active
+version: 4
+text: |
+  The control law that holds steam character for a whole draw, and recovers afterward, is built here, in host simulation against the plant description. No control law drives the steam heater or steam feed today: the control unit only ever computes brew heater duty, and nothing writes either steam channel, so both are fully open-loop.
+
+  While idle or recovering, the controlled variable is the block's own temperature, held at a declared ready target -- pressure at rest is a direct function of that temperature, so holding temperature holds pressure with it. Once a draw begins, measured pressure becomes the variable actually tracked, because pressure and temperature diverge exactly when a draw is under way, and pressure is what determines the character delivered at the wand. A reading outside physically plausible bounds is rejected rather than acted on, on both channels.
+
+  On demand starting, the heater is driven to its ceiling immediately, and feed engagement deliberately lags behind it by a declared margin-building interval -- steam made before the block has any thermal margin to give is the wet, degrading start this loop exists to avoid, and leading with heat rather than with feed is what prevents it. Once feed engages, it is driven to honour as much of the demanded rate as the block's declared capacity allows, reducing what is delivered rather than its character when the two cannot both be met. On demand ending, feed is cut immediately and the same temperature-holding control that maintains the ready state resumes, carrying pressure back up with it -- recovery is not a separate mechanism, it is the ready-holding behaviour continuing from wherever the draw left it.
+
+  A host harness closes the loop through a truth plant distinct from the control law's own view of it, injecting the same sensor channels the reference machine now carries, so tracking and recovery are asserted against a plant the control law does not get to agree with by construction.
+
+  Out of scope: whether the loop keeps its guarantees across the declared range of model error, which belongs to the robustness work downstream -- this matters more here than for most loops, since the plant description's own account flags the pressure-under-draw coefficient as the loosest figure it carries. Withholding feed before the ready threshold is reached is out of scope here -- it is the depended-on gate's job. The single-boiler plant structure is out of scope for this slice: it carries no steam feed channel at all, so it cannot exercise a control law whose actuator is that channel. Choosing when the machine should sit at a lower idle temperature versus the ready target is a scheduling policy this slice does not decide; this loop holds whatever target it is given.
+rationale: |
+  Temperature at rest and pressure under draw are the same underlying choice, not two: the plant model defines rest pressure as a direct function of temperature, so nothing is gained by tracking pressure while nothing is being drawn, and everything is lost by tracking temperature once a draw decouples the two. Each phase gets the variable that is actually informative in it.
+
+  Heater-leads-feed rather than the two engaging together follows from what "dry" means here: steam made from water the block has not yet earned the thermal margin to boil cleanly is wet steam, and the whole reason this loop exists is to avoid delivering that. The delay is a declared interval rather than a fixed constant of the control source, for the same reason every other tunable figure here is declared -- what interval is actually needed is a question the simulation answers, not one this text settles in advance.
+
+  Cutting feed immediately on demand ending, and treating recovery as the same mechanism as ready-holding rather than a distinct one, follows from the pressure-at-rest relation itself: once the draw stops costing the block anything, there is nothing recovery needs to do that holding ready does not already do. Building a second recovery-specific control path would be maintaining two mechanisms for one behaviour.
+
+  Declining to assert a tight numerical bound on how far pressure may sag under a draw, or how quickly it recovers, is deliberate rather than a gap: the plant description's own account names the coefficient governing draw-time pressure sag as a first-principles guess, the loosest figure it carries, because a thermoblock holds no reservoir and nobody has instrumented this behaviour on a machine of this type. Asserting precision the model does not have would be testing the guess rather than the loop, and that coefficient is the strongest candidate for revision once a bench exists.
+links:
+  - target: DEC-STEAM-PRESSURE-SENSOR-ADDED
+    type: justified-by
+  - target: DEL-SIM-STEAM-LOOP.C1
+    type: derives-from
+  - target: DEL-SIM-STEAM-LOOP.C3
+    type: derives-from
+  - target: DEL-SIM-STEAM-LOOP.C4
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C3
+    type: targets
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets
+  - target: REQ-STEAM-DELIVERY-001.C1
+    type: targets
+  - target: REQ-STEAM-DELIVERY-001.C3
+    type: targets
+  - target: REQ-STEAM-DELIVERY-001.C4
+    type: targets
+  - target: REQ-STEAM-DELIVERY-001.C5
+    type: targets
+  - target: SOL-SIM-STEAM-READINESS-GATE
+    type: depends-on
+  - target: DEL-SIM-STEAM-LOOP.C5
+    type: derives-from

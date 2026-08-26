@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C3
+type: criterion
+title: The ready temperature target and the draw-time pressure band are declared data with recorded origins
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The ready temperature target and the draw-time pressure band are declared once, alongside the loop's other coefficients, each carrying a recorded origin, rather than compiled into the control source. Changing either changes which trajectories the control suite accepts with no source edit, and an undeclared value fails the gate rather than defaulting silently. Fixing the values the physical machine is finally held to is out of scope for this criterion -- it establishes that they exist, are sourced, and are read, not what their numbers should be.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

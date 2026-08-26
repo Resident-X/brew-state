@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C12
+type: criterion
+title: Once engaged, feed rises to its sustainable rate over a declared interval rather than stepping
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Once feed is commanded to engage, it rises to its declared sustainable rate over a declared interval rather than stepping to it. A test holds the margin-building interval before engagement fixed at a declared nonzero value in both arms of the comparison, then compares commanded feed immediately after engagement with the rise present against the same rise duration set to zero, and shows the zeroed case reaches full rate on the first control step after engagement while the risen case does not. Prescribing the exact shape of the rise -- linear, exponential, or otherwise -- is out of scope for this criterion, which asserts only that a rise exists and that its duration is declared data with a recorded origin rather than a literal in the control source. This is distinct from the margin-building interval before feed engages at all: that interval delays the start of feed, this one shapes what feed does once it has started, and each criterion's test holds the other's interval fixed and nonzero so the two are not exercised as if either alone explained a good start.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

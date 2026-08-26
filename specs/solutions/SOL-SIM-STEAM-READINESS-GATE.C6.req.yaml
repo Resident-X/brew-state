@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-READINESS-GATE.C6
+type: criterion
+title: The control law is exercised against the plant model in host simulation before any hardware exists
+status: deprecated
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The check, the reconstruction it reads, and the loop it gates are all exercised in host simulation against the plant description before any hardware exists to energise -- the control suite drives every assertion above through the same host harness the band-holding loop uses, with no dependency on a target board. Verifying the same behaviour once hardware exists, and that the implementation matches this design, is out of scope for this criterion.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE
+    type: criterion-of

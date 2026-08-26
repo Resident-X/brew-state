@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C8
+type: criterion
+title: Heater leads and feed lags by a declared interval on demand starting, so delivered steam starts in character
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The instant the wand's microswitch reports a draw has begun, heater duty is driven to its ceiling, and feed is deliberately held back for a declared margin-building interval before it is allowed to engage -- steam made before that margin exists is the wet, degrading start this loop is built to avoid. A test holds the feed's own rise duration fixed at a declared nonzero value in both arms of the comparison, then compares the character of the first steam delivered with the margin-building interval present against the same interval set to zero, and shows the present case starts in band while the zeroed case does not. The length of the interval is declared data with a recorded origin, not a literal in the control source. Fixing what that interval's value should be on the physical machine is out of scope for this criterion, which asserts only that the sequencing exists and is declared.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

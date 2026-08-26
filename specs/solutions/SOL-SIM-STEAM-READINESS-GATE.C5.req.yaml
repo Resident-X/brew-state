@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-READINESS-GATE.C5
+type: criterion
+title: The feed-withhold policy is exercised in host simulation against the plant model before any hardware exists
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The feed-withhold policy is driven through the same host harness the band-holding loop uses, against the plant description, with no dependency on a target board -- satisfying the pre-energisation verification this slice targets. Verifying the same behaviour once hardware exists, and that the implementation matches this design, is out of scope for this criterion.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: REQ-STEAM-DELIVERY-001.C5
+type: criterion
+title: Output rises to its steady rate over a declared interval rather than stepping to it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A machine that steps straight to full output the instant a draw begins can spray the operator or the milk before they have a chance to react. Output therefore rises to its steady rate over a declared interval rather than stepping to it. The shape of that rise -- linear, exponential, or otherwise -- is not stated here; only that a rise happens rather than a step, and that how long it takes is declared rather than fixed in source.
+links:
+  - target: REQ-STEAM-DELIVERY-001
+    type: criterion-of
