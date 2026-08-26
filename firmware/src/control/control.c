@@ -572,6 +572,19 @@ static void command_everything_off(control_state_t *state)
     state->delivery_elapsed_millis = 0u;
     state->delivery_lead_millis = 0u;
     forget_departure(state);
+
+    /*
+     * A demand held against the delivery just cleared has nothing left to
+     * wait for. The mass it was waiting on did not free by the delivery it
+     * contended with reaching its own end -- it was taken away from under it
+     * by whatever commanded everything off -- and starting a new course onto
+     * a machine that has just been told to stop would be exactly the
+     * outstanding request this function exists to clear, on the same
+     * reasoning the running delivery above is cleared rather than left to
+     * count on. The resume such a demand is owed happens only where a
+     * delivery reaches its own end, in control_step, and not here.
+     */
+    state->delivery_held = false;
 }
 
 /* Latch the fault and command the outputs off. */
@@ -1016,6 +1029,17 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     state->delivery_running = false;
     state->delivery_elapsed_millis = 0u;
     state->delivery_lead_millis = 0u;
+    /*
+     * A demand cannot be held before anything has ever run to contend with,
+     * so this starts false on the same terms `delivery_running` above does.
+     * `held_delivery` itself is left uninitialised rather than cleared here:
+     * it is meaningful only while `delivery_held` is set (see the field
+     * comment on `held_delivery` in control.h), on the same terms `delivery`
+     * is left in place once `delivery_running` goes false rather than
+     * cleared, so there is nothing this function is entitled to assume about
+     * its shape that clearing it would express.
+     */
+    state->delivery_held = false;
     forget_departure(state);
 
     /*
@@ -1134,6 +1158,61 @@ bool control_command_flow(control_state_t *state, uint16_t pump_permille)
     return true;
 }
 
+/*
+ * Copy a profile into the state as the delivery now running, against the
+ * peak rate it draws at.
+ *
+ * Written once so that a delivery commanded directly and a demand that was
+ * held and is now being admitted start on identical terms: elapsed time at
+ * zero regardless of anything that ran, or waited, before it; the read-ahead
+ * lead probed fresh against this course's own peak rather than carried over
+ * from whatever last held the field; and the last delivery's departure and
+ * yield forgotten, so neither reports on a course that is not its own.
+ */
+static void start_delivery(control_state_t *state, const delivery_profile_t *profile,
+                           float peak_ml_per_s)
+{
+    state->delivery = *profile;
+    state->delivery_running = true;
+    state->delivery_elapsed_millis = 0u;
+    state->delivery_lead_millis = probe_read_ahead_lead_millis(
+        &state->parameters, state->full_scale_flow_ml_per_s, peak_ml_per_s);
+    forget_departure(state);
+}
+
+/*
+ * Start the demand held against the delivery that has just reached its own
+ * end, if one is waiting.
+ *
+ * Called only from the one place in control_step a delivery ends on its own
+ * account -- reaching its end condition -- rather than being cut off by
+ * everything being commanded off: see command_everything_off for why a
+ * demand held against a delivery that ends that way is discarded rather than
+ * started. What full pump scale this machine draws and what description it
+ * was brought up against have not changed since the demand was held, so
+ * nothing about it is re-admitted here; only the peak this course draws at is
+ * asked again, on the same terms start_delivery asks it of any other
+ * delivery, because it is what the lead-ahead term is probed against and
+ * this call does not have admission's own answer lying around to reuse.
+ *
+ * Started on exactly the terms start_delivery starts any other delivery on,
+ * so a demand that waited many control steps for the mass it named begins
+ * counting its own elapsed time from this admission and not from however long
+ * it waited.
+ */
+static void start_the_held_delivery(control_state_t *state)
+{
+    if (!state->delivery_held) {
+        return;
+    }
+
+    uint32_t at_millis = 0u;
+    const float peak_ml_per_s = peak_rate_ml_per_s(&state->held_delivery, &at_millis);
+
+    start_delivery(state, &state->held_delivery, peak_ml_per_s);
+    state->delivery_held = false;
+}
+
 bool control_command_delivery_reporting(control_state_t *state, const delivery_profile_t *profile,
                                         control_admission_t *admission)
 {
@@ -1147,17 +1226,44 @@ bool control_command_delivery_reporting(control_state_t *state, const delivery_p
         return false;
     }
 
-    state->delivery = *profile;
-    state->delivery_running = true;
-    state->delivery_elapsed_millis = 0u;
     /*
-     * Taken once, here, against the peak admission has already found, rather
-     * than recomputed as the course runs -- see drawn_load_pump_permille,
-     * which reads it back.
+     * Contention is a transient condition -- whether the mass this profile
+     * would draw is given to the delivery already running -- and not a
+     * permanent one, so it is asked here rather than folded into
+     * admit_delivery's own bound vocabulary above. Asked of whatever is
+     * actually running, through the same two-argument seam call the recovery
+     * accounting between deliveries already reads, rather than of a fixed
+     * reference point: control_delivery_contends_with_the_group answers a
+     * narrower question than this one needs.
+     *
+     * The point named is compared against the one already running first, and
+     * the mass is only asked about when the two differ. A profile naming the
+     * same point a running delivery already does shares a mass with it
+     * trivially -- it is the same mass by definition -- and that is not the
+     * contention this question is about: a caller repeating the point it
+     * already named is restating the same demand, on the same terms a new
+     * target replaces one already commanded, and is replaced exactly as
+     * before rather than held against itself. What this asks about is two
+     * distinct points that answer for one casting between them.
+     *
+     * A demand found to contend is held rather than started, and the
+     * delivery already running is left completely alone -- nothing here
+     * touches `state->delivery` or its bookkeeping. A second contending
+     * demand commanded while one is already held simply overwrites
+     * `held_delivery`, on the same terms a running delivery is replaced by a
+     * later command: one waiting slot, not a queue.
      */
-    state->delivery_lead_millis = probe_read_ahead_lead_millis(
-        &state->parameters, state->full_scale_flow_ml_per_s, peak_ml_per_s);
-    forget_departure(state);
+    bool contends = false;
+    if (state->delivery_running && profile->served_at != state->delivery.served_at &&
+        plant_delivery_points_share_mass(profile->served_at, state->delivery.served_at,
+                                         &contends) &&
+        contends) {
+        state->held_delivery = *profile;
+        state->delivery_held = true;
+        return true;
+    }
+
+    start_delivery(state, profile, peak_ml_per_s);
     return true;
 }
 
@@ -1171,6 +1277,18 @@ bool control_command_delivery(control_state_t *state, const delivery_profile_t *
 bool control_delivery_running(const control_state_t *state)
 {
     return state != NULL && state->delivery_running;
+}
+
+bool control_delivery_held(const control_state_t *state, delivery_profile_t *held_profile,
+                           plant_delivery_point_t *held_against)
+{
+    if (state == NULL || held_profile == NULL || held_against == NULL || !state->delivery_held) {
+        return false;
+    }
+
+    *held_profile = state->held_delivery;
+    *held_against = state->delivery.served_at;
+    return true;
 }
 
 bool control_temperature_band(const control_state_t *state, int32_t *band_milli_c)
@@ -1366,6 +1484,14 @@ control_step_result_t control_step(control_state_t *state)
             (void)judge_the_interval_just_elapsed(state);
             state->delivery_running = false;
             state->commanded_pump_permille = 0u;
+
+            /*
+             * A demand held for the mass this delivery was drawing has
+             * nothing left to wait for: start it now, on the same control
+             * cadence that noticed the mass was free, with nothing asked of
+             * the caller again. See start_the_held_delivery.
+             */
+            start_the_held_delivery(state);
         } else {
             const float rate_ml_per_s =
                 delivery_profile_rate_ml_per_s(&state->delivery, state->delivery_elapsed_millis);

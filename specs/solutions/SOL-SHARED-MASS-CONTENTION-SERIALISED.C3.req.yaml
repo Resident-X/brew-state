@@ -1,0 +1,17 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED.C3
+type: criterion
+title: A demand for a point not sharing a mass with what is running is admitted immediately
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A demand naming a delivery point that answers a different identifier from whatever is running is
+  admitted the moment it is received, exactly as any demand is admitted when nothing is running at all --
+  holding it, even briefly, would be treating an arrangement with two independent masses as though it
+  shared one. How closely a demand that does start tracks its target once running, and how well a demand
+  following one on the same mass recovers, are sibling criteria's claims and stay out of scope here: this
+  is only about whether admission itself is delayed.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED
+    type: criterion-of

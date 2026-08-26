@@ -1,0 +1,16 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED.C6
+type: criterion
+title: A held demand's elapsed course is counted from its own admission rather than when it was received
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A demand's elapsed course counts from the control step it is actually admitted on, whether that is the
+  step it was received or a later one it spent held -- a demand held for the length of a long hot water
+  draw begins its own profile with zero elapsed time, not with however long it waited. Altering the
+  commanded course itself -- its target, its rate, its own end condition -- to account for time spent held
+  is out of scope: holding changes only when a course begins, never what the course asks for.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED
+    type: criterion-of

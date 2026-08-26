@@ -1,0 +1,18 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED.C1
+type: criterion
+title: A demand for a point sharing a mass with the delivery already running is held rather than starting it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Whether the two points contend is asked of the same declaration the recovery accounting between
+  deliveries already reads, not written again for this case: two points that answer the same identifier
+  are contending, and any other pairing is not. Holding rather than starting leaves the running delivery's
+  own course -- its profile, its elapsed time, its departure account -- entirely untouched; nothing about
+  what is already running changes because a second demand arrived. Declining the demand outright on this
+  same signal, rather than holding it, is out of scope: what this claims is that contention is answered by
+  waiting, not by refusal.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED
+    type: criterion-of

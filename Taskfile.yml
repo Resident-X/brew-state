@@ -124,6 +124,7 @@ tasks:
     cmds:
       - "{{.PIO}} run -e native"
       - "{{.PIO}} run -e native_fixture"
+      - "{{.PIO}} run -e native_flow_fixture"
       - "{{.PIO}} run -e native_boiler"
       - "{{.PIO}} run -e stm32"
 

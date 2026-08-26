@@ -1,0 +1,17 @@
+id: EVD-SOL-SHARED-MASS-CONTENTION-SERIALISED.C3-TEST
+type: evidence
+title: Non-contending demand admitted immediately, unaffected by any hold (SOL-SHARED-MASS-CONTENTION-SERIALISED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T09:25:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control_narrow/test_control_narrow.c::test_the_two_points_this_structure_serves_never_share_a_mass; firmware/test/test_control_flow_fixture/test_control_flow_fixture.c::test_a_demand_not_sharing_the_mass_is_admitted_immediately_while_a_delivery_runs
+text: |-
+  Against a two-mass, pump-capable structure, a demand naming the point that does not share a mass with what is running is admitted on the spot -- CONTROL_ADMISSION_OK, the new course becomes what control_step advances, nothing is reported held -- proving the non-contending branch end to end rather than merely by the underlying mass-sharing predicate.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED.C3
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-SHARED-MASS-CONTENTION-SERIALISED.C5-TEST
+type: evidence
+title: A held demand and what it is held against is reported (SOL-SHARED-MASS-CONTENTION-SERIALISED.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T09:25:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_held_demand_and_what_it_is_held_against_are_readable
+text: |-
+  control_delivery_held follows this file's existing query convention: false and nothing written for a null state or null destination, false for a machine with nothing held, and true with both the held profile and the point it is held against filled in for as long as it stays held.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED.C5
+    type: satisfies

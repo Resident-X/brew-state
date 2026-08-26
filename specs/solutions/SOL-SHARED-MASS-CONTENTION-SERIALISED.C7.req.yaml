@@ -1,0 +1,18 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED.C7
+type: criterion
+title: The control suite exercises holding and resuming against a shared-mass description and its absence against a separate-mass one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control suite commands a second delivery against the description that answers the two delivery
+  points with one heated mass while the first is still running, and asserts the second is held rather than
+  replacing the first, then that it starts unassisted once the first ends. The same commands run again
+  against the description built with two separate masses, and assert neither delivery is ever held. Both
+  runs are exercised on the host tier the rest of this epic already verifies on. Establishing that holding
+  and resuming hold across the declared range of model error is out of scope and is the robustness
+  verification's claim.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED
+    type: criterion-of

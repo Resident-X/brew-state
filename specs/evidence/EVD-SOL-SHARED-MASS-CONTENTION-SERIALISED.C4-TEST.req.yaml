@@ -1,0 +1,17 @@
+id: EVD-SOL-SHARED-MASS-CONTENTION-SERIALISED.C4-TEST
+type: evidence
+title: A second contending demand replaces the held demand (SOL-SHARED-MASS-CONTENTION-SERIALISED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T09:25:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_second_contending_demand_replaces_the_first_held_one
+text: |-
+  A second hot water demand commanded while a first hot water demand is already held replaces the held one -- what is reported held afterwards is the second course, never the first, and it is the second course that starts once the running extraction ends.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED.C4
+    type: satisfies

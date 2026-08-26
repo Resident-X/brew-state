@@ -1,0 +1,65 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED
+type: deliverable
+category: solution
+title: A demand contending for the mass a running delivery already holds is deferred and admitted once that delivery ends
+status: active
+version: 1
+text: |
+  Both deliveries this machine serves reach the drinker through one heated mass: the group and the hot
+  water arm draw the same casting down, and a delivery is committed the moment it is admitted -- nothing
+  today asks whether another delivery is already drawing that same mass before starting a second one.
+  Commanding a delivery while one is already running simply replaces it: the profile in flight is
+  discarded, its elapsed time resets, and its departure account is forgotten. That behaviour is deliberate
+  everywhere the machine genuinely can begin at once, but a demand for the same mass a running delivery
+  already holds is a different case -- one the admission path has always been able to ask about, through
+  the declaration that already says whether two delivery points answer the same identifier, and has simply
+  never been asked.
+
+  This slice asks it. A demand naming a delivery point that shares its mass with whatever is already
+  running is held rather than replacing it: the running delivery keeps its course uninterrupted, and the
+  held demand waits. A demand for a point that answers a different identifier is admitted exactly as
+  before, unaffected by anything running elsewhere -- the fixture built with two separate castings proves
+  this stays true, exactly as it already does for the recovery accounting a sibling slice built.
+
+  A held demand is admitted the moment the delivery it contended with ends, with nothing asked of the
+  operator: the same tracking that already knows whether a delivery is running is what notices the mass
+  has freed and starts the held one. Its elapsed course begins counting from that admission, not from the
+  moment it was first received -- a demand held for the length of an entire hot water draw does not begin
+  its own life already stale. Only one demand is held at a time; naming the arrangement any richer than a
+  single waiting slot is not asked for here, so a second contending demand arriving while one is already
+  held replaces the held one exactly as a running delivery is replaced today, rather than queuing behind
+  it. Whether a demand is presently held, and which running delivery it is held against, is reported
+  rather than disappearing into the wait -- a demand that never starts still gives an account of why.
+
+  What this does not do: it does not compute whether the mass has recovered enough to hold the held
+  demand's own target -- the recovery a demand receives once it starts is the tracking loop's existing
+  job, already shown to land within a declared distance of a delivery from rest, and adding a second wait
+  on top of that finding would be answering a question already settled. It does not refuse a demand
+  outright for contending with another; contention here is always resolved by waiting, never by declining.
+  And it adds no second waiting slot beyond the one demand already held -- a third contender finds the
+  second, not a queue.
+rationale: |
+  Refusing a contending demand outright was considered and rejected: the requirement this slice serves
+  asks for a deferred demand to proceed once conditions return, not to be declined, and a hot water draw
+  or an extraction are both routine demands a drinker expects honoured, not turned away because something
+  else happened to be running first. Queuing more than one held demand was also considered and rejected:
+  this machine takes one delivery at a time on either side today, and a multi-item wait list would answer
+  a demand the machine's own two-delivery-point vocabulary does not make.
+
+  Gating admission of the held demand on a recomputed thermal-readiness answer -- whether the mass has
+  returned to where the held demand's own target can be held -- was considered and rejected. That
+  readiness question was already worked out and then deliberately left unbuilt precisely because nothing
+  consumed it yet; the recovery a demand receives once admitted is already the tracking loop's job,
+  already shown to land within a declared distance of a delivery from rest without first waiting for full
+  recovery. Building a readiness gate now would settle, a second time and for no better reason, a question
+  the tracking loop's existing conditional integration already answers by running.
+
+  Reusing the existing mass-sharing declaration, rather than inventing a new one, keeps this slice a
+  statement about which delivery points share a casting rather than about any one kitchen's arrangement: a
+  machine whose two delivery points answer different identifiers is exercised through the same admission
+  path and takes neither the hold nor the wait, proven by the fixture built for exactly that case.
+links:
+  - target: DEL-SIM-BREW-LOOP.C8
+    type: derives-from
+  - target: REQ-HOT-WATER-001.C4
+    type: targets

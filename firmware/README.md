@@ -176,6 +176,7 @@ cited behind it. The vocabulary is declared once, in `include/plant_support.h`.
 | --- | --- | --- |
 | `thermoblock` | `PLANT_SUPPORT_UNVERIFIED` | — |
 | `fixture` | `PLANT_SUPPORT_UNVERIFIED` | — |
+| `flow_fixture` | `PLANT_SUPPORT_UNVERIFIED` | — |
 | `boiler` | `PLANT_SUPPORT_UNVERIFIED` | — |
 
 The line is drawn at verification against real hardware and at nothing else. In
@@ -212,7 +213,8 @@ fails a check rather than the one that ships.
 | `src/hw/stm32/` | The STM32 HAL-backed implementation. Naming vendor symbols is its job. |
 | `src/plant/common/` | Reads a parameter record from a description. One parser, every structure. Not a structure itself. |
 | `src/plant/thermoblock/` | The machine-describing structure: two heated masses, pump-driven brew pressure, steam pressure above saturation. |
-| `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. |
+| `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. Answers no pump channel and keeps no state the estimator reconstructs, on purpose -- see `src/plant/flow_fixture/` for the structure that exists because of that. |
+| `src/plant/flow_fixture/` | A third structure that models nothing, alongside `fixture`. Answers a pump channel and the one state the estimator reconstructs, so `control_init` can come up against it and a real admission can be asked of `control_command_delivery_reporting` -- which `fixture`'s own narrowness rules out. |
 | `src/plant/boiler/` | A structure of a different architecture: one heated vessel serving both paths, so both temperature quantities follow one heater and the machine's second heating channel goes unanswered. |
 | `params/` | Parameter descriptions, and the statement of what each represents. Read at run time. The host builds open the one they are given; the target has no filesystem to open one from, so its build compiles the description it declares into the artefact and the entry point reads those bytes back through the same loader. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. A description that claims a real machine accounts for every value it carries and is accompanied by `<structure>.md`, which says what those quantities are and how they relate. |
 | `params/robustness.declaration` | The behaviours the design commits to, each classified as one that must survive an arbitrarily wrong model or one permitted to degrade with it. Carried with the descriptions because it is the other half of the same design input: a declared range of model error says nothing without a statement of which behaviours are not allowed to depend on it. |

@@ -399,6 +399,18 @@ typedef struct {
     delivery_profile_t delivery;
     bool delivery_running;
     /*
+     * A demand named while a point sharing a mass with `delivery` above was
+     * already running, held rather than started -- see
+     * control_command_delivery_reporting. Held by value for the reason
+     * `delivery` itself is: no allocator exists to point at a caller's copy
+     * instead. Meaningful only while `delivery_held` is set; a profile that
+     * has since been started, or discarded when everything was commanded
+     * off, is left in place rather than cleared, on the same terms `delivery`
+     * itself is left in place once it finishes.
+     */
+    delivery_profile_t held_delivery;
+    bool delivery_held;
+    /*
      * How long the running delivery has been under way, advanced each step by
      * the same interval the estimator is advanced by -- see control_step --
      * so a step that arrived late advances both by the same honest amount
@@ -599,7 +611,16 @@ bool control_command_flow(control_state_t *state, uint16_t pump_permille);
  * terms control_command_temperature replaces a target already named: a caller
  * that names a new course meant to say what should be happening now, and a
  * control path that went on running the old one until some other call told it
- * to stop would be honouring an intent the caller has already withdrawn.
+ * to stop would be honouring an intent the caller has already withdrawn. That
+ * is not the whole of it, though: a profile naming a different point that
+ * shares a heated mass with the delivery already running is held rather than
+ * replacing it, and the running delivery's own course is left entirely
+ * untouched -- see control_command_delivery_reporting for where that
+ * question is asked and control_delivery_held for reading a demand held this
+ * way. It starts on its own, with nothing asked of the caller again, the
+ * control step the delivery it contended with ends; see control_step. A
+ * profile naming the same point already running shares that mass trivially
+ * and is not this case: it is replaced immediately, exactly as before.
  *
  * Returns false, changing nothing, for a null state or profile, or when the
  * figure control_init probed for what full pump scale draws on this machine
@@ -613,15 +634,17 @@ bool control_command_flow(control_state_t *state, uint16_t pump_permille);
  * pump scale draws, or a target the heater has not the authority to hold
  * against the draw the course asks for at its peak. Both are judged before
  * anything is driven, because a delivery admitted and then abandoned part way
- * through has already spent the coffee and the operator's time.
+ * through has already spent the coffee and the operator's time. Both bounds
+ * are permanent-infeasibility questions and are judged once, here, whether the
+ * delivery starts immediately or is held first: a demand held for a mass to
+ * free is a demand this machine can do, just not yet, and holding it asks a
+ * different, transient question rather than repeating these two.
  *
  * A machine that is merely not there yet is admitted. Both bounds are asked of
  * where the description says the machine settles, not of the reconstruction it
  * is presently at, so a cold machine and one still recovering from the last
- * draw both start -- which is deliberate, and is the case a later slice, the
- * one that defers a delivery until the heated mass is free, will own. Until
- * then such a delivery runs and the departure report is the only account it
- * gives.
+ * draw both start when nothing else is running. Until then such a delivery
+ * runs and the departure report is the only account it gives.
  */
 bool control_command_delivery(control_state_t *state, const delivery_profile_t *profile);
 
@@ -631,8 +654,9 @@ bool control_command_delivery(control_state_t *state, const delivery_profile_t *
  * The reporting sibling of control_command_delivery on the same terms
  * control_command_temperature_reporting is that call's: the operation is
  * written once here, that one is this with the record discarded, and
- * `admission` may not be null. It is set to CONTROL_ADMISSION_OK on a delivery
- * that starts.
+ * `admission` may not be null. It is set to CONTROL_ADMISSION_OK on a demand
+ * this machine can do, whether it starts now or is held because the mass it
+ * names is given to the delivery already running.
  *
  * The target's own ceiling is not re-asked here. A target at or above
  * saturation is refused where it is named, so no state a delivery is commanded
@@ -667,6 +691,34 @@ bool control_command_delivery_reporting(control_state_t *state, const delivery_p
  * that does not exist.
  */
 bool control_delivery_running(const control_state_t *state);
+
+/*
+ * Whether a demand commanded through control_command_delivery is presently
+ * held for the mass it names to free, and which point the delivery it is
+ * held against is serving.
+ *
+ * A demand is held rather than started when it names a different point
+ * sharing a heated mass with the delivery already running -- see
+ * control_command_delivery_reporting -- and it starts on its own, with
+ * nothing asked of the caller again, the control step the delivery it
+ * contended with ends: see control_step. For as long as it stays held, this
+ * is the only account of it -- a demand that never starts still gives an
+ * account of why, on the same reasoning control_delivery_departure reports a
+ * delivery that ran rather than leaving a caller to infer one from silence.
+ *
+ * Only one demand is ever held at a time. A second contending demand
+ * commanded while one is already held replaces it, on the same terms a
+ * running delivery is replaced by a later command, and this reports whichever
+ * one is presently waiting.
+ *
+ * Returns false, writing to neither destination, for a null state, a null
+ * profile or point destination, or a machine with no demand presently held --
+ * the same answer as "nothing is held" and safe for the same reason
+ * control_delivery_running's own null case is: nothing is waiting for a state
+ * that does not exist.
+ */
+bool control_delivery_held(const control_state_t *state, delivery_profile_t *held_profile,
+                           plant_delivery_point_t *held_against);
 
 /*
  * How far from the commanded temperature a delivery may sit, in millidegrees.
@@ -796,12 +848,24 @@ bool control_delivery_yield(const control_state_t *state, control_yield_t *yield
  * delivery is running -- and both have to be sitting there before either is
  * read, not after.
  *
+ * A delivery ending its own course this way is also the step a demand held
+ * for the mass it was drawing is started, if one is waiting: see
+ * control_delivery_held. Nothing is asked of the caller to make that happen
+ * -- the same step that notices the course has ended is the one that starts
+ * what was waiting on it, on exactly the terms any other delivery is started
+ * on, so its own elapsed course begins counting from this step and not from
+ * whenever it was first commanded.
+ *
  * A delivery does not outlive the machine driving it. Whenever this step
  * commands everything off -- nothing targeted, a refused drive command, or a
  * fault an earlier step already latched -- command_everything_off clears
  * delivery_running and its elapsed clock along with the outputs, so a
  * delivery is never left running against a machine that has stopped moving
- * water, and control_delivery_running answers false from that step on.
+ * water, and control_delivery_running answers false from that step on. A
+ * demand held against the delivery just cleared is discarded there too,
+ * rather than started: the mass it was waiting on did not free by that
+ * delivery reaching its own end, and starting a new course onto a machine
+ * that has just been told to stop would not be honouring the wait.
  *
  * On a step that advances a still-running delivery, the flow channel is read
  * and compared against the rate the course is commanding for that step. A gap
