@@ -1,0 +1,21 @@
+id: SOL-ADMISSION-PROVES-FULL-PAIRING
+type: deliverable
+category: solution
+title: Admission to the estimator proves a structure answers both halves of the pairing it was admitted for, not only the half that gated entry
+status: active
+version: 1
+text: |
+  The estimator admits a structure by probing exactly one state per reconstructed value: the state a reconstruction-target table names as what the reconstruction answers. Nothing at admission time also probes the state the correction step will actually write toward for the same reconstructed value -- the two are looked up from separate tables, keyed differently, and nothing has ever required them to be checked together. A structure that answers the first and refuses the second passes admission cleanly and then has every correction against it silently dropped, run after run, until the accumulated gap exceeds the declared loss-tolerance window and the reconstruction is withdrawn -- a machine brought down for a missing observation that was, in fact, arriving on every step.
+
+  This is not hypothetical: a synthetic no-machine fixture built purely so admission could succeed against it answered exactly one of the two names, was admitted, and then failed every correction for the whole of a host exercise before that was found and corrected in place for the one structure (SOL-FLOW-FIXTURE-STATE-CORRECTABLE). Nothing in that fix changes the admission check itself, and nothing today stops a future structure from making the identical mistake and being admitted the identical way.
+
+  What has to hold once this is corrected: admitting a structure for a reconstructed value proves the structure answers every state that value's correction will be asked for, not only the state the reconstruction itself is asked for -- so a structure that cannot be corrected is refused at start-up on the same terms a structure that cannot be reconstructed already is, rather than being admitted and left to fault-latch later. Which of the admission check's own lookup, or the correspondence tables it reads from, is the right place to add that proof is not decided here.
+rationale: |
+  Recorded as a maintenance item rather than folded into the fix it was found alongside, because the defect is independent of the structure that exposed it: it is a gap in the estimator's admission check itself, already merged and already exercised by every structure in the tree, that happens to have been exposed by one structure rather than caused by it. Fixing that one structure closes the instance found; it does not touch the check that let the instance through, so the same failure is available to the next structure that answers one name of a pairing and not the other.
+
+  Left open which layer adds the proof -- widening the admission check to also probe each reconstructed value's correction target, or restructuring the correspondence tables so one lookup answers both questions -- because more than one closes the gap and none was evaluated here: this node's job is to make the finding durable and traceable to the requirement criterion it protects, not to choose an implementation. That choice belongs to whoever picks this item up.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets

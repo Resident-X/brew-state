@@ -2,13 +2,13 @@ id: SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C1
 type: criterion
 title: A structure control_init accepts as reconstructing a state answers that state to the estimator's own correction path
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
   Restores REQ-MODEL-STRUCTURE-SEAM-001.C2 for `native_flow_fixture`: `plant_model_state` answers `PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C` for this structure, or the estimator's channel-to-state correspondence is reconciled so the quantity `correct_against` reads for the brew-temperature channel resolves to the same state `control_init`'s own reachability check already probes -- so `correct_against` succeeds against `flow_fixture` on a step carrying a valid, in-bounds brew-temperature reading.
 
-  Verified by extending `firmware/src/app/native/main.c`'s host exercise against `native_flow_fixture`: `exercise_untargeted_steps` and `exercise_actuating_steps` complete their full run of `EXERCISE_STEPS` control steps, and `task fw:run` exits 0, with a continuously valid sensor reading present throughout. Reconciling the estimator's channel-to-state correspondence for the other three structures, and any change to the loss-tolerance window or the correction gain, are out of scope -- this restores agreement for the one structure found inconsistent, not a retuning of a mechanism the other three already satisfy.
+  Verified by two new Unity tests in `firmware/test/test_control_flow_fixture/test_control_flow_fixture.c`: `test_both_names_the_estimator_uses_reach_the_one_kept_state` proves a write under either state name is read back under both, ruling out a second field or a constant standing in for the correction; `test_a_valid_reading_is_incorporated_on_every_step` proves `correct_against` actually lands against a running control loop -- a residual is reported for the brew channel and the loop completes well past the loss-tolerance window unfaulted. `firmware/src/app/native/main.c`'s existing host exercise needed no extension to confirm the same thing end to end: unmodified, it now completes its full run against `native_flow_fixture` under `task fw:run` where it previously reported unmet expectations. Reconciling the estimator's channel-to-state correspondence for the other three structures, and any change to the loss-tolerance window or the correction gain, are out of scope -- this restores agreement for the one structure found inconsistent, not a retuning of a mechanism the other three already satisfy.
 links:
   - target: SOL-FLOW-FIXTURE-STATE-CORRECTABLE
     type: criterion-of

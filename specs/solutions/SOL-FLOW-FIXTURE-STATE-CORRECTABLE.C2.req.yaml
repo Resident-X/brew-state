@@ -2,13 +2,13 @@ id: SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C2
 type: criterion
 title: A brief gap in the brew reading against native_flow_fixture behaves the same as it already does against every other structure
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
   Once the correction lands, `exercise_invalid_sensor` in `firmware/src/app/native/main.c` exercises its intended paths against `native_flow_fixture` for the first time: a single missed step rides through, and only a reading absent for the whole of the declared loss-tolerance window brings the machine down -- not a permanently mismatched state that was never actually being corrected in the first place.
 
-  Verified by `task fw:run` completing with zero unmet expectations against `native_flow_fixture` end to end, `exercise_invalid_sensor` included, and by the run's fault-latch failing when the sensor is made to recover before the window elapses. Whether the loss-tolerance window's 500ms figure is the right value for any real machine is out of scope -- this only confirms the fault path responds to an actual gap once the spurious one is removed.
+  Verified by `task fw:run` completing with zero unmet expectations against `native_flow_fixture` end to end, `exercise_invalid_sensor` included -- a single missed step rides through and a sustained absence latches the fault, mirroring what already held for every other structure. The finer-grained case in between, that a gap recovered inside the declared window never latches at all, is established by `test_a_brief_gap_rides_through_and_only_a_sustained_one_brings_the_machine_down` in `firmware/test/test_control_flow_fixture/test_control_flow_fixture.c`, since `exercise_invalid_sensor` asserts both ends of a gap but not a recovery in between. Whether the loss-tolerance window's 500ms figure is the right value for any real machine is out of scope -- this only confirms the fault path responds to an actual gap once the spurious one is removed.
 links:
   - target: SOL-FLOW-FIXTURE-STATE-CORRECTABLE
     type: criterion-of
