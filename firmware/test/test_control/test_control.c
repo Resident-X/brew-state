@@ -1150,6 +1150,12 @@ static float flow_at_full_scale_for(const plant_parameters_t *machine)
 #define CARRIED_MATCH_BAND                                                                         \
     "post-draw-match-band = 500 milli-c @estimated Carried unchanged from the shipped "            \
     "declaration; this case is about another band.\n"
+#define CARRIED_DRINKING_FLOOR_BAND                                                                \
+    "drinking-temperature-floor = 60000 milli-c @document Carried unchanged from the shipped "     \
+    "declaration; this case is about another band.\n"
+#define CARRIED_DRINKING_CEILING_BAND                                                              \
+    "drinking-temperature-ceiling = 96000 milli-c @document Carried unchanged from the shipped "   \
+    "declaration; this case is about another band.\n"
 
 /// SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C1: Brew temperature's
 /// tolerance band is described data with a recorded origin.
@@ -1182,7 +1188,8 @@ static void test_a_different_declaration_changes_the_band_with_no_source_edit(vo
     static const char TIGHTER[] =
         "brew-temperature-band = 400 milli-c @document Taken from a machine that has been "
         "characterised, for the purpose of asking what the design costs at a narrower band.\n"
-        CARRIED_FLOW_BAND CARRIED_MATCH_BAND;
+        CARRIED_FLOW_BAND CARRIED_MATCH_BAND CARRIED_DRINKING_FLOOR_BAND
+        CARRIED_DRINKING_CEILING_BAND;
     delivery_tolerance_t narrowed;
     delivery_tolerance_error_t fault;
     int32_t band = 0;
@@ -2738,11 +2745,13 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
     static const char WIDE[] =
         CARRIED_TEMPERATURE_BAND
         "flow-departure-band = 900 milli-ml-s @estimated Wide enough that the gap this test "
-        "injects is absorbed rather than reported.\n" CARRIED_MATCH_BAND;
+        "injects is absorbed rather than reported.\n" CARRIED_MATCH_BAND CARRIED_DRINKING_FLOOR_BAND
+        CARRIED_DRINKING_CEILING_BAND;
     static const char NARROW[] =
         CARRIED_TEMPERATURE_BAND
         "flow-departure-band = 100 milli-ml-s @estimated Narrow enough that the gap this test "
-        "injects is reported rather than absorbed.\n" CARRIED_MATCH_BAND;
+        "injects is reported rather than absorbed.\n" CARRIED_MATCH_BAND CARRIED_DRINKING_FLOOR_BAND
+        CARRIED_DRINKING_CEILING_BAND;
 
     delivery_tolerance_t wide_tolerance;
     delivery_tolerance_t narrow_tolerance;
@@ -2849,7 +2858,8 @@ static void test_the_flow_departure_band_is_required_and_validated(void)
      */
     static const char ADMISSIBLE[] =
         "brew-temperature-band = 8000 milli-c @document Loose, and well inside its own bound.\n"
-        CARRIED_FLOW_BAND CARRIED_MATCH_BAND;
+        CARRIED_FLOW_BAND CARRIED_MATCH_BAND CARRIED_DRINKING_FLOOR_BAND
+        CARRIED_DRINKING_CEILING_BAND;
     delivery_tolerance_t wide_temperature;
     delivery_tolerance_error_t admissible_fault;
     TEST_ASSERT_TRUE_MESSAGE(
@@ -4381,6 +4391,12 @@ static void test_every_band_comes_back_in_its_own_unit(void)
     TEST_ASSERT_EQUAL_INT32_MESSAGE(500, tolerance.post_draw_match_band_milli_c,
                                     "the shipped post-draw match band is not what the declaration "
                                     "states");
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(60000, tolerance.drinking_floor_milli_c,
+                                    "the shipped drinking-temperature floor is not what the "
+                                    "declaration states");
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(96000, tolerance.drinking_ceiling_milli_c,
+                                    "the shipped drinking-temperature ceiling is not what the "
+                                    "declaration states");
 
     /*
      * The same figures with their units exchanged, band for band. Nothing about
@@ -4764,7 +4780,8 @@ static void test_a_different_declaration_changes_the_post_draw_band_alone(void)
     static const char TIGHTER[] =
         CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND
         "post-draw-match-band = 250 milli-c @estimated Taken from a machine that has been "
-        "characterised, for the purpose of asking what the design costs at a narrower band.\n";
+        "characterised, for the purpose of asking what the design costs at a narrower band.\n"
+        CARRIED_DRINKING_FLOOR_BAND CARRIED_DRINKING_CEILING_BAND;
     delivery_tolerance_t narrowed;
     delivery_tolerance_error_t fault;
     int32_t band = 0;
@@ -4852,7 +4869,8 @@ static void test_the_post_draw_band_is_required_and_bounded_on_its_own_terms(voi
      */
     static const char ADMISSIBLE[] =
         "brew-temperature-band = 20000 milli-c @document At the widest the grammar admits.\n"
-        CARRIED_FLOW_BAND CARRIED_MATCH_BAND;
+        CARRIED_FLOW_BAND CARRIED_MATCH_BAND CARRIED_DRINKING_FLOOR_BAND
+        CARRIED_DRINKING_CEILING_BAND;
     delivery_tolerance_t wide_temperature;
     delivery_tolerance_error_t admissible_fault;
     TEST_ASSERT_TRUE_MESSAGE(
@@ -4862,6 +4880,99 @@ static void test_the_post_draw_band_is_required_and_bounded_on_its_own_terms(voi
         "than its own");
     TEST_ASSERT_EQUAL_INT32(20000, wide_temperature.brew_temperature_band_milli_c);
     TEST_ASSERT_EQUAL_INT32(500, wide_temperature.post_draw_match_band_milli_c);
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: The drinking-temperature window
+/// is declared data with a recorded origin.
+///
+/// The refusals that make it declared data rather than a figure with a
+/// default: a declaration omitting either edge is refused outright rather
+/// than defaulting to zero or to a band beside it, each edge is refused on
+/// its own admissible range rather than one shared with the half-width
+/// bands or with the other edge, and a floor at or above its own ceiling is
+/// refused as a window admitting nothing rather than accepted as an
+/// unusually narrow one.
+static void test_the_drinking_window_is_required_and_bounded_on_its_own_terms(void)
+{
+    static const struct {
+        const char *text;
+        delivery_tolerance_fault_t fault;
+        const char *why;
+    } REFUSED[] = {
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_MISSING, "a declaration missing the drinking floor was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         CARRIED_DRINKING_FLOOR_BAND,
+         DELIVERY_TOLERANCE_MISSING, "a declaration missing the drinking ceiling was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         "drinking-temperature-floor = 60000 milli-c\n" CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_ORIGIN, "a drinking floor with no origin was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         "drinking-temperature-floor = 20000 milli-c @document Below its own admissible "
+         "bound.\n" CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_OUT_OF_RANGE,
+         "a drinking floor below its own admissible bound was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         "drinking-temperature-floor = 150000 milli-c @document Above its own admissible "
+         "bound.\n" CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_OUT_OF_RANGE,
+         "a drinking floor above its own admissible bound was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         CARRIED_DRINKING_FLOOR_BAND
+         "drinking-temperature-ceiling = 150000 milli-c @document Above its own admissible "
+         "bound.\n",
+         DELIVERY_TOLERANCE_OUT_OF_RANGE,
+         "a drinking ceiling above its own admissible bound was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         "drinking-temperature-floor = 60000 milli-ml-s @document The flow band's unit.\n"
+         CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_UNIT_MISMATCH, "a drinking floor in the flow band's unit was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         "drinking-temperature-floor = 60000 milli-c @document First.\n"
+         "drinking-temperature-floor = 61000 milli-c @document Second.\n"
+         CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_DUPLICATE, "a drinking floor declared twice was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         "drinking-temperature-floor = 96000 milli-c @document At the shipped ceiling.\n"
+         CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_WINDOW_INVERTED, "a floor equal to its own ceiling was accepted"},
+        {CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+         "drinking-temperature-floor = 97000 milli-c @document Above the shipped ceiling.\n"
+         CARRIED_DRINKING_CEILING_BAND,
+         DELIVERY_TOLERANCE_WINDOW_INVERTED, "a floor above its own ceiling was accepted"},
+    };
+
+    for (size_t which = 0u; which < sizeof(REFUSED) / sizeof(REFUSED[0]); which++) {
+        delivery_tolerance_t built;
+        delivery_tolerance_error_t fault;
+
+        TEST_ASSERT_FALSE_MESSAGE(
+            delivery_tolerance_load(REFUSED[which].text, strlen(REFUSED[which].text), &built,
+                                    &fault),
+            REFUSED[which].why);
+        TEST_ASSERT_EQUAL_MESSAGE(REFUSED[which].fault, fault.fault, REFUSED[which].why);
+    }
+
+    /*
+     * The mirror of the out-of-range cases above: a floor and ceiling
+     * comfortably inside their own admissible range, correctly ordered, load
+     * without complaint.
+     */
+    static const char ADMISSIBLE[] =
+        CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+        "drinking-temperature-floor = 41000 milli-c @document Comfortably inside its own "
+        "bound.\n"
+        "drinking-temperature-ceiling = 98000 milli-c @document Comfortably inside its own "
+        "bound.\n";
+    delivery_tolerance_t wide_window;
+    delivery_tolerance_error_t admissible_fault;
+    TEST_ASSERT_TRUE_MESSAGE(
+        delivery_tolerance_load(ADMISSIBLE, sizeof(ADMISSIBLE) - 1u, &wide_window,
+                                &admissible_fault),
+        "a floor and ceiling comfortably inside their own admissible range were refused");
+    TEST_ASSERT_EQUAL_INT32(41000, wide_window.drinking_floor_milli_c);
+    TEST_ASSERT_EQUAL_INT32(98000, wide_window.drinking_ceiling_milli_c);
 }
 
 /// SOL-BREW-RECOVERS-AFTER-DRAW.C2: Which heated mass a delivery draws from is
@@ -5265,6 +5376,716 @@ static void test_an_extraction_after_a_draw_matches_one_pulled_from_rest(void)
                              "nothing the extraction after it depends on");
 }
 
+/* --- Hot water is held inside a window by giving up rate, not temperature - */
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: The drinking-temperature window is
+/// declared data with a recorded origin.
+///
+/// Raising the declared floor above a target the shipped declaration admits
+/// refuses that same target, with no edit to any source file; the shipped
+/// declaration goes on admitting it. A window compiled into control.c would
+/// answer both cases alike.
+static void test_a_different_declaration_changes_the_drinking_window_with_no_source_edit(void)
+{
+    static const char RAISED_FLOOR[] =
+        CARRIED_TEMPERATURE_BAND CARRIED_FLOW_BAND CARRIED_MATCH_BAND
+        "drinking-temperature-floor = 70000 milli-c @document Raised above the target this case "
+        "commands, to show the floor is read from here rather than compiled in.\n"
+        CARRIED_DRINKING_CEILING_BAND;
+    delivery_tolerance_t raised;
+    delivery_tolerance_error_t fault;
+    delivery_profile_t course = steady_course_of(0.5f, 2000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+
+    TEST_ASSERT_TRUE(delivery_tolerance_load(RAISED_FLOOR, sizeof(RAISED_FLOOR) - 1u, &raised, &fault));
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &raised));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 65.0f));
+    TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &course, &admission),
+                              "sixty-five degrees was admitted against a seventy-degree floor");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 65.0f));
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_delivery_reporting(&state, &course, &admission),
+        "sixty-five degrees was refused against the shipped floor, which this case needs "
+        "admitted to show the raised floor above is what changed the first outcome");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C2: A target outside the declared
+/// window is refused for a delivery served at the drinking point.
+///
+/// Checked in both orders a target and a drinking-point profile can arrive --
+/// a target already named refuses a profile whose window it falls outside,
+/// and a profile already running refuses a target named afterwards on the
+/// same terms -- the same symmetry the authority bound beside it already
+/// keeps.
+static void test_a_target_below_the_floor_is_refused_in_either_arrival_order(void)
+{
+    delivery_profile_t course = steady_course_of(0.5f, 2000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+    const float floor_c = (float)tolerance.drinking_floor_milli_c / 1000.0f;
+
+    /* The target is named first, and the profile arrives second. */
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 50.0f));
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &course, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(50.0f, admission.requested);
+    TEST_ASSERT_EQUAL_FLOAT(floor_c, admission.available);
+
+    /* The profile arrives first, and the target is named second. */
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, 50.0f, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(50.0f, admission.requested);
+    TEST_ASSERT_EQUAL_FLOAT(floor_c, admission.available);
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C2: A target outside the declared
+/// window is refused for a delivery served at the drinking point.
+///
+/// The ceiling is refused on the same terms the floor is, at the point past
+/// which nothing may be handed to a person: a target sitting exactly at it is
+/// refused rather than admitted, on the same convention the saturation bound
+/// beside it already reads its own ceiling.
+static void test_a_target_at_the_ceiling_is_refused(void)
+{
+    delivery_profile_t course = steady_course_of(0.1f, 2000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+    const float ceiling_c = (float)tolerance.drinking_ceiling_milli_c / 1000.0f;
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, ceiling_c));
+    TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &course, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_ABOVE_DRINKING_CEILING, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(ceiling_c, admission.requested);
+    TEST_ASSERT_EQUAL_FLOAT(ceiling_c, admission.available);
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C2: A target outside the declared
+/// window is refused for a delivery served at the drinking point.
+///
+/// The same target refused above is admitted here for an extraction: the
+/// window is asked only of a delivery whose profile states the drinking
+/// point, and an extraction gains nothing from it.
+static void test_an_extraction_gains_nothing_from_the_drinking_window(void)
+{
+    delivery_profile_t extraction = steady_course_of(1.0f, 2000u, PLANT_DELIVERY_POINT_GROUP);
+    control_admission_t admission;
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 50.0f));
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_delivery_reporting(&state, &extraction, &admission),
+        "an extraction below the drinking floor was refused, so the window is being asked of a "
+        "delivery that never named the drinking point");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3: Hot water is held by the loop
+/// already built rather than by a second control law.
+///
+/// For each of several (target, reconstruction, commanded flow) triples, the
+/// same case driven once as a delivery served at the drinking point and once
+/// as one served at the group produces identical heater duty while neither is
+/// yielding. More than one target and more than one commanded flow are
+/// exercised deliberately: a hidden second calibration valid at exactly one
+/// target, or one that only agreed with the shared law at exactly one flow,
+/// would still pass a single-case comparison and would be caught here the
+/// moment either figure moved.
+static void test_hot_water_is_driven_by_the_same_law_as_an_extraction(void)
+{
+    static const struct {
+        float target_c;
+        float mass_c;
+        float outlet_c;
+        float rate_ml_per_s;
+    } CASES[] = {
+        {70.0f, 65.0f, 63.0f, 1.0f},
+        {93.0f, 80.0f, 78.0f, 1.0f},
+        {93.0f, 85.0f, 83.0f, 2.5f},
+        {62.0f, 60.0f, 58.0f, 0.5f},
+    };
+    static const plant_delivery_point_t POINTS[] = {PLANT_DELIVERY_POINT_GROUP,
+                                                    PLANT_DELIVERY_POINT_HOT_WATER_SPOUT};
+
+    for (size_t which = 0u; which < sizeof(CASES) / sizeof(CASES[0]); which++) {
+        uint16_t heater[2] = {0u, 0u};
+
+        for (unsigned run = 0u; run < 2u; run++) {
+            delivery_profile_t course =
+                steady_course_of(CASES[which].rate_ml_per_s, 5000u, POINTS[run]);
+
+            bring_the_loop_up(&parameters, &parameters, CASES[which].mass_c,
+                              CASES[which].outlet_c);
+            TEST_ASSERT_TRUE(control_command_temperature(&state, CASES[which].target_c));
+            TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+            TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+            heater[run] = hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
+        }
+
+        char message[160];
+        (void)snprintf(message, sizeof(message),
+                       "at target %.1f, flow %.2f: the same target and reconstruction drove "
+                       "the heater differently depending only on which point the delivery "
+                       "named, so a second control law is being consulted",
+                       (double)CASES[which].target_c, (double)CASES[which].rate_ml_per_s);
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(heater[0], heater[1], message);
+    }
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4: The commanded rate is reduced
+/// only once the heater has no authority left.
+///
+/// The same reconstruction below the drinking floor, and only the heater
+/// level driven the step before differs: short of full scale, the rate is
+/// kept in full; at full scale, it is reduced. A delivery merely on its way
+/// up keeps the rate its course states, since giving up the operator's time
+/// there would buy nothing.
+static void test_the_rate_is_reduced_only_once_the_heater_has_no_authority_left(void)
+{
+    delivery_profile_t course =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+    bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    state.brew_heater_permille = (uint16_t)(ACTUATION_FULL_SCALE - 1u);
+    place_reconstruction_at(50000);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(
+        1.0f, state.delivery_yield_fraction,
+        "the rate was reduced while the heater still had authority left, so the yield is "
+        "triggered on error alone rather than on the heater's own limit");
+
+    bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    place_reconstruction_at(50000);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_TRUE_MESSAGE(
+        state.delivery_yield_fraction < 1.0f,
+        "the heater was at full scale and the water was below the floor, and nothing was given "
+        "up");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4: The commanded rate is reduced
+/// only once the heater has no authority left.
+///
+/// A shortfall of two degrees gives up more rate than one of one, at the
+/// same saturated heater: the reduction follows the distance below the floor
+/// rather than switching between two rates.
+static void test_the_reduction_follows_the_shortfall_rather_than_switching_rates(void)
+{
+    delivery_profile_t course =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    float fractions[2] = {0.0f, 0.0f};
+    /* One degree and two degrees below the shipped sixty-degree floor: both
+     * stay inside the coefficient's own partial range rather than clamping
+     * to nothing, which is what lets the comparison tell proportional from
+     * a switch between two rates. */
+    static const int32_t RECONSTRUCTIONS_MILLI_C[] = {59000, 58000};
+
+    for (unsigned run = 0u; run < 2u; run++) {
+        bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+        TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+        state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+        place_reconstruction_at(RECONSTRUCTIONS_MILLI_C[run]);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        fractions[run] = state.delivery_yield_fraction;
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(fractions[0] < 1.0f && fractions[1] < 1.0f,
+                             "one of the two shortfalls did not engage the yield at all, so "
+                             "there is nothing here to compare the proportion against");
+    TEST_ASSERT_TRUE_MESSAGE(
+        fractions[1] < fractions[0],
+        "a shortfall of two degrees gave up no more rate than one of one, so the reduction "
+        "is not following the distance below the floor");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4: The commanded rate is reduced
+/// only once the heater has no authority left.
+///
+/// Past the shortfall this coefficient reduces to nothing at, the commanded
+/// rate reaches zero rather than some smallest trickle, and stays there
+/// while the shortfall does -- a deliberate reading of "has nothing left to
+/// trade" rather than an unconsidered edge, per the coefficient's own
+/// account in params/control.declaration. This is made an explicit,
+/// intended case here rather than an incidental one only ever reached by
+/// tests written about something else.
+static void test_the_reduction_reaches_zero_past_its_own_coefficient_and_stays_there(void)
+{
+    delivery_profile_t course =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+    bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    /* A little over four degrees below the shipped sixty-degree floor --
+     * comfortably past the point CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR's
+     * own account says the rate reaches nothing at, rather than exactly on
+     * it, where single-precision rounding could land the computed fraction
+     * on either side of zero. */
+    place_reconstruction_at(55500);
+    const control_step_result_t at_the_edge = closed_loop_step(-1);
+    TEST_ASSERT_TRUE(at_the_edge == CONTROL_STEP_ACTUATED ||
+                     at_the_edge == CONTROL_STEP_DELIVERY_DEPARTED);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, state.delivery_yield_fraction,
+                                    "four degrees below the floor did not reduce the rate to "
+                                    "nothing, so the coefficient's own account of where it does "
+                                    "is wrong");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0u, state.commanded_pump_permille,
+                                     "the fraction reached zero but the pump was not actually "
+                                     "commanded to nothing");
+
+    /* Ten degrees below the floor -- well past the coefficient's own zero
+     * point -- stays at zero rather than going negative or wrapping. */
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    place_reconstruction_at(50000);
+    const control_step_result_t well_past = closed_loop_step(-1);
+    TEST_ASSERT_TRUE(well_past == CONTROL_STEP_ACTUATED ||
+                     well_past == CONTROL_STEP_DELIVERY_DEPARTED);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, state.delivery_yield_fraction,
+                                    "a shortfall well past the coefficient's zero point did not "
+                                    "stay clamped at nothing");
+
+    control_yield_t yield;
+    TEST_ASSERT_TRUE(control_delivery_yield(&state, &yield));
+    TEST_ASSERT_TRUE_MESSAGE(yield.yielded,
+                             "a delivery held at zero rate reported no yield, so a caller "
+                             "watching the delivery would see it stall with no account of why");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4: The commanded rate is reduced
+/// only once the heater has no authority left.
+///
+/// The reduction is withdrawn on the step the water returns into the window,
+/// so a delivery that dipped once is not slowed for the rest of its course.
+static void test_the_reduction_is_withdrawn_as_the_water_recovers(void)
+{
+    delivery_profile_t course =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+    bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    place_reconstruction_at(50000);
+    /*
+     * The step may report ACTUATED or DELIVERY_DEPARTED: a yielding step
+     * drives the pump at less than the course's own rate on purpose, and the
+     * meter reading it against the unreduced commanded rate is exactly
+     * CONTROL_STEP_DELIVERY_DEPARTED's own case -- see
+     * test_departure_is_judged_against_the_original_commanded_rate. Neither
+     * result is what this test is about.
+     */
+    const control_step_result_t dipped = closed_loop_step(-1);
+    TEST_ASSERT_TRUE(dipped == CONTROL_STEP_ACTUATED || dipped == CONTROL_STEP_DELIVERY_DEPARTED);
+    TEST_ASSERT_TRUE_MESSAGE(state.delivery_yield_fraction < 1.0f,
+                             "the dip below the floor did not engage the yield, so there is "
+                             "nothing here for the recovery below to be a recovery from");
+
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    place_reconstruction_at(70000);
+    const control_step_result_t recovered = closed_loop_step(-1);
+    TEST_ASSERT_TRUE(recovered == CONTROL_STEP_ACTUATED ||
+                     recovered == CONTROL_STEP_DELIVERY_DEPARTED);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(
+        1.0f, state.delivery_yield_fraction,
+        "the reduction was still in force once the water was back inside the window, so a dip "
+        "is slowing the rest of the delivery's course rather than being withdrawn");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4: The commanded rate is reduced
+/// only once the heater has no authority left.
+///
+/// It acts on a delivery served at the drinking point alone: an extraction
+/// held to the same saturated heater and the same shortfall gives up
+/// nothing, because holding it to its commanded rate is the brew
+/// criterion's.
+static void test_the_yield_applies_only_to_a_delivery_served_at_the_drinking_point(void)
+{
+    delivery_profile_t extraction =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_GROUP);
+
+    bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    place_reconstruction_at(50000);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(
+        1.0f, state.delivery_yield_fraction,
+        "an extraction gave up rate under exactly the conditions that yield one at the "
+        "drinking point, so the yield is not confined to it");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C5: The rate the machine gave up is
+/// reported rather than absorbed into the delivery.
+///
+/// The commanded rate a yielded step records for departure to be judged
+/// against is the course's own, not the reduced one it actually drove the
+/// pump at.
+static void test_departure_is_judged_against_the_original_commanded_rate(void)
+{
+    delivery_profile_t course =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+    bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    place_reconstruction_at(50000);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    TEST_ASSERT_TRUE_MESSAGE(state.delivery_yield_fraction < 1.0f,
+                             "the yield never engaged, so this run shows nothing about what "
+                             "departure is judged against");
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(
+        2.0f, state.delivery_commanded_rate_ml_per_s,
+        "the rate a yielded step records for departure to answer for was the reduced rate "
+        "rather than the course's own, so a yielded delivery would not report its shortfall "
+        "as a choked path would");
+    TEST_ASSERT_TRUE_MESSAGE(state.commanded_pump_permille < pump_level_for(2.0f),
+                             "the pump command was not reduced, so nothing here shows a yield "
+                             "in force at all");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C5: The rate the machine gave up is
+/// reported rather than absorbed into the delivery.
+///
+/// What was given up is readable in its own right through
+/// control_delivery_yield, apart from control_delivery_departure: nothing
+/// yet run reports nothing given up, a yielding step reports a positive
+/// magnitude, and a machine that has never run a delivery reports the same
+/// as nothing yet run.
+static void test_the_rate_given_up_is_reported_via_control_delivery_yield(void)
+{
+    delivery_profile_t course =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_yield_t yield;
+
+    bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    TEST_ASSERT_TRUE(control_delivery_yield(&state, &yield));
+    TEST_ASSERT_FALSE_MESSAGE(yield.yielded,
+                              "a freshly commanded delivery already reports a yield");
+
+    state.brew_heater_permille = (uint16_t)ACTUATION_FULL_SCALE;
+    place_reconstruction_at(50000);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    TEST_ASSERT_TRUE(control_delivery_yield(&state, &yield));
+    TEST_ASSERT_TRUE_MESSAGE(yield.yielded, "the rate was reduced and no yield was reported");
+    TEST_ASSERT_TRUE_MESSAGE(yield.largest_milli_ml_per_s > 0,
+                             "a yield was reported with no positive magnitude");
+
+    control_state_t clean;
+    control_yield_t no_yield;
+    TEST_ASSERT_TRUE(control_init(&clean, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_delivery_yield(&clean, &no_yield));
+    TEST_ASSERT_FALSE_MESSAGE(no_yield.yielded,
+                              "a machine that has run no delivery already reports a yield");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C5: The rate the machine gave up is
+/// reported rather than absorbed into the delivery.
+///
+/// The discriminating case C5's own rationale names: a delivery that departed
+/// because the world disagreed with it -- a meter reading well short of what
+/// was commanded, on an extraction that never named the drinking point and
+/// so could never yield -- reports departed with no yield at all. A caller
+/// told only the total could not otherwise tell a failing pump from a
+/// machine that decided to trade.
+static void test_a_choked_delivery_reports_departure_with_no_yield(void)
+{
+    delivery_profile_t course = steady_course_of(2.0f, 2000u, PLANT_DELIVERY_POINT_GROUP);
+
+    bring_the_loop_up(&parameters, &parameters, 93.0f, 93.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+    /* Commands the rate; nothing is judged until the interval it ran over
+     * has elapsed. */
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    /* The meter reports well short of the roughly 2000 milli-ml/s commanded,
+     * on a machine driving the course exactly as asked -- a choked path, not
+     * a yield, which never applies to an extraction in any case. */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 500);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, control_step(&state));
+
+    control_departure_t departure;
+    control_yield_t yield;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &departure));
+    TEST_ASSERT_TRUE(control_delivery_yield(&state, &yield));
+    TEST_ASSERT_TRUE_MESSAGE(
+        departure.departed,
+        "the meter disagreed with the commanded rate and no departure was reported");
+    TEST_ASSERT_FALSE_MESSAGE(
+        yield.yielded,
+        "an extraction that never yielded reported one, so a failing pump and a correct "
+        "yield are being told apart from nothing at all");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8: The rate read ahead of the
+/// delivery carries whatever reduction the yield is holding.
+///
+/// The same course, the same target and the same reconstruction, differing
+/// only in whether the heater driven the step before had run out of
+/// authority: the run that is yielding asks the heater for less duty than
+/// the one that is not, at a target chosen so neither run saturates the
+/// heater command outright -- which is what lets the difference the
+/// lead-ahead term makes actually reach the output.
+static void test_the_lead_ahead_term_carries_the_yields_reduction(void)
+{
+    delivery_profile_t course =
+        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    uint16_t heater[2] = {0u, 0u};
+    static const uint16_t HEATER_BEFORE[] = {(uint16_t)(ACTUATION_FULL_SCALE - 1u),
+                                             (uint16_t)ACTUATION_FULL_SCALE};
+
+    for (unsigned run = 0u; run < 2u; run++) {
+        bring_the_loop_up(&parameters, &parameters, 58.0f, 58.0f);
+        TEST_ASSERT_TRUE(control_command_temperature(&state, 63.0f));
+        TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+        state.brew_heater_permille = HEATER_BEFORE[run];
+        place_reconstruction_at(58000);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        heater[run] = hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        heater[0] < ACTUATION_FULL_SCALE && heater[1] < ACTUATION_FULL_SCALE,
+        "the heater command saturated in at least one run, so a difference in the lead-ahead "
+        "term could not reach the output either way");
+    TEST_ASSERT_TRUE_MESSAGE(
+        heater[1] < heater[0],
+        "the yielding run asked the heater for no less duty than the non-yielding one, so the "
+        "lead-ahead term is not carrying the reduction the yield is holding");
+}
+
+/*
+ * A course holding one rate until a bend, then jumping to a second rate for
+ * the rest of its length -- built so the bend's own timing can be placed
+ * relative to a probed lead, which steady_course_of and course_peaking_at
+ * above do not need to do.
+ */
+static delivery_profile_t bent_course_of(float held_rate, uint32_t bend_at_millis,
+                                         float peak_rate, uint32_t total_millis,
+                                         plant_delivery_point_t served_at)
+{
+    const delivery_profile_point_t points[] = {{0u, held_rate},
+                                               {bend_at_millis, held_rate},
+                                               {bend_at_millis + 1u, peak_rate},
+                                               {total_millis, peak_rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = total_millis};
+    delivery_profile_t course;
+
+    TEST_ASSERT_TRUE(delivery_profile_init(&course, points, 4u, end, served_at));
+    return course;
+}
+
+/* The lead this machine's description establishes for a course bending to
+ * the given peak, admitted and discarded for the purpose of reading it. */
+static uint32_t probed_lead_millis(float held_rate, float peak_rate)
+{
+    delivery_profile_t probe =
+        bent_course_of(held_rate, 30000u, peak_rate, 90000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+    bring_the_loop_up(&parameters, &parameters, 80.0f, 78.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &probe));
+    return state.delivery_lead_millis;
+}
+
+/*
+ * The heater duty at a chosen instant of a course that bends from one rate to
+ * another, with the heater and reconstruction forced every step so the run
+ * is either yielding throughout or not at all.
+ */
+static float heater_duty_at(float held_rate, uint32_t bend_at_millis, float peak_rate,
+                            uint32_t sample_at_millis, bool yielding)
+{
+    delivery_profile_t course = bent_course_of(held_rate, bend_at_millis, peak_rate,
+                                               bend_at_millis + 90000u,
+                                               PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+    bring_the_loop_up(&parameters, &parameters, 80.0f, 78.0f);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+
+    for (uint32_t elapsed = 0u; elapsed < sample_at_millis; elapsed += CONTROL_STEP_INTERVAL_MS) {
+        state.brew_heater_permille =
+            yielding ? (uint16_t)ACTUATION_FULL_SCALE : (uint16_t)(ACTUATION_FULL_SCALE - 1u);
+        place_reconstruction_at(yielding ? 55000 : 80000);
+        /*
+         * ACTUATED or DELIVERY_DEPARTED, on the same reasoning every other
+         * yield test in this file reads either: a yielding step drives the
+         * pump below the course's own rate on purpose, and departure judged
+         * against the unreduced rate is exactly what that is expected to
+         * report.
+         */
+        const control_step_result_t result = closed_loop_step(-1);
+        TEST_ASSERT_TRUE(result == CONTROL_STEP_ACTUATED ||
+                         result == CONTROL_STEP_DELIVERY_DEPARTED);
+    }
+    return (float)hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8: The rate read ahead of the
+/// delivery carries whatever reduction the yield is holding.
+///
+/// Two courses share the same rate at the sampled instant and differ only in
+/// what they bend to a lead ahead of it. The heater-duty gap between the two
+/// peaks is measured once unyielded, to calibrate what the raw lead-ahead
+/// difference is worth, and once yielding at a known fraction: a proportion
+/// carries that gap down by the fraction, and a difference subtracted from
+/// each peak would leave the gap where it was, since the rate the difference
+/// is taken against -- the held rate at the sampled instant -- is identical
+/// between the two courses. Distinguishing the two is the entire substance
+/// of this criterion, and no course holding one rate throughout its length,
+/// which is what every other yield test in this file uses, could ever tell
+/// them apart -- the two readings agree exactly where a course is flat.
+static void test_the_lead_ahead_term_scales_the_bend_by_the_fraction_not_a_difference(void)
+{
+    const float held_rate = 1.0f;
+    const float peak_a = 1.4f;
+    const float peak_b = 2.4f;
+
+    const uint32_t lead_a = probed_lead_millis(held_rate, peak_a);
+    const uint32_t lead_b = probed_lead_millis(held_rate, peak_b);
+    const uint32_t safe_lead = (lead_a < lead_b) ? lead_a : lead_b;
+    TEST_ASSERT_TRUE_MESSAGE(
+        safe_lead > 300u,
+        "the shorter of the two probed leads was too small for this test to place a bend "
+        "comfortably ahead of the sampled step");
+
+    const uint32_t sample_at = 4000u;
+    const uint32_t bend_at = sample_at + safe_lead - 200u;
+
+    const float unyielded_a = heater_duty_at(held_rate, bend_at, peak_a, sample_at, false);
+    const float unyielded_b = heater_duty_at(held_rate, bend_at, peak_b, sample_at, false);
+    const float yielded_a = heater_duty_at(held_rate, bend_at, peak_a, sample_at, true);
+    const float yielded_b = heater_duty_at(held_rate, bend_at, peak_b, sample_at, true);
+
+    const float raw_gap = unyielded_b - unyielded_a;
+    const float yielded_gap = yielded_b - yielded_a;
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        raw_gap > 5.0f,
+        "the two peaks did not produce a measurable heater-duty gap unyielded, so there is "
+        "nothing here for the yielding case to be compared against");
+    TEST_ASSERT_TRUE_MESSAGE(
+        yielded_gap < raw_gap * 0.9f,
+        "the lead-ahead gap between two different peaks was not reduced while yielding, so "
+        "the term is carrying the difference in rate subtracted from it rather than a "
+        "proportion of it -- the two are the same figure only where the course is flat");
+}
+
+/// SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C6: A draw beyond what the machine
+/// can sustain ends inside the window, or within a bounded margin of it,
+/// with the rate having fallen.
+///
+/// The scenario this criterion is verified against: a long black's worth of
+/// hot water commanded at the largest rate admission -- judged against the
+/// loop's own belief -- will accept, run against a truth plant whose element
+/// is rated below what that belief assumes, from a machine that has not
+/// settled at the target when the draw begins. Every sample from first flow
+/// to last is asserted inside the declared window or within the yield law's
+/// own bounded steady-state margin of it -- see BOUNDED_DROOP_TOLERANCE_C
+/// below and C6's own account of why a proportional-only law referenced at
+/// an edge has one -- rather than the average, and the delivery's own yield
+/// report is asserted to have engaged, which is what tells this run apart
+/// from one that merely tracked well.
+static void test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_window(void)
+{
+    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    /*
+     * The real element rated at less than the description the loop was
+     * brought up on believes -- within the declared assumed error the
+     * reference description itself carries for this coefficient -- so that
+     * the peak this rate was admitted against is genuinely beyond what the
+     * machine can sustain in truth, and not merely at the edge the loop's
+     * own belief already accounts for.
+     */
+    const plant_parameters_t weaker_machine =
+        parameters_from(description_with("brew.heater_power_w", "480.0"));
+    const float floor_c = (float)tolerance.drinking_floor_milli_c / 1000.0f;
+    const float ceiling_c = (float)tolerance.drinking_ceiling_milli_c / 1000.0f;
+    /*
+     * The reduction is a proportion of the shortfall with no integral term --
+     * deliberately, per SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3 -- so against
+     * a sustained disturbance it settles at whatever shortfall produces
+     * exactly enough reduction to balance, rather than at zero error the way
+     * an integral term would drive it. C6 itself now states this margin
+     * explicitly rather than asserting the window is held exactly; what
+     * follows is this test's own figure for it, not a second, unaccounted
+     * tolerance invented to make a run pass. That fixed point is under a
+     * degree below the floor at the gain this build carries and this
+     * scenario's own severity, confirmed bounded rather than growing by
+     * letting this same run continue under a wide tolerance while this test
+     * was written; the tolerance below is sized to admit that bounded droop
+     * with margin while still catching a reduction that never engaged at
+     * all, which the assertion after this loop also checks directly.
+     */
+    static const float BOUNDED_DROOP_TOLERANCE_C = 0.75f;
+
+    bring_the_loop_up(&parameters, &weaker_machine, DRINKING_TARGET_C - 13.0f,
+                      DRINKING_TARGET_C - 15.0f);
+
+    delivery_profile_t draw =
+        steady_course_of(rate, long_black_draw_millis(rate), PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_delivery_reporting(&state, &draw, &admission),
+        "the draw admission itself accepts for the sibling recovery suite was refused here");
+
+    bool ever_yielded = false;
+    while (control_delivery_running(&state)) {
+        /*
+         * ACTUATED or DELIVERY_DEPARTED, on the same reasoning
+         * test_the_reduction_is_withdrawn_as_the_water_recovers reads either:
+         * a yielding step drives the pump below the course's own rate on
+         * purpose, and departure judged against the unreduced rate is
+         * exactly what that is expected to report.
+         */
+        const control_step_result_t result = closed_loop_step(-1);
+        TEST_ASSERT_TRUE(result == CONTROL_STEP_ACTUATED ||
+                         result == CONTROL_STEP_DELIVERY_DEPARTED);
+
+        const float outlet_c = truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C);
+        char message[220];
+        (void)snprintf(message, sizeof(message),
+                       "the water leaving the machine sat at %.4f degrees, outside the declared "
+                       "window of [%.4f, %.4f) by more than the yield law's own bounded droop",
+                       (double)outlet_c, (double)floor_c, (double)ceiling_c);
+        TEST_ASSERT_TRUE_MESSAGE(
+            outlet_c >= floor_c - BOUNDED_DROOP_TOLERANCE_C && outlet_c < ceiling_c, message);
+
+        if (state.delivery_yield_fraction < 1.0f) {
+            ever_yielded = true;
+        }
+    }
+
+    control_yield_t yield;
+    TEST_ASSERT_TRUE(control_delivery_yield(&state, &yield));
+    TEST_ASSERT_TRUE_MESSAGE(
+        ever_yielded && yield.yielded,
+        "the draw never gave up rate, so this run shows only that the loop tracked well rather "
+        "than that the trade this criterion asks for was made");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -5365,11 +6186,28 @@ int main(void)
     RUN_TEST(test_the_post_draw_band_the_loop_holds_is_the_one_the_declaration_carries);
     RUN_TEST(test_a_different_declaration_changes_the_post_draw_band_alone);
     RUN_TEST(test_the_post_draw_band_is_required_and_bounded_on_its_own_terms);
+    RUN_TEST(test_the_drinking_window_is_required_and_bounded_on_its_own_terms);
     RUN_TEST(test_a_profile_carries_its_delivery_point_and_is_refused_without_one);
     RUN_TEST(test_contention_with_the_group_is_asked_of_the_seam);
     RUN_TEST(test_the_state_a_draw_leaves_is_carried_into_the_next_delivery);
     RUN_TEST(test_the_target_stands_and_the_heater_is_driven_between_deliveries);
     RUN_TEST(test_recovery_after_a_draw_needs_no_law_beyond_the_loop);
     RUN_TEST(test_an_extraction_after_a_draw_matches_one_pulled_from_rest);
+    RUN_TEST(test_a_different_declaration_changes_the_drinking_window_with_no_source_edit);
+    RUN_TEST(test_a_target_below_the_floor_is_refused_in_either_arrival_order);
+    RUN_TEST(test_a_target_at_the_ceiling_is_refused);
+    RUN_TEST(test_an_extraction_gains_nothing_from_the_drinking_window);
+    RUN_TEST(test_hot_water_is_driven_by_the_same_law_as_an_extraction);
+    RUN_TEST(test_the_rate_is_reduced_only_once_the_heater_has_no_authority_left);
+    RUN_TEST(test_the_reduction_follows_the_shortfall_rather_than_switching_rates);
+    RUN_TEST(test_the_reduction_reaches_zero_past_its_own_coefficient_and_stays_there);
+    RUN_TEST(test_the_reduction_is_withdrawn_as_the_water_recovers);
+    RUN_TEST(test_the_yield_applies_only_to_a_delivery_served_at_the_drinking_point);
+    RUN_TEST(test_departure_is_judged_against_the_original_commanded_rate);
+    RUN_TEST(test_the_rate_given_up_is_reported_via_control_delivery_yield);
+    RUN_TEST(test_a_choked_delivery_reports_departure_with_no_yield);
+    RUN_TEST(test_the_lead_ahead_term_carries_the_yields_reduction);
+    RUN_TEST(test_the_lead_ahead_term_scales_the_bend_by_the_fraction_not_a_difference);
+    RUN_TEST(test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_window);
     return UNITY_END();
 }

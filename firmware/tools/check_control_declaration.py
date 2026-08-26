@@ -111,10 +111,22 @@ ACCOUNTED_ELSEWHERE = {
 #: names its kinds: a check reading its list of what must be declared out of the
 #: thing it is inspecting would agree with any edit to it.
 #: Each band's entry carries the identifier fragment that would spell it if
-#: somebody defined it in the source instead, the word for the unit it is stated
-#: in, and the widest half-width it may be declared at.
+#: somebody defined it in the source instead, the word for the unit it is
+#: stated in, its shape, and the range it may be declared inside.
 #:
-#: The unit and the bound restate what the loader in
+#: Three of these five are half-widths ("half-width" shape), whose low end is
+#: fixed at one -- a band of nothing or less is not a distance a delivery
+#: could be held to -- and whose high end is the widest half-width this build
+#: admits. The drinking-temperature floor and ceiling instead state an
+#: absolute edge ("edge" shape), admissible against a range of their own
+#: rather than a distance-from-zero bound: what bounds an edge is a plausible
+#: temperature to hand a drink to a person at, not a point past which a
+#: distance has stopped meaning anything. The shape is carried as its own
+#: field rather than inferred from the low bound happening to be one, so a
+#: future half-width band whose own low bound is legitimately above one does
+#: not silently read as an edge.
+#:
+#: The unit and the range restate what the loader in
 #: src/delivery/delivery_tolerance.c holds. That restatement is deliberate and is
 #: the same one this module already makes about whole numbers and about zero: the
 #: point of the gate is to refuse at build time exactly what the machine would
@@ -122,11 +134,25 @@ ACCOUNTED_ELSEWHERE = {
 #: is checking could not fail before the machine did. The two are held together
 #: by the tests below, which run this check against declarations the C loader is
 #: separately required to refuse.
+BAND_SHAPE_HALF_WIDTH = "half-width"
+BAND_SHAPE_EDGE = "edge"
+
 BANDS = {
-    "brew-temperature-band": ("TEMPERATURE_BAND", "milli-c", 20000),
-    "flow-departure-band": ("FLOW_DEPARTURE_BAND", "milli-ml-s", 7000),
-    "post-draw-match-band": ("POST_DRAW_MATCH_BAND", "milli-c", 2000),
+    "brew-temperature-band": ("TEMPERATURE_BAND", "milli-c", BAND_SHAPE_HALF_WIDTH, 1, 20000),
+    "flow-departure-band": ("FLOW_DEPARTURE_BAND", "milli-ml-s", BAND_SHAPE_HALF_WIDTH, 1, 7000),
+    "post-draw-match-band": ("POST_DRAW_MATCH_BAND", "milli-c", BAND_SHAPE_HALF_WIDTH, 1, 2000),
+    "drinking-temperature-floor": (
+        "DRINKING_TEMPERATURE_FLOOR", "milli-c", BAND_SHAPE_EDGE, 40000, 99000),
+    "drinking-temperature-ceiling": (
+        "DRINKING_TEMPERATURE_CEILING", "milli-c", BAND_SHAPE_EDGE, 40000, 99000),
 }
+
+#: The two band names that together state the drinking-temperature window,
+#: named here rather than discovered so the cross-check below reads as
+#: deliberately about this one pair rather than as a loop over BANDS that
+#: happens to find two entries whose low bound is not one.
+DRINKING_FLOOR = "drinking-temperature-floor"
+DRINKING_CEILING = "drinking-temperature-ceiling"
 
 #: What the source is scanned for.
 #:
@@ -350,7 +376,7 @@ def unusable_band(name: str, figure: str) -> str | None:
     right window for this drink is a bench question, and the account beside the
     figure is what lets a reader challenge it.
     """
-    _, expected_unit, widest = BANDS[name]
+    _, expected_unit, shape, low, high = BANDS[name]
 
     parts = figure.split()
     if len(parts) != 2:
@@ -377,25 +403,46 @@ def unusable_band(name: str, figure: str) -> str | None:
         )
 
     milli_c = int(figure)
-    if milli_c == 0:
+
+    # The half-width shape is refused with wording specific to it: nothing or
+    # less is not a distance a delivery could be held to.
+    if shape == BAND_SHAPE_HALF_WIDTH:
+        if milli_c == 0:
+            return (
+                f"'{name}' is declared as nothing at all. A band of zero is not a tight "
+                "tolerance, it is a criterion no delivery could ever meet, and the loader "
+                "refuses it rather than holding every cup to it"
+            )
+        if milli_c < 0:
+            return (
+                f"'{name}' is declared as {milli_c}. A band is a half-width rather than a "
+                "direction, and there is no distance from the figure a band is measured "
+                "against that is less than none"
+            )
+    elif milli_c < low:
         return (
-            f"'{name}' is declared as nothing at all. A band of zero is not a tight "
-            "tolerance, it is a criterion no delivery could ever meet, and the loader "
-            "refuses it rather than holding every cup to it"
+            f"'{name}' is declared as {milli_c} {expected_unit}, which is below the {low} "
+            f"this build admits for it. Past that it is no longer a plausible temperature "
+            "for this quantity, refused for the same reason a figure past its high bound "
+            "is: not a value the loader considers, but a figure that is not the quantity "
+            "this name means"
         )
-    if milli_c < 0:
+
+    if milli_c > high:
+        if shape == BAND_SHAPE_HALF_WIDTH:
+            return (
+                f"'{name}' is declared as {milli_c} {expected_unit}, which is wider than the "
+                f"{high} the loader admits for it. Past that a band has stopped being a "
+                "criterion -- it accepts everything the machine can do -- so the loader "
+                "refuses the declaration outright and a band nobody could exceed becomes a "
+                "machine that will not start"
+            )
         return (
-            f"'{name}' is declared as {milli_c}. A band is a half-width rather than a "
-            "direction, and there is no distance from the figure a band is measured "
-            "against that is less than none"
-        )
-    if milli_c > widest:
-        return (
-            f"'{name}' is declared as {milli_c} {expected_unit}, which is wider than the "
-            f"{widest} the loader admits for it. Past that a band has stopped being a "
-            "criterion -- it accepts everything the machine can do -- so the loader "
-            "refuses the declaration outright and a band nobody could exceed becomes a "
-            "machine that will not start"
+            f"'{name}' is declared as {milli_c} {expected_unit}, which is above the {high} "
+            f"this build admits for it. Past that it is no longer a plausible temperature "
+            "for this quantity, refused for the same reason a figure below its low bound "
+            "is: not a value the loader considers, but a figure that is not the quantity "
+            "this name means"
         )
     return None
 
@@ -415,6 +462,13 @@ def bands(path: str, origin_words: frozenset[str], defined: dict[str, list[str]]
         lines = handle.read().splitlines()
 
     declared: dict[str, int] = {}
+    #: The parsed figure of each drinking-temperature edge that read as an
+    #: admissible whole number of its own unit, kept aside so the ordering
+    #: check below can compare the pair without re-reading the file. An edge
+    #: that failed unusable_band is not added: it already carries its own
+    #: problem, and comparing an unusable figure against the other edge would
+    #: report a second, derivative fault about the same line.
+    edges: dict[str, int] = {}
     for number, raw in enumerate(lines, start=1):
         line = raw.strip()
         if not line or line.startswith("#"):
@@ -445,6 +499,8 @@ def bands(path: str, origin_words: frozenset[str], defined: dict[str, list[str]]
             unusable = unusable_band(name, figure.strip())
             if unusable:
                 problems.append(f"{path}:{number}: {unusable}")
+            elif name in (DRINKING_FLOOR, DRINKING_CEILING):
+                edges[name] = int(figure.strip().split()[0])
         if not marker:
             problems.append(
                 f"{path}:{number}: '{name}' records no origin, so what the design is holding "
@@ -472,7 +528,22 @@ def bands(path: str, origin_words: frozenset[str], defined: dict[str, list[str]]
                 "band, it is a criterion nothing holds a delivery to"
             )
 
-    for name, (fragment, _unit, _widest) in sorted(BANDS.items()):
+    # Checked once both edges are individually admissible, on the same terms
+    # the C loader's own DELIVERY_TOLERANCE_WINDOW_INVERTED check is: a floor
+    # at or above its own ceiling is a window no target could ever be inside,
+    # which is a criterion nothing could ever meet rather than an unusually
+    # narrow one, and this gate exists to refuse at build time exactly what
+    # the machine would refuse at start-up.
+    if DRINKING_FLOOR in edges and DRINKING_CEILING in edges:
+        if edges[DRINKING_FLOOR] >= edges[DRINKING_CEILING]:
+            problems.append(
+                f"{path}: '{DRINKING_FLOOR}' ({edges[DRINKING_FLOOR]}) is not below "
+                f"'{DRINKING_CEILING}' ({edges[DRINKING_CEILING]}). A window whose floor "
+                "sits at or above its own ceiling admits nothing, which is a criterion "
+                "nothing could ever meet rather than an unusually narrow one"
+            )
+
+    for name, (fragment, _unit, _shape, _low, _high) in sorted(BANDS.items()):
         offenders = sorted(
             {path for macro, paths in defined.items() if fragment in macro for path in paths}
         )

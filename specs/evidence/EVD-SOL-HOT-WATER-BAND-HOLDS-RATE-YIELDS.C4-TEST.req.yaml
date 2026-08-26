@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4-TEST
+type: evidence
+title: Rate reduced only once the heater has no authority left, proportional, withdrawn on recovery (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_rate_is_reduced_only_once_the_heater_has_no_authority_left,test_the_reduction_follows_the_shortfall_rather_than_switching_rates,test_the_reduction_reaches_zero_past_its_own_coefficient_and_stays_there,test_the_reduction_is_withdrawn_as_the_water_recovers,test_the_yield_applies_only_to_a_delivery_served_at_the_drinking_point
+text: |-
+  The two-condition gate (heater at full scale AND reconstruction below floor) is shown discriminating against each condition alone; the reduction is shown proportional to shortfall (not a two-rate switch), reaches exactly zero past the coefficient's own stated point and stays there, is withdrawn (not latched) on recovery, and is confined to the drinking point.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4
+    type: satisfies

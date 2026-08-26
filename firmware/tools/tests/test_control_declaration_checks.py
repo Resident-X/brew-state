@@ -84,6 +84,23 @@ POST_DRAW_BAND = (
     "since two runs inside half of it are not different drinks.\n"
 )
 
+#: The two bands stating the drinking-temperature window, on the same footing
+#: the three above are: present in every fixture meant to pass, and
+#: substituted for or withdrawn by the cases below that are about them
+#: specifically. Unlike the three above, each states an absolute edge rather
+#: than a half-width, which is the shape the range-checking cases below are
+#: written to exercise.
+DRINKING_FLOOR_BAND = (
+    "drinking-temperature-floor = 60000 milli-c @document Taken from the serving-temperature "
+    "literature's treatment of the point below which a hot beverage reads as merely warm.\n"
+)
+
+DRINKING_CEILING_BAND = (
+    "drinking-temperature-ceiling = 96000 milli-c @document Taken from the serving-temperature "
+    "literature's treatment of the point above which a beverage handed to a person is a scald "
+    "risk.\n"
+)
+
 #: A header belonging to one of the sources under inspection, carrying no figure
 #: of its own. It sits in the shared include directory because a caller has to
 #: see it, which is exactly the arrangement that lets a figure in a header go
@@ -115,7 +132,7 @@ class ControlDeclarationGate(unittest.TestCase):
         self.header(LOADER_HEADER)
         self.source(CONTROL_SOURCE)
         self.declaration(ACCOUNTED)
-        self.tolerance(BAND + FLOW_BAND + POST_DRAW_BAND)
+        self.tolerance(BAND + FLOW_BAND + POST_DRAW_BAND + DRINKING_FLOOR_BAND + DRINKING_CEILING_BAND)
 
     @staticmethod
     def write(path: str, content: str) -> None:
@@ -299,6 +316,27 @@ class ControlDeclarationGate(unittest.TestCase):
         result = self.run_gate()
         self.assertEqual(1, result.returncode)
         self.assertIn("cadence.declaration", result.stderr)
+
+    # --- The coefficient the drinking-point yield rests on ------------------
+
+    def test_the_yield_coefficient_is_refused_as_a_bare_number(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C7: the yield coefficient is refused as a bare number, on the same terms every other control figure is."""
+        self.source(CONTROL_SOURCE + "#define CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR 250.0f\n")
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR", result.stderr)
+        self.assertIn("accounts for itself nowhere", result.stderr)
+
+    def test_the_yield_coefficient_passes_once_accounted_for(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C7: the same figure is accepted once its declaration line is added, with one home and a recorded origin."""
+        self.source(CONTROL_SOURCE + "#define CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR 250.0f\n")
+        self.declaration(
+            ACCOUNTED
+            + "CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR @estimated Estimated as the rate the "
+            "commanded flow backs off per kelvin below the drinking floor.\n"
+        )
+        result = self.run_gate()
+        self.assertEqual(0, result.returncode, result.stderr)
 
     # --- Every figure has one home -----------------------------------------
 
@@ -579,6 +617,104 @@ class ControlDeclarationGate(unittest.TestCase):
             "'milli-c'",
             result.stderr,
         )
+
+    # --- The window a delivery served at the drinking point is held inside -
+
+    def test_the_drinking_floor_left_undeclared_is_refused(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: a declaration omitting the drinking floor is refused rather than defaulting to zero or to a band beside it."""
+        self.tolerance(BAND + FLOW_BAND + POST_DRAW_BAND + DRINKING_CEILING_BAND)
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("drinking-temperature-floor", result.stderr)
+        self.assertIn("declared nowhere", result.stderr)
+
+    def test_the_drinking_ceiling_left_undeclared_is_refused(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: the ceiling is required exactly as the floor is -- the gate is not satisfied by either edge alone."""
+        self.tolerance(BAND + FLOW_BAND + POST_DRAW_BAND + DRINKING_FLOOR_BAND)
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("drinking-temperature-ceiling", result.stderr)
+        self.assertIn("declared nowhere", result.stderr)
+
+    def test_the_drinking_edges_are_bounded_apart_from_the_half_width_bands(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: each edge is range-checked against an admissible bound of its own rather than one shared with the half-width bands beside it."""
+        self.tolerance(
+            BAND
+            + FLOW_BAND
+            + POST_DRAW_BAND
+            + "drinking-temperature-floor = 20000 milli-c @document Taken from nothing.\n"
+            + DRINKING_CEILING_BAND
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        # Admissible for the temperature band above, refused for the edge: the
+        # two do not share a bound even though both are stated in milli-c.
+        self.assertIn("below the 40000 this build admits", result.stderr)
+
+    def test_a_drinking_edge_above_its_own_bound_is_refused(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: an edge past its own admissible range is refused as measuring the wrong quantity, not accepted as an unusually hot one."""
+        self.tolerance(
+            BAND
+            + FLOW_BAND
+            + POST_DRAW_BAND
+            + DRINKING_FLOOR_BAND
+            + "drinking-temperature-ceiling = 150000 milli-c @document Taken from nothing.\n"
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("above the 99000 this build admits", result.stderr)
+
+    def test_the_drinking_floor_with_no_origin_is_refused(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: each edge carries its own recorded origin on the same terms every other band does."""
+        self.tolerance(
+            BAND + FLOW_BAND + POST_DRAW_BAND + "drinking-temperature-floor = 60000 milli-c\n" +
+            DRINKING_CEILING_BAND
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("records no origin", result.stderr)
+
+    def test_a_drinking_edge_compiled_into_the_control_logic_is_refused(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: an edge with a second home in the source is the one the software would hold deliveries to."""
+        self.source(CONTROL_SOURCE + "#define CONTROL_DRINKING_TEMPERATURE_FLOOR_MILLI_C 60000\n")
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("compiled in cannot be varied", result.stderr)
+
+    def test_a_drinking_edge_in_another_unit_is_refused(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: the floor is held in thousandths of a degree, and a figure in another quantity is refused rather than read."""
+        self.tolerance(
+            BAND
+            + FLOW_BAND
+            + POST_DRAW_BAND
+            + "drinking-temperature-floor = 60000 milli-ml-s @document Taken from nothing.\n"
+            + DRINKING_CEILING_BAND
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn(
+            "'drinking-temperature-floor' is declared in 'milli-ml-s', but this build holds "
+            "it in 'milli-c'",
+            result.stderr,
+        )
+
+    def test_a_floor_at_or_above_its_own_ceiling_is_refused(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: a floor that is not below its own ceiling is a window admitting nothing, refused rather than accepted as an unusually narrow one."""
+        self.tolerance(
+            BAND
+            + FLOW_BAND
+            + POST_DRAW_BAND
+            + "drinking-temperature-floor = 96000 milli-c @document Taken from nothing.\n"
+            + DRINKING_CEILING_BAND
+        )
+        result = self.run_gate()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("is not below", result.stderr)
+
+    def test_a_floor_comfortably_below_its_ceiling_passes(self):
+        """SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1: two edges in the right order, each inside its own admissible range, are accepted."""
+        result = self.run_gate()
+        self.assertEqual(0, result.returncode, result.stderr)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C6-TEST
+type: evidence
+title: A draw beyond what the machine can sustain ends inside the window, or within its bounded margin, with the rate fallen (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_window
+text: |-
+  A long-black-sized draw at the largest rate admission accepts, run against a truth plant with a weaker element than the loop's belief and an unsettled start, asserts every sample inside the window or within the yield law's own bounded steady-state margin (per the amended criterion text), and asserts the yield actually engaged -- so the run demonstrates the trade rather than merely tracking well.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C6
+    type: satisfies

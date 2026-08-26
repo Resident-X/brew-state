@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C7-TEST
+type: evidence
+title: Yield coefficient is declared data carrying its origin, refused as a bare number (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_control_declaration_checks.py::test_the_yield_coefficient_is_refused_as_a_bare_number,test_the_yield_coefficient_passes_once_accounted_for
+text: |-
+  CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR is refused by the build-time declaration gate when compiled with no account, and accepted once accounted for in control.declaration with a recorded origin -- confirmed against the real declaration files as well (19->21 accounted figures after this slice, gate returns clean).
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C7
+    type: satisfies

@@ -104,6 +104,32 @@
 #define CONTROL_LEAD_PROBE_MAX_MS 60000u
 
 /*
+ * The one figure the drinking-point yield rests on: how far the commanded
+ * rate backs off, in permille of itself, per kelvin the reconstructed
+ * temperature sits below the drinking-temperature floor. It accounts for
+ * itself beside the coefficients above rather than in a plant description,
+ * on the same footing they do: it states what the design does about a
+ * machine that has run out of heater authority, not what any casting is, and
+ * it is the same figure on every structure this software is compiled
+ * against.
+ *
+ * It is not a coefficient of heater_command's own law: nothing here is added
+ * to a duty or multiplied by an error. It answers a different question --
+ * how much of the commanded rate a delivery still gets to keep -- which is
+ * why it is separated from the loop's coefficients on the same terms
+ * CONTROL_SATURATION_C and CONTROL_SETTLING_INTERVAL_MS already are.
+ *
+ * At this figure the rate reaches nothing four degrees below the floor --
+ * see drinking_yield_fraction's own clamp. That is read here rather than
+ * discovered there: a machine that far outside what it can sustain has
+ * nothing left to trade the cup for, and a stopped delivery is the safer
+ * failure than one that goes on moving water further from what was asked
+ * for. See the account in params/control.declaration for where the figure
+ * itself came from.
+ */
+#define CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR 250.0f
+
+/*
  * What was commanded over the interval just elapsed, for the estimator to
  * advance under.
  *
@@ -189,6 +215,19 @@ static uint16_t as_drive_level(float permille)
  * hold the course's last rate on: a lead read past the end asks the heater
  * for the energy of a draw that will have stopped, which is the case this
  * machine is least able to survive quietly.
+ *
+ * The rate read ahead is scaled by delivery_yield_fraction, established for
+ * this same step before heater_command is called -- see control_step. A
+ * delivery giving nothing up reads back a fraction of one and this is the
+ * read it has always been; a delivery presently yielding has the same
+ * reduction in force applied here as at the pump, so the term answers the
+ * draw the machine will actually be making rather than the one the course
+ * asked for and the delivery has already stopped attempting. It is a
+ * proportion of the rate read ahead rather than the absolute reduction
+ * subtracted from it, because the two agree only where the course is flat
+ * and part on every ramp: carrying a proportion forward is what keeps the
+ * scaling honest on a course that is still rising or falling across the
+ * lead.
  */
 static uint16_t drawn_load_pump_permille(const control_state_t *state)
 {
@@ -219,9 +258,80 @@ static uint16_t drawn_load_pump_permille(const control_state_t *state)
     }
 
     const float rate_ml_per_s = delivery_profile_rate_ml_per_s(&state->delivery, read_at_millis);
+    const float yielded_rate_ml_per_s = rate_ml_per_s * state->delivery_yield_fraction;
     const float permille =
-        (rate_ml_per_s / state->full_scale_flow_ml_per_s) * (float)ACTUATION_FULL_SCALE;
+        (yielded_rate_ml_per_s / state->full_scale_flow_ml_per_s) * (float)ACTUATION_FULL_SCALE;
     return as_drive_level(permille);
+}
+
+/*
+ * The proportion of a running delivery's commanded rate this step still gets
+ * to keep.
+ *
+ * One while nothing is being given up, which is every extraction and every
+ * hot water delivery that has not run out of authority. Less than one only
+ * where two conditions are both true, neither sufficient alone: the heater
+ * driven on the step just gone was at full scale, and the reconstruction is
+ * below the drinking-temperature floor. A delivery merely on its way up, with
+ * duty still short of the limit, keeps the rate its course states -- giving
+ * up the operator's time there would buy nothing, since both can still be
+ * met.
+ *
+ * The heater level read is the one this file actually drove on the previous
+ * step (state->brew_heater_permille), not a level computed fresh here. The
+ * level this step is about to drive depends on the pump command this
+ * function itself feeds into by way of drawn_load_pump_permille, so asking
+ * "is the heater at full scale" of a figure not yet computed would be
+ * circular; reading the step before is the same convention control_step
+ * already reads a delivery's departure against the command issued the step
+ * before, and one control step of latency is not a meaningfully different
+ * gate than an instantaneous one at this loop's cadence.
+ *
+ * The reduction follows the distance below the floor rather than switching
+ * between two rates, through the one coefficient CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR
+ * accounts for itself with, and it is recomputed fresh every step rather than
+ * latched: a delivery that dipped once and came back is not slowed for the
+ * rest of its course, because nothing here remembers the dip once the
+ * reconstruction is back inside the window.
+ *
+ * Applies only to a delivery served at the drinking point. An extraction's
+ * course is its recipe, held to its commanded rate by the brew criterion
+ * rather than this one, and reading this of a machine with no delivery
+ * running at all is meaningless -- the caller only ever asks while
+ * delivery_running is set.
+ */
+static float drinking_yield_fraction(const control_state_t *state, float reconstruction_c)
+{
+    if (state->delivery.served_at != PLANT_DELIVERY_POINT_HOT_WATER_SPOUT) {
+        return 1.0f;
+    }
+    if (state->brew_heater_permille < (uint16_t)ACTUATION_FULL_SCALE) {
+        return 1.0f;
+    }
+
+    const float floor_c = (float)state->tolerance.drinking_floor_milli_c / 1000.0f;
+    if (!(reconstruction_c < floor_c)) {
+        return 1.0f;
+    }
+
+    const float shortfall_k = floor_c - reconstruction_c;
+    const float reduction = (CONTROL_YIELD_PERMILLE_PER_K_BELOW_FLOOR * shortfall_k) / 1000.0f;
+    const float fraction = 1.0f - reduction;
+
+    /*
+     * A shortfall past the point this coefficient reduces to nothing at is
+     * not clamped to some smallest trickle: the commanded rate reaches zero
+     * and stays there for as long as the shortfall does. That is a
+     * deliberate reading of "has nothing left to trade" rather than an
+     * unconsidered edge -- a machine this far outside what it can sustain
+     * gains nothing from continuing to move water further from the window
+     * than it already is, and a delivery held at zero still reports what it
+     * gave up through control_yield_t exactly as a smaller reduction would.
+     */
+    if (!(fraction > 0.0f)) {
+        return 0.0f;
+    }
+    return fraction;
 }
 
 /*
@@ -332,11 +442,15 @@ static int32_t as_milli(float value)
 }
 
 /*
- * Forget what the last delivery had to say about following its course.
+ * Forget what the last delivery had to say about following its course, and
+ * about rate it gave up on its own account.
  *
  * A report belongs to one delivery. Carrying it into the next would have a
  * machine answer for a shot that has already been poured, and the caller has no
- * way to tell that from the shot it is actually asking about.
+ * way to tell that from the shot it is actually asking about. The yield
+ * fraction is put back at one alongside the reports it feeds -- see
+ * delivery_yield_fraction's own comment -- so a machine with nothing running
+ * reads no yield in force rather than a value left over from the last one.
  */
 static void forget_departure(control_state_t *state)
 {
@@ -347,6 +461,10 @@ static void forget_departure(control_state_t *state)
     state->departure.departed = false;
     state->departure.largest_milli_ml_per_s = 0;
     state->departure.at_millis = 0u;
+    state->delivery_yield_fraction = 1.0f;
+    state->yield.yielded = false;
+    state->yield.largest_milli_ml_per_s = 0;
+    state->yield.at_millis = 0u;
 }
 
 /*
@@ -726,6 +844,51 @@ static void refuse_if_beyond_the_authority(const control_state_t *state, float p
 }
 
 /*
+ * Refuse a target outside the drinking-temperature window, for a delivery
+ * served at the drinking point, writing the bound and both figures into the
+ * record. A record already carrying a crossed bound is never reached with
+ * this, on the same terms refuse_if_beyond_the_authority above isn't.
+ *
+ * Asked only of a delivery whose profile states the drinking point: an
+ * extraction's course is its recipe, held to it by the brew-temperature band
+ * rather than this window, and gains nothing from a check that names no
+ * drinking point at all. Checked ahead of the authority bound at both call
+ * sites because it costs nothing to ask -- a comparison against two figures
+ * already in the tolerance record -- while authority costs a plant model
+ * probe, and a target that fails the cheaper question first is refused
+ * without paying for the dearer one.
+ *
+ * The floor is inclusive and the ceiling is not, on the same convention
+ * admit_target's own saturation check already reads CONTROL_SATURATION_C by:
+ * a target sitting exactly at the floor is the coldest the drink may still be
+ * and is admitted, while one sitting at the ceiling has reached the point
+ * past which nothing may be handed to a person.
+ */
+static void refuse_if_outside_the_drinking_window(const delivery_tolerance_t *tolerance,
+                                                  plant_delivery_point_t served_at, float target_c,
+                                                  control_admission_t *admission)
+{
+    if (served_at != PLANT_DELIVERY_POINT_HOT_WATER_SPOUT) {
+        return;
+    }
+
+    const float floor_c = (float)tolerance->drinking_floor_milli_c / 1000.0f;
+    const float ceiling_c = (float)tolerance->drinking_ceiling_milli_c / 1000.0f;
+
+    if (target_c < floor_c) {
+        admission->bound = CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR;
+        admission->requested = target_c;
+        admission->available = floor_c;
+        return;
+    }
+    if (!(target_c < ceiling_c)) {
+        admission->bound = CONTROL_ADMISSION_TARGET_ABOVE_DRINKING_CEILING;
+        admission->requested = target_c;
+        admission->available = ceiling_c;
+    }
+}
+
+/*
  * Whether this machine can ever do what a delivery asks of it, and what it
  * crossed if not -- and the course's own peak, so a caller admitting a
  * delivery is not left to scan the course a second time for a figure this
@@ -769,7 +932,11 @@ static control_admission_t admit_delivery(const control_state_t *state,
      * two commands to decide whether the pair is ever examined.
      */
     if (state->targeted) {
-        refuse_if_beyond_the_authority(state, peak, at_millis, state->target_c, &admission);
+        refuse_if_outside_the_drinking_window(&state->tolerance, profile->served_at,
+                                              state->target_c, &admission);
+        if (admission.bound == CONTROL_ADMISSION_OK) {
+            refuse_if_beyond_the_authority(state, peak, at_millis, state->target_c, &admission);
+        }
     }
     return admission;
 }
@@ -815,11 +982,15 @@ static control_admission_t admit_target(const control_state_t *state, float cels
         return admission;
     }
 
-    if (state->delivery_running && (state->full_scale_flow_ml_per_s > 0.0f)) {
-        uint32_t at_millis = 0u;
-        const float peak = peak_rate_ml_per_s(&state->delivery, &at_millis);
+    if (state->delivery_running) {
+        refuse_if_outside_the_drinking_window(&state->tolerance, state->delivery.served_at, celsius,
+                                              &admission);
+        if (admission.bound == CONTROL_ADMISSION_OK && (state->full_scale_flow_ml_per_s > 0.0f)) {
+            uint32_t at_millis = 0u;
+            const float peak = peak_rate_ml_per_s(&state->delivery, &at_millis);
 
-        refuse_if_beyond_the_authority(state, peak, at_millis, celsius, &admission);
+            refuse_if_beyond_the_authority(state, peak, at_millis, celsius, &admission);
+        }
     }
     return admission;
 }
@@ -1049,6 +1220,16 @@ bool control_delivery_departure(const control_state_t *state, control_departure_
     return true;
 }
 
+bool control_delivery_yield(const control_state_t *state, control_yield_t *yield)
+{
+    if (state == NULL || yield == NULL) {
+        return false;
+    }
+
+    *yield = state->yield;
+    return true;
+}
+
 control_step_result_t control_step(control_state_t *state)
 {
     if (state == NULL) {
@@ -1188,9 +1369,42 @@ control_step_result_t control_step(control_state_t *state)
         } else {
             const float rate_ml_per_s =
                 delivery_profile_rate_ml_per_s(&state->delivery, state->delivery_elapsed_millis);
-            const float permille =
-                (rate_ml_per_s / state->full_scale_flow_ml_per_s) * (float)ACTUATION_FULL_SCALE;
+            /*
+             * Established here, before the pump level below is computed and
+             * before heater_command reads it back through
+             * drawn_load_pump_permille -- see drinking_yield_fraction and
+             * delivery_yield_fraction's own comment in control.h. A delivery
+             * giving nothing up reads a fraction of one and nothing here
+             * changes; this is the gate the loop has always had, extended
+             * rather than replaced.
+             */
+            const float yield_fraction = drinking_yield_fraction(state, brew_c);
+            const float yielded_rate_ml_per_s = rate_ml_per_s * yield_fraction;
+            const float permille = (yielded_rate_ml_per_s / state->full_scale_flow_ml_per_s) *
+                                   (float)ACTUATION_FULL_SCALE;
             state->commanded_pump_permille = as_drive_level(permille);
+            state->delivery_yield_fraction = yield_fraction;
+
+            /*
+             * What was given up this step, latched the same way departure is
+             * and for the same reason -- see control_yield_t. Tracked by
+             * magnitude across the delivery's life rather than only by
+             * having happened at all, on the same footing
+             * control_departure_t's own largest figure already is, so a
+             * caller can tell how hard the machine had to trade and not only
+             * that it did.
+             */
+            if (yield_fraction < 1.0f) {
+                const int32_t given_up_milli_ml_per_s =
+                    as_milli((rate_ml_per_s - yielded_rate_ml_per_s) * 1000.0f);
+
+                if (!state->yield.yielded ||
+                    given_up_milli_ml_per_s > state->yield.largest_milli_ml_per_s) {
+                    state->yield.largest_milli_ml_per_s = given_up_milli_ml_per_s;
+                    state->yield.at_millis = state->delivery_elapsed_millis;
+                }
+                state->yield.yielded = true;
+            }
 
             /*
              * The delivered flow is compared against the same commanded rate
@@ -1208,7 +1422,12 @@ control_step_result_t control_step(control_state_t *state)
             /*
              * What was commanded on this step is what the next step's reading
              * will answer for, so it is kept here after the judgement above has
-             * used the one before it.
+             * used the one before it. It is the rate the profile commanded and
+             * not the one the pump was actually driven at, unreduced by any
+             * yield in force: a yielded delivery is judged against what it was
+             * asked for, so its shortfall reports exactly as a choked path's
+             * would, and what the machine chose to give up is control_yield_t's
+             * account rather than this one's.
              */
             state->delivery_commanded_rate_ml_per_s = rate_ml_per_s;
             state->delivery_commanded_at_millis = state->delivery_elapsed_millis;

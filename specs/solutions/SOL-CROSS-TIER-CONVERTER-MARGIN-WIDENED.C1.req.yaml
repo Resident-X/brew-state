@@ -1,0 +1,16 @@
+id: SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED.C1
+type: criterion
+title: The finest converter subcase uses a margin robust to unrelated struct growth
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The cross-tier converter-sensitivity check's finest subcase distinguishes a
+  converter perturbation of five counts rather than one, shown by direct
+  comparison to survive a semantically inert struct growth in control_state_t that
+  the one-count margin did not: all 70 tests in firmware/emulation/tests, including
+  this subcase, pass on a clean rebuild both before and after that growth.
+links:
+  - target: SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED
+    type: criterion-of

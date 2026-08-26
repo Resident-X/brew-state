@@ -99,6 +99,40 @@ _Static_assert(sizeof(UNIT_WORDS) / sizeof(UNIT_WORDS[0]) == (size_t)DELIVERY_TO
 #define FLOW_DEPARTURE_WIDEST_ADMISSIBLE_MILLI_ML_PER_S 7000
 #define POST_DRAW_MATCH_WIDEST_ADMISSIBLE_MILLI_C 2000
 
+/*
+ * The ranges the drinking-temperature floor and ceiling may each be declared
+ * inside, in thousandths of a degree Celsius.
+ *
+ * Neither is a half-width and neither bound is one distance: an edge is the
+ * temperature itself, so what bounds it is a plausible range for a drink to
+ * be handed to a person at, not a point past which a distance has stopped
+ * meaning anything. Forty degrees is well below any served hot water
+ * temperature this design has ever discussed; barely under a hundred is this
+ * bound's own account of what water can still be delivered as a liquid,
+ * deliberately just short of the temperature control.c's own saturation
+ * ceiling declares -- this loader does not read that figure, since a
+ * tolerance declaration answers for the drink and not for the machine, and a
+ * dependency on the control declaration's own constant would be exactly the
+ * second home a value is refused for having elsewhere in this file.
+ *
+ * The floor and the ceiling each get their own named range, per C1's "an
+ * admissible bound of its own", even though both presently hold the same
+ * figures: they name different facts about the same quantity -- what the
+ * drink stops being once it is in the cup, and what may still be handed to a
+ * person as liquid water -- and a later account that widened one without the
+ * other should not have to invent a second constant to say so. Whether one
+ * ever runs above the other is not decided here at all: a floor above where a
+ * ceiling could ever sensibly sit is refused by the ordering check once both
+ * are read, not by these ranges disagreeing. What both ranges already share,
+ * deliberately, is not being shared with the half-width bands beside them: a
+ * floor or a ceiling far outside a plausible drinking temperature is refused
+ * on its own terms rather than on a bound sized for a distance.
+ */
+#define DRINKING_FLOOR_ADMISSIBLE_LOW_MILLI_C 40000
+#define DRINKING_FLOOR_ADMISSIBLE_HIGH_MILLI_C 99000
+#define DRINKING_CEILING_ADMISSIBLE_LOW_MILLI_C 40000
+#define DRINKING_CEILING_ADMISSIBLE_HIGH_MILLI_C 99000
+
 static bool is_blank(char c)
 {
     return c == ' ' || c == '\t' || c == '\r' || c == '\v' || c == '\f';
@@ -235,6 +269,8 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
     bool brew_given = false;
     bool flow_given = false;
     bool post_draw_given = false;
+    bool drinking_floor_given = false;
+    bool drinking_ceiling_given = false;
 
     const char *cursor = text;
     const char *limit = text + length;
@@ -293,22 +329,45 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
         int32_t *slot = NULL;
         bool *given = NULL;
         delivery_tolerance_unit_t stated_in = DELIVERY_TOLERANCE_UNIT_COUNT;
-        long widest = 0;
+        /*
+         * Every name checks its figure against [low, high]. A half-width's low
+         * is fixed at one -- a band of nothing or less is not a distance a
+         * delivery could be held to -- and its high is the widest half-width
+         * this build admits for it. An absolute edge's low and high are
+         * instead a plausible range for the temperature itself, which is what
+         * gives the two drinking-temperature edges the admissible bound of
+         * their own C1 asks for, distinct from the bound shared by the three
+         * half-width bands.
+         */
+        long low = 1;
+        long high = 0;
         if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_BREW_TEMPERATURE_WORD)) {
             slot = &staging.brew_temperature_band_milli_c;
             given = &brew_given;
             stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_C;
-            widest = (long)BREW_TEMPERATURE_WIDEST_ADMISSIBLE_MILLI_C;
+            high = (long)BREW_TEMPERATURE_WIDEST_ADMISSIBLE_MILLI_C;
         } else if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_FLOW_DEPARTURE_WORD)) {
             slot = &staging.flow_departure_band_milli_ml_per_s;
             given = &flow_given;
             stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_ML_PER_S;
-            widest = (long)FLOW_DEPARTURE_WIDEST_ADMISSIBLE_MILLI_ML_PER_S;
+            high = (long)FLOW_DEPARTURE_WIDEST_ADMISSIBLE_MILLI_ML_PER_S;
         } else if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD)) {
             slot = &staging.post_draw_match_band_milli_c;
             given = &post_draw_given;
             stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_C;
-            widest = (long)POST_DRAW_MATCH_WIDEST_ADMISSIBLE_MILLI_C;
+            high = (long)POST_DRAW_MATCH_WIDEST_ADMISSIBLE_MILLI_C;
+        } else if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_DRINKING_FLOOR_WORD)) {
+            slot = &staging.drinking_floor_milli_c;
+            given = &drinking_floor_given;
+            stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_C;
+            low = (long)DRINKING_FLOOR_ADMISSIBLE_LOW_MILLI_C;
+            high = (long)DRINKING_FLOOR_ADMISSIBLE_HIGH_MILLI_C;
+        } else if (spans_word(name_begin, name_end, DELIVERY_TOLERANCE_DRINKING_CEILING_WORD)) {
+            slot = &staging.drinking_ceiling_milli_c;
+            given = &drinking_ceiling_given;
+            stated_in = DELIVERY_TOLERANCE_UNIT_MILLI_C;
+            low = (long)DRINKING_CEILING_ADMISSIBLE_LOW_MILLI_C;
+            high = (long)DRINKING_CEILING_ADMISSIBLE_HIGH_MILLI_C;
         } else {
             report(error, DELIVERY_TOLERANCE_UNKNOWN, line_number, name_begin, name_length);
             return false;
@@ -388,19 +447,23 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
         }
 
         /*
-         * A band of nothing or less is not a distance a delivery could be held
-         * to: it would refuse every trajectory a real machine ever produced,
-         * including the ones the design is working. Refused here rather than
-         * left to fail every assertion downstream, where it would read as a
-         * broken control law rather than as a band nobody meant to declare.
+         * A half-width of nothing or less is not a distance a delivery could
+         * be held to: it would refuse every trajectory a real machine ever
+         * produced, including the ones the design is working. An absolute
+         * edge outside its own plausible range is refused for the same
+         * reason a wrong unit is: not a loose or tight setting of it, but a
+         * figure that is not the quantity this name means. Both are refused
+         * here rather than left to fail every assertion downstream, where
+         * either would read as a broken control law rather than as a
+         * declaration nobody meant to write.
          *
-         * The upper bound is this band's own, not one distance shared by all of
-         * them: a figure is judged as a quantity of the unit it was just
-         * checked to be stated in. A band wider than its own bound has stopped
-         * being a criterion -- it accepts everything the machine can do -- and
-         * that point sits at a different number for each quantity.
+         * The range is this name's own, not one shared by every name in the
+         * grammar: a figure is judged as a quantity of the unit it was just
+         * checked to be stated in, and a bound belongs to what is being
+         * bounded rather than to the unit it happens to share with its
+         * neighbours.
          */
-        if (figure <= 0 || figure > widest) {
+        if (figure < low || figure > high) {
             report(error, DELIVERY_TOLERANCE_OUT_OF_RANGE, line_number, name_begin, name_length);
             return false;
         }
@@ -430,6 +493,30 @@ bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance
     if (!post_draw_given) {
         report(error, DELIVERY_TOLERANCE_MISSING, 0u, DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD,
                strlen(DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD));
+        return false;
+    }
+    if (!drinking_floor_given) {
+        report(error, DELIVERY_TOLERANCE_MISSING, 0u, DELIVERY_TOLERANCE_DRINKING_FLOOR_WORD,
+               strlen(DELIVERY_TOLERANCE_DRINKING_FLOOR_WORD));
+        return false;
+    }
+    if (!drinking_ceiling_given) {
+        report(error, DELIVERY_TOLERANCE_MISSING, 0u, DELIVERY_TOLERANCE_DRINKING_CEILING_WORD,
+               strlen(DELIVERY_TOLERANCE_DRINKING_CEILING_WORD));
+        return false;
+    }
+    /*
+     * Checked once both edges are individually admissible, and against the
+     * pair rather than while either line is being read: a file that happens
+     * to write the ceiling before the floor must not be told the floor -- read
+     * second -- is the one at fault. A floor at or above its own ceiling is a
+     * window no target could ever be inside, which is a criterion nothing
+     * could ever meet rather than an unusually demanding one.
+     */
+    if (staging.drinking_floor_milli_c >= staging.drinking_ceiling_milli_c) {
+        report(error, DELIVERY_TOLERANCE_WINDOW_INVERTED, 0u,
+               DELIVERY_TOLERANCE_DRINKING_FLOOR_WORD,
+               strlen(DELIVERY_TOLERANCE_DRINKING_FLOOR_WORD));
         return false;
     }
 

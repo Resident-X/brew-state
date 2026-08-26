@@ -77,6 +77,35 @@
 #define DELIVERY_TOLERANCE_POST_DRAW_MATCH_WORD "post-draw-match-band"
 
 /*
+ * The lower edge of the window a delivery served at the drinking point is held
+ * inside: the temperature below which the water reaching the cup has stopped
+ * being the drink that was asked for, whatever the machine's own tracking
+ * looked like getting there.
+ *
+ * Declared as an absolute edge rather than as a half-width, and that is the
+ * substance of it rather than a detail of the grammar: what this names is not a
+ * distance from a command, it is a fact about the drink that holds however
+ * hard the machine tried. It is its own name rather than a reading of the
+ * band above, because the two answer different questions -- how far a
+ * delivery may sit from what it was told to do, and what a delivery may never
+ * be handed to a person regardless of what it was told.
+ */
+#define DELIVERY_TOLERANCE_DRINKING_FLOOR_WORD "drinking-temperature-floor"
+
+/*
+ * The upper edge of the same window: the temperature at or above which the
+ * brew path can no longer be trusted to still be delivering liquid water, or
+ * past which nothing may be handed to a person however the machine arrived
+ * there.
+ *
+ * Its own name and its own account for the same reason the floor's are: it
+ * answers a different fact from the floor, and a figure derived from the
+ * other would move whenever the other was retuned for reasons that have
+ * nothing to do with this one.
+ */
+#define DELIVERY_TOLERANCE_DRINKING_CEILING_WORD "drinking-temperature-ceiling"
+
+/*
  * The units a band may be stated in.
  *
  * Enumerated rather than free text for the reason the origin kinds are: a unit
@@ -144,6 +173,23 @@ typedef struct {
      * otherwise.
      */
     int32_t post_draw_match_band_milli_c;
+    /*
+     * An absolute edge in thousandths of a degree Celsius, unlike every field
+     * above: what is held here is the temperature itself rather than a
+     * distance from one. A delivery served at the drinking point is refused a
+     * target below it -- see control_command_delivery_reporting -- and the
+     * running loop is asked no question about it at all, on the same footing
+     * the bands above are: they describe what a delivery must achieve, not
+     * how the loop achieves it.
+     */
+    int32_t drinking_floor_milli_c;
+    /*
+     * The edge above drinking_floor_milli_c, in the same unit and read back
+     * for the same reason. The two are validated together at load: a floor at
+     * or above the ceiling is a window admitting nothing, and is refused
+     * rather than accepted as an unusually narrow one.
+     */
+    int32_t drinking_ceiling_milli_c;
 } delivery_tolerance_t;
 
 /* Why a tolerance declaration was refused. */
@@ -195,7 +241,18 @@ typedef enum {
      * is damaged" and "this figure is not accounted for" is repaired by
      * different people from different sources.
      */
-    DELIVERY_TOLERANCE_ORIGIN
+    DELIVERY_TOLERANCE_ORIGIN,
+    /*
+     * The drinking-temperature floor is not below the drinking-temperature
+     * ceiling. A window whose floor sits at or above its own ceiling admits
+     * nothing -- no target could ever be inside it -- which is a criterion
+     * nothing could ever meet rather than an unusually narrow one, on the same
+     * footing DELIVERY_TOLERANCE_OUT_OF_RANGE already refuses a band of
+     * nothing or less. Reported once both edges are otherwise admissible, so a
+     * caller is told about the pair rather than about whichever one happened
+     * to be read second.
+     */
+    DELIVERY_TOLERANCE_WINDOW_INVERTED
 } delivery_tolerance_fault_t;
 
 /*
@@ -221,6 +278,13 @@ typedef struct {
  * settled; and a band with no unit is a number whose meaning rests on the
  * reader already knowing which quantity it measures.
  *
+ * Every name but two states a half-width, admissible against a bound of its
+ * own; the drinking-temperature floor and ceiling instead each state an
+ * absolute edge, admissible against a bound of their own rather than the one
+ * shared by the half-width bands. The grammar does not need to be told which
+ * shape a name is: each name's own admissible range says so, and a figure
+ * outside it is refused the same way regardless.
+ *
  * The unit is checked against the one this build holds that band in, and the
  * figure is range-checked as a quantity of that unit. A declaration whose bands
  * have been given each other's units is refused rather than read, so the file
@@ -234,9 +298,10 @@ typedef struct {
  * Returns false, writing the fault into `error`, when the text or the record is
  * null, when a line cannot be read, when a band is named twice or not at all,
  * when a band is stated in the wrong unit, when a band is not a distance a
- * delivery could be held to, or when a band is not accounted for. Returns false
- * and writes nothing when `error` is null, since a caller that cannot be told
- * what was wrong must not be told the declaration was fine.
+ * delivery could be held to, when a band is not accounted for, or when the
+ * drinking-temperature floor is not below its own ceiling. Returns false and
+ * writes nothing when `error` is null, since a caller that cannot be told what
+ * was wrong must not be told the declaration was fine.
  */
 bool delivery_tolerance_load(const char *text, size_t length, delivery_tolerance_t *tolerance,
                              delivery_tolerance_error_t *error);
