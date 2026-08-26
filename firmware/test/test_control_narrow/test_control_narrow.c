@@ -126,6 +126,47 @@ static void test_a_point_outside_the_vocabulary_is_refused_here_too(void)
                               "refused");
 }
 
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C3: A demand for a point not sharing a
+/// mass with what is running is admitted immediately.
+///
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C7: The control suite exercises
+/// holding and resuming against a shared-mass description and its absence
+/// against a separate-mass one.
+///
+/// The suite beside this one brings a loop up against the structure that
+/// serves both points from one casting, commands a second delivery while the
+/// first is still running, and shows it is held and then resumes unassisted
+/// once the first ends -- which is the half of these two criteria this
+/// structure cannot be the one to prove. Nothing here can command a delivery
+/// at all: this structure answers no pump channel, so the probe
+/// control_command_delivery_reporting's admission runs to find what full
+/// pump scale draws is refused before it ever moves anything, and every
+/// delivery is refused CONTROL_ADMISSION_NO_MACHINE_DESCRIBED regardless of
+/// which point it names or what is running -- see admit_delivery. Driving a
+/// delivery to prove one is never held would therefore not be proving
+/// anything about contention at all.
+///
+/// What this structure can prove, and what the hold this slice built is
+/// entirely built on, is that the two points it serves answer that they do
+/// not share a mass -- through the exact two-argument seam call
+/// control_command_delivery_reporting asks, not the group-fixed helper beside
+/// it. A demand for the spout while the group is running is admitted
+/// immediately on this structure for the same reason the fixture built for
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C2 already is: because this is what the seam
+/// answers, and nothing here would ever hold one even if a machine to run it
+/// against existed.
+static void test_the_two_points_this_structure_serves_never_share_a_mass(void)
+{
+    bool contends = true;
+
+    TEST_ASSERT_TRUE(plant_delivery_points_share_mass(
+        PLANT_DELIVERY_POINT_GROUP, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, &contends));
+    TEST_ASSERT_FALSE_MESSAGE(
+        contends, "this structure serves its two points from two heated masses, so "
+                  "control_command_delivery_reporting would never hold a demand against a "
+                  "delivery running here");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -133,5 +174,6 @@ int main(void)
     RUN_TEST(test_the_group_contends_with_itself_on_any_structure);
     RUN_TEST(test_the_answer_follows_the_masses_this_structure_declares);
     RUN_TEST(test_a_point_outside_the_vocabulary_is_refused_here_too);
+    RUN_TEST(test_the_two_points_this_structure_serves_never_share_a_mass);
     return UNITY_END();
 }

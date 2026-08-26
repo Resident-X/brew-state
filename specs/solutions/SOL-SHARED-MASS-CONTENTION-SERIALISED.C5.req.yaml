@@ -1,0 +1,17 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED.C5
+type: criterion
+title: A held demand and what it is held against is reported rather than absorbed into the wait
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A demand presently held, and the identifier of the delivery it is held against, is available to be read
+  for as long as it stays held -- a held demand gives an account of itself in the same way a departure from
+  a running profile does, rather than existing only as an absence of a started delivery. Reporting what
+  that account says once the demand starts running -- whether it tracked its target, what it departed by --
+  is out of scope and belongs to a sibling criterion; this is only about the fact and cause of the hold
+  itself.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED
+    type: criterion-of

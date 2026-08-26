@@ -1,0 +1,17 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED.C4
+type: criterion
+title: A second contending demand arriving while one is already held replaces the held demand
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A second demand naming a point that contends with what is already running, arriving while a first demand
+  is already held, replaces the held demand exactly as a running delivery is replaced by a later command
+  today: the first held demand's profile is discarded and the second is what starts once the mass frees.
+  Holding more than one demand at a time, so that the first held demand would still run after the one
+  running now ends, is out of scope -- this machine's two delivery points give it no arrangement that asks
+  for a wait list longer than one.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED
+    type: criterion-of

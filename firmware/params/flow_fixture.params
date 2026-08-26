@@ -1,0 +1,18 @@
+# The flow_fixture structure's two coefficients.
+#
+# This structure describes no machine and neither number means anything, on
+# the same terms fixture.params does not. They exist so an artefact built
+# against this structure can be brought up through control_init at all: the
+# gain lets the exclusivity check compare a third real artefact against the
+# other two, and the pump figure is what probe_full_scale_flow_ml_per_s finds
+# a positive figure at, which is what lets control_init succeed and a real
+# admission be asked of control_command_delivery_reporting.
+#
+# The statement below is that same fact in the form the check reads, and it is
+# what exempts this description from accounting for its values. A number that
+# means nothing has no origin to record.
+
+@describes-no-machine
+
+fixture.gain = 2.5
+pump.flow_ml_per_s = 7.0

@@ -6086,6 +6086,327 @@ static void test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_wind
         "than that the trade this criterion asks for was made");
 }
 
+/* --- Contention for a shared heated mass is resolved by holding ----------- */
+
+/*
+ * One closed-loop step, accepting either the ordinary result or a reported
+ * flow departure.
+ *
+ * The extraction courses below are driven for many steps at a stretch, and
+ * the pump level a course's own rate quantises to does not always land the
+ * flow read back inside the declared departure band -- the same gap
+ * test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_window
+ * tolerates for the same reason. That is a report about quantisation and not
+ * a control-path defect, and none of what these cases assert is about
+ * whether any one step's flow measurement agreed with its command: it is
+ * about which delivery is running, at what level, and when it starts.
+ */
+static void step_tolerating_departure(void)
+{
+    const control_step_result_t result = closed_loop_step(-1);
+    TEST_ASSERT_TRUE(result == CONTROL_STEP_ACTUATED || result == CONTROL_STEP_DELIVERY_DEPARTED);
+}
+
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C1: A demand for a point sharing a
+/// mass with the delivery already running is held rather than starting it.
+///
+/// An extraction is commanded at the group and left running; a hot water
+/// demand commanded against it is admitted, but not started -- this structure
+/// routes both points through one casting, so the seam this contention is
+/// asked of, the same one the recovery accounting between deliveries already
+/// reads, answers that the two contend. What is asserted is that the running
+/// extraction notices nothing at all: it is still what control_delivery_running
+/// answers for, it is still the profile control_step is advancing, and the
+/// pump goes on being driven at its own commanded rate across every step that
+/// follows, unperturbed by the demand waiting behind it.
+static void test_a_demand_sharing_the_mass_with_what_is_running_is_held(void)
+{
+    stand_the_machine_rested();
+
+    const float extraction_rate = EXTRACTION_RATE_ML_PER_S;
+    delivery_profile_t extraction =
+        steady_course_of(extraction_rate, 2000u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    step_tolerating_departure();
+    TEST_ASSERT_EQUAL_UINT16(pump_level_for(extraction_rate),
+                             hw_sim_output(ACTUATION_CHANNEL_PUMP));
+
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    delivery_profile_t hot_water =
+        steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_delivery_reporting(&state, &hot_water, &admission),
+        "a demand for the mass another delivery is running against was refused rather than held");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "the running extraction was ended by a demand that should have been "
+                             "held instead");
+    TEST_ASSERT_EQUAL_MESSAGE(PLANT_DELIVERY_POINT_GROUP, state.delivery.served_at,
+                              "what control_step is advancing is no longer the extraction, so the "
+                              "held demand replaced it instead of waiting");
+
+    for (unsigned step = 0u; step < 50u; step++) {
+        step_tolerating_departure();
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+            pump_level_for(extraction_rate), hw_sim_output(ACTUATION_CHANNEL_PUMP),
+            "the extraction's own course moved off its commanded rate while a demand was held "
+            "against it");
+    }
+}
+
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C2: A held demand is admitted with no
+/// operator action once the delivery it contended with ends.
+///
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C7: The control suite exercises
+/// holding and resuming against a shared-mass description and its absence
+/// against a separate-mass one.
+///
+/// An extraction runs at the group; a hot water demand commanded against it
+/// stays held across every step the extraction has left to run, not merely
+/// the one it arrived on -- proving the wait rather than a coincidence of
+/// timing. The extraction is driven to its own end condition through the
+/// ordinary closed loop, and nothing commands the hot water demand a second
+/// time: the same control_step call that notices the extraction has ended is
+/// what starts it, on the cadence control_delivery_running already answers
+/// from every other step. This is the half of C7 this structure, which serves
+/// both points from one casting, can prove; the suite beside this one proves
+/// the other half, that nothing here is ever held against a structure whose
+/// two points do not share a mass.
+static void test_a_held_demand_resumes_unassisted_once_the_running_delivery_ends(void)
+{
+    stand_the_machine_rested();
+
+    delivery_profile_t extraction =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    delivery_profile_t hot_water =
+        steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+    TEST_ASSERT_TRUE(control_command_delivery_reporting(&state, &hot_water, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+    unsigned held_steps = 0u;
+    while (control_delivery_held(&state, &held, &held_against)) {
+        TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_GROUP, state.delivery.served_at);
+        step_tolerating_departure();
+        held_steps++;
+        TEST_ASSERT_TRUE_MESSAGE(held_steps < 100u,
+                                 "the demand stayed held long past the extraction's own duration, "
+                                 "so nothing is noticing that it ended");
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(held_steps > 1u,
+                             "the demand was resumed on the very step it was commanded, which is "
+                             "not evidence it stayed held across the extraction's own course");
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "the extraction ended and nothing started running in its place");
+    TEST_ASSERT_EQUAL_MESSAGE(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, state.delivery.served_at,
+                              "what is running once the extraction ended is not the demand that "
+                              "was held against it");
+    TEST_ASSERT_FALSE_MESSAGE(control_delivery_held(&state, &held, &held_against),
+                              "a demand is still reported held after it has started running");
+}
+
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C4: A second contending demand
+/// arriving while one is already held replaces the held demand.
+///
+/// A hot water demand is held against a running extraction, and a second hot
+/// water demand -- a different course, so the two are told apart by more than
+/// the point they name -- is commanded while the first is still held. What is
+/// reported held afterwards is the second course, never the first, and once
+/// the extraction ends it is the second course that starts: the same terms a
+/// running delivery is replaced by a later command today, with only one
+/// waiting slot rather than a queue behind it.
+static void test_a_second_contending_demand_replaces_the_first_held_one(void)
+{
+    stand_the_machine_rested();
+
+    delivery_profile_t extraction =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    delivery_profile_t first_demand =
+        steady_course_of(rate, 40000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    delivery_profile_t second_demand =
+        steady_course_of(rate, 45000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+
+    TEST_ASSERT_TRUE(control_command_delivery_reporting(&state, &first_demand, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+    TEST_ASSERT_TRUE(control_command_delivery_reporting(&state, &second_demand, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+    TEST_ASSERT_TRUE(control_delivery_held(&state, &held, &held_against));
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(45000u, held.end.elapsed_millis,
+                                     "the demand reported held is the first one commanded, not "
+                                     "the second one that replaced it");
+
+    while (control_delivery_held(&state, &held, &held_against)) {
+        step_tolerating_departure();
+    }
+
+    TEST_ASSERT_TRUE(control_delivery_running(&state));
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(45000u, state.delivery.end.elapsed_millis,
+                                     "what started once the extraction ended is the first held "
+                                     "demand rather than the one that replaced it");
+}
+
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C5: A held demand and what it is held
+/// against is reported rather than absorbed into the wait.
+///
+/// Read on the same terms every other query in this file is: false and
+/// nothing written for a null state or a null destination, false for a
+/// machine with nothing held, and true with both the held profile and the
+/// point it is held against filled in for as long as it stays held.
+static void test_a_held_demand_and_what_it_is_held_against_are_readable(void)
+{
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+
+    TEST_ASSERT_FALSE(control_delivery_held(NULL, &held, &held_against));
+    TEST_ASSERT_FALSE(control_delivery_held(&state, NULL, &held_against));
+    TEST_ASSERT_FALSE(control_delivery_held(&state, &held, NULL));
+    TEST_ASSERT_FALSE_MESSAGE(control_delivery_held(&state, &held, &held_against),
+                              "a freshly brought-up machine with nothing running or held "
+                              "reported a demand held");
+
+    stand_the_machine_rested();
+    delivery_profile_t extraction =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_FALSE_MESSAGE(control_delivery_held(&state, &held, &held_against),
+                              "a delivery running alone, with nothing commanded against it, "
+                              "reported a demand held");
+
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    delivery_profile_t hot_water =
+        steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &hot_water));
+
+    TEST_ASSERT_TRUE(control_delivery_held(&state, &held, &held_against));
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, held.served_at);
+    TEST_ASSERT_EQUAL_UINT32(60000u, held.end.elapsed_millis);
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_GROUP, held_against);
+}
+
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C6: A held demand's elapsed course is
+/// counted from its own admission rather than when it was received.
+///
+/// The hot water demand is held across many control steps before the
+/// extraction it contends with ends. If its clock had been running since it
+/// was received, it would already be most of the way through its own course
+/// the moment it starts; what is asserted is that it is not: the instant it
+/// starts its elapsed time is zero, and one control step later it reads
+/// exactly one step's worth, the same as any delivery commanded directly
+/// reads on its own first step.
+static void test_a_held_deliverys_elapsed_time_begins_at_its_own_admission(void)
+{
+    stand_the_machine_rested();
+
+    delivery_profile_t extraction =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 800u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    delivery_profile_t hot_water =
+        steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &hot_water));
+
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+    unsigned held_steps = 0u;
+    while (control_delivery_held(&state, &held, &held_against)) {
+        step_tolerating_departure();
+        held_steps++;
+        TEST_ASSERT_TRUE(held_steps < 200u);
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        held_steps > 10u,
+        "the demand was held for too few steps to tell its own elapsed clock apart from one that "
+        "had been running since it was received");
+    TEST_ASSERT_TRUE(control_delivery_running(&state));
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(
+        0u, state.delivery_elapsed_millis,
+        "the resumed delivery's elapsed clock did not start at zero on its own admission");
+
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(
+        CONTROL_STEP_INTERVAL_MS, state.delivery_elapsed_millis,
+        "the resumed delivery's elapsed clock is not advancing from its own admission the way "
+        "any other delivery's does");
+}
+
+/// SOL-SHARED-MASS-CONTENTION-SERIALISED.C1: A demand for a point sharing a
+/// mass with the delivery already running is held rather than starting it.
+///
+/// A demand held against a running extraction has nothing left to wait for
+/// once a fault takes the mass it was waiting on away from under it -- the
+/// same reasoning command_everything_off's own comment gives for discarding
+/// it there rather than leaving it to be resumed where a delivery reaching
+/// its own end resumes one. This is the case that reasoning was never
+/// exercised by: an extraction runs, a hot water demand is held against it,
+/// and a fault latches mid-course. What is asserted is that the held demand
+/// is reported held no longer, and that stepping the faulted machine forward
+/// afterwards never starts it -- into a machine that has just been told to
+/// stop, which is exactly the outstanding request command_everything_off
+/// exists to clear.
+static void test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_latches(void)
+{
+    stand_the_machine_rested();
+
+    delivery_profile_t extraction =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 5000u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+    delivery_profile_t hot_water =
+        steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+    TEST_ASSERT_TRUE(control_command_delivery_reporting(&state, &hot_water, &admission));
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_held(&state, &held, &held_against),
+                             "the hot water demand was not held against the running extraction, "
+                             "so a fault discarding it proves nothing");
+
+    hw_sim_set_output_refused(true);
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_OUTPUT_REFUSED, control_step(&state));
+    TEST_ASSERT_TRUE(state.faulted);
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_delivery_held(&state, &held, &held_against),
+        "a demand held against a delivery ended by a fault is still reported held, so it is "
+        "still waiting on a mass a machine commanded off is never going to free");
+
+    for (int i = 0; i < 4; i++) {
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+        TEST_ASSERT_FALSE_MESSAGE(
+            control_delivery_held(&state, &held, &held_against),
+            "the discarded demand came back held on a later faulted step");
+        TEST_ASSERT_FALSE_MESSAGE(
+            control_delivery_running(&state),
+            "the discarded demand started running into a machine that had just faulted");
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -6209,5 +6530,11 @@ int main(void)
     RUN_TEST(test_the_lead_ahead_term_carries_the_yields_reduction);
     RUN_TEST(test_the_lead_ahead_term_scales_the_bend_by_the_fraction_not_a_difference);
     RUN_TEST(test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_window);
+    RUN_TEST(test_a_demand_sharing_the_mass_with_what_is_running_is_held);
+    RUN_TEST(test_a_held_demand_resumes_unassisted_once_the_running_delivery_ends);
+    RUN_TEST(test_a_second_contending_demand_replaces_the_first_held_one);
+    RUN_TEST(test_a_held_demand_and_what_it_is_held_against_are_readable);
+    RUN_TEST(test_a_held_deliverys_elapsed_time_begins_at_its_own_admission);
+    RUN_TEST(test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_latches);
     return UNITY_END();
 }

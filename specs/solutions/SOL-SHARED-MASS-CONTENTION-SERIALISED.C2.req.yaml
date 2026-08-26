@@ -1,0 +1,17 @@
+id: SOL-SHARED-MASS-CONTENTION-SERIALISED.C2
+type: criterion
+title: A held demand is admitted with no operator action once the delivery it contended with ends
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The held demand starts on the same control cadence that already tracks whether a delivery is running,
+  the step after that delivery ends, with no command reissued and no operator action of any kind between
+  the first delivery ending and the second beginning. Waiting on a recomputed answer for whether the mass
+  has recovered enough to hold the held demand's own target, rather than starting as soon as the mass is
+  free, is out of scope: that recovery is a question the tracking loop already answers once a delivery is
+  running, not a precondition for starting one.
+links:
+  - target: SOL-SHARED-MASS-CONTENTION-SERIALISED
+    type: criterion-of
