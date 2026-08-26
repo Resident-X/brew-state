@@ -1754,6 +1754,162 @@ class DocumentationSaysWhatTheSourcesSay(SupportTreeCase):
         self.assertIn("no documentation", result.stderr)
 
 
+class CitationIdentifiesWhatWasRunAgainstWhat(SupportTreeCase):
+    """SOL-SUPPORT-CITATION-SUBSTANCE.C1, .C2: a citation has to name something.
+
+    The floor before this solution was a fixed placeholder list -- anything
+    else, including a single affirmation, cleared it. These tests drive a
+    citation that clears the placeholder list but still names no machine and
+    no action, on both surfaces the requirement cross-checks, and confirm a
+    citation that does name something is still accepted.
+    """
+
+    def test_a_single_generic_word_citation_fails_on_the_header_surface(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C1: clears EMPTY_CELLS, still refused.
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"verified"')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "run against a Gaggia Classic, 2026-01"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("cites 'verified'", result.stderr)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+    def test_padding_a_citation_with_more_affirmations_still_fails(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C1: the floor is distinct non-generic
+        # words, not length -- stringing more affirmations together does not
+        # clear it.
+        self.tree.structure(
+            "beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"yes it was verified and confirmed"'
+        )
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "run against a Gaggia Classic, 2026-01"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+    def test_a_single_non_generic_word_still_fails(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C1: one word cannot name both a
+        # machine and an action, whatever the word is.
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"classic"')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "run against a Gaggia Classic, 2026-01"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+    def test_a_single_generic_word_citation_fails_on_the_documentation_surface(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C1: refused "on the same terms... at
+        # both the points that refusal is already made" -- the header side is
+        # fine here, only the table cell names nothing.
+        self.tree.structure(
+            "beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"run against a Gaggia Classic, 2026-01"'
+        )
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "confirmed"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("cites nothing an adopter can read", result.stderr)
+
+    def test_a_word_padded_citation_fails_on_the_documentation_surface_too(self):
+        self.tree.structure(
+            "beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"run against a Gaggia Classic, 2026-01"'
+        )
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "yes it was checked and confirmed"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("cites nothing an adopter can read", result.stderr)
+
+    def test_a_citation_naming_something_alongside_an_affirmation_passes(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C2: the generic-word floor only
+        # blocks a citation built from nothing but affirmations and function
+        # words -- one that also names something clears it.
+        self.tree.structure(
+            "beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"confirmed on a Gaggia Classic"'
+        )
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "confirmed on a Gaggia Classic"},
+        )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_unverified_structures_are_undisturbed_by_the_substance_floor(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C2: a generic-word EVIDENCE macro on
+        # an unverified structure is still refused only for the pre-existing
+        # reason -- carrying evidence at all -- not reclassified by what the
+        # text says, so the substance message never fires for it.
+        self.tree.structure("beta", "PLANT_SUPPORT_UNVERIFIED", '"ok"')
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("reads as verification the structure is not claiming", result.stderr)
+        self.assertNotIn("says nothing about what was run", result.stderr)
+
+    def test_a_non_ascii_lookalike_does_not_fragment_into_extra_words(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C1: "verifіed" below has a Cyrillic
+        # і (U+0456) standing in for the ASCII i -- to a reader it is the
+        # single placeholder word "verified", and it must not be split into
+        # ASCII fragments that count as two distinct words.
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"verifіed"')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "verifіed"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+    def test_digits_alone_do_not_clear_the_floor(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C1: a date or serial number says when
+        # or which instance, never what was run or against what.
+        self.tree.structure("beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"2026-01-15"')
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "2026-01-15"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+    def test_digits_alongside_a_named_machine_still_pass(self):
+        # The digit exclusion only removes digit-only tokens from the count --
+        # a citation naming a machine and carrying a date still clears it.
+        self.tree.structure(
+            "beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"Gaggia Classic, 2026-01-15"'
+        )
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "Gaggia Classic, 2026-01-15"},
+        )
+        result = self.check()
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_a_vague_hedge_still_fails(self):
+        # SOL-SUPPORT-CITATION-SUBSTANCE.C1: a realistic lazy citation that
+        # names no machine and no action, phrased as a hedge rather than a
+        # single affirmation.
+        self.tree.structure(
+            "beta", "PLANT_SUPPORT_HARDWARE_VERIFIED", '"no issues found"'
+        )
+        self.tree.document(
+            {"alpha": "PLANT_SUPPORT_UNVERIFIED", "beta": "PLANT_SUPPORT_HARDWARE_VERIFIED"},
+            evidence={"beta": "no issues found"},
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("says nothing about what was run", result.stderr)
+
+
 class ActuationTree:
     """A temporary tree of structures and the actuation vocabulary they draw on."""
 

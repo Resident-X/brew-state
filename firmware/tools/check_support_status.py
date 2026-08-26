@@ -76,10 +76,125 @@ EMPTY_CELLS = frozenset(
     {"", "-", "--", "---", "–", "—", "?", "tbd", "n/a", "none", "not applicable"}
 )
 
+#: Words that name neither a machine nor an action: affirmations, and the
+#: function words that hold a sentence together without naming anything in
+#: it. A reader who reads only these still knows nothing about which machine
+#: was exercised or what was done to it -- so a citation built from nothing
+#: but these words carries no more identification than an empty one, however
+#: many of them it strings together.
+GENERIC_WORDS = frozenset(
+    {
+        # Affirmations -- claim that a fact holds without stating one.
+        "ok",
+        "okay",
+        "yes",
+        "true",
+        "verified",
+        "confirmed",
+        "checked",
+        "tested",
+        "done",
+        "pass",
+        "passed",
+        "works",
+        "working",
+        "good",
+        "correct",
+        "fine",
+        "valid",
+        "great",
+        "excellent",
+        "success",
+        "successful",
+        "clean",
+        "clear",
+        "seem",
+        "seems",
+        "seemed",
+        "look",
+        "looks",
+        "looked",
+        "found",
+        "issue",
+        "issues",
+        "problem",
+        "problems",
+        "wrong",
+        "nothing",
+        "everything",
+        "all",
+        # Function words -- hold a sentence together without naming anything.
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "been",
+        "but",
+        "by",
+        "for",
+        "from",
+        "had",
+        "has",
+        "have",
+        "here",
+        "i",
+        "in",
+        "is",
+        "it",
+        "its",
+        "me",
+        "no",
+        "not",
+        "of",
+        "on",
+        "or",
+        "our",
+        "over",
+        "so",
+        "that",
+        "the",
+        "then",
+        "there",
+        "this",
+        "to",
+        "was",
+        "we",
+        "were",
+        "with",
+    }
+)
+
 _ENUM_BODY = re.compile(r"\benum\b[^;{]*\{([^}]*)\}\s*" + VOCABULARY_TYPE + r"\s*;", re.DOTALL)
 _ENUMERATOR = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)")
 _STRING_LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
 _TABLE_ROW = re.compile(r"^\s*\|(.+)\|\s*$")
+#: `\w` rather than an ASCII class, so a word carrying a non-ASCII letter --
+#: Unicode text is a citation this check has no business rejecting on that
+#: basis alone -- is kept whole. Splitting it into ASCII fragments at the
+#: non-ASCII character would count a single word as several, which is the
+#: same hole padding leaves: distinctness inflated by how a word is spelled
+#: rather than by what it names.
+_WORD = re.compile(r"\w+", re.UNICODE)
+_DIGITS = re.compile(r"^[0-9]+$")
+
+
+def lacks_substance(text: str) -> bool:
+    """Whether a citation is too slight to identify what was run against what.
+
+    Judged by how many distinct, non-generic words it names rather than by
+    length or by matching a fixed phrase -- so a citation cannot clear the bar
+    by repeating one word or padding with characters. A run of digits alone --
+    a date, a serial number -- says when or which instance, never what was run
+    or against what, so it does not count toward the two; naming two things
+    is the minimum shape that can hold both a machine and an action, and
+    whether it actually does is a review question this check does not reach.
+    """
+    words = {word.lower() for word in _WORD.findall(text)} - GENERIC_WORDS
+    named = {word for word in words if not _DIGITS.match(word)}
+    return len(named) < 2
 
 
 class Uninspectable(Exception):
@@ -277,7 +392,7 @@ def structure_status(header: str, values: list[str]) -> tuple[list[str], str | N
                     f"check or an adopter can read -- {EVIDENCE_MACRO} carries the citation as "
                     "a string"
                 )
-            elif text.lower() in EMPTY_CELLS:
+            elif text.lower() in EMPTY_CELLS or lacks_substance(text):
                 problems.append(
                     f"line {cited_at}: cites '{text}', which says nothing about what was run "
                     "against what, so the claim rests on confidence rather than on a bench"
@@ -363,7 +478,9 @@ def documentation_problems(
                 f"{path}:{lineno}: documents the '{name}' structure as {documented_status} "
                 f"while its own header claims {status}"
             )
-        elif status == HARDWARE_VERIFIED and evidence.lower() in EMPTY_CELLS:
+        elif status == HARDWARE_VERIFIED and (
+            evidence.lower() in EMPTY_CELLS or lacks_substance(evidence)
+        ):
             problems.append(
                 f"{path}:{lineno}: documents the '{name}' structure as {status} and cites "
                 "nothing an adopter can read"
