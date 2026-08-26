@@ -11,22 +11,25 @@
  * `control_command_delivery_reporting`, which will not run at all against a
  * machine `control_init` refused to come up on, and `control_init` refuses
  * unless the structure it is brought up against answers a pump channel -- for
- * probe_full_scale_flow_ml_per_s to find a positive figure at -- and keeps the
- * one state the estimator reconstructs. `fixture` answers neither, on
- * purpose: its whole role in the suite beside this one is to be the structure
- * an unanswered-channel refusal and an unreconstructable-state refusal can be
- * shown to trigger against, and giving it either would take that suite's
- * subject away.
+ * probe_full_scale_flow_ml_per_s to find a positive figure at -- and answers
+ * the state its reachability check probes before it will reconstruct at all.
+ * `fixture` answers neither, on purpose: its whole role in the suite beside
+ * this one is to be the structure an unanswered-channel refusal and an
+ * unreconstructable-state refusal can be shown to trigger against, and giving
+ * it either would take that suite's subject away.
  *
  * So this is a second, separate structure rather than an extension of the
  * first. It describes no machine and carries no claim about one, on the same
  * terms `fixture` does; what it adds is just enough of the seam -- one pump
- * channel, and the one state `ESTIMATOR_STATE_BREW_TEMPERATURE_C`
- * reconstructs -- for `control_init` to come up and a real admission to be
- * asked of it. Its two delivery points are declared on two separate masses,
- * on the same terms `fixture`'s are and for the same reason: proving a demand
- * at one is admitted while a delivery is running at the other needs two points
- * that do not share a mass to admit it against.
+ * channel, and one accumulator answered under both names the estimator
+ * reaches it by: the state `ESTIMATOR_STATE_BREW_TEMPERATURE_C` reconstructs,
+ * which `control_init`'s reachability check probes before it will come up at
+ * all, and the state its per-step correction writes -- for `control_init` to
+ * come up and a real admission to be asked of it. Its two delivery points are
+ * declared on two separate masses, on the same terms `fixture`'s are and for
+ * the same reason: proving a demand at one is admitted while a delivery is
+ * running at the other needs two points that do not share a mass to admit it
+ * against.
  */
 #ifndef PLANT_STRUCTURE_H
 #define PLANT_STRUCTURE_H

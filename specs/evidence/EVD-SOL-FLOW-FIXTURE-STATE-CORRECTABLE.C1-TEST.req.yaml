@@ -1,0 +1,17 @@
+id: EVD-SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C1-TEST
+type: evidence
+title: flow_fixture answers both correction/reconstruction state names and lands corrections (SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T22:33:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'firmware/test/test_control_flow_fixture/test_control_flow_fixture.c::test_both_names_the_estimator_uses_reach_the_one_kept_state,test_a_valid_reading_is_incorporated_on_every_step; task fw:run (native_flow_fixture: 0 unmet expectations, previously 81)'
+text: |-
+  plant_model_state/plant_model_set_state for flow_fixture now answer both PLANT_STATE_BREW_OUTLET_TEMPERATURE_C and PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C off the same accumulator. test_both_names_the_estimator_uses_reach_the_one_kept_state proves a write under either name reads back under both, ruling out a stand-in field or constant. test_a_valid_reading_is_incorporated_on_every_step proves correct_against actually lands against a running control loop: a residual is reported and the loop runs unfaulted for 8x the loss-tolerance window with a continuously valid reading. task fw:run's pre-existing, unmodified host exercise against native_flow_fixture now completes cleanly (0 unmet expectations; was 81 before the fix).
+links:
+  - target: SOL-FLOW-FIXTURE-STATE-CORRECTABLE.C1
+    type: satisfies
