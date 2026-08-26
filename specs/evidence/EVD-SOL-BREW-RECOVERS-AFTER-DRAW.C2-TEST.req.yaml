@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C2-TEST
+type: evidence
+title: Which heated mass a delivery draws from is asked of the plant seam (SOL-BREW-RECOVERS-AFTER-DRAW.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T01:45:21Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control_narrow/test_control_narrow.c::test_two_points_on_two_masses_do_not_contend
+text: |
+  The delivery point is a field of delivery_profile_t, supplied to delivery_profile_init and refused there when it is not one the machine's vocabulary carries -- the value a caller with nothing to name arrives with -- leaving the profile exactly as it was, which the suite asserts rather than assuming. Which heated mass stands behind the named point is put to the plant seam through plant_delivery_points_share_mass and never answered in the control path. The question is exercised from both sides: against the structure describing the reference machine, which serves both points from one casting, the group and the spout are answered as contending; against the fixture structure, which declares its two points on two masses, the same call answers that they do not, and a new suite runs the control path against it under native_fixture_test. An implementation answering either way unconditionally fails one of the two suites. Both suites read the masses back through the seam and require them to agree or differ, so neither case can go vacuous if a structure is later changed, and both assert that a point the linked structure does not serve is refused rather than answered. Run under pio test -e native_test and -e native_fixture_test.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C2
+    type: satisfies

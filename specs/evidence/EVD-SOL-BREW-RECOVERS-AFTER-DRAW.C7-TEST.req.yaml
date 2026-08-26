@@ -1,0 +1,19 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C7-TEST
+type: evidence
+title: The disturbed state is produced by running the draw through the closed loop (SOL-BREW-RECOVERS-AFTER-DRAW.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T01:45:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_an_extraction_after_a_draw_matches_one_pulled_from_rest
+text: |
+  The disturbed state the extraction is served from is produced by commanding the draw as an ordinary delivery and advancing the truth plant under what the loop actually drove, step by step, through the same closed-loop harness the existing whole-extraction runs use. No plant state is written between bringing the loop up rested and the extraction that follows: plant_model_set_state is reached only by the bring-up that places the machine at rest, which is where a machine switched on and left alone sits. The truth plant is a separate instance from the one the estimator carries, so what is measured is the machine's recovery rather than the reconstruction agreeing with itself.
+
+  The distinction is asserted rather than assumed. The volume the machine actually moved is accumulated from the plant's own reported flow across the draw and required to be the two hundred millilitres that were asked for, and the casting is required to have ended outside the brew-temperature band. A run that wrote the state instead would have moved no water at all and would fail the first of those. Worth knowing about the strength of that check: the plant's reported flow is a function of the commanded pump level, so what it establishes is that the pump was driven at the right level for the right duration rather than that a measurement was taken -- which is what distinguishes a run from a written state, and is what the criterion asks for. Run under pio test -e native_test.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C7
+    type: satisfies

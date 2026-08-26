@@ -1,0 +1,23 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C6-TEST
+type: evidence
+title: An extraction after a hot water draw stays within the declared distance of one pulled from rest (SOL-BREW-RECOVERS-AFTER-DRAW.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T01:45:34Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_an_extraction_after_a_draw_matches_one_pulled_from_rest
+text: |
+  test_an_extraction_after_a_draw_matches_one_pulled_from_rest passes. Two runs against one machine description: the same extraction from the settled machine, and that extraction after two hundred millilitres of hot water at 3.0135 mL/s -- the largest rate admission will accept against the commanded target, found by putting trial courses to the same probe the machine uses to refuse a delivery it cannot make. All 3000 samples of each run are compared point by point against the declared distance read back from the loop, and each run is separately held to the brew-temperature band, so neither an average that lands on target while wandering nor two equally wrong runs can meet it.
+
+  Two figures this run establishes about the reference description, recorded here because nothing else in the graph carries them.
+
+  The draw takes 66 seconds. That is the volume divided by the rate, both of which the criterion fixes, and it is a minute rather than the "some minutes" the criterion's first version also named -- the three quantities cannot all hold on a casting that gives up its target above three millilitres a second. The criterion was amended to state the contrast the duration was standing for rather than a third independent figure.
+
+  The machine needs about eighty-five seconds between the draw and the next demand. Below that the extraction sits further from the rested one than the declared band admits: measured worst separations were 0.50 C at a thirty-second gap, 1.10 C at sixty, 0.51 C at eighty, and inside the band from eighty-five on. The approach rings rather than settling monotonically -- sixty seconds is further out than thirty -- because the loop drives the casting well past the target to bring the water on its way to the group back through a twenty-second transport lag, and the next draw then pulls the outlet up to whatever the casting is at. The run uses ninety seconds, which is a gap an operator leaves between putting the hot water down and locking in a basket. This figure is the machine's rather than the loop's and is what a slice deferring a demand until conditions return would act on.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C6
+    type: satisfies
