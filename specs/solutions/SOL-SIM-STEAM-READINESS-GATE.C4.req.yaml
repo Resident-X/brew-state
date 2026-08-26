@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-READINESS-GATE.C4
+type: criterion
+title: The ready threshold is declared data with a recorded origin, read by the control law rather than compiled into it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The threshold below which feed is withheld is declared alongside the loop's other coefficients, carrying a recorded origin, rather than a literal in the control source -- the same discipline the band-holding loop's own band and threshold follow, since both read the same declared value. A test changes the declared threshold and shows the feed-withhold boundary moves with it, with no rebuild of the control law. Fixing the value the physical machine is finally held to is out of scope for this criterion.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE
+    type: criterion-of

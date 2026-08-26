@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-READINESS-GATE.C3
+type: criterion
+title: Withholding feed holds the pressure deficit rather than letting an open wand widen it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pressure deficit only grows while steam is actually being made -- the rate the plant model charges the deficit relation against is bounded by feed, so withholding feed holds the deficit at whatever it already is, including a deficit that is not zero, rather than letting an open wand widen it further. A test opens the wand with feed withheld from a state where the deficit is already nonzero, and asserts the deficit does not grow for as long as feed stays at zero -- a test starting from a rested, zero-deficit state would prove nothing, since a deficit that cannot grow either way looks the same as one that is being held. What measured pressure itself does meanwhile -- recovering, holding, or continuing to track a rising temperature -- is out of scope for this criterion, which asserts only that the deficit does not worsen.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE
+    type: criterion-of

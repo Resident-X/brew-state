@@ -1,0 +1,27 @@
+id: SOL-SIM-STEAM-READINESS-GATE
+type: deliverable
+category: solution
+title: Steam feed is withheld until measured pressure reaches the ready threshold, so an early draw is starved rather than delivered wet
+status: active
+version: 3
+text: |
+  The steam wand is a manual, purely mechanical valve -- the operator's hand opens it directly, and nothing in this machine's actuation list places a solenoid in that path to block it. So preventing a draw cannot mean intercepting the valve; it has to mean nothing else feeds a draw that starts too early. This slice withholds the steam feed pump -- the only thing standing between a draw and getting more steam made for it -- whenever measured steam pressure sits below the declared ready threshold, regardless of whether the wand is open or closed. A draw attempted while feed is withheld draws down whatever residual pressure the block already holds and gets nothing behind it; a draw attempted once the threshold is reached is handed to the band-holding loop, which sustains it.
+
+  Withholding feed rather than blocking the valve is also what keeps this buildable in host simulation, before any hardware exists: nothing here commands an actuator that isn't already on the machine's list, and the same policy holds whether the valve happens to be open or shut, since demand is not something software observes as a continuous rate -- only the microswitch reports that the wand is turned.
+
+  Out of scope: physically stopping the operator from opening the valve -- no solenoid is added to the steam path, and this slice's premise is that withholding feed is what prevention means here, not a literal block. The tracking, feedforward and recovery behaviour once feed is enabled belongs to the depending band-holding loop and is not built here. Demand beyond sustainable capacity reducing delivered quantity before quality is out of scope for this slice and is deferred to a separate criterion.
+rationale: |
+  Withholding feed rather than adding a solenoid follows directly from what the reference machine actually carries: two solenoid valves exist, both on the brew and hot-water side, and the steam path has none. Adding a part the machine does not have is a hardware decision with cost consequences for whoever owns the bill of materials to make deliberately, not something this slice assumes into existence.
+
+  Gating on measured pressure rather than a fixed warm-up timer follows the same reasoning the band-holding loop's own controlled-variable choice rests on: pressure, not casting temperature, is what a drinker's steamed milk is sensitive to, and a timer cannot know the block has actually reached target the way a direct reading can -- a machine run from a partially recovered state would either be held back too long or released too early against a clock that knows nothing about where it actually stands.
+
+  Starving rather than blocking is deliberately the softer failure: an operator who opens the valve early gets an unmistakably weak or absent result rather than steam that starts acceptable and degrades mid-pour, which is the specific failure the requirement's own account calls the one that ruins milk irreversibly. This is why the criterion is met by policy rather than by a part: the machine already has everything this slice needs.
+links:
+  - target: DEL-SIM-STEAM-LOOP.C2
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets
+  - target: REQ-STEAM-DELIVERY-001.C2
+    type: targets
+  - target: DEC-STEAM-PRESSURE-SENSOR-ADDED
+    type: justified-by

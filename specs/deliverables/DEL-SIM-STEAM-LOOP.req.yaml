@@ -4,9 +4,9 @@ category: task
 title: The steam loop holds its character for the whole draw in simulation
 status: active
 level: task
-version: 3
+version: 4
 text: |
-  In simulation against the estimated plant model, steam properties stay within band for the whole of a draw regardless of its duration, delivery is prevented until the steam side can sustain it, demand beyond capacity reduces delivered quantity before delivered quality, and the steam side returns to a ready state after a draw without operator action.
+  In simulation against the estimated plant model, steam properties stay within band for the whole of a draw regardless of its duration, delivery is prevented until the steam side can sustain it, demand beyond capacity reduces delivered quantity before delivered quality, output rises to its steady rate over a declared interval rather than stepping to it, and the steam side returns to a ready state after a draw without operator action.
 rationale: |
   The steam side serves one purpose and is simpler than the coffee side, but it is disturbed harder: opening the valve is a large step the controller cannot anticipate from the demand itself. That makes it the loop where the disturbance-rejection claim is actually tested, and it is a separate unit of work from the brew loop because it is a different plant with different dynamics, buildable alongside rather than after it.
 
@@ -15,6 +15,8 @@ links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
   - target: DEL-SIM-ESTIMATOR
+    type: depends-on
+  - target: DEL-SIM-STEAM-DRAW-TERM
     type: depends-on
   - target: DEL-SIM-UNCERTAINTY-BUDGET
     type: depends-on
@@ -28,5 +30,5 @@ links:
     type: targets
   - target: REQ-STEAM-DELIVERY-001.C4
     type: targets
-  - target: DEL-SIM-STEAM-DRAW-TERM
-    type: depends-on
+  - target: REQ-STEAM-DELIVERY-001.C5
+    type: targets

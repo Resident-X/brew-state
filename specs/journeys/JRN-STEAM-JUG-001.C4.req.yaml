@@ -1,0 +1,14 @@
+id: JRN-STEAM-JUG-001.C4
+type: criterion
+title: The machine stops making steam once a set milk-temperature target is reached, signalling the operator to close the valve
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The wand valve is manual and mechanical, with no solenoid on the steam path anywhere on this machine -- the machine cannot close it, so "automatically" here means the machine stops making steam, not that the draw itself ends without the operator's hand. The wand-mounted temperature reading that would drive this is currently wired to an analogue gauge rather than read digitally, and its own account records that it lags real milk temperature and is not yet characterised against the wand's own internal heat. Whether that reading is trustworthy enough to stop on, once it does reach the control system, is not settled here and is separate work this journey does not do.
+
+  What this criterion asserts is the operator-facing outcome only: given a set target and a milk-temperature reading the machine trusts, the machine stops making steam once that target is reached and signals the operator to close the valve, rather than leaving them to judge the moment by hand or eye. Characterising the probe's lag and cross-coupling, deciding whether it is accurate enough to close a loop on, and building whatever compensation that needs, are all out of scope for this criterion and belong to whichever solution eventually takes the probe on.
+links:
+  - target: JRN-STEAM-JUG-001
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C1
+type: criterion
+title: The controlled variable is temperature while idle and pressure while a draw is active
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  While idle or recovering, the control law drives to the block's own measured temperature; once a draw begins, it drives to measured pressure instead, since pressure and temperature diverge exactly then and pressure is what a drinker's steamed milk is sensitive to -- a test demonstrates the switch happens on the same step demand becomes nonzero. During the margin-building interval before feed engages, this switch commands nothing different from temperature control: with feed still at zero the deficit is not growing, so measured pressure equals what temperature alone implies, and driving to one is driving to the other. Establishing what tolerance either sensor must meet is out of scope for this criterion, which asserts only which channel governs in each phase.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

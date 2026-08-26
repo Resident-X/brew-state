@@ -1,0 +1,13 @@
+id: DEL-SIM-STEAM-LOOP.C5
+type: criterion
+title: Output rises to its steady rate over a declared interval rather than stepping to it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Output rises to its steady rate over a declared interval rather than stepping to it, in simulation against the estimated plant model, so the operator is not met with a sudden full-force onset at the start of a draw.
+links:
+  - target: DEL-SIM-STEAM-LOOP
+    type: criterion-of

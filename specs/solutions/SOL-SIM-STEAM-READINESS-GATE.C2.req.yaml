@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-READINESS-GATE.C2
+type: criterion
+title: Steam feed is enabled once measured pressure reaches the declared ready threshold
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control law commands nonzero feed once measured pressure is at or above the ready threshold, handing sustained tracking to the band-holding loop. A test brings the block up to threshold and asserts feed becomes available on the same step the threshold is crossed. What duty the band-holding loop then commands once feed is enabled is out of scope for this criterion.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE
+    type: criterion-of

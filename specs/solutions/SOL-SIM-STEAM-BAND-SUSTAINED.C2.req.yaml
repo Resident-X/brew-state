@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C2
+type: criterion
+title: A steam pressure reading outside physically plausible bounds is rejected rather than acted on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A pressure reading below zero absolute, above the block's mechanical rating, or otherwise outside the plausible range for this machine is rejected and the control law holds its last trusted value rather than driving toward the implausible one -- the same discipline the brew side's own measurement channels already follow. A test injects an implausible reading mid-draw and asserts duty does not react to it. Recovering from a sensor that stays implausible indefinitely is out of scope for this criterion.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

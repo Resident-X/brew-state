@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C10
+type: criterion
+title: The steam knob's microswitch reaches the control unit as a discrete reading
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The steam control knob's microswitch state reaches the control unit as a discrete, on-or-off reading through the hardware seam, alongside the existing analogue sensor channels rather than folded into one of them -- a test asserts the reading is available with the same present-or-absent and valid-or-failed reporting discipline every other channel on this seam already carries. Interpreting that reading as a continuous demand rate, or deriving one from it, is out of scope for this criterion; it establishes only that the bit reaches the control unit.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

@@ -1,0 +1,25 @@
+id: DEC-STEAM-PRESSURE-SENSOR-ADDED
+type: decision
+title: A steam-path pressure transducer is added to the reference machine's bill of materials
+status: active
+version: 1
+decided_by: david
+rationale: |
+  Context: REQ-MEASUREMENT-001.C8 requires steam pressure to be measured rather than inferred from temperature, because the two track each other only at rest and diverge exactly during a draw -- the moment quality matters most. The reference machine's declared sensing list carries no pressure transducer on either path. Simulation work on the steam control loop needs a real pressure channel to close the loop honestly, ahead of any hardware being built, rather than building a control law whose premise the graph has already ruled against.
+
+  Trade-offs: Adding a steam-path pressure transducer directly satisfies C8's literal requirement and follows the same measure-rather-than-infer pattern the brew side's own pressure and flow channels already carry. It is a small, well-understood part relative to the risk of a control loop that cannot reject the one disturbance it exists to reject. The rejected alternatives were: inferring pressure from the existing steam-block casting temperature sensor, which contradicts C8 directly and asks a slow, indirect thermal proxy to track a fast, disturbance-driven quantity the plant model's own description deliberately keeps un-reconstructable from outside; and relying on the already-documented steam wand temperature sensor, which measures temperature rather than pressure, has no firmware channel wired to it today, and would still leave pressure itself unmeasured.
+
+  Reversibility: Low. This is a small, low-complexity part being added to a design still at the simulation and pre-hardware tier, with no plumbing or firmware seam already committed to its absence -- superseding this decision would mean reverting the sensing-dependent criteria in the steam-loop solutions that justify themselves by it, not unwinding any hardware already built.
+
+  Consequences: SOL-SIM-STEAM-BAND-SUSTAINED and SOL-SIM-STEAM-READINESS-GATE both assume this channel exists and are justified by this decision. docs/reference-machine.md's declared sensing list is not amended to claim the part is already fitted -- it remains an accurate record of the physical machine as documented -- and instead carries a note pointing here, so the assumption is visible without corrupting the document's own provenance discipline.
+options_considered:
+  - option: Add a steam-path pressure transducer
+    reason_rejected: ""
+  - option: Infer pressure from the steam-block casting temperature sensor
+    reason_rejected: Contradicts REQ-MEASUREMENT-001.C8 directly; the plant model deliberately withholds the temperature-to-pressure deficit from consumers; casting temperature is a slow proxy for a fast, disturbance-driven quantity.
+  - option: Rely on the already-documented steam wand temperature sensor
+    reason_rejected: Measures temperature, not pressure, and has no firmware channel wired to it today; would still leave pressure itself unmeasured.
+chosen: Add a steam-path pressure transducer
+links:
+  - target: REQ-MEASUREMENT-001.C8
+    type: addresses

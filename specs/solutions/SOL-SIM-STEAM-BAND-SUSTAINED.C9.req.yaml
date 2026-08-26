@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C9
+type: criterion
+title: The host harness closes the loop through a truth plant the control law does not share
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A host harness steps a truth plant distinct from the control law's own view of it under the driven actuation, injects that plant's steam-pressure reading back through the hardware seam, and only then runs the control step -- the same arrangement the brew loop's own test harness already establishes, so that tracking and recovery are demonstrated against a plant the control law cannot agree with by construction. Whether the harness is a new instance or an extension of the brew loop's existing one is out of scope for this criterion, which asserts only that the two plant instances stay distinct.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

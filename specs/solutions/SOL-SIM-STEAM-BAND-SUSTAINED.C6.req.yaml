@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C6
+type: criterion
+title: Once engaged, feed is commanded at a declared sustainable rate, not a rate requiring an unobservable demand reading
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Once engaged and past its own declared rise, feed is commanded at a declared sustainable rate rather than at a rate that would require reading the demand's actual size -- the wand's microswitch reports only that a draw is under way, not how much is being asked for, so no law here can vary feed with demand even if it wanted to. A test supplies the harness with several different demand values behind an open wand and asserts commanded feed, once the rise has completed, holds at the declared rate regardless of which demand value it was given; the rise interval itself is a separate criterion's concern and this one samples only after it has elapsed. Choosing what that declared rate should be on the physical machine is out of scope for this criterion, which asserts only that engaged, settled feed is a fixed, declared figure rather than a demand-following one.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

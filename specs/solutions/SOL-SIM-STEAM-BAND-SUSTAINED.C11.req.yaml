@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C11
+type: criterion
+title: Delivered character stays in band because feed is never raised to chase demand beyond the declared sustainable rate
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Once settled past its own declared rise, engaged feed never exceeds the declared sustainable rate no matter what the wand's position implies wanting, so delivered character stays within the declared band even where an unbounded feed would have driven it out. A test drives an exogenous demand far beyond the declared sustainable rate and asserts that, once the rise has completed, pressure stays in band while the rate actually delivered does not climb further to meet the larger demand. This is what makes quantity yield before quality: the cap is never raised to chase a bigger draw once settled, so what is delivered is always at whatever rate was already safe rather than a rate answering the demand. Computing the sustainable rate itself, and the shape of the rise on the way to it, are out of scope for this criterion, which is covered instead by the criteria declaring them.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

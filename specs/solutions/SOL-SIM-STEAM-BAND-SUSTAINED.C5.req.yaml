@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C5
+type: criterion
+title: Measured pressure stays within the declared band for the whole of a draw, within the declared model-error tolerance
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A draw held open for durations ranging from a brief pull to an extended one each keep measured pressure inside the declared band throughout, not merely at the end, within the tolerance the declared model-error range admits -- a test exercising only a single fixed duration would not discharge this. The plant description's own account names the draw-time pressure coefficient as its loosest figure, so this criterion is tested against the declared uncertainty band around that coefficient rather than against one assumed-exact value. Demand beyond what the steam side can sustain reducing delivered quantity before quality is out of scope for this criterion and is covered by a separate one.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

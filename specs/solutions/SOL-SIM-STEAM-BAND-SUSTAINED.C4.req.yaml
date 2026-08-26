@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C4
+type: criterion
+title: The control law's band and gains are inputs it reads rather than constants compiled into it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control law reads the pressure band and its feedforward and tracking gains as inputs rather than as constants written into the source, the same discipline the band's own declaration follows. A test changes a declared gain and shows the control suite's pass-fail boundary moves with it, with no rebuild of the control law itself. What target profile or demand shape drives the loop is out of scope for this criterion.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-READINESS-GATE.C1
+type: criterion
+title: Steam feed is withheld while measured pressure sits below the declared ready threshold
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The control law commands zero steam feed pump duty whenever measured steam pressure is below the ready threshold, independent of whether the wand is reported open. A test holds the block below threshold, opens the simulated wand, and asserts feed pump duty stays at zero throughout. Physically blocking the valve itself is out of scope for this criterion; only the feed decision is asserted.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE
+    type: criterion-of

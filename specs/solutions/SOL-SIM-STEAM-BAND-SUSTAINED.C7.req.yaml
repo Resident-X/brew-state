@@ -1,0 +1,12 @@
+id: SOL-SIM-STEAM-BAND-SUSTAINED.C7
+type: criterion
+title: Recovery after a draw is the same ready-holding control continuing, not a separate mechanism
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The instant demand returns to zero, feed is cut and the control law resumes driving toward the same declared ready temperature target it holds while idle -- recovery is not a distinct control path, it is the ready-holding behaviour continuing from wherever the draw left it. A test holds a draw open long enough to draw temperature down, closes it, and asserts the same control law that holds ready from a cold start also carries this state back to the ready target, within the declared model-error range's assumed recovery time. Recovery under a second draw arriving before the first has finished recovering is out of scope for this criterion; there is only one steam demand in this task's scope.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED
+    type: criterion-of

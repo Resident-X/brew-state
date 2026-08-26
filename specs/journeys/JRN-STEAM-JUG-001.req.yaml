@@ -4,7 +4,7 @@ category: journey
 title: Operator steams a jug of milk
 status: active
 priority: must
-version: 1
+version: 3
 text: |
   Texturing milk is the one interaction where the operator is working continuously against the machine's output rather than waiting for it. Their hands and attention are committed for the duration, and they have no capacity to compensate for a supply that changes underneath them.
 
@@ -24,6 +24,8 @@ text: |
   4a. The operator's demand exceeds what the machine can sustain. The machine degrades predictably and gradually, so the operator can feel it happening and adapt, rather than collapsing abruptly into water carry-over.
 
   4b. The operator takes longer over the jug than expected. The machine sustains steam character for as long as the operator draws, rather than for a fixed window after the valve opens.
+
+  4c. The operator has set a target milk temperature rather than judging it by hand or eye. The machine stops making steam once its milk-temperature reading reaches that target, signalling the operator to close the valve -- the operator then closes it as in step 5, rather than the machine closing it for them.
 
   5a. The operator closes the valve and immediately wants to brew. The machine hands off to the group-service journey, which owns what happens when demands overlap.
 rationale: |

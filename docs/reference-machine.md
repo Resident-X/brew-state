@@ -97,7 +97,7 @@ Sensing:
 
 - Coffee thermoblock temperature sensor, on the block itself
 - Steam thermoblock temperature sensor, on the block itself
-- Steam wand temperature sensor, in the wand itself
+- Steam wand temperature sensor, in the wand itself -- a metal conduction disc on the wand's exterior, isolated from the wand body by an O-ring, wired today to drive the milk-temperature gauge below directly rather than read digitally. *(Provenance: owner's direct account of the physical wand, not yet bench-verified.)* **Hypothesis, not established:** the disc lags real milk temperature, and is believed to respond to both the wand's own internal heat and the milk it contacts externally, with external contact suspected to dominate the faster response -- but the relative weight and lag of each path has not been characterised, and nothing here establishes whether the O-ring's isolation is adequate to make this a usable milk-temperature reading at all.
 - Water level sensor in the tank (magnet/reed type)
 - Flow meter in the water path, wired to the OEM controller
 - Two microswitches, one on each control knob
@@ -125,6 +125,8 @@ Actuation:
 - Two stepper-driven analogue gauges (espresso "resistance to pour", milk temperature)
 
 **Not fitted:** pressure transducer on either path; current sensing; real-time clock.
+
+**Planned addition, not yet fitted.** `DEC-STEAM-PRESSURE-SENSOR-ADDED` records the decision to add a steam-path pressure transducer, made because `REQ-MEASUREMENT-001.C8` requires steam pressure measured rather than inferred from temperature. Simulation work assuming this channel exists is proceeding ahead of the physical fitting; the line above stays accurate to the machine as documented until that fitting happens and this note is replaced with a provenance entry of its own.
 
 Other figures: water tank 3 L; espresso pump rated 15 bar; steam pump rated 4 bar.
 
