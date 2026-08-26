@@ -1,0 +1,22 @@
+# The pressure the steam control law withholds feed below and enables it at.
+#
+# This is the steam side's companion to tolerance.declaration: not a property
+# of a casting, but a policy choice about when this design judges the steam
+# path ready, read by the control law rather than compiled into it. The
+# feed-withhold gate and the band-holding loop it feeds both read this same
+# figure -- the gate as the boundary feed is withheld below, the holding loop
+# as its own ready-holding target -- so it has one home here rather than a
+# copy in each.
+#
+# Nothing here has been on a bench. The figure is estimated, and says so.
+
+# At the declared slope in thermoblock.params (steam.pressure_bar_per_k,
+# 0.036 bar/K) and the declared saturation temperature (100 C), a steam block
+# run at the temperature that file's own account describes -- "about a bar of
+# gauge pressure at the temperature the steam block is run at" -- sits close
+# to nine tenths of a bar above rest. Nine hundred milli-bar is taken from
+# that same account rather than a fresh judgement, so the two figures cannot
+# disagree about what "ready" means on this machine without both being
+# revisited together. Nothing has been measured; the coefficients this is
+# read against have not been either.
+ready-pressure-bar = 900 milli-bar @estimated Read from thermoblock.params's own account of what gauge pressure a steam block run at its working temperature carries, at the declared saturation temperature and pressure-per-kelvin slope -- not a bench measurement, and not established against a real pressure transducer.

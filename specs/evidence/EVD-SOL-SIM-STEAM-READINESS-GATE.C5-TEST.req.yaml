@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-READINESS-GATE.C5-TEST
+type: evidence
+title: The feed-withhold policy is exercised in host simulation against the plant model before any hardware exists (SOL-SIM-STEAM-READINESS-GATE.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T14:56:59Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_feed_withheld_while_pressure_stays_below_threshold_with_the_wand_open,test_gate_runs_against_the_simulated_implementation_with_no_target_dependency
+text: |-
+  pio test -e native_test (env:native_test, no target/vendor toolchain) passes, and task fw:build links the gate into the stm32 target build unchanged (check_control_identical confirms byte-identical preprocessing). The policy is driven against a real plant_model_t truth instance of the thermoblock structure, advanced through the plant seam (plant_model_step) with its channels stood up on the simulated hardware implementation (hw_sim), and the gate under test reached only through hw_interface.h.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE.C5
+    type: satisfies

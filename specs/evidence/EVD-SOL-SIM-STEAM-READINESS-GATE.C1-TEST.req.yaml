@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-READINESS-GATE.C1-TEST
+type: evidence
+title: Feed withheld below the declared ready threshold, regardless of an open wand or an untrustworthy reading (SOL-SIM-STEAM-READINESS-GATE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T14:56:40Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_feed_withheld_while_pressure_stays_below_threshold_with_the_wand_open,test_feed_withheld_one_milli_bar_below_threshold,test_feed_withheld_on_an_untrustworthy_reading
+text: |-
+  pio test -e native_test -f test_steam_control passes. The gate commands ACTUATION_CHANNEL_STEAM_PUMP to zero on every step while measured pressure is below the declared threshold -- verified with a real draw open against the truth plant (steam_demand > 0), at the boundary (threshold minus one milli-bar), and on an absent/failed/implausible reading, which is not evidence the threshold has been reached.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE.C1
+    type: satisfies

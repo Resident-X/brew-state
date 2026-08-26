@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-READINESS-GATE.C2-TEST
+type: evidence
+title: Feed enabled the same step measured pressure reaches the declared ready threshold (SOL-SIM-STEAM-READINESS-GATE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T14:56:59Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_feed_enabled_the_same_step_pressure_reaches_threshold,test_feed_enabled_against_the_plant_models_own_truth
+text: |-
+  pio test -e native_test -f test_steam_control passes. A single instance stepped across the boundary (threshold-1 -> withheld, threshold exactly -> enabled on that same step, threshold+500 -> still enabled) proves the transition lands on the crossing step precisely. A second test reaches the same threshold through the truth plant's own quantity rather than an injected figure.
+links:
+  - target: SOL-SIM-STEAM-READINESS-GATE.C2
+    type: satisfies
