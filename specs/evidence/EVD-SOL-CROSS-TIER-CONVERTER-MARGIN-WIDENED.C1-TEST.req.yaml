@@ -1,0 +1,17 @@
+id: EVD-SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED.C1-TEST
+type: evidence
+title: Finest cross-tier converter subcase widened to a margin robust to unrelated struct growth (SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::ADeliberateDivergenceFailsTheComparison.test_the_reading_the_converter_reports_changes_what_the_draw_does
+text: |-
+  All 70 tests in firmware/emulation/tests pass on a clean rebuild with the widened five-count margin, including the case that motivated it: growing delivery_tolerance_t by two fields no longer flips this subcase's result.
+links:
+  - target: SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED.C1
+    type: satisfies

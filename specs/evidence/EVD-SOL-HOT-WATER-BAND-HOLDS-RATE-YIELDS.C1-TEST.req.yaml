@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1-TEST
+type: evidence
+title: Drinking-temperature window declared as data, own admissible bounds (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_drinking_window_is_required_and_bounded_on_its_own_terms,test_a_different_declaration_changes_the_drinking_window_with_no_source_edit; firmware/tools/tests/test_control_declaration_checks.py (C1 cases)
+text: |-
+  The window is declared in tolerance.declaration, read back through the loop's own tolerance record, and range-checked against admissible bounds distinct per edge and distinct from the half-width bands. C-level loader tests cover missing/duplicate/out-of-range/wrong-unit/no-origin/window-inverted for both edges; a Python declaration-gate test set covers the same at build time.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C1
+    type: satisfies

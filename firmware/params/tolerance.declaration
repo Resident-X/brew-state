@@ -20,7 +20,11 @@
 # it is about is inside it when it sits no further than this from the figure it
 # is compared against, in either direction. What each band compares is stated
 # beside it -- the first two hold a delivery against what it was commanded, and
-# the third holds one delivery against another.
+# the third holds one delivery against another. The drinking-temperature floor
+# and ceiling near the end of this file are the one exception: each states an
+# absolute edge rather than a distance, because what they answer is not how
+# closely a delivery tracked a command but what the drink may never be
+# regardless.
 #
 # The unit is written on the line rather than assumed. This file once stated
 # every band in millidegrees and said so here, which worked for exactly as long
@@ -120,3 +124,26 @@ flow-departure-band = 200 milli-ml-s @estimated No meter has been fitted to a be
 # working to rather than a figure a built machine has been shown to hold -- the
 # same footing both bands above are in.
 post-draw-match-band = 500 milli-c @estimated Derived from the brew-temperature band above as half of it, and not measured: no machine has been on a bench and no pair of trajectories has been recorded from one. The reasoning is that two extractions differing by less than half the band each is individually held to are inside the spread that band already admits as one drink, so treating them as two would claim a resolution the band itself does not have. It is written out here rather than computed from the other band, so that retuning what a single delivery is held to does not silently move what a pair of them is held to. A bench that records a rested and a post-draw extraction from the same machine is what would displace it.
+
+# The window a delivery served at the drinking point is held inside: not a
+# distance from a command, on the same footing the bands above are, but an
+# absolute edge either side of which the drink is wrong however faithfully
+# the machine tracked whatever it was told to track.
+#
+# The floor is what the drink stops being once it is in the cup, and the
+# ceiling is what may be handed to a person and what the brew path can still
+# deliver as liquid water rather than steam. Each is declared and range-checked
+# on its own account, not read off the brew-temperature band above: a
+# half-width around a command answers how closely the machine tracked what it
+# was told, and a lukewarm target tracked perfectly would still be wrong for
+# this drink in a way that band cannot express.
+#
+# Neither figure is a measurement of this machine, which has never been on a
+# bench. They are a statement about the drink, taken from the serving-
+# temperature literature's treatment of what a hot beverage must clear to
+# still be received as hot and what it must stay under to still be liquid
+# water rather than a scald risk; a later bench measurement of this machine's
+# own delivered temperature revises a recorded assumption rather than an
+# anonymous constant.
+drinking-temperature-floor = 60000 milli-c @document Taken from the serving-temperature literature's treatment of the threshold below which a hot beverage reads as merely warm rather than hot to the person receiving it. It is a statement about the drink and not a measurement of this machine, which has never been on a bench.
+drinking-temperature-ceiling = 96000 milli-c @document Taken from the serving-temperature literature's treatment of the ceiling above which a beverage handed to a person becomes a scald risk, and held comfortably below the temperature water boils at where this machine stands so the figure never asks the brew path for anything but liquid water. It is a statement about the drink and not a measurement of this machine, which has never been on a bench.

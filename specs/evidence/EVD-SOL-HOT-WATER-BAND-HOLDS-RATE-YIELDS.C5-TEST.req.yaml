@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C5-TEST
+type: evidence
+title: Yielded rate reported apart from departure, judged against the original commanded rate (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_departure_is_judged_against_the_original_commanded_rate,test_the_rate_given_up_is_reported_via_control_delivery_yield,test_a_choked_delivery_reports_departure_with_no_yield
+text: |-
+  Departure is judged against the unreduced course rate while the pump is shown actually reduced. control_delivery_yield reports a separate, positive-magnitude account while yielding and none otherwise. A choked (meter-disagreeing) extraction, which can never yield, is shown to report departure with no yield -- the discriminating case the criterion's own rationale names.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C5
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8-TEST
+type: evidence
+title: Lead-ahead term scaled by the yield fraction as a proportion, not a difference (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_lead_ahead_term_carries_the_yields_reduction,test_the_lead_ahead_term_scales_the_bend_by_the_fraction_not_a_difference
+text: |-
+  A flat-course test shows the yielding run asks less heater duty than the non-yielding one. A discriminating ramping-course test (two courses sharing a rate at the sampled instant, differing only in what they bend to ahead of it) shows the heater-duty gap between two peaks shrinks by the yield fraction while yielding rather than staying at its unyielded size -- the only construction that can tell a proportion from a difference, which is exactly what C8 requires.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8
+    type: satisfies

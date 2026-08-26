@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C2-TEST
+type: evidence
+title: Target outside the drinking window refused at the drinking point (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_target_below_the_floor_is_refused_in_either_arrival_order,test_a_target_at_the_ceiling_is_refused,test_an_extraction_gains_nothing_from_the_drinking_window
+text: |-
+  Both admission arrival orders (target-then-profile, profile-then-target) refuse a below-floor target at the drinking point, naming the crossed bound with figures matching the existing admission-record convention. Ceiling exclusivity is tested at the exact edge. An extraction is proven unaffected by the same target that the drinking point refuses.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C2
+    type: satisfies

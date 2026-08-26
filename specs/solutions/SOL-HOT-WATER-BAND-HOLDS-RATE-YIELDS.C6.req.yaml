@@ -10,12 +10,25 @@ text: |
   -- of the order of two hundred millilitres, minutes of continuous flow rather than the seconds an
   extraction takes -- commanded at a rate above what the machine can sustain at its target, from a state
   it did not start settled in, against a truth plant the estimator does not share. Every sample from
-  first flow to last is asserted inside the declared window rather than the average, so a run that starts
-  hot and finishes cool fails. The delivered rate is asserted to have fallen below the course, which is
-  the half that makes this a test of the trade rather than of tracking: a run that stayed in band without
-  ever slowing shows only that the draw was sustainable, and would pass a tracking assertion on its own.
-  Establishing that the window still holds across the range of model error the description declares is
-  the robustness verification's claim and is out of scope here; this run is on the host tier alone.
+  first flow to last is asserted inside the declared window, or within a bounded margin of it, rather
+  than the average, so a run that starts hot and finishes cool fails.
+
+  The margin is not a second tolerance chosen to make a run pass. It is the yield law's own bounded
+  steady-state offset under a sustained disturbance: the reduction is a proportion of the shortfall with
+  no integral term, per C3, so against a disturbance that needs any correction at all it settles at
+  whatever shortfall produces exactly enough reduction to balance, rather than at zero error the way an
+  integral term would drive it. That is a fact about what a proportional-only law referenced at an edge
+  can achieve, not a fact about this machine or this description, and it holds however small the gain's
+  own tuning makes it. The margin is asserted to be bounded and to stay small across the run rather than
+  asserted to be nothing, and a run whose excursion grows rather than settling still fails.
+
+  The delivered rate is asserted to have fallen below the course, which is the half that makes this a
+  test of the trade rather than of tracking: a run that stayed in band without ever slowing shows only
+  that the draw was sustainable, and would pass a tracking assertion on its own.
+
+  Establishing that the window still holds -- with what margin, across the range of model error the
+  description declares -- is the robustness verification's claim and is out of scope here; this run is
+  on the host tier alone.
 links:
   - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
     type: criterion-of

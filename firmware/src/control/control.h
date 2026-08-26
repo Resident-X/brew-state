@@ -125,10 +125,19 @@ typedef enum {
  * faults: a command with more than one thing wrong with it names the same bound
  * every time. Each entry point states its own order, because the two ask
  * different questions. A delivery is judged as nothing-to-evaluate, then the
- * ceiling on a rate, then the machine's authority against the draw asked for. A
- * target is judged as nothing-to-evaluate, then not-a-temperature, then the
- * ceiling water itself imposes, then that same authority bound where a course
- * is already running to be held against.
+ * ceiling on a rate, then -- where a target is already named and the profile
+ * states the drinking point -- the drinking-temperature window, then the
+ * machine's authority against the draw asked for. A target is judged as
+ * nothing-to-evaluate, then not-a-temperature, then the ceiling water itself
+ * imposes, then -- where a delivery is already running and its profile states
+ * the drinking point -- the same window, then that same authority bound where
+ * a course is already running to be held against.
+ *
+ * The window is checked ahead of authority at both entry points because it
+ * costs nothing to ask -- a comparison against two figures already in the
+ * tolerance record -- while authority costs a plant model probe, and a
+ * command that fails the cheaper question first is refused without paying
+ * for the dearer one.
  */
 typedef enum {
     /* Nothing was crossed; the command was taken. */
@@ -184,7 +193,27 @@ typedef enum {
      * it by name, so the bound follows whichever structure is linked instead of
      * describing one of them.
      */
-    CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY
+    CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY,
+    /*
+     * A delivery served at the drinking point names a target below the
+     * declared drinking-temperature floor. Asked only of a delivery whose
+     * profile states the drinking point -- an extraction gains nothing from
+     * this bound and is judged on the others alone -- and only where both a
+     * target and a drinking-point profile are known together, on the same
+     * terms CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY already asks its
+     * question of whichever of the two commands arrives second.
+     */
+    CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR,
+    /*
+     * A delivery served at the drinking point names a target at or above the
+     * declared drinking-temperature ceiling. Its own bound rather than a
+     * second report of CONTROL_ADMISSION_TARGET_OVER_SATURATION, because the
+     * two answer different questions: saturation is where water stops being
+     * liquid on any machine, and the ceiling is the narrower point past which
+     * this drink stops being one a person should be handed, on a machine that
+     * may be perfectly capable of holding a target above it.
+     */
+    CONTROL_ADMISSION_TARGET_ABOVE_DRINKING_CEILING
 } control_admission_bound_t;
 
 /*
@@ -248,6 +277,35 @@ typedef struct {
     int32_t largest_milli_ml_per_s;
     uint32_t at_millis;
 } control_departure_t;
+
+/*
+ * What a delivery has to say about rate it chose to give up, as distinct from
+ * rate the world took from it.
+ *
+ * A yield is a departure from the commanded course made deliberately, by the
+ * machine's own decision, and it is not allowed to hide behind having been
+ * deliberate: control_departure_t above still judges this delivery against
+ * the rate its profile commanded, unreduced, so a yielded delivery reports a
+ * shortfall exactly as a choked path would. What this record adds is the
+ * other half of the account -- that the shortfall was chosen and not merely
+ * suffered -- because a caller told only the total cannot tell a machine that
+ * decided from a world that intervened, and folding the two into one number
+ * would have a failing pump and a correct yield report the same thing.
+ *
+ * The shape mirrors control_departure_t and is latched the same way and for
+ * the same reason: `yielded` says whether this delivery ever gave anything up,
+ * `largest_milli_ml_per_s` is the widest reduction it made from the rate its
+ * course was commanding at the moment the reduction was largest, and
+ * `at_millis` is the point on the course that was taken at. Both are
+ * meaningful only while `yielded` is set and are zero otherwise, read against
+ * it rather than on their own -- the same convention control_departure_t's
+ * own fields already carry.
+ */
+typedef struct {
+    bool yielded;
+    int32_t largest_milli_ml_per_s;
+    uint32_t at_millis;
+} control_yield_t;
 
 typedef struct {
     uint32_t last_step_millis;
@@ -391,6 +449,33 @@ typedef struct {
      * step, and control_delivery_departure for reading it.
      */
     control_departure_t departure;
+    /*
+     * The proportion of this step's commanded rate a running drinking-point
+     * delivery is presently allowed to keep: one while nothing is being given
+     * up, and less than one while the heater has no authority left and the
+     * reconstruction sits below the drinking-temperature floor -- see
+     * drinking_yield_fraction in control.c. Read back the same step it is
+     * set, by drawn_load_pump_permille, so that the lead-ahead term answers
+     * for the draw the machine is actually making rather than the one the
+     * course asked for and this delivery has already stopped attempting.
+     *
+     * Meaningful only while delivery_running is set. It is put back to one
+     * whenever a delivery is commanded or the machine is commanded off (see
+     * forget_departure), but not when a delivery ends on its own end
+     * condition -- the same value it last held stands until then. That is
+     * harmless rather than stale, because every reader of this field is
+     * itself gated on delivery_running: a caller reading it against a
+     * machine with nothing running never reaches it at all.
+     */
+    float delivery_yield_fraction;
+    /*
+     * What the running delivery has so far had to say about rate it gave up
+     * on its own account, as distinct from departure imposed by the world.
+     * Cleared alongside departure and for the same reason -- see
+     * control_yield_t for why it is latched, and control_delivery_yield for
+     * reading it.
+     */
+    control_yield_t yield;
 } control_state_t;
 
 /*
@@ -661,6 +746,22 @@ bool control_delivery_contends_with_the_group(const delivery_profile_t *profile,
 bool control_delivery_departure(const control_state_t *state, control_departure_t *departure);
 
 /*
+ * What the delivery under way -- or the last one to run -- had to say about
+ * rate it chose to give up, as distinct from control_delivery_departure's
+ * account of rate the world took from it.
+ *
+ * Latched, cleared and read on exactly the terms control_delivery_departure
+ * is: across the whole delivery, on the next delivery commanded or the
+ * machine commanded off, and as nothing yielded for a machine that has moved
+ * no water. Reading both together is what tells a caller a shortfall it sees
+ * apart: the same one control_delivery_departure already reports if it was
+ * chosen, or a different one entirely if it was not.
+ *
+ * Returns false, writing nothing, for a null state or a null destination.
+ */
+bool control_delivery_yield(const control_state_t *state, control_yield_t *yield);
+
+/*
  * Advance the control path by one step: the estimator is advanced under the
  * levels commanded over the interval just elapsed and corrected toward what the
  * machine reports, and the drive levels follow the temperature it reconstructs
@@ -711,6 +812,17 @@ bool control_delivery_departure(const control_state_t *state, control_departure_
  * the brew-temperature reconstruction is carried on prediction rather than
  * treated as evidence of a fault: no reading is not evidence of a departed
  * one.
+ *
+ * A delivery served at the drinking point additionally has this step's
+ * yield fraction established here, before the pump level it commands is
+ * computed and before the heater command reads it through
+ * drawn_load_pump_permille -- see drinking_yield_fraction in control.c for
+ * the gate and delivery_yield_fraction's own comment for why it is read back
+ * the same step it is set. The comparison judge_the_interval_just_elapsed
+ * makes is unaffected: it stays the rate the profile commanded before any
+ * reduction, so a yielded delivery reports its shortfall exactly as a choked
+ * path would, and what was given up is reported separately -- see
+ * control_yield_t.
  */
 control_step_result_t control_step(control_state_t *state);
 

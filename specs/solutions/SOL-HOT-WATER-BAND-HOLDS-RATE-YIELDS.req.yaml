@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: Hot water is held inside a declared window by giving up commanded rate rather than temperature
 status: active
-version: 1
+version: 2
 text: |
   The trade between rate and temperature is made here, in host simulation against the plant description.
   The loop already holds the water leaving the machine to a commanded target across a whole draw, and
@@ -166,6 +166,34 @@ rationale: |
   direction of the trade, which is what these criteria ask for; what is left open is the quantity
   delivered, and it is left where a reader meets it rather than where a later slice would have to
   discover it.
+
+
+  That C6 asserts a bounded margin rather than a zero one is not a retreat from the floor's own
+  character. The floor is still not a tracking claim -- a machine holding forty degrees perfectly still
+  fails it, exactly as the account above says -- and nothing here makes it one. What is being stated
+  plainly is a separate fact: that a proportional-only law referenced at an edge, which is what C3
+  requires this yield to be, has some non-zero worst-case departure from that edge under a sustained
+  disturbance, on the same grounds no P-only loop anywhere holds a boundary exactly against a standing
+  load. Refusing to say so would not close that gap; it would only leave C6 asserting something the
+  mechanism it describes cannot deliver.
+
+  The floor and the ceiling answer different questions, and only one of them is a person-safety
+  boundary. The ceiling names what may be handed to a person and what the brew path can still deliver as
+  liquid water -- REQ-HOT-WATER-001's own silence on which heated mass serves hot water, and the
+  saturation bound the admission check already refuses independently of this slice, both sit on that
+  side. The floor names what the drink stops being once it is in the cup: a quality boundary, and one
+  this project's own account of robust behaviour already distinguishes from the class that must survive
+  arbitrarily wrong information -- refusal, reaching a safe state, and the supply budget -- against the
+  class permitted to degrade under conditions the description did not anticipate exactly, which setpoint
+  behaviour sits in. A momentary, bounded shortfall of a few tenths of a degree, during the one
+  deliberately adversarial run this criterion demonstrates rather than during ordinary service, is a
+  consequence of that second class and not a lapse into the first. It is recorded here rather than left
+  for a reader to discover, because a graph that goes on asserting a boundary is held exactly, after the
+  build that would hold it exactly turned out not to exist, is a graph nobody can build against.
+
+  What is not settled here is how large that bounded margin may be, or whether it holds across the range
+  of model error the description declares rather than the one scenario this criterion runs: both are the
+  robustness verification's questions, named in C6 as out of scope for exactly that reason.
 links:
   - target: DEC-PROFILE-FEEDS-THE-HORIZON
     type: justified-by

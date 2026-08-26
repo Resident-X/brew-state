@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3-TEST
+type: evidence
+title: Hot water driven by the loop already built, at more than one target and flow (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T06:45:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_hot_water_is_driven_by_the_same_law_as_an_extraction
+text: |-
+  Four (target, reconstruction, flow) cases each show identical heater duty between a drinking-point delivery and a group delivery while neither yields, ruling out a hidden second calibration valid at only one target or flow.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3
+    type: satisfies
