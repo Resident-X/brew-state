@@ -1,0 +1,17 @@
+id: EVD-SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C1-TEST
+type: evidence
+title: check_estimator_limits and the outlet-only-fixture admission suite pass with steam-knob bounded (SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T11:07:19Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_estimator_limits.py; firmware/test/test_estimator_outlet_only_fixture/test_estimator_outlet_only_fixture.c::test_a_structure_answering_only_the_reconstruction_name_is_refused,test_a_refused_instance_answers_nothing
+text: |-
+  task fw:check reports check_estimator_limits: '5 declaration(s) bound every channel the estimator corrects against' -- outlet_only_fixture.limits and the test suite's inline LIMITS_DECLARATION literal both carry a steam-knob = 0 .. 1000 line. pio test -e native_outlet_only_fixture_test passes both admission-suite assertions (test_a_structure_answering_only_the_reconstruction_name_is_refused, test_a_refused_instance_answers_nothing), which previously failed during setUp on the missing bound. The fix landed via the independently-filed sibling maintenance item SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED (finished), which corrected the same declaration this criterion names; this criterion's premise was already true in code by the time this item reached build, so no new change was made here.
+links:
+  - target: SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C1
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C2-ANALYSIS
+type: evidence
+title: check_structure_exclusive witnesses outlet_only_fixture from its own linked artefact (SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C2)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-27T11:07:19Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/check_structure_exclusive.py against .pio/build/native_outlet_only_fixture/program
+text: |-
+  task fw:check reports check_structure_exclusive: './.pio/build/native_outlet_only_fixture/program carries 1 symbol(s) of outlet_only_fixture and none of any other'. Inspection of firmware/src/plant/outlet_only_fixture/plant_structure.h/.c confirms outlet_only_fixture_accumulate has external linkage (no static) and a header declaration, giving the linked artefact a symbol the checker can attribute to this structure and no other. The fix landed via the independently-filed sibling maintenance item SOL-OUTLET-FIXTURE-EXCLUSIVE-SYMBOL (finished), which made the identical change this criterion names; this criterion's premise was already true in code by the time this item reached build, so no new change was made here.
+links:
+  - target: SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C2
+    type: satisfies
