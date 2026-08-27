@@ -1,0 +1,19 @@
+id: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2
+type: criterion
+title: The determination is taken over perturbations applied to the machine alone
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The per-channel signatures are gathered from perturbations applied to the machine alone, with the
+  control path held at the description the machine was nominally built to, and the identifiable /
+  not-shown-identifiable determination is taken over them by the same comparison the coupled reading
+  uses — same resolution floors, same test against combinations of the other in-scope parameters.
+
+  Only what is perturbed changes. A determination arrived at by a different comparison would not be
+  one the two readings could be set against each other, which is the whole of what the second reading
+  is for.
+links:
+  - target: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT
+    type: criterion-of

@@ -1,0 +1,18 @@
+id: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3
+type: criterion
+title: A parameter identifiable when built differently and not when drifted is named as such
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Both readings are committed together, and a parameter the two disagree about is named as one the
+  machine could be told apart on when built differently and not when it has drifted.
+
+  Naming the disagreement rather than reporting two tables is what makes the pair worth having: that
+  parameter is the case where a machine passing every commissioning check can still go wrong with
+  nothing to report it, and a reader given two lists to compare by eye will not find it. A parameter
+  neither reading shows identifiable, and one both do, are each stated once.
+links:
+  - target: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT
+    type: criterion-of

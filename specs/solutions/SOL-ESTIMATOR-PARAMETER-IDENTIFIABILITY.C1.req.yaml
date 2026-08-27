@@ -1,0 +1,25 @@
+id: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C1
+type: criterion
+title: The sweep records each in-scope parameter's effect on every hw_interface channel, not only the delivery-outcome deviation dominance ranked
+status: active
+version: 2
+measurement_type: binary
+verification: analysis
+text: |
+  Reusing the sensitivity sweep's existing corner-perturbation re-run for every parameter the
+  estimator's reconstructed outlet-temperature state depends on, the sweep additionally records the
+  perturbed run's deviation on each channel the machine observes: brew temperature, steam
+  temperature, brew pressure, and steam pressure, already compared by the cross-tier check both
+  draws run through, plus flow, exposed by one small additive print path alongside the existing
+  delivered-temperature line rather than through the four already-compared channels. The steam knob
+  is out of scope — it reports an operator's valve position, not a plant-state measurement any
+  in-scope parameter could move.
+
+  A parameter the dominance pass could not weigh is recorded against the channels on the same terms
+  as any other, and given no identifiability verdict of its own. Reaching no delivery the design
+  declares a band for is what kept it out of that ranking; it still moves channels, so leaving it
+  out here would credit the remaining parameters with a separability the machine does not have.
+  Redoing the dominance ranking itself is out of scope.
+links:
+  - target: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY
+    type: criterion-of

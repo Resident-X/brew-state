@@ -1,0 +1,18 @@
+id: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C2
+type: criterion
+title: A parameter whose channel signature is indistinguishable from another's, or from the sweep's own resolution, is named as not shown identifiable
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Every in-scope parameter's per-channel signature is compared against every other in-scope
+  parameter's signature and against the sweep's own resolution; a parameter is identifiable only
+  when no combination of the others reproduces its signature and its effect exceeds that resolution
+  on at least one observed channel. A parameter that fails either test is named as not shown
+  identifiable in the recorded finding rather than omitted or assumed identifiable. Selecting,
+  costing, or fitting any sensor the finding names as needed is out of scope — that decision belongs
+  to the physical track's procurement, not this analysis.
+links:
+  - target: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY
+    type: criterion-of

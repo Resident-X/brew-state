@@ -1,0 +1,44 @@
+id: SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS
+type: deliverable
+category: solution
+title: The committed dominance record names the machine description as it presently stands
+status: active
+version: 1
+text: |
+  The dominance record the sensitivity sweep writes names the four files it was run against and the
+  digest each of them held at the time, so that a reader can establish which machine the ranking
+  describes. A later change to the machine's description moved one of those digests and the record
+  was not regenerated, leaving it naming a model that no longer exists while reading as current.
+
+  The figures it carries are not merely stale in the last place. The change was a measurement
+  displacing an estimate, so the coefficient's declared error moved as well as its value, and the
+  ranking those two feed came out in a different order: the coefficient concerned falls from the
+  second place the committed record gives it, and the count of coefficients whose own uncertainty
+  spends more than a whole declared band falls with it. A reader prioritising measurement off the
+  committed order would have been prioritising off the machine as it was described before it was
+  measured.
+
+  The correction is to regenerate the record against the description as it now stands, which the
+  sweep does unchanged — nothing about the method is at fault. The suite already holds the record to
+  the digests it names, so this shortfall was detectable at the gate and the gate was not clean when
+  the change merged; that is what this item restores.
+
+  Out of scope: any mechanism that regenerates the record automatically when the model moves, which
+  the sweep's own criterion already places outside itself.
+rationale: |
+  A record that names the model it was taken against is worth exactly as much as the naming being
+  true. Left standing, it is worse than no record: a ranking with no model behind it invites nobody
+  to act on it, while a ranking naming a model somebody can no longer produce invites everybody to.
+  The whole reason the digests are written down is that a path alone does not say which machine, and
+  that reasoning fails closed only if the record is actually regenerated when a digest moves.
+
+  It lands in the maintenance lane rather than as a new requirement because nothing the graph says
+  was wrong. The criterion asking for a committed, repeatable record said the right thing and the
+  method it describes still produces the right answer; what fell short is the record in the tree.
+  That is a defect in delivered behaviour, and the behaviour it restores is the one that criterion's
+  own evidence was taken against.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets

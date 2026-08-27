@@ -71,6 +71,24 @@ DECLARED_INTERVAL_MS = 10
 #: the drink and not the block the drink was heated by.
 OUTLET_KEY = "outlet-c"
 
+#: What the host loop prints the rate water is being drawn through the brew path
+#: at under.
+#:
+#: Not one of the compared quantities either, and deliberately not in
+#: QUANTITY_KEYS, for a different reason from the one above. The seam does
+#: enumerate a flow channel, so a machine could observe this -- but the board
+#: this project is building has nothing wired to it, the flow meter having been
+#: left on the controller this project replaces. So no converter carries the
+#: figure and it has no place in a comparison of two tiers reading the same
+#: converters.
+#:
+#: It is read off the line all the same, because work asking whether a
+#: coefficient could be told apart from what the machine observes has to be able
+#: to read every channel the machine could observe, including one an instrument
+#: has not yet been placed on -- that is precisely the case where the answer
+#: decides whether placing one would buy anything.
+FLOW_KEY = "brew-mlps"
+
 #: What each compared quantity is called when a divergence has to be reported to
 #: somebody, in the order both loops report them -- which is the order the names
 #: they are printed under are declared in, so the two cannot come apart.
@@ -243,7 +261,15 @@ def parse_host(output):
         elif kind == "trajectory":
             fields = closed_loop.keyed(parts[1:])
             where = "the host loop's trajectory line %d" % len(findings["trajectory"])
-            for name in ("interval", "result", "pump", "heater", "steps"):
+            # The drawn rate is required where the delivered temperature is not.
+            # A structure that heats the water where it delivers it legitimately
+            # keeps no outlet temperature, so that field is allowed to be
+            # absent; the drawn rate is one of the plant seam's quantities
+            # rather than one structure's state, and the seam undertakes that
+            # every structure answers every quantity -- so a line without it is
+            # a draw that stopped printing it, which is the case that must fail
+            # where it is looked for rather than quietly reading as no flow.
+            for name in ("interval", "result", "pump", "heater", "steps", FLOW_KEY):
                 if name not in fields:
                     raise closed_loop.Unkeyed("%s reports no %s" % (where, name))
             findings["trajectory"].append({
@@ -263,6 +289,13 @@ def parse_host(output):
                 # delivers it has no such temperature and any number stood in
                 # for it would be read as a measurement of something.
                 "outlet_c": (float(fields[OUTLET_KEY]) if OUTLET_KEY in fields else None),
+                # The rate the brew path is drawing at, which the seam
+                # enumerates a channel for and this machine has no instrument
+                # on. It takes no part in the comparison this module exists for,
+                # for the reason the outlet temperature does not: the two tiers
+                # are compared on what their converters carried, and no
+                # converter carries this.
+                "brew_flow_ml_per_s": float(fields[FLOW_KEY]),
             })
         elif kind == "pre-draw-steps":
             findings["pre_draw_steps"] = int(parts[1])

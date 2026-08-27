@@ -1,0 +1,18 @@
+id: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C3
+type: criterion
+title: The identifiability finding is committed with the per-channel data it was derived from, pointed at the model it was run against
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The per-parameter, per-channel signatures and the identifiable / not-shown-identifiable
+  determination they produced are committed together, in a form that names the parameter and limit
+  files (and their digests, the way `docs/parameter-dominance.md` already does for the dominance
+  ranking) the sweep was run against, so the finding can be reproduced against a replacement model
+  by re-pointing the same sweep rather than rewritten. Re-running the analysis once the measured
+  model replaces the estimated one is out of scope for this slice — the committed form exists so
+  that re-run can happen without re-deriving the method.
+links:
+  - target: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY
+    type: criterion-of

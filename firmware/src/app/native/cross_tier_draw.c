@@ -91,6 +91,34 @@ _Static_assert(sizeof(quantity_key) / sizeof(quantity_key[0]) == SENSED_CHANNEL_
 #define DELIVERED_KEY "outlet-c"
 
 /*
+ * What the rate water is being drawn through the brew path at is reported
+ * under.
+ *
+ * It is beside the delivered temperature above rather than in the sensed table,
+ * and for the same reason that one is: the table is what two tiers reading the
+ * same converters compare with one another, and no converter carries this. The
+ * seam enumerates a flow channel, but the board this project is building has
+ * nothing wired to it -- the machine's flow meter answers the controller this
+ * project replaces -- so a figure reported through the sensed path would be
+ * claiming an instrument the machine does not have.
+ *
+ * It is reported all the same, because the question of whether a coefficient
+ * could be told apart from what the machine observes cannot be asked of a
+ * channel nobody printed. What this line carries is what the modelled machine's
+ * rate actually is, which is the figure an instrument on that channel would be
+ * placed against -- and the difference between a channel that carries a
+ * distinguishing signature and one that does not is exactly what says whether
+ * fitting such an instrument would buy anything.
+ *
+ * Unlike the delivered temperature it is never absent. The plant seam
+ * enumerates it as a quantity rather than a state, which is the seam's own way
+ * of saying every structure answers it whatever it keeps inside -- so a
+ * structure with no such state still reports the rate it was commanded to move,
+ * and there is no architecture for which the field would have to be left off.
+ */
+#define FLOW_KEY "brew-mlps"
+
+/*
  * Nine significant digits, which is what round-trips an IEEE-754 single
  * precision value exactly. A narrower format would be this run's printing
  * introducing a disagreement rather than reporting one.
@@ -110,7 +138,7 @@ _Static_assert(sizeof(quantity_key) / sizeof(quantity_key[0]) == SENSED_CHANNEL_
  * which is the answer a consumer can act on.
  */
 static void report(const char *what, int index, int result, unsigned pump, unsigned heater,
-                   unsigned long taken, const float *values, const float *delivered)
+                   unsigned long taken, const float *values, const float *delivered, float flow)
 {
     (void)printf("HOST %s", what);
     if (index >= 0) {
@@ -125,6 +153,7 @@ static void report(const char *what, int index, int result, unsigned pump, unsig
     if (delivered != NULL) {
         (void)printf(" " DELIVERED_KEY "=" QUANTITY_FORMAT, (double)*delivered);
     }
+    (void)printf(" " FLOW_KEY "=" QUANTITY_FORMAT, (double)flow);
     (void)printf("\n");
 }
 
@@ -136,6 +165,22 @@ static bool sensed(const plant_model_t *machine, float *values)
         }
     }
     return true;
+}
+
+/*
+ * The rate water is presently being drawn through the brew path at.
+ *
+ * Read on its own rather than through the table above, because the table's
+ * entries are the quantities a converter input stands behind and this is not
+ * one of them. A refusal here is worth stopping the draw on: this is a
+ * quantity and not a state, which is the plant seam's own way of undertaking
+ * that every structure answers it whatever it keeps inside, so a structure
+ * refusing it is a structure that has stopped honouring the seam rather than
+ * one whose architecture has nowhere to put it.
+ */
+static bool drawn_rate(const plant_model_t *machine, float *value)
+{
+    return plant_model_quantity(machine, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, value);
 }
 
 /*
@@ -251,6 +296,7 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
     control_state_t state;
     float values[SENSED_CHANNEL_COUNT];
     float outlet_c = 0.0f;
+    float drawn_ml_per_s = 0.0f;
 
     if (!plant_model_init(&machine, parameters)) {
         (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
@@ -275,11 +321,11 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
     }
 
     /* The machine as it came up, before anything has driven it. */
-    if (!sensed(&machine, values)) {
+    if (!sensed(&machine, values) || !drawn_rate(&machine, &drawn_ml_per_s)) {
         return 1;
     }
     report("trajectory-baseline", -1, 0, 0u, 0u, 0uL, values,
-           delivered_or_not(&machine, outlet_kept, &outlet_c));
+           delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
 
     if (!control_init(&state, parameters, limits, tolerance)) {
         (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
@@ -348,7 +394,8 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
         }
         taken += owed;
 
-        if (!stand_the_readings_up(&machine, draw) || !sensed(&machine, values)) {
+        if (!stand_the_readings_up(&machine, draw) || !sensed(&machine, values) ||
+            !drawn_rate(&machine, &drawn_ml_per_s)) {
             (void)fprintf(stderr,
                           "cross-tier draw: the machine reported no quantity at interval %u\n",
                           interval);
@@ -364,7 +411,7 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
          */
         report("trajectory", (int)interval, (int)result, (unsigned)asked_for,
                (unsigned)hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER), taken, values,
-               delivered_or_not(&machine, outlet_kept, &outlet_c));
+               delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
     }
 
     (void)printf("HOST plant-step-count %lu\n", taken);

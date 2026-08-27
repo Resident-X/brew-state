@@ -1,0 +1,20 @@
+id: SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C1
+type: criterion
+title: Every digest the committed dominance record names is the one that file presently holds
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The record carries, for each of the files the sweep was run against, the digest that file holds
+  now — so that regenerating it against an unchanged tree writes the same bytes back, and a reader
+  can establish which machine the ranking describes without being told separately.
+
+  Both halves matter and only one of them is visible from the record alone. Naming a digest nothing
+  presently holds is the shortfall being corrected; naming a digest that is current while the
+  figures beside it came from an earlier run would read identically and be no better, so the ranking
+  itself has to be the one this method now produces rather than an older one with the digests
+  refreshed over it.
+links:
+  - target: SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS
+    type: criterion-of

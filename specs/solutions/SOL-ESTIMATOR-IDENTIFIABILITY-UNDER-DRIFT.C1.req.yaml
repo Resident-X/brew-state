@@ -1,0 +1,20 @@
+id: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1
+type: criterion
+title: A draw takes one description for the machine and another for the control path
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A draw can be given one description for the machine it advances and a second for the control path
+  that drives it, and a perturbation written into the first alone reaches the machine while the
+  control path goes on working from the figures it was given.
+
+  A run naming the same description for both has to remain available and has to behave exactly as
+  the single-description run does today, because that is the reading already taken and the cross-tier
+  comparison depends on both tiers running one machine. Out of scope: giving the two tiers of that
+  comparison different descriptions, which would make it a comparison of two machines rather than of
+  two computations of one.
+links:
+  - target: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT
+    type: criterion-of
