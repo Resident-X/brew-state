@@ -1,0 +1,17 @@
+id: EVD-SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2-TEST
+type: evidence
+title: A course cut at a nonzero rate holds the declared band through its own end (SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T00:12:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_course_ending_mid_draw_holds_the_band
+text: |-
+  A flat 2.0 ml/s course at the group, cut at a nonzero rate rather than tapered to nothing, run for its full 30-second length from a rested start. The water reaching the coffee is asserted within the declared 1.0C band at every 10ms step, including the final lead-interval before the delivery's own end. Passes under task fw:test / pio test -e native_test.
+links:
+  - target: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2
+    type: satisfies

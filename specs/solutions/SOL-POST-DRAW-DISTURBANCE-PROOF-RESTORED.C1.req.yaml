@@ -1,0 +1,22 @@
+id: SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1
+type: criterion
+title: The two recovery tests run again, proving their precondition against a real closed-loop-driven scenario rather than standing TEST_IGNORE
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Both test_the_state_a_draw_leaves_is_carried_into_the_next_delivery and
+  test_an_extraction_after_a_draw_matches_one_pulled_from_rest run again rather than stand
+  TEST_IGNORE, each proving its own precondition -- that the draw genuinely left the casting
+  outside the declared band -- against a scenario produced by driving the closed loop, not by
+  writing plant state and not by a scenario either test's criterion already forecloses.
+
+  Which scenario or which observable establishes that is not settled here: a rate or a
+  duration outside what SOL-BREW-RECOVERS-AFTER-DRAW.C6 already fixes, a different point the
+  disturbance is read from, or a different question asked of the machine entirely are all
+  open to whoever takes this, so long as the criterion's own text -- what a demand following
+  a draw receives -- is what the result is read against.
+links:
+  - target: SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED
+    type: criterion-of

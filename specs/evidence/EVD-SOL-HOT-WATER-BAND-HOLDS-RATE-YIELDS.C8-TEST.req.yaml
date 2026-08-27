@@ -1,7 +1,7 @@
 id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8-TEST
 type: evidence
 title: Lead-ahead term scaled by the yield fraction as a proportion, not a difference (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8)
-status: active
+status: superseded
 version: 1
 result: pass
 method: test

@@ -201,7 +201,15 @@ static uint16_t as_drive_level(float permille)
  *
  * A running delivery's course is read a lead ahead of where the delivery
  * actually is, rather than at the elapsed time the pump is actually being
- * driven at this step. The lead is the one probe_read_ahead_lead_millis
+ * driven at this step -- and averaged across the stretch the lead spans
+ * rather than sampled only at its far edge, because everything the course
+ * does between here and there is water this step's duty answers for. A
+ * course that is flat across that stretch reads the same either way; a
+ * course still rising or falling across it does not, and a point taken only
+ * at the far edge answers for a rate the course has not carried for most of
+ * the stretch. See delivery_profile_read_ahead_rate_ml_per_s, which also
+ * carries why the stretch is cut short at the delivery's own end rather than
+ * read past it. The lead itself is the one probe_read_ahead_lead_millis
  * established when the delivery was admitted and does not move as the course
  * runs, so it is read from the state rather than probed again here.
  *
@@ -210,11 +218,6 @@ static uint16_t as_drive_level(float permille)
  * for a lead to be taken against, so the level fed to the term is the one
  * presently commanded -- the same read this file always made before this
  * term existed.
- *
- * The read is clipped at the delivery's own end condition rather than left to
- * hold the course's last rate on: a lead read past the end asks the heater
- * for the energy of a draw that will have stopped, which is the case this
- * machine is least able to survive quietly.
  *
  * The rate read ahead is scaled by delivery_yield_fraction, established for
  * this same step before heater_command is called -- see control_step. A
@@ -235,29 +238,8 @@ static uint16_t drawn_load_pump_permille(const control_state_t *state)
         return state->commanded_pump_permille;
     }
 
-    /*
-     * Saturated rather than wrapped: an elapsed clock within one lead of
-     * wrapping is a delivery that has been running for weeks, which nothing
-     * else in this file anticipates either, but a wrapped sum would read as
-     * early in the course rather than past its end -- the one outcome the
-     * clip below exists to rule out.
-     *
-     * The widest value is written out rather than reached for as UINT32_MAX,
-     * on the same terms is_a_temperature and as_milli above already refuse
-     * the standard library for: this file is compiled byte-identically for
-     * the host and the target, and stdint.h's own widest-value macro is not
-     * the same text on both.
-     */
-    const uint32_t read_at_millis =
-        (state->delivery_lead_millis > (0xFFFFFFFFu - state->delivery_elapsed_millis))
-            ? 0xFFFFFFFFu
-            : state->delivery_elapsed_millis + state->delivery_lead_millis;
-
-    if (delivery_profile_ended(&state->delivery, read_at_millis)) {
-        return 0u;
-    }
-
-    const float rate_ml_per_s = delivery_profile_rate_ml_per_s(&state->delivery, read_at_millis);
+    const float rate_ml_per_s = delivery_profile_read_ahead_rate_ml_per_s(
+        &state->delivery, state->delivery_elapsed_millis, state->delivery_lead_millis);
     const float yielded_rate_ml_per_s = rate_ml_per_s * state->delivery_yield_fraction;
     const float permille =
         (yielded_rate_ml_per_s / state->full_scale_flow_ml_per_s) * (float)ACTUATION_FULL_SCALE;
