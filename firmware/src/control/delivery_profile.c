@@ -199,3 +199,126 @@ bool delivery_profile_ended(const delivery_profile_t *profile, uint32_t elapsed_
         return true;
     }
 }
+
+/*
+ * The course's rate, averaged across the stretch from from_millis to
+ * to_millis rather than sampled at either end.
+ *
+ * A piecewise-linear course is integrated one segment at a time: before its
+ * first point -- reached only if from_millis is exactly zero, since
+ * delivery_profile_init fixes the first point there -- and at or beyond its
+ * last, a constant rate contributes a rectangle; every interior segment
+ * contributes the trapezoid its two endpoints bound, which is exact for a
+ * segment that is itself linear. Each endpoint is read through
+ * delivery_profile_rate_ml_per_s rather than interpolated afresh here, so the
+ * two functions can never come to disagree about what the course says at a
+ * shared instant.
+ *
+ * Returns the point rate delivery_profile_rate_ml_per_s answers at
+ * from_millis for a null profile, one with fewer than two points, or a
+ * stretch that is not strictly increasing -- there is nothing to average
+ * across a single instant or a stretch running backwards, and the honest
+ * answer is the same one a point sample would have given there.
+ */
+static float delivery_profile_average_rate_ml_per_s(const delivery_profile_t *profile,
+                                                     uint32_t from_millis, uint32_t to_millis)
+{
+    if (profile == NULL || profile->point_count < 2u || to_millis <= from_millis) {
+        return delivery_profile_rate_ml_per_s(profile, from_millis);
+    }
+
+    const delivery_profile_point_t *last = &profile->points[profile->point_count - 1u];
+    float integral_ml_per_s_millis = 0.0f;
+    uint32_t cursor_millis = from_millis;
+
+    for (size_t index = 1u; index < profile->point_count && cursor_millis < to_millis; index++) {
+        const uint32_t breakpoint_millis = profile->points[index].at_millis;
+        if (breakpoint_millis <= cursor_millis) {
+            continue;
+        }
+
+        const uint32_t segment_end_millis =
+            (to_millis < breakpoint_millis) ? to_millis : breakpoint_millis;
+        const float rate_at_start = delivery_profile_rate_ml_per_s(profile, cursor_millis);
+        const float rate_at_end = delivery_profile_rate_ml_per_s(profile, segment_end_millis);
+
+        integral_ml_per_s_millis +=
+            0.5f * (rate_at_start + rate_at_end) * (float)(segment_end_millis - cursor_millis);
+        cursor_millis = segment_end_millis;
+    }
+
+    if (cursor_millis < to_millis) {
+        integral_ml_per_s_millis += last->rate_ml_per_s * (float)(to_millis - cursor_millis);
+    }
+
+    return integral_ml_per_s_millis / (float)(to_millis - from_millis);
+}
+
+float delivery_profile_read_ahead_rate_ml_per_s(const delivery_profile_t *profile,
+                                                uint32_t elapsed_millis, uint32_t lead_millis)
+{
+    if (profile == NULL) {
+        return 0.0f;
+    }
+
+    /*
+     * Saturated rather than wrapped, on the same terms the caller in
+     * control.c always took this sum on before this function existed: an
+     * elapsed clock within one lead of wrapping is a delivery running for
+     * weeks, and a wrapped sum would read as early in the course rather than
+     * past its end -- the one outcome the end clamp below exists to rule
+     * out.
+     */
+    const uint32_t read_at_millis =
+        (lead_millis > (0xFFFFFFFFu - elapsed_millis)) ? 0xFFFFFFFFu : elapsed_millis + lead_millis;
+
+    uint32_t window_end_millis = read_at_millis;
+    switch (profile->end.quantity) {
+    case DELIVERY_END_ELAPSED_MILLIS:
+        if (read_at_millis > profile->end.elapsed_millis) {
+            window_end_millis = profile->end.elapsed_millis;
+        }
+        break;
+    case DELIVERY_END_DELIVERED_VOLUME_ML:
+    case DELIVERY_END_QUANTITY_COUNT:
+    default:
+        /*
+         * The same direction delivery_profile_ended reads an unevaluable
+         * quantity in: as ended already, which leaves nothing between
+         * elapsed_millis and itself to average.
+         */
+        window_end_millis = elapsed_millis;
+        break;
+    }
+
+    /*
+     * A third of the full window's average and two thirds of its nearer
+     * half's, rather than the full window's average alone.
+     *
+     * Across a stretch the course holds one slope over, averaging uniformly
+     * from elapsed_millis to window_end_millis answers the same rate the
+     * course states at the stretch's own midpoint -- the mean of a linear
+     * function over an interval is its value at the interval's centre. That
+     * still reads a rising course ahead of where an even earlier sample
+     * would, which is duty asked for before the water drawing it has caught
+     * up to the course. Blending in two thirds of the average over only the
+     * nearer half of the same stretch pulls the answer to the course's own
+     * value a third of the way in rather than halfway -- nearer the present
+     * instant, the direction the loop's own account already prefers an
+     * answer to err in -- reached by two calls to the average already proven
+     * above rather than a second integration this file would owe a second
+     * proof: on a stretch that holds one slope throughout, the blend and a
+     * weighting that favoured the near edge of the window over its far one
+     * arrive at the same figure by construction, and on a stretch that bends
+     * partway across it the blend still leans the answer the same direction
+     * without claiming the same exactness.
+     */
+    const uint32_t near_half_end_millis =
+        elapsed_millis + (window_end_millis - elapsed_millis) / 2u;
+    const float whole_window_rate_ml_per_s =
+        delivery_profile_average_rate_ml_per_s(profile, elapsed_millis, window_end_millis);
+    const float near_half_rate_ml_per_s =
+        delivery_profile_average_rate_ml_per_s(profile, elapsed_millis, near_half_end_millis);
+
+    return (whole_window_rate_ml_per_s / 3.0f) + (near_half_rate_ml_per_s * 2.0f / 3.0f);
+}

@@ -249,4 +249,32 @@ float delivery_profile_rate_ml_per_s(const delivery_profile_t *profile, uint32_t
  */
 bool delivery_profile_ended(const delivery_profile_t *profile, uint32_t elapsed_millis);
 
+/*
+ * The rate the drawn-load term reads for the step at elapsed_millis, a lead
+ * ahead of it, without reading past the delivery's own end.
+ *
+ * A single future instant is not what the lead is owed: elapsed_millis plus
+ * lead_millis names when the read lands, but everything the course does
+ * between elapsed_millis and that landing is water this step's duty answers
+ * for, and a rising or falling course says something different at each end
+ * of that stretch. Averaging the course across the whole stretch is what a
+ * point taken only at its far edge cannot do -- on a course holding one rate
+ * the two agree, and only a course that changes across the stretch tells
+ * them apart.
+ *
+ * The stretch is cut short at the delivery's own end rather than read past
+ * it: elapsed_millis is always before the end while a delivery is running,
+ * so the far edge is the nearer of where the lead would land and where the
+ * course stops, never past the end even when the lead would otherwise land
+ * there. A quantity this build cannot evaluate -- reached only by a profile
+ * assembled without delivery_profile_init -- is read the same direction
+ * delivery_profile_ended reads it: as ended already, which cuts the stretch
+ * to nothing and answers with the rate the present instant alone states.
+ *
+ * Returns 0.0f for a null profile, on the same terms delivery_profile_ended
+ * does: a caller with no profile has no course to read ahead of.
+ */
+float delivery_profile_read_ahead_rate_ml_per_s(const delivery_profile_t *profile,
+                                                uint32_t elapsed_millis, uint32_t lead_millis);
+
 #endif /* DELIVERY_PROFILE_H */

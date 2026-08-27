@@ -1,7 +1,7 @@
 id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5-TEST
 type: evidence
 title: Reading ahead stops at the end condition rather than holding the last rate on (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5)
-status: active
+status: superseded
 version: 1
 result: pass
 method: test

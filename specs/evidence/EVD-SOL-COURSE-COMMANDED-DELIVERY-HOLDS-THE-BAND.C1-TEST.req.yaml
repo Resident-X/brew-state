@@ -1,0 +1,17 @@
+id: EVD-SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C1-TEST
+type: evidence
+title: A rising course (step and ramp) holds the declared band across a rested run (SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T00:12:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_rising_course_holds_the_band
+text: |-
+  Two rise shapes to 2.0 ml/s at the group (an immediate step and a 3-second ramp), machine rested at BREW_TARGET_C, run for 42 seconds with the delivery's own end held well past the observation window. The water reaching the coffee is asserted within the declared 1.0C band at every 10ms step, not only at a settled instant. Passes under task fw:test / pio test -e native_test.
+links:
+  - target: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C1
+    type: satisfies

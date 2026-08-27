@@ -1,0 +1,17 @@
+id: EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8-TEST-2
+type: evidence
+title: The bend discriminating test is placed within the windowed read-ahead so the proportion-vs-difference signal still separates (SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T00:12:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_lead_ahead_term_scales_the_bend_by_the_fraction_not_a_difference
+text: |-
+  Superseded by the windowed-average read-ahead fix (SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C1/.C2): the term now averages the course across the lead window rather than sampling one instant, so a bend placed a fixed distance before the window's far edge (the prior construction) now falls inside the averaging window and is washed out, no longer producing a measurable unyielded heater-duty gap between the two peaks. The bend is now placed exactly at the sampled instant instead, so the whole window on both courses sits past the bend at their respective peak rates, restoring a clean signal. The gap still shrinks by the yield fraction under yielding, which is what C8 requires. Passes under task fw:test / pio test -e native_test.
+links:
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C8
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5-TEST-2
+type: evidence
+title: Reading ahead's averaging window is clamped at the delivery's own end rather than reading past it (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T00:12:52Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_reading_ahead_stops_at_the_end_condition
+text: |-
+  Superseded by the windowed-average read-ahead fix (SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2): the term no longer point-samples and hard-clips to zero past the end, it averages the course across a window bounded at the delivery's own end. Rewritten test: a course holding one rate then bending to a higher one, admitted with two end conditions (one at the bend, one far past it) and sampled at the same instant. The near-ending course's window is clamped before the bend and reads within 2 heater-duty units of a never-bending baseline at the same rate; the far-ending course's window reaches past the bend and reads measurably higher -- showing the clamp tracks the true end rather than leaking the bend in, and no longer collapses to near-zero the way the pre-fix clip did. Passes under task fw:test / pio test -e native_test.
+links:
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5
+    type: satisfies
