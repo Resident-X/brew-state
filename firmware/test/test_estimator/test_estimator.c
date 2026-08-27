@@ -196,6 +196,12 @@ static void test_a_state_outside_the_enumerated_set_is_refused(void)
 /// reference machine keeps the state, so initialisation is accepted. The
 /// refusal is shown by the suites built against the structures that do not,
 /// because a build compiles one structure and this one compiles this.
+///
+/// SOL-ADMISSION-PROVES-FULL-PAIRING.C2: Every structure the estimator
+/// already admits keeps being admitted, unchanged. The structure describing
+/// the reference machine answers both names a reconstructed value is reached
+/// by, so the widened reachability check that also probes the
+/// correction-target state does not newly refuse it here.
 static void test_a_structure_that_keeps_the_state_is_accepted(void)
 {
     estimator_t estimator;

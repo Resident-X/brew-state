@@ -1,0 +1,14 @@
+id: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C2
+type: criterion
+title: Every structure the estimator already admits keeps being admitted, unchanged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every structure the estimator already admits keeps being admitted, unchanged. The structures behind the plant-structure seam today each already answer both a read and a write of every state the estimator's correction reaches, so none is newly refused by the added probe. A regression here would silently narrow which structures the machine can run rather than catching a future one.
+
+  Verified by every existing host exercise and host-tier suite for every structure continuing to pass unchanged under the added check, with no test's expected admission outcome -- accepted, or refused for want of a state -- flipping from what it asserts today. Whether a structure not yet written would pass is out of scope -- this only confirms the added check is not made stricter for a structure that already satisfies it.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE
+    type: criterion-of

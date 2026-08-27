@@ -304,6 +304,15 @@ static void test_both_names_the_estimator_uses_reach_the_one_kept_state(void)
 /// partway through for want of an observation that was arriving the whole
 /// time. A structure whose correction lands drives all the way through
 /// instead.
+///
+/// SOL-ADMISSION-PROVES-FULL-PAIRING.C2: Every structure the estimator
+/// already admits keeps being admitted, unchanged. flow_fixture is the
+/// structure that most needed re-checking under the widened admission test --
+/// it is the one structure in the tree that ever exhibited the defect that
+/// check now guards against -- and unlike the seam-level case above, this
+/// goes through control_init and so would fail outright if the widened check
+/// ever newly refused it: bring_the_machine_up_driving asserts control_init
+/// succeeds, and every step below depends on that admission having held.
 static void test_a_valid_reading_is_incorporated_on_every_step(void)
 {
     control_state_t state;

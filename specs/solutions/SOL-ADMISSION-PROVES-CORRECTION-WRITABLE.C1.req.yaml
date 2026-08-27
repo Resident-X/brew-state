@@ -1,0 +1,14 @@
+id: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C1
+type: criterion
+title: A structure is refused admission if it cannot write the correction-target state for a value it reconstructs, not only read it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Restores REQ-MODEL-STRUCTURE-SEAM-001.C2: the admission check that runs when a structure is brought up under the estimator is extended so that, for every reconstructed value, it also proves the correction-target state can be written, not only that it can be read. A structure failing this probe is refused on the same terms a structure failing either of the existing probes already is: no state is left half-proven because a value happened to have two operations to prove against it.
+
+  Verified by a test built directly against the failure this restores: a structure that reads the correction-target state and refuses to write it is refused at admission, where today it is admitted. Extending the proof to a value with no correction step at all, or to a value observed by more than one channel, is out of scope on the same terms SOL-ADMISSION-PROVES-FULL-PAIRING.C1 already scopes those out.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE
+    type: criterion-of

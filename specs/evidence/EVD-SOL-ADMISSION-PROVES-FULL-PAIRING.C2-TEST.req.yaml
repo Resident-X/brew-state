@@ -1,0 +1,17 @@
+id: EVD-SOL-ADMISSION-PROVES-FULL-PAIRING.C2-TEST
+type: evidence
+title: Every already-admitted structure (thermoblock, flow_fixture) stays admitted under the widened check (SOL-ADMISSION-PROVES-FULL-PAIRING.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T00:19:49Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:test (native_test, native_fixture_test, native_flow_fixture_test, native_boiler_test, native_outlet_only_fixture_test) and task fw:run
+text: |-
+  thermoblock and flow_fixture are the complete set of structures the estimator admits today -- fixture and boiler already fail the original, unwidened reachability probe (they refuse PLANT_STATE_BREW_OUTLET_TEMPERATURE_C) and so never reach the widened check. Every existing host-tier test suite passed unchanged under task fw:test: native_test (thermoblock's test_estimator suite, including test_a_structure_that_keeps_the_state_is_accepted, now also traced to this criterion, asserting estimator_init still succeeds), native_flow_fixture_test (test_control_flow_fixture, including test_a_valid_reading_is_incorporated_on_every_step, now also traced to this criterion, which drives control_init/estimator_init and every subsequent step), native_fixture_test and native_boiler_test. task fw:check and task fw:run also passed with zero regressions. Directly confirmed by running each host artefact: native and native_flow_fixture still print "host exercise: control path reconstructs its brew temperature" (accepted, unchanged); native_fixture and native_boiler still print the refused message they always did, refused on the same original probe as before this change.
+links:
+  - target: SOL-ADMISSION-PROVES-FULL-PAIRING.C2
+    type: satisfies

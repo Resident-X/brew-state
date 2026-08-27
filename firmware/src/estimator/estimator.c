@@ -347,11 +347,50 @@ bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters
      * A structure that does not keep one of these states is one whose
      * architecture has nowhere for it to live, and the caller is better told
      * that now than handed a substitute on every read afterwards.
+     *
+     * Answering the name above is not the whole of what a structure needs to
+     * carry. The per-step correction reaches the same reconstructed value
+     * under a different name -- the state the value's own observing channel is
+     * corrected through, found by the same two-hop walk correct_against takes
+     * -- and a structure that answers the first name and refuses the second is
+     * admitted here and then has every correction against it silently
+     * dropped: the reading arrives, the state it would land on does not exist,
+     * and the reconstruction runs on prediction alone until the unobserved
+     * span exceeds what this structure's own limits declare tolerable. So
+     * every channel a state's observation set names is walked the same way
+     * correct_against walks it, and the state at the far end of that walk is
+     * probed here too. A channel the walk cannot complete -- unmeasured, or
+     * paired with no state -- names nothing to probe and is passed over,
+     * exactly as correct_against passes over it every step.
      */
     for (unsigned state = 0u; state < (unsigned)ESTIMATOR_STATE_COUNT; state++) {
         float reachable = 0.0f;
         if (!plant_model_state(&estimator->model, STATE_FOR_RECONSTRUCTION[state], &reachable)) {
             return false;
+        }
+
+        for (unsigned channel = 0u; channel < (unsigned)HW_SENSOR_CHANNEL_COUNT; channel++) {
+            if ((OBSERVATIONS_FOR_RECONSTRUCTION[state] & ESTIMATOR_OBSERVATION_BIT(channel)) ==
+                0u) {
+                continue;
+            }
+
+            plant_quantity_t quantity = PLANT_QUANTITY_COUNT;
+            if (!quantity_measured_by((hw_sensor_channel_t)channel, &quantity)) {
+                continue;
+            }
+
+            plant_state_t corrected = PLANT_STATE_COUNT;
+            if (!state_observed_by(quantity, &corrected)) {
+                continue;
+            }
+
+            /* Discarded, on the same terms `reachable` above is: only whether
+             * the structure keeps this state is asked here, not its value. */
+            float correction_target_reachable = 0.0f;
+            if (!plant_model_state(&estimator->model, corrected, &correction_target_reachable)) {
+                return false;
+            }
         }
     }
 

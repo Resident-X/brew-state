@@ -41,10 +41,13 @@
  *
  * Nothing here names a plant structure. Whether the control path comes up at
  * all is therefore something this exercise observes rather than assumes: a
- * structure that keeps no state for the estimator to reconstruct is one the
- * control path refuses to start against, and that refusal is a path worth
- * walking on the artefacts built against such a structure. Both outcomes are
- * exercised, and which one happened is printed.
+ * structure that cannot carry a reconstruction the estimator can keep
+ * corrected -- whether because it keeps no state for the reconstruction
+ * itself, or because it keeps that state but not the different one the
+ * estimator's correction writes toward -- is one the control path refuses to
+ * start against, and that refusal is a path worth walking on the artefacts
+ * built against such a structure. Both outcomes are exercised, and which one
+ * happened is printed.
  *
  * Given a draw to run instead, this executable runs that and only that. The
  * draw is cross_tier_draw.c's, and it is reached from here rather than from an
@@ -672,7 +675,8 @@ int main(int argc, char **argv)
         exercise_invalid_sensor(&state);
         exercise_refused_output(&parameters, &limits, &tolerance);
     } else {
-        (void)printf("host exercise: this structure keeps no state to reconstruct\n");
+        (void)printf("host exercise: this structure cannot carry a reconstruction the "
+                     "estimator can keep corrected\n");
         exercise_refused_reconstruction(&state);
     }
 
