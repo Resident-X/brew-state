@@ -1489,6 +1489,127 @@ static void test_recovery_holds_its_bound_across_the_declared_model_error(void)
     }
 }
 
+/* --- Accumulated intent does not outlive the limit ------------------------- */
+
+/*
+ * Hold the block at a fixed, well-below-target temperature for a controlled
+ * span -- pinning the heater against its ceiling for exactly that long -- then
+ * let it go and report how far the temperature climbs past the ready target.
+ *
+ * The steam law offers nothing comparable to control_command_flow's own
+ * external knob, which is what lets the brew side's version of this test pin
+ * duty at the ceiling independent of the plant's own physics. The same effect
+ * is had here instead by holding the variable the law is actually driving to
+ * fixed by hand for the span under test: writing the truth plant's
+ * temperature back to the same cold figure on every step of it overrides
+ * whatever the block would otherwise have done under that duty, so the error
+ * the law sees -- and therefore whether it is pushing past the ceiling -- is
+ * the same on every one of those steps regardless of how many there are. Once
+ * the span ends the plant is left alone, so what happens next is the law's own
+ * continuation and nothing the test is still forcing.
+ */
+static float overshoot_after_saturating_for(unsigned steps, float *released_at)
+{
+    const float cold_c = nominal_of("ambient_temperature_c");
+    float highest = -1000.0f;
+
+    bring_the_loop_up(&parameters, &declaration, cold_c);
+
+    for (unsigned step = 0u; step < steps; step++) {
+        TEST_ASSERT_TRUE(plant_model_set_state(&truth, PLANT_STATE_STEAM_TEMPERATURE_C, cold_c));
+        TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_ACTUATED, closed_loop_step());
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)ACTUATION_FULL_SCALE,
+                                         hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
+                                         "the loop was not held against its limit at all");
+    }
+
+    *released_at = truth_quantity(PLANT_QUANTITY_STEAM_TEMPERATURE_C);
+
+    for (unsigned step = 0u; step < 12000u; step++) {
+        (void)closed_loop_step();
+        const float temperature = truth_quantity(PLANT_QUANTITY_STEAM_TEMPERATURE_C);
+        if (temperature > highest) {
+            highest = temperature;
+        }
+    }
+
+    return highest - ready_target_c(&declaration);
+}
+
+/// SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C1: Accumulated intent
+/// does not outlive the actuator limit on the steam loop, to the same
+/// structural standard already proven for the brew loop.
+///
+/// The discriminating check is the second one, on the same terms
+/// test_control.c's own version of this test states it: a loop that merely
+/// unwinds quickly passes the first assertion by having accumulated little,
+/// and fails this one, because what it accumulated grew with the time spent
+/// against the limit. Conditional integration does not accumulate there at
+/// all, so a longer interval leaves the same overshoot as a shorter one.
+static void test_a_longer_saturated_interval_does_not_deepen_the_overshoot(void)
+{
+    float released_from_short = 0.0f;
+    float released_from_long = 0.0f;
+
+    const float shorter = overshoot_after_saturating_for(3000u, &released_from_short);
+    const float longer = overshoot_after_saturating_for(6000u, &released_from_long);
+
+    /*
+     * Both runs are released from the same held-cold state by construction,
+     * which is what makes the comparison below about the length of the
+     * saturated interval rather than about two different machines being let
+     * go at two different temperatures.
+     */
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.1f, released_from_short, released_from_long,
+                                     "the two runs were released from different states, so the "
+                                     "comparison is not about the saturated interval");
+
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.05f, shorter, longer,
+                                     "twice as long against the limit left a different overshoot, "
+                                     "so intent accumulated while the actuator could take no more");
+}
+
+/// SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C1: Accumulated intent
+/// does not outlive the actuator limit on the steam loop, to the same
+/// structural standard already proven for the brew loop.
+///
+/// Nothing accumulates while the actuator is at its limit and the error would
+/// drive it further past, and what had accumulated before is still there when
+/// the loop comes back into range. The second half is what keeps this from
+/// being satisfied by an integrator that is simply switched off: an error
+/// pointing back into range integrates on the step the machine does, so the
+/// loop leaves saturation when the machine does rather than some steps later.
+static void test_intent_is_surrendered_at_the_limit_and_not_afterwards(void)
+{
+    const float cold_c = nominal_of("ambient_temperature_c");
+
+    bring_the_loop_up(&parameters, &declaration, cold_c);
+
+    for (unsigned step = 0u; step < 100u; step++) {
+        TEST_ASSERT_TRUE(plant_model_set_state(&truth, PLANT_STATE_STEAM_TEMPERATURE_C, cold_c));
+        TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_ACTUATED, closed_loop_step());
+    }
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)ACTUATION_FULL_SCALE,
+                                     hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
+                                     "the loop was not held against its limit at all");
+    const float held = loop.integral_permille;
+
+    for (unsigned step = 0u; step < 2000u; step++) {
+        TEST_ASSERT_TRUE(plant_model_set_state(&truth, PLANT_STATE_STEAM_TEMPERATURE_C, cold_c));
+        TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_ACTUATED, closed_loop_step());
+    }
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(held, loop.integral_permille,
+                                    "intent accumulated while the actuator could take no more");
+
+    /* Let the machine back into range, and it accumulates again. */
+    for (unsigned step = 0u; step < 6000u; step++) {
+        TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_ACTUATED, closed_loop_step());
+    }
+    TEST_ASSERT_TRUE_MESSAGE(loop.integral_permille != held,
+                             "the integral never resumed, so it is switched off rather than "
+                             "conditional");
+}
+
 /* --- The truth plant is not the law's own view of the machine -------------- */
 
 /// SOL-SIM-STEAM-BAND-SUSTAINED.C9: The host harness closes the loop through a
@@ -2142,6 +2263,8 @@ int main(void)
     RUN_TEST(test_engaged_feed_rises_over_the_declared_interval_rather_than_stepping);
     RUN_TEST(test_recovery_is_the_ready_holding_law_continuing);
     RUN_TEST(test_recovery_holds_its_bound_across_the_declared_model_error);
+    RUN_TEST(test_a_longer_saturated_interval_does_not_deepen_the_overshoot);
+    RUN_TEST(test_intent_is_surrendered_at_the_limit_and_not_afterwards);
     RUN_TEST(test_a_disturbance_to_the_truth_plant_alone_reaches_the_law);
     RUN_TEST(test_a_machine_unlike_the_declarations_own_holds_the_band_less_well);
     RUN_TEST(test_feed_withheld_while_pressure_stays_below_threshold_with_the_wand_open);

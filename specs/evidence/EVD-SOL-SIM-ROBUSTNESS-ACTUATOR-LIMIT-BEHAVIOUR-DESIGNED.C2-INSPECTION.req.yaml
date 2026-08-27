@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C2-INSPECTION
+type: evidence
+title: The actuator-limit design is named once, at the level both loops share (SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-27T22:43:42Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED (text field) and firmware/src/control/steam_control.c (heater_command comment block, ~line 229-235)
+text: |-
+  Inspected: the solution node's own text states the system-wide claim once -- that the actuator limit is a designed condition on both loops, not an edge case -- and backs it by naming each loop's own mechanism and its own evidence (this criterion's sibling C1, now evidenced, for steam; the brew loop's own already-satisfied SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C5 for brew) rather than resting the system-wide claim on the brew-only precedent. In code, steam_control.c's own comment on the conditional-integration guard already names it as being applied 'on exactly the terms control.c's own loop is and for the same reason', so the naming is present at both the graph level and the code level. No code or doc change was needed for this criterion; it required no artifact beyond what already existed plus C1's new evidence.
+links:
+  - target: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C2
+    type: satisfies

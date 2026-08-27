@@ -1,0 +1,30 @@
+id: EVD-REQ-ROBUST-CONTROL-001.C4-ATTEST
+type: evidence
+title: Attestation of REQ-ROBUST-CONTROL-001.C4
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-27T22:50:26Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-ROBUST-CONTROL-001.C4","synthesised_at":"2026-08-27T22:50:26.916226Z","entries":[{"input_id":"DEL-SIM-ROBUSTNESS-VERIFICATION","kind":"deliverable","state":"partial","breakdown":[{"criterion_id":"DEL-SIM-ROBUSTNESS-VERIFICATION.C1","state":"unsatisfied"},{"criterion_id":"DEL-SIM-ROBUSTNESS-VERIFICATION.C2","state":"unsatisfied"},{"criterion_id":"DEL-SIM-ROBUSTNESS-VERIFICATION.C3","state":"satisfied"},{"criterion_id":"DEL-SIM-ROBUSTNESS-VERIFICATION.C4","state":"unsatisfied"},{"criterion_id":"DEL-SIM-ROBUSTNESS-VERIFICATION.C5","state":"unsatisfied"}],"status":"active","artifact_version":null},{"input_id":"SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED","kind":"solution","state":"satisfied","status":"active","artifact_version":"SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED (text field) and firmware/src/control/steam_control.c (heater_command comment block, ~line 229-235)"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-ROBUST-CONTROL-001.C4.
+
+  Final-state intent: full duty is this machine's ordinary condition, so the controller's accumulated intent must not outlive the actuator limit and arrive as overshoot afterward -- for the controller generally, not for one loop read narrowly.
+
+  Composition: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED, the sole formal targets-edge onto this criterion, with active evidence EVD-SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C1-TEST and .C2-INSPECTION.
+
+  Intent fit: the machine carries exactly two closed control loops with actuator-saturation state -- brew (control.c) and steam (steam_control.c); delivery_profile.c is feedforward course-shaping with no integrator of its own, confirmed by inspection. Brew's instance of this property was already proven and evidenced under SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C5 (targeting REQ-BREW-TEMP-001.C5, verified independently satisfied with its own passing evidence). This solution's C1 closes the one remaining gap by proving the steam loop's structurally identical mechanism to the same standard, and its C2 states the system-wide claim once, naming both loops' own mechanisms and evidence rather than resting on the brew-only precedent -- which is also literally reflected in steam_control.c's own code comment, cross-referencing control.c's proven mechanism 'for the same reason'. Together the two loops are the whole of 'the controller' this machine has, so the composition reaches the criterion's final-state intent rather than only the scope this one solution set out to close.
+
+  Acknowledged scope boundary: this solution explicitly excludes redesigning either loop's saturation handling and excludes establishing the property by sweeping the declared error range instead of the structural test already used for brew -- both are deliberate, recorded in the solution's own text, and neither is asked for by this criterion's verification type (test, not threshold-across-error-range).
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-ROBUST-CONTROL-001.C4
+    type: satisfies
+attributes:
+  attested_criterion_version: 1
