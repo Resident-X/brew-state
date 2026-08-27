@@ -91,4 +91,14 @@ typedef struct {
  */
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
 
+/*
+ * Add what the brew heater commanded over `seconds`, scaled by the gain, to
+ * the one state this structure keeps. This is the whole of the structure's
+ * behaviour, declared here rather than kept `static` in the translation unit
+ * so the symbol is visible to anything checking which structure an artefact
+ * carries -- on the same terms `fixture_accumulate` is declared for `fixture`.
+ */
+void outlet_only_fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation,
+                                    float seconds);
+
 #endif /* PLANT_STRUCTURE_H */

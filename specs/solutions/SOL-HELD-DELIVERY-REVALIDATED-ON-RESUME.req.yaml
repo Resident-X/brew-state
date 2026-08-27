@@ -1,0 +1,68 @@
+id: SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME
+type: deliverable
+category: solution
+title: A target that would strand a held delivery is refused where it is commanded
+status: active
+version: 1
+text: |
+  admit_target checks a newly commanded target against whatever delivery is presently running,
+  and against nothing else: state->delivery_held is not consulted. start_the_held_delivery later
+  starts that held delivery once the delivery it was waiting behind ends, with no admission check
+  of its own. A target commanded while a demand is held is therefore never weighed against that
+  demand's own peak draw -- only against the delivery running at the time the target arrived.
+
+  Concretely: a delivery is commanded and admitted against target A; a second, contending delivery
+  is commanded and held; the target is then changed to B, checked only against the delivery still
+  running under A; that delivery ends; the held delivery starts against B having only ever been
+  found admissible against A -- a pairing admission's own bound
+  (SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4) says must be checked wherever the pair is completed.
+
+  The fix judges that pair where it is completed, which is where the target arrives. admit_target
+  asks the held demand's own course the two bounds it already asks of any pairing -- the drinking
+  window, and the authority the description gives under the course's peak -- and refuses the target
+  when either is crossed, exactly as it already refuses one the running delivery cannot be held at.
+  A refused target leaves the standing target and the waiting demand both as they were, and that
+  demand goes on to be served when the delivery it waits behind ends.
+
+  Nothing is added to the resume path and nothing is taken from it. Once the pairing is judged where
+  it is completed, a held demand beyond the standing target's authority is a state this machine can
+  no longer be driven into, so a check there would have nothing to catch; the peak that path already
+  asks the held course for is asked for the read-ahead lead and not for admission, and stays.
+rationale: |
+  Traced to REQ-BREW-TEMP-001.C3 rather than to SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED's own
+  criterion, on the same reasoning DEL-MAINTENANCE.C1 gives for every item under this lane: what
+  is owed is evidence against the requirement criterion the shortfall bears on. That criterion's
+  own text draws exactly the distinction this gap crosses: "a target it cannot reach yet... is
+  deferred until conditions are restored and then delivered" -- delivered, meaning checked again
+  once conditions return, not merely released.
+
+  Found while investigating why a resumed held delivery's read-ahead behaviour couldn't be made to
+  disturb the casting for an unrelated slice (SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED); the
+  resume path was read closely enough in that search to notice start_the_held_delivery carries no
+  admission call at all, which the pairing bound SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4 already
+  requires wherever a target and a course are completed. Not built as evidence for that slice's own
+  criterion, because a test rebuilt on an admission gap would break the moment the gap closes --
+  filed here instead, per this project's discipline against letting a mid-build discovery disappear
+  into a PR nobody re-reads.
+
+  Refusing where the target arrives, rather than discarding where the demand would have resumed, is
+  what the requirement chain leaves available. REQ-HOT-WATER-001.C4 requires a demand deferred behind
+  another to proceed once conditions return, and it is already attested: a machine that accepted a
+  demand and then dropped it because an unrelated target arrived in the meantime would be withdrawing
+  a guarantee it had already given, silently, and at a moment when there is nobody left to tell.
+  Refusal puts the answer where the caller still is -- in the same record and on the same bound as
+  every other refused pairing -- and leaves the demand where it was. An operator cannot command a
+  target that would strand a waiting drink, on exactly the terms he already cannot command one that
+  would strand a running delivery.
+
+  A check at the resume path is deliberately not kept alongside that as defence in depth. The state
+  it would catch cannot be reached once the pairing is judged where it is completed, so nothing could
+  ever exercise it; and reached, the only act available to it is the discard the refusal exists to
+  make unnecessary. Two answers to one question, differing, with the second reachable by no path at
+  all, is the arrangement this project's account of a second law warns against rather than a net
+  under the first.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BREW-TEMP-001.C3
+    type: targets

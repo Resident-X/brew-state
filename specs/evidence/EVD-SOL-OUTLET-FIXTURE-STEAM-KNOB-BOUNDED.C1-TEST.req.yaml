@@ -1,0 +1,17 @@
+id: EVD-SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED.C1-TEST
+type: evidence
+title: check_estimator_limits and the two refused-channel tests pass (SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T05:00:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:check (check_estimator_limits); firmware/test/test_estimator_outlet_only_fixture/test_estimator_outlet_only_fixture.c::test_a_structure_answering_only_the_reconstruction_name_is_refused, ::test_a_refused_instance_answers_nothing
+text: |-
+  task fw:check exits 0 with check_estimator_limits reporting all 5 descriptions bound every channel. native_outlet_only_fixture_test's two tests exercising the refused-channel path both pass, verified via pio test -e native_outlet_only_fixture_test.
+links:
+  - target: SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED.C1
+    type: satisfies

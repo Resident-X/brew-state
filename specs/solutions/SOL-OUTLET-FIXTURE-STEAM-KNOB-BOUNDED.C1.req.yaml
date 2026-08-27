@@ -1,0 +1,17 @@
+id: SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED.C1
+type: criterion
+title: check_estimator_limits and the outlet-only fixture's refused-channel tests pass
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  task fw:check's check_estimator_limits passes against firmware/params/outlet_only_fixture.limits,
+  and native_outlet_only_fixture_test's two tests exercising the refused-channel path pass.
+
+  Out of scope: whether the declared bound's numbers mean anything -- this fixture describes no
+  machine, so they carry no origin to be right or wrong about, on the same terms every other line
+  in the file already stands on.
+links:
+  - target: SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED
+    type: criterion-of

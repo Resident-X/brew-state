@@ -1,0 +1,17 @@
+id: EVD-SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME.C1-TEST
+type: evidence
+title: A target that would strand a held demand is refused (SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T05:00:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_target_that_would_strand_a_held_demand_is_refused, ::test_a_target_a_held_demand_can_be_met_at_is_admitted, ::test_a_target_below_the_drinking_floor_is_refused_against_a_held_draw
+text: |-
+  All three new tests pass, verified via pio test -e native_test -f test_control (131 cases, 129 pass, 2 pre-existing skips unrelated to this criterion). Full task fw:test and task fw:check both exit 0. Regression-catching confirmed: stubbing out the held-delivery check in admit_target makes two of the three tests fail with their own assertion messages.
+links:
+  - target: SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME.C1
+    type: satisfies

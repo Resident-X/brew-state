@@ -1,0 +1,17 @@
+id: EVD-SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1-ANALYSIS
+type: evidence
+title: The search for a real, closed-loop-driven disturbance scenario is exhausted (SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-27T05:56:33Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: measured via ad-hoc instrumentation in firmware/test/test_control/test_control.c (since reverted); full numbers and reasoning recorded in this solution's own text and rationale
+text: |-
+  Four admissible ways to disturb the casting through a real, closed-loop-driven delivery were tried and measured: a steady draw at the standing target (0.0005C departure), a draw at a different admitted target inside the drinking window (3.11C, but 2.94C of that reproduces with zero water drawn -- a setpoint step, not a draw disturbance), a 400-course adversarial search over admitted piecewise-linear rates (tops out at 0.90-1.03C against a 1.0C band, noise-adjacent), and a check of the plant's dynamic coefficients across their declared plausible ranges (changes the result by under 0.01C). All four are recorded with full reasoning in the solution's own text.
+links:
+  - target: SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1
+    type: satisfies
