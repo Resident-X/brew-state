@@ -1,0 +1,17 @@
+id: EVD-SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C1-TEST
+type: evidence
+title: Every parameter's effect on every observed channel is recorded, flow included (SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T08:42:45Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_identifiability.py::TheSweepRecordsEveryChannelTheMachineObserves
+text: |-
+  TheSweepRecordsEveryChannelTheMachineObserves passes under task fw:verify (123/123 emulation tests). Every coefficient the sweep perturbed carries a signed per-interval effect on all five observed channels of both draws; the channel set is asserted against the cross-tier comparison's own keys plus the seam's flow channel, and against the seam's channel count less the knob. Flow's print path is read out of both native draws' sources and its reported rate is tied to the commanded pump level at every interval across 301 distinct levels; both parsers are shown to refuse a line that stops carrying it. One coefficient's signature is recomputed from its own two corner runs rather than read back off the sweep.
+links:
+  - target: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C1
+    type: satisfies

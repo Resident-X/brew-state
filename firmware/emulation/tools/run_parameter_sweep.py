@@ -211,6 +211,34 @@ JUDGED = {
     STEAM_SIDE: ("the pressure of the steam being drawn", "bar"),
 }
 
+#: The channels of the machine a perturbation's effect is recorded on, in the
+#: order everything downstream reads them.
+#:
+#: The four the two tiers already compare themselves on, plus the rate the brew
+#: path is drawing at. The first four are the ones a converter carries; the
+#: fifth is a channel the seam enumerates and this board has nothing wired to,
+#: and it is here for exactly that reason -- a channel no instrument sits on is
+#: where the question of whether one would buy anything is decided, and it
+#: cannot be decided about a channel nothing recorded.
+#:
+#: The steam knob is deliberately absent, and it is the one seam channel that
+#: could never belong here. It reports where an operator has put a valve, which
+#: no coefficient of a casting can move; a column for it would be a column of
+#: nothing beside four that mean something, and would read as a channel this
+#: analysis looked at and found unmoved rather than one it could not have been
+#: asked about.
+OBSERVED_CHANNELS = closed_loop.QUANTITY_KEYS + (cross_tier.FLOW_KEY,)
+
+#: What each observed channel is carried in, for a record that has to put a
+#: figure beside a unit.
+CHANNEL_UNIT = {
+    "brew-c": "C",
+    "steam-c": "C",
+    "brew-bar": "bar",
+    "steam-bar": "bar",
+    cross_tier.FLOW_KEY: "mL/s",
+}
+
 #: The words the two declarations spell their bands with, read out of the
 #: headers that declare them rather than written here. A band renamed in a
 #: header and not here would otherwise leave this sweep normalising against a
@@ -496,6 +524,25 @@ def build_host(pio=base.DEFAULT_PIO):
     return cross_tier.build_host(pio)
 
 
+def observed_series(findings):
+    """What each channel the machine observes carried, interval by interval,
+    over one draw.
+
+    One reading of the trajectory for both draws, because the two report the
+    same channels under the same names and a second reading here would be a
+    second opinion about which column is which. The four a converter carries are
+    taken through the parser that already knows their order; the drawn rate is
+    taken from the field beside them, since no converter carries it and it is
+    printed outside that set for that reason.
+    """
+    series = dict((key, []) for key in OBSERVED_CHANNELS)
+    for reported in findings["trajectory"]:
+        for at, key in enumerate(closed_loop.QUANTITY_KEYS):
+            series[key].append(reported["quantities"][at])
+        series[cross_tier.FLOW_KEY].append(reported["brew_flow_ml_per_s"])
+    return series
+
+
 def brew_draw(executable, description, limits, course, scale, name):
     """One brew draw, and the delivered temperature it produced per interval."""
     findings = cross_tier.host_draw(executable, description, limits, BREW_TARGET_C, course,
@@ -506,6 +553,7 @@ def brew_draw(executable, description, limits, course, scale, name):
             "the brew draw reported no delivered temperature, so this build's structure keeps no "
             "state for the water on its way to the group and there is no delivery here to judge")
     findings["delivered"] = delivered
+    findings["channels"] = observed_series(findings)
     return findings
 
 
@@ -531,7 +579,8 @@ def parse_steam(output):
         elif kind == "steam-trajectory":
             fields = closed_loop.keyed(parts[1:])
             where = "the steam loop's trajectory line %d" % len(findings["trajectory"])
-            for name in ("interval", "result", "drawing", "demand", "heater", "feed", "steps"):
+            for name in ("interval", "result", "drawing", "demand", "heater", "feed", "steps",
+                         cross_tier.FLOW_KEY):
                 if name not in fields:
                     raise closed_loop.Unkeyed("%s reports no %s" % (where, name))
             findings["trajectory"].append({
@@ -543,6 +592,12 @@ def parse_steam(output):
                 "feed_permille": int(fields["feed"]),
                 "plant_steps": int(fields["steps"]),
                 "quantities": closed_loop.quantities_of(fields, where),
+                # The brew path's drawn rate, which this draw never commands and
+                # which is read all the same: a channel reported only where it
+                # was expected to move cannot distinguish a path standing still
+                # from a path nobody looked at, and which channels a coefficient
+                # leaves alone is half of what its signature across them says.
+                "brew_flow_ml_per_s": float(fields[cross_tier.FLOW_KEY]),
             })
         elif kind == "steam-settling-steps":
             findings["settling_steps"] = int(parts[1])
@@ -580,6 +635,7 @@ def steam_draw(executable, description, limits, declaration, initial_c, course, 
     steam_bar = closed_loop.QUANTITY_KEYS.index("steam-bar")
     findings["delivered"] = [reported["quantities"][steam_bar]
                              for reported in findings["trajectory"]]
+    findings["channels"] = observed_series(findings)
     return findings
 
 
@@ -648,6 +704,79 @@ def reached_quantities(reference, perturbed):
             if key not in moved and was["quantities"][at] != now["quantities"][at]:
                 moved.add(key)
     return moved
+
+
+def signature_of(corners, reference):
+    """One coefficient's effect on the observed channels of one side, as one
+    signed series per channel.
+
+    Signed and interval by interval rather than a worst-case magnitude, because
+    what this feeds is a comparison of one coefficient's effect against
+    another's rather than a figure for how large it was. Two coefficients that
+    move a channel by the same amount in opposite directions, or by the same
+    amount at different moments of the same draw, are told apart by nothing an
+    absolute worst case keeps -- and being told apart is the whole of the
+    question this series exists to answer.
+
+    The two corners are combined rather than one of them taken, and combined as
+    half the difference between them rather than as a mean of two magnitudes:
+    half of what separates the machine at the top of the coefficient's declared
+    error from the machine at the bottom. That is the part of the response which
+    is linear in the coefficient, and the linear part is the only part another
+    coefficient's uncertainty could stand in for. A comparison that kept the
+    curvature as well would be free to separate two coefficients on how
+    differently their relations bend at their own corners -- a difference no
+    observation of a machine sitting anywhere else could exploit, and therefore
+    not identifiability but an artefact of where the sweep chose to look.
+
+    The two corner runs are subtracted from one another directly rather than
+    each being taken against the unperturbed run first. The two are the same
+    quantity in exact arithmetic and not in this one: each figure is a
+    single-precision value read back at nine significant digits, which
+    round-trips it exactly, so one subtraction of two of them is exact in the
+    double precision Python carries -- while subtracting the unperturbed run
+    from each and then differencing rounds twice, and leaves the recorded
+    signature carrying a last place of this file's arithmetic rather than the
+    machine's. Since how small a difference may be believed is decided further
+    on against what the machine's own arithmetic could express, a reader of that
+    figure must not be reading this subtraction's rounding instead.
+
+    Where one corner was refused as a machine, the other is taken against the
+    unperturbed run instead. To first order that is the same quantity -- one
+    declared error's worth of movement -- and taking it is what keeps a
+    coefficient with an inadmissible corner inside the comparison rather than
+    quietly outside it.
+    """
+    for corner, run in corners.items():
+        if len(run[OBSERVED_CHANNELS[0]]) != len(reference["channels"][OBSERVED_CHANNELS[0]]):
+            raise SweepError(
+                "the %s corner covered %d intervals and the unperturbed run covered %d, so there "
+                "is no interval-by-interval effect on the observed channels to take"
+                % (corner, len(run[OBSERVED_CHANNELS[0]]),
+                   len(reference["channels"][OBSERVED_CHANNELS[0]])))
+    if "high" in corners and "low" in corners:
+        return dict((key, [(high - low) / 2.0
+                           for high, low in zip(corners["high"][key], corners["low"][key])])
+                    for key in OBSERVED_CHANNELS)
+    if "high" in corners:
+        return dict((key, [high - was for high, was in zip(corners["high"][key],
+                                                           reference["channels"][key])])
+                    for key in OBSERVED_CHANNELS)
+    return dict((key, [was - low for was, low in zip(reference["channels"][key],
+                                                     corners["low"][key])])
+                for key in OBSERVED_CHANNELS)
+
+
+def peak_of(series):
+    """The largest magnitude one series reached.
+
+    Taken as the wider of the two extremes rather than by taking an absolute
+    value of every element, which is the same figure and does not build a second
+    series the size of the first to get it.
+    """
+    if not series:
+        return 0.0
+    return max(max(series), -min(series))
 
 
 def could_not_be_weighed(entry):
@@ -733,6 +862,18 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
         STEAM_SIDE: steam_judged_window(steam, reference[STEAM_SIDE]["trajectory"]),
     }
 
+    # The largest magnitude each channel carried anywhere in this sweep, on each
+    # side. It is the coarsest last place that channel's own single-precision
+    # arithmetic had over the runs being compared, and so the floor beneath
+    # which a difference between two of those runs could not have been expressed
+    # at all. Taken across the perturbed runs as well as the unperturbed one,
+    # because a perturbation that carries a channel higher than the reference
+    # ever went carries the floor up with it, and a floor read off the reference
+    # alone would credit such a run with a resolution its own figures never had.
+    peaks = dict((side, dict((key, peak_of(reference[side]["channels"][key]))
+                             for key in OBSERVED_CHANNELS))
+                 for side in (BREW_SIDE, STEAM_SIDE))
+
     swept = []
     for name, value, fraction in covered:
         entry = {
@@ -745,8 +886,28 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
             "sensitivity": {},
             "reaches": set(),
             "moves_banded": set(),
+            # Whether the perturbation moved the temperature of the water on its
+            # way to the group. Kept apart from the entry above even though the
+            # two presently agree on the coffee side, because they are different
+            # statements about different things: one says the coefficient
+            # reached a quantity the design declares a band for, the other that
+            # it reached the state the control path reconstructs and drives on.
+            # They coincide today only because the band this design declares for
+            # the coffee side happens to be declared on that state, and a design
+            # that banded the block's own temperature instead would have them
+            # come apart with nothing here to notice.
+            "reaches_outlet": False,
             "refused": [],
         }
+        # What each corner's run carried on each channel, kept only until the two
+        # are combined into the coefficient's signature below. The runs
+        # themselves rather than their difference from the unperturbed one,
+        # because the signature is taken as one subtraction of two of them and a
+        # difference computed here first would round twice. Two corners of two
+        # sides of five channels over several thousand intervals is a large
+        # thing to hold for every coefficient at once, and nothing wants the
+        # corners once the signature exists.
+        cornered = dict((side, {}) for side in (BREW_SIDE, STEAM_SIDE))
         for corner, factor in (("low", 1.0 - fraction), ("high", 1.0 + fraction)):
             perturbed_value = value * factor
             entry["corners"][corner] = perturbed_value
@@ -774,10 +935,23 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
                 entry["reaches"].update(reached_quantities(reference[side], run_findings))
                 if delivery_moved(reference[side]["delivered"], run_findings["delivered"]):
                     entry["moves_banded"].add(side)
+                    if side == BREW_SIDE:
+                        # The coffee side's delivery is the water on its way to
+                        # the group, which is the state the control path
+                        # reconstructs -- so a corner that moved it is a corner
+                        # whose coefficient that reconstruction rests on.
+                        entry["reaches_outlet"] = True
+                cornered[side][corner] = run_findings["channels"]
+                for key in OBSERVED_CHANNELS:
+                    peaks[side][key] = max(peaks[side][key],
+                                           peak_of(run_findings["channels"][key]))
                 apart, where = worst_separation(reference[side]["delivered"],
                                                 run_findings["delivered"], windows[side])
                 if side not in entry["deviation"] or apart > entry["deviation"][side][0]:
                     entry["deviation"][side] = (apart, corner, where)
+
+        entry["signature"] = dict((side, signature_of(cornered[side], reference[side]))
+                                  for side in (BREW_SIDE, STEAM_SIDE) if cornered[side])
 
         for side in (BREW_SIDE, STEAM_SIDE):
             if side not in entry["deviation"]:
@@ -838,6 +1012,7 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
                     for path in (description, limits, declaration, tolerance)},
         "executable": executable,
         "bands": bands,
+        "peaks": peaks,
         "windows": {side: (window[0], window[-1]) for side, window in windows.items()},
         "courses": {BREW_SIDE: brew, STEAM_SIDE: steam},
         "reference": reference,
@@ -1093,14 +1268,20 @@ def report_text(findings):
         for name, corner, side, what in refused:
             write("- `%s`, %s corner, %s side: %s" % (name, corner, side, what))
         write("")
-    write("Two further questions this sweep was deliberately not built to answer. Whether the "
-          "order above is quantitatively right for a real machine is not established here and "
-          "cannot be: every figure in the model it was taken against is an estimate, so the "
-          "ranking is meant to be redone against a measured model rather than argued about "
-          "against this one. And identifiability — whether a coefficient a reconstructed state "
-          "depends on can be told apart from the channels this machine observes at all — is a "
-          "separate question, which needs this sweep's apparatus to exist before it can be asked "
-          "and is not asked here.")
+    write("Whether the order above is quantitatively right for a real machine is not established "
+          "here and cannot be: every figure in the model it was taken against is an estimate, so "
+          "the ranking is meant to be redone against a measured model rather than argued about "
+          "against this one.")
+    write("")
+    write("Identifiability — whether a coefficient a reconstructed state depends on can be told "
+          "apart from the channels this machine observes at all — is a separate question and is "
+          "not answered here. It is answered from the same perturbed re-runs by "
+          "`firmware/emulation/tools/run_parameter_identifiability.py`, which reads each run's "
+          "effect on the observed channels where this one reads its effect on the delivery, and "
+          "records what it found in `docs/parameter-identifiability.md`. A coefficient can stand "
+          "at the head of the ranking above and still be one no observation of this machine can "
+          "tell from another, which is why the two records are kept apart and why neither figure "
+          "should be read off the other's table.")
     write("")
 
     return "\n".join(lines) + "\n"

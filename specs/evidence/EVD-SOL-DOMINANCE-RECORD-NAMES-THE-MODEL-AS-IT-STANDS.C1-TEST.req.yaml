@@ -1,0 +1,17 @@
+id: EVD-SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C1-TEST
+type: evidence
+title: The committed dominance record names the digest each file presently holds (SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T08:43:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::TheSweepAndItsRankingAreCommittedAndRepeatable::test_the_committed_record_names_the_files_it_was_run_against_as_they_stand
+text: |-
+  The assertion passes under task fw:verify against the regenerated docs/parameter-dominance.md. It had been failing since the element powers were measured and firmware/params/thermoblock.params moved without the record being regenerated, which left task fw:emulate -- and so the whole gate -- red on main. The record now names e229bfe1 for that file, which is what it presently holds, and the same assertion is what will catch the next such change.
+links:
+  - target: SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C1
+    type: satisfies

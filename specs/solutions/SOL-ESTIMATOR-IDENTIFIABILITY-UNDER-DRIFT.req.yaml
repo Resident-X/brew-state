@@ -1,0 +1,60 @@
+id: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT
+type: deliverable
+category: solution
+title: Which parameters a drifting machine reveals, with the controller's model left where it was
+status: active
+version: 1
+text: |
+  The identifiability analysis already built perturbs a parameter by handing one description to the
+  whole build, and the build gives that description to the machine and to the control path alike. So
+  what it compares is two machines each built consistently to its own coefficients, and the question
+  it answers is whether the channels could tell those two apart.
+
+  That is not the question a machine in service asks. Fouling and ageing move the machine away from a
+  description its controller still believes, and there the reconstruction is biased rather than
+  merely different: the loop holds its own estimate at the target instead of the delivery, and the
+  channels move less than they do when the controller knows. The consequence is one-sided and it is
+  the wrong side — the reading already taken is optimistic, so a parameter it names identifiable may
+  still be one no amount of running a drifting machine would reveal, which is precisely the failure
+  the requirement behind it describes.
+
+  What is needed is a draw that can be handed one description for the machine and a second for the
+  control path, so a perturbation can be applied to the machine alone. The harness cannot presently
+  do this: the host draw takes a single description and passes it to both. Nothing else about the
+  sweep, the signatures, the resolution floors or the determination has to change — the same
+  comparison is made over signatures gathered from a machine its controller is wrong about.
+
+  The two readings are reported together rather than one replacing the other. They answer different
+  questions and a design needs both: whether two machines built differently could be told apart, and
+  whether one machine going wrong could be caught. A parameter identifiable under the first and not
+  the second is the case worth naming, because it is the one where a machine that passes every
+  commissioning check can still drift with nothing to report it.
+
+  Out of scope: choosing or costing any instrument the finding argues for, and re-running either
+  reading against the measured model once one exists.
+rationale: |
+  This was found by building the coupled reading, not before it, and it is recorded rather than
+  folded into that slice because closing it needs a capability the harness does not have. The host
+  draw takes one description and gives it to the machine and the control path together, which is
+  right for the cross-tier comparison it was built for — the two tiers have to be running the same
+  machine — and the second description is an addition to that harness rather than a correction of
+  it.
+
+  Reporting both readings rather than replacing the first is what keeps the finding honest in both
+  directions. The coupled reading is the right answer to a commissioning question: if this casting
+  were built to a different figure, could the machine be told apart from one that was not. The
+  decoupled reading is the right answer to a service question. Discarding either would answer one
+  question while appearing to answer the other, which is the confusion the two records already
+  separate dominance and identifiability to avoid.
+
+  The direction of the error is what makes this worth its own work rather than a note. An analysis
+  that under-stated identifiability would cost an instrument nobody needed; this one over-states it,
+  so acting on it alone risks leaving out an instrument that a drifting machine turns out to need,
+  and the machine reports nothing when that happens.
+links:
+  - target: DEL-SIM-SENSITIVITY.C3
+    type: derives-from
+  - target: REQ-STATE-ESTIMATION-001.C6
+    type: targets
+  - target: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY
+    type: depends-on

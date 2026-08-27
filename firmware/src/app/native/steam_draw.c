@@ -66,6 +66,25 @@ _Static_assert(sizeof(quantity_key) / sizeof(quantity_key[0]) == SENSED_CHANNEL_
                "every sensed quantity reported has to have a name to report it under");
 
 /*
+ * What the rate water is being drawn through the brew path at is reported
+ * under, on the same terms and under the same name the brew draw beside this
+ * file reports it: outside the table above, because the seam's flow channel has
+ * nothing wired behind it on the board this project is building and a figure
+ * reported through the sensed path would be claiming an instrument the machine
+ * does not have.
+ *
+ * A steam draw should leave that rate at nothing throughout -- the brew pump is
+ * never commanded here, and these two blocks are separately fed -- and printing
+ * it is what turns that into something a reader can establish rather than
+ * assume. It is the same argument the four sensed quantities above are all
+ * reported under: a run that printed only the channels it expected to move
+ * could not tell a brew path standing still from a brew path nobody looked at,
+ * and a coefficient's signature across the channels is exactly a statement
+ * about which of them it left alone.
+ */
+#define FLOW_KEY "brew-mlps"
+
+/*
  * Nine significant digits, which is what round-trips an IEEE-754 single
  * precision value exactly. Every quantity the model carries is single
  * precision, and a narrower format would be this run's printing introducing a
@@ -124,6 +143,22 @@ static bool sensed(const plant_model_t *machine, float *values)
 }
 
 /*
+ * The rate water is presently being drawn through the brew path at.
+ *
+ * Read on its own rather than through the table above, because that table's
+ * entries are the quantities a converter input stands behind and this is not
+ * one of them. A refusal is worth stopping the draw on: this is one of the
+ * plant seam's quantities rather than one structure's state, and the seam
+ * undertakes that every structure answers every quantity -- so a refusal here
+ * says the model has stopped honouring that, not that this structure keeps no
+ * such thing.
+ */
+static bool drawn_rate(const plant_model_t *machine, float *value)
+{
+    return plant_model_quantity(machine, PLANT_QUANTITY_BREW_FLOW_ML_PER_S, value);
+}
+
+/*
  * One reported line: what the interval did, and what the machine reads once it
  * has done it.
  *
@@ -134,7 +169,7 @@ static bool sensed(const plant_model_t *machine, float *values)
  */
 static void report(const char *what, int index, int result, unsigned drawing,
                    unsigned demand_milli, unsigned heater, unsigned feed, unsigned long taken,
-                   const float *values)
+                   const float *values, float flow)
 {
     (void)printf("HOST %s", what);
     if (index >= 0) {
@@ -146,6 +181,7 @@ static void report(const char *what, int index, int result, unsigned drawing,
          * the source says, and the build refuses a silent promotion. */
         (void)printf(" %s=" QUANTITY_FORMAT, quantity_key[i], (double)values[i]);
     }
+    (void)printf(" " FLOW_KEY "=" QUANTITY_FORMAT, (double)flow);
     (void)printf("\n");
 }
 
@@ -220,6 +256,7 @@ int steam_draw_run(const plant_parameters_t *parameters,
     plant_model_t machine;
     steam_control_state_t loop;
     float values[SENSED_CHANNEL_COUNT];
+    float drawn_ml_per_s = 0.0f;
 
     /*
      * A course stating no interval is refused before anything is read off it.
@@ -255,10 +292,10 @@ int steam_draw_run(const plant_parameters_t *parameters,
     }
 
     /* The machine as the draw found it, before the loop has driven anything. */
-    if (!sensed(&machine, values)) {
+    if (!sensed(&machine, values) || !drawn_rate(&machine, &drawn_ml_per_s)) {
         return 1;
     }
-    report("steam-trajectory-baseline", -1, 0, 0u, 0u, 0u, 0u, 0uL, values);
+    report("steam-trajectory-baseline", -1, 0, 0u, 0u, 0u, 0u, 0uL, values, drawn_ml_per_s);
 
     /*
      * The one interval spent settling the state the draw begins from, reported
@@ -333,7 +370,7 @@ int steam_draw_run(const plant_parameters_t *parameters,
         }
         taken++;
 
-        if (!sensed(&machine, values)) {
+        if (!sensed(&machine, values) || !drawn_rate(&machine, &drawn_ml_per_s)) {
             (void)fprintf(stderr, "steam draw: the machine reported no quantity at interval %u\n",
                           interval);
             return 1;
@@ -352,7 +389,8 @@ int steam_draw_run(const plant_parameters_t *parameters,
         report("steam-trajectory", (int)interval, (int)result, drawing ? 1u : 0u,
                (unsigned)demand_milli,
                (unsigned)hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
-               (unsigned)hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP), taken, values);
+               (unsigned)hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP), taken, values,
+               drawn_ml_per_s);
     }
 
     (void)printf("HOST steam-plant-step-count %lu\n", taken);

@@ -1,0 +1,17 @@
+id: EVD-SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C3-TEST
+type: evidence
+title: The finding is committed with its per-channel figures and the model it was run against (SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T08:43:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_identifiability.py::TheFindingIsCommittedWithItsDataAndItsModel
+text: |-
+  TheFindingIsCommittedWithItsDataAndItsModel passes under task fw:verify. docs/parameter-identifiability.md carries the per-parameter per-channel figures for both draws, the determination with every figure it was reached from, and the four files named with the sha256 each presently holds. Every committed figure is compared against what the method now produces rather than only the verdicts, which is how the sibling dominance record went stale unnoticed. The whole method is run against a replacement description by argument alone and is required to cover the same coefficients, name the replacement's digest, and come back with figures that moved.
+links:
+  - target: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C3
+    type: satisfies

@@ -1,0 +1,20 @@
+id: SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C2
+type: criterion
+title: The committed ranking is the one the present description produces, not an earlier one
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The ranked order, the figures against each coefficient, and the account of what could not be
+  weighed are all the ones the present description produces, not the ones an earlier description
+  did. A coefficient whose place in the order moved because the machine's description was corrected
+  sits where the corrected description puts it.
+
+  This is what makes the correction worth more than a digest refresh. The change that stranded the
+  record replaced an estimate with a measurement, which moved a declared error as well as a value —
+  so the order a reader would prioritise measurement off is different, and a record carrying current
+  digests over an earlier ordering would be wrong in the way that actually costs money.
+links:
+  - target: SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS
+    type: criterion-of

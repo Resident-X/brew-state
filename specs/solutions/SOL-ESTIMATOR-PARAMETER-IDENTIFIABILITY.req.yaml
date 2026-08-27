@@ -1,0 +1,71 @@
+id: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY
+type: deliverable
+category: solution
+title: Which of the estimator's parameters are identifiable from the channels the machine observes
+status: active
+version: 1
+text: |
+  The sweep apparatus SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING built already perturbs every
+  parameter carrying a declared error and re-runs a closed-loop draw through each side; today it
+  reduces that re-run to one number per parameter per side, the deviation in the delivery outcome
+  the dominance ranking divides by the machine's declared band. This slice reuses the same
+  perturbation harness — the same corner-perturbed brew and steam re-runs — but reads a different
+  signal out of each re-run: the effect on the channels the machine actually observes, not the
+  outcome deviation dominance already ranked.
+
+  Four of those channels (brew temperature, steam temperature, brew pressure, steam pressure) are
+  already compared, timestep for timestep, by the cross-tier check the host and target draws both
+  run through. Flow is not: the trajectory line the two draws already print carries an `outlet-c`
+  field the compared channels do not, added because a delivery's judged temperature needed printing
+  even though nothing declares a band for it, and flow needs the same treatment — a print path
+  alongside `outlet-c` rather than through the four already-compared channels, since flow has no
+  hardware converter behind it. That is the one small, additive extension this slice makes to a
+  harness several already-sealed criteria's evidence depends on; nothing already compared changes
+  shape. The steam knob is out of scope: it reports an operator's valve position, not a plant-state
+  measurement any parameter here could move.
+
+  The parameters in scope are the ones the estimator's reconstructed outlet temperature depends on —
+  the brew- and water-side fields of the thermoblock's parameter record, plus the ambient
+  temperature every side of the machine shares. Brew and steam evolve with no coupling beyond that
+  shared ambient input, so a brew-side parameter reaching the steam channels at all is itself a
+  finding, not an error in scoping the comparison. For each in-scope parameter, the sweep's
+  per-channel perturbation signature is compared against every other in-scope parameter's; a
+  parameter whose signature no combination of the others reproduces is identifiable, and one that
+  is — or whose effect on every observed channel sits at the sweep's own noise floor — is named as
+  not shown identifiable.
+
+  Out of scope: choosing or costing any sensor the finding argues for (that is the physical track's
+  procurement decision, not this analysis's), and redoing the dominance ranking itself, which
+  SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING already delivered.
+rationale: |
+  Building a second perturbation harness to answer this question would have repeated the mistake
+  SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING's own rationale warned against for splitting estimation
+  from residual reporting: the corner-perturbed re-run this slice needs is exactly the one dominance
+  already runs, and the only thing that changes is which signal is read out of it. Deferring
+  identifiability until the dominance sweep existed, rather than building both at once, is what lets
+  this slice reuse rather than duplicate that apparatus.
+
+  Reading the per-channel effect rather than the outcome deviation is what distinguishes this
+  question from dominance. Dominance asks whether a parameter's uncertainty already spends a share
+  of the machine's declared margin; identifiability asks whether that parameter can be told apart,
+  from what the machine senses, from another parameter's uncertainty at all. A parameter can
+  dominate the outcome and still be unidentifiable — its effect on the observed channels
+  indistinguishable from a sibling parameter's — and the two questions read alike from a single
+  number per parameter, which is why the dominance sweep was scoped to defer this one rather than
+  conflate them.
+
+  Naming a parameter as not shown identifiable, rather than silently ranking it last or assuming
+  identifiability by default, follows the same discipline the dominance ranking's own
+  unweighed-parameter account already established for a parameter the sweep could not weigh: an
+  unproven identifiability and a disproven one read alike as "this parameter reached no
+  distinguishing signal," and only the analysis — not an assumption — can tell them apart. This is
+  also the strongest case DEL-SIM-SENSITIVITY's own rationale names for adding an observation
+  channel, which is exactly why choosing that channel is left to the physical track rather than
+  folded into this analysis.
+links:
+  - target: DEL-SIM-SENSITIVITY.C3
+    type: derives-from
+  - target: REQ-STATE-ESTIMATION-001.C6
+    type: targets
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING
+    type: depends-on
