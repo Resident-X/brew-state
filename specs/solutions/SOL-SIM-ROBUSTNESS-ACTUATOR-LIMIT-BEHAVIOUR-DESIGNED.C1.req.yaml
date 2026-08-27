@@ -1,0 +1,14 @@
+id: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C1
+type: criterion
+title: Accumulated intent does not outlive the actuator limit on the steam loop, to the same structural standard already proven for the brew loop
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The steam loop already withholds integration while its actuator is pushed past the limit, the same conditional-integration discipline already proven structural — not dependent on the model being right — on the brew loop. This slice proves the steam instance to the same standard: holding the loop at the limit and then removing demand produces no overshoot attributable to that interval, and a longer interval at the limit produces no more of it than a shorter one.
+
+  Re-deriving or altering the brew loop's own already-proven instance is out of scope.
+links:
+  - target: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED
+    type: criterion-of

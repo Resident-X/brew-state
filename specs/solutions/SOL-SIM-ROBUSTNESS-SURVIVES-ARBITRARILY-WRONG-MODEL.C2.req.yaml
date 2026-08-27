@@ -1,0 +1,14 @@
+id: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C2
+type: criterion
+title: The behaviours confirmed are named against the classification's own three-class vocabulary and scoped to a single invariant entry
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The classification's three classes — invariant, bounded, and degrading — are named accurately here, and this solution's claim is scoped to one entry of the invariant class, refusing what cannot be delivered, rather than to the classification's other three entries or to either of the other two classes.
+
+  Restating a class other than invariant, or an invariant behaviour other than the one this solution exercises, as if it were covered here is out of scope.
+links:
+  - target: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL
+    type: criterion-of

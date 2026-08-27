@@ -1,0 +1,14 @@
+id: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C3
+type: criterion
+title: The refusal holds across a spread of mismatch magnitudes beyond the declared error band, not only at a single wrong-model instance
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The refusal is confirmed to fire across a spread of mismatch magnitudes beyond the declared error band, not only at a single arbitrarily-wrong instance, so the claim does not rest on one corner that happened to land clearly on the refused side.
+
+  Characterising exactly where the refusal boundary sits, as opposed to confirming it still fires well beyond the declared band, is out of scope.
+links:
+  - target: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL
+    type: criterion-of

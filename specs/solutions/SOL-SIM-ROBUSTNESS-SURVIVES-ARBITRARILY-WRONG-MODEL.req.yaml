@@ -1,0 +1,21 @@
+id: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL
+type: deliverable
+category: solution
+title: Refusing what cannot be delivered holds against an arbitrarily wrong model, on the coffee side
+status: active
+version: 1
+text: |
+  The model-error classification declares four behaviours that must hold however wrong the model turns out to be: refusing what cannot be delivered, reaching a safe state, respecting the supply budget, and surrendering accumulated intent at the actuator limit. Of these, surrendering accumulated intent at the actuator limit is proven separately, structurally, on both loops; reaching a safe state and respecting the supply budget have no built mechanism anywhere in the delivery chain yet for a verification to exercise. This solution takes up the remaining one: refusing what cannot be delivered.
+
+  The coffee side already refuses a delivery profile beyond what the machine can ever achieve, before it begins, proven at nominal parameters. This solution exercises that same refusal with the controller's own belief about the plant driven apart from the plant actually simulated, at a magnitude beyond the declared error band, and confirms the refusal still fires rather than accepting a target the machine cannot in fact reach. The steam side has no equivalent commanded-profile concept to refuse — the operator opens a draw rather than the machine committing to a profile in advance — so this solution does not extend to it.
+
+  Out of scope: reaching a safe state and respecting the supply budget — neither has a built mechanism to exercise yet, and asserting either here would test something that does not exist; the actuator-limit invariant, proven separately and structurally; a steam-side equivalent, which this behaviour does not have.
+rationale: |
+  The classification names four behaviours together, but nothing requires them to be proven by one solution at once — a criterion that closes by cascading over its contributing solutions accepts partial, honest contribution across multiple slices, and claiming coverage of a behaviour with no built mechanism behind it would be worse than leaving it open for a later slice built against a real premise. Reusing the coffee side's existing infeasible-profile refusal, rather than inventing a new refusal path, keeps the claim tied to a mechanism already proven at nominal parameters; what this solution adds is that the same refusal survives when the controller is deliberately wrong about the plant, not merely uncertain about it.
+
+  The steam side is left out rather than stretched to fit because the asymmetry is real: the coffee side's controller commits to a profile it can evaluate for feasibility before starting, and the steam side has no equivalent commitment to refuse — an operator-opened draw is met with withheld feed until ready, a different mechanism answering a different question.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION.C4
+    type: derives-from
+  - target: REQ-ROBUST-CONTROL-001.C5
+    type: targets
