@@ -1,0 +1,12 @@
+id: REQ-PARAMETER-SENSITIVITY-001.C3
+type: criterion
+title: A parameter the analysis could not weigh is named as unweighed rather than ranked as unimportant
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Every parameter the analysis cannot weigh against a delivery outcome — because it carries no declared error to perturb by, because the error carried is declared as nothing, or because its effect reaches no quantity carrying a declared band — is named as such rather than given a place in the ranking. A parameter left in the ranking with nothing to divide by reads as unimportant when what is true is that nothing here could judge it, and a ranking that lets the first stand in for the second fails this.
+links:
+  - target: REQ-PARAMETER-SENSITIVITY-001
+    type: criterion-of

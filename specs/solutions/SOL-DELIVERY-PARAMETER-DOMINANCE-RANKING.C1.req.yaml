@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C1
+type: criterion
+title: The sweep perturbs every parameter carrying a declared error and re-runs the closed loop for both deliveries
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each plant parameter that carries a declared error against its nominal value, the sweep holds every other parameter at nominal, perturbs the one under test by its declared amount, and re-runs a closed-loop draw through each side — once for the coffee side, once for the steam side — recording the resulting deviation in the delivery outcome the loop is judged against. The steam side runs the same course the steam band-holding test judges its delivery by; the coffee side runs the temperature-held draw the cross-tier comparison already closes its loop through, not the profile-commanded course with its own read-ahead term that the brew band-holding test judges quality by. Out of scope: parameters that carry no declared error, since there is nothing to weigh their sensitivity against; perturbing more than one parameter at a time; and, on the coffee side, whatever a parameter's contribution would be under the profile-commanded course rather than the temperature-held one — a parameter reaching mainly the transport between the block and the group is the case most likely under-stated by that substitution.
+links:
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING
+    type: criterion-of

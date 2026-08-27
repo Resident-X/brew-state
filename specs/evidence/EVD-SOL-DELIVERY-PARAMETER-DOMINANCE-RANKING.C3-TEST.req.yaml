@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C3-TEST
+type: evidence
+title: Sweep and ranking are committed and repeatable against a replacement model (SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T04:14:23Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::TheSweepAndItsRankingAreCommittedAndRepeatable
+text: |-
+  TheSweepAndItsRankingAreCommittedAndRepeatable passes under task fw:emulate (94/94). Confirms the committed ranking in docs/parameter-dominance.md matches what the method presently produces, the record names the sha256 of every input file it was run against, and the same tool run against a replacement model needs no code change -- only its --description/--limits/--steam-declaration/--tolerance arguments change.
+links:
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C3
+    type: satisfies

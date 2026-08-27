@@ -1,0 +1,31 @@
+id: SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED
+type: deliverable
+category: solution
+title: The outlet-only fixture declares the channel bounds and the distinguishing name every structure in the tree carries
+status: active
+version: 1
+text: |
+  The tree's newest structure — a synthetic description carrying no machine, built so the estimator's widened admission check could be shown refusing a structure that answers only one half of a reconstruction's pairing — was merged without two of the declarations every other structure in the tree carries. Two standing gates have been failing on it since, and a third failure follows from the first.
+
+  Its bounds declaration leaves out one of the channels the hardware seam reports: the knob that says how far open the steam demand is. Every other description in the tree carries a line for it, including the two other structures that describe no machine and whose figures accordingly mean nothing. The gate that refuses a machine built with a channel nobody bounded fails the whole check pass on that omission, and it is right to: a channel arriving with no bounds takes whatever a default happens to be, and nothing about the running machine distinguishes a channel nobody thought about from one somebody decided was fine. The suite written to exercise this structure's admission fails for the same reason at one remove — the bounds declaration it loads inline is short of the same line, so the estimator refuses to come up and both of that suite's assertions fail while it is still setting itself up, before reaching the admission they exist to prove.
+
+  Its header declares no name that no other structure declares. The only name it declares at the top level is the entry point every structure supplies for the seam to read its coefficient table through, and a name every structure shares cannot witness which structure an artefact was built from. So the gate that requires a linked artefact to carry the symbols of the structure it was built for and none belonging to any other reports this structure as one it cannot see, rather than passing over it — which is correct, because a structure that cannot be witnessed is exactly the structure that gate would clear unconditionally.
+
+  Neither failure is caused by the work in flight beside it. Both reproduce with that work absent, and neither the structure nor its bounds declaration has been touched since the slice that introduced them.
+
+  What has to hold once this is corrected: every structure in the tree, including one that describes no machine and exists only to be refused at admission, declares a bound for every channel the seam reports and declares at least one name of its own — so both gates conclude about it rather than failing on it or reporting that they cannot see it. Which name distinguishes the structure, and whether it comes with behaviour the structure genuinely needs or exists only so the structure can be told apart, is not decided here.
+rationale: |
+  Recorded as a maintenance item rather than corrected in place because it was found while building an unrelated slice, and a finding made mid-build is made durable in the graph rather than left to a pull request's prose, which stops being readable the moment the branch is gone. Both failures were reproduced with that slice's changes absent.
+
+  Kept as one item rather than two, although two different criteria's behaviour is at stake, because both have a single cause: a structure was admitted to the tree without carrying what the tree requires of every structure. The two gates that noticed are precisely the two that discover their subjects rather than being handed a list of names, so a structure arriving short is the case they exist for, and they worked. Splitting the item would make the count of maintenance items track the count of gates that fired rather than the count of mistakes made.
+
+  Nothing here asks for a change to either gate. Both already exist, both already fail, and both fail for the right reason and with a message that names what is missing — the correction owed is to the structure, not to what noticed it. That the structure merged anyway is a separate question about what runs before a merge, and is not answered here.
+
+  Left open which name the structure declares to distinguish itself, because more than one choice closes the gap and none was evaluated: a name for behaviour the structure could genuinely use, or a declaration made purely so the structure can be recognised in an artefact. This item's job is to make the finding durable and traceable to the criteria whose behaviour it restores, not to choose between them.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C3
+    type: targets
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
+    type: targets

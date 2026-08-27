@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C2-TEST
+type: evidence
+title: Ranking orders by band-fraction, not raw deviation or declared-error-normalised sensitivity (SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T04:14:23Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::ParametersAreRankedByWhatTheirOwnUncertaintySpends
+text: |-
+  ParametersAreRankedByWhatTheirOwnUncertaintySpends passes under task fw:emulate (94/94). Confirms the dominance figure equals deviation divided by the delivery's declared band, that the resulting order differs from both the raw-deviation order and the declared-error-normalised sensitivity order, and that a loosely-known parameter with a shallower relation can outrank a tightly-known parameter with a steeper one.
+links:
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C2
+    type: satisfies

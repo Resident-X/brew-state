@@ -1,0 +1,17 @@
+id: EVD-SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C4-TEST
+type: evidence
+title: A parameter the sweep cannot weigh is named separately, not ranked as unimportant (SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T04:14:23Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::ACoefficientTheSweepCannotWeighIsNamedRatherThanRanked
+text: |-
+  ACoefficientTheSweepCannotWeighIsNamedRatherThanRanked passes under task fw:emulate (94/94). Confirms pump.pressure_bar and brew.pressure_time_constant_s -- both reaching only the brew path's unbanded pressure -- are absent from the ranked table and the committed record, and are instead named in a separate account with the specific condition (no declared error / error declared as nothing / no banded quantity reached) that excluded each.
+links:
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C4
+    type: satisfies

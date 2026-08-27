@@ -49,15 +49,26 @@
  * built against such a structure. Both outcomes are exercised, and which one
  * happened is printed.
  *
- * Given a draw to run instead, this executable runs that and only that. The
- * draw is cross_tier_draw.c's, and it is reached from here rather than from an
- * executable of its own because it needs exactly what this one is already
- * linked from -- the control logic, the simulated hardware seam and the plant
- * model -- and a second host artefact carrying the same three would be a second
- * build of the same tier for no question the first cannot answer. The two modes
- * do not share a run: the exercise deliberately drives the loop into faults and
+ * Given a draw to run instead, this executable runs that and only that. There
+ * are two of them -- the brew side's, in cross_tier_draw.c, and the steam
+ * side's, in steam_draw.c -- and both are reached from here rather than from
+ * executables of their own because each needs exactly what this one is already
+ * linked from: the control logic, the simulated hardware seam and the plant
+ * model. Further host artefacts carrying the same three would be further builds
+ * of the same tier for no question the first cannot answer. No two of the three
+ * modes share a run: the exercise deliberately drives the loop into faults and
  * refusals, and a draw begun after that would be a draw of a machine somebody
  * had already broken.
+ *
+ * The steam draw is named a file the other two are not: the figures the steam
+ * control law is given rather than compiled with. It arrives on the command
+ * line beside the description and the limits rather than being fixed at build
+ * time the way the delivery band is, because it is not the same kind of
+ * statement. The band says what the drink demands and would read the same on a
+ * machine of another kind entirely; the steam figures are the design's policy
+ * about a particular steam path, and every gain in them was chosen against a
+ * particular casting's coefficients. Which of them to read is therefore a
+ * decision that travels with the description, and is a caller's per run.
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -71,10 +82,14 @@
 #include "hw_sim.h"
 #include "machine_actuation.h"
 #include "plant_model.h"
+#include "steam_control_declaration.h"
+#include "steam_draw.h"
 
-/* What names the draw mode on the command line, and how many arguments follow it. */
+/* What names each draw mode on the command line, and how many arguments follow it. */
 #define DRAW_OPTION "--cross-tier-draw"
 #define DRAW_ARGUMENTS 4
+#define STEAM_DRAW_OPTION "--steam-draw"
+#define STEAM_DRAW_ARGUMENTS 3
 
 /* Steps to run in each phase of the exercise. */
 #define EXERCISE_STEPS 64
@@ -254,32 +269,40 @@ static char *read_file(const char *path, size_t *length)
 
 /*
  * The course a draw is run along: one line per control interval, each carrying
- * the milliseconds the clock advances before that interval and the permille the
- * pump is asked for during it. The count of lines decides how many intervals the
+ * the milliseconds the clock advances before that interval and the one figure
+ * that interval commands. The count of lines decides how many intervals the
  * draw runs for.
+ *
+ * What the second figure means belongs to the draw being run and not to this
+ * reader. The brew draw reads it as the permille the pump is asked for; the
+ * steam draw reads it as the thousandths of a millilitre per second the wand is
+ * passing. That is why the ceiling a figure is held to and the sentence a
+ * refusal is reported in both arrive as arguments -- a reader carrying either
+ * of them would be a reader that knew which draw it was serving, and the second
+ * draw would then need a second copy of the whole of this.
  *
  * A file of figures rather than a pair of figures repeated, and for two separate
  * reasons. The cadence is a sequence because a loop closed through an emulated
  * machine does not keep a perfectly even one, and the control logic advances its
  * estimator by the interval that actually elapsed rather than the one the loop is
  * meant to run at -- so reproducing another loop's draw means reproducing what
- * that loop's clock did. The flow is a sequence because a draw is a shape:
- * nothing moves while the block is coming up, water is drawn once it is, and a
- * level held at one figure for the whole run would leave the brew path's pressure
- * settled after its first few intervals and asked nothing further.
+ * that loop's clock did. The commanded figure is a sequence because a draw is a
+ * shape: nothing moves while the block is coming up, something is drawn once it
+ * is, and a level held at one figure for the whole run would leave what it acts
+ * on settled after its first few intervals and asked nothing further.
  *
  * The two travel in one file rather than two, so that a draw cannot be run with a
  * cadence of one length against a course of another -- which is not a run with a
  * mistake in it but two different draws, and neither loop would be able to say
  * which one it had been given.
  *
- * Returns NULL and reports why on any file that cannot be opened, holds something
- * that is not a whole number of milliseconds, asks the pump for a level beyond
- * full scale, leaves an interval without a level, or holds no interval at all --
- * a draw of no intervals is not a short draw, it is not a draw. The caller frees
- * both arrays it writes.
+ * Returns false and reports why on any file that cannot be opened, holds something
+ * that is not a whole number of milliseconds, carries a figure beyond the ceiling
+ * the caller stated, leaves an interval without a figure, or holds no interval at
+ * all -- a draw of no intervals is not a short draw, it is not a draw. The caller
+ * frees both arrays it writes.
  */
-static bool grow_the_course(uint32_t **intervals, uint16_t **levels, size_t *capacity)
+static bool grow_the_course(uint32_t **intervals, uint32_t **commanded, size_t *capacity)
 {
     const size_t wanted = *capacity * 2u;
 
@@ -290,11 +313,11 @@ static bool grow_the_course(uint32_t **intervals, uint16_t **levels, size_t *cap
     if (grown_intervals != NULL) {
         *intervals = grown_intervals;
     }
-    uint16_t *grown_levels = realloc(*levels, wanted * sizeof(**levels));
-    if (grown_levels != NULL) {
-        *levels = grown_levels;
+    uint32_t *grown_commanded = realloc(*commanded, wanted * sizeof(**commanded));
+    if (grown_commanded != NULL) {
+        *commanded = grown_commanded;
     }
-    if (grown_intervals == NULL || grown_levels == NULL) {
+    if (grown_intervals == NULL || grown_commanded == NULL) {
         return false;
     }
 
@@ -302,8 +325,8 @@ static bool grow_the_course(uint32_t **intervals, uint16_t **levels, size_t *cap
     return true;
 }
 
-static bool read_the_course(const char *path, uint32_t **interval_millis,
-                            uint16_t **pump_permille, uint32_t *count)
+static bool read_the_course(const char *path, unsigned long ceiling, const char *what,
+                            uint32_t **interval_millis, uint32_t **commanded, uint32_t *count)
 {
     FILE *handle = fopen(path, "r");
     if (handle == NULL) {
@@ -314,7 +337,7 @@ static bool read_the_course(const char *path, uint32_t **interval_millis,
     size_t capacity = 256u;
     size_t used = 0u;
     uint32_t *intervals = malloc(capacity * sizeof(*intervals));
-    uint16_t *levels = malloc(capacity * sizeof(*levels));
+    uint32_t *levels = malloc(capacity * sizeof(*levels));
     if (intervals == NULL || levels == NULL) {
         (void)fprintf(stderr, "host exercise: no room to read the course in %s\n", path);
         free(intervals);
@@ -336,19 +359,16 @@ static bool read_the_course(const char *path, uint32_t **interval_millis,
             (void)fprintf(stderr, "host exercise: %s holds something that is not an interval\n",
                           path);
             readable = false;
-        } else if (fscanf(handle, "%lu", &level) != 1 ||
-                   level > (unsigned long)ACTUATION_FULL_SCALE) {
-            (void)fprintf(stderr,
-                          "host exercise: the interval on line %lu of %s carries no level the "
-                          "pump can be asked for\n",
-                          (unsigned long)used + 1uL, path);
+        } else if (fscanf(handle, "%lu", &level) != 1 || level > ceiling) {
+            (void)fprintf(stderr, "host exercise: the interval on line %lu of %s carries no %s\n",
+                          (unsigned long)used + 1uL, path, what);
             readable = false;
         } else if (used == capacity && !grow_the_course(&intervals, &levels, &capacity)) {
             (void)fprintf(stderr, "host exercise: no room to read the whole course in %s\n", path);
             readable = false;
         } else {
             intervals[used] = (uint32_t)millis;
-            levels[used] = (uint16_t)level;
+            levels[used] = (uint32_t)level;
             used++;
         }
     }
@@ -366,7 +386,7 @@ static bool read_the_course(const char *path, uint32_t **interval_millis,
     }
 
     *interval_millis = intervals;
-    *pump_permille = levels;
+    *commanded = levels;
     *count = (uint32_t)used;
     return true;
 }
@@ -421,10 +441,33 @@ static int run_the_draw(char **arguments, const plant_parameters_t *parameters,
 
     uint32_t intervals = 0u;
     uint32_t *cadence = NULL;
-    uint16_t *levels = NULL;
-    if (!read_the_course(arguments[3], &cadence, &levels, &intervals)) {
+    uint32_t *commanded = NULL;
+    if (!read_the_course(arguments[3], (unsigned long)ACTUATION_FULL_SCALE,
+                         "level the pump can be asked for", &cadence, &commanded, &intervals)) {
         return 1;
     }
+
+    /*
+     * Narrowed into the width the draw's own record carries a pump level in.
+     * Nothing is lost by it: the reader refused every figure above full scale,
+     * and full scale is three orders of magnitude inside what this holds. It is
+     * a copy rather than a cast of the array because the two widths are not the
+     * same object, and a record pointed at the wider one would read every level
+     * from the wrong half of a figure on the first machine whose endianness
+     * disagreed with the author's.
+     */
+    uint16_t *levels = malloc((size_t)intervals * sizeof(*levels));
+    if (levels == NULL) {
+        (void)fprintf(stderr, "host exercise: no room to hold the course's pump levels\n");
+        free(cadence);
+        free(commanded);
+        return 1;
+    }
+    for (uint32_t at = 0u; at < intervals; at++) {
+        levels[at] = (uint16_t)commanded[at];
+    }
+    free(commanded);
+
     draw.interval_millis = cadence;
     draw.pump_permille = levels;
     draw.interval_count = intervals;
@@ -432,6 +475,78 @@ static int run_the_draw(char **arguments, const plant_parameters_t *parameters,
     const int outcome = cross_tier_draw_run(parameters, limits, tolerance, &draw);
     free(cadence);
     free(levels);
+    return outcome;
+}
+
+/*
+ * Run the steam draw the command line asked for, and nothing else.
+ *
+ * The steam control declaration is opened here rather than in the draw itself,
+ * on the terms the description and the limits are opened in main: reading a
+ * file and running a loop are different jobs, and a draw that opened its own
+ * inputs could not be handed one that came from anywhere else.
+ *
+ * The state the machine starts in is taken from the arguments for the reason
+ * the draw's own header gives at length -- it is where the design says the
+ * machine stands when somebody turns the wand, and that figure is declared
+ * rather than being this file's to remember.
+ */
+static int run_the_steam_draw(char **arguments, const plant_parameters_t *parameters,
+                              const estimator_limits_t *limits)
+{
+    steam_draw_t draw = {0.0f, NULL, NULL, 0u};
+    char *end = NULL;
+
+    size_t length = 0u;
+    char *text = read_file(arguments[0], &length);
+    if (text == NULL) {
+        return 1;
+    }
+
+    steam_control_declaration_t declaration;
+    steam_control_declaration_error_t declaration_error;
+    const bool declared =
+        steam_control_declaration_load(text, length, &declaration, &declaration_error);
+    free(text);
+
+    if (!declared) {
+        (void)fprintf(stderr,
+                      "host exercise: steam control declaration refused: %s (fault %d, line %u)\n",
+                      declaration_error.name, (int)declaration_error.fault,
+                      declaration_error.line);
+        return 1;
+    }
+
+    draw.initial_steam_c = strtof(arguments[1], &end);
+    if (end == arguments[1] || *end != '\0') {
+        (void)fprintf(stderr, "host exercise: '%s' is not a temperature to start the block at\n",
+                      arguments[1]);
+        return 2;
+    }
+
+    /*
+     * The ceiling on a commanded rate is what the figure is carried in and not
+     * a judgement about how fast a wand can pass steam. Nobody has established
+     * that rate for this machine or its type, and inventing a bound here would
+     * be this file quietly declaring one. What refuses a rate the equations
+     * cannot act on is the model's own admissibility guard, which is where the
+     * question belongs.
+     */
+    uint32_t intervals = 0u;
+    uint32_t *cadence = NULL;
+    uint32_t *demand = NULL;
+    if (!read_the_course(arguments[2], 0xFFFFFFFFuL,
+                         "rate the wand can be passing, in thousandths of a millilitre per second",
+                         &cadence, &demand, &intervals)) {
+        return 1;
+    }
+    draw.interval_millis = cadence;
+    draw.demand_milli_ml_per_s = demand;
+    draw.interval_count = intervals;
+
+    const int outcome = steam_draw_run(parameters, limits, &declaration, &draw);
+    free(cadence);
+    free(demand);
     return outcome;
 }
 
@@ -584,17 +699,31 @@ int main(int argc, char **argv)
 {
     control_state_t state;
 
-    const bool draw_requested = argc > 3;
+    /*
+     * Which of the three modes was asked for, settled before anything is
+     * opened. A mode is named only when its own option is written and exactly
+     * the arguments that option takes follow it; anything else past the limits
+     * declaration is an unrecognised ask and is refused with the whole usage
+     * rather than being run as the mode it most resembles.
+     */
+    const bool something_requested = argc > 3;
+    const bool draw_requested = something_requested && strcmp(argv[3], DRAW_OPTION) == 0 &&
+                                argc == 4 + DRAW_ARGUMENTS;
+    const bool steam_draw_requested = something_requested &&
+                                      strcmp(argv[3], STEAM_DRAW_OPTION) == 0 &&
+                                      argc == 4 + STEAM_DRAW_ARGUMENTS;
 
-    if (argc < 3 ||
-        (draw_requested &&
-         (strcmp(argv[3], DRAW_OPTION) != 0 || argc != 4 + DRAW_ARGUMENTS))) {
+    if (argc < 3 || (something_requested && !draw_requested && !steam_draw_requested)) {
         (void)fprintf(stderr,
                       "usage: %s <parameter-description> <limits-declaration>\n"
                       "       %s <parameter-description> <limits-declaration> "
                       DRAW_OPTION " <target-c> <converter-full-scale-counts> "
-                      "<converter-full-scale-milli> <course-file>\n",
-                      argc > 0 ? argv[0] : "program", argc > 0 ? argv[0] : "program");
+                      "<converter-full-scale-milli> <course-file>\n"
+                      "       %s <parameter-description> <limits-declaration> "
+                      STEAM_DRAW_OPTION " <steam-control-declaration> <initial-steam-c> "
+                      "<course-file>\n",
+                      argc > 0 ? argv[0] : "program", argc > 0 ? argv[0] : "program",
+                      argc > 0 ? argv[0] : "program");
         return 2;
     }
 
@@ -662,6 +791,9 @@ int main(int argc, char **argv)
 
     if (draw_requested) {
         return run_the_draw(&argv[4], &parameters, &limits, &tolerance);
+    }
+    if (steam_draw_requested) {
+        return run_the_steam_draw(&argv[4], &parameters, &limits);
     }
 
     hw_sim_reset();

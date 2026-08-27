@@ -72,14 +72,45 @@ _Static_assert(sizeof(quantity_key) / sizeof(quantity_key[0]) == SENSED_CHANNEL_
                "every sensed quantity reported has to have a name to report it under");
 
 /*
+ * What the temperature an extraction is actually judged by is reported under.
+ *
+ * It is deliberately not in the table above, and the separation is the point.
+ * That table is what two tiers reading the same instruments compare with one
+ * another, and this is not an instrument's reading at all: nothing on this
+ * machine reports the water on its way to the group, which is exactly why the
+ * control path reconstructs it and drives to the reconstruction. Folding it in
+ * beside the sensed four would put a quantity no converter carries into a
+ * comparison whose whole subject is what a converter carried.
+ *
+ * It is reported all the same, because a run asking what a coefficient's
+ * uncertainty costs the drink has to be able to read the drink. The block's own
+ * temperature is not a substitute: how far the two sit apart moves with the
+ * draw, and the coefficients that decide the distance are among the loosest the
+ * description carries.
+ */
+#define DELIVERED_KEY "outlet-c"
+
+/*
  * Nine significant digits, which is what round-trips an IEEE-754 single
  * precision value exactly. A narrower format would be this run's printing
  * introducing a disagreement rather than reporting one.
  */
 #define QUANTITY_FORMAT "%.9g"
 
+/*
+ * One reported line.
+ *
+ * `delivered` is the temperature of the water on its way to the group, or null
+ * on a build whose structure keeps no such state. A null is reported by the
+ * field being absent from the line rather than by a figure standing for
+ * absence: a structure that heats the water where it delivers it has no such
+ * temperature, and any number printed for it -- nothing, the block's own, a
+ * sentinel -- would be read by whatever consumes the line as a measurement of
+ * something. A field that is simply not there fails where it is looked for,
+ * which is the answer a consumer can act on.
+ */
 static void report(const char *what, int index, int result, unsigned pump, unsigned heater,
-                   unsigned long taken, const float *values)
+                   unsigned long taken, const float *values, const float *delivered)
 {
     (void)printf("HOST %s", what);
     if (index >= 0) {
@@ -90,6 +121,9 @@ static void report(const char *what, int index, int result, unsigned pump, unsig
         /* The cast is explicit because a variadic argument is promoted whatever
          * the source says, and the build refuses a silent promotion. */
         (void)printf(" %s=" QUANTITY_FORMAT, quantity_key[i], (double)values[i]);
+    }
+    if (delivered != NULL) {
+        (void)printf(" " DELIVERED_KEY "=" QUANTITY_FORMAT, (double)*delivered);
     }
     (void)printf("\n");
 }
@@ -187,6 +221,27 @@ static bool advance_the_machine(plant_model_t *machine, uint32_t owed, uint32_t 
     return true;
 }
 
+/*
+ * The temperature of the water on its way to the group, where the structure
+ * this build compiled keeps it.
+ *
+ * Which states a structure keeps is fixed by the structure and does not change
+ * over an instance's life, so whether this answers at all is established once
+ * by the caller and the per-interval reads then only fail if the model itself
+ * has stopped answering -- which is a refusal worth stopping on rather than
+ * printing around.
+ */
+static const float *delivered_or_not(const plant_model_t *machine, bool kept, float *into)
+{
+    if (!kept) {
+        return NULL;
+    }
+    if (!plant_model_state(machine, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, into)) {
+        return NULL;
+    }
+    return into;
+}
+
 int cross_tier_draw_run(const plant_parameters_t *parameters,
                         const estimator_limits_t *limits,
                         const delivery_tolerance_t *tolerance,
@@ -195,11 +250,23 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
     plant_model_t machine;
     control_state_t state;
     float values[SENSED_CHANNEL_COUNT];
+    float outlet_c = 0.0f;
 
     if (!plant_model_init(&machine, parameters)) {
         (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
         return 1;
     }
+
+    /*
+     * Whether this structure keeps the temperature a delivery is judged by,
+     * asked once. A structure that heats the water where it delivers it keeps
+     * no such state, and a draw run against one reports the sensed quantities
+     * and nothing under the delivered name -- rather than refusing to run,
+     * which would make a legitimate architecture undrawable for want of a
+     * figure it has no business having.
+     */
+    const bool outlet_kept =
+        plant_model_state(&machine, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &outlet_c);
 
     hw_sim_reset();
     if (!stand_the_readings_up(&machine, draw)) {
@@ -211,7 +278,8 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
     if (!sensed(&machine, values)) {
         return 1;
     }
-    report("trajectory-baseline", -1, 0, 0u, 0u, 0uL, values);
+    report("trajectory-baseline", -1, 0, 0u, 0u, 0uL, values,
+           delivered_or_not(&machine, outlet_kept, &outlet_c));
 
     if (!control_init(&state, parameters, limits, tolerance)) {
         (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
@@ -295,7 +363,8 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
          * two open loops however closely the two agree.
          */
         report("trajectory", (int)interval, (int)result, (unsigned)asked_for,
-               (unsigned)hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER), taken, values);
+               (unsigned)hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER), taken, values,
+               delivered_or_not(&machine, outlet_kept, &outlet_c));
     }
 
     (void)printf("HOST plant-step-count %lu\n", taken);

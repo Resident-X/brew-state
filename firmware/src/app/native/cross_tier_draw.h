@@ -20,6 +20,16 @@
  *
  * Nothing here decides whether the answers agree. What runs the draw and what
  * judges it are deliberately not the same thing.
+ *
+ * Beside the sensed quantities each interval carries the temperature of the
+ * water on its way to the group, where the structure the build compiled keeps
+ * it. That is the temperature an extraction is judged by and the one nothing on
+ * the machine reports, so it takes no part in a comparison of two tiers reading
+ * the same instruments -- but a run asking what a coefficient's uncertainty
+ * costs the drink has to be able to read the drink, and the block's own
+ * temperature is not a stand-in for it: how far the two sit apart moves with
+ * the draw. On a structure that keeps no such state the field is absent from
+ * the line rather than reported as a figure standing for absence.
  */
 #ifndef CROSS_TIER_DRAW_H
 #define CROSS_TIER_DRAW_H
