@@ -1,0 +1,35 @@
+id: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING
+type: deliverable
+category: solution
+title: A sensitivity sweep across the closed loop, and the parameters it ranks
+status: active
+version: 2
+text: |
+  The closed loop this ranking runs against already exists on both sides the machine serves, and every parameter that feeds it already carries a declared error against its nominal value — the two things a dominance ranking needs are already in place. What is missing is the sweep itself: nothing today perturbs a parameter by its declared error and asks how far the delivery it feeds moves.
+
+  The sweep takes each parameter carrying a declared error in turn, holds every other parameter at its nominal value, perturbs the one under test by its budgeted amount, and re-runs a closed-loop draw through each side — once for the coffee side, once for the steam side. The steam side runs the same course the steam band-holding test judges its delivery by. The coffee side runs the temperature-held draw the cross-tier comparison already closes its loop through rather than the profile-commanded course with its own read-ahead term that the brew band-holding test judges quality by — a parameter reaching mainly the transport between the block and the group is the case this stands the most chance of under-stating, and redoing the coffee side against that course is worth doing the next time the sweep is touched to rerun against the committed model. What comes back is a deviation in the outcome the loop is judged against, one number per parameter per side.
+
+  A raw deviation does not by itself say which parameter dominates: a parameter known to within a hair that moves the outcome a little, and a parameter known only roughly that moves it a lot, are not compared fairly by the deviation alone. The ranking instead divides each deviation by the delivery's own declared band — the margin the machine is already held to — so what is reported is how much of that margin a parameter's own present uncertainty is already spending, the sense in which "dominant" is meant here. Dividing by the parameter's declared error instead would answer a different question: a deviation produced by perturbing at that same declared error already carries it, so dividing it out again would cancel the very uncertainty the ranking exists to weigh. A parameter whose effect reaches no declared band is named as one the ranking cannot weigh rather than placed at its foot with a figure of nothing — the two read alike but are not: one says the parameter barely matters, the other says nothing here can judge it, and only the true one is safe to act on.
+
+  The sweep and the ranking it produces are committed together, in a form that names the model they were run against and can be pointed at a replacement model without being rewritten — only the model changes, not the method. Identifiability, the second question this same sweep is positioned to answer — whether a parameter a reconstructed state depends on can be told apart from the channels the machine observes at all — is deferred rather than answered here: it needs this sweep's apparatus to exist first, and is picked up once it does.
+
+  Out of scope: redoing the ranking once a measured model replaces the estimated one, buying or fitting any instrumentation the ranking recommends, ranking a parameter that carries no declared error or against a delivery outcome that carries no declared band, and re-running the coffee side against the profile-commanded course rather than the temperature-held one.
+rationale: |
+  The delivery plan spends measurement effort only where a dominant parameter makes the margin thin, and that discipline holds only if dominance is established rather than assumed — an unbacked ranking would leave the cost decision resting on intuition. The two loops the ranking runs against are treated together rather than separately because a parameter that dominates one side and barely moves the other would be under-ranked by whichever side is skipped, and the machine is judged as one loop-carrying structure rather than two independent plants.
+
+  Normalising by the delivery's own declared band, rather than by the parameter's own declared error, is what makes the ranking answer the question the plan actually asks. Dividing by the declared error looks like the obvious way to compare a parameter known to a hair against one known only roughly, but the deviation was produced by moving the parameter at exactly its declared error, so that error is already inside it — dividing by it again cancels the very uncertainty the ranking exists to weigh and leaves the model's raw sensitivity to the relation instead, which is blind to how well the parameter is actually known. Dividing by the band instead answers what the plan asked: of the margin this machine is already held to, how much is this parameter's own present uncertainty spending.
+
+  A parameter whose effect reaches no declared band is excluded from the ranking rather than reported at its foot with nothing to divide by. A ranking that places such a parameter last reads as a judgement that it barely matters, when what is actually true is that nothing here can judge it at all — those are different findings, and only one of them is safe to act on with money.
+
+  Recording the sweep alongside the ranking, rather than recording only the conclusion, is what lets the ranking be redone rather than re-argued once the committed model replaces the estimated one — the parameters most worth ranking accurately are often the ones hardest to estimate well, so the ranking taken against the estimated model is exactly the one most likely to move.
+
+  Identifiability is deferred rather than folded in here because it depends on the same sweep apparatus this slice builds — attempting it first would mean building the apparatus twice, once to guess at identifiability and once for real once dominance exists to build on.
+links:
+  - target: DEL-SIM-SENSITIVITY.C1
+    type: derives-from
+  - target: DEL-SIM-SENSITIVITY.C2
+    type: derives-from
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets
+  - target: REQ-PARAMETER-SENSITIVITY-001.C3
+    type: targets

@@ -1,0 +1,12 @@
+id: SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C2
+type: criterion
+title: The outlet-only fixture declares a name no other structure in the tree declares
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  An artefact built from this structure can be told apart from an artefact built from any other, because the structure's header carries at least one top-level name no other structure in the tree declares. Today the only top-level name it declares is the coefficient-table entry point every structure supplies, which is shared by all of them and so witnesses nothing. The gate that inspects a linked artefact for the symbols of the structure it was built for, and for none belonging to any other, then reports a conclusion about this structure rather than reporting it as one it cannot see. Out of scope: any change to that gate, which already reports the right thing for the right reason, and any behaviour beyond what a name the structure can be recognised by requires — this structure exists to be refused at admission, and nothing past admission is exercised against it.
+links:
+  - target: SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED
+    type: criterion-of

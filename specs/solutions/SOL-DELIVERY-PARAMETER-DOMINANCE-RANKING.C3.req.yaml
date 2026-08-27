@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C3
+type: criterion
+title: The sweep and the ranking it produced are committed in a form repeatable against a replacement model
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The sweep's method and the ranking it produced are checked in together, naming the model they were run against, such that pointing the same sweep at a replacement model requires changing only which model it reads and nothing about how the sweep or the ranking are computed. Out of scope: any mechanism that triggers the rerun automatically when the model changes — that is a convenience for later, not a condition of repeatability.
+links:
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING
+    type: criterion-of

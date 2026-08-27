@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C2
+type: criterion
+title: Parameters are ranked by how much of the machine's declared margin their own uncertainty already spends
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Each parameter's recorded deviation from the sweep is divided by the delivery's own declared band — the margin the machine is already held to — and parameters and channels are ordered by the resulting fraction of that margin rather than by the raw deviation or by the parameter's own declared error alone. Dividing by the declared error instead would cancel out exactly the thing dominance is meant to weigh: a deviation produced by perturbing a parameter at its own declared error already carries that error in it, so a well-known parameter with a large raw effect and a poorly-known parameter with a small one are compared on the same footing only when what is reported is how much of the machine's actual margin each one's own present uncertainty is spending. Out of scope: judging whether the resulting order is quantitatively correct against a measured machine — that is analysis against the estimated model, redone later once the committed model exists.
+links:
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING
+    type: criterion-of

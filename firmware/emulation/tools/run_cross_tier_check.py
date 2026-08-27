@@ -61,6 +61,16 @@ HW_SEAM_SOURCE = os.path.join(FIRMWARE_DIR, "src", "hw", "stm32", "hw_stm32.c")
 #: accepted step of either loop is advanced by whatever the clock read before it.
 DECLARED_INTERVAL_MS = 10
 
+#: What the host loop prints the temperature an extraction is judged by under.
+#:
+#: It is not one of the compared quantities and is deliberately not in
+#: QUANTITY_KEYS: nothing on the machine reports the water on its way to the
+#: group, so no converter carries it and it has no place in a comparison of two
+#: tiers reading the same converters. It is read off the line all the same,
+#: because work asking what a coefficient's uncertainty costs the drink needs
+#: the drink and not the block the drink was heated by.
+OUTLET_KEY = "outlet-c"
+
 #: What each compared quantity is called when a divergence has to be reported to
 #: somebody, in the order both loops report them -- which is the order the names
 #: they are printed under are declared in, so the two cannot come apart.
@@ -243,6 +253,16 @@ def parse_host(output):
                 "heater_permille": int(fields["heater"]),
                 "plant_steps": int(fields["steps"]),
                 "quantities": closed_loop.quantities_of(fields, where),
+                # The temperature an extraction is judged by, which no sensor
+                # reports and which the comparison this module exists for
+                # therefore takes no part in -- the two tiers are compared on
+                # what their converters carried. It is kept because a caller
+                # asking what a coefficient costs the drink has to be able to
+                # read the drink, and None where the structure keeps no such
+                # state, because a structure that heats the water where it
+                # delivers it has no such temperature and any number stood in
+                # for it would be read as a measurement of something.
+                "outlet_c": (float(fields[OUTLET_KEY]) if OUTLET_KEY in fields else None),
             })
         elif kind == "pre-draw-steps":
             findings["pre_draw_steps"] = int(parts[1])
@@ -285,8 +305,18 @@ def host_draw(executable, description, limits, target_c, course, scale, name="dr
     return findings
 
 
-def description_with(coefficient, value, destination):
-    """The carried description with one coefficient written differently.
+def description_with(coefficient, value, destination, source=None):
+    """A description with one coefficient written differently.
+
+    `source` is the description to rewrite, and defaults to the one the target
+    artefact carries -- which is what the comparison this module runs needs,
+    since the whole point of a deliberate divergence is that it differs from
+    what the other loop is using. It is an argument rather than always that
+    file, because work whose subject is a machine other than the one this build
+    carries has to be able to perturb the description of that machine; a rewrite
+    that could only ever reach one file would oblige such work to keep a second
+    copy of this rewrite, and two rewrites of an annotated description are two
+    opinions about where a value ends and its account of itself begins.
 
     Written back out and handed to the ordinary loader rather than the record
     being reached into, so a description a run is deliberately given is admitted
@@ -303,7 +333,7 @@ def description_with(coefficient, value, destination):
     been seen to fail and one that cannot fail read the same from the outside,
     and the second is not a check.
     """
-    description, _ = carried_declarations()
+    description = source if source is not None else carried_declarations()[0]
     with open(description, encoding="utf-8") as handle:
         lines = handle.read().splitlines()
 

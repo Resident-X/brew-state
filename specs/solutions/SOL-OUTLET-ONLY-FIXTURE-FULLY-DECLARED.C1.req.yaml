@@ -1,0 +1,12 @@
+id: SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED.C1
+type: criterion
+title: The outlet-only fixture's bounds declaration accounts for every channel the seam reports
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Both places that bound this structure's channels — the description that ships beside it, and the inline declaration the suite exercising its admission loads — carry a line for the steam demand knob alongside the temperature, pressure and flow channels each already carries. The figures mean nothing on the same terms the rest of that declaration's do, and the statement the declaration already makes about describing no machine is what exempts them from accounting for themselves. The gate that fails a build over a channel nobody bounded then reaches a conclusion over the whole tree instead of stopping on this structure, and the admission suite gets past setting itself up to the two assertions it was written for. Out of scope: whether any declared figure is right, which is a review question against a machine that has never been on a bench, and any change to which channels the hardware seam reports.
+links:
+  - target: SOL-OUTLET-ONLY-FIXTURE-FULLY-DECLARED
+    type: criterion-of

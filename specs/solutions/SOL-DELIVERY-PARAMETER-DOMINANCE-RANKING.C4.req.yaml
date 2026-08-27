@@ -1,0 +1,12 @@
+id: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C4
+type: criterion
+title: A parameter the sweep cannot weigh is named separately rather than given a place in the ranking
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A parameter carrying no declared error, a declared error of nothing, or an effect that reaches no quantity carrying a declared band is left out of the ranked list entirely and named instead in a separate account of what the sweep could not weigh and why. It is not given a row in the ranking with a dominance of nothing, since a reader scanning a ranked list for what matters least would find it there and read the wrong thing. Out of scope: deciding whether an unweighed parameter matters — that needs a declared band or a declared error to exist first, and this criterion only asks that its absence be said plainly rather than stood in for.
+links:
+  - target: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING
+    type: criterion-of

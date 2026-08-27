@@ -1,0 +1,30 @@
+id: EVD-REQ-PARAMETER-SENSITIVITY-001.C3-ATTEST
+type: evidence
+title: Attestation of REQ-PARAMETER-SENSITIVITY-001.C3
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-27T04:16:16Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-PARAMETER-SENSITIVITY-001.C3","synthesised_at":"2026-08-27T04:16:16.623767Z","entries":[{"input_id":"SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/emulation/tests/test_parameter_sweep.py::TheSweepPerturbsEveryDeclaredErrorAndRunsBothDeliveries"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-PARAMETER-SENSITIVITY-001.C3.
+
+  Final-state intent: every parameter the sensitivity analysis cannot weigh against a delivery outcome -- no declared error, a declared error of nothing, or an effect reaching no quantity carrying a declared band -- is named as such rather than given a place in the ranking, since a parameter left ranked with a figure of nothing reads as unimportant when the true state is that nothing here could judge it.
+
+  Composition: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING with active evidence EVD-SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C1-TEST through .C4-TEST.
+
+  Intent fit: SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C4's test class (ACoefficientTheSweepCannotWeighIsNamedRatherThanRanked, firmware/emulation/tests/test_parameter_sweep.py) independently verifies all three exclusion conditions against both the live sweep findings and the committed record: the two coefficients reaching only the brew path's unbanded pressure (pump.pressure_bar, brew.pressure_time_constant_s) are absent from the ranked table in both, present in a separate account naming the excluding condition, and the two conditions not directly reachable from the shipped description (no declared error; error declared as exactly zero) are each exercised against a synthetic description and asserted to carry distinct, non-collapsing labels. This reaches the criterion's literal wording, not only the SOL's own framing of it -- the criterion was authored directly from this gap during this same build.
+
+  Acknowledged scope boundary: none. The criterion asks only that an unweighable parameter be named apart from the ranking, not that the analysis be extended to weigh it; nothing here is deferred against that ask.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-PARAMETER-SENSITIVITY-001.C3
+    type: satisfies
+attributes:
+  attested_criterion_version: 1
