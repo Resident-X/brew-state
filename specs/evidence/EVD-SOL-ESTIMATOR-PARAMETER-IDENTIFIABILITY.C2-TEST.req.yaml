@@ -1,0 +1,17 @@
+id: EVD-SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C2-TEST
+type: evidence
+title: A parameter the others reproduce, or one below what a reading carries, is named not shown identifiable (SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T08:43:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_identifiability.py::AParameterNotToldApartIsNamedRatherThanAssumed
+text: |-
+  AParameterNotToldApartIsNamedRatherThanAssumed passes under task fw:verify. On this model two of the nine in-scope coefficients come back not shown identifiable, each named with which of the two conditions put it there and with the size of the reproducing combination beside it. The verdict logic is exercised against synthetic signatures rather than only this model's: an exact dependency among three names all three, an independent fourth still comes back identifiable, two identical signatures name each other, and a signature wholly below what a reading could carry is named for that reason and not the other. The floor is shown to decide -- coarsening what a reading could carry past every coefficient's largest reach takes every verdict below it -- and the affordable coordinate-space remainder is re-checked against the direct projection over all 65,000 components.
+links:
+  - target: SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C2
+    type: satisfies

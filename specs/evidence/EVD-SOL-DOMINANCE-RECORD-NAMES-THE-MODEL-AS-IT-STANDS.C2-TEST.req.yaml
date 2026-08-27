@@ -1,0 +1,17 @@
+id: EVD-SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C2-TEST
+type: evidence
+title: The committed ranking is the one the present description produces (SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T08:43:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::TheSweepAndItsRankingAreCommittedAndRepeatable::test_the_committed_ranking_is_the_one_this_method_presently_produces
+text: |-
+  The assertion passes under task fw:verify: the committed order, the declared error against each coefficient and each dominance figure are the ones the present description produces, coefficient for coefficient. The correction was not cosmetic -- the measurement that displaced the estimate moved a declared error as well as a value, so brew.heater_power_w falls from second place to third and the count of coefficients whose own uncertainty spends more than a whole declared band falls from seven to six. The account of what could not be weighed is compared in the same pass.
+links:
+  - target: SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS.C2
+    type: satisfies
