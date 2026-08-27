@@ -58,6 +58,22 @@ typedef enum {
      * fitted.
      */
     HW_SENSOR_FLOW,
+    /*
+     * Whether the steam control knob is turned, as the microswitch behind it
+     * reports it. It is a channel of this seam beside the analogue ones rather
+     * than folded into one of them, because what it answers is a different
+     * kind of question -- not how much of a quantity there is, but whether a
+     * thing is so -- and a switch smuggled into a continuous channel as two
+     * agreed-upon values would be a channel whose consumers each had to know
+     * which two.
+     *
+     * It reports that a draw has been asked for and nothing about its size:
+     * the wand is a mechanical valve opened by hand, and the switch closes at
+     * some point in the knob's travel that nobody has characterised. A
+     * consumer wanting a rate has to get it from somewhere else, and there is
+     * nowhere else on this machine.
+     */
+    HW_SENSOR_STEAM_KNOB,
     HW_SENSOR_CHANNEL_COUNT
 } hw_sensor_channel_t;
 
@@ -104,6 +120,30 @@ typedef struct {
     hw_reading_status_t status;
     int32_t value_milli;
 } hw_reading_t;
+
+/*
+ * What a channel measuring a thing that is either so or not so reports in
+ * `value_milli`.
+ *
+ * Such a channel carries no continuous quantity, but it is read back through
+ * the same reading as every other channel, so it needs a spelling for its two
+ * answers rather than a second reading type. Thousandths of the channel's own
+ * unit is what this seam already means by `value_milli`, and the unit of a
+ * thing that is so is that it is so -- one whole of it, or none.
+ *
+ * They are the two admissible values and not merely two agreed-upon ones. A
+ * discrete channel reporting anything between them has not answered the
+ * question it exists to answer: whatever produced it was not the switch, and
+ * a consumer reading "mostly so" from a contact that is either made or not has
+ * been handed a figure no implementation of this seam is entitled to produce.
+ * The distinction is worth keeping separate from HW_READING_VALID, which says
+ * a sample was obtained, and from the plausible span a machine declares for
+ * the channel, which says what a reading off that machine could be: an
+ * implementation can obtain a sample, inside the declared span, that is still
+ * not one of the two answers.
+ */
+#define HW_READING_DISCRETE_CLEAR 0
+#define HW_READING_DISCRETE_SET 1000
 
 /*
  * Sample a sensor channel. A channel outside the enumerated set reports

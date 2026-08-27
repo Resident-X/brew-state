@@ -43,7 +43,25 @@ static const uint32_t sensor_adc_channel[HW_SENSOR_CHANNEL_COUNT] = {
      * unconnected pin floats at -- and a number is exactly what a consumer
      * must not get from an instrument that is not there.
      */
-    SENSOR_INPUT_NONE /* HW_SENSOR_FLOW */
+    SENSOR_INPUT_NONE, /* HW_SENSOR_FLOW */
+    /*
+     * The steam knob's microswitch is a contact rather than a voltage to
+     * convert, so no converter input could back it whatever this board were
+     * wired to -- and it is wired, like the flow meter above, to the OEM
+     * controller this project replaces rather than to this board. Both facts
+     * point the same way and only one of them could change: a board bringing
+     * the contact out would read it as a digital input, which is a peripheral
+     * this seam's implementation does not configure and which no board has
+     * been selected to have pins on.
+     *
+     * So the channel is carried with nothing behind it and reports that it is
+     * absent, which is the true statement about this artefact. It is
+     * deliberately not reported as a clear contact: a knob that is not turned
+     * and a knob nothing is reading are different machines, and a control law
+     * told the second was the first would hold a machine ready for a draw it
+     * could never be told had begun, with nothing anywhere saying why.
+     */
+    SENSOR_INPUT_NONE /* HW_SENSOR_STEAM_KNOB */
 };
 
 /*

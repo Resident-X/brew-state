@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C9-TEST
+type: evidence
+title: The host harness closes the loop through a truth plant the control law does not share (SOL-SIM-STEAM-BAND-SUSTAINED.C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_a_disturbance_to_the_truth_plant_alone_reaches_the_law, firmware/test/test_steam_control/test_steam_control.c::test_a_machine_unlike_the_declarations_own_holds_the_band_less_well, firmware/test/test_steam_control/test_steam_control.c::test_pressure_holds_the_band_for_draws_of_every_duration_across_the_declared_error
+text: |-
+  All pass. The harness publishes what the truth plant reports through the simulated hardware seam, runs the control step, then advances that plant under the levels the step actually got onto the two channels -- so the law never sees the plant except through the seam. Two tests establish the instances are genuinely distinct rather than agreeing by construction: cooling the truth plant and nothing else moves the duty, which can only happen through the seam; and a machine whose steam path sags four times as hard as the declaration was sized against holds the band measurably worse than one it was sized for. Against an arrangement where the only model in the loop is the law's own view, both would pass for free.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C9
+    type: satisfies

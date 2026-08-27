@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The steam loop holds its character for the whole draw in simulation
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 4
 text: |

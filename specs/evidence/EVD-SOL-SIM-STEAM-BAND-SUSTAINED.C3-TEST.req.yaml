@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C3-TEST
+type: evidence
+title: The ready temperature target and the draw-time pressure band are declared data with recorded origins (SOL-SIM-STEAM-BAND-SUSTAINED.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:12Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_the_declared_ready_target_is_where_the_loop_settles, firmware/test/test_steam_control/test_steam_control.c::test_the_declared_band_decides_which_draws_the_suite_accepts, firmware/test/test_steam_control/test_steam_control.c::test_the_declaration_grammar_refuses_what_it_must
+text: |-
+  All three pass. Two declarations differing only in a declared ready temperature settle the same machine at the two temperatures they name, ten degrees apart, with nothing rebuilt between them. The same draw against the same machine is then judged against two declared bands and the suite's own verdict moves with the declaration. The grammar test is the 'undeclared fails the gate' half: it drives every fault the loader can report, and carries one arm per declared figure -- generated from the word macros rather than written out -- asserting that a declaration leaving that figure out is refused as missing and names it. Every figure carries an origin kind and an account in params/steam_control.declaration.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C3
+    type: satisfies

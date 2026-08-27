@@ -55,6 +55,7 @@
 #define ESTIMATOR_LIMITS_BREW_PRESSURE_WORD "brew-pressure"
 #define ESTIMATOR_LIMITS_STEAM_PRESSURE_WORD "steam-pressure"
 #define ESTIMATOR_LIMITS_FLOW_WORD "flow"
+#define ESTIMATOR_LIMITS_STEAM_KNOB_WORD "steam-knob"
 
 /*
  * Every channel word, in the order the channels are enumerated in, so that a
@@ -67,7 +68,7 @@
     {                                                                                              \
         ESTIMATOR_LIMITS_BREW_TEMPERATURE_WORD, ESTIMATOR_LIMITS_STEAM_TEMPERATURE_WORD,           \
             ESTIMATOR_LIMITS_BREW_PRESSURE_WORD, ESTIMATOR_LIMITS_STEAM_PRESSURE_WORD,             \
-            ESTIMATOR_LIMITS_FLOW_WORD                                                             \
+            ESTIMATOR_LIMITS_FLOW_WORD, ESTIMATOR_LIMITS_STEAM_KNOB_WORD                           \
     }
 
 /*

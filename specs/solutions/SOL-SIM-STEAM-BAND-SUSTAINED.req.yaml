@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The steam control law holds temperature at ready, pressure during a draw, and recovers unattended
 status: active
-version: 4
+version: 5
 text: |
   The control law that holds steam character for a whole draw, and recovers afterward, is built here, in host simulation against the plant description. No control law drives the steam heater or steam feed today: the control unit only ever computes brew heater duty, and nothing writes either steam channel, so both are fully open-loop.
 
@@ -22,6 +22,12 @@ rationale: |
   Cutting feed immediately on demand ending, and treating recovery as the same mechanism as ready-holding rather than a distinct one, follows from the pressure-at-rest relation itself: once the draw stops costing the block anything, there is nothing recovery needs to do that holding ready does not already do. Building a second recovery-specific control path would be maintaining two mechanisms for one behaviour.
 
   Declining to assert a tight numerical bound on how far pressure may sag under a draw, or how quickly it recovers, is deliberate rather than a gap: the plant description's own account names the coefficient governing draw-time pressure sag as a first-principles guess, the loosest figure it carries, because a thermoblock holds no reservoir and nobody has instrumented this behaviour on a machine of this type. Asserting precision the model does not have would be testing the guess rather than the loop, and that coefficient is the strongest candidate for revision once a bench exists.
+
+  Two things the build established that the text above did not anticipate, recorded here because they are properties of this loop against this model rather than of any one test.
+
+  A draw leaves the block hotter than it found it, not cooler. Holding the band while the path's deficit accumulates can only be done by raising the block, since the saturation relation is the only term that rises against a deficit that only grows; and the feed-withhold policy this loop carries in front of it cuts feed the moment measured pressure falls below the ready threshold, so a draw cannot run the block down even at a rate the element cannot sustain. The recovery this loop performs is therefore a descent to the ready target under standing loss rather than a climb back to it, and the state the recovery criterion's own text anticipates -- a block drawn down by the draw -- is not reachable through the loop at all. It is reached in test by disturbing the machine directly, and both directions are asserted, because which one a real machine shows is a bench question this model cannot settle and the answer decides how long a second jug waits.
+
+  The depended-on feed-withhold gate's enabling criterion now holds with a qualification its own text does not carry. That criterion reads that feed is commanded nonzero once measured pressure reaches the ready threshold, and scopes out what duty the band-holding loop then commands. Under this loop feed is nonzero only while a draw is under way and past both its declared intervals: with the wand shut the threshold is reached and nothing is fed, because a block nothing is being drawn from needs no water pushed into it. That is a narrowing of when the gate's criterion is observable rather than a contradiction of what it asserts, and it is recorded here rather than left in the test that had to be rewritten around it.
 links:
   - target: DEC-STEAM-PRESSURE-SENSOR-ADDED
     type: justified-by
@@ -30,6 +36,8 @@ links:
   - target: DEL-SIM-STEAM-LOOP.C3
     type: derives-from
   - target: DEL-SIM-STEAM-LOOP.C4
+    type: derives-from
+  - target: DEL-SIM-STEAM-LOOP.C5
     type: derives-from
   - target: REQ-MEASUREMENT-001.C3
     type: targets
@@ -45,5 +53,3 @@ links:
     type: targets
   - target: SOL-SIM-STEAM-READINESS-GATE
     type: depends-on
-  - target: DEL-SIM-STEAM-LOOP.C5
-    type: derives-from

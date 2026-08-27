@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C12-TEST
+type: evidence
+title: Once engaged, feed rises to its sustainable rate over a declared interval rather than stepping (SOL-SIM-STEAM-BAND-SUSTAINED.C12)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_engaged_feed_rises_over_the_declared_interval_rather_than_stepping
+text: |-
+  Passes. Two arms differing in one declared figure, with the margin-building interval held fixed at its shipped nonzero value in both and asserted to be so -- the mirror of the margin criterion's own test, each holding the other's interval nonzero so neither is exercised as if it alone explained a good start. With the rise zeroed, feed is at the full declared rate on the first control step past engagement; with the rise present it is not. The rise is then asserted to be a rise rather than a delay followed by a step: the level is required to be non-decreasing, to climb strictly somewhere inside the declared interval, never to exceed the declared rate, and to have arrived at it by the end of the interval.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C12
+    type: satisfies

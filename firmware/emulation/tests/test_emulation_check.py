@@ -35,6 +35,7 @@ SENSOR_CHANNELS = {
     2: "HW_SENSOR_BREW_PRESSURE",
     3: "HW_SENSOR_STEAM_PRESSURE",
     4: "HW_SENSOR_FLOW",
+    5: "HW_SENSOR_STEAM_KNOB",
 }
 OUTPUT_CHANNELS = {
     0: "ACTUATION_CHANNEL_BREW_HEATER",
@@ -43,10 +44,14 @@ OUTPUT_CHANNELS = {
     3: "ACTUATION_CHANNEL_STEAM_PUMP",
 }
 
-# The channel this board wires no converter input to. It is in the set above
-# and answers by saying nothing is there, which is a different answer from a
-# reading of zero.
-UNWIRED_SENSOR_CHANNEL = 4
+# The channels this board wires no converter input to. Both are in the set
+# above and both answer by saying nothing is there, which is a different answer
+# from a reading of zero. They are unwired for different reasons -- the flow
+# meter is wired to the OEM controller this project replaces, and the steam
+# knob's microswitch is a contact no converter input could back whatever it
+# were wired to -- but the answer the seam owes for them is the same, so this
+# is a set rather than a pair of separately-named channels.
+UNWIRED_SENSOR_CHANNELS = frozenset({4, 5})
 
 HW_READING_ABSENT = 0
 HW_READING_FAILED = 1
@@ -190,7 +195,7 @@ class SensorChannelsAreModelled(unittest.TestCase):
     # the status and figure the model was put into.
     def test_every_wired_sensor_channel_reports_the_figure_its_own_input_was_given(self):
         for channel, name in SENSOR_CHANNELS.items():
-            if channel == UNWIRED_SENSOR_CHANNEL:
+            if channel in UNWIRED_SENSOR_CHANNELS:
                 continue
             with self.subTest(channel=name):
                 counts = FINDINGS["injected"][channel]
@@ -208,7 +213,7 @@ class SensorChannelsAreModelled(unittest.TestCase):
     def test_no_two_sensor_channels_reported_the_same_figure(self):
         reported = [FINDINGS["sensor"][channel]["value_milli"]
                     for channel in SENSOR_CHANNELS
-                    if channel != UNWIRED_SENSOR_CHANNEL]
+                    if channel not in UNWIRED_SENSOR_CHANNELS]
         self.assertEqual(
             len(set(reported)), len(reported),
             "two sensor channels reached the same modelled converter input")
@@ -219,7 +224,7 @@ class SensorChannelsAreModelled(unittest.TestCase):
     # reads back exactly the status and figure the model was put into.
     def test_each_wired_channel_caused_exactly_one_conversion_on_its_own_input(self):
         for channel, name in SENSOR_CHANNELS.items():
-            if channel == UNWIRED_SENSOR_CHANNEL:
+            if channel in UNWIRED_SENSOR_CHANNELS:
                 continue
             with self.subTest(channel=name):
                 self.assertEqual(
@@ -229,14 +234,17 @@ class SensorChannelsAreModelled(unittest.TestCase):
     # SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C2: ... a model that can be
     # driven into every reading status the interface defines -- a channel with
     # nothing fitted ...
-    def test_the_channel_this_board_wires_nothing_to_answers_by_saying_so(self):
-        reading = FINDINGS["sensor"][UNWIRED_SENSOR_CHANNEL]
+    def test_the_channels_this_board_wires_nothing_to_answer_by_saying_so(self):
+        for channel in sorted(UNWIRED_SENSOR_CHANNELS):
+            with self.subTest(channel=SENSOR_CHANNELS[channel]):
+                reading = FINDINGS["sensor"][channel]
+                self.assertEqual(
+                    reading["status"], HW_READING_ABSENT,
+                    "%s reported something other than absence, though no converter input backs it"
+                    % SENSOR_CHANNELS[channel])
         self.assertEqual(
-            reading["status"], HW_READING_ABSENT,
-            "%s reported something other than absence, though no converter input backs it"
-            % SENSOR_CHANNELS[UNWIRED_SENSOR_CHANNEL])
-        self.assertEqual(
-            sum(FINDINGS["conversions"].values()), len(SENSOR_CHANNELS) - 1,
+            sum(FINDINGS["conversions"].values()),
+            len(SENSOR_CHANNELS) - len(UNWIRED_SENSOR_CHANNELS),
             "a conversion was started that no wired channel accounts for")
 
     # SOL-EMULATED-BINARY-AND-MODELLED-PERIPHERALS.C2: ... a model that can be
@@ -270,9 +278,9 @@ class SensorChannelsAreModelled(unittest.TestCase):
         self.assertIn(
             channel, SENSOR_CHANNELS,
             "the channel driven into failure is not one the seam declares")
-        self.assertNotEqual(
-            channel, UNWIRED_SENSOR_CHANNEL,
-            "failure was provoked on the channel with nothing fitted, where it "
+        self.assertNotIn(
+            channel, UNWIRED_SENSOR_CHANNELS,
+            "failure was provoked on a channel with nothing fitted, where it "
             "cannot be told from absence")
 
         reading = FINDINGS["failed"][channel]
@@ -291,8 +299,9 @@ class SensorChannelsAreModelled(unittest.TestCase):
         # left alone, and a different channel reports absence throughout.
         self.assertEqual(
             FINDINGS["sensor"][channel]["status"], HW_READING_VALID)
-        self.assertEqual(
-            FINDINGS["sensor"][UNWIRED_SENSOR_CHANNEL]["status"], HW_READING_ABSENT)
+        for unwired in sorted(UNWIRED_SENSOR_CHANNELS):
+            self.assertEqual(
+                FINDINGS["sensor"][unwired]["status"], HW_READING_ABSENT)
         self.assertEqual(
             len({HW_READING_ABSENT, HW_READING_FAILED, HW_READING_VALID}), 3)
 

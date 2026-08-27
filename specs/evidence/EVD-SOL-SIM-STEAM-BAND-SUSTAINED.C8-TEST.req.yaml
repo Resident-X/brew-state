@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C8-TEST
+type: evidence
+title: The heater leads and the feed lags by the declared margin-building interval (SOL-SIM-STEAM-BAND-SUSTAINED.C8)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_the_heater_leads_and_the_feed_lags_by_the_declared_interval
+text: |-
+  Passes. Two arms differing in one declared figure, with the feed's own rise held fixed at its shipped nonzero value in both and asserted to be so, so neither arm can be explained by the rise instead of the interval under test. Both start from a block correctly held at the declared ready target. With the margin-building interval present the element alone carries the block into the band before any steam is made and the first steam delivered is in band; with it zeroed, feed begins replacing water immediately and the first steam is out of band. That the element leads is asserted twice: on the first step of an ordinary draw, and again on a draw beginning with the path already in the middle of its band, where the tracking law alone would command little more than the standing load so a ceiling can only have come from the sequencing. Sabotage check: removing the leading behaviour fails the second assertion (expected 1000, was 158); the first alone would have passed.
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C8
+    type: satisfies

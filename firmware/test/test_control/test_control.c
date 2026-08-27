@@ -256,6 +256,7 @@ static void test_drive_level_stays_within_full_scale_at_extremes(void)
                                           "brew-pressure = -2147483647 .. 2147483647\n"
                                           "steam-pressure = -2147483647 .. 2147483647\n"
                                           "flow = -2147483647 .. 2147483647\n"
+                                          "steam-knob = 0 .. 1000\n"
                                           "loss-tolerance-window-ms = 4000000000\n"
                                           "excursion-bound-milli-c = 2147483647\n";
     const int32_t readings[] = { INT32_MIN, -1000000, 0, BREW_TARGET_MILLI_C, INT32_MAX };

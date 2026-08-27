@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C6-TEST
+type: evidence
+title: Settled feed is the declared sustainable rate whatever demand is behind the wand (SOL-SIM-STEAM-BAND-SUSTAINED.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-26T23:17:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_settled_feed_is_the_declared_rate_whatever_demand_is
+text: |-
+  Passes. Three demands -- 0.25, 1.0 and 5.0 millilitres a second, all above the declared sustainable rate -- are put behind the same open wand, and the commanded feed is asserted equal to the declared rate on every step past the margin interval and the feed's rise. Sampling only past the rise is deliberate: the rise is a separate criterion's concern. The point the criterion makes is that no law here could vary feed with demand even if it wanted to, because the microswitch reports only that the wand is turned. Sabotage check: removing the cap fails this test (expected 67, was 1000).
+links:
+  - target: SOL-SIM-STEAM-BAND-SUSTAINED.C6
+    type: satisfies

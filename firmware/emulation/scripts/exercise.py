@@ -43,7 +43,7 @@ TIM3_WRITES = TIM3_BASE + 0x100
 # written here -- and the suite outside asserts them against the enumerations in
 # hw_interface.h and machine_actuation.h, so a channel added to either without a
 # line here is a failure rather than a channel the run quietly skips.
-SENSOR_CHANNEL_COUNT = 5
+SENSOR_CHANNEL_COUNT = 6
 OUTPUT_CHANNEL_COUNT = 4
 CONVERTER_INPUTS = 4
 
@@ -142,7 +142,7 @@ print("EMU startup %d" % startup_steps)
 print("EMU init %d" % call("hw_stm32_init", []))
 report_outputs("after-init", 0, 1)
 
-# Every sensor channel the seam declares, including the one this board wires no
+# Every sensor channel the seam declares, including the ones this board wires no
 # converter input to, and one past the end of the set.
 for channel in range(SENSOR_CHANNEL_COUNT + 1):
     status, value = read_sensor(channel)

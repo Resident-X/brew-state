@@ -61,6 +61,29 @@ steam-pressure = -1000 .. 20000 @estimated Estimated on the same basis as the br
 # a delivery is running fast.
 flow = -1000 .. 20000 @estimated Estimated from the rate the brew pump is taken to command into an open path -- pump.flow_ml_per_s in thermoblock.params, 7 ml/s, itself a judgement rather than a reading -- with the high set at nearly three times it so that no rate this machine can develop is refused, and the low set below zero to admit the small reverse movement a brew path shows as it relaxes. The fitted meter's part, position and resolution are not yet established, so this is not the range of a chosen part and it is not a measurement of anything.
 
+# Whether the steam control knob is turned, as the microswitch behind it
+# reports it. The two ends of the span are the two answers the hardware seam
+# spells for a discrete channel, so unlike every channel above -- where the
+# span is drawn wide around a quantity that genuinely varies -- this one sits
+# exactly on what the seam admits.
+#
+# What it refuses is a reading outside that pair, which is the same thing every
+# other channel's span refuses: the disconnected input reading full scale, the
+# shorted one reading past zero. What it does not refuse is a figure between
+# the two, and the distinction is worth being exact about. A span is an
+# inclusive range, so a contact reported half made is admitted by this line;
+# what refuses it is the consumer, which asks whether the reading is the seam's
+# set value rather than whether it is inside this span. That division is
+# deliberate -- this file says what a reading off this machine could be, and
+# which of the two answers means the knob is turned is the seam's vocabulary
+# rather than this machine's -- but it does mean this line is not on its own
+# what keeps a half-made contact from reading as a draw.
+#
+# It is declared all the same, on the same terms as every other channel,
+# because a channel carrying no bounds is the failure worth preventing whether
+# or not a reading could plausibly land outside them.
+steam-knob = 0 .. 1000 @estimated Read off the hardware seam's own spelling of a discrete reading rather than estimated from anything about this machine: the low end is the seam's cleared value and the high end its set value. The microswitch itself has not been on a bench, its part is not established, and where in the knob's travel it closes is not established either -- none of which this span depends on, since a contact reports one of two answers whatever the travel that produced it.
+
 # How long a reconstructed state may go with no usable observation among the
 # channels it depends on before the estimator stops answering for it.
 #
