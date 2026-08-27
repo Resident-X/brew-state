@@ -543,10 +543,17 @@ def observed_series(findings):
     return series
 
 
-def brew_draw(executable, description, limits, course, scale, name):
-    """One brew draw, and the delivered temperature it produced per interval."""
+def brew_draw(executable, description, limits, course, scale, name, control_description=None):
+    """One brew draw, and the delivered temperature it produced per interval.
+
+    `control_description` is carried through to the draw untouched: it names the
+    description the loop's control path reconstructs from, and left off the
+    machine's own is used for both. What it is for is stated where the draw
+    itself takes it, and nothing about how a delivery is read off the run
+    changes with it.
+    """
     findings = cross_tier.host_draw(executable, description, limits, BREW_TARGET_C, course,
-                                    scale, name=name)
+                                    scale, name=name, control_description=control_description)
     delivered = [reported["outlet_c"] for reported in findings["trajectory"]]
     if any(value is None for value in delivered):
         raise SweepError(
@@ -818,7 +825,7 @@ def digest_of(path):
 
 def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
         tolerance=TOLERANCE_DECLARATION, pio=base.DEFAULT_PIO, executable=None,
-        workspace=BUILD_DIR):
+        workspace=BUILD_DIR, control_description=None):
     """Sweep every coefficient carrying a declared error, and rank what it did.
 
     `description` and `limits` default to the two files the target build carries
@@ -836,6 +843,25 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
     findings are in memory by then -- but anything that goes back to the files
     to establish what a run actually handed the machine would be reading the
     other model's.
+
+    `control_description` decides which of two questions the sweep is asking,
+    and it is the one argument here that changes what the answer means rather
+    than which machine it is about. Left off, every perturbed corner is handed
+    to the machine and to the coffee side's control path alike: what is then
+    compared is two machines each built consistently to its own coefficients,
+    which is the question a commissioning check asks. Named, the control path is
+    held at that one description for every run while the machine is perturbed
+    away from it -- which is what fouling and ageing do to a machine whose
+    controller nobody has re-measured, and it is the question a machine in
+    service asks. Both are worth taking and neither answers the other, so the
+    argument exists rather than one of the two being chosen here.
+
+    Only the coffee side can be asked the second question, and the reason is
+    structural rather than a limit of this sweep: the steam law is built from
+    its own declaration and from no description of a casting at all, so there is
+    nothing on that side for a perturbation to be kept out of. Its runs are made
+    the same way whichever question is being asked, and a caller comparing two
+    sweeps will find that side's figures standing exactly where they were.
     """
     carried_description, carried_limits = cross_tier.carried_declarations()
     description = description or carried_description
@@ -853,7 +879,8 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
     os.makedirs(workspace, exist_ok=True)
 
     reference = {
-        BREW_SIDE: brew_draw(executable, description, limits, brew, scale, "nominal-brew"),
+        BREW_SIDE: brew_draw(executable, description, limits, brew, scale, "nominal-brew",
+                             control_description=control_description),
         STEAM_SIDE: steam_draw(executable, description, limits, declaration, ready_c, steam,
                                "nominal-steam"),
     }
@@ -919,7 +946,13 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
                 label = "%s-%s-%s" % (name, corner, side)
                 try:
                     if side == BREW_SIDE:
-                        run_findings = brew_draw(executable, written, limits, brew, scale, label)
+                        # The perturbed description goes to the machine. Where a
+                        # control description was named it does not go to the
+                        # control path as well, which is the whole of what makes
+                        # this a drifted machine rather than a differently built
+                        # one.
+                        run_findings = brew_draw(executable, written, limits, brew, scale, label,
+                                                 control_description=control_description)
                     else:
                         run_findings = steam_draw(executable, written, limits, declaration,
                                                   ready_c, steam, label)
@@ -1005,6 +1038,19 @@ def run(description=None, limits=None, declaration=STEAM_CONTROL_DECLARATION,
 
     return {
         "description": description,
+        # What the coffee side's control path reconstructed from throughout,
+        # which is the machine's own description where no second one was named.
+        # Recorded rather than left to be inferred from whether an argument was
+        # passed, because which of the two questions a set of findings answers
+        # is not something a reader of them should have to reconstruct.
+        "control_description": description if control_description is None else control_description,
+        # Whether the perturbations reached the control path along with the
+        # machine. It is the same statement as the pair above where the sweep is
+        # unperturbed, and it is not the same statement once a corner is run:
+        # a sweep naming the machine's own description as the control path's
+        # holds the control path at the unperturbed figures while every corner
+        # moves the machine, which the two paths alone cannot say.
+        "control_path_follows_the_machine": control_description is None,
         "limits": limits,
         "declaration": declaration,
         "tolerance": tolerance,

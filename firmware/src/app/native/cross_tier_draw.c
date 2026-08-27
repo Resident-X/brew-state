@@ -9,6 +9,15 @@
  * reads its sensors through one, and a reading that skipped the converter would
  * be a different input, not the same one measured differently.
  *
+ * The machine and the control path are stood up from separate descriptions,
+ * handed in separately. Where the two are the same record the run is what it
+ * always was; where they differ it is a machine its controller is wrong about,
+ * which is what a casting that has fouled or aged is. The difference is not
+ * cosmetic: the loop drives a reconstruction built from whichever description
+ * the control path was given, so a controller holding the old figures holds its
+ * own estimate at the target rather than the delivery, and what reaches the
+ * channels is smaller than it is when the controller knows.
+ *
  * What the converter reports has to be able to reach what is commanded next, or
  * modelling it is decoration. That is why the draw commands a course of flow
  * alongside its temperature: with the pump off, the water on its way to the
@@ -287,7 +296,8 @@ static const float *delivered_or_not(const plant_model_t *machine, bool kept, fl
     return into;
 }
 
-int cross_tier_draw_run(const plant_parameters_t *parameters,
+int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
+                        const plant_parameters_t *control_parameters,
                         const estimator_limits_t *limits,
                         const delivery_tolerance_t *tolerance,
                         const cross_tier_draw_t *draw)
@@ -298,7 +308,7 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
     float outlet_c = 0.0f;
     float drawn_ml_per_s = 0.0f;
 
-    if (!plant_model_init(&machine, parameters)) {
+    if (!plant_model_init(&machine, machine_parameters)) {
         (void)fprintf(stderr, "cross-tier draw: the machine could not be initialised\n");
         return 1;
     }
@@ -327,7 +337,7 @@ int cross_tier_draw_run(const plant_parameters_t *parameters,
     report("trajectory-baseline", -1, 0, 0u, 0u, 0uL, values,
            delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
 
-    if (!control_init(&state, parameters, limits, tolerance)) {
+    if (!control_init(&state, control_parameters, limits, tolerance)) {
         (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
         return 1;
     }

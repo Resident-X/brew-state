@@ -17,8 +17,21 @@
  *
  * The parameter description is named on the command line rather than compiled
  * in, so the same executable runs different parameter values without being
- * rebuilt. It is loaded once and handed to both paths, because the control path
- * now drives from a state reconstructed against that same record.
+ * rebuilt. It is the machine's, and by default it is handed to the control path
+ * as well, because the control path drives from a state reconstructed against a
+ * record of the machine and the ordinary case is that the record it holds is
+ * the right one.
+ *
+ * The brew draw can be given a second description for that control path, and
+ * then the two come apart: the machine is built from the first and the
+ * reconstruction the loop drives from is built from the second. That is what a
+ * machine which has fouled or aged is -- a casting somewhere its controller's
+ * figures no longer describe -- and it is not the same experiment as two
+ * machines each built consistently to its own coefficients. Naming it rather
+ * than deriving it, on the terms the limits declaration is named rather than
+ * substituted for: a run whose two descriptions are the same file has said so,
+ * and a run whose control path was quietly given the machine's would be
+ * reporting the first experiment under the second's name.
  *
  * The limits declaration is named beside it on the same terms. It says what a
  * reading off this machine may plausibly be and how long the estimator may go
@@ -90,6 +103,27 @@
 #define DRAW_ARGUMENTS 4
 #define STEAM_DRAW_OPTION "--steam-draw"
 #define STEAM_DRAW_ARGUMENTS 3
+
+/*
+ * What names the description the brew draw's control path is built from, and
+ * how many arguments follow it.
+ *
+ * It is written after the draw's own arguments rather than beside the
+ * description at the front, and the position says what it is: the description
+ * at the front is the machine's, which every mode needs, and this one is a
+ * statement about one draw's control path that only that draw can act on. A
+ * second description at the front would have to mean something to the exercise
+ * and to the steam draw as well, and it means nothing to either -- the exercise
+ * walks the control logic's paths against the machine it was given, and the
+ * steam law is built from its own declaration and no description at all.
+ *
+ * Leaving it off is not an omission and is the ordinary case: a draw handed one
+ * description gives it to the machine and the control path alike, which is what
+ * a comparison of two tiers running the same machine needs and what every
+ * caller before this option existed was asking for.
+ */
+#define CONTROL_DESCRIPTION_OPTION "--control-description"
+#define CONTROL_DESCRIPTION_ARGUMENTS 1
 
 /* Steps to run in each phase of the exercise. */
 #define EXERCISE_STEPS 64
@@ -398,8 +432,14 @@ static bool read_the_course(const char *path, unsigned long ceiling, const char 
  * and the course are what the draw is; the converter's full scale is a fact
  * about a board this tier does not have, and a run comparing this loop against
  * one closed through a real converter has to hold both to the same reporting.
+ *
+ * The two descriptions arrive already loaded, and both are required. Where the
+ * caller named no second one it hands this the same record twice, which is a
+ * loop that knows the machine it is driving; where it named one they differ,
+ * and the loop is driving a machine its own figures no longer describe.
  */
-static int run_the_draw(char **arguments, const plant_parameters_t *parameters,
+static int run_the_draw(char **arguments, const plant_parameters_t *machine_parameters,
+                        const plant_parameters_t *control_parameters,
                         const estimator_limits_t *limits,
                         const delivery_tolerance_t *tolerance)
 {
@@ -472,7 +512,8 @@ static int run_the_draw(char **arguments, const plant_parameters_t *parameters,
     draw.pump_permille = levels;
     draw.interval_count = intervals;
 
-    const int outcome = cross_tier_draw_run(parameters, limits, tolerance, &draw);
+    const int outcome =
+        cross_tier_draw_run(machine_parameters, control_parameters, limits, tolerance, &draw);
     free(cadence);
     free(levels);
     return outcome;
@@ -695,6 +736,37 @@ static void exercise_plant(const plant_parameters_t *parameters)
     exercise_refused_limits();
 }
 
+/*
+ * Read one parameter description and stand it up, reporting why if it is
+ * refused.
+ *
+ * One reader for however many descriptions a run names, because a second copy
+ * of it would be free to admit a description on terms the first does not -- and
+ * the whole of what a run naming two of them means is that the same kind of
+ * statement was made twice about two different things. A machine admitted by
+ * one set of checks and a controller's record admitted by another would not be
+ * comparable at all.
+ */
+static bool load_a_description(const char *path, plant_parameters_t *into)
+{
+    size_t length = 0u;
+    char *text = read_file(path, &length);
+    if (text == NULL) {
+        return false;
+    }
+
+    plant_parameter_error_t error;
+    const bool loaded = plant_parameters_load(text, length, into, &error);
+    free(text);
+
+    if (!loaded) {
+        (void)fprintf(stderr,
+                      "host exercise: parameter description %s refused: %s (fault %d, line %u)\n",
+                      path, error.parameter, (int)error.fault, error.line);
+    }
+    return loaded;
+}
+
 int main(int argc, char **argv)
 {
     control_state_t state;
@@ -705,10 +777,20 @@ int main(int argc, char **argv)
      * the arguments that option takes follow it; anything else past the limits
      * declaration is an unrecognised ask and is refused with the whole usage
      * rather than being run as the mode it most resembles.
+     *
+     * The brew draw is the one mode that admits a further option after its own
+     * arguments, and it is admitted only in that one position and only under
+     * its own name. A trailing argument accepted on its position alone would
+     * make a mistyped option a control-path description, which is a run that
+     * proceeds and answers the wrong question.
      */
     const bool something_requested = argc > 3;
-    const bool draw_requested = something_requested && strcmp(argv[3], DRAW_OPTION) == 0 &&
-                                argc == 4 + DRAW_ARGUMENTS;
+    const bool draw_named = something_requested && strcmp(argv[3], DRAW_OPTION) == 0;
+    const bool drifted_draw_requested =
+        draw_named && argc == 4 + DRAW_ARGUMENTS + 1 + CONTROL_DESCRIPTION_ARGUMENTS &&
+        strcmp(argv[4 + DRAW_ARGUMENTS], CONTROL_DESCRIPTION_OPTION) == 0;
+    const bool draw_requested = draw_named && (argc == 4 + DRAW_ARGUMENTS ||
+                                               drifted_draw_requested);
     const bool steam_draw_requested = something_requested &&
                                       strcmp(argv[3], STEAM_DRAW_OPTION) == 0 &&
                                       argc == 4 + STEAM_DRAW_ARGUMENTS;
@@ -718,7 +800,8 @@ int main(int argc, char **argv)
                       "usage: %s <parameter-description> <limits-declaration>\n"
                       "       %s <parameter-description> <limits-declaration> "
                       DRAW_OPTION " <target-c> <converter-full-scale-counts> "
-                      "<converter-full-scale-milli> <course-file>\n"
+                      "<converter-full-scale-milli> <course-file> "
+                      "[" CONTROL_DESCRIPTION_OPTION " <parameter-description>]\n"
                       "       %s <parameter-description> <limits-declaration> "
                       STEAM_DRAW_OPTION " <steam-control-declaration> <initial-steam-c> "
                       "<course-file>\n",
@@ -727,21 +810,21 @@ int main(int argc, char **argv)
         return 2;
     }
 
-    size_t length = 0u;
-    char *description = read_file(argv[1], &length);
-    if (description == NULL) {
+    plant_parameters_t parameters;
+    if (!load_a_description(argv[1], &parameters)) {
         return 1;
     }
 
-    plant_parameters_t parameters;
-    plant_parameter_error_t error;
-    const bool loaded = plant_parameters_load(description, length, &parameters, &error);
-    free(description);
-
-    if (!loaded) {
-        (void)fprintf(stderr,
-                      "host exercise: parameter description refused: %s (fault %d, line %u)\n",
-                      error.parameter, (int)error.fault, error.line);
+    /*
+     * The record the brew draw's control path drives its reconstruction from.
+     * It is the machine's own unless a second description was named, and where
+     * one was it is loaded and admitted on exactly the terms the machine's was
+     * -- a controller believing a description no structure would accept as a
+     * machine is not a drifted machine, it is a broken run.
+     */
+    plant_parameters_t control_parameters;
+    if (drifted_draw_requested &&
+        !load_a_description(argv[4 + DRAW_ARGUMENTS + 1], &control_parameters)) {
         return 1;
     }
 
@@ -790,7 +873,9 @@ int main(int argc, char **argv)
     }
 
     if (draw_requested) {
-        return run_the_draw(&argv[4], &parameters, &limits, &tolerance);
+        return run_the_draw(&argv[4], &parameters,
+                            drifted_draw_requested ? &control_parameters : &parameters, &limits,
+                            &tolerance);
     }
     if (steam_draw_requested) {
         return run_the_steam_draw(&argv[4], &parameters, &limits);

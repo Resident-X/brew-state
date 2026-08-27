@@ -308,24 +308,46 @@ def parse_host(output):
     return findings
 
 
-def host_draw(executable, description, limits, target_c, course, scale, name="draw"):
+def host_draw(executable, description, limits, target_c, course, scale, name="draw",
+              control_description=None):
     """Run one draw through the host tier's loop and report what it did.
 
-    `description` is an argument rather than read from the build because the
-    negative case this harness has to support is a draw run against a
-    description the other loop is not using, and a run that could not be given
-    one would leave the comparison unable to be shown failing at all.
+    `description` is the machine's, and it is an argument rather than read from
+    the build because the negative case this harness has to support is a draw
+    run against a description the other loop is not using, and a run that could
+    not be given one would leave the comparison unable to be shown failing at
+    all.
+
+    `control_description` is the description the loop's own control path
+    reconstructs from. Left off, the machine's own is used for both, which is
+    what a comparison of two tiers running the same machine needs and what every
+    caller asking for a draw before this argument existed was asking for.
+    Naming a second one holds the control path at a record of a machine while
+    the machine itself is elsewhere -- which is what fouling and ageing do to a
+    machine in service, and which is a different experiment from running a
+    machine built consistently to different coefficients. In the first the loop
+    is wrong about the machine and holds its own estimate at the target rather
+    than the delivery; in the second it is right about a different machine.
+
+    What the control path was actually built from comes back in the findings
+    rather than being left for a reader to infer from whether an argument was
+    passed, because everything downstream of a run has to be able to say which
+    of the two experiments it is reading.
     """
     course_file = write_course(course, os.path.join(BUILD_DIR, "%s-course.txt" % name))
     counts, milli = scale
+    command = [executable, description, limits, "--cross-tier-draw",
+               repr(float(target_c)), str(counts), str(milli), course_file]
+    if control_description is not None:
+        command += ["--control-description", control_description]
     completed = base.subprocess.run(
-        [executable, description, limits, "--cross-tier-draw",
-         repr(float(target_c)), str(counts), str(milli), course_file],
-        cwd=FIRMWARE_DIR, stdin=base.subprocess.DEVNULL, capture_output=True, text=True)
+        command, cwd=FIRMWARE_DIR, stdin=base.subprocess.DEVNULL, capture_output=True, text=True)
 
     findings = parse_host(completed.stdout)
     findings["executable"] = executable
     findings["description"] = description
+    findings["control_description"] = (description if control_description is None
+                                       else control_description)
     findings["limits"] = limits
     findings["course_file"] = course_file
     findings["returncode"] = completed.returncode
