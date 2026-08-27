@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C1-TEST
+type: evidence
+title: Steam loop conditional-integration proven to brew's own standard (SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T22:43:30Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_steam_control/test_steam_control.c::test_a_longer_saturated_interval_does_not_deepen_the_overshoot,firmware/test/test_steam_control/test_steam_control.c::test_intent_is_surrendered_at_the_limit_and_not_afterwards
+text: |-
+  Two tests mirror the brew loop's already-proven standard (test_control.c's test_a_longer_saturated_interval_does_not_deepen_the_overshoot and test_intent_is_surrendered_at_the_limit_and_not_afterwards), adapted to the steam loop's API. The forcing device pins the truth plant's PLANT_STATE_STEAM_TEMPERATURE_C each step to hold the heater against ACTUATION_FULL_SCALE for a controlled span, then releases it: a longer saturated interval leaves no deeper overshoot than a shorter one, and state.integral_permille is confirmed frozen while saturated and resumes once the loop is back in range. Both pass on task fw:verify (full gate, including the mutation sweep), and both were confirmed to fail when the conditional-integration guard in steam_control.c was temporarily disabled, verifying they catch the regression they exist to catch.
+links:
+  - target: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C1
+    type: satisfies
