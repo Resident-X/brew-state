@@ -80,26 +80,51 @@ averaging, and is called unresolvable here. Both err the same way, toward
 naming a coefficient not shown identifiable, which is the direction that cannot
 mislead somebody into leaving an instrument out.
 
-WHAT THE PERTURBATION MOVES, AND WHAT IT THEREFORE ANSWERS
+WHAT THE PERTURBATION MOVES, AND WHY IT IS DONE TWICE
 
-Each corner run hands one perturbed description to the whole build, and the
-build gives it to both the plant and the control path -- so the machine is
-different and the control path's own estimator already knows it. That is what
-the sweep this reads was built to do, and it makes the question answered here a
-precise one: if this machine were built to a coefficient that far from the
-description and everything about it were consistent, would the channels look
-different from a machine built to a different coefficient instead?
+The same determination is taken twice, over two sweeps that differ in one thing
+and nothing else, and both are reported.
 
-It is deliberately not the other question, and the difference is worth stating
-because the requirement that reaches this analysis raises it: a machine that
-fouls or ages moves away from a description the controller still believes. In
-that case the reconstruction is biased, the loop holds the estimate at target
-rather than the delivery, and the channel movement is smaller than the coupled
-case measured here -- so this analysis is optimistic about identifiability for
-drift, in the direction that could name a coefficient identifiable which a
-drifting machine would not reveal. Taking the decoupled reading needs a draw
-that can be handed one description for the machine and another for the control
-path, which this harness cannot presently do, and it is not attempted here.
+In the first, each corner run hands one perturbed description to the whole
+build, and the build gives it to both the plant and the control path -- so the
+machine is different and the control path's own estimator already knows it. The
+question that answers is precise: if this machine were built to a coefficient
+that far from the description and everything about it were consistent, would the
+channels look different from a machine built to a different coefficient instead?
+That is a commissioning question, and it is the one the sweep was originally
+built to ask.
+
+In the second, the perturbed description goes to the machine alone and the
+control path is held at the unperturbed one throughout. That is what fouling and
+ageing do: the casting moves away from figures its controller still believes.
+The reconstruction is then biased rather than merely different -- the loop holds
+its own estimate at the target instead of the delivery -- and what the channels
+carry changes with it.
+
+Which way it changes is computed here and not assumed, and it is not one way.
+Holding the control path still withdraws a correction, and a correction
+withdrawn can leave a coefficient's own error standing on the channels as
+readily as it can absorb it: on the model this presently runs against, the
+figure a verdict is taken on falls under drift for some coefficients and rises
+for others, and so does the reach the signature manages at all. So neither
+reading bounds the other, and neither is the conservative one to read alone. The
+record states which coefficients moved which way out of the two determinations,
+and names each crossing between the two sets of verdicts one at a time, rather
+than asserting a direction that a different model could contradict.
+
+Neither reading replaces the other. They answer different questions and a design
+needs both: whether two machines built differently could be told apart, and
+whether one machine going wrong could be caught. A coefficient identifiable
+under the first and not the second is the case worth naming, and the record
+names it, because it is the one where a machine that passes every commissioning
+check can still drift with nothing to report it.
+
+Only the coffee side can be asked the second question, and the reason is
+structural rather than a limitation here: the steam law is built from its own
+declaration and from no description of a casting at all, so there is nothing on
+that side for a perturbation to be kept out of and its figures stand where they
+were under either reading. The record says so from the runs rather than
+asserting it.
 
 WHAT IS IN SCOPE
 
@@ -213,6 +238,45 @@ REPRODUCED_BY_THE_OTHERS = "not shown identifiable: reproduced by a combination 
 
 #: Why a coefficient the sweep perturbed is not asked about here.
 REACHES_NO_RECONSTRUCTION = "reaches no reconstructed state"
+
+#: What the two readings are called wherever one of them has to be named.
+#:
+#: They are named for what was done to the machine rather than for the harness
+#: arrangement that produced them -- "coupled" and "decoupled" say what the two
+#: descriptions did and not what the machine did, and a reader of the record is
+#: being told about a machine. The first is two machines each built consistently
+#: to its own coefficients; the second is one machine that has moved away from
+#: the figures its controller still holds.
+BUILT_DIFFERENTLY = "built differently"
+DRIFTED = "drifted"
+
+#: What a coefficient the first reading shows identifiable and the second does
+#: not is called. It is the finding the second reading exists to produce: a
+#: machine that passes every commissioning check and then drifts with nothing to
+#: report it.
+HIDDEN_BY_DRIFT = "identifiable when built differently, not when drifted"
+
+#: How the second reading's scratch directory is named from the first's.
+#:
+#: A directory of its own rather than the first reading's, on the terms the
+#: sweep already states for a second model: every run writes one description per
+#: coefficient per corner under the same names, so two sweeps sharing a
+#: directory leave the second's standing where the first's were. Nothing reading
+#: a finished run would notice, and anything going back to the files to
+#: establish what a run handed the machine would be reading the other reading's.
+#:
+#: Derived from the first reading's directory rather than fixed, so that a
+#: replacement model analysed in a directory of its own gets a second reading in
+#: a directory of its own too. A fixed path here would put every model's second
+#: reading in the same place, which is the collision this avoids reintroduced
+#: one level down.
+DRIFTED_WORKSPACE_SUFFIX = "-drifted"
+
+
+def drifted_workspace(workspace):
+    """Where the second reading of a sweep taken in `workspace` writes its own
+    perturbed descriptions."""
+    return workspace + DRIFTED_WORKSPACE_SUFFIX
 
 #: The table in the hardware seam's implementation that says which converter
 #: input, if any, stands behind each of the seam's sensor channels, and what it
@@ -532,6 +596,77 @@ def unreproduced_part(subject, others, basis):
             combination_size(within, from_vector, overlaps, subject, len(others)))
 
 
+# --- The second reading: the machine alone ----------------------------------
+
+
+_DRIFTED = {}
+
+
+def drifted_sweep(findings):
+    """The same sweep again, with every perturbation applied to the machine
+    alone and the control path held at the description this one was taken
+    against.
+
+    The coupled findings are handed in rather than the files being named again,
+    for two reasons. The description, the limits, the steam declaration and the
+    band a delivery is held to have to be the same four files or the two
+    readings are of two machines and nothing can be concluded from their
+    disagreeing. And the host artefact is already built, so re-deriving it here
+    would pay for a second build to produce the same executable.
+
+    What is not shared is the workspace: the perturbed descriptions this reading
+    writes carry the same names as the first reading's, and one directory could
+    hold only one of them.
+
+    Cached against the machine it is about, on the terms the sweep caches its own
+    run: four host draws per coefficient is the most expensive thing in this
+    tier and every caller wants the same ones. Keyed rather than kept as a single
+    record, so that a suite analysing a replacement model gets that model's
+    second reading rather than the shipped machine's.
+    """
+    key = (findings["description"], findings["limits"], findings["declaration"],
+           findings["tolerance"], findings["workspace"])
+    if key not in _DRIFTED:
+        _DRIFTED[key] = sweep.run(
+            description=findings["description"], limits=findings["limits"],
+            declaration=findings["declaration"], tolerance=findings["tolerance"],
+            executable=findings["executable"],
+            workspace=drifted_workspace(findings["workspace"]),
+            control_description=findings["description"])
+    return _DRIFTED[key]
+
+
+def sides_the_readings_differ_on(findings, drifted_findings):
+    """Which sides' recorded signatures the two readings do not agree about.
+
+    Computed rather than stated, though what it will presently return is
+    predictable from the structure: the steam law is built from its own
+    declaration and from no description of a casting, so holding a control
+    description still cannot change anything that side does. Reporting that from
+    the runs is what keeps the record right on the day some steam-side law does
+    reconstruct something -- a statement written here instead would go on
+    claiming the two readings coincide there after they had stopped.
+    """
+    by_name = dict((entry["coefficient"], entry) for entry in drifted_findings["swept"])
+    differing = []
+    for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+        moved = False
+        for entry in findings["swept"]:
+            other = by_name.get(entry["coefficient"])
+            if other is None:
+                continue
+            for key in sweep.OBSERVED_CHANNELS:
+                if entry["signature"].get(side, {}).get(key) != \
+                        other["signature"].get(side, {}).get(key):
+                    moved = True
+                    break
+            if moved:
+                break
+        if moved:
+            differing.append(side)
+    return differing
+
+
 # --- The finding ------------------------------------------------------------
 
 
@@ -657,16 +792,222 @@ def determine(findings, reading=None):
     }
 
 
+def hidden_by_drift(finding, drifted_finding):
+    """Every coefficient the first reading shows identifiable that the second
+    does not.
+
+    Taken over the coefficients the first reading found identifiable, because
+    that is what the finding is a statement about: a coefficient the first
+    reading could not show identifiable either was never a commissioning check
+    anybody would have passed on, and there is nothing for drift to hide that
+    was not hidden already.
+
+    A coefficient the second reading gives no verdict of its own -- because that
+    reading found no reconstruction resting on it -- counts here on the same
+    terms as one it named not shown identifiable. Both are the machine failing
+    to reveal the coefficient once it has drifted, which is the whole of what
+    this asks; separating them would be reporting the reason a drifting machine
+    says nothing as though it changed whether it says nothing.
+
+    The two readings' figures come back beside the verdicts, because the size of
+    the drop is as much of the finding as the crossing of the threshold. A
+    coefficient whose distinguishing part falls from a hundred times what could
+    be read to just under it, and one that falls from just over to just under,
+    are the same verdict about very different machines.
+    """
+    when_drifted = dict((record["coefficient"], record)
+                        for record in drifted_finding["determination"])
+    hidden = []
+    for record in finding["determination"]:
+        if not record["in_scope"] or record["verdict"] != IDENTIFIABLE:
+            continue
+        drifted = when_drifted.get(record["coefficient"])
+        if drifted is not None and drifted["verdict"] == IDENTIFIABLE:
+            continue
+        hidden.append({
+            "coefficient": record["coefficient"],
+            "built_differently": record,
+            "drifted": drifted,
+            "verdict_when_drifted": (REACHES_NO_RECONSTRUCTION if drifted is None
+                                     else drifted["verdict"]),
+        })
+    return hidden
+
+
+def readings_agree_on(finding, drifted_finding):
+    """The coefficients both readings show identifiable, the ones neither shows
+    identifiable, and the ones only the second shows identifiable.
+
+    The three cases the crossing above does not cover, taken together so that
+    the four between them account for every coefficient a verdict was reached
+    about. Two readings and two verdicts leave four ways for a coefficient to
+    come out, and a record naming only the one it was built to find would leave
+    a reader intersecting two tables by eye for the other three.
+
+    The third is the counterpart of the crossing and it is asked for the same
+    reason the crossing is: a coefficient the drifted machine reveals and the
+    built-differently one does not is what a claim that drift can only hide
+    would rule out in advance. Whether this model produces one is a finding
+    about this model, so it is computed here rather than assumed away.
+
+    A coefficient only one reading found a reconstruction resting on has no pair
+    of verdicts to agree or disagree about, and is left out of all three -- the
+    scope section already reports that disagreement, and folding it in here
+    would report a difference in what was asked as a difference in the answer.
+    """
+    when_drifted = dict((record["coefficient"], record)
+                        for record in drifted_finding["determination"])
+    both, neither, only_drifted = [], [], []
+    for record in finding["determination"]:
+        if not record["in_scope"]:
+            continue
+        drifted = when_drifted.get(record["coefficient"])
+        if drifted is None or not drifted["in_scope"]:
+            continue
+        was = record["verdict"] == IDENTIFIABLE
+        now = drifted["verdict"] == IDENTIFIABLE
+        if was and now:
+            both.append(record["coefficient"])
+        elif not was and not now:
+            neither.append(record["coefficient"])
+        elif now:
+            only_drifted.append(record["coefficient"])
+    return both, neither, only_drifted
+
+
+#: The two figures the two readings are compared on where the comparison is
+#: about size rather than about a verdict, named here because the record and the
+#: checks over it both have to say which one a count is of.
+#:
+#: The first is what the verdict is taken on; the second is what has to clear a
+#: floor before the first is even asked. They can move opposite ways for one
+#: coefficient, which is why both are reported rather than one standing for the
+#: pair.
+THE_VERDICT_FIGURE = "the part no combination of the others reproduces"
+THE_REACH_FIGURE = "the largest the signature reached on any channel"
+
+
+def moved_between_readings(finding, drifted_finding):
+    """Which way each coefficient's figures moved when the control path was held
+    still, as {figure: (fell, rose, stood still)}.
+
+    Computed rather than stated, because the direction is not one direction and
+    a record asserting one would be asserting it of whichever model it was first
+    written against. Withdrawing the loop's correction can leave a coefficient's
+    own error standing on the channels as readily as it can absorb it, and both
+    happen -- so neither reading is an upper bound on the other and a reader told
+    that one of them was would be reading the tables through a claim they do not
+    support.
+
+    A figure moved by no more than the arithmetic's own rounding is reported as
+    having stood still. The guard is the one the orthogonalisation already uses
+    and it is derived for the same reason: below it a difference between two
+    projections is the double precision they were taken in and not a difference
+    between two machines.
+    """
+    when_drifted = dict((record["coefficient"], record)
+                        for record in drifted_finding["determination"])
+    moved = dict((figure, ([], [], [])) for figure in (THE_VERDICT_FIGURE, THE_REACH_FIGURE))
+    scoped = [record for record in finding["determination"] if record["in_scope"]]
+    guard = DOUBLE_PRECISION_RELATIVE_FLOOR * (len(scoped) + 1)
+    for record in scoped:
+        drifted = when_drifted.get(record["coefficient"])
+        if drifted is None or not drifted["in_scope"]:
+            continue
+        for figure, of in ((THE_VERDICT_FIGURE, lambda one: one["against_scoped"]["unique"]),
+                           (THE_REACH_FIGURE, lambda one: one["largest"])):
+            was, now = of(record), of(drifted)
+            fell, rose, stood = moved[figure]
+            entry = (record["coefficient"], was, now)
+            if abs(now - was) <= guard * max(abs(was), abs(now)):
+                stood.append(entry)
+            elif now < was:
+                fell.append(entry)
+            else:
+                rose.append(entry)
+    return moved
+
+
+def why_no_instrument_recovers(hidden):
+    """Why an instrument on a channel this record models does not buy back what
+    drift hides, coefficient by coefficient.
+
+    Asked because the crossing reads like a shopping list and is not one, and
+    the record contradicted itself over exactly that: it concluded from the same
+    figures that the unfitted channel was presently not worth spending on, and
+    then named the coefficient that channel would not recover as one an
+    instrument would be bought for.
+
+    It is not a fact about this model. Both figures a verdict is taken on -- the
+    reach and the part no combination of the others reproduces -- are maxima
+    over every channel the signature is laid out against, fitted or not. A
+    coefficient that failed one of them failed it on all of them, so a channel
+    given an instrument carries the same nothing the analysis already has for
+    it, and the crossing can never be the case for fitting one. Where an
+    instrument on a modelled channel would buy something, it is a coefficient
+    shown identifiable by that channel alone, which each reading's own account
+    of the unfitted channels reports.
+
+    The reason is still taken per coefficient, because the three ways the second
+    reading can lose one are three different things to tell a reader and only
+    one of them is about a confounding.
+    """
+    reasons = []
+    for entry in hidden:
+        drifted = entry["drifted"]
+        if drifted is None or not drifted["in_scope"]:
+            why = ("the drifted reading found no reconstruction resting on it, so it has no "
+                   "remainder to land on a channel at all")
+        elif drifted["verdict"] == BELOW_WHAT_A_READING_CARRIES:
+            why = ("nothing the drifted machine observes moves by an amount a reading could "
+                   "carry, on any channel here")
+        else:
+            why = ("what the drifted machine shows is what it would show if a combination of the "
+                   "others had drifted instead, and that holds on every channel here rather than "
+                   "on the fitted ones only")
+        reasons.append((entry, why))
+    return reasons
+
+
 # --- The record -------------------------------------------------------------
 
 #: The heading each part of the record sits under, named here because the checks
 #: that the committed record still says what this method produces read it back
 #: by them.
 MODEL_HEADING = "## The model this was run against"
+READINGS_HEADING = "## The two readings"
 FLOOR_HEADING = "## What each channel could resolve"
 SCOPE_HEADING = "## Which coefficients the question is about"
 SIGNATURE_HEADING = "## What each coefficient did to each channel"
 DETERMINATION_HEADING = "## What this machine could tell apart"
+DRIFT_DETERMINATION_HEADING = "## What a drifting machine would reveal"
+HIDDEN_HEADING = "## What drift hides"
+
+#: How each reading is put into a sentence that is about a machine rather than
+#: about the harness that produced it. Two forms, because both are needed and
+#: neither reads as the other: one names the machine a reading was taken over,
+#: and one is the clause that qualifies a finding about it.
+READING_CLAUSE = {
+    BUILT_DIFFERENTLY: "a machine built throughout to coefficients that far from the description",
+    DRIFTED: "a machine that has moved away from the description its controller still holds",
+}
+WHEN_THE_MACHINE_IS = {
+    BUILT_DIFFERENTLY: "when it is built differently",
+    DRIFTED: "when it has drifted",
+}
+
+
+def signature_heading(side, reading):
+    """The sub-heading one reading's per-channel table for one side sits under.
+
+    Both halves are in the name because the record carries one of these tables
+    per side per reading, and two of them cover the same side. A reader -- and
+    the check that the committed record is still the one this method produces --
+    finds a table by its heading, and a heading naming only the side would find
+    whichever of the two happened to be written first while reporting the other
+    one's figures as missing.
+    """
+    return "### On the %s draw, %s" % (side, reading)
 
 
 def _fitted_channels(source_path=None):
@@ -734,6 +1075,18 @@ def _relative(path):
     return os.path.relpath(os.path.abspath(path), REPOSITORY_DIR)
 
 
+def _heading_name(heading):
+    """What one of this record's sections is called, without the marks that make
+    it a heading.
+
+    Taken off the heading itself so that a sentence pointing a reader at another
+    section goes on pointing at it after that section is renamed. A name written
+    out a second time in the prose is a cross-reference that rots the first time
+    the two are edited apart.
+    """
+    return heading.lstrip("#").strip()
+
+
 def _listed(items):
     """Several things named in a sentence, joined the way a sentence joins them.
 
@@ -749,9 +1102,389 @@ def _listed(items):
     return "%s and %s" % (", ".join(items[:-1]), items[-1])
 
 
-def report_text(findings, finding):
+#: The heading one reading's own account of its verdicts sits under. Two
+#: readings under one record cannot both be introduced by the same sentence, and
+#: a reader arriving at the second half has to be told which machine it is about
+#: without scrolling back.
+VERDICTS_HEADING = {
+    BUILT_DIFFERENTLY: "### What the verdicts say",
+    DRIFTED: "### What the verdicts say once the machine has drifted",
+}
+
+
+def _write_floor_table(write, finding, fitted):
+    """What a difference on each channel of each side had to clear, for one
+    reading."""
+    write("| Side | Channel | Fitted | Largest magnitude reached | One last place there | What a "
+          "reading could carry | Floor used |")
+    write("|---|---|---|---|---|---|---|")
+    for side, key in finding["layout"]:
+        floor = finding["floors"][side][key]
+        unit = sweep.CHANNEL_UNIT[key]
+        write("| %s | `%s` | %s | %s %s | %s %s | %s %s | %s %s |"
+              % (side, key, "yes" if fitted[key] else "no",
+                 FIGURE_FORMAT % floor["peak"], unit,
+                 FIGURE_FORMAT % floor["arithmetic"], unit,
+                 FIGURE_FORMAT % floor["reading"], unit,
+                 FIGURE_FORMAT % floor["floor"], unit))
+    write("")
+
+
+def floors_that_differ(finding, drifted_finding):
+    """Which channels the two readings did not arrive at the same floor for.
+
+    Each reading takes its own peaks off its own runs, so each has its own
+    arithmetic floor, and nothing obliges the two to agree. What is presently
+    true -- that the machine's reading resolution is far coarser than either
+    reading's arithmetic and therefore decides both -- is a fact about a board
+    nobody has chosen instruments for, and it stops being true on a finer one.
+    So the record establishes it from the two findings rather than stating it.
+    """
+    differing = []
+    for side, key in finding["layout"]:
+        theirs = drifted_finding["floors"].get(side, {}).get(key)
+        if theirs is None or theirs["floor"] != finding["floors"][side][key]["floor"]:
+            differing.append((side, key))
+    return differing
+
+
+def _write_determination_table(write, finding):
+    """One reading's verdicts, with every figure each was reached from."""
+    write("| Coefficient | Largest reach | On | Unique against the in-scope set | Unique against "
+          "every coefficient | Unique as a fraction of itself | Others used | Verdict |")
+    write("|---|---|---|---|---|---|---|---|")
+    for record in finding["determination"]:
+        if not record["in_scope"]:
+            continue
+        side, key = record["loudest"]
+        write("| `%s` | %s | %s `%s` | %s | %s | %s | %s | %s |"
+              % (record["coefficient"], FIGURE_FORMAT % record["largest"], side, key,
+                 FIGURE_FORMAT % record["against_scoped"]["unique"],
+                 FIGURE_FORMAT % record["against_every"]["unique"],
+                 FIGURE_FORMAT % record["against_scoped"]["fraction"],
+                 FIGURE_FORMAT % record["against_scoped"]["used"], record["verdict"]))
+    write("")
+
+
+def _write_verdict_prose(write, finding, reading, already_unshown=None):
+    """One reading's account of what its own verdicts amount to.
+
+    Written per reading rather than once over both, because the sentences are
+    statements about a machine and the two readings are about two different
+    machines. A single account would have to name which reading each figure came
+    from in every clause, which is the same words with the reading spelled out
+    twice and a reader left to keep track.
+
+    What the other reading could not show either is handed in, and an account
+    given it writes no paragraph for those coefficients. A verdict that did not
+    change between the two readings is one finding and not two, and writing it
+    out under each reading with that reading's own figures leaves a reader
+    working out whether two paragraphs about the same coefficient are one
+    finding or a disagreement. Those are stated once, where the two readings are
+    compared, and the figures behind each reading's verdict are in that
+    reading's own table either way.
+    """
+    already_unshown = set() if already_unshown is None else set(already_unshown)
+    shown = [record for record in finding["determination"]
+             if record["in_scope"] and record["verdict"] == IDENTIFIABLE]
+    unshown = [record for record in finding["determination"]
+               if record["in_scope"] and record["verdict"] != IDENTIFIABLE]
+    told_here = [record for record in unshown
+                 if record["coefficient"] not in already_unshown]
+    write(VERDICTS_HEADING[reading])
+    write("")
+    write("Of the %d coefficients the reconstruction rests on, %d are shown identifiable from "
+          "what this machine observes %s%s"
+          % (len(finding["scoped"]), len(shown), WHEN_THE_MACHINE_IS[reading],
+             ": %s." % _listed("`%s`" % record["coefficient"] for record in shown)
+             if shown else "."))
+    write("")
+    narrow = [record for record in shown if record["against_scoped"]["unique"] < 2.0]
+    if narrow:
+        write("Of those, %s clear the floor by less than a factor of two — %s respectively. They "
+              "are shown identifiable on the arithmetic and should not be read as comfortably so: "
+              "each rests on a distinguishing signal of about one step of a converter nobody has "
+              "chosen, and a per-channel scale or any reading noise would take them below it. "
+              "They are the rows to re-run first against the measured model."
+              % (_listed("`%s`" % record["coefficient"] for record in narrow),
+                 _listed(FIGURE_FORMAT % record["against_scoped"]["unique"]
+                         for record in narrow)))
+        write("")
+    if unshown and not told_here:
+        write("The rest are **not shown identifiable**, and they are the same ones the other "
+              "reading could not show either. They are stated once under **%s** below rather "
+              "than a second time here, since a verdict that did not change between the two "
+              "readings is one finding and not two. Each one's figures under this reading are in "
+              "the table above." % _heading_name(HIDDEN_HEADING))
+        write("")
+    elif unshown:
+        write("The rest are **not shown identifiable**, and each is named here rather than left "
+              "out of the table or given the benefit of the doubt%s:"
+              % ("" if len(told_here) == len(unshown) else
+                 " — except %s, which the other reading could not show either and which are "
+                 "stated once under **%s** below rather than twice"
+                 % (_listed("`%s`" % record["coefficient"] for record in unshown
+                            if record["coefficient"] in already_unshown),
+                    _heading_name(HIDDEN_HEADING))))
+        write("")
+        for record in told_here:
+            side, key = record["loudest"]
+            if record["verdict"] == BELOW_WHAT_A_READING_CARRIES:
+                write("- `%s` — its declared error's largest effect on any channel is %s of what "
+                      "that channel could resolve, on the %s draw's `%s`. Nothing this machine "
+                      "observes moves by an amount it could report, so no amount of running it "
+                      "would ever say this coefficient is wrong, and drift correction cannot "
+                      "reach it. A channel that carried it would have to be one nothing here "
+                      "measures."
+                      % (record["coefficient"], FIGURE_FORMAT % record["largest"], side, key))
+            else:
+                write("- `%s` — it does reach the channels, by up to %s of what the %s draw's "
+                      "`%s` could resolve, but the part of its signature that no combination of "
+                      "the other in-scope coefficients reproduces comes to %s of that resolution "
+                      "— %s of the signature's own size. What the machine sees when this "
+                      "coefficient is wrong is what it would see if a combination of the others "
+                      "were wrong instead, so an observation cannot say which. That combination "
+                      "totals %s of the others' own declared errors%s."
+                      % (record["coefficient"], FIGURE_FORMAT % record["largest"], side, key,
+                         FIGURE_FORMAT % record["against_scoped"]["unique"],
+                         FIGURE_FORMAT % record["against_scoped"]["fraction"],
+                         FIGURE_FORMAT % record["against_scoped"]["used"],
+                         ", so it is a machine the description already admits to being possible"
+                         if record["against_scoped"]["used"] <= 1.0 else
+                         ", which is more than the description admits those coefficients may be "
+                         "out by — so the confounding is arithmetic that the description's own "
+                         "error budget already rules out, and this verdict is conservative"))
+        write("")
+    else:
+        write("Nothing the reconstruction rests on was left unshown. Every in-scope coefficient "
+              "reaches a channel by more than that channel could resolve, and carries a part no "
+              "combination of the others reproduces.")
+        write("")
+
+
+def _write_unfitted_account(write, finding, fitted, unfitted, reading):
+    """What an unfitted channel is presently buying under one reading.
+
+    This is the question the analysis exists to inform, and it has to be
+    answered in the record whichever way it comes out. A record that spoke up
+    only where an instrument would help would leave a reader unable to tell "no
+    instrument is needed" from "nobody asked", and those are opposite findings.
+
+    It is answered under each reading rather than under the first alone, because
+    the first is the optimistic one: an instrument the commissioning question
+    says nothing would be bought by is exactly the instrument a drifting machine
+    might need, and a case made from one reading only would be the case the
+    solution behind this record warns against making.
+    """
+    depends_on_unfitted = []
+    carried_by_unfitted = []
+    for record in finding["determination"]:
+        if not record["in_scope"]:
+            continue
+        by_channel = record["against_scoped"]["unique_by_channel"]
+        on_fitted = max((value for (_, key), value in by_channel.items() if fitted[key]),
+                        default=0.0)
+        on_unfitted = max((value for (_, key), value in by_channel.items() if not fitted[key]),
+                          default=0.0)
+        if on_unfitted > 1.0:
+            carried_by_unfitted.append((record, on_unfitted))
+            if on_fitted <= 1.0:
+                depends_on_unfitted.append(record)
+    if depends_on_unfitted:
+        write("%s, these are shown identifiable only by a channel nothing is presently fitted "
+              "to: %s. On the instruments this board actually carries, the part of each one's "
+              "signature that nothing else reproduces sits below what a reading could resolve. "
+              "That is the strongest case this reading can make for adding an observation "
+              "channel, and it is left as a case rather than a decision."
+              % (WHEN_THE_MACHINE_IS[reading].capitalize(),
+                 ", ".join("`%s`" % record["coefficient"] for record in depends_on_unfitted)))
+        write("")
+    elif carried_by_unfitted:
+        write("No verdict above turns on a channel this board has no instrument behind. %s does "
+              "carry a part of a signature nothing else reproduces — %s — but every coefficient "
+              "it separates is already separated by a channel that is fitted, so on this model, "
+              "%s, adding that instrument would confirm a finding rather than produce one. That "
+              "is a negative answer to the question this analysis exists to inform, and it is "
+              "worth as much as a positive one: it is the case for *not* spending on that channel "
+              "yet, and it is a statement about this estimated model that a measured one could "
+              "overturn."
+              % (_listed("`%s`" % key for key in unfitted) or "The unfitted channel",
+                 _listed("%s of what it could resolve for `%s`"
+                         % (FIGURE_FORMAT % value, record["coefficient"])
+                         for record, value in carried_by_unfitted),
+                 WHEN_THE_MACHINE_IS[reading]))
+        write("")
+        write("A figure there for a coefficient the tables above show moving that channel by "
+              "nothing at all is not a contradiction, and it is the one number here most easily "
+              "misread. What is being reported is the remainder, not the reach: the combination "
+              "of the other coefficients that comes nearest to reproducing this one's signature "
+              "does move that channel, so the disagreement between the coefficient and its "
+              "nearest imitation shows up there even though the coefficient itself never touched "
+              "it. A channel a coefficient leaves alone can separate it from something that does "
+              "not.")
+        write("")
+    elif unfitted:
+        write("No coefficient's distinguishing signature reaches %s at all %s, so on these two "
+              "draws an instrument on that channel would separate nothing the fitted channels do "
+              "not already separate."
+              % (", ".join("`%s`" % key for key in unfitted), WHEN_THE_MACHINE_IS[reading]))
+        write("")
+
+
+#: How the record opens its statement about the two readings' directions, and
+#: how the three ways their verdicts can agree are each introduced. Named here
+#: because each has to be found back in a written record -- once, and only once
+#: -- by anything checking that the record still states what the analysis
+#: computes.
+NEITHER_READING_BOUNDS = "Neither reading bounds the other"
+BOTH_READINGS_SHOW = "**Both readings show these identifiable:**"
+NEITHER_READING_SHOWS = "**Neither reading shows these identifiable:**"
+ONLY_DRIFTED_SHOWS = "**Shown identifiable only once drifted:**"
+
+#: How the record says what an instrument would do about the coefficients drift
+#: hides. Findable in a written record on its own, because a reader and a check
+#: both have to be able to tell "no instrument on these channels recovers it"
+#: from "nobody asked" -- and because the record says the opposite of it, about
+#: the same channel, sixteen lines earlier if this is ever dropped.
+NO_INSTRUMENT_RECOVERS = "no instrument on a channel this record models would recover"
+
+
+def _moved_clause(groups):
+    """Which way one figure moved between the two readings, as a clause naming
+    the coefficients under each direction."""
+    said = []
+    for how, group in (("falls for", groups[0]), ("rises for", groups[1]),
+                       ("stands where it was for", groups[2])):
+        if group:
+            said.append("%s %d (%s)"
+                        % (how, len(group), _listed("`%s`" % name for name, _, _ in group)))
+    return _listed(said)
+
+
+def _write_reading_comparison(write, finding, drifted_finding):
+    """Which way the two readings' figures actually moved, stated from the two
+    determinations.
+
+    Here rather than left implicit, because the obvious thing to say about a
+    loop that no longer knows its machine -- that it lets less of a
+    coefficient's error reach the channels -- is a claim about a direction, and
+    the two tables it sits between can falsify it. Saying it anyway would put a
+    reader through the tables looking for a pattern the figures do not carry,
+    and would make the first reading look like a safe upper bound on the second
+    when it is not one.
+    """
+    moved = moved_between_readings(finding, drifted_finding)
+    counted = len(moved[THE_VERDICT_FIGURE][0]) + len(moved[THE_VERDICT_FIGURE][1]) \
+        + len(moved[THE_VERDICT_FIGURE][2])
+    if not counted:
+        return
+    write("%s, and the two determinations establish that rather than it being assumed. Of the %d "
+          "coefficients both readings put a verdict to, %s %s. And %s %s."
+          % (NEITHER_READING_BOUNDS, counted,
+             THE_VERDICT_FIGURE, _moved_clause(moved[THE_VERDICT_FIGURE]),
+             THE_REACH_FIGURE, _moved_clause(moved[THE_REACH_FIGURE])))
+    write("")
+    write("Holding the control path still withdraws a correction, and a correction withdrawn can "
+          "leave a coefficient's own error standing on the channels as readily as it can absorb "
+          "it. Which of the two happens is a fact about the coefficient and is read off the "
+          "tables rather than argued for here. So the first reading is not an upper bound on the "
+          "second, neither of them is the conservative one to read alone, and the crossings "
+          "between the two sets of verdicts are named one at a time under **%s** below rather "
+          "than inferred from a direction." % _heading_name(HIDDEN_HEADING))
+    write("")
+
+
+def _write_instrument_account(write, hidden):
+    """What an instrument would do about the coefficients drift hides, which is
+    nothing, and why that is structural rather than this model's answer.
+
+    Said here because the crossing reads like a shopping list, and because the
+    same record already reports -- out of the same figures and a few lines
+    earlier -- that the channel nothing is fitted to presently separates nothing
+    the fitted channels do not. A section closing on "these are the coefficients
+    an instrument would be bought for" contradicts that, and of the two it is
+    the shopping list that the figures do not support.
+    """
+    write("These are the rows the first reading on its own would have said nothing about. They "
+          "are not, on that account, rows an instrument would be bought for: %s any of them, and "
+          "that follows from what the verdict is rather than from this model. Both figures a "
+          "verdict is taken on are the largest over every channel the signature is laid out "
+          "against, fitted or not — so a coefficient that failed one of them failed it on all of "
+          "them, and a channel given an instrument would carry the same nothing this analysis "
+          "already has for it." % NO_INSTRUMENT_RECOVERS)
+    write("")
+    grouped = {}
+    for entry, why in why_no_instrument_recovers(hidden):
+        grouped.setdefault(why, []).append(entry["coefficient"])
+    for why in sorted(grouped):
+        write("%s — %s." % (_listed("`%s`" % name for name in grouped[why]), why))
+        write("")
+    write("Recovering what drift hides would need an observation this analysis does not model, "
+          "and naming one is the physical track's decision taken against this record rather than "
+          "inside it. Where an instrument on a channel this record does model would buy "
+          "something, it is a coefficient that channel alone shows identifiable, and each "
+          "reading's own account of the unfitted channels above is where that is reported.")
+    write("")
+
+
+def _write_agreement(write, finding, drifted_finding):
+    """The three ways the two readings can come out other than the crossing,
+    each stated once.
+
+    Under the crossing rather than under either reading, because each is a
+    statement about the pair and not about a machine. Written out rather than
+    left as two lists of verdicts for a reader to intersect: the whole reason
+    both readings are in one record is that the finding is in the comparison,
+    and a comparison a reader has to perform by eye is one that will be
+    performed wrong or not at all.
+    """
+    both, neither, only_drifted = readings_agree_on(finding, drifted_finding)
+    rose = len(moved_between_readings(finding, drifted_finding)[THE_VERDICT_FIGURE][1])
+    scoped = len(finding["scoped"])
+    write("The other three ways the two readings can come out are stated here once rather than "
+          "under each of them, since a verdict both readings reach is one finding and not two.")
+    write("")
+    write("%s %s. A machine built to a different figure for any of them could be told apart at "
+          "commissioning, and a machine that has drifted in it could be told apart in service, so "
+          "a drift check has these to work with."
+          % (BOTH_READINGS_SHOW,
+             "%s — %d of the %d the reconstruction rests on"
+             % (_listed("`%s`" % name for name in both), len(both), scoped)
+             if both else "none — no coefficient the reconstruction rests on is shown "
+             "identifiable "
+             "under both readings"))
+    write("")
+    write("%s %s. Drift hides nothing about them that a machine built differently did not hide "
+          "already, so they are not what the second reading was taken to find; each one's figures "
+          "under each reading are in the two determination tables above, and the account of why "
+          "it was not shown is given once, under the reading that could not show it first."
+          % (NEITHER_READING_SHOWS,
+             "%s — %d of the %d" % (_listed("`%s`" % name for name in neither),
+                                    len(neither), scoped)
+             if neither else "none — every coefficient the reconstruction rests on is shown "
+             "identifiable by at least one of the two readings"))
+    write("")
+    write("%s %s"
+          % (ONLY_DRIFTED_SHOWS,
+             "%s — %d of the %d. A machine that has drifted reveals these where one built to a "
+             "different figure for them does not, which is the crossing above taken the other way "
+             "round and worth as much: it says the commissioning reading is not the one to design "
+             "a drift check from."
+             % (_listed("`%s`" % name for name in only_drifted), len(only_drifted), scoped)
+             if only_drifted else
+             "none on this model. Nothing the machine could not be told apart on at commissioning "
+             "becomes something it could be told apart on in service. That is a finding about "
+             "this "
+             "model rather than a rule the method enforces — the figure a verdict is taken on "
+             "does "
+             "rise under drift for %d of the coefficients here, just never far enough to carry a "
+             "verdict across." % rose))
+    write("")
+
+
+def report_text(findings, finding, drifted_findings, drifted_finding):
     """The whole record: what was compared, against what resolution, and what
-    came back.
+    came back under each of the two readings.
 
     Written by the analysis rather than by hand and written whole rather than as
     tables pasted into prose somebody maintains separately, for the reason the
@@ -759,8 +1492,17 @@ def report_text(findings, finding):
     to need nothing changed about how it runs, and a record whose prose is
     re-edited by hand every time the model moves is one that will be left
     describing the previous machine.
+
+    Both readings are written into one record rather than into two, and that is
+    the point of taking the second at all. They answer different questions off
+    the same four files, and a reader who has one record has been given one
+    answer while the other question goes on looking answered. The case the
+    second reading exists to produce -- a coefficient the first shows
+    identifiable and the second does not -- cannot be stated by either record
+    alone.
     """
     fitted = _channel_is_fitted()
+    hidden = hidden_by_drift(finding, drifted_finding)
     lines = []
     write = lines.append
 
@@ -775,6 +1517,14 @@ def report_text(findings, finding):
           "at a different place. That record asks how far the *delivery* moved. This one asks how "
           "far the *channels the machine can observe* moved, and whether what one coefficient did "
           "to them could have been done by a combination of the others instead.")
+    write("")
+    write("It asks that twice. Once of a machine built throughout to different coefficients, "
+          "which is what a commissioning check would be up against, and once of a machine that "
+          "has drifted away from the description its own controller still holds, which is what "
+          "fouling and ageing leave behind. Both readings are below and neither replaces the "
+          "other. The case worth looking for is a coefficient the first shows identifiable and "
+          "the second does not: a machine that passes every check at build and then goes wrong "
+          "with nothing to report it.")
     write("")
     write("A coefficient's signature here is half the difference between the run at the top of "
           "its declared error and the run at the bottom, channel by channel and interval by "
@@ -812,12 +1562,57 @@ def report_text(findings, finding):
                        ("The bands a delivery is held to", findings["tolerance"])):
         write("| %s | `%s` | `%s` |" % (what, _relative(path), findings["digests"][path]))
     write("")
+    write("Both readings are taken against these four files and no others, which is what makes "
+          "them comparable: a difference between the two answers is then the difference between "
+          "the two questions and not between two machines.")
+    write("")
     write("A replacement model is analysed by naming it: `--description`, `--limits`, "
           "`--steam-declaration` and `--tolerance` each point the same method at another file, "
           "and `--workspace` gives that run its own scratch directory. Nothing about how the "
           "signatures are taken or how the verdict is reached changes with them, which is what "
           "makes this repeatable against the measured model that is meant to replace this "
           "estimated one rather than something to be argued about against this one.")
+    write("")
+
+    write(READINGS_HEADING)
+    write("")
+    write("The two sweeps differ in one thing and nothing else.")
+    write("")
+    write("**%s.** Each corner hands the perturbed description to the machine and to the coffee "
+          "side's control path alike, so the machine is different and its own loop already knows "
+          "it. What is compared is two machines each built consistently to its own coefficients, "
+          "and what it answers is whether the channels could tell them apart."
+          % BUILT_DIFFERENTLY.capitalize())
+    write("")
+    write("**%s.** The perturbed description goes to the machine alone. The control path is built "
+          "from `%s` for every run, whatever the machine was perturbed to, so the loop is driving "
+          "a reconstruction that is wrong about the machine rather than a different machine it is "
+          "right about. It holds its own estimate at the target instead of the delivery, and what "
+          "the channels carry is what a machine nothing is correcting for shows rather than "
+          "what a "
+          "machine built to those figures shows."
+          % (DRIFTED.capitalize(), _relative(drifted_findings["control_description"])))
+    write("")
+    moved = sides_the_readings_differ_on(findings, drifted_findings)
+    stood_still = [side for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE) if side not in moved]
+    if moved and stood_still:
+        write("Holding the control path still changed what the %s draw recorded and left the %s "
+              "draw's figures exactly where they were. That is not a partial run: the steam law "
+              "is built from its own declaration and from no description of a casting at all, so "
+              "there is nothing on that side for a perturbation to be kept out of, and the two "
+              "readings can only come apart where a control path holds a model. The record "
+              "establishes this from the runs rather than assuming it, so a steam-side law that "
+              "did start reconstructing something would move this sentence rather than be missed "
+              "by it."
+              % (_listed(moved), _listed(stood_still)))
+    elif moved:
+        write("Holding the control path still changed what both draws recorded, so both sides "
+              "carry a control path driving from a model of the machine.")
+    else:
+        write("Holding the control path still changed nothing either draw recorded. Either "
+              "nothing in this build drives from a reconstruction of the machine, or the two "
+              "descriptions reaching the loop were the same one — and in both cases the second "
+              "reading below is the first one again and establishes nothing about drift.")
     write("")
 
     write(FLOOR_HEADING)
@@ -847,19 +1642,21 @@ def report_text(findings, finding):
           "is the largest reached anywhere in the sweep, perturbed runs included, because a run "
           "that carried a channel higher carried the last place up with it.")
     write("")
-    write("| Side | Channel | Fitted | Largest magnitude reached | One last place there | What a "
-          "reading could carry | Floor used |")
-    write("|---|---|---|---|---|---|---|")
-    for side, key in finding["layout"]:
-        floor = finding["floors"][side][key]
-        unit = sweep.CHANNEL_UNIT[key]
-        write("| %s | `%s` | %s | %s %s | %s %s | %s %s | %s %s |"
-              % (side, key, "yes" if fitted[key] else "no",
-                 FIGURE_FORMAT % floor["peak"], unit,
-                 FIGURE_FORMAT % floor["arithmetic"], unit,
-                 FIGURE_FORMAT % floor["reading"], unit,
-                 FIGURE_FORMAT % floor["floor"], unit))
-    write("")
+    _write_floor_table(write, finding, fitted)
+    apart = floors_that_differ(finding, drifted_finding)
+    if apart:
+        write("The drifted reading takes its own peaks off its own runs, and on %s it arrives at "
+              "a different floor. Its verdicts are taken against these:"
+              % _listed("the %s draw's `%s`" % (side, key) for side, key in apart))
+        write("")
+        _write_floor_table(write, drifted_finding, fitted)
+    else:
+        write("The drifted reading takes its own peaks off its own runs and arrives at the same "
+              "floor on every channel, so both determinations below are taken against the figures "
+              "in this table. That holds because the machine's own reading resolution is the "
+              "coarser of the two floors everywhere, and it is established here from the two "
+              "readings rather than assumed of a board with a finer converter.")
+        write("")
     unfitted = sorted(set(key for _, key in finding["layout"] if not fitted[key]))
     if unfitted:
         write("The channels marked unfitted are enumerated by the hardware seam and have no "
@@ -906,39 +1703,59 @@ def report_text(findings, finding):
                  "neither end of its declared error moved the temperature the control path "
                  "reconstructs, so no reconstruction rests on it and nothing here is asked of it"))
     write("")
+    only_when_built = sorted(set(finding["scoped"]) - set(drifted_finding["scoped"]))
+    only_when_drifted = sorted(set(drifted_finding["scoped"]) - set(finding["scoped"]))
+    if only_when_built or only_when_drifted:
+        write("The two readings do not agree about this set. %s Whether the reconstruction rests "
+              "on a coefficient is asked of each reading's own runs, so a coefficient reaching "
+              "the delivered temperature on a machine its controller knows and not on one that "
+              "has drifted is a finding in itself and not a fault in the scoping."
+              % " ".join(filter(None, [
+                  "In scope only when the machine is built differently: %s."
+                  % _listed("`%s`" % name for name in only_when_built)
+                  if only_when_built else "",
+                  "In scope only when it has drifted: %s."
+                  % _listed("`%s`" % name for name in only_when_drifted)
+                  if only_when_drifted else ""])))
+        write("")
+    else:
+        write("Both readings arrive at this same set from their own runs.")
+        write("")
 
     write(SIGNATURE_HEADING)
     write("")
     write("The largest the coefficient's own declared error moved each channel, in that "
-          "channel's unit, over each draw. This is the record the verdict below was drawn from: "
-          "the verdict is taken over the whole interval-by-interval signature and not off these "
-          "peaks, but a coefficient's peaks are what say at a glance which channels it reaches at "
-          "all. A figure of nothing is a channel this coefficient left exactly where it was, "
-          "which is as much a part of a signature as a channel it moved.")
+          "channel's unit, over each draw, under each reading. This is the record the verdicts "
+          "below were drawn from: a verdict is taken over the whole interval-by-interval "
+          "signature and not off these peaks, but a coefficient's peaks are what say at a glance "
+          "which channels it reaches at all. A figure of nothing is a channel this coefficient "
+          "left exactly where it was, which is as much a part of a signature as a channel it "
+          "moved.")
     write("")
-    for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
-        keys = [key for at_side, key in finding["layout"] if at_side == side]
-        if not keys:
-            continue
-        write("### On the %s draw" % side)
-        write("")
-        write("| Coefficient | %s |" % " | ".join("`%s` (%s)" % (key, sweep.CHANNEL_UNIT[key])
-                                                  for key in keys))
-        write("|---|%s" % ("---|" * len(keys)))
-        for record in finding["determination"]:
-            cells = []
-            for key in keys:
-                floor = finding["floors"][side][key]["floor"]
-                cells.append(FIGURE_FORMAT % (record["reached"][(side, key)] * floor))
-            write("| `%s` | %s |" % (record["coefficient"], " | ".join(cells)))
-        write("")
+    for reading, of in ((BUILT_DIFFERENTLY, finding), (DRIFTED, drifted_finding)):
+        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+            keys = [key for at_side, key in of["layout"] if at_side == side]
+            if not keys:
+                continue
+            write(signature_heading(side, reading))
+            write("")
+            write("| Coefficient | %s |" % " | ".join("`%s` (%s)" % (key, sweep.CHANNEL_UNIT[key])
+                                                      for key in keys))
+            write("|---|%s" % ("---|" * len(keys)))
+            for record in of["determination"]:
+                cells = []
+                for key in keys:
+                    floor = of["floors"][side][key]["floor"]
+                    cells.append(FIGURE_FORMAT % (record["reached"][(side, key)] * floor))
+                write("| `%s` | %s |" % (record["coefficient"], " | ".join(cells)))
+            write("")
 
     write(DETERMINATION_HEADING)
     write("")
-    write("Every in-scope coefficient, with what its signature reached and how much of it nothing "
-          "else accounts for. Both figures are in multiples of the floor that channel had to "
-          "clear, so a figure of 1 sits exactly at what could be resolved and a figure below 1 is "
-          "a difference this machine reports as none.")
+    write("Every in-scope coefficient on %s, with what its signature reached and how much of it "
+          "nothing else accounts for. Both figures are in multiples of the floor that channel had "
+          "to clear, so a figure of 1 sits exactly at what could be resolved and a figure below 1 "
+          "is a difference this machine reports as none." % READING_CLAUSE[BUILT_DIFFERENTLY])
     write("")
     write("A figure only just above 1 is a coefficient shown identifiable by a hair: the part of "
           "its signature nothing else reproduces is barely more than the smallest step the "
@@ -964,151 +1781,107 @@ def report_text(findings, finding):
           "errors — a statement about this machine — where a total in the hundreds would be the "
           "arithmetic finding a combination nobody has reason to think the machine is in.")
     write("")
-    write("| Coefficient | Largest reach | On | Unique against the in-scope set | Unique against "
-          "every coefficient | Unique as a fraction of itself | Others used | Verdict |")
-    write("|---|---|---|---|---|---|---|---|")
-    for record in finding["determination"]:
-        if not record["in_scope"]:
-            continue
-        side, key = record["loudest"]
-        write("| `%s` | %s | %s `%s` | %s | %s | %s | %s | %s |"
-              % (record["coefficient"], FIGURE_FORMAT % record["largest"], side, key,
-                 FIGURE_FORMAT % record["against_scoped"]["unique"],
-                 FIGURE_FORMAT % record["against_every"]["unique"],
-                 FIGURE_FORMAT % record["against_scoped"]["fraction"],
-                 FIGURE_FORMAT % record["against_scoped"]["used"], record["verdict"]))
-    write("")
+    _write_determination_table(write, finding)
+    _write_verdict_prose(write, finding, BUILT_DIFFERENTLY)
+    _write_unfitted_account(write, finding, fitted, unfitted, BUILT_DIFFERENTLY)
 
-    shown = [record for record in finding["determination"]
-             if record["in_scope"] and record["verdict"] == IDENTIFIABLE]
-    unshown = [record for record in finding["determination"]
-               if record["in_scope"] and record["verdict"] != IDENTIFIABLE]
-    write("### What the verdicts say")
+    write(DRIFT_DETERMINATION_HEADING)
     write("")
-    write("%d of the %d coefficients the reconstruction rests on are shown identifiable from what "
-          "this machine can observe%s"
-          % (len(shown), len(finding["scoped"]),
-             ": %s." % _listed("`%s`" % record["coefficient"] for record in shown)
-             if shown else "."))
+    write("The same determination taken again over %s. Every column means what it means above; "
+          "what has changed is which machine the signatures came off. The control path was built "
+          "from the unperturbed description throughout, so its reconstruction is biased rather "
+          "than merely different, and what each coefficient's own error leaves on the channels is "
+          "what it leaves on a machine nothing is correcting for it."
+          % READING_CLAUSE[DRIFTED])
     write("")
-    narrow = [record for record in shown if record["against_scoped"]["unique"] < 2.0]
-    if narrow:
-        write("Of those, %s clear the floor by less than a factor of two — %s respectively. They "
-              "are shown identifiable on the arithmetic and should not be read as comfortably so: "
-              "each rests on a distinguishing signal of about one step of a converter nobody has "
-              "chosen, and a per-channel scale or any reading noise would take them below it. "
-              "They are the rows to re-run first against the measured model."
-              % (_listed("`%s`" % record["coefficient"] for record in narrow),
-                 _listed(FIGURE_FORMAT % record["against_scoped"]["unique"]
-                         for record in narrow)))
+    write("This is the reading a machine in service is under, and it is the one to design a drift "
+          "check against.")
+    write("")
+    _write_determination_table(write, drifted_finding)
+    _write_reading_comparison(write, finding, drifted_finding)
+    _write_verdict_prose(write, drifted_finding, DRIFTED,
+                         already_unshown=readings_agree_on(finding, drifted_finding)[1])
+    _write_unfitted_account(write, drifted_finding, fitted, unfitted, DRIFTED)
+
+    write(HIDDEN_HEADING)
+    write("")
+    write("A coefficient shown identifiable when the machine is built differently and **not** "
+          "shown identifiable once it has drifted. This is the case the second reading exists to "
+          "find, and it is the one that cannot be seen from either reading alone: such a "
+          "coefficient passes every check that can be made at build, and then moves with nothing "
+          "the machine observes able to say that it has.")
+    write("")
+    if hidden:
+        write("%d of the %d coefficients the first reading shows identifiable %s named **%s**:"
+              % (len(hidden),
+                 len([record for record in finding["determination"]
+                      if record["in_scope"] and record["verdict"] == IDENTIFIABLE]),
+                 "is" if len(hidden) == 1 else "are", HIDDEN_BY_DRIFT))
         write("")
-    if unshown:
-        write("The rest are **not shown identifiable**, and each is named here rather than left "
-              "out of the table or given the benefit of the doubt:")
+        write("| Coefficient | Unique when built differently | Unique when drifted | Largest "
+              "reach when drifted | Verdict when drifted |")
+        write("|---|---|---|---|---|")
+        for entry in hidden:
+            drifted = entry["drifted"]
+            write("| `%s` | %s | %s | %s | %s |"
+                  % (entry["coefficient"],
+                     FIGURE_FORMAT % entry["built_differently"]["against_scoped"]["unique"],
+                     (FIGURE_FORMAT % drifted["against_scoped"]["unique"]
+                      if drifted is not None and drifted["in_scope"] else "—"),
+                     FIGURE_FORMAT % drifted["largest"] if drifted is not None else "—",
+                     entry["verdict_when_drifted"]))
         write("")
-        for record in unshown:
-            side, key = record["loudest"]
-            if record["verdict"] == BELOW_WHAT_A_READING_CARRIES:
-                write("- `%s` — its declared error's largest effect on any channel is %s of what "
-                      "that channel could resolve, on the %s draw's `%s`. Nothing this machine "
-                      "observes moves by an amount it could report, so no amount of running it "
-                      "would ever say this coefficient is wrong, and drift correction cannot "
-                      "reach it. A channel that carried it would have to be one nothing here "
-                      "measures."
-                      % (record["coefficient"], FIGURE_FORMAT % record["largest"], side, key))
+        for entry in hidden:
+            drifted = entry["drifted"]
+            if drifted is None or not drifted["in_scope"]:
+                write("- `%s` — the drifted reading found no reconstruction resting on it at all, "
+                      "so it leaves that reading with no verdict of its own. Whatever a machine "
+                      "built to a different figure for it would show, a machine that has drifted "
+                      "to one shows nothing."
+                      % entry["coefficient"])
+            elif drifted["verdict"] == BELOW_WHAT_A_READING_CARRIES:
+                side, key = drifted["loudest"]
+                write("- `%s` — built differently it stands %s clear of what a reading could "
+                      "carry. Drifted, its largest effect on any channel is %s of what that "
+                      "channel could resolve, on the %s draw's `%s`: the loop absorbs it. A "
+                      "machine commissioned against this coefficient and then left to drift in it "
+                      "reports nothing, and no instrument already fitted would say otherwise."
+                      % (entry["coefficient"],
+                         FIGURE_FORMAT % entry["built_differently"]["against_scoped"]["unique"],
+                         FIGURE_FORMAT % drifted["largest"], side, key))
             else:
-                write("- `%s` — it does reach the channels, by up to %s of what the %s draw's "
-                      "`%s` could resolve, but the part of its signature that no combination of "
-                      "the other in-scope coefficients reproduces comes to %s of that resolution "
-                      "— %s of the signature's own size. What the machine sees when this "
-                      "coefficient is wrong is what it would see if a combination of the others "
-                      "were wrong instead, so an observation cannot say which. That combination "
-                      "totals %s of the others' own declared errors%s."
-                      % (record["coefficient"], FIGURE_FORMAT % record["largest"], side, key,
-                         FIGURE_FORMAT % record["against_scoped"]["unique"],
-                         FIGURE_FORMAT % record["against_scoped"]["fraction"],
-                         FIGURE_FORMAT % record["against_scoped"]["used"],
-                         ", so it is a machine the description already admits to being possible"
-                         if record["against_scoped"]["used"] <= 1.0 else
-                         ", which is more than the description admits those coefficients may be "
-                         "out by — so the confounding is arithmetic that the description's own "
-                         "error budget already rules out, and this verdict is conservative"))
+                write("- `%s` — built differently the part of its signature nothing else "
+                      "reproduces stands at %s of what a reading could carry. Drifted, it falls "
+                      "to %s, which is below it: the machine still moves, but what it shows is "
+                      "what it would show if a combination of the others had drifted instead, so "
+                      "an observation cannot say which drifted."
+                      % (entry["coefficient"],
+                         FIGURE_FORMAT % entry["built_differently"]["against_scoped"]["unique"],
+                         FIGURE_FORMAT % drifted["against_scoped"]["unique"]))
         write("")
+        _write_instrument_account(write, hidden)
     else:
-        write("Nothing the reconstruction rests on was left unshown. Every in-scope coefficient "
-              "reaches a channel by more than that channel could resolve, and carries a part no "
-              "combination of the others reproduces.")
+        write("**No coefficient is in this position on this model.** Every coefficient the first "
+              "reading shows identifiable the second reading shows identifiable too. That is a "
+              "finding and not an absence of one: it says the loop's own correction does not "
+              "absorb any coefficient's declared error far enough to take it below what a reading "
+              "could carry, so a drift check on this machine is up against the same set the "
+              "commissioning question is. It is a statement about this estimated model, and a "
+              "measured one could overturn it.")
         write("")
-
-    # What an unfitted channel is presently buying, which is the question the
-    # analysis exists to inform and which has to be answered in the record
-    # whichever way it comes out. A record that spoke up only where an
-    # instrument would help would leave a reader unable to tell "no instrument
-    # is needed" from "nobody asked", and those are opposite findings.
-    depends_on_unfitted = []
-    carried_by_unfitted = []
-    for record in finding["determination"]:
-        if not record["in_scope"]:
-            continue
-        by_channel = record["against_scoped"]["unique_by_channel"]
-        on_fitted = max((value for (_, key), value in by_channel.items() if fitted[key]),
-                        default=0.0)
-        on_unfitted = max((value for (_, key), value in by_channel.items() if not fitted[key]),
-                          default=0.0)
-        if on_unfitted > 1.0:
-            carried_by_unfitted.append((record, on_unfitted))
-            if on_fitted <= 1.0:
-                depends_on_unfitted.append(record)
-    if depends_on_unfitted:
-        write("These are shown identifiable only by a channel nothing is presently fitted to: %s. "
-              "On the instruments this board actually carries, the part of each one's signature "
-              "that nothing else reproduces sits below what a reading could resolve. That is the "
-              "strongest case this analysis can make for adding an observation channel, and it is "
-              "left as a case rather than a decision."
-              % ", ".join("`%s`" % record["coefficient"] for record in depends_on_unfitted))
-        write("")
-    elif carried_by_unfitted:
-        write("No verdict above turns on a channel this board has no instrument behind. %s does "
-              "carry a part of a signature nothing else reproduces — %s — but every coefficient "
-              "it separates is already separated by a channel that is fitted, so on this model "
-              "adding that instrument would confirm a finding rather than produce one. That is a "
-              "negative answer to the question this analysis exists to inform, and it is worth as "
-              "much as a positive one: it is the case for *not* spending on that channel yet, and "
-              "it is a statement about this estimated model that a measured one could overturn."
-              % (_listed("`%s`" % key for key in unfitted) or "The unfitted channel",
-                 _listed("%s of what it could resolve for `%s`"
-                         % (FIGURE_FORMAT % value, record["coefficient"])
-                         for record, value in carried_by_unfitted)))
-        write("")
-        write("A figure there for a coefficient the tables above show moving that channel by "
-              "nothing at all is not a contradiction, and it is the one number here most easily "
-              "misread. What is being reported is the remainder, not the reach: the combination "
-              "of the other coefficients that comes nearest to reproducing this one's signature "
-              "does move that channel, so the disagreement between the coefficient and its "
-              "nearest imitation shows up there even though the coefficient itself never touched "
-              "it. A channel a coefficient leaves alone can separate it from something that does "
-              "not.")
-        write("")
-    elif unfitted:
-        write("No coefficient's distinguishing signature reaches %s at all, so on these two draws "
-              "an instrument on that channel would separate nothing the fitted channels do not "
-              "already separate."
-              % ", ".join("`%s`" % key for key in unfitted))
-        write("")
+    _write_agreement(write, finding, drifted_finding)
 
     write("## What this does not settle")
     write("")
-    write("**It measures a machine the controller already knows about, not a machine that has "
-          "drifted.** Each perturbed run hands one description to the whole build, and the build "
-          "gives it to the plant and to the control path alike — so what is compared is two "
-          "machines each built consistently to its own coefficients. A machine that fouls or ages "
-          "moves away from a description its controller still believes, and there the "
-          "reconstruction is biased, the loop holds the estimate at target rather than the "
-          "delivery, and the channels move less than they do here. So these figures are "
-          "optimistic for drift: a coefficient named identifiable here may still be one a "
-          "drifting machine never reveals. Taking that second reading needs a draw that can be "
-          "handed one description for the machine and another for the control path, which this "
-          "harness cannot presently do.")
+    write("**Drift here is one coefficient moved to the end of its own declared error, all at "
+          "once.** A machine that fouls or ages moves gradually and moves several coefficients "
+          "together, and neither is what the second reading above puts to it: it takes exactly "
+          "the perturbation the first reading takes and withholds it from the control path. What "
+          "that establishes is how far one coefficient's own error reaches the channels when the "
+          "loop is not told about it, one coefficient at a time. It does not establish what a "
+          "real drift trajectory would show, "
+          "and a drift check designed against it would still have to be run against a machine "
+          "actually drifting.")
     write("")
     write("**The floor is one board's single full scale, and the test is on the widest single "
           "disagreement.** The seam declares one converter scale for every channel, which is "
@@ -1171,9 +1944,9 @@ def _table_rows(text, heading):
     return rows
 
 
-def determination_rows(text):
-    """The determination read back out of a written record: per coefficient, the
-    verdict and every figure it was reached from.
+def determination_rows(text, heading=DETERMINATION_HEADING):
+    """One reading's determination read back out of a written record: per
+    coefficient, the verdict and every figure it was reached from.
 
     The figures and not only the verdict, because the figures are half of what
     the record exists to carry -- a verdict with no figure behind it cannot be
@@ -1181,9 +1954,13 @@ def determination_rows(text):
     in the table drift while staying green until one of them crossed a
     threshold. That is the failure that has already happened once to the
     dominance record beside this one.
+
+    Which reading is asked for by heading, because the record carries two
+    determinations of the same coefficients under the same column names and a
+    reader that took whichever came first would check one of them twice.
     """
     rows = []
-    for cells in _table_rows(text, DETERMINATION_HEADING):
+    for cells in _table_rows(text, heading):
         if len(cells) != 8:
             continue
         rows.append({
@@ -1199,12 +1976,28 @@ def determination_rows(text):
     return rows
 
 
-def signature_rows(text, side):
-    """One side's per-channel figures read back out of a written record, as
-    {coefficient: [figure per channel]}, in the order the channels are laid out.
+def hidden_rows(text):
+    """The coefficients a written record names as identifiable when the machine
+    is built differently and not once it has drifted, as (coefficient, verdict
+    when drifted).
+
+    Read back for the reason the determination is: the crossing is what the
+    second reading exists to produce, and a record that had stopped naming one
+    would read exactly like a machine that had none. An empty list is the
+    record's own positive statement that nothing crosses, which is why the
+    section is written either way.
+    """
+    return [(cells[0].strip("`"), cells[4])
+            for cells in _table_rows(text, HIDDEN_HEADING) if len(cells) == 5]
+
+
+def signature_rows(text, side, reading=BUILT_DIFFERENTLY):
+    """One reading's per-channel figures for one side, read back out of a
+    written record, as {coefficient: [figure per channel]}, in the order the
+    channels are laid out.
     """
     rows = {}
-    for cells in _table_rows(text, "### On the %s draw" % side):
+    for cells in _table_rows(text, signature_heading(side, reading)):
         if len(cells) != len(sweep.OBSERVED_CHANNELS) + 1:
             continue
         rows[cells[0].strip("`")] = [float(cell) for cell in cells[1:]]
@@ -1247,7 +2040,16 @@ def main(argv):
                          declaration=arguments.steam_declaration, tolerance=arguments.tolerance,
                          pio=arguments.pio, workspace=arguments.workspace)
     finding = determine(findings)
-    text = report_text(findings, finding)
+
+    # The second reading, over the same four files and the same host artefact,
+    # with every perturbation kept out of the control path. It is taken here
+    # rather than being a mode this tool can be asked for, because the finding
+    # the record exists to carry is the disagreement between the two and a run
+    # producing one of them has not produced it.
+    drifted_findings = drifted_sweep(findings)
+    drifted_finding = determine(drifted_findings)
+
+    text = report_text(findings, finding, drifted_findings, drifted_finding)
 
     if arguments.stdout:
         sys.stdout.write(text)
@@ -1256,12 +2058,19 @@ def main(argv):
     os.makedirs(os.path.dirname(arguments.report), exist_ok=True)
     with open(arguments.report, "w", encoding="utf-8") as handle:
         handle.write(text)
-    print("analysed %d coefficient(s) of %s, %d of them in scope, and wrote the record to %s"
+    print("analysed %d coefficient(s) of %s under both readings, %d of them in scope, and wrote "
+          "the record to %s"
           % (len(finding["determination"]), _relative(findings["description"]),
              len(finding["scoped"]), _relative(arguments.report)))
+    when_drifted = dict((record["coefficient"], record["verdict"])
+                        for record in drifted_finding["determination"])
     for record in finding["determination"]:
         if record["in_scope"]:
-            print("  %-40s %s" % (record["coefficient"], record["verdict"]))
+            print("  %-40s %-64s %s"
+                  % (record["coefficient"], record["verdict"],
+                     when_drifted.get(record["coefficient"], REACHES_NO_RECONSTRUCTION)))
+    for entry in hidden_by_drift(finding, drifted_finding):
+        print("  %-40s %s" % (entry["coefficient"], HIDDEN_BY_DRIFT))
     return 0
 
 

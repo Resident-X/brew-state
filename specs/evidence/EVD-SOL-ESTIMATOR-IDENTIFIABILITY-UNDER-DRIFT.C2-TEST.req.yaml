@@ -1,0 +1,17 @@
+id: EVD-SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2-TEST
+type: evidence
+title: The determination is taken over perturbations applied to the machine alone (SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T13:01:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_identifiability.py::TheDeterminationIsTakenOverPerturbationsAppliedToTheMachineAlone
+text: |-
+  run_parameter_sweep.run() and run_parameter_identifiability.drifted_sweep() re-run the identifiability determination with each perturbed corner applied to the machine's description only, while the control path is held at the unperturbed baseline throughout. Test class covers that the recorded signature differs from the coupled (both-perturbed) run, that the control-path description stays fixed across the sweep, and that the resulting drifted findings feed the same determine() logic as the coupled reading.
+links:
+  - target: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2
+    type: satisfies

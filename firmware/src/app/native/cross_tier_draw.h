@@ -92,11 +92,30 @@ typedef struct {
 /*
  * Run the draw and print what the plant model reported, one line per interval.
  *
+ * The machine and the control path are described separately, and a caller
+ * wanting the two to agree hands the same record to both. They are separate
+ * because a machine and the description its controller believes are separate
+ * things on any machine that has been in service: fouling and ageing move the
+ * casting away from figures nobody has re-measured, and a loop driving a
+ * reconstruction built from the old figures holds its own estimate at the
+ * target rather than the delivery. A run able to state only one description can
+ * ask what two machines built differently look like and cannot ask what one
+ * machine going wrong looks like, and the second is the question a machine in
+ * service asks.
+ *
+ * Neither is defaulted from the other here. A null for the control path would
+ * read as "the same one", which is a reasonable thing to mean and a thing a
+ * caller should have to write down: the whole difference this entry point
+ * exists to carry is between a loop that knows the machine and one that does
+ * not, and a caller that never said which it wanted has not said what its run
+ * means.
+ *
  * Returns zero when the draw ran to its end, and non-zero when the loop could
  * not be brought up or a step was refused -- a partial trajectory is not a
  * shorter answer, it is no answer, and a caller must not read one as evidence.
  */
-int cross_tier_draw_run(const plant_parameters_t *parameters,
+int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
+                        const plant_parameters_t *control_parameters,
                         const estimator_limits_t *limits,
                         const delivery_tolerance_t *tolerance,
                         const cross_tier_draw_t *draw);

@@ -9,6 +9,13 @@ and paying for a second set of them would buy two answers that must agree.
 Everything asserted below reads what that run produced rather than reaching for
 the loops itself.
 
+A second set of them is paid for all the same, once, and it is a different set
+rather than the same one again: the same perturbations with the control path
+held at the description they were perturbed away from. That is a machine its
+controller is wrong about rather than a machine built differently, and the two
+readings are what the record this suite covers exists to put side by side. It is
+cached on the same terms and for the same reason.
+
 Three assertions cost real work of their own and each is deliberate. One re-runs
 one coefficient's two corners through the brew draw and recomputes its signature
 from scratch, because a signature the analysis computed and then read back off
@@ -51,6 +58,8 @@ import seam_channels  # noqa: E402
 
 FINDINGS = None
 FINDING = None
+DRIFTED_FINDINGS = None
+DRIFTED_FINDING = None
 
 BREW_DRAW_SOURCE = os.path.join(FIRMWARE_DIR, "src", "app", "native", "cross_tier_draw.c")
 STEAM_DRAW_SOURCE = os.path.join(FIRMWARE_DIR, "src", "app", "native", "steam_draw.c")
@@ -85,9 +94,11 @@ FIGURE_TOLERANCE = 0.01
 
 
 def setUpModule():
-    global FINDINGS, FINDING
+    global FINDINGS, FINDING, DRIFTED_FINDINGS, DRIFTED_FINDING
     FINDINGS = sweep.run_once()
     FINDING = ident.determine(FINDINGS)
+    DRIFTED_FINDINGS = ident.drifted_sweep(FINDINGS)
+    DRIFTED_FINDING = ident.determine(DRIFTED_FINDINGS)
 
 
 def _committed_record():
@@ -95,15 +106,40 @@ def _committed_record():
         return handle.read()
 
 
-def _entry(coefficient):
-    for entry in FINDINGS["swept"]:
+def _produced_record():
+    """The record this method presently produces, over both readings."""
+    return ident.report_text(FINDINGS, FINDING, DRIFTED_FINDINGS, DRIFTED_FINDING)
+
+
+def _sentence_with(text, marker):
+    """The record's paragraph carrying one marker, or nothing if it carries
+    none.
+
+    A paragraph and not a window of characters: the record writes each one as a
+    single line so that a renderer wraps it, which makes the line the unit a
+    statement is made in. An assertion that a name is or is not in the same
+    statement as a marker is asking about that line and not about the record.
+    """
+    for line in text.splitlines():
+        if marker in line:
+            return line
+    return ""
+
+
+def _coefficients_in(sentence):
+    """The coefficients one sentence of the record names."""
+    return re.findall(r"`([^`]+)`", sentence)
+
+
+def _entry(coefficient, findings=None):
+    for entry in (FINDINGS if findings is None else findings)["swept"]:
         if entry["coefficient"] == coefficient:
             return entry
     raise AssertionError("the sweep did not perturb %s" % coefficient)
 
 
-def _record(coefficient):
-    for record in FINDING["determination"]:
+def _record(coefficient, finding=None):
+    for record in (FINDING if finding is None else finding)["determination"]:
         if record["coefficient"] == coefficient:
             return record
     raise AssertionError("the analysis reports nothing for %s" % coefficient)
@@ -789,7 +825,7 @@ class TheFindingIsCommittedWithItsDataAndItsModel(unittest.TestCase):
     # the figures they were drawn from is a finding nobody can check.
     def test_the_committed_record_is_the_one_this_method_presently_produces(self):
         committed = _committed_record()
-        produced = ident.report_text(FINDINGS, FINDING)
+        produced = _produced_record()
 
         was = ident.determination_rows(committed)
         now = ident.determination_rows(produced)
@@ -840,24 +876,28 @@ class TheFindingIsCommittedWithItsDataAndItsModel(unittest.TestCase):
     # describe an earlier model.
     def test_the_committed_per_channel_figures_are_the_ones_this_method_now_produces(self):
         committed = _committed_record()
-        produced = ident.report_text(FINDINGS, FINDING)
-        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
-            was = ident.signature_rows(committed, side)
-            now = ident.signature_rows(produced, side)
-            self.assertTrue(was, "the committed record carries no %s draw table" % side)
-            self.assertEqual(sorted(was), sorted(now))
-            for coefficient, figures in was.items():
-                with self.subTest(side=side, coefficient=coefficient):
-                    self.assertEqual(len(figures), len(sweep.OBSERVED_CHANNELS))
-                    for at, before in enumerate(figures):
-                        after = now[coefficient][at]
-                        self.assertLessEqual(
-                            abs(before - after),
-                            FIGURE_TOLERANCE * max(abs(after), 1e-12) + 1e-12,
-                            "the committed record has %s moving the %s draw's %s by %g and this "
-                            "analysis now has it moving it by %g. Re-run "
-                            "firmware/emulation/tools/run_parameter_identifiability.py"
-                            % (coefficient, side, sweep.OBSERVED_CHANNELS[at], before, after))
+        produced = _produced_record()
+        for reading in (ident.BUILT_DIFFERENTLY, ident.DRIFTED):
+            for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+                was = ident.signature_rows(committed, side, reading)
+                now = ident.signature_rows(produced, side, reading)
+                self.assertTrue(
+                    was, "the committed record carries no %s draw table for the machine %s"
+                         % (side, reading))
+                self.assertEqual(sorted(was), sorted(now))
+                for coefficient, figures in was.items():
+                    with self.subTest(reading=reading, side=side, coefficient=coefficient):
+                        self.assertEqual(len(figures), len(sweep.OBSERVED_CHANNELS))
+                        for at, before in enumerate(figures):
+                            after = now[coefficient][at]
+                            self.assertLessEqual(
+                                abs(before - after),
+                                FIGURE_TOLERANCE * max(abs(after), 1e-12) + 1e-12,
+                                "the committed record has %s moving the %s draw's %s by %g on a "
+                                "machine %s and this analysis now has it moving it by %g. Re-run "
+                                "firmware/emulation/tools/run_parameter_identifiability.py"
+                                % (coefficient, side, sweep.OBSERVED_CHANNELS[at], before,
+                                   reading, after))
 
     # SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C3: with the per-channel data it
     # was derived from. Every coefficient the analysis covers has to appear in
@@ -865,26 +905,31 @@ class TheFindingIsCommittedWithItsDataAndItsModel(unittest.TestCase):
     # that the verdict beside it can be argued with rather than only read.
     def test_the_committed_record_carries_a_figure_for_every_coefficient_and_channel(self):
         committed = _committed_record()
-        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
-            heading = "### On the %s draw" % side
-            self.assertIn(heading, committed)
-            block = committed.split(heading, 1)[1].split("\n##", 1)[0]
-            header = [line for line in block.splitlines() if line.startswith("| Coefficient")]
-            self.assertEqual(len(header), 1, "the %s draw's table has no single header row" % side)
-            for key in sweep.OBSERVED_CHANNELS:
-                with self.subTest(side=side, channel=key):
-                    self.assertIn("`%s`" % key, header[0])
-            for record in FINDING["determination"]:
-                with self.subTest(side=side, coefficient=record["coefficient"]):
-                    row = [line for line in block.splitlines()
-                           if line.startswith("| `%s` |" % record["coefficient"])]
-                    self.assertEqual(len(row), 1)
-                    cells = [cell.strip() for cell in row[0].strip("|").split("|")]
-                    self.assertEqual(
-                        len(cells), len(sweep.OBSERVED_CHANNELS) + 1,
-                        "%s's row on the %s draw carries %d cells for %d channels"
-                        % (record["coefficient"], side, len(cells) - 1,
-                           len(sweep.OBSERVED_CHANNELS)))
+        for reading, of in ((ident.BUILT_DIFFERENTLY, FINDING), (ident.DRIFTED, DRIFTED_FINDING)):
+            for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+                heading = ident.signature_heading(side, reading)
+                self.assertIn(heading, committed)
+                block = committed.split(heading, 1)[1].split("\n#", 1)[0]
+                header = [line for line in block.splitlines() if line.startswith("| Coefficient")]
+                self.assertEqual(
+                    len(header), 1,
+                    "the %s draw's table for a machine %s has no single header row"
+                    % (side, reading))
+                for key in sweep.OBSERVED_CHANNELS:
+                    with self.subTest(reading=reading, side=side, channel=key):
+                        self.assertIn("`%s`" % key, header[0])
+                for record in of["determination"]:
+                    with self.subTest(reading=reading, side=side,
+                                      coefficient=record["coefficient"]):
+                        row = [line for line in block.splitlines()
+                               if line.startswith("| `%s` |" % record["coefficient"])]
+                        self.assertEqual(len(row), 1)
+                        cells = [cell.strip() for cell in row[0].strip("|").split("|")]
+                        self.assertEqual(
+                            len(cells), len(sweep.OBSERVED_CHANNELS) + 1,
+                            "%s's row on the %s draw carries %d cells for %d channels"
+                            % (record["coefficient"], side, len(cells) - 1,
+                               len(sweep.OBSERVED_CHANNELS)))
 
     # SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C3: naming the parameter and limit
     # files, and their digests, the sweep was run against. A name alone does not
@@ -929,7 +974,20 @@ class TheFindingIsCommittedWithItsDataAndItsModel(unittest.TestCase):
             sorted(record["coefficient"] for record in FINDING["determination"]),
             "the replacement model was analysed over a different set of coefficients")
 
-        written = ident.report_text(elsewhere, finding)
+        # Both readings are re-pointed, not only the first. A second reading
+        # that went on being taken of the shipped machine would put that
+        # machine's drift finding into a record naming the replacement, which is
+        # the one way this could go wrong and still look right.
+        elsewhere_drifted = ident.drifted_sweep(elsewhere)
+        self.assertEqual(elsewhere_drifted["description"], replacement)
+        self.assertNotEqual(
+            elsewhere_drifted["workspace"], DRIFTED_FINDINGS["workspace"],
+            "the replacement model's second reading wrote its perturbed descriptions where the "
+            "shipped machine's second reading wrote its own, so one of the two is standing on "
+            "files the other wrote")
+
+        written = ident.report_text(elsewhere, finding, elsewhere_drifted,
+                                    ident.determine(elsewhere_drifted))
         self.assertIn(sweep.digest_of(replacement), written)
         self.assertNotIn(sweep.digest_of(FINDINGS["description"]), written)
 
@@ -958,6 +1016,634 @@ class TheFindingIsCommittedWithItsDataAndItsModel(unittest.TestCase):
             "is not asked here", dominance,
             "the dominance record still says identifiability is asked nowhere, which stopped "
             "being true. Re-run firmware/emulation/tools/run_parameter_sweep.py")
+
+
+class TheDeterminationIsTakenOverPerturbationsAppliedToTheMachineAlone(unittest.TestCase):
+    """SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2: The determination is taken
+    over perturbations applied to the machine alone.
+
+    The second reading is the same sweep with one thing withheld, and the whole
+    of what has to be shown is that the one thing really was withheld. A second
+    sweep that quietly handed each perturbed description to the control path as
+    well would produce a second reading identical to the first, and a record
+    carrying two identical readings reads exactly like a machine drift cannot
+    hide anything from.
+    """
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2: applied to the machine alone
+    # -- the control path is held at the description the perturbations move away
+    # from, and the sweep records that it was rather than leaving it to be
+    # inferred. Both sweeps are asked, because a field that said the same thing
+    # about each would say nothing about either.
+    def test_the_second_reading_held_the_control_path_at_the_unperturbed_description(self):
+        self.assertEqual(
+            DRIFTED_FINDINGS["description"], FINDINGS["description"],
+            "the two readings are of two different machines, so nothing can be concluded from "
+            "their disagreeing")
+        self.assertEqual(
+            DRIFTED_FINDINGS["control_description"], FINDINGS["description"],
+            "the second reading's control path was not held at the description the perturbations "
+            "move the machine away from")
+        self.assertFalse(
+            DRIFTED_FINDINGS["control_path_follows_the_machine"],
+            "the second reading records its control path as following the machine, which is the "
+            "first reading again")
+        self.assertTrue(
+            FINDINGS["control_path_follows_the_machine"],
+            "the first reading records its control path as held at a description of its own, so "
+            "it is not the coupled reading the record and the sealed evidence say it is")
+        self.assertEqual(
+            DRIFTED_FINDINGS["reference"][sweep.BREW_SIDE]["control_description"],
+            FINDINGS["description"],
+            "the second reading's unperturbed brew draw did not record which description its "
+            "control path drove from")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2: over perturbations applied
+    # to the machine alone -- recomputed from the corner descriptions the second
+    # reading actually wrote, because a signature checked against itself agrees
+    # with itself over any arithmetic. The same two corners are then put through
+    # the draw coupled, and the two recomputations have to differ: that is the
+    # one comparison that says the perturbation was withheld rather than merely
+    # that a second sweep was run.
+    def test_the_recorded_signature_is_the_one_a_machine_alone_perturbation_produces(self):
+        machine_alone = {}
+        coupled = {}
+        for corner in ("low", "high"):
+            written = os.path.join(DRIFTED_FINDINGS["workspace"],
+                                   "%s-%s.params" % (RECOMPUTED_COEFFICIENT, corner))
+            self.assertTrue(os.path.exists(written), written)
+            machine_alone[corner] = sweep.brew_draw(
+                FINDINGS["executable"], written, FINDINGS["limits"],
+                FINDINGS["courses"][sweep.BREW_SIDE], FINDINGS["converter_scale"],
+                "drifted-recomputed-%s" % corner,
+                control_description=DRIFTED_FINDINGS["control_description"])
+            coupled[corner] = sweep.brew_draw(
+                FINDINGS["executable"], written, FINDINGS["limits"],
+                FINDINGS["courses"][sweep.BREW_SIDE], FINDINGS["converter_scale"],
+                "drifted-recomputed-coupled-%s" % corner)
+
+        def half_the_difference(runs, key):
+            return [(high - low) / 2.0
+                    for high, low in zip(runs["high"]["channels"][key],
+                                         runs["low"]["channels"][key])]
+
+        recorded = _entry(RECOMPUTED_COEFFICIENT, DRIFTED_FINDINGS)["signature"][sweep.BREW_SIDE]
+        as_coupled = _entry(RECOMPUTED_COEFFICIENT)["signature"][sweep.BREW_SIDE]
+        withheld = 0
+        for key in sweep.OBSERVED_CHANNELS:
+            held_still = half_the_difference(machine_alone, key)
+            following = half_the_difference(coupled, key)
+            with self.subTest(channel=key):
+                self.assertEqual(
+                    held_still, recorded[key],
+                    "the second reading's recorded effect of %s on %s is not what those two "
+                    "corner descriptions produce when the control path is held still"
+                    % (RECOMPUTED_COEFFICIENT, key))
+                self.assertEqual(
+                    following, as_coupled[key],
+                    "the same two corner descriptions run with the control path following the "
+                    "machine did not reproduce the first reading's recorded effect on %s, so the "
+                    "two readings are not perturbing the same machine by the same amount" % key)
+            withheld += sum(1 for was, now in zip(held_still, following) if was != now)
+        self.assertGreater(
+            withheld, 0,
+            "the same corner descriptions produced the same effect on every channel whether the "
+            "control path was held still or not, so nothing was withheld from it and the second "
+            "reading is the first one again")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2: the machine alone -- and the
+    # two readings can only come apart where a control path drives from a model
+    # of the machine. The coffee side has one and the steam side does not: its
+    # law is built from its own declaration and from no description of a casting.
+    # So exactly one side has to move. A run where neither moved would mean
+    # nothing was withheld anywhere; a run where the steam side moved would mean
+    # the second reading changed something no description of a casting reaches.
+    def test_the_readings_differ_where_a_control_path_drives_from_a_model_and_nowhere_else(self):
+        self.assertEqual(
+            ident.sides_the_readings_differ_on(FINDINGS, DRIFTED_FINDINGS), [sweep.BREW_SIDE],
+            "the sides the two readings disagree about are not the coffee side alone: the coffee "
+            "side's control path reconstructs from the description and the steam side's law is "
+            "built from its own declaration, so that side and only that side can answer a "
+            "description withheld from a control path")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2: the determination is taken
+    # over them -- a determination, meaning every in-scope coefficient leaves the
+    # second reading with a verdict of its own, and one taken off the second
+    # reading's own figures rather than the first's. A second determination that
+    # reproduced the first's numbers would be the first one relabelled.
+    def test_the_second_reading_produces_a_determination_of_its_own(self):
+        drifted = dict((record["coefficient"], record)
+                       for record in DRIFTED_FINDING["determination"] if record["in_scope"])
+        self.assertEqual(sorted(drifted), sorted(DRIFTED_FINDING["scoped"]))
+        for name, record in drifted.items():
+            with self.subTest(coefficient=name):
+                self.assertIn(record["verdict"],
+                              (ident.IDENTIFIABLE, ident.BELOW_WHAT_A_READING_CARRIES,
+                               ident.REPRODUCED_BY_THE_OTHERS))
+
+        moved = [name for name, record in drifted.items()
+                 if abs(record["largest"] - _record(name)["largest"]) >
+                 FIGURE_TOLERANCE * max(_record(name)["largest"], 1e-12)]
+        self.assertTrue(
+            moved,
+            "every coefficient reached every channel by the same amount under both readings, so "
+            "holding the control path still changed nothing the determination is taken over")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2: the same perturbations. The
+    # two readings write a description per coefficient per corner under the same
+    # names, so they need directories of their own or one reading stands on the
+    # files the other wrote. What has to hold is both: the directories differ,
+    # and the descriptions in them are the same machines -- since the whole claim
+    # is that only where the description went changed.
+    def test_the_two_readings_perturb_the_same_machines_in_directories_of_their_own(self):
+        self.assertNotEqual(
+            DRIFTED_FINDINGS["workspace"], FINDINGS["workspace"],
+            "the second reading wrote its perturbed descriptions where the first wrote its own")
+        for corner in ("low", "high"):
+            first = os.path.join(FINDINGS["workspace"],
+                                 "%s-%s.params" % (RECOMPUTED_COEFFICIENT, corner))
+            second = os.path.join(DRIFTED_FINDINGS["workspace"],
+                                  "%s-%s.params" % (RECOMPUTED_COEFFICIENT, corner))
+            with self.subTest(corner=corner):
+                self.assertTrue(os.path.exists(first) and os.path.exists(second))
+                self.assertEqual(
+                    sweep.digest_of(first), sweep.digest_of(second),
+                    "the two readings perturbed %s's %s corner to different machines, so what "
+                    "separates their answers is not only where the description went"
+                    % (RECOMPUTED_COEFFICIENT, corner))
+
+
+class AParameterHiddenByDriftIsNamedAsSuch(unittest.TestCase):
+    """SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: A parameter identifiable
+    when built differently and not when drifted is named as such.
+
+    Both halves are asserted. The two readings have to be in the one record --
+    a reader given one of them has been given one answer while the other
+    question goes on looking answered -- and the crossing between them has to be
+    named coefficient by coefficient, because it is the finding neither reading
+    carries on its own.
+
+    The crossing is put to the logic against synthetic readings as well as
+    against this machine's, for the reason the verdicts themselves are: a
+    coefficient can leave the second reading in three different ways and this
+    model presently produces one of them. A suite asserting only what this model
+    does would leave the other two implemented and never run.
+
+    The criterion's other half is asserted here too, and it is the half a
+    record satisfies by accident least often: a coefficient neither reading
+    shows identifiable, and one both do, each stated once. Once means derived
+    and written rather than left as two lists a reader intersects by eye, and
+    it means once rather than under each reading with that reading's own
+    figures -- two paragraphs about one unchanged verdict read as a
+    disagreement to be resolved.
+
+    And what the record may say around the crossing is held to what the two
+    determinations carry. Two claims that do not survive them were in it: that
+    a loop no longer told about its machine lets less of a coefficient's error
+    reach the channels, which the figures contradict in both directions, and
+    that what drift hides is what an instrument would be bought for, which the
+    verdict's own definition rules out and which the record contradicted
+    sixteen lines earlier.
+    """
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: both readings are reported
+    # together rather than one replacing the other. The committed record has to
+    # carry the second reading's determination as well as the first's, with its
+    # own figures, and the two have to be different tables -- a record that
+    # wrote one of them twice would satisfy every structural check while
+    # answering the drift question with the commissioning answer.
+    def test_the_record_carries_both_readings_with_their_own_figures(self):
+        committed = _committed_record()
+        produced = _produced_record()
+
+        for heading in (ident.READINGS_HEADING, ident.DETERMINATION_HEADING,
+                        ident.DRIFT_DETERMINATION_HEADING, ident.HIDDEN_HEADING):
+            with self.subTest(heading=heading):
+                self.assertIn(heading, committed)
+
+        was = ident.determination_rows(committed, ident.DRIFT_DETERMINATION_HEADING)
+        now = ident.determination_rows(produced, ident.DRIFT_DETERMINATION_HEADING)
+        self.assertTrue(was, "the committed record carries no drifted determination table")
+        self.assertEqual([row["coefficient"] for row in was],
+                         [row["coefficient"] for row in now])
+        for before, after in zip(was, now):
+            with self.subTest(coefficient=before["coefficient"]):
+                self.assertEqual(before["verdict"], after["verdict"])
+                for figure in ("largest", "unique_scoped", "unique_every", "fraction", "used"):
+                    self.assertLessEqual(
+                        abs(before[figure] - after[figure]),
+                        FIGURE_TOLERANCE * max(abs(after[figure]), 1e-12) + 1e-12,
+                        "the committed record gives %s a drifted %s of %g and this analysis now "
+                        "gives it %g. Re-run "
+                        "firmware/emulation/tools/run_parameter_identifiability.py"
+                        % (before["coefficient"], figure, before[figure], after[figure]))
+
+        coupled = ident.determination_rows(committed)
+        self.assertNotEqual(
+            coupled, was,
+            "the record's two determinations are the same table, so one reading was written "
+            "twice and the drift question has been answered with the commissioning answer")
+        self.assertIn(
+            sweep._relative(DRIFTED_FINDINGS["control_description"]), committed,
+            "the record does not say which description the second reading's control path was "
+            "held at, so what was withheld from it cannot be established from the record")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: is named as such. Every
+    # coefficient the two readings disagree about in that direction is named in
+    # the committed record, and each one's two verdicts are read back out of the
+    # record's own tables rather than out of this run -- a record naming a
+    # coefficient the tables beside it do not support is a finding nobody can
+    # check.
+    def test_every_coefficient_the_crossing_covers_is_named_in_the_committed_record(self):
+        committed = _committed_record()
+        computed = ident.hidden_by_drift(FINDING, DRIFTED_FINDING)
+        named = ident.hidden_rows(committed)
+
+        self.assertEqual(
+            sorted(entry["coefficient"] for entry in computed),
+            sorted(coefficient for coefficient, _ in named),
+            "the committed record does not name the coefficients this analysis now finds "
+            "identifiable when built differently and not when drifted. Re-run "
+            "firmware/emulation/tools/run_parameter_identifiability.py")
+
+        coupled = dict((row["coefficient"], row["verdict"])
+                       for row in ident.determination_rows(committed))
+        drifted = dict((row["coefficient"], row["verdict"])
+                       for row in ident.determination_rows(
+                           committed, ident.DRIFT_DETERMINATION_HEADING))
+        for coefficient, verdict_when_drifted in named:
+            with self.subTest(coefficient=coefficient):
+                self.assertEqual(
+                    coupled.get(coefficient), ident.IDENTIFIABLE,
+                    "%s is named as hidden by drift and the record's own first reading does not "
+                    "show it identifiable" % coefficient)
+                self.assertNotEqual(
+                    drifted.get(coefficient), ident.IDENTIFIABLE,
+                    "%s is named as hidden by drift and the record's own second reading shows it "
+                    "identifiable" % coefficient)
+                self.assertEqual(drifted.get(coefficient, ident.REACHES_NO_RECONSTRUCTION),
+                                 verdict_when_drifted)
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: not when drifted -- which a
+    # coefficient can fail to be in three ways, and all three have to be caught.
+    # It can be reproduced by the others once the loop absorbs part of it, it can
+    # fall below what a reading could carry altogether, and the second reading
+    # can find no reconstruction resting on it at all. The last is the one most
+    # easily missed, because such a coefficient leaves the second reading with no
+    # verdict rather than with a bad one -- and a machine that reveals nothing
+    # about a coefficient reveals nothing about it whichever of the three is why.
+    def test_the_crossing_is_found_whichever_way_the_second_reading_loses_a_coefficient(self):
+        where = (sweep.BREW_SIDE, "brew-c")
+        first = [10.0, 0.0, 0.0, 30.0, 0.0, 0.0, 5.0, 0.0]
+        second = [0.0, 40.0, 0.0, 0.0, 20.0, 0.0, 0.0, 7.0]
+        apart = [0.0, 0.0, 60.0, 0.0, 0.0, -25.0, 0.0, 0.0]
+        built = ident.determine(_synthetic({
+            "first": {where: first},
+            "second": {where: second},
+            "crossing": {where: apart},
+        }), reading=1.0)
+        self.assertEqual(
+            [record["verdict"] for record in built["determination"]],
+            [ident.IDENTIFIABLE] * 3,
+            "the first reading of this synthetic pair does not show all three identifiable, so "
+            "there is nothing for the second to lose")
+
+        # Reproduced by the others: the crossing coefficient is written as a
+        # combination of the two it stood apart from.
+        reproduced = ident.determine(_synthetic({
+            "first": {where: first},
+            "second": {where: second},
+            "crossing": {where: [2.0 * a - 0.5 * b for a, b in zip(first, second)]},
+        }), reading=1.0)
+        # Below what a reading could carry: it still stands apart and no longer
+        # reaches any channel by as much as one count.
+        faded = ident.determine(_synthetic({
+            "first": {where: first},
+            "second": {where: second},
+            "crossing": {where: [value / 1000.0 for value in apart]},
+        }), reading=1.0)
+        # No reconstruction resting on it: the second reading found the coffee
+        # side's delivered temperature unmoved by it, so it has no verdict at all.
+        unscoped = ident.determine(_synthetic({
+            "first": {where: first},
+            "second": {where: second},
+            "crossing": {where: apart},
+        }, reaches_outlet={"first": True, "second": True, "crossing": False}), reading=1.0)
+
+        for what, drifted, expected in (
+                ("reproduced", reproduced, ident.REPRODUCED_BY_THE_OTHERS),
+                ("faded", faded, ident.BELOW_WHAT_A_READING_CARRIES),
+                ("unscoped", unscoped, ident.REACHES_NO_RECONSTRUCTION)):
+            with self.subTest(way=what):
+                hidden = dict((entry["coefficient"], entry["verdict_when_drifted"])
+                              for entry in ident.hidden_by_drift(built, drifted))
+                self.assertIn(
+                    "crossing", hidden,
+                    "a coefficient the first reading shows identifiable and the second loses by "
+                    "being %s was not named as hidden by drift" % what)
+                self.assertEqual(hidden["crossing"], expected)
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: identifiable when built
+    # differently and not when drifted -- both halves, so neither a coefficient
+    # both readings show identifiable nor one neither reading shows identifiable
+    # may be named. The second is the one worth asserting: such a coefficient is
+    # already named as not shown identifiable by the first reading, and naming it
+    # again here would report a machine as having drifted out of a capability it
+    # never had.
+    def test_only_a_coefficient_the_first_reading_shows_identifiable_is_named(self):
+        where = (sweep.BREW_SIDE, "brew-c")
+        first = [10.0, 0.0, 0.0, 30.0, 0.0, 0.0, 5.0, 0.0]
+        second = [0.0, 40.0, 0.0, 0.0, 20.0, 0.0, 0.0, 7.0]
+        combination = [2.0 * a - 0.5 * b for a, b in zip(first, second)]
+        apart = [0.0, 0.0, 60.0, 0.0, 0.0, -25.0, 0.0, 0.0]
+
+        neither = _synthetic({
+            "first": {where: first},
+            "second": {where: second},
+            "combination": {where: combination},
+            "apart": {where: apart},
+        })
+        finding = ident.determine(neither, reading=1.0)
+        self.assertEqual(
+            ident.hidden_by_drift(finding, finding), [],
+            "a reading put beside itself named a coefficient as hidden by drift, so the crossing "
+            "is being read off one reading rather than off the disagreement between two")
+
+        # And a second reading that loses the one coefficient the first reading
+        # could show and treats the other three exactly as the first did. Only
+        # that one may be named: the three the first reading could not show are
+        # already named as not shown identifiable there, and naming them again
+        # here would report a machine as having drifted out of a capability it
+        # never had.
+        faded = ident.determine(_synthetic({
+            "first": {where: first},
+            "second": {where: second},
+            "combination": {where: combination},
+            "apart": {where: [value / 1000.0 for value in apart]},
+        }), reading=1.0)
+        named = [entry["coefficient"] for entry in ident.hidden_by_drift(finding, faded)]
+        self.assertEqual(
+            named, ["apart"],
+            "the crossing named %s, where the first reading shows only `apart` identifiable and "
+            "the second reading loses only that one" % named)
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: named as such -- which means
+    # the record has to say so when nothing crosses as well as when something
+    # does. A record that spoke up only where drift hid something would leave a
+    # reader unable to tell "drift hides nothing here" from "nobody looked", and
+    # those are opposite findings. Put to it by writing a record whose two
+    # readings are the same one, which is the case that necessarily has no
+    # crossing.
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: naming what the two readings
+    # show means naming it and nothing more. The obvious sentence to write
+    # between two readings -- that a loop no longer told about its machine lets
+    # less of a coefficient's error reach the channels, so the first reading is
+    # optimistic relative to the second -- is a claim about a direction, and the
+    # record's own two determination tables can falsify it. They do here: the
+    # figure each verdict is taken on rises under drift for some coefficients
+    # and falls for others. A record asserting the one direction anyway would
+    # have a reader read both tables through a pattern the figures do not carry,
+    # and would make the first reading look like a safe bound on the second.
+    # Read out of the committed record's own tables rather than out of this run,
+    # so that a record whose prose and figures had come apart fails here.
+    def test_no_direction_is_claimed_between_the_readings_that_the_figures_deny(self):
+        committed = _committed_record()
+        coupled = dict((row["coefficient"], row)
+                       for row in ident.determination_rows(committed))
+        drifted = dict((row["coefficient"], row)
+                       for row in ident.determination_rows(
+                           committed, ident.DRIFT_DETERMINATION_HEADING))
+        self.assertTrue(coupled and drifted, "the committed record carries no determination")
+
+        fell, rose = [], []
+        for coefficient, row in coupled.items():
+            other = drifted.get(coefficient)
+            if other is None:
+                continue
+            # Three significant figures is what the record carries, so a
+            # difference smaller than that is a difference the record does not
+            # claim either way.
+            was, now = row["unique_scoped"], other["unique_scoped"]
+            if abs(now - was) <= FIGURE_TOLERANCE * max(abs(was), abs(now)):
+                continue
+            (fell if now < was else rose).append(coefficient)
+
+        self.assertTrue(
+            fell and rose,
+            "the committed record's two determinations move one way only (%d down, %d up), so "
+            "the claim this asserts against is not falsified by them and this assertion has "
+            "stopped testing anything" % (len(fell), len(rose)))
+        self.assertIn(
+            ident.NEITHER_READING_BOUNDS, committed,
+            "the record's own figures move both ways between the two readings and it does not "
+            "say so, so a reader is left to infer a direction from two tables")
+
+        # The four sentences that stated the one direction, each of which the
+        # tables above contradict. Named exactly, because each stood in the
+        # record until the two determinations were read against it.
+        for claimed in ("the channels move less",
+                        "carry less of the coefficient's own error",
+                        "is optimistic relative to",
+                        "optimistic about drift"):
+            with self.subTest(claim=claimed):
+                self.assertNotIn(
+                    claimed, committed,
+                    "the record claims drift moves the channels one way, and its own two "
+                    "determinations disagree: %s move further from the others under drift and "
+                    "%s move nearer"
+                    % (", ".join(sorted(rose)), ", ".join(sorted(fell))))
+
+        # And the split the record states is the split its own tables carry.
+        stated = _sentence_with(committed, ident.NEITHER_READING_BOUNDS)
+        for coefficient in fell + rose:
+            with self.subTest(coefficient=coefficient):
+                self.assertIn(
+                    "`%s`" % coefficient, stated,
+                    "the record's comparison of the two readings does not say which way %s "
+                    "moved. Re-run "
+                    "firmware/emulation/tools/run_parameter_identifiability.py" % coefficient)
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: a coefficient drift hides is
+    # named as such and as nothing else. It is not thereby a coefficient an
+    # instrument would buy back: one hidden because what it does to every
+    # channel modelled here is what a combination of the others drifting would
+    # do is hidden by a confounding, and an instrument on any of those channels
+    # carries that confounding rather than breaking it. The record said both --
+    # that the unfitted channel is presently not worth spending on, and sixteen
+    # lines later that the coefficient it hides is one an instrument would be
+    # bought for -- and only the first followed from the figures.
+    def test_a_coefficient_no_instrument_recovers_is_not_named_as_one_to_buy_for(self):
+        committed = _committed_record()
+        hidden = ident.hidden_by_drift(FINDING, DRIFTED_FINDING)
+        if not hidden:
+            self.skipTest("this model has no crossing for the record to say anything about")
+
+        # The invariant, put to the analysis rather than to the prose. Both
+        # figures a verdict is taken on are maxima over every channel the
+        # signature is laid out against, so a coefficient the drifted reading
+        # could not show identifiable is one no channel here separates -- the
+        # unfitted ones included. An instrument on one of them therefore
+        # recovers nothing, whatever a record might say.
+        fitted = ident._channel_is_fitted()
+        for entry in hidden:
+            drifted = entry["drifted"]
+            if drifted is None or not drifted["in_scope"]:
+                continue
+            with self.subTest(coefficient=entry["coefficient"]):
+                by_channel = drifted["against_scoped"]["unique_by_channel"]
+                on_unfitted = max((value for (side, key), value in by_channel.items()
+                                   if not fitted[key]), default=0.0)
+                reach_unfitted = max((value for (side, key), value in drifted["reached"].items()
+                                      if not fitted[key]), default=0.0)
+                self.assertTrue(
+                    on_unfitted <= 1.0 or reach_unfitted <= 1.0,
+                    "%s is hidden by drift and an unfitted channel carries both its reach and the "
+                    "part nothing else reproduces above what that channel could resolve, so the "
+                    "verdict it failed was not taken over that channel" % entry["coefficient"])
+
+        said = _sentence_with(committed, ident.NO_INSTRUMENT_RECOVERS)
+        self.assertTrue(
+            said,
+            "the committed record names coefficients drift hides and does not say what an "
+            "instrument would do about them, so the section reads as a shopping list. Re-run "
+            "firmware/emulation/tools/run_parameter_identifiability.py")
+        self.assertNotIn(
+            "the coefficients an instrument would be bought for", committed,
+            "the record names what drift hides as what an instrument would be bought for, and its "
+            "own account of the unfitted channel concludes from the same figures that the channel "
+            "is presently not worth spending on")
+
+        # And each one is given the reason its own verdict supplies, so a
+        # coefficient hidden three different ways is not accounted for once.
+        accounted = ident.why_no_instrument_recovers(hidden)
+        self.assertEqual(
+            sorted(entry["coefficient"] for entry, _ in accounted),
+            sorted(entry["coefficient"] for entry in hidden),
+            "the account of what an instrument would do does not cover every coefficient drift "
+            "hides")
+        for entry, why in accounted:
+            with self.subTest(coefficient=entry["coefficient"]):
+                self.assertIn(
+                    "`%s`" % entry["coefficient"], committed)
+                self.assertIn(
+                    why, committed,
+                    "the committed record does not carry the reason no instrument recovers %s. "
+                    "Re-run firmware/emulation/tools/run_parameter_identifiability.py"
+                    % entry["coefficient"])
+
+        # The three ways the second reading can lose a coefficient are three
+        # different things to tell a reader, and this model produces one of
+        # them. Put to the logic against synthetic readings so the other two
+        # are not left implemented and never run.
+        where = (sweep.BREW_SIDE, "brew-c")
+        first = [10.0, 0.0, 0.0, 30.0, 0.0, 0.0, 5.0, 0.0]
+        second = [0.0, 40.0, 0.0, 0.0, 20.0, 0.0, 0.0, 7.0]
+        apart = [0.0, 0.0, 60.0, 0.0, 0.0, -25.0, 0.0, 0.0]
+        built = ident.determine(_synthetic({
+            "first": {where: first},
+            "second": {where: second},
+            "crossing": {where: apart},
+        }), reading=1.0)
+        given = set()
+        for what, signatures, reaches in (
+                ("reproduced",
+                 {"crossing": {where: [2.0 * a - 0.5 * b for a, b in zip(first, second)]}}, None),
+                ("faded", {"crossing": {where: [value / 1000.0 for value in apart]}}, None),
+                ("unscoped", {"crossing": {where: apart}},
+                 {"first": True, "second": True, "crossing": False})):
+            with self.subTest(way=what):
+                drifted = ident.determine(_synthetic(dict(
+                    {"first": {where: first}, "second": {where: second}}, **signatures),
+                    reaches_outlet=reaches), reading=1.0)
+                reasons = dict((entry["coefficient"], why) for entry, why
+                               in ident.why_no_instrument_recovers(
+                                   ident.hidden_by_drift(built, drifted)))
+                self.assertIn(
+                    "crossing", reasons,
+                    "a coefficient the second reading loses by being %s was given no account of "
+                    "what an instrument would do about it" % what)
+                given.add(reasons["crossing"])
+        self.assertEqual(
+            len(given), 3,
+            "the three ways drift can hide a coefficient are given the same reason for an "
+            "instrument buying nothing, so a reader is told a confounding where the machine "
+            "observes nothing at all")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3: a parameter neither reading
+    # shows identifiable, and one both do, are each stated once. Two readings
+    # and two verdicts leave four ways for a coefficient to come out, and a
+    # record naming only the crossing leaves the other three to be got by
+    # intersecting two tables by eye -- which is the comparison the criterion
+    # says a reader will not perform. So each of the three is derived and
+    # stated, once: not repeated under both readings' accounts, and not left
+    # implicit in the difference between two lists.
+    def test_the_sets_the_two_readings_agree_on_are_each_stated_once(self):
+        committed = _committed_record()
+        both, neither, only_drifted = ident.readings_agree_on(FINDING, DRIFTED_FINDING)
+
+        for marker in (ident.BOTH_READINGS_SHOW, ident.NEITHER_READING_SHOWS,
+                       ident.ONLY_DRIFTED_SHOWS):
+            with self.subTest(marker=marker):
+                self.assertEqual(
+                    committed.count(marker), 1,
+                    "the committed record states '%s' %d times, and a set the two readings agree "
+                    "on is one finding stated once" % (marker, committed.count(marker)))
+
+        for marker, expected in ((ident.BOTH_READINGS_SHOW, both),
+                                 (ident.NEITHER_READING_SHOWS, neither),
+                                 (ident.ONLY_DRIFTED_SHOWS, only_drifted)):
+            with self.subTest(marker=marker):
+                self.assertEqual(
+                    sorted(_coefficients_in(_sentence_with(committed, marker))), sorted(expected),
+                    "the committed record's '%s' does not name what this analysis now computes. "
+                    "Re-run firmware/emulation/tools/run_parameter_identifiability.py" % marker)
+
+        # And the verdict paragraph for a coefficient neither reading could show
+        # appears once over the whole record rather than under each reading with
+        # that reading's own figures. Two paragraphs about one unchanged verdict
+        # read as a disagreement to be resolved rather than as one finding.
+        for coefficient in neither:
+            with self.subTest(coefficient=coefficient):
+                self.assertEqual(
+                    committed.count("- `%s` — " % coefficient), 1,
+                    "%s is not shown identifiable under either reading and the record accounts "
+                    "for it %d times" % (coefficient, committed.count("- `%s` — " % coefficient)))
+
+        # The three sets and the crossing between them account for every
+        # coefficient a verdict was reached about, so nothing the reconstruction
+        # rests on is left out of all four.
+        crossing = [entry["coefficient"] for entry in ident.hidden_by_drift(FINDING,
+                                                                            DRIFTED_FINDING)]
+        self.assertEqual(
+            sorted(both + neither + only_drifted + crossing),
+            sorted(record["coefficient"] for record in FINDING["determination"]
+                   if record["in_scope"]),
+            "the four cases do not partition the coefficients the reconstruction rests on, so a "
+            "coefficient is named under two of them or under none")
+
+    def test_a_record_with_nothing_crossing_says_so_rather_than_falling_silent(self):
+        nothing_crosses = ident.report_text(FINDINGS, FINDING, FINDINGS, FINDING)
+
+        self.assertIn(ident.HIDDEN_HEADING, nothing_crosses)
+        self.assertEqual(
+            ident.hidden_rows(nothing_crosses), [],
+            "a record whose two readings are the same one still named a coefficient as hidden "
+            "by drift")
+        self.assertIn(
+            "No coefficient is in this position", nothing_crosses,
+            "a record with nothing crossing left the section empty, so it reads as a question "
+            "nobody asked rather than as an answer")
+        crossing = ident.hidden_by_drift(FINDING, DRIFTED_FINDING)
+        if crossing:
+            self.assertNotIn(
+                "No coefficient is in this position", _committed_record(),
+                "the committed record says nothing crosses while this analysis finds %d that do. "
+                "Re-run firmware/emulation/tools/run_parameter_identifiability.py" % len(crossing))
+        else:
+            self.assertIn(
+                "No coefficient is in this position", _committed_record(),
+                "this analysis finds nothing crossing and the committed record does not say so. "
+                "Re-run firmware/emulation/tools/run_parameter_identifiability.py")
 
 
 if __name__ == "__main__":

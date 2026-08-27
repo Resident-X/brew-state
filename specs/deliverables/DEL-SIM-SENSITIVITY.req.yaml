@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The parameters and channels that dominate delivery behaviour, ranked by analysis, and those no observation can reach
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 2
 text: |

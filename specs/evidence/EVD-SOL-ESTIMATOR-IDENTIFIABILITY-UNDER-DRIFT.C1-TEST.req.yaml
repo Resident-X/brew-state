@@ -1,0 +1,17 @@
+id: EVD-SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1-TEST
+type: evidence
+title: A draw takes one description for the machine and another for the control path (SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T13:01:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::ADrawTakesOneDescriptionForTheMachineAndAnotherForTheControlPath (test_a_draw_handed_the_same_description_twice_is_the_draw_it_was_before, test_a_description_named_for_the_control_path_alone_reaches_the_loop, test_a_perturbation_kept_from_the_control_path_is_not_the_run_that_reaches_it, test_a_control_description_that_is_not_a_machine_stops_the_draw)
+text: |-
+  The native cross_tier_draw_run seam now accepts two independent plant_parameters_t records; main.c's --control-description flag threads a second description through to control_init while plant_model_init keeps the machine's. Byte-identical draw when the same description is handed twice (regression pin), a control-only description reaching the loop, a machine-only perturbation diverging from a same-description run, and refusal on an unloadable control description are each covered by their own test.
+links:
+  - target: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1
+    type: satisfies

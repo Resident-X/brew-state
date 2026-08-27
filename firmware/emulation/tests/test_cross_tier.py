@@ -78,6 +78,23 @@ DIVERGENT_VALUE = "1000.5"
 DIVERGENT_PUMP_COEFFICIENT = "pump.pressure_bar"
 DIVERGENT_PUMP_VALUE = "15.01"
 
+# And a third, written differently from both of the above because what it is for
+# is different: it is not a hair, it is a machine somewhere else. A fifth off the
+# coffee element's declared power, which is twice the error the description
+# admits for it and still a figure the structure accepts as a machine. What has
+# to be shown with it is which half of a draw a description reaches, and a
+# perturbation small enough to be argued about would leave that turning on
+# whether a difference survived rather than on where it landed.
+DRIFT_COEFFICIENT = "brew.heater_power_w"
+DRIFT_VALUE = "1200.0"
+
+# A description no structure will accept as a machine, for the path where the
+# record the control path is told to drive from is not one. It is the shortest
+# of the refusals the loader already declares -- a line with no separator -- so
+# what is being established is that the second description goes through that
+# loader at all, not which of its refusals it lands on.
+UNLOADABLE_DESCRIPTION = "this line has no separator\n"
+
 # The level of full heater scale at or above which the control law has nothing
 # further to give: what it commands is clamped there, so an interval sitting at
 # it is one where the reconstruction the loop drives from could have been
@@ -148,6 +165,35 @@ def _diverged_host_draw(coefficient=DIVERGENT_COEFFICIENT, value=DIVERGENT_VALUE
         FINDINGS["executable"], perturbed, FINDINGS["limits"],
         FINDINGS["emulation"]["target_brew_c"], FINDINGS["course"],
         FINDINGS["converter_scale"], name=name)
+
+
+def _drifted_description(name="drifted"):
+    """A description of the same machine somewhere else, for the runs that have
+    to establish which half of a draw a description reaches."""
+    return runner.description_with(
+        DRIFT_COEFFICIENT, DRIFT_VALUE, os.path.join(runner.BUILD_DIR, "%s.params" % name))
+
+
+def _draw_described_by(machine, control, name):
+    """One host draw of the same commanded draw, with the machine and the
+    control path each built from a description this caller names."""
+    return runner.host_draw(
+        FINDINGS["executable"], machine, FINDINGS["limits"],
+        FINDINGS["emulation"]["target_brew_c"], FINDINGS["course"],
+        FINDINGS["converter_scale"], name=name, control_description=control)
+
+
+def _trajectory_of(findings):
+    """What the plant model carried at every interval of one draw, as the
+    figures alone.
+
+    Compared exactly rather than within a tolerance wherever this is used. Both
+    sides of every such comparison are read back from what one artefact printed,
+    at the nine significant digits that round-trip the single precision the
+    model carries -- so two runs of the same machine produce the same characters
+    and two runs of different ones do not.
+    """
+    return [reported["quantities"] for reported in findings["trajectory"]]
 
 
 def _host_draw_at(scale, name):
@@ -574,6 +620,115 @@ class ADeliberateDivergenceFailsTheComparison(unittest.TestCase):
             runner.compare(emulation, restepped)["divergences"],
             "a host run that advanced the model a different number of times was compared as "
             "though it had not")
+
+
+class ADrawTakesOneDescriptionForTheMachineAndAnotherForTheControlPath(unittest.TestCase):
+    """SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1: A draw takes one
+    description for the machine and another for the control path.
+
+    Four runs of the one draw the suite above already established is a draw:
+    both halves described the same way, each half described differently in turn,
+    and both described differently together. What each has to show is different,
+    and no one of them shows it alone -- a run where a second description
+    changed the trajectory says only that something reached something, and a run
+    where it changed nothing says only that this course could not tell.
+
+    The comparisons are exact. Both sides of each are read back from figures one
+    artefact printed at the precision that round-trips them, so a run of the
+    same machine under the same loop produces the same characters.
+    """
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1: a draw takes one description
+    # for the machine and another for the control path -- and a draw handed the
+    # same one for both is the draw it always was. This is what says the second
+    # description is an addition to the harness and not a change to it: every
+    # run this repository's sealed evidence rests on names no second description,
+    # and a draw that had started answering differently for them would have
+    # moved the machine underneath that evidence.
+    def test_a_draw_handed_the_same_description_twice_is_the_draw_it_was_before(self):
+        again = _draw_described_by(FINDINGS["description"], FINDINGS["description"], "same-twice")
+
+        self.assertEqual(
+            _trajectory_of(again), _trajectory_of(FINDINGS["host"]),
+            "naming the machine's own description for the control path as well moved the "
+            "trajectory, so a draw that names no second description and one that names the same "
+            "one are not the same run")
+        self.assertEqual(
+            [reported["heater_permille"] for reported in again["trajectory"]],
+            [reported["heater_permille"] for reported in FINDINGS["host"]["trajectory"]],
+            "the loop commanded the heater differently when handed its own description twice")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1: another for the control path
+    # -- which is worth nothing unless the control path is what it reaches. The
+    # machine is left exactly as the run above built it and only the record the
+    # loop reconstructs from is moved, so anything that changes did so through
+    # the loop's own reconstruction and through nothing else.
+    def test_a_description_named_for_the_control_path_alone_reaches_the_loop(self):
+        drifted = _drifted_description()
+        elsewhere = _draw_described_by(FINDINGS["description"], drifted, "control-elsewhere")
+
+        self.assertEqual(
+            elsewhere["description"], FINDINGS["description"],
+            "the run recorded a machine other than the one it was given")
+        self.assertEqual(
+            elsewhere["control_description"], drifted,
+            "the run did not record the description its control path was told to drive from")
+        self.assertNotEqual(
+            _trajectory_of(elsewhere), _trajectory_of(FINDINGS["host"]),
+            "moving only the description the control path reconstructs from left the trajectory "
+            "byte for byte where it was, so the second description reaches nothing the loop does "
+            "and this draw cannot represent a machine its controller is wrong about")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1: one description for the
+    # machine and another for the control path -- the two being separate is the
+    # whole of it, and separateness is only shown by a run where the two differ
+    # coming out somewhere neither of the runs where they agree came out. A
+    # perturbation reaching the machine alone has to differ from the same
+    # perturbation reaching both, or the control path is being handed the
+    # machine's description whatever the caller asked for.
+    def test_a_perturbation_kept_from_the_control_path_is_not_the_run_that_reaches_it(self):
+        drifted = _drifted_description()
+        machine_alone = _draw_described_by(drifted, FINDINGS["description"], "machine-alone")
+        both = _draw_described_by(drifted, drifted, "both-elsewhere")
+
+        self.assertNotEqual(
+            _trajectory_of(machine_alone), _trajectory_of(FINDINGS["host"]),
+            "perturbing the machine alone left the trajectory where the unperturbed run put it, "
+            "so the first description reaches neither half of the draw")
+        self.assertNotEqual(
+            _trajectory_of(machine_alone), _trajectory_of(both),
+            "a perturbation given to the machine alone produced the same trajectory as the same "
+            "perturbation given to the machine and the control path together, so the control "
+            "path was built from the machine's description whichever was named for it")
+        self.assertEqual(
+            len(machine_alone["trajectory"]), len(both["trajectory"]),
+            "the two runs did not cover the same intervals, so the comparison above is between "
+            "two different draws rather than two different machines")
+
+    # SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C1: a description, which means a
+    # record admitted on the terms every description is. A control path told to
+    # drive from something no structure will accept as a machine is not a
+    # drifted machine, it is a broken run, and it has to stop rather than fall
+    # back on the machine's own description and report a coupled run under a
+    # decoupled run's name. Both ways of failing to be one are put to it: a file
+    # that is not there, and a file that is there and is not a machine.
+    def test_a_control_description_that_is_not_a_machine_stops_the_draw(self):
+        missing = os.path.join(runner.BUILD_DIR, "no-such.params")
+        if os.path.exists(missing):
+            os.remove(missing)
+        with self.assertRaises(runner.CrossTierError):
+            _draw_described_by(FINDINGS["description"], missing, "control-missing")
+
+        unloadable = os.path.join(runner.BUILD_DIR, "unloadable.params")
+        os.makedirs(os.path.dirname(unloadable), exist_ok=True)
+        with open(unloadable, "w", encoding="utf-8") as handle:
+            handle.write(UNLOADABLE_DESCRIPTION)
+        with self.assertRaises(runner.CrossTierError) as refused:
+            _draw_described_by(FINDINGS["description"], unloadable, "control-unloadable")
+        self.assertIn(
+            unloadable, str(refused.exception),
+            "the draw was refused without naming which of the two descriptions it refused, which "
+            "is the one thing whoever has to fix it needs")
 
 
 if __name__ == "__main__":

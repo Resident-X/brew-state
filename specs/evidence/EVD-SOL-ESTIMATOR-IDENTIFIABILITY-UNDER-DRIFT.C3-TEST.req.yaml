@@ -1,0 +1,17 @@
+id: EVD-SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3-TEST
+type: evidence
+title: A parameter identifiable when built differently and not when drifted is named as such (SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T13:01:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_identifiability.py::AParameterHiddenByDriftIsNamedAsSuch (including test_no_direction_is_claimed_between_the_readings_that_the_figures_deny, test_a_coefficient_no_instrument_recovers_is_not_named_as_one_to_buy_for, test_the_sets_the_two_readings_agree_on_are_each_stated_once)
+text: |-
+  docs/parameter-identifiability.md commits both readings side by side and names, per coefficient, whether it is identifiable under both, neither, or only the coupled (built-differently) reading -- the crossover case the criterion targets. Following a blind-review correction, the record no longer asserts an unproven universal direction between the readings (the tool's own tables move both ways depending on the coefficient), the instrument-recovery account no longer contradicts the per-coefficient verdict prose, and the both-identifiable / neither-identifiable sets are each derived and stated exactly once rather than left for the reader to intersect by eye. On the currently committed model, brew.outlet_held_volume_ml is the coefficient identifiable when built differently and not when drifted.
+links:
+  - target: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3
+    type: satisfies
