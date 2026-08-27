@@ -125,7 +125,7 @@ Actuation:
 
 **Planned addition, not yet fitted.** `DEC-STEAM-PRESSURE-SENSOR-ADDED` records the decision to add a steam-path pressure transducer, made because `REQ-MEASUREMENT-001.C8` requires steam pressure measured rather than inferred from temperature. Simulation work assuming this channel exists is proceeding ahead of the physical fitting; the line above stays accurate to the machine as documented until that fitting happens and this note is replaced with a provenance entry of its own.
 
-Other figures: water tank 3 L; espresso pump rated 15 bar; steam pump rated 4 bar.
+Other figures: water tank 3 L, from the machine's EM7000 specification; espresso pump rated 15 bar, the Ulka EP5's nameplate figure, consistent across independent listings but not read from a manufacturer datasheet held here; steam pump rated 4 bar, a nameplate-type figure for the JYPC-4 family whose datasheets range 1.5–7.0 bar across variants — which variant is fitted is not confirmed, so this figure is not established to the precision the other two carry.
 
 ## Thermal and hydraulic characteristics
 

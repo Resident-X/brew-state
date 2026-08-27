@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: The brew and steam element ratings are established by measurement rather than assumed from the manual
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |
