@@ -1,0 +1,27 @@
+id: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED
+type: deliverable
+category: solution
+title: Brew and steam element power, measured on the bench and carried through the description and its docs
+status: active
+version: 1
+text: |
+  Resistance readings taken cold at each thermoblock element, converted to power at a 230 V reference (P = V^2/R, matching the AU/NZ nameplate convention and the bottom of the declared 230-240 V supply span), displace the two @document heater-power origins in firmware/params/thermoblock.params: brew.heater_power_w becomes 1004 W (52.7 ohm at 20.3 degC ambient), settling the existing manual-vs-owner dispute in favour of the manual's 1000 W; steam.heater_power_w becomes 1126 W (47.0 ohm at 20.3 degC ambient), retiring the file's "the two elements are equally rated" claim, which the measurement does not support. Each origin's account carries the resistance, the ambient, and the 230 V reference so a reader can recompute the 240 V figures (1093 W / 1226 W) without the bench.
+
+  The uncertainty fraction against each new value is resized rather than copied forward: it has to admit the ~8% delivered-power swing across the declared supply span and the ~1-2% resistance rise as the element heats, exactly the two effects thermoblock.md already names as folded into this fixed coefficient. The steam side's account carries one further caveat: the bench could not isolate the element from a possible parallel path, so 47.0 ohm is a lower bound on the true resistance and the resulting wattage is conservative rather than central.
+
+  The correction is then carried into the two documents that reasoned from the figures it replaces -- thermoblock.md's element-ratings paragraph, and reference-machine.md's disputed-rating narrative, heating-and-load table, and concurrency-headroom conclusion, all of which are computed from the retired 2000 W / 2200 W figures today.
+
+  Out of scope: brew and steam thermal_mass_j_per_k and loss_w_per_k, untouched by a resistance reading; any change to how heater_power_w is represented or computed (no voltage or current sensing exists to make a dynamic figure more accurate than a measured constant with a stated margin); and the reference machine's Protection section and open pressure-relief question, which this measurement does not touch.
+links:
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C1
+    type: derives-from
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C2
+    type: derives-from
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C3
+    type: derives-from
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C4
+    type: derives-from
+  - target: REQ-MACHINE-CONFIGURATION-001.C3
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C5
+    type: targets

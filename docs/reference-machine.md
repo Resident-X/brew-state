@@ -29,27 +29,24 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 
 | Value | Figure | Provenance |
 |---|---|---|
-| Coffee thermoblock element | 1000 W — **disputed, see below** | Circuit diagram, service manual p.24 — read at source |
-| Steam thermoblock element | 1000 W | Circuit diagram, service manual p.24 — read at source |
+| Coffee thermoblock element | 1004 W at 230 V, 1093 W at 240 V | Measured: 52.7 Ω cold, 20.3 °C ambient, converted at the declared supply |
+| Steam thermoblock element | 1126 W at 230 V, 1226 W at 240 V | Measured: 47.0 Ω cold, 20.3 °C ambient — see note below on isolation |
 | Steam pump | 22 W (JYPC-4) | Service manual parts list |
 | Coffee pump | 48 W (Ulka EP5) | Manufacturer spec sheet for the fitted type |
 | Mains fuse (control supply) | 5 A | Circuit diagram |
-| **Total installed heating** | **2000 W** | Sum of the two elements |
+| **Total installed heating** | **2130 W at 230 V, 2319 W at 240 V** | Sum of the two measured elements |
 
-Both elements together draw roughly **8.3 A at 240 V**. With both pumps running as well the worst case is about **2.07 kW, or 8.6 A**, inside a 10 A supply with roughly 330 W of headroom. Concurrent brew and steam is therefore *available* on this supply. It would not be at 120 V, where the same 2000 W is over 16 A.
+**The coffee element's rating was disputed; a cold resistance reading measures and resolves it, in the manual's favour.** The service manual's circuit diagram gave both elements as 1000 W. The machine's owner recalled the coffee element as 1200 W and the steam element as 1000 W, and believed the manual to describe a variant — a service manual describing a variant is exactly the failure `REQ-MACHINE-CONFIGURATION-001.C5` exists to keep visible. 52.7 Ω does not admit a 1200 W element on this supply, so the manual's figure stands. What the reading also settled, and what neither document claimed, is that the two elements are *not* equally rated: the steam side's 47.0 Ω draws meaningfully more than the coffee side's 52.7 Ω, so the total installed heating this machine actually carries is higher than either previous figure (2000 W manual-equal, or 2200 W disputed-recollection).
 
-**The coffee element's rating is disputed, and the concurrency conclusion above depends on it.** The service manual's circuit diagram gives both elements as 1000 W. The machine's owner recalls the coffee element being **1200 W** and the steam element 1000 W, and believes the manual to be wrong — a service manual describing a variant is exactly the failure `REQ-MACHINE-CONFIGURATION-001.C5` exists to keep visible, and neither reading has been established on this machine.
+The steam reading carries one further caveat. The bench could not get the element off the circuit to read it in isolation, and a parallel path across it — a thermostat, most likely — can only pull a resistance reading down, never up. So 47.0 Ω is a lower bound on the true element resistance, and the 1126–1226 W it produces is a conservative ceiling on the steam side's power rather than a central estimate.
 
-It is not a small difference, because the headroom above is what it eats:
+Both elements together draw roughly **9.3 A at 230 V, 9.7 A at 240 V**. With both pumps running as well the worst case is about **2.39 kW, 9.95 A at 240 V**, essentially the full 10 A a domestic circuit provides:
 
 | | Installed heating | Worst case with both pumps, at 240 V | At 253 V (230 V nominal, +10%) |
 |---|---|---|---|
-| Manual: 1000 + 1000 | 2000 W | 2.07 kW, 8.6 A | 9.1 A |
-| Recollection: 1200 + 1000 | 2200 W | 2.27 kW, 9.5 A | **9.9 A** |
+| Measured: 52.7 Ω / 47.0 Ω | 2319 W | 2.39 kW, 9.95 A | 2.65 kW, **10.5 A** |
 
-At the top of the permitted supply range the second reading leaves essentially nothing against a 10 A circuit. So *"concurrent brew and steam is available on this supply"* is a conclusion that holds on the manual's figures and is marginal on the owner's, and nothing downstream should treat it as settled until the elements are measured.
-
-**Establish by measurement**, not by preferring one source to the other. Element power is a thermal characteristic of this machine, so `REQ-MACHINE-CONFIGURATION-001.C3` already requires it measured rather than adopted from a document; the reading is a resistance measurement across each element cold, which needs no bench rig and no energised machine. Until it happens, `firmware/params/thermoblock.params` carries the manual's figure with the dispute recorded against it, because the manual is the only citable source and a recollection is not one — that is a statement about provenance, not a judgement about which is right.
+At the top of the permitted supply range the measured total now exceeds a 10 A circuit on the arithmetic alone. That does not mean this machine trips a breaker every time brew and steam run together: `REQ-POWER-BUDGET-001` already requires the controller to plan within the budget rather than discover it by reaching it, evaluated against exactly this kind of pessimistic, worst-of-span figure. What it does mean is that this document's earlier claim — that concurrent brew and steam is simply *available* on this supply — no longer holds unconditionally. Whether a given draw is available is a question the controller's budget arbitration answers; it is not a standing property of the supply the way it looked when the elements were assumed equally rated at 1000 W each.
 
 ## Protection
 
@@ -132,11 +129,11 @@ Other figures: water tank 3 L; espresso pump rated 15 bar; steam pump rated 4 ba
 
 ## Thermal and hydraulic characteristics
 
-**Not established.** These are to be measured during commissioning per `JRN-COMMISSION-PLANT-001`, not adopted from datasheets — which is what `REQ-MACHINE-CONFIGURATION-001.C3` requires.
+**Partially established.** The two element ratings are now measured — see the heating-and-load section above for the readings and the figures they produced. Everything else here — thermal mass, loss coefficients, pump characteristics, outlet geometry — remains to be measured during commissioning per `JRN-COMMISSION-PLANT-001`, not adopted from datasheets, which is what `REQ-MACHINE-CONFIGURATION-001.C3` requires of all of them.
 
-The plant model needs figures for them before that happens, so `firmware/params/thermoblock.params` carries estimates, each recording what it was estimated from. An estimate recorded as an estimate is not a characteristic established by this section, and reading one back as though it were is exactly what recording the origin against each value exists to prevent. Read the origins in that file rather than this paragraph for which values are which: what the build guarantees is that every value there carries one and that the words are a fixed set, not what any particular value's origin currently says.
+The plant model needs figures for the rest before that happens, so `firmware/params/thermoblock.params` carries estimates for them, each recording what it was estimated from. An estimate recorded as an estimate is not a characteristic established by this section, and reading one back as though it were is exactly what recording the origin against each value exists to prevent. Read the origins in that file rather than this paragraph for which values are which: what the build guarantees is that every value there carries one and that the words are a fixed set, not what any particular value's origin currently says.
 
-When commissioning establishes one of these on the bench, the measurement is recorded here and that value's origin in the description becomes `measured`. Until then, nothing in either place claims a measurement.
+When commissioning establishes one of the rest on the bench, the measurement is recorded here and that value's origin in the description becomes `measured`, the same way the two element ratings just did.
 
 ## What depends on these values
 
@@ -153,7 +150,7 @@ If you replace this file, these are the parts of the graph your substitution rea
 | Sensing already fitted | `REQ-MEASUREMENT-001.C4`, `.C5`, `.C6`, `.C7`, `.C8`, `REQ-WATER-SUPPLY-001.C2`, `REQ-ACTUATION-CONFIRMATION-001.C5` |
 | Wiring authority | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C9`, `REQ-ELECTRICAL-INSTALL-001` |
 
-The clearest case is the supply. At 240 V the two elements together draw about 8.3 A and concurrent brew and steam fits inside a 10 A circuit. At 120 V the same 2000 W is over 16 A, so that concurrency is simply unavailable — which does not change any requirement, but does change what the machine can be asked for, and makes `DEC-PLUMBING-LEFT-AS-BUILT` a decision worth re-reading rather than inheriting.
+The clearest case is the supply. At 240 V the two measured elements together draw about 9.95 A with both pumps running — essentially the whole of a 10 A circuit, rather than the roughly 330 W of headroom the manual's figures suggested — and at 253 V the arithmetic exceeds it outright. At 120 V the same installed heating is over 16 A, so concurrency is simply unavailable there regardless — which does not change any requirement, but does change what the machine can be asked for, and makes `DEC-PLUMBING-LEFT-AS-BUILT` a decision worth re-reading rather than inheriting.
 
 ## What is not declared here
 

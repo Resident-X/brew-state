@@ -1,0 +1,17 @@
+id: EVD-SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C1-INSPECTION
+type: evidence
+title: Both heater-power origins carry @measured with a reproducible account (SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-27T06:15:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/params/thermoblock.params:38,44
+text: |-
+  Inspected firmware/params/thermoblock.params lines 38 and 44. brew.heater_power_w carries @measured, 1004.0 ~ 0.1, with account stating 52.7 ohm cold at 20.3 degC ambient converted at a 230 V reference (240 V figure 1093 W also stated). steam.heater_power_w carries @measured, 1126.0 ~ 0.15, with account stating 47.0 ohm cold at 20.3 degC ambient at the same 230 V reference (240 V figure 1226 W also stated), retiring the prior equally-rated claim. Both accounts state resistance, ambient, and reference voltage explicitly enough to be recomputed.
+links:
+  - target: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C1
+    type: satisfies
