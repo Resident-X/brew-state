@@ -1,0 +1,21 @@
+id: SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME.C1
+type: criterion
+title: A target that would leave a held delivery beyond what the machine can hold is refused
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A target commanded while a demand is held is judged against that demand's own course as well as
+  against whatever delivery is running, on the two bounds admission already applies to a pairing,
+  and is refused where either is crossed. The refusal carries the bound and the figures any refused
+  pairing is answered with, and leaves the standing target and the waiting demand both unchanged, so
+  that demand is still served once the delivery it waits behind ends. A target the running delivery
+  and the waiting demand can both be held at is admitted, unchanged from today.
+
+  Out of scope: the resume path, which gains no check of its own -- what it starts is a pairing
+  already judged; and the bounds admission applies to a target or a course on its own account, which
+  are SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED's and are untouched here.
+links:
+  - target: SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME
+    type: criterion-of

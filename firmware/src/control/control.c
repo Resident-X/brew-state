@@ -937,6 +937,40 @@ static control_admission_t admit_delivery(const control_state_t *state,
 }
 
 /*
+ * Refuse a target this machine cannot serve a given course at, on the two
+ * bounds a target-and-course pair is judged by, in the order they cost: the
+ * drinking window first, because it is a comparison against two figures
+ * already in the tolerance record, and the authority bound only where that
+ * clears, because it costs a plant model probe.
+ *
+ * Written once so that the several courses one target may have to be held
+ * against are each judged on identical terms. A record already carrying a
+ * crossed bound is never handed to this, on the same terms neither of the two
+ * calls below is reached with one.
+ *
+ * The peak is scanned here rather than passed in, unlike the authority bound
+ * itself, because every caller of this has a whole course and no peak in hand.
+ * The delivery admission below does have one already -- it needed the peak for
+ * the pump's own ceiling first -- which is why it asks the two bounds directly
+ * rather than through here, and does not scan the same course twice.
+ */
+static void refuse_if_the_pair_is_beyond_the_machine(const control_state_t *state,
+                                                     const delivery_profile_t *course,
+                                                     float target_c,
+                                                     control_admission_t *admission)
+{
+    refuse_if_outside_the_drinking_window(&state->tolerance, course->served_at, target_c, admission);
+    if (admission->bound != CONTROL_ADMISSION_OK || !(state->full_scale_flow_ml_per_s > 0.0f)) {
+        return;
+    }
+
+    uint32_t at_millis = 0u;
+    const float peak = peak_rate_ml_per_s(course, &at_millis);
+
+    refuse_if_beyond_the_authority(state, peak, at_millis, target_c, admission);
+}
+
+/*
  * Whether this machine can ever be driven to a target, and what it crossed if
  * not.
  *
@@ -945,6 +979,22 @@ static control_admission_t admit_delivery(const control_state_t *state,
  * course it is running is the draw this target will have to be held against,
  * and the pair is judged here on exactly the terms it would have been judged
  * on had the two commands arrived the other way round.
+ *
+ * A demand held against that delivery is judged here too, and for the same
+ * reason: it is a course this machine has accepted and owes, waiting only on
+ * the mass it named being free. The bound is on the pair wherever the pair is
+ * completed, and commanding a target while a demand waits completes one --
+ * so a target this machine could not hold that demand against is refused
+ * where it is asked for, exactly as one it could not hold a running delivery
+ * against already is. What that leaves is a caller who cannot strand a demand
+ * the machine has taken on, rather than one whose demand is quietly dropped
+ * later when it turns out to have been stranded: a demand deferred behind
+ * another is one this machine is required to go on to serve, and a target
+ * arriving in between is not an occasion to stop owing it.
+ *
+ * The running delivery is asked about first only because it is the nearer
+ * question, not because it is the stronger one: either crossing refuses the
+ * target, and neither is asked once the other has crossed.
  */
 static control_admission_t admit_target(const control_state_t *state, float celsius)
 {
@@ -978,14 +1028,10 @@ static control_admission_t admit_target(const control_state_t *state, float cels
     }
 
     if (state->delivery_running) {
-        refuse_if_outside_the_drinking_window(&state->tolerance, state->delivery.served_at, celsius,
-                                              &admission);
-        if (admission.bound == CONTROL_ADMISSION_OK && (state->full_scale_flow_ml_per_s > 0.0f)) {
-            uint32_t at_millis = 0u;
-            const float peak = peak_rate_ml_per_s(&state->delivery, &at_millis);
-
-            refuse_if_beyond_the_authority(state, peak, at_millis, celsius, &admission);
-        }
+        refuse_if_the_pair_is_beyond_the_machine(state, &state->delivery, celsius, &admission);
+    }
+    if (admission.bound == CONTROL_ADMISSION_OK && state->delivery_held) {
+        refuse_if_the_pair_is_beyond_the_machine(state, &state->held_delivery, celsius, &admission);
     }
     return admission;
 }
@@ -1176,6 +1222,16 @@ static void start_delivery(control_state_t *state, const delivery_profile_t *pro
  * asked again, on the same terms start_delivery asks it of any other
  * delivery, because it is what the lead-ahead term is probed against and
  * this call does not have admission's own answer lying around to reuse.
+ *
+ * The target has not changed under it either, and that is a property of where
+ * targets are admitted rather than an assumption made here: admit_target
+ * judges a new target against a waiting demand exactly as it judges one
+ * against a running delivery, so a target this machine could not hold this
+ * demand against never became the standing one. Asking again here would be a
+ * second answer to a question already answered, and the two answers would
+ * have to differ -- there is nothing left to refuse at this point, only a
+ * demand to drop -- which is the arrangement a machine required to go on and
+ * serve a deferred demand cannot have.
  *
  * Started on exactly the terms start_delivery starts any other delivery on,
  * so a demand that waited many control steps for the mass it named begins

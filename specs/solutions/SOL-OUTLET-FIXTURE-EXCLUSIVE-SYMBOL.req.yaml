@@ -1,0 +1,40 @@
+id: SOL-OUTLET-FIXTURE-EXCLUSIVE-SYMBOL
+type: deliverable
+category: solution
+title: outlet_only_fixture declares a symbol unique to it
+status: active
+version: 1
+text: |
+  check_structure_exclusive requires that every plant structure in the source tree declare at
+  least one symbol unique to it, so a linked artefact's structure membership can be verified from
+  the artefact itself. outlet_only_fixture's header declares nothing beyond the parameter-spec
+  accessor every structure implements identically; the one function that carries this structure's
+  own behaviour, outlet_only_fixture_accumulate, is `static` in plant_structure.c and declared
+  nowhere in plant_structure.h, so it produces no symbol the checker -- or anything else outside
+  the translation unit -- can see.
+
+  `fixture`, the structure outlet_only_fixture already borrows its actuation channel and its
+  "describes no machine" shape from, resolves the identical problem by giving its own accumulator
+  function external linkage and a header declaration: `fixture_accumulate`. The fix is the same
+  change applied here -- drop `static` from outlet_only_fixture_accumulate's definition and declare
+  it in plant_structure.h, on the same terms fixture.h already does -- which gives the checker a
+  name to find without changing what the function does.
+rationale: |
+  Traced to REQ-MODEL-STRUCTURE-SEAM-001.C3 rather than to SOL-PLANT-STRUCTURE-SEAM-FIRST-STRUCTURE's
+  own criteria, on the same reasoning DEL-MAINTENANCE.C1 gives for every item in this lane: what is
+  owed is evidence against the requirement criterion the shortfall bears on. check_structure_exclusive
+  exists so that controlling a machine with another structure's dynamics linked in is detectable from
+  the artefact rather than merely unlikely -- C3's own text, almost verbatim -- and this defect leaves
+  exactly one structure, outlet_only_fixture, outside what that check can verify.
+
+  Found immediately behind the outlet_only_fixture.limits defect (SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED):
+  task fw:check fails fast on the first failing check in its sequence, so this second, independent
+  defect on the same structure was masked until the first was fixed and the task ran far enough to
+  reach check_structure_exclusive. Confirmed unrelated to any change on this branch -- neither
+  outlet_only_fixture's plant source nor the exclusivity checker have been touched by this slice or
+  any commit reachable from it.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C3
+    type: targets

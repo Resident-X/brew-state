@@ -1,0 +1,42 @@
+id: SOL-OUTLET-FIXTURE-STEAM-KNOB-BOUNDED
+type: deliverable
+category: solution
+title: The outlet-only fixture declares plausible bounds for the steam-knob channel
+status: active
+version: 1
+text: |
+  The outlet-only fixture structure's limits declaration, firmware/params/outlet_only_fixture.limits,
+  carries no line for the steam-knob channel. check_estimator_limits treats this the same as any
+  other unbounded channel: a machine built against this description would accept a steam-knob
+  reading with nothing to reject it against, on a fixture that ships tests exercising exactly the
+  refusal path this channel's absence undermines.
+
+  The same gap exists a second time, independently: test_estimator_outlet_only_fixture.c carries
+  its own hand-copied LIMITS_DECLARATION literal rather than reading the params file, and that
+  literal was missing the same line, which is what actually failed the two tests this criterion
+  names. Both copies are fixed on the same @describes-no-machine shape every other line in each
+  already carries: this fixture describes no machine, so the bound has no physical origin to
+  declare, on the same terms brew-temperature, steam-temperature, brew-pressure, steam-pressure and
+  flow already state theirs.
+
+  Out of scope: the duplication itself -- that the test file keeps its own copy of the params
+  file's declaration rather than reading it, which is a second, distinct gap this criterion does
+  not close.
+rationale: |
+  Traced to REQ-MEASUREMENT-001.C3 rather than to SOL-USABLE-ESTIMATE-EVERY-STEP's own criterion,
+  on the same reasoning DEL-MAINTENANCE.C1 gives for every item under this lane: what is owed is
+  evidence against the requirement criterion the shortfall bears on, not against the solution
+  criterion whose check already exists and already runs -- check_estimator_limits is not broken,
+  the fixture's declaration is incomplete.
+
+  Found while verifying an unrelated slice's quality gates: task fw:check fails on main at
+  e5adeba with this exact channel named, and native_outlet_only_fixture_test loses two tests
+  to it (test_a_structure_answering_only_the_reconstruction_name_is_refused,
+  test_a_refused_instance_answers_nothing). Confirmed pre-existing and unrelated to that slice's
+  own change before filing here, per this project's discipline against routing an unrelated
+  discovery around rather than into the graph.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C3
+    type: targets

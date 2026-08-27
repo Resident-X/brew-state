@@ -71,8 +71,8 @@ bool plant_model_init(plant_model_t *model, const plant_parameters_t *parameters
 /* Add what the brew heater commanded over `seconds`, scaled by the gain --
  * on the same terms fixture_accumulate does, so the one channel this
  * structure answers is exercised rather than declared and left inert. */
-static void outlet_only_fixture_accumulate(plant_model_t *model,
-                                           const plant_actuation_t *actuation, float seconds)
+void outlet_only_fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation,
+                                    float seconds)
 {
     model->accumulated += model->coefficients.heater_gain *
                           (actuation->level_permille[ACTUATION_CHANNEL_BREW_HEATER] /

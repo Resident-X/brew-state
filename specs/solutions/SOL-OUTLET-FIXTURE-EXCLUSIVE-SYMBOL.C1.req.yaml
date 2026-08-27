@@ -1,0 +1,17 @@
+id: SOL-OUTLET-FIXTURE-EXCLUSIVE-SYMBOL.C1
+type: criterion
+title: check_structure_exclusive passes for outlet_only_fixture
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  task fw:check's check_structure_exclusive passes for outlet_only_fixture, finding a symbol
+  unique to it in every environment that links it.
+
+  Out of scope: whether outlet_only_fixture_accumulate's behaviour is itself correct -- this
+  criterion is about the symbol being visible to the checker, not about the arithmetic it
+  performs, which no criterion here disputes.
+links:
+  - target: SOL-OUTLET-FIXTURE-EXCLUSIVE-SYMBOL
+    type: criterion-of

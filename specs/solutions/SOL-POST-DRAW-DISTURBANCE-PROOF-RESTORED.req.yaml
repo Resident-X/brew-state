@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: Post-draw recovery is proven against a disturbance the corrected loop cannot already meet indefinitely
 status: active
-version: 1
+version: 2
 text: |
   Two tests of SOL-BREW-RECOVERS-AFTER-DRAW -- the one asserting the state a hot water
   draw leaves is carried into the delivery that follows, and the one comparing an
@@ -58,6 +58,46 @@ rationale: |
   a demand actually receives an accounted-for state -- perhaps a scenario this admission
   check does not yet gate on, perhaps a different observable than the casting's own
   departure from target -- which is a real design question and not a threshold to relax.
+
+  Three further ways past it have since been tried and measured, and are recorded here so the next
+  reader does not re-walk them.
+
+  Serving the draw at a lower target inside the drinking window is not a draw's disturbance. The
+  declaration the sibling slice ships is a window and not a setpoint -- the control path holds a
+  caller to it at admission against whatever target is already standing -- and nothing in
+  REQ-HOT-WATER-001's criteria or in the reference machine asks that a cup of water be served below
+  the temperature coffee is extracted at. Measured on the reference description: a draw commanded at
+  ninety degrees leaves the casting 3.11 C from the brew target, and standing the same machine at
+  ninety degrees for the same length of time with no delivery commanded and no water drawn leaves it
+  2.94 C from it. The draw's own share is 0.17 C. What such a run measures is the recovery from a
+  step between two commanded targets, which is a different disturbance and a different criterion's
+  subject.
+
+  No admitted course produces one either. A search over four hundred piecewise-linear courses at the
+  standing target, each with its peak inside what admission accepts, tops out at 0.90 C of casting
+  departure at the end of the course and 1.03 C during it, against a band of 1.00 C -- which is
+  noise beside the threshold rather than a disturbance to recover from.
+
+  A truth machine differing from the description does produce a real one, and is foreclosed on other
+  grounds. At the largest admitted rate the element sits at its rail for the whole draw, so the loop
+  has no authority left to correct an error in what it believes, while an extraction at the ordinary
+  rate runs at about seven tenths of scale and integrates the same error away: a pump moving 7.2
+  against a believed 7.0 mL/s leaves the casting 1.73 C out at the draw's end, against 0.005 C for
+  the same wait with no water drawn. But that is model error, which SOL-BREW-RECOVERS-AFTER-DRAW.C6
+  places outside its own scope and robustness.declaration classes among the behaviours permitted to
+  degrade as the model worsens -- so a run built on it would be asserting the robustness
+  verification's claim under these criteria's names, and the size of the perturbation would be a
+  figure chosen to make the run pass.
+
+  Underneath all three is one property of the description. Under a constant draw this structure
+  settles with the water leaving the machine at the casting's own temperature, so a draw moves what
+  duty a target costs and not where either state sits; admission refuses any pairing whose duty is
+  out of reach; and the corrected read-ahead supplies what is left. Perturbing the coefficients that
+  carry only the dynamics -- the casting's mass, the volume held at the outlet, the no-draw
+  conduction constant -- across their declared fractions changes the state a draw leaves by under
+  0.01 C, which is what says the mechanism is the steady-state balance and nothing else. Whoever
+  takes this next has to move one of those three, or read the disturbance from something other than
+  a temperature.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from

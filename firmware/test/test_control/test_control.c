@@ -4648,13 +4648,18 @@ static void test_the_harness_publishes_the_truth_plants_flow_at_the_seam(void)
  * The temperature the hot water draw is commanded at.
  *
  * The criterion this run answers sets the draw's rate at the largest the machine
- * can hold its drinking-temperature target against. There is no
- * drinking-temperature target in this build: what a dispensed cup of hot water
- * has to arrive at is the sibling slice's to declare, and until it does, a figure
- * invented here would be a second answer waiting to disagree with it. So the
- * brew target stands in for it, and this name says so rather than letting
- * BREW_TARGET_C appear at the draw's call sites as though it were the figure the
- * criterion named.
+ * can hold its drinking-temperature target against. There is still no
+ * drinking-temperature target in this build, and the sibling slice that owns the
+ * question has not supplied one: what it declared is a window -- a floor the
+ * drink stops being hot below and a ceiling above which it may not be handed to
+ * a person -- and the control path holds a caller to that window at admission,
+ * against whatever target is already standing. A window is not a setpoint.
+ * Nothing in it, in REQ-HOT-WATER-001's own criteria or in the reference machine
+ * says a cup of water is served below the temperature coffee is extracted at,
+ * and ninety-three degrees sits inside the declared window. So the brew target
+ * stands in for it, and this name says so rather than letting BREW_TARGET_C
+ * appear at the draw's call sites as though it were the figure the criterion
+ * named.
  *
  * The substitution is admissible on this machine because both deliveries come
  * out of one casting driven toward one commanded temperature, and ninety-three
@@ -4663,6 +4668,15 @@ static void test_the_harness_publishes_the_truth_plants_flow_at_the_seam(void)
  * only in whether a draw happened: a second temperature commanded between them
  * would put a change of target in the way of the recovery being measured, which
  * is a different disturbance and a different criterion's subject.
+ *
+ * That second sentence is not a caution about a small effect, and it has been
+ * measured since. Serving the draw at ninety degrees leaves the casting 3.11 C
+ * from the brew target; standing the same machine at ninety degrees for the same
+ * length of time with no delivery commanded and no water drawn leaves it 2.94 C
+ * from it. Nearly the whole of that departure is the step between two commanded
+ * targets, and 0.17 C of it is the draw. A run built on the difference between
+ * two targets would report a setpoint step's recovery under these two criteria's
+ * names.
  */
 #define DRINKING_TARGET_C BREW_TARGET_C
 
@@ -5242,12 +5256,23 @@ static void test_contention_with_the_group_is_asked_of_the_seam(void)
 static void test_the_state_a_draw_leaves_is_carried_into_the_next_delivery(void)
 {
     TEST_IGNORE_MESSAGE(
-        "SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1: fixing the read-ahead term's "
-        "end-of-course collapse (SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2) removed "
-        "the only mechanism producing this test's own disturbance precondition -- no rate "
-        "or duration admission accepts leaves the casting outside the band anymore, since "
-        "admission's own bound never asks more of the corrected loop than it can meet "
-        "indefinitely. Needs a redesigned scenario or observable, tracked by the cited item.");
+        "SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1: this test's own disturbance "
+        "precondition cannot be produced by any scenario its criteria admit. Under a "
+        "constant draw this structure settles with the water leaving the machine at the "
+        "casting's own temperature, so a draw moves what duty the target costs and not "
+        "where either state sits; admission refuses any pair whose duty is out of reach; "
+        "and the corrected read-ahead supplies it. Measured: a 200 mL draw at the largest "
+        "admitted rate holds both states within 0.0005 C of the target throughout and at "
+        "its end, against a 1 C band. Three ways past it were tried and all are foreclosed "
+        "-- serving the draw at a lower target inside the drinking window departs 3.11 C "
+        "where the same target with no water drawn at all departs 2.94 C, so it measures a "
+        "setpoint step rather than a draw; a 400-course random search over admitted "
+        "piecewise-linear rates tops out at 0.90 C, inside the band; and a truth machine "
+        "differing from the description does produce one (a pump at 7.2 against a believed "
+        "7.0 mL/s leaves the casting 1.73 C out, against 0.005 C for the same wait with no "
+        "draw) but is model error, which SOL-BREW-RECOVERS-AFTER-DRAW.C6 puts out of its "
+        "own scope and robustness.declaration classes as permitted to degrade. Tracked by "
+        "the cited item.");
 
     const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
 
@@ -5453,12 +5478,23 @@ static void test_recovery_after_a_draw_needs_no_law_beyond_the_loop(void)
 static void test_an_extraction_after_a_draw_matches_one_pulled_from_rest(void)
 {
     TEST_IGNORE_MESSAGE(
-        "SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1: fixing the read-ahead term's "
-        "end-of-course collapse (SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2) removed "
-        "the only mechanism producing this test's own disturbance precondition -- no rate "
-        "or duration admission accepts leaves the casting outside the band anymore, since "
-        "admission's own bound never asks more of the corrected loop than it can meet "
-        "indefinitely. Needs a redesigned scenario or observable, tracked by the cited item.");
+        "SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1: this test's own disturbance "
+        "precondition cannot be produced by any scenario its criteria admit. Under a "
+        "constant draw this structure settles with the water leaving the machine at the "
+        "casting's own temperature, so a draw moves what duty the target costs and not "
+        "where either state sits; admission refuses any pair whose duty is out of reach; "
+        "and the corrected read-ahead supplies it. Measured: a 200 mL draw at the largest "
+        "admitted rate holds both states within 0.0005 C of the target throughout and at "
+        "its end, against a 1 C band. Three ways past it were tried and all are foreclosed "
+        "-- serving the draw at a lower target inside the drinking window departs 3.11 C "
+        "where the same target with no water drawn at all departs 2.94 C, so it measures a "
+        "setpoint step rather than a draw; a 400-course random search over admitted "
+        "piecewise-linear rates tops out at 0.90 C, inside the band; and a truth machine "
+        "differing from the description does produce one (a pump at 7.2 against a believed "
+        "7.0 mL/s leaves the casting 1.73 C out, against 0.005 C for the same wait with no "
+        "draw) but is model error, which SOL-BREW-RECOVERS-AFTER-DRAW.C6 puts out of its "
+        "own scope and robustness.declaration classes as permitted to degrade. Tracked by "
+        "the cited item.");
 
     const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     int32_t match_band_milli_c = 0;
@@ -6570,6 +6606,210 @@ static void test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_lat
     }
 }
 
+/*
+ * A target low enough that this machine holds a very heavy draw against it, and
+ * high enough to sit inside the drinking window a delivery at the spout is held
+ * to -- the window's own floor is sixty degrees, and a demand served there is
+ * refused outright below it, which would answer the cases below on a bound
+ * other than the one they are about.
+ */
+static const float LOW_TARGET_C = 65.0f;
+
+/*
+ * A machine standing at that low target with an extraction running and a hot
+ * water demand held behind it, which is the arrangement each case below
+ * commands a target into.
+ *
+ * The extraction is brief because none of these cases is about what it does: it
+ * is there to own the mass, so that the hot water demand commanded after it is
+ * held rather than started. Its rate is the ordinary one, which this machine
+ * holds every target these cases name against comfortably -- so a target one of
+ * them refuses is refused on the held demand's account and not on this one's.
+ */
+static void stand_a_demand_held_at_the_low_target(float held_rate_ml_per_s)
+{
+    bring_the_loop_up(&parameters, &parameters, LOW_TARGET_C, LOW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, LOW_TARGET_C));
+
+    delivery_profile_t extraction =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    delivery_profile_t draw =
+        steady_course_of(held_rate_ml_per_s, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    control_admission_t admission;
+    TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &draw, &admission),
+                             "the draw was refused against the target this machine was brought up "
+                             "under, so there is no held demand for a later target to be weighed "
+                             "against");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_held(&state, &held, &held_against),
+                             "the draw was started rather than held against the running "
+                             "extraction, so commanding a target while it waits proves nothing");
+}
+
+/*
+ * Step until whatever is held has been resolved one way or the other, and
+ * answer how many steps that took.
+ */
+static unsigned steps_until_the_held_demand_is_resolved(void)
+{
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+    unsigned held_steps = 0u;
+
+    while (control_delivery_held(&state, &held, &held_against)) {
+        step_tolerating_departure();
+        held_steps++;
+        TEST_ASSERT_TRUE_MESSAGE(held_steps < 200u,
+                                 "the demand stayed held long past the extraction's own duration, "
+                                 "so nothing is noticing that it ended");
+    }
+    return held_steps;
+}
+
+/// SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME.C1: A target the machine could not
+/// hold a held delivery against is refused where it is commanded, and the held
+/// delivery goes on to be served.
+///
+/// A draw heavy enough that only a low target holds it is commanded and held
+/// behind a running extraction. The brew target is then commanded while it
+/// waits. Nothing about the extraction refuses that target -- a modest rate at
+/// the brew target is what every other extraction case here runs at -- so a
+/// machine weighing a new target against the running delivery alone accepts it,
+/// which is exactly the gap this closes: the pairing bound
+/// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4 states is on the pair wherever the
+/// pair is completed, and a target commanded while a demand waits completes one.
+///
+/// What is asserted is the refusal and what survives it. The figure the record
+/// reports as available is where this machine settles under the held draw's own
+/// peak rather than under the extraction's, which is what says the held demand
+/// is what was weighed. The standing target is unmoved, the demand is still
+/// held, and once the extraction reaches its own end the demand is served --
+/// which is the guarantee REQ-HOT-WATER-001.C4 makes of a demand deferred behind
+/// another, and the reason this is a refusal where the target arrives rather
+/// than a discard once it is too late to tell anybody.
+static void test_a_target_that_would_strand_a_held_demand_is_refused(void)
+{
+    const float heavy_rate = largest_rate_the_machine_holds(LOW_TARGET_C);
+
+    stand_a_demand_held_at_the_low_target(heavy_rate);
+
+    control_admission_t admission;
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_command_temperature_reporting(&state, BREW_TARGET_C, &admission),
+        "a target this machine cannot hold the waiting demand against was accepted, leaving a "
+        "demand it has taken on stranded behind a pairing nothing ever judged");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(BREW_TARGET_C, admission.requested);
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(
+        0.1f, LOW_TARGET_C, admission.available,
+        "the figure reported as available is not where this machine settles under the held "
+        "draw's own peak, so the refusal was judged against some other course");
+
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(LOW_TARGET_C, state.target_c,
+                                    "the refused target was written into the state anyway");
+
+    const unsigned held_steps = steps_until_the_held_demand_is_resolved();
+    TEST_ASSERT_TRUE_MESSAGE(held_steps > 1u,
+                             "the demand was resolved on the very step the target was commanded, "
+                             "which is not evidence it stayed held across the extraction");
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "the demand a refused target left waiting was never served, so the "
+                             "machine dropped a drink it had already taken on");
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, state.delivery.served_at);
+}
+
+/// SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME.C1: A target the machine can hold the
+/// held delivery against is admitted while that delivery waits.
+///
+/// The counterpart to the case above, and what stops the refusal there from
+/// being a refusal of every target commanded while anything is held. The same
+/// arrangement with a modest draw waiting instead of a heavy one: the brew
+/// target is one this machine holds that draw against with room to spare, so it
+/// is accepted, it becomes the standing target, and the demand goes on to be
+/// served exactly as it would have been had no target arrived at all.
+static void test_a_target_a_held_demand_can_be_met_at_is_admitted(void)
+{
+    stand_a_demand_held_at_the_low_target(1.0f);
+
+    control_admission_t admission;
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_temperature_reporting(&state, BREW_TARGET_C, &admission),
+        "a target this machine holds both the running extraction and the waiting demand against "
+        "was refused, so the pairing bound is refusing on the fact of a demand waiting rather "
+        "than on what holding it would cost");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(BREW_TARGET_C, state.target_c);
+
+    (void)steps_until_the_held_demand_is_resolved();
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                             "the demand was not served after a target it can be met at was "
+                             "commanded while it waited");
+    TEST_ASSERT_EQUAL(PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, state.delivery.served_at);
+}
+
+/// SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME.C1: A target outside the drinking
+/// window is refused against a held draw, on the same bound a running one
+/// crosses.
+///
+/// The pair a target completes is judged on both the bounds admission asks of
+/// any pairing rather than on authority alone, so this case takes the other one.
+/// A target below the drinking floor is commanded twice against the same
+/// machine: once while only the extraction is running, where the window has
+/// nothing to say because an extraction is not served at the drinking point and
+/// the target is accepted; and once while a draw at that point is waiting, where
+/// it is refused. The two commands differ in nothing but whether a demand is
+/// held, so what refuses the second is the held demand and not the target's own
+/// value.
+static void test_a_target_below_the_drinking_floor_is_refused_against_a_held_draw(void)
+{
+    const float below_the_floor_c = 50.0f;
+    const float floor_c = (float)tolerance.drinking_floor_milli_c / 1000.0f;
+
+    TEST_ASSERT_TRUE_MESSAGE(below_the_floor_c < floor_c,
+                             "the target this case commands is not below the declared floor, so "
+                             "it is not the bound being crossed");
+
+    bring_the_loop_up(&parameters, &parameters, LOW_TARGET_C, LOW_TARGET_C);
+    TEST_ASSERT_TRUE(control_command_temperature(&state, LOW_TARGET_C));
+
+    delivery_profile_t extraction =
+        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
+    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+    TEST_ASSERT_TRUE_MESSAGE(control_command_temperature(&state, below_the_floor_c),
+                             "a target below the drinking floor was refused against a running "
+                             "extraction, which is not served at the drinking point at all");
+    TEST_ASSERT_TRUE(control_command_temperature(&state, LOW_TARGET_C));
+
+    delivery_profile_t draw = steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &draw));
+
+    delivery_profile_t held;
+    plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
+    TEST_ASSERT_TRUE(control_delivery_held(&state, &held, &held_against));
+
+    control_admission_t admission;
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_command_temperature_reporting(&state, below_the_floor_c, &admission),
+        "a target below the drinking floor was accepted while a draw at the drinking point was "
+        "waiting, so that demand would have been served into a cup at a temperature the window "
+        "exists to refuse");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(below_the_floor_c, admission.requested);
+    TEST_ASSERT_EQUAL_FLOAT(floor_c, admission.available);
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(LOW_TARGET_C, state.target_c,
+                                    "the refused target was written into the state anyway");
+    TEST_ASSERT_TRUE_MESSAGE(control_delivery_held(&state, &held, &held_against),
+                             "the waiting demand was dropped by a target that was itself refused");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -6701,5 +6941,8 @@ int main(void)
     RUN_TEST(test_a_held_demand_and_what_it_is_held_against_are_readable);
     RUN_TEST(test_a_held_deliverys_elapsed_time_begins_at_its_own_admission);
     RUN_TEST(test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_latches);
+    RUN_TEST(test_a_target_that_would_strand_a_held_demand_is_refused);
+    RUN_TEST(test_a_target_a_held_demand_can_be_met_at_is_admitted);
+    RUN_TEST(test_a_target_below_the_drinking_floor_is_refused_against_a_held_draw);
     return UNITY_END();
 }

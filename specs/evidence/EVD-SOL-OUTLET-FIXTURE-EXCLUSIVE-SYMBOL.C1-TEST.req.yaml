@@ -1,0 +1,17 @@
+id: EVD-SOL-OUTLET-FIXTURE-EXCLUSIVE-SYMBOL.C1-TEST
+type: evidence
+title: check_structure_exclusive passes for outlet_only_fixture (SOL-OUTLET-FIXTURE-EXCLUSIVE-SYMBOL.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T05:00:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:check (check_structure_exclusive)
+text: |-
+  task fw:check exits 0; check_structure_exclusive reports native_outlet_only_fixture/program carries 1 symbol(s) of outlet_only_fixture and none of any other, alongside the same pass for boiler, fixture, flow_fixture and thermoblock.
+links:
+  - target: SOL-OUTLET-FIXTURE-EXCLUSIVE-SYMBOL.C1
+    type: satisfies
