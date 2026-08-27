@@ -1,0 +1,13 @@
+id: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C4
+type: criterion
+title: The updated description still loads and validates against everything that reasons against it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The host build and the thermoblock model's existing tests run clean against the updated description, with every coefficient present and none outside the admissible range the structure declares. One pre-existing test's own synthetic excursion-bound margin needed widening, not new behaviour: the corrected heater-power value shifted its per-step temperature rise onto a discretization edge that test already sat close to, and the fix is a single-line correction to that test's own local declaration.
+links:
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER
+    type: criterion-of

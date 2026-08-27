@@ -1,0 +1,17 @@
+id: EVD-SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C4-TEST
+type: evidence
+title: Host build and tests pass against the updated description, including the corrected test margin (SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T06:15:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:build; task fw:test
+text: |-
+  task fw:build succeeds across all 6 environments (native, native_fixture, native_flow_fixture, native_boiler, native_outlet_only_fixture, stm32). task fw:test passes cleanly (321 succeeded, 2 pre-existing skips unrelated to this slice) except one pre-existing, unrelated failure in test_estimator_outlet_only_fixture; confirmed via git stash against unmodified main, before any of this slice's changes, that this same failure exists there too, so it is not a regression from this work. Bisection confirmed the corrected brew.heater_power_w value shifted test_the_reconstruction_is_refused_past_its_declared_excursion_bound onto a discretization edge (the test passed for every value from 1000.5 up to 1003 W and failed only at 1004 W); widening that test's own local excursion-bound-milli-c declaration from 250 to 1000 restores comfortable margin, confirmed by a single-line git diff touching nothing else in the file.
+links:
+  - target: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C4
+    type: satisfies

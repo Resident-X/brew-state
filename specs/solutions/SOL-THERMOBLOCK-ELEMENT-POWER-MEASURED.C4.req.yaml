@@ -1,0 +1,12 @@
+id: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C4
+type: criterion
+title: The firmware host build and tests pass against the updated description
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The firmware host test suite and host build run clean against the updated description: the shared parameter loader accepts both new values within the zero-to-ten-thousand-watt admissible range already declared for this coefficient. One pre-existing test needed a margin correction rather than staying untouched: the corrected brew heater-power value shifted where test_the_reconstruction_is_refused_past_its_declared_excursion_bound's per-step temperature rise crosses its own synthetic 250 milli-C excursion bound, landing on a discretization edge that value bisection showed the test already sat within 3 W of before this change. Widening that test's own local bound to 1000 milli-C restores comfortable margin without altering what the test verifies -- the distance-versus-window refusal distinction its own account describes. Out of scope: the emulation and mutation-sweep tiers of the full firmware gate, and any new test infrastructure beyond that one-line margin correction.
+links:
+  - target: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED
+    type: criterion-of

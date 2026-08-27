@@ -1,0 +1,22 @@
+id: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER
+type: deliverable
+category: task
+title: The brew and steam element ratings are established by measurement rather than assumed from the manual
+status: active
+seal_state: sealed
+seal_outcome: complete
+level: task
+version: 1
+text: |
+  A resistance reading taken cold at each thermoblock element settles what neither manufacturer document could: the brew element's disputed rating, and whether the two elements are actually equally rated as the description has assumed. Converted to power at the declared supply's lower bound, the reading becomes the origin `firmware/params/thermoblock.params` carries for `brew.heater_power_w` and `steam.heater_power_w`, displacing the manual figure on the brew side and the equally-rated assumption on the steam side, each with the account of how it was taken, at what ambient, and what real effects -- the voltage-squared spread across the declared supply and the resistance's own rise with temperature -- are folded into the margin around it rather than modelled.
+
+  The correction propagates to the two documents that reasoned from the figures it replaces. `thermoblock.md`'s account of why each element rating carries the fraction it does is written against a disputed brew figure and an assumed-equal steam figure; both premises change once the values do. `docs/reference-machine.md`'s heating-and-load narrative computes installed heating and concurrency headroom from the manual's 2000 W or the owner's disputed 2200 W; neither reflects what the elements actually draw, and the concurrency conclusion drawn from either needs re-stating against the measured total.
+
+  Out of scope: the brew and steam thermal masses and loss coefficients, which no resistance reading touches and which remain estimated for a later measurement round; any change to how `heater_power_w` is represented or computed, since no voltage or current sensing exists on this machine to make a computed figure more accurate than a measured constant with a stated margin; and the control design's own margin analysis, which reasons against the assumed-error fraction and is untouched as long as that fraction still bounds the corrected value.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C2
+    type: derives-from
+  - target: REQ-MACHINE-CONFIGURATION-001.C3
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C5
+    type: targets

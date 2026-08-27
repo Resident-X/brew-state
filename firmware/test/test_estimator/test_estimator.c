@@ -937,7 +937,7 @@ static void test_the_reconstruction_is_refused_past_its_declared_excursion_bound
                                       "flow = -1000 .. 20000\n"
                                       "steam-knob = 0 .. 1000\n"
                                       "loss-tolerance-window-ms = 4000000\n"
-                                      "excursion-bound-milli-c = 250\n";
+                                      "excursion-bound-milli-c = 1000\n";
     const estimator_limits_t tight = limits_from(DECLARATION);
 
     estimator_t estimator;

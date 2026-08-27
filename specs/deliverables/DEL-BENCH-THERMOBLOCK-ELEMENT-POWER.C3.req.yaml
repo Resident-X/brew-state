@@ -1,0 +1,13 @@
+id: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C3
+type: criterion
+title: thermoblock.md and reference-machine.md no longer reason from the retired figures
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The plant model's own account of the element ratings no longer reasons from a disputed brew figure or an assumed-equal steam figure, and the reference machine's declaration of heating and load and its concurrency narrative are rewritten against the measured total rather than the manual's 2000 W or the owner's disputed 2200 W.
+links:
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER
+    type: criterion-of

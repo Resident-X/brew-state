@@ -1,0 +1,12 @@
+id: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C2
+type: criterion
+title: Each new value's uncertainty fraction states the voltage, temperature, and (steam-side) parallel-path effects it covers
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The uncertainty fraction against each of the two new values is resized to state what it folds in: the roughly 8 percent delivered-power swing across the declared 230-240 V supply span (power scales with voltage squared) and the roughly one to two percent power reduction from the element's own resistance rising as it heats -- both effects already named in the model's existing element-ratings account and its account of what makes element power vary, which this rewrite stays consistent with rather than contradicts. The steam side's account additionally states that the bench could not isolate the element from a possible parallel path, so 47.0 ohm is a lower bound on the true resistance and the resulting wattage is a conservative upper bound rather than a central estimate. Out of scope: deriving an actual temperature coefficient for the element alloy, or modelling voltage or temperature dependence dynamically.
+links:
+  - target: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED
+    type: criterion-of

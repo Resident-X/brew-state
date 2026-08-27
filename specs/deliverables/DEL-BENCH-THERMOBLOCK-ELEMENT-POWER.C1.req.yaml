@@ -1,0 +1,13 @@
+id: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C1
+type: criterion
+title: Brew and steam heater-power origins are measured rather than documented or assumed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each account names the resistance read, the ambient it was read at, and the reference voltage the figure was converted at, so either can be recomputed by someone who was not on the bench -- displacing the manual's disputed rating on the brew side and the equally-rated assumption on the steam side.
+links:
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER
+    type: criterion-of

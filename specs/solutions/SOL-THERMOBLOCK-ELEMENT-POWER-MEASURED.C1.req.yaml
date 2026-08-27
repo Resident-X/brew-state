@@ -1,0 +1,12 @@
+id: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C1
+type: criterion
+title: Brew and steam heater-power values carry the bench resistance reading and its conversion
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Brew: 1004 W, from 52.7 ohm measured cold at 20.3 degC ambient, converted at a 230 V reference (P=V^2/R); this displaces the manual's disputed 1000 W figure. Steam: 1126 W, from 47.0 ohm measured cold at 20.3 degC ambient at the same 230 V reference; this retires the file's existing equally-rated claim -- they are not. Each account states the resistance, the ambient, and the 230 V reference explicitly enough that the 240 V figures (1093 W / 1226 W) can be recomputed by a reader. Out of scope: brew and steam thermal mass and loss-coefficient values on both blocks, which no resistance reading touches and which stay estimated.
+links:
+  - target: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED
+    type: criterion-of

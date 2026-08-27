@@ -1,0 +1,13 @@
+id: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER.C2
+type: criterion
+title: The assumed-error fraction against each new value states what it folds in
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The fraction beside each displaced value is sized to admit the declared 230-240 V supply span's contribution to delivered power and the element's own resistance rise with temperature, both already named in the model's own documentation as folded into the fixed coefficient rather than modelled. The steam side's account additionally states that an unexcluded parallel path across the element could only have read the bench measurement low, so the displaced value is a conservative upper bound rather than a central estimate.
+links:
+  - target: DEL-BENCH-THERMOBLOCK-ELEMENT-POWER
+    type: criterion-of

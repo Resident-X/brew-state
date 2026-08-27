@@ -3,14 +3,14 @@
 # This is the description the design is established against, and it describes
 # the machine named in docs/reference-machine.md rather than the architecture in
 # general. Every value carries the origin of that value, because they are not
-# all the same kind of fact: two are read off the manufacturer's circuit
-# diagram, four are derived from steam tables, and the rest are estimates that
-# say what they were estimated from.
+# all the same kind of fact: two are now measured on this machine, four are
+# derived from steam tables, and the rest are estimates that say what they were
+# estimated from.
 #
-# Nothing here is measured. The machine has not been on the bench, so no value
-# claims it. Commissioning replaces these estimates one at a time, each becoming
-# a measured value with its own account, while the rest stand -- which is why
-# the origin sits against the value rather than at the top of the file.
+# The machine has been on the bench for the two element ratings, and nothing
+# else. Commissioning replaces the remaining estimates one at a time, each
+# becoming a measured value with its own account, while the rest stand -- which
+# is why the origin sits against the value rather than at the top of the file.
 #
 # Every value also carries the error the design is entitled to assume for it, as
 # a fraction of the value, written after the ~ and before the origin. That
@@ -35,13 +35,13 @@
 ambient_temperature_c = 20.0 ~ 0.25 @estimated Assumed indoor ambient for the machine's AU/NZ domestic market. Nothing has been measured where the machine actually stands, and the value it settles from moves with the room.
 
 brew.thermal_mass_j_per_k = 320.0 ~ 0.4 @estimated From the coffee thermoblock's aluminium casting, taken as roughly 0.35 kg at 900 J/kg/K. The casting has not been weighed and its alloy is not stated in either manual.
-brew.heater_power_w = 1000.0 ~ 0.25 @document Coffee thermoblock element, read off the circuit diagram on p.24 of the Sunbeam EM7000 service manual. Disputed: the machine's owner recalls this element as 1200 W and believes the manual describes a variant. The manual is the only citable source, so its figure stands here until the element is measured, which is what settles it -- see the heating section of docs/reference-machine.md, where the concurrency margin that depends on this is worked both ways.
+brew.heater_power_w = 1004.0 ~ 0.1 @measured Coffee thermoblock element, measured cold: 52.7 ohm at 20.3 degC ambient, converted to power at a 230 V reference (P = V^2/R) -- the AU/NZ nameplate convention and the bottom of the declared 230-240 V supply span; the same reading gives 1093 W at 240 V. This settles the dispute this figure used to carry, in the manual's favour: a 1200 W element does not fit a 52.7 ohm reading on this supply. The fraction folds in the roughly 8% delivered-power swing across the declared supply span and the roughly one-to-two-percent drop in power as the element runs hot, both already accounted for against this coefficient in thermoblock.md.
 brew.loss_w_per_k = 1.2 ~ 0.6 @estimated From the casting's exposed area under still-air convection, with no allowance for conduction into the chassis. Not measured, and the chassis path is the part most likely to be wrong.
 brew.outlet_held_volume_ml = 4.0 ~ 0.6 @estimated The water held between the casting and the group, which the drawn rate has to displace before the group sees the casting's temperature. Worked out from geometry nobody has measured: a channel of roughly 1.8 mm bore taking a few hundred millimetres of path through the casting is about a millilitre, and the run of tube from the block to the group carries the rest. At the two-and-a-bit millilitres per second a shot is actually drawn at, this gives a residence time of order a second and a half -- which is the figure the fixed outlet time constant this coefficient replaces stood for, arrived at from the same block by the same reasoning, so the two accounts agree about the machine rather than only about the number.
 brew.outlet_conduction_time_constant_s = 20.0 ~ 0.8 @estimated How fast the held water reaches the casting when nothing is being drawn and conduction is the only path. This is the widest fraction in the file, and it is wide because the figure is not one path but two averaged by hand. Water sitting in the casting's own channel is a millimetre from hot metal and equilibrates in about a second; water already out of the block and in the tube to the group reaches the casting through nothing at all, and on its own would never get there. One constant for both is a judgement about which part of the held volume dominates, and the fraction is sized to admit either answer. Nothing has been measured, and the measurement is the same one the machine cannot take: a temperature at the group.
 
 steam.thermal_mass_j_per_k = 360.0 ~ 0.4 @estimated From the steam thermochamber's casting, taken as slightly heavier than the coffee block's on the strength of the exploded views in the service manual. Neither casting has been weighed.
-steam.heater_power_w = 1000.0 ~ 0.12 @document Steam thermoblock element, read off the circuit diagram on p.24 of the Sunbeam EM7000 service manual. The two elements are equally rated.
+steam.heater_power_w = 1126.0 ~ 0.15 @measured Steam thermoblock element, measured cold: 47.0 ohm at 20.3 degC ambient, converted at the same 230 V reference as the coffee side; the same reading gives 1226 W at 240 V. This retires the claim that the two elements are equally rated -- they are not, and the steam side draws more. The bench could not isolate the element from a possible parallel path (a thermostat wired across it, most likely), which can only pull a resistance reading down and never up, so 47.0 ohm is a lower bound on the true element resistance and this figure is a conservative upper bound on its power rather than a central estimate. The wider fraction carries that alongside the roughly 8% supply-voltage swing and roughly one-to-two-percent hot-derate the coffee side's account already states.
 steam.loss_w_per_k = 1.5 ~ 0.6 @estimated By the same method as the coffee side, and larger because this mass runs far hotter and so drives a larger gradient into the same surroundings.
 
 pump.pressure_bar = 15.0 ~ 0.4 @estimated Taken as the nameplate rating of the Ulka EP5 fitted to the coffee side, recorded as 15 bar in docs/reference-machine.md, which cites no source for that figure. A nameplate rating is what the pump makes against a closed outlet, and this coefficient is what it commands at full duty against the brew path, so using one for the other is a judgement rather than a reading. The pressure reaching the group during an extraction is lower and is not established.

@@ -1,0 +1,12 @@
+id: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C3
+type: criterion
+title: The plant model's docs and the reference machine's heating narrative are rewritten against the measured total
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The model's own element-ratings account is rewritten so it no longer reasons from a disputed brew figure or an assumed-equal steam figure. The reference machine's heating-and-load section -- currently computing 2000 W manual or 2200 W disputed-recollection installed heating and a concurrency conclusion against roughly 330 W of headroom -- is rewritten against the corrected total, and its thermal-and-hydraulic-characteristics section's heater-power line moves from not-established to measured, citing the new values. Out of scope: the protection section and the open pressure-relief question that follows it, which this measurement does not touch.
+links:
+  - target: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED
+    type: criterion-of

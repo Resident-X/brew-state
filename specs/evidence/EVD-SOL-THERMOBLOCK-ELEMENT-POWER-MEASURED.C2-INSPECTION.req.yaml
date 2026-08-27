@@ -1,0 +1,17 @@
+id: EVD-SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C2-INSPECTION
+type: evidence
+title: Each value's uncertainty fraction states the effects it folds in (SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-27T06:15:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/params/thermoblock.params:38,44; firmware/params/thermoblock.md:240
+text: |-
+  Inspected the two new origin accounts against thermoblock.md's rewritten element-ratings paragraph (line 240). Both fractions (brew 0.1, steam 0.15) are stated to cover the declared 230-240V supply span's roughly 8% delivered-power swing and the roughly one-to-two-percent hot-derate from the element's own resistance rise, consistent with thermoblock.md's account. Steam's account additionally states the parallel-path lower-bound caveat, accounting for its wider fraction.
+links:
+  - target: SOL-THERMOBLOCK-ELEMENT-POWER-MEASURED.C2
+    type: satisfies
