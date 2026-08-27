@@ -1,0 +1,17 @@
+id: EVD-SOL-ADMISSION-PROVES-FULL-PAIRING.C1-TEST
+type: evidence
+title: outlet_only_fixture refused at admission; existing structures unaffected (SOL-ADMISSION-PROVES-FULL-PAIRING.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-27T00:19:49Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator_outlet_only_fixture/test_estimator_outlet_only_fixture.c::test_a_structure_answering_only_the_reconstruction_name_is_refused
+text: |-
+  estimator_init's widened reachability check (firmware/src/estimator/estimator.c) now also probes the correction-target state derived via quantity_measured_by then state_observed_by, for every channel in each reconstructed state's own observation set -- the same two-hop walk correct_against takes. A new narrow plant structure, outlet_only_fixture, was built to answer PLANT_STATE_BREW_OUTLET_TEMPERATURE_C (the reconstruction-target name, satisfying the original probe) while refusing PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C (the correction-target name for the identical reconstructed value). test_a_structure_answering_only_the_reconstruction_name_is_refused first pins that shape directly against plant_model_state, then asserts estimator_init returns false -- PASSED under the native_outlet_only_fixture_test PlatformIO environment. test_a_refused_instance_answers_nothing confirms the refused instance answers nothing from estimator_state or estimator_step -- PASSED. Independently confirmed at the host-exercise level: running .pio/build/native_outlet_only_fixture/program prints "host exercise: this structure cannot carry a reconstruction the estimator can keep corrected", the control_init-refused branch, with zero unmet expectations.
+links:
+  - target: SOL-ADMISSION-PROVES-FULL-PAIRING.C1
+    type: satisfies

@@ -1,0 +1,23 @@
+id: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE
+type: deliverable
+category: solution
+title: Admission proves the correction-target state can be written, not only read, before a structure is admitted
+status: active
+version: 1
+text: |
+  The estimator's per-step correction needs three things from a structure for a correction to land: a successful read of the quantity it corrects from, a successful read of the state that quantity is corrected through, and a successful write of the corrected value back to that same state. SOL-ADMISSION-PROVES-FULL-PAIRING widened admission to also probe the second of these -- whether the correction-target state can be read -- alongside the reconstruction-target state admission always probed. It did not, and by its own stated scope was not asked to, probe the third: whether that same state can be written.
+
+  A structure that answers a read of the correction-target state and refuses a write to it passes the widened admission check cleanly and then has every correction against it silently dropped by the write's own refusal, inside the same per-step correction path -- the identical externally observable failure the widened check exists to catch, arrived at one call further down the chain. Nothing in the tree currently has this shape: every structure's read and write of a state answer and refuse the same states in the same pairs today, by convention, in every structure written so far. Nothing requires that pairing to hold for a structure written next.
+
+  What has to hold once this is corrected: admitting a structure proves the correction-target state for each reconstructed value can be written as well as read, before a structure is admitted, on the same terms the read is now proven. Which of admission's own probe, or a wider statement of what the plant-model seam guarantees about the read/write pairing of a state, is the right place to add that proof is not decided here.
+rationale: |
+  Recorded as a maintenance item found while building SOL-ADMISSION-PROVES-FULL-PAIRING, rather than folded into that solution, because widening the read-side probe already fully satisfies that solution's own two criteria: its first criterion asks admission to also probe the state a value's correction step will write toward, and its own verification text scopes it to that one pairing shape. This finding was not something anyone had asked SOL-ADMISSION-PROVES-FULL-PAIRING to satisfy, so folding it in would have meant solving something nobody had specified yet, not completing the specified work more thoroughly.
+
+  Left open which layer proves the write is possible -- widening the estimator's own admission probe with a companion write-side call, or stating the read/write pairing as a property the plant-model seam guarantees for every state a structure answers -- because more than one closes the gap and none was evaluated here. This node's job is to make the finding durable and traceable to the requirement criterion it protects, on the same terms SOL-ADMISSION-PROVES-FULL-PAIRING's own rationale does for the finding it recorded; the choice of mechanism belongs to whoever picks this item up.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: SOL-ADMISSION-PROVES-FULL-PAIRING
+    type: depends-on

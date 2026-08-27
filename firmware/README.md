@@ -178,6 +178,7 @@ cited behind it. The vocabulary is declared once, in `include/plant_support.h`.
 | `fixture` | `PLANT_SUPPORT_UNVERIFIED` | — |
 | `flow_fixture` | `PLANT_SUPPORT_UNVERIFIED` | — |
 | `boiler` | `PLANT_SUPPORT_UNVERIFIED` | — |
+| `outlet_only_fixture` | `PLANT_SUPPORT_UNVERIFIED` | — |
 
 The line is drawn at verification against real hardware and at nothing else. In
 particular it is **not** drawn at whose machine a structure describes: the
@@ -216,6 +217,7 @@ fails a check rather than the one that ships.
 | `src/plant/fixture/` | A structure that models nothing, so the exclusivity and two-structure checks have a second subject. Answers no pump channel and keeps no state the estimator reconstructs, on purpose -- see `src/plant/flow_fixture/` for the structure that exists because of that. |
 | `src/plant/flow_fixture/` | A third structure that models nothing, alongside `fixture`. Answers a pump channel and one accumulator under both names the estimator reaches it by -- the state it reconstructs and the state its correction writes -- so `control_init` can come up against it and stay corrected once up, and a real admission can be asked of `control_command_delivery_reporting` -- which `fixture`'s own narrowness rules out. |
 | `src/plant/boiler/` | A structure of a different architecture: one heated vessel serving both paths, so both temperature quantities follow one heater and the machine's second heating channel goes unanswered. |
+| `src/plant/outlet_only_fixture/` | A third structure that models nothing, alongside `fixture` and `flow_fixture`. Answers the state `estimator_init`'s reachability check probes and refuses the different state the estimator's per-step correction writes toward for the identical reconstructed value -- the one pairing shape a structure can be admitted on one name of and silently never corrected against, which `SOL-ADMISSION-PROVES-FULL-PAIRING`'s widened admission check exists to refuse instead. |
 | `params/` | Parameter descriptions, and the statement of what each represents. Read at run time. The host builds open the one they are given; the target has no filesystem to open one from, so its build compiles the description it declares into the artefact and the entry point reads those bytes back through the same loader. Each is named for the structure it describes — `<structure>.params`, or `<structure>-<variant>.params` where a structure ships several — which is how the task that runs the host artefacts knows what to run each against. A description no structure claims is reported rather than left unrun. A description that claims a real machine accounts for every value it carries and is accompanied by `<structure>.md`, which says what those quantities are and how they relate. |
 | `params/robustness.declaration` | The behaviours the design commits to, each classified as one that must survive an arbitrarily wrong model or one permitted to degrade with it. Carried with the descriptions because it is the other half of the same design input: a declared range of model error says nothing without a statement of which behaviours are not allowed to depend on it. |
 | `src/app/native/` | Host entry point: drives the control path and the model, including their error paths, and exits. |
@@ -224,6 +226,7 @@ fails a check rather than the one that ships.
 | `test/test_plant/` | The plant model exercised through the seam, naming no structure symbol. |
 | `test/test_plant_narrow/` | The seam driven against a structure answering fewer actuation channels than the machine has — the refusal of a command with nowhere to land, which a structure answering everything cannot exercise. |
 | `test/test_plant_boiler/` | The single-boiler structure exercised through the seam, asserting what holds of that architecture whatever its coefficients are. |
+| `test/test_estimator_outlet_only_fixture/` | `estimator_init` asked directly for the admission a structure answering only the reconstruction-target state is refused by -- the one case no other suite's structure can drive. |
 | `tools/` | The checks that make the seam's properties build failures rather than review notes, and the build steps that render the carried description and keep the model's operations in the artefact. |
 
 The control logic behind the seam is a minimal path that reads a sensor,

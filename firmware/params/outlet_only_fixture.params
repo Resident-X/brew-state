@@ -1,0 +1,18 @@
+# The outlet_only_fixture structure's two coefficients.
+#
+# This structure describes no machine and neither number below means anything.
+# They exist so an artefact built against this structure can be run at all,
+# which is what lets the exclusivity check compare a fifth real artefact
+# against the other four: the first gives estimator_init's reachability probe
+# a value to answer with, and the second is what lets the one actuation
+# channel this structure answers actually move something over the host
+# exercise's plant-only steps.
+#
+# The statement below is that same fact in the form the check reads, and it is
+# what exempts this description from accounting for its values. A number that
+# means nothing has no origin to record.
+
+@describes-no-machine
+
+outlet.value_c = 21.5
+heater.gain = 2.5
