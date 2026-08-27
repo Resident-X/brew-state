@@ -1,103 +1,91 @@
 id: SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED
 type: deliverable
 category: solution
-title: Post-draw recovery is proven against a disturbance the corrected loop cannot already meet indefinitely
+title: No closed-loop-driven scenario currently disturbs the corrected loop enough to test recovery against
 status: active
-version: 2
+version: 3
 text: |
   Two tests of SOL-BREW-RECOVERS-AFTER-DRAW -- the one asserting the state a hot water
   draw leaves is carried into the delivery that follows, and the one comparing an
-  extraction after such a draw against one pulled from rest -- each open by running a real
-  hot water draw through the closed loop at the largest rate admission accepts, then assert
-  the casting sat outside the declared band once the draw ended, as a check that the draw
-  actually disturbed the machine rather than leaving every assertion below it passing for
-  free.
-
-  Correcting the read-ahead term's end-of-course collapse -- see
+  extraction after such a draw against one pulled from rest -- proved their own
+  precondition by running a real hot water draw through the closed loop at the largest
+  rate admission accepts, then asserting the casting sat outside the declared band once
+  the draw ended. Correcting the read-ahead term's end-of-course collapse -- see
   SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND.C2 -- removed the one mechanism that
-  disturbance was coming from. Measured directly: the largest rate admission accepts is
-  bounded by whether the machine holds the target with the heater at full scale for a
-  simulated hour, so nothing admission ever admits asks more of the loop than it can meet
-  indefinitely, and the corrected feedforward now tracks such a draw to within a few
-  thousandths of a degree for its whole length, not only at its end. Both tests' own
-  precondition now fails on every run: no rate or duration either test's criterion permits
-  choosing leaves the casting outside the band, because none was ever admissible to begin
-  with once the collapse stopped inflating the apparent cost of running near that limit.
+  disturbance was coming from, and this slice is the search for a replacement.
 
-  The recovery and continuity behaviour these two criteria assert is not shown to be wrong.
-  What has stopped working is each test's own way of proving there was something to recover
-  from: a scenario that reliably disturbs the casting past the declared band, produced by
-  running an ordinary, admitted delivery through the closed loop rather than by writing
-  plant state directly, which SOL-BREW-RECOVERS-AFTER-DRAW.C7 requires of both.
+  Measured directly: the largest rate admission accepts is bounded by whether the machine
+  holds the target with the heater at full scale for a simulated hour, so nothing admission
+  ever admits asks more of the loop than it can meet indefinitely, and the corrected
+  feedforward tracks such a draw to within a few thousandths of a degree for its whole
+  length, not only at its end.
 
-  Both tests are marked TEST_IGNORE, citing this item, so the suite stays green and the gap
-  stays visible rather than silently passing or silently disappearing.
+  Four ways past that were tried, each measured rather than assumed.
+
+  Extending the draw, choosing a different admitted rate, or running it longer cannot
+  manufacture a harder case than the steady-state bound already describes -- the tracking
+  above already covers the whole admissible range.
+
+  Serving the draw at a lower target inside the drinking window is not a draw's disturbance.
+  The declaration the sibling slice ships is a window and not a setpoint -- the control path
+  holds a caller to it at admission against whatever target is already standing -- and
+  nothing in REQ-HOT-WATER-001's criteria or in the reference machine asks that a cup of
+  water be served below the temperature coffee is extracted at. Measured on the reference
+  description: a draw commanded at ninety degrees leaves the casting 3.11 C from the brew
+  target, and standing the same machine at ninety degrees for the same length of time with
+  no delivery commanded and no water drawn leaves it 2.94 C from it. The draw's own share is
+  0.17 C. What such a run measures is the recovery from a step between two commanded
+  targets, which is a different disturbance and a different criterion's subject.
+
+  No admitted course produces one either. A search over four hundred piecewise-linear
+  courses at the standing target, each with its peak inside what admission accepts, tops
+  out at 0.90 C of casting departure at the end of the course and 1.03 C during it, against
+  a band of 1.00 C -- noise beside the threshold rather than a disturbance to recover from.
+
+  A truth machine differing from the description does produce a real one, and is foreclosed
+  on other grounds. At the largest admitted rate the element sits at its rail for the whole
+  draw, so the loop has no authority left to correct an error in what it believes, while an
+  extraction at the ordinary rate runs at about seven tenths of scale and integrates the
+  same error away: a pump moving 7.2 against a believed 7.0 mL/s leaves the casting 1.73 C
+  out at the draw's end, against 0.005 C for the same wait with no water drawn. But that is
+  model error, which SOL-BREW-RECOVERS-AFTER-DRAW.C6 places outside its own scope and
+  robustness.declaration classes among the behaviours permitted to degrade as the model
+  worsens.
+
+  Underneath all four is one property of the description. Under a constant draw this
+  structure settles with the water leaving the machine at the casting's own temperature, so
+  a draw moves what duty a target costs and not where either state sits; admission refuses
+  any pairing whose duty is out of reach; and the corrected read-ahead supplies what is
+  left. Perturbing the coefficients that carry only the dynamics -- the casting's mass, the
+  volume held at the outlet, the no-draw conduction constant -- across their declared
+  fractions changes the state a draw leaves by under 0.01 C, which is what says the
+  mechanism is the steady-state balance and nothing else.
+
+  Out of scope: producing the disturbance itself, choosing what replaces the two
+  TEST_IGNORE'd tests, and any change to SOL-BREW-RECOVERS-AFTER-DRAW's own criteria --
+  each belongs to whichever follow-on maintenance item takes up this search's own
+  conclusion, not to this one.
 rationale: |
   Filed here rather than reopening SOL-BREW-RECOVERS-AFTER-DRAW, because what fell short is a
   test's precondition rather than the behaviour the criteria assert. Both criteria's own text
   asks what a demand following a draw receives; neither asks that the draw be the largest one
   this machine can be made to suffer, which was a test author's choice of how to manufacture a
-  provable disturbance, not a term either criterion states. Re-examining what actually needs
-  restoring is exactly what a maintenance item is for.
+  provable disturbance, not a term either criterion states.
 
   Traced to REQ-BREW-TEMP-001.C4 and REQ-HOT-WATER-001.C3 rather than to
-  SOL-BREW-RECOVERS-AFTER-DRAW's own criteria, on the same reasoning
-  DEL-MAINTENANCE.C1 gives for every item under this lane: what is owed is evidence against
-  the requirement criterion the shortfall bears on, not against the solution criterion whose
-  test stopped proving it.
+  SOL-BREW-RECOVERS-AFTER-DRAW's own criteria, on the same reasoning DEL-MAINTENANCE.C1 gives
+  for every item under this lane: what is owed is evidence against the requirement criterion
+  the shortfall bears on, not against the solution criterion whose test stopped proving it.
 
-  No parameter is left within either test's own admissible scenario to restore a disturbance:
-  SOL-BREW-RECOVERS-AFTER-DRAW.C6 already fixes the rate, the volume and the duration to a
-  served long black at the admitted largest rate, naming duration explicitly as not a figure
-  to choose beside the other two, and admission's own bound -- the steady-state settle check
-  -- means no rate it will ever accept demands more of the loop than an indefinitely
-  sustained draw does. Extending the draw, choosing a different admitted rate, or running it
-  longer cannot manufacture a harder case than the one the bound already describes.
-  Writing the disturbance into plant state directly is foreclosed on its own terms by
-  SOL-BREW-RECOVERS-AFTER-DRAW.C7. Whoever takes this has to choose a different way to prove
-  a demand actually receives an accounted-for state -- perhaps a scenario this admission
-  check does not yet gate on, perhaps a different observable than the casting's own
-  departure from target -- which is a real design question and not a threshold to relax.
-
-  Three further ways past it have since been tried and measured, and are recorded here so the next
-  reader does not re-walk them.
-
-  Serving the draw at a lower target inside the drinking window is not a draw's disturbance. The
-  declaration the sibling slice ships is a window and not a setpoint -- the control path holds a
-  caller to it at admission against whatever target is already standing -- and nothing in
-  REQ-HOT-WATER-001's criteria or in the reference machine asks that a cup of water be served below
-  the temperature coffee is extracted at. Measured on the reference description: a draw commanded at
-  ninety degrees leaves the casting 3.11 C from the brew target, and standing the same machine at
-  ninety degrees for the same length of time with no delivery commanded and no water drawn leaves it
-  2.94 C from it. The draw's own share is 0.17 C. What such a run measures is the recovery from a
-  step between two commanded targets, which is a different disturbance and a different criterion's
-  subject.
-
-  No admitted course produces one either. A search over four hundred piecewise-linear courses at the
-  standing target, each with its peak inside what admission accepts, tops out at 0.90 C of casting
-  departure at the end of the course and 1.03 C during it, against a band of 1.00 C -- which is
-  noise beside the threshold rather than a disturbance to recover from.
-
-  A truth machine differing from the description does produce a real one, and is foreclosed on other
-  grounds. At the largest admitted rate the element sits at its rail for the whole draw, so the loop
-  has no authority left to correct an error in what it believes, while an extraction at the ordinary
-  rate runs at about seven tenths of scale and integrates the same error away: a pump moving 7.2
-  against a believed 7.0 mL/s leaves the casting 1.73 C out at the draw's end, against 0.005 C for
-  the same wait with no water drawn. But that is model error, which SOL-BREW-RECOVERS-AFTER-DRAW.C6
-  places outside its own scope and robustness.declaration classes among the behaviours permitted to
-  degrade as the model worsens -- so a run built on it would be asserting the robustness
-  verification's claim under these criteria's names, and the size of the perturbation would be a
-  figure chosen to make the run pass.
-
-  Underneath all three is one property of the description. Under a constant draw this structure
-  settles with the water leaving the machine at the casting's own temperature, so a draw moves what
-  duty a target costs and not where either state sits; admission refuses any pairing whose duty is
-  out of reach; and the corrected read-ahead supplies what is left. Perturbing the coefficients that
-  carry only the dynamics -- the casting's mass, the volume held at the outlet, the no-draw
-  conduction constant -- across their declared fractions changes the state a draw leaves by under
-  0.01 C, which is what says the mechanism is the steady-state balance and nothing else. Whoever
-  takes this next has to move one of those three, or read the disturbance from something other than
-  a temperature.
+  This node's own scope narrowed as the search ran. It began as an attempt to restore the two
+  tests directly, and the four ways tried -- recorded in the text -- are what that attempt
+  found instead: not a replacement scenario, but a demonstration that none exists within the
+  terms the search held fixed (an admitted, closed-loop-driven delivery on a description that
+  matches the truth machine). That demonstration is itself complete, evidenced work, distinct
+  from the open question of what happens next -- which is why it is closed here rather than
+  left to stand open indefinitely alongside a job it can no longer finish. The open question
+  belongs to a separate child of the same lane, so a closed investigation and a still-open
+  design question are not asked to be the same deliverable.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from

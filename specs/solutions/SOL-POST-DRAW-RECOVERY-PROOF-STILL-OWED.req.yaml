@@ -1,0 +1,67 @@
+id: SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED
+type: deliverable
+category: solution
+title: The two recovery tests still need a proof the corrected loop's disturbance no longer supplies
+status: active
+version: 1
+text: |
+  A prior search ruled out every way of disturbing the casting through an admitted,
+  closed-loop-driven delivery on this reference machine's current description: a steady
+  draw at the standing target, a draw served at a different admitted target, four hundred
+  adversarial admitted course shapes, and the plant's own dynamic coefficients across their
+  declared plausible ranges. None leaves the casting outside the band the two tests below
+  need broken to prove there is something to recover from.
+
+  test_the_state_a_draw_leaves_is_carried_into_the_next_delivery and
+  test_an_extraction_after_a_draw_matches_one_pulled_from_rest stay TEST_IGNORE'd. What they
+  were built to prove -- that a demand following a hot water draw is served from an
+  accounted-for state, not a restarted one -- is not shown to be false; only the specific way
+  of proving it, induce a real disturbance and then show recovery from it, is unreachable
+  under this description and this control law.
+
+  Whoever takes this has to change one of the terms the ruled-out search held fixed. Four
+  directions, none chosen here:
+
+  Verify the mechanism the tests were actually protecting -- the state a draw leaves carried
+  into the delivery that follows rather than restarted, and no second law needed for recovery
+  -- directly, rather than through an end-to-end temperature-band violation that may no
+  longer be achievable.
+
+  Accept that the criteria are now met by a comfortable margin on every admissible scenario,
+  and close them against an inspection of the search's own numbers rather than a live test
+  whose precondition cannot fire.
+
+  Wait on the plant description gaining a fidelity this one deliberately omits. The held
+  volume between the casting and the group is modelled as well-mixed rather than as a
+  transport delay, and the description says so precisely because adding the delay changes
+  what the model represents rather than what it declares -- not because the delay does not
+  matter here. A delay of the length that omission describes could put a real, timing-based
+  disturbance back within reach in a way a steady-state argument cannot rule out in advance.
+
+  Treat the verification strategy these two tests were built on as having asked the wrong
+  thing of a test rather than the right thing of a now-improved loop, and supersede it.
+
+  Out of scope: choosing among these four -- that choice is a real design question this
+  criterion does not settle.
+rationale: |
+  Traced to REQ-BREW-TEMP-001.C4 and REQ-HOT-WATER-001.C3, the same pair the prior
+  investigation targeted, on the same DEL-MAINTENANCE.C1 reasoning: what is owed is
+  evidence against the requirement criterion the shortfall bears on. That investigation's
+  own job -- searching the admissible space for a disturbance and recording what it found --
+  is done and closed as its own item. This is not the same work continued; it is the
+  decision the search's own conclusion leaves open, split into its own child so a closed
+  investigation and a still-open design question are not asked to be the same deliverable
+  pretending to be finished and unfinished at once.
+
+  depends-on the investigation this splits from, because every one of the four directions
+  above is scoped the way it is by that search's own findings -- picking this up without
+  reading that first means re-walking ground already measured.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BREW-TEMP-001.C4
+    type: targets
+  - target: REQ-HOT-WATER-001.C3
+    type: targets
+  - target: SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED
+    type: depends-on

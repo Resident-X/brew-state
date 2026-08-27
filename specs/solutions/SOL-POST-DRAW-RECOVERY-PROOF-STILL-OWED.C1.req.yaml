@@ -1,0 +1,20 @@
+id: SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1
+type: criterion
+title: The two recovery tests run again against a scenario not already ruled out, or their verification strategy is replaced
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Both test_the_state_a_draw_leaves_is_carried_into_the_next_delivery and
+  test_an_extraction_after_a_draw_matches_one_pulled_from_rest run again rather than stand
+  TEST_IGNORE, each proving its own precondition against a scenario produced by driving the
+  closed loop rather than by writing plant state, and not a scenario the prior investigation
+  already ruled out; or the verification strategy they were built on is replaced by one of
+  the other directions this solution's text names, with evidence recorded against it instead.
+
+  Out of scope: which of the directions this solution's text lists is taken -- that choice
+  belongs to whoever builds this.
+links:
+  - target: SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED
+    type: criterion-of
