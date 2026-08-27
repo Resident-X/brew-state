@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: analysis
 text: |
-  A corner whose response diverges, grows without bound, or has not settled within the delivery's own tolerance band by the extended horizon is recorded as its own finding, not folded into the deviation number the existing sweep already reports — a large deviation and an unbounded one are different failures and read the same only if the distinction is thrown away.
+  A corner — independent or the one joint corner a sibling criterion adds — whose response diverges, grows without bound, or has not settled within the delivery's own tolerance band by the extended horizon is recorded as its own finding, not folded into the deviation number the existing sweep already reports — a large deviation and an unbounded one are different failures and read the same only if the distinction is thrown away.
 
   Deciding what commanded margin the finding implies is out of scope; that belongs to the criterion that widens margin with model error.
 links:

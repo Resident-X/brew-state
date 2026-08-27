@@ -1,0 +1,14 @@
+id: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4
+type: criterion
+title: The one dependence the reference description's own construction implies — brew and steam element ratings sagging together under a shared mains supply — is run as a joint corner alongside the independent ones
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The brew and steam element ratings are both mains-driven, and the reference description's own reasoning already treats them as moving together under a supply sag rather than as two independent draws — an independent, one-at-a-time sweep does not exercise that case by construction, and a stability claim that never runs it has not covered what the description itself already implies. This slice adds the one joint corner — both ratings perturbed together under a stated fractional dependence on a shared supply droop — checked for settling to the same standard and the same tolerance band as every independent corner.
+
+  A general correlation sweep across every possible pairing of declared-error coefficients, rather than the one dependence the reference description's own construction already implies, is out of scope.
+links:
+  - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR
+    type: criterion-of

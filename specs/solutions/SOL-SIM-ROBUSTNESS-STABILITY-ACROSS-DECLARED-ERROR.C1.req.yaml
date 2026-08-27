@@ -6,9 +6,9 @@ version: 1
 measurement_type: threshold
 verification: analysis
 text: |
-  The existing per-parameter sweep already perturbs each declared-error corner and re-runs a closed-loop draw on both the coffee side and the steam side, but it measures how far the outcome moves as a fraction of the delivery's own tolerance band — a magnitude that says nothing about whether the response actually settles. This slice runs the same corners to a horizon long enough to show whether the response settles within that same declared tolerance band, held for a stated trailing portion of the horizon, or does not.
+  The existing per-parameter sweep already perturbs each declared-error corner and re-runs a closed-loop draw on both the coffee side and the steam side, but it measures how far the outcome moves as a fraction of the delivery's own tolerance band — a magnitude that says nothing about whether the response actually settles. This slice runs the same corners to a horizon long enough to show whether the response settles within that same declared tolerance band, held for a stated trailing portion of the horizon, or does not. A coefficient the plant description declares one-sided is run at its one declared corner rather than skipped, so its half of the range is checked to the same standard as a two-sided coefficient's pair.
 
-  Perturbing more than one parameter at once, or otherwise honouring how the declared errors relate to each other rather than treating them independently, is out of scope, as is a coefficient the plant description declares one-sided.
+  Perturbing declared-error coefficients jointly, other than the one stated dependence a sibling criterion adds, is out of scope.
 links:
   - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR
     type: criterion-of
