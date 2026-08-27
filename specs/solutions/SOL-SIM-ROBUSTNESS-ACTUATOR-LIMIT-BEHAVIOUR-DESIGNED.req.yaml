@@ -1,0 +1,21 @@
+id: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED
+type: deliverable
+category: solution
+title: The steam loop's conditional integration at the actuator limit is proven to the same standard already proven for the brew loop
+status: active
+version: 1
+text: |
+  Both the brew and steam control loops already implement conditional integration at the actuator limit as a deliberate design — integration is inhibited while the actuator is pushed past its limit rather than accumulating and being unwound afterward. This is not incidental clamping; it is the mechanism the control-design obligation calls for on a machine that spends much of its working life at full heater duty. The model-error classification names this behaviour, precisely, as surrendering accumulated intent at the actuator limit, one of four behaviours classified invariant — required to hold however wrong the model is, never permitted to trade away the way behaviours in its bounded or degrading classes may.
+
+  The brew loop's instance of this is already proven: accumulated intent does not outlive its actuator limit, evidenced by a test showing a longer saturated interval produces no more overshoot than a shorter one. The steam loop implements the structurally identical mechanism but carries no criterion or evidence of its own anywhere in the graph. This solution closes that gap: it evidences the steam loop's conditional integration to the same standard already proven for brew, and states the system-wide claim — that the actuator limit is a designed condition on both loops, not an edge case — by naming each loop's own mechanism and its own evidence, rather than resting the system-wide claim on the brew-only precedent.
+
+  Out of scope: redesigning either loop's saturation handling; establishing this property by sweeping the declared error range rather than by the same structural test already used for brew.
+rationale: |
+  A single loop's proof does not by itself support a system-wide claim just because the mechanism looks identical in code — the steam loop's own saturated-interval behaviour has never been exercised by a test, and a claim about designed behaviour is not established by a mechanism merely resembling one proven elsewhere. Testing steam to the same standard already used for brew, rather than restating brew's proof as if it already covered both, is what makes "designed rather than incidental" an actually-checked claim on both plants this requirement addresses.
+
+  The property is proven structurally rather than by sweeping the declared error range for the same reason it already was on the brew side: the behaviour does not depend on how wrong the model is, so a sweep would establish only the weaker, bounded claim in place of the stronger one a structural test already gives.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION.C3
+    type: derives-from
+  - target: REQ-ROBUST-CONTROL-001.C4
+    type: targets

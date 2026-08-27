@@ -1,0 +1,14 @@
+id: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED.C2
+type: criterion
+title: The actuator-limit design is named as a property of both loops rather than inferred from one
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The claim that the actuator limit is a designed condition rather than an incidental edge case is made once, at the level both loops share, but is backed by naming each loop's own conditional-integration mechanism and its own evidence within this solution's own criteria — this criterion together with its sibling — rather than by a restatement of either loop's proof standing alone for the system-wide claim.
+
+  Establishing this by sweeping the declared error range, rather than by the structural test each loop already carries, is out of scope — the property does not depend on how wrong the model is.
+links:
+  - target: SOL-SIM-ROBUSTNESS-ACTUATOR-LIMIT-BEHAVIOUR-DESIGNED
+    type: criterion-of

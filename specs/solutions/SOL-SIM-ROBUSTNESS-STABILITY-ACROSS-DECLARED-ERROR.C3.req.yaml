@@ -1,0 +1,14 @@
+id: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C3
+type: criterion
+title: The corners run, the horizon used, and the verdict at each corner are committed in a form repeatable against a replacement model
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The record names the model it was run against, and the existing sweep's own committed figures that it leaves unchanged, so the same corners and horizon can be re-run unchanged once a measured model replaces the estimated one, rather than being reconstructed from scratch or mistaken for a revision of the existing sweep's results.
+
+  Actually re-running the check against a replacement model, once one exists, is out of scope for this slice.
+links:
+  - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR
+    type: criterion-of
