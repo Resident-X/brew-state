@@ -8,7 +8,7 @@ length of the sweep's own is the most expensive thing in this tier, and every
 assertion below reads what that run produced rather than reaching for the loops
 itself.
 
-Four assertions cost real draws of their own and each is deliberate. One runs a
+Six assertions cost real draws of their own and each is deliberate. One runs a
 corner at a horizon deliberately too short, because a horizon that is long enough
 and one that has never been shown to be long enough read the same from a table of
 verdicts. One runs the upper corner of a coefficient this description declares
@@ -17,8 +17,16 @@ one-sided -- a machine the description does not claim, run here and nowhere else
 detector that has never been seen to say otherwise on the real apparatus is not a
 detector. One runs the whole method against a description the shipped one is not,
 because a method that can only be pointed at one model cannot be shown repeatable
-against a replacement. And one re-runs a coefficient's own corner to establish
-that the joint corner is not that corner under another name.
+against a replacement. One re-runs a coefficient's own corner to establish that
+the joint corner is not that corner under another name.
+
+And two put a corner the machine's own loader really refuses through the paths
+that have to record it rather than raise: one through the whole method, against a
+description declaring an error wide enough that a corner of it is no longer a
+machine of this architecture, and one through the joint corner in particular,
+which is the path that claimed to be admitted on the same terms as the others
+while it was not. Neither can be shown with an exception raised on purpose: what
+has to be established is that the structure's own refusal reaches the record.
 
 The verdict logic itself is exercised against synthetic separations as well as
 against this machine's. All three verdicts have to be reachable and told apart,
@@ -142,6 +150,41 @@ def _reference_lines():
         return handle.read().splitlines()
 
 
+def _with_declared_errors(errors, destination, source=None):
+    """A description with one or more coefficients' declared errors written
+    differently, and every value left where it stands.
+
+    Written here rather than borrowed, because the rewrite the tools share moves
+    a coefficient's value and carries its account of itself -- including the
+    error -- across untouched, which is exactly right for running a corner and
+    exactly wrong for asking what a wider declared error would make this analysis
+    do. What is wanted is the same machine with the description claiming to be
+    more wrong about it than it does, so that a corner the declared error implies
+    lands outside what the structure will admit as a machine at all.
+    """
+    source = source or FINDINGS["description"]
+    with open(source, encoding="utf-8") as handle:
+        lines = handle.read().splitlines()
+    rewritten = []
+    for line in lines:
+        head, separator, tail = line.partition("=")
+        name = head.strip()
+        if separator and name in errors:
+            value, marker, account = tail.partition("~")
+            if not marker:
+                raise AssertionError("%s declares no error against '%s' to widen" % (source, name))
+            account = account.strip()
+            at = account.find("@")
+            rewritten.append("%s =%s~ %g %s" % (name, value, errors[name],
+                                                account[at:] if at >= 0 else ""))
+        else:
+            rewritten.append(line)
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    with open(destination, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(rewritten) + "\n")
+    return destination
+
+
 def _flat(value, length):
     """A separation series that does not change."""
     return [value] * length
@@ -255,6 +298,75 @@ class EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling(unittest.TestCase
             stability.ONE_SIDED = was
         self.assertIn("left unchecked", str(refused.exception))
 
+    # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1 and .C4: the two
+    # departures from a plain two-sided sweep -- which coefficients reach in one
+    # direction only, and which two move together -- are facts stated in
+    # firmware/params/thermoblock.md's prose and nowhere else. The description's
+    # grammar carries a value, an error and an origin, and has nowhere to put
+    # either claim, so the tool holds them in tables of its own.
+    #
+    # Nothing structural ties those tables to the prose they came from, and
+    # nothing can: a fourth coefficient declared one-sided in that prose, or a
+    # value or fraction moved under one of these five lines, would leave this
+    # analysis running the old assumption and reporting it as current. This is
+    # the tripwire. It pins what the live description presently says about each
+    # of the five, read through the sweep's own reader, so any movement fails
+    # here rather than being carried silently into a record that claims to be
+    # about the machine as described.
+    #
+    # The sag the joint corner is run at falls out of two of these figures and is
+    # pinned with them: it is the smaller of the two element errors, so it is the
+    # coffee element's own declared error and not the steam element's -- which is
+    # why the coffee side has a like-for-like comparison against the joint corner
+    # and the steam side has none.
+    def test_the_prose_facts_these_tables_encode_are_what_the_description_still_says(self):
+        pinned = {
+            "pump.pressure_bar": (15.0, 0.4),
+            "pump.flow_ml_per_s": (7.0, 0.6),
+            "steam.feed_flow_ml_per_s": (3.0, 0.7),
+            "brew.heater_power_w": (1004.0, 0.1),
+            "steam.heater_power_w": (1126.0, 0.15),
+        }
+        self.assertEqual(
+            sorted(pinned), sorted(set(stability.ONE_SIDED) | set(stability.MAINS_COUPLED)),
+            "the coefficients this tool holds prose facts about are not the ones pinned here, so "
+            "a claim read out of firmware/params/thermoblock.md has been added to or dropped from "
+            "a table with nothing checking it against the description")
+
+        declared = dict((name, (nominal, fraction))
+                        for name, nominal, fraction in _covered())
+        for name, (nominal, fraction) in sorted(pinned.items()):
+            with self.subTest(coefficient=name):
+                self.assertIn(
+                    name, declared,
+                    "the description no longer declares an error against `%s`, which this tool "
+                    "carries a prose fact about" % name)
+                self.assertAlmostEqual(
+                    declared[name][0], nominal, places=6,
+                    msg="`%s` is now stated as %g rather than the %g this tool's account of it "
+                        "was written against. Re-read what firmware/params/thermoblock.md says "
+                        "about it before updating this figure"
+                        % (name, declared[name][0], nominal))
+                self.assertAlmostEqual(
+                    declared[name][1], fraction, places=9,
+                    msg="`%s` now declares an error of %g rather than %g. Which corners this "
+                        "analysis runs, and what the joint corner's sag is, both follow from "
+                        "these fractions" % (name, declared[name][1], fraction))
+
+        coupled = [declared[name][1] for name in stability.MAINS_COUPLED]
+        self.assertAlmostEqual(FINDINGS["joint"]["fraction"], min(coupled), places=9)
+        self.assertAlmostEqual(
+            FINDINGS["joint"]["fraction"],
+            declared[stability.MAINS_COUPLED_BY_SIDE[sweep.BREW_SIDE]][1], places=9,
+            msg="the joint corner's sag is no longer the coffee element's own declared error, so "
+                "which side has a like-for-like comparison against it has moved")
+        self.assertNotAlmostEqual(
+            FINDINGS["joint"]["fraction"],
+            declared[stability.MAINS_COUPLED_BY_SIDE[sweep.STEAM_SIDE]][1], places=9,
+            msg="the two elements now declare the same error, so both sides would have a "
+                "comparable independent corner and the record's account of why one does not has "
+                "gone stale")
+
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1: checked for a
     # response that settles, not only a bounded deviation. This is the whole of
     # what separates this analysis from the dominance record beside it, and it
@@ -351,7 +463,8 @@ class EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling(unittest.TestCase
                 for label, description in (("nominal", FINDINGS["description"]),
                                            ("corner", settled["description"]))]
         hurried = stability.settle_of(runs[0]["delivered"], runs[1]["delivered"], window,
-                                      FINDINGS["bands"][sweep.BREW_SIDE], FINDINGS["floor"])
+                                      FINDINGS["bands"][sweep.BREW_SIDE],
+                                      FINDINGS["floors"][sweep.BREW_SIDE])
         self.assertNotEqual(
             hurried["verdict"], stability.SETTLED,
             "%s's corner is reported as settled over a horizon a fifteenth of the committed one, "
@@ -409,6 +522,67 @@ class EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling(unittest.TestCase
             stability.reference_delivers_in_band(adrift, windows, FINDINGS["bands"],
                                                  FINDINGS["declaration"])
         self.assertIn("bar band", str(steam_refused.exception))
+
+    # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1: within the
+    # delivery's own tolerance band -- which a separation from the reference only
+    # stands in for where the reference is itself near the target. Somewhere
+    # inside the band is not enough and is what this guard asked for first: a
+    # reference on one edge and a corner on the other are a band apart, the
+    # separation between them reads as one band, and the corner is called settled
+    # while both deliveries are marginal. So a reference inside its band and off
+    # the target by more than the stated fraction of it has to be refused, on
+    # both sides, and every figure below turns on that having been established.
+    def test_a_reference_inside_its_band_but_far_off_target_is_refused(self):
+        windows = dict((side, list(range(first, last + 1)))
+                       for side, (first, last) in FINDINGS["windows"].items())
+        bands = FINDINGS["bands"]
+        allowed = stability.REFERENCE_CENTRED_WITHIN
+        self.assertLess(allowed, 1.0, "the guard admits a reference anywhere inside its band, "
+                                      "which is the bound this test exists to say is not enough")
+
+        # The coffee side, put just inside the band and well off the commanded
+        # temperature. The old guard admitted this and every verdict taken
+        # against it would have been a comparison with a machine most of a band
+        # from where the design puts it.
+        off = dict((side, {"delivered": list(run["delivered"])})
+                   for side, run in FINDINGS["reference"].items())
+        edge = sweep.BREW_TARGET_C + bands[sweep.BREW_SIDE] * (1.0 + allowed) / 2.0
+        self.assertLess(abs(edge - sweep.BREW_TARGET_C), bands[sweep.BREW_SIDE],
+                        "the doctored reference is outside the band, so this is the refusal the "
+                        "guard beside this one already makes")
+        for at in windows[sweep.BREW_SIDE]:
+            off[sweep.BREW_SIDE]["delivered"][at] = edge
+        with self.assertRaises(stability.StabilityError) as refused:
+            stability.reference_delivers_in_band(off, windows, bands, FINDINGS["declaration"])
+        self.assertIn("too far off the target", str(refused.exception))
+
+        # The steam side, put just inside the declared span and near its ceiling.
+        settled = FINDINGS["reference_settled"]
+        middle = settled["steam_middle"]
+        off = dict((side, {"delivered": list(run["delivered"])})
+                   for side, run in FINDINGS["reference"].items())
+        near_edge = middle + bands[sweep.STEAM_SIDE] * (1.0 + allowed) / 2.0
+        self.assertLess(near_edge, settled["steam_ceiling"],
+                        "the doctored steam reference is outside the declared span, so this is "
+                        "the refusal the guard beside this one already makes")
+        for at in windows[sweep.STEAM_SIDE]:
+            off[sweep.STEAM_SIDE]["delivered"][at] = near_edge
+        with self.assertRaises(stability.StabilityError) as steam_refused:
+            stability.reference_delivers_in_band(off, windows, bands, FINDINGS["declaration"])
+        self.assertIn("too far off the target", str(steam_refused.exception))
+
+        # And the machine the committed verdicts were taken against passes it
+        # with room in hand, which is what makes the fraction a guard against a
+        # model that moved rather than one fitted to this one.
+        for side, distance in ((sweep.BREW_SIDE, settled["brew_worst_from_target"]),
+                               (sweep.STEAM_SIDE, settled["steam_worst_from_middle"])):
+            with self.subTest(side=side):
+                self.assertLess(
+                    distance, allowed * bands[side],
+                    "the unperturbed machine sits %g from the middle of the %s side's band, "
+                    "which is at or past the %g of it this analysis requires -- the verdicts "
+                    "were taken against a reference the guard was written to refuse"
+                    % (distance, side, allowed))
 
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1: across the declared
     # error and not beyond it, which is the standard the robustness declaration
@@ -545,7 +719,8 @@ class ACornerThatFailsToSettleIsNamedAsAnInstabilityFinding(unittest.TestCase):
         first, last = FINDINGS["windows"][sweep.BREW_SIDE]
         settle = stability.settle_of(
             FINDINGS["reference"][sweep.BREW_SIDE]["delivered"], run["delivered"],
-            list(range(first, last + 1)), FINDINGS["bands"][sweep.BREW_SIDE], FINDINGS["floor"])
+            list(range(first, last + 1)), FINDINGS["bands"][sweep.BREW_SIDE],
+            FINDINGS["floors"][sweep.BREW_SIDE])
         self.assertEqual(
             settle["verdict"], stability.SETTLED_OUTSIDE_THE_BAND,
             "a corner that leaves the coffee loop drawing more than its element can carry was "
@@ -565,7 +740,7 @@ class ACornerThatFailsToSettleIsNamedAsAnInstabilityFinding(unittest.TestCase):
         counts, milli = cross_tier.converter_scale()
         self.assertAlmostEqual(stability.reading_resolution(),
                                float(milli) / float(counts) / 1000.0, places=12)
-        self.assertAlmostEqual(FINDINGS["floor"], stability.reading_resolution(), places=12)
+        self.assertAlmostEqual(FINDINGS["reading"], stability.reading_resolution(), places=12)
 
         window = list(range(0, 400))
         reference = _flat(0.0, 400)
@@ -583,6 +758,140 @@ class ACornerThatFailsToSettleIsNamedAsAnInstabilityFinding(unittest.TestCase):
             real["verdict"], stability.STILL_DIVERGING,
             "a change of two counts was not reported as growth, so the floor has swallowed the "
             "finding it exists to protect")
+
+    # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C2: an instability
+    # finding, which a floor large against the band it is judged beside would
+    # swallow. The seam declares one converter full scale for every channel
+    # alike, so its count is a figure about the board rather than about either
+    # delivery: it is a twentieth of the coffee side's band and a quarter of the
+    # steam side's, and a response growing at just under a quarter of the band
+    # per half-window is not settled by any reading of the word. So each side's
+    # floor is asserted against that side's own band and not only against the
+    # seam -- an assertion that the floor is the seam's figure passes at any full
+    # scale whatsoever, including one that made the floor half the band.
+    def test_each_sides_growth_floor_is_bounded_by_a_fraction_of_that_sides_own_band(self):
+        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+            band = FINDINGS["bands"][side]
+            with self.subTest(side=side):
+                self.assertLessEqual(
+                    FINDINGS["floors"][side], stability.GROWTH_FLOOR_BAND_FRACTION * band,
+                    "the %s side calls a change of %g settled, which is more than %g of the %g "
+                    "band that side is judged against -- a response growing at that rate spends "
+                    "the margin the verdict is about while the verdict says it came to rest"
+                    % (side, FINDINGS["floors"][side], stability.GROWTH_FLOOR_BAND_FRACTION,
+                       band))
+                self.assertLessEqual(FINDINGS["floors"][side], FINDINGS["reading"])
+                self.assertAlmostEqual(
+                    FINDINGS["floors"][side],
+                    min(FINDINGS["reading"], stability.GROWTH_FLOOR_BAND_FRACTION * band),
+                    places=12)
+                self.assertGreater(FINDINGS["floors"][side], 0.0)
+
+        # And the bound is doing work rather than being a formality on this
+        # machine: the steam band is narrow enough that the seam's own count
+        # stands well above a twentieth of it, so that side is held by its band
+        # and not by the converter. A run in which both sides were held by the
+        # seam would be no evidence that the band ever bounds anything.
+        self.assertLess(
+            FINDINGS["floors"][sweep.STEAM_SIDE], FINDINGS["reading"],
+            "the steam side's floor is the seam's own count, so nothing here establishes that a "
+            "floor large against a narrow band is bounded at all")
+        self.assertAlmostEqual(FINDINGS["floors"][sweep.BREW_SIDE], FINDINGS["reading"], places=12)
+
+        # A verdict actually turns on the difference: a steam response growing by
+        # more than its own bounded floor and less than the seam's count is
+        # growth here and would have been called settled by the seam's figure.
+        window = list(range(0, 400))
+        reference = _flat(0.0, 400)
+        between = (FINDINGS["floors"][sweep.STEAM_SIDE] + FINDINGS["reading"]) / 2.0
+        band = FINDINGS["bands"][sweep.STEAM_SIDE]
+        self.assertEqual(
+            stability.settle_of(reference, _series(0.01, 0.01 + between, 400), window, band,
+                                FINDINGS["floors"][sweep.STEAM_SIDE])["verdict"],
+            stability.STILL_DIVERGING)
+        self.assertEqual(
+            stability.settle_of(reference, _series(0.01, 0.01 + between, 400), window, band,
+                                FINDINGS["reading"])["verdict"],
+            stability.SETTLED,
+            "the seam's own count no longer swallows a steam response growing by %g per "
+            "half-window, so this assertion is not about the distinction it exists to make"
+            % between)
+
+        # And a side held to no band at all has no fraction to bound a floor by,
+        # which is a refusal rather than a floor of nothing.
+        with self.assertRaises(stability.StabilityError) as refused:
+            stability.growth_floors({sweep.BREW_SIDE: 0.0})
+        self.assertIn("no margin", str(refused.exception))
+
+    # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C2: reported -- which a
+    # corner the structure will not admit as a machine has to be too, rather than
+    # ending the run. It is a finding about the description's declared error: the
+    # error reaches a value at which these equations stop describing a machine of
+    # this architecture, and a record of what the declared error implies that
+    # stopped there would report nothing at all about the corners that did run.
+    #
+    # Put to the whole method rather than to the verdict-combining function on
+    # its own, and with a refusal the structure really makes rather than a raised
+    # exception standing in for one: a description declaring an ambient it may be
+    # two and a half times wrong about implies an upper corner above anything the
+    # structure admits as a room, and the machine's own loader refuses it. Every
+    # part of the path has to hold -- the draw refused, the refusal recorded
+    # against that side, the corner's verdict taken from it, and the record
+    # naming it -- and none of it is exercised by a synthetic verdict at all.
+    def test_a_corner_the_structure_refuses_is_recorded_and_reported_rather_than_stopping_the_run(
+            self):
+        widened = 2.5
+        refusable = "ambient_temperature_c"
+        nominal, declared = [(nominal, fraction) for name, nominal, fraction in _covered()
+                             if name == refusable][0]
+        self.assertLess(declared, 1.0)
+        self.assertNotIn(refusable, stability.ONE_SIDED,
+                         "%s is declared one-sided, so its upper corner is not run and this test "
+                         "has nothing to refuse" % refusable)
+
+        workspace = os.path.join(FINDINGS["workspace"], "refused")
+        description = _with_declared_errors(
+            {refusable: widened}, os.path.join(workspace, "refusable.params"))
+        findings = stability.run(description=description, limits=FINDINGS["limits"],
+                                 executable=FINDINGS["executable"], workspace=workspace)
+
+        refused = [record for record in findings["corners"] if record["refused"]]
+        self.assertEqual(
+            [(record["coefficient"], record["corner"]) for record in refused],
+            [(refusable, "high")],
+            "the corner the structure refuses is not the one this description's widened error "
+            "puts outside what the machine admits, so this run is not about the refusal path")
+        record = refused[0]
+        self.assertAlmostEqual(record["values"][refusable], nominal * (1.0 + widened), places=6)
+        self.assertEqual(
+            sorted(record["refused"]), sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]),
+            "a side of a machine the structure refuses came back with a run, so what was judged "
+            "is not the description that was written")
+        self.assertEqual(record["sides"], {})
+        self.assertEqual(record["verdict"], stability.CORNER_REFUSED)
+        for side, why in record["refused"].items():
+            with self.subTest(side=side):
+                self.assertTrue(why, "the %s side records no reason for the refusal, so the "
+                                     "record cannot say what the declared error reached" % side)
+
+        # The corner beside it, at the other end of the same widened error, is
+        # still a machine and still ran: a run that refused everything would pass
+        # every assertion above.
+        low = [other for other in findings["corners"]
+               if other["coefficient"] == refusable and other["corner"] == "low"][0]
+        self.assertEqual(low["refused"], {})
+        self.assertEqual(sorted(low["sides"]), sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]))
+
+        # And it is reported, in both places a reader would look for it.
+        named = stability.unsettled(findings)
+        self.assertEqual(
+            sorted(side for entry, side, _ in named if entry is record),
+            sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]))
+        written = stability.report_text(findings)
+        self.assertIn(stability.CORNER_REFUSED, written)
+        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+            with self.subTest(side=side):
+                self.assertIn("`%s`, high corner, %s side" % (refusable, side), written)
 
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C2: distinct from the
     # existing deviation measure, and not folded into it. Three things are asked,
@@ -618,8 +927,20 @@ class ACornerThatFailsToSettleIsNamedAsAnInstabilityFinding(unittest.TestCase):
                  stability.STILL_DIVERGING, stability.CORNER_REFUSED)
         for record in FINDINGS["corners"]:
             with self.subTest(coefficient=record["coefficient"], corner=record["corner"]):
-                self.assertEqual(sorted(record["sides"]) + sorted(record["refused"]),
-                                 sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]))
+                # Every side is accounted for exactly once, either by a verdict
+                # or by a refusal. Compared as sets built from both, rather than
+                # as two sorted lists laid end to end: that concatenation is not
+                # itself sorted, so it would fail or pass on which side happened
+                # to be refused rather than on whether both were accounted for.
+                self.assertEqual(
+                    set(record["sides"]) | set(record["refused"]),
+                    {sweep.BREW_SIDE, sweep.STEAM_SIDE},
+                    "the %s corner of %s leaves a side neither judged nor recorded as refused"
+                    % (record["corner"], record["coefficient"]))
+                self.assertFalse(
+                    set(record["sides"]) & set(record["refused"]),
+                    "a side is both judged and recorded as refused, so one of the two is about a "
+                    "run that did not happen")
                 for settle in record["sides"].values():
                     self.assertIn(settle["verdict"], named)
                 self.assertIn(record["verdict"], named)
@@ -714,7 +1035,7 @@ class TheCornersTheHorizonAndTheVerdictsAreCommitted(unittest.TestCase):
                         self.assertEqual(before[key], after[key])
                         continue
                     self.assertTrue(
-                        _near(float(before[key]), float(after[key]), FINDINGS["floor"]),
+                        _near(float(before[key]), float(after[key]), FINDINGS["reading"]),
                         "the committed record gives %s's %s corner a %s of %s and this analysis "
                         "now gives it %s. Re-run "
                         "firmware/emulation/tools/run_parameter_stability.py"
@@ -802,7 +1123,7 @@ class TheCornersTheHorizonAndTheVerdictsAreCommitted(unittest.TestCase):
                  if not _near(settle["early"],
                               _corner(record["coefficient"],
                                       record["corner"])["sides"][side]["early"],
-                              FINDINGS["floor"])]
+                              FINDINGS["reading"])]
         self.assertTrue(
             moved,
             "running a machine whose coffee element is %s W rather than the measured figure "
@@ -946,6 +1267,73 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
             with self.subTest(side=side):
                 self.assertEqual(verdict, joint["sides"][side]["verdict"])
 
+    # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4: run as a joint
+    # corner alongside the independent ones -- which means admitted on the terms
+    # they are admitted on, including the one that only shows up when a corner is
+    # refused. An inadmissible independent corner is recorded and the run goes
+    # on; an inadmissible joint corner that ended the run instead would take
+    # every verdict in the record with it, and the difference would be invisible
+    # on this description because its joint corner is admissible.
+    #
+    # So a description declaring both element ratings more than a hundred per
+    # cent uncertain is put to the joint corner, which makes the shared sag drive
+    # both elements below zero, and the machine's own loader refuses it. The
+    # corner has to come back recorded rather than raised, with the same shape an
+    # independent refusal leaves, and it has to be reported.
+    def test_a_joint_corner_the_structure_refuses_is_recorded_on_the_same_terms(self):
+        workspace = os.path.join(FINDINGS["workspace"], "joint-refused")
+        description = _with_declared_errors(
+            dict((name, 1.2) for name in stability.MAINS_COUPLED),
+            os.path.join(workspace, "wide-elements.params"))
+        covered = sweep.swept_coefficients(description)[0]
+        sag, values = stability.joint_sag(covered)
+        self.assertAlmostEqual(sag, 1.2, places=9)
+        for name in stability.MAINS_COUPLED:
+            with self.subTest(coefficient=name):
+                self.assertLess(values[name], 0.0,
+                                "%s does not sag below zero at this declared error, so the "
+                                "structure has no reason to refuse the joint machine" % name)
+
+        windows = dict((side, list(range(first, last + 1)))
+                       for side, (first, last) in FINDINGS["windows"].items())
+        tails = dict((side, list(range(FINDINGS["ends"][side] - FINDINGS["tails"][side],
+                                       FINDINGS["ends"][side])))
+                     for side in FINDINGS["ends"])
+        refused = stability.joint_corner(
+            covered, FINDINGS["executable"], description, FINDINGS["limits"],
+            FINDINGS["declaration"], FINDINGS["steam_ready_c"], FINDINGS["converter_scale"],
+            FINDINGS["courses"], FINDINGS["reference"], windows, tails, FINDINGS["bands"],
+            FINDINGS["floors"], FINDINGS["steam_block_ceiling_c"], workspace)
+
+        self.assertIsNotNone(refused)
+        self.assertEqual(refused["sides"], {})
+        self.assertEqual(sorted(refused["refused"]), sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]),
+                         "a side of a joint machine the structure refuses came back with a run")
+        self.assertEqual(refused["verdict"], stability.CORNER_REFUSED)
+        # The same record a joint corner that ran leaves, less the one field only
+        # a steam run can produce. Anything else missing is a shape a reader of
+        # these records would have to know which kind of corner it was holding to
+        # cope with.
+        self.assertEqual(
+            sorted(refused), sorted(set(FINDINGS["joint"]) - {"steam_block_peak_c"}),
+            "a refused joint corner leaves a differently shaped record from one that ran, so "
+            "what reads it has to know which kind it is holding")
+
+        # And it is reported the way a refused independent corner is: through the
+        # same account, in the same words, under the same heading.
+        doctored = dict(FINDINGS)
+        doctored["corners"] = [record for record in FINDINGS["corners"]
+                               if not record["joint"]] + [refused]
+        doctored["joint"] = refused
+        written = stability.report_text(doctored)
+        section = written.split(stability.UNSETTLED_HEADING, 1)[1].split("\n## ", 1)[0]
+        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+            with self.subTest(side=side):
+                self.assertIn("`%s`, %s corner, %s side"
+                              % (stability.JOINT_COEFFICIENT, stability.JOINT_CORNER, side),
+                              section)
+        self.assertIn("The structure would not admit it as a machine", section)
+
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4: the one dependence
     # the description's own construction implies -- and what that dependence
     # actually produces on this description has to be established from the runs
@@ -955,19 +1343,74 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
     # statement that the joint corner reproduces the independent one is a finding
     # about the description and has to be checked against a real pair of runs
     # rather than against the analysis's own bookkeeping.
+    #
+    # The steam side is the other half and is the one this comparison got wrong
+    # first. The sag is the smaller of the two declared errors, which is the
+    # coffee element's, so the steam element's own corner was run at a wider
+    # movement and there is no like-for-like comparison to be had on that side at
+    # all. Comparing it against the *coffee* element's corner instead -- which is
+    # what matching by fraction alone did -- holds a perturbation up against
+    # something that never touched the steam delivery, reports "differing"
+    # because a coefficient with no path to that side does nothing to it, and
+    # writes that up as a coupling. The correct answer is that the comparison is
+    # not available, and the record has to say so without claiming a finding.
     def test_what_the_joint_corner_reproduces_is_established_from_the_runs(self):
         joint = FINDINGS["joint"]
         same, differing, incomparable = stability.joint_against_the_independent_corners(FINDINGS)
         self.assertEqual(
-            sorted(set([side for side, _ in same] + [side for side, _ in differing]
-                       + list(incomparable))),
-            sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]),
+            set([side for side, _ in same] + [side for side, _ in differing]
+                + list(incomparable)),
+            {sweep.BREW_SIDE, sweep.STEAM_SIDE},
             "the comparison of the joint corner against the independent ones does not account for "
             "both sides, so a side has been dropped rather than reported one way or the other")
         self.assertTrue(
             same or differing,
             "neither side had an independent corner at the joint corner's own sag to compare "
             "against, so the record says nothing about what moving the two together did")
+
+        # Whatever a side is reported as, the coefficient it was compared against
+        # is the element that makes that side's delivery. Nothing else is a
+        # comparison: this is the structural assertion the original defect would
+        # have failed, whatever the two sides' figures happened to be.
+        for side, name in same + differing:
+            with self.subTest(side=side, coefficient=name):
+                self.assertEqual(
+                    name, stability.MAINS_COUPLED_BY_SIDE[side],
+                    "the %s side's joint corner was compared against `%s`, which is not the "
+                    "element that makes that delivery -- so two different perturbations are "
+                    "being reported as though one reproduced or failed to reproduce the other"
+                    % (side, name))
+
+        # And a differing verdict has to mean something about the machine. It is
+        # only a finding where the coefficient compared against reaches that
+        # side's delivery at all: a coefficient that moves it nowhere differs
+        # from anything trivially, and reporting that as the joint corner
+        # reaching a delivery differently is the shape of the original defect.
+        for side, name in differing:
+            alone = _corner(name, "low")["sides"][side]
+            with self.subTest(side=side, coefficient=name):
+                self.assertTrue(
+                    alone["moved"],
+                    "the %s side is reported as differing from `%s`, which moves that delivery "
+                    "nowhere at all -- so the difference is between a perturbation and nothing, "
+                    "not between two ways of reaching the same delivery" % (side, name))
+
+        # The coffee side is where the like-for-like comparison exists on this
+        # description, and it is checked against a real re-run rather than
+        # against the analysis's own bookkeeping.
+        self.assertEqual(
+            [side for side, _ in same], [sweep.BREW_SIDE],
+            "the coffee side is no longer the one side whose own element carries the joint "
+            "corner's sag, so what this description makes comparable has changed")
+        self.assertEqual(
+            incomparable, [sweep.STEAM_SIDE],
+            "the steam side is expected to have no comparison available: the sag is the smaller "
+            "of the two declared errors and the steam element declares the wider one, so its own "
+            "corner is a further-moved machine and there is nothing at this sag to hold the joint "
+            "corner against")
+        self.assertEqual(differing, [],
+                         "a side is reported as reaching its delivery differently when the two "
+                         "moved together, which these relations carry no path for")
 
         for side, name in same:
             alone = sweep.brew_draw if side == sweep.BREW_SIDE else None
@@ -988,13 +1431,44 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
                 first, last = FINDINGS["windows"][side]
                 settle = stability.settle_of(
                     FINDINGS["reference"][side]["delivered"], run["delivered"],
-                    list(range(first, last + 1)), FINDINGS["bands"][side], FINDINGS["floor"])
+                    list(range(first, last + 1)), FINDINGS["bands"][side],
+                    FINDINGS["floors"][side])
                 self.assertEqual(
                     (settle["early"], settle["late"]),
                     (joint["sides"][side]["early"], joint["sides"][side]["late"]),
                     "the record says the joint corner reproduces `%s` alone on the %s side, and a "
                     "run of that coefficient alone at the same sag does not produce the joint "
                     "corner's figures" % (name, side))
+
+    # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4: run as a joint
+    # corner and reported -- which means the record has to say what the
+    # comparison found and must not say what it did not. The side with no
+    # like-for-like comparison is the one a record can go wrong about most
+    # quietly: a sentence claiming the two sides are coupled reads as a finding,
+    # contradicts the description these runs were taken against, and nothing in a
+    # table of figures would show it up.
+    def test_the_record_does_not_claim_a_coupling_on_the_side_it_cannot_compare(self):
+        record = _committed_record()
+        section = record.split(stability.JOINT_HEADING, 1)[1].split("\n## ", 1)[0]
+        _, differing, incomparable = stability.joint_against_the_independent_corners(FINDINGS)
+        self.assertTrue(incomparable, "no side is without a comparison, so this test is not about "
+                                      "the case it exists for")
+        self.assertFalse(differing, "a side is reported as differing, and the assertion below "
+                                    "would then be refusing prose that had become correct")
+        for side in incomparable:
+            with self.subTest(side=side):
+                self.assertIn("On the %s side there is no like-for-like comparison" % side,
+                              section)
+        self.assertNotIn(
+            "does not reproduce that side's own element corner", section,
+            "the committed record reports a side as reaching its delivery differently when the "
+            "two elements moved together, and no side did")
+        self.assertNotIn(
+            "That is what a description carrying a coupling between the two sides produces.",
+            section,
+            "the committed record states that a coupling between the two sides was found, which "
+            "the description these runs were taken against says it does not carry")
+        self.assertIn("carry no coupling between the two sides at all", section)
 
 
 if __name__ == "__main__":

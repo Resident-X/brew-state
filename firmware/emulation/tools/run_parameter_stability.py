@@ -92,11 +92,13 @@ the machine's own protection as taking over at, this description says nothing
 that can be believed -- its saturation slope is a local one at a hundred degrees
 and gives about a quarter of the true pressure up there, and the protective
 devices that would actually have opened are not modelled at all. So the steam
-extension is three settles rather than fifteen, and every steam run's peak block
-temperature is checked against that declared bound. A run that crossed it would
-not be a finding about a coefficient; it would be this file's horizon reaching
-past what the description answers for, and it stops the analysis rather than
-being reported.
+extension is two settles rather than fifteen -- two is what leaves the hottest
+corner this description produces a comfortable distance under that bound, where
+three would bring it within about a tenth of the block's own rise over the draw
+-- and every steam run's peak block temperature is checked against that declared
+bound. A run that crossed it would not be a finding about a coefficient; it would
+be this file's horizon reaching past what the description answers for, and it
+stops the analysis rather than being reported.
 
 WHAT COUNTS AS SETTLING
 
@@ -119,9 +121,25 @@ come to rest somewhere the design does not hold the delivery, which is a
 different finding and named differently. Reporting the second where the first is
 true would tell a reader a loop had settled when it had not.
 
-That the unperturbed run itself settles is established rather than assumed. A
-separation taken against a reference that is still travelling is a comparison of
-two transients, and every verdict below would be about the reference.
+How much larger the late half has to be before the difference is growth at all
+is floored, because what sits below that floor is the loop's own integer command
+quantisation and not a divergence. The floor is each side's own: the smaller of
+one count of the machine's converter and a stated small fraction of that side's
+band. The seam declares one converter scale for every channel alike, so one count
+is a twentieth of one band and a quarter of the other, and a floor worth a
+quarter of the band it is judged beside would call a response eating that much
+margin per half-window settled -- which is the finding this file exists to make,
+made backwards.
+
+That the unperturbed run itself settles is established rather than assumed, and
+so is that it settles near the middle of its own band rather than merely
+somewhere inside it. A separation taken against a reference that is still
+travelling is a comparison of two transients, and every verdict below would be
+about the reference. A separation taken against a reference resting on the edge
+of its band is not a transient, but it is not a distance from what the design
+promises either: a corner a band away on the other side would read as settled
+while its own delivery was marginal, and what a verdict here claims is about the
+delivery.
 
 TWO PROPERTIES OF THE DECLARED ERROR AN INDEPENDENT TWO-SIDED SWEEP DOES NOT
 CARRY
@@ -307,6 +325,69 @@ STEAM_TAIL_STEPS = STEAM_TAIL_MULTIPLE * sweep.STEAM_SETTLE_STEPS
 #: is a comparison over too little of the loop's own slow mode to mean anything.
 SETTLING_WINDOW_FRACTION = 0.5
 
+#: How much of a side's own band the growth floor is allowed to be worth.
+#:
+#: The floor below which a change in the separation is read as the loop's own
+#: command quantisation rather than as growth is one count of the machine's
+#: converter, and the seam declares one full scale for every channel alike. That
+#: is a figure about the board and not about either delivery, and it lands very
+#: differently on the two sides: one count is about a twentieth of the coffee
+#: side's one-kelvin band and about a quarter of the steam side's fifth-of-a-bar
+#: one. A quarter of a band per half-window is not a floor, it is most of the
+#: margin -- a steam response growing at just under it would be called settled
+#: while eating the band it is being judged against.
+#:
+#: So the floor each side actually uses is the smaller of the seam's figure and
+#: this fraction of that side's own declared band. A twentieth is chosen: it is
+#: small enough that what hides under it cannot consume a band over the handful
+#: of half-windows a verdict is taken across, and large enough to stand above the
+#: command beat the floor exists for -- on the coffee side the seam's own figure
+#: is already a twentieth of the band and is what gets used, which is the
+#: evidence that a twentieth is not below the beat rather than an argument that
+#: it is not.
+#:
+#: This is deliberately not the reasoning the identifiability analysis beside
+#: this file gives for its own floor, and the difference is the direction the
+#: error falls in. There a generous floor errs towards "not shown identifiable",
+#: which is the safe answer -- it declines to claim something. Here a generous
+#: floor errs towards "settled", which is a claim, and the unsafe one: it says a
+#: response came back when it may not have. A floor that may only be too small is
+#: what this analysis wants and a floor that may be too large is what that one
+#: can afford, so the reasoning cannot be inherited even though the seam figure
+#: is the same.
+GROWTH_FLOOR_BAND_FRACTION = 0.05
+
+#: How near the middle of its own band the unperturbed machine has to sit before
+#: a separation taken against it stands in for a distance from the target.
+#:
+#: Every verdict below is a separation between a corner's delivery and the
+#: unperturbed machine's, and the band it is compared against is a distance from
+#: what the design promises. Those are the same statement only where the
+#: reference is itself close to what the design promises: a reference sitting on
+#: one edge of its band and a corner sitting on the other are a band apart while
+#: the separation between them reads as one band, and both are marginal while
+#: the table calls the corner settled.
+#:
+#: Requiring only that the reference be somewhere inside its band -- which is
+#: what this guard asked for first, and is not enough -- leaves the separation
+#: worth up to a whole band less than the corner's real distance from target. A
+#: fifth is required instead, so that a corner called settled at the very edge of
+#: the band is at worst a fifth of a band outside it rather than a whole one, and
+#: the reader of a "settled within the band" verdict is being told something
+#: about the delivery and not only about the two runs' agreement.
+#:
+#: A fifth rather than a tenth because the reference is a real closed loop under
+#: a sustained draw and not a set point: it carries the same standing ripple
+#: every corner does, and a bound tight enough to catch that ripple would refuse
+#: the analysis over a property of the loop rather than over a reference that had
+#: not arrived. A fifth rather than a half because a half is not a bound at all
+#: on the argument above. The shipped model sits at about a twenty-fifth of the
+#: coffee band from its commanded temperature and about a thirtieth of the steam
+#: band from the middle of its span, so this guard has room in hand on both sides
+#: -- which is what makes it a guard against a model that moved rather than a
+#: figure fitted to this one.
+REFERENCE_CENTRED_WITHIN = 0.2
+
 # --- What the description declares one-sided ---------------------------------
 
 #: The coefficients whose declared error reaches in one direction only, and which
@@ -334,6 +415,17 @@ SETTLING_WINDOW_FRACTION = 0.5
 #: repeatable, and a replacement need not carry the same coefficients. Which of
 #: them were found and which were not is reported, so a name that has gone stale
 #: is visible rather than silent.
+#:
+#: Nothing structural ties this table to the prose it was read out of, and there
+#: is no field in the description's grammar that could: one-sidedness is a
+#: sentence in params/thermoblock.md and the file beside it carries a symmetric
+#: fraction. So a coefficient declared one-sided in that prose after this table
+#: was written, or a value or fraction moved under it, would leave this analysis
+#: running the old assumption and reporting it as current. The tripwire is a test
+#: rather than a check here -- the suite pins the exact nominal and fraction each
+#: name in this table and in MAINS_COUPLED below is presently written at, read
+#: through the sweep's own reader off the live description, so any movement in
+#: those five lines fails loudly instead of being carried silently.
 REACHING_DOWNWARDS = "low"
 ONE_SIDED = {
     "pump.pressure_bar": REACHING_DOWNWARDS,
@@ -357,7 +449,23 @@ ONE_SIDED = {
 #: droop lowers a supply; there is no shared cause the description names that
 #: would raise both at once, and inventing the other three corners of a box would
 #: be running machines the description does not claim.
-MAINS_COUPLED = ("brew.heater_power_w", "steam.heater_power_w")
+#:
+#: It is written as which element each delivery is made by rather than as a bare
+#: pair, because one thing downstream needs to know that and cannot work it out:
+#: comparing the joint corner against an independent one is only a comparison at
+#: all when the independent corner is the one that side's own element makes. The
+#: coffee delivery is made by the coffee element and the steam delivery by the
+#: steam one, and this description carries no path between them.
+#:
+#: This table is prose from params/thermoblock.md in the same way the one-sided
+#: table above is -- the description states that both elements are fed from one
+#: supply, and its grammar has nowhere to put a relationship between two values
+#: -- so the same tripwire covers it. See the account above REACHING_DOWNWARDS.
+MAINS_COUPLED_BY_SIDE = {
+    sweep.BREW_SIDE: "brew.heater_power_w",
+    sweep.STEAM_SIDE: "steam.heater_power_w",
+}
+MAINS_COUPLED = (MAINS_COUPLED_BY_SIDE[sweep.BREW_SIDE], MAINS_COUPLED_BY_SIDE[sweep.STEAM_SIDE])
 
 #: How the joint corner is named wherever a corner has to be named. It is not a
 #: coefficient of the description and must not read as one, so it names both
@@ -592,6 +700,36 @@ def reading_resolution():
     return float(milli) / float(counts) / 1000.0
 
 
+def growth_floors(bands, reading=None, fraction=GROWTH_FLOOR_BAND_FRACTION):
+    """What a change in each side's separation has to clear to be growth at all.
+
+    One figure per side rather than the seam's single one, because the seam's
+    figure is about the board and the question is about a delivery. The seam
+    declares one converter full scale for every channel alike, so one count is
+    worth what it is worth against whichever quantity it is being read beside --
+    a twentieth of the coffee side's band and a quarter of the steam side's. A
+    floor worth a quarter of a band is not separating a rounding from a
+    divergence; it is admitting a divergence that spends a quarter of the margin
+    per half-window and calling it settled.
+
+    So each side takes the smaller of the seam's own figure and a stated fraction
+    of its own declared band, and which of the two bound it is reported rather
+    than left to be worked out. The reasoning for the fraction, and for why this
+    analysis cannot take the identifiability analysis's view that a generous
+    floor is the safe one, is at GROWTH_FLOOR_BAND_FRACTION.
+    """
+    reading = reading_resolution() if reading is None else reading
+    floors = {}
+    for side, band in bands.items():
+        if band <= 0.0:
+            raise StabilityError(
+                "the %s side is held to a band of %g, so there is no margin for a growth floor to "
+                "be a fraction of and nothing for a separation to be judged against"
+                % (side, band))
+        floors[side] = min(reading, fraction * band)
+    return floors
+
+
 def halves(window):
     """One window's early and late halves, as two windows.
 
@@ -629,23 +767,28 @@ def settle_of(reference, perturbed, window, band, floor):
     would report whichever side of it the two intervals fell on.
 
     `floor` is how much larger the late half has to be before the difference is
-    growth at all, and it is one count of the machine's own converter. A floor is
-    needed here and it is not for the reason a reader arriving from the
-    identifiability analysis beside this file would expect. What sits down there
-    is not the model's arithmetic rounding: it is the integer quantisation of the
-    commands the loop issues, which is orders of magnitude coarser than one last
-    place of a single-precision figure. Two runs of the same machine a hair
-    apart command the same duties for long stretches and then part by one
-    permille, which puts a slow beat on the separation between them -- and a beat
-    crosses a window boundary in whichever direction it happened to be going.
-    Without a floor those crossings are read as divergences, which is an
-    instability finding manufactured out of a rounding.
+    growth at all, and it is this side's own: the smaller of one count of the
+    machine's converter and a stated small fraction of the band this side is held
+    to. A floor is needed here and it is not for the reason a reader arriving
+    from the identifiability analysis beside this file would expect. What sits
+    down there is not the model's arithmetic rounding: it is the integer
+    quantisation of the commands the loop issues, which is orders of magnitude
+    coarser than one last place of a single-precision figure. Two runs of the
+    same machine a hair apart command the same duties for long stretches and then
+    part by one permille, which puts a slow beat on the separation between them
+    -- and a beat crosses a window boundary in whichever direction it happened to
+    be going. Without a floor those crossings are read as divergences, which is
+    an instability finding manufactured out of a rounding.
 
     One converter count is the coarsest distinction anything on this board draws
     and it stands well above that beat, which is what makes it the floor rather
-    than one last place of the model's own arithmetic. What it costs is stated
-    where the record states what it does not settle: a separation growing more
-    slowly than one count per half-window is called settled here.
+    than one last place of the model's own arithmetic. What it is not allowed to
+    be is a large part of the band it is being read beside, and that is the other
+    half of what fixes it: the seam's figure is a statement about the board and
+    lands as a twentieth of one side's band and a quarter of the other's, so each
+    side takes whichever of the two is smaller. What it costs either way is
+    stated where the record states what it does not settle: a separation growing
+    more slowly than this side's floor per half-window is called settled here.
     """
     early, late = halves(window)
     at_first, _ = sweep.worst_separation(reference, perturbed, early)
@@ -764,7 +907,14 @@ def joint_sag(covered):
 
 
 def _draws(executable, description, limits, declaration, ready_c, scale, courses, label):
-    """One machine put through both lengthened courses."""
+    """The unperturbed machine put through both lengthened courses.
+
+    A refusal here is raised rather than recorded, which is what separates this
+    from the reader every corner is drawn through. A corner the structure will
+    not admit is a finding about the declared error and the run goes on without
+    it; a reference the structure will not admit is the machine every verdict
+    would have been taken against, and there is nothing left to record.
+    """
     return {
         sweep.BREW_SIDE: sweep.brew_draw(executable, description, limits,
                                          courses[sweep.BREW_SIDE], scale,
@@ -789,6 +939,22 @@ def reference_delivers_in_band(runs, windows, bands, declaration):
     one another: the coffee side against the half-width the tolerance declaration
     states around the temperature that was commanded, the steam side against the
     two edges the steam declaration puts the delivered pressure between.
+
+    Two things are asked of each side and the second is the one that makes the
+    verdicts below mean what they say. The first is that the reference is inside
+    its band at all -- a reference outside it is a machine that never arrived, and
+    nothing can be established against it. The second is that it is inside the
+    band by a wide margin: near the middle of it, within the fraction
+    REFERENCE_CENTRED_WITHIN states and not merely somewhere between the edges.
+
+    That second bound is what lets a separation from this run stand in for a
+    distance from what the design promises. Every corner below is judged on how
+    far its delivery sits from this one, and the band it is judged against is a
+    distance from a target -- so the two are the same statement only where the
+    reference is close to the target. A reference sitting on one edge with a
+    corner on the other would show a separation of one band while both were
+    marginal, and the table would call the corner settled. The account of why a
+    fifth rather than something looser or tighter is at REFERENCE_CENTRED_WITHIN.
     """
     brew = runs[sweep.BREW_SIDE]["delivered"]
     worst = max(abs(brew[at] - sweep.BREW_TARGET_C) for at in windows[sweep.BREW_SIDE])
@@ -798,6 +964,11 @@ def reference_delivers_in_band(runs, windows, bands, declaration):
             "window every verdict is taken in, outside the %.4f C band the design holds it to -- "
             "so the machine the corners are compared against had not settled either"
             % (worst, sweep.BREW_TARGET_C, bands[sweep.BREW_SIDE]))
+    _near_enough_to_the_middle(
+        worst, bands[sweep.BREW_SIDE],
+        "the unperturbed coffee draw sat %.4f C from the %.1f C it was commanded"
+        % (worst, sweep.BREW_TARGET_C),
+        "C")
 
     floor = sweep._declared_figure(
         declaration, sweep._declared_word(sweep.STEAM_DECLARATION_HEADER,
@@ -813,7 +984,35 @@ def reference_delivers_in_band(runs, windows, bands, declaration):
             "of the %d intervals every verdict is taken over, so the machine the corners are "
             "compared against had not settled either"
             % (floor, ceiling, len(outside), len(windows[sweep.STEAM_SIDE])))
-    return {"brew_worst_from_target": worst, "steam_floor": floor, "steam_ceiling": ceiling}
+    middle = (floor + ceiling) / 2.0
+    from_middle = max(abs(steam[at] - middle) for at in windows[sweep.STEAM_SIDE])
+    _near_enough_to_the_middle(
+        from_middle, bands[sweep.STEAM_SIDE],
+        "the unperturbed steam draw sat %.4f bar from the %.3f bar middle of the %.3f..%.3f bar "
+        "span it is held inside" % (from_middle, middle, floor, ceiling),
+        "bar")
+    return {"brew_worst_from_target": worst, "steam_floor": floor, "steam_ceiling": ceiling,
+            "steam_middle": middle, "steam_worst_from_middle": from_middle,
+            "centred_within": REFERENCE_CENTRED_WITHIN}
+
+
+def _near_enough_to_the_middle(distance, band, what, unit, fraction=REFERENCE_CENTRED_WITHIN):
+    """Refuse a reference that is inside its band and not near the middle of it.
+
+    Its own function because both sides ask it and the two would otherwise state
+    the same standard twice, in two places free to drift apart -- and because the
+    thing being refused is subtle enough that a reader meeting it on one side has
+    to be able to find the whole of the reasoning from either.
+    """
+    if distance > fraction * band:
+        raise StabilityError(
+            "%s over the window every verdict is taken in. That is inside the %.4f %s band the "
+            "design holds it to and further than %g of it from the middle, which is too far off "
+            "the target for a separation taken against this run to stand in for a distance from "
+            "the target: a corner sitting a band away on the other side would be reported as "
+            "settled while its delivery was marginal. The analysis stops rather than issuing "
+            "verdicts that read as being about a delivery and are only about two runs agreeing"
+            % (what, band, unit, fraction))
 
 
 def _under_the_ceiling(peak, ceiling, label):
@@ -836,8 +1035,40 @@ def _under_the_ceiling(peak, ceiling, label):
             "answers for" % (label, peak, ceiling))
 
 
-def _corner_record(coefficient, corner, values, runs, reference, windows, tails, bands, floor,
-                   ceiling, description):
+def _draw_each_side(executable, description, limits, declaration, ready_c, scale, courses, label):
+    """One machine put through both lengthened courses, with a side the structure
+    would not admit recorded rather than raised.
+
+    The one place a corner's draws are made, so that every corner -- each
+    single-coefficient one and the joint one alike -- is admitted on exactly the
+    same terms. A corner the structure refuses is a finding about the
+    description's declared error and not a failure of this analysis: the declared
+    error reaches a value these equations stop describing a machine at, which is
+    worth recording beside the corners that did run. Raising instead would stop
+    the whole analysis on one inadmissible corner, and having two copies of this
+    -- one that records and one that raises -- would mean the joint corner and
+    the independent ones were admitted on different terms while a comment said
+    they were not.
+
+    Comes back as a pair: what ran, and why each side that did not was refused.
+    """
+    runs, refused = {}, {}
+    for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+        try:
+            if side == sweep.BREW_SIDE:
+                runs[side] = sweep.brew_draw(executable, description, limits, courses[side], scale,
+                                             "stability-%s-brew" % label)
+            else:
+                runs[side] = sweep.steam_draw(executable, description, limits, declaration,
+                                              ready_c, courses[side],
+                                              "stability-%s-steam" % label)
+        except (sweep.SweepError, cross_tier.CrossTierError) as refusal:
+            refused[side] = str(refusal).splitlines()[0]
+    return runs, refused
+
+
+def _corner_record(coefficient, corner, values, runs, reference, windows, tails, bands, floors,
+                   ceiling, description, refused=None):
     """What one perturbed machine did on both sides."""
     record = {
         "coefficient": coefficient,
@@ -845,7 +1076,7 @@ def _corner_record(coefficient, corner, values, runs, reference, windows, tails,
         "values": values,
         "description": description,
         "sides": {},
-        "refused": {},
+        "refused": dict(refused or {}),
     }
     for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
         run = runs.get(side)
@@ -856,7 +1087,7 @@ def _corner_record(coefficient, corner, values, runs, reference, windows, tails,
             _under_the_ceiling(record["steam_block_peak_c"], ceiling,
                                "%s %s corner's" % (coefficient, corner))
         settle = settle_of(reference[side]["delivered"], run["delivered"], windows[side],
-                           bands[side], floor)
+                           bands[side], floors[side])
         settle["moved"] = sweep.delivery_moved(reference[side]["delivered"], run["delivered"])
         settle["last_outside"] = last_outside_the_band(
             reference[side]["delivered"], run["delivered"], tails[side], bands[side])
@@ -878,6 +1109,49 @@ def _verdict_of(record):
     if not reached:
         return CORNER_REFUSED
     return min(reached, key=order.index)
+
+
+def joint_corner(covered, executable, description, limits, declaration, ready_c, scale, courses,
+                 reference, windows, tails, bands, floors, ceiling, workspace):
+    """The one corner with both mains-coupled coefficients low together, or
+    nothing where this description does not carry both of them.
+
+    Its own function rather than a tail of the run loop, so that the claim it
+    makes about itself can be put to it: the joint machine is written, drawn and
+    judged on exactly the terms every single-coefficient corner is. Both
+    coefficients are written into one description by chaining the same rewrite
+    the independent corners use, each taking the previous as its source; both
+    draws are made through the same admitting reader they are, so a joint machine
+    the structure would not admit is recorded as a refused corner rather than
+    stopping the analysis; and the record it leaves is the same record with the
+    same keys, so nothing downstream has to know which kind of corner it is
+    reading.
+
+    That last point is why this is worth a function. A joint corner whose draws
+    were made some other way would be a corner admitted on different terms from
+    the ones beside it while a comment beside it said otherwise -- and an
+    inadmissible joint machine would end the run rather than being reported,
+    which is the one outcome a record of what the declared error implies must not
+    have.
+    """
+    sag = joint_sag(covered)
+    if sag is None:
+        return None
+    fraction, values = sag
+    written = description
+    for at, name in enumerate(MAINS_COUPLED):
+        written = cross_tier.description_with(
+            name, VALUE_FORMAT % values[name],
+            os.path.join(workspace, "joint-mains-droop-%d.params" % at), source=written)
+    runs, refused = _draw_each_side(executable, written, limits, declaration, ready_c, scale,
+                                    courses, "joint")
+    joint = _corner_record(JOINT_COEFFICIENT, JOINT_CORNER, values, runs, reference, windows,
+                           tails, bands, floors, ceiling, written, refused=refused)
+    joint["fraction"] = fraction
+    joint["nominal"] = None
+    joint["joint"] = True
+    joint["verdict"] = _verdict_of(joint)
+    return joint
 
 
 def run(description=None, limits=None, declaration=sweep.STEAM_CONTROL_DECLARATION,
@@ -905,11 +1179,12 @@ def run(description=None, limits=None, declaration=sweep.STEAM_CONTROL_DECLARATI
     is not too short is to be able to run a shorter one and watch the verdict
     change.
 
-    `reading` is what one count of the machine's converter is worth, and it is
-    the floor a change in a separation has to clear to be growth at all. It
-    defaults to what the seam declares and is an argument for the reason the
-    horizon is: whether a floor is deciding anything can only be established by
-    moving it.
+    `reading` is what one count of the machine's converter is worth. It is one of
+    the two things the floor a change in a separation has to clear is the smaller
+    of -- the other is a stated fraction of each side's own band, which does not
+    move with it -- and it defaults to what the seam declares. It is an argument
+    for the reason the horizon is: whether a floor is deciding anything can only
+    be established by moving it and watching a verdict change.
     """
     carried_description, carried_limits = cross_tier.carried_declarations()
     description = description or carried_description
@@ -923,7 +1198,8 @@ def run(description=None, limits=None, declaration=sweep.STEAM_CONTROL_DECLARATI
              sweep.STEAM_SIDE: sweep.steam_band_bar(declaration)}
     ready_c = sweep.steam_ready_temperature_c(declaration)
     scale = cross_tier.converter_scale()
-    floor = reading_resolution() if reading is None else reading
+    seam_reading = reading_resolution() if reading is None else reading
+    floors = growth_floors(bands, seam_reading)
     executable = executable or sweep.build_host(pio)
 
     courses = {sweep.BREW_SIDE: brew_course(brew_tail),
@@ -950,53 +1226,20 @@ def run(description=None, limits=None, declaration=sweep.STEAM_CONTROL_DECLARATI
             written = cross_tier.description_with(
                 name, VALUE_FORMAT % perturbed_value,
                 os.path.join(workspace, "%s-%s.params" % (name, corner)), source=description)
-            runs = {}
-            refused = {}
-            for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
-                try:
-                    if side == sweep.BREW_SIDE:
-                        runs[side] = sweep.brew_draw(
-                            executable, written, limits, courses[side], scale,
-                            "stability-%s-%s-brew" % (name, corner))
-                    else:
-                        runs[side] = sweep.steam_draw(
-                            executable, written, limits, declaration, ready_c, courses[side],
-                            "stability-%s-%s-steam" % (name, corner))
-                except (sweep.SweepError, cross_tier.CrossTierError) as refusal:
-                    # A corner the structure will not admit as a machine is a
-                    # finding about the description's declared error rather than
-                    # a failure here, and it is recorded on the terms the sweep
-                    # already records one.
-                    refused[side] = str(refusal).splitlines()[0]
+            runs, refused = _draw_each_side(executable, written, limits, declaration, ready_c,
+                                            scale, courses, "%s-%s" % (name, corner))
             record = _corner_record(name, corner, {name: perturbed_value}, runs, reference,
-                                    windows, tails, bands, floor, ceiling, written)
-            record["refused"] = refused
+                                    windows, tails, bands, floors, ceiling, written,
+                                    refused=refused)
             record["fraction"] = fraction
             record["nominal"] = value
             record["joint"] = False
             record["verdict"] = _verdict_of(record)
             corners.append(record)
 
-    joint = None
-    sag = joint_sag(covered)
-    if sag is not None:
-        fraction, values = sag
-        # Both coefficients written into one description, one after the other,
-        # each rewrite taking the previous as its source. Chaining rather than a
-        # rewrite of this file's own is what keeps the joint machine admitted on
-        # exactly the terms every single-coefficient corner is.
-        written = description
-        for at, name in enumerate(MAINS_COUPLED):
-            written = cross_tier.description_with(
-                name, VALUE_FORMAT % values[name],
-                os.path.join(workspace, "joint-mains-droop-%d.params" % at), source=written)
-        runs = _draws(executable, written, limits, declaration, ready_c, scale, courses, "joint")
-        joint = _corner_record(JOINT_COEFFICIENT, JOINT_CORNER, values, runs, reference, windows,
-                               tails, bands, floor, ceiling, written)
-        joint["fraction"] = fraction
-        joint["nominal"] = None
-        joint["joint"] = True
-        joint["verdict"] = _verdict_of(joint)
+    joint = joint_corner(covered, executable, description, limits, declaration, ready_c, scale,
+                         courses, reference, windows, tails, bands, floors, ceiling, workspace)
+    if joint is not None:
         corners.append(joint)
 
     found, missing = one_sided_account(covered)
@@ -1011,7 +1254,12 @@ def run(description=None, limits=None, declaration=sweep.STEAM_CONTROL_DECLARATI
         "robustness_declaration": ROBUSTNESS_DECLARATION,
         "robustness_class": carried_class,
         "bands": bands,
-        "floor": floor,
+        # What the seam declares one converter count is worth, and what each side
+        # actually judges growth against. Both, because they are not the same
+        # figure on the steam side and a record naming one of them would leave a
+        # reader unable to tell which bound decided a verdict.
+        "reading": seam_reading,
+        "floors": floors,
         "courses": courses,
         "tails": {sweep.BREW_SIDE: brew_tail, sweep.STEAM_SIDE: steam_tail},
         "ends": ends,
@@ -1163,6 +1411,23 @@ def _figure_cell(record, side, key):
     return "—" if settle is None else FIGURE_FORMAT % settle[key]
 
 
+def _floor_text(findings, side):
+    """One side's growth floor, in that side's own unit and with the bound that
+    fixed it named.
+
+    Both, because a bare number is what this record carried first and it left a
+    reader unable to say what it was a number of: the two sides are judged in
+    kelvin and in bar, and the floor is the seam's converter count on one side
+    and a fraction of the band on the other.
+    """
+    _, unit = sweep.JUDGED[side]
+    floor = findings["floors"][side]
+    bounded_by = ("one count of the machine's converter"
+                  if floor >= findings["reading"]
+                  else "%g of that side's own band" % GROWTH_FLOOR_BAND_FRACTION)
+    return "%s %s, which is %s" % (FIGURE_FORMAT % floor, unit, bounded_by)
+
+
 def report_text(findings):
     """The whole record: the standard, the horizon, the corners and the verdict
     at each.
@@ -1203,6 +1468,13 @@ def report_text(findings):
           "corners the declared error names, run on two courses against an estimated model whose "
           "own figures are estimates. A machine can settle at every corner of a box and misbehave "
           "inside it.")
+    write("")
+    write("Nothing in `docs/parameter-dominance.md` is changed or restated by this record. That "
+          "record's ranking of the coefficients, the deviation each one costs as a fraction of "
+          "the declared margin, and the corner set those figures were taken over all stand "
+          "exactly as they were: this analysis re-runs its own corners over its own longer "
+          "courses and writes its verdicts here, and takes nothing away from the figures beside "
+          "it. The one thing it adds there is a pointer to this file.")
     write("")
 
     write(MODEL_HEADING)
@@ -1319,12 +1591,30 @@ def report_text(findings):
     write("The unperturbed machine is established to have settled too, and not assumed: over the "
           "window every verdict is taken in, the coffee side sat no more than %s C from the %.1f "
           "C "
-          "it was commanded and the steam side stayed inside the %.3f..%.3f bar the design holds "
-          "it between. A separation taken against a reference still travelling would be a "
-          "comparison of two transients."
+          "it was commanded and the steam side no more than %s bar from the %.3f bar middle of "
+          "the %.3f..%.3f bar span it is held inside. A separation taken against a reference "
+          "still travelling would be a comparison of two transients."
           % (FIGURE_FORMAT % findings["reference_settled"]["brew_worst_from_target"],
-             sweep.BREW_TARGET_C, findings["reference_settled"]["steam_floor"],
+             sweep.BREW_TARGET_C,
+             FIGURE_FORMAT % findings["reference_settled"]["steam_worst_from_middle"],
+             findings["reference_settled"]["steam_middle"],
+             findings["reference_settled"]["steam_floor"],
              findings["reference_settled"]["steam_ceiling"]))
+    write("")
+    write("Being somewhere inside the band is not enough of the reference and is not what is "
+          "asked of it. Every verdict below is a separation from this run, and the band it is "
+          "compared against is a distance from what the design promises — so the two are the same "
+          "statement only where the reference is close to what the design promises. A reference "
+          "on one edge of its band with a corner on the other would show a separation of one band "
+          "while both were marginal. So the reference is required to sit within **%g** of the "
+          "band from the target on the coffee side and from the middle of the span on the steam "
+          "side, and this analysis stops rather than issuing verdicts against a reference further "
+          "off than that. The figures above are %s and %s of the band respectively."
+          % (findings["reference_settled"]["centred_within"],
+             FIGURE_FORMAT % (findings["reference_settled"]["brew_worst_from_target"]
+                              / findings["bands"][sweep.BREW_SIDE]),
+             FIGURE_FORMAT % (findings["reference_settled"]["steam_worst_from_middle"]
+                              / findings["bands"][sweep.STEAM_SIDE])))
     write("")
 
     write(CORNERS_HEADING)
@@ -1405,10 +1695,10 @@ def report_text(findings):
           "rather than about a loop."
           % (SETTLED, SETTLED_OUTSIDE_THE_BAND, STILL_DIVERGING, CORNER_REFUSED))
     write("")
-    write("The late half has to stand **%s** above the early half before the difference counts as "
-          "growth, and that figure is one count of the machine's own converter, read off the "
-          "hardware seam. A floor is needed and not for the reason a reader arriving from "
-          "`docs/parameter-identifiability.md` would expect: what sits below it is not the "
+    write("The late half has to stand a stated amount above the early half before the difference "
+          "counts as growth, and that amount is each side's own: **%s** on the coffee side and "
+          "**%s** on the steam side. A floor is needed and not for the reason a reader arriving "
+          "from `docs/parameter-identifiability.md` would expect: what sits below it is not the "
           "model's "
           "arithmetic rounding but the integer quantisation of the commands the loop issues. Two "
           "runs of the same machine a hair apart command the same duties for long stretches and "
@@ -1417,7 +1707,29 @@ def report_text(findings):
           "Without the floor those crossings read as divergences, which is an instability finding "
           "manufactured out of a rounding. One converter count is the coarsest distinction "
           "anything on this board draws and stands well above that beat."
-          % (FIGURE_FORMAT % findings["floor"]))
+          % (_floor_text(findings, sweep.BREW_SIDE), _floor_text(findings, sweep.STEAM_SIDE)))
+    write("")
+    write("The two figures differ because neither the seam nor the band alone can fix a floor. "
+          "The seam declares one converter full scale for every channel alike, so one count is "
+          "worth **%s** in whatever unit it is read beside — which is %s of the coffee side's "
+          "band and %s of the steam side's. A floor worth a quarter of the band it is being "
+          "judged against is not separating a rounding from a divergence; it is admitting a "
+          "response that eats a "
+          "quarter of the margin per half-window and calling it settled. So each side takes "
+          "whichever is smaller of that count and **%g** of its own band. The coffee side is "
+          "bounded by the seam's count and the steam side by its band, and which of the two "
+          "decided is named beside each figure above."
+          % (FIGURE_FORMAT % findings["reading"],
+             FIGURE_FORMAT % (findings["reading"] / findings["bands"][sweep.BREW_SIDE]),
+             FIGURE_FORMAT % (findings["reading"] / findings["bands"][sweep.STEAM_SIDE]),
+             GROWTH_FLOOR_BAND_FRACTION))
+    write("")
+    write("This is deliberately not the reasoning `docs/parameter-identifiability.md` gives for "
+          "its own floor, and the difference is which way an error falls. There a generous floor "
+          "errs towards *not shown identifiable*, which declines to claim something. Here a "
+          "generous floor errs towards *settled*, which is a claim, and the unsafe one — it says "
+          "a response came back when it may not have. A floor that can only be too small is what "
+          "this record wants; a floor that may be too large is what that one can afford.")
     write("")
     write("| Coefficient | Corner | Written as | Brew early | Brew late | Brew verdict | Steam "
           "early | Steam late | Steam verdict |")
@@ -1502,19 +1814,25 @@ def report_text(findings):
                             "same sag" % (side, name) for side, name in same))
             write("")
         if differing:
-            write("On %s the joint corner does not reproduce the independent one, so moving the "
-                  "two together reaches that delivery differently from moving either by itself. "
-                  "That is what a description carrying a coupling between the two sides produces."
-                  % _listed("the %s side against `%s`" % (side, name) for side, name in differing))
+            write("On %s the joint corner does not reproduce that side's own element corner at "
+                  "the same sag, so moving the two together reaches that delivery differently "
+                  "from moving the element that makes it by itself. That is what a description "
+                  "carrying a path between the two sides would produce, and it is worth looking "
+                  "at against a description these relations say carries none."
+                  % _listed("the %s side, against `%s`" % (side, name)
+                            for side, name in differing))
             write("")
         if incomparable:
-            write("On %s there is nothing at this sag to compare the joint corner against, and "
-                  "that is a consequence of the sag being the smaller of the two declared errors: "
-                  "that side's own element carries the wider one, so its independent corner above "
-                  "is a further-moved machine rather than the same one moved alone. Its own "
-                  "corner "
-                  "is run and reported above; what is not available is the like-for-like "
-                  "comparison the other side offers."
+            write("On %s there is no like-for-like comparison to be made, and that is a "
+                  "consequence of the sag being the smaller of the two declared errors rather "
+                  "than a finding about the machine. The only independent corner this comparison "
+                  "could be made against is that side's own element moved alone by the same "
+                  "fraction, and that side's element carries the wider declared error — so its "
+                  "independent corner above is a further-moved machine and not the same machine "
+                  "moved alone. Its own corner is run and reported above, and the joint corner's "
+                  "own figures for that side are in the table above this paragraph. What is not "
+                  "available is the comparison, and nothing is claimed either way about a "
+                  "coupling from it: the other side is where that question is answered here."
                   % _listed("the %s side" % side for side in incomparable))
             write("")
         write("Whether that stated dependence is the real one is a characterisation question and "
@@ -1576,14 +1894,16 @@ def report_text(findings):
           "implies. A machine can settle at every corner of a box and misbehave inside it: these "
           "relations are not all monotone, and nothing here rules that out.")
     write("")
-    write("**A separation growing more slowly than one converter count per half-window is called "
+    write("**A separation growing more slowly than that side's floor per half-window is called "
           "settled.** The floor that keeps the loop's own command quantisation from reading as a "
-          "divergence is the same floor a genuinely slow divergence would hide under. It is one "
-          "count of a single full scale the seam declares for every channel alike, which is "
-          "generous where a channel's own range is small — a two-hundred-unit scale standing "
-          "against a steam pressure that reaches a bar and a half. Nothing here bounds how slowly "
-          "a response could be walking away and still be called settled; what bounds it in "
-          "practice is that the verdict window is minutes of delivering rather than seconds.")
+          "divergence is the same floor a genuinely slow divergence would hide under. Bounding it "
+          "to %g of each side's own band caps what can hide there as a fraction of the margin — "
+          "which is what the seam's single full scale, declared for every channel alike, does not "
+          "do — but it does not remove it. Nothing here bounds how slowly a response could be "
+          "walking away and still be called settled; what bounds it in practice is that a verdict "
+          "window is minutes of delivering rather than seconds, and that the growth a floor can "
+          "swallow over one is a fraction of the band rather than a multiple of it."
+          % GROWTH_FLOOR_BAND_FRACTION)
     write("")
     write("**It is not a margin calculation.** How far a commanded target would have to move to "
           "keep a delivery inside its band across this range is a different question and is not "
@@ -1620,16 +1940,32 @@ def joint_against_the_independent_corners(findings):
     coincide after a description carrying a shared supply budget had made them
     come apart.
 
-    Comparable means an independent corner run at the joint corner's own sag, not
-    merely at that coefficient's own declared corner -- those are two different
-    machines wherever the coefficient's declared error is wider than the sag,
-    which on this description is true of the steam rating and not of the coffee
-    one. Where no comparable run exists, that is said rather than a comparison
-    being made against a corner that moved further.
+    Comparable means two things at once, and dropping either turns this into a
+    comparison of two different perturbations reported as a finding.
 
-    Three lists come back: the sides on which the joint corner reproduced the
-    independent one exactly, the sides on which it did not, and the sides where
-    there was nothing at the same sag to compare it against.
+    The first is that the independent corner has to be the one that side's own
+    element makes. The coffee delivery is made by the coffee element and the
+    steam delivery by the steam one; asking what the joint corner did to the
+    steam pressure and holding the answer against what the *coffee* element's own
+    corner did to it compares a perturbation with something that never touched
+    that delivery, and would report "differing" for every description in which
+    the two sides are unconnected -- which is exactly what this description says
+    they are. That is the wrong way round: the absence of a coupling is what
+    would make the two coincide, not what would make them differ.
+
+    The second is that the independent corner has to have been run at the joint
+    corner's own sag rather than merely at that coefficient's own declared
+    corner. Those are two different machines wherever the coefficient's declared
+    error is wider than the sag -- which on this description is true of the steam
+    rating and not of the coffee one, since the sag is the smaller of the two
+    declared errors and that is the coffee element's. So the coffee side has a
+    like-for-like comparison here and the steam side has none, and the steam side
+    is reported as having none rather than being compared against a machine moved
+    further or against the other side's element.
+
+    Three lists come back: the sides on which the joint corner reproduced that
+    side's own independent corner exactly, the sides on which it did not, and the
+    sides where nothing comparable was run at all.
     """
     joint = findings["joint"]
     if joint is None:
@@ -1639,8 +1975,9 @@ def joint_against_the_independent_corners(findings):
         at_joint = joint["sides"].get(side)
         if at_joint is None:
             continue
+        own = MAINS_COUPLED_BY_SIDE.get(side)
         comparable = [record for record in findings["corners"]
-                      if not record["joint"] and record["coefficient"] in MAINS_COUPLED
+                      if not record["joint"] and record["coefficient"] == own
                       and record["corner"] == "low"
                       and record["fraction"] == joint["fraction"]
                       and side in record["sides"]]
@@ -1775,12 +2112,20 @@ def main(argv):
                         help="how many control intervals the coffee side's hold is lengthened by")
     parser.add_argument("--steam-tail", type=int, default=STEAM_TAIL_STEPS,
                         help="how many control intervals the steam side's draw is lengthened by")
+    parser.add_argument("--reading", type=float, default=None,
+                        help="what one count of the machine's converter is worth, in a delivered "
+                             "quantity's own unit. It is one of the two things each side's growth "
+                             "floor is the smaller of, and it is exposed here for the reason the "
+                             "two horizons are: whether a floor is deciding anything can only be "
+                             "established by moving it and watching a verdict change. Defaults to "
+                             "what the hardware seam declares")
     arguments = parser.parse_args(argv)
 
     findings = run(description=arguments.description, limits=arguments.limits,
                    declaration=arguments.steam_declaration, tolerance=arguments.tolerance,
                    pio=arguments.pio, workspace=arguments.workspace,
-                   brew_tail=arguments.brew_tail, steam_tail=arguments.steam_tail)
+                   brew_tail=arguments.brew_tail, steam_tail=arguments.steam_tail,
+                   reading=arguments.reading)
     text = report_text(findings)
 
     if arguments.stdout:
