@@ -1,7 +1,7 @@
 id: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5
 type: criterion
 title: The pump command follows the course rather than chasing the measured rate back to it
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

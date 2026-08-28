@@ -1,0 +1,20 @@
+id: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1
+type: criterion
+title: The commanded pump level is trimmed toward the commanded rate using the measured flow
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On each control step a delivery runs, the commanded pump level moves from the value the course
+  alone would produce by an amount driven by the gap between commanded and measured rate, with the
+  trim's gains and bounds read from described data carrying a recorded origin. A course run against
+  a seam reading held below command drives the pump above the open-loop level until the reading
+  meets the command; the same course with the seam agreeing drives the open-loop level unchanged.
+  Out of scope: predicting the gap from any resistance term or pump characteristic — the trim
+  consumes only the seam's measured rate.
+links:
+  - target: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW
+    type: criterion-of
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5
+    type: supersedes

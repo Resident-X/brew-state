@@ -1,0 +1,18 @@
+id: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C2
+type: criterion
+title: The departure account survives an active trim
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A residual beyond the declared tolerance that the trim has not closed is latched for the life of
+  the delivery and readable when it ends, exactly as the open-loop arrangement latched its
+  shortfall, and the account also carries the level the pump was actually driven at, so a
+  delivery the trim corrected is distinguishable from one it never touched. A delivery whose trim
+  closes the gap within tolerance reports no departure while its account still shows the driven
+  level departing from the open-loop course. Out of scope: how an interface presents the account
+  to the operator.
+links:
+  - target: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW
+    type: criterion-of

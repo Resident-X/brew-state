@@ -1,0 +1,57 @@
+id: DEC-CORRECTION-KEEPS-THE-ACCOUNT
+type: decision
+title: The pump command is trimmed closed-loop toward the commanded flow, and the correction keeps the departure account
+status: active
+version: 1
+text: |
+  During a delivery, the commanded pump level is trimmed closed-loop so the measured flow tracks the
+  rate the profile commands, and the departure account survives the correction: the residual the trim
+  could not close, the level the pump was actually driven at, and whether the pump reached its limit
+  remain latched and reported for the life of the delivery. Silent correction stays prohibited — the
+  report is the obligation, the correction is the service the operator asked for.
+rationale: |
+  Context: The departure slice pinned the pump to the open-loop course and recorded closing a loop on
+  rate as a separate obligation no criterion of that epic asked for. Read as a permanent arrangement,
+  open-loop duty replays the same actuation into a puck whose resistance varies with grind, dose,
+  distribution and age, and drifts again within one extraction — handing that variability straight to
+  the flow the coffee sees. The operator programs a course of flow and judges the machine on the cup
+  landing the same twice; the pump level is an internal quantity no operator can program or reason
+  about. What the governing criterion forbids is absorption — correction with no account — not
+  correction as such, and the two had become conflated.
+
+  Trade-offs: Holding the pump open-loop and only reporting keeps the actuation history trivially
+  repeatable, but repeats the wrong thing: the coffee experiences flow, not duty, so open-loop repeat
+  degrades in-cup repeatability exactly when the puck moves. Trimming closed-loop and reporting keeps
+  the machine trying to deliver what was actually commanded, needs no model of what resists the flow,
+  and converges on the commanded rate whatever the puck is doing — at the cost that the actuation
+  history now varies between shots, which is precisely the variability the account records. Trimming
+  silently was never admissible: a corrected shot that reports nothing is the drink nobody can
+  reproduce. Predicting the shortfall from a puck or pump characteristic is already ruled out — nothing
+  pins the coefficients, and feedback against the measured rate needs none of them.
+
+  Reversibility: The trim is a control-law change behind the existing hardware seam; removing it
+  restores the open-loop arrangement without touching the requirement layer, the seam, or the
+  hardware. The superseded criterion and its evidence remain in the record as the account of what the
+  open-loop arrangement asserted and proved.
+
+  Consequences: Departure is redefined as the residual that survives correction, so the criterion that
+  pinned the pump channel step-for-step to the course no longer describes the machine and is
+  superseded rather than revised in place. Pump saturation with the rate still short becomes the
+  honest signal that the puck asks more than the machine can give, and the report must distinguish it.
+  The decisions this ruling leans on stand unchanged: departure is still observed by measuring, not
+  reproduced by modelling — the trim consumes the measured rate and adds no resistance term, no pump
+  characteristic and no coefficient — and flow remains the commanded quantity with pressure capped
+  mechanically and measured.
+options_considered:
+  - option: Trim the pump level closed-loop toward the commanded flow and keep the departure account latched and reported
+    reason_rejected: ""
+  - option: Hold the pump level open-loop to the course and only report the shortfall
+    reason_rejected: Repeats the actuation instead of the drink — the coffee experiences flow, not duty, so replaying the same level into a puck that has moved hands the puck's variability straight to the cup while the machine watches itself fall short.
+  - option: Trim closed-loop and let the corrected delivery pass unreported
+    reason_rejected: Erases the signal the report exists to carry — a corrected shot that reports nothing is the drink nobody can reproduce, and it is the one arrangement the governing criterion names as failure.
+  - option: Predict the shortfall from a puck or pump characteristic and compensate feed-forward
+    reason_rejected: Already ruled out where departure was made an observation — the puck's resistance moves within a single extraction and nothing pins it, so the coefficients would be chosen to make the model behave, and the trim needs none of them.
+chosen: Trim the pump level closed-loop toward the commanded flow and keep the departure account latched and reported
+links:
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: addresses
