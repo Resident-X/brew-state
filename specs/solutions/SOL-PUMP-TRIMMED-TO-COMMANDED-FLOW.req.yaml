@@ -1,0 +1,53 @@
+id: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW
+type: deliverable
+category: solution
+title: The pump is trimmed to hold the commanded flow curve, and the departure account survives the correction
+status: active
+version: 1
+text: |
+  The control unit's delivery step gains a trim on the commanded pump level, driven each control step
+  by the difference between the rate the profile commands and the rate the hardware seam reports, so
+  the delivered flow tracks the commanded course through a puck whose resistance the machine does not
+  model. The trim's gains and limits are described data with a recorded origin, like every other
+  figure the loop reads, and the trim is bounded by the pump's own level range with the same
+  accumulated-intent discipline the brew and steam loops already prove at their actuator limits: intent
+  does not outlive the limit.
+
+  The departure comparison this lane inherits keeps its meaning and changes its subject. The
+  comparison, the declared tolerance, and the latched life-of-delivery report all stand as built; what
+  the report now carries is the residual that survives the trim, alongside the level the pump was
+  actually driven at, so a corrected delivery is distinguishable from an uncorrected one and a
+  shortfall the trim could not close is distinguishable from one it closed. A trim that reaches the
+  pump's limit with the rate still short is the account's honest signal that the puck asks more than
+  the machine can give, and the report says so rather than folding it into a generic miss.
+
+  Everything is exercised in host simulation the way the departure slice already works: a seam reading
+  injected to disagree with the command produces the shortfall, and the same comparison holds on the
+  bench because the reading arrives through the same seam. Out of scope: modelling the puck, a fixed
+  restriction, or the pump's flow-versus-pressure characteristic, which stays permanently ruled out;
+  ending a delivery on delivered volume, which still waits on a state nothing integrates; how an
+  interface presents the deviation to the operator, which belongs to the interface journey; and bench
+  measurement of what the fitted meter resolves, which stays on the bench track.
+rationale: |
+  Filed in the maintenance lane because the work corrects the delivered behaviour of a sealed slice
+  whose own criterion has been superseded: the open-loop arrangement shipped complete and proven
+  against what was then asked, and the ruling that replaced it is recorded where decisions live rather
+  than re-argued here. The slice traces to the departure criterion whose behaviour it serves and to the
+  operator's repeatability floor, which is the ground the ruling stands on: the operator programs a
+  course of flow and tunes by taste, and a machine that replays duty into a moved puck is repeatable in
+  the quantity nobody asked for.
+links:
+  - target: DEC-CORRECTION-KEEPS-THE-ACCOUNT
+    type: justified-by
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: PER-OPERATOR-001.C1
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: targets
+  - target: DEL-SIM-FLOW-SENSED
+    type: depends-on
+  - target: SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED
+    type: depends-on
+  - target: SOL-DELIVERY-COMMANDED-AS-A-PROFILE
+    type: depends-on

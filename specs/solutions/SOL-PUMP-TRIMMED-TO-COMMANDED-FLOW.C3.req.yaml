@@ -1,0 +1,16 @@
+id: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3
+type: criterion
+title: A trim at the pump's limit with the rate still short is reported as saturation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When the trim reaches the pump's level bound and the measured rate remains below command beyond
+  tolerance, the report distinguishes that state from an unsaturated miss, and accumulated trim
+  intent does not outlive the limit — the standard the brew and steam loops already prove at their
+  actuator bounds. Out of scope: diagnosing the cause behind the saturation; the report carries
+  the state and the operator judges the grind.
+links:
+  - target: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW
+    type: criterion-of

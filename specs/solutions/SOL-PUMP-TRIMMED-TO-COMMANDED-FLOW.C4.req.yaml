@@ -1,0 +1,15 @@
+id: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C4
+type: criterion
+title: The plant description gains no resistance term for the trim
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The plant sources continue to state the puck, the pump's flow-versus-pressure characteristic and
+  the mechanical cap as omissions, and no coefficient serving the trim appears in them: the trim
+  is a consumer of the measured rate, not a model of what produced it. Out of scope: bench
+  characterisation of the pump's real curve, which stays on the bench track.
+links:
+  - target: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW
+    type: criterion-of
