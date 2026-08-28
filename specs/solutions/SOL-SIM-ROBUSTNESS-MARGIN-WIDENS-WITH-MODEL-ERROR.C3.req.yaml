@@ -1,0 +1,12 @@
+id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C3
+type: criterion
+title: The error-to-margin mapping and its corner verdicts are committed in a repeatable form
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each corner's declared-error inputs, its per-coefficient margin contribution, the combination rule applied, the resulting widened margin, and the corner's within-tolerance verdict are committed together as a checked-in, re-runnable artifact — the same form the existing corner sweep already established for its own committed figures — rather than a scratch calculation that leaves no trail against a replacement model. Documenting the corner sweep's own settling or refusal logic again, beyond what committing this mapping and its verdicts requires, is out of scope.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR
+    type: criterion-of

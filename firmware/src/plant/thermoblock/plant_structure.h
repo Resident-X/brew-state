@@ -228,6 +228,18 @@ typedef struct {
 const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count);
 
 /*
+ * The coefficients the supply this machine is fed from drives, by the names the
+ * description calls them by. `count` receives the number of entries; the
+ * returned table outlives any call.
+ *
+ * It is the one relationship between two of this structure's coefficients that
+ * is stated anywhere, and it is stated here because a description's own grammar
+ * has nowhere to put one: every line there accounts for a single number, and a
+ * pair that moves together is a fact about two of them.
+ */
+const char *const *plant_structure_supply_driven_parameters(size_t *count);
+
+/*
  * Advance both thermal masses over `seconds` under the given actuation and the
  * rate steam is being drawn, and the water on its way to the group with them.
  * Each mass takes in what its heater delivers at the commanded duty and gives up

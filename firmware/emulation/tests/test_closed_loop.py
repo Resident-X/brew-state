@@ -253,6 +253,16 @@ class SensorReadingsReflectThePostActuationState(unittest.TestCase):
     # figure the harness happened to inject.
     def test_the_control_law_actually_commanded_the_delivery_this_run_measured(self):
         self.assertTrue(FINDINGS["command"], "control_command_temperature was refused")
+        # The control path is brought up against the description's coefficients
+        # and against what that description says those coefficients may be
+        # wrong by. Both are asserted, because the second is what the margin a
+        # commanded target is held to is sized from: a run that loaded only the
+        # first brings the loop up faulted, and every interval of the draw
+        # below then reports a latched fault with the heater standing at
+        # nothing -- a shape a reader can mistake for a loop that simply had
+        # little to do.
+        self.assertTrue(FINDINGS["parameters_loaded"], "plant_parameters_load was refused")
+        self.assertTrue(FINDINGS["budget_loaded"], "plant_parameter_budget_load was refused")
         self.assertTrue(FINDINGS["control_init"], "control_init was refused")
         self.assertEqual(
             FINDINGS["flow_refusals"], 0,

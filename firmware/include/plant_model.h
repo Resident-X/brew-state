@@ -110,6 +110,81 @@ bool plant_parameter_budget_for(const plant_parameter_budget_t *budget,
                                 const char *name, float *assumed_error);
 
 /*
+ * Write one coefficient of a record at a fraction of the value the description
+ * gave for it, by the position that coefficient occupies in the structure's own
+ * ordering.
+ *
+ * By position and not by name, unlike plant_parameter_budget_for above, because
+ * the caller this exists for has no name to ask with. Work that reasons about
+ * how wrong the model may be walks the budget record coefficient by
+ * coefficient, and that record is indexed by this same ordering -- so the
+ * position is something the seam itself handed the caller rather than something
+ * the caller had to know about a structure. A consumer that spelled a
+ * coefficient's name instead would be a consumer that compiles against one
+ * structure and not against the next, which is exactly what this seam exists to
+ * prevent.
+ *
+ * The result is range-checked on the same terms a description's own value is: a
+ * factor carrying a coefficient outside the span the structure declares
+ * admissible is refused rather than written, because a record outside that span
+ * is not a machine this structure claims to describe, and a corner run against
+ * one would be a finding about arithmetic rather than about the declared error.
+ *
+ * Returns false, changing nothing, for a null record, for a position at or past
+ * the structure's own coefficient count, for a factor that is not a finite
+ * number, and for a result that is not finite or lies outside the declared
+ * range.
+ */
+bool plant_parameter_scale(plant_parameters_t *parameters, size_t at, float factor);
+
+/*
+ * The position one coefficient occupies in that ordering, by the name the
+ * description calls it by.
+ *
+ * The bridge between the seam's two ways of naming a coefficient, and it exists
+ * because they answer different callers rather than because either is
+ * redundant. Work that walks the whole budget has positions and no names; work
+ * that has read a statement about a particular coefficient out of a
+ * description's own prose -- that one of them is one-sided, say, which the
+ * grammar carries no field for -- has a name and no position, and no way to
+ * reach the corner machinery without one.
+ *
+ * It is deliberately not a way for a consumer of the model to acquire a name it
+ * did not already have: what it takes is text the caller is holding, exactly as
+ * plant_parameter_budget_for takes it, and it answers nothing at all for a name
+ * this structure's table does not declare.
+ *
+ * Returns false, writing nothing, for a null argument or a name this structure
+ * does not have.
+ */
+bool plant_parameter_position(const char *name, size_t *at);
+
+/*
+ * Whether the coefficient at that position is one the supply the machine is fed
+ * from drives.
+ *
+ * A statement the structure makes about its own coefficients, read through the
+ * seam on exactly the terms plant_structure_actuation_channels and
+ * plant_structure_delivery_points are read: which of a structure's values move
+ * together when the mains sags is a property of that structure's architecture,
+ * and a consumer that decided it for itself would be deciding it for a machine
+ * it has never seen. It is the one relationship between two coefficients this
+ * seam carries, because it is the one the descriptions behind it state: an
+ * element's power goes as the square of the voltage across it, so two elements
+ * on one supply are low together and never independently.
+ *
+ * Answered by position rather than by name for the reason plant_parameter_scale
+ * above is: the caller is walking the budget record, and the position is what
+ * the seam already handed it.
+ *
+ * Returns false, writing nothing, for a null destination or a position at or
+ * past the structure's own coefficient count. A structure that names no such
+ * coefficient answers false for every position, which is a statement about that
+ * structure rather than a refusal.
+ */
+bool plant_parameter_supply_driven(size_t at, bool *driven);
+
+/*
  * Bring a model instance to its initial state under the given parameters.
  *
  * The instance keeps its own copy of the record, so the caller's may go out of

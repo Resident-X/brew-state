@@ -96,6 +96,7 @@
 #include "machine_actuation.h"
 #include "plant_model.h"
 #include "steam_control_declaration.h"
+#include "protection_margin_record.h"
 #include "steam_draw.h"
 
 /* What names each draw mode on the command line, and how many arguments follow it. */
@@ -103,6 +104,19 @@
 #define DRAW_ARGUMENTS 4
 #define STEAM_DRAW_OPTION "--steam-draw"
 #define STEAM_DRAW_ARGUMENTS 3
+
+/*
+ * What names the margin reading, and how many arguments follow it: the steam
+ * side's design figures, on exactly the terms the steam draw takes them.
+ *
+ * It runs no draw and needs no course, because what it reads is a standing
+ * property of a commanded target rather than of anything a delivery does. It
+ * takes the steam declaration because both loops size a margin against the same
+ * declared error and this reads both, and the steam loop's target is a figure
+ * that declaration names rather than one a command supplies.
+ */
+#define MARGIN_RECORD_OPTION "--protection-margin-record"
+#define MARGIN_RECORD_ARGUMENTS 1
 
 /*
  * What names the description the brew draw's control path is built from, and
@@ -222,6 +236,7 @@ static void exercise_invalid_sensor(control_state_t *state)
 }
 
 static void exercise_refused_output(const plant_parameters_t *parameters,
+                                    const plant_parameter_budget_t *budget,
                                     const estimator_limits_t *limits,
                                     const delivery_tolerance_t *tolerance)
 {
@@ -229,7 +244,7 @@ static void exercise_refused_output(const plant_parameters_t *parameters,
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    expect(control_init(&state, parameters, limits, tolerance),
+    expect(control_init(&state, parameters, budget, limits, tolerance),
            "the control path could not be initialised");
     expect(control_command_temperature(&state, EXERCISE_TARGET_C),
            "the exercise's target was refused");
@@ -440,6 +455,7 @@ static bool read_the_course(const char *path, unsigned long ceiling, const char 
  */
 static int run_the_draw(char **arguments, const plant_parameters_t *machine_parameters,
                         const plant_parameters_t *control_parameters,
+                        const plant_parameter_budget_t *control_budget,
                         const estimator_limits_t *limits,
                         const delivery_tolerance_t *tolerance)
 {
@@ -513,7 +529,8 @@ static int run_the_draw(char **arguments, const plant_parameters_t *machine_para
     draw.interval_count = intervals;
 
     const int outcome =
-        cross_tier_draw_run(machine_parameters, control_parameters, limits, tolerance, &draw);
+        cross_tier_draw_run(machine_parameters, control_parameters, control_budget, limits,
+                            tolerance, &draw);
     free(cadence);
     free(levels);
     return outcome;
@@ -533,6 +550,7 @@ static int run_the_draw(char **arguments, const plant_parameters_t *machine_para
  * rather than being this file's to remember.
  */
 static int run_the_steam_draw(char **arguments, const plant_parameters_t *parameters,
+                              const plant_parameter_budget_t *budget,
                               const estimator_limits_t *limits)
 {
     steam_draw_t draw = {0.0f, NULL, NULL, 0u};
@@ -585,7 +603,7 @@ static int run_the_steam_draw(char **arguments, const plant_parameters_t *parame
     draw.demand_milli_ml_per_s = demand;
     draw.interval_count = intervals;
 
-    const int outcome = steam_draw_run(parameters, limits, &declaration, &draw);
+    const int outcome = steam_draw_run(parameters, budget, limits, &declaration, &draw);
     free(cadence);
     free(demand);
     return outcome;
@@ -747,7 +765,8 @@ static void exercise_plant(const plant_parameters_t *parameters)
  * one set of checks and a controller's record admitted by another would not be
  * comparable at all.
  */
-static bool load_a_description(const char *path, plant_parameters_t *into)
+static bool load_a_description(const char *path, plant_parameters_t *into,
+                               plant_parameter_budget_t *budget_into)
 {
     size_t length = 0u;
     char *text = read_file(path, &length);
@@ -755,8 +774,15 @@ static bool load_a_description(const char *path, plant_parameters_t *into)
         return false;
     }
 
+    /*
+     * The same text read twice for two different things: the coefficients, and
+     * what the description says each of them may be wrong by. Both come from
+     * the one file because a margin sized against an uncertainty carried
+     * somewhere else is a margin sized against a file nobody kept in step.
+     */
     plant_parameter_error_t error;
-    const bool loaded = plant_parameters_load(text, length, into, &error);
+    const bool loaded = plant_parameters_load(text, length, into, &error) &&
+                        plant_parameter_budget_load(text, length, budget_into, &error);
     free(text);
 
     if (!loaded) {
@@ -794,8 +820,12 @@ int main(int argc, char **argv)
     const bool steam_draw_requested = something_requested &&
                                       strcmp(argv[3], STEAM_DRAW_OPTION) == 0 &&
                                       argc == 4 + STEAM_DRAW_ARGUMENTS;
+    const bool margin_record_requested = something_requested &&
+                                         strcmp(argv[3], MARGIN_RECORD_OPTION) == 0 &&
+                                         argc == 4 + MARGIN_RECORD_ARGUMENTS;
 
-    if (argc < 3 || (something_requested && !draw_requested && !steam_draw_requested)) {
+    if (argc < 3 || (something_requested && !draw_requested && !steam_draw_requested &&
+                     !margin_record_requested)) {
         (void)fprintf(stderr,
                       "usage: %s <parameter-description> <limits-declaration>\n"
                       "       %s <parameter-description> <limits-declaration> "
@@ -804,14 +834,17 @@ int main(int argc, char **argv)
                       "[" CONTROL_DESCRIPTION_OPTION " <parameter-description>]\n"
                       "       %s <parameter-description> <limits-declaration> "
                       STEAM_DRAW_OPTION " <steam-control-declaration> <initial-steam-c> "
-                      "<course-file>\n",
+                      "<course-file>\n"
+                      "       %s <parameter-description> <limits-declaration> "
+                      MARGIN_RECORD_OPTION " <steam-control-declaration>\n",
                       argc > 0 ? argv[0] : "program", argc > 0 ? argv[0] : "program",
-                      argc > 0 ? argv[0] : "program");
+                      argc > 0 ? argv[0] : "program", argc > 0 ? argv[0] : "program");
         return 2;
     }
 
     plant_parameters_t parameters;
-    if (!load_a_description(argv[1], &parameters)) {
+    plant_parameter_budget_t budget;
+    if (!load_a_description(argv[1], &parameters, &budget)) {
         return 1;
     }
 
@@ -823,8 +856,9 @@ int main(int argc, char **argv)
      * machine is not a drifted machine, it is a broken run.
      */
     plant_parameters_t control_parameters;
+    plant_parameter_budget_t control_budget;
     if (drifted_draw_requested &&
-        !load_a_description(argv[4 + DRAW_ARGUMENTS + 1], &control_parameters)) {
+        !load_a_description(argv[4 + DRAW_ARGUMENTS + 1], &control_parameters, &control_budget)) {
         return 1;
     }
 
@@ -874,23 +908,65 @@ int main(int argc, char **argv)
 
     if (draw_requested) {
         return run_the_draw(&argv[4], &parameters,
-                            drifted_draw_requested ? &control_parameters : &parameters, &limits,
+                            drifted_draw_requested ? &control_parameters : &parameters,
+                            drifted_draw_requested ? &control_budget : &budget, &limits,
                             &tolerance);
     }
     if (steam_draw_requested) {
-        return run_the_steam_draw(&argv[4], &parameters, &limits);
+        return run_the_steam_draw(&argv[4], &parameters, &budget, &limits);
+    }
+    if (margin_record_requested) {
+        /*
+         * The description's text again, because the mapping is indexed by the
+         * structure's own ordering and the names that ordering can be read back
+         * through are in the file rather than in either record. It is opened a
+         * second time rather than the first read being kept for every mode,
+         * since no other mode wants it and holding it would mean every run
+         * carrying the file for the one that does.
+         */
+        size_t description_length = 0u;
+        char *description_text = read_file(argv[1], &description_length);
+        if (description_text == NULL) {
+            return 1;
+        }
+
+        size_t steam_length = 0u;
+        char *steam_text = read_file(argv[4], &steam_length);
+        if (steam_text == NULL) {
+            free(description_text);
+            return 1;
+        }
+        steam_control_declaration_t steam;
+        steam_control_declaration_error_t steam_error;
+        const bool steam_declared =
+            steam_control_declaration_load(steam_text, steam_length, &steam, &steam_error);
+        free(steam_text);
+        if (!steam_declared) {
+            free(description_text);
+            (void)fprintf(stderr,
+                          "host exercise: steam control declaration refused: %s (fault %d, "
+                          "line %u)\n",
+                          steam_error.name, (int)steam_error.fault, steam_error.line);
+            return 1;
+        }
+
+        const int status = protection_margin_record_run(description_text, description_length,
+                                                        &parameters, &budget, &limits, &tolerance,
+                                                        &steam);
+        free(description_text);
+        return status;
     }
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
 
-    if (control_init(&state, &parameters, &limits, &tolerance)) {
+    if (control_init(&state, &parameters, &budget, &limits, &tolerance)) {
         (void)printf("host exercise: control path reconstructs its brew temperature\n");
         exercise_untargeted_steps(&state);
         exercise_actuating_steps(&state);
         exercise_early_step(&state);
         exercise_invalid_sensor(&state);
-        exercise_refused_output(&parameters, &limits, &tolerance);
+        exercise_refused_output(&parameters, &budget, &limits, &tolerance);
     } else {
         (void)printf("host exercise: this structure cannot carry a reconstruction the "
                      "estimator can keep corrected\n");

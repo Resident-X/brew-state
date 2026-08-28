@@ -249,6 +249,7 @@ static bool bring_the_machine_to_where_the_draw_begins(plant_model_t *machine,
 }
 
 int steam_draw_run(const plant_parameters_t *parameters,
+                   const plant_parameter_budget_t *budget,
                    const estimator_limits_t *limits,
                    const steam_control_declaration_t *declaration,
                    const steam_draw_t *draw)
@@ -306,7 +307,7 @@ int steam_draw_run(const plant_parameters_t *parameters,
      */
     (void)printf("HOST steam-settling-steps 1\n");
 
-    if (!steam_control_init(&loop, limits, declaration)) {
+    if (!steam_control_init(&loop, limits, declaration, parameters, budget)) {
         (void)fprintf(stderr, "steam draw: the steam control path could not be brought up\n");
         return 1;
     }

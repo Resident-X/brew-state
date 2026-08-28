@@ -99,18 +99,29 @@ static delivery_profile_t steady_course(float rate_ml_per_s, uint32_t elapsed_mi
  * every caller that needs a plant_parameters_t for it, whether or not they go
  * on to bring a whole control_state_t up.
  */
-static void load_this_structures_parameters(plant_parameters_t *parameters)
+static void load_this_structures_parameters(plant_parameters_t *parameters,
+                                            plant_parameter_budget_t *budget)
 {
     plant_parameter_error_t parameter_fault;
     TEST_ASSERT_TRUE(
         plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, parameters, &parameter_fault));
+    /*
+     * The same text read again for what it says its figures may be wrong by.
+     * This description declares nothing of the kind against anything, which is
+     * the honest state for a structure that describes no machine -- and is what
+     * control_init is entitled to be handed, since the record still says which
+     * coefficients exist.
+     */
+    TEST_ASSERT_TRUE(plant_parameter_budget_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, budget,
+                                                 &parameter_fault));
 }
 
 /* A control_state_t brought up against this structure, ready to command. */
 static void bring_the_machine_up(control_state_t *state)
 {
     plant_parameters_t parameters;
-    load_this_structures_parameters(&parameters);
+    plant_parameter_budget_t budget;
+    load_this_structures_parameters(&parameters, &budget);
 
     estimator_limits_t limits;
     estimator_limits_error_t limits_fault;
@@ -127,7 +138,7 @@ static void bring_the_machine_up(control_state_t *state)
     const delivery_tolerance_t tolerance = {0};
 
     TEST_ASSERT_TRUE_MESSAGE(
-        control_init(state, &parameters, &limits, &tolerance),
+        control_init(state, &parameters, &budget, &limits, &tolerance),
         "control_init was refused against a structure built to let it succeed -- see "
         "flow_fixture's own header for what it answers and why");
 }
@@ -233,7 +244,8 @@ static void bring_the_machine_up_driving(control_state_t *state)
 static void test_both_names_the_estimator_uses_reach_the_one_kept_state(void)
 {
     plant_parameters_t parameters;
-    load_this_structures_parameters(&parameters);
+    plant_parameter_budget_t budget;
+    load_this_structures_parameters(&parameters, &budget);
 
     plant_model_t model;
     TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));

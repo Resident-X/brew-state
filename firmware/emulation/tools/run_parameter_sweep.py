@@ -543,7 +543,8 @@ def observed_series(findings):
     return series
 
 
-def brew_draw(executable, description, limits, course, scale, name, control_description=None):
+def brew_draw(executable, description, limits, course, scale, name, control_description=None,
+              target_c=BREW_TARGET_C):
     """One brew draw, and the delivered temperature it produced per interval.
 
     `control_description` is carried through to the draw untouched: it names the
@@ -551,8 +552,16 @@ def brew_draw(executable, description, limits, course, scale, name, control_desc
     machine's own is used for both. What it is for is stated where the draw
     itself takes it, and nothing about how a delivery is read off the run
     changes with it.
+
+    `target_c` is the temperature the draw is commanded at, and it defaults to
+    the ordinary brew target this sweep's own course was built around. It is an
+    argument because one caller asks something this sweep does not: what a
+    delivery does when it is commanded as hot as the design will admit rather
+    than where a drink wants it -- a target read off the loop's own admission
+    path rather than stated by any file. Nothing about how a delivery is read
+    off the run changes with it either.
     """
-    findings = cross_tier.host_draw(executable, description, limits, BREW_TARGET_C, course,
+    findings = cross_tier.host_draw(executable, description, limits, target_c, course,
                                     scale, name=name, control_description=control_description)
     delivered = [reported["outlet_c"] for reported in findings["trajectory"]]
     if any(value is None for value in delivered):
@@ -1338,6 +1347,16 @@ def report_text(findings):
           "the declared band, in `docs/parameter-stability.md`. A coefficient can carry a small "
           "deviation here and still be the one corner that does not settle, which is why that "
           "finding is kept in a record of its own rather than folded into this one.")
+    write("")
+    write("How much of the gap between a commanded target and the machine's own hardware "
+          "protection each declared error spends is a fourth question, and it is not this one "
+          "either: the band ranked above is what a delivery is held to and the trip point is a "
+          "device that opens on the truth, and a coefficient can sit low in this ranking while "
+          "being the one that costs the protection gap most. It is answered by "
+          "`firmware/emulation/tools/run_protection_margin.py`, which reads the margin the "
+          "control path enforces back out of that path and runs a delivery at every corner of "
+          "the declared error it was sized from, recording what it found in "
+          "`docs/protection-margin.md`.")
     write("")
 
     return "\n".join(lines) + "\n"

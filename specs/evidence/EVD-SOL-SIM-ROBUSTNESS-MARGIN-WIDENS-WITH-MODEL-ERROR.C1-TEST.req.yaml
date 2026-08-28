@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1-TEST
+type: evidence
+title: The margin computation implements worst-corner enumeration, clamped at zero, path-scoped, with the joint corner (SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T12:23:42Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_margin_widens_monotonically_with_each_declared_coefficients_error
+text: |-
+  Coffee side: test_the_margin_widens_monotonically_with_each_declared_coefficients_error, test_a_corner_moving_the_gap_the_safe_way_contributes_nothing, test_the_margin_is_the_worst_single_corner_and_not_a_sum_or_a_root_sum_square (numerically distinguishes worst-corner enumeration from summation and RSS, matching DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE), test_a_coefficient_with_no_path_to_the_gap_contributes_nothing, test_the_enumeration_carries_the_stated_joint_corner_moving_the_pair_together, test_a_target_inside_the_widened_margin_is_refused. Steam side: test_a_ready_target_inside_the_widened_margin_is_refused (test_steam_control.c). Both refusal tests are mutation-sensitive: deleting the protection-margin refusal from admit_target / ready_target_clears_the_protection_margin causes them to fail (verified independently by blind review). task fw:build/fw:test/fw:check all pass.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1
+    type: satisfies

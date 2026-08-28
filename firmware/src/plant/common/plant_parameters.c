@@ -580,3 +580,89 @@ bool plant_parameter_budget_for(const plant_parameter_budget_t *budget, const ch
     *assumed_error = budget->assumed_error[index];
     return true;
 }
+
+bool plant_parameter_scale(plant_parameters_t *parameters, size_t at, float factor)
+{
+    if (parameters == NULL || !isfinite(factor)) {
+        return false;
+    }
+
+    size_t spec_count = 0u;
+    const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
+    if (specs == NULL || spec_count == 0u || spec_count > PLANT_PARAMETER_LIMIT ||
+        at >= spec_count) {
+        return false;
+    }
+
+    /*
+     * The same route into the record the loader itself takes -- the offset the
+     * structure's own table declares -- so a coefficient written here lands
+     * where a description would have put it, rather than through a second
+     * arrangement that could disagree with the first about which field a
+     * position means.
+     */
+    float *const field = (float *)(void *)((char *)parameters + specs[at].offset);
+    const float scaled = *field * factor;
+
+    /*
+     * Refused rather than clamped. A record clamped back to the edge of the
+     * declared range would be a machine the caller did not ask for, reported as
+     * though it were the corner it did: a caller sizing anything against a
+     * corner has to be able to tell "the description does not admit that
+     * corner" from "here is the corner", and the two demand opposite responses.
+     */
+    if (!isfinite(scaled) || scaled < specs[at].minimum || scaled > specs[at].maximum) {
+        return false;
+    }
+
+    *field = scaled;
+    return true;
+}
+
+bool plant_parameter_position(const char *name, size_t *at)
+{
+    if (name == NULL || at == NULL) {
+        return false;
+    }
+
+    size_t spec_count = 0u;
+    const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
+    if (specs == NULL || spec_count == 0u || spec_count > PLANT_PARAMETER_LIMIT) {
+        return false;
+    }
+
+    const size_t found = index_of(specs, spec_count, name, strlen(name));
+    if (found == spec_count) {
+        return false;
+    }
+
+    *at = found;
+    return true;
+}
+
+bool plant_parameter_supply_driven(size_t at, bool *driven)
+{
+    if (driven == NULL) {
+        return false;
+    }
+
+    size_t spec_count = 0u;
+    const plant_parameter_spec_t *specs = plant_structure_parameter_specs(&spec_count);
+    if (specs == NULL || spec_count == 0u || spec_count > PLANT_PARAMETER_LIMIT ||
+        at >= spec_count) {
+        return false;
+    }
+
+    size_t named_count = 0u;
+    const char *const *named = plant_structure_supply_driven_parameters(&named_count);
+
+    *driven = false;
+    for (size_t which = 0u; which < named_count && named != NULL; which++) {
+        if (named[which] != NULL &&
+            index_of(specs, spec_count, named[which], strlen(named[which])) == at) {
+            *driven = true;
+            break;
+        }
+    }
+    return true;
+}

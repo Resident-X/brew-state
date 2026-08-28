@@ -613,6 +613,8 @@ class TheSweepAndItsRankingAreCommittedAndRepeatable(unittest.TestCase):
         self.assertIn("docs/parameter-identifiability.md", record)
         self.assertIn("run_parameter_stability.py", record)
         self.assertIn("docs/parameter-stability.md", record)
+        self.assertIn("run_protection_margin.py", record)
+        self.assertIn("docs/protection-margin.md", record)
 
 
 class ACoefficientTheSweepCannotWeighIsNamedRatherThanRanked(unittest.TestCase):

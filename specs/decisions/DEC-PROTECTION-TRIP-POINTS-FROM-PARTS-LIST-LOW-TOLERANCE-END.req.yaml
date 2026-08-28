@@ -1,0 +1,28 @@
+id: DEC-PROTECTION-TRIP-POINTS-FROM-PARTS-LIST-LOW-TOLERANCE-END
+type: decision
+title: Coffee and steam protection trip points are the parts-list nominal thermostat setting less its stated tolerance
+status: active
+version: 1
+text: |
+  The commanded-margin computation needs a trip point to size the margin against, and none was declared anywhere machine-readable before this solution — the design relied on a limit that was documented in prose but never stated as a figure the graph or the firmware could reason about. This decision settles what that figure is for the coffee thermoblock thermostat and the steam thermochamber thermostat, the two protective devices REQ-MACHINE-CONFIGURATION-001.C2 requires this design to declare a trip point for.
+
+  docs/reference-machine.md's Protection table gives the coffee thermoblock thermostat as "110 °C nominal (95–110 °C, ±3)" and the steam thermochamber thermostat as "200 °C ±5 (180–200 °C)", both sourced from the parts list. The 95–110 °C and 180–200 °C spans read, on a first pass, as if they might be this specific fitted device's own uncertainty — which would leave the 110/200 nominal figures understated relative to the actual worst case.
+rationale: |
+  Context: The same document commits to 110 °C and 200 °C (+5 tolerance) as the operative figures in two other places, independent of the Protection table's own wording: its Margin note states plainly that "the coffee block's commanded target sits below its 110 °C thermostat, and the ±3 °C tolerance means the worst-case margin is a few degrees" — computed from 110 and ±3 alone, with no reference to 95 — and its saturation-pressure table restates "Protection permits: Coffee side 110 °C" and "Steam side 200 °C (+5 tolerance)" for a wholly separate pressure calculation. A document that used the 95 °C or 180 °C end as this machine's actual worst case would not have written either passage the way it did.
+
+  Trade-offs: Reading the 95–110 °C and 180–200 °C spans as a parts-catalogue range — the family of trip-point settings the thermostat part number is manufactured in, of which this machine's parts list identifies the 110 °C / 200 °C variant as fitted — resolves the apparent contradiction and matches every other passage in the document. Reading them instead as this specific device's own manufacturing tolerance would require treating the Margin note and the saturation-pressure table as both independently wrong about the same number, which is a worse account of the evidence than treating one ambiguous table cell as a catalogue span. It would also make the machine's own shipped behaviour incoherent: at a margin sized from a 95 °C trip point, the highest admissible commanded target lands near 91 °C — below the shipped 93 °C brew target and further still below the 96 °C drinking ceiling. A reading under which this machine cannot brew what it already ships is not a plausible account of a document describing that machine, which is independent evidence about what the parenthetical means, not merely a second data point for the same conclusion. The choice costs nothing in conservatism either way at the coffee thermostat: this decision still applies the full ±3 °C tolerance on top of the 110 °C nominal, so 107 °C is not the 110 °C figure taken at face value.
+
+  Reversibility: Reversible on inspection. The thermal fuse's rating is separately unestablished per the same Protection table, so this trip point is not yet the only device standing between commanded target and hazard; when the fitted thermostat part number is confirmed against its own datasheet rather than inferred from the two-document parts-list cross-check, this decision's figure can be corrected without touching the margin computation's structure — only the constant changes.
+
+  Consequences: CONTROL_PROTECTION_TRIP_C is declared as 107.0 (110 − 3) and STEAM_CONTROL_PROTECTION_TRIP_C as 195.0 (200 − 5) in firmware/params/control.declaration, each carrying this decision's derivation rather than a bare number. SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR's commanded margin is sized against these two figures, and REQ-MACHINE-CONFIGURATION-001.C2 — which required a trip point to be declared before this decision existed to declare one — has a partial answer for the two devices this decision resolves; the thermal fuse and the two documented relief paths remain undeclared and are not this decision's or this solution's to close.
+options_considered:
+  - option: 110 C / 200 C nominal, less the stated tolerance (107 C / 195 C) — the parts-list figure is a catalogue variant identifier, and the tolerance is this fitted device's own manufacturing spread
+    reason_rejected: ""
+  - option: Treat 95 C / 180 C (the span's low end) as this device's own worst-case trip point
+    reason_rejected: would make the document's own Margin note and saturation-pressure table wrong about the same number in two other places, which is a worse account of the same evidence
+  - option: Treat 110 C / 200 C nominal at face value, with no tolerance subtracted
+    reason_rejected: ignores the tolerance the parts list itself states and understates how close a command can sit to actual protection
+chosen: 110 C / 200 C nominal, less the stated tolerance (107 C / 195 C) — the parts-list figure is a catalogue variant identifier, and the tolerance is this fitted device's own manufacturing spread
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001.C2
+    type: addresses

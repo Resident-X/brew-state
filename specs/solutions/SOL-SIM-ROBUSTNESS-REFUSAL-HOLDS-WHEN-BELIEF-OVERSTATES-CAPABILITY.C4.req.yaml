@@ -1,0 +1,12 @@
+id: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C4
+type: criterion
+title: A course within the degraded plant's own capability is still admitted, under a belief matching truth
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Under a belief matching the true, nominal plant, a course that plant can actually deliver is still admitted after the authority probe is changed to evaluate the least-capable plant the declared error budget admits, provided that course stays within what the degraded plant itself can achieve — the probe becomes more conservative, not unconditionally more restrictive, and a delivery within the machine's declared-error-consistent worst case is not refused. Courses that were only ever admitted because the point belief overstated capability, and that the degraded plant genuinely cannot achieve, are excluded from this criterion — refusing those is C2's own point, not a regression.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY
+    type: criterion-of
