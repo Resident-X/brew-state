@@ -61,6 +61,19 @@ LIMITS_SCRATCH = 0x10002000
 TOLERANCE_SCRATCH = 0x10003000
 ERROR_SCRATCH = 0x10004000
 STATE_SCRATCH = 0x10005000
+# What the same description says its own coefficients may be wrong by. The
+# control path is brought up against both records, because the margin it holds
+# a commanded target to is sized from what the description admits it may be
+# wrong by -- so a harness handing it the coefficients alone is one the loop
+# refuses to come up at all, and every step of the draw after it would be a
+# latched fault rather than a loop.
+#
+# Placed past the state region rather than in among the records above it,
+# because control_state_t carries both of them by value and is far the largest
+# thing this harness writes into core-coupled memory. A slot of its own keeps
+# these a list of disjoint 4 KiB regions, which is what makes a collision
+# between two of them impossible to introduce by accident.
+BUDGET_SCRATCH = 0x10006000
 
 # One step budget for every call, as exercise.py's is: far above what any of
 # these functions takes, so a call that never returns is reported as such
@@ -146,16 +159,48 @@ def to_bits(value):
     return struct.unpack("<I", struct.pack("<f", value))[0]
 
 
+# How many arguments AAPCS puts in core registers before the rest go on the
+# stack. It is four, and it is written down here rather than left implicit
+# because getting it wrong is silent: a fifth argument written into r4 is a
+# register the callee is entitled to use for anything it likes, so the callee
+# reads whatever its own prologue left there and refuses -- with no fault, no
+# unmapped access and nothing in the log to say an argument never arrived.
+ARGUMENTS_IN_REGISTERS = 4
+
+# The alignment AAPCS requires of the stack pointer at a public interface, in
+# bytes. Eight, so a stacked argument list is padded up to it rather than
+# leaving the callee's own doubleword accesses misaligned.
+STACK_ALIGNMENT = 8
+
+
 def call(name, args):
     address = bus.GetSymbolAddress(name)
-    for index in range(len(args)):
+    for index in range(min(len(args), ARGUMENTS_IN_REGISTERS)):
         cpu.SetRegister(index, RegisterValue.Create(args[index], 32))
+
+    # Everything past the fourth argument is passed on the stack, in order,
+    # starting at the stack pointer as the call is made. The frame is taken
+    # below wherever the core currently stands and given back afterwards, so a
+    # harness that calls repeatedly does not walk the stack down.
+    stacked = args[ARGUMENTS_IN_REGISTERS:]
+    entry_sp = cpu.SP.RawValue
+    frame_sp = entry_sp
+    if stacked:
+        span = len(stacked) * 4
+        span += (-span) % STACK_ALIGNMENT
+        frame_sp = (entry_sp - span) & ~(STACK_ALIGNMENT - 1)
+        for index in range(len(stacked)):
+            bus.WriteDoubleWord(frame_sp + (index * 4), stacked[index])
+        cpu.SP = RegisterValue.Create(frame_sp, 32)
+
     cpu.LR = RegisterValue.Create(CALL_TRAP | 1, 32)
     cpu.PC = RegisterValue.Create(address, 32)
     taken = 0
     while cpu.PC.RawValue != CALL_TRAP and taken < STEP_BUDGET:
         cpu.Step(1)
         taken += 1
+    if stacked:
+        cpu.SP = RegisterValue.Create(entry_sp, 32)
     if cpu.PC.RawValue != CALL_TRAP:
         raise Exception("%s did not return within %d instructions" % (name, STEP_BUDGET))
     return cpu.GetRegister(0).RawValue
@@ -272,6 +317,13 @@ parameters_ok = call("plant_parameters_load",
                       [description_addr, description_length, PARAMS_SCRATCH, ERROR_SCRATCH])
 print("EMU parameters-loaded %d" % parameters_ok)
 
+# The same text read a second time for what it says those coefficients may be
+# wrong by, exactly as the artefact's own main() reads it. The control path
+# below will not come up without it.
+budget_ok = call("plant_parameter_budget_load",
+                 [description_addr, description_length, BUDGET_SCRATCH, ERROR_SCRATCH])
+print("EMU budget-loaded %d" % budget_ok)
+
 limits_addr = bus.GetSymbolAddress("reference_limits")
 limits_length = read_symbol_u32("reference_limits_length")
 limits_ok = call("estimator_limits_load",
@@ -285,7 +337,8 @@ tolerance_ok = call("delivery_tolerance_load",
 print("EMU tolerance-loaded %d" % tolerance_ok)
 
 control_init_ok = call(
-    "control_init", [STATE_SCRATCH, PARAMS_SCRATCH, LIMITS_SCRATCH, TOLERANCE_SCRATCH])
+    "control_init",
+    [STATE_SCRATCH, PARAMS_SCRATCH, BUDGET_SCRATCH, LIMITS_SCRATCH, TOLERANCE_SCRATCH])
 print("EMU control-init %d" % control_init_ok)
 
 command_ok = call("control_command_temperature", [STATE_SCRATCH, to_bits(TARGET_BREW_C)])

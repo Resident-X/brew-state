@@ -121,6 +121,7 @@ typedef struct {
  * structure happened to come up in.
  */
 int steam_draw_run(const plant_parameters_t *parameters,
+                   const plant_parameter_budget_t *budget,
                    const estimator_limits_t *limits,
                    const steam_control_declaration_t *declaration,
                    const steam_draw_t *draw);

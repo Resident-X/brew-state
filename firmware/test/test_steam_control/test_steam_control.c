@@ -382,7 +382,7 @@ static void bring_the_loop_up(const plant_parameters_t *machine,
     const plant_actuation_t idle = {{0u}};
     TEST_ASSERT_TRUE(plant_model_step(&truth, &idle, 0.0f, STEP_INTERVAL_MS));
 
-    TEST_ASSERT_TRUE(steam_control_init(&loop, &limits, figures));
+    TEST_ASSERT_TRUE(steam_control_init(&loop, &limits, figures, &parameters, &budget));
 }
 
 static float ready_target_c(const steam_control_declaration_t *figures)
@@ -577,7 +577,7 @@ static void test_only_a_trustworthy_set_knob_reading_is_taken_for_a_draw(void)
         steam_control_state_t state;
 
         hw_sim_reset();
-        TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+        TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
         hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID,
                           declaration.ready_pressure_milli_bar);
         hw_sim_set_sensor(HW_SENSOR_STEAM_TEMPERATURE, HW_READING_VALID,
@@ -626,7 +626,7 @@ static void test_the_controlled_variable_switches_on_the_step_the_draw_begins(vo
     steam_control_state_t state;
     steam_control_variable_t variable;
 
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
     (void)step_with(&state, false, declaration.ready_pressure_milli_bar,
                     declaration.ready_temperature_milli_c);
@@ -662,7 +662,7 @@ static void test_duty_answers_temperature_while_idle_and_pressure_while_drawing(
     steam_control_state_t state;
 
     /* Idle: pressure held, temperature moved. */
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
     const uint16_t idle_at_target = step_with(&state, false, declaration.ready_pressure_milli_bar,
                                               declaration.ready_temperature_milli_c);
     const uint16_t idle_cooler = step_with(&state, false, declaration.ready_pressure_milli_bar,
@@ -671,7 +671,7 @@ static void test_duty_answers_temperature_while_idle_and_pressure_while_drawing(
                              "a colder block did not raise duty while idle, so the idle phase is "
                              "not driving to temperature");
 
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
     const uint16_t idle_again = step_with(&state, false, declaration.ready_pressure_milli_bar,
                                           declaration.ready_temperature_milli_c);
     const uint16_t idle_pressure_moved =
@@ -695,7 +695,7 @@ static void test_duty_answers_temperature_while_idle_and_pressure_while_drawing(
     const uint32_t settled_at =
         (uint32_t)declaration.margin_interval_millis + (uint32_t)declaration.feed_rise_millis;
 
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
     for (uint32_t elapsed = 0u; elapsed <= settled_at; elapsed += STEP_INTERVAL_MS) {
         (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
     }
@@ -707,7 +707,7 @@ static void test_duty_answers_temperature_while_idle_and_pressure_while_drawing(
                              "a sagging path did not raise duty during a draw, so the draw phase "
                              "is not driving to pressure");
 
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
     for (uint32_t elapsed = 0u; elapsed <= settled_at; elapsed += STEP_INTERVAL_MS) {
         (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
     }
@@ -753,7 +753,7 @@ static void test_an_implausible_pressure_reading_mid_draw_is_rejected_rather_tha
                                 2;
 
         hw_sim_reset();
-        TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+        TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
         /* A settled draw: past the margin interval and past the feed's rise. */
         const uint32_t settled_at = (uint32_t)declaration.margin_interval_millis +
@@ -1225,7 +1225,7 @@ static void test_the_heater_leads_and_the_feed_lags_by_the_declared_interval(voi
                                    2;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&leading_only, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&leading_only, &limits, &declaration, &parameters, &budget));
     TEST_ASSERT_EQUAL_UINT16_MESSAGE(
         (uint16_t)ACTUATION_FULL_SCALE,
         step_with(&leading_only, true, at_draw_target, declaration.ready_temperature_milli_c),
@@ -1714,7 +1714,7 @@ static void test_feed_withheld_while_pressure_stays_below_threshold_with_the_wan
 
     hw_sim_reset();
     TEST_ASSERT_TRUE(plant_model_init(&below, &parameters));
-    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
 
     const plant_actuation_t idle = {{0u}};
     const uint32_t span = (uint32_t)declaration.margin_interval_millis +
@@ -1759,7 +1759,7 @@ static void test_feed_withheld_one_milli_bar_below_threshold(void)
     steam_control_state_t gate;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
 
     const uint32_t span = (uint32_t)declaration.margin_interval_millis +
                           (uint32_t)declaration.feed_rise_millis;
@@ -1791,7 +1791,7 @@ static void test_feed_enabled_the_same_step_pressure_reaches_threshold(void)
     steam_control_state_t gate;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
 
     const uint32_t span = (uint32_t)declaration.margin_interval_millis +
                           (uint32_t)declaration.feed_rise_millis;
@@ -1858,7 +1858,7 @@ static void test_withheld_feed_holds_an_existing_deficit_against_an_open_wand(vo
 
     hw_sim_reset();
     TEST_ASSERT_TRUE(plant_model_init(&primed, &parameters));
-    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
     TEST_ASSERT_TRUE(plant_model_set_state(&primed, PLANT_STATE_STEAM_TEMPERATURE_C, 115.0f));
 
     /*
@@ -1969,8 +1969,8 @@ static void test_declared_threshold_moves_the_feed_boundary(void)
     steam_control_state_t gate_high;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&gate_low, &limits, &low));
-    TEST_ASSERT_TRUE(steam_control_init(&gate_high, &limits, &high));
+    TEST_ASSERT_TRUE(steam_control_init(&gate_low, &limits, &low, &parameters, &budget));
+    TEST_ASSERT_TRUE(steam_control_init(&gate_high, &limits, &high, &parameters, &budget));
 
     const uint32_t span =
         (uint32_t)declaration.margin_interval_millis + (uint32_t)declaration.feed_rise_millis;
@@ -2052,7 +2052,7 @@ static void test_feed_withheld_when_no_pressure_reading_has_ever_been_trusted(vo
         steam_control_state_t gate;
 
         hw_sim_reset();
-        TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration));
+        TEST_ASSERT_TRUE(steam_control_init(&gate, &limits, &declaration, &parameters, &budget));
 
         const int32_t value = CASES[at].above_declared_high
                                   ? limits.high_milli[HW_SENSOR_STEAM_PRESSURE] + 1000
@@ -2084,7 +2084,7 @@ static void test_init_is_refused_and_leaves_both_channels_off_without_either_rec
     bool drawing = false;
 
     hw_sim_reset();
-    TEST_ASSERT_FALSE(steam_control_init(&state, NULL, &declaration));
+    TEST_ASSERT_FALSE(steam_control_init(&state, NULL, &declaration, &parameters, &budget));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
     TEST_ASSERT_FALSE(steam_control_variable(&state, &variable));
@@ -2092,15 +2092,66 @@ static void test_init_is_refused_and_leaves_both_channels_off_without_either_rec
     TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_SENSOR_INVALID, steam_control_step(&state));
 
     hw_sim_reset();
-    TEST_ASSERT_FALSE(steam_control_init(&state, &limits, NULL));
+    TEST_ASSERT_FALSE(steam_control_init(&state, &limits, NULL, &parameters, &budget));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
 
     hw_sim_reset();
-    TEST_ASSERT_FALSE(steam_control_init(NULL, &limits, &declaration));
+    TEST_ASSERT_FALSE(steam_control_init(NULL, &limits, &declaration, &parameters, &budget));
     TEST_ASSERT_EQUAL(STEAM_CONTROL_STEP_SENSOR_INVALID, steam_control_step(NULL));
     TEST_ASSERT_FALSE(steam_control_variable(NULL, &variable));
     TEST_ASSERT_FALSE(steam_control_drawing(NULL, &drawing));
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: a loop handed no
+/// description of the machine, or no statement of how far out that
+/// description's figures may be, is refused with both channels left commanded
+/// off -- on exactly the terms one handed no limits record or no declaration
+/// is.
+///
+/// This loop drives from no model, so a reader could reasonably expect it to
+/// take a declaration and nothing else. It takes both because the ready target
+/// that declaration names is a commanded temperature and the steam block
+/// carries protection of its own: how far below that protection the target has
+/// to sit is sized from what the description says its figures may be wrong by,
+/// and a loop asked to hold a block against a margin nobody stated would be
+/// holding it against nothing.
+///
+/// The margin reads answer nothing on a refused instance, which is what says
+/// the refusal is not merely at the door: an instance that would not come up
+/// and then reported a margin would be reporting one nothing is enforcing.
+static void test_init_is_refused_without_a_description_or_a_budget(void)
+{
+    steam_control_state_t state;
+    protection_margin_t margin;
+    protection_margin_corner_t corner;
+
+    hw_sim_reset();
+    TEST_ASSERT_FALSE(steam_control_init(&state, &limits, &declaration, NULL, &budget));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
+    TEST_ASSERT_FALSE(steam_control_protection_margin(&state, &margin));
+    TEST_ASSERT_FALSE(steam_control_protection_margin_corner(&state, 0u, &corner));
+
+    hw_sim_reset();
+    TEST_ASSERT_FALSE(steam_control_init(&state, &limits, &declaration, &parameters, NULL));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_PUMP));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER));
+    TEST_ASSERT_FALSE_MESSAGE(steam_control_protection_margin(&state, &margin),
+                              "an instance brought up without a budget reported a margin");
+    TEST_ASSERT_FALSE(steam_control_protection_margin_corner(&state, 0u, &corner));
+
+    /* And the reads refuse a null state and a null destination on the same terms. */
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
+    TEST_ASSERT_FALSE(steam_control_protection_margin(NULL, &margin));
+    TEST_ASSERT_FALSE(steam_control_protection_margin(&state, NULL));
+    TEST_ASSERT_FALSE(steam_control_protection_margin_corner(NULL, 0u, &corner));
+    TEST_ASSERT_FALSE(steam_control_protection_margin_corner(&state, 0u, NULL));
+
+    /* A position past the end of the enumeration is refused rather than answered. */
+    TEST_ASSERT_TRUE(steam_control_protection_margin(&state, &margin));
+    TEST_ASSERT_FALSE(steam_control_protection_margin_corner(&state, margin.corners, &corner));
 }
 
 /// Regression protection for the accessors' null out-parameters, which a
@@ -2110,7 +2161,7 @@ static void test_the_accessors_refuse_nowhere_to_answer(void)
     steam_control_state_t state;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
     TEST_ASSERT_FALSE(steam_control_variable(&state, NULL));
     TEST_ASSERT_FALSE(steam_control_drawing(&state, NULL));
 }
@@ -2126,7 +2177,7 @@ static void test_output_refused_is_reported_rather_than_folded_into_actuated(voi
     steam_control_state_t state;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
     hw_sim_set_output_refused(true);
     hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID,
@@ -2161,7 +2212,7 @@ static void test_a_refused_heater_command_does_not_leave_the_feed_running(void)
         (uint32_t)declaration.margin_interval_millis + (uint32_t)declaration.feed_rise_millis;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
     for (uint32_t elapsed = 0u; elapsed <= settled_at; elapsed += STEP_INTERVAL_MS) {
         (void)step_with(&state, true, in_band, declaration.ready_temperature_milli_c);
@@ -2196,7 +2247,7 @@ static void test_init_reports_a_refused_off_command_but_leaves_the_loop_usable(v
 
     hw_sim_reset();
     hw_sim_set_output_refused(true);
-    TEST_ASSERT_FALSE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_FALSE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
     hw_sim_set_output_refused(false);
     hw_sim_set_sensor(HW_SENSOR_STEAM_PRESSURE, HW_READING_VALID,
@@ -2217,7 +2268,7 @@ static void test_a_reopened_draw_earns_its_margin_again(void)
     steam_control_state_t state;
 
     hw_sim_reset();
-    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration));
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
 
     const int32_t in_band = (declaration.draw_pressure_floor_milli_bar +
                              declaration.draw_pressure_ceiling_milli_bar) /
@@ -2244,6 +2295,422 @@ static void test_a_reopened_draw_earns_its_margin_again(void)
                                      "the element did not lead on the second draw");
 }
 
+/* --- The margin the ready target keeps from the steam block's trip point --- */
+
+
+/*
+ * The coefficients the reference description declares one-sided, and the one
+ * end of each the description actually claims.
+ *
+ * One-sidedness is a sentence in params/thermoblock.md and not a field of the
+ * description's grammar -- the line beside the value carries a symmetric
+ * fraction and nothing that could say otherwise -- so it cannot be read out of
+ * the budget and is written here instead, exactly as the sibling stability
+ * analysis writes it beside its own corner logic. All three are one-sided the
+ * same way and for the same kind of reason: each is a figure standing in for
+ * something it is not, and a real machine sits below it rather than either side
+ * of it.
+ *
+ * A corner at the end the description does not claim is a machine nobody has
+ * claimed, and a verdict taken against one would be a verdict about a machine
+ * this description does not describe. The margin computation itself still runs
+ * both ends -- nothing on that side of the seam can read this sentence, and
+ * running the unclaimed end can only widen a margin, which is the safe
+ * direction for a protection bound -- but a delivery verdict is a different
+ * kind of claim and is taken only where the description stands behind the
+ * machine.
+ *
+ * Nothing structural ties this table to the prose it was read out of, so a
+ * name that has gone stale would leave this quietly skipping a corner the
+ * description now claims. The tripwire is the assertion below that every name
+ * here is one this structure has: a coefficient renamed or removed fails
+ * loudly rather than being carried silently.
+ */
+static const char *const ONE_SIDED_REACHING_DOWNWARDS[] = {
+    "pump.pressure_bar",
+    "pump.flow_ml_per_s",
+    "steam.feed_flow_ml_per_s",
+};
+
+static bool the_end_the_description_does_not_claim(const protection_margin_corner_t *corner)
+{
+    if (corner->joint || corner->reaching_downwards) {
+        return false;
+    }
+
+    for (size_t which = 0u; which < sizeof(ONE_SIDED_REACHING_DOWNWARDS) /
+                                        sizeof(ONE_SIDED_REACHING_DOWNWARDS[0]);
+         which++) {
+        size_t at = 0u;
+
+        if (plant_parameter_position(ONE_SIDED_REACHING_DOWNWARDS[which], &at) &&
+            at == corner->at) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/* Every name in that table is one this structure has, or the table has gone stale. */
+static void the_one_sided_table_still_names_this_machine(void)
+{
+    for (size_t which = 0u; which < sizeof(ONE_SIDED_REACHING_DOWNWARDS) /
+                                        sizeof(ONE_SIDED_REACHING_DOWNWARDS[0]);
+         which++) {
+        size_t at = 0u;
+
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(ONE_SIDED_REACHING_DOWNWARDS[which], &at),
+                                 ONE_SIDED_REACHING_DOWNWARDS[which]);
+    }
+}
+
+/*
+ * The machine one enumerated corner names, built through the plant seam from
+ * the position that corner moves rather than from any coefficient's name --
+ * the same route the margin computation itself takes to build it, so a draw's
+ * verdict is taken against the machine the contribution was taken against.
+ */
+static bool the_machine_at_the_corner(const protection_margin_corner_t *corner,
+                                      plant_parameters_t *machine)
+{
+    const float factor = corner->reaching_downwards ? (1.0f - corner->declared_error)
+                                                    : (1.0f + corner->declared_error);
+
+    *machine = parameters;
+    if (!corner->joint) {
+        return plant_parameter_scale(machine, corner->at, factor);
+    }
+
+    for (size_t at = 0u; at < budget.count; at++) {
+        bool driven = false;
+
+        if (!plant_parameter_supply_driven(at, &driven) || !driven || !budget.declared[at]) {
+            continue;
+        }
+        if (!plant_parameter_scale(machine, at, factor)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/*
+ * Whether the draw came to rest inside the band, judged over its trailing
+ * third.
+ *
+ * Where a draw *lands* rather than everything it did on the way, which is what
+ * this criterion asks and is a different question from the one
+ * in_band_from_first_delivery above answers. Holding the delivered character
+ * inside the band for the whole of a draw is what the steam law's own criterion
+ * claims at the description's own figures; how tightly it is held as the model
+ * moves is declared a degrading behaviour in params/robustness.declaration and
+ * is permitted to get worse. A corner that shifts the relation between the
+ * block's temperature and the path's pressure gives the loop a longer climb
+ * before the band is reached at all, and judging that climb would be judging
+ * the horizon rather than the machine.
+ */
+static bool lands_in_band(const steam_control_declaration_t *figures, int32_t *worst)
+{
+    bool held = false;
+    const size_t judged_from = (sample_count * 2u) / 3u;
+
+    *worst = 0;
+    for (size_t at = judged_from; at < sample_count; at++) {
+        const int32_t pressure = samples[at].pressure_milli_bar;
+
+        held = true;
+        if (pressure < figures->draw_pressure_floor_milli_bar ||
+            pressure > figures->draw_pressure_ceiling_milli_bar) {
+            *worst = pressure;
+            return false;
+        }
+    }
+    return held;
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2: A draw lands inside
+/// the band the design holds it to at every independent declared-error corner
+/// and at the one joint corner the description's own construction implies,
+/// with the loop admitted at the widened margin.
+///
+/// Every coefficient the shipped description carries a declared error against
+/// is taken to its corner and the same draw is run against it, with the machine
+/// built from that corner's coefficients while the loop stays where it was:
+/// this loop drives from no model at all, so what a corner moves is the machine
+/// and never the belief, and the split the coffee side has to arrange
+/// deliberately is structural here. Both ends of a two-sided coefficient are
+/// run, and a coefficient whose other end the structure will not admit as a
+/// machine is run at the one end it does.
+///
+/// The committed record of this side's mapping is docs/protection-margin.md,
+/// written by firmware/emulation/tools/run_protection_margin.py off the same
+/// reads this case uses and kept in step with the method by
+/// firmware/emulation/tests/test_protection_margin.py. It is a checked-in file
+/// rather than a table this case prints because a table printed by a Unity test
+/// is swallowed by the runner: nothing downstream of any gate ever sees it.
+///
+/// The joint corner is run to the same standard rather than left with the
+/// settling check the sibling stability solution gives it: it is the one corner
+/// where two declared errors move together, and leaving band adequacy unchecked
+/// there would leave it unchecked at the only corner an independent sweep
+/// cannot reach.
+static void test_a_draw_lands_within_its_band_at_every_declared_error_corner(void)
+{
+    protection_margin_t margin;
+    unsigned drawn = 0u;
+    unsigned joint_drawn = 0u;
+    unsigned contributing = 0u;
+    float widest_contribution_c = 0.0f;
+    float summed_contributions_c = 0.0f;
+    float squared_contributions = 0.0f;
+
+    bring_the_loop_up(&parameters, &declaration, ready_target_c(&declaration));
+    TEST_ASSERT_TRUE(steam_control_protection_margin(&loop, &margin));
+    TEST_ASSERT_TRUE_MESSAGE(margin.corners > 0u,
+                             "the shipped description supports no corner enumeration at all");
+
+    /*
+     * The whole enumeration is read off the loop before any corner is drawn
+     * against, because the margin follows whatever description the instance is
+     * holding: a corner read from a loop since brought up against another
+     * corner's machine would belong to a different enumeration.
+     */
+    static protection_margin_corner_t corners[(2u * PLANT_PARAMETER_LIMIT) + 1u];
+
+    for (size_t which = 0u; which < margin.corners; which++) {
+        TEST_ASSERT_TRUE(steam_control_protection_margin_corner(&loop, which, &corners[which]));
+    }
+    the_one_sided_table_still_names_this_machine();
+
+    for (size_t which = 0u; which < margin.corners; which++) {
+        const protection_margin_corner_t *const corner = &corners[which];
+        plant_parameters_t machine;
+        int32_t worst = 0;
+        char coefficient[16];
+
+        if (corner->joint) {
+            (void)snprintf(coefficient, sizeof(coefficient), "pair");
+        } else {
+            (void)snprintf(coefficient, sizeof(coefficient), "%u", (unsigned)corner->at);
+        }
+
+        if (!the_end_the_description_does_not_claim(corner) && corner->ran &&
+            the_machine_at_the_corner(corner, &machine)) {
+            char message[224];
+
+            bring_the_loop_up(&machine, &declaration, ready_target_c(&declaration));
+            hold_ready_for(SETTLE_SECONDS);
+            draw_for(30u, 1.0f);
+
+            const bool held = lands_in_band(&declaration, &worst);
+            drawn++;
+            if (corner->joint) {
+                joint_drawn++;
+            }
+
+            (void)snprintf(message, sizeof(message),
+                           "corner %u -- %s, coefficient %s %s at %.4f of nominal -- left the "
+                           "delivered pressure at %d milli-bar, outside the declared band of %d "
+                           "to %d",
+                           (unsigned)which, corner->joint ? "joint mains droop" : "independent",
+                           coefficient, corner->reaching_downwards ? "low" : "high",
+                           (double)corner->declared_error, worst,
+                           declaration.draw_pressure_floor_milli_bar,
+                           declaration.draw_pressure_ceiling_milli_bar);
+            TEST_ASSERT_TRUE_MESSAGE(held, message);
+        }
+
+        if (!corner->ran) {
+            continue;
+        }
+        if (corner->contribution_c > widest_contribution_c) {
+            widest_contribution_c = corner->contribution_c;
+        }
+        if (corner->contribution_c > 0.0f) {
+            contributing++;
+            summed_contributions_c += corner->contribution_c;
+            squared_contributions += corner->contribution_c * corner->contribution_c;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(drawn >= 2u,
+                             "no corner of the declared error was drawn against at all, so "
+                             "nothing here was established");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, joint_drawn,
+                                   "the joint corner was not drawn against to the same standard "
+                                   "the independent corners were");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(contributing, margin.contributing,
+                                   "the record and the margin disagree about how many corners "
+                                   "cost the trip-point gap anything");
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-5f, widest_contribution_c, margin.worst_corner_c,
+                                     "the margin's worst corner is not the widest contribution in "
+                                     "the record");
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-5f, margin.unwidened_c + widest_contribution_c,
+                                     margin.margin_c,
+                                     "the widened margin is not the un-widened gap plus the worst "
+                                     "corner");
+    if (contributing >= 2u) {
+        TEST_ASSERT_TRUE_MESSAGE(margin.worst_corner_c < summed_contributions_c - 1e-5f,
+                                 "the margin is the sum of every corner's contribution rather "
+                                 "than the worst single corner");
+        TEST_ASSERT_TRUE_MESSAGE(margin.worst_corner_c < sqrtf(squared_contributions) - 1e-5f,
+                                 "the margin is the root-sum-square of the corners' "
+                                 "contributions rather than the worst single corner");
+    }
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2: The corner sweep above
+/// is drawn at the ready target the declaration names, and how far that sits
+/// from the widened margin's own edge is a finding rather than a silence.
+///
+/// "Commanded at the widened margin" is a claim about which bound actually
+/// stops this loop's target, and on this machine it is not the margin: the
+/// declaration names a ready temperature well below the highest one the margin
+/// leaves room for, so the sweep above draws at a target the margin refuses
+/// nothing about. The headroom is narrowed on the loop's own refusal rather
+/// than computed here, and asserted to be real, so a description or a
+/// declaration that closed that gap fails this case instead of quietly turning
+/// the sweep into a different experiment.
+///
+/// Drawing the sweep at that edge instead is not the fix and is worth saying
+/// why: the band a draw is held to is declared for the block held at the ready
+/// temperature, and a draw taken with the block some sixty degrees hotter would
+/// leave the band by construction rather than because any declared error moved
+/// it. What is exercised at the edge is the refusal itself, which is the case
+/// below.
+static void test_the_sweep_draws_at_the_declared_ready_target_and_not_at_the_margins_edge(void)
+{
+    steam_control_declaration_t asking = declaration;
+    steam_control_state_t narrowing;
+    protection_margin_t margin;
+    char message[224];
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&narrowing, &limits, &declaration, &parameters, &budget));
+    TEST_ASSERT_TRUE(steam_control_protection_margin(&narrowing, &margin));
+
+    int32_t taken_milli_c = declaration.ready_temperature_milli_c;
+    int32_t refused_milli_c = 400000;
+
+    while (refused_milli_c - taken_milli_c > 100) {
+        const int32_t middle_milli_c = (taken_milli_c + refused_milli_c) / 2;
+
+        asking.ready_temperature_milli_c = middle_milli_c;
+        hw_sim_reset();
+        if (steam_control_init(&narrowing, &limits, &asking, &parameters, &budget)) {
+            taken_milli_c = middle_milli_c;
+        } else {
+            refused_milli_c = middle_milli_c;
+        }
+    }
+
+    (void)snprintf(message, sizeof(message),
+                   "the declaration names %.3f C and the highest the margin leaves room for is "
+                   "%.3f C, against a widened margin of %.4f C",
+                   (double)declaration.ready_temperature_milli_c / 1000.0,
+                   (double)taken_milli_c / 1000.0, (double)margin.margin_c);
+
+    TEST_ASSERT_TRUE_MESSAGE(taken_milli_c > declaration.ready_temperature_milli_c, message);
+    TEST_ASSERT_TRUE_MESSAGE(margin.margin_c > 0.0f,
+                             "the declared error widened this loop's margin by nothing, so the "
+                             "headroom above is not a statement about model error");
+
+    /* And one step past the edge is refused, so the edge is the loop's and not this case's. */
+    asking.ready_temperature_milli_c = refused_milli_c;
+    hw_sim_reset();
+    TEST_ASSERT_FALSE_MESSAGE(
+        steam_control_init(&narrowing, &limits, &asking, &parameters, &budget),
+        "the loop came up at a ready target above the highest the narrowing found, so the "
+        "headroom reported is not the margin's own edge");
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The widened margin is
+/// what this loop actually enforces against the ready target it is handed,
+/// rather than a figure computed and left unused.
+///
+/// The same declaration is put to the loop twice against two descriptions
+/// differing in nothing but how far out they say the steam element may be.
+/// Against the shipped figures the ready target is taken; against a description
+/// declaring the element far looser -- widening the margin past the gap the
+/// ready target leaves to the block's own protection -- the loop refuses to
+/// come up at all. A margin computed and discarded would accept both.
+static void test_a_ready_target_inside_the_widened_margin_is_refused(void)
+{
+    steam_control_declaration_t ambitious = declaration;
+    steam_control_state_t refused_loop;
+    protection_margin_t margin;
+
+    /*
+     * The highest ready target the shipped description leaves room for, asked
+     * of the loop by narrowing on it rather than worked out from a trip point
+     * read out of the control source: a suite computing that figure for itself
+     * would be asserting against its own arithmetic. The case is then run a
+     * degree under it, which the shipped description takes.
+     */
+    int32_t taken_milli_c = declaration.ready_temperature_milli_c;
+    int32_t refused_milli_c = 200000;
+
+    while (refused_milli_c - taken_milli_c > 100) {
+        const int32_t middle_milli_c = (taken_milli_c + refused_milli_c) / 2;
+
+        ambitious.ready_temperature_milli_c = middle_milli_c;
+        hw_sim_reset();
+        if (steam_control_init(&refused_loop, &limits, &ambitious, &parameters, &budget)) {
+            taken_milli_c = middle_milli_c;
+        } else {
+            refused_milli_c = middle_milli_c;
+        }
+    }
+
+    ambitious.ready_temperature_milli_c = taken_milli_c - 1000;
+    TEST_ASSERT_TRUE_MESSAGE(ambitious.ready_temperature_milli_c >
+                                 declaration.ready_temperature_milli_c,
+                             "the shipped description's own margin already refuses every target "
+                             "above the one it ships with, so this case tests nothing");
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE_MESSAGE(
+        steam_control_init(&refused_loop, &limits, &ambitious, &parameters, &budget),
+        "the ready target this case turns on is already refused against the shipped description, "
+        "so a refusal below would establish nothing about the declared error");
+    TEST_ASSERT_TRUE(steam_control_protection_margin(&refused_loop, &margin));
+
+    const plant_parameters_t loose = machine_with_scaled("steam.loss_w_per_k", 1.0f);
+    plant_parameter_budget_t widened = budget;
+
+    /*
+     * The declared error on every coefficient of the description is widened
+     * together rather than one being singled out: what this case is about is
+     * the loop refusing a target the margin no longer leaves room for, and
+     * which coefficient earned the margin is C1's own sweep on the coffee side
+     * rather than this one's.
+     */
+    for (size_t at = 0u; at < widened.count; at++) {
+        if (widened.declared[at]) {
+            widened.assumed_error[at] = 0.95f;
+        }
+    }
+
+    protection_margin_t wider;
+    steam_control_state_t probing;
+    steam_control_declaration_t modest = declaration;
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&probing, &limits, &modest, &loose, &widened));
+    TEST_ASSERT_TRUE(steam_control_protection_margin(&probing, &wider));
+    TEST_ASSERT_TRUE_MESSAGE(wider.margin_c > margin.margin_c,
+                             "widening every declared error did not widen the margin, so the "
+                             "refusal below would not be about the declared error");
+
+    hw_sim_reset();
+    TEST_ASSERT_FALSE_MESSAGE(
+        steam_control_init(&refused_loop, &limits, &ambitious, &loose, &widened),
+        "a ready target inside the widened protection margin was taken");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+        0u, hw_sim_output(ACTUATION_CHANNEL_STEAM_HEATER),
+        "the refusal left the steam element commanded on");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -2263,6 +2730,9 @@ int main(void)
     RUN_TEST(test_engaged_feed_rises_over_the_declared_interval_rather_than_stepping);
     RUN_TEST(test_recovery_is_the_ready_holding_law_continuing);
     RUN_TEST(test_recovery_holds_its_bound_across_the_declared_model_error);
+    RUN_TEST(test_a_draw_lands_within_its_band_at_every_declared_error_corner);
+    RUN_TEST(test_the_sweep_draws_at_the_declared_ready_target_and_not_at_the_margins_edge);
+    RUN_TEST(test_a_ready_target_inside_the_widened_margin_is_refused);
     RUN_TEST(test_a_longer_saturated_interval_does_not_deepen_the_overshoot);
     RUN_TEST(test_intent_is_surrendered_at_the_limit_and_not_afterwards);
     RUN_TEST(test_a_disturbance_to_the_truth_plant_alone_reaches_the_law);
@@ -2276,6 +2746,7 @@ int main(void)
     RUN_TEST(test_the_law_runs_against_the_simulated_implementation_with_no_target_dependency);
     RUN_TEST(test_feed_withheld_when_no_pressure_reading_has_ever_been_trusted);
     RUN_TEST(test_init_is_refused_and_leaves_both_channels_off_without_either_record);
+    RUN_TEST(test_init_is_refused_without_a_description_or_a_budget);
     RUN_TEST(test_the_accessors_refuse_nowhere_to_answer);
     RUN_TEST(test_output_refused_is_reported_rather_than_folded_into_actuated);
     RUN_TEST(test_a_refused_heater_command_does_not_leave_the_feed_running);

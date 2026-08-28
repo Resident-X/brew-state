@@ -1,0 +1,12 @@
+id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1
+type: criterion
+title: Commanded margin against the protection trip point widens monotonically with each declared coefficient's model error
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  This slice establishes the commanded margin as the gap between the commanded target and the protection trip point REQ-MEASUREMENT-001 names, sized against declared model error rather than left at whatever gap the trip point alone implies — no prior computation reads the declared error budget into that gap. Per DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE, the margin is the largest single-corner degradation across every enumerated corner: one corner per coefficient with a path to the trip-point gap, run independently, plus one corner per stated joint dependence, run together — never a sum across every coefficient at once. A corner's contribution is measured only in the degrading direction, clamped at zero, so a corner that would move the gap the safe way never shrinks the margin below the un-widened trip-point gap. The margin is monotone non-decreasing in every contributing coefficient's declared-error fraction, and strictly larger than the un-widened gap whenever any coefficient with a path to the trip-point gap carries a nonzero declared error. Deriving an equivalent contribution from sensing error is out of scope — REQ-MEASUREMENT-001.C4, the measurement side of commanded margin, has no covering solution and stays a separate, uncovered gap this slice does not close.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR
+    type: criterion-of

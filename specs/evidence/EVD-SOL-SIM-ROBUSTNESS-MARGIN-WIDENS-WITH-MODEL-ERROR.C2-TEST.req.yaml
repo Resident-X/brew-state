@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2-TEST
+type: evidence
+title: A delivery lands within tolerance at the widened margin's own edge, across every independent and joint corner (SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T12:23:42Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_delivery_lands_within_tolerance_at_every_declared_error_corner
+text: |-
+  Coffee side: test_a_delivery_lands_within_tolerance_at_every_declared_error_corner (per-corner sweep incl. the extended joint-corner check, belief fixed at nominal parameters with truth at the corner-perturbed machine), the_budget_at_which_the_margin_binds and test_a_delivery_commanded_at_the_widened_margins_own_edge_lands_in_band (binary-search to the margin's own edge; mutation-sensitive, verified independently by blind review). Steam side: test_a_draw_lands_within_its_band_at_every_declared_error_corner, test_the_sweep_draws_at_the_declared_ready_target_and_not_at_the_margins_edge (test_steam_control.c). task fw:build/fw:test/fw:check all pass.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2
+    type: satisfies

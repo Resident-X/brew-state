@@ -3,6 +3,8 @@
 #include <stddef.h>
 
 #include "hw_interface.h"
+#include "plant_model.h"
+#include "protection_margin.h"
 
 /*
  * No figure the law rests on is written in this file. Every gain, every
@@ -19,7 +21,28 @@
  * same way: a name defined here would be a second home for the unit the
  * estimator beside it already spells, and the check that keeps a figure to one
  * home would then be asking which of the two the machine ran on.
+ *
+ * One figure is the exception and it is not a figure of the law. The steam
+ * block carries a protective device, and where that device opens is a property
+ * of the machine rather than of any declaration a caller writes -- so it is
+ * declared here, once, and accounts for itself in params/control.declaration
+ * beside the coffee side's own.
  */
+
+/*
+ * The temperature at which the hardware protection fitted to the steam block
+ * removes power from its element, in degrees Celsius.
+ *
+ * Declared on this side of the plant seam for the reason the coffee side's own
+ * trip point is: the structures behind that seam model no protective device
+ * and will run a block straight past this figure, so nothing can be asked of
+ * them about it. It is the earliest the fitted device may open rather than its
+ * nominal point, on the same reasoning -- a margin exists to survive a trip
+ * that comes early, and sizing against nominal would leave it short by the
+ * device's own tolerance.
+ */
+#define STEAM_CONTROL_PROTECTION_TRIP_C 195.0f
+
 
 /*
  * Whether a value is a number at all -- neither a not-a-number nor an
@@ -294,8 +317,113 @@ static bool command_everything_off(steam_control_state_t *state)
     return heater_off && feed_off;
 }
 
+/*
+ * The margin this loop requires between the ready target a declaration names
+ * and the steam block's own trip point, and the enumeration it came out of.
+ *
+ * The duty handed to the probe is the standing load the declaration itself
+ * carries: it is what this loop commands to hold the ready target with nothing
+ * being drawn, which is the duty a wrong coefficient actually acts through. The
+ * feed-load term is left out for the reason the coffee side leaves its own
+ * drawn load out -- a margin is a standing property of a commanded target, and
+ * what a draw costs is answered on the step the draw is made.
+ *
+ * The un-widened gap is nothing. This loop's ready phase holds a temperature
+ * against no declared temperature band at all -- the band it is held to is a
+ * pressure one, and converting it would mean reading a saturation slope out of
+ * a description by name, which is exactly what this side of the seam may not do
+ * -- so what the trip point alone implies here is only that the target sit
+ * below it. Every kelvin of the margin is therefore earned by declared model
+ * error rather than inherited, which is a narrower claim than the coffee side's
+ * and an honest one.
+ */
+static bool steam_widened_margin(const steam_control_declaration_t *declaration,
+                                 const plant_parameters_t *parameters,
+                                 const plant_parameter_budget_t *budget,
+                                 protection_margin_t *margin)
+{
+    protection_margin_probe_t probe;
+
+    probe.protects = PLANT_QUANTITY_STEAM_TEMPERATURE_C;
+    probe.heater = ACTUATION_CHANNEL_STEAM_HEATER;
+    probe.held_at_target[0] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe.held_at_target[1] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe.held_count = 1u;
+    probe.target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
+    probe.holding_permille = as_drive_level((float)declaration->standing_load_permille);
+    probe.unwidened_c = 0.0f;
+
+    return protection_margin_widened(parameters, budget, &probe, margin);
+}
+
+/*
+ * Whether a declared ready target leaves the widened margin between itself and
+ * the steam block's trip point.
+ *
+ * A margin that could not be established admits the target, on the same terms
+ * the coffee side's own refusal admits what it cannot refuse on evidence: a
+ * description that will not support a corner enumeration has said nothing about
+ * how wrong it may be, and a refusal invented from that would be this file
+ * declaring an uncertainty the description did not. A target sitting exactly at
+ * the edge keeps exactly the margin asked for and is admitted, on the same
+ * convention the coffee side reads its own edge by.
+ */
+static bool ready_target_clears_the_protection_margin(const steam_control_declaration_t *declaration,
+                                                      const plant_parameters_t *parameters,
+                                                      const plant_parameter_budget_t *budget)
+{
+    protection_margin_t margin;
+
+    if (!steam_widened_margin(declaration, parameters, budget, &margin)) {
+        return true;
+    }
+
+    const float target_c = (float)declaration->ready_temperature_milli_c / 1000.0f;
+    return target_c <= (STEAM_CONTROL_PROTECTION_TRIP_C - margin.margin_c);
+}
+
+bool steam_control_protection_margin(const steam_control_state_t *state,
+                                     protection_margin_t *margin)
+{
+    if (state == NULL || margin == NULL || !state->configured) {
+        return false;
+    }
+
+    return steam_widened_margin(&state->declaration, &state->parameters, &state->budget, margin);
+}
+
+bool steam_control_protection_margin_corner(const steam_control_state_t *state, size_t which,
+                                            protection_margin_corner_t *corner)
+{
+    if (state == NULL || corner == NULL || !state->configured) {
+        return false;
+    }
+
+    protection_margin_probe_t probe;
+
+    /*
+     * The same probe steam_widened_margin builds, built here rather than shared
+     * through a field on the state, on the terms the coffee side's own corner
+     * reader states: it is derived entirely from figures the state already
+     * holds, and a copy kept beside them would be a second statement of what
+     * this loop commands to hold its ready target with.
+     */
+    probe.protects = PLANT_QUANTITY_STEAM_TEMPERATURE_C;
+    probe.heater = ACTUATION_CHANNEL_STEAM_HEATER;
+    probe.held_at_target[0] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe.held_at_target[1] = PLANT_STATE_STEAM_TEMPERATURE_C;
+    probe.held_count = 1u;
+    probe.target_c = (float)state->declaration.ready_temperature_milli_c / 1000.0f;
+    probe.holding_permille = as_drive_level((float)state->declaration.standing_load_permille);
+    probe.unwidened_c = 0.0f;
+
+    return protection_margin_corner(&state->parameters, &state->budget, &probe, which, corner);
+}
+
 bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *limits,
-                        const steam_control_declaration_t *declaration)
+                        const steam_control_declaration_t *declaration,
+                        const plant_parameters_t *parameters,
+                        const plant_parameter_budget_t *budget)
 {
     if (state == NULL) {
         return false;
@@ -337,6 +465,18 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
         state->declaration = *declaration;
     }
 
+    static const plant_parameters_t NO_MACHINE;
+    static const plant_parameter_budget_t NOTHING_DECLARED_WRONG;
+
+    state->parameters = NO_MACHINE;
+    if (parameters != NULL) {
+        state->parameters = *parameters;
+    }
+    state->budget = NOTHING_DECLARED_WRONG;
+    if (budget != NULL) {
+        state->budget = *budget;
+    }
+
     const bool off = command_everything_off(state);
 
     /*
@@ -345,7 +485,18 @@ bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *
      * leaves the machine neither heated nor fed the way every other refusal
      * here does.
      */
-    if (limits == NULL || declaration == NULL) {
+    if (limits == NULL || declaration == NULL || parameters == NULL || budget == NULL) {
+        return false;
+    }
+
+    /*
+     * And a declaration asking this loop to hold the block where the declared
+     * model error could carry it into its own protection is refused here, at
+     * the one point the target is taken on, rather than left to be discovered
+     * by the device opening. It is refused after the outputs are off for the
+     * reason every other refusal here is.
+     */
+    if (!ready_target_clears_the_protection_margin(declaration, parameters, budget)) {
         return false;
     }
 

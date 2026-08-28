@@ -6,6 +6,7 @@
 #include "estimator.h"
 #include "hw_interface.h"
 #include "plant_model.h"
+#include "protection_margin.h"
 
 /*
  * The three coefficients the law rests on. Each accounts for itself in
@@ -68,6 +69,25 @@
  * steam side of a record this file may not read by name.
  */
 #define CONTROL_SATURATION_C 100.0f
+
+/*
+ * The temperature at which the hardware protection fitted to the coffee block
+ * removes power from its element, in degrees Celsius.
+ *
+ * It is a property of a device on the machine rather than of the model, which
+ * is why it is declared on this side of the plant seam: the structures behind
+ * that seam carry no protective device at all and will happily run a block
+ * straight past it, so a probe would report a machine climbing through this
+ * figure and would be right about the model while being wrong about the
+ * machine.
+ *
+ * It is the earliest the fitted device may open rather than its nominal point.
+ * A margin exists to keep the machine away from a trip, and a trip that comes
+ * earlier than nominal is exactly the case it has to survive; sizing against
+ * the nominal figure would leave the margin short by the device's own
+ * tolerance on every machine whose thermostat sits at the low end of it.
+ */
+#define CONTROL_PROTECTION_TRIP_C 107.0f
 
 /*
  * How far forward a model is stepped to arrive at where it settles, in
@@ -971,6 +991,86 @@ static void refuse_if_the_pair_is_beyond_the_machine(const control_state_t *stat
 }
 
 /*
+ * The margin this instance requires between a commanded target and the
+ * protection trip point, and the corner enumeration it came out of.
+ *
+ * The duty handed to the probe is the one the loop's own feedforward commands
+ * to hold that target with nothing being drawn -- the standing load alone,
+ * scaled by the rise the target asks for above the temperature the machine
+ * draws from. It is the loop's figure and not the description's, which is the
+ * point: what a wrong coefficient acts through is the duty the controller
+ * actually issues, and a probe driven at anything else would be sizing the
+ * margin for a machine nobody is commanding.
+ *
+ * Taken at rest rather than under a draw because a margin is a standing
+ * property of a commanded target. What a particular course draws is answered on
+ * the step it draws it, and sizing the margin against one course would make it
+ * a statement about that course rather than about the target.
+ *
+ * The un-widened gap is the band the delivery is held to. A delivery is allowed
+ * to sit anywhere inside that band and still be the delivery that was asked
+ * for, so a target closer to the trip point than the band could deliver at the
+ * trip point while every figure this loop reports says it was in tolerance --
+ * which is the gap the trip point implies before any declared error is
+ * considered at all.
+ */
+static bool widened_margin(const control_state_t *state, float target_c,
+                           protection_margin_t *margin)
+{
+    protection_margin_probe_t probe;
+    const float rise_k =
+        (target_c > CONTROL_COLD_REFERENCE_C) ? (target_c - CONTROL_COLD_REFERENCE_C) : 0.0f;
+
+    probe.protects = PLANT_QUANTITY_BREW_TEMPERATURE_C;
+    probe.heater = ACTUATION_CHANNEL_BREW_HEATER;
+    probe.held_at_target[0] = PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C;
+    probe.held_at_target[1] = PLANT_STATE_BREW_OUTLET_TEMPERATURE_C;
+    probe.held_count = 2u;
+    probe.target_c = target_c;
+    probe.holding_permille = as_drive_level(rise_k * CONTROL_STANDING_PERMILLE_PER_K);
+    probe.unwidened_c = (float)state->tolerance.brew_temperature_band_milli_c / 1000.0f;
+
+    return protection_margin_widened(&state->parameters, &state->budget, &probe, margin);
+}
+
+/*
+ * Refuse a target that does not leave the widened margin between itself and the
+ * protection trip point, writing the bound and both figures into the record. A
+ * record already carrying a crossed bound is never reached with this, on the
+ * same terms the two refusals above are not.
+ *
+ * A margin that could not be established refuses nothing, on the same terms the
+ * authority probe admits what it cannot refuse on evidence: a description that
+ * will not support a corner enumeration -- a structure describing no machine,
+ * a budget record that was never loaded -- has said nothing about how wrong it
+ * may be, and inventing a refusal from it would be this file declaring an
+ * uncertainty the description did not.
+ *
+ * A target sitting exactly at the edge keeps exactly the margin the description
+ * asks for and is admitted, which is the same convention the drinking floor
+ * already reads by: the edge is the last admissible value rather than the first
+ * refused one.
+ */
+static void refuse_if_inside_the_protection_margin(const control_state_t *state, float target_c,
+                                                   control_admission_t *admission)
+{
+    protection_margin_t margin;
+
+    if (!widened_margin(state, target_c, &margin)) {
+        return;
+    }
+
+    const float highest_c = CONTROL_PROTECTION_TRIP_C - margin.margin_c;
+    if (target_c <= highest_c) {
+        return;
+    }
+
+    admission->bound = CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN;
+    admission->requested = target_c;
+    admission->available = highest_c;
+}
+
+/*
  * Whether this machine can ever be driven to a target, and what it crossed if
  * not.
  *
@@ -1027,6 +1127,11 @@ static control_admission_t admit_target(const control_state_t *state, float cels
         return admission;
     }
 
+    refuse_if_inside_the_protection_margin(state, celsius, &admission);
+    if (admission.bound != CONTROL_ADMISSION_OK) {
+        return admission;
+    }
+
     if (state->delivery_running) {
         refuse_if_the_pair_is_beyond_the_machine(state, &state->delivery, celsius, &admission);
     }
@@ -1037,7 +1142,8 @@ static control_admission_t admit_target(const control_state_t *state, float cels
 }
 
 bool control_init(control_state_t *state, const plant_parameters_t *parameters,
-                  const estimator_limits_t *limits, const delivery_tolerance_t *tolerance)
+                  const plant_parameter_budget_t *budget, const estimator_limits_t *limits,
+                  const delivery_tolerance_t *tolerance)
 {
     if (state == NULL) {
         return false;
@@ -1091,6 +1197,23 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
     }
 
     /*
+     * The budget travels with the description on the same terms and is put in
+     * before anything can refuse for the same reason: an instance that failed
+     * to come up answers with a record claiming no coefficients at all, which
+     * is what a record never loaded looks like, rather than with whatever the
+     * memory it was declared in contained. A record of nothing supports no
+     * corner enumeration, so a margin taken off it establishes nothing and
+     * refuses nothing -- which is the honest state for an instance that never
+     * accepted a description.
+     */
+    static const plant_parameter_budget_t NOTHING_DECLARED_WRONG;
+
+    state->budget = NOTHING_DECLARED_WRONG;
+    if (budget != NULL) {
+        state->budget = *budget;
+    }
+
+    /*
      * The bands are put into the state before anything can refuse, so that an
      * instance which failed to come up still answers what it was given rather
      * than whatever the memory it was declared in contained. Given none it
@@ -1122,6 +1245,19 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
      * counts as having reached it.
      */
     if (tolerance == NULL) {
+        state->faulted = true;
+        return false;
+    }
+
+    /*
+     * A control path with no budget is refused on exactly those terms. A
+     * description arriving without a statement of how far out its figures may
+     * be is not a description asserting that they are exact: it is one that has
+     * said nothing, and a loop brought up on it would command a target against
+     * a margin sized by an uncertainty that exists nowhere -- which is the
+     * state the assumed-error annotation exists to prevent.
+     */
+    if (budget == NULL) {
         state->faulted = true;
         return false;
     }
@@ -1337,6 +1473,46 @@ bool control_temperature_band(const control_state_t *state, int32_t *band_milli_
 
     *band_milli_c = state->tolerance.brew_temperature_band_milli_c;
     return true;
+}
+
+bool control_protection_margin(const control_state_t *state, float celsius,
+                               protection_margin_t *margin)
+{
+    if (state == NULL || margin == NULL || !is_a_temperature(celsius)) {
+        return false;
+    }
+
+    return widened_margin(state, celsius, margin);
+}
+
+bool control_protection_margin_corner(const control_state_t *state, float celsius, size_t which,
+                                      protection_margin_corner_t *corner)
+{
+    if (state == NULL || corner == NULL || !is_a_temperature(celsius)) {
+        return false;
+    }
+
+    protection_margin_probe_t probe;
+    const float rise_k = (celsius > CONTROL_COLD_REFERENCE_C) ? (celsius - CONTROL_COLD_REFERENCE_C)
+                                                             : 0.0f;
+
+    /*
+     * The same probe widened_margin builds, built here rather than shared
+     * through a field on the state: it is small, it is derived entirely from
+     * figures the state already holds, and a copy kept between commands would
+     * be a second statement of what the loop commands to hold a target with --
+     * one that goes stale the moment the target moves.
+     */
+    probe.protects = PLANT_QUANTITY_BREW_TEMPERATURE_C;
+    probe.heater = ACTUATION_CHANNEL_BREW_HEATER;
+    probe.held_at_target[0] = PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C;
+    probe.held_at_target[1] = PLANT_STATE_BREW_OUTLET_TEMPERATURE_C;
+    probe.held_count = 2u;
+    probe.target_c = celsius;
+    probe.holding_permille = as_drive_level(rise_k * CONTROL_STANDING_PERMILLE_PER_K);
+    probe.unwidened_c = (float)state->tolerance.brew_temperature_band_milli_c / 1000.0f;
+
+    return protection_margin_corner(&state->parameters, &state->budget, &probe, which, corner);
 }
 
 bool control_post_draw_match_band(const control_state_t *state, int32_t *band_milli_c)

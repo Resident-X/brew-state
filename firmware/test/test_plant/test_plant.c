@@ -2431,6 +2431,171 @@ static void test_the_assumed_error_of_every_coefficient_is_readable(void)
     }
 }
 
+/* --- Writing a coefficient by the position the budget record is indexed by -- */
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: a corner outside the
+/// range the structure declares admissible is refused rather than clamped back
+/// to the edge of it.
+///
+/// This is the safety-relevant half of plant_parameter_scale and nothing else
+/// asserts it. A record clamped back would be a machine the caller did not ask
+/// for, reported as though it were the corner it did: work sizing a protection
+/// bound against a corner has to be able to tell "the description does not admit
+/// that corner" from "here is the corner", and the two demand opposite
+/// responses. A clamp would answer true and hand back the second while meaning
+/// the first, and the bound would then be sized against a machine the
+/// description never claimed.
+static void test_a_scale_outside_the_declared_range_is_refused_rather_than_clamped(void)
+{
+    plant_parameters_t before = parameters;
+    plant_parameters_t after;
+
+    /*
+     * A factor no structure could admit at any position: whatever range a
+     * coefficient is declared within, this carries it out of it. The position
+     * swept is every one the structure has, so this does not turn on which
+     * coefficient happens to sit where.
+     */
+    for (size_t at = 0u; at < COEFFICIENT_COUNT; at++) {
+        after = before;
+        TEST_ASSERT_FALSE_MESSAGE(plant_parameter_scale(&after, at, 1.0e30f),
+                                  NOMINAL[at].name);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&before, &after, sizeof(after), NOMINAL[at].name);
+
+        after = before;
+        TEST_ASSERT_FALSE_MESSAGE(plant_parameter_scale(&after, at, -1.0e30f),
+                                  NOMINAL[at].name);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&before, &after, sizeof(after), NOMINAL[at].name);
+    }
+
+    /* And a factor that is not a number at all writes nothing either. */
+    after = before;
+    TEST_ASSERT_FALSE(plant_parameter_scale(&after, 0u, 0.0f / 0.0f));
+    TEST_ASSERT_FALSE(plant_parameter_scale(&after, 0u, 1.0f / 0.0f));
+    TEST_ASSERT_EQUAL_MEMORY(&before, &after, sizeof(after));
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: a corner inside the
+/// declared range is written, at the position the budget record is indexed by,
+/// and each position writes a different coefficient.
+///
+/// The complement of the case above, and it is what says the refusal there is a
+/// range check rather than a call that never writes anything. That every
+/// position writes somewhere different is asserted rather than assumed: two
+/// positions landing on one field would send a corner to a coefficient that is
+/// not the one the budget record's own index named, and every figure taken off
+/// that corner would be attributed to the wrong coefficient while reading
+/// perfectly plausibly.
+///
+/// A factor of exactly one is a corner of the machine itself and writes nothing,
+/// which is the case that separates "wrote the same value" from "wrote nothing
+/// at all".
+static void test_a_scale_inside_the_declared_range_writes_that_coefficient_alone(void)
+{
+    static plant_parameters_t scaled[COEFFICIENT_COUNT];
+
+    for (size_t at = 0u; at < COEFFICIENT_COUNT; at++) {
+        plant_parameters_t unchanged = parameters;
+
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_scale(&unchanged, at, 1.0f), NOMINAL[at].name);
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&parameters, &unchanged, sizeof(unchanged),
+                                         NOMINAL[at].name);
+
+        scaled[at] = parameters;
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_scale(&scaled[at], at, 0.9f), NOMINAL[at].name);
+        TEST_ASSERT_TRUE_MESSAGE(memcmp(&scaled[at], &parameters, sizeof(parameters)) != 0,
+                                 NOMINAL[at].name);
+    }
+
+    for (size_t at = 0u; at < COEFFICIENT_COUNT; at++) {
+        for (size_t other = at + 1u; other < COEFFICIENT_COUNT; other++) {
+            TEST_ASSERT_TRUE_MESSAGE(
+                memcmp(&scaled[at], &scaled[other], sizeof(parameters)) != 0,
+                "two positions wrote the same field, so a corner at one of them is a corner at "
+                "a coefficient the budget record did not name");
+        }
+    }
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: the seam refuses a
+/// position it does not have and a record it was given nowhere to write.
+///
+/// A position past the structure's last is the one a caller walking a budget
+/// record reaches when the record and the structure have come apart, and a
+/// write accepted there would be a write into whatever sits past the record.
+static void test_scaling_refuses_a_position_this_structure_does_not_have(void)
+{
+    plant_parameters_t scaled = parameters;
+
+    TEST_ASSERT_FALSE(plant_parameter_scale(&scaled, COEFFICIENT_COUNT, 1.0f));
+    TEST_ASSERT_FALSE(plant_parameter_scale(&scaled, COEFFICIENT_COUNT + 1u, 1.0f));
+    TEST_ASSERT_FALSE(plant_parameter_scale(NULL, 0u, 1.0f));
+    TEST_ASSERT_EQUAL_MEMORY(&parameters, &scaled, sizeof(scaled));
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: the position a
+/// coefficient occupies is answered by the name the description calls it, and
+/// nothing else is answered at all.
+///
+/// The bridge between the seam's two ways of naming a coefficient, exercised
+/// directly rather than only through the corner machinery that leans on it. Two
+/// coefficients answering the same position, or a position past the structure's
+/// count, would send a corner to the wrong coefficient silently.
+static void test_the_position_of_every_coefficient_is_answered_by_name(void)
+{
+    bool seen[COEFFICIENT_COUNT];
+    size_t at = 12345u;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        seen[i] = false;
+    }
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(NOMINAL[i].name, &at),
+                                 NOMINAL[i].name);
+        TEST_ASSERT_TRUE_MESSAGE(at < COEFFICIENT_COUNT, NOMINAL[i].name);
+        TEST_ASSERT_FALSE_MESSAGE(seen[at], "two coefficients answer the same position");
+        seen[at] = true;
+    }
+
+    at = 12345u;
+    TEST_ASSERT_FALSE(plant_parameter_position("not.a.coefficient", &at));
+    TEST_ASSERT_FALSE(plant_parameter_position("", &at));
+    TEST_ASSERT_FALSE(plant_parameter_position(NULL, &at));
+    TEST_ASSERT_FALSE(plant_parameter_position(NOMINAL[0].name, NULL));
+    TEST_ASSERT_EQUAL_UINT(12345u, at);
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: whether the
+/// coefficient at a position is one the supply drives is answered for every
+/// position the structure has, and refused past its last.
+///
+/// The one relationship between two coefficients this seam carries, exercised
+/// directly. A structure naming no such coefficient answers false for every
+/// position -- a statement about that structure rather than a refusal -- and
+/// the two are told apart here by the call answering true while writing false.
+static void test_whether_a_position_is_supply_driven_is_answered_for_every_one(void)
+{
+    unsigned driven_count = 0u;
+    bool driven = true;
+
+    for (size_t at = 0u; at < COEFFICIENT_COUNT; at++) {
+        driven = true;
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_supply_driven(at, &driven), NOMINAL[at].name);
+        if (driven) {
+            driven_count++;
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(driven_count > 1u,
+                             "this structure reports at most one supply-driven coefficient, so "
+                             "the joint corner it exists for moves nothing together");
+
+    driven = true;
+    TEST_ASSERT_FALSE(plant_parameter_supply_driven(COEFFICIENT_COUNT, &driven));
+    TEST_ASSERT_FALSE(plant_parameter_supply_driven(COEFFICIENT_COUNT + 1u, &driven));
+    TEST_ASSERT_FALSE(plant_parameter_supply_driven(0u, NULL));
+    TEST_ASSERT_TRUE(driven);
+}
+
 /// SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR.C2: a name the structure does not have is refused rather than answered
 static void test_a_coefficient_the_structure_does_not_have_is_refused(void)
 {
@@ -6839,6 +7004,11 @@ int main(void)
     RUN_TEST(test_the_assumed_error_of_every_coefficient_is_readable);
     RUN_TEST(test_a_coefficient_the_structure_does_not_have_is_refused);
     RUN_TEST(test_a_value_with_no_error_is_undeclared_rather_than_zero);
+    RUN_TEST(test_a_scale_outside_the_declared_range_is_refused_rather_than_clamped);
+    RUN_TEST(test_a_scale_inside_the_declared_range_writes_that_coefficient_alone);
+    RUN_TEST(test_scaling_refuses_a_position_this_structure_does_not_have);
+    RUN_TEST(test_the_position_of_every_coefficient_is_answered_by_name);
+    RUN_TEST(test_whether_a_position_is_supply_driven_is_answered_for_every_one);
     RUN_TEST(test_a_budget_never_loaded_answers_nothing);
     RUN_TEST(test_a_refused_description_yields_no_budget);
     RUN_TEST(test_an_assumed_error_that_cannot_stand_is_refused);

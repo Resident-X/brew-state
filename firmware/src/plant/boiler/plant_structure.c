@@ -100,6 +100,26 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
 }
 
 /*
+ * The one element rating this architecture has, and the supply that feeds it
+ * drives it on exactly the terms it drives the two on a machine with two
+ * elements: power goes as the square of the voltage across the element. It is
+ * named here rather than left out because a machine with one element still
+ * has a rating the supply moves; that the set has one member is a property of
+ * this architecture rather than an absence of the relationship.
+ */
+static const char *const SUPPLY_DRIVEN[] = {
+    "vessel.heater_power_w",
+};
+
+const char *const *plant_structure_supply_driven_parameters(size_t *count)
+{
+    if (count != NULL) {
+        *count = sizeof(SUPPLY_DRIVEN) / sizeof(SUPPLY_DRIVEN[0]);
+    }
+    return SUPPLY_DRIVEN;
+}
+
+/*
  * Steam pressure at a given vessel temperature.
  *
  * One expression, used both to bring an instance up and to advance it. Writing

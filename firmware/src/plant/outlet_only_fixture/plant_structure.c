@@ -29,6 +29,18 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
+/*
+ * This structure describes no machine, so no supply drives any of it, on the
+ * same terms the fixtures beside it state.
+ */
+const char *const *plant_structure_supply_driven_parameters(size_t *count)
+{
+    if (count != NULL) {
+        *count = 0u;
+    }
+    return NULL;
+}
+
 actuation_channel_set_t plant_structure_actuation_channels(void)
 {
     return PLANT_STRUCTURE_ACTUATION_CHANNELS;

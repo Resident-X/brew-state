@@ -26,6 +26,19 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
+/*
+ * This structure describes no machine, so no supply drives any of it. Its one
+ * coefficient is a gain a test chooses, and answering that a supply moved it
+ * would be a claim about a machine that does not exist.
+ */
+const char *const *plant_structure_supply_driven_parameters(size_t *count)
+{
+    if (count != NULL) {
+        *count = 0u;
+    }
+    return NULL;
+}
+
 void fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation, float seconds)
 {
     if (model == NULL || actuation == NULL) {

@@ -33,6 +33,7 @@
 #include "delivery_profile.h"
 #include "delivery_tolerance.h"
 #include "estimator.h"
+#include "protection_margin.h"
 
 /*
  * Shortest interval between two accepted steps, in milliseconds.
@@ -129,9 +130,20 @@ typedef enum {
  * states the drinking point -- the drinking-temperature window, then the
  * machine's authority against the draw asked for. A target is judged as
  * nothing-to-evaluate, then not-a-temperature, then the ceiling water itself
- * imposes, then -- where a delivery is already running and its profile states
- * the drinking point -- the same window, then that same authority bound where
- * a course is already running to be held against.
+ * imposes, then the margin the protection trip point demands once it has been
+ * widened for the declared model error, then -- where a delivery is already
+ * running and its profile states the drinking point -- the same window, then
+ * that same authority bound where a course is already running to be held
+ * against.
+ *
+ * The protection margin is asked ahead of the window and the authority bound
+ * for the reason the window is asked ahead of authority: it is a comparison
+ * against figures the machine's own description already supplies, while
+ * authority costs a settling probe of the plant model, and a command that fails
+ * the cheaper question is refused without paying for the dearer one. It follows
+ * saturation rather than preceding it because a target that is not liquid water
+ * has failed a question about water, and reporting it as a protection margin
+ * would send a reader to argue about a thermostat.
  *
  * The window is checked ahead of authority at both entry points because it
  * costs nothing to ask -- a comparison against two figures already in the
@@ -213,7 +225,32 @@ typedef enum {
      * this drink stops being one a person should be handed, on a machine that
      * may be perfectly capable of holding a target above it.
      */
-    CONTROL_ADMISSION_TARGET_ABOVE_DRINKING_CEILING
+    CONTROL_ADMISSION_TARGET_ABOVE_DRINKING_CEILING,
+    /*
+     * The target sits inside the margin that stands between a commanded
+     * temperature and the hardware protection trip point, once that margin has
+     * been widened for the error the machine's own description declares it may
+     * be wrong by -- see protection_margin.h, and CONTROL_PROTECTION_TRIP_C in
+     * control.c for the trip point itself.
+     *
+     * Its own bound rather than a second report of
+     * CONTROL_ADMISSION_TARGET_OVER_SATURATION, on the same terms the drinking
+     * ceiling is its own: saturation is where water stops being liquid on any
+     * machine, and this is where a target stops leaving room for the model to
+     * be as wrong as the description says it may be before a device that opens
+     * on the truth removes the power. The two are unrelated figures and either
+     * may be the tighter one on a given machine.
+     *
+     * `requested` carries the target asked for and `available` the trip point
+     * less the margin sized for that target, so a caller is told what it may
+     * ask for rather than only that it asked for too much. It is the highest
+     * target this refusal leaves room for and not a fixed point of the
+     * refusal: the margin follows the target, because a machine held higher
+     * carries a larger load for the same declared error to be a fraction of,
+     * so a target named at that figure is judged against its own, slightly
+     * narrower margin when it arrives.
+     */
+    CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN
 } control_admission_bound_t;
 
 /*
@@ -390,6 +427,20 @@ typedef struct {
      */
     plant_parameters_t parameters;
     /*
+     * What that same description says each of its coefficients may be wrong by,
+     * held beside the description itself and for the same reason: the margin a
+     * commanded target has to keep from the protection trip point is sized from
+     * it, and a loop that had to be handed the figures again at every command
+     * would be a loop whose margin could be sized against a different
+     * description from the one it is driving.
+     *
+     * It is a separate record rather than part of the description above because
+     * the plant seam keeps the two separate: a description says what the machine
+     * is and this says how far out those figures may be, and most consumers of
+     * the first want nothing to do with the second.
+     */
+    plant_parameter_budget_t budget;
+    /*
      * The delivery currently under way, held by value for the reason the
      * estimator above is: no allocator exists to point at one instead. It is
      * meaningful only while `delivery_running` is set; a profile copied in
@@ -499,6 +550,12 @@ typedef struct {
  * limits record is what that estimator will believe a reading to be, carried in
  * through here rather than reached by a path of their own, so that the control
  * path and the state it acts on are brought up from the same description. The
+ * budget record travels beside the parameter record because it is the same
+ * description read for something else -- how far out each of those figures may
+ * be -- and it is required rather than optional: a loop that does not know what
+ * its model may be wrong by cannot size the margin that stands between a
+ * commanded target and a device that removes the power, and a margin sized
+ * against an uncertainty nobody stated is one nobody can check. The
  * tolerance record travels the same way and for a different reason: it is not a
  * property of the machine at all, but of the drink, and the control path is
  * given it rather than compiling it in so that changing what a delivery is held
@@ -523,13 +580,61 @@ typedef struct {
  * delivery can be commanded", rather than divided by later.
  *
  * Returns false when the interface refuses an off command, when no usable
- * record is given, or when the estimator refuses the structure this build
- * compiled. The last two leave the fault latched as an untrustworthy reading
- * does: a control law that cannot obtain the temperature it acts on must not
- * drive the heater, and it must not start driving it later either.
+ * record is given -- including no budget record -- or when the estimator
+ * refuses the structure this build compiled. Those leave the fault latched as
+ * an untrustworthy reading does: a control law that cannot obtain the
+ * temperature it acts on must not drive the heater, and it must not start
+ * driving it later either.
  */
 bool control_init(control_state_t *state, const plant_parameters_t *parameters,
-                  const estimator_limits_t *limits, const delivery_tolerance_t *tolerance);
+                  const plant_parameter_budget_t *budget, const estimator_limits_t *limits,
+                  const delivery_tolerance_t *tolerance);
+
+/*
+ * The margin this instance requires between a commanded target and the
+ * protection trip point, for a target it is asked about, and the enumeration
+ * that margin came out of.
+ *
+ * A read rather than a figure a caller works out for itself, on the same terms
+ * control_temperature_band is one: the margin the loop enforces is sized from
+ * the description this instance was brought up with, and a caller computing its
+ * own would be holding a machine to a figure the loop is not using. What comes
+ * back is the whole account -- the un-widened gap, the worst corner, how many
+ * corners were enumerated, how many ran and how many cost the gap anything --
+ * so a record of the mapping is taken off the same computation the refusal is
+ * taken off rather than off a second one beside it.
+ *
+ * It is asked about a target rather than answered once, because the margin
+ * genuinely follows the target: what the loop commands to hold a temperature is
+ * what a wrong coefficient acts through, and a machine held higher carries a
+ * larger load for the same error to be a fraction of.
+ *
+ * Returns false, writing nothing, for a null state or destination, for a target
+ * that is not a finite temperature, or where the description this instance
+ * holds will not support an enumeration at all -- which is a structure whose
+ * budget record was never loaded, and is not a margin of nothing.
+ */
+bool control_protection_margin(const control_state_t *state, float celsius,
+                               protection_margin_t *margin);
+
+/*
+ * One corner of the enumeration that margin came out of, by its position in
+ * that enumeration.
+ *
+ * The corners are what the figure above is the worst of, and a record of the
+ * mapping from declared error to margin is a record of them: what each corner
+ * moves, at what fraction, which end of it, whether it produced a machine at
+ * all, and what it cost the gap. Read through this rather than recomputed by a
+ * caller, so a record and the refusal it explains come off one enumeration.
+ *
+ * How many there are is protection_margin_corner_count of the budget this
+ * instance holds, which a caller reaches by walking until this refuses.
+ *
+ * Returns false, writing nothing, on the same terms the figure above does, and
+ * additionally for a position at or past the end of the enumeration.
+ */
+bool control_protection_margin_corner(const control_state_t *state, float celsius, size_t which,
+                                      protection_margin_corner_t *corner);
 
 /*
  * Name the temperature the water reaching the coffee is to be driven toward.

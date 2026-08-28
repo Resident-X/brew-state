@@ -60,6 +60,7 @@
 #include <stdint.h>
 
 #include "estimator_limits.h"
+#include "protection_margin.h"
 #include "steam_control_declaration.h"
 
 /* Why a step drove the steam channels the way it did, or did not drive them. */
@@ -141,6 +142,17 @@ typedef struct {
     /* What the previous step actually got onto each channel. */
     uint16_t heater_permille;
     uint16_t feed_permille;
+
+    /*
+     * The description this instance was brought up against and what that
+     * description says its own figures may be wrong by, held by value on the
+     * same terms every other record here is. They are kept rather than read and
+     * discarded so that the margin a caller asks about is taken off the same
+     * description the loop was admitted against, rather than off whatever the
+     * caller happens to be holding when it asks.
+     */
+    plant_parameters_t parameters;
+    plant_parameter_budget_t budget;
 } steam_control_state_t;
 
 /*
@@ -154,14 +166,60 @@ typedef struct {
  * own records, so a change to either is a change to a declaration rather than
  * to this file.
  *
+ * The description and its budget arrive here for a third reason, and it is not
+ * that this loop drives from a model -- it does not, and nothing here steps
+ * one. It is that the ready target the declaration names is a commanded
+ * temperature, and the steam block carries hardware protection of its own; how
+ * far below that protection a target has to sit is sized from what the
+ * description says its own figures may be wrong by. A loop handed a target and
+ * no statement of how wrong its model may be would be commanding against a
+ * margin nobody can check -- see protection_margin.h, and
+ * STEAM_CONTROL_PROTECTION_TRIP_C in steam_control.c for the trip point.
+ *
  * Returns false, leaving the outputs commanded off but the instance refusing
- * every subsequent step, when the interface refuses either off command or when
- * either record is null: a loop that cannot obtain the figures it acts on, or
- * the bounds a reading is judged by, must not drive a heater on a whim it
- * invented for itself.
+ * every subsequent step, when the interface refuses either off command, when
+ * any record is null, or when the declared ready target does not leave the
+ * widened margin between itself and that trip point: a loop that cannot obtain
+ * the figures it acts on, or the bounds a reading is judged by, must not drive
+ * a heater on a whim it invented for itself -- and one asked to hold a block at
+ * a temperature the declared model error could carry into its own protection
+ * must not start either.
  */
 bool steam_control_init(steam_control_state_t *state, const estimator_limits_t *limits,
-                        const steam_control_declaration_t *declaration);
+                        const steam_control_declaration_t *declaration,
+                        const plant_parameters_t *parameters,
+                        const plant_parameter_budget_t *budget);
+
+/*
+ * The margin this instance requires between the ready target it was brought up
+ * with and the steam side's protection trip point, and the enumeration that
+ * margin came out of.
+ *
+ * A read rather than a figure a caller works out for itself, on the same terms
+ * control_protection_margin is one: the margin the loop was admitted against is
+ * sized from the description it was handed, and a caller computing its own
+ * would be holding a machine to a figure this loop never used.
+ *
+ * Returns false, writing nothing, for a null state or destination, for an
+ * instance this loop cannot vouch for, or where the description it holds will
+ * not support a corner enumeration at all.
+ */
+bool steam_control_protection_margin(const steam_control_state_t *state,
+                                     protection_margin_t *margin);
+
+/*
+ * One corner of the enumeration that margin came out of, by its position in
+ * that enumeration, on exactly the terms control_protection_margin_corner
+ * reads the coffee side's own: the corners are what the figure above is the
+ * worst of, and a record of the mapping from declared error to margin is a
+ * record of them. Read through this rather than recomputed by a caller, so a
+ * record and the margin it explains come off one enumeration.
+ *
+ * Returns false, writing nothing, on the same terms the figure above does, and
+ * additionally for a position at or past the end of the enumeration.
+ */
+bool steam_control_protection_margin_corner(const steam_control_state_t *state, size_t which,
+                                            protection_margin_corner_t *corner);
 
 /*
  * Advance the loop by one step: read the wand's microswitch and both steam

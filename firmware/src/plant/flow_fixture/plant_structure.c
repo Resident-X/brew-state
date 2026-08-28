@@ -28,6 +28,19 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
     return SPECS;
 }
 
+/*
+ * This structure describes no machine, so no supply drives any of it, on the
+ * same terms the fixture beside it states: its coefficients are figures a
+ * test chooses rather than properties of anything fed from a supply.
+ */
+const char *const *plant_structure_supply_driven_parameters(size_t *count)
+{
+    if (count != NULL) {
+        *count = 0u;
+    }
+    return NULL;
+}
+
 void flow_fixture_accumulate(plant_model_t *model, const plant_actuation_t *actuation,
                              float seconds)
 {

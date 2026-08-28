@@ -113,6 +113,28 @@ const plant_parameter_spec_t *plant_structure_parameter_specs(size_t *count)
 }
 
 /*
+ * The two element ratings, which are not independent of one another. Both
+ * elements are fed from the one mains supply, and an element's power goes as
+ * the square of the voltage across it, so a supply that sags makes both of
+ * them low at once and never one of them alone. Nothing else this structure
+ * carries is driven that way: a thermal mass, a loss coefficient and a
+ * saturation slope are properties of a casting and of water, and no supply
+ * moves them.
+ */
+static const char *const SUPPLY_DRIVEN[] = {
+    "brew.heater_power_w",
+    "steam.heater_power_w",
+};
+
+const char *const *plant_structure_supply_driven_parameters(size_t *count)
+{
+    if (count != NULL) {
+        *count = sizeof(SUPPLY_DRIVEN) / sizeof(SUPPLY_DRIVEN[0]);
+    }
+    return SUPPLY_DRIVEN;
+}
+
+/*
  * Steam pressure at a given steam temperature.
  *
  * One expression, used both to bring an instance up and to advance it. Writing

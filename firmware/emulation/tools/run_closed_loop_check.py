@@ -80,6 +80,7 @@ def parse_findings(output):
         "startup": None,
         "init": None,
         "parameters_loaded": None,
+        "budget_loaded": None,
         "limits_loaded": None,
         "tolerance_loaded": None,
         "control_init": None,
@@ -137,6 +138,8 @@ def parse_findings(output):
             findings["init"] = int(parts[1])
         elif kind == "parameters-loaded":
             findings["parameters_loaded"] = int(parts[1]) != 0
+        elif kind == "budget-loaded":
+            findings["budget_loaded"] = int(parts[1]) != 0
         elif kind == "limits-loaded":
             findings["limits_loaded"] = int(parts[1]) != 0
         elif kind == "tolerance-loaded":

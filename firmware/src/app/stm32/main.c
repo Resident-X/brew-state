@@ -41,6 +41,7 @@ int main(void)
 {
     control_state_t state;
     plant_parameters_t parameters;
+    plant_parameter_budget_t budget;
     plant_parameter_error_t description_fault;
     estimator_limits_t limits;
     estimator_limits_error_t limits_fault;
@@ -58,16 +59,22 @@ int main(void)
     }
 
     if (!plant_parameters_load(reference_description, reference_description_length, &parameters,
-                               &description_fault)) {
+                               &description_fault) ||
+        !plant_parameter_budget_load(reference_description, reference_description_length, &budget,
+                                     &description_fault)) {
         /*
          * The description this artefact carries is not one the loader accepts,
          * so there is no model of this machine. Stop rather than continue on
          * whatever a partly-filled record happens to hold: a machine running
          * against coefficients nobody supplied is one whose predictions mean
          * nothing, and it has no symptom that distinguishes it from a machine
-         * whose model is merely wrong. What the machine should do about being
-         * left without a model, beyond not proceeding, is a fault-response
-         * concern answered elsewhere.
+         * whose model is merely wrong. The same text is read a second time for
+         * what it says those coefficients may be wrong by, and a failure of
+         * either stops here: a description whose figures load and whose
+         * uncertainty does not is one the loop would command a target against a
+         * margin sized by nothing. What the machine should do about being left
+         * without a model, beyond not proceeding, is a fault-response concern
+         * answered elsewhere.
          */
         for (;;) {
         }
@@ -121,7 +128,7 @@ int main(void)
      * refusal here leaves the heater commanded off and the fault latched, and
      * the loop below keeps it there.
      */
-    (void)control_init(&state, &parameters, &limits, &tolerance);
+    (void)control_init(&state, &parameters, &budget, &limits, &tolerance);
 
     for (;;) {
         (void)control_step(&state);

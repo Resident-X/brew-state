@@ -179,7 +179,7 @@ void setUp(void)
     load_the_reference_description();
     load_the_reference_limits();
     load_the_reference_tolerance();
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
 
     /*
      * A target is named here because most of what follows is about a machine
@@ -267,7 +267,7 @@ static void test_drive_level_stays_within_full_scale_at_extremes(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &permissive, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &permissive, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
 
     for (unsigned i = 0; i < sizeof(readings) / sizeof(readings[0]); i++) {
@@ -388,7 +388,7 @@ static void test_step_interval_survives_the_clock_wrapping(void)
 static void test_initialisation_commands_the_heater_off(void)
 {
     hw_sim_reset();
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
     TEST_ASSERT_EQUAL_UINT32(1u, hw_sim_output_write_count(ACTUATION_CHANNEL_BREW_HEATER));
 }
@@ -397,7 +397,7 @@ static void test_initialisation_commands_the_heater_off(void)
  * a caller, and it must not become a memory error the analysis stage reports. */
 static void test_null_state_is_refused_rather_than_dereferenced(void)
 {
-    TEST_ASSERT_FALSE(control_init(NULL, &parameters, &limits, &tolerance));
+    TEST_ASSERT_FALSE(control_init(NULL, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_EQUAL(CONTROL_STEP_SENSOR_INVALID, control_step(NULL));
 }
 
@@ -641,7 +641,7 @@ static void test_initialisation_without_a_record_leaves_the_heater_off_and_latch
 {
     hw_sim_reset();
 
-    TEST_ASSERT_FALSE(control_init(&state, NULL, &limits, &tolerance));
+    TEST_ASSERT_FALSE(control_init(&state, NULL, &budget, &limits, &tolerance));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
     TEST_ASSERT_TRUE(state.faulted);
 
@@ -650,6 +650,49 @@ static void test_initialisation_without_a_record_leaves_the_heater_off_and_latch
         TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
         TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
     }
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: a control path handed
+/// a description and no statement of how far out its figures may be is refused
+/// on exactly the terms one handed no description is.
+///
+/// A description arriving without that statement is not one asserting its
+/// figures are exact: it is one that has said nothing, and a loop brought up on
+/// it would command a target against a margin sized by an uncertainty that
+/// exists nowhere. The instance is left faulted rather than merely answering
+/// false, because a caller that ignored the answer would otherwise go on
+/// stepping a loop enforcing no margin at all.
+///
+/// And the margin reads answer nothing on such an instance, which is what says
+/// the refusal is not merely at the door: a loop that refused to come up and
+/// then reported a margin would be reporting one nothing is enforcing.
+static void test_initialisation_without_a_budget_leaves_the_heater_off_and_latched(void)
+{
+    protection_margin_t margin;
+    protection_margin_corner_t corner;
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+
+    TEST_ASSERT_FALSE(control_init(&state, &parameters, NULL, &limits, &tolerance));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    TEST_ASSERT_TRUE(state.faulted);
+
+    TEST_ASSERT_FALSE_MESSAGE(control_protection_margin(&state, BREW_TARGET_C, &margin),
+                              "an instance brought up without a budget reported a margin");
+    TEST_ASSERT_FALSE(control_protection_margin_corner(&state, BREW_TARGET_C, 0u, &corner));
+
+    for (int i = 0; i < 4; i++) {
+        hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+        TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+        TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+    }
+
+    /* And the reads refuse a null state and a null destination on the same terms. */
+    TEST_ASSERT_FALSE(control_protection_margin(NULL, BREW_TARGET_C, &margin));
+    TEST_ASSERT_FALSE(control_protection_margin(&state, BREW_TARGET_C, NULL));
+    TEST_ASSERT_FALSE(control_protection_margin_corner(NULL, BREW_TARGET_C, 0u, &corner));
+    TEST_ASSERT_FALSE(control_protection_margin_corner(&state, BREW_TARGET_C, 0u, NULL));
 }
 
 /// SOL-UNMEASURED-STATE-RECONSTRUCTION.C10: The estimator receives its
@@ -728,7 +771,7 @@ static void test_the_first_accepted_step_is_advanced_by_the_declared_interval(vo
     load_the_reference_description();
     load_the_reference_limits();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
 
@@ -1022,6 +1065,19 @@ static void report_what_the_machine_reads(void)
  * can differ: an estimator and a machine that cannot be told apart make every
  * assertion below unfalsifiable.
  */
+/*
+ * What the loop is told its description may be wrong by when it is brought up.
+ *
+ * It is the shipped budget for every case here but one, and it is a pointer
+ * rather than an argument on bring_the_loop_up because exactly one case wants
+ * to move it: the one asking what happens once the widened protection margin
+ * becomes the bound that stops a commanded target. Threading an argument
+ * through every caller for that would put the uncertainty question in front of
+ * cases that have nothing to do with it. Set it back to the shipped record
+ * before leaving, or every case after it inherits a description nobody ships.
+ */
+static const plant_parameter_budget_t *the_budget_the_loop_believes = NULL;
+
 static void bring_the_loop_up(const plant_parameters_t *estimator_reconstructs_from,
                               const plant_parameters_t *the_machine_is, float mass_c,
                               float outlet_c)
@@ -1037,7 +1093,11 @@ static void bring_the_loop_up(const plant_parameters_t *estimator_reconstructs_f
     delivered_flow_status = HW_READING_VALID;
     report_what_the_machine_reads();
 
-    TEST_ASSERT_TRUE(control_init(&state, estimator_reconstructs_from, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, estimator_reconstructs_from,
+                                  the_budget_the_loop_believes == NULL
+                                      ? &budget
+                                      : the_budget_the_loop_believes,
+                                  &limits, &tolerance));
     TEST_ASSERT_TRUE(plant_model_set_state(
         &state.estimator.model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, mass_c));
     TEST_ASSERT_TRUE(plant_model_set_state(&state.estimator.model,
@@ -1202,7 +1262,7 @@ static void test_a_different_declaration_changes_the_band_with_no_source_edit(vo
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &narrowed));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrowed));
     TEST_ASSERT_TRUE(control_temperature_band(&state, &band));
 
     TEST_ASSERT_EQUAL_INT32(400, band);
@@ -1329,7 +1389,7 @@ static void test_the_band_is_required_rather_than_assumed(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_FALSE(control_init(&state, &parameters, &limits, NULL));
+    TEST_ASSERT_FALSE(control_init(&state, &parameters, &budget, &limits, NULL));
     TEST_ASSERT_TRUE(state.faulted);
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 }
@@ -1351,7 +1411,7 @@ static void test_two_targets_in_one_binary_produce_two_duty_trajectories(void)
     for (unsigned run = 0u; run < 2u; run++) {
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 80000);
-        TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+        TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
         TEST_ASSERT_TRUE(control_command_temperature(&state, targets[run]));
         place_reconstruction_at(80000);
 
@@ -1377,7 +1437,7 @@ static void test_a_machine_with_no_target_commanded_drives_nothing(void)
 {
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     place_reconstruction_at(20000);
 
     for (unsigned step = 0u; step < 4u; step++) {
@@ -1470,7 +1530,7 @@ static void test_perturbing_the_outlet_time_constant_alone_changes_the_duty(void
 
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-        TEST_ASSERT_TRUE(control_init(&state, &perturbed, &limits, &tolerance));
+        TEST_ASSERT_TRUE(control_init(&state, &perturbed, &budget, &limits, &tolerance));
         TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
         TEST_ASSERT_TRUE(plant_model_set_state(
             &state.estimator.model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 88.0f));
@@ -2113,7 +2173,7 @@ static void test_control_command_delivery_refuses_a_structure_that_draws_nothing
 {
     control_state_t local_state;
     const plant_parameters_t no_flow = parameters_from(description_with("pump.flow_ml_per_s", "0"));
-    TEST_ASSERT_TRUE(control_init(&local_state, &no_flow, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&local_state, &no_flow, &budget, &limits, &tolerance));
 
     const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
@@ -2776,7 +2836,7 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
     /* The commanded rate is 2000 milli-ml/s; the injected reading is 500 short of it. */
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &wide_tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &wide_tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
@@ -2790,7 +2850,7 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &narrow_tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrow_tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
@@ -2887,7 +2947,7 @@ static void test_a_delivery_on_an_untargeted_machine_does_not_advance(void)
 {
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
 
@@ -3739,7 +3799,7 @@ static void test_a_refusal_names_the_bound_it_crossed_and_the_figures(void)
      */
     control_state_t drawless;
     const plant_parameters_t no_flow = parameters_from(description_with("pump.flow_ml_per_s", "0"));
-    TEST_ASSERT_TRUE(control_init(&drawless, &no_flow, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&drawless, &no_flow, &budget, &limits, &tolerance));
     TEST_ASSERT_FALSE(control_command_delivery_reporting(&drawless, &ordinary, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_NO_MACHINE_DESCRIBED, admission.bound);
 
@@ -4852,7 +4912,7 @@ static float largest_rate_the_machine_holds(float target_c)
 {
     control_state_t asking;
 
-    TEST_ASSERT_TRUE(control_init(&asking, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&asking, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&asking, target_c));
 
     float admitted = 0.0f;
@@ -5024,7 +5084,7 @@ static void test_a_different_declaration_changes_the_post_draw_band_alone(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &narrowed));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrowed));
     TEST_ASSERT_TRUE(control_post_draw_match_band(&state, &band));
     TEST_ASSERT_TRUE(control_temperature_band(&state, &brew_band));
 
@@ -5672,7 +5732,7 @@ static void test_a_different_declaration_changes_the_drinking_window_with_no_sou
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &raised));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &raised));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 65.0f));
     TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &course, &admission),
                               "sixty-five degrees was admitted against a seventy-degree floor");
@@ -5680,7 +5740,7 @@ static void test_a_different_declaration_changes_the_drinking_window_with_no_sou
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 65.0f));
     TEST_ASSERT_TRUE_MESSAGE(
         control_command_delivery_reporting(&state, &course, &admission),
@@ -5705,7 +5765,7 @@ static void test_a_target_below_the_floor_is_refused_in_either_arrival_order(voi
     /* The target is named first, and the profile arrives second. */
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 50.0f));
     TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &course, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
@@ -5715,7 +5775,7 @@ static void test_a_target_below_the_floor_is_refused_in_either_arrival_order(voi
     /* The profile arrives first, and the target is named second. */
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
     TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, 50.0f, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
@@ -5738,7 +5798,7 @@ static void test_a_target_at_the_ceiling_is_refused(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, ceiling_c));
     TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &course, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_ABOVE_DRINKING_CEILING, admission.bound);
@@ -5759,7 +5819,7 @@ static void test_an_extraction_gains_nothing_from_the_drinking_window(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 50.0f));
     TEST_ASSERT_TRUE_MESSAGE(
         control_command_delivery_reporting(&state, &extraction, &admission),
@@ -6065,7 +6125,7 @@ static void test_the_rate_given_up_is_reported_via_control_delivery_yield(void)
 
     control_state_t clean;
     control_yield_t no_yield;
-    TEST_ASSERT_TRUE(control_init(&clean, &parameters, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&clean, &parameters, &budget, &limits, &tolerance));
     TEST_ASSERT_TRUE(control_delivery_yield(&clean, &no_yield));
     TEST_ASSERT_FALSE_MESSAGE(no_yield.yielded,
                               "a machine that has run no delivery already reports a yield");
@@ -6895,6 +6955,1318 @@ static void test_a_target_below_the_drinking_floor_is_refused_against_a_held_dra
                              "the waiting demand was dropped by a target that was itself refused");
 }
 
+/* --- The margin a commanded target keeps from the protection trip point ---- */
+
+/*
+ * The reference description with the assumed error against every coefficient
+ * rewritten: the coefficients named keep the fraction stated for them, and
+ * every other coefficient loses its annotation entirely, so the description
+ * says nothing at all about how far out that one may be.
+ *
+ * Rewritten as text and handed back to the same loader, on exactly the terms
+ * description_with above rewrites a value: the assumed error is part of the
+ * description's grammar, and a suite that reached into the budget record to
+ * change a fraction would be exercising an arrangement no description could
+ * produce. The origin annotation is carried across untouched, because where a
+ * figure came from does not stop being true because a test asked what would
+ * happen if it were known better or worse.
+ *
+ * A coefficient not named here loses its error rather than keeping it at
+ * nothing, and the two are deliberately different: an error of nothing is the
+ * description saying the value is exact, and no annotation at all is the
+ * description saying nothing -- which is what a case isolating one coefficient
+ * wants of all the others.
+ */
+static const char *description_declaring(const char *const *names, const float *errors,
+                                         size_t count)
+{
+    static char rewritten[sizeof(description_text)];
+    size_t written = 0u;
+    size_t at = 0u;
+
+    while (at < description_length) {
+        size_t end = at;
+        while (end < description_length && description_text[end] != '\n') {
+            end++;
+        }
+
+        size_t cursor = at;
+        while (cursor < end && (description_text[cursor] == ' ' ||
+                                description_text[cursor] == '\t')) {
+            cursor++;
+        }
+
+        /* The name runs to the first blank or to the assignment. */
+        size_t name_end = cursor;
+        while (name_end < end && description_text[name_end] != ' ' &&
+               description_text[name_end] != '\t' && description_text[name_end] != '=') {
+            name_end++;
+        }
+
+        size_t equals = name_end;
+        while (equals < end && (description_text[equals] == ' ' ||
+                                description_text[equals] == '\t')) {
+            equals++;
+        }
+
+        const bool assigns = cursor < end && description_text[cursor] != '#' &&
+                             name_end > cursor && equals < end && description_text[equals] == '=';
+        if (!assigns) {
+            written += (size_t)snprintf(&rewritten[written], sizeof(rewritten) - written, "%.*s\n",
+                                        (int)(end - at), &description_text[at]);
+            TEST_ASSERT_TRUE(written < sizeof(rewritten));
+            at = (end < description_length) ? end + 1u : description_length;
+            continue;
+        }
+
+        /* The value runs from past the assignment to the first annotation. */
+        size_t value = equals + 1u;
+        while (value < end && (description_text[value] == ' ' ||
+                               description_text[value] == '\t')) {
+            value++;
+        }
+        size_t value_end = value;
+        while (value_end < end && description_text[value_end] != '~' &&
+               description_text[value_end] != '@') {
+            value_end++;
+        }
+        size_t origin = value_end;
+        while (origin < end && description_text[origin] != '@') {
+            origin++;
+        }
+        while (value_end > value && (description_text[value_end - 1u] == ' ' ||
+                                     description_text[value_end - 1u] == '\t')) {
+            value_end--;
+        }
+
+        const char *declared = NULL;
+        char fraction[32];
+        for (size_t which = 0u; which < count; which++) {
+            if (strlen(names[which]) == (size_t)(name_end - cursor) &&
+                memcmp(names[which], &description_text[cursor],
+                       (size_t)(name_end - cursor)) == 0) {
+                (void)snprintf(fraction, sizeof(fraction), " ~ %.6f", (double)errors[which]);
+                declared = fraction;
+            }
+        }
+
+        written += (size_t)snprintf(&rewritten[written], sizeof(rewritten) - written,
+                                    "%.*s = %.*s%s %.*s\n", (int)(name_end - cursor),
+                                    &description_text[cursor], (int)(value_end - value),
+                                    &description_text[value], declared == NULL ? "" : declared,
+                                    (int)(end - origin), &description_text[origin]);
+        TEST_ASSERT_TRUE(written < sizeof(rewritten));
+        at = (end < description_length) ? end + 1u : description_length;
+    }
+    return rewritten;
+}
+
+static plant_parameter_budget_t budget_from(const char *text)
+{
+    plant_parameter_budget_t built;
+    plant_parameter_error_t fault;
+
+    TEST_ASSERT_TRUE_MESSAGE(plant_parameter_budget_load(text, strlen(text), &built, &fault),
+                             "the suite's own description was refused by the budget loader");
+    return built;
+}
+
+/*
+ * The margin a loop brought up against a description of the suite's own asks
+ * of a target. The loop is the subject rather than protection_margin.h
+ * directly, because what is under test is the figure the controller enforces
+ * and not a computation standing beside it.
+ */
+static protection_margin_t margin_for(const char *description, float target_c)
+{
+    const plant_parameters_t believed = parameters_from(description);
+    const plant_parameter_budget_t declared = budget_from(description);
+    protection_margin_t margin;
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_protection_margin(&state, target_c, &margin));
+    return margin;
+}
+
+/* The margin against a description declaring one fraction on one coefficient. */
+static protection_margin_t margin_declaring_one(const char *name, float fraction, float target_c)
+{
+    const char *const names[] = {name};
+    const float fractions[] = {fraction};
+
+    return margin_for(description_declaring(names, fractions, 1u), target_c);
+}
+
+/*
+ * The target the margin is asked about throughout. It is the suite's ordinary
+ * brew target, which is what a machine is actually commanded to; the cases
+ * below that are about the refusal itself name their own.
+ */
+#define MARGIN_TARGET_C BREW_TARGET_C
+
+/*
+ * The coefficients of the reference description that reach the brew block's
+ * own temperature, and therefore have a path to the gap between a commanded
+ * target and the trip point.
+ *
+ * Named here as the subjects of a sweep rather than as an exclusion list the
+ * margin consults: nothing in the control path knows these names, and a
+ * coefficient's contribution is nothing because its corner moves the protected
+ * quantity nowhere rather than because anything left it out. What this table
+ * is for is the opposite claim -- that the ones that do have a path are
+ * actually weighed -- which cannot be made by a sweep that does not name them.
+ */
+static const char *const REACHES_THE_TRIP_POINT_GAP[] = {
+    "brew.heater_power_w",
+    "brew.loss_w_per_k",
+    "ambient_temperature_c",
+};
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The commanded margin
+/// against the protection trip point widens monotonically with each declared
+/// coefficient's model error, and is strictly larger than the un-widened gap
+/// wherever a coefficient with a path to that gap carries a nonzero declared
+/// error.
+///
+/// Each coefficient that reaches the brew block is taken on its own, with
+/// every other coefficient's annotation dropped so the description says
+/// nothing about them, and its declared error is walked upward. Two things
+/// have to hold across that walk and they are different claims: the margin
+/// never falls as the declared error grows, and it stands strictly above the
+/// un-widened gap at every nonzero fraction. A margin that ignored the budget
+/// entirely would satisfy the first and fail the second; one that answered
+/// only whether any error was declared would satisfy the second and fail the
+/// first.
+///
+/// The description declaring the coefficient exact is walked as well, and is
+/// required to give exactly the un-widened gap. That is the falsifiable end of
+/// the mapping: a computation that widened by some fixed allowance whenever it
+/// was asked would pass everything above it and fail here.
+static void test_the_margin_widens_monotonically_with_each_declared_coefficients_error(void)
+{
+    static const float FRACTIONS[] = {0.0f, 0.02f, 0.05f, 0.1f, 0.2f, 0.4f};
+
+    for (size_t which = 0u;
+         which < sizeof(REACHES_THE_TRIP_POINT_GAP) / sizeof(REACHES_THE_TRIP_POINT_GAP[0]);
+         which++) {
+        const char *const name = REACHES_THE_TRIP_POINT_GAP[which];
+        float previous_c = 0.0f;
+
+        for (size_t at = 0u; at < sizeof(FRACTIONS) / sizeof(FRACTIONS[0]); at++) {
+            char message[224];
+            const protection_margin_t margin =
+                margin_declaring_one(name, FRACTIONS[at], MARGIN_TARGET_C);
+
+            (void)snprintf(message, sizeof(message),
+                           "%s declared %.3f out: the margin came back at %.4f degrees against an "
+                           "un-widened gap of %.4f, and %.4f at the fraction below it",
+                           name, (double)FRACTIONS[at], (double)margin.margin_c,
+                           (double)margin.unwidened_c, (double)previous_c);
+
+            if (at == 0u) {
+                TEST_ASSERT_EQUAL_FLOAT_MESSAGE(margin.unwidened_c, margin.margin_c, message);
+                TEST_ASSERT_EQUAL_UINT_MESSAGE(0u, margin.contributing, message);
+            } else {
+                TEST_ASSERT_TRUE_MESSAGE(margin.margin_c > margin.unwidened_c, message);
+                TEST_ASSERT_TRUE_MESSAGE(margin.margin_c >= previous_c, message);
+                TEST_ASSERT_TRUE_MESSAGE(margin.contributing > 0u, message);
+            }
+            previous_c = margin.margin_c;
+        }
+
+        /*
+         * And the walk actually moved: a mapping that came back at the same
+         * figure for a fiftieth and for two fifths would satisfy every
+         * inequality above while carrying no information at all.
+         */
+        const protection_margin_t widest = margin_declaring_one(name, 0.4f, MARGIN_TARGET_C);
+        const protection_margin_t narrowest = margin_declaring_one(name, 0.02f, MARGIN_TARGET_C);
+        TEST_ASSERT_TRUE_MESSAGE(widest.margin_c > narrowest.margin_c, name);
+    }
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: A corner that moves
+/// the trip-point gap the safe way contributes nothing, so the widened margin
+/// is never narrower than the un-widened gap.
+///
+/// One coefficient is declared and both of its corners are read back off the
+/// loop's own enumeration. The element written low leaves the machine cooler
+/// than the description says it would be -- further from the trip point, not
+/// nearer -- and has to cost the gap nothing; the same element written high
+/// has to cost it something. A computation taking the magnitude of each
+/// corner's movement, rather than only its degrading direction, passes every
+/// monotonicity assertion above and fails this: it would report the low corner
+/// as costing exactly what the high one does.
+static void test_a_corner_moving_the_gap_the_safe_way_contributes_nothing(void)
+{
+    const char *const names[] = {"brew.heater_power_w"};
+    const float fractions[] = {0.2f};
+    const char *const description = description_declaring(names, fractions, 1u);
+    const plant_parameters_t believed = parameters_from(description);
+    const plant_parameter_budget_t declared = budget_from(description);
+    unsigned downwards_costing = 0u;
+    unsigned upwards_costing = 0u;
+    unsigned ran = 0u;
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance));
+
+    for (size_t which = 0u;; which++) {
+        protection_margin_corner_t corner;
+
+        if (!control_protection_margin_corner(&state, MARGIN_TARGET_C, which, &corner)) {
+            break;
+        }
+        if (!corner.ran) {
+            continue;
+        }
+        ran++;
+        if (corner.reaching_downwards && corner.contribution_c > 0.0f) {
+            downwards_costing++;
+        }
+        if (!corner.reaching_downwards && corner.contribution_c > 0.0f) {
+            upwards_costing++;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(ran > 0u, "no corner ran at all, so nothing here was established");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(0u, downwards_costing,
+                                   "an element written low -- which leaves the machine cooler and "
+                                   "so further from the trip point -- was charged against the "
+                                   "margin, so the clamp is not being applied");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, upwards_costing,
+                                   "the element written high did not cost the trip-point gap "
+                                   "anything, so this case establishes nothing about the clamp");
+
+    const protection_margin_t margin = margin_declaring_one("brew.heater_power_w", 0.2f,
+                                                            MARGIN_TARGET_C);
+    TEST_ASSERT_TRUE_MESSAGE(margin.margin_c >= margin.unwidened_c,
+                             "the widened margin came back narrower than the un-widened gap");
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The figure is the
+/// largest single corner across the enumeration -- not a sum across every
+/// coefficient at once, and not their root-sum-square.
+///
+/// Per DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE this is the arithmetic
+/// the decision actually rules on, and the three candidates it separates are
+/// numerically distinct wherever two coefficients each cost the gap something:
+/// the worst single corner is strictly below their root-sum-square, which is
+/// strictly below their sum. So two coefficients are declared together, each
+/// is also declared alone, and the joint figure is required to be exactly the
+/// larger of the two on its own -- and strictly below both of the rejected
+/// combinations. An implementation that summed, or that combined in
+/// quadrature, passes every other case in this file and fails this one.
+static void test_the_margin_is_the_worst_single_corner_and_not_a_sum_or_a_root_sum_square(void)
+{
+    static const char *const BOTH[] = {"brew.loss_w_per_k", "brew.heater_power_w"};
+    static const float FRACTIONS[] = {0.3f, 0.2f};
+
+    const protection_margin_t first =
+        margin_declaring_one(BOTH[0], FRACTIONS[0], MARGIN_TARGET_C);
+    const protection_margin_t second =
+        margin_declaring_one(BOTH[1], FRACTIONS[1], MARGIN_TARGET_C);
+    const protection_margin_t together =
+        margin_for(description_declaring(BOTH, FRACTIONS, 2u), MARGIN_TARGET_C);
+
+    TEST_ASSERT_TRUE_MESSAGE(first.worst_corner_c > 0.0f && second.worst_corner_c > 0.0f,
+                             "one of the two coefficients cost the gap nothing on its own, so "
+                             "the three combination rules are not distinguishable here");
+
+    const float larger = first.worst_corner_c > second.worst_corner_c ? first.worst_corner_c
+                                                                     : second.worst_corner_c;
+    const float summed = first.worst_corner_c + second.worst_corner_c;
+    const float in_quadrature = sqrtf((first.worst_corner_c * first.worst_corner_c) +
+                                      (second.worst_corner_c * second.worst_corner_c));
+    char message[256];
+
+    (void)snprintf(message, sizeof(message),
+                   "the two corners cost %.4f and %.4f degrees on their own; together the margin "
+                   "widened by %.4f, against %.4f for the worst of them, %.4f in quadrature and "
+                   "%.4f summed",
+                   (double)first.worst_corner_c, (double)second.worst_corner_c,
+                   (double)together.worst_corner_c, (double)larger, (double)in_quadrature,
+                   (double)summed);
+
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-4f, larger, together.worst_corner_c, message);
+    TEST_ASSERT_TRUE_MESSAGE(together.worst_corner_c < in_quadrature - 1e-4f, message);
+    TEST_ASSERT_TRUE_MESSAGE(together.worst_corner_c < summed - 1e-4f, message);
+
+    /*
+     * And the corners were genuinely both enumerated, so the figure is the
+     * worst of a set rather than the only one that was looked at.
+     */
+    TEST_ASSERT_TRUE_MESSAGE(together.contributing >= 2u, message);
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: A coefficient with no
+/// established path to the trip-point gap contributes nothing, and does so by
+/// having nothing to contribute through rather than by being excluded.
+///
+/// A coefficient of the steam path is declared a wide error and nothing else
+/// is. Its corners are run -- the description admits them as machines and the
+/// probe answers for them -- and they cost the brew block's own gap nothing,
+/// so the margin comes back at exactly the un-widened gap. That the corners
+/// ran is asserted separately from what they cost: an implementation that
+/// skipped the coefficient by name would also report a margin of the
+/// un-widened gap, and the two are told apart only by whether anything was
+/// weighed at all.
+static void test_a_coefficient_with_no_path_to_the_gap_contributes_nothing(void)
+{
+    static const char *const NO_PATH[] = {"steam.pressure_fall_bar_per_ml",
+                                          "water.latent_heat_j_per_ml"};
+
+    for (size_t which = 0u; which < sizeof(NO_PATH) / sizeof(NO_PATH[0]); which++) {
+        char message[192];
+        const protection_margin_t margin = margin_declaring_one(NO_PATH[which], 0.5f,
+                                                                MARGIN_TARGET_C);
+
+        (void)snprintf(message, sizeof(message),
+                       "%s declared half out: %u of %u corners ran, %u cost the gap anything, and "
+                       "the margin came back at %.4f against an un-widened gap of %.4f",
+                       NO_PATH[which], (unsigned)margin.corners_run, (unsigned)margin.corners,
+                       (unsigned)margin.contributing, (double)margin.margin_c,
+                       (double)margin.unwidened_c);
+
+        TEST_ASSERT_TRUE_MESSAGE(margin.corners_run >= 2u, message);
+        TEST_ASSERT_EQUAL_UINT_MESSAGE(0u, margin.contributing, message);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(margin.unwidened_c, margin.margin_c, message);
+    }
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The enumeration
+/// carries one corner per stated joint dependence, run with those coefficients
+/// moving together, alongside the independent one-at-a-time corners.
+///
+/// Against the shipped description, the last corner of the enumeration is the
+/// joint one: it moves both of the coefficients the structure states the
+/// supply drives, in the one direction a supply moves them, at the smaller of
+/// the two declared errors -- the largest equal fractional sag both of them
+/// admit. What is asserted here is the shape of the enumeration rather than
+/// what the corner costs, because on this machine a mains droop leaves both
+/// blocks cooler and the clamp above is what decides its contribution.
+static void test_the_enumeration_carries_the_stated_joint_corner_moving_the_pair_together(void)
+{
+    unsigned joint = 0u;
+    size_t last = 0u;
+    protection_margin_corner_t the_joint_corner = {0u, 0u, false, false, 0.0f, false, 0.0f, 0.0f};
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+
+    for (size_t which = 0u;; which++) {
+        protection_margin_corner_t corner;
+
+        if (!control_protection_margin_corner(&state, MARGIN_TARGET_C, which, &corner)) {
+            break;
+        }
+        last = which;
+        if (corner.joint) {
+            joint++;
+            the_joint_corner = corner;
+        }
+    }
+
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, joint,
+                                   "the enumeration carries other than exactly one joint corner, "
+                                   "so it is not one corner per stated dependence");
+    TEST_ASSERT_TRUE_MESSAGE(the_joint_corner.joint && last > 0u, "the joint corner is not last");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(2u, the_joint_corner.moves,
+                                   "the joint corner does not move the pair the structure states "
+                                   "the supply drives");
+    TEST_ASSERT_TRUE_MESSAGE(the_joint_corner.reaching_downwards,
+                             "the joint corner reaches upwards, but a supply sags and nothing "
+                             "states a cause that would raise two elements at once");
+
+    float brew_error = 0.0f;
+    float steam_error = 0.0f;
+    TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, "brew.heater_power_w", &brew_error));
+    TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, "steam.heater_power_w", &steam_error));
+
+    const float smaller = brew_error < steam_error ? brew_error : steam_error;
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(smaller, the_joint_corner.declared_error,
+                                    "the joint corner is not run at the largest equal fractional "
+                                    "sag both declared errors admit");
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The widened margin is
+/// what the controller actually enforces against a commanded target, rather
+/// than a figure computed and left unused.
+///
+/// The same target is commanded twice against two descriptions that differ in
+/// nothing but how far out they say the element may be. Against the shipped
+/// figures it is taken; against a description declaring the element far looser
+/// it is refused, naming the protection margin and reporting the highest
+/// target that description leaves room for. That the two answers differ is the
+/// whole of the claim: a margin computed and discarded would take both.
+static void test_a_target_inside_the_widened_margin_is_refused(void)
+{
+    const char *const names[] = {"brew.heater_power_w"};
+    const float loose[] = {2.5f};
+    const char *const description = description_declaring(names, loose, 1u);
+    const plant_parameters_t believed = parameters_from(description);
+    const plant_parameter_budget_t declared = budget_from(description);
+    const float ambitious_c = 98.0f;
+    control_admission_t admission;
+
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_temperature_reporting(&state, ambitious_c, &admission),
+        "the target this case turns on is already refused against the shipped description, so a "
+        "refusal below would establish nothing about the declared error");
+
+    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance));
+
+    protection_margin_t margin;
+    TEST_ASSERT_TRUE(control_protection_margin(&state, ambitious_c, &margin));
+    TEST_ASSERT_TRUE_MESSAGE(margin.margin_c > 9.0f,
+                             "the loosened description did not widen the margin far enough for "
+                             "this target to sit inside it, so the case tests nothing");
+
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_command_temperature_reporting(&state, ambitious_c, &admission),
+        "a target inside the widened protection margin was taken");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN, admission.bound);
+    TEST_ASSERT_EQUAL_FLOAT(ambitious_c, admission.requested);
+    TEST_ASSERT_TRUE_MESSAGE(admission.available < ambitious_c,
+                             "the refusal reported a highest admissible target at or above the "
+                             "one it refused");
+
+    /*
+     * The figure reported is actionable rather than decorative: the target it
+     * names is one this same instance takes. It is the trip point less the
+     * margin sized for the target that was asked about, and the margin itself
+     * follows the target -- a machine held higher carries a larger load for the
+     * same declared error to be a fraction of -- so it is the highest target
+     * this refusal leaves room for and not a fixed point of the refusal.
+     */
+    TEST_ASSERT_TRUE_MESSAGE(control_command_temperature(&state, admission.available),
+                             "the highest target the refusal named was itself refused");
+    TEST_ASSERT_FALSE_MESSAGE(control_command_temperature(&state, ambitious_c + 1.0f),
+                              "a target further inside the widened margin than the one already "
+                              "refused was taken");
+}
+
+/*
+ * A probe of the shipped machine, built the way the control path builds its
+ * own: the quantity the trip point protects, the channel that drives it, and
+ * the states a machine holding the target has standing at it.
+ */
+static protection_margin_probe_t the_shipped_probe(void)
+{
+    protection_margin_probe_t probe;
+
+    probe.protects = PLANT_QUANTITY_BREW_TEMPERATURE_C;
+    probe.heater = ACTUATION_CHANNEL_BREW_HEATER;
+    probe.held_at_target[0] = PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C;
+    probe.held_at_target[1] = PLANT_STATE_BREW_OUTLET_TEMPERATURE_C;
+    probe.held_count = 2u;
+    probe.target_c = MARGIN_TARGET_C;
+    probe.holding_permille = 200u;
+    probe.unwidened_c = 1.0f;
+    return probe;
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: a budget record that
+/// was never loaded, or one that does not belong to the structure this build
+/// compiled, supports no enumeration at all -- and that is reported as such
+/// rather than as a description declaring nothing wrong.
+///
+/// The dangerous reading is the one this rules out. A record never loaded is
+/// zeroed, and read short it would report the design as assuming no error
+/// against anything: a margin of exactly the un-widened gap, sized off a
+/// description nobody supplied, indistinguishable from a description that
+/// genuinely claims to be exact. So the length is checked against the structure
+/// rather than trusted, and a record of the wrong length answers nothing.
+///
+/// Asked of the computation directly rather than through the loop, because the
+/// loop cannot be brought up with such a record at all -- which is the point of
+/// the case below it, and a different claim from this one.
+static void test_a_budget_that_does_not_belong_to_this_structure_supports_no_enumeration(void)
+{
+    const protection_margin_probe_t probe = the_shipped_probe();
+    plant_parameter_budget_t never_loaded;
+    protection_margin_t margin;
+    protection_margin_corner_t corner;
+
+    memset(&never_loaded, 0, sizeof(never_loaded));
+
+    TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(&never_loaded));
+    TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(NULL));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &never_loaded, &probe, &margin));
+    TEST_ASSERT_FALSE(protection_margin_corner(&parameters, &never_loaded, &probe, 0u, &corner));
+
+    /* A record short of the structure's own count is refused on the same terms. */
+    plant_parameter_budget_t shortened = budget;
+    TEST_ASSERT_TRUE_MESSAGE(shortened.count > 1u,
+                             "this structure has one coefficient, so a short record cannot be "
+                             "told from a whole one");
+    shortened.count -= 1u;
+    TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(&shortened));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &shortened, &probe, &margin));
+
+    /* And one longer than the structure has, which is the other way to disagree. */
+    plant_parameter_budget_t lengthened = budget;
+    lengthened.count += 1u;
+    TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(&lengthened));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &lengthened, &probe, &margin));
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: the enumeration covers
+/// both ends of every coefficient the structure has plus the joint corner, and
+/// a position past its end is refused rather than answered.
+///
+/// The count and the corners are the seam a record of the mapping is taken
+/// through, and they are asked here directly rather than only through the loop
+/// that leans on them: a count that disagreed with what the corner reader will
+/// answer for would leave a caller walking off the end of an enumeration it was
+/// told the length of.
+static void test_the_corner_count_and_the_corners_agree_about_where_the_enumeration_ends(void)
+{
+    const protection_margin_probe_t probe = the_shipped_probe();
+    const size_t corners = protection_margin_corner_count(&budget);
+    protection_margin_corner_t corner;
+    protection_margin_t margin;
+    size_t joint_corners = 0u;
+
+    TEST_ASSERT_EQUAL_UINT((2u * budget.count) + 1u, corners);
+
+    for (size_t which = 0u; which < corners; which++) {
+        TEST_ASSERT_TRUE(protection_margin_corner(&parameters, &budget, &probe, which, &corner));
+        if (corner.joint) {
+            joint_corners++;
+        }
+    }
+    TEST_ASSERT_EQUAL_UINT(1u, joint_corners);
+
+    /* One past the end, and far past it, are both refused rather than answered. */
+    TEST_ASSERT_FALSE(protection_margin_corner(&parameters, &budget, &probe, corners, &corner));
+    TEST_ASSERT_FALSE(
+        protection_margin_corner(&parameters, &budget, &probe, corners + 100u, &corner));
+
+    /* And every argument the two take may not be null. */
+    TEST_ASSERT_FALSE(protection_margin_corner(NULL, &budget, &probe, 0u, &corner));
+    TEST_ASSERT_FALSE(protection_margin_corner(&parameters, &budget, NULL, 0u, &corner));
+    TEST_ASSERT_FALSE(protection_margin_corner(&parameters, &budget, &probe, 0u, NULL));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &budget, NULL, &margin));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &budget, &probe, NULL));
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: a probe naming no
+/// state this structure keeps cannot be run, and comes back as a corner that
+/// ran nothing rather than as a refusal or a figure.
+///
+/// The two are different findings and only one of them is about the machine: a
+/// structure that cannot be probed at all has said nothing about what a corner
+/// costs, and reporting that as a contribution of nothing would be a margin
+/// sized by a probe that never happened.
+static void test_a_probe_the_structure_cannot_answer_runs_no_corner(void)
+{
+    protection_margin_probe_t probe = the_shipped_probe();
+    protection_margin_corner_t corner;
+    protection_margin_t margin;
+
+    probe.held_count = 0u;
+    TEST_ASSERT_TRUE(protection_margin_corner(&parameters, &budget, &probe, 0u, &corner));
+    TEST_ASSERT_FALSE_MESSAGE(corner.ran,
+                              "a corner nothing could be stood at reported having run");
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, corner.contribution_c);
+
+    /*
+     * And the margin taken over an enumeration none of whose corners could run
+     * is exactly the un-widened gap, with nothing reported as contributing.
+     * That is the honest answer for a probe nobody could take, and it is
+     * distinguishable from a description claiming to be exact only by the count
+     * of corners that ran -- which is why that count is carried.
+     */
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe, &margin));
+    TEST_ASSERT_EQUAL_FLOAT(probe.unwidened_c, margin.margin_c);
+    TEST_ASSERT_EQUAL_UINT(0u, margin.corners_run);
+    TEST_ASSERT_EQUAL_UINT(0u, margin.contributing);
+}
+
+/* --- A delivery at the widened margin, at every corner the budget implies --- */
+
+/*
+ * The course every corner is run against: one rate held long enough for the
+ * loop to answer the machine it has actually been given, ending at that rate
+ * rather than tapering, so the judged stretch is a stretch of an actual
+ * delivery.
+ */
+#define MARGIN_SWEEP_COURSE_MILLIS 500000u
+#define MARGIN_SWEEP_RATE_ML_PER_S 1.0f
+#define MARGIN_SWEEP_STEPS 50000u
+/*
+ * How much of the run the verdict is taken over: the trailing quarter. What
+ * this criterion asks is where the delivery lands, not what it did on the way
+ * -- how tightly a setpoint is held is declared a degrading behaviour in
+ * params/robustness.declaration and is permitted to get worse as the model
+ * does, while where the delivery comes to rest is what the band is a statement
+ * about.
+ */
+#define MARGIN_SWEEP_JUDGED_STEPS 5000u
+
+/* What one enumerated corner did, as the record commits it. */
+typedef struct {
+    size_t at;
+    bool joint;
+    bool reaching_downwards;
+    float declared_error;
+    bool ran;
+    float contribution_c;
+    /*
+     * Whether the description claims the machine this corner names at all. The
+     * end of a one-sided coefficient the description does not claim is
+     * enumerated and weighed -- nothing on the far side of the seam can read
+     * that sentence -- and is not delivered against, which is a different state
+     * from a corner the structure refused and is recorded as one.
+     */
+    bool claimed;
+    bool delivered;
+    bool within_tolerance;
+    float worst_departure_c;
+} margin_corner_record_t;
+
+static margin_corner_record_t margin_record[(2u * PLANT_PARAMETER_LIMIT) + 1u];
+static size_t margin_record_count;
+static protection_margin_t margin_recorded;
+static float margin_recorded_target_c;
+static control_admission_t margin_recorded_stopped_by;
+static bool margin_record_taken;
+
+
+/*
+ * The coefficients the reference description declares one-sided, and the one
+ * end of each the description actually claims.
+ *
+ * One-sidedness is a sentence in params/thermoblock.md and not a field of the
+ * description's grammar -- the line beside the value carries a symmetric
+ * fraction and nothing that could say otherwise -- so it cannot be read out of
+ * the budget and is written here instead, exactly as the sibling stability
+ * analysis writes it beside its own corner logic. All three are one-sided the
+ * same way and for the same kind of reason: each is a figure standing in for
+ * something it is not, and a real machine sits below it rather than either side
+ * of it.
+ *
+ * A corner at the end the description does not claim is a machine nobody has
+ * claimed, and a verdict taken against one would be a verdict about a machine
+ * this description does not describe. The margin computation itself still runs
+ * both ends -- nothing on that side of the seam can read this sentence, and
+ * running the unclaimed end can only widen a margin, which is the safe
+ * direction for a protection bound -- but a delivery verdict is a different
+ * kind of claim and is taken only where the description stands behind the
+ * machine.
+ *
+ * Nothing structural ties this table to the prose it was read out of, so a
+ * name that has gone stale would leave this quietly skipping a corner the
+ * description now claims. The tripwire is the assertion below that every name
+ * here is one this structure has: a coefficient renamed or removed fails
+ * loudly rather than being carried silently.
+ */
+static const char *const ONE_SIDED_REACHING_DOWNWARDS[] = {
+    "pump.pressure_bar",
+    "pump.flow_ml_per_s",
+    "steam.feed_flow_ml_per_s",
+};
+
+static bool the_end_the_description_does_not_claim(const protection_margin_corner_t *corner)
+{
+    if (corner->joint || corner->reaching_downwards) {
+        return false;
+    }
+
+    for (size_t which = 0u; which < sizeof(ONE_SIDED_REACHING_DOWNWARDS) /
+                                        sizeof(ONE_SIDED_REACHING_DOWNWARDS[0]);
+         which++) {
+        size_t at = 0u;
+
+        if (plant_parameter_position(ONE_SIDED_REACHING_DOWNWARDS[which], &at) &&
+            at == corner->at) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/* Every name in that table is one this structure has, or the table has gone stale. */
+static void the_one_sided_table_still_names_this_machine(void)
+{
+    for (size_t which = 0u; which < sizeof(ONE_SIDED_REACHING_DOWNWARDS) /
+                                        sizeof(ONE_SIDED_REACHING_DOWNWARDS[0]);
+         which++) {
+        size_t at = 0u;
+
+        TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(ONE_SIDED_REACHING_DOWNWARDS[which], &at),
+                                 ONE_SIDED_REACHING_DOWNWARDS[which]);
+    }
+}
+
+/*
+ * The machine one enumerated corner names, built through the plant seam from
+ * the position that corner moves rather than from any coefficient's name --
+ * the same route the margin computation itself takes to build it, so the
+ * machine a verdict is taken against is the machine the contribution was taken
+ * against and not a second one assembled beside it.
+ */
+static bool the_machine_at_the_corner(const protection_margin_corner_t *corner,
+                                      plant_parameters_t *machine)
+{
+    const float factor = corner->reaching_downwards ? (1.0f - corner->declared_error)
+                                                    : (1.0f + corner->declared_error);
+
+    *machine = parameters;
+    if (!corner->joint) {
+        return plant_parameter_scale(machine, corner->at, factor);
+    }
+
+    for (size_t at = 0u; at < budget.count; at++) {
+        bool driven = false;
+
+        if (!plant_parameter_supply_driven(at, &driven) || !driven || !budget.declared[at]) {
+            continue;
+        }
+        if (!plant_parameter_scale(machine, at, factor)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/*
+ * The highest temperature this loop will take, asked of the loop rather than
+ * worked out from figures read out of its source.
+ *
+ * A suite that computed the trip point less the margin for itself would be
+ * asserting against its own arithmetic; asking the admission path narrows onto
+ * whichever bound is actually the tighter one on this machine, which is the
+ * figure a delivery commanded as hot as the design allows is commanded at.
+ *
+ * Which bound that is comes back beside the figure, because it decides what a
+ * sweep commanded there is evidence for. A sweep stopped by the saturation
+ * ceiling establishes nothing about the protection margin -- deleting the
+ * margin refusal outright would leave it commanded at exactly the same target
+ * -- and a caller that could not tell the two apart would be free to claim the
+ * one while running the other.
+ */
+static float the_highest_target_the_loop_takes(control_admission_t *stopped_by)
+{
+    float taken_c = 20.0f;
+    float refused_c = 120.0f;
+    control_admission_t admission;
+
+    TEST_ASSERT_TRUE(control_command_temperature(&state, taken_c));
+    TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, refused_c, &admission));
+    if (stopped_by != NULL) {
+        *stopped_by = admission;
+    }
+
+    for (unsigned narrowing = 0u; narrowing < 40u; narrowing++) {
+        const float middle_c = (taken_c + refused_c) / 2.0f;
+
+        if (control_command_temperature_reporting(&state, middle_c, &admission)) {
+            taken_c = middle_c;
+        } else {
+            refused_c = middle_c;
+            if (stopped_by != NULL) {
+                *stopped_by = admission;
+            }
+        }
+    }
+    return taken_c;
+}
+
+/* The course every corner of the sweep is run against. */
+static delivery_profile_t the_sweeps_course(void)
+{
+    const delivery_profile_point_t points[] = {
+        {0u, MARGIN_SWEEP_RATE_ML_PER_S},
+        {MARGIN_SWEEP_COURSE_MILLIS, MARGIN_SWEEP_RATE_ML_PER_S},
+    };
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = MARGIN_SWEEP_COURSE_MILLIS};
+    delivery_profile_t course;
+
+    TEST_ASSERT_TRUE(delivery_profile_init(&course, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    return course;
+}
+
+/*
+ * Run every corner the shipped description's declared error implies, with the
+ * delivery commanded at the widened margin, and record what each one did.
+ *
+ * The margin and the target are taken against the shipped description, because
+ * that is the description the design sized its margin from: a machine that
+ * turns out to sit at a corner does not get a margin re-sized for it after the
+ * fact, it gets the one the design already commanded within.
+ *
+ * Each corner is then run with the machine built from that corner's
+ * coefficients and the loop's own belief held at the shipped description. That
+ * split is the whole of what makes this a robustness check: an estimator
+ * reconstructing from the very coefficients the machine was perturbed with has
+ * a perfect model at every corner, and a run arranged that way carries no model
+ * error at all -- every corner would come back in tolerance whatever the margin
+ * was, and deleting the margin from the admission path entirely would not move
+ * a single verdict. What the criterion asks is whether a delivery lands inside
+ * its band when the plant is somewhere within the declared error and the
+ * controller is the one that shipped, which is the arrangement this file
+ * already uses wherever a machine is deliberately unlike the estimator's model.
+ *
+ * The record is taken once and read by both of the cases below, so the verdicts
+ * one of them asserts and the mapping the other commits come off one sweep.
+ */
+static void take_the_margin_record(void)
+{
+    if (margin_record_taken) {
+        return;
+    }
+
+    bring_the_loop_up(&parameters, &parameters, BREW_TARGET_C, BREW_TARGET_C);
+    margin_recorded_target_c = the_highest_target_the_loop_takes(&margin_recorded_stopped_by);
+    TEST_ASSERT_TRUE(
+        control_protection_margin(&state, margin_recorded_target_c, &margin_recorded));
+    TEST_ASSERT_TRUE_MESSAGE(margin_recorded.corners > 0u,
+                             "the shipped description supports no corner enumeration at all");
+
+    /*
+     * The whole enumeration is read off the loop while it still holds the
+     * shipped description, before any corner is delivered against. Reading a
+     * corner from a loop that has since been brought up against another
+     * corner's machine would be reading a different enumeration -- the margin
+     * follows whatever description the instance is holding -- and the record
+     * would then describe corners the committed margin was not taken over.
+     */
+    the_one_sided_table_still_names_this_machine();
+
+    margin_record_count = 0u;
+    for (size_t which = 0u; which < margin_recorded.corners; which++) {
+        protection_margin_corner_t corner;
+        margin_corner_record_t entry;
+
+        TEST_ASSERT_TRUE(
+            control_protection_margin_corner(&state, margin_recorded_target_c, which, &corner));
+
+        entry.at = corner.at;
+        entry.joint = corner.joint;
+        entry.reaching_downwards = corner.reaching_downwards;
+        entry.declared_error = corner.declared_error;
+        entry.ran = corner.ran;
+        entry.contribution_c = corner.contribution_c;
+        entry.claimed = !the_end_the_description_does_not_claim(&corner);
+        entry.delivered = false;
+        entry.within_tolerance = false;
+        entry.worst_departure_c = 0.0f;
+
+        margin_record[margin_record_count] = entry;
+        margin_record_count++;
+    }
+
+    const delivery_profile_t course = the_sweeps_course();
+    const float band_c = (float)tolerance.brew_temperature_band_milli_c / 1000.0f;
+
+    for (size_t which = 0u; which < margin_record_count; which++) {
+        margin_corner_record_t *const entry = &margin_record[which];
+        protection_margin_corner_t corner;
+        plant_parameters_t machine;
+
+        if (!entry->ran) {
+            continue;
+        }
+
+        corner.at = entry->at;
+        corner.moves = entry->joint ? 2u : 1u;
+        corner.joint = entry->joint;
+        corner.reaching_downwards = entry->reaching_downwards;
+        corner.declared_error = entry->declared_error;
+        corner.ran = true;
+        corner.reached_c = 0.0f;
+        corner.contribution_c = entry->contribution_c;
+
+        if (!entry->claimed || !the_machine_at_the_corner(&corner, &machine)) {
+            continue;
+        }
+
+        bring_the_loop_up(&parameters, &machine, margin_recorded_target_c,
+                          margin_recorded_target_c);
+        TEST_ASSERT_TRUE(control_command_temperature(&state, margin_recorded_target_c));
+        TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+
+        for (unsigned step = 0u; step < MARGIN_SWEEP_STEPS; step++) {
+            (void)closed_loop_step(-1);
+
+            if (step + MARGIN_SWEEP_JUDGED_STEPS < MARGIN_SWEEP_STEPS) {
+                continue;
+            }
+            const float departure_c = fabsf(
+                truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C) - margin_recorded_target_c);
+            if (departure_c > entry->worst_departure_c) {
+                entry->worst_departure_c = departure_c;
+            }
+        }
+        entry->delivered = true;
+        entry->within_tolerance = entry->worst_departure_c <= band_c;
+    }
+    margin_record_taken = true;
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2: A delivery lands
+/// within its own tolerance band at the widened margin, at every independent
+/// declared-error corner and at the one joint corner the description's own
+/// construction implies.
+///
+/// Every coefficient the shipped description carries a declared error against
+/// is taken to its corner and the same delivery is run against it, commanded
+/// at the hottest target the widened margin leaves room for rather than at the
+/// nominal one. Both ends of a two-sided coefficient are run; a coefficient
+/// whose other end the structure will not admit as a machine is run at the one
+/// end it does, which is the same treatment a description declaring a
+/// coefficient one-sided asks for and the only one the description's grammar
+/// -- which carries a symmetric fraction and no statement of sidedness --
+/// makes available here.
+///
+/// The joint corner is run on exactly the same standard rather than left with
+/// the settling check the sibling stability solution already gives it: it is
+/// the one corner where two declared errors move together, and leaving margin
+/// adequacy unchecked there would leave it unchecked at the only corner an
+/// independent sweep cannot reach.
+///
+/// The verdict is taken over the trailing stretch of the run, because what is
+/// asked is where the delivery lands. How tightly a setpoint is held on the
+/// way is declared a degrading behaviour in params/robustness.declaration and
+/// is permitted to get worse as the model does; where the delivery comes to
+/// rest is what the band states.
+static void test_a_delivery_lands_within_tolerance_at_every_declared_error_corner(void)
+{
+    unsigned delivered = 0u;
+    unsigned joint_delivered = 0u;
+
+    take_the_margin_record();
+
+    for (size_t which = 0u; which < margin_record_count; which++) {
+        const margin_corner_record_t *const entry = &margin_record[which];
+        char message[256];
+
+        if (!entry->delivered) {
+            continue;
+        }
+        delivered++;
+        if (entry->joint) {
+            joint_delivered++;
+        }
+
+        (void)snprintf(message, sizeof(message),
+                       "corner %u -- %s, coefficient %u %s at %.4f of nominal -- left the "
+                       "delivery %.4f degrees from the %.3f degree target it was commanded at, "
+                       "against a declared band of %.4f",
+                       (unsigned)which, entry->joint ? "joint mains droop" : "independent",
+                       (unsigned)entry->at, entry->reaching_downwards ? "low" : "high",
+                       (double)entry->declared_error, (double)entry->worst_departure_c,
+                       (double)margin_recorded_target_c,
+                       (double)tolerance.brew_temperature_band_milli_c / 1000.0);
+        TEST_ASSERT_TRUE_MESSAGE(entry->within_tolerance, message);
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(delivered >= 2u,
+                             "no corner of the declared error was actually delivered against, so "
+                             "nothing here was established");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, joint_delivered,
+                                   "the joint corner was not run to the same within-tolerance "
+                                   "standard the independent corners were");
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2: The delivery is
+/// commanded at the widened margin rather than at a nominal target -- which is
+/// a claim about which of the admission path's ceilings actually stops a
+/// command on this machine, and therefore something the sweep has to establish
+/// rather than assume.
+///
+/// The sweep runs at the highest target the loop takes, which is as close to
+/// the margin as a delivery on this machine can be commanded. What that is
+/// evidence for depends entirely on which bound stopped it: a sweep stopped by
+/// the saturation ceiling establishes nothing at all about the protection
+/// margin, because deleting the margin refusal outright would leave it
+/// commanded at exactly the same target. So the bound is read off the loop's
+/// own refusal and pinned here, and the commanded target is required to be the
+/// figure that refusal names as the highest admissible one -- so a sweep that
+/// silently began running somewhere else fails rather than going on reporting
+/// verdicts under the old claim.
+///
+/// The committed record of this mapping is docs/protection-margin.md, which
+/// names the bound in the same words, and firmware/emulation/tests/
+/// test_protection_margin.py is what keeps that record and this method in step.
+static void test_the_sweep_is_commanded_at_the_bound_that_actually_stops_a_command(void)
+{
+    char message[224];
+
+    take_the_margin_record();
+
+    (void)snprintf(message, sizeof(message),
+                   "the sweep was commanded at %.4f C, stopped by bound %d, which names %.4f C "
+                   "as the highest admissible target",
+                   (double)margin_recorded_target_c, (int)margin_recorded_stopped_by.bound,
+                   (double)margin_recorded_stopped_by.available);
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        margin_recorded_stopped_by.bound == CONTROL_ADMISSION_TARGET_OVER_SATURATION ||
+            margin_recorded_stopped_by.bound == CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN,
+        message);
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-3f, margin_recorded_stopped_by.available,
+                                     margin_recorded_target_c, message);
+}
+
+/*
+ * The narrowest declared error against one coefficient at which the widened
+ * protection margin, rather than any other ceiling, is what stops a commanded
+ * target -- narrowed on the loop's own report of which bound stopped it.
+ *
+ * The analogue of the steam side's own narrowing onto its authority boundary,
+ * and it exists for the same reason: the point at which one of the control
+ * path's ceilings overtakes another is a property of the loop, and a figure
+ * this file computed for itself would be asserting against its own arithmetic.
+ *
+ * The error is widened rather than a target being chosen, because on the
+ * machine this description names the margin never overtakes the saturation
+ * ceiling at the errors actually declared -- see the case below, which is what
+ * makes that a stated finding rather than a silence. The end widened is the one
+ * that writes the coefficient high: a declared error is a fraction of a value,
+ * so the low end stops being a machine the structure admits once the fraction
+ * reaches one, and the high end has no such stop.
+ *
+ * The record itself is widened rather than a description being rewritten, which
+ * is the one place this file departs from asking the description everything. A
+ * fraction past one is not something any description in this tree states, and
+ * rewriting one to say it would be inventing a machine to test the arithmetic
+ * of a bound; what is under test here is which ceiling the loop applies, and
+ * the record is the input that decides it.
+ */
+static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char *name)
+{
+    plant_parameter_budget_t widened = budget;
+    size_t at = 0u;
+    float below = 0.0f;
+    float above = 0.0f;
+
+    TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(name, &at), name);
+    TEST_ASSERT_TRUE_MESSAGE(budget.declared[at],
+                             "the description declares no error against the coefficient this "
+                             "narrowing widens, so there is nothing here to widen");
+    below = budget.assumed_error[at];
+
+    for (float trying = below * 2.0f; trying <= 8.0f; trying *= 2.0f) {
+        control_admission_t stopped_by;
+
+        widened.assumed_error[at] = trying;
+        hw_sim_reset();
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+        TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance));
+        (void)the_highest_target_the_loop_takes(&stopped_by);
+        if (stopped_by.bound == CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
+            above = trying;
+            break;
+        }
+        below = trying;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(above > 0.0f,
+                             "no declared error this narrowing tried put the protection margin in "
+                             "front of the other ceilings, so the bound cannot be reached at all");
+
+    for (unsigned narrowing = 0u; narrowing < 30u; narrowing++) {
+        const float middle = (below + above) / 2.0f;
+        control_admission_t stopped_by;
+
+        widened.assumed_error[at] = middle;
+        hw_sim_reset();
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+        TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance));
+        (void)the_highest_target_the_loop_takes(&stopped_by);
+        if (stopped_by.bound == CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
+            above = middle;
+        } else {
+            below = middle;
+        }
+    }
+
+    widened.assumed_error[at] = above;
+    return widened;
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The widened margin is
+/// what the controller actually enforces against a commanded target -- and
+/// where it is the binding bound, the highest target the loop takes is that
+/// margin's own edge and a delivery commanded there is one the loop admits.
+///
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2: A delivery lands
+/// within tolerance when it is commanded at the widened margin -- at the
+/// margin's own edge, which is the one place that claim can be made and is not
+/// reachable on this machine at the errors the description actually declares.
+///
+/// The declared error against one coefficient is widened until the loop reports
+/// the protection margin as the bound that stops a commanded target, narrowed
+/// on that report rather than computed here. The command is then run at exactly
+/// the edge the refusal names, and three things are asked of it: that the edge
+/// is the figure the refusal reports, that it is the trip point less the margin
+/// sized for it -- so the edge follows the target rather than being a fixed
+/// point -- and that a delivery commanded there lands inside the band on the
+/// machine the description names.
+///
+/// This is the case the corner sweep above cannot be: at the errors this
+/// description declares, the saturation ceiling is the tighter bound and the
+/// protection margin refuses nothing, so the sweep runs where it would run with
+/// the margin refusal deleted. That is a finding about this machine rather than
+/// a gap in the sweep, and it is why the mechanism is exercised here instead.
+static void test_a_delivery_commanded_at_the_widened_margins_own_edge_lands_in_band(void)
+{
+    const plant_parameter_budget_t widened =
+        the_budget_at_which_the_margin_binds("brew.heater_power_w");
+    const delivery_profile_t course = the_sweeps_course();
+    const float band_c = (float)tolerance.brew_temperature_band_milli_c / 1000.0f;
+    control_admission_t stopped_by;
+    protection_margin_t at_the_edge;
+    protection_margin_t at_the_refusal;
+    float worst_departure_c = 0.0f;
+    char message[256];
+
+    the_budget_the_loop_believes = &widened;
+    bring_the_loop_up(&parameters, &parameters, BREW_TARGET_C, BREW_TARGET_C);
+
+    const float edge_c = the_highest_target_the_loop_takes(&stopped_by);
+
+    TEST_ASSERT_EQUAL_MESSAGE(CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN,
+                              stopped_by.bound,
+                              "the widened description does not put the protection margin in "
+                              "front of the other ceilings, so this case is not commanded at the "
+                              "margin at all");
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-3f, stopped_by.available, edge_c,
+                                     "the highest target the loop takes is not the figure its "
+                                     "own refusal names as admissible");
+    TEST_ASSERT_TRUE(control_protection_margin(&state, edge_c, &at_the_edge));
+    TEST_ASSERT_TRUE(control_protection_margin(&state, stopped_by.requested, &at_the_refusal));
+
+    /*
+     * The edge is the trip point less the margin sized for the target being
+     * asked about, and the margin follows the target -- so the trip point read
+     * back through the refusal has to be the same figure read back through the
+     * edge. Neither is written in this file: the refusal reports the highest
+     * admissible target for the target it refused, and the margin behind each
+     * is read off the loop.
+     */
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(
+        1e-2f, stopped_by.available + at_the_refusal.margin_c, edge_c + at_the_edge.margin_c,
+        "the trip point the refusal implies and the one the admitted edge implies are different "
+        "figures, so the edge is not the trip point less the margin sized for it");
+    TEST_ASSERT_TRUE_MESSAGE(at_the_edge.margin_c > at_the_edge.unwidened_c,
+                             "the margin at the edge is no wider than the un-widened gap, so "
+                             "nothing here is being decided by the declared error");
+
+    /* And the delivery commanded exactly there is one the loop takes, and lands. */
+    bring_the_loop_up(&parameters, &parameters, edge_c, edge_c);
+    TEST_ASSERT_TRUE_MESSAGE(control_command_temperature(&state, edge_c),
+                             "the edge the refusal named as admissible was itself refused");
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
+
+    for (unsigned step = 0u; step < MARGIN_SWEEP_STEPS; step++) {
+        (void)closed_loop_step(-1);
+
+        if (step + MARGIN_SWEEP_JUDGED_STEPS < MARGIN_SWEEP_STEPS) {
+            continue;
+        }
+        const float departure_c =
+            fabsf(truth_state(PLANT_STATE_BREW_OUTLET_TEMPERATURE_C) - edge_c);
+        if (departure_c > worst_departure_c) {
+            worst_departure_c = departure_c;
+        }
+    }
+    the_budget_the_loop_believes = NULL;
+
+    (void)snprintf(message, sizeof(message),
+                   "a delivery commanded at %.4f C -- the widened margin's own edge, against a "
+                   "margin of %.4f C -- left the delivery %.4f degrees from what it was asked "
+                   "for, against a declared band of %.4f",
+                   (double)edge_c, (double)at_the_edge.margin_c, (double)worst_departure_c,
+                   (double)band_c);
+    TEST_ASSERT_TRUE_MESSAGE(worst_departure_c <= band_c, message);
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The margin is the
+/// worst single corner of the enumeration it was taken over, and the record a
+/// reader inspects comes off that same enumeration.
+///
+/// What this asks is that the account and the figure agree: the widest
+/// contribution among the corners this sweep read back is the worst corner the
+/// loop reports, and the margin is the un-widened gap plus exactly that -- not
+/// the sum of the corners' contributions, and not their root-sum-square. Where
+/// more than one corner costs the gap something the three candidates separate
+/// numerically, so the rule applied is the one
+/// DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE names rather than one that
+/// happens to agree with it on this description.
+///
+/// The committed record of the mapping itself is docs/protection-margin.md,
+/// written by firmware/emulation/tools/run_protection_margin.py off the same
+/// reads this suite uses and kept in step with the method by
+/// firmware/emulation/tests/test_protection_margin.py. It is a checked-in file
+/// rather than a table this suite prints because a table printed by a Unity
+/// test is swallowed by the runner: nothing downstream of any gate ever sees
+/// it, so a record kept that way is a record nobody can read or diff.
+static void test_the_recorded_corners_and_the_margin_come_off_one_enumeration(void)
+{
+    float widest_contribution_c = 0.0f;
+    float summed_contributions_c = 0.0f;
+    float squared_contributions = 0.0f;
+    unsigned contributing = 0u;
+
+    take_the_margin_record();
+
+    for (size_t which = 0u; which < margin_record_count; which++) {
+        const margin_corner_record_t *const entry = &margin_record[which];
+
+        if (!entry->ran) {
+            continue;
+        }
+        if (entry->contribution_c > widest_contribution_c) {
+            widest_contribution_c = entry->contribution_c;
+        }
+        if (entry->contribution_c > 0.0f) {
+            contributing++;
+            summed_contributions_c += entry->contribution_c;
+            squared_contributions += entry->contribution_c * entry->contribution_c;
+        }
+    }
+
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(margin_recorded.corners, margin_record_count,
+                                   "the record covers a different number of corners from the "
+                                   "enumeration the margin was taken over");
+    TEST_ASSERT_EQUAL_UINT_MESSAGE(contributing, margin_recorded.contributing,
+                                   "the record and the margin disagree about how many corners "
+                                   "cost the trip-point gap anything");
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-5f, widest_contribution_c, margin_recorded.worst_corner_c,
+                                     "the margin's worst corner is not the widest contribution in "
+                                     "the record");
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(
+        1e-5f, margin_recorded.unwidened_c + widest_contribution_c, margin_recorded.margin_c,
+        "the widened margin is not the un-widened gap plus the worst corner");
+
+    /*
+     * And the rule applied is the one the decision names rather than one that
+     * happens to agree with it on this description. Where more than one corner
+     * costs the gap something the three candidates separate numerically, and
+     * the figure has to be the smallest of them.
+     */
+    if (contributing >= 2u) {
+        TEST_ASSERT_TRUE_MESSAGE(margin_recorded.worst_corner_c < summed_contributions_c - 1e-5f,
+                                 "the margin is the sum of every corner's contribution rather "
+                                 "than the worst single corner");
+        TEST_ASSERT_TRUE_MESSAGE(
+            margin_recorded.worst_corner_c < sqrtf(squared_contributions) - 1e-5f,
+            "the margin is the root-sum-square of the corners' contributions rather than the "
+            "worst single corner");
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -6915,6 +8287,7 @@ int main(void)
     RUN_TEST(test_the_drive_level_follows_the_reconstruction_and_not_the_reading);
     RUN_TEST(test_an_untrustworthy_reading_reaches_the_estimator_and_not_the_drive);
     RUN_TEST(test_initialisation_without_a_record_leaves_the_heater_off_and_latched);
+    RUN_TEST(test_initialisation_without_a_budget_leaves_the_heater_off_and_latched);
     RUN_TEST(test_the_record_reaches_the_estimator_the_control_law_holds);
     RUN_TEST(test_the_estimator_is_advanced_by_the_interval_that_elapsed);
     RUN_TEST(test_the_first_accepted_step_is_advanced_by_the_declared_interval);
@@ -7030,5 +8403,18 @@ int main(void)
     RUN_TEST(test_a_target_that_would_strand_a_held_demand_is_refused);
     RUN_TEST(test_a_target_a_held_demand_can_be_met_at_is_admitted);
     RUN_TEST(test_a_target_below_the_drinking_floor_is_refused_against_a_held_draw);
+    RUN_TEST(test_the_margin_widens_monotonically_with_each_declared_coefficients_error);
+    RUN_TEST(test_a_corner_moving_the_gap_the_safe_way_contributes_nothing);
+    RUN_TEST(test_the_margin_is_the_worst_single_corner_and_not_a_sum_or_a_root_sum_square);
+    RUN_TEST(test_a_coefficient_with_no_path_to_the_gap_contributes_nothing);
+    RUN_TEST(test_the_enumeration_carries_the_stated_joint_corner_moving_the_pair_together);
+    RUN_TEST(test_a_budget_that_does_not_belong_to_this_structure_supports_no_enumeration);
+    RUN_TEST(test_the_corner_count_and_the_corners_agree_about_where_the_enumeration_ends);
+    RUN_TEST(test_a_probe_the_structure_cannot_answer_runs_no_corner);
+    RUN_TEST(test_a_target_inside_the_widened_margin_is_refused);
+    RUN_TEST(test_a_delivery_lands_within_tolerance_at_every_declared_error_corner);
+    RUN_TEST(test_the_sweep_is_commanded_at_the_bound_that_actually_stops_a_command);
+    RUN_TEST(test_a_delivery_commanded_at_the_widened_margins_own_edge_lands_in_band);
+    RUN_TEST(test_the_recorded_corners_and_the_margin_come_off_one_enumeration);
     return UNITY_END();
 }

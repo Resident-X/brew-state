@@ -1,0 +1,12 @@
+id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2
+type: criterion
+title: A delivery lands within tolerance at the widened margin, at every independent and joint declared-error corner
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Reusing the existing per-parameter corner sweep, each parameter carrying a declared model error is run to its corner with the delivery commanded at the widened margin rather than the nominal one, on both the coffee side and the steam side, and the delivery is checked to land within its own tolerance band at that corner. A coefficient the plant description declares one-sided is run at its single declared corner, to the same standard as a two-sided coefficient's pair. The one joint corner the reference description's own construction already implies — the mains-driven element ratings sagging together — already has a settling check from the sibling stability solution; this criterion extends that same joint corner with the same within-tolerance check the independent corners get, at the widened margin, rather than leaving margin adequacy unverified at the one corner where two declared errors move together. A general correlation sweep across every possible pairing of declared-error coefficients, beyond the one dependence the reference description's own construction already implies, is out of scope.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR
+    type: criterion-of
