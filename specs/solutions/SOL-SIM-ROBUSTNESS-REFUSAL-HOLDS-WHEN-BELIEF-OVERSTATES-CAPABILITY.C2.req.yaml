@@ -1,0 +1,12 @@
+id: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C2
+type: criterion
+title: The refusal fires for every course the true plant cannot deliver, whenever truth lies within belief's declared error band
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  For every belief that overstates capability relative to the simulated plant, provided the true plant lies within belief's own declared error band (each authority-relevant coefficient's true value sits within its own declared fraction of the believed value), every course the true plant cannot deliver is refused: the degraded-plant probe this solution introduces is never more capable than the true plant on that range, so nothing it cannot achieve is ever admitted. Belief driven weaker than truth, already covered by the existing companion check, is out of scope for this criterion. A mismatch beyond the declared band is a real improvement over the unchanged point-belief probe wherever it happens to bind, but is not a guarantee this criterion makes — the degraded plant can itself still overstate a true plant whose divergence from belief exceeds what was declared.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY
+    type: criterion-of

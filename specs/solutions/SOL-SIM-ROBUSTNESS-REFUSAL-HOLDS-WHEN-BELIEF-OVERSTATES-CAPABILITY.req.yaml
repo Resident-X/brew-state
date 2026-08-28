@@ -1,0 +1,29 @@
+id: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY
+type: deliverable
+category: solution
+title: The coffee-side authority check refuses against the least-capable plant the declared error admits, not the point belief alone
+status: active
+version: 1
+text: |
+  The existing pre-delivery authority check probes only the controller's point belief about the plant — a single value, not a range — to decide whether a requested course exceeds what the machine can deliver. A companion check already proves that refusal still fires when belief is driven weaker than the truth (the understating direction), but the check has no route back to what the plant actually is: a belief driven the other way, overstating what the machine can do, passes the same probe unchallenged, because the probe was never asked to doubt the belief it was given. DEL-SIM-ROBUSTNESS-VERIFICATION.C6 names this the coffee-side refusal's remaining open direction.
+
+  This solution changes what the authority check probes: instead of trusting the point belief alone, it evaluates the least-capable plant the declared error budget admits — each authority-relevant coefficient shifted toward reduced capability by its own declared error, combined by worst case per DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE, the same conservative combination this graph already applies to commanded margin. Whenever the true plant lies within belief's own declared error band — the ordinary case the declared-error budget exists to cover — the degraded plant this probe evaluates is never more capable than the truth, so every course the true plant cannot deliver is refused regardless of what the point belief alone would have said. A mismatch beyond the declared band is a different question: the degraded plant can itself still overstate a true plant whose divergence from belief exceeds what was declared, so this solution improves that regime without guaranteeing it, and does not claim otherwise.
+
+  The accepted cost is symmetric with the gain: a course the true plant could genuinely deliver, but that falls outside the degraded plant's own capability, is now refused where the unchanged point-belief probe would have admitted it. The machine's admissible envelope shrinks by the declared error in exchange for the guarantee above — a deliberate trade this solution makes, not a side effect it leaves unstated.
+
+  Out of scope: reconciling belief against a sensor-fed or estimator-fed measure of the true plant — this solution widens what the authority probe is willing to doubt about its own stated belief, it does not add a feedback channel to ground truth; the steam side, which DEL-SIM-ROBUSTNESS-VERIFICATION.C6 does not name and the existing sibling solution does not cover either; any change to admit_delivery's course-admission logic beyond the authority bound itself; guaranteeing refusal against a mismatch beyond the declared error band, which DEL-SIM-ROBUSTNESS-VERIFICATION.C6's own boundary does not require and this solution does not claim.
+rationale: |
+  The authority probe already stands up a throwaway plant model from the believed parameters and reads back what it can achieve — the same apparatus this solution reuses, just fed a degraded copy of the belief instead of the belief verbatim, rather than building a second probe. Reusing DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE's combination rule rather than deciding a second one keeps one convention for "how do several declared errors combine into a single conservative figure" across both the margin solution and this one, instead of two conventions answering the same question differently.
+
+  Not adding a feedback channel to ground truth is a scope choice, not an oversight: REQ-ROBUST-CONTROL-001's rationale places refusal in the class of behaviour that must hold regardless of model quality, which this solution honours by making the check doubt its own belief rather than by trying to make the belief itself more accurate — the latter is an estimation question, not a refusal question, and stays out of scope here.
+
+  Scoping the guarantee to within the declared error band, rather than to any mismatch however large, follows directly from what the degraded plant is built from: it is belief shifted by the declared error, not belief shifted to the truth, so it can only be guaranteed at least as conservative as the truth when the truth itself has not moved further than the declared error already accounts for. Claiming the unconditional version — refusal for any mismatch, however large — would repeat exactly the unstated-limitation pattern this solution exists to close in the check it changes.
+
+  Making the degraded probe's added conservatism this solution's own obligation to reconcile against SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL's existing attested evidence, rather than a change discovered later, follows the same reasoning: a probe change that moves what a sibling's already-attested test depends on is this solution's consequence to own, not a silent side effect for a future session to notice.
+links:
+  - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
+    type: justified-by
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION.C6
+    type: derives-from
+  - target: REQ-ROBUST-CONTROL-001.C5
+    type: targets

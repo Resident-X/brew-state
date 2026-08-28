@@ -1,0 +1,12 @@
+id: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C3
+type: criterion
+title: The degraded-plant probe is never less conservative than the existing point-belief probe
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  For every belief the existing authority tests exercise — the nominal belief and the belief already driven weaker than the simulated plant — the degraded-plant probe this solution introduces refuses at least every course the existing point-belief probe already refused: the widened check never admits a course the narrower one would have caught. This includes the nominal-belief admissions SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL's own attested evidence depends on — where the added conservatism newly refuses a course that evidence assumed admitted, refreshing that evidence is this solution's own scope to carry, not a side effect left for someone else to notice. Proving the degraded probe is strictly more conservative on courses beyond what the existing tests exercise is out of scope.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C1
+type: criterion
+title: The authority probe evaluates the least-capable plant the declared error budget admits, not the point belief alone
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The authority check that decides whether a requested course exceeds what the machine can deliver evaluates the least-capable plant the declared error budget admits, not the single point belief it is handed. Every authority-relevant coefficient the probe's thermal path depends on is shifted toward reduced capability by its own declared error before the probe runs, and where more than one such coefficient is declared, their contributions combine by worst case per DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE. Changing the estimator's belief itself, or adding any channel back to a sensed or simulated ground truth, is out of scope — this criterion only concerns what the authority probe evaluates, not what the controller otherwise believes.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY
+    type: criterion-of
