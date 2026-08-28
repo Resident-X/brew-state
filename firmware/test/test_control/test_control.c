@@ -2077,14 +2077,14 @@ static void test_delivery_profile_samples_the_course_piecewise_linearly(void)
 /// Nothing about the two shapes differing needed a draw that large.
 static void test_two_profiles_of_different_shape_drive_different_trajectories(void)
 {
-    const delivery_profile_point_t flat_points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_profile_point_t flat_points[] = {{0u, 1.0f}, {2000u, 1.0f}};
     const delivery_end_condition_t flat_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                .elapsed_millis = 2000u};
     delivery_profile_t flat;
     TEST_ASSERT_TRUE(delivery_profile_init(&flat, flat_points, 2u, flat_end,
                                            PLANT_DELIVERY_POINT_GROUP));
 
-    const delivery_profile_point_t ramp_points[] = {{0u, 0.0f}, {2000u, 2.5f}};
+    const delivery_profile_point_t ramp_points[] = {{0u, 0.0f}, {2000u, 1.2f}};
     const delivery_end_condition_t ramp_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                .elapsed_millis = 2000u};
     delivery_profile_t ramp;
@@ -2131,7 +2131,7 @@ static void test_a_commanded_rate_converts_through_the_plant_seams_flow_figure(v
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {2000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
@@ -2139,7 +2139,7 @@ static void test_a_commanded_rate_converts_through_the_plant_seams_flow_figure(v
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
-    TEST_ASSERT_EQUAL_UINT16(pump_level_for(2.0f), state.commanded_pump_permille);
+    TEST_ASSERT_EQUAL_UINT16(pump_level_for(1.0f), state.commanded_pump_permille);
 
     /*
      * A description declaring a different pump figure moves the level with no
@@ -2154,10 +2154,10 @@ static void test_a_commanded_rate_converts_through_the_plant_seams_flow_figure(v
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
     const uint16_t moved_level = state.commanded_pump_permille;
-    TEST_ASSERT_NOT_EQUAL_UINT16(pump_level_for(2.0f), moved_level);
+    TEST_ASSERT_NOT_EQUAL_UINT16(pump_level_for(1.0f), moved_level);
 
     const float expected_permille =
-        (2.0f / flow_at_full_scale_for(&machine)) * (float)ACTUATION_FULL_SCALE;
+        (1.0f / flow_at_full_scale_for(&machine)) * (float)ACTUATION_FULL_SCALE;
     TEST_ASSERT_EQUAL_UINT16((uint16_t)lroundf(expected_permille), moved_level);
 }
 
@@ -2290,7 +2290,7 @@ static void test_the_delivery_ends_on_the_step_the_condition_is_first_met(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {5000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 350u};
     delivery_profile_t profile;
@@ -2322,7 +2322,7 @@ static void test_the_delivery_ends_on_the_step_the_condition_is_first_met(void)
 /// still passing the one above.
 static void test_moving_the_end_condition_moves_the_ending(void)
 {
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {5000u, 1.0f}};
 
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
     const delivery_end_condition_t end_a = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
@@ -2377,7 +2377,7 @@ static void test_a_profile_commanded_delivery_drives_the_truth_plant_through_the
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
@@ -2434,7 +2434,7 @@ static void test_a_held_level_set_while_a_delivery_runs_is_overwritten_next_step
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {2000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
@@ -2470,7 +2470,7 @@ static void test_a_fault_mid_delivery_ends_the_delivery(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {5000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
     delivery_profile_t profile;
@@ -2524,7 +2524,7 @@ static void test_delivered_flow_is_compared_against_the_commanded_rate_each_cycl
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
@@ -2551,7 +2551,7 @@ static void test_departure_beyond_the_band_surfaces_and_agreement_does_not(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
@@ -2599,7 +2599,7 @@ static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
@@ -2608,7 +2608,7 @@ static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
-     * Commanded is 2000 milli-ml/s, so a reading the shipped band's width below
+     * Commanded is 1000 milli-ml/s, so a reading the shipped band's width below
      * it sits exactly on the boundary rather than inside or outside it.
      *
      * Planted directly and stepped without the harness meter, unlike the cases
@@ -2618,7 +2618,7 @@ static void test_a_gap_exactly_at_the_tolerance_does_not_depart(void)
      * rather than on the comparison it exists to pin.
      */
     const int32_t exactly_at_the_band =
-        2000 - (int32_t)tolerance.flow_departure_band_milli_ml_per_s;
+        1000 - (int32_t)tolerance.flow_departure_band_milli_ml_per_s;
 
     /*
      * The first step commands the rate and judges nothing; the second is the
@@ -2668,7 +2668,7 @@ static void test_a_departed_delivery_still_runs_to_its_own_completion(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {5000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 350u};
     delivery_profile_t profile;
@@ -2677,14 +2677,14 @@ static void test_a_departed_delivery_still_runs_to_its_own_completion(void)
 
     unsigned ended_at_step = 0u;
     unsigned departed_steps = 0u;
-    /* A meter reporting nothing at all, against a commanded 2 ml/s. */
+    /* A meter reporting nothing at all, against a commanded 1 ml/s. */
     delivered_flow_factor = 0.0f;
     for (unsigned step = 1u; step <= 500u; step++) {
         const control_step_result_t result = closed_loop_step(-1);
         if (control_delivery_running(&state)) {
             /*
              * The comparison ran this step, so a reading of nothing against a
-             * commanded 2 ml/s departs the shipped band by a wide margin --
+             * commanded 1 ml/s departs the shipped band by a wide margin --
              * every step but the first, which has no elapsed interval under
              * the delivery's command to judge.
              */
@@ -2728,7 +2728,7 @@ static void test_a_departed_delivery_still_runs_to_its_own_completion(void)
 /// cadence and off course.
 static void test_late_takes_priority_over_departed_on_the_same_cycle(void)
 {
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
@@ -2741,12 +2741,12 @@ static void test_late_takes_priority_over_departed_on_the_same_cycle(void)
      * measured against it -- the very first step accepted is never late, by
      * construction, so a late+departed cycle has to be the second one.
      */
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 2000);
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1000);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
 
-    /* Commanded is 2000 milli-ml/s; the shipped band is 200, so 800 diverges. */
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 800);
+    /* Commanded is 1000 milli-ml/s; the shipped band is 200, so 900 diverges. */
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 100);
     hw_sim_advance_millis((CONTROL_STEP_INTERVAL_MS * CONTROL_STEP_LATE_MULTIPLE) + 1u);
     TEST_ASSERT_EQUAL_MESSAGE(
         CONTROL_STEP_LATE, control_step(&state),
@@ -2771,7 +2771,7 @@ static void test_an_absent_or_failed_flow_reading_does_not_report_departure(void
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
@@ -2826,14 +2826,14 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
     TEST_ASSERT_NOT_EQUAL_INT32(wide_tolerance.flow_departure_band_milli_ml_per_s,
                                 narrow_tolerance.flow_departure_band_milli_ml_per_s);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
     TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
 
-    /* The commanded rate is 2000 milli-ml/s; the injected reading is 500 short of it. */
+    /* The commanded rate is 1000 milli-ml/s; the injected reading is 500 away from it. */
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
     TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &wide_tolerance));
@@ -2951,7 +2951,7 @@ static void test_a_delivery_on_an_untargeted_machine_does_not_advance(void)
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {500u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {500u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 500u};
     delivery_profile_t profile;
@@ -3115,7 +3115,7 @@ static void test_duty_rises_in_the_step_a_profile_delivery_is_commanded_in(void)
     const uint16_t settled = hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER);
     const float before = reconstruction();
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {2000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
@@ -3154,7 +3154,7 @@ static void test_mid_ramp_level_matches_the_interpolated_rate_through_the_contro
     const delivery_profile_point_t points[] = {
         {0u, 0.0f},
         {500u, 1.0f},
-        {2000u, 2.0f},
+        {2000u, 1.2f},
     };
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 3000u};
@@ -3173,7 +3173,7 @@ static void test_mid_ramp_level_matches_the_interpolated_rate_through_the_contro
         TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
     }
 
-    const float expected_rate = 1.0f + ((1250.0f - 500.0f) / (2000.0f - 500.0f)) * (2.0f - 1.0f);
+    const float expected_rate = 1.0f + ((1250.0f - 500.0f) / (2000.0f - 500.0f)) * (1.2f - 1.0f);
     TEST_ASSERT_EQUAL_UINT16(pump_level_for(expected_rate), state.commanded_pump_permille);
 }
 
@@ -3231,7 +3231,7 @@ static void test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {5000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {5000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 40u};
     delivery_profile_t profile;
@@ -3309,7 +3309,7 @@ static delivery_profile_t course_holding(float ml_per_s)
 /// faster has to move it in and rules out the relation running backwards.
 static void test_the_lead_is_read_from_the_machines_description(void)
 {
-    const delivery_profile_t course = course_holding(2.0f);
+    const delivery_profile_t course = course_holding(1.0f);
     uint32_t leads[2] = {0u, 0u};
     static const char *const CONSTANTS[] = {"1.0", "8.0"};
 
@@ -3346,8 +3346,8 @@ static void test_the_lead_is_read_from_the_machines_description(void)
 /// against wherever the course happens to be on a later step.
 static void test_the_lead_is_taken_at_the_courses_peak(void)
 {
-    const delivery_profile_t shot_shaped = course_peaking_at(2.0f);
-    const delivery_profile_point_t held_points[] = {{0u, 2.0f}, {2000u, 2.0f}};
+    const delivery_profile_t shot_shaped = course_peaking_at(1.0f);
+    const delivery_profile_point_t held_points[] = {{0u, 1.0f}, {2000u, 1.0f}};
     const delivery_end_condition_t held_end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                                .elapsed_millis = 2000u};
     delivery_profile_t held_at_the_peak;
@@ -3372,7 +3372,7 @@ static void test_the_lead_is_taken_at_the_courses_peak(void)
                                      "two courses sharing a peak answered with different leads, "
                                      "so the probe is not reading the peak alone");
 
-    const delivery_profile_t faster_peak = course_peaking_at(2.5f);
+    const delivery_profile_t faster_peak = course_peaking_at(1.2f);
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &faster_peak));
     TEST_ASSERT_TRUE_MESSAGE(state.delivery_lead_millis < lead_shot_shaped,
@@ -3433,7 +3433,7 @@ static float shortfall_after_running(const delivery_profile_t *course, unsigned 
 /// behind for the whole delivery.
 static void test_a_rising_course_droops_less_when_the_law_is_led(void)
 {
-    const delivery_profile_point_t points[] = {{0u, 0.0f}, {3000u, 2.7f}};
+    const delivery_profile_point_t points[] = {{0u, 0.0f}, {3000u, 1.2f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 3000u};
     delivery_profile_t ramp;
@@ -3468,8 +3468,8 @@ static void test_reading_ahead_stops_at_the_end_condition(void)
      * held before the rise, and a window free to run past that same instant
      * picks up some of what the course rises to. */
     const delivery_profile_point_t bent[] = {
-        {0u, 2.0f}, {1000u, 2.0f}, {1100u, 3.0f}, {90000u, 3.0f}};
-    const delivery_profile_point_t flat[] = {{0u, 2.0f}, {90000u, 2.0f}};
+        {0u, 1.0f}, {1000u, 1.0f}, {1100u, 1.2f}, {90000u, 1.2f}};
+    const delivery_profile_point_t flat[] = {{0u, 1.0f}, {90000u, 1.0f}};
     uint16_t heater[2] = {0u, 0u};
     uint16_t baseline_heater = 0u;
     static const uint32_t ENDS[] = {1000u, 90000u};
@@ -3549,7 +3549,7 @@ static void test_reading_ahead_stops_at_the_end_condition(void)
 /// than a second arrangement built for hot water.
 static void test_a_hot_water_shaped_course_is_led_by_the_same_term_an_extraction_is(void)
 {
-    const delivery_profile_point_t points[] = {{0u, 0.0f}, {3000u, 2.5f}, {80000u, 2.5f}};
+    const delivery_profile_point_t points[] = {{0u, 0.0f}, {3000u, 1.2f}, {80000u, 1.2f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 80000u};
     delivery_profile_t hot_water_shaped;
@@ -3634,7 +3634,7 @@ static void test_a_rising_course_holds_the_band(void)
 /// whole course, including the stretch right up to its last one.
 static void test_a_course_ending_mid_draw_holds_the_band(void)
 {
-    const delivery_profile_point_t points[] = {{0u, 2.0f}, {30000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 1.0f}, {30000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 30000u};
     delivery_profile_t course;
@@ -3736,7 +3736,7 @@ static void test_a_refusal_names_the_bound_it_crossed_and_the_figures(void)
     admission.requested = 1.0f;
     admission.available = 2.0f;
     admission.at_millis = 3u;
-    const delivery_profile_t ordinary = course_holding(2.0f);
+    const delivery_profile_t ordinary = course_holding(1.0f);
     TEST_ASSERT_TRUE(control_command_delivery_reporting(&state, &ordinary, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
     TEST_ASSERT_EQUAL_FLOAT_MESSAGE(0.0f, admission.requested,
@@ -3899,6 +3899,13 @@ static void test_a_target_beyond_the_authority_at_the_peak_draw_is_refused(void)
 {
     const float full_scale = full_scale_flow_ml_per_s();
     control_admission_t admission;
+    /*
+     * Modest enough that the heavy draw's own worst-corner settled figure
+     * still clears it -- the widened authority probe worst-cases the heavy
+     * draw down into the low forties, so 45 no longer separates "modest" from
+     * "beyond the machine entirely" the way it did against the point belief.
+     */
+    const float modest_target_c = 35.0f;
 
     /* One target, two courses: heavy draw refused, light draw admitted. */
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
@@ -3916,7 +3923,7 @@ static void test_a_target_beyond_the_authority_at_the_peak_draw_is_refused(void)
 
     /* One course, two targets: the heavy draw admits a modest target. */
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
-    TEST_ASSERT_TRUE(control_command_temperature(&state, 45.0f));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, modest_target_c));
     TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &heavy, &admission),
                              "a draw the machine holds a modest target against was refused, so "
                              "the bound is on the draw alone rather than on the pair");
@@ -3941,14 +3948,14 @@ static void test_a_target_beyond_the_authority_at_the_peak_draw_is_refused(void)
      * round the bound entirely.
      */
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
-    TEST_ASSERT_TRUE(control_command_temperature(&state, 45.0f));
+    TEST_ASSERT_TRUE(control_command_temperature(&state, modest_target_c));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &heavy));
     TEST_ASSERT_FALSE_MESSAGE(
         control_command_temperature_reporting(&state, BREW_TARGET_C, &admission),
         "a target beyond the machine's authority was accepted because the delivery had been "
         "commanded first");
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(45.0f, state.target_c,
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(modest_target_c, state.target_c,
                                     "a refused target was written into the state anyway");
 }
 
@@ -3989,7 +3996,14 @@ static void test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_
     static const float NOMINAL_HEATER_POWER_W = 1004.0f;
     /* Fractions the belief's heater is driven down by, each strictly beyond the declared band. */
     static const float DRIVEN_DOWN_BY[] = {0.30f, 0.60f, 0.90f};
-    const delivery_profile_t within = course_holding(2.8f);
+    /*
+     * A rate the widened authority probe admits at the shipped budget's own
+     * worst corner (worst-case settled well above target), but that a belief
+     * additionally driven down by any of DRIVEN_DOWN_BY still refuses -- 2.8
+     * no longer separates the two now that the probe already worst-cases the
+     * declared error on its own, unweakened belief.
+     */
+    const delivery_profile_t within = course_holding(1.3f);
     control_admission_t admission;
     float assumed_error = 0.0f;
 
@@ -4055,11 +4069,26 @@ static void test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_
 /// no channel to the truth description at all, so there is nothing there for a
 /// mistake to reach through. It is kept because the property is load-bearing
 /// and costs nothing to state, not because it is falsifiable.
+///
+/// SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C4: A
+/// course within the degraded plant's own capability is still admitted,
+/// under a belief matching truth -- the shipped machine's own admission of
+/// `within` below, at the nominal, unweakened, unstrengthened description.
 static void test_the_authority_boundary_follows_the_description_the_loop_holds(void)
 {
-    /* Either side of the shipped machine's boundary, which sits near 3.0 mL/s. */
-    const delivery_profile_t within = course_holding(2.8f);
-    const delivery_profile_t beyond = course_holding(3.5f);
+    /*
+     * Either side of the shipped machine's boundary, which the authority
+     * probe's own worst-corner evaluation against the declared error budget
+     * now sits near 1.9 mL/s rather than 3.0. The binding corner is
+     * pump.flow_ml_per_s: the commanded duty is computed once from the
+     * believed full-scale flow and held fixed across every corner, so the
+     * corner that scales the believed pump capacity up draws more water at
+     * that same duty than the point belief assumed, which costs more of the
+     * settled figure at full settling than any other single coefficient's
+     * corner does.
+     */
+    const delivery_profile_t within = course_holding(1.5f);
+    const delivery_profile_t beyond = course_holding(2.0f);
     control_admission_t admission;
 
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
@@ -4180,7 +4209,7 @@ static void test_a_target_above_the_saturation_ceiling_is_refused(void)
 static void test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused(void)
 {
     static const float STANDING_AT[] = {20.0f, 40.0f, 60.0f, 88.0f, 93.0f};
-    const delivery_profile_t ordinary = course_holding(2.0f);
+    const delivery_profile_t ordinary = course_holding(1.0f);
 
     for (size_t at = 0u; at < sizeof(STANDING_AT) / sizeof(STANDING_AT[0]); at++) {
         control_admission_t admission;
@@ -4228,7 +4257,7 @@ static void test_an_admissible_delivery_reaches_the_machine_exactly_as_before(vo
     const float target_before = state.target_c;
     const float integral_before = state.integral_permille;
 
-    const delivery_profile_point_t points[] = {{0u, 0.0f}, {1000u, 2.0f}, {2000u, 2.0f}};
+    const delivery_profile_point_t points[] = {{0u, 0.0f}, {1000u, 1.0f}, {2000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 2000u};
     delivery_profile_t profile;
@@ -4282,7 +4311,7 @@ static void test_an_admissible_delivery_reaches_the_machine_exactly_as_before(vo
 /// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C2: The departure a delivery reports
 /// is the commanded rate less the measured one.
 ///
-/// A flat 2.0 ml/s course with 1.2 ml/s planted at the seam has to report 800
+/// A flat 1.0 ml/s course with 0.2 ml/s planted at the seam has to report 800
 /// thousandths short. The figure is what makes this an assertion about the
 /// reading rather than about the command: a control path that compared the
 /// command against itself would report nothing, and one that reported a bare
@@ -4295,7 +4324,7 @@ static void test_the_departure_reported_is_the_commanded_rate_less_the_measured_
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
@@ -4304,13 +4333,13 @@ static void test_the_departure_reported_is_the_commanded_rate_less_the_measured_
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
 
     /*
-     * The first step commands 2.0 ml/s and judges nothing; the second reads the
+     * The first step commands 1.0 ml/s and judges nothing; the second reads the
      * meter for the interval that command was in force over.
      */
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1200);
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 200);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, control_step(&state));
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 1200);
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 200);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, control_step(&state));
 
@@ -4339,7 +4368,7 @@ static void test_a_reading_outside_the_plausible_span_is_no_observation(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
@@ -4389,7 +4418,7 @@ static void test_a_departure_found_on_one_step_is_still_reportable_when_the_deli
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
@@ -4441,7 +4470,7 @@ static void test_the_departure_report_belongs_to_one_delivery(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {4000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 4000u};
@@ -4509,7 +4538,7 @@ static void test_the_departure_report_belongs_to_one_delivery(void)
 /// channel.
 static void test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees(void)
 {
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
@@ -4575,7 +4604,7 @@ static void test_a_delivery_nothing_measured_reports_no_account(void)
     for (size_t which = 0u; which < sizeof(UNTRUSTED) / sizeof(UNTRUSTED[0]); which++) {
         bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-        const float rate = 2.0f;
+        const float rate = 1.0f;
         const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
         const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                               .elapsed_millis = 5000u};
@@ -4615,7 +4644,7 @@ static void test_a_failed_reading_that_recovers_resumes_the_comparison(void)
 {
     bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
 
-    const float rate = 2.0f;
+    const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
                                           .elapsed_millis = 5000u};
@@ -5848,7 +5877,7 @@ static void test_hot_water_is_driven_by_the_same_law_as_an_extraction(void)
     } CASES[] = {
         {70.0f, 65.0f, 63.0f, 1.0f},
         {93.0f, 80.0f, 78.0f, 1.0f},
-        {93.0f, 85.0f, 83.0f, 2.5f},
+        {93.0f, 85.0f, 83.0f, 1.5f},
         {62.0f, 60.0f, 58.0f, 0.5f},
     };
     static const plant_delivery_point_t POINTS[] = {PLANT_DELIVERY_POINT_GROUP,
@@ -5890,7 +5919,7 @@ static void test_hot_water_is_driven_by_the_same_law_as_an_extraction(void)
 static void test_the_rate_is_reduced_only_once_the_heater_has_no_authority_left(void)
 {
     delivery_profile_t course =
-        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+        steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
 
     bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
@@ -5922,7 +5951,7 @@ static void test_the_rate_is_reduced_only_once_the_heater_has_no_authority_left(
 static void test_the_reduction_follows_the_shortfall_rather_than_switching_rates(void)
 {
     delivery_profile_t course =
-        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+        steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     float fractions[2] = {0.0f, 0.0f};
     /* One degree and two degrees below the shipped sixty-degree floor: both
      * stay inside the coefficient's own partial range rather than clamping
@@ -5961,7 +5990,7 @@ static void test_the_reduction_follows_the_shortfall_rather_than_switching_rates
 static void test_the_reduction_reaches_zero_past_its_own_coefficient_and_stays_there(void)
 {
     delivery_profile_t course =
-        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+        steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
 
     bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
@@ -6009,7 +6038,7 @@ static void test_the_reduction_reaches_zero_past_its_own_coefficient_and_stays_t
 static void test_the_reduction_is_withdrawn_as_the_water_recovers(void)
 {
     delivery_profile_t course =
-        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+        steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
 
     bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
@@ -6050,7 +6079,7 @@ static void test_the_reduction_is_withdrawn_as_the_water_recovers(void)
 static void test_the_yield_applies_only_to_a_delivery_served_at_the_drinking_point(void)
 {
     delivery_profile_t extraction =
-        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_GROUP);
+        steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_GROUP);
 
     bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
@@ -6073,7 +6102,7 @@ static void test_the_yield_applies_only_to_a_delivery_served_at_the_drinking_poi
 static void test_departure_is_judged_against_the_original_commanded_rate(void)
 {
     delivery_profile_t course =
-        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+        steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
 
     bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
@@ -6085,11 +6114,11 @@ static void test_departure_is_judged_against_the_original_commanded_rate(void)
                              "the yield never engaged, so this run shows nothing about what "
                              "departure is judged against");
     TEST_ASSERT_EQUAL_FLOAT_MESSAGE(
-        2.0f, state.delivery_commanded_rate_ml_per_s,
+        1.0f, state.delivery_commanded_rate_ml_per_s,
         "the rate a yielded step records for departure to answer for was the reduced rate "
         "rather than the course's own, so a yielded delivery would not report its shortfall "
         "as a choked path would");
-    TEST_ASSERT_TRUE_MESSAGE(state.commanded_pump_permille < pump_level_for(2.0f),
+    TEST_ASSERT_TRUE_MESSAGE(state.commanded_pump_permille < pump_level_for(1.0f),
                              "the pump command was not reduced, so nothing here shows a yield "
                              "in force at all");
 }
@@ -6105,7 +6134,7 @@ static void test_departure_is_judged_against_the_original_commanded_rate(void)
 static void test_the_rate_given_up_is_reported_via_control_delivery_yield(void)
 {
     delivery_profile_t course =
-        steady_course_of(2.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+        steady_course_of(1.0f, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     control_yield_t yield;
 
     bring_the_loop_up(&parameters, &parameters, 50.0f, 50.0f);
@@ -6142,7 +6171,7 @@ static void test_the_rate_given_up_is_reported_via_control_delivery_yield(void)
 /// machine that decided to trade.
 static void test_a_choked_delivery_reports_departure_with_no_yield(void)
 {
-    delivery_profile_t course = steady_course_of(2.0f, 2000u, PLANT_DELIVERY_POINT_GROUP);
+    delivery_profile_t course = steady_course_of(1.0f, 2000u, PLANT_DELIVERY_POINT_GROUP);
 
     bring_the_loop_up(&parameters, &parameters, 93.0f, 93.0f);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
@@ -6150,10 +6179,10 @@ static void test_a_choked_delivery_reports_departure_with_no_yield(void)
      * has elapsed. */
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    /* The meter reports well short of the roughly 2000 milli-ml/s commanded,
+    /* The meter reports well short of the roughly 1000 milli-ml/s commanded,
      * on a machine driving the course exactly as asked -- a choked path, not
      * a yield, which never applies to an extraction in any case. */
-    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 500);
+    hw_sim_set_sensor(HW_SENSOR_FLOW, HW_READING_VALID, 200);
     hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
     TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, control_step(&state));
 
@@ -6290,9 +6319,9 @@ static float heater_duty_at(float held_rate, uint32_t bend_at_millis, float peak
 /// them apart -- the two readings agree exactly where a course is flat.
 static void test_the_lead_ahead_term_scales_the_bend_by_the_fraction_not_a_difference(void)
 {
-    const float held_rate = 1.0f;
-    const float peak_a = 1.4f;
-    const float peak_b = 2.4f;
+    const float held_rate = 0.5f;
+    const float peak_a = 1.0f;
+    const float peak_b = 1.5f;
 
     const uint32_t lead_a = probed_lead_millis(held_rate, peak_a);
     const uint32_t lead_b = probed_lead_millis(held_rate, peak_b);
@@ -6357,14 +6386,25 @@ static void test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_wind
     const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     /*
      * The real element rated at less than the description the loop was
-     * brought up on believes -- within the declared assumed error the
-     * reference description itself carries for this coefficient -- so that
-     * the peak this rate was admitted against is genuinely beyond what the
-     * machine can sustain in truth, and not merely at the edge the loop's
-     * own belief already accounts for.
+     * brought up on believes, so that the peak this rate was admitted against
+     * is genuinely beyond what the machine can sustain in truth, and not
+     * merely at the edge the loop's own belief already accounts for.
+     *
+     * Weak enough that the truth machine's own full-rate asymptote at the
+     * admitted rate sits below the drinking floor -- the figure the yield law
+     * actually reacts to, not the standing target -- rather than merely below
+     * the target: the widened authority probe's own worst-corner evaluation
+     * now admits a markedly lower rate than it used to (pump.flow_ml_per_s's
+     * declared error is the binding corner -- the commanded duty is computed
+     * once from the believed full-scale flow and held fixed across every
+     * corner, so the corner scaling the believed pump capacity up draws more
+     * water at that same duty than any other coefficient's corner costs),
+     * and at that lower rate an element only as weak as the previous figure
+     * settles comfortably above the floor on its own, full rate, with
+     * nothing for the yield law to correct.
      */
     const plant_parameters_t weaker_machine =
-        parameters_from(description_with("brew.heater_power_w", "480.0"));
+        parameters_from(description_with("brew.heater_power_w", "340.0"));
     const float floor_c = (float)tolerance.drinking_floor_milli_c / 1000.0f;
     const float ceiling_c = (float)tolerance.drinking_ceiling_milli_c / 1000.0f;
     /*
@@ -6467,7 +6507,7 @@ static void test_a_demand_sharing_the_mass_with_what_is_running_is_held(void)
 {
     stand_the_machine_rested();
 
-    const float extraction_rate = EXTRACTION_RATE_ML_PER_S;
+    const float extraction_rate = 1.0f;
     delivery_profile_t extraction =
         steady_course_of(extraction_rate, 2000u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
@@ -6523,7 +6563,7 @@ static void test_a_held_demand_resumes_unassisted_once_the_running_delivery_ends
     stand_the_machine_rested();
 
     delivery_profile_t extraction =
-        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+        steady_course_of(1.0f, 500u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
@@ -6573,7 +6613,7 @@ static void test_a_second_contending_demand_replaces_the_first_held_one(void)
     stand_the_machine_rested();
 
     delivery_profile_t extraction =
-        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+        steady_course_of(1.0f, 500u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
@@ -6627,7 +6667,7 @@ static void test_a_held_demand_and_what_it_is_held_against_are_readable(void)
 
     stand_the_machine_rested();
     delivery_profile_t extraction =
-        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+        steady_course_of(1.0f, 500u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
     TEST_ASSERT_FALSE_MESSAGE(control_delivery_held(&state, &held, &held_against),
@@ -6660,7 +6700,7 @@ static void test_a_held_deliverys_elapsed_time_begins_at_its_own_admission(void)
     stand_the_machine_rested();
 
     delivery_profile_t extraction =
-        steady_course_of(EXTRACTION_RATE_ML_PER_S, 800u, PLANT_DELIVERY_POINT_GROUP);
+        steady_course_of(1.0f, 800u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
@@ -6713,7 +6753,7 @@ static void test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_lat
     stand_the_machine_rested();
 
     delivery_profile_t extraction =
-        steady_course_of(EXTRACTION_RATE_ML_PER_S, 5000u, PLANT_DELIVERY_POINT_GROUP);
+        steady_course_of(1.0f, 5000u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
@@ -6776,8 +6816,16 @@ static void stand_a_demand_held_at_the_low_target(float held_rate_ml_per_s)
     bring_the_loop_up(&parameters, &parameters, LOW_TARGET_C, LOW_TARGET_C);
     TEST_ASSERT_TRUE(control_command_temperature(&state, LOW_TARGET_C));
 
-    delivery_profile_t extraction =
-        steady_course_of(EXTRACTION_RATE_ML_PER_S, 500u, PLANT_DELIVERY_POINT_GROUP);
+    /*
+     * A rate this machine holds even the brew target against, comfortably,
+     * under the declared error budget's own worst corner -- not
+     * EXTRACTION_RATE_ML_PER_S, which the widened authority bound now refuses
+     * at the brew target on its own account. A target one of these cases
+     * refuses has to be refused on the held demand's account, never on this
+     * one's, and an extraction that is itself beyond authority at the target
+     * commanded below would be judged first and misattribute every case here.
+     */
+    delivery_profile_t extraction = steady_course_of(1.0f, 500u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
@@ -7097,6 +7145,165 @@ static protection_margin_t margin_declaring_one(const char *name, float fraction
     const float fractions[] = {fraction};
 
     return margin_for(description_declaring(names, fractions, 1u), target_c);
+}
+
+/*
+ * The largest rate a loop brought up under the given belief and budget holds
+ * a target against, by the same bisection largest_rate_the_machine_holds
+ * runs over the module's own shipped globals -- generalised to take its
+ * belief and budget as arguments, for cases that want the question put to a
+ * machine other than the shipped one.
+ */
+static float largest_rate_held_against(const plant_parameters_t *believed,
+                                       const plant_parameter_budget_t *budget_used, float target_c)
+{
+    control_state_t asking;
+
+    TEST_ASSERT_TRUE(control_init(&asking, believed, budget_used, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&asking, target_c));
+
+    float admitted = 0.0f;
+    float refused = full_scale_flow_ml_per_s();
+
+    for (unsigned narrowing = 0u; narrowing < 24u; narrowing++) {
+        const float rate = (admitted + refused) * 0.5f;
+        control_state_t trying = asking;
+        control_admission_t admission;
+        delivery_profile_t trial =
+            steady_course_of(rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
+
+        if (control_command_delivery_reporting(&trying, &trial, &admission)) {
+            admitted = rate;
+        } else {
+            refused = rate;
+        }
+    }
+    return admitted;
+}
+
+/// SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C1: The
+/// authority probe evaluates the least-capable plant the declared error
+/// budget admits, not the point belief alone.
+///
+/// SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C3: The
+/// degraded-plant probe is never less conservative than the existing
+/// point-belief probe.
+///
+/// Two loops are brought up on the identical believed values -- description_declaring
+/// with an empty list rewrites the shipped description with every declared-error
+/// annotation stripped, so the coefficients are unchanged and only the budget
+/// differs. The largest rate each holds a target against is found by the same
+/// bisection largest_rate_the_machine_holds itself runs. If the widened probe
+/// evaluated the point belief alone, budget or no budget would make no
+/// difference and the two rates would be equal; if it were ever more
+/// permissive than the point-belief probe it replaces, the real budget's own
+/// rate would exceed the undeclared one's. Neither is true here: the real
+/// budget's rate is strictly the smaller of the two.
+static void test_the_degraded_probe_never_admits_more_than_the_point_belief_alone(void)
+{
+    const char *exact = description_declaring(NULL, NULL, 0u);
+    const plant_parameters_t exact_parameters = parameters_from(exact);
+    const plant_parameter_budget_t exact_budget = budget_from(exact);
+
+    const float point_belief_rate =
+        largest_rate_held_against(&exact_parameters, &exact_budget, BREW_TARGET_C);
+    const float degraded_rate = largest_rate_held_against(&parameters, &budget, BREW_TARGET_C);
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        degraded_rate <= point_belief_rate + 1e-4f,
+        "the shipped budget's own worst corner admitted a faster draw than the point belief "
+        "alone holds with no declared error to widen against, so the degraded probe is less "
+        "conservative than the probe it replaces");
+    TEST_ASSERT_TRUE_MESSAGE(
+        degraded_rate < point_belief_rate - 1e-3f,
+        "the shipped budget's declared error made no difference to the admitted rate at all, so "
+        "this run shows nothing about the widened probe actually evaluating anything beyond the "
+        "point belief");
+}
+
+/*
+ * Where the water leaving a machine settles under a peak draw, held long
+ * enough to reach the same steady state the authority probe's own settling
+ * window reaches. Not tied to that window's exact length -- a settled
+ * temperature is an asymptote, and any sufficiently long hold reaches the
+ * same one -- so this stands on its own rather than duplicating a figure
+ * private to control.c.
+ */
+static float long_run_settled_c(const plant_parameters_t *machine, float peak_ml_per_s)
+{
+    static const uint32_t LONG_ENOUGH_MS = 7200000u;
+    plant_model_t probe;
+    plant_actuation_t held = {{0u}};
+    float settled_c = 0.0f;
+
+    TEST_ASSERT_TRUE(plant_model_init(&probe, machine));
+    held.level_permille[ACTUATION_CHANNEL_BREW_HEATER] = (uint16_t)ACTUATION_FULL_SCALE;
+    held.level_permille[ACTUATION_CHANNEL_PUMP] = pump_level_for(peak_ml_per_s);
+    TEST_ASSERT_TRUE(plant_model_step(&probe, &held, 0.0f, LONG_ENOUGH_MS));
+    TEST_ASSERT_TRUE(plant_model_state(&probe, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &settled_c));
+    return settled_c;
+}
+
+/// SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C2: The
+/// refusal fires for every course the true plant cannot deliver, whenever
+/// truth diverges from belief along a single authority-relevant coefficient,
+/// within that coefficient's own declared fraction.
+///
+/// The budget here declares an error against pump.flow_ml_per_s alone --
+/// nothing else -- so the enumeration this solution runs has exactly one
+/// coefficient's two corners and a joint corner with nothing to move. Truth
+/// is belief with that one coefficient written at the corner's own edge, 7.0
+/// mL/s believed against 11.2 truth, which is exactly what the worst corner
+/// assumes -- so the boundary the loop's own bisection finds against belief
+/// is also the exact boundary of what truth can deliver, and both sides of
+/// it are checked directly against truth's own settled figure before either
+/// is asked of admission, so a refusal or an admission here is judged
+/// against what the boundary claims rather than assumed to be right because
+/// admission produced it.
+static void test_refusal_holds_when_a_single_coefficient_diverges_within_its_declared_band(void)
+{
+    static const char *const PUMP_COEFFICIENT[] = {"pump.flow_ml_per_s"};
+    static const float PUMP_ERROR[] = {0.6f};
+    const char *scoped = description_declaring(PUMP_COEFFICIENT, PUMP_ERROR, 1u);
+    const plant_parameters_t belief = parameters_from(scoped);
+    const plant_parameter_budget_t scoped_budget = budget_from(scoped);
+    const plant_parameters_t truth = parameters_from(description_with("pump.flow_ml_per_s", "11.2"));
+
+    const float boundary = largest_rate_held_against(&belief, &scoped_budget, BREW_TARGET_C);
+    TEST_ASSERT_TRUE_MESSAGE(boundary > 0.2f,
+                             "the single-coefficient boundary sits too close to zero for this "
+                             "test's own probe margin either side of it");
+
+    const float within = boundary - 0.1f;
+    const float beyond = boundary + 0.1f;
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        long_run_settled_c(&truth, within) >= BREW_TARGET_C,
+        "a course just inside the single-coefficient boundary is one truth cannot actually "
+        "deliver, so admitting it below would establish nothing about the guarantee");
+    TEST_ASSERT_TRUE_MESSAGE(
+        long_run_settled_c(&truth, beyond) < BREW_TARGET_C,
+        "a course just beyond the single-coefficient boundary is one truth can actually deliver, "
+        "so refusing it below would establish nothing about the guarantee");
+
+    control_state_t local;
+    TEST_ASSERT_TRUE(control_init(&local, &belief, &scoped_budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_command_temperature(&local, BREW_TARGET_C));
+
+    control_admission_t admission;
+    const delivery_profile_t within_course = course_holding(within);
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_delivery_reporting(&local, &within_course, &admission),
+        "a course truth can actually deliver, with truth's own single-coefficient divergence "
+        "inside the declared band, was refused");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    const delivery_profile_t beyond_course = course_holding(beyond);
+    TEST_ASSERT_FALSE_MESSAGE(
+        control_command_delivery_reporting(&local, &beyond_course, &admission),
+        "a course truth cannot actually deliver, with truth's own single-coefficient divergence "
+        "inside the declared band, was admitted");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound);
 }
 
 /*
@@ -8403,6 +8610,8 @@ int main(void)
     RUN_TEST(test_a_target_that_would_strand_a_held_demand_is_refused);
     RUN_TEST(test_a_target_a_held_demand_can_be_met_at_is_admitted);
     RUN_TEST(test_a_target_below_the_drinking_floor_is_refused_against_a_held_draw);
+    RUN_TEST(test_the_degraded_probe_never_admits_more_than_the_point_belief_alone);
+    RUN_TEST(test_refusal_holds_when_a_single_coefficient_diverges_within_its_declared_band);
     RUN_TEST(test_the_margin_widens_monotonically_with_each_declared_coefficients_error);
     RUN_TEST(test_a_corner_moving_the_gap_the_safe_way_contributes_nothing);
     RUN_TEST(test_the_margin_is_the_worst_single_corner_and_not_a_sum_or_a_root_sum_square);

@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: Each loop holds its guarantees across the declared range of model error
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 1
 text: |

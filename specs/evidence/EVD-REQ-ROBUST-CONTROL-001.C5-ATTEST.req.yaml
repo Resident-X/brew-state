@@ -1,0 +1,30 @@
+id: EVD-REQ-ROBUST-CONTROL-001.C5-ATTEST
+type: evidence
+title: Attestation of REQ-ROBUST-CONTROL-001.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-28T22:03:51Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-ROBUST-CONTROL-001.C5","synthesised_at":"2026-08-28T22:03:51.486085Z","entries":[{"input_id":"DEL-SIM-ROBUSTNESS-VERIFICATION","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_degraded_probe_never_admits_more_than_the_point_belief_alone"},{"input_id":"SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_simulated_plant"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-ROBUST-CONTROL-001.C5.
+
+  Final-state intent: safety, refusal and budget behaviour survive an arbitrarily wrong model -- these are the properties that must not depend on identification having succeeded.
+
+  Composition: DEL-SIM-ROBUSTNESS-VERIFICATION (cascade), SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL (active evidence C1-TEST, C2-ANALYSIS, C3-TEST), SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY (active evidence C1-TEST through C4-TEST).
+
+  Intent fit: of the three named properties, only refusal is discharged by this composition, and only on the coffee side. The sibling solution proves the coffee-side refusal survives a belief driven weaker than truth, beyond the declared error band (its own scope explicitly excludes reaching a safe state and respecting the supply budget, stating neither has a built mechanism anywhere in the delivery chain yet for a verification to exercise). This solution closes the complementary gap that sibling's own text names as open: refusal now also survives a belief that overstates the machine's capability, evaluating the least-capable plant the declared error budget admits rather than the point belief alone, verified for a single authority-relevant coefficient diverging within its declared band (criterion C2 was narrowed to this scope in this same session, matching what the worst-corner enumeration DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE established can actually prove -- simultaneous independent divergence across more than one coefficient is not covered and neither solution claims it is).
+
+  Acknowledged scope boundary: safety (reaching a safe state) and supply-budget behaviour are not discharged by this composition and are not claimed to be. DEL-SIM-ROBUSTNESS-VERIFICATION's own rationale states the supply budget is a property of the machine and its supply, established on the physical track rather than in simulation, so nothing in this phase asserts what that budget is; safety has no built mechanism in the delivery chain yet either. Both are deferred to later phases by the graph's own prior design, not by an unstated gap this attestation is introducing. The steam side is also out of scope: it has no equivalent commanded-profile concept for the coffee-side refusal mechanism to extend to, per both contributing solutions' own text.
+
+  Decision: attest. The refusal property this phase's contributing solutions were built to discharge is fully discharged, on the coffee side, within the explicitly acknowledged bounds above. Safety and budget on the coffee side, and refusal on the steam side, remain open and are not represented as closed by this attestation.
+links:
+  - target: REQ-ROBUST-CONTROL-001.C5
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

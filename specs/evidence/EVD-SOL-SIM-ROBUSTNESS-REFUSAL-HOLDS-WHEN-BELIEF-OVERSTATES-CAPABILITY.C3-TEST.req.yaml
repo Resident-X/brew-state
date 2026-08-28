@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C3-TEST
+type: evidence
+title: The degraded-plant probe is never less conservative than the point-belief probe it replaces (SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T22:00:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_degraded_probe_never_admits_more_than_the_point_belief_alone
+text: |-
+  test_the_degraded_probe_never_admits_more_than_the_point_belief_alone passes, directly asserting degraded_rate <= point_belief_rate + 1e-4 -- the real shipped budget's own worst corner never admits a faster draw than the same believed coefficients hold with no declared error to widen against at all. Regression-protects the ordering degraded_settled_brew_c's own seed in control.c (starting the corner search from the point-belief settled figure and only ever lowering it) is meant to guarantee: deleting that seed and starting the search from the first corner instead would let this test catch a probe that had become more permissive than the one it replaces.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C3
+    type: satisfies

@@ -190,6 +190,54 @@ typedef struct {
 size_t protection_margin_corner_count(const plant_parameter_budget_t *budget);
 
 /*
+ * The corner descriptor for corner `which` alone: which coefficient it moves
+ * (or, for the joint corner, how many), which end of the declared error, and
+ * the fraction. Written apart from protection_margin_corner below so a caller
+ * that wants the degraded machine a corner describes, but not this file's own
+ * probe of it, can ask for one without this file assuming the caller's probe
+ * shape -- the authority bound in control.c is such a caller: it has its own
+ * question to put to the degraded machine and no standing duty to hold it at.
+ *
+ * `moves` comes back 0 for a corner with nothing to run: a coefficient the
+ * description declares no error against, or declares an error of nothing
+ * against. `ran`, `reached_c` and `contribution_c` are left at their zero
+ * values -- this call runs no probe, so no probe result exists to fill them
+ * with; a caller wanting those runs protection_margin_corner instead.
+ *
+ * Returns false, writing nothing, for a null argument, for a corner index at
+ * or past the count above, or for a budget whose coefficient count does not
+ * match the structure this build compiled.
+ */
+bool protection_margin_corner_descriptor(const plant_parameter_budget_t *budget, size_t which,
+                                         protection_margin_corner_t *corner);
+
+/*
+ * The degraded plant_parameters_t a described corner builds: the believed
+ * parameters with every coefficient the corner moves written at its corner
+ * value through the plant seam. A corner with `moves` at 0 comes back as the
+ * believed parameters unchanged in the ordinary case -- an undeclared
+ * coefficient's corner has nothing to scale -- but not in every case a
+ * caller could construct one: a hand-built corner with `moves` left at 0 and
+ * a declared_error the plant seam refuses (not-a-number, say) is not
+ * distinguished from the ordinary one and still reaches the seam's own
+ * range check below, on the same terms an inadmissible corner from
+ * protection_margin_corner_descriptor above does.
+ *
+ * Returns false for a null argument, for a budget whose coefficient count
+ * does not match the structure this build compiled, or for a corner the
+ * structure will not admit as a machine -- the same range check a
+ * description is built against. `machine` is left holding the believed
+ * parameters, not untouched, when a scale past the first fails: the corner
+ * is written coefficient by coefficient and only the whole result is the
+ * caller's to trust, so a false return is the signal to read, not the
+ * partial machine.
+ */
+bool protection_margin_corner_machine(const plant_parameters_t *believed,
+                                      const plant_parameter_budget_t *budget,
+                                      const protection_margin_corner_t *corner,
+                                      plant_parameters_t *machine);
+
+/*
  * Run one corner of that enumeration and report what it cost the gap.
  *
  * The corner is built by writing the description's own coefficients at their

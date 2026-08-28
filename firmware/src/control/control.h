@@ -199,11 +199,16 @@ typedef enum {
      */
     CONTROL_ADMISSION_TARGET_OVER_SATURATION,
     /*
-     * The machine has not the heater authority to hold the target against the
-     * draw the course asks for at its peak. Established by probing the plant
-     * description -- see control.c -- rather than by reading any coefficient of
-     * it by name, so the bound follows whichever structure is linked instead of
-     * describing one of them.
+     * The least-capable plant the machine's declared error admits has not the
+     * heater authority to hold the target against the draw the course asks for
+     * at its peak. Established by probing the plant description -- see
+     * control.c -- rather than by reading any coefficient of it by name, so the
+     * bound follows whichever structure is linked instead of describing one of
+     * them. The description's own point belief is not probed alone: every
+     * coefficient with a path to this answer is also taken to its own corner by
+     * its declared error, one at a time, combined by worst case on the same
+     * terms the protection margin below is -- so `available` is the settled
+     * figure the worst such corner reaches, not the point belief's.
      */
     CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY,
     /*
