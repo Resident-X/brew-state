@@ -1,0 +1,17 @@
+id: EVD-SOL-DOMINANCE-RECORD-NAMES-EVERY-SIBLING-ANALYSIS.C1-TEST
+type: evidence
+title: The committed dominance record names every analysis presently taken from its re-runs, including the stability record (SOL-DOMINANCE-RECORD-NAMES-EVERY-SIBLING-ANALYSIS.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T05:24:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::TheSweepAndItsRankingAreCommittedAndRepeatable::test_the_committed_record_points_at_every_sibling_analysis
+text: |-
+  test_the_committed_record_points_at_every_sibling_analysis passes; docs/parameter-dominance.md regenerated with only the new pointer paragraph added (ranking, digests and every other section byte-identical to before).
+links:
+  - target: SOL-DOMINANCE-RECORD-NAMES-EVERY-SIBLING-ANALYSIS.C1
+    type: satisfies

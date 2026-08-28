@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1-TEST
+type: evidence
+title: Every declared error is run to its corners and checked for settling (SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T05:24:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_stability.py::EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling
+text: |-
+  9 tests in EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling pass, including the crux test distinguishing a settling from a diverging separation of equal magnitude, correct per-side window/band wiring, and the reference-centring guard. python3 -m unittest emulation.tests.test_parameter_stability -v: 33 tests OK.
+links:
+  - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C2-TEST
+type: evidence
+title: A corner that fails to settle is named as an instability finding, distinct from the deviation measure (SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T05:24:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_stability.py::ACornerThatFailsToSettleIsNamedAsAnInstabilityFinding
+text: |-
+  6 tests pass, including a real (not synthetic) excluded-corner run through the extended course requiring a non-settled verdict, the bounded growth floor deciding in both directions, and the finding kept apart from the dominance sweep's own deviation record.
+links:
+  - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C2
+    type: satisfies

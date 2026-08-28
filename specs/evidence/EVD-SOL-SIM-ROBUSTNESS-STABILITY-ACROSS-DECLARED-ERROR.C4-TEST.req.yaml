@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4-TEST
+type: evidence
+title: The one dependence the description implies is run as a joint corner alongside the independent ones (SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T05:24:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_stability.py::TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner
+text: |-
+  5 tests pass, including the fixed per-side comparison (brew reproduces its own corner; steam correctly reports incomparable, with an explicit assertion the record makes no false coupling claim) and a real structure-refused joint corner recorded on the same terms as an independent refusal.
+links:
+  - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4
+    type: satisfies
