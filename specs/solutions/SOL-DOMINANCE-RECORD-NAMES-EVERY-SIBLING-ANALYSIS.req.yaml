@@ -1,0 +1,40 @@
+id: SOL-DOMINANCE-RECORD-NAMES-EVERY-SIBLING-ANALYSIS
+type: deliverable
+category: solution
+title: The committed dominance record names every analysis presently taken from its re-runs
+status: active
+version: 1
+text: |
+  The dominance record names every analysis presently asked off its own corner-perturbed
+  re-runs, not only the ones that existed at the time it last named one. It already points a
+  reader at the identifiability record as the other analysis taken from the same runs; a third
+  analysis now exists, reusing the identical re-run apparatus to ask whether each corner's
+  response settles or diverges, and the dominance record does not mention it. A reader arriving
+  at the record most readers reach first is sent nowhere towards a finding taken from the exact
+  re-runs they are reading about.
+
+  The correction is to extend the dominance record's existing account of sibling analyses to
+  name the new one alongside the identifiability record, and nothing else: the ranking, the
+  digests, and every other section of the record are untouched.
+
+  Out of scope: any mechanism that keeps this list current automatically as future analyses are
+  added off the same apparatus — the sweep's own criterion already places that kind of
+  automation outside itself, and the same reasoning applies here.
+rationale: |
+  A record whose stated purpose is pointing a reader at every question asked off one set of
+  re-runs is only as complete as that pointer set. The convention was established once, when
+  the identifiability finding first needed to be found from the record most readers reach
+  first; it is now incomplete for exactly the reason it was needed the first time — a second
+  sibling has been added and the record was not told.
+
+  It lands in the maintenance lane rather than as new scope on the solution that adds the third
+  analysis: nothing about that solution's own criteria required it to edit a record another,
+  already-sealed solution owns, and the shortfall is in the dominance record's own
+  completeness, not in the new analysis. That is a defect in delivered behaviour — the
+  discoverability the identifiability slice's own evidence already established and tested for —
+  and the behaviour it restores is that same one, now short by one entry.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets
