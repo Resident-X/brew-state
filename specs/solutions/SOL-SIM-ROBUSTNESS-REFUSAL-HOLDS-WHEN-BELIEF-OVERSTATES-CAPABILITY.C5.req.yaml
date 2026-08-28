@@ -1,0 +1,18 @@
+id: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C5
+type: criterion
+title: The authority boundary's worked example and admission.available's meaning are corrected to reflect the worst-corner probe
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4's own worked example -- a target admitted up to about 3.0 mL/s and refused above it under the shipped thermoblock description, with the settled figure carried as the figure available -- described the point-belief probe the authority check ran before this solution changed what it evaluates. That worked example is now stale and is superseded rather than corrected in place, since C4 is attested and its text is frozen.
+
+  Under the same shipped description, once the authority probe evaluates the least-capable plant the declared error budget admits, the boundary at the suite's own 93 degC target sits near 1.9 mL/s rather than 3.0 -- pump.flow_ml_per_s is the binding coefficient, since the commanded duty is computed once from the believed full-scale flow and held fixed across every corner, so the corner that scales the believed pump capacity up draws more water at that same duty than any other coefficient's corner costs. The figure carried in admission.available at refusal is the worst-corner settled figure the degraded plant reaches, not the point-belief settled figure C4's account described.
+
+  Out of scope: any change to what is refused or how. SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4's own testable predicate -- that a target the machine cannot hold against the profile's peak draw is refused -- is unchanged and continues to hold; this criterion corrects only the worked example's specific figures and the account of what admission.available carries, both stated in this solution's own C1 through C4 in general terms and restated here as the direct successor of the specific worked example that named them.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY
+    type: criterion-of
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4
+    type: supersedes

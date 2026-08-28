@@ -1,7 +1,7 @@
 id: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4
 type: criterion
 title: A target the machine cannot hold against the profile's peak draw is refused
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test
