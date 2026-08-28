@@ -1,0 +1,13 @@
+id: DEL-SIM-ROBUSTNESS-VERIFICATION.C6
+type: criterion
+title: The coffee-side refusal holds when belief overstates the machine's capability, not only when it understates it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  What is proven so far is the refusal holding when belief is driven weaker than the plant it is closed around, which only ever makes the check refuse more readily. The classification's own account of this behaviour names the opposite direction as the one to guard against: a model wrong about how fast a mass heats turning a refusal into an acceptance. A belief that overstates the machine's capability admits a delivery the true plant cannot in fact reach, and nothing built so far closes that -- the pre-delivery check reads only what the controller believes, with no route back to what is actually true.
+links:
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION
+    type: criterion-of

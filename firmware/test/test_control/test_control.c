@@ -25,6 +25,7 @@
 
 static control_state_t state;
 static plant_parameters_t parameters;
+static plant_parameter_budget_t budget;
 static estimator_limits_t limits;
 static delivery_tolerance_t tolerance;
 
@@ -64,6 +65,8 @@ static void load_the_reference_description(void)
     plant_parameter_error_t fault;
     TEST_ASSERT_TRUE(
         plant_parameters_load(description_text, description_length, &parameters, &fault));
+    TEST_ASSERT_TRUE(
+        plant_parameter_budget_load(description_text, description_length, &budget, &fault));
 }
 
 /*
@@ -3889,6 +3892,88 @@ static void test_a_target_beyond_the_authority_at_the_peak_draw_is_refused(void)
                                     "a refused target was written into the state anyway");
 }
 
+/// SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C1: The coffee side's
+/// existing refusal of an infeasible delivery still fires when the
+/// controller's belief about the plant is driven weaker than the plant
+/// actually simulated.
+///
+/// SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C2: What is exercised
+/// is refusing-what-cannot-be-delivered, the one invariant-class entry
+/// firmware/params/robustness.declaration names for this claim. Reaching a
+/// safe state, respecting the supply budget, the actuator-limit invariant
+/// proven separately, and the classification's bounded and degrading classes
+/// are all out of scope here.
+///
+/// SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C3: The refusal is
+/// confirmed across a spread of mismatch magnitudes beyond the declared error
+/// band, not only at one wrong-model instance.
+///
+/// The authority check reads only the belief the control path holds -- it has
+/// no route back to the truth plant at all -- so a belief driven weaker only
+/// ever makes it refuse more readily, and this is the direction that
+/// mechanism can actually be shown to hold. The complementary direction, a
+/// belief that overstates the machine and so admits a delivery the true plant
+/// cannot reach, is not covered here: the check has no margin standing in for
+/// the truth it cannot see, and DEL-SIM-ROBUSTNESS-VERIFICATION.C6 carries
+/// that as its own open scope. The magnitudes tried are multiples of the
+/// description's own declared error on the element the check probes with, so
+/// the claim does not rest on one corner that happened to land clearly on the
+/// refused side. The course tried is the "within" course above, admitted
+/// there against a matched belief and truth -- so a refusal below is shown to
+/// follow the weakened belief rather than being a bound the course could
+/// never have passed regardless of what the controller believed.
+static void test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_simulated_plant(
+    void)
+{
+    static const char *const HEATER_COEFFICIENT = "brew.heater_power_w";
+    static const float NOMINAL_HEATER_POWER_W = 1004.0f;
+    /* Fractions the belief's heater is driven down by, each strictly beyond the declared band. */
+    static const float DRIVEN_DOWN_BY[] = {0.30f, 0.60f, 0.90f};
+    const delivery_profile_t within = course_holding(2.8f);
+    control_admission_t admission;
+    float assumed_error = 0.0f;
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        plant_parameter_budget_for(&budget, HEATER_COEFFICIENT, &assumed_error),
+        "the description declares no error on the coefficient this criterion is tested across");
+    TEST_ASSERT_TRUE_MESSAGE(assumed_error > 0.0f,
+                             "the description declares that coefficient exact, which is not what "
+                             "its own account says");
+
+    /* Belief matches truth: the course is admitted, establishing it was reachable to begin with. */
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    TEST_ASSERT_TRUE_MESSAGE(
+        control_command_delivery_reporting(&state, &within, &admission),
+        "the course this test drives belief away from is not admitted even against an accurate "
+        "belief, so a refusal below would establish nothing about the mismatch");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    for (size_t at = 0u; at < sizeof(DRIVEN_DOWN_BY) / sizeof(DRIVEN_DOWN_BY[0]); at++) {
+        TEST_ASSERT_TRUE_MESSAGE(DRIVEN_DOWN_BY[at] > assumed_error,
+                                 "this case does not drive the belief beyond the declared band at "
+                                 "all, so it tests nothing beyond what the bounded-class sibling "
+                                 "already sweeps");
+
+        char value[32];
+        snprintf(value, sizeof(value), "%.1f",
+                (double)(NOMINAL_HEATER_POWER_W * (1.0f - DRIVEN_DOWN_BY[at])));
+        const plant_parameters_t weak_belief =
+            parameters_from(description_with(HEATER_COEFFICIENT, value));
+
+        char message[192];
+        snprintf(message, sizeof(message),
+                "a belief with the heater driven %.0f%% below nominal -- %.1fx the declared "
+                "error -- admitted a delivery its own weakened heater cannot reach",
+                (double)(DRIVEN_DOWN_BY[at] * 100.0f), (double)(DRIVEN_DOWN_BY[at] / assumed_error));
+
+        bring_the_loop_up(&weak_belief, &parameters, 93.0f, BREW_TARGET_C);
+        TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &within, &admission),
+                                  message);
+        TEST_ASSERT_EQUAL_MESSAGE(CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY, admission.bound,
+                                  message);
+    }
+}
+
 /// SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4: The authority boundary is
 /// probed from the description rather than written into the control source,
 /// and it is the description the loop holds that decides it.
@@ -6905,6 +6990,7 @@ int main(void)
     RUN_TEST(test_a_refusal_names_the_bound_it_crossed_and_the_figures);
     RUN_TEST(test_a_rate_above_full_scale_flow_is_refused_as_unreachable);
     RUN_TEST(test_a_target_beyond_the_authority_at_the_peak_draw_is_refused);
+    RUN_TEST(test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_simulated_plant);
     RUN_TEST(test_the_authority_boundary_follows_the_description_the_loop_holds);
     RUN_TEST(test_a_target_above_the_saturation_ceiling_is_refused);
     RUN_TEST(test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused);

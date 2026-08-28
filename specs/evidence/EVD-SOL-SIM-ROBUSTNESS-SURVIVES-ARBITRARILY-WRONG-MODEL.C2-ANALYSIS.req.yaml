@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C2-ANALYSIS
+type: evidence
+title: Claim scoped to the single named invariant entry (SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C2)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-28T00:51:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_simulated_plant (doc comment)
+text: |-
+  The test's doc comment names refusing-what-cannot-be-delivered as the exact classification entry exercised, the sole invariant-class entry in firmware/params/robustness.declaration this claim covers, and explicitly excludes reaching a safe state, respecting the supply budget, the actuator-limit invariant (proven separately), and the bounded and degrading classes. Cross-checked against the declaration file directly: robustness.declaration names four invariant entries and 'refusing-what-cannot-be-delivered = invariant' is the only one this solution's criteria touch.
+links:
+  - target: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C2
+    type: satisfies
