@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C1-TEST
+type: evidence
+title: Authority refusal survives a weaker belief (SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T00:51:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_simulated_plant
+text: |-
+  test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_simulated_plant passes in the native_test host environment (task fw:test, 329 test cases, 0 failures). It brings the closed loop up with the control path's belief driven weaker than the truth plant on brew.heater_power_w, at magnitudes strictly beyond the description's declared assumed error, and confirms control_command_delivery_reporting still refuses the same course that was admitted moments earlier against a matched, accurate belief.
+links:
+  - target: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C1
+    type: satisfies

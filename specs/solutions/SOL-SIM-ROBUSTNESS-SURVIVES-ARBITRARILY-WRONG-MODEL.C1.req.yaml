@@ -1,12 +1,12 @@
 id: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C1
 type: criterion
-title: The coffee side's existing refusal of an infeasible delivery still fires when the controller's belief about the plant is driven arbitrarily far from the plant actually simulated
+title: The coffee side's existing refusal of an infeasible delivery still fires when the controller's belief about the plant is driven weaker than the plant actually simulated
 status: active
 version: 1
 measurement_type: binary
 verification: analysis
 text: |
-  The delivery-profile refusal already proven at nominal parameters is exercised again with the controller-versus-plant mismatch driven well beyond the declared error band, using the same separation the coffee side's existing mismatch harness already provides, and the refusal is confirmed to still fire before the infeasible delivery begins.
+  The delivery-profile refusal already proven at nominal parameters is exercised again with the belief driven weaker than the plant actually simulated, at a magnitude beyond the declared error band, using the same separation the coffee side's existing mismatch harness already provides, and the refusal is confirmed to still fire before the infeasible delivery begins. The complementary direction, a belief that overstates the machine, is not exercised here -- the check has no route back to the truth it would need to catch it, and DEL-SIM-ROBUSTNESS-VERIFICATION.C6 carries that as its own open scope.
 
   Reaching a safe state, respecting the supply budget, and the actuator-limit invariant are out of scope for this criterion — none is exercised here.
 links:

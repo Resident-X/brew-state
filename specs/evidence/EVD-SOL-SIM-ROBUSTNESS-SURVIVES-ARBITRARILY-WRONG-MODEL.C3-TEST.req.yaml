@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C3-TEST
+type: evidence
+title: Refusal holds across a spread of magnitudes beyond the declared band (SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T00:51:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_authority_refusal_survives_a_belief_driven_weaker_than_the_simulated_plant
+text: |-
+  The same test loops the belief's heater coefficient through three magnitudes strictly beyond the description's own declared assumed error on that coefficient (driven down by 30%, 60% and 90% against a declared 10% band, each checked live via plant_parameter_budget_for rather than assumed), confirming the refusal fires at every one rather than only at a single wrong-model instance. Passes in the native_test host environment (task fw:test, 329 test cases, 0 failures).
+links:
+  - target: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL.C3
+    type: satisfies
