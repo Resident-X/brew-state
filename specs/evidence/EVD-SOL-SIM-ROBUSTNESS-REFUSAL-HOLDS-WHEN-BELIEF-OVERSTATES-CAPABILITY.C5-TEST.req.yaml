@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C5-TEST
+type: evidence
+title: The authority boundary sits near 1.9 mL/s and admission.available carries the worst-corner figure (SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C5)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T22:00:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_authority_boundary_follows_the_description_the_loop_holds
+text: |-
+  test_the_authority_boundary_follows_the_description_the_loop_holds passes against the shipped thermoblock description with the corrected boundary values: within (1.5 mL/s, worst-corner settled figure 110.07 C) is admitted at the 93 C target, beyond (2.0 mL/s, worst-corner settled figure 89.27 C) is refused with CONTROL_ADMISSION_TARGET_BEYOND_AUTHORITY. This directly supersedes the ~3.0 mL/s worked example EVD-SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4-TEST recorded against the now-deprecated SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED.C4, and against admission.available carrying the worst-corner settled figure rather than the point-belief settled figure that evidence described.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C5
+    type: satisfies

@@ -200,6 +200,77 @@ static bool corner_machine(const plant_parameters_t *believed,
     return true;
 }
 
+/*
+ * Fill a corner's descriptor fields -- everything protection_margin_corner_descriptor
+ * answers -- leaving the probe-result fields at zero. `count` is the caller's
+ * already-established coefficient count, so this never re-validates the
+ * budget: both public entry points that reach it have already done that.
+ */
+static void corner_descriptor(const plant_parameter_budget_t *budget, size_t count, size_t which,
+                              protection_margin_corner_t *corner)
+{
+    corner->at = count;
+    corner->moves = 0u;
+    corner->joint = (which == 2u * count);
+    corner->reaching_downwards = corner->joint || ((which % 2u) == 0u);
+    corner->declared_error = 0.0f;
+    corner->ran = false;
+    corner->reached_c = 0.0f;
+    corner->contribution_c = 0.0f;
+
+    if (corner->joint) {
+        if (!joint_sag(budget, count, &corner->declared_error, &corner->moves)) {
+            return;
+        }
+    } else {
+        corner->at = which / 2u;
+        corner->moves = 1u;
+        if (!budget->declared[corner->at]) {
+            corner->moves = 0u;
+            return;
+        }
+        corner->declared_error = budget->assumed_error[corner->at];
+    }
+
+    if (!is_a_number(corner->declared_error) || !(corner->declared_error > 0.0f)) {
+        /*
+         * A coefficient the description declares exact has no corner: both ends
+         * of an error of nothing are the machine itself, and running it would
+         * be reporting the description's own figures as a corner of themselves.
+         */
+        corner->moves = 0u;
+    }
+}
+
+bool protection_margin_corner_descriptor(const plant_parameter_budget_t *budget, size_t which,
+                                         protection_margin_corner_t *corner)
+{
+    size_t count = 0u;
+
+    if (corner == NULL || !coefficients_of(budget, &count)) {
+        return false;
+    }
+    if (which >= (2u * count) + 1u) {
+        return false;
+    }
+
+    corner_descriptor(budget, count, which, corner);
+    return true;
+}
+
+bool protection_margin_corner_machine(const plant_parameters_t *believed,
+                                      const plant_parameter_budget_t *budget,
+                                      const protection_margin_corner_t *corner,
+                                      plant_parameters_t *machine)
+{
+    size_t count = 0u;
+
+    if (believed == NULL || corner == NULL || machine == NULL || !coefficients_of(budget, &count)) {
+        return false;
+    }
+    return corner_machine(believed, budget, count, corner, machine);
+}
+
 bool protection_margin_corner(const plant_parameters_t *believed,
                               const plant_parameter_budget_t *budget,
                               const protection_margin_probe_t *probe, size_t which,
@@ -214,35 +285,8 @@ bool protection_margin_corner(const plant_parameters_t *believed,
         return false;
     }
 
-    corner->at = count;
-    corner->moves = 0u;
-    corner->joint = (which == 2u * count);
-    corner->reaching_downwards = corner->joint || ((which % 2u) == 0u);
-    corner->declared_error = 0.0f;
-    corner->ran = false;
-    corner->reached_c = 0.0f;
-    corner->contribution_c = 0.0f;
-
-    if (corner->joint) {
-        if (!joint_sag(budget, count, &corner->declared_error, &corner->moves)) {
-            return true;
-        }
-    } else {
-        corner->at = which / 2u;
-        corner->moves = 1u;
-        if (!budget->declared[corner->at]) {
-            corner->moves = 0u;
-            return true;
-        }
-        corner->declared_error = budget->assumed_error[corner->at];
-    }
-
-    if (!is_a_number(corner->declared_error) || !(corner->declared_error > 0.0f)) {
-        /*
-         * A coefficient the description declares exact has no corner: both ends
-         * of an error of nothing are the machine itself, and running it would
-         * be reporting the description's own figures as a corner of themselves.
-         */
+    corner_descriptor(budget, count, which, corner);
+    if (corner->moves == 0u) {
         return true;
     }
 

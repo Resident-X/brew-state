@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C1-TEST
+type: evidence
+title: Degraded probe evaluates the least-capable plant, not the point belief alone (SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T22:00:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_degraded_probe_never_admits_more_than_the_point_belief_alone
+text: |-
+  test_the_degraded_probe_never_admits_more_than_the_point_belief_alone passes. Two loops are brought up on identical believed coefficient values -- description_declaring with an empty list strips every declared-error annotation from the shipped description, leaving the values unchanged -- so only the budget differs: one carries no declared error at all, the other the real shipped budget. The largest rate each holds BREW_TARGET_C against is found by bisection through the real admission path. The real-budget rate is strictly smaller than the undeclared-budget rate, which is only possible if the probe is evaluating something beyond the point belief the two loops share -- namely the worst corner the declared error budget admits.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C1
+    type: satisfies

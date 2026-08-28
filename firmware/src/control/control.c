@@ -811,6 +811,75 @@ static float peak_rate_ml_per_s(const delivery_profile_t *profile, uint32_t *at_
 }
 
 /*
+ * Where the water leaves this record's own least-capable plant: the settled
+ * brew temperature probe_settled_brew_c already asks, but of a machine every
+ * coefficient with a path to that answer has been shifted toward reduced
+ * capability by its own declared error, one coefficient's corner at a time
+ * plus the joint supply corner, combined by worst case rather than by
+ * reading any single corner as the answer.
+ *
+ * The corner descriptor and the degraded machine it builds are the same
+ * enumeration the commanded margin widens by -- see protection_margin.h --
+ * asked here of a different question than that file asks of it: not how far
+ * a corner carries a standing target toward a trip point, but whether a
+ * corner's own machine still reaches a target under the delivery's peak draw.
+ * Reusing the enumeration keeps one answer to "how do several declared
+ * errors combine into a single conservative figure" in this file rather than
+ * deciding a second one that could disagree with the margin's.
+ *
+ * The search starts at the point belief's own settled figure and only ever
+ * lowers it, never raises it: a corner that would leave the machine more
+ * capable than the point belief is not the corner this file is looking for,
+ * and starting anywhere else could report a machine more capable than the
+ * point belief alone already established, which is the one thing changing
+ * what this probes must not do to what it replaces. A budget declaring no
+ * error against anything enumerates no corners, so the search never runs and
+ * the point belief's own figure stands -- the same answer this file has
+ * always given a description that claims to be exact.
+ *
+ * A corner the enumeration cannot build a machine for, or cannot settle, is
+ * passed over rather than treated as a failure: a corner with nothing to
+ * report is not evidence the true plant is more or less capable, and a
+ * refusal established on every other corner should not be undone by one that
+ * answered nothing.
+ *
+ * Returns false, writing nothing, only where the point belief's own probe
+ * fails -- the same condition probe_settled_brew_c alone answered false for
+ * before this file asked it of more than one machine.
+ */
+static bool degraded_settled_brew_c(const control_state_t *state, uint16_t peak_level,
+                                    float *worst_settled_c)
+{
+    float worst_c = 0.0f;
+    if (!probe_settled_brew_c(&state->parameters, peak_level, &worst_c)) {
+        return false;
+    }
+
+    const size_t corners = protection_margin_corner_count(&state->budget);
+    for (size_t which = 0u; which < corners; which++) {
+        protection_margin_corner_t corner;
+        plant_parameters_t machine;
+        float settled_c = 0.0f;
+
+        if (!protection_margin_corner_descriptor(&state->budget, which, &corner) ||
+            corner.moves == 0u) {
+            continue;
+        }
+        if (!protection_margin_corner_machine(&state->parameters, &state->budget, &corner,
+                                              &machine) ||
+            !probe_settled_brew_c(&machine, peak_level, &settled_c)) {
+            continue;
+        }
+        if (settled_c < worst_c) {
+            worst_c = settled_c;
+        }
+    }
+
+    *worst_settled_c = worst_c;
+    return true;
+}
+
+/*
  * Refuse a target that is beyond what the machine can hold against a draw,
  * writing the bound and both figures into the record. A record already
  * carrying a crossed bound is never reached with this: each caller asks only
@@ -847,8 +916,7 @@ static void refuse_if_beyond_the_authority(const control_state_t *state, float p
      * admits what it cannot refuse on evidence. A machine settling exactly at
      * the target is held to reach it, so the comparison is strict.
      */
-    if (!probe_settled_brew_c(&state->parameters, peak_level, &settled_c) ||
-        !(settled_c < target_c)) {
+    if (!degraded_settled_brew_c(state, peak_level, &settled_c) || !(settled_c < target_c)) {
         return;
     }
 

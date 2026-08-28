@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C4-TEST
+type: evidence
+title: A course within the degraded plant's own capability is still admitted under a belief matching truth (SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T22:00:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_authority_boundary_follows_the_description_the_loop_holds
+text: |-
+  test_the_authority_boundary_follows_the_description_the_loop_holds passes. Brought up against the shipped, unweakened, unstrengthened description with belief matching truth, the within course (1.5 mL/s, worst-corner settled figure 110.07 C against a 93 C target) is admitted with CONTROL_ADMISSION_OK. Since the shipped budget's declared error is real and non-empty, this admission is evidence the widened probe -- not merely a probe that always refuses once any error is declared -- still admits a course genuinely within the degraded plant's own worst-case capability.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C4
+    type: satisfies

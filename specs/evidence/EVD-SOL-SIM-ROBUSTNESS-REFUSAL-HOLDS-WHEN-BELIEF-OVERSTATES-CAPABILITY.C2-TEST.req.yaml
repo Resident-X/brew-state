@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C2-TEST
+type: evidence
+title: Refusal holds when truth diverges from belief along a single coefficient within its declared band (SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T22:00:36Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_refusal_holds_when_a_single_coefficient_diverges_within_its_declared_band
+text: |-
+  test_refusal_holds_when_a_single_coefficient_diverges_within_its_declared_band passes. The budget declares an error against pump.flow_ml_per_s alone, so the enumeration runs exactly one coefficient's two corners plus an empty joint corner. Truth is belief with that one coefficient written at the corner's own edge (7.0 mL/s believed, 11.2 mL/s truth -- exactly the worst-corner value), so the boundary the loop's own bisection finds against belief is also the exact boundary of what truth can deliver. Both sides of that boundary are independently checked against truth's own settled figure before admission is ever asked -- a course just inside is confirmed truth can deliver it, a course just beyond is confirmed truth cannot -- and only then is the same pair of courses put to admission, which refuses exactly the one truth cannot deliver and admits exactly the one it can. This is the criterion as narrowed in the same session (version 2): the guarantee is demonstrated for a single authority-relevant coefficient diverging within its declared band, not for simultaneous independent divergence across more than one, which the worst-corner enumeration this solution reuses from DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE does not cover.
+links:
+  - target: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY.C2
+    type: satisfies
