@@ -1329,6 +1329,16 @@ def report_text(findings):
           "tell from another, which is why the two records are kept apart and why neither figure "
           "should be read off the other's table.")
     write("")
+    write("Whether the response at each corner settles or diverges is a third question, and this "
+          "ranking cannot answer it either: a deviation is a magnitude, and a loop that moves "
+          "further and then recovers reports the same larger number as one that has lost "
+          "authority and is walking away. It is answered from the same perturbed re-runs by "
+          "`firmware/emulation/tools/run_parameter_stability.py`, which holds each corner for "
+          "longer than this sweep runs it and records whether the response came to rest inside "
+          "the declared band, in `docs/parameter-stability.md`. A coefficient can carry a small "
+          "deviation here and still be the one corner that does not settle, which is why that "
+          "finding is kept in a record of its own rather than folded into this one.")
+    write("")
 
     return "\n".join(lines) + "\n"
 

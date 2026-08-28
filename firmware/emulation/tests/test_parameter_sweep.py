@@ -602,6 +602,18 @@ class TheSweepAndItsRankingAreCommittedAndRepeatable(unittest.TestCase):
         for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
             self.assertIn(sweep.JUDGED[side][0], record)
 
+    # SOL-DOMINANCE-RECORD-NAMES-EVERY-SIBLING-ANALYSIS.C1: the committed
+    # dominance record names every analysis presently taken from its re-runs,
+    # including the stability record -- mirrors the identifiability pointer
+    # this record already carries, and is what a reader arriving here first is
+    # left without if a further analysis is added and this record is not told.
+    def test_the_committed_record_points_at_every_sibling_analysis(self):
+        record = _committed_record()
+        self.assertIn("run_parameter_identifiability.py", record)
+        self.assertIn("docs/parameter-identifiability.md", record)
+        self.assertIn("run_parameter_stability.py", record)
+        self.assertIn("docs/parameter-stability.md", record)
+
 
 class ACoefficientTheSweepCannotWeighIsNamedRatherThanRanked(unittest.TestCase):
     """SOL-DELIVERY-PARAMETER-DOMINANCE-RANKING.C4: A parameter the sweep cannot

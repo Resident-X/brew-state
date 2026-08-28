@@ -1,0 +1,19 @@
+id: SOL-DOMINANCE-RECORD-NAMES-EVERY-SIBLING-ANALYSIS.C1
+type: criterion
+title: The committed dominance record names every analysis presently taken from its re-runs, including the stability record
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  docs/parameter-dominance.md's account of related analyses (presently naming
+  docs/parameter-identifiability.md) is extended to also name docs/parameter-stability.md, the
+  record run_parameter_stability.py commits off the same corner-perturbed re-runs.
+  docs/parameter-dominance.md is then regenerated via run_parameter_sweep.py's existing report
+  generation so the committed file matches what the method now produces.
+
+  Out of scope: any change to the ranking, the digests, or any other section of the dominance
+  record; any change to run_parameter_stability.py or docs/parameter-stability.md themselves.
+links:
+  - target: SOL-DOMINANCE-RECORD-NAMES-EVERY-SIBLING-ANALYSIS
+    type: criterion-of

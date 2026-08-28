@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C3-TEST
+type: evidence
+title: The corners, horizon, and verdicts are committed in a repeatable form (SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-28T05:24:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_stability.py::TheCornersTheHorizonAndTheVerdictsAreCommitted
+text: |-
+  5 tests pass: the committed docs/parameter-stability.md verdicts and horizon match a fresh run byte-for-byte, digests name the files run against, and the same method re-run against a replacement model needs no edit.
+links:
+  - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C3
+    type: satisfies
