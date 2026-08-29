@@ -1,0 +1,23 @@
+id: SOL-SUCTION-LINE-METER-COST-DIFFERENTIAL.C1
+type: criterion
+title: The meter's cost to the pump is measured as a with/without-meter differential in delivered mass and prime time
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  With the pump running for a fixed, controlled interval under a means independent of the flow
+  meter's own signal -- so the run's start and stop do not depend on the channel under test -- the
+  delivered mass is weighed at the open hot-water spout twice under otherwise identical conditions:
+  once with the fitted meter in the suction line, once with it removed. The two weighed masses, and
+  the two prime times, are recorded and their difference is the meter's measured cost. The result is
+  written into docs/reference-machine.md's flow-meter entry alongside the qualitative finding
+  SOL-SUCTION-LINE-PUMP-MARGIN already recorded, superseding it as the load-bearing evidence for
+  DEL-BENCH-FLOW-INSTRUMENTATION.C6.
+
+  Out of scope: the specific mechanism that provides independent pump control, which is a premise of
+  this criterion rather than something it builds -- whatever bench rig exists by the time this is
+  picked up satisfies it.
+links:
+  - target: SOL-SUCTION-LINE-METER-COST-DIFFERENTIAL
+    type: criterion-of

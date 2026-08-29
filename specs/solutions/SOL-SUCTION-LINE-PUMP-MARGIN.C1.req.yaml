@@ -1,0 +1,27 @@
+id: SOL-SUCTION-LINE-PUMP-MARGIN.C1
+type: criterion
+title: The pump's bench performance with the meter installed is measured across repeated cold starts
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Using the machine's existing OEM controls, the hot-water function specifically -- an open path to
+  the spout with no portafilter or puck in the way, so the pump's own priming and cavitation margin is
+  what is being measured rather than puck resistance -- the pump is run from a hydraulically standing
+  (not recently primed) state across at least 3 trials, with the flow meter left in its existing
+  factory position on the suction line throughout. The meter is not removed or bypassed, since it may
+  be load-bearing to the OEM controller's own dispense logic and pulling it risks an OEM fault rather
+  than a clean without-meter baseline. For each trial, the time from start to first delivery reaching
+  the spout is timed externally with a stopwatch, and the delivered water is weighed on a scale to get
+  a delivered mass over the run. Any audible or visible sign of cavitation -- irregular noise,
+  sputtering, or a visibly reduced or unsteady flow -- is also noted. The raw per-trial observations
+  (times, weighed mass, notes) are supplied by whoever runs the bench and become the evidence artifact
+  for this criterion.
+
+  Out of scope: a without-meter control run, which this criterion does not attempt for the reason
+  given above -- see the next criterion for how that limitation is handled -- instrumented acoustic
+  cavitation detection, and long-term wear or reliability testing.
+links:
+  - target: SOL-SUCTION-LINE-PUMP-MARGIN
+    type: criterion-of

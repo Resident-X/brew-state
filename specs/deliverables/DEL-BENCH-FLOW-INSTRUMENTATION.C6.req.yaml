@@ -1,17 +1,19 @@
 id: DEL-BENCH-FLOW-INSTRUMENTATION.C6
 type: criterion
-title: A suction-line meter leaves the pump enough margin to prime and deliver
+title: The fitted suction-line meter leaves the pump enough margin to prime and deliver
 status: active
-version: 1
+version: 2
 measurement_type: threshold
 verification: test
 closes_by: cascade
 text: |
-  A meter inserted in the coffee pump's suction line leaves that pump enough priming and cavitation
-  margin to prime and deliver, measured before the meter is adopted, because the line is fed from a
-  tank rather than a pressurised supply and a vibratory pump is sensitive to restriction ahead of it.
-  Measuring the cost without requiring it be acceptable would trade a measurement problem for a
-  delivery one. Where no such meter is inserted, this criterion is satisfied.
+  The fitted meter, already installed on the coffee pump's own suction line rather than pending
+  insertion, leaves that pump enough priming and cavitation margin to prime and deliver -- established
+  by measurement now that the machine already runs in that configuration, rather than as a check
+  before some future adoption. The line is fed from a tank rather than a pressurised supply, and a
+  vibratory pump is sensitive to restriction ahead of it, which is why this cannot be assumed from the
+  fitting alone. Measuring the cost without requiring it be acceptable would trade a measurement
+  problem for a delivery one.
 links:
   - target: DEL-BENCH-FLOW-INSTRUMENTATION
     type: criterion-of

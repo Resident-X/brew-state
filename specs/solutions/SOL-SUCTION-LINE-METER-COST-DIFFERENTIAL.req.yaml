@@ -1,0 +1,30 @@
+id: SOL-SUCTION-LINE-METER-COST-DIFFERENTIAL
+type: deliverable
+category: solution
+title: The suction-line meter's cost to the pump is measured against a without-meter baseline, once independent pump control exists
+status: active
+version: 1
+text: |
+  SOL-SUCTION-LINE-PUMP-MARGIN establishes only the with-meter behaviour of the coffee pump's suction
+  line, using the machine's own OEM controls, because removing the fitted meter for a without-meter
+  control run risks an OEM dispense-logic fault rather than a clean baseline -- the meter may be
+  load-bearing to the OEM controller's own stop condition. That leaves DEL-BENCH-FLOW-INSTRUMENTATION.C6
+  answered only qualitatively, against the owner's factory-use account rather than a measured
+  differential, even though the criterion is a threshold one asking what the restriction costs the
+  pump.
+
+  This item measures that differential once the pump can be run for a fixed, controlled interval
+  independent of the OEM controller's own dispense logic -- so neither run depends on the flow meter's
+  signal to know when to stop -- with the delivered mass weighed both with the fitted meter installed
+  and with it removed, same run duration, same hydraulic path (the open hot-water spout, no puck).
+  This becomes buildable once independent pump control exists on the bench (for instance, once a bench
+  sensing board can drive the pump directly rather than only read its channels), which is not yet the
+  case.
+
+  Out of scope: redesigning or relocating the meter based on what the differential shows, which would
+  be its own follow-on work.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C5
+    type: targets

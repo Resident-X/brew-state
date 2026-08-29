@@ -1,0 +1,27 @@
+id: SOL-SUCTION-LINE-PUMP-MARGIN
+type: deliverable
+category: solution
+title: The coffee pump's priming and delivery, bench-measured with the suction-line meter fitted as found
+status: active
+version: 1
+text: |
+  The suction-line restriction the fitted flow meter adds to the coffee pump's inlet is not assumed
+  harmless from the part; it is measured on the bench, using the machine's own existing OEM controls
+  to run the pump rather than any new firmware or hardware, since the meter may be load-bearing to the
+  OEM controller's own dispense logic and pulling it risks a fault rather than a clean baseline.
+  Repeated cold-start trials are timed to first delivery and weighed for delivered mass, with any
+  cavitation symptoms noted, and judged against the machine's own pre-project operating history in the
+  absence of a manufacturer spec for this pump's rated flow or priming time. What this measurement
+  does not establish -- the meter's true cost relative to a without-meter baseline -- is stated
+  explicitly rather than assumed answered, and is left for follow-on work once the pump can be run
+  independent of the OEM controller.
+
+  Out of scope: redesigning or relocating the meter if a problem is found, instrumented acoustic
+  cavitation measurement, and long-term reliability testing.
+links:
+  - target: DEL-BENCH-FLOW-INSTRUMENTATION.C6
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C5
+    type: targets
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
+    type: justified-by

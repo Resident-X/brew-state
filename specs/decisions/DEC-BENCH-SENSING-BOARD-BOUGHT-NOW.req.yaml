@@ -1,0 +1,58 @@
+id: DEC-BENCH-SENSING-BOARD-BOUGHT-NOW
+type: decision
+title: An STM32F4 board with spare sensing I/O is bought now for bench characterisation, not yet confirmed as the machine's controller
+status: active
+version: 1
+decided_by: david
+rationale: |
+  Context: The pre-hardware target build already nominates the STM32F4 family
+  (DEC-PREHARDWARE-TARGET-FAMILY) for verification purposes only, committing no purchase. Bench
+  characterisation work now needs live sensor readings on real hardware rather than the host build
+  alone -- DEL-BENCH-FLOW-INSTRUMENTATION's flow work, and the pressure, temperature, HMI and
+  dial-gauge stepper channels the reference machine already carries or plans to carry, all need
+  something physical to read or drive them on the bench. A single board sized for all of them avoids
+  buying and re-wiring five separate one-channel rigs.
+
+  Trade-offs: Buying a board now, before the machine's controller is formally selected, risks the
+  purchase turning out wrong for that later choice -- but STM32F4 is already the family this
+  project's own feasibility work sits in, so the risk is bounded to this exact part rather than the
+  whole family. REQ-HARDWARE-HEADROOM-001.C3 already argues for buying once with spare capacity over
+  re-selecting per deferred capability, and that reasoning applies here even though this purchase is
+  instrumentation rather than the controller itself: if it later becomes the controller, the headroom
+  argument was right the first time; if it does not, it remains useful bench kit rather than a sunk
+  cost specific to one channel.
+
+  Reversibility: Cheap to reverse as a purchase -- a board is a part, not a design commitment, and
+  nothing about the machine's plumbing, wiring topology or firmware architecture depends on which
+  specific board reads these channels on the bench. What is not reversible without care is treating
+  this board's pinout as the machine's pin map, or its peripheral count as the machine's peripheral
+  budget -- DEC-PREHARDWARE-TARGET-FAMILY already rules that controller selection stays open, answered
+  later against measured plant parameters and the headroom requirement, and this decision does not
+  change that.
+
+  Consequences: This board is wired to and reads or drives the sensing and low-power indicator
+  channels bench work needs -- flow, pressure, temperature, HMI, dial-gauge steppers -- as each is
+  characterised. It is explicitly not wired to the SSRs or any heater channel under this decision:
+  REQ-SAFETY-CHAIN-001.C2 and .C3, the hardware proof-of-life interlock that keeps heater power
+  available only while the controller is demonstrably running, have no covering deliverable yet, and
+  the steam-side over-pressure relief question is unresolved. Driving a heater channel from this board
+  is blocked on both, independent of whether the board itself is purchased -- this decision buys
+  sensing and indicator capability only, and heater channels are follow-on work with their own
+  prerequisites.
+options_considered:
+  - option: Buy an STM32F4-family board now, sized with spare I/O for the sensing channels currently in view (flow, pressure, temperature, HMI, dial-gauge steppers), on the owner's judgement that this family is the most likely final controller without confirming that selection
+    reason_rejected: ""
+  - option: Buy narrow, single-channel bench rigs per sensor as each is characterised in turn
+    reason_rejected: Costs more in aggregate and forecloses nothing that buying once with headroom avoids; REQ-HARDWARE-HEADROOM-001.C3 already argues against re-selecting parts per deferred capability
+  - option: Wait for the on-target phase's formal controller selection before buying any board for bench work
+    reason_rejected: Bench characterisation is itself a prerequisite input to the parameters controller selection is judged against per DEC-PREHARDWARE-TARGET-FAMILY, so waiting is circular
+chosen: Buy an STM32F4-family board now, sized with spare I/O for the sensing channels currently in view (flow, pressure, temperature, HMI, dial-gauge steppers), on the owner's judgement that this family is the most likely final controller without confirming that selection
+links:
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: addresses
+  - target: REQ-HARDWARE-HEADROOM-001.C3
+    type: addresses
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: addresses
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: addresses
