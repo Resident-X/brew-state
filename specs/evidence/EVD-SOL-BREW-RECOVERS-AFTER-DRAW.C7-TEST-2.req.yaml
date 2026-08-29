@@ -1,0 +1,19 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C7-TEST-2
+type: evidence
+title: The disturbed state is produced by running the draw through the closed loop, current precondition (SOL-BREW-RECOVERS-AFTER-DRAW.C7)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T10:09:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_an_extraction_after_a_draw_matches_one_pulled_from_rest
+text: |-
+  The disturbed state the extraction is served from is produced by commanding the draw as an ordinary delivery and advancing the truth plant step by step through the closed-loop harness, unchanged from the previous evidence for this criterion: the volume the machine actually moved is accumulated from the plant's own reported flow and required to equal the two hundred millilitres asked for, and no plant state is written between bringing the loop up rested and the extraction that follows.
+
+  What changed, under SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1: the prior evidence (EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C7-TEST) additionally required the casting to have ended outside the brew-temperature band, which SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1 later proved no admitted closed-loop-driven scenario can do. That requirement is replaced with a floor read off the truth plant -- movement of more than 0.00005 C off the rested baseline -- which the volume-moved check already establishes came from a real draw rather than a written state. Run under pio test -e native_test. Supersedes EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C7-TEST.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C7
+    type: satisfies

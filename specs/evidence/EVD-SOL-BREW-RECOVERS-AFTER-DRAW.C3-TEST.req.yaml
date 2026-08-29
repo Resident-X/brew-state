@@ -6,7 +6,7 @@ version: 1
 result: pass
 method: test
 observed_at: "2026-08-26T01:45:21Z"
-valid_until: until-superseded
+valid_until: "2026-08-29"
 artifact:
   kind: external
   reference: firmware/test/test_control/test_control.c::test_the_state_a_draw_leaves_is_carried_into_the_next_delivery

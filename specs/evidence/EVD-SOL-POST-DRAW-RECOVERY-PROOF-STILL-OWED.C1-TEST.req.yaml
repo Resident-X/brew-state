@@ -1,0 +1,23 @@
+id: EVD-SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1-TEST
+type: evidence
+title: The two recovery tests run again, verifying their mechanisms directly (SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T10:09:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_state_a_draw_leaves_is_carried_into_the_next_delivery,test_an_extraction_after_a_draw_matches_one_pulled_from_rest
+text: |-
+  Both tests run again rather than stand TEST_IGNORE'd. The prior disturbance search (SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1) proved no admitted closed-loop-driven scenario pushes the casting outside the brew band, so both tests' original end-to-end temperature-band-violation precondition is unreachable; the verification strategy each was built on is replaced with a direct check of the mechanism it was actually protecting, per SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED's own text.
+
+  test_the_state_a_draw_leaves_is_carried_into_the_next_delivery drives a real hot-water draw to completion, then compares state.estimator byte-for-byte immediately before and after commanding the next delivery with nothing stepped in between -- proving control_command_delivery/start_delivery never touches the estimator -- then takes one real step and bounds the resulting reconstruction movement against the largest single-step movement the draw itself produced, so a reseed hiding inside the delivery's first step is caught too. The draw-happened precondition is read off the truth casting rather than the estimator, against a floor of 0.00005 C (a tenth of the smallest real movement, 0.0005 C, the disturbance search measured across every admitted scenario).
+
+  test_an_extraction_after_a_draw_matches_one_pulled_from_rest keeps its original point-by-point trace comparison (3000 samples against the declared match band, each run separately held to the brew band) and its volume-moved check unchanged; only the disturbance precondition changed, from requiring the truth casting to exit the (now-unreachable) brew band to requiring it to have moved off the rested baseline by more than the same 0.00005 C floor.
+
+  Both tests pass under pio test -e native_test.
+links:
+  - target: SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1
+    type: satisfies
