@@ -22,11 +22,13 @@
  * estimator beside it already spells, and the check that keeps a figure to one
  * home would then be asking which of the two the machine ran on.
  *
- * One figure is the exception and it is not a figure of the law. The steam
+ * Two figures are the exception and neither is a figure of the law. The steam
  * block carries a protective device, and where that device opens is a property
- * of the machine rather than of any declaration a caller writes -- so it is
- * declared here, once, and accounts for itself in params/control.declaration
- * beside the coffee side's own.
+ * of the machine rather than of any declaration a caller writes; what this
+ * channel's own sensor may be wrong by is a property of the same kind, of the
+ * sensor rather than of the control policy. Both are declared here, once, and
+ * account for themselves in params/control.declaration beside the coffee
+ * side's own.
  */
 
 /*
@@ -42,6 +44,23 @@
  * device's own tolerance.
  */
 #define STEAM_CONTROL_PROTECTION_TRIP_C 195.0f
+
+/*
+ * How far the steam channel's own reading may be wrong by, in degrees Celsius,
+ * carried into the commanded margin per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN.
+ *
+ * On the same footing CONTROL_SENSING_ERROR_C in control.c is: no
+ * temperature-sensing part has been selected for this channel, and
+ * REQ-MEASUREMENT-001 leaves sensor choice an open, cost-driven decision. The
+ * figure is estimated at the accuracy class a domestic thermoblock machine's
+ * block-mounted sensor ordinarily carries in the wider span this channel works
+ * across -- an NTC thermistor read up toward the steam block's working
+ * temperature -- rather than read off a fitted part's datasheet. A bench
+ * characterisation of the part actually fitted, or a decision settling which
+ * sensor this design specifies, displaces this figure with a measured or
+ * documented one.
+ */
+#define STEAM_CONTROL_SENSING_ERROR_C 2.0f
 
 
 /*
@@ -333,9 +352,11 @@ static bool command_everything_off(steam_control_state_t *state)
  * pressure one, and converting it would mean reading a saturation slope out of
  * a description by name, which is exactly what this side of the seam may not do
  * -- so what the trip point alone implies here is only that the target sit
- * below it. Every kelvin of the margin is therefore earned by declared model
- * error rather than inherited, which is a narrower claim than the coffee side's
- * and an honest one.
+ * below it. Every kelvin of the model-error half of the margin is therefore
+ * earned by declared model error rather than inherited, which is a narrower
+ * claim than the coffee side's and an honest one. STEAM_CONTROL_SENSING_ERROR_C
+ * is added on top of that per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN, on
+ * the same terms the coffee side's own sensing error is.
  */
 static bool steam_widened_margin(const steam_control_declaration_t *declaration,
                                  const plant_parameters_t *parameters,
@@ -353,7 +374,8 @@ static bool steam_widened_margin(const steam_control_declaration_t *declaration,
     probe.holding_permille = as_drive_level((float)declaration->standing_load_permille);
     probe.unwidened_c = 0.0f;
 
-    return protection_margin_widened(parameters, budget, &probe, margin);
+    return protection_margin_widened(parameters, budget, &probe, STEAM_CONTROL_SENSING_ERROR_C,
+                                     margin);
 }
 
 /*

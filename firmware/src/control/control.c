@@ -90,6 +90,30 @@
 #define CONTROL_PROTECTION_TRIP_C 107.0f
 
 /*
+ * How far the brew channel's own reading may be wrong by, in degrees Celsius,
+ * carried into the commanded margin per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN.
+ *
+ * No temperature-sensing part has been selected for this channel yet -- the
+ * machine as described carries a sensor on the block and nothing further:
+ * REQ-MEASUREMENT-001 itself leaves which sensor type, interface and
+ * compensation scheme meet it as an open, cost-driven decision. This figure is
+ * therefore not read off a fitted part's datasheet; it is estimated at the
+ * accuracy class a domestic thermoblock machine's block-mounted sensor
+ * ordinarily carries -- an NTC thermistor read in the 20-110 C span this
+ * channel works across, for which two degrees is a routine, unremarkable
+ * tolerance rather than a best case. It is deliberately not tightened by
+ * assuming a specific part this machine has not been shown to carry: a margin
+ * this close to a trip point should be sized against an ordinary reading of
+ * this sensor class, not against a best-case one nobody has verified is fitted.
+ *
+ * A bench characterisation of the part actually fitted, or a decision settling
+ * which sensor this design specifies going forward, displaces this figure with
+ * a measured or documented one; until then this is what the design assumes
+ * this channel's reading may be wrong by.
+ */
+#define CONTROL_SENSING_ERROR_C 2.0f
+
+/*
  * How far forward a model is stepped to arrive at where it settles, in
  * milliseconds. One step and not a sequence of them: the structures integrate
  * an interval exactly rather than by small forward steps.
@@ -1255,6 +1279,11 @@ static void refuse_if_the_pair_is_beyond_the_machine(const control_state_t *stat
  * trip point while every figure this loop reports says it was in tolerance --
  * which is the gap the trip point implies before any declared error is
  * considered at all.
+ *
+ * CONTROL_SENSING_ERROR_C is added on top of the model-error corner enumeration
+ * rather than run through it, per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN:
+ * what this channel's own sensor may be wrong by is present regardless of which
+ * model-error corner is real, not an alternative hypothesis about the plant.
  */
 static bool widened_margin(const control_state_t *state, float target_c,
                            protection_margin_t *margin)
@@ -1272,7 +1301,8 @@ static bool widened_margin(const control_state_t *state, float target_c,
     probe.holding_permille = as_drive_level(rise_k * CONTROL_STANDING_PERMILLE_PER_K);
     probe.unwidened_c = (float)state->tolerance.brew_temperature_band_milli_c / 1000.0f;
 
-    return protection_margin_widened(&state->parameters, &state->budget, &probe, margin);
+    return protection_margin_widened(&state->parameters, &state->budget, &probe,
+                                     CONTROL_SENSING_ERROR_C, margin);
 }
 
 /*

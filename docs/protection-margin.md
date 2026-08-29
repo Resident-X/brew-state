@@ -25,15 +25,15 @@ A replacement model is read by naming it: `--description`, `--limits`, `--tolera
 
 The highest target the loop takes is narrowed on its own admission path rather than worked out from any figure read out of the control source, and which of that path's ceilings stops the narrowing is a finding about this machine rather than an assumption of the method.
 
-| Highest target taken (C) | Bound that stops it | Widened margin (C) | Un-widened gap (C) | Trip point (C) |
-|---|---|---|---|---|
-| 100 | over-saturation | 4.02 | 1 | — |
+| Highest target taken (C) | Bound that stops it | Widened margin (C) | Un-widened gap (C) | Declared sensing error (C) | Trip point (C) |
+|---|---|---|---|---|---|
+| 100 | over-saturation | 6.02 | 1 | 2 | — |
 
 **The protection margin is not that bound.** Another of the admission path's ceilings is the tighter one on this machine, so the widened margin refuses nothing: every target it would refuse has already been refused by an earlier ceiling. The trip point is unreported for the same reason — the loop is never asked about it, and a figure named here that nothing was measured against would be this record inventing the number the whole mapping is anchored to.
 
 What that costs the sweep below is worth stating plainly. It is commanded at the hottest target this design admits, which is as close to the margin as a delivery on this machine can be commanded — but it is not evidence that the margin refusal does anything, because removing that refusal outright would leave every figure in this record unchanged.
 
-How far this machine stands from the case where its margin does bind is a figure rather than a sentence: the declared error against `brew.heater_power_w` would have to widen from 0.1 to 1.21 of its own value before the protection margin overtook the ceiling that is presently tighter. That is read and not swept. No delivery below is run against a widened description, because a description nobody claims is not a machine a verdict can be taken about, and a table of failures against one would read as findings about this design.
+How far this machine stands from the case where its margin does bind is a figure rather than a sentence: the declared error against `brew.heater_power_w` would have to widen from 0.1 to 0.806 of its own value before the protection margin overtook the ceiling that is presently tighter. That is read and not swept. No delivery below is run against a widened description, because a description nobody claims is not a machine a verdict can be taken about, and a table of failures against one would read as findings about this design.
 
 ## What each declared error contributes to the margin
 
@@ -81,7 +81,7 @@ Every corner the enumeration covers, at the target the sweep was commanded at. A
 | 37 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
 | 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.1 | 0.9 | ran | 0 |
 
-The margin is 4.02 C: the un-widened gap of 1 C plus the worst single corner's 3.02 C, which is corner 6. 39 of 39 corners ran and 4 cost the gap anything.
+The margin is 6.02 C: the un-widened gap of 1 C plus the worst single corner's 3.02 C (corner 6) plus the declared sensing error of 2 C. 39 of 39 corners ran and 4 cost the gap anything.
 
 ## What each corner's delivery did
 
@@ -135,7 +135,7 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 
 The steam side sizes a margin of its own, against a trip point of its own, out of the same declared error. Its un-widened gap is nothing: that loop's ready phase holds a temperature against no declared temperature band at all — the band it is held to is a pressure one — so every kelvin of its margin is earned by declared model error rather than inherited.
 
-Its target is not commanded but declared: `firmware/params/steam_control.declaration` names the ready temperature the loop is brought up holding, and the loop refuses to come up at all where that target does not leave the widened margin between itself and the trip point. The declared target is 125 C and the highest the loop would come up at is 188 C, so the margin has 63 C of room here and is not what stops this loop's target either.
+Its target is not commanded but declared: `firmware/params/steam_control.declaration` names the ready temperature the loop is brought up holding, and the loop refuses to come up at all where that target does not leave the widened margin between itself and the trip point. The declared target is 125 C and the highest the loop would come up at is 186 C, so the margin has 61.1 C of room here and is not what stops this loop's target either.
 
 | Corner | Kind | Coefficient | End | Declared error | Written at | Ran | Contribution (C) |
 |---|---|---|---|---|---|---|---|
@@ -179,7 +179,7 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 37 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
 | 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.1 | 0.9 | ran | 0 |
 
-The steam margin is 4.42 C: the un-widened gap of 0 C plus the worst single corner's 4.42 C, which is corner 16. 39 of 39 corners ran and 4 cost the gap anything.
+The steam margin is 6.42 C: the un-widened gap of 0 C plus the worst single corner's 4.42 C (corner 16) plus the declared sensing error of 2 C. 39 of 39 corners ran and 4 cost the gap anything.
 
 ## What each corner's steam draw did
 

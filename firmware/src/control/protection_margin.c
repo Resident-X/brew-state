@@ -322,6 +322,7 @@ bool protection_margin_corner(const plant_parameters_t *believed,
 bool protection_margin_widened(const plant_parameters_t *believed,
                                const plant_parameter_budget_t *budget,
                                const protection_margin_probe_t *probe,
+                               float sensing_error_c,
                                protection_margin_t *margin)
 {
     if (margin == NULL || probe == NULL) {
@@ -335,7 +336,9 @@ bool protection_margin_widened(const plant_parameters_t *believed,
 
     margin->unwidened_c = (probe->unwidened_c > 0.0f) ? probe->unwidened_c : 0.0f;
     margin->worst_corner_c = 0.0f;
-    margin->margin_c = margin->unwidened_c;
+    margin->sensing_error_c =
+        (is_a_number(sensing_error_c) && sensing_error_c > 0.0f) ? sensing_error_c : 0.0f;
+    margin->margin_c = margin->unwidened_c + margin->sensing_error_c;
     margin->corners = corners;
     margin->corners_run = 0u;
     margin->contributing = 0u;
@@ -372,6 +375,6 @@ bool protection_margin_widened(const plant_parameters_t *believed,
         }
     }
 
-    margin->margin_c = margin->unwidened_c + margin->worst_corner_c;
+    margin->margin_c = margin->unwidened_c + margin->worst_corner_c + margin->sensing_error_c;
     return true;
 }

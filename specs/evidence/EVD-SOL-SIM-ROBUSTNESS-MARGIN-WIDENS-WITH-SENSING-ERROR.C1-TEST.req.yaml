@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1-TEST
+type: evidence
+title: Sensing error adds to the model-error margin exactly, on both loops (SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T12:08:43Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly, test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing, test_the_public_margin_reader_carries_the_declared_sensing_error; firmware/test/test_steam_control/test_steam_control.c::test_the_steam_margin_reader_carries_the_declared_sensing_error; firmware/emulation/tests/test_protection_margin.py::TheDeclaredSensingErrorAddsToTheCommandedMargin.test_both_loops_carry_a_nonzero_declared_sensing_error
+text: |-
+  protection_margin_widened() adds sensing_error_c on top of unwidened_c + worst_corner_c exactly (not compared/maxed), clamps non-positive/NaN sensing error to zero, and both control.c's and steam_control.c's public margin readers carry a nonzero declared sensing error via CONTROL_SENSING_ERROR_C / STEAM_CONTROL_SENSING_ERROR_C. task fw:test and python3 -m unittest emulation.tests.test_protection_margin both pass.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1
+    type: satisfies

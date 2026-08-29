@@ -1,0 +1,80 @@
+id: SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS
+type: deliverable
+category: solution
+title: The cross-tier converter-margin fragility recurs at the previously widened margin
+status: active
+version: 1
+text: |
+  SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED widened
+  test_the_reading_the_converter_reports_changes_what_the_draw_does's finest
+  converter subcase from a one-count margin to five, after growing
+  delivery_tolerance_t by two fields silently erased the one-count margin's
+  ability to detect a deliberate converter divergence at all: the perturbed and
+  unperturbed replayed trajectories came back byte-identical instead of
+  different.
+
+  That subcase, now named "few-counts" in the test source, fails again on an
+  otherwise clean checkout of main: the five-count margin that solution chose no
+  longer detects the same deliberate divergence, and the replayed trajectories
+  are again byte-identical where the test asserts they must differ. Confirmed
+  against a detached worktree at a commit with no local changes applied, so this
+  is not an artefact of any change in flight -- the subcase has quietly stopped
+  demonstrating what it claims to for a second time.
+
+  The account the prior solution gave already named the mechanism as probably
+  timing-shift rather than floating-point rounding, arising from ordinary
+  unrelated growth elsewhere in the tree shifting the emulated tier's per-step
+  execution time enough to move the clock jitter the host tier is replayed
+  against. Nothing about that mechanism was fixed; only the specific margin it
+  had eaten was widened. The tree has continued to grow since, as this repository
+  does routinely, and the same erosion has recurred at the new margin.
+
+  This solution's own build settles which of two shapes closes the gap: another,
+  larger fixed-count margin (the same class of fix as before, restoring
+  detection but leaving the same erosion free to recur again at some larger
+  tree size), or a construction that is robust to per-step timing jitter by
+  design rather than by a margin sized against the tree's present shape (for
+  instance comparing the converter's effect on the quantity it actually acts on
+  rather than on a trajectory that also carries emulated-tier timing noise, or
+  widening the margin to a size justified by the timing-shift mechanism itself
+  rather than by trial). Whichever shape is chosen, the subcase has to detect the
+  same deliberate divergence the "coarser" and "finer" subcases beside it already
+  reliably detect, and do so in a way its own account of the fix explains rather
+  than merely restores by trial.
+
+  Out of scope: identifying the timing-shift mechanism with certainty (Renode's
+  own scheduling internals are not this project's to instrument); the "coarser"
+  and "finer" subcases beside this one, which have not been observed to recur;
+  and any change to what the comparison is for, which stays REQ-PREENERGISATION-VERIFICATION-001.C2's
+  own claim that a reported divergence is attributable to the port once the two
+  tiers are known to agree.
+rationale: |
+  Maintenance rather than a new criterion, on the same grounds
+  SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED already gives: the requirement criterion
+  this restores -- REQ-PREENERGISATION-VERIFICATION-001.C2 -- is already built,
+  evidenced and attested, and what has again quietly stopped holding is a check
+  demonstrating that attested claim rather than the claim itself. Per
+  DEC-MAINTENANCE-CONTINUOUS-LANE that makes this a child of the lane tracing to
+  the criterion it restores rather than a criterion of its own.
+
+  Filed as a fresh solution rather than reopening
+  SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED because that solution's own account
+  already predicted this: it named the mechanism as probably timing-shift from
+  ordinary tree growth and said explicitly that a bench or a longer run of
+  unrelated changes is what would justify a different figure than the five
+  counts it chose by trial. That prediction has now been confirmed by a second
+  occurrence at the widened margin, which is new information that solution's own
+  text did not have, not a defect in how it was built.
+
+  Left open which of the two candidate shapes (a further-widened count, or a
+  construction robust to jitter by design) the build settles on, rather than
+  choosing one here, because settling it needs the same kind of investigation
+  the prior fix explicitly left undone: isolating whether the emulated tier's own
+  run, compared directly across the two struct sizes, actually shows the timing
+  shift the prior account hypothesised. That investigation belongs to this
+  solution's own build brief rather than to the finding that a fix is owed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: targets

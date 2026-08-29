@@ -8035,11 +8035,22 @@ static void test_the_margin_widens_monotonically_with_each_declared_coefficients
                            name, (double)FRACTIONS[at], (double)margin.margin_c,
                            (double)margin.unwidened_c, (double)previous_c);
 
+            /*
+             * The baseline each fraction is compared against is the un-widened
+             * gap plus whatever this loop's declared sensing error adds -- not
+             * the un-widened gap alone, now that the public path this helper
+             * reads through always carries that addition. What this walk tests
+             * is the model-error corner's own monotonicity, so the sensing
+             * error's constant contribution is subtracted out of the
+             * comparison rather than mistaken for a model-error effect.
+             */
+            const float no_model_error_c = margin.unwidened_c + margin.sensing_error_c;
+
             if (at == 0u) {
-                TEST_ASSERT_EQUAL_FLOAT_MESSAGE(margin.unwidened_c, margin.margin_c, message);
+                TEST_ASSERT_EQUAL_FLOAT_MESSAGE(no_model_error_c, margin.margin_c, message);
                 TEST_ASSERT_EQUAL_UINT_MESSAGE(0u, margin.contributing, message);
             } else {
-                TEST_ASSERT_TRUE_MESSAGE(margin.margin_c > margin.unwidened_c, message);
+                TEST_ASSERT_TRUE_MESSAGE(margin.margin_c > no_model_error_c, message);
                 TEST_ASSERT_TRUE_MESSAGE(margin.margin_c >= previous_c, message);
                 TEST_ASSERT_TRUE_MESSAGE(margin.contributing > 0u, message);
             }
@@ -8203,7 +8214,8 @@ static void test_a_coefficient_with_no_path_to_the_gap_contributes_nothing(void)
 
         TEST_ASSERT_TRUE_MESSAGE(margin.corners_run >= 2u, message);
         TEST_ASSERT_EQUAL_UINT_MESSAGE(0u, margin.contributing, message);
-        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(margin.unwidened_c, margin.margin_c, message);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(margin.unwidened_c + margin.sensing_error_c,
+                                        margin.margin_c, message);
     }
 }
 
@@ -8369,7 +8381,7 @@ static void test_a_budget_that_does_not_belong_to_this_structure_supports_no_enu
 
     TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(&never_loaded));
     TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(NULL));
-    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &never_loaded, &probe, &margin));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &never_loaded, &probe, 0.0f, &margin));
     TEST_ASSERT_FALSE(protection_margin_corner(&parameters, &never_loaded, &probe, 0u, &corner));
 
     /* A record short of the structure's own count is refused on the same terms. */
@@ -8379,13 +8391,13 @@ static void test_a_budget_that_does_not_belong_to_this_structure_supports_no_enu
                              "told from a whole one");
     shortened.count -= 1u;
     TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(&shortened));
-    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &shortened, &probe, &margin));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &shortened, &probe, 0.0f, &margin));
 
     /* And one longer than the structure has, which is the other way to disagree. */
     plant_parameter_budget_t lengthened = budget;
     lengthened.count += 1u;
     TEST_ASSERT_EQUAL_UINT(0u, protection_margin_corner_count(&lengthened));
-    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &lengthened, &probe, &margin));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &lengthened, &probe, 0.0f, &margin));
 }
 
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: the enumeration covers
@@ -8424,8 +8436,8 @@ static void test_the_corner_count_and_the_corners_agree_about_where_the_enumerat
     TEST_ASSERT_FALSE(protection_margin_corner(NULL, &budget, &probe, 0u, &corner));
     TEST_ASSERT_FALSE(protection_margin_corner(&parameters, &budget, NULL, 0u, &corner));
     TEST_ASSERT_FALSE(protection_margin_corner(&parameters, &budget, &probe, 0u, NULL));
-    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &budget, NULL, &margin));
-    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &budget, &probe, NULL));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &budget, NULL, 0.0f, &margin));
+    TEST_ASSERT_FALSE(protection_margin_widened(&parameters, &budget, &probe, 0.0f, NULL));
 }
 
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: a probe naming no
@@ -8455,10 +8467,93 @@ static void test_a_probe_the_structure_cannot_answer_runs_no_corner(void)
      * distinguishable from a description claiming to be exact only by the count
      * of corners that ran -- which is why that count is carried.
      */
-    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe, &margin));
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe, 0.0f, &margin));
     TEST_ASSERT_EQUAL_FLOAT(probe.unwidened_c, margin.margin_c);
     TEST_ASSERT_EQUAL_UINT(0u, margin.corners_run);
     TEST_ASSERT_EQUAL_UINT(0u, margin.contributing);
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the declared sensing
+/// error is added on top of the model-error margin rather than weighed against
+/// it, per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN -- so the combined margin
+/// is the model-error-only margin plus the sensing error exactly, on a
+/// structure whose corners contribute nothing as well as one whose worst
+/// corner is nonzero.
+static void test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly(void)
+{
+    const protection_margin_probe_t probe = the_shipped_probe();
+    protection_margin_t without_sensing_error;
+    protection_margin_t with_sensing_error;
+    const float declared_sensing_error_c = 2.0f;
+
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe, 0.0f,
+                                               &without_sensing_error));
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe,
+                                               declared_sensing_error_c, &with_sensing_error));
+
+    TEST_ASSERT_EQUAL_FLOAT(declared_sensing_error_c, with_sensing_error.sensing_error_c);
+    TEST_ASSERT_EQUAL_FLOAT(without_sensing_error.worst_corner_c, with_sensing_error.worst_corner_c);
+    TEST_ASSERT_EQUAL_FLOAT(without_sensing_error.margin_c + declared_sensing_error_c,
+                            with_sensing_error.margin_c);
+
+    /*
+     * And doubling the declared sensing error doubles what it adds -- the
+     * widening is monotonic in the declared figure, not a comparison that could
+     * saturate against the model-error corner the way a worst-case combination
+     * would.
+     */
+    protection_margin_t doubled;
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe,
+                                               2.0f * declared_sensing_error_c, &doubled));
+    TEST_ASSERT_EQUAL_FLOAT(without_sensing_error.margin_c + (2.0f * declared_sensing_error_c),
+                            doubled.margin_c);
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: a sensing error that
+/// is not a positive, finite number contributes nothing, on the same terms
+/// `unwidened_c` is clamped -- a margin taking credit for a negative or
+/// not-a-number sensing error would be sized by an error nobody declared.
+static void test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing(void)
+{
+    const protection_margin_probe_t probe = the_shipped_probe();
+    protection_margin_t zero_reference;
+    protection_margin_t negative;
+    protection_margin_t not_a_number;
+
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe, 0.0f,
+                                               &zero_reference));
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe, -1.5f, &negative));
+    TEST_ASSERT_TRUE(protection_margin_widened(&parameters, &budget, &probe,
+                                               (float)NAN, &not_a_number));
+
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, negative.sensing_error_c);
+    TEST_ASSERT_EQUAL_FLOAT(zero_reference.margin_c, negative.margin_c);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, not_a_number.sensing_error_c);
+    TEST_ASSERT_EQUAL_FLOAT(zero_reference.margin_c, not_a_number.margin_c);
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the brew loop's
+/// public margin reader carries a nonzero declared sensing error -- not just
+/// the underlying computation this file can call directly -- and carries the
+/// same figure regardless of the target asked about, because it is a property
+/// of the channel's sensor rather than of any one command.
+///
+/// The figure itself is not asserted against a literal here: it is accounted
+/// for once, in params/control.declaration beside CONTROL_SENSING_ERROR_C, and
+/// a copy in this file would be a second home for it that could silently drift
+/// from the source's own account.
+static void test_the_public_margin_reader_carries_the_declared_sensing_error(void)
+{
+    protection_margin_t at_one_target;
+    protection_margin_t at_another_target;
+
+    bring_the_loop_up(&parameters, &parameters, BREW_TARGET_C, BREW_TARGET_C);
+    TEST_ASSERT_TRUE(control_protection_margin(&state, BREW_TARGET_C, &at_one_target));
+    TEST_ASSERT_TRUE(control_protection_margin(&state, BREW_TARGET_C - 10.0f, &at_another_target));
+
+    TEST_ASSERT_TRUE_MESSAGE(at_one_target.sensing_error_c > 0.0f,
+                             "the public margin reader carries no declared sensing error at all");
+    TEST_ASSERT_EQUAL_FLOAT(at_one_target.sensing_error_c, at_another_target.sensing_error_c);
 }
 
 /* --- A delivery at the widened margin, at every corner the budget implies --- */
@@ -8890,9 +8985,45 @@ static void test_the_sweep_is_commanded_at_the_bound_that_actually_stops_a_comma
 }
 
 /*
- * The narrowest declared error against one coefficient at which the widened
- * protection margin, rather than any other ceiling, is what stops a commanded
- * target -- narrowed on the loop's own report of which bound stopped it.
+ * Whether a delivery commanded at this instance's own highest admitted target
+ * is one the loop will actually run, rather than refuse for a reason of its
+ * own -- read back off the loop rather than assumed.
+ *
+ * A widening large enough to move the protection margin ahead of saturation
+ * moves the same coefficient's own downward corner, which is what the
+ * authority check beyond_the_authority reads the budget for. The two checks
+ * share one budget because a declared error is one fact about the machine, not
+ * two, so a widening chosen only to explore the margin can -- at exactly the
+ * fractions this narrowing explores -- also cost the machine the authority to
+ * hold the resulting edge under a draw. That is not a defect in either check:
+ * it is what a widened description honestly costs, and this narrowing has to
+ * find a fraction the loop both binds its margin at and can still deliver
+ * against, or the case below it would be commanding a target the loop itself
+ * says it cannot hold.
+ */
+static bool a_delivery_would_be_admitted_here(control_admission_t *stopped_by)
+{
+    const delivery_profile_t course = the_sweeps_course();
+    const float edge_c = the_highest_target_the_loop_takes(stopped_by);
+    control_admission_t delivery_admission;
+
+    if (stopped_by->bound != CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
+        return false;
+    }
+    TEST_ASSERT_TRUE(control_command_temperature(&state, edge_c));
+    return control_command_delivery_reporting(&state, &course, &delivery_admission);
+}
+
+/*
+ * A declared error against one coefficient at which the widened protection
+ * margin is what stops a commanded target, saturation does not bind first, and
+ * a delivery commanded at the resulting edge is still one the loop takes --
+ * narrowed on the loop's own report of which bound stopped it and of whether
+ * it would run the delivery, not computed here. Not asserted to be the
+ * narrowest such fraction: the joint predicate the fine narrowing below
+ * converges on is not shown to be single-crossing, so what convergence
+ * guarantees is a fraction the case downstream can use, not the least one that
+ * would serve.
  *
  * The analogue of the steam side's own narrowing onto its authority boundary,
  * and it exists for the same reason: the point at which one of the control
@@ -8906,6 +9037,16 @@ static void test_the_sweep_is_commanded_at_the_bound_that_actually_stops_a_comma
  * that writes the coefficient high: a declared error is a fraction of a value,
  * so the low end stops being a machine the structure admits once the fraction
  * reaches one, and the high end has no such stop.
+ *
+ * The coarse search keeps doubling past the first fraction at which the margin
+ * binds if a delivery cannot yet be run there: at fractions where the
+ * coefficient's own downward corner is still an admissible machine, that
+ * corner also costs the authority check something, and only past the fraction
+ * where the low end stops being an admissible machine at all does the
+ * authority check stop counting it. The fine narrowing below is then taken
+ * against that already-deliverable point rather than against the bare first
+ * crossing, so it cannot narrow back into a fraction the loop cannot deliver
+ * at.
  *
  * The record itself is widened rather than a description being rewritten, which
  * is the one place this file departs from asking the description everything. A
@@ -8927,23 +9068,25 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
                              "narrowing widens, so there is nothing here to widen");
     below = budget.assumed_error[at];
 
-    for (float trying = below * 2.0f; trying <= 8.0f; trying *= 2.0f) {
+    for (float trying = below * 2.0f; trying <= 64.0f; trying *= 2.0f) {
         control_admission_t stopped_by;
 
         widened.assumed_error[at] = trying;
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
         TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance, &pump_trim));
-        (void)the_highest_target_the_loop_takes(&stopped_by);
-        if (stopped_by.bound == CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
+        if (a_delivery_would_be_admitted_here(&stopped_by)) {
             above = trying;
             break;
         }
-        below = trying;
+        if (stopped_by.bound != CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
+            below = trying;
+        }
     }
-    TEST_ASSERT_TRUE_MESSAGE(above > 0.0f,
-                             "no declared error this narrowing tried put the protection margin in "
-                             "front of the other ceilings, so the bound cannot be reached at all");
+    TEST_ASSERT_TRUE_MESSAGE(
+        above > 0.0f,
+        "no declared error this narrowing tried put the protection margin in front of the "
+        "other ceilings with a delivery still admissible at the resulting edge");
 
     for (unsigned narrowing = 0u; narrowing < 30u; narrowing++) {
         const float middle = (below + above) / 2.0f;
@@ -8953,8 +9096,7 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
         TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance, &pump_trim));
-        (void)the_highest_target_the_loop_takes(&stopped_by);
-        if (stopped_by.bound == CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
+        if (a_delivery_would_be_admitted_here(&stopped_by)) {
             above = middle;
         } else {
             below = middle;
@@ -8970,7 +9112,8 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
 /// where it is the binding bound, the highest target the loop takes is that
 /// margin's own edge and a delivery commanded there is one the loop admits.
 ///
-/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2: A delivery lands
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C2 and
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C2: A delivery lands
 /// within tolerance when it is commanded at the widened margin -- at the
 /// margin's own edge, which is the one place that claim can be made and is not
 /// reachable on this machine at the errors the description actually declares.
@@ -8983,6 +9126,14 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
 /// sized for it -- so the edge follows the target rather than being a fixed
 /// point -- and that a delivery commanded there lands inside the band on the
 /// machine the description names.
+///
+/// The edge itself is read off `control_protection_margin`, which now always
+/// includes `CONTROL_SENSING_ERROR_C` -- so this is the combined edge, worst
+/// model-error corner plus declared sensing error, and not the model-error
+/// figure alone. This covers SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C2
+/// as well as the model-error solution's own claim: there is one edge the real
+/// control path enforces, and a delivery commanded there has to land whichever
+/// half of it a widened coefficient happened to earn.
 ///
 /// This is the case the corner sweep above cannot be: at the errors this
 /// description declares, the saturation ceiling is the tighter bound and the
@@ -9117,8 +9268,11 @@ static void test_the_recorded_corners_and_the_margin_come_off_one_enumeration(vo
                                      "the margin's worst corner is not the widest contribution in "
                                      "the record");
     TEST_ASSERT_FLOAT_WITHIN_MESSAGE(
-        1e-5f, margin_recorded.unwidened_c + widest_contribution_c, margin_recorded.margin_c,
-        "the widened margin is not the un-widened gap plus the worst corner");
+        1e-5f,
+        margin_recorded.unwidened_c + widest_contribution_c + margin_recorded.sensing_error_c,
+        margin_recorded.margin_c,
+        "the widened margin is not the un-widened gap plus the worst corner plus the declared "
+        "sensing error");
 
     /*
      * And the rule applied is the one the decision names rather than one that
@@ -9294,6 +9448,9 @@ int main(void)
     RUN_TEST(test_a_budget_that_does_not_belong_to_this_structure_supports_no_enumeration);
     RUN_TEST(test_the_corner_count_and_the_corners_agree_about_where_the_enumeration_ends);
     RUN_TEST(test_a_probe_the_structure_cannot_answer_runs_no_corner);
+    RUN_TEST(test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly);
+    RUN_TEST(test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing);
+    RUN_TEST(test_the_public_margin_reader_carries_the_declared_sensing_error);
     RUN_TEST(test_a_target_inside_the_widened_margin_is_refused);
     RUN_TEST(test_a_delivery_lands_within_tolerance_at_every_declared_error_corner);
     RUN_TEST(test_the_sweep_is_commanded_at_the_bound_that_actually_stops_a_command);

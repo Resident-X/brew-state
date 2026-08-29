@@ -6,14 +6,21 @@ version: 1
 measurement_type: threshold
 verification: analysis
 text: |
-  Each loop's guarded temperature channel gains a declared sensing-error figure, sourced from the fitted
-  sensor's own specified accuracy rather than assumed or left at the model-error solution's implicit zero.
-  That figure widens the commanded margin by being added on top of the model-error solution's own worst
-  corner, on that loop, rather than being weighed against it by worst-case enumeration: sensing error is
-  present regardless of which model-error corner is real, so it stacks rather than competes. The combined
-  margin on each loop is never smaller than that loop's model-error-only margin and is strictly larger
-  whenever the declared sensing error is nonzero, independent of which model-error corner is binding. Out of
-  scope: any channel other than the one temperature channel each of the two loops guards.
+  Each loop's guarded temperature channel gains a declared sensing-error figure, carried with the same
+  measured-versus-trusted provenance REQ-MACHINE-CONFIGURATION-001.C5 already requires of a declared
+  configuration value. No temperature-sensing part has been selected for either channel yet -- the machine
+  as described carries a sensor on the block and nothing further, and REQ-MEASUREMENT-001 itself leaves
+  sensor type, interface and compensation scheme an open, cost-driven decision -- so the figure is declared
+  @estimated, at the accuracy class a domestic thermoblock machine's block-mounted sensor ordinarily carries,
+  rather than read off a fitted part's datasheet or left at the model-error solution's implicit zero. That
+  figure widens the commanded margin by being added on top of the model-error solution's own worst corner,
+  on that loop, rather than being weighed against it by worst-case enumeration: sensing error is present
+  regardless of which model-error corner is real, so it stacks rather than competes. The combined margin on
+  each loop is never smaller than that loop's model-error-only margin and is strictly larger whenever the
+  declared sensing error is nonzero, independent of which model-error corner is binding. A bench
+  characterisation of the part actually fitted, or a decision settling which sensor this design specifies,
+  displaces the estimate with a measured or documented figure. Out of scope: any channel other than the one
+  temperature channel each of the two loops guards.
 links:
   - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
     type: criterion-of

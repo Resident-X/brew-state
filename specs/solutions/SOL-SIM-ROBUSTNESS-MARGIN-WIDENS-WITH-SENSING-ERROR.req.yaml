@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: Commanded margin widens by declared sensing error added on top of the existing model-error margin, on both loops
 status: active
-version: 2
+version: 3
 text: |
   SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR established the commanded margin itself, against the
   protection trip point, wired into delivery commands on both the coffee side and the steam side. Its own
@@ -14,9 +14,14 @@ text: |
   solution enumerates.
 
   This solution closes that gap on both loops. For the temperature channel each loop guards, it declares
-  that channel's own sensing error -- the accuracy figure its fitted sensor carries, sourced from the part
-  actually specified rather than assumed, and recorded with the same measured-versus-trusted provenance
-  REQ-MACHINE-CONFIGURATION-001.C5 already requires of a declared configuration value.
+  that channel's own sensing error, recorded with the same measured-versus-trusted provenance
+  REQ-MACHINE-CONFIGURATION-001.C5 already requires of a declared configuration value. No
+  temperature-sensing part has been selected for either channel yet -- the machine as described carries a
+  sensor on the block and nothing further, and REQ-MEASUREMENT-001 itself leaves sensor type, interface and
+  compensation scheme an open, cost-driven decision -- so the figure this solution declares is an estimate
+  at the accuracy class a domestic thermoblock machine's block-mounted sensor ordinarily carries, marked
+  @estimated rather than read off a fitted part's datasheet, and displaced once a sensor is characterised or
+  specified.
 
   That figure does not combine with the model-error corners the way model-error corners combine with each
   other. DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE answers how several plant coefficients, each an
@@ -40,12 +45,13 @@ text: |
   land within tolerance -- is asked of the combined figure rather than of the model-error figure alone.
 
   Out of scope: re-deriving or re-arguing the model-error contribution itself, which the prior solution
-  already established and which this solution only adds to rather than recomputes; characterising the
-  fitted sensor's true accuracy against its datasheet figure, which is a measurement-validation question
-  this solution takes the declared figure as given for rather than re-establishes; and building the
-  estimator-side error a reconstructed state carries, which REQ-STATE-ESTIMATION-001 already covers
-  separately and which this solution's margin concerns itself with only through the declared sensing figure
-  on the measured channel, not through estimation error generally.
+  already established and which this solution only adds to rather than recomputes; selecting or
+  characterising the temperature-sensing part itself, which stays the open, cost-driven decision
+  REQ-MEASUREMENT-001's own rationale already leaves it as -- this solution takes an estimated figure at a
+  plausible accuracy class as given, rather than settling which sensor the design specifies or bench
+  characterising one; and building the estimator-side error a reconstructed state carries, which
+  REQ-STATE-ESTIMATION-001 already covers separately and which this solution's margin concerns itself with
+  only through the declared sensing figure on the measured channel, not through estimation error generally.
 rationale: |
   Traced to DEL-MAINTENANCE.C1 rather than to DEL-SIM-ROBUSTNESS-VERIFICATION's own cascade criterion, on the
   same reasoning DEL-MAINTENANCE.C1 gives for every item under this lane: DEL-SIM-ROBUSTNESS-VERIFICATION is
@@ -82,11 +88,16 @@ rationale: |
 
   Targeting REQ-MACHINE-CONFIGURATION-001.C5 follows the same pattern DEC-PROTECTION-TRIP-POINTS-FROM-PARTS-LIST-LOW-TOLERANCE-END
   set for the model-error solution's own trip-point figures: a number this solution's build brief requires
-  be sourced from the part actually fitted, rather than assumed, is a declared-configuration fact, and
-  REQ-MACHINE-CONFIGURATION-001.C5 already requires the declaration to mark which of its values were measured
-  and which were taken on trust. A manufacturer's stated sensor accuracy is exactly a value taken on trust
-  rather than measured on this machine, and recording it there rather than leaving it implicit in the margin
-  computation keeps one place, rather than two, answering which declared figures this design relies on.
+  be recorded with a marked provenance is a declared-configuration fact, and REQ-MACHINE-CONFIGURATION-001.C5
+  already requires the declaration to mark which of its values were measured and which were taken on trust.
+  No sensor part has been selected for either guarded channel -- confirmed against docs/reference-machine.md,
+  which names only "the sensor is on the block" for each thermoblock, and against REQ-MEASUREMENT-001's own
+  rationale, which leaves sensor type, interface and compensation scheme an open decision -- so the figure
+  this solution declares is an estimate at a plausible accuracy class, exactly as thermoblock.params already
+  carries other coefficients no part has been measured for, rather than a datasheet reading of a fitted part.
+  Recording it with the same @estimated origin and displacement condition those coefficients already carry,
+  rather than leaving it implicit in the margin computation, keeps one place, rather than two, answering
+  which declared figures this design relies on and how firmly.
 links:
   - target: DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN
     type: justified-by

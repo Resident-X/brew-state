@@ -50,9 +50,15 @@
  * coffee side and the steam side get the same computation rather than two that
  * will eventually disagree.
  *
- * Sensing error is not part of this. What a sensor may be wrong by is the other
- * half of commanded margin and it is not carried here; a margin that folded the
- * two together would leave neither half separately answerable.
+ * Sensing error is handed in rather than enumerated here: what a sensor may be
+ * wrong by is not an alternative hypothesis about the plant the way a model
+ * coefficient is, so it does not compete for the worst-corner comparison above
+ * -- it is present simultaneously with whatever the true plant turns out to be,
+ * degrading every reading regardless of which model-error corner is real.
+ * DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN settles how the two combine: the
+ * declared sensing error is added on top of the worst model-error corner,
+ * never compared against it, so the combined margin is never smaller than
+ * either half would give alone.
  */
 #ifndef PROTECTION_MARGIN_H
 #define PROTECTION_MARGIN_H
@@ -148,16 +154,22 @@ typedef struct {
 /*
  * The margin a loop is to command within, and the enumeration it came out of.
  *
- * `margin_c` is `unwidened_c` plus `worst_corner_c`, and is the whole of what a
- * loop enforces. The rest is the account: how many corners the enumeration
- * covers, how many of them were runnable, how many actually cost the gap
- * anything, and which one was worst. A margin figure with no account behind it
- * is a number nobody can challenge, which is the state a load-bearing figure is
- * in just before everybody treats it as settled.
+ * `margin_c` is `unwidened_c` plus `worst_corner_c` plus `sensing_error_c`, and
+ * is the whole of what a loop enforces. `sensing_error_c` is carried apart from
+ * `worst_corner_c` rather than folded into it before this struct is filled, so
+ * a reader can tell how much of the margin the model-error enumeration earned
+ * and how much the declared sensing error added on top, on the same terms the
+ * rest of the account already separates the un-widened gap from what the
+ * enumeration widened it by. The rest is the account: how many corners the
+ * enumeration covers, how many of them were runnable, how many actually cost
+ * the gap anything, and which one was worst. A margin figure with no account
+ * behind it is a number nobody can challenge, which is the state a
+ * load-bearing figure is in just before everybody treats it as settled.
  */
 typedef struct {
     float unwidened_c;
     float worst_corner_c;
+    float sensing_error_c;
     float margin_c;
     size_t corners;
     size_t corners_run;
@@ -260,7 +272,8 @@ bool protection_margin_corner(const plant_parameters_t *believed,
 
 /*
  * The widened margin: the un-widened gap plus the largest single-corner
- * degradation across the whole enumeration.
+ * degradation across the whole enumeration, plus the declared sensing error on
+ * top of that.
  *
  * Written in terms of protection_margin_corner above rather than beside it, so
  * the figure a loop enforces and the record a reader inspects come out of one
@@ -268,15 +281,27 @@ bool protection_margin_corner(const plant_parameters_t *believed,
  * would be invisible: the record would go on describing corners the margin was
  * not actually taken over.
  *
+ * `sensing_error_c` is added rather than compared against the worst corner, per
+ * DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN: it is not an alternative
+ * hypothesis about the plant, so it does not compete in the worst-corner
+ * enumeration above and is not run through a corner at all. A caller with no
+ * declared sensing error for its channel passes zero, which adds nothing and
+ * leaves the model-error-only margin this function used to return. A value
+ * that is not a positive number -- negative, not-a-number, an infinity --
+ * contributes nothing, on the same terms `unwidened_c` is clamped below: a
+ * margin taking credit for a negative sensing error would be sized by an error
+ * nobody declared.
+ *
  * Returns false, writing nothing, for a null argument or a budget that does not
  * belong to the structure this build compiled. A budget that declares no error
- * against anything is not a refusal: it produces a margin of exactly the
- * un-widened gap, which is the honest answer for a description that claims to
- * be exact.
+ * against anything is not a refusal: it produces a margin of the un-widened gap
+ * plus the declared sensing error, which is the honest answer for a plant
+ * description that claims to be exact but a sensor that does not.
  */
 bool protection_margin_widened(const plant_parameters_t *believed,
                                const plant_parameter_budget_t *budget,
                                const protection_margin_probe_t *probe,
+                               float sensing_error_c,
                                protection_margin_t *margin);
 
 #endif /* PROTECTION_MARGIN_H */

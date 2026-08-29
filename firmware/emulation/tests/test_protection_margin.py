@@ -98,8 +98,10 @@ class TheMarginIsTheWorstSingleCornerOfTheDeclaredError(unittest.TestCase):
             msg="the margin's worst corner is not the widest contribution the enumeration "
                 "reported")
         self.assertAlmostEqual(
-            record["widened_c"], record["unwidened_c"] + max(contributions), places=5,
-            msg="the widened margin is not the un-widened gap plus the worst corner")
+            record["widened_c"],
+            record["unwidened_c"] + max(contributions) + record["sensing_error_c"], places=5,
+            msg="the widened margin is not the un-widened gap plus the worst corner plus the "
+                "declared sensing error")
         self.assertEqual(len(contributions), record["contributing"])
 
         if len(contributions) >= 2:
@@ -464,6 +466,52 @@ class TheMappingAndTheCornerVerdictsAreCommitted(unittest.TestCase):
         for corner, why in FINDINGS["refused"]:
             with self.subTest(corner=corner["which"]):
                 self.assertIn(why, record)
+
+
+class TheDeclaredSensingErrorAddsToTheCommandedMargin(unittest.TestCase):
+    """SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1-C3: the declared
+    sensing error on each loop's guarded channel is added on top of the
+    model-error margin, and the sensing-error mapping and corner verdicts are
+    committed in the same repeatable form the model-error margin already uses.
+    """
+
+    # SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the reading names
+    # a nonzero declared sensing error on both loops -- carried explicitly
+    # rather than folded silently into the worst-corner figure -- and that
+    # figure adds to, rather than competes with, the model-error corner: the
+    # combined margin is exactly the un-widened gap plus the worst corner plus
+    # the declared sensing error, on both loops.
+    def test_both_loops_carry_a_nonzero_declared_sensing_error(self):
+        for side, record in (("coffee", FINDINGS["shipped"]["margin"]),
+                             ("steam", FINDINGS["shipped"]["steam_margin"])):
+            with self.subTest(side=side):
+                self.assertGreater(record["sensing_error_c"], 0.0,
+                                   "this loop's margin reading carries no declared sensing error "
+                                   "at all")
+                self.assertAlmostEqual(
+                    record["widened_c"],
+                    record["unwidened_c"] + record["worst_c"] + record["sensing_error_c"],
+                    places=5,
+                    msg="the widened margin is not the un-widened gap plus the worst corner "
+                        "plus the declared sensing error")
+
+    # SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C3: the committed
+    # record carries the declared sensing error as its own figure, on both
+    # loops, rather than only the combined total -- so a reader can tell how
+    # much of the margin the model-error enumeration earned and how much the
+    # declared sensing error added on top, on the same terms the record
+    # already separates the un-widened gap from what the enumeration widened
+    # it by.
+    def test_the_committed_record_names_the_declared_sensing_error_on_both_loops(self):
+        record = _committed_record()
+        for side, margin_record in (("coffee", FINDINGS["shipped"]["margin"]),
+                                    ("steam", FINDINGS["shipped"]["steam_margin"])):
+            with self.subTest(side=side):
+                self.assertIn(
+                    margin.FIGURE_FORMAT % margin_record["sensing_error_c"], record,
+                    "the committed record does not name %s's declared sensing error figure"
+                    % side)
+        self.assertIn("declared sensing error", record)
 
 
 if __name__ == "__main__":
