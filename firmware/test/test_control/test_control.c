@@ -3661,13 +3661,18 @@ static void test_reading_ahead_stops_at_the_end_condition(void)
 
         bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
         TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
-        TEST_ASSERT_TRUE_MESSAGE(state.delivery_lead_millis > 300u,
+        /* A sample point comfortably inside the near-ending course's own
+         * stop, fixed at half of ENDS[0] rather than derived from the lead --
+         * so this can never underflow regardless of how large the lead
+         * grows. What the test still needs is that the read-ahead window has
+         * crossed the near end by this instant, i.e. sample_at + lead >
+         * ENDS[0]; refuse rather than silently misjudge if a future lead
+         * ever shrinks too far to cross it from here. */
+        const uint32_t sample_at = ENDS[0] / 2u;
+        TEST_ASSERT_TRUE_MESSAGE(state.delivery_lead_millis > ENDS[0] - sample_at,
                                  "the lead against the shipped machine at this rate was too short "
                                  "for this test to tell a window clamped at the end apart from one "
                                  "that has reached the rise beyond it");
-
-        /* Comfortably inside the near-ending course's own stop. */
-        const uint32_t sample_at = ENDS[0] - (state.delivery_lead_millis / 2u);
         for (uint32_t elapsed = 0u; elapsed < sample_at; elapsed += CONTROL_STEP_INTERVAL_MS) {
             TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
         }
