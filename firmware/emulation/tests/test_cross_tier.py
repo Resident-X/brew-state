@@ -156,6 +156,13 @@ def _emulated_draws_quantity_keys():
         r"TRAJECTORY_QUANTITIES\s*=\s*\((.*?)\n\)")
 
 
+def _host_draws_converter_keys():
+    """The names the host tier's draw prints its converter readings under, in
+    order."""
+    return _declared_keys(
+        HOST_DRAW_SOURCE, "converter_key[]", r"converter_key\[\]\s*=\s*\{(.*?)\}")
+
+
 def _diverged_host_draw(coefficient=DIVERGENT_COEFFICIENT, value=DIVERGENT_VALUE, name="diverged"):
     """One host draw of the same commanded draw against a description the
     emulated loop is not using."""
@@ -323,6 +330,17 @@ class TheTwoLoopsReportTheSamePlantTrajectory(unittest.TestCase):
             _emulated_draws_quantity_keys(), closed_loop.QUANTITY_KEYS,
             "the emulated loop prints its quantities under names the comparison does not "
             "look up")
+
+    # SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS.C1: the finest converter subcase
+    # reads the converter reading back by name, the same way the quantities
+    # above are -- a rename on either side of the C/Python boundary would have
+    # the parser silently stop reading the figure this subcase now depends on.
+    def test_the_host_loop_reports_its_converter_readings_under_the_names_the_parser_looks_up(
+            self):
+        self.assertEqual(
+            _host_draws_converter_keys(), runner.CONVERTER_KEYS,
+            "the host tier's draw prints its converter readings under names the parser does "
+            "not look up")
 
     # SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C1: report the same plant trajectory
     # -- a trajectory, which means the model has to have gone somewhere. Two
@@ -552,41 +570,25 @@ class ADeliberateDivergenceFailsTheComparison(unittest.TestCase):
     # comparison run over a loop the converter sits outside of would agree
     # whatever the converter did, and would go on agreeing after the round trip
     # this criterion's own .C1 is over had stopped working. So the same draw is
-    # put through the host loop again with the converter's full scale moved, and
-    # the trajectory has to come out somewhere else.
+    # put through the host loop again with the converter's full scale moved,
+    # and the trajectory has to come out somewhere else -- which "coarser" and
+    # "finer" below still ask of the full plant trajectory. "few-counts" now
+    # asks a narrower question of its own; see the comment above that subtest
+    # for why, and test_the_loop_left_the_heaters_limit_on_both_sides above for
+    # where the round-trip claim at this test's own granularity is carried.
     def test_the_reading_the_converter_reports_changes_what_the_draw_does(self):
         counts, milli = FINDINGS["converter_scale"]
         as_run = [reported["quantities"] for reported in FINDINGS["host"]["trajectory"]]
+        converter_as_run = [
+            reported["converter_milli"] for reported in FINDINGS["host"]["trajectory"]]
 
-        # The finest case is a few counts rather than one. A single count moves
-        # the scale by roughly a four-thousandth of the full span (one part in
-        # ADC_FULL_SCALE_COUNTS), which was found by measurement to be fine
-        # enough that whether it survives to a reported difference is not
-        # robust: growing SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS's
-        # delivery_tolerance_t by two fields (embedded by value in
-        # control_state_t) made this subcase report no difference at all,
-        # even though that slice's own logic is provably unreached by this
-        # draw -- it never commands a profile-based delivery, so
-        # delivery_running stays false throughout and every branch the new
-        # yield logic added is skipped. Comparing the host tier alone before
-        # and after that struct growth on the same course produced
-        # byte-identical trajectories, which rules out a host-side
-        # floating-point rounding shift as the cause; the more likely
-        # explanation is that the larger struct shifted per-step execution
-        # time on the emulated (Renode) tier enough to move the clock jitter
-        # that tier's run records, which this host-only comparison then
-        # replays -- but that half was not directly confirmed. Whatever the
-        # exact mechanism, one count is evidently not a robust distance
-        # against unrelated, semantically inert changes elsewhere in the
-        # tree, which is a false failure this test exists to avoid rather
-        # than to produce. A handful of counts is still far finer than
-        # "coarser" and "finer" above and stays a converter-granularity
-        # question, not a tolerance-width one. See
-        # SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED for the discovery this
-        # restates.
+        # "coarser" and "finer" compare the full plant trajectory and, unlike
+        # "few-counts" below, still assert that the round trip through the
+        # control loop is what produces the difference -- they have never
+        # failed this way, being far enough from the noise floor that the
+        # jitter-driven erosion described below has no room to erase them.
         for name, scale in (("coarser", (counts // 4, milli)),
-                            ("finer", (counts * 4, milli)),
-                            ("few-counts", (counts - 5, milli))):
+                            ("finer", (counts * 4, milli))):
             with self.subTest(converter=name):
                 elsewhere = _host_draw_at(scale, "converter-%s" % name)
                 self.assertEqual(
@@ -597,6 +599,54 @@ class ADeliberateDivergenceFailsTheComparison(unittest.TestCase):
                     "moving the converter's full scale to %s left the host loop's trajectory "
                     "byte for byte where it was, so what the converter reports reaches nothing "
                     "the loop commands and the round trip is outside the comparison" % name)
+
+        # The finest case is a few counts rather than one. A single count moves
+        # the scale by roughly a four-thousandth of the full span (one part in
+        # ADC_FULL_SCALE_COUNTS), which was found by measurement to be fine
+        # enough that whether it survives to a reported difference in the full
+        # plant trajectory is not robust: growing an unrelated struct
+        # (SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED) erased a one-count margin,
+        # and widening it to five counts (the same fix) erased itself again
+        # (SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS) on an otherwise clean
+        # checkout. Both erosions traced to the same mechanism: the host loop
+        # is driven by a course of per-interval elapsed times replayed from a
+        # single captured emulated-tier (Renode) run, and unrelated code
+        # shifting that tier's own per-step execution time shifts the
+        # recorded jitter this test-only replay carries -- which can, at some
+        # tree size, absorb a small converter perturbation before it survives
+        # 30-odd seconds of thermal integration into the reported quantities.
+        # The brew heater's own commanded level turned out no more robust: it
+        # is an integer permille, and a few-count shift on the brew reading
+        # measurably failed to move it anywhere across an entire draw once
+        # tried -- the control law's own actuation resolution is coarser than
+        # this subcase's granularity, whatever the timing course carries.
+        #
+        # Rather than choose another fixed count to widen to -- the same class
+        # of fix, free to recur again at some larger tree size -- this
+        # compares what the converter itself reconstructed for each sensed
+        # quantity (converter_milli, reported by cross_tier_draw.c's own
+        # reported_milli arithmetic) instead of anything downstream of it. Both
+        # runs start from the same plant state, so the two converter readings
+        # at the first interval are already a comparison of the full-scale
+        # arithmetic alone, before either run's actuation or timing has had
+        # any chance to matter -- which is what makes this robust against the
+        # mechanism above rather than against the same mechanism at a larger
+        # size. It no longer asks whether that reading goes on to move the
+        # control law's own actuation the way "coarser" and "finer" still do;
+        # that narrower claim is what
+        # test_the_loop_left_the_heaters_limit_on_both_sides above already
+        # carries for this draw.
+        with self.subTest(converter="few-counts"):
+            elsewhere = _host_draw_at((counts - 5, milli), "converter-few-counts")
+            self.assertEqual(
+                len(elsewhere["trajectory"]), len(as_run),
+                "the draw read through a few-counts converter did not run to the same length")
+            self.assertNotEqual(
+                [reported["converter_milli"] for reported in elsewhere["trajectory"]],
+                converter_as_run,
+                "moving the converter's full scale by a few counts left what the converter "
+                "itself reconstructed byte for byte where it was, so the finest subcase is not "
+                "actually reading through a converter sensitive to its full-scale setting")
 
     # SOL-PLANT-MODEL-AGREES-ACROSS-TIERS.C2: demonstrating that the check is
     # sensitive to a real divergence. Two runs that did not even cover the same

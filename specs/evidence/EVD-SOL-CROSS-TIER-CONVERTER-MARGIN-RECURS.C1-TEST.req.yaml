@@ -1,0 +1,17 @@
+id: EVD-SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS.C1-TEST
+type: evidence
+title: Cross-tier converter-margin fix — few-counts subcase re-verified (SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T13:32:07Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::ADeliberateDivergenceFailsTheComparison::test_the_reading_the_converter_reports_changes_what_the_draw_does
+text: |-
+  The 'few-counts' subcase of test_the_reading_the_converter_reports_changes_what_the_draw_does now compares the converter's own reconstructed reading (a new converter_milli field, exposed from cross_tier_draw.c's reported_milli() and parsed by run_cross_tier_check.py's CONVERTER_KEYS) instead of the full plant trajectory, which was vulnerable to replayed emulated-tier clock jitter erasing a small perturbation. This figure is fixed by the full-scale arithmetic alone at the first interval, before either run's actuation or timing can matter, so it reliably differs regardless of tree-size-driven timing shifts. An earlier attempt comparing heater_permille (the control law's actuation) was tried and empirically failed -- the actuation is coarsely quantized and did not move at all for a 5-count shift across the draw -- confirming the raw converter reading is the robust signal. Full firmware gate green: task fw:build, task fw:test (727 tests), task fw:emulate (195 tests including two new tests added by this fix: a drift guard binding the C converter_key[] names to the Python CONVERTER_KEYS, and a refusal test for a trajectory line missing a converter field).
+links:
+  - target: SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS.C1
+    type: satisfies

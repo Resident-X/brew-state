@@ -103,6 +103,16 @@ assert len(QUANTITY_NAMES) == len(closed_loop.QUANTITY_KEYS), (
     "every quantity the two loops report under a name has to have a name to "
     "report a divergence in it by")
 
+#: What the host loop prints its converter's own reconstructed reading for each
+#: sensed quantity under, in the same order as QUANTITY_KEYS.
+#:
+#: Read only by the host tier's own subcases that compare what one draw's
+#: converter reported against another's -- the emulated tier reports no such
+#: figure, since this file's whole point is that the host tier has no converter
+#: of its own and is handed one to model. Unlike the sensed quantities above,
+#: this is not something a divergence between the two tiers is reported in.
+CONVERTER_KEYS = tuple("%s-converter-milli" % key for key in closed_loop.QUANTITY_KEYS)
+
 #: How far apart the two loops' figures for one quantity may sit.
 #:
 #: Derived from what single precision accumulates, not from what a drink can
@@ -269,7 +279,7 @@ def parse_host(output):
             # every structure answers every quantity -- so a line without it is
             # a draw that stopped printing it, which is the case that must fail
             # where it is looked for rather than quietly reading as no flow.
-            for name in ("interval", "result", "pump", "heater", "steps", FLOW_KEY):
+            for name in ("interval", "result", "pump", "heater", "steps", FLOW_KEY) + CONVERTER_KEYS:
                 if name not in fields:
                     raise closed_loop.Unkeyed("%s reports no %s" % (where, name))
             findings["trajectory"].append({
@@ -279,6 +289,14 @@ def parse_host(output):
                 "heater_permille": int(fields["heater"]),
                 "plant_steps": int(fields["steps"]),
                 "quantities": closed_loop.quantities_of(fields, where),
+                # What the converter itself reconstructed for each sensed
+                # quantity, before the plant model integrated anything the
+                # control law did with it. Held apart from "quantities" for the
+                # same reason it is read under its own key: it is the
+                # converter's own arithmetic, reproducible from the sensed
+                # quantity and the full-scale settings alone, not a figure two
+                # tiers' plant models are compared on.
+                "converter_milli": [int(fields[key]) for key in CONVERTER_KEYS],
                 # The temperature an extraction is judged by, which no sensor
                 # reports and which the comparison this module exists for
                 # therefore takes no part in -- the two tiers are compared on
