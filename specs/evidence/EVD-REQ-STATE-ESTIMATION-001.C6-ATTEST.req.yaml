@@ -1,0 +1,35 @@
+id: EVD-REQ-STATE-ESTIMATION-001.C6-ATTEST
+type: evidence
+title: Attestation of REQ-STATE-ESTIMATION-001.C6
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C2-TEST
+    - EVD-SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2-TEST
+    - EVD-SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C3-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-STATE-ESTIMATION-001.C6.
+
+  Final-state intent: every parameter a reconstructed state depends on is identifiable from what the machine observes, including under drift, so fouling and ageing cannot move an unidentifiable parameter with nothing to notice.
+
+  Composition: SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT (active evidence C1,C2,C3-TEST) with SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY (active evidence C1,C2,C3-TEST).
+
+  Intent fit: the second solution establishes, per in-scope parameter, whether its perturbation signature is distinguishable from every other in-scope parameter's -- the identifiability claim itself. The first solution extends that question to the drift case: whether a machine that has moved away from its description is still distinguishable from one that has not, which is the specific 'under drift' clause this criterion adds beyond bare identifiability.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the parameter-identifiability half's citation was already correctly targeted. The drift half's marshalled citation pointed only at the harness-separation check (SOL C1), which shows the machine/control descriptions CAN be separated, not the actual under-drift determination. SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT.C2-TEST and .C3-TEST are the tests that run the actual drift-perturbation sweep and name the real crossover finding (brew.outlet_held_volume_ml identifiable when built differently and not when drifted). The attest decision stands; only the drift-half artifact was wrong.
+links:
+  - target: REQ-STATE-ESTIMATION-001.C6
+    type: satisfies
+attributes:
+  attested_criterion_version: 2

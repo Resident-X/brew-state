@@ -1,0 +1,30 @@
+id: EVD-REQ-ROBUST-CONTROL-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-ROBUST-CONTROL-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-ROBUST-CONTROL-001.C2","synthesised_at":"2026-08-29T07:01:17.130533Z","entries":[{"input_id":"DEL-SIM-UNCERTAINTY-BUDGET","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR","kind":"solution","state":"satisfied","status":"active","artifact_version":"27c9c11637397f52eb518acb681be9b767ae03f6"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-ROBUST-CONTROL-001.C2.
+
+  Final-state intent: the model error the design assumes is declared and carried with the model, so it can be checked and revisited rather than argued from an unstated figure.
+
+  Composition: SOL-SIM-UNCERTAINTY-BUDGET-DECLARED-MODEL-ERROR (active evidence C1-ANALYSIS, C2-TEST, C3-TEST, C4-ANALYSIS, C5-TEST).
+
+  Intent fit: the solution carries the assumed model error in the plant description itself, beside the value it qualifies, with a build-time check refusing a description that omits it -- exactly the declared-and-carried claim this criterion states. The solution's own text notes it establishes and carries this input without yet exercising a loop against it, which this criterion does not require.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-ROBUST-CONTROL-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

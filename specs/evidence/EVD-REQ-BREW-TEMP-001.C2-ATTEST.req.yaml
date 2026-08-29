@@ -1,0 +1,33 @@
+id: EVD-REQ-BREW-TEMP-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-BREW-TEMP-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:16Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C3-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-BREW-TEMP-001.C2.
+
+  Final-state intent: the controlled variable is the temperature the water actually reaches the coffee at, not a more convenient proxy the controller regulates instead.
+
+  Composition: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET (active evidence C1-TEST through C9-TEST).
+
+  Intent fit: the solution's control law is built to hold the group-outlet temperature itself as the regulated variable, not an upstream proxy (e.g. block temperature) that the design then assumes tracks it. The band-declaration and gate test suites (C1-C9) exercise that this is the quantity actually controlled.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at a band-declaration/config-format check rather than a test of which variable is controlled. SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C3-TEST (test_perturbing_the_outlet_time_constant_alone_changes_the_duty) is the test that actually shows the loop's objective is the reconstructed group-outlet temperature rather than the sensed heated-mass temperature. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-BREW-TEMP-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

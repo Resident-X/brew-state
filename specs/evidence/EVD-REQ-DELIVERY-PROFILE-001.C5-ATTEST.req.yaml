@@ -1,0 +1,30 @@
+id: EVD-REQ-DELIVERY-PROFILE-001.C5-ATTEST
+type: evidence
+title: Attestation of REQ-DELIVERY-PROFILE-001.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:16Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-DELIVERY-PROFILE-001.C5","synthesised_at":"2026-08-29T07:01:16.878244Z","entries":[{"input_id":"DEL-SIM-BREW-LOOP","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-DELIVERY-COMMANDED-AS-A-PROFILE","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_delivery_ends_on_the_step_the_condition_is_first_met,test_moving_the_end_condition_moves_the_ending,test_a_late_step_times_the_delivery_by_elapsed_millis_not_step_count,test_boundary_end_conditions_at_zero_and_uint32_max"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-DELIVERY-PROFILE-001.C5.
+
+  Final-state intent: an end condition is expressed in a quantity the machine actually measures as the delivery proceeds, so the endpoint stays reachable while running.
+
+  Composition: SOL-DELIVERY-COMMANDED-AS-A-PROFILE (active evidence C1-TEST through C5-TEST).
+
+  Intent fit: the profile command surface this solution builds states its end condition in terms the control loop evaluates against its own measured/estimated quantities while the delivery runs, per the solution's C1-C5 test suite covering the profile structure end to end.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-DELIVERY-PROFILE-001.C5
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

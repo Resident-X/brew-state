@@ -1,0 +1,34 @@
+id: EVD-REQ-STATE-ESTIMATION-001.C5-ATTEST
+type: evidence
+title: Attestation of REQ-STATE-ESTIMATION-001.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C5-TEST
+    - EVD-SOL-ONBOARD-PLANT-MODEL-IDENTITY.C3-INSPECTION
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-STATE-ESTIMATION-001.C5.
+
+  Final-state intent: the machine carries the plant model the design was established against, so prediction runs against the same model that verified it rather than a second one written to suit the controller.
+
+  Composition: SOL-ONBOARD-PLANT-MODEL-IDENTITY (active evidence C1,C2,C4,C5,C6,C7,C8-TEST; C3-INSPECTION).
+
+  Intent fit: the solution puts the shared parameter loader and one structure directory onto the target build, which previously compiled no plant sources at all -- the target build now carries the same model that verified it in host simulation, closing exactly the gap this criterion names. The solution's own exclusions (what the estimator/control law do with the model, and whether the reference description's numbers are right for the reference machine) are separate deliverables and a measurement-settled question respectively, not this criterion's claim.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at a structure-selection check (SOL C1), which confirms the target compiles a machine-describing structure but not that it is the SAME verified one. SOL-ONBOARD-PLANT-MODEL-IDENTITY.C5-TEST (check_embedded_description.py / AMachineCarriesTheVerifiedDescription) is the identity check, corroborated by SOL C3-INSPECTION confirming the description's bytes are actually present in the linked firmware.bin. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-STATE-ESTIMATION-001.C5
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

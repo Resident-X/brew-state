@@ -1,0 +1,33 @@
+id: EVD-REQ-TIMING-FAULT-RESPONSE-001.C1-ATTEST
+type: evidence
+title: Attestation of REQ-TIMING-FAULT-RESPONSE-001.C1
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-USABLE-ESTIMATE-EVERY-STEP.C9-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-TIMING-FAULT-RESPONSE-001.C1.
+
+  Final-state intent: a missed deadline is detected rather than passing unnoticed -- detection is separable from and prior to deciding a response.
+
+  Composition: SOL-USABLE-ESTIMATE-EVERY-STEP (active evidence C1,C10-INSPECTION; C2 through C9, C11-TEST).
+
+  Intent fit: the solution's estimator step reads every channel the hardware seam reports and reasons about a reading that arrives late or wrong, which is the detection half of the timing-fault story. The solution's stated exclusions are about establishing a worst-case duration value and about the disturbance-timescale sufficiency question -- both about what the deadline should be, not about whether an overrun against whatever deadline is set gets detected.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at sensor-channel plausibility-bound config-validation tests, which run at config-load time and never exercise a control-loop deadline. SOL-USABLE-ESTIMATE-EVERY-STEP.C9-TEST (test_a_step_past_the_tolerable_multiple_is_reported_late) is the test that actually detects a missed control-step deadline at runtime. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C1
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

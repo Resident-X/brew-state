@@ -1,0 +1,30 @@
+id: EVD-REQ-MACHINE-CONFIGURATION-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-MACHINE-CONFIGURATION-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-MACHINE-CONFIGURATION-001.C2","synthesised_at":"2026-08-29T07:01:17.069399Z","entries":[{"input_id":"SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_margin_widens_monotonically_with_each_declared_coefficients_error"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-MACHINE-CONFIGURATION-001.C2.
+
+  Final-state intent: the trip points of the protective devices the design relies on are declared, so the margin between what the controller commands and where protection acts can be reasoned about.
+
+  Composition: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR (active evidence C1-TEST, C2-TEST, C3-TEST).
+
+  Intent fit: the trip points themselves (107 C coffee, 195 C steam) are declared by DEC-PROTECTION-TRIP-POINTS-FROM-PARTS-LIST-LOW-TOLERANCE-END, derived from the parts-list thermostat rating less its stated tolerance -- a datasheet-sourced declaration, not a simulation output. The contributing solution consumes that declared figure to compute a widened margin; its own text records that this margin computation 'closes REQ-MACHINE-CONFIGURATION-001.C2 for these two devices as a consequence of this solution's own work.'
+
+  Acknowledged scope boundary: unlike the roadmap's other simulation-backed criteria in this batch, this criterion's intent (that trip points be declared) does not itself rest on the estimated plant model's fidelity -- the declared values come from a parts-list datasheet figure, not from a simulation result. This attestation does not link REQ-MACHINE-CONFIGURATION-001 to DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED on this basis; the margin-widening computation that consumes the trip point is separately covered under REQ-ROBUST-CONTROL-001.C3's own attestation path.
+
+  Decision: attest. The declaration is sourced from a parts-list datasheet figure, independent of model fidelity; no unstated gap against this criterion's specific intent.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

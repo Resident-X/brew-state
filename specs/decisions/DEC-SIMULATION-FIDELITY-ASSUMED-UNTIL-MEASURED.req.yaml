@@ -1,0 +1,24 @@
+id: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
+type: decision
+category: assumption
+title: The estimated plant model's fidelity is an unproven assumption until measured validation supersedes it
+status: active
+version: 1
+validation_horizon: DEL-BREW-STATE-DELIVERY.C3
+rationale: |
+  Context: DEL-BREW-STATE-DELIVERY is a five-phase roadmap -- validate in software, characterise the machine, then build and energise. Phase 1 (DEL-BREW-STATE-DELIVERY.C1) closes on simulation against an estimated plant model by the roadmap's own design. Requirement criteria are being attested now against SOL evidence produced against that estimated model, ahead of phase 3 (DEL-BREW-STATE-DELIVERY.C3), where the committed model is fitted to bench measurement and the design is re-verified against it. Attesting these criteria now without a separate record of what they rest on would leave "we believe this because the model said so" implicit in each attestation's free-text rationale rather than an explicit, revisitable graph fact.
+
+  Trade-offs: Could leave the model-fidelity dependency implicit, relying on each attestation's own prose to mention it -- cheap per attestation, but the dependency ends up scattered across dozens of separate rationales with no single traceable node and no explicit trigger for when it should be revisited. Recording it once as a decision with a validation_horizon costs one node plus a link from every simulation-backed requirement, but turns a diffuse belief into a single fact reachable by trace or query, with an explicit point at which it is meant to be re-examined.
+
+  Reversibility: Reversible the cheap way: once DEL-BREW-STATE-DELIVERY.C3 closes, this decision is superseded or its status updated to record that the fidelity assumption discharged, and justified-by links simply point at whichever decision is then current. The alternative is the one that is expensive to reverse -- if the dependency is never named explicitly, recovering later which requirements were satisfied only because an estimated model was trusted means re-reading every attestation's free text instead of running one query.
+
+  Consequences: Every requirement criterion attested from simulation evidence during this phase should link justified-by to this decision, so the model-fidelity dependency is explicit and revisitable rather than implicit. When DEL-BREW-STATE-DELIVERY.C3 closes, this decision's validation_horizon is discharged and the assumption is retired or superseded rather than silently carried forward. No requirement forks a simulated and a real version of itself over this: the same criterion is attested once now under this decision, and again later against rig evidence superseding the earlier evidence node, matching the one-criterion-two-attestations-over-time pattern already used by EVD-REQ-ROBUST-CONTROL-001.C5-ATTEST.
+options_considered:
+  - option: Record the model-fidelity dependency once as an explicit assumption decision with a validation_horizon, linked from every simulation-backed requirement
+    reason_rejected: ""
+  - option: Leave the model-fidelity dependency implicit in each attestation's own prose
+    reason_rejected: scatters one dependency across dozens of attestation rationales with no single traceable node and no explicit trigger for revisiting it
+chosen: Record the model-fidelity dependency once as an explicit assumption decision with a validation_horizon, linked from every simulation-backed requirement
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: addresses

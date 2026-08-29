@@ -1,0 +1,33 @@
+id: EVD-REQ-HOT-WATER-001.C1-ATTEST
+type: evidence
+title: Attestation of REQ-HOT-WATER-001.C1
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:16Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C6-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-HOT-WATER-001.C1.
+
+  Final-state intent: dispensed water leaves the machine within the drinking-temperature band for the whole dispense, not merely on average.
+
+  Composition: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS (active evidence C1-TEST through C7-TEST, C8-TEST-2).
+
+  Intent fit: the solution declares what counts as a drinkable band and holds the water leaving the hot-water spout to that commanded target across a whole draw, which is this criterion's stated claim.
+
+  Acknowledged scope boundary: the whole slice is verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at a feedforward lead-term scaling test (SOL C8) unrelated to band-holding. SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C6-TEST (test_a_draw_beyond_what_the_machine_can_sustain_ends_inside_the_window) is the test that asserts every sample of a whole draw sits inside the drinking-temperature band. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-HOT-WATER-001.C1
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

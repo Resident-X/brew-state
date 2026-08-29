@@ -1,0 +1,33 @@
+id: EVD-REQ-BREW-TEMP-001.C5-ATTEST
+type: evidence
+title: Attestation of REQ-BREW-TEMP-001.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:16Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C6-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-BREW-TEMP-001.C5.
+
+  Final-state intent: the controller acts on the thermal state it is actually in, rather than assuming a rested machine, on every delivery after the first.
+
+  Composition: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET (active evidence C1-TEST through C9-TEST).
+
+  Intent fit: the control law built here reads the loop's actual starting condition rather than a compiled rested-state assumption. The solution's own scope boundary notes that in its test rig a disturbed starting state is set directly rather than produced by simulating a preceding delivery end-to-end -- that is a statement about how the test induces the initial condition, not a gap in whether the control law itself consults actual state.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at a band-declaration/config-format check with no connection to thermal-state handling. SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET.C6-TEST (test_tracking_holds_across_a_whole_extraction_from_a_disturbed_state) is the test that starts the machine away from rest and asserts the band holds across the whole extraction. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-BREW-TEMP-001.C5
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

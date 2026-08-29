@@ -1,0 +1,30 @@
+id: EVD-REQ-STEAM-DELIVERY-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-STEAM-DELIVERY-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-STEAM-DELIVERY-001.C2","synthesised_at":"2026-08-29T07:01:17.443822Z","entries":[{"input_id":"DEL-SIM-STEAM-LOOP","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-SIM-STEAM-READINESS-GATE","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_steam_control/test_steam_control.c::test_feed_enabled_the_same_step_pressure_reaches_threshold,test_feed_enabled_against_the_plant_models_own_truth"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-STEAM-DELIVERY-001.C2.
+
+  Final-state intent: delivery is prevented until the steam side can sustain it, in a way the operator cannot act around by accident.
+
+  Composition: SOL-SIM-STEAM-READINESS-GATE (active evidence C1 through C5-TEST).
+
+  Intent fit: the solution withholds the steam feed pump -- the one thing standing between a draw and getting more steam made for it -- whenever measured pressure sits below the declared ready threshold, which is this criterion's prevention claim. The solution's own exclusion of physically blocking the manual valve is consistent with its stated premise that withholding feed is what prevention means for this actuation layout.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-STEAM-DELIVERY-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

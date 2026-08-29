@@ -20,3 +20,5 @@ links:
     type: derives-from
   - target: JRN-STEAM-JUG-001.C3
     type: derives-from
+  - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
+    type: justified-by
