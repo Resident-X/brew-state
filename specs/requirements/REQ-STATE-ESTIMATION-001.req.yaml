@@ -14,7 +14,9 @@ rationale: |
 
   Silent on estimator structure, model order and update strategy. The notes assume a low-order model per loop, but whether that is sufficient is not knowable before real response data exists, and this requirement must not depend on the answer.
 links:
-  - target: JRN-PULL-SHOT-001.C1
-    type: derives-from
   - target: JRN-CORRECT-DRIFT-001.C1
     type: derives-from
+  - target: JRN-PULL-SHOT-001.C1
+    type: derives-from
+  - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
+    type: justified-by

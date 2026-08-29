@@ -1,0 +1,33 @@
+id: EVD-REQ-STEAM-DELIVERY-001.C5-ATTEST
+type: evidence
+title: Attestation of REQ-STEAM-DELIVERY-001.C5
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C12-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-STEAM-DELIVERY-001.C5.
+
+  Final-state intent: output rises to its steady rate over a declared interval rather than stepping to it, so a draw cannot spray the operator or the milk before they can react.
+
+  Composition: SOL-SIM-STEAM-BAND-SUSTAINED (active evidence C1 through C12-TEST).
+
+  Intent fit: the C1-C12 suite covering this solution's control law includes the declared-interval rise behaviour as part of holding steam character for the whole draw; nothing in its stated exclusions touches the shape or existence of the rise interval itself.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at the same unrelated knob-reading test. SOL-SIM-STEAM-BAND-SUSTAINED.C12-TEST (test_engaged_feed_rises_over_the_declared_interval_rather_than_stepping) is the test that asserts a monotonic rise over the declared interval rather than a step. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-STEAM-DELIVERY-001.C5
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

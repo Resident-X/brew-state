@@ -24,3 +24,5 @@ links:
     type: derives-from
   - target: JRN-PULL-SHOT-001.C6
     type: derives-from
+  - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
+    type: justified-by

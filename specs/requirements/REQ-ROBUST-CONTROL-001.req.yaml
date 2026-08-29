@@ -28,3 +28,5 @@ links:
     type: derives-from
   - target: OBL-CONTROL-DESIGN-DISCIPLINE-001.C5
     type: derives-from
+  - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
+    type: justified-by

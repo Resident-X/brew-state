@@ -1,0 +1,33 @@
+id: EVD-REQ-STEAM-DELIVERY-001.C3-ATTEST
+type: evidence
+title: Attestation of REQ-STEAM-DELIVERY-001.C3
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C11-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-STEAM-DELIVERY-001.C3.
+
+  Final-state intent: when demand exceeds capacity, delivered quantity reduces before delivered quality does -- a ruined jug discovered afterward is worse than less steam the operator can feel and work with.
+
+  Composition: SOL-SIM-STEAM-BAND-SUSTAINED (active evidence C1 through C12-TEST).
+
+  Intent fit: the sibling readiness-gate solution explicitly defers this quantity-before-quality trade to 'a separate criterion', naming this one; SOL-SIM-STEAM-BAND-SUSTAINED's own scope does not exclude it, and its C1-C12 suite is the composition this criterion draws on.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at the same unrelated knob-reading test. SOL-SIM-STEAM-BAND-SUSTAINED.C11-TEST (test_feed_is_never_raised_to_chase_demand_beyond_the_sustainable_rate) is the test that asserts quality (band) is held rather than quantity when demand exceeds sustainable capacity. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-STEAM-DELIVERY-001.C3
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

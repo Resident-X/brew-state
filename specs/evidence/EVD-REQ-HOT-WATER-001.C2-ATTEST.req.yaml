@@ -1,0 +1,33 @@
+id: EVD-REQ-HOT-WATER-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-HOT-WATER-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-HOT-WATER-001.C2.
+
+  Final-state intent: when rate and temperature cannot both be met, delivery rate reduces rather than delivered temperature.
+
+  Composition: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS (active evidence C1-TEST through C7-TEST, C8-TEST-2).
+
+  Intent fit: the solution states this trade-off directly as its purpose -- at the limit the machine gives up rate, not temperature -- and the same test suite that verifies the band also exercises this direction of the trade.
+
+  Acknowledged scope boundary: the whole slice is verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at the same unrelated feedforward lead-term test. SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C4-TEST (test_the_rate_is_reduced_only_once_the_heater_has_no_authority_left and siblings) is the test cluster that asserts rate yields before temperature at the limit. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-HOT-WATER-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

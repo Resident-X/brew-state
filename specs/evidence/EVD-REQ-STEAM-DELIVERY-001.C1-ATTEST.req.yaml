@@ -1,0 +1,33 @@
+id: EVD-REQ-STEAM-DELIVERY-001.C1-ATTEST
+type: evidence
+title: Attestation of REQ-STEAM-DELIVERY-001.C1
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-SIM-STEAM-BAND-SUSTAINED.C5-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-STEAM-DELIVERY-001.C1.
+
+  Final-state intent: steam properties stay within band for the whole of the operator's draw, regardless of its duration -- the bound is the draw, not any interval the machine finds convenient.
+
+  Composition: SOL-SIM-STEAM-BAND-SUSTAINED (active evidence C1 through C12-TEST).
+
+  Intent fit: the solution's control law holds steam character for a whole draw and recovers afterward, verified across the C1-C12 suite. Its stated exclusions (robustness across declared model error, the feed-withhold gate before readiness, the single-boiler structure, and idle-temperature scheduling policy) are each a separate requirement's claim, not this one's.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at a steam-knob discrete-reading test (SOL C10), unrelated to band-holding duration. SOL-SIM-STEAM-BAND-SUSTAINED.C5-TEST (test_pressure_holds_the_band_for_draws_of_every_duration_across_the_declared_error) is the test that sweeps draw durations against the declared error band. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-STEAM-DELIVERY-001.C1
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

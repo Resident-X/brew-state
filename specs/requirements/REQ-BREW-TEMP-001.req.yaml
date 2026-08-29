@@ -14,11 +14,13 @@ rationale: |
 
   The starting-state criteria exist because a machine that regulates well from rest and poorly after a preceding draw fails exactly where the operator's goals bite. A controller that assumes it starts rested is wrong on every drink after the first.
 links:
+  - target: JRN-DIAL-IN-RECIPE-001.C1
+    type: derives-from
   - target: JRN-PULL-SHOT-001.C1
     type: derives-from
   - target: JRN-PULL-SHOT-001.C2
     type: derives-from
   - target: JRN-SERVE-LONG-BLACK-001.C2
     type: derives-from
-  - target: JRN-DIAL-IN-RECIPE-001.C1
-    type: derives-from
+  - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
+    type: justified-by

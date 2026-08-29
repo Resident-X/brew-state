@@ -1,0 +1,30 @@
+id: EVD-REQ-BREW-TEMP-001.C3-ATTEST
+type: evidence
+title: Attestation of REQ-BREW-TEMP-001.C3
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:16Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-BREW-TEMP-001.C3","synthesised_at":"2026-08-29T07:01:16.56796Z","entries":[{"input_id":"DEL-SIM-BREW-LOOP","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_a_machine_not_yet_at_temperature_is_admitted_rather_than_refused"},{"input_id":"SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_a_target_that_would_strand_a_held_demand_is_refused, ::test_a_target_a_held_demand_can_be_met_at_is_admitted, ::test_a_target_below_the_drinking_floor_is_refused_against_a_held_draw"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-BREW-TEMP-001.C3.
+
+  Final-state intent: a target the machine cannot reach at all is refused; a target it cannot reach yet, because a preceding demand left the shared mass elsewhere, is deferred until conditions are restored and then delivered.
+
+  Composition: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED (active evidence C1,C2,C3,C5,C6,C7-TEST) with SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME (active evidence C1-TEST).
+
+  Intent fit: the first solution builds the admission check that refuses what the machine cannot do at all. The second solution closes a specific gap the first left: a target commanded while a demand is held was being checked only against the delivery running at the time, never against the held demand's own peak draw, so a target could be wrongly admitted and then fail on resume. Together they cover both named outcomes -- refuse-outright and defer-and-revalidate.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-BREW-TEMP-001.C3
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

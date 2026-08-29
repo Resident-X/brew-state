@@ -1,0 +1,30 @@
+id: EVD-REQ-BREW-TEMP-001.C1-ATTEST
+type: evidence
+title: Attestation of REQ-BREW-TEMP-001.C1
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-BREW-TEMP-001.C1","synthesised_at":"2026-08-29T07:01:06.816192Z","entries":[{"input_id":"DEL-SIM-BREW-LOOP","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_band_the_loop_holds_is_the_one_the_declaration_carries; firmware/tools/tests/test_control_declaration_checks.py::ControlDeclarationGate"},{"input_id":"SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_a_rising_course_holds_the_band"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-BREW-TEMP-001.C1.
+
+  Final-state intent: water arriving at the group tracks the commanded temperature for the whole extraction, band-to-band from first drop to last, with no exemption for early transients.
+
+  Composition: SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET (active evidence C1-TEST through C9-TEST) with SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND (active evidence C1-TEST, C2-TEST).
+
+  Intent fit: the first solution builds the control law that holds group-outlet temperature against a commanded target in host simulation. On its own it left the band twice at the ends of a rising course -- exactly the "early transients are not exempt" edge this criterion names -- which the second solution closes by reading the commanded course a lead ahead so the heater answers a draw before the water carrying it away arrives. Together the composition covers the whole-extraction claim including its stated edge case, not just the steady-state middle.
+
+  Acknowledged scope boundary: both solutions are verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-BREW-TEMP-001.C1
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

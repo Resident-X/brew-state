@@ -1,0 +1,33 @@
+id: EVD-REQ-DELIVERY-PROFILE-001.C1-ATTEST
+type: evidence
+title: Attestation of REQ-DELIVERY-PROFILE-001.C1
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:16Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-DELIVERY-PROFILE-001.C1.
+
+  Final-state intent: a delivery the machine ends is commanded by a profile -- a course from beginning to end -- rather than by a single value held throughout.
+
+  Composition: SOL-DELIVERY-COMMANDED-AS-A-PROFILE (active evidence C1-TEST through C5-TEST).
+
+  Intent fit: the solution replaces the two independent held scalars (a temperature and a pump level, each set once) with a profile that commands flow as a course with a stated end, which is exactly this criterion's assertion.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation only exercised end-condition timing on flat/non-varying profiles. SOL-DELIVERY-COMMANDED-AS-A-PROFILE.C1-TEST (test_delivery_profile_samples_the_course_piecewise_linearly, test_two_profiles_of_different_shape_drive_different_trajectories) is the test that shows the target differs from start to finish, which is this criterion's specific claim. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-DELIVERY-PROFILE-001.C1
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

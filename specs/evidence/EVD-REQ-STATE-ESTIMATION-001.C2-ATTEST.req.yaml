@@ -1,0 +1,33 @@
+id: EVD-REQ-STATE-ESTIMATION-001.C2-ATTEST
+type: evidence
+title: Attestation of REQ-STATE-ESTIMATION-001.C2
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T07:01:17Z"
+valid_until: until-superseded
+artifact:
+  kind: composition
+  cites:
+    - EVD-SOL-UNMEASURED-STATE-RECONSTRUCTION.C8-TEST
+attested_by: david
+text: |
+  Tier 2 attestation of REQ-STATE-ESTIMATION-001.C2.
+
+  Final-state intent: a running comparison between predicted and observed measurements is produced as an output the control law and later requirements can reach, not buried as an internal value.
+
+  Composition: SOL-UNMEASURED-STATE-RECONSTRUCTION (active evidence C1,C5,C6-INSPECTION; C2,C3,C4,C8,C9,C10,C11,C12,C13-TEST).
+
+  Intent fit: the reconstruction this solution builds produces the predicted-vs-observed residual as a first-class output. The solution's stated exclusions (handling a briefly-lost or implausible reading, output rate, tuning the control law to the signal, and the quantitative rightness of the model for the reference machine) are all downstream consumers of this output or measurement-settled questions, not the existence of the comparison itself.
+
+  Acknowledged scope boundary: verified in host simulation against the plant description's estimated parameters -- no real machine has been measured yet. That dependency is recorded explicitly as DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED (an assumption decision with validation_horizon DEL-BREW-STATE-DELIVERY.C3), which this attestation's parent requirement links justified-by. Per DEL-BREW-STATE-DELIVERY.C1's own definition of phase-1 closure, that is the scope this phase's attestation is meant to reach -- not a claim about the real machine.
+
+  Decision: attest. Within the acknowledged simulation-phase scope, no unstated gap against the criterion's final-state intent.
+
+  Correction (adversarial re-verification): the composition's marshalled citation pointed at a header structure-neutrality check (SOL C1), which verifies interface cleanliness, not that a comparison is produced. SOL-UNMEASURED-STATE-RECONSTRUCTION.C8-TEST (test_the_residual_follows_the_imposed_discrepancy) is the test that shows the predicted-vs-observed residual is actually produced and tracks an imposed discrepancy. The attest decision stands; only the cited artifact was wrong.
+links:
+  - target: REQ-STATE-ESTIMATION-001.C2
+    type: satisfies
+attributes:
+  attested_criterion_version: 1
