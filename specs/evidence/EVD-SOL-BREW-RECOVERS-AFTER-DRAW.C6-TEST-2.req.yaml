@@ -1,0 +1,19 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C6-TEST-2
+type: evidence
+title: An extraction after a hot water draw stays within the declared distance of one pulled from rest, current declaration (SOL-BREW-RECOVERS-AFTER-DRAW.C6)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T10:09:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_an_extraction_after_a_draw_matches_one_pulled_from_rest
+text: |-
+  test_an_extraction_after_a_draw_matches_one_pulled_from_rest passes. Two runs against one machine description: the same extraction from the settled machine, and that extraction after two hundred millilitres of hot water at the largest rate admission will currently accept against the commanded target. All 3000 samples of each run are compared point by point against the declared match-band distance, and each run is separately held to the brew-temperature band -- this comparison is unchanged from the previous evidence for this criterion.
+
+  What changed, under SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1: the draw rate this run computes is no longer the 3.0135 mL/s the prior evidence (EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C6-TEST) recorded. SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY (merged 2026-08-28, after that evidence was recorded) moved the authority-boundary check from the point belief to the least-capable plant the declared error admits, which lowered the admitted rate at the drinking target to roughly 1.9 mL/s -- so the draw duration and the timing figures the prior evidence recorded (66 s draw, 85 s recovery gap) are stale and are not re-asserted here; this evidence supersedes that text without re-measuring those specific figures, since neither is required by the criterion itself. The disturbance precondition also changed, from requiring the truth casting to exit the (now-unreachable) brew band to requiring it to have moved off the rested baseline by more than 0.00005 C (a tenth of the smallest real movement, 0.0005 C, SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1 measured across every admitted scenario), read off the truth plant rather than the estimator. Run under pio test -e native_test. Supersedes EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C6-TEST.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C6
+    type: satisfies

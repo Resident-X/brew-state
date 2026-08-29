@@ -6,7 +6,7 @@ version: 1
 result: pass
 method: test
 observed_at: "2026-08-26T01:45:34Z"
-valid_until: until-superseded
+valid_until: "2026-08-29"
 artifact:
   kind: external
   reference: firmware/test/test_control/test_control.c::test_an_extraction_after_a_draw_matches_one_pulled_from_rest

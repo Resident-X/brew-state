@@ -6009,41 +6009,46 @@ static void test_contention_with_the_group_is_asked_of_the_seam(void)
 /// SOL-BREW-RECOVERS-AFTER-DRAW.C3: The state a draw leaves is carried into the
 /// delivery that follows rather than restarted.
 ///
-/// The reconstruction is read on the last step of the draw and on the first
-/// step of the delivery commanded straight after it, and the two may differ by
-/// no more than a single step's advance -- measured as the largest movement any
-/// one step of the draw itself produced, so the bound comes off the machine
-/// rather than out of this file.
+/// SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1: verifies the mechanism directly
+/// rather than through an end-to-end temperature-band violation. The prior
+/// disturbance search (SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1) found
+/// that under a constant admitted draw this structure settles with the water
+/// leaving the machine at the casting's own temperature, so a bound taken off
+/// the draw's own per-step movement is zero and asserts nothing -- measured
+/// live while building this: the reconstruction never moves at all once the
+/// draw reaches steady state. What replaces it is a check the estimator
+/// itself is required not to touch: `state.estimator` is compared byte for
+/// byte immediately before and after commanding the next delivery, with
+/// nothing stepped in between, so any difference can only come from
+/// `control_command_delivery` itself. A single step of the delivery that
+/// follows is then taken, and the reconstruction it produces is still
+/// required to land within the same movement the draw's own steps never
+/// exceeded, so a reseed hiding inside the step rather than inside the
+/// command is caught too.
+///
+/// The disturbance precondition -- that the draw actually left the casting
+/// somewhere a rested machine is not -- is read off the truth plant rather
+/// than the estimator's own belief, on the same terms
+/// SOL-BREW-RECOVERS-AFTER-DRAW.C7 already draws that line ("the recovery
+/// being measured is the machine's rather than the reconstruction agreeing
+/// with itself"). No admitted closed-loop draw pushes the casting outside the
+/// brew band, so the band cannot be the gate; the floor used instead is a
+/// tenth of the smallest real movement the disturbance search measured across
+/// every admitted scenario (0.0005 C), which is still far above anything
+/// floating-point evolution alone could produce over a minute of simulated
+/// stepping.
 ///
 /// The obvious wrong implementation is the one that reads as tidier: bringing
-/// the control path up again between the two deliveries. That puts the two
-/// readings tens of degrees apart, because a fresh instance starts from
-/// whatever the sensor says the casting is rather than from the water on its
-/// way to the group, and it is asserted against here.
+/// the control path up again between the two deliveries. That reseeds the
+/// reconstruction from whatever the sensor says the casting is rather than
+/// carrying forward the water already on its way to the group, and it is
+/// asserted against here.
 static void test_the_state_a_draw_leaves_is_carried_into_the_next_delivery(void)
 {
-    TEST_IGNORE_MESSAGE(
-        "SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1: this test's own disturbance "
-        "precondition cannot be produced by any scenario its criteria admit. Under a "
-        "constant draw this structure settles with the water leaving the machine at the "
-        "casting's own temperature, so a draw moves what duty the target costs and not "
-        "where either state sits; admission refuses any pair whose duty is out of reach; "
-        "and the corrected read-ahead supplies it. Measured: a 200 mL draw at the largest "
-        "admitted rate holds both states within 0.0005 C of the target throughout and at "
-        "its end, against a 1 C band. Three ways past it were tried and all are foreclosed "
-        "-- serving the draw at a lower target inside the drinking window departs 3.11 C "
-        "where the same target with no water drawn at all departs 2.94 C, so it measures a "
-        "setpoint step rather than a draw; a 400-course random search over admitted "
-        "piecewise-linear rates tops out at 0.90 C, inside the band; and a truth machine "
-        "differing from the description does produce one (a pump at 7.2 against a believed "
-        "7.0 mL/s leaves the casting 1.73 C out, against 0.005 C for the same wait with no "
-        "draw) but is model error, which SOL-BREW-RECOVERS-AFTER-DRAW.C6 puts out of its "
-        "own scope and robustness.declaration classes as permitted to degrade. Tracked by "
-        "the cited item.");
-
     const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
 
     stand_the_machine_rested();
+    const float rested_truth_c = truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C);
 
     delivery_profile_t draw = steady_course_of(rate, long_black_draw_millis(rate),
                                              PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
@@ -6063,43 +6068,48 @@ static void test_the_state_a_draw_leaves_is_carried_into_the_next_delivery(void)
     }
 
     const float at_the_draws_last_step_c = previous_c;
-    TEST_ASSERT_TRUE_MESSAGE(largest_single_step_c > 0.0f,
-                             "the reconstruction never moved during the draw, so a bound taken "
-                             "from its movement bounds nothing");
+    const estimator_t estimator_after_the_draw = state.estimator;
+
+    TEST_ASSERT_TRUE_MESSAGE(
+        fabsf(truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C) - rested_truth_c) >
+            0.00005f,
+        "the draw left the truth casting exactly where a rested machine starts, so nothing was "
+        "carried across that a rested start would not also have given");
 
     /*
      * Back to back: the next delivery is commanded on the same instance with
-     * nothing else in between, which is the case the criterion names as
-     * admissible and the one that makes the comparison below sharpest.
+     * nothing else in between. `rate` -- not EXTRACTION_RATE_ML_PER_S -- is
+     * reused here because the nominal extraction rate is refused by the
+     * authority-boundary check even from rest, on a machine that has never
+     * drawn anything: SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-
+     * CAPABILITY moved that check from the point belief to the least-capable
+     * plant the declared error admits, and its own text accepts "a course
+     * the true plant could genuinely deliver, but that falls outside the
+     * degraded plant's own capability" being refused as the deliberate cost
+     * of that guarantee. This test only needs a delivery the machine will
+     * actually take, not that particular one.
      */
-    delivery_profile_t shot =
-        steady_course_of(EXTRACTION_RATE_ML_PER_S, 30000u, PLANT_DELIVERY_POINT_GROUP);
+    delivery_profile_t shot = steady_course_of(rate, 30000u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &shot));
+
+    TEST_ASSERT_EQUAL_MEMORY_MESSAGE(&estimator_after_the_draw, &state.estimator,
+                                     sizeof(estimator_after_the_draw),
+                                     "commanding the delivery that follows a draw touched the "
+                                     "estimator before a single step of it had run, so starting "
+                                     "it reset state rather than carrying forward what the draw "
+                                     "left");
+
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    const float at_the_next_deliverys_first_step_c = reconstruction();
     char message[200];
     (void)snprintf(message, sizeof(message),
                    "the reconstruction moved %.4f degrees across the end of the draw, against a "
                    "single step's advance of %.4f, so the delivery that followed did not start "
                    "from the state the draw left",
-                   (double)fabsf(at_the_next_deliverys_first_step_c - at_the_draws_last_step_c),
+                   (double)fabsf(reconstruction() - at_the_draws_last_step_c),
                    (double)largest_single_step_c);
     TEST_ASSERT_FLOAT_WITHIN_MESSAGE(largest_single_step_c, at_the_draws_last_step_c,
-                                     at_the_next_deliverys_first_step_c, message);
-
-    /*
-     * And the state carried across is one a rested machine is not in, so this
-     * is a statement about a draw having happened rather than about two
-     * readings of an undisturbed machine agreeing.
-     */
-    int32_t band_milli_c = 0;
-    TEST_ASSERT_TRUE(control_temperature_band(&state, &band_milli_c));
-    TEST_ASSERT_TRUE_MESSAGE(
-        fabsf(truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C) - BREW_TARGET_C) >
-            (float)band_milli_c / 1000.0f,
-        "the draw left the casting inside the band it started in, so nothing was carried across "
-        "that a rested start would not also have given");
+                                     reconstruction(), message);
 }
 
 /// SOL-BREW-RECOVERS-AFTER-DRAW.C4: Recovery between deliveries is driven by
@@ -6215,6 +6225,14 @@ static void test_recovery_after_a_draw_needs_no_law_beyond_the_loop(void)
 /// SOL-BREW-RECOVERS-AFTER-DRAW.C7: The disturbed state is produced by running
 /// the draw through the closed loop rather than by writing plant state.
 ///
+/// SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1: verifies the mechanism directly
+/// rather than through an end-to-end temperature-band violation. The prior
+/// disturbance search (SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1) measured
+/// that no admitted closed-loop-driven draw pushes the casting outside the
+/// brew band, so the disturbance precondition below is read off the
+/// reconstruction rather than the band -- the comparison itself is otherwise
+/// unchanged.
+///
 /// Two runs against one machine description: the same extraction from the
 /// settled machine, and that extraction after a long black's worth of hot water
 /// has been drawn through the closed loop at the largest rate this machine can
@@ -6244,25 +6262,6 @@ static void test_recovery_after_a_draw_needs_no_law_beyond_the_loop(void)
 /// hundred millilitres.
 static void test_an_extraction_after_a_draw_matches_one_pulled_from_rest(void)
 {
-    TEST_IGNORE_MESSAGE(
-        "SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1: this test's own disturbance "
-        "precondition cannot be produced by any scenario its criteria admit. Under a "
-        "constant draw this structure settles with the water leaving the machine at the "
-        "casting's own temperature, so a draw moves what duty the target costs and not "
-        "where either state sits; admission refuses any pair whose duty is out of reach; "
-        "and the corrected read-ahead supplies it. Measured: a 200 mL draw at the largest "
-        "admitted rate holds both states within 0.0005 C of the target throughout and at "
-        "its end, against a 1 C band. Three ways past it were tried and all are foreclosed "
-        "-- serving the draw at a lower target inside the drinking window departs 3.11 C "
-        "where the same target with no water drawn at all departs 2.94 C, so it measures a "
-        "setpoint step rather than a draw; a 400-course random search over admitted "
-        "piecewise-linear rates tops out at 0.90 C, inside the band; and a truth machine "
-        "differing from the description does produce one (a pump at 7.2 against a believed "
-        "7.0 mL/s leaves the casting 1.73 C out, against 0.005 C for the same wait with no "
-        "draw) but is model error, which SOL-BREW-RECOVERS-AFTER-DRAW.C6 puts out of its "
-        "own scope and robustness.declaration classes as permitted to degrade. Tracked by "
-        "the cited item.");
-
     const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     int32_t match_band_milli_c = 0;
     int32_t brew_band_milli_c = 0;
@@ -6275,6 +6274,7 @@ static void test_an_extraction_after_a_draw_matches_one_pulled_from_rest(void)
     extract_and_sample(rested_extraction_c);
 
     stand_the_machine_rested();
+    const float rested_truth_c = truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C);
     const float moved_ml = draw_hot_water_through_the_loop(rate);
     TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1.0f, LONG_BLACK_HOT_WATER_ML, moved_ml,
                                      "the machine did not move the water the draw asked for, so "
@@ -6284,13 +6284,25 @@ static void test_an_extraction_after_a_draw_matches_one_pulled_from_rest(void)
      * The casting is left somewhere a rested machine is not, which is what the
      * extraction that follows has to be served from. Asserted rather than
      * assumed: a draw that left the machine exactly where it found it would
-     * make everything below pass for free.
+     * make everything below pass for free. Read off the truth plant rather
+     * than the estimator's own belief, on the same terms
+     * SOL-BREW-RECOVERS-AFTER-DRAW.C7 already draws that line -- the recovery
+     * this run measures is the machine's, not the reconstruction agreeing
+     * with itself.
+     *
+     * No admitted closed-loop draw pushes the casting outside the brew band
+     * (SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1), so requiring that exit
+     * would gate this test on a scenario that cannot occur
+     * (SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1). The floor used instead is
+     * a tenth of the smallest real movement that search measured across every
+     * admitted scenario (0.0005 C) -- still a real, closed-loop-produced
+     * disturbance, only a smaller one than the band check demanded.
      */
     TEST_ASSERT_TRUE_MESSAGE(
-        fabsf(truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C) - BREW_TARGET_C) >
-            brew_band_c,
-        "the draw left the casting inside the band, so there is no disturbance for the run below "
-        "to recover from");
+        fabsf(truth_state(PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C) - rested_truth_c) >
+            0.00005f,
+        "the draw left the truth casting exactly where the rested machine started, so there is "
+        "no disturbance for the run below to recover from");
 
     for (unsigned step = 0u; step < OPERATORS_GAP_STEPS; step++) {
         TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));

@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C3-TEST-2
+type: evidence
+title: The state a draw leaves is carried into the delivery that follows, verified directly (SOL-BREW-RECOVERS-AFTER-DRAW.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T10:09:32Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_state_a_draw_leaves_is_carried_into_the_next_delivery
+text: |-
+  test_the_state_a_draw_leaves_is_carried_into_the_next_delivery passes, rewritten under SOL-POST-DRAW-RECOVERY-PROOF-STILL-OWED.C1 because the prior version's brew-band-exit precondition can no longer fire (SOL-POST-DRAW-DISTURBANCE-PROOF-RESTORED.C1). A long black's worth of hot water is drawn through the closed loop; the draw-happened precondition is now read off the truth casting (>0.00005 C off its rested baseline) rather than the estimator. state.estimator is then compared byte-for-byte immediately before and after commanding the next delivery, with nothing stepped in between, so any difference could only come from control_command_delivery/start_delivery itself -- a stronger, direct replacement for the deleted single-step-advance bound, which was provably always zero under a constant admitted draw (the outlet locks exactly to the casting's own temperature at steady state). One real step of the new delivery is then taken and the reconstruction's movement is still bounded by the largest single-step movement the draw itself produced, preserving coverage against a reseed hiding inside the delivery's first step rather than inside the command. The next delivery is commanded at the draw's own admitted rate rather than EXTRACTION_RATE_ML_PER_S, because that fixed rate is refused by the authority-boundary check even from rest -- an accepted, already-documented trade-off of SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY, unrelated to this criterion. Run under pio test -e native_test. Supersedes EVD-SOL-BREW-RECOVERS-AFTER-DRAW.C3-TEST, whose text described assertions (asserted-nonzero step bound, required brew-band exit) the current test body no longer contains.
+links:
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW.C3
+    type: satisfies
