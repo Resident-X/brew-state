@@ -81,6 +81,27 @@ _Static_assert(sizeof(quantity_key) / sizeof(quantity_key[0]) == SENSED_CHANNEL_
                "every sensed quantity reported has to have a name to report it under");
 
 /*
+ * What the converter's own reconstructed reading for each sensed quantity is
+ * reported under, in the same order as the table above.
+ *
+ * Deliberately a name of its own rather than a column counted off the table
+ * above: the figure printed here is not the plant model's quantity, which the
+ * table above already reports -- it is what that quantity becomes after the
+ * same round trip through a count `reported_milli` performs before a reading
+ * reaches the control law. A run comparing full-scale settings needs this
+ * rather than the plant quantity, because the plant quantity is common to
+ * every run of the same course and the converter's reading of it is not; the
+ * two came apart in exactly the way a subcase comparing full-scale settings
+ * has to be able to tell.
+ */
+static const char *const converter_key[] = {
+    "brew-c-converter-milli", "steam-c-converter-milli",
+    "brew-bar-converter-milli", "steam-bar-converter-milli"};
+
+_Static_assert(sizeof(converter_key) / sizeof(converter_key[0]) == SENSED_CHANNEL_COUNT,
+               "every converter reading reported has to have a name to report it under");
+
+/*
  * What the temperature an extraction is actually judged by is reported under.
  *
  * It is deliberately not in the table above, and the separation is the point.
@@ -147,7 +168,8 @@ _Static_assert(sizeof(quantity_key) / sizeof(quantity_key[0]) == SENSED_CHANNEL_
  * which is the answer a consumer can act on.
  */
 static void report(const char *what, int index, int result, unsigned pump, unsigned heater,
-                   unsigned long taken, const float *values, const float *delivered, float flow)
+                   unsigned long taken, const float *values, const int32_t *converter_milli,
+                   const float *delivered, float flow)
 {
     (void)printf("HOST %s", what);
     if (index >= 0) {
@@ -158,6 +180,9 @@ static void report(const char *what, int index, int result, unsigned pump, unsig
         /* The cast is explicit because a variadic argument is promoted whatever
          * the source says, and the build refuses a silent promotion. */
         (void)printf(" %s=" QUANTITY_FORMAT, quantity_key[i], (double)values[i]);
+    }
+    for (size_t i = 0u; i < SENSED_CHANNEL_COUNT; i++) {
+        (void)printf(" %s=%ld", converter_key[i], (long)converter_milli[i]);
     }
     if (delivered != NULL) {
         (void)printf(" " DELIVERED_KEY "=" QUANTITY_FORMAT, (double)*delivered);
@@ -236,7 +261,8 @@ static int32_t reported_milli(float value, const cross_tier_draw_t *draw)
                      (uint64_t)draw->converter_full_scale_counts);
 }
 
-static bool stand_the_readings_up(const plant_model_t *machine, const cross_tier_draw_t *draw)
+static bool stand_the_readings_up(const plant_model_t *machine, const cross_tier_draw_t *draw,
+                                  int32_t *converter_milli)
 {
     float values[SENSED_CHANNEL_COUNT];
 
@@ -244,8 +270,8 @@ static bool stand_the_readings_up(const plant_model_t *machine, const cross_tier
         return false;
     }
     for (size_t i = 0u; i < SENSED_CHANNEL_COUNT; i++) {
-        hw_sim_set_sensor((hw_sensor_channel_t)i, HW_READING_VALID,
-                          reported_milli(values[i], draw));
+        converter_milli[i] = reported_milli(values[i], draw);
+        hw_sim_set_sensor((hw_sensor_channel_t)i, HW_READING_VALID, converter_milli[i]);
     }
     return true;
 }
@@ -307,6 +333,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
     plant_model_t machine;
     control_state_t state;
     float values[SENSED_CHANNEL_COUNT];
+    int32_t converter_milli[SENSED_CHANNEL_COUNT];
     float outlet_c = 0.0f;
     float drawn_ml_per_s = 0.0f;
 
@@ -327,7 +354,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
         plant_model_state(&machine, PLANT_STATE_BREW_OUTLET_TEMPERATURE_C, &outlet_c);
 
     hw_sim_reset();
-    if (!stand_the_readings_up(&machine, draw)) {
+    if (!stand_the_readings_up(&machine, draw, converter_milli)) {
         (void)fprintf(stderr, "cross-tier draw: the machine reported no quantity to read\n");
         return 1;
     }
@@ -336,7 +363,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
     if (!sensed(&machine, values) || !drawn_rate(&machine, &drawn_ml_per_s)) {
         return 1;
     }
-    report("trajectory-baseline", -1, 0, 0u, 0u, 0uL, values,
+    report("trajectory-baseline", -1, 0, 0u, 0u, 0uL, values, converter_milli,
            delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
 
     if (!control_init(&state, control_parameters, control_budget, limits, tolerance, pump_trim)) {
@@ -406,7 +433,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
         }
         taken += owed;
 
-        if (!stand_the_readings_up(&machine, draw) || !sensed(&machine, values) ||
+        if (!stand_the_readings_up(&machine, draw, converter_milli) || !sensed(&machine, values) ||
             !drawn_rate(&machine, &drawn_ml_per_s)) {
             (void)fprintf(stderr,
                           "cross-tier draw: the machine reported no quantity at interval %u\n",
@@ -423,7 +450,8 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
          */
         report("trajectory", (int)interval, (int)result, (unsigned)asked_for,
                (unsigned)hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER), taken, values,
-               delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
+               converter_milli, delivered_or_not(&machine, outlet_kept, &outlet_c),
+               drawn_ml_per_s);
     }
 
     (void)printf("HOST plant-step-count %lu\n", taken);

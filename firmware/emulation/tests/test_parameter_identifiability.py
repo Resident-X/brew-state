@@ -378,9 +378,11 @@ class TheSweepRecordsEveryChannelTheMachineObserves(unittest.TestCase):
     # its own.
     def test_a_line_that_stops_reporting_the_drawn_rate_is_refused_by_both_parsers(self):
         quantities = " ".join("%s=1" % key for key in closed_loop.QUANTITY_KEYS)
+        converter = " ".join("%s=1" % key for key in cross_tier.CONVERTER_KEYS)
         with self.assertRaises(closed_loop.Unkeyed) as refused:
             cross_tier.parse_host(
-                "HOST trajectory interval=0 result=0 pump=0 heater=0 steps=1 %s\n" % quantities)
+                "HOST trajectory interval=0 result=0 pump=0 heater=0 steps=1 %s %s\n"
+                % (quantities, converter))
         self.assertIn(cross_tier.FLOW_KEY, str(refused.exception))
 
         with self.assertRaises(closed_loop.Unkeyed) as steam_refused:
@@ -393,9 +395,27 @@ class TheSweepRecordsEveryChannelTheMachineObserves(unittest.TestCase):
         # above are about the missing field rather than about a line neither
         # parser was ever going to accept.
         accepted = cross_tier.parse_host(
-            "HOST trajectory interval=0 result=0 pump=0 heater=0 steps=1 %s %s=2.5\n"
-            % (quantities, cross_tier.FLOW_KEY))
+            "HOST trajectory interval=0 result=0 pump=0 heater=0 steps=1 %s %s %s=2.5\n"
+            % (quantities, converter, cross_tier.FLOW_KEY))
         self.assertEqual(accepted["trajectory"][0]["brew_flow_ml_per_s"], 2.5)
+
+    # SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS.C1: a line that stops reporting
+    # what the converter itself reconstructed for a sensed quantity has to
+    # fail where it is looked for -- the finest converter subcase now compares
+    # exactly that figure, so a line silently missing it would read as no
+    # divergence rather than as a draw that stopped printing what the
+    # comparison needs.
+    def test_a_line_that_stops_reporting_a_converter_reading_is_refused(self):
+        quantities = " ".join("%s=1" % key for key in closed_loop.QUANTITY_KEYS)
+        for missing in cross_tier.CONVERTER_KEYS:
+            present = " ".join(
+                "%s=1" % key for key in cross_tier.CONVERTER_KEYS if key != missing)
+            with self.subTest(missing=missing):
+                with self.assertRaises(closed_loop.Unkeyed) as refused:
+                    cross_tier.parse_host(
+                        "HOST trajectory interval=0 result=0 pump=0 heater=0 steps=1 %s %s "
+                        "%s=2.5\n" % (quantities, present, cross_tier.FLOW_KEY))
+                self.assertIn(missing, str(refused.exception))
 
     # SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY.C1: for every parameter the
     # estimator's reconstructed outlet-temperature state depends on. Which those
