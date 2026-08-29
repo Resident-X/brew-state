@@ -1,74 +1,102 @@
 id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
 type: deliverable
 category: solution
-title: Commanded margin widens against the protection trip point by the declared sensing error, combined with the existing model-error contribution
+title: Commanded margin widens by declared sensing error added on top of the existing model-error margin, on both loops
 status: active
-version: 1
+version: 2
 text: |
   SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR established the commanded margin itself, against the
-  protection trip point, but its own scope statement named the sensing-error half of REQ-ROBUST-CONTROL-001.C3
-  out of scope and left REQ-MEASUREMENT-001.C4 -- "sensing error is carried explicitly in the margin the
-  controller commands within" -- as a separate, uncovered gap. Nothing in the machine today derives a margin
-  contribution from declared sensing error: the commanded margin widens only for the model-error corners that
+  protection trip point, wired into delivery commands on both the coffee side and the steam side. Its own
+  scope statement named the sensing-error half of REQ-ROBUST-CONTROL-001.C3 out of scope and left
+  REQ-MEASUREMENT-001.C4 -- "sensing error is carried explicitly in the margin the controller commands
+  within" -- as a separate, uncovered gap. Nothing in the machine today derives a margin contribution from
+  declared sensing error on either loop: the commanded margin widens only for the model-error corners that
   solution enumerates.
 
-  This solution closes that gap. For the channel the protection margin already guards, it declares that
-  channel's own sensing error -- the accuracy figure the fitted sensor carries, sourced the way the existing
-  trip-point figures were sourced, from the part actually specified rather than assumed -- and derives that
-  channel's contribution to the widened margin from it, on the same terms model error already earns a
-  contribution: a corner that degrades the margin by the declared sensing error, evaluated independently of
-  the model-error corners that already exist. The two contributions are combined by the same worst-case
-  convention the model-error margin already established, so one convention answers "how do several declared
-  errors combine into a single conservative figure" across both the parameter side and the sensing side, and
-  neither invents a second rule the other must reconcile against. The combined margin is what the controller
-  commanded margin actually enforces, replacing the model-error-only figure the prior solution wired in.
+  This solution closes that gap on both loops. For the temperature channel each loop guards, it declares
+  that channel's own sensing error -- the accuracy figure its fitted sensor carries, sourced from the part
+  actually specified rather than assumed, and recorded with the same measured-versus-trusted provenance
+  REQ-MACHINE-CONFIGURATION-001.C5 already requires of a declared configuration value.
 
-  Verification reuses the existing corner-perturbation and margin-adequacy apparatus: a sensing-error corner
-  is added to the enumeration the model-error solution already runs, and the same margin-adequacy check --
-  does a delivery commanded at the widened margin's own edge still land within tolerance -- is asked of the
-  combined figure rather than of the model-error figure alone.
+  That figure does not combine with the model-error corners the way model-error corners combine with each
+  other. DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE answers how several plant coefficients, each an
+  alternative hypothesis about the one plant actually fitted, combine into a single conservative corner: by
+  worst-case enumeration, because only one of them is true and the design must survive whichever it is.
+  Sensing error is not an alternative hypothesis about the plant; it is present simultaneously with whatever
+  the true plant turns out to be, degrading every reading regardless of which model-error corner is real. A
+  margin that only takes the larger of the two therefore drops the smaller one from the number entirely
+  whenever it loses the comparison -- and REQ-ROBUST-CONTROL-001's own rationale states model error is
+  ordinarily the larger of the two, which is exactly the case in which a worst-case-only combination would
+  carry no sensing contribution at all, contradicting REQ-MEASUREMENT-001.C4's requirement that sensing error
+  be carried explicitly. This solution instead widens the margin the model-error solution already computes
+  by the declared sensing error on top of it: the combined widening is the model-error solution's own worst
+  corner plus the declared sensing error, so the margin is strictly larger than the model-error-only margin
+  whenever the sensing error is nonzero, on both channels, regardless of which model-error corner is
+  binding.
+
+  Verification reuses the existing corner-perturbation and margin-adequacy apparatus on both loops: each
+  loop's declared sensing error is added to its own model-error corners rather than compared against them,
+  and the same margin-adequacy check -- does a delivery commanded at the widened margin's own edge still
+  land within tolerance -- is asked of the combined figure rather than of the model-error figure alone.
 
   Out of scope: re-deriving or re-arguing the model-error contribution itself, which the prior solution
-  already established and which this solution only combines with rather than recomputes; any sensing channel
-  other than the one the protection margin already guards, since REQ-MEASUREMENT-001.C4 and the protection
-  margin both concern that one channel and extending to others is a separate question; characterising the
-  fitted sensor's true accuracy against its datasheet figure, which is a measurement-validation question this
-  solution takes the declared figure as given for rather than re-establishes; and building the estimator-side
-  error a reconstructed state carries, which REQ-STATE-ESTIMATION-001 already covers separately and which this
-  solution's margin concerns itself with only through the one declared sensing figure, not through estimation
-  error generally.
+  already established and which this solution only adds to rather than recomputes; characterising the
+  fitted sensor's true accuracy against its datasheet figure, which is a measurement-validation question
+  this solution takes the declared figure as given for rather than re-establishes; and building the
+  estimator-side error a reconstructed state carries, which REQ-STATE-ESTIMATION-001 already covers
+  separately and which this solution's margin concerns itself with only through the declared sensing figure
+  on the measured channel, not through estimation error generally.
 rationale: |
   Traced to DEL-MAINTENANCE.C1 rather than to DEL-SIM-ROBUSTNESS-VERIFICATION's own cascade criterion, on the
   same reasoning DEL-MAINTENANCE.C1 gives for every item under this lane: DEL-SIM-ROBUSTNESS-VERIFICATION is
-  sealed, and what is owed is evidence against the requirement criteria the shortfall bears on -- REQ-MEASUREMENT-001.C4
-  and REQ-ROBUST-CONTROL-001.C3 -- not a reopening of a closed deliverable. SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME
-  establishes the same pattern for a different sealed epic: a gap found in already-sealed work attaches as a
-  maintenance child tracing to the requirement criterion it restores, rather than as a new child of the sealed
-  parent.
+  sealed, and what is owed is evidence against the requirement criteria the shortfall bears on --
+  REQ-MEASUREMENT-001.C4 and REQ-ROBUST-CONTROL-001.C3 -- not a reopening of a closed deliverable.
+  SOL-HELD-DELIVERY-REVALIDATED-ON-RESUME establishes the same pattern for a different sealed epic: a gap
+  found in already-sealed work attaches as a maintenance child tracing to the requirement criterion it
+  restores, rather than as a new child of the sealed parent.
 
-  Found during phase-1 attestation of DEL-BREW-STATE-DELIVERY: REQ-ROBUST-CONTROL-001.C3 and REQ-MEASUREMENT-001.C4
-  were both review-ready with no covering solution. SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR's own
-  scope statement already named the gap explicitly rather than leaving it silently uncovered, so this is not a
-  new discovery so much as picking up a boundary that solution already drew and declined to cross.
+  Found during phase-1 attestation of DEL-BREW-STATE-DELIVERY: REQ-ROBUST-CONTROL-001.C3 and
+  REQ-MEASUREMENT-001.C4 were both review-ready with no covering solution. SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR's
+  own scope statement already named the gap explicitly rather than leaving it silently uncovered, so this is
+  not a new discovery so much as picking up a boundary that solution already drew and declined to cross.
 
-  Combining by the same worst-case convention the model-error margin already established, rather than deciding
-  a second combination rule for sensing error, keeps one answer to "how do declared errors combine into a
-  margin" across both contributions -- the same reasoning DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE and
-  its reuse in SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY already give for not inventing
-  a competing convention every time a new declared error needs a conservative figure.
+  Combining sensing error additively on top of the model-error solution's own worst corner, rather than by
+  reusing DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE's max as originally drafted, follows from what
+  that decision actually rules on: its own text scopes it to "more than one plant coefficient" carrying
+  declared model error, combined because "only one of them is true and the design must survive whichever it
+  is" -- an alternative-hypothesis combination. Sensing error is not an alternative hypothesis about the
+  plant; a sensor reads with its own error regardless of which model-error corner turns out to be real, so
+  the two degradations are simultaneous rather than competing, and must add rather than be compared. Reusing
+  the existing decision's combination rule for a case its own rationale never contemplated would have left
+  REQ-MEASUREMENT-001.C4's requirement -- that sensing error be carried explicitly -- unmet exactly in the
+  case REQ-ROBUST-CONTROL-001's own rationale names as ordinary: model error larger than sensing error, where
+  a worst-case-only combination drops the smaller term from the number entirely.
 
-  Scoping to the one channel the protection margin already guards, rather than every sensing channel the
-  machine carries, follows the shape of REQ-MEASUREMENT-001.C4 itself: that criterion is about the margin the
-  controller commands within, and only one channel runs close enough to its trip point for that margin to be
-  the operative concern. A channel with no comparable trip point has no comparable margin to widen.
+  Covering both the coffee and steam channels, rather than the coffee channel alone, follows the shape of
+  the criteria this solution targets rather than of REQ-MEASUREMENT-001's own narrower text: REQ-ROBUST-CONTROL-001.C3
+  carries no channel restriction, and the deliverable both this solution and the model-error solution derive
+  evidence toward, DEL-SIM-ROBUSTNESS-VERIFICATION.C2, is itself scoped to both loops -- the model-error
+  solution it extends already wires its widened margin into delivery commands on both sides. Scoping this
+  solution to one channel would leave the steam side's sensing contribution as unnamed and uncovered as the
+  gap this solution exists to close.
+
+  Targeting REQ-MACHINE-CONFIGURATION-001.C5 follows the same pattern DEC-PROTECTION-TRIP-POINTS-FROM-PARTS-LIST-LOW-TOLERANCE-END
+  set for the model-error solution's own trip-point figures: a number this solution's build brief requires
+  be sourced from the part actually fitted, rather than assumed, is a declared-configuration fact, and
+  REQ-MACHINE-CONFIGURATION-001.C5 already requires the declaration to mark which of its values were measured
+  and which were taken on trust. A manufacturer's stated sensor accuracy is exactly a value taken on trust
+  rather than measured on this machine, and recording it there rather than leaving it implicit in the margin
+  computation keeps one place, rather than two, answering which declared figures this design relies on.
 links:
+  - target: DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN
+    type: justified-by
   - target: DEL-MAINTENANCE.C1
     type: derives-from
+  - target: REQ-MACHINE-CONFIGURATION-001.C5
+    type: targets
   - target: REQ-MEASUREMENT-001.C4
     type: targets
   - target: REQ-ROBUST-CONTROL-001.C3
     type: targets
-  - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
-    type: justified-by
   - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR
     type: depends-on

@@ -6,10 +6,10 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The declared sensing-error figure, its combination with the model-error corners, and the corner verdicts
-  this solution adds are committed in the same repeatable form the model-error margin's own mapping already
-  uses, so both contributions to the commanded margin are checked from one committed record rather than two.
-  Out of scope: re-committing the model-error corners the prior solution already recorded.
+  Each loop's declared sensing-error figure, its addition to that loop's model-error corner, and the corner
+  verdicts this solution adds are committed in the same repeatable form the model-error margin's own mapping
+  already uses, so both contributions to each loop's commanded margin are checked from one committed record
+  rather than two. Out of scope: re-committing the model-error corners the prior solution already recorded.
 links:
   - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
     type: criterion-of
