@@ -1,0 +1,18 @@
+id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1
+type: criterion
+title: Commanded margin against the protection trip point widens with the guarded channel's declared sensing error, combined with its declared model error
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  The protection margin's guarded channel gains a declared sensing-error figure, sourced from the fitted
+  sensor's own specified accuracy rather than assumed or left at the model-error solution's implicit zero.
+  That figure earns a margin corner on the same terms each declared model-error coefficient already does:
+  evaluated independently, combined with the existing model-error corners by worst-case enumeration rather
+  than summed or root-sum-squared. The combined margin is never smaller than the model-error-only margin and
+  is strictly larger whenever the declared sensing error is nonzero. Out of scope: any channel other than the
+  one channel the protection margin already guards.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
+    type: criterion-of

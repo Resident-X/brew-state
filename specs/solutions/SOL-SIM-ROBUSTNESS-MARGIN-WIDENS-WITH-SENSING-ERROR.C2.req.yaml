@@ -1,0 +1,15 @@
+id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C2
+type: criterion
+title: A delivery lands within tolerance at the combined margin's own edge, across every corner the model-error and sensing-error budgets together imply
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  A delivery commanded at the combined margin's own edge -- model-error and sensing-error corners together --
+  still lands within its own tolerance band, checked by extending the existing corner-perturbation apparatus
+  with the sensing-error corner rather than by building a second harness. Out of scope: re-verifying the
+  model-error-only corners the prior solution's own tests already cover.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
+    type: criterion-of

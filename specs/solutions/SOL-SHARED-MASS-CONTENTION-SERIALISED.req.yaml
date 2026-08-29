@@ -63,3 +63,5 @@ links:
     type: derives-from
   - target: REQ-HOT-WATER-001.C4
     type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C3
+    type: targets
