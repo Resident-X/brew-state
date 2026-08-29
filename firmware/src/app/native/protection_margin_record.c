@@ -285,12 +285,13 @@ static void print_corner(const char *prefix, size_t which,
 /* The margin figure itself, under the prefix the side reports beneath. */
 static void print_margin(const char *prefix, const protection_margin_t *margin)
 {
-    (void)printf("HOST %s widened-c=%.9g unwidened-c=%.9g worst-c=%.9g corners=%u run=%u "
-                 "contributing=%u worst-at=%u worst-joint=%d\n",
+    (void)printf("HOST %s widened-c=%.9g unwidened-c=%.9g worst-c=%.9g sensing-error-c=%.9g "
+                 "corners=%u run=%u contributing=%u worst-at=%u worst-joint=%d\n",
                  prefix, (double)margin->margin_c, (double)margin->unwidened_c,
-                 (double)margin->worst_corner_c, (unsigned)margin->corners,
-                 (unsigned)margin->corners_run, (unsigned)margin->contributing,
-                 (unsigned)margin->worst_at, margin->worst_is_joint ? 1 : 0);
+                 (double)margin->worst_corner_c, (double)margin->sensing_error_c,
+                 (unsigned)margin->corners, (unsigned)margin->corners_run,
+                 (unsigned)margin->contributing, (unsigned)margin->worst_at,
+                 margin->worst_is_joint ? 1 : 0);
 }
 
 /*

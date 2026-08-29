@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C2-TEST
+type: evidence
+title: A delivery lands within tolerance at each loop's combined margin edge (SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T12:08:43Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_delivery_commanded_at_the_widened_margins_own_edge_lands_in_band; firmware/emulation/tests/test_protection_margin.py::ADeliveryLandsWithinToleranceAtEveryDeclaredErrorCorner (corner sweep against the real control_protection_margin path, which now always includes CONTROL_SENSING_ERROR_C)
+text: |-
+  The coffee-side margin edge test now exercises the combined edge (worst model-error corner plus declared sensing error) since control_protection_margin always includes CONTROL_SENSING_ERROR_C; the search helper the_budget_at_which_the_margin_binds was extended to require both protection-margin binding and delivery admissibility jointly, and the delivery commanded at that edge lands within the declared band. The steam-side corner sweep in test_protection_margin.py runs against the same real margin path (steam_control_protection_margin), so its per-corner deliveries are likewise judged against the combined edge.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C2
+    type: satisfies

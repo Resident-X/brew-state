@@ -2545,10 +2545,11 @@ static void test_a_draw_lands_within_its_band_at_every_declared_error_corner(voi
     TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-5f, widest_contribution_c, margin.worst_corner_c,
                                      "the margin's worst corner is not the widest contribution in "
                                      "the record");
-    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(1e-5f, margin.unwidened_c + widest_contribution_c,
-                                     margin.margin_c,
-                                     "the widened margin is not the un-widened gap plus the worst "
-                                     "corner");
+    TEST_ASSERT_FLOAT_WITHIN_MESSAGE(
+        1e-5f, margin.unwidened_c + widest_contribution_c + margin.sensing_error_c,
+        margin.margin_c,
+        "the widened margin is not the un-widened gap plus the worst corner plus the declared "
+        "sensing error");
     if (contributing >= 2u) {
         TEST_ASSERT_TRUE_MESSAGE(margin.worst_corner_c < summed_contributions_c - 1e-5f,
                                  "the margin is the sum of every corner's contribution rather "
@@ -2622,6 +2623,27 @@ static void test_the_sweep_draws_at_the_declared_ready_target_and_not_at_the_mar
         steam_control_init(&narrowing, &limits, &asking, &parameters, &budget),
         "the loop came up at a ready target above the highest the narrowing found, so the "
         "headroom reported is not the margin's own edge");
+}
+
+/// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1: the steam loop's own
+/// margin reader carries a nonzero declared sensing error, on the same terms
+/// the coffee loop's does -- carried explicitly rather than silently absent on
+/// this side of the machine, which is the half of the criterion's "on each
+/// loop" claim nothing else in this file pins down: every other margin
+/// assertion in this suite reads `sensing_error_c` back out of the same figure
+/// it is folded into, so a steam-side regression that zeroed it would still
+/// pass every other case here.
+static void test_the_steam_margin_reader_carries_the_declared_sensing_error(void)
+{
+    steam_control_state_t state;
+    protection_margin_t margin;
+
+    hw_sim_reset();
+    TEST_ASSERT_TRUE(steam_control_init(&state, &limits, &declaration, &parameters, &budget));
+    TEST_ASSERT_TRUE(steam_control_protection_margin(&state, &margin));
+    TEST_ASSERT_TRUE_MESSAGE(margin.sensing_error_c > 0.0f,
+                             "the steam loop's margin reader carries no declared sensing error at "
+                             "all");
 }
 
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The widened margin is
@@ -2732,6 +2754,7 @@ int main(void)
     RUN_TEST(test_recovery_holds_its_bound_across_the_declared_model_error);
     RUN_TEST(test_a_draw_lands_within_its_band_at_every_declared_error_corner);
     RUN_TEST(test_the_sweep_draws_at_the_declared_ready_target_and_not_at_the_margins_edge);
+    RUN_TEST(test_the_steam_margin_reader_carries_the_declared_sensing_error);
     RUN_TEST(test_a_ready_target_inside_the_widened_margin_is_refused);
     RUN_TEST(test_a_longer_saturated_interval_does_not_deepen_the_overshoot);
     RUN_TEST(test_intent_is_surrendered_at_the_limit_and_not_afterwards);

@@ -1,0 +1,30 @@
+id: EVD-REQ-MEASUREMENT-001.C4-ATTEST
+type: evidence
+title: Attestation of REQ-MEASUREMENT-001.C4
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T12:11:54Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-MEASUREMENT-001.C4","synthesised_at":"2026-08-29T12:11:54.318296Z","entries":[{"input_id":"SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_declared_sensing_error_adds_to_the_model_error_margin_exactly, test_a_sensing_error_that_is_not_a_positive_number_contributes_nothing, test_the_public_margin_reader_carries_the_declared_sensing_error; firmware/test/test_steam_control/test_steam_control.c::test_the_steam_margin_reader_carries_the_declared_sensing_error; firmware/emulation/tests/test_protection_margin.py::TheDeclaredSensingErrorAddsToTheCommandedMargin.test_both_loops_carry_a_nonzero_declared_sensing_error"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-MEASUREMENT-001.C4.
+
+  Final-state intent: sensing error is carried explicitly in the margin the controller commands within, on the channel that margin protects -- not merely acknowledged in prose, and not folded silently into a figure that could be zero without a reader noticing.
+
+  Composition: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR, with active evidence EVD-SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1/.C2/.C3-TEST.
+
+  Intent fit: protection_margin_t carries a dedicated sensing_error_c field, separate from unwidened_c and worst_corner_c, added on top of the model-error corner (never compared against it) per DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN. Both control.c and steam_control.c's public margin readers carry a nonzero CONTROL_SENSING_ERROR_C / STEAM_CONTROL_SENSING_ERROR_C. Tests confirm the addition is exact (doubling the declared figure doubles what it adds -- distinguishing addition from a worst-case max) and that a non-positive or NaN sensing error contributes nothing, matching the same clamp discipline unwidened_c already carries. The committed record (docs/protection-margin.md) and its regenerate-and-compare test suite name the sensing-error figure explicitly on both loops, so the carrying is auditable, not merely present in memory.
+
+  Acknowledged scope boundary: the declared sensing-error figure is an estimate (@estimated in params/control.declaration) rather than a measurement of a specified sensor part, because no temperature-sensing part has been selected for either channel yet (confirmed against docs/reference-machine.md and REQ-MEASUREMENT-001's own rationale, which leaves sensor choice open). The criterion requires the error be carried explicitly, not that it be measured -- REQ-MACHINE-CONFIGURATION-001.C5's own provenance-marking discipline is exactly what accommodates a declared-but-estimated figure, and the SOL's own text and rationale were amended (version 3) to say so plainly rather than claim a sourced-from-a-part reading. This deferral is named, not silent.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-MEASUREMENT-001.C4
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

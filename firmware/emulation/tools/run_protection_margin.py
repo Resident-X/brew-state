@@ -203,6 +203,7 @@ def parse_record(output):
             "widened_c": float(fields["widened-c"]),
             "unwidened_c": float(fields["unwidened-c"]),
             "worst_c": float(fields["worst-c"]),
+            "sensing_error_c": float(fields["sensing-error-c"]),
             "corners": int(fields["corners"]),
             "run": int(fields["run"]),
             "contributing": int(fields["contributing"]),
@@ -785,13 +786,14 @@ def report_text(findings):
           "assumption of the method.")
     write("")
     write("| Highest target taken (C) | Bound that stops it | Widened margin (C) | "
-          "Un-widened gap (C) | Trip point (C) |")
-    write("|---|---|---|---|---|")
-    write("| %s | %s | %s | %s | %s |" % (
+          "Un-widened gap (C) | Declared sensing error (C) | Trip point (C) |")
+    write("|---|---|---|---|---|---|")
+    write("| %s | %s | %s | %s | %s | %s |" % (
         FIGURE_FORMAT % shipped["target_c"],
         shipped["capping_bound_name"],
         FIGURE_FORMAT % margin["widened_c"],
         FIGURE_FORMAT % margin["unwidened_c"],
+        FIGURE_FORMAT % margin["sensing_error_c"],
         FIGURE_FORMAT % shipped["trip_c"] if shipped["trip_known"] else NOTHING))
     write("")
     if findings["margin_binds"]:
@@ -845,10 +847,12 @@ def report_text(findings):
             "ran" if corner["ran"] else "not-run",
             FIGURE_FORMAT % corner["contribution_c"]))
     write("")
-    write("The margin is %s C: the un-widened gap of %s C plus the worst single corner's %s C, "
-          "which is corner %d. %d of %d corners ran and %d cost the gap anything." % (
+    write("The margin is %s C: the un-widened gap of %s C plus the worst single corner's %s C "
+          "(corner %d) plus the declared sensing error of %s C. %d of %d corners ran and %d "
+          "cost the gap anything." % (
               FIGURE_FORMAT % margin["widened_c"], FIGURE_FORMAT % margin["unwidened_c"],
-              FIGURE_FORMAT % margin["worst_c"], margin["worst_at"], margin["run"],
+              FIGURE_FORMAT % margin["worst_c"], margin["worst_at"],
+              FIGURE_FORMAT % margin["sensing_error_c"], margin["run"],
               margin["corners"], margin["contributing"]))
     write("")
 
@@ -911,11 +915,13 @@ def report_text(findings):
             FIGURE_FORMAT % corner["contribution_c"]))
     write("")
     write("The steam margin is %s C: the un-widened gap of %s C plus the worst single corner's "
-          "%s C, which is corner %d. %d of %d corners ran and %d cost the gap anything." % (
+          "%s C (corner %d) plus the declared sensing error of %s C. %d of %d corners ran and "
+          "%d cost the gap anything." % (
               FIGURE_FORMAT % steam_margin["widened_c"],
               FIGURE_FORMAT % steam_margin["unwidened_c"],
               FIGURE_FORMAT % steam_margin["worst_c"], steam_margin["worst_at"],
-              steam_margin["run"], steam_margin["corners"], steam_margin["contributing"]))
+              FIGURE_FORMAT % steam_margin["sensing_error_c"], steam_margin["run"],
+              steam_margin["corners"], steam_margin["contributing"]))
     write("")
 
     write(STEAM_VERDICT_HEADING)

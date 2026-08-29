@@ -1,0 +1,15 @@
+id: SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS.C1
+type: criterion
+title: The finest converter subcase reliably detects the deliberate divergence again
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The finest converter subcase in test_the_reading_the_converter_reports_changes_what_the_draw_does
+  detects the deliberate converter divergence on a clean checkout, and its own
+  committed account explains why the fix it uses is expected to hold rather than
+  being a further trial-widened figure.
+links:
+  - target: SOL-CROSS-TIER-CONVERTER-MARGIN-RECURS
+    type: criterion-of

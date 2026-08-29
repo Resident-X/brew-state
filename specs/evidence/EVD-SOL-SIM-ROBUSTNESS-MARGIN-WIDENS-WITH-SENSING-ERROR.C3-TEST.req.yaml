@@ -1,0 +1,17 @@
+id: EVD-SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C3-TEST
+type: evidence
+title: Sensing-error mapping and corner verdicts committed in the same repeatable form as the model-error margin (SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T12:08:43Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_protection_margin.py::TheDeclaredSensingErrorAddsToTheCommandedMargin.test_the_committed_record_names_the_declared_sensing_error_on_both_loops, TheMappingAndTheCornerVerdictsAreCommitted.* (regenerate-and-compare); docs/protection-margin.md
+text: |-
+  protection_margin_record.c's print_margin() emits sensing-error-c=; run_protection_margin.py parses it into margin_of()['sensing_error_c'] and both report_text() breakdown sentences and the coffee-side standing table now name the declared sensing error explicitly, alongside the un-widened gap and worst corner. docs/protection-margin.md was regenerated and the full test_protection_margin.py suite (19 tests, including the regenerate-and-compare committed-record tests) passes, confirming the committed record matches what the method presently produces.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C3
+    type: satisfies
