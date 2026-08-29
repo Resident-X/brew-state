@@ -22,7 +22,17 @@
  * heated in. It is carried because the control path is given the band rather
  * than compiling it in, and because there is no filesystem here to open it from.
  *
- * All three are read through their own loaders rather than through readers
+ * The pump trim declaration travels the same way again, and answers yet another
+ * kind of question: how hard DEC-CORRECTION-KEEPS-THE-ACCOUNT's trim leans on
+ * the gap between a course's commanded rate and what the flow seam reports.
+ * Like the tolerance it is not a statement about this machine, and unlike it,
+ * it is not a statement about the drink either -- it is the design's own
+ * control-tuning policy, on exactly the footing the steam side's own
+ * declaration already is. It is carried for the same want of a filesystem, and
+ * control_init refuses to come up without it on exactly the terms it refuses
+ * without the band.
+ *
+ * All four are read through their own loaders rather than through readers
  * written for the target. A second parser accepts a slightly different language
  * sooner or later -- a whitespace rule, an annotation quietly skipped -- and
  * then the machine is running numbers the host tier never saw, out of a file
@@ -33,8 +43,10 @@
 #include "estimator_limits.h"
 #include "hw_stm32.h"
 #include "plant_model.h"
+#include "pump_trim_declaration.h"
 #include "reference_description.h"
 #include "reference_limits.h"
+#include "reference_pump_trim.h"
 #include "reference_tolerance.h"
 
 int main(void)
@@ -47,6 +59,8 @@ int main(void)
     estimator_limits_error_t limits_fault;
     delivery_tolerance_t tolerance;
     delivery_tolerance_error_t tolerance_fault;
+    pump_trim_declaration_t pump_trim;
+    pump_trim_declaration_error_t pump_trim_fault;
 
     if (!hw_stm32_init()) {
         /*
@@ -121,14 +135,33 @@ int main(void)
         }
     }
 
+    if (!pump_trim_declaration_load(reference_pump_trim, reference_pump_trim_length, &pump_trim,
+                                    &pump_trim_fault)) {
+        /*
+         * The pump trim declaration this artefact carries is not one the
+         * loader accepts, so nothing says how hard the trim is to lean on a
+         * rate gap. Stop for the same reason the other three refusals stop
+         * the machine: proceeding on a partly-filled record would command a
+         * pump correction against gains nobody supplied, believed as though
+         * somebody had -- and unlike the other three, control_init itself
+         * would refuse to come up on a null record here, so continuing past
+         * this refusal and handing the loop nothing would only move where the
+         * machine stops rather than avoid it. What the machine should do
+         * about being left without a trim, beyond not proceeding, is a
+         * fault-response concern answered elsewhere.
+         */
+        for (;;) {
+        }
+    }
+
     /*
-     * All three records go in through the control path rather than reaching the
+     * All four records go in through the control path rather than reaching the
      * estimator by a route of their own, so the machine drives from the same
-     * description, the same bounds and the same band it was verified against. A
-     * refusal here leaves the heater commanded off and the fault latched, and
-     * the loop below keeps it there.
+     * description, the same bounds, the same band and the same trim it was
+     * verified against. A refusal here leaves the heater commanded off and the
+     * fault latched, and the loop below keeps it there.
      */
-    (void)control_init(&state, &parameters, &budget, &limits, &tolerance);
+    (void)control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim);
 
     for (;;) {
         (void)control_step(&state);

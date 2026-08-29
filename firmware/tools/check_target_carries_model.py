@@ -78,24 +78,33 @@ class Carried(NamedTuple):
 
 
 #: Everything the artefact is asked about, in the order it is reported on.
+#:
+#: The tolerance declaration and the pump trim declaration are both searched
+#: against the whole of the shared `.declaration` suffix, and the files they
+#: share it with are the reason rather than an obstacle. The tree holds
+#: exactly one statement of what a delivery is held to and exactly one
+#: statement of how hard the trim corrects a rate gap, so a second file under
+#: this suffix turning up inside an artefact is one of two things, and both
+#: are findings. Either a rival declaration has been embedded beside the
+#: pinned one, in which case which band -- or which gains -- the machine is
+#: running on is settled by neither the build nor anything readable off the
+#: machine, and the pinned one would go on reading as authoritative. Or one of
+#: the declarations that is not meant to be embedded at all has reached the
+#: image: nothing in the tree puts the cadence, control or robustness
+#: declaration into an artefact, so an artefact carrying one is a build that
+#: has started embedding files nobody decided to embed, which is exactly the
+#: sort of thing a reader wants told to them while it is still one file rather
+#: than a habit.
+#:
+#: The two share the suffix and are still asked about separately, on the same
+#: terms every other pair here is: each answers a different question about
+#: the machine, and collapsing them into one entry would report a divergence
+#: in either as though it were the same finding.
 CARRIED = (
     Carried("description", build_environments.pinned_description, DESCRIPTION_SUFFIX),
     Carried("limits declaration", build_environments.pinned_limits, LIMITS_SUFFIX),
-    # The tolerance declaration is searched against the whole of its suffix, and
-    # the files it shares that suffix with are the reason rather than an
-    # obstacle. The tree holds exactly one statement of what a delivery is held
-    # to, so a second file under this suffix turning up inside an artefact is
-    # one of two things, and both are findings. Either a rival tolerance file
-    # has been embedded beside the pinned one, in which case which band the
-    # machine holds its deliveries to is settled by neither the build nor
-    # anything readable off the machine -- and the pinned one would go on
-    # reading as authoritative. Or one of the declarations that is not meant to
-    # be embedded at all has reached the image: nothing in the tree puts the
-    # cadence, control or robustness declaration into an artefact, so an
-    # artefact carrying one is a build that has started embedding files nobody
-    # decided to embed, which is exactly the sort of thing a reader wants told
-    # to them while it is still one file rather than a habit.
     Carried("tolerance declaration", build_environments.pinned_tolerance, DECLARATION_SUFFIX),
+    Carried("pump trim declaration", build_environments.pinned_pump_trim, DECLARATION_SUFFIX),
 )
 
 
@@ -217,6 +226,16 @@ def check(project: str, include_dir: str, params_dir: str) -> tuple[list[str], l
                 "an artefact the model was discarded from"
             )
 
+        # Every path this artefact is legitimately pinned to carry, across every
+        # `Carried` entry -- not only the one presently being asked about. Two
+        # entries sharing a sibling suffix (the tolerance and pump trim
+        # declarations both search the whole of `.declaration`) would otherwise
+        # have each read the other's own pinned file as a rival beside it,
+        # which is a divergence from nothing: both are meant to be in the
+        # image, under their own names, and neither is a second answer to the
+        # other's question.
+        every_pinned_path = {os.path.abspath(os.path.join(project, p)) for _, p, _ in resolved}
+
         image = read_bytes(artefact)
         for carried, pinned, verified in resolved:
             if image.count(verified) != 1:
@@ -225,7 +244,7 @@ def check(project: str, include_dir: str, params_dir: str) -> tuple[list[str], l
                     f"{pinned} {image.count(verified)} time(s), not once"
                 )
             for other in files_in(os.path.join(project, params_dir), carried.siblings):
-                if os.path.abspath(other) == os.path.abspath(os.path.join(project, pinned)):
+                if os.path.abspath(other) in every_pinned_path:
                     continue
                 # An empty file is in every image. Reading that as a second one
                 # carried would fail the gate for a file with nothing in it,

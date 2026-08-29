@@ -1,0 +1,30 @@
+id: EVD-REQ-DELIVERY-PROFILE-001.C4-ATTEST
+type: evidence
+title: Attestation of REQ-DELIVERY-PROFILE-001.C4
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T08:36:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: '{"schema_version":"1","parent_criterion_id":"REQ-DELIVERY-PROFILE-001.C4","synthesised_at":"2026-08-29T08:36:53.557404Z","entries":[{"input_id":"DEL-SIM-BREW-LOOP","kind":"deliverable","state":"satisfied","status":"active","artifact_version":null},{"input_id":"SOL-DELIVERY-DEPARTURE-REPORTED","kind":"solution","state":"unsatisfied","status":"deprecated","artifact_version":null},{"input_id":"SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED","kind":"solution","state":"satisfied","status":"active","artifact_version":"firmware/test/test_control/test_control.c::test_the_departure_reported_is_the_commanded_rate_less_the_measured_one"},{"input_id":"SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW","kind":"solution","state":"satisfied","status":"active","artifact_version":"git diff --stat -- firmware/src/plant on branch req/SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW/pump-trimmed-to-commanded-flow: empty"}]}'
+attested_by: david
+text: |-
+  Tier 2 attestation of REQ-DELIVERY-PROFILE-001.C4.
+
+  Final-state intent: a delivery that cannot follow the commanded profile reports the shortfall rather than the machine quietly absorbing it, and this reporting obligation survives even once following the profile becomes impossible -- it does not merely hold while everything goes well.
+
+  Composition: DEL-SIM-BREW-LOOP (rollup, no direct evidence), SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED (active evidence EVD-SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C1-TEST through .C4/.C6/.C7-TEST, re-verified present and passing after this session's edits to the same test file), SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW (active evidence EVD-SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1 through .C4).
+
+  Intent fit: the pump trim redefines departure as the residual surviving correction (per DEC-CORRECTION-KEEPS-THE-ACCOUNT) rather than removing the reporting obligation -- a corrected delivery within tolerance correctly reports no departure because the commanded rate was genuinely met, not because a failure was hidden (EVD-SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C2-TEST), and a delivery the trim cannot correct -- the exact case where following the profile becomes impossible -- still reports, now distinguishing ordinary miss from saturation (EVD-SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3-TEST). The original reporting mechanism (measurement against the commanded rate, tolerance-gated, latched for the delivery's life, absent-meter handled honestly) is unchanged and still covered by its own evidence.
+
+  Acknowledged scope boundary: how an interface presents the departure/saturation account to the operator is explicitly out of scope of SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW and belongs to the interface journey (REQ-OPERATOR-FEEDBACK-001 / JRN-OPERATE-INTERFACE-001), which remain separately open in the graph -- not a gap in this criterion, which is about whether the shortfall is reported/recorded at all, not how it is displayed.
+
+  Decision: attest. No unstated gap against the criterion's final-state intent.
+links:
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: satisfies
+attributes:
+  attested_criterion_version: 1

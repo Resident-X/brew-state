@@ -45,13 +45,14 @@ class Embedding(NamedTuple):
     """One file an artefact carries compiled in.
 
     An artefact carries more than one: the description of the machine, the
-    declaration of what a reading off that machine may plausibly be, and the
-    band a delivery off it is held to. They are the same mechanism repeated
-    rather than three mechanisms, so the parts that differ between them -- the
-    symbol defined and the file rendered to -- are named here and everything
-    else is shared. A second copy of the renderer for a second file is how the
-    formats would come to differ, and each copy after the first is a place the
-    drift can start from without anything reporting it.
+    declaration of what a reading off that machine may plausibly be, the band
+    a delivery off it is held to, and the gains the pump trim corrects a rate
+    gap with. They are the same mechanism repeated rather than four mechanisms,
+    so the parts that differ between them -- the symbol defined and the file
+    rendered to -- are named here and everything else is shared. A second copy
+    of the renderer for a second file is how the formats would come to differ,
+    and each copy after the first is a place the drift can start from without
+    anything reporting it.
     """
 
     #: The symbol the generated array is defined as. The checked-in declaration
@@ -88,8 +89,25 @@ TOLERANCE = Embedding(
     description="tolerance declaration",
 )
 
+#: The pump trim declaration: the gains DEC-CORRECTION-KEEPS-THE-ACCOUNT's
+#: closed-loop trim leans on a rate gap with. It travels with the other three
+#: for the same want of a filesystem on the target, and it is unlike all three
+#: of them in what it is a statement about: the description and the limits say
+#: what this machine is and what its sensors could report, and the tolerance
+#: says what the drink demands whatever machine it was made on -- this says how
+#: hard the design corrects a rate gap, which is a control-tuning policy on
+#: exactly the footing the steam side's own declaration already is, and not a
+#: fact about this machine or this drink at all. It is carried anyway, because
+#: control_init refuses to come up without it and there is nowhere on the
+#: target to read it from.
+PUMP_TRIM = Embedding(
+    symbol="reference_pump_trim",
+    generated_name="reference_pump_trim_bytes.h",
+    description="pump trim declaration",
+)
+
 #: All of them, in the order a build renders them.
-EMBEDDINGS = (DESCRIPTION, LIMITS, TOLERANCE)
+EMBEDDINGS = (DESCRIPTION, LIMITS, TOLERANCE, PUMP_TRIM)
 
 #: How many bytes go on one line. Narrow enough to read, wide enough that a
 #: description of a few kilobytes does not become a file of a few thousand

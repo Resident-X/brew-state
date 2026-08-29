@@ -95,6 +95,7 @@
 #include "hw_sim.h"
 #include "machine_actuation.h"
 #include "plant_model.h"
+#include "pump_trim_declaration.h"
 #include "steam_control_declaration.h"
 #include "protection_margin_record.h"
 #include "steam_draw.h"
@@ -238,13 +239,14 @@ static void exercise_invalid_sensor(control_state_t *state)
 static void exercise_refused_output(const plant_parameters_t *parameters,
                                     const plant_parameter_budget_t *budget,
                                     const estimator_limits_t *limits,
-                                    const delivery_tolerance_t *tolerance)
+                                    const delivery_tolerance_t *tolerance,
+                                    const pump_trim_declaration_t *pump_trim)
 {
     control_state_t state;
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    expect(control_init(&state, parameters, budget, limits, tolerance),
+    expect(control_init(&state, parameters, budget, limits, tolerance, pump_trim),
            "the control path could not be initialised");
     expect(control_command_temperature(&state, EXERCISE_TARGET_C),
            "the exercise's target was refused");
@@ -457,7 +459,8 @@ static int run_the_draw(char **arguments, const plant_parameters_t *machine_para
                         const plant_parameters_t *control_parameters,
                         const plant_parameter_budget_t *control_budget,
                         const estimator_limits_t *limits,
-                        const delivery_tolerance_t *tolerance)
+                        const delivery_tolerance_t *tolerance,
+                        const pump_trim_declaration_t *pump_trim)
 {
     cross_tier_draw_t draw = {0.0f, NULL, NULL, 0u, 0u, 0u};
     char *end = NULL;
@@ -530,7 +533,7 @@ static int run_the_draw(char **arguments, const plant_parameters_t *machine_para
 
     const int outcome =
         cross_tier_draw_run(machine_parameters, control_parameters, control_budget, limits,
-                            tolerance, &draw);
+                            tolerance, pump_trim, &draw);
     free(cadence);
     free(levels);
     return outcome;
@@ -906,11 +909,38 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    /*
+     * The pump trim's gains, read from the path this build was compiled with
+     * on exactly the same terms the band above is: it is not named on the
+     * command line because, like the band, it does not vary with the machine
+     * or the drink -- it is DEC-CORRECTION-KEEPS-THE-ACCOUNT's own policy for
+     * how hard the trim leans on a rate gap, which reads the same whatever
+     * structure this build is compiled against.
+     */
+    size_t pump_trim_length = 0u;
+    char *pump_trim_text = read_file(REFERENCE_PUMP_TRIM_PATH, &pump_trim_length);
+    if (pump_trim_text == NULL) {
+        return 1;
+    }
+
+    pump_trim_declaration_t pump_trim;
+    pump_trim_declaration_error_t pump_trim_error;
+    const bool pump_trim_loaded =
+        pump_trim_declaration_load(pump_trim_text, pump_trim_length, &pump_trim, &pump_trim_error);
+    free(pump_trim_text);
+
+    if (!pump_trim_loaded) {
+        (void)fprintf(stderr,
+                      "host exercise: pump trim declaration refused: %s (fault %d, line %u)\n",
+                      pump_trim_error.name, (int)pump_trim_error.fault, pump_trim_error.line);
+        return 1;
+    }
+
     if (draw_requested) {
         return run_the_draw(&argv[4], &parameters,
                             drifted_draw_requested ? &control_parameters : &parameters,
                             drifted_draw_requested ? &control_budget : &budget, &limits,
-                            &tolerance);
+                            &tolerance, &pump_trim);
     }
     if (steam_draw_requested) {
         return run_the_steam_draw(&argv[4], &parameters, &budget, &limits);
@@ -952,7 +982,7 @@ int main(int argc, char **argv)
 
         const int status = protection_margin_record_run(description_text, description_length,
                                                         &parameters, &budget, &limits, &tolerance,
-                                                        &steam);
+                                                        &pump_trim, &steam);
         free(description_text);
         return status;
     }
@@ -960,13 +990,13 @@ int main(int argc, char **argv)
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
 
-    if (control_init(&state, &parameters, &budget, &limits, &tolerance)) {
+    if (control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim)) {
         (void)printf("host exercise: control path reconstructs its brew temperature\n");
         exercise_untargeted_steps(&state);
         exercise_actuating_steps(&state);
         exercise_early_step(&state);
         exercise_invalid_sensor(&state);
-        exercise_refused_output(&parameters, &budget, &limits, &tolerance);
+        exercise_refused_output(&parameters, &budget, &limits, &tolerance, &pump_trim);
     } else {
         (void)printf("host exercise: this structure cannot carry a reconstruction the "
                      "estimator can keep corrected\n");

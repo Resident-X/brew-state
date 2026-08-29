@@ -1,0 +1,17 @@
+id: EVD-SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C4-INSPECTION
+type: evidence
+title: The plant description gains no resistance term for the trim (SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C4)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-29T08:35:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'git diff --stat -- firmware/src/plant on branch req/SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW/pump-trimmed-to-commanded-flow: empty'
+text: |-
+  Inspected the full diff implementing this solution: no file under firmware/src/plant/** was touched. The trim is a consumer of the measured rate at the control-law layer (control.c/control.h, pump_trim_declaration.h/.c) and adds no coefficient, resistance term, or pump characteristic to any plant structure. The puck, the pump's flow-versus-pressure characteristic, and the mechanical cap remain stated omissions in the plant sources exactly as before this change.
+links:
+  - target: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C4
+    type: satisfies

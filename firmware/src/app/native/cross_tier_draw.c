@@ -301,6 +301,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
                         const plant_parameter_budget_t *control_budget,
                         const estimator_limits_t *limits,
                         const delivery_tolerance_t *tolerance,
+                        const pump_trim_declaration_t *pump_trim,
                         const cross_tier_draw_t *draw)
 {
     plant_model_t machine;
@@ -338,7 +339,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
     report("trajectory-baseline", -1, 0, 0u, 0u, 0uL, values,
            delivered_or_not(&machine, outlet_kept, &outlet_c), drawn_ml_per_s);
 
-    if (!control_init(&state, control_parameters, control_budget, limits, tolerance)) {
+    if (!control_init(&state, control_parameters, control_budget, limits, tolerance, pump_trim)) {
         (void)fprintf(stderr, "cross-tier draw: the control path could not be brought up\n");
         return 1;
     }

@@ -39,6 +39,7 @@
 #include "delivery_tolerance.h"
 #include "estimator_limits.h"
 #include "plant_model.h"
+#include "pump_trim_declaration.h"
 
 /*
  * How a draw is commanded, and how the machine underneath it reports.
@@ -119,6 +120,7 @@ int cross_tier_draw_run(const plant_parameters_t *machine_parameters,
                         const plant_parameter_budget_t *control_budget,
                         const estimator_limits_t *limits,
                         const delivery_tolerance_t *tolerance,
+                        const pump_trim_declaration_t *pump_trim,
                         const cross_tier_draw_t *draw);
 
 #endif /* CROSS_TIER_DRAW_H */
