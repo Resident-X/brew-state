@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-MEASUREMENT-FIGURES.C2
+type: criterion
+title: Each figure names the declared figure it was taken from and the requirement criterion it serves
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |
+  The admissible bases are figures this design has already committed to elsewhere: the delivery bands in firmware/params/tolerance.declaration, the declared sensing error in firmware/params/control.declaration, the control loop's step interval accounted for in firmware/params/cadence.declaration, and the states and bands the steam path is held at in firmware/params/steam_control.declaration. A figure naming no such source is inadmissible, and so is one whose named basis is what a part costs, since the parent task applies cost to a settled specification rather than letting it shape one. Where the source declaration marks its own value as an estimate, the row carries that marking across, so a figure resting on an estimate cannot be read as an established one.
+
+  Out of scope: revising any value in a source declaration, and arguing whether an estimate recorded there is the right one -- both belong to the work that produced the declaration.
+links:
+  - target: SOL-CHANNEL-MEASUREMENT-FIGURES
+    type: criterion-of

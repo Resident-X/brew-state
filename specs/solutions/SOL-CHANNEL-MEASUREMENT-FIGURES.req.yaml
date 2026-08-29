@@ -1,0 +1,29 @@
+id: SOL-CHANNEL-MEASUREMENT-FIGURES
+type: deliverable
+category: solution
+title: The accuracy, resolution and update rate the control needs of each enumerated channel, every figure named against the declared figure it was taken from
+status: active
+version: 1
+text: |
+  The channel table SOL-CONTROLLER-CHANNEL-ENUMERATION wrote -- docs/controller-io.md, one row per channel with its signal, peripheral class, count and safety marking -- gains what the control actually needs of each row: the absolute accuracy, the resolution, and how often a fresh reading or command has to arrive. The three figures sit beside the channel they belong to rather than in a table of their own, so someone judging a candidate part against a channel reads one row instead of reconciling two documents.
+
+  No figure here is invented for the document. Each is taken from a figure this design has already declared and committed to, and each row names which one: the brew temperature band in firmware/params/tolerance.declaration, which states how far a delivery may sit from what it was asked for; the declared sensing error in firmware/params/control.declaration, which the commanded margin on each temperature loop is already widened by; the flow departure band in that same tolerance declaration, which is the smallest departure a delivery is judged against; and the control loop's step interval, accounted for in firmware/params/cadence.declaration, inside which every channel has to be sampled and every command issued. Each row also names the requirement criterion its figure serves, so a reader can tell a figure that carries a requirement apart from one that merely happens to be true of a part.
+
+  Provenance travels with the figure. The declared sensing error is an estimate at the accuracy class a block-mounted domestic sensor ordinarily carries, and the step interval is an estimate chosen so the loop samples far faster than the brew path's thermal constants; neither has been measured on this machine, and nothing has yet shown either is sufficient. A figure copied across without the marking its source carries would read as established, which is exactly the failure those source declarations exist to prevent, so the marking is carried rather than dropped.
+
+  Where no declared figure reaches a channel, the cell says so instead of carrying a plausible number. The wand disc channel is the clearest case: the machine's declaration records it as an uncharacterised hypothesis about milk temperature, with neither the lag nor the relative weight of its two heat paths established, so what the control needs of it cannot be derived from anything committed.
+
+  What a part costs is not an input to any figure written here. The parent task applies cost to a specification already settled rather than letting cost shape one, and a figure adopted because a part happened to offer it at a price is the case that ordering exists to exclude.
+
+  Out of scope: enumerating the channels themselves, which SOL-CONTROLLER-CHANNEL-ENUMERATION already did and this work only extends; naming, against each unsettled cell, the work that will settle it, which DEL-COMPONENT-SPECIFICATION.C3 requires separately and which is not attempted here; selecting or characterising any sensing part, which REQ-MEASUREMENT-001's own rationale leaves as an open, cost-driven decision; sizing or choosing the controller; regenerating the document from the graph and the committed parameters, which is a later criterion of the parent task; and the bench work that would displace any estimate here with a measurement.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION.C2
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C1
+    type: targets
+  - target: REQ-MEASUREMENT-001.C2
+    type: targets
+  - target: REQ-MEASUREMENT-001.C6
+    type: targets
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION
+    type: depends-on

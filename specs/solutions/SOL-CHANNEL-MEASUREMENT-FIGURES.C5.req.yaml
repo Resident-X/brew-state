@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-MEASUREMENT-FIGURES.C5
+type: criterion
+title: The flow row's resolution is stated against the declared smallest departure a delivery is judged by
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  The resolution written against the flow row comes from the declared flow departure band rather than from what a vane meter conveniently provides, because a reading too coarse to separate one delivery from the next cannot support the consistency the machine is judged on however accurate it is in aggregate. That band is itself an estimate, placed between a pump ripple and a choked-puck shortfall neither of which has been recorded from a bench, so the row carries that provenance rather than presenting the figure as measured.
+
+  Out of scope: fitting, reading or bench-characterising the meter and confirming it can actually resolve that band, which DEL-BENCH-FLOW-INSTRUMENTATION carries; and the volume held between the meter and each point of delivery.
+links:
+  - target: SOL-CHANNEL-MEASUREMENT-FIGURES
+    type: criterion-of
