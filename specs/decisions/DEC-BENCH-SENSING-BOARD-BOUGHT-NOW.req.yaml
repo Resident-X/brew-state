@@ -1,7 +1,7 @@
 id: DEC-BENCH-SENSING-BOARD-BOUGHT-NOW
 type: decision
 title: An STM32F4 board with spare sensing I/O is bought now for bench characterisation, not yet confirmed as the machine's controller
-status: active
+status: deprecated
 version: 1
 decided_by: david
 rationale: |

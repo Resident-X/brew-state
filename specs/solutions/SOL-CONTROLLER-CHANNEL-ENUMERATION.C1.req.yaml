@@ -1,0 +1,14 @@
+id: SOL-CONTROLLER-CHANNEL-ENUMERATION.C1
+type: criterion
+title: The enumeration draws every channel from the machine's declared configuration and the decisions that added to it, each row naming its source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The enumeration is built from the reference-machine document's already-fitted sensing and actuation lists together with every channel a decision has since added, and each row of docs/controller-io.md names where it came from -- the document, or the deciding node's id. A channel present in neither source is absent from the enumeration rather than inferred from the machine's behaviour.
+
+  Out of scope: channels that a future capability might want but no decision has admitted, and the machine's plumbing topology.
+links:
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION
+    type: criterion-of

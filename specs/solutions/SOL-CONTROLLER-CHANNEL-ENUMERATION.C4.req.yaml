@@ -1,0 +1,14 @@
+id: SOL-CONTROLLER-CHANNEL-ENUMERATION.C4
+type: criterion
+title: Channels whose failure bears on safety are marked and separated from those whose failure does not
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every row is marked as bearing on safety or not, with the protective devices the machine reuses and anything switching a heater in the first set, so that substituting a component surfaces the safety argument that depended on it rather than passing as an equivalent part.
+
+  Out of scope: judging whether any reused protective device is fit for service, which is established by inspection elsewhere.
+links:
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION
+    type: criterion-of

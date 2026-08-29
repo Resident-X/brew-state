@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  Per DEC-BENCH-SENSING-BOARD-BOUGHT-NOW, an STM32F4-family board bought for bench sensing is wired
+  Per DEC-HEATER-DRIVE-GATED-BY-SUPERVISION, an STM32F4-family board bought for bench sensing is wired
   to the meter's signal line on a peripheral matching the signal type the prior criterion establishes.
   If the signal is an analogue voltage or current, the HW_SENSOR_FLOW channel in
   firmware/include/hw_interface.h and its backing table in firmware/src/hw/stm32/hw_stm32.c, which
@@ -21,8 +21,9 @@ text: |
   the meter being wired to the OEM controller rather than this board, is updated to match.
 
   Out of scope: the final production controller selection, which this wiring does not constitute or
-  foreclose per DEC-PREHARDWARE-TARGET-FAMILY, and driving any SSR or heater channel from this board,
-  which DEC-BENCH-SENSING-BOARD-BOUGHT-NOW explicitly excludes.
+  foreclose per DEC-PREHARDWARE-TARGET-FAMILY, and driving any SSR or heater channel from this
+  board, which DEC-HEATER-DRIVE-GATED-BY-SUPERVISION admits for bench work but which this slice does
+  not cover.
 links:
   - target: SOL-FLOW-METER-READING-AT-CONTROLLER
     type: criterion-of

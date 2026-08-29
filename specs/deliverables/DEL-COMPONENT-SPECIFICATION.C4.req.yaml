@@ -1,0 +1,15 @@
+id: DEL-COMPONENT-SPECIFICATION.C4
+type: criterion
+title: The hardware chosen is shown to leave room on the interfaces in use for the channels the graph anticipates
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The headroom requirement is stated of the machine's hardware in general; what this criterion adds is that the argument is made against this enumeration and this candidate part, channel by channel, rather than asserted of the part as a whole.
+
+  An argument that counts connectors satisfies nothing here: the bus loading and the timing resources each anticipated channel would need are what the count has to be taken over.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION
+    type: criterion-of

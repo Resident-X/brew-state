@@ -1,0 +1,15 @@
+id: DEL-COMPONENT-SPECIFICATION.C2
+type: criterion
+title: Each channel states the accuracy, resolution and update rate the control needs, with the basis of each figure named
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  A figure without its basis cannot be checked, and reads as established whether it was derived from the delivery tolerance and the protection margin or adopted because a part offered it.
+
+  What a part costs is not among the admissible bases.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION
+    type: criterion-of
