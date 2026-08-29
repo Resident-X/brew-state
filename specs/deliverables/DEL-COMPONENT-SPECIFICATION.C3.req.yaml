@@ -1,0 +1,15 @@
+id: DEL-COMPONENT-SPECIFICATION.C3
+type: criterion
+title: A figure that cannot yet be derived is marked pending against the work that will settle it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  A provisional number is indistinguishable from a derived one once written down, and the distinction is the whole value of the document.
+
+  Naming the work that will settle it is what makes the gap closeable rather than merely acknowledged.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION
+    type: criterion-of

@@ -1,0 +1,50 @@
+id: DEL-COMPONENT-SPECIFICATION
+type: deliverable
+category: task
+title: Every channel the machine needs is specified from the requirements, and the hardware that serves them is bought once with headroom
+status: active
+level: task
+version: 1
+text: |
+  What the machine has to be built from stops being an option someone once costed and becomes a specification derived from what the control needs. Every channel the machine senses or drives is named with the signal it carries, the kind of peripheral that reads or writes it, and how many of it there are; alongside them sit the compute the control law and estimator demand and the way the operator reaches the machine, whether that is a colour panel driven directly or a separate display board reached over a serial link. That much is derivable today from the machine's declared configuration and the additions the graph has already ruled on, and it waits on nothing.
+
+  Each channel then carries what the control actually needs of it -- absolute accuracy, resolution, and how often a fresh reading has to arrive -- with the basis each figure comes from named, so a reader can tell a figure derived from the delivery tolerance and the protection margin apart from one adopted because a part happened to offer it. What a part costs is not an input to any of these figures. A channel whose figure cannot yet be derived is marked as pending against the work that will settle it rather than given a provisional number that later reads as established. The temperature channels are in exactly that position until sensing error is carried in the commanded margin, which is separate work already in the graph; the sensing and interface enumeration is not held behind it.
+
+  The hardware that serves those channels is bought once, sized past the channels currently in view so a channel added later does not mean a second board, and shown to leave that room on the interfaces themselves rather than only in unused pins. What is bought, what the machine already carries and can be reused, and what the whole comes to are recorded together against the figure the build is held to -- which is where cost enters, applied to a specification already settled rather than shaping it.
+
+  All of it is produced from the graph and the committed parameters rather than kept by hand, and regenerates from the project's task runner, so the specification cannot quietly diverge from the requirements it claims to derive from.
+
+  Out of scope: formally selecting the machine's controller, which is answered against measured plant parameters and stays open; the bench characterisation that produces those measurements; fitting or wiring any of the parts; and the sensing-error term itself, which is carried by its own solution and consumed here.
+links:
+  - target: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
+    type: justified-by
+  - target: DEL-BREW-STATE-DELIVERY.C4
+    type: derives-from
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C1
+    type: targets
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C2
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C1
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C2
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C5
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C6
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C2
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C3
+    type: targets
+  - target: REQ-MEASUREMENT-001.C1
+    type: targets
+  - target: REQ-MEASUREMENT-001.C2
+    type: targets
+  - target: REQ-MEASUREMENT-001.C6
+    type: targets
+  - target: REQ-MEASUREMENT-001.C7
+    type: targets
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets

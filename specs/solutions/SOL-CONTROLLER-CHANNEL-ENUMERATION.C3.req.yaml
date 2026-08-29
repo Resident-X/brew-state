@@ -1,0 +1,14 @@
+id: SOL-CONTROLLER-CHANNEL-ENUMERATION.C3
+type: criterion
+title: The compute and operator-interface demands are stated alongside the channels that compete with them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The arithmetic and timing the control law and estimator demand are stated alongside the channels, derived from the loop rates those components already declare and the arithmetic their committed implementation already uses, with that derivation named as the basis. A figure with no stated basis is not admissible here. The operator interface demand is stated under each of its two forms -- a panel driven from the controller directly, and a panel reached over a serial link -- with what each form costs the controller in interfaces and bandwidth.
+
+  Out of scope: choosing between the two interface forms, and measuring the control law's actual execution time on any target, which is on-target work under a later phase.
+links:
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: SOL-CONTROLLER-CHANNEL-ENUMERATION.C2
+type: criterion
+title: Each channel states its signal, the class of peripheral that serves it, and its count
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each row states the signal the channel presents or expects, the class of peripheral that serves it -- analogue conversion, counter or timer capture, plain digital level, serial bus, or modulated output -- and the count of instances. Two channels of the same physical quantity occupy separate rows when they occupy separate controller inputs.
+
+  Out of scope: the accuracy, resolution and update rate the channel needs, and any specific part number or controller peripheral name.
+links:
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION
+    type: criterion-of

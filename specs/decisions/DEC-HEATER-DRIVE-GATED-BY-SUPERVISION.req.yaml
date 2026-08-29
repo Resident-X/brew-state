@@ -1,0 +1,55 @@
+id: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
+type: decision
+category: strategic
+title: Bench heater drive is admissible on the protective devices the machine already carries, and the board is sized to a worst-case envelope as the prospective controller
+status: active
+version: 1
+text: |
+  Heater channels may be wired and driven during bench characterisation, and the parts that switch them may be bought and fitted now. This is a deliberate relaxation of an earlier gate, not a correction of one: the decision it supersedes blocked heater drive on the proof-of-life interlock having no covering work and on the steam-side relief question being open, and both of those remain true. What has changed is the judgement about whether they need to be true before the machine may be heated on a bench.
+
+  What bounds the hazard during bench work is not the controller and not the operator. It is the protective devices the machine already carries and that this project reuses: a thermostat wired in series with the power to each block, and a one-shot thermal device in the same path. Both act on temperature directly, with no controller involvement and no firmware able to reach them, and both are fitted today. Driving a block from a bench controller therefore puts the machine in the state it already occupies whenever its original controls call for heat, bounded by the same devices in the same way. Pressure, which no electrical action reaches once present, is bounded by the outlet rather than by power: a thermoblock heated with its wand open is not a shut volume, and opening the wand is the release path available at the moment power is removed.
+
+  The operator's presence is a secondary layer over that, not the argument. An engineer who built the rig, watching it and able to remove power, catches what the devices are not there to catch -- a wiring error, a channel driving the wrong load, a reading that stops making sense -- and none of the above admits leaving the bench running unattended.
+
+  The protective chain the delivered machine requires is unchanged and unweakened. The proof-of-life interlock is still owed, still has no covering work, and still gates the assembled machine; supervision is not proof of life and is not offered as a substitute for it. Nor is any element of the chain disabled, delayed or bypassed here -- the devices that exist keep acting, and what is absent is absent because it has not been built, which is a different thing from an override. A mechanical relief fitting may likewise be added now; an unresolved relief question is a reason to fit one, not a reason to withhold a component list.
+
+  The board bought is sized to a worst-case input, output and compute envelope rather than to the channels currently in view, and serves as both the bench instrument and the prospective machine controller. Buying instrumentation, measuring the machine with it, then discarding it for a second board costs more than buying once with headroom, and a real target board is needed for on-target timing verification in any case. Formal controller selection still happens against measured plant parameters and is not settled here.
+rationale: |
+  Context: DEC-BENCH-SENSING-BOARD-BOUGHT-NOW bought a board for bench characterisation and excluded heater and switching channels from it, gating that exclusion on REQ-SAFETY-CHAIN-001.C2 and .C3 having no covering deliverable and on the steam-side relief question being open, and stating that heater drive was blocked on both independent of whether the board was purchased. That gate is not mis-drawn; it is drawn on whether those mitigations exist, and they still do not. But it blocks the thermal bench characterisation the board was bought to enable, and thermal behaviour is the largest part of the plant model the roadmap's next phase must measure. Holding it costs the project its next phase; releasing it requires an argument about what actually bounds the hazard while the mitigations are outstanding.
+
+  Trade-offs: Grounding the release in the reused per-block series thermostat and one-shot device puts the argument on mechanisms that act without the controller, are fitted today, and already bound the machine in factory use -- so bench heat-on is not a new hazard state but the existing one reached by a different command path. REQ-SAFETY-CHAIN-001.C5 rules that nothing electrical addresses pressure and that removing heat does not remove pressure already present, which is why power removal is not offered as the pressure answer; the answer is the outlet, since a block heated with its wand open is not the shut volume C5 sizes relief against. REQ-SAFETY-CHAIN-001.C6 admits no exception for test modes or commissioning and says characterisation in particular runs with the chain fully active; that is honoured on its own terms, because nothing here disables, delays or bypasses a fitted element, and the elements still owed are unbuilt rather than overridden -- a distinction C6 turns on, since its concern is a chain that holds until firmware sets an override. Resting the argument on the operator's presence alone was rejected: it is a property of how the rig is operated rather than of how it is built, it is the kind of condition that quietly lapses, and it does not reach the pressure hazard at all. Keeping the exclusion was rejected because it defers the project's next phase indefinitely while protecting nothing the reused devices are not already protecting. Weakening REQ-SAFETY-CHAIN-001.C2 or .C3 to admit supervision as proof of life was rejected outright: the interlock exists for the case where nobody is watching, and admitting a watching human into it would hollow it out for the delivered machine. Buying separate narrow bench instrumentation and selecting the controller only after the model is fitted was rejected on cost and time, because the instrument capable of reading these channels is substantially the controller capable of driving them.
+
+  Reversibility: Cheap on the purchase side, and the safety argument is reversible only in the sense that it is bounded. Parts bought under a worst-case envelope stay useful whichever way controller selection lands, and REQ-HARDWARE-HEADROOM-001.C3 is the argument for buying them once. What is not cheap to reverse is the precedent: if operating with the interlock outstanding comes to read as generally acceptable rather than as bounded to supervised bench work on a machine whose reused devices still act, the interlock's covering work can be deferred indefinitely without anyone deciding to defer it. Superseding this decision means re-imposing the exclusion on bench work, not unwinding hardware.
+
+  Consequences: Heater and switching channels may be wired to the board and driven during bench characterisation, and the parts that switch them may be bought now. Thermal bench characterisation is no longer blocked on the proof-of-life interlock. Component selection and a bill of materials are not gated on the relief question or on the interlock's covering deliverable. REQ-SAFETY-CHAIN-001.C2 and .C3 still have no covering deliverable and still gate the assembled machine; the condition this decision relies on -- that the reused per-block thermostat and one-shot device are fitted and acting -- is an assumption about the machine's present state that OBL-PHYSICAL-CONFIGURATION-001.C3 requires establishing before anything relies on it, and bench work relies on it from the first heated trial. Downstream component work may assume the board is sized to a worst-case envelope with headroom on the interfaces in use, and may not assume the controller has been formally selected.
+options_considered:
+  - option: Gate heater drive on whether operation is supervised rather than on which board drives the channel, and size the board bought to a worst-case envelope so it serves as both bench instrument and prospective machine controller
+    reason_rejected: ""
+  - option: Keep the heater exclusion tied to the bench board and wait for the proof-of-life interlock's covering deliverable before driving any heater channel
+    reason_rejected: blocks the thermal bench characterisation the roadmap's next phase depends on while protecting nothing, since the same operator can energise the same element from the machine's original controls today
+  - option: Weaken REQ-SAFETY-CHAIN-001.C2 and .C3 to admit supervised operation as a form of proof of life
+    reason_rejected: the interlock exists for the case where nobody is watching, and admitting a watching human into it would hollow it out for the delivered machine
+  - option: Buy separate narrow bench instrumentation now and select the machine's controller only after the plant model is fitted
+    reason_rejected: the instrument capable of reading these channels is substantially the controller capable of driving them, so the sequence buys the same class of part twice
+chosen: Gate heater drive on whether operation is supervised rather than on which board drives the channel, and size the board bought to a worst-case envelope so it serves as both bench instrument and prospective machine controller
+links:
+  - target: DEC-BENCH-SENSING-BOARD-BOUGHT-NOW
+    type: supersedes
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: addresses
+  - target: REQ-HARDWARE-HEADROOM-001.C1
+    type: addresses
+  - target: REQ-HARDWARE-HEADROOM-001.C2
+    type: addresses
+  - target: REQ-HARDWARE-HEADROOM-001.C3
+    type: addresses
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: addresses
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: addresses
+  - target: REQ-SAFETY-CHAIN-001.C5
+    type: addresses
+  - target: REQ-SAFETY-CHAIN-001.C6
+    type: addresses
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C3
+    type: addresses

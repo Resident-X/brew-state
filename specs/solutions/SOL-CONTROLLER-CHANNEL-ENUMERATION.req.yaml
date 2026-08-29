@@ -1,0 +1,25 @@
+id: SOL-CONTROLLER-CHANNEL-ENUMERATION
+type: deliverable
+category: solution
+title: Every channel the machine senses or drives, with its signal, peripheral class and count, drawn from the declared configuration and the decisions that added to it
+status: active
+version: 1
+text: |
+  Everything the machine senses or drives is written down once, in docs/controller-io.md, as the input every later component judgement reads. The document is written by hand in this slice; regenerating it from its sources is a later criterion of the parent task and is not attempted here. The source is the machine's own declared configuration in the reference-machine document -- the sensing and actuation recorded there as already fitted -- plus the channels the graph has since decided to add, each named against the decision that added it rather than appearing without provenance. Nothing is invented: a channel is in the enumeration because the machine carries it or because a decision put it there.
+
+  Each channel carries what a controller has to provide to serve it: the signal it presents or expects, the class of peripheral that reads or writes that signal, and how many instances of it exist. A casting temperature sensor and a wand disc sensor are separate rows even though both are temperature, because each occupies its own input. A pulse train and a ratiometric analogue voltage are distinguished, because one wants a counter or capture unit and the other an analogue converter, and a board with the right total pin count and the wrong mix of peripherals fails on a fact the pin count never showed.
+
+  Alongside the channels sit the two demands that compete with them for the same controller: what the control law and estimator need in arithmetic and time to run at the rate they consume their inputs at, and how the operator reaches the machine -- either a colour panel driven from the controller directly, which spends its display and memory bandwidth, or a separate display board reached over a serial link, which spends two pins and pushes the panel's cost onto a second part. The enumeration states what each choice demands rather than choosing between them.
+
+  Channels whose failure bears on safety are marked as such and separated from those whose failure does not, so that a later substitution surfaces the safety argument it touches rather than passing as an equivalent part. The protective devices the machine reuses are in this set, and so is anything that switches a heater.
+
+  Out of scope: what accuracy, resolution or update rate any channel needs, which is derived separately and against work that has not landed; choosing a specific part or controller for any channel; the cost of anything; wiring, fitting or pin assignment; and the machine's plumbing, which a decision already leaves as the factory built it.
+links:
+  - target: DEC-HEATER-DRIVE-GATED-BY-SUPERVISION
+    type: justified-by
+  - target: DEL-COMPONENT-SPECIFICATION.C1
+    type: derives-from
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C1
+    type: targets
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C2
+    type: targets

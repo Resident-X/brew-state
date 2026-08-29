@@ -1,0 +1,15 @@
+id: DEL-COMPONENT-SPECIFICATION.C6
+type: criterion
+title: The specification and the purchase list regenerate from the graph and the committed parameters
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A document maintained by hand diverges from the requirements it claims to derive from, and the divergence is silent.
+
+  Regenerating from the project's task runner is what makes the divergence visible rather than a matter of remembering. The machine's declared configuration counts as a source alongside the graph and the committed parameters, since what the machine already carries is recorded there rather than in either.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION
+    type: criterion-of

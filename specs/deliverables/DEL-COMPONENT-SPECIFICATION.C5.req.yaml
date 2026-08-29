@@ -1,0 +1,17 @@
+id: DEL-COMPONENT-SPECIFICATION.C5
+type: criterion
+title: The spend the build is held to is declared, and what is bought, what is reused and what the whole comes to are recorded against it
+status: active
+version: 1
+measurement_type: threshold
+verification: inspection
+closes_by: cascade
+text: |
+  Every channel can carry a good reason for its part and the total still arrive at commercial pricing, so the figure the build is held to is written down here rather than held in anyone's head, and the total is recorded against it.
+
+  A channel whose part departs from the reused-or-commodity default carries the reason for that departure against that channel, so a departure cannot ride on a general preference for better components.
+
+  Parts the machine already carries count as reuse against the total rather than falling outside it.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION
+    type: criterion-of

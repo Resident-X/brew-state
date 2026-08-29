@@ -1,0 +1,17 @@
+id: DEL-COMPONENT-SPECIFICATION.C1
+type: criterion
+title: Every channel the machine senses or drives is enumerated with its signal, the peripheral kind it demands, its count, and whether its failure bears on safety
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  An enumeration that omits a channel produces hardware that cannot reach it, and the omission is found when the part is already bought.
+
+  The compute the control law and estimator demand, and the way the operator reaches the machine, sit alongside the channels because they compete for the same interfaces.
+
+  Each channel also records whether its failure bears on safety, so that substituting one later surfaces the safety argument that depended on it rather than passing as an equivalent part.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION
+    type: criterion-of
