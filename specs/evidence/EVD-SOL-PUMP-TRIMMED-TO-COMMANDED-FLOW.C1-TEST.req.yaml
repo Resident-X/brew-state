@@ -1,0 +1,17 @@
+id: EVD-SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1-TEST
+type: evidence
+title: Trim moves the pump toward the commanded rate using the measured flow, gains as declared data (SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T08:34:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_a_departed_reading_drives_the_pump_above_the_open_loop_level, test_an_agreeing_meter_leaves_the_pump_at_the_open_loop_level, test_the_pump_trim_is_required_rather_than_assumed, test_the_trim_does_not_chase_the_rate_a_delivery_chose_to_yield
+text: |-
+  A departed seam reading drives the pump above the open-loop level and an agreeing one leaves it unchanged, proving the trim consumes the measured rate; pump_trim_declaration_t is required by control_init (refused when null); and the trim's error is the yield-explained gap subtracted out, not the raw one, so a deliberate yield is not fought. All pass in native_test:test_control.
+links:
+  - target: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1
+    type: satisfies

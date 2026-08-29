@@ -8,13 +8,15 @@ apiece includes them. The rendered files are never checked in, because a copy of
 a description is a second description -- two records answering the same question,
 diverging the moment either is corrected.
 
-There are three of them, and an environment built through this script declares
+There are four of them, and an environment built through this script declares
 all of them or none. An artefact carrying a description of a machine and no
 statement of what a reading off that machine may plausibly be would either
 believe every reading or believe none; one carrying both and no band would come
-up with a control law holding its deliveries to nothing. None of those is a
-state anybody would choose deliberately -- so a partial declaration is refused
-here rather than built.
+up with a control law holding its deliveries to nothing; and one carrying all
+three but no pump trim declaration has a control law that refuses to come up
+at all, since control_init requires the trim on the same terms it requires the
+band. None of those is a state anybody would choose deliberately -- so a
+partial declaration is refused here rather than built.
 
 Which files those are is read off the environment rather than named here, so a
 second board declaring its own is covered without this script being edited.
@@ -86,6 +88,11 @@ sources = [
         embedded_description.TOLERANCE,
         build_environments.EMBEDDED_TOLERANCE_OPTION,
         named[0].embedded_tolerance,
+    ),
+    (
+        embedded_description.PUMP_TRIM,
+        build_environments.EMBEDDED_PUMP_TRIM_OPTION,
+        named[0].embedded_pump_trim,
     ),
 ]
 

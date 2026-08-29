@@ -34,6 +34,7 @@
 #include "delivery_tolerance.h"
 #include "estimator.h"
 #include "protection_margin.h"
+#include "pump_trim_declaration.h"
 
 /*
  * Shortest interval between two accepted steps, in milliseconds.
@@ -312,12 +313,47 @@ typedef struct {
  * and wrong for an account of a delivery: what a delivery owes is an answer to
  * whether this shot followed what it was asked for, and that answer is not the
  * state of the last step.
+ *
+ * `driven_pump_permille` and `trim_saturated` are DEC-CORRECTION-KEEPS-THE-ACCOUNT's
+ * addition to an account that otherwise stands as the departure slice built
+ * it: the pump command is now trimmed closed-loop toward the commanded rate,
+ * so knowing that a gap was seen is no longer enough to know what the machine
+ * actually did about it. The two do not share one lifetime, though, and reading
+ * either against the other's rule is a mistake.
+ *
+ * `driven_pump_permille` is deliberately not latched to the widest departure
+ * the way `largest_milli_ml_per_s` and `at_millis` are: it is refreshed on
+ * every valid reading a delivery judges, departed or not, and is meaningful
+ * whenever `rate_observed` is set rather than only while `departed` is. That
+ * is what a caller needs to tell apart a delivery whose trim closed the gap
+ * back inside tolerance by the time it ends -- which reads `departed ==
+ * false`, the same answer a delivery the trim never had anything to correct
+ * also gives -- from one the trim never touched at all: it is the level the
+ * trim had actually driven the pump to as of the most recent judged reading,
+ * so the open-loop course alone driving a different level is visible even
+ * where `departed` alone cannot show it.
+ *
+ * `trim_saturated` is latched on the same tolerance comparison `departed`
+ * itself is -- meaningful only while `departed` is set, zero (false)
+ * otherwise, exactly as `largest_milli_ml_per_s` reads -- because saturation
+ * is a property of an actual departure and not of a course that merely
+ * happens to peak at the pump's own bound with the seam still agreeing. It
+ * says whether the trim was pinned at that bound, with the rate still beyond
+ * tolerance, as of the most recent departing reading: a trim reaching the
+ * limit and reporting nothing about it would fold "the puck asks more than
+ * this machine can give" into an ordinary miss the operator has no way to
+ * tell apart from one a little more correction would have closed. It is
+ * refreshed on every departing reading rather than pinned to the widest one,
+ * so a trim that recovers authority later in the same delivery is not left
+ * reporting a saturation that has since ended.
  */
 typedef struct {
     bool rate_observed;
     bool departed;
     int32_t largest_milli_ml_per_s;
     uint32_t at_millis;
+    uint16_t driven_pump_permille;
+    bool trim_saturated;
 } control_departure_t;
 
 /*
@@ -381,6 +417,29 @@ typedef struct {
     float integral_permille;
     /* How far from the commanded temperature a delivery may sit. */
     delivery_tolerance_t tolerance;
+    /*
+     * Accumulated trim intent, in the same permille the pump's own drive
+     * level is expressed in -- mirrors integral_permille above, the same
+     * conditional-integration discipline and the same reason it exists: it is
+     * what removes the steady rate error the trim's proportional term alone
+     * leaves standing. It does not share integral_permille's lifetime, though:
+     * that term survives between deliveries because the heater is still
+     * holding one temperature across the gap between them, while this one is
+     * put back to nothing by forget_departure alongside the departure report
+     * it feeds -- see pump_trim_command in control.c. A trim's accumulated
+     * intent answers for the puck the delivery just finished pouring through,
+     * and that puck is not the one the next delivery will meet; carrying the
+     * intent forward would have a fresh shot start already trimmed for
+     * somebody else's grounds.
+     */
+    float pump_trim_permille;
+    /*
+     * The declaration this instance was brought up against, held by value on
+     * the same terms `tolerance` above is: no allocator exists to point at a
+     * caller's copy instead, and a caller's copy is not promised to outlive
+     * the call that handed it in.
+     */
+    pump_trim_declaration_t pump_trim;
     bool started;
     bool faulted;
     /*
@@ -564,7 +623,16 @@ typedef struct {
  * tolerance record travels the same way and for a different reason: it is not a
  * property of the machine at all, but of the drink, and the control path is
  * given it rather than compiling it in so that changing what a delivery is held
- * to is a change to a declaration rather than to this file.
+ * to is a change to a declaration rather than to this file. The pump trim
+ * record travels the same way and for the same reason the tolerance does: it
+ * is not a property of the machine either but a policy choice about how hard
+ * the design leans on a rate gap, per DEC-CORRECTION-KEEPS-THE-ACCOUNT, and it
+ * is required on exactly the terms the tolerance is. A trim declared nowhere
+ * is not "no trim" -- there is no such thing as a delivery this loop drives
+ * without a course to hold, so a null here would leave every delivery's pump
+ * command uncorrected against a gap this loop already knows how to measure,
+ * silently, which is precisely the absorption DEC-CORRECTION-KEEPS-THE-ACCOUNT
+ * forbids.
  *
  * No temperature is commanded here. A machine that has just been brought up has
  * not been asked for a drink, and starting to drive toward a temperature nobody
@@ -593,7 +661,8 @@ typedef struct {
  */
 bool control_init(control_state_t *state, const plant_parameters_t *parameters,
                   const plant_parameter_budget_t *budget, const estimator_limits_t *limits,
-                  const delivery_tolerance_t *tolerance);
+                  const delivery_tolerance_t *tolerance,
+                  const pump_trim_declaration_t *pump_trim);
 
 /*
  * The margin this instance requires between a commanded target and the

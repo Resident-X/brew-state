@@ -85,6 +85,23 @@ TOLERANCE_VARIANT = (
 )
 
 
+#: The fourth thing an artefact carries: the pump trim's own gains. Unlike the
+#: other three it is neither a fact about the machine nor about the drink --
+#: it is a control-tuning policy, on the same footing the tolerance band's own
+#: fixture is here, and it travels the same way for the same want of a
+#: filesystem on the target.
+PUMP_TRIM = (
+    "# A synthetic pump trim declaration.\n"
+    "some-gain-milli = 4000 @estimated From nothing in particular.\n"
+)
+
+#: A second declaration, for the tree that has acquired one beside the intended one.
+PUMP_TRIM_VARIANT = (
+    "# A synthetic variant pump trim declaration.\n"
+    "some-gain-milli = 5000 @estimated From nothing in particular either.\n"
+)
+
+
 def target_environment(structure: str | None = None, **options):
     """One environment building for a board, as the build file would declare it."""
     terms = ["+<control/>", "+<plant/common/>", "+<hw/board/>", "+<app/board/>"]
@@ -106,6 +123,7 @@ def carrying_environment(structure: str | None = None, **options):
         "custom_embedded_description": "params/thermoblock.params",
         "custom_embedded_limits": "params/thermoblock.limits",
         "custom_embedded_tolerance": "params/tolerance.declaration",
+        "custom_embedded_pump_trim": "params/pump_trim.declaration",
     }
     declared.update(options)
     return target_environment(structure, **declared)
@@ -116,15 +134,17 @@ def host_test_environment(
     description: str,
     limits: str = "params/thermoblock.limits",
     tolerance: str = "params/tolerance.declaration",
+    pump_trim: str = "params/pump_trim.declaration",
     **options,
 ):
     """The host environment that pins the tier to a description, as the build file has it.
 
-    It pins the limits declaration and the tolerance declaration on the same
-    terms and in the same place, because that is where the build states them:
-    each is named separately so that a build pinning some and forgetting one is
-    a state a gate can see. Each is defaulted and each can be emptied, which is
-    how a test asks about exactly one omission at a time.
+    It pins the limits declaration, the tolerance declaration and the pump trim
+    declaration on the same terms and in the same place, because that is where
+    the build states them: each is named separately so that a build pinning
+    some and forgetting one is a state a gate can see. Each is defaulted and
+    each can be emptied, which is how a test asks about exactly one omission at
+    a time.
     """
     declared = {
         "platform": "native",
@@ -134,6 +154,11 @@ def host_test_environment(
         + (
             f" -D REFERENCE_TOLERANCE_PATH='\"$PROJECT_DIR/{tolerance}\"'"
             if tolerance
+            else ""
+        )
+        + (
+            f" -D REFERENCE_PUMP_TRIM_PATH='\"$PROJECT_DIR/{pump_trim}\"'"
+            if pump_trim
             else ""
         ),
         "test_build_src": "yes",
@@ -154,6 +179,7 @@ class TargetModelTree:
         self.describe("thermoblock.params", DESCRIPTION)
         self.describe("thermoblock.limits", LIMITS)
         self.describe("tolerance.declaration", TOLERANCE)
+        self.describe("pump_trim.declaration", PUMP_TRIM)
         # The directory every structure shares. It carries no structure header,
         # which is what makes it shared rather than a structure, and the real
         # tree keeps the parameter loader in it.
@@ -203,6 +229,8 @@ class TargetModelTree:
         limits_data: bytes | None = None,
         tolerance_source: str = "params/tolerance.declaration",
         tolerance_data: bytes | None = None,
+        pump_trim_source: str = "params/pump_trim.declaration",
+        pump_trim_data: bytes | None = None,
     ) -> str:
         """Render every embedding and answer the directory they went into.
 
@@ -214,6 +242,9 @@ class TargetModelTree:
         self.render(environment, embedded_description.LIMITS, limits_source, limits_data)
         self.render(
             environment, embedded_description.TOLERANCE, tolerance_source, tolerance_data
+        )
+        self.render(
+            environment, embedded_description.PUMP_TRIM, pump_trim_source, pump_trim_data
         )
         return self.generated(environment)
 
@@ -595,6 +626,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("board's parameter description", result.stdout)
         self.assertIn("board's limits declaration", result.stdout)
         self.assertIn("board's tolerance declaration", result.stdout)
+        self.assertIn("board's pump trim declaration", result.stdout)
 
     def test_a_build_declaring_a_different_description_fails(self):
         """The first divergence: a build naming a description the tier never saw."""
@@ -630,6 +662,18 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("tolerance-variant.declaration", result.stderr)
         self.assertIn("tolerance declaration the tier never verified", result.stderr)
 
+    def test_a_build_declaring_a_different_pump_trim_declaration_fails(self):
+        """The fourth divergence: a build naming gains the tier never saw."""
+        self.tree.describe("pump-trim-variant.declaration", PUMP_TRIM_VARIANT)
+        self.declare({"custom_embedded_pump_trim": "params/pump-trim-variant.declaration"})
+        generated = self.tree.generate(
+            "board", pump_trim_source="params/pump-trim-variant.declaration"
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("pump-trim-variant.declaration", result.stderr)
+        self.assertIn("pump trim declaration the tier never verified", result.stderr)
+
     def test_an_embedding_left_stale_by_an_incremental_build_fails(self):
         """The second: the description moved on and the rendered bytes did not."""
         self.declare()
@@ -658,6 +702,15 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("bytes of tolerance declaration", result.stderr)
+
+    def test_a_pump_trim_left_stale_by_an_incremental_build_fails(self):
+        """The gains were retuned and the artefact went on carrying the old ones."""
+        self.declare()
+        generated = self.tree.generate("board", pump_trim_data=PUMP_TRIM.encode("utf-8"))
+        self.tree.describe("pump_trim.declaration", PUMP_TRIM_VARIANT)
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of pump trim declaration", result.stderr)
 
     def test_an_embedding_rendered_from_a_second_description_fails(self):
         """The third: a variant sitting beside the intended one is what got carried."""
@@ -690,6 +743,17 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("generated from params/tolerance-variant.declaration", result.stderr)
         self.assertIn("pinned tolerance declaration", result.stderr)
 
+    def test_a_pump_trim_rendered_from_a_second_declaration_fails(self):
+        self.tree.describe("pump-trim-variant.declaration", PUMP_TRIM_VARIANT)
+        self.declare()
+        generated = self.tree.generate(
+            "board", pump_trim_source="params/pump-trim-variant.declaration"
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("generated from params/pump-trim-variant.declaration", result.stderr)
+        self.assertIn("pinned pump trim declaration", result.stderr)
+
     def test_an_embedding_carrying_two_descriptions_fails(self):
         """Two definitions leave which one the machine carries to the compiler."""
         self.declare()
@@ -714,6 +778,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
                         "thermoblock",
                         custom_embedded_limits="params/thermoblock.limits",
                         custom_embedded_tolerance="params/tolerance.declaration",
+                        custom_embedded_pump_trim="params/pump_trim.declaration",
                     ),
                 ),
                 ("native_test", self.pinned),
@@ -734,6 +799,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
                         "thermoblock",
                         custom_embedded_description="params/thermoblock.params",
                         custom_embedded_tolerance="params/tolerance.declaration",
+                        custom_embedded_pump_trim="params/pump_trim.declaration",
                     ),
                 ),
                 ("native_test", self.pinned),
@@ -756,6 +822,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
                         "thermoblock",
                         custom_embedded_description="params/thermoblock.params",
                         custom_embedded_limits="params/thermoblock.limits",
+                        custom_embedded_pump_trim="params/pump_trim.declaration",
                     ),
                 ),
                 ("native_test", self.pinned),
@@ -766,6 +833,30 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("custom_embedded_tolerance", result.stderr)
         self.assertIn("tolerance declaration its artefact carries", result.stderr)
+
+    def test_a_machine_build_declaring_no_pump_trim_fails(self):
+        """A control path refuses to come up at all without the trim's own
+        gains, which is a louder failure than the other three but the same
+        omission underneath it."""
+        self.tree.declare(
+            [
+                (
+                    "board",
+                    target_environment(
+                        "thermoblock",
+                        custom_embedded_description="params/thermoblock.params",
+                        custom_embedded_limits="params/thermoblock.limits",
+                        custom_embedded_tolerance="params/tolerance.declaration",
+                    ),
+                ),
+                ("native_test", self.pinned),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("custom_embedded_pump_trim", result.stderr)
+        self.assertIn("pump trim declaration its artefact carries", result.stderr)
 
     def test_a_build_pinning_no_description_fails(self):
         """A tier pinned to nothing has verified against nothing in particular."""
@@ -814,6 +905,29 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("REFERENCE_TOLERANCE_PATH", result.stderr)
         self.assertIn(
             "no tolerance declaration the verification tier is pinned to", result.stderr
+        )
+
+    def test_a_build_pinning_no_pump_trim_fails(self):
+        """A tier pinning the machine's files and the drink's tolerance but
+        forgetting the trim never exercised the actual gains the target
+        carries."""
+        self.tree.declare(
+            [
+                ("board", carrying_environment("thermoblock")),
+                (
+                    "native_test",
+                    host_test_environment(
+                        "thermoblock", "params/thermoblock.params", pump_trim=""
+                    ),
+                ),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("REFERENCE_PUMP_TRIM_PATH", result.stderr)
+        self.assertIn(
+            "no pump trim declaration the verification tier is pinned to", result.stderr
         )
 
     def test_a_build_pinning_two_descriptions_fails(self):
@@ -882,6 +996,29 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("more than one tolerance declaration is named", result.stderr)
         self.assertIn("tolerance-variant.declaration by other_test", result.stderr)
 
+    def test_a_build_pinning_two_pump_trim_declarations_fails(self):
+        """Two answers to how hard the trim corrects is no answer at all."""
+        self.tree.describe("pump-trim-variant.declaration", PUMP_TRIM_VARIANT)
+        self.tree.declare(
+            [
+                ("board", carrying_environment("thermoblock")),
+                ("native_test", self.pinned),
+                (
+                    "other_test",
+                    host_test_environment(
+                        "thermoblock",
+                        "params/thermoblock.params",
+                        pump_trim="params/pump-trim-variant.declaration",
+                    ),
+                ),
+            ]
+        )
+        generated = self.tree.generate("board")
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("more than one pump trim declaration is named", result.stderr)
+        self.assertIn("pump-trim-variant.declaration by other_test", result.stderr)
+
     def test_a_pinned_description_that_is_not_there_fails(self):
         self.declare()
         generated = self.tree.generate("board")
@@ -908,6 +1045,15 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("pinned to the tolerance declaration", result.stderr)
         self.assertIn("nothing for an artefact to be compared against", result.stderr)
 
+    def test_a_pinned_pump_trim_declaration_that_is_not_there_fails(self):
+        self.declare()
+        generated = self.tree.generate("board")
+        os.remove(os.path.join(self.tree.root, "params", "pump_trim.declaration"))
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("pinned to the pump trim declaration", result.stderr)
+        self.assertIn("nothing for an artefact to be compared against", result.stderr)
+
     def test_an_embedding_offered_for_something_that_is_not_a_machine_build_fails(self):
         self.declare()
         generated = self.tree.generate("native_test")
@@ -931,6 +1077,7 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         self.assertIn("no generated embedding of the parameter description", result.stderr)
         self.assertIn("no generated embedding of the limits declaration", result.stderr)
         self.assertIn("no generated embedding of the tolerance declaration", result.stderr)
+        self.assertIn("no generated embedding of the pump trim declaration", result.stderr)
 
     def test_a_machine_build_whose_limits_alone_were_never_rendered_fails(self):
         """Half a rendering is the state an added embedding arrives through."""
@@ -958,6 +1105,20 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("no generated embedding of the tolerance declaration", result.stderr)
+
+    def test_a_machine_build_whose_pump_trim_alone_was_never_rendered_fails(self):
+        """The state the newest embedding of all arrives through."""
+        self.declare()
+        self.tree.generate("board")
+        os.remove(
+            os.path.join(
+                self.tree.generated("board"),
+                embedded_description.PUMP_TRIM.generated_name,
+            )
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("no generated embedding of the pump trim declaration", result.stderr)
 
     def test_a_generated_directory_inside_the_source_tree_is_refused(self):
         """A rendered file kept in the tree is the second copy this exists to prevent."""
@@ -1023,6 +1184,18 @@ class AMachineCarriesTheVerifiedDescription(TargetModelCase):
         result = self.check(f"board={generated}")
         self.assertEqual(1, result.returncode)
         self.assertIn("tolerance declaration", result.stderr)
+        self.assertIn("description-source:", result.stderr)
+
+    def test_a_generated_pump_trim_file_that_is_not_an_embedding_fails(self):
+        self.declare()
+        generated = self.tree.generate("board")
+        write(
+            os.path.join(generated, embedded_description.PUMP_TRIM.generated_name),
+            "const char reference_pump_trim[] = { 0x00 };\n",
+        )
+        result = self.check(f"board={generated}")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("pump trim declaration", result.stderr)
         self.assertIn("description-source:", result.stderr)
 
     def test_a_second_board_declaring_the_wrong_description_is_caught(self):
@@ -1106,7 +1279,8 @@ class TheArtefactCarriesTheModel(TargetModelCase):
     def link(self, environment: str, *, operations=("plant_model_init", "plant_model_step"),
              descriptions=("params/thermoblock.params",),
              limits=("params/thermoblock.limits",),
-             tolerances=("params/tolerance.declaration",)):
+             tolerances=("params/tolerance.declaration",),
+             pump_trims=("params/pump_trim.declaration",)):
         """Link an artefact defining the given operations and carrying the given bytes.
 
         Each file goes in through the same rendering the build uses, so what a
@@ -1130,6 +1304,7 @@ class TheArtefactCarriesTheModel(TargetModelCase):
             (embedded_description.DESCRIPTION, descriptions),
             (embedded_description.LIMITS, limits),
             (embedded_description.TOLERANCE, tolerances),
+            (embedded_description.PUMP_TRIM, pump_trims),
         ):
             for index, path in enumerate(carried):
                 with open(os.path.join(self.tree.root, path), "rb") as handle:
@@ -1193,6 +1368,17 @@ class TheArtefactCarriesTheModel(TargetModelCase):
         self.assertIn("bytes of the tolerance declaration", result.stderr)
         self.assertIn("0 time(s)", result.stderr)
 
+    def test_an_artefact_carrying_no_pump_trim_fails(self):
+        """Gains the linker dropped leave the control path with nothing to
+        satisfy control_init's own refusal -- a symptom this gate finds before
+        the machine ever tries to come up."""
+        self.declare("board")
+        self.link("board", pump_trims=())
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of the pump trim declaration", result.stderr)
+        self.assertIn("0 time(s)", result.stderr)
+
     def test_an_artefact_carrying_the_band_twice_fails(self):
         """Two copies leave which one the running machine is held to unanswerable
         from the artefact, which is the one place it can still be asked."""
@@ -1204,6 +1390,18 @@ class TheArtefactCarriesTheModel(TargetModelCase):
         result = self.check()
         self.assertEqual(1, result.returncode)
         self.assertIn("bytes of the tolerance declaration", result.stderr)
+        self.assertIn("2 time(s)", result.stderr)
+
+    def test_an_artefact_carrying_the_pump_trim_twice_fails(self):
+        """Two copies of the trim's own gains is the same ambiguity again."""
+        self.declare("board")
+        self.link(
+            "board",
+            pump_trims=("params/pump_trim.declaration", "params/pump_trim.declaration"),
+        )
+        result = self.check()
+        self.assertEqual(1, result.returncode)
+        self.assertIn("bytes of the pump trim declaration", result.stderr)
         self.assertIn("2 time(s)", result.stderr)
 
     def test_an_artefact_carrying_a_second_limits_declaration_fails(self):
@@ -1378,6 +1576,7 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
             (embedded_description.DESCRIPTION, DESCRIPTION, "params/thermoblock"),
             (embedded_description.LIMITS, LIMITS, "params/thermoblock"),
             (embedded_description.TOLERANCE, TOLERANCE, "params/tolerance"),
+            (embedded_description.PUMP_TRIM, PUMP_TRIM, "params/pump_trim"),
         ):
             with open(self.rendered(embedding), "r", encoding="utf-8") as handle:
                 source, carried = embedded_description.decode(handle.read(), embedding)
@@ -1442,7 +1641,8 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
 
     def test_a_build_declaring_the_machines_files_and_no_band_is_refused(self):
         """The artefact would come up with a control law holding its deliveries to
-        nothing, which is the one omission of the three that produces coffee."""
+        nothing, which is one of the two omissions of the four that let the
+        machine come up wrong rather than not at all."""
         self.tree.declare(
             [
                 (
@@ -1451,6 +1651,7 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
                         "thermoblock",
                         custom_embedded_description="params/thermoblock.params",
                         custom_embedded_limits="params/thermoblock.limits",
+                        custom_embedded_pump_trim="params/pump_trim.declaration",
                     ),
                 ),
                 ("native_test", self.pinned),
@@ -1459,6 +1660,30 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
         result = self.embed()
         self.assertEqual(2, result.returncode)
         self.assertIn("custom_embedded_tolerance", result.stderr)
+        self.assertFalse(os.path.exists(self.rendered(embedded_description.DESCRIPTION)))
+
+    def test_a_build_declaring_the_machines_files_and_the_band_and_no_pump_trim_is_refused(self):
+        """The artefact would come up with no control path at all: control_init
+        refuses a null trim on the same terms it refuses a null band, which is
+        a louder failure than the other three omissions but the same one
+        underneath."""
+        self.tree.declare(
+            [
+                (
+                    "board",
+                    target_environment(
+                        "thermoblock",
+                        custom_embedded_description="params/thermoblock.params",
+                        custom_embedded_limits="params/thermoblock.limits",
+                        custom_embedded_tolerance="params/tolerance.declaration",
+                    ),
+                ),
+                ("native_test", self.pinned),
+            ]
+        )
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("custom_embedded_pump_trim", result.stderr)
         self.assertFalse(os.path.exists(self.rendered(embedded_description.DESCRIPTION)))
 
     def test_a_declared_limits_file_that_is_not_there_is_refused(self):
@@ -1472,6 +1697,12 @@ class TheArtefactIsGivenWhatItCarries(TargetModelCase):
         result = self.embed()
         self.assertEqual(2, result.returncode)
         self.assertIn("no tolerance declaration at", result.stderr)
+
+    def test_a_declared_pump_trim_file_that_is_not_there_is_refused(self):
+        self.declare({"custom_embedded_pump_trim": "params/nowhere.declaration"})
+        result = self.embed()
+        self.assertEqual(2, result.returncode)
+        self.assertIn("no pump trim declaration at", result.stderr)
 
     def test_an_unchanged_declaration_is_not_rewritten(self):
         """Restamping the rendered file would rebuild the translation unit that

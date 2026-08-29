@@ -1,0 +1,47 @@
+# What the pump trim is given, rather than compiled with.
+#
+# This is the delivery side's companion to steam_control.declaration: not
+# properties of a casting, but the design's own choice of how hard to lean on
+# the gap between the rate a course commands and the rate the flow seam
+# reports, read by control.c's pump_trim_command rather than compiled into it.
+# DEC-CORRECTION-KEEPS-THE-ACCOUNT is what asked for a trim at all -- see that
+# decision for why a machine that only reported the gap was no longer enough --
+# and these two figures are the whole of what it asked to be tunable.
+#
+# The figures were chosen against the reference description and against the
+# departure tests in test/test_control/test_control.c, in host simulation.
+# Nothing here has been on a bench, and neither have the coefficients they were
+# chosen against. Every line says so.
+#
+# A note on why the pair below reads unlike every other gain pair in this
+# project, with the integral larger than the proportional rather than smaller.
+# The plant relation this trim closes the loop on carries no resistance term
+# by design -- the trim answers only the measured rate, never a puck or a
+# pump characteristic -- so what the trim measures each step is a rate
+# directly proportional to the permille the pump was driven at the step
+# before, with no lag between the two at all. A proportional term feeding
+# straight back into a plant with no lag of
+# its own, through a loop that only ever sees last step's actuation, is a
+# textbook one-step-delay recursion: it oscillates, growing on every step,
+# the moment the gain carries more than the whole of the gap back in one
+# correction. Concretely, on the reference description's own full-scale flow,
+# a proportional gain at or above roughly a hundred and forty permille per
+# millilitre a second overshoots further than it started from every single
+# step -- confirmed by running a rising course at that gain and watching the
+# commanded level alternate between the pump's own bound and nothing every
+# other step, rather than settling. The gain below is chosen with a wide
+# margin under that figure precisely because this plant's own zero-lag
+# relation leaves so little of it to spend. The integral term does not carry
+# the same risk: accumulating gradually rather than answering the whole gap at
+# once, it stays well-behaved at gains an order of magnitude past where the
+# proportional term already oscillates, so it is where the bulk of this trim's
+# correcting is asked to happen, with the proportional term left just large
+# enough to give the loop a head start on a fresh gap without overshooting the
+# one-step delay that is this plant's own honest description of itself.
+#
+# Each line is `name = figure unit @kind account`, on the same grammar
+# steam_control.declaration already reads by.
+
+pump-trim-gain = 50000 milli-permille-per-ml-per-s @estimated Estimated at fifty permille of pump scale per millilitre a second of standing rate error -- a little over a third of the roughly hundred-and-forty figure past which the reference description's own zero-lag flow relation turns a one-step-delayed proportional term into a limit cycle bouncing between the pump's bound and nothing (see this file's own account above), and left there with margin rather than pushed any closer to it. Tuned by running test_control.c's own rising-course test against the reference description and adjusting downward from an initially more aggressive figure until the commanded trajectory stopped alternating step to step and settled to a smooth, monotonic one; confirmed against the departed-course tests to still contribute a visible, rising correction well within the tail of a five-second course. Nothing here is a measurement, and no bench has established what proportional gain a real puck's resistance would actually want answered this hard.
+
+pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Estimated at three hundred permille of pump scale per millilitre-second of accumulated rate error -- six times the proportional gain above, deliberately, because the two terms do not carry the same risk in a loop closed on a plant with no lag of its own: an integral answers a standing gap gradually rather than all at once, and stays well-behaved at gains far past where the proportional term above already oscillates against this same relation. Tuned by running test_control.c's own departed-course tests -- a meter held at four tenths of what moved for a whole five-second course -- and adjusting until the residual closed back inside the declared flow-departure band well before the course ended, without the commanded level ever alternating the way an over-aggressive proportional term does. Confirmed against a course-long departure severe enough that no pump could ever close it (a meter held at one hundredth of what moved) that the trim saturates cleanly at the pump's own bound rather than oscillating against it. Nothing here is a measurement, and no bench has established what integral gain a real puck's resistance, changing within one extraction, would actually want answered this fast.

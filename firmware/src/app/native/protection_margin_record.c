@@ -301,6 +301,7 @@ static int record_the_brew_side(const plant_parameters_t *parameters,
                                 const plant_parameter_budget_t *budget,
                                 const estimator_limits_t *limits,
                                 const delivery_tolerance_t *tolerance,
+                                const pump_trim_declaration_t *pump_trim,
                                 const char names[][COEFFICIENT_NAME_LIMIT])
 {
     control_state_t state;
@@ -311,7 +312,7 @@ static int record_the_brew_side(const plant_parameters_t *parameters,
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, STANDING_READING_MILLI_C);
 
-    if (!control_init(&state, parameters, budget, limits, tolerance)) {
+    if (!control_init(&state, parameters, budget, limits, tolerance, pump_trim)) {
         (void)fprintf(stderr, "protection margin record: the control path could not be brought "
                               "up\n");
         return 1;
@@ -470,6 +471,7 @@ int protection_margin_record_run(const char *description_text, size_t descriptio
                                  const plant_parameter_budget_t *budget,
                                  const estimator_limits_t *limits,
                                  const delivery_tolerance_t *tolerance,
+                                 const pump_trim_declaration_t *pump_trim,
                                  const steam_control_declaration_t *steam)
 {
     static char names[PLANT_PARAMETER_LIMIT][COEFFICIENT_NAME_LIMIT];
@@ -479,7 +481,7 @@ int protection_margin_record_run(const char *description_text, size_t descriptio
         return 1;
     }
 
-    const int brew = record_the_brew_side(parameters, budget, limits, tolerance, names);
+    const int brew = record_the_brew_side(parameters, budget, limits, tolerance, pump_trim, names);
     if (brew != 0) {
         return brew;
     }

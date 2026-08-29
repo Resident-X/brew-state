@@ -413,6 +413,92 @@ static float heater_command(control_state_t *state, float reconstruction_c, floa
 }
 
 /*
+ * The trimmed pump command for one step, and the accumulated trim intent it
+ * leaves behind.
+ *
+ * `course_permille` is the level the profile's own commanded rate alone asks
+ * for -- the open-loop figure this loop drove before a trim closed any loop
+ * on the flow seam -- and still the whole of what this function returns
+ * while `gap_valid` is false: a step with nothing trustworthy to compare
+ * against, or one taken before a delivery's first interval has elapsed, has
+ * nothing for a trim to answer and leaves the course exactly as it found it.
+ * That is also why an agreeing meter leaves the course untouched: a gap of
+ * nothing makes the proportional term nothing times the gain, the
+ * conditional integration below accumulates nothing more, and the level that
+ * comes back is the course unchanged -- a zero-error trim contributes
+ * nothing, on exactly the terms a zero-error heater_command's proportional
+ * term already contributes nothing to that loop.
+ *
+ * `gap_milli_ml_per_s` is commanded less measured, so a positive gap is a
+ * shortfall -- the seam reading below what the course commands. The sign
+ * convention is what makes the arithmetic below match the words: a positive
+ * error scaled by a positive gain is added to `course_permille`, so a
+ * reading held below command drives the pump above the open-loop level until
+ * the reading meets the command. A seam reading above command is the
+ * opposite gap, and subtracts from the course the same way.
+ *
+ * Both gains travel as data read from `state->pump_trim` rather than as
+ * `#define`s beside CONTROL_PROPORTIONAL_PERMILLE_PER_K above, per
+ * DEC-CORRECTION-KEEPS-THE-ACCOUNT's own reasoning that a trim's gains
+ * belong in described data carrying a recorded origin, the same footing
+ * every other control-law policy figure in this project already stands on --
+ * see pump_trim_declaration.h. Dividing by a thousand at each use rather than
+ * converting once follows control.c's own established convention for a
+ * milli-scaled figure, on the same terms steam_control.c's own
+ * heater_command already reads its declared gains.
+ *
+ * Integration is made conditional on the pump's own actuator bound rather than
+ * unwound after the fact, on exactly the terms heater_command's own integral
+ * is above and for the same reason: a trim pinned at the bound has nothing
+ * left to give, and intent accumulated past that point would arrive as an
+ * overshoot once the gap closed, long after the interval that produced it.
+ * `pushing_past_full` and `pushing_past_off` ask whether the level this step
+ * is about to command has already reached a bound in the direction the gap
+ * is still pushing, and the integral is left untouched on exactly the step
+ * the trim would otherwise wind up further past a pump that cannot follow
+ * it -- accumulated trim intent does not outlive the limit, the same
+ * standard the brew and steam loops already prove at their own actuator
+ * bounds. The saturation DEC-CORRECTION-KEEPS-THE-ACCOUNT asks the departure
+ * report to carry is read back separately, in
+ * judge_the_interval_just_elapsed, against the level this step actually
+ * drives -- not here, because this function only ever proposes a level;
+ * as_drive_level and the actuator write in control_step are what decide
+ * whether it is actually reached.
+ *
+ * What this function reads is the measured rate and the course level alone --
+ * `gap_milli_ml_per_s` and `course_permille` -- and the two declared gains.
+ * Nothing here reaches for a puck's resistance, a pump's flow-versus-pressure
+ * characteristic, or any other plant coefficient, which is
+ * DEC-CORRECTION-KEEPS-THE-ACCOUNT's own ruling: predicting the gap from a
+ * model was considered and rejected, because nothing pins the coefficients
+ * such a model would need and feedback against the measured rate needs none
+ * of them.
+ */
+static float pump_trim_command(control_state_t *state, float course_permille, bool gap_valid,
+                               int32_t gap_milli_ml_per_s, float interval_s)
+{
+    if (!gap_valid) {
+        return course_permille;
+    }
+
+    const float error_ml_per_s = (float)gap_milli_ml_per_s / 1000.0f;
+    const float gain = (float)state->pump_trim.gain_milli_permille_per_ml_per_s / 1000.0f;
+    const float integral_gain =
+        (float)state->pump_trim.integral_gain_milli_permille_per_ml_per_s_s / 1000.0f;
+
+    const float proportional = gain * error_ml_per_s;
+    const float before = course_permille + proportional + state->pump_trim_permille;
+    const bool pushing_past_full = (before >= (float)ACTUATION_FULL_SCALE) && (error_ml_per_s > 0.0f);
+    const bool pushing_past_off = (before <= 0.0f) && (error_ml_per_s < 0.0f);
+
+    if (!pushing_past_full && !pushing_past_off) {
+        state->pump_trim_permille += integral_gain * error_ml_per_s * interval_s;
+    }
+
+    return course_permille + proportional + state->pump_trim_permille;
+}
+
+/*
  * Command every output off.
  *
  * The pump goes off with the heater rather than being left where it was. A
@@ -453,6 +539,12 @@ static int32_t as_milli(float value)
  * fraction is put back at one alongside the reports it feeds -- see
  * delivery_yield_fraction's own comment -- so a machine with nothing running
  * reads no yield in force rather than a value left over from the last one.
+ *
+ * The trim's accumulated intent is forgotten here too, and for the same
+ * reason the rest of this function exists: pump_trim_permille answers for the
+ * puck the delivery that just ended was pouring through, which is not the
+ * puck the next delivery will meet, so nothing about it should outlive this
+ * call -- see pump_trim_permille's own comment in control.h.
  */
 static void forget_departure(control_state_t *state)
 {
@@ -463,6 +555,9 @@ static void forget_departure(control_state_t *state)
     state->departure.departed = false;
     state->departure.largest_milli_ml_per_s = 0;
     state->departure.at_millis = 0u;
+    state->departure.driven_pump_permille = 0u;
+    state->departure.trim_saturated = false;
+    state->pump_trim_permille = 0.0f;
     state->delivery_yield_fraction = 1.0f;
     state->yield.yielded = false;
     state->yield.largest_milli_ml_per_s = 0;
@@ -488,10 +583,32 @@ static void forget_departure(control_state_t *state)
  * what moved before the delivery was asked for anything, and comparing the new
  * command against it would report the whole commanded rate as a shortfall on
  * every delivery ever run.
+ *
+ * `gap_valid_out` and `gap_milli_ml_per_s_out` are how this step's raw gap
+ * reaches the pump trim, and they are both nullable -- the "delivery just
+ * ended" call site in control_step judges the interval for the departure
+ * report alone and has no trim left to feed it to. Where they are given,
+ * `*gap_valid_out` is set true and `*gap_milli_ml_per_s_out` is written the
+ * moment a trustworthy gap exists, which is before the tolerance-gate check
+ * below rather than after it: the trim is a proportional-integral loop and has
+ * to see every valid reading's gap to behave like one, including a gap well
+ * inside the declared tolerance band. Gating the trim on the same tolerance
+ * check that latches a departure would leave it doing nothing for as long as
+ * the reading sat inside the band and then reacting only once it had already
+ * left -- a dead zone followed by a step, which is a limit cycle sitting
+ * exactly on the tolerance boundary rather than a controller correcting a
+ * course. The departure latch below stays gated on tolerance exactly as
+ * before: what changed is that the trim now sees a wider stream of gaps than
+ * the departure report does, not that the report's own criterion moved.
  */
-static bool judge_the_interval_just_elapsed(control_state_t *state)
+static bool judge_the_interval_just_elapsed(control_state_t *state, int32_t *gap_milli_ml_per_s_out,
+                                            bool *gap_valid_out)
 {
     const hw_reading_t flow = hw_sensor_read(HW_SENSOR_FLOW);
+
+    if (gap_valid_out != NULL) {
+        *gap_valid_out = false;
+    }
 
     if (!state->delivery_rate_commanded) {
         return false;
@@ -521,9 +638,66 @@ static bool judge_the_interval_just_elapsed(control_state_t *state)
     const int32_t gap = as_milli(commanded_milli_ml_per_s - (float)flow.value_milli);
     const int32_t gap_magnitude = gap < 0 ? -gap : gap;
 
+    if (gap_valid_out != NULL) {
+        *gap_valid_out = true;
+    }
+    if (gap_milli_ml_per_s_out != NULL) {
+        *gap_milli_ml_per_s_out = gap;
+    }
+
+    /*
+     * The pump level is refreshed on every valid gap, whether or not this one
+     * is wide enough to depart -- unlike `largest_milli_ml_per_s`/`at_millis`
+     * below, which stay latched to the widest departure this delivery has
+     * shown. DEC-CORRECTION-KEEPS-THE-ACCOUNT asks for this specifically
+     * because a trim that has closed the gap back inside tolerance is not the
+     * same delivery as one the trim never touched, and a caller cannot tell
+     * the two apart from `departed` alone once the residual has settled: both
+     * read `departed == false` by the time the delivery ends if the trim
+     * caught up before the last reading, but one drove the pump at the
+     * open-loop level throughout and the other did not. Updating here, ahead
+     * of the tolerance gate, is what keeps this field answering "what is the
+     * machine doing right now" rather than "what was it doing the one time
+     * this delivery departed" -- a question the latched fields beside it
+     * already answer and this one exists to answer differently.
+     *
+     * `state->driven_pump_permille` at the moment this function runs still
+     * holds what the previous step actually drove the pump to -- control_step
+     * has moved this call ahead of the point where a fresh level is driven, so
+     * nothing else has overwritten it yet -- and that is exactly the level a
+     * delivery review needs to tell a trim-corrected shot from one the trim
+     * never touched.
+     */
+    state->departure.driven_pump_permille = state->driven_pump_permille;
+
     if (gap_magnitude <= state->tolerance.flow_departure_band_milli_ml_per_s) {
+        /*
+         * Saturation is only ever a property of a departure: a pump legitimately
+         * pinned at its own bound by a course that peaks there, with the seam
+         * still agreeing to within tolerance, has not asked the trim for
+         * anything it cannot give and must not read as though it had. Gated
+         * here on the same tolerance comparison `departed` itself is gated on,
+         * rather than on the gap's sign and the pump's own bound alone, so a
+         * benign in-tolerance gap at full scale never reads as the trim
+         * running out of authority.
+         */
+        state->departure.trim_saturated = false;
         return false;
     }
+
+    /*
+     * Refreshed on every departing gap rather than latched to the widest one,
+     * on the same reasoning `driven_pump_permille` above is: a trim that was
+     * pinned earlier in a delivery and has since recovered authority is not
+     * still saturated by the time the account is read, and this is what keeps
+     * that recovery visible rather than stuck on whatever the worst moment
+     * showed. Read the same way the trim itself reads its own bound in
+     * pump_trim_command: pinned at full scale while the gap still calls for
+     * more, or pinned at nothing while it still calls for less.
+     */
+    state->departure.trim_saturated =
+        (gap > 0 && state->driven_pump_permille >= (uint16_t)ACTUATION_FULL_SCALE) ||
+        (gap < 0 && state->driven_pump_permille == 0u);
 
     /*
      * The widest gap this delivery has shown is what it is reported by, kept
@@ -1211,7 +1385,8 @@ static control_admission_t admit_target(const control_state_t *state, float cels
 
 bool control_init(control_state_t *state, const plant_parameters_t *parameters,
                   const plant_parameter_budget_t *budget, const estimator_limits_t *limits,
-                  const delivery_tolerance_t *tolerance)
+                  const delivery_tolerance_t *tolerance,
+                  const pump_trim_declaration_t *pump_trim)
 {
     if (state == NULL) {
         return false;
@@ -1301,6 +1476,23 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
         state->tolerance = *tolerance;
     }
 
+    /*
+     * The pump trim's declaration travels beside the tolerance and on the same
+     * terms: put into the state before anything can refuse, so an instance
+     * that failed to come up answers what it was given rather than whatever
+     * the memory it was declared in contained. Given none it answers with
+     * gains of nothing, which is not read as a trim that merely does nothing
+     * -- the refusal below follows rather than that being assumed, on exactly
+     * the reasoning the tolerance's own absence is refused rather than read as
+     * an unbounded band.
+     */
+    static const pump_trim_declaration_t NO_PUMP_TRIM;
+
+    state->pump_trim = NO_PUMP_TRIM;
+    if (pump_trim != NULL) {
+        state->pump_trim = *pump_trim;
+    }
+
     const bool off = hw_output_set(ACTUATION_CHANNEL_BREW_HEATER, 0u) &&
                      hw_output_set(ACTUATION_CHANNEL_PUMP, 0u);
 
@@ -1313,6 +1505,22 @@ bool control_init(control_state_t *state, const plant_parameters_t *parameters,
      * counts as having reached it.
      */
     if (tolerance == NULL) {
+        state->faulted = true;
+        return false;
+    }
+
+    /*
+     * A control path with no pump trim declaration is refused on the same
+     * terms and for a parallel reason. A trim declared nowhere is not "no
+     * trim" the way a course with no meter fitted is genuinely uncorrected:
+     * this loop already knows how to measure the gap and would go on
+     * measuring it, so a null here would leave the pump command uncorrected
+     * against a gap the loop can see and says nothing about -- which is
+     * exactly the silent absorption DEC-CORRECTION-KEEPS-THE-ACCOUNT rules
+     * out, arriving through the one path that skips the declaration that
+     * bounds it rather than through the control law itself.
+     */
+    if (pump_trim == NULL) {
         state->faulted = true;
         return false;
     }
@@ -1752,6 +1960,16 @@ control_step_result_t control_step(control_state_t *state)
      */
     bool departed = false;
 
+    /*
+     * Hoisted ahead of the delivery block below, so both the trim call inside
+     * it and heater_command further down share one declaration rather than
+     * two: this is the interval every term in this step answers for, and a
+     * second, later declaration of the same figure would be a second name for
+     * one quantity waiting to disagree with itself the day only one of the two
+     * sites was touched.
+     */
+    const float interval_s = (float)advance / 1000.0f;
+
     if (state->delivery_running) {
         state->delivery_elapsed_millis += advance;
 
@@ -1762,8 +1980,11 @@ control_step_result_t control_step(control_state_t *state)
              * delivery is not the one stretch nothing accounts for. Only the
              * report is written: the step's own result stays the ordinary one,
              * because what this step is reporting is that the delivery ended.
+             * Nothing here still wants the raw gap -- the delivery is already
+             * over and there is no trim left to feed it to -- so both out
+             * parameters are left null.
              */
-            (void)judge_the_interval_just_elapsed(state);
+            (void)judge_the_interval_just_elapsed(state, NULL, NULL);
             state->delivery_running = false;
             state->commanded_pump_permille = 0u;
 
@@ -1775,6 +1996,26 @@ control_step_result_t control_step(control_state_t *state)
              */
             start_the_held_delivery(state);
         } else {
+            /*
+             * Judged first in this branch, ahead of the course-only level
+             * below, because it reads state->delivery_commanded_rate_ml_per_s
+             * and state->delivery_commanded_at_millis -- last step's command,
+             * neither of which anything below touches before they are
+             * overwritten at the end of this branch -- and state->driven_pump_permille,
+             * which still holds what was actually driven over the interval
+             * just elapsed and is not overwritten until this same step's own
+             * actuation further down. Moving the call here changes nothing
+             * about what it judges, only that the raw gap it finds is ready
+             * before the trim needs it: the departure report itself is
+             * unaffected, and stays gated on tolerance exactly as before --
+             * see judge_the_interval_just_elapsed's own comment for why the
+             * trim is handed every valid gap rather than only the ones this
+             * report latches.
+             */
+            int32_t gap_milli_ml_per_s = 0;
+            bool gap_valid = false;
+            departed = judge_the_interval_just_elapsed(state, &gap_milli_ml_per_s, &gap_valid);
+
             const float rate_ml_per_s =
                 delivery_profile_rate_ml_per_s(&state->delivery, state->delivery_elapsed_millis);
             /*
@@ -1788,9 +2029,51 @@ control_step_result_t control_step(control_state_t *state)
              */
             const float yield_fraction = drinking_yield_fraction(state, brew_c);
             const float yielded_rate_ml_per_s = rate_ml_per_s * yield_fraction;
-            const float permille = (yielded_rate_ml_per_s / state->full_scale_flow_ml_per_s) *
-                                   (float)ACTUATION_FULL_SCALE;
-            state->commanded_pump_permille = as_drive_level(permille);
+            const float course_permille =
+                (yielded_rate_ml_per_s / state->full_scale_flow_ml_per_s) *
+                (float)ACTUATION_FULL_SCALE;
+            /*
+             * The gap judge_the_interval_just_elapsed found is against the
+             * course's own unreduced rate -- deliberately, so the departure
+             * account above still reports a yielded delivery's shortfall
+             * exactly as a choked path's would (see that function's own
+             * comment and control_yield_t). The trim answers a different
+             * question, though: what the pump should do about a rate the
+             * world would not give it, not about a rate this machine chose
+             * not to keep asking for. `state->delivery_yield_fraction` here
+             * is still the fraction that was in force over the interval just
+             * judged -- this step's own fraction is not established until
+             * `yield_fraction` above, after this reads it -- so subtracting
+             * what the yield alone accounts for out of the raw gap is what
+             * keeps the trim from spending its correction fighting a
+             * reduction drinking_yield_fraction chose on purpose. An
+             * extraction's course never yields (drinking_yield_fraction
+             * returns one for anything but a drinking-point delivery), so
+             * this is a no-op there and the trim answers the whole gap
+             * exactly as before.
+             */
+            int32_t trim_gap_milli_ml_per_s = gap_milli_ml_per_s;
+            if (gap_valid) {
+                const float unyielded_commanded_milli =
+                    state->delivery_commanded_rate_ml_per_s * 1000.0f;
+                const float yielded_commanded_milli =
+                    unyielded_commanded_milli * state->delivery_yield_fraction;
+                trim_gap_milli_ml_per_s -=
+                    as_milli(unyielded_commanded_milli - yielded_commanded_milli);
+            }
+
+            /*
+             * The course-only level above is what the profile alone asks for;
+             * what is actually clamped into commanded_pump_permille is the
+             * trim's own answer on top of it -- see pump_trim_command's own
+             * comment for the sign convention and the windup guard, and
+             * DEC-CORRECTION-KEEPS-THE-ACCOUNT for why the machine now tries
+             * to hold the commanded rate rather than only the commanded
+             * course.
+             */
+            const float trimmed_permille = pump_trim_command(
+                state, course_permille, gap_valid, trim_gap_milli_ml_per_s, interval_s);
+            state->commanded_pump_permille = as_drive_level(trimmed_permille);
             state->delivery_yield_fraction = yield_fraction;
 
             /*
@@ -1815,19 +2098,6 @@ control_step_result_t control_step(control_state_t *state)
             }
 
             /*
-             * The delivered flow is compared against the same commanded rate
-             * that just drove the pump, on the same cadence the profile is
-             * evaluated -- not a figure read back from the plant model, which
-             * would compare the command against itself. Per
-             * DEC-DEPARTURE-OBSERVED-NOT-MODELLED, departure is observed by
-             * measuring what moved rather than reproduced by modelling what
-             * resisted it, so an absent or failed reading is not compared
-             * against anything: nothing arrived to have moved differently
-             * from what was asked.
-             */
-            departed = judge_the_interval_just_elapsed(state);
-
-            /*
              * What was commanded on this step is what the next step's reading
              * will answer for, so it is kept here after the judgement above has
              * used the one before it. It is the rate the profile commanded and
@@ -1843,7 +2113,6 @@ control_step_result_t control_step(control_state_t *state)
         }
     }
 
-    const float interval_s = (float)advance / 1000.0f;
     const uint16_t level = as_drive_level(heater_command(state, brew_c, interval_s));
 
     /*

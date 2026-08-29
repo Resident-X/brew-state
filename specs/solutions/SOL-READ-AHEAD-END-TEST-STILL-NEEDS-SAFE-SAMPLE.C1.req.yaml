@@ -1,0 +1,21 @@
+id: SOL-READ-AHEAD-END-TEST-STILL-NEEDS-SAFE-SAMPLE.C1
+type: criterion
+title: The end-condition test's sample point cannot underflow, and a future underflow is caught rather than silently absorbed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `test_reading_ahead_stops_at_the_end_condition`'s sample point is computed so it cannot underflow
+  regardless of how `state.delivery_lead_millis` compares to `ENDS[0]` for whatever description the
+  suite is run against -- by asserting the precondition the test already needs before subtracting,
+  or by deriving the sample point some other way that stays in range. The test completes in
+  comparable time to its neighbours (sub-second, not several hundred million loop iterations) and
+  its existing assertions -- the near-ending course's heater level sits at or above the baseline,
+  and below the far-ending course's -- are unchanged. A regression test (or an assertion added to
+  this one) fails loudly on an unsigned underflow rather than silently wrapping into a
+  multi-million-iteration loop, so a future change that widens the lead relative to an end
+  condition is caught immediately rather than discovered as an unexplained slowdown.
+links:
+  - target: SOL-READ-AHEAD-END-TEST-STILL-NEEDS-SAFE-SAMPLE
+    type: criterion-of

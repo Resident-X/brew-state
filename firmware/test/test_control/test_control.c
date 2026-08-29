@@ -22,12 +22,14 @@
 #include "hw_interface.h"
 #include "hw_sim.h"
 #include "plant_model.h"
+#include "pump_trim_declaration.h"
 
 static control_state_t state;
 static plant_parameters_t parameters;
 static plant_parameter_budget_t budget;
 static estimator_limits_t limits;
 static delivery_tolerance_t tolerance;
+static pump_trim_declaration_t pump_trim;
 
 /*
  * The temperature the suite asks for. It is the suite's own choice rather than
@@ -114,6 +116,29 @@ static void load_the_reference_tolerance(void)
 }
 
 /*
+ * The pump trim's gains beside the band above, read from the file the build
+ * names on the same terms load_the_reference_tolerance already is. It is what
+ * the trim control_init is brought up against actually leans on a rate gap
+ * with, so a suite carrying its own copy would be exercising gains nobody
+ * shipped.
+ */
+static void load_the_reference_pump_trim(void)
+{
+    static char text[16384];
+
+    FILE *const handle = fopen(REFERENCE_PUMP_TRIM_PATH, "rb");
+    TEST_ASSERT_NOT_NULL_MESSAGE(handle, "could not open the reference pump trim declaration");
+
+    const size_t used = fread(text, 1u, sizeof(text) - 1u, handle);
+    (void)fclose(handle);
+    TEST_ASSERT_TRUE(used > 0u);
+    TEST_ASSERT_TRUE(used < sizeof(text) - 1u);
+
+    pump_trim_declaration_error_t fault;
+    TEST_ASSERT_TRUE(pump_trim_declaration_load(text, used, &pump_trim, &fault));
+}
+
+/*
  * A limits record built from text the test writes, for the cases that need to
  * reach the control law with a reconstruction the shipped declaration would
  * rightly refuse. The shipped one is what every other test here runs against.
@@ -179,7 +204,8 @@ void setUp(void)
     load_the_reference_description();
     load_the_reference_limits();
     load_the_reference_tolerance();
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    load_the_reference_pump_trim();
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
 
     /*
      * A target is named here because most of what follows is about a machine
@@ -267,7 +293,7 @@ static void test_drive_level_stays_within_full_scale_at_extremes(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &permissive, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &permissive, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
 
     for (unsigned i = 0; i < sizeof(readings) / sizeof(readings[0]); i++) {
@@ -388,7 +414,7 @@ static void test_step_interval_survives_the_clock_wrapping(void)
 static void test_initialisation_commands_the_heater_off(void)
 {
     hw_sim_reset();
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
     TEST_ASSERT_EQUAL_UINT32(1u, hw_sim_output_write_count(ACTUATION_CHANNEL_BREW_HEATER));
 }
@@ -397,7 +423,7 @@ static void test_initialisation_commands_the_heater_off(void)
  * a caller, and it must not become a memory error the analysis stage reports. */
 static void test_null_state_is_refused_rather_than_dereferenced(void)
 {
-    TEST_ASSERT_FALSE(control_init(NULL, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_FALSE(control_init(NULL, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_EQUAL(CONTROL_STEP_SENSOR_INVALID, control_step(NULL));
 }
 
@@ -641,7 +667,7 @@ static void test_initialisation_without_a_record_leaves_the_heater_off_and_latch
 {
     hw_sim_reset();
 
-    TEST_ASSERT_FALSE(control_init(&state, NULL, &budget, &limits, &tolerance));
+    TEST_ASSERT_FALSE(control_init(&state, NULL, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
     TEST_ASSERT_TRUE(state.faulted);
 
@@ -674,7 +700,7 @@ static void test_initialisation_without_a_budget_leaves_the_heater_off_and_latch
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
 
-    TEST_ASSERT_FALSE(control_init(&state, &parameters, NULL, &limits, &tolerance));
+    TEST_ASSERT_FALSE(control_init(&state, &parameters, NULL, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
     TEST_ASSERT_TRUE(state.faulted);
 
@@ -693,6 +719,28 @@ static void test_initialisation_without_a_budget_leaves_the_heater_off_and_latch
     TEST_ASSERT_FALSE(control_protection_margin(&state, BREW_TARGET_C, NULL));
     TEST_ASSERT_FALSE(control_protection_margin_corner(NULL, BREW_TARGET_C, 0u, &corner));
     TEST_ASSERT_FALSE(control_protection_margin_corner(&state, BREW_TARGET_C, 0u, NULL));
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1: The trim's gains are described data
+/// carrying a recorded origin, required on the same terms the tolerance band
+/// is.
+///
+/// A control path handed no pump trim declaration is refused rather than
+/// left to drive an uncorrected pump against a gap it already knows how to
+/// measure -- see control_init's own doc comment for why a null here is not
+/// read as "no trim" the way an unfitted meter genuinely is.
+static void test_the_pump_trim_is_required_rather_than_assumed(void)
+{
+    hw_sim_reset();
+    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+
+    TEST_ASSERT_FALSE(control_init(&state, &parameters, &budget, &limits, &tolerance, NULL));
+    TEST_ASSERT_TRUE(state.faulted);
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+
+    hw_sim_advance_millis(CONTROL_STEP_INTERVAL_MS);
+    TEST_ASSERT_EQUAL(CONTROL_STEP_FAULT_LATCHED, control_step(&state));
+    TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
 }
 
 /// SOL-UNMEASURED-STATE-RECONSTRUCTION.C10: The estimator receives its
@@ -771,7 +819,7 @@ static void test_the_first_accepted_step_is_advanced_by_the_declared_interval(vo
     load_the_reference_description();
     load_the_reference_limits();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
 
@@ -1097,7 +1145,7 @@ static void bring_the_loop_up(const plant_parameters_t *estimator_reconstructs_f
                                   the_budget_the_loop_believes == NULL
                                       ? &budget
                                       : the_budget_the_loop_believes,
-                                  &limits, &tolerance));
+                                  &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(plant_model_set_state(
         &state.estimator.model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, mass_c));
     TEST_ASSERT_TRUE(plant_model_set_state(&state.estimator.model,
@@ -1262,7 +1310,7 @@ static void test_a_different_declaration_changes_the_band_with_no_source_edit(vo
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrowed));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrowed, &pump_trim));
     TEST_ASSERT_TRUE(control_temperature_band(&state, &band));
 
     TEST_ASSERT_EQUAL_INT32(400, band);
@@ -1389,9 +1437,114 @@ static void test_the_band_is_required_rather_than_assumed(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_FALSE(control_init(&state, &parameters, &budget, &limits, NULL));
+    TEST_ASSERT_FALSE(control_init(&state, &parameters, &budget, &limits, NULL, &pump_trim));
     TEST_ASSERT_TRUE(state.faulted);
     TEST_ASSERT_EQUAL_UINT16(0u, hw_sim_output(ACTUATION_CHANNEL_BREW_HEATER));
+}
+
+/* --- The pump trim declaration's own loader --------------------------------
+ *
+ * Infrastructure tests protecting pump_trim_declaration_load itself, on the
+ * same terms delivery_tolerance_load's and steam_control_declaration_load's
+ * own inline tests are: this loader is new code introduced alongside the
+ * trim, and it earns the same regression protection its neighbours already
+ * have. These do not carry SOL-* trace comments -- they are not verifying a
+ * criterion directly, only the parser the criteria's own tests all rely on.
+ */
+
+/// The two figures load in either order, and the record they populate reads
+/// back exactly what was declared.
+static void test_pump_trim_declaration_loads_both_figures_in_either_order(void)
+{
+    static const char FORWARD[] =
+        "pump-trim-gain = 20000 milli-permille-per-ml-per-s @estimated First.\n"
+        "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Second.\n";
+    static const char REVERSED[] =
+        "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated First.\n"
+        "pump-trim-gain = 20000 milli-permille-per-ml-per-s @estimated Second.\n";
+
+    pump_trim_declaration_t forward;
+    pump_trim_declaration_error_t fault;
+    TEST_ASSERT_TRUE(
+        pump_trim_declaration_load(FORWARD, sizeof(FORWARD) - 1u, &forward, &fault));
+    TEST_ASSERT_EQUAL_INT32(20000, forward.gain_milli_permille_per_ml_per_s);
+    TEST_ASSERT_EQUAL_INT32(300000, forward.integral_gain_milli_permille_per_ml_per_s_s);
+
+    pump_trim_declaration_t reversed;
+    TEST_ASSERT_TRUE(
+        pump_trim_declaration_load(REVERSED, sizeof(REVERSED) - 1u, &reversed, &fault));
+    TEST_ASSERT_EQUAL_INT32(forward.gain_milli_permille_per_ml_per_s,
+                           reversed.gain_milli_permille_per_ml_per_s);
+    TEST_ASSERT_EQUAL_INT32(forward.integral_gain_milli_permille_per_ml_per_s_s,
+                           reversed.integral_gain_milli_permille_per_ml_per_s_s);
+}
+
+/// What the loader refuses, and why each refusal is its own answer, on the
+/// same terms test_the_loader_refuses_a_declaration_that_settles_nothing
+/// establishes for the tolerance declaration beside this one.
+static void test_pump_trim_declaration_refuses_what_it_must(void)
+{
+    static const struct {
+        const char *text;
+        pump_trim_declaration_fault_t fault;
+        const char *why;
+    } REFUSED[] = {
+        {"# nothing but a comment\n", PUMP_TRIM_DECLARATION_MISSING,
+         "a declaration carrying neither figure was accepted"},
+        {"pump-trim-gain = 20000 milli-permille-per-ml-per-s @estimated Only one.\n",
+         PUMP_TRIM_DECLARATION_MISSING, "a declaration missing the integral gain was accepted"},
+        {"pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Only one.\n",
+         PUMP_TRIM_DECLARATION_MISSING, "a declaration missing the proportional gain was accepted"},
+        {"pump-trim-gain = 20000 milli-permille-per-ml-per-s @estimated First.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Second.\n"
+         "pump-trim-gain = 1 milli-permille-per-ml-per-s @estimated Third.\n",
+         PUMP_TRIM_DECLARATION_DUPLICATE, "a figure declared twice was accepted"},
+        {"pump-trim-gain = 20000 milli-permille-per-ml-per-s @estimated First.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Second.\n"
+         "pump-trim-standing-load = 50 permille @estimated Nothing reads this.\n",
+         PUMP_TRIM_DECLARATION_UNKNOWN, "a figure nothing holds the trim to was accepted"},
+        {"pump-trim-gain = 20000 milli-permille-per-ml-per-s-s @estimated Wrong unit.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_UNIT_MISMATCH,
+         "a proportional gain declared in the integral gain's own unit was accepted"},
+        {"pump-trim-gain = 20000 @estimated No unit at all.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_UNIT_MISMATCH, "a figure carrying no unit was accepted"},
+        {"pump-trim-gain = 0 milli-permille-per-ml-per-s @estimated Nothing at all.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_OUT_OF_RANGE, "a gain of nothing was accepted"},
+        {"pump-trim-gain = 2000000 milli-permille-per-ml-per-s @estimated Past the bound.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_OUT_OF_RANGE, "a gain beyond its own admissible bound was accepted"},
+        {"pump-trim-gain = 20000 milli-permille-per-ml-per-s\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_ORIGIN, "a figure with no origin at all was accepted"},
+        {"pump-trim-gain = 20000 milli-permille-per-ml-per-s @estimated\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_ORIGIN, "a kind with no account behind it was accepted"},
+        {"pump-trim-gain = 20000 milli-permille-per-ml-per-s @guessed Arrived at by feel.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_ORIGIN, "an origin kind outside the vocabulary was accepted"},
+        {"pump-trim-gain 20000 @estimated No separator.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_MALFORMED, "a line with no separator was accepted"},
+        {"= 20000 milli-permille-per-ml-per-s @estimated No name.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_MALFORMED, "a line naming no figure was accepted"},
+        {"pump-trim-gain = @estimated Nothing before the origin.\n"
+         "pump-trim-integral-gain = 300000 milli-permille-per-ml-per-s-s @estimated Fine.\n",
+         PUMP_TRIM_DECLARATION_MALFORMED, "a figure carrying no number at all was accepted"},
+    };
+
+    for (size_t i = 0u; i < sizeof(REFUSED) / sizeof(REFUSED[0]); i++) {
+        pump_trim_declaration_t built;
+        pump_trim_declaration_error_t fault;
+
+        TEST_ASSERT_FALSE_MESSAGE(
+            pump_trim_declaration_load(REFUSED[i].text, strlen(REFUSED[i].text), &built, &fault),
+            REFUSED[i].why);
+        TEST_ASSERT_EQUAL_MESSAGE(REFUSED[i].fault, fault.fault, REFUSED[i].why);
+    }
 }
 
 /* --- The target is an input ----------------------------------------------- */
@@ -1411,7 +1564,7 @@ static void test_two_targets_in_one_binary_produce_two_duty_trajectories(void)
     for (unsigned run = 0u; run < 2u; run++) {
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 80000);
-        TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+        TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
         TEST_ASSERT_TRUE(control_command_temperature(&state, targets[run]));
         place_reconstruction_at(80000);
 
@@ -1437,7 +1590,7 @@ static void test_a_machine_with_no_target_commanded_drives_nothing(void)
 {
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     place_reconstruction_at(20000);
 
     for (unsigned step = 0u; step < 4u; step++) {
@@ -1530,7 +1683,7 @@ static void test_perturbing_the_outlet_time_constant_alone_changes_the_duty(void
 
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-        TEST_ASSERT_TRUE(control_init(&state, &perturbed, &budget, &limits, &tolerance));
+        TEST_ASSERT_TRUE(control_init(&state, &perturbed, &budget, &limits, &tolerance, &pump_trim));
         TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
         TEST_ASSERT_TRUE(plant_model_set_state(
             &state.estimator.model, PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C, 88.0f));
@@ -2173,7 +2326,7 @@ static void test_control_command_delivery_refuses_a_structure_that_draws_nothing
 {
     control_state_t local_state;
     const plant_parameters_t no_flow = parameters_from(description_with("pump.flow_ml_per_s", "0"));
-    TEST_ASSERT_TRUE(control_init(&local_state, &no_flow, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&local_state, &no_flow, &budget, &limits, &tolerance, &pump_trim));
 
     const delivery_profile_point_t points[] = {{0u, 1.0f}, {1000u, 1.0f}};
     const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
@@ -2570,16 +2723,41 @@ static void test_departure_beyond_the_band_surfaces_and_agreement_does_not(void)
     TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
                              "a departed cycle ended the delivery, which is out of scope for "
                              "this criterion");
-    TEST_ASSERT_EQUAL_UINT16(pump_level_for(rate), state.commanded_pump_permille);
+    /*
+     * What this criterion pins is the step result, not the pump level: a gap
+     * beyond the band surfaces as CONTROL_STEP_DELIVERY_DEPARTED whether or
+     * not anything downstream of that reading acts on it. Since
+     * SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW the pump level itself is no longer
+     * pinned to the open-loop course on a departed cycle -- the trim moves it
+     * toward the commanded rate, which is that criterion's own test to make --
+     * so this test asserts the result code alone rather than reasserting a
+     * pump level the departure account and the trim's own tests already
+     * cover from both directions.
+     */
 
     /*
-     * Back within the band. The meter reading published on a step describes the
-     * interval that step just ran, so a change of factor is seen immediately --
-     * it is only the command the reading is judged against that comes from the
-     * step before.
+     * Back within the band -- but not necessarily on the very next step.
+     * Since SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW the pump was already driven
+     * above the open-loop course by the shortfall just judged, and a meter
+     * that now agrees with the machine at that already-corrected level
+     * reports more than command until the trim unwinds the intent the
+     * shortfall left behind -- exactly the residual
+     * DEC-CORRECTION-KEEPS-THE-ACCOUNT's own account exists to carry, and not
+     * a defect in the boundary comparison this criterion is about. So this
+     * settles the loop back onto an agreeing meter first, within a small
+     * budget of steps, and asserts the ordinary result once the trim has
+     * actually caught up rather than on the one step immediately after the
+     * one that departed.
      */
     delivered_flow_factor = 1.05f;
-    TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+    control_step_result_t settled = CONTROL_STEP_DELIVERY_DEPARTED;
+    for (unsigned attempt = 0u; attempt < 10u && settled != CONTROL_STEP_ACTUATED; attempt++) {
+        settled = closed_loop_step(-1);
+    }
+    TEST_ASSERT_EQUAL_MESSAGE(
+        CONTROL_STEP_ACTUATED, settled,
+        "an agreeing meter never returned the ordinary result once the trim had room to unwind "
+        "what the earlier shortfall left behind");
 
     delivered_flow_factor = 0.625f;
     TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
@@ -2836,7 +3014,7 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
     /* The commanded rate is 1000 milli-ml/s; the injected reading is 500 away from it. */
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &wide_tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &wide_tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
@@ -2850,7 +3028,7 @@ static void test_a_different_declaration_changes_what_counts_as_departure(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrow_tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrow_tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
@@ -2947,7 +3125,7 @@ static void test_a_delivery_on_an_untargeted_machine_does_not_advance(void)
 {
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, BREW_TARGET_C));
     place_reconstruction_at(20000);
 
@@ -3799,7 +3977,7 @@ static void test_a_refusal_names_the_bound_it_crossed_and_the_figures(void)
      */
     control_state_t drawless;
     const plant_parameters_t no_flow = parameters_from(description_with("pump.flow_ml_per_s", "0"));
-    TEST_ASSERT_TRUE(control_init(&drawless, &no_flow, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&drawless, &no_flow, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_FALSE(control_command_delivery_reporting(&drawless, &ordinary, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_NO_MACHINE_DESCRIBED, admission.bound);
 
@@ -4521,22 +4699,28 @@ static void test_the_departure_report_belongs_to_one_delivery(void)
     hw_sim_set_output_refused(false);
 }
 
-/// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5: The pump command follows the
-/// course rather than chasing the measured rate back to it.
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1: A seam reading held below command
+/// drives the pump above the open-loop level, rather than the pump command
+/// following the course unchanged -- the exact opposite of what this
+/// replaces.
 ///
-/// This is the half of the obligation that can actually fail. A machine that
-/// measures a shortfall, drives the pump up to close it and says nothing has
-/// read the sensor and still produced the drink nobody can reproduce -- and
-/// every other test here would still pass.
+/// This supersedes SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C5, which asserted
+/// the pump was driven identically whether or not the meter agreed. Per
+/// DEC-CORRECTION-KEEPS-THE-ACCOUNT that is no longer the behaviour: a
+/// departed reading is now something the loop corrects toward, not merely
+/// reports.
 ///
-/// The same course is run twice to its end: once with the meter agreeing and
-/// once with it reporting four tenths of what moved. Every pump level of the
-/// two runs is recorded and compared step for step, so a correction of any size
-/// on any step fails this, not merely a large one on the first. The departure
-/// is asserted to be reported in the second run and not the first, which is
-/// what keeps this from passing on a control path that simply never read the
-/// channel.
-static void test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees(void)
+/// The same course is run twice: once with the meter agreeing and once with
+/// it reporting four tenths of what moved. The first interval judges nothing
+/// (see judge_the_interval_just_elapsed), so both trajectories agree there;
+/// every step after it, the departed run must sit at or above the agreeing
+/// one, and the departed run's own final quarter -- long enough for the
+/// trim's own gain to have carried it well clear of the open-loop level --
+/// must sit strictly above it, not merely tied. The departed run's account is
+/// asserted to have latched a departure, and its driven level asserted to
+/// differ from the open-loop figure the course alone would have driven --
+/// otherwise this comparison would prove nothing about the pump.
+static void test_a_departed_reading_drives_the_pump_above_the_open_loop_level(void)
 {
     const float rate = 1.0f;
     const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
@@ -4573,18 +4757,427 @@ static void test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees(
     TEST_ASSERT_EQUAL_size_t_MESSAGE(agreeing_steps, departed_steps,
                                      "the departed delivery ran a different number of steps, so "
                                      "the measured rate reached something it should not have");
-    for (size_t step = 0u; step < agreeing_steps; step++) {
-        TEST_ASSERT_EQUAL_UINT16_MESSAGE(agreeing[step], departed[step],
-                                         "the pump was driven differently on a step where only "
-                                         "the meter differed -- the loop is chasing the measured "
-                                         "rate");
+
+    /*
+     * The first interval judges nothing -- no reading has yet arrived under
+     * this delivery's own command -- so step 0 is expected to agree; every
+     * step after it is the trim's to answer for. The tail is the strict
+     * half of the claim: a trim that moved the pump once and then let it
+     * settle back to the course would satisfy ">=" everywhere and prove
+     * nothing about a live correction, so the last quarter of the window
+     * must sit strictly above the open-loop trajectory rather than merely
+     * not below it.
+     */
+    const size_t tail_from = agreeing_steps - (agreeing_steps / 4u);
+    bool tail_strictly_higher = true;
+    for (size_t step = 1u; step < agreeing_steps; step++) {
+        TEST_ASSERT_TRUE_MESSAGE(departed[step] >= agreeing[step],
+                                 "the departed run's pump level fell below the open-loop course");
+        if (step >= tail_from && !(departed[step] > agreeing[step])) {
+            tail_strictly_higher = false;
+        }
     }
+    TEST_ASSERT_TRUE_MESSAGE(
+        tail_strictly_higher,
+        "the departed run never rose clear of the open-loop level in the tail of the "
+        "captured window, so the trim is not visibly correcting anything");
 
     TEST_ASSERT_FALSE_MESSAGE(agreeing_report.departed,
                               "the agreeing delivery reported a departure");
     TEST_ASSERT_TRUE_MESSAGE(departed_report.departed,
                              "the departed delivery reported none, so this comparison proves "
                              "nothing about the pump");
+    TEST_ASSERT_NOT_EQUAL_UINT16_MESSAGE(
+        pump_level_for(rate), departed_report.driven_pump_permille,
+        "the departure account's driven level matches the open-loop course, so it does not "
+        "reflect the trim");
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1: A zero-error trim contributes
+/// nothing -- an agreeing meter leaves the pump command at exactly the
+/// open-loop level throughout, so a future bug that adds a spurious offset
+/// even with no error is caught.
+///
+/// Run comfortably short of the point where the quantisation gap an agreeing
+/// meter still shows (the plant relation is exact, but a course's continuous
+/// rate is driven at a quantised integer permille) would, integrated for
+/// long enough, eventually nudge the accumulated trim across a rounding
+/// boundary -- see params/pump_trim.declaration's own account of the gains.
+/// That is a property of any nonzero integral gain answering a real, if tiny,
+/// standing residual, not a defect in this test or in the trim; asserting
+/// over a shorter window than that is what keeps this test about whether the
+/// trim answers a real error rather than about how long a quantisation
+/// artefact takes to become one.
+static void test_an_agreeing_meter_leaves_the_pump_at_the_open_loop_level(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 1.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    for (unsigned step = 0u; step < 80u; step++) {
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+            pump_level_for(rate), state.commanded_pump_permille,
+            "an agreeing meter moved the pump off the open-loop level it should have left "
+            "unchanged");
+    }
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C2: The departure account survives an
+/// active trim, and carries the driven level -- for a delivery whose gap
+/// stays beyond tolerance for the whole course.
+///
+/// A meter held at four tenths of what moved for the whole 5000 ms course
+/// asks the trim to close a gap it cannot fully close in that time (the
+/// gains are chosen to converge well inside a longer course, per
+/// params/pump_trim.declaration's own account, and this one is short enough
+/// that a residual survives it). What is asserted is that the account still
+/// reports the departure, and that the driven level it carries is the
+/// trimmed one -- distinctly above the open-loop figure the course alone
+/// would have driven -- and not pinned at the pump's own bound, which would
+/// be SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3's case rather than this one's.
+static void test_the_departure_account_carries_the_trimmed_level(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 1.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    delivered_flow_factor = 0.4f;
+    while (control_delivery_running(&state)) {
+        (void)closed_loop_step(-1);
+    }
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_TRUE_MESSAGE(report.departed,
+                             "a meter held beyond the band for the whole course reported no "
+                             "departure");
+    TEST_ASSERT_TRUE_MESSAGE(
+        report.driven_pump_permille > pump_level_for(rate),
+        "the departure account's driven level was not above the open-loop course, so it does "
+        "not reflect a trim correcting a shortfall");
+    TEST_ASSERT_FALSE_MESSAGE(report.trim_saturated,
+                              "an ordinary, reachable shortfall was reported as saturating the "
+                              "trim");
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C2: A delivery whose trim closes the
+/// gap within tolerance reports no departure while its account still shows
+/// the driven level departing from the open-loop course.
+///
+/// A meter held a little below what moved -- close enough that the trim
+/// closes the gap back inside the declared band before the course ends --
+/// never latches a departure, so `departed` alone cannot tell this delivery
+/// apart from one the trim never touched. What distinguishes them is the
+/// driven level this criterion asks the account to carry regardless of
+/// whether a departure was ever latched.
+static void test_the_departure_account_shows_the_trimmed_level_with_no_departure_reported(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 1.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    delivered_flow_factor = 0.9f;
+    while (control_delivery_running(&state)) {
+        (void)closed_loop_step(-1);
+    }
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_FALSE_MESSAGE(report.departed,
+                              "a gap this small, held for a whole course this long, was reported "
+                              "as a departure -- the trim should have closed it back inside the "
+                              "band");
+    TEST_ASSERT_NOT_EQUAL_UINT16_MESSAGE(
+        pump_level_for(rate), report.driven_pump_permille,
+        "the account showed the open-loop level for a delivery the trim actually corrected, so "
+        "departed == false cannot be told apart from a delivery the trim never touched");
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3: A trim at the pump's limit with the
+/// rate still short is reported as saturation.
+///
+/// A meter reporting one hundredth of what moved asks the trim for a
+/// correction no pump can supply -- the gap it would have to close calls for
+/// roughly a hundred times the open-loop level -- so the trim is driven to
+/// the actuator's own bound and stays there for the rest of the course.
+/// `trim_saturated` is asserted true alongside `departed`, and the driven
+/// level is asserted to be the pump's own full scale rather than some lesser
+/// figure a partial correction would have left it at.
+static void test_trim_saturation_is_reported_when_the_rate_is_unreachable(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 1.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    delivered_flow_factor = 0.01f;
+    while (control_delivery_running(&state)) {
+        (void)closed_loop_step(-1);
+    }
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_TRUE_MESSAGE(report.departed,
+                             "a meter reporting one hundredth of what moved was not reported as a "
+                             "departure");
+    TEST_ASSERT_TRUE_MESSAGE(report.trim_saturated,
+                             "a correction no pump could supply was not reported as saturating "
+                             "the trim");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE((uint16_t)ACTUATION_FULL_SCALE, report.driven_pump_permille,
+                                     "a saturated trim's driven level was not the pump's own full "
+                                     "scale");
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3: Accumulated trim intent does not
+/// outlive the limit -- a fresh delivery after a saturated one starts with
+/// `trim_saturated` cleared, not stale from the delivery before it.
+///
+/// Extends the same forget_departure discipline
+/// test_the_departure_report_belongs_to_one_delivery already exercises for
+/// `departed`/`largest_milli_ml_per_s`, over the new field: a saturated
+/// delivery's own account must not be mistaken for the next delivery's,
+/// which has not yet been measured at all.
+static void test_a_fresh_delivery_does_not_inherit_the_last_ones_saturation(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 1.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 5000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    delivered_flow_factor = 0.01f;
+    while (control_delivery_running(&state)) {
+        (void)closed_loop_step(-1);
+    }
+
+    control_departure_t saturated_report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &saturated_report));
+    TEST_ASSERT_TRUE_MESSAGE(saturated_report.trim_saturated,
+                             "the setup delivery this test depends on did not actually saturate");
+
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+    control_departure_t fresh_report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &fresh_report));
+    TEST_ASSERT_FALSE_MESSAGE(fresh_report.trim_saturated,
+                              "a freshly commanded delivery read the last delivery's saturation "
+                              "before anything had been measured on its own account");
+    TEST_ASSERT_FALSE_MESSAGE(fresh_report.departed,
+                              "a freshly commanded delivery read the last delivery's departure "
+                              "before anything had been measured on its own account");
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3: A trim pinned at the pump's own
+/// bound by the course alone, with an agreeing meter, is not reported as
+/// saturating.
+///
+/// A course commanded at this machine's own full-scale flow drives the pump
+/// to ACTUATION_FULL_SCALE on the open-loop figure alone, with nothing for
+/// the trim to correct. A meter reading two per cent below what actually
+/// moved -- comfortably inside the declared flow-departure band -- is exactly
+/// the case `trim_saturated`'s own sign-and-bound check, read with no
+/// tolerance gate at all, would misreport: the gap is positive (a shortfall)
+/// and the pump is at full scale, which is the pattern the check looks for,
+/// but the gap never left the band and nothing has actually departed. What is
+/// asserted is that neither `departed` nor `trim_saturated` reads true here,
+/// while `driven_pump_permille` still honestly reports the pump was at full
+/// scale -- proving the account tells "the course legitimately asked for
+/// everything the pump has" apart from "the trim ran out of authority
+/// chasing a shortfall", which is the distinction this criterion exists to
+/// carry.
+static void test_a_course_peaking_at_full_scale_with_an_agreeing_meter_is_not_saturated(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+    /*
+     * Retargeted below the temperature the loop was brought up at, so a draw
+     * asking for everything the pump has does not also ask for heater
+     * authority this machine does not have at BREW_TARGET_C -- a refusal on
+     * that bound would be answering a different question than the one this
+     * test asks.
+     */
+    TEST_ASSERT_TRUE(control_command_temperature(&state, 40.0f));
+
+    const float rate = full_scale_flow_ml_per_s();
+    const delivery_profile_point_t points[] = {{0u, rate}, {2000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 2000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    control_admission_t admission;
+    TEST_ASSERT_TRUE_MESSAGE(control_command_delivery_reporting(&state, &profile, &admission),
+                             "a course peaking at exactly this machine's own full-scale flow, "
+                             "against a retargeted temperature, was refused");
+    TEST_ASSERT_EQUAL(CONTROL_ADMISSION_OK, admission.bound);
+
+    delivered_flow_factor = 0.98f;
+    for (unsigned step = 0u; step < 100u && control_delivery_running(&state); step++) {
+        (void)closed_loop_step(-1);
+    }
+
+    control_departure_t report;
+    TEST_ASSERT_TRUE(control_delivery_departure(&state, &report));
+    TEST_ASSERT_FALSE_MESSAGE(report.departed,
+                              "a two per cent gap, well inside the declared band, was reported "
+                              "as a departure");
+    TEST_ASSERT_FALSE_MESSAGE(
+        report.trim_saturated,
+        "a pump pinned at full scale by the course alone, with an in-tolerance gap, was "
+        "reported as the trim saturating -- trim_saturated must be gated on the same "
+        "tolerance comparison departed is, not on the gap's sign and the pump's bound alone");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+        (uint16_t)ACTUATION_FULL_SCALE, report.driven_pump_permille,
+        "the account did not show the pump at full scale, so this comparison proves nothing "
+        "about the case it is meant to catch");
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3: Accumulated trim intent does not
+/// outlive the limit -- the integrator itself stops accumulating while the
+/// trim is pinned, rather than merely unwinding fast once it is released.
+///
+/// The discriminating check is the second half. A trim that merely unwinds
+/// quickly would still pass the first -- held for a long saturated stretch,
+/// its accumulated intent stops changing once pinned, exactly like
+/// heater_command's own integral at its own bound (see
+/// test_intent_is_surrendered_at_the_limit_and_not_afterwards, which this
+/// mirrors) -- but only conditional integration keeps it from having grown
+/// with the time it spent pinned in the first place, which is what the first
+/// half establishes: the same value read twice, five hundred steps apart,
+/// while the meter goes on reporting one hundredth of what moved throughout.
+static void test_pump_trim_intent_is_surrendered_at_the_limit_and_not_afterwards(void)
+{
+    bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+    const float rate = 1.0f;
+    const delivery_profile_point_t points[] = {{0u, rate}, {30000u, rate}};
+    const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                          .elapsed_millis = 30000u};
+    delivery_profile_t profile;
+    TEST_ASSERT_TRUE(delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_GROUP));
+    TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+    delivered_flow_factor = 0.01f;
+    for (unsigned step = 0u; step < 500u; step++) {
+        TEST_ASSERT_TRUE_MESSAGE(control_delivery_running(&state),
+                                 "the course ended before the trim had time to reach and hold "
+                                 "its own bound");
+        (void)closed_loop_step(-1);
+    }
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(
+        (uint16_t)ACTUATION_FULL_SCALE, state.commanded_pump_permille,
+        "the setup this test depends on had not actually pinned the pump at its bound");
+    const float held = state.pump_trim_permille;
+
+    for (unsigned step = 0u; step < 1500u; step++) {
+        TEST_ASSERT_TRUE(control_delivery_running(&state));
+        (void)closed_loop_step(-1);
+    }
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(
+        held, state.pump_trim_permille,
+        "accumulated trim intent grew while the pump was pinned at its own bound and the gap "
+        "was still calling for more, which is exactly what conditional integration exists to "
+        "refuse");
+
+    /* Let the meter agree again, and the accumulated intent moves once more. */
+    delivered_flow_factor = 1.0f;
+    for (unsigned step = 0u; step < 200u; step++) {
+        TEST_ASSERT_TRUE(control_delivery_running(&state));
+        (void)closed_loop_step(-1);
+    }
+    TEST_ASSERT_TRUE_MESSAGE(
+        state.pump_trim_permille != held,
+        "the trim's accumulated intent never moved again once the gap reversed, so it is "
+        "switched off at the bound rather than conditional");
+}
+
+/// SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C1: The trim answers the measured
+/// rate's own shortfall, not a reduction the machine chose on its own account
+/// -- a drinking-point delivery whose heater has yielded some of the
+/// commanded rate away is not fought back up by the trim for the part of the
+/// gap the yield already explains.
+///
+/// `state->delivery_yield_fraction` is poked directly to a known value
+/// between the two steps this drives, rather than driven up to it through a
+/// real heater-authority shortfall, so the figure this test compares against
+/// is exact rather than whatever a particular machine and target happen to
+/// settle at -- see drinking_yield_fraction in control.c for how a real
+/// delivery would arrive at the same fraction. Run once with no yield in
+/// force and once with the same meter reading but half the commanded rate
+/// yielded away, the second run's trim contribution is asserted to be
+/// visibly smaller than the first -- proving the yield-attributable share of
+/// the gap is actually being subtracted before the trim ever sees it -- and
+/// still strictly positive, proving the subtraction has not overshot into
+/// erasing a genuine shortfall along with the explained one.
+static void test_the_trim_does_not_chase_the_rate_a_delivery_chose_to_yield(void)
+{
+    float with_no_yield = 0.0f;
+    float with_half_yielded = 0.0f;
+
+    for (unsigned run = 0u; run < 2u; run++) {
+        bring_the_loop_up(&parameters, &parameters, 93.0f, BREW_TARGET_C);
+
+        const float rate = 1.0f;
+        const delivery_profile_point_t points[] = {{0u, rate}, {5000u, rate}};
+        const delivery_end_condition_t end = {.quantity = DELIVERY_END_ELAPSED_MILLIS,
+                                              .elapsed_millis = 5000u};
+        delivery_profile_t profile;
+        TEST_ASSERT_TRUE(
+            delivery_profile_init(&profile, points, 2u, end, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT));
+        TEST_ASSERT_TRUE(control_command_delivery(&state, &profile));
+
+        /* First interval judges nothing; it only establishes a driven level
+         * for the second interval to be measured against. */
+        TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
+
+        delivered_flow_factor = 0.4f;
+        state.delivery_yield_fraction = (run == 0u) ? 1.0f : 0.7f;
+        TEST_ASSERT_EQUAL(CONTROL_STEP_DELIVERY_DEPARTED, closed_loop_step(-1));
+
+        if (run == 0u) {
+            with_no_yield = state.pump_trim_permille;
+        } else {
+            with_half_yielded = state.pump_trim_permille;
+        }
+    }
+
+    TEST_ASSERT_TRUE_MESSAGE(with_no_yield > 0.0f,
+                             "the unyielded run accumulated no trim intent at all, so this "
+                             "comparison proves nothing about the yield-adjusted one");
+    TEST_ASSERT_TRUE_MESSAGE(
+        with_half_yielded > 0.0f,
+        "the yield-adjusted run accumulated no trim intent at all -- the subtraction has "
+        "erased a genuine shortfall along with the yield-explained share of it");
+    TEST_ASSERT_TRUE_MESSAGE(
+        with_half_yielded < with_no_yield,
+        "a delivery yielding part of the commanded rate away accumulated the same trim "
+        "intent as one that yielded nothing, so the yield-attributable share of the gap is "
+        "not being kept out of the trim's own correction");
 }
 
 /// SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED.C6: A machine with no flow meter
@@ -4941,7 +5534,7 @@ static float largest_rate_the_machine_holds(float target_c)
 {
     control_state_t asking;
 
-    TEST_ASSERT_TRUE(control_init(&asking, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&asking, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&asking, target_c));
 
     float admitted = 0.0f;
@@ -5113,7 +5706,7 @@ static void test_a_different_declaration_changes_the_post_draw_band_alone(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrowed));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &narrowed, &pump_trim));
     TEST_ASSERT_TRUE(control_post_draw_match_band(&state, &band));
     TEST_ASSERT_TRUE(control_temperature_band(&state, &brew_band));
 
@@ -5761,7 +6354,7 @@ static void test_a_different_declaration_changes_the_drinking_window_with_no_sou
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &raised));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &raised, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 65.0f));
     TEST_ASSERT_FALSE_MESSAGE(control_command_delivery_reporting(&state, &course, &admission),
                               "sixty-five degrees was admitted against a seventy-degree floor");
@@ -5769,7 +6362,7 @@ static void test_a_different_declaration_changes_the_drinking_window_with_no_sou
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 65.0f));
     TEST_ASSERT_TRUE_MESSAGE(
         control_command_delivery_reporting(&state, &course, &admission),
@@ -5794,7 +6387,7 @@ static void test_a_target_below_the_floor_is_refused_in_either_arrival_order(voi
     /* The target is named first, and the profile arrives second. */
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 50.0f));
     TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &course, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
@@ -5804,7 +6397,7 @@ static void test_a_target_below_the_floor_is_refused_in_either_arrival_order(voi
     /* The profile arrives first, and the target is named second. */
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_delivery(&state, &course));
     TEST_ASSERT_FALSE(control_command_temperature_reporting(&state, 50.0f, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_BELOW_DRINKING_FLOOR, admission.bound);
@@ -5827,7 +6420,7 @@ static void test_a_target_at_the_ceiling_is_refused(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, ceiling_c));
     TEST_ASSERT_FALSE(control_command_delivery_reporting(&state, &course, &admission));
     TEST_ASSERT_EQUAL(CONTROL_ADMISSION_TARGET_ABOVE_DRINKING_CEILING, admission.bound);
@@ -5848,7 +6441,7 @@ static void test_an_extraction_gains_nothing_from_the_drinking_window(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&state, 50.0f));
     TEST_ASSERT_TRUE_MESSAGE(
         control_command_delivery_reporting(&state, &extraction, &admission),
@@ -6154,7 +6747,7 @@ static void test_the_rate_given_up_is_reported_via_control_delivery_yield(void)
 
     control_state_t clean;
     control_yield_t no_yield;
-    TEST_ASSERT_TRUE(control_init(&clean, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&clean, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_delivery_yield(&clean, &no_yield));
     TEST_ASSERT_FALSE_MESSAGE(no_yield.yielded,
                               "a machine that has run no delivery already reports a yield");
@@ -6507,6 +7100,26 @@ static void test_a_demand_sharing_the_mass_with_what_is_running_is_held(void)
 {
     stand_the_machine_rested();
 
+    /*
+     * The hot water rate is searched for before the extraction is ever
+     * commanded, on a local instance of its own -- largest_rate_the_machine_holds
+     * brings that instance up through control_init, which commands the
+     * simulated hardware's own outputs off as part of coming up clean. That
+     * write reaches the one simulated pump register every control_state_t in
+     * this process shares, not a register scoped to the instance that asked
+     * for it, so probing after the extraction had already been driven would
+     * silently re-zero what the extraction just commanded -- harmless before
+     * the trim existed, because the very next step recomputed the pump level
+     * from the course alone regardless of what the register had been reset
+     * to, but not harmless now: a pump seen at nothing where the course
+     * commands flow is exactly the largest gap the trim can be shown, and it
+     * would leave a real correction behind rather than the momentary,
+     * self-healing artefact step_tolerating_departure below is written to
+     * tolerate. Searching first is what keeps that probe's own bookkeeping
+     * out of the extraction's way entirely.
+     */
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
     const float extraction_rate = 1.0f;
     delivery_profile_t extraction =
         steady_course_of(extraction_rate, 2000u, PLANT_DELIVERY_POINT_GROUP);
@@ -6515,7 +7128,6 @@ static void test_a_demand_sharing_the_mass_with_what_is_running_is_held(void)
     TEST_ASSERT_EQUAL_UINT16(pump_level_for(extraction_rate),
                              hw_sim_output(ACTUATION_CHANNEL_PUMP));
 
-    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     delivery_profile_t hot_water =
         steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     control_admission_t admission;
@@ -6562,12 +7174,23 @@ static void test_a_held_demand_resumes_unassisted_once_the_running_delivery_ends
 {
     stand_the_machine_rested();
 
+    /*
+     * Searched for before the extraction is commanded -- see the same
+     * reordering's own comment on test_a_demand_sharing_the_mass_with_what_is_running_is_held,
+     * which this test's own setup otherwise repeats: largest_rate_the_machine_holds
+     * brings a local instance up through control_init, which zeroes the one
+     * simulated pump register every control_state_t shares, and doing that
+     * after the extraction had already been driven would hand the trim a
+     * fake, momentary dropout to correct rather than the harmless artefact it
+     * was before the trim existed.
+     */
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
     delivery_profile_t extraction =
         steady_course_of(1.0f, 500u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     delivery_profile_t hot_water =
         steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     control_admission_t admission;
@@ -6612,12 +7235,17 @@ static void test_a_second_contending_demand_replaces_the_first_held_one(void)
 {
     stand_the_machine_rested();
 
+    /*
+     * Searched for before the extraction is commanded -- see the reordering
+     * comment on test_a_demand_sharing_the_mass_with_what_is_running_is_held.
+     */
+    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
     delivery_profile_t extraction =
         steady_course_of(1.0f, 500u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    const float rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     delivery_profile_t first_demand =
         steady_course_of(rate, 40000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     delivery_profile_t second_demand =
@@ -6655,6 +7283,15 @@ static void test_a_second_contending_demand_replaces_the_first_held_one(void)
 /// point it is held against filled in for as long as it stays held.
 static void test_a_held_demand_and_what_it_is_held_against_are_readable(void)
 {
+    /*
+     * Searched for before anything else in this test touches `state` -- see
+     * the reordering comment on
+     * test_a_demand_sharing_the_mass_with_what_is_running_is_held. Nothing
+     * this search does depends on `state` itself, only on the machine's own
+     * description, so it costs nothing to do first.
+     */
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
     delivery_profile_t held;
     plant_delivery_point_t held_against = PLANT_DELIVERY_POINT_COUNT;
 
@@ -6674,7 +7311,6 @@ static void test_a_held_demand_and_what_it_is_held_against_are_readable(void)
                               "a delivery running alone, with nothing commanded against it, "
                               "reported a demand held");
 
-    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     delivery_profile_t hot_water =
         steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &hot_water));
@@ -6699,12 +7335,17 @@ static void test_a_held_deliverys_elapsed_time_begins_at_its_own_admission(void)
 {
     stand_the_machine_rested();
 
+    /*
+     * Searched for before the extraction is commanded -- see the reordering
+     * comment on test_a_demand_sharing_the_mass_with_what_is_running_is_held.
+     */
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
     delivery_profile_t extraction =
         steady_course_of(1.0f, 800u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     delivery_profile_t hot_water =
         steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &hot_water));
@@ -6752,12 +7393,17 @@ static void test_a_held_demand_is_discarded_rather_than_resumed_when_a_fault_lat
 {
     stand_the_machine_rested();
 
+    /*
+     * Searched for before the extraction is commanded -- see the reordering
+     * comment on test_a_demand_sharing_the_mass_with_what_is_running_is_held.
+     */
+    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
+
     delivery_profile_t extraction =
         steady_course_of(1.0f, 5000u, PLANT_DELIVERY_POINT_GROUP);
     TEST_ASSERT_TRUE(control_command_delivery(&state, &extraction));
     TEST_ASSERT_EQUAL(CONTROL_STEP_ACTUATED, closed_loop_step(-1));
 
-    const float hot_water_rate = largest_rate_the_machine_holds(DRINKING_TARGET_C);
     delivery_profile_t hot_water =
         steady_course_of(hot_water_rate, 60000u, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT);
     control_admission_t admission;
@@ -7133,7 +7779,7 @@ static protection_margin_t margin_for(const char *description, float target_c)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_protection_margin(&state, target_c, &margin));
     return margin;
 }
@@ -7159,7 +7805,7 @@ static float largest_rate_held_against(const plant_parameters_t *believed,
 {
     control_state_t asking;
 
-    TEST_ASSERT_TRUE(control_init(&asking, believed, budget_used, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&asking, believed, budget_used, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&asking, target_c));
 
     float admitted = 0.0f;
@@ -7287,7 +7933,7 @@ static void test_refusal_holds_when_a_single_coefficient_diverges_within_its_dec
         "so refusing it below would establish nothing about the guarantee");
 
     control_state_t local;
-    TEST_ASSERT_TRUE(control_init(&local, &belief, &scoped_budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&local, &belief, &scoped_budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE(control_command_temperature(&local, BREW_TARGET_C));
 
     control_admission_t admission;
@@ -7419,7 +8065,7 @@ static void test_a_corner_moving_the_gap_the_safe_way_contributes_nothing(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance, &pump_trim));
 
     for (size_t which = 0u;; which++) {
         protection_margin_corner_t corner;
@@ -7563,7 +8209,7 @@ static void test_the_enumeration_carries_the_stated_joint_corner_moving_the_pair
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
 
     for (size_t which = 0u;; which++) {
         protection_margin_corner_t corner;
@@ -7622,13 +8268,13 @@ static void test_a_target_inside_the_widened_margin_is_refused(void)
 
     hw_sim_reset();
     hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
     TEST_ASSERT_TRUE_MESSAGE(
         control_command_temperature_reporting(&state, ambitious_c, &admission),
         "the target this case turns on is already refused against the shipped description, so a "
         "refusal below would establish nothing about the declared error");
 
-    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance));
+    TEST_ASSERT_TRUE(control_init(&state, &believed, &declared, &limits, &tolerance, &pump_trim));
 
     protection_margin_t margin;
     TEST_ASSERT_TRUE(control_protection_margin(&state, ambitious_c, &margin));
@@ -8270,7 +8916,7 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
         widened.assumed_error[at] = trying;
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-        TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance));
+        TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance, &pump_trim));
         (void)the_highest_target_the_loop_takes(&stopped_by);
         if (stopped_by.bound == CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
             above = trying;
@@ -8289,7 +8935,7 @@ static plant_parameter_budget_t the_budget_at_which_the_margin_binds(const char 
         widened.assumed_error[at] = middle;
         hw_sim_reset();
         hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-        TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance));
+        TEST_ASSERT_TRUE(control_init(&state, &parameters, &widened, &limits, &tolerance, &pump_trim));
         (void)the_highest_target_the_loop_takes(&stopped_by);
         if (stopped_by.bound == CONTROL_ADMISSION_TARGET_INSIDE_PROTECTION_MARGIN) {
             above = middle;
@@ -8495,6 +9141,7 @@ int main(void)
     RUN_TEST(test_an_untrustworthy_reading_reaches_the_estimator_and_not_the_drive);
     RUN_TEST(test_initialisation_without_a_record_leaves_the_heater_off_and_latched);
     RUN_TEST(test_initialisation_without_a_budget_leaves_the_heater_off_and_latched);
+    RUN_TEST(test_the_pump_trim_is_required_rather_than_assumed);
     RUN_TEST(test_the_record_reaches_the_estimator_the_control_law_holds);
     RUN_TEST(test_the_estimator_is_advanced_by_the_interval_that_elapsed);
     RUN_TEST(test_the_first_accepted_step_is_advanced_by_the_declared_interval);
@@ -8507,6 +9154,8 @@ int main(void)
     RUN_TEST(test_the_loader_refuses_a_declaration_that_settles_nothing);
     RUN_TEST(test_a_refused_declaration_leaves_the_record_as_it_was);
     RUN_TEST(test_the_band_is_required_rather_than_assumed);
+    RUN_TEST(test_pump_trim_declaration_loads_both_figures_in_either_order);
+    RUN_TEST(test_pump_trim_declaration_refuses_what_it_must);
     RUN_TEST(test_two_targets_in_one_binary_produce_two_duty_trajectories);
     RUN_TEST(test_a_machine_with_no_target_commanded_drives_nothing);
     RUN_TEST(test_a_target_that_is_not_a_temperature_is_refused);
@@ -8546,7 +9195,15 @@ int main(void)
     RUN_TEST(test_a_reading_outside_the_plausible_span_is_no_observation);
     RUN_TEST(test_a_departure_found_on_one_step_is_still_reportable_when_the_delivery_ends);
     RUN_TEST(test_the_departure_report_belongs_to_one_delivery);
-    RUN_TEST(test_the_pump_is_driven_identically_whether_or_not_the_meter_agrees);
+    RUN_TEST(test_a_departed_reading_drives_the_pump_above_the_open_loop_level);
+    RUN_TEST(test_an_agreeing_meter_leaves_the_pump_at_the_open_loop_level);
+    RUN_TEST(test_the_departure_account_carries_the_trimmed_level);
+    RUN_TEST(test_the_departure_account_shows_the_trimmed_level_with_no_departure_reported);
+    RUN_TEST(test_trim_saturation_is_reported_when_the_rate_is_unreachable);
+    RUN_TEST(test_a_fresh_delivery_does_not_inherit_the_last_ones_saturation);
+    RUN_TEST(test_a_course_peaking_at_full_scale_with_an_agreeing_meter_is_not_saturated);
+    RUN_TEST(test_pump_trim_intent_is_surrendered_at_the_limit_and_not_afterwards);
+    RUN_TEST(test_the_trim_does_not_chase_the_rate_a_delivery_chose_to_yield);
     RUN_TEST(test_a_delivery_nothing_measured_reports_no_account);
     RUN_TEST(test_a_failed_reading_that_recovers_resumes_the_comparison);
     RUN_TEST(test_every_band_comes_back_in_its_own_unit);

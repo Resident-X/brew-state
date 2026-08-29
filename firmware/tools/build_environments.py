@@ -130,6 +130,17 @@ EMBEDDED_LIMITS_OPTION = "custom_embedded_limits"
 #: absent criterion.
 EMBEDDED_TOLERANCE_OPTION = "custom_embedded_tolerance"
 
+#: The same declaration again, for the pump trim declaration that travels
+#: beside all three. It is not a statement about the machine either, on the
+#: same terms the tolerance is not -- it is how hard the design corrects a rate
+#: gap, a control-tuning policy on exactly the footing the steam side's own
+#: declaration already is -- but it reaches the artefact by the same route and
+#: for the same reason: control_init refuses to come up without it, and a
+#: target has no filesystem to open it from. An artefact carrying a machine and
+#: a band but no pump trim would have a control law that refuses to start at
+#: all, which is a louder failure than the others but the same omission.
+EMBEDDED_PUMP_TRIM_OPTION = "custom_embedded_pump_trim"
+
 #: The macro a build names the description its artefact and its tests are
 #: exercised against with. An environment naming one is pinning the host
 #: verification tier to that description: it is the file the model's own tests
@@ -155,6 +166,13 @@ REFERENCE_LIMITS_MACRO = "REFERENCE_LIMITS_PATH"
 #: answers to that exist.
 REFERENCE_TOLERANCE_MACRO = "REFERENCE_TOLERANCE_PATH"
 
+#: The same, for the pump trim declaration the host tier is pinned to. Named on
+#: its own terms rather than derived from either of the others, for the reason
+#: the tolerance's own macro is: it is not a file that varies with the machine
+#: or with the drink, and a build naming a second one is a build in which two
+#: answers to "how hard does this design correct a rate gap" exist at once.
+REFERENCE_PUMP_TRIM_MACRO = "REFERENCE_PUMP_TRIM_PATH"
+
 #: The flag options a reference description can be named in.
 _FLAG_OPTIONS = ("build_flags", "build_src_flags")
 
@@ -165,6 +183,9 @@ _REFERENCE_LIMITS_FLAG = re.compile(
 )
 _REFERENCE_TOLERANCE_FLAG = re.compile(
     r"-D\s*" + REFERENCE_TOLERANCE_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*"
+)
+_REFERENCE_PUMP_TRIM_FLAG = re.compile(
+    r"-D\s*" + REFERENCE_PUMP_TRIM_MACRO + r"\s*=\s*[\"']*([^\"'\s]+)[\"']*"
 )
 
 #: `${section.option}`, the build file's own reference to another value.
@@ -334,6 +355,17 @@ class Environment:
         return _project_relative(self.get(EMBEDDED_TOLERANCE_OPTION).strip())
 
     @property
+    def embedded_pump_trim(self) -> str:
+        """The pump trim declaration this artefact carries compiled in, or empty.
+
+        Declared in its own right, like the tolerance beside it. Which file an
+        artefact carries is a fact about the artefact whatever the file happens
+        to be about, and a build is entitled to be read rather than reasoned
+        about.
+        """
+        return _project_relative(self.get(EMBEDDED_PUMP_TRIM_OPTION).strip())
+
+    @property
     def reference_descriptions(self) -> list[str]:
         """Every description this environment names as the one it is exercised
         against, as paths relative to the project, in the order they appear.
@@ -372,6 +404,19 @@ class Environment:
         found: list[str] = []
         for option in _FLAG_OPTIONS:
             for match in _REFERENCE_TOLERANCE_FLAG.finditer(self.get(option)):
+                path = _project_relative(match.group(1))
+                if path not in found:
+                    found.append(path)
+        return found
+
+    @property
+    def reference_pump_trim(self) -> list[str]:
+        """Every pump trim declaration this environment names as the one it is
+        exercised against, on the same terms as the three above.
+        """
+        found: list[str] = []
+        for option in _FLAG_OPTIONS:
+            for match in _REFERENCE_PUMP_TRIM_FLAG.finditer(self.get(option)):
                 path = _project_relative(match.group(1))
                 if path not in found:
                     found.append(path)
@@ -695,4 +740,27 @@ def pinned_tolerance(environments: list[Environment]) -> tuple[str, list[str]]:
         lambda environment: environment.reference_tolerance,
         REFERENCE_TOLERANCE_MACRO,
         "tolerance declaration",
+    )
+
+
+def pinned_pump_trim(environments: list[Environment]) -> tuple[str, list[str]]:
+    """The one pump trim declaration the build pins its verification to, and
+    what went wrong.
+
+    Asked separately from the three above because it answers a separate
+    question again: not what this machine is, what its sensors could report,
+    or what the drink demands, but how hard DEC-CORRECTION-KEEPS-THE-ACCOUNT's
+    trim corrects a rate gap -- a control-tuning policy that would read the
+    same on a machine of another kind entirely, on exactly the footing the
+    steam side's own gains already do. A build pinning the machine's files and
+    the drink's tolerance but leaving this one unnamed has a verification tier
+    that never exercised the actual trim gains the target carries: the tier's
+    tests would have run some other pair of gains, or none, while the artefact
+    goes out carrying whatever this build happened to embed.
+    """
+    return _pinned(
+        environments,
+        lambda environment: environment.reference_pump_trim,
+        REFERENCE_PUMP_TRIM_MACRO,
+        "pump trim declaration",
     )

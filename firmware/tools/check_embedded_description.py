@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Fail when a machine would be built carrying bytes nobody verified.
 
-An artefact carries three files compiled in: the description of what the machine
-is, the declaration of what a reading off that machine may plausibly be, and the
-band a delivery off it is held to. Each is one of the things about the machine's
-behaviour that cannot be read back off it once it is running. Generating them
-from the files removes the obvious way for them to go stale, but it does not
-establish that the artefact and the host verification tier are pinned to the
-same files. A build naming a different description, a generated file left behind
-by an incremental build, and a second description sitting alongside the intended
-one each produce a target carrying something the tier never saw.
+An artefact carries four files compiled in: the description of what the machine
+is, the declaration of what a reading off that machine may plausibly be, the
+band a delivery off it is held to, and the gains the pump trim corrects a rate
+gap with. Each is one of the things about the machine's behaviour that cannot
+be read back off it once it is running. Generating them from the files removes
+the obvious way for them to go stale, but it does not establish that the
+artefact and the host verification tier are pinned to the same files. A build
+naming a different description, a generated file left behind by an incremental
+build, and a second description sitting alongside the intended one each produce
+a target carrying something the tier never saw.
 
 None of those has a symptom. A machine predicting from coefficients that
 describe a different variant is wrong in exactly the way a machine that has
@@ -17,9 +18,12 @@ drifted is wrong, and the residual that would eventually surface it cannot tell
 the two apart. A machine believing readings a different machine's sensors could
 produce is wrong the same way and just as quietly. A machine holding its
 deliveries to a band nobody verified is quieter still: it makes coffee, and the
-only evidence is in the cup. So this is a build failure and not a warning, and
-it runs before anything is compiled rather than against the artefact afterwards:
-an artefact that should not exist is not made better by being inspected.
+only evidence is in the cup. A machine trimming its pump with gains nobody
+verified is the same failure again: it corrects toward the commanded rate, and
+whether it does so the way the tier's own tests exercised is not something the
+cup can tell either. So this is a build failure and not a warning, and it runs
+before anything is compiled rather than against the artefact afterwards: an
+artefact that should not exist is not made better by being inspected.
 
 Every embedding is asked the same questions by the same code, and every message
 names which one it is about. Written as separate checks they would answer
@@ -92,6 +96,12 @@ SUBJECTS = (
         build_environments.EMBEDDED_TOLERANCE_OPTION,
         lambda environment: environment.embedded_tolerance,
         build_environments.pinned_tolerance,
+    ),
+    Subject(
+        embedded_description.PUMP_TRIM,
+        build_environments.EMBEDDED_PUMP_TRIM_OPTION,
+        lambda environment: environment.embedded_pump_trim,
+        build_environments.pinned_pump_trim,
     ),
 )
 

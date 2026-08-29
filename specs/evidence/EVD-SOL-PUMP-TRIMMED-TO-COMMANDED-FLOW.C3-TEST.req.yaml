@@ -1,0 +1,17 @@
+id: EVD-SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3-TEST
+type: evidence
+title: A trim at the pump's limit with the rate still short is reported as saturation, and accumulated intent does not outlive the limit (SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T08:34:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_trim_saturation_is_reported_when_the_rate_is_unreachable, test_a_fresh_delivery_does_not_inherit_the_last_ones_saturation, test_a_course_peaking_at_full_scale_with_an_agreeing_meter_is_not_saturated, test_pump_trim_intent_is_surrendered_at_the_limit_and_not_afterwards
+text: |-
+  An unreachable rate correctly reports trim_saturated once departed beyond tolerance; a fresh delivery inherits neither the prior one's saturation nor its departure; a course legitimately peaking at full-scale flow with an agreeing (in-tolerance) meter is not misreported as saturated, proving trim_saturated is gated on the tolerance band the same way departed is; and pump_trim_permille is bit-identical across a long saturated interval and moves again once released, mirroring the proof heater_command already carries at its own actuator bound. All four pass in native_test:test_control.
+links:
+  - target: SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW.C3
+    type: satisfies

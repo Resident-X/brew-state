@@ -38,6 +38,7 @@
 #include "delivery_tolerance.h"
 #include "estimator_limits.h"
 #include "plant_model.h"
+#include "pump_trim_declaration.h"
 #include "steam_control_declaration.h"
 
 /*
@@ -72,6 +73,7 @@ int protection_margin_record_run(const char *description_text, size_t descriptio
                                  const plant_parameter_budget_t *budget,
                                  const estimator_limits_t *limits,
                                  const delivery_tolerance_t *tolerance,
+                                 const pump_trim_declaration_t *pump_trim,
                                  const steam_control_declaration_t *steam);
 
 #endif /* PROTECTION_MARGIN_RECORD_H */

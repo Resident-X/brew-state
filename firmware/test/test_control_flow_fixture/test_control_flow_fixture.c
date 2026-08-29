@@ -47,6 +47,7 @@
 #include "hw_interface.h"
 #include "hw_sim.h"
 #include "plant_model.h"
+#include "pump_trim_declaration.h"
 
 void setUp(void) {}
 void tearDown(void) {}
@@ -137,8 +138,17 @@ static void bring_the_machine_up(control_state_t *state)
      */
     const delivery_tolerance_t tolerance = {0};
 
+    /*
+     * Zero-valued and never loaded from a declaration, on the same terms and
+     * for the same reason the tolerance above is: nothing this suite commands
+     * ever measures a rate gap against a real course long enough for the
+     * trim's own gains to matter, and control_init asks only that the pointer
+     * is not null.
+     */
+    const pump_trim_declaration_t pump_trim = {0};
+
     TEST_ASSERT_TRUE_MESSAGE(
-        control_init(state, &parameters, &budget, &limits, &tolerance),
+        control_init(state, &parameters, &budget, &limits, &tolerance, &pump_trim),
         "control_init was refused against a structure built to let it succeed -- see "
         "flow_fixture's own header for what it answers and why");
 }

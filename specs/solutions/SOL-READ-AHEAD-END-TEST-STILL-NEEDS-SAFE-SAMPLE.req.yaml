@@ -1,0 +1,50 @@
+id: SOL-READ-AHEAD-END-TEST-STILL-NEEDS-SAFE-SAMPLE
+type: deliverable
+category: solution
+title: The reading-ahead end-condition test still needs a sample point its own arithmetic cannot underflow
+status: active
+version: 1
+text: |
+  `test_reading_ahead_stops_at_the_end_condition` in `firmware/test/test_control/test_control.c`
+  computes its sample point as `ENDS[0] - (state.delivery_lead_millis / 2u)`, an unsigned
+  subtraction. Against the shipped reference description the lead this test itself asserts is
+  "too short to tell a window clamped at the end apart from one that has reached the rise beyond
+  it" already exceeds `2 * ENDS[0]`, so the subtraction underflows to a value close to
+  `UINT32_MAX`. The loop that follows, `for (uint32_t elapsed = 0u; elapsed < sample_at; elapsed
+  += CONTROL_STEP_INTERVAL_MS)`, still terminates and the test's own assertions still pass -- the
+  loop counter wraps back past `sample_at` rather than running forever -- but only after several
+  hundred million iterations, costing on the order of minutes of wall time in what should be a
+  sub-second Unity case.
+
+  This is a defect in the regression protection `SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT.C5`
+  carries for `REQ-SEQUENCE-CONSISTENCY-001.C2`, not a defect in the production behaviour the
+  criterion describes: the read-ahead window is still correctly clamped at the delivery's end
+  condition, and the assertions this test makes are still the right ones. What is broken is the
+  test's own arithmetic for choosing where to sample, which happens to depend on how the lead
+  compares to `ENDS[0]` in a way nobody checked holds for the shipped machine.
+
+  Restoring this means computing `sample_at` so it cannot underflow regardless of how the lead
+  compares to `ENDS[0]` for whatever description the suite is run against -- either by asserting
+  the precondition the test already needs (`ENDS[0] > lead/2`) and refusing rather than wrapping
+  when it does not hold, or by deriving the sample point differently so the subtraction is always
+  in range. Out of scope: retuning the lead itself, the shipped description's lead figure, or any
+  other test in this file -- this restores one test's own arithmetic, not the lead mechanism it
+  exercises.
+rationale: |
+  Found while implementing SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW: the full host test suite was run
+  repeatedly during that build's verification loop, and this one case's multi-minute runtime stood
+  out against every other case's sub-second one. Confirmed reproducible against unmodified
+  `origin/main` with none of that slice's changes applied, and confirmed unrelated to it --
+  SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW touches the pump/departure path, not the read-ahead lead
+  calculation this test exercises.
+
+  Filed in the maintenance lane rather than fixed in place because the defect sits in
+  already-sealed, already-merged work (SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT, unrelated to
+  and predating the slice that found it), which is exactly the "restoring behaviour that fell
+  short after work merged" this lane exists for -- not a mid-build finding inside the criterion
+  currently being built.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-SEQUENCE-CONSISTENCY-001.C2
+    type: targets
