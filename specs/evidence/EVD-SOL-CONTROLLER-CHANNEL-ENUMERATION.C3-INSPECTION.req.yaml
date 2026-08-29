@@ -1,0 +1,17 @@
+id: EVD-SOL-CONTROLLER-CHANNEL-ENUMERATION.C3-INSPECTION
+type: evidence
+title: Compute and operator-interface demand stated with a named basis (SOL-CONTROLLER-CHANNEL-ENUMERATION.C3)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-29T12:53:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/controller-io.md
+text: |-
+  The 'Compute and operator-interface demand' section derives the control-law/estimator tick rate from firmware/src/control/control.h's CONTROL_STEP_INTERVAL_MS (10 ms / 100 Hz), naming firmware/params/cadence.declaration as the basis, and correctly scopes out only on-target execution-time measurement (a later phase) rather than the declared cadence itself. The two operator-interface forms (colour panel vs. serial-linked display board) each state what they cost without choosing between them. Blind review found this section originally cited the wrong criterion (OBL-REALTIME-DISCIPLINE-001.C6, about measured execution time) and omitted the already-declared cadence C3 asks to be named as the basis; corrected before this evidence was recorded.
+links:
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION.C3
+    type: satisfies

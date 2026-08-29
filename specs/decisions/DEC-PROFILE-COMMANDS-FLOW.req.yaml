@@ -2,7 +2,7 @@ id: DEC-PROFILE-COMMANDS-FLOW
 type: decision
 title: A delivery profile commands flow, and pressure is capped mechanically
 status: active
-version: 1
+version: 2
 decided_by: david
 rationale: |
   Context: A profile commands a course of targets, and the graph deliberately did not say which physical quantity those targets are in. Flow and pressure are not independent — they are coupled through the coffee itself, and through a puck whose resistance changes with grind, dose, distribution and age. Only one of them can be commanded; the other is whatever the machine and the coffee produce in response.
@@ -11,7 +11,7 @@ rationale: |
 
   Reversibility: Reversible in the control law without touching the requirement layer, which states the course and its end condition without naming a quantity. What would not reverse cheaply is the hardware: a mechanical pressure cap sized for a commanded-flow machine is not the same component as the pressure regulation a pressure-commanded machine would want, and the sensing needed to close a pressure loop to the same standard is a different specification again.
 
-  Consequences: Pressure is still measured, on both paths, and is not made redundant by being capped. When the cap opens, delivered flow stops tracking commanded flow, and pressure is what distinguishes that from a blockage, a failing pump or a grind that has moved — a distinction the profile-departure criterion requires the machine to report rather than absorb. The mechanical cap is a working-pressure device and discharges nothing: relief that acts on the pressure itself, without power, while a sensor is lying and while nothing has recognised a hazard, remains a separate requirement covering both heated masses.
+  Consequences: Pressure is not made redundant by being capped, but the two paths are not in the same state: the steam path has a decided channel for it (DEC-STEAM-PRESSURE-SENSOR-ADDED adds a transducer there), while the brew path does not — no decision has added one, and REQ-MEASUREMENT-001.C7 remains open there rather than satisfied by this decision. Where pressure is measured, when the cap opens delivered flow stops tracking commanded flow, and pressure is what distinguishes that from a blockage, a failing pump or a grind that has moved — a distinction the profile-departure criterion requires the machine to report rather than absorb once a channel exists to report it from. The mechanical cap is a working-pressure device and discharges nothing: relief that acts on the pressure itself, without power, while a sensor is lying and while nothing has recognised a hazard, remains a separate requirement covering both heated masses.
 options_considered:
   - option: Command flow and cap pressure mechanically
     reason_rejected: ""

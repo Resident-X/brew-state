@@ -1,0 +1,17 @@
+id: EVD-SOL-BREW-PRESSURE-RATIONALE-CORRECTED.C1-INSPECTION
+type: evidence
+title: DEC-PROFILE-COMMANDS-FLOW rationale no longer overclaims brew-path pressure is measured (SOL-BREW-PRESSURE-RATIONALE-CORRECTED.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-29T12:53:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: specs/decisions/DEC-PROFILE-COMMANDS-FLOW.req.yaml
+text: |-
+  DEC-PROFILE-COMMANDS-FLOW was updated (version 2) so its Consequences paragraph states pressure measurement is decided for the steam path only (DEC-STEAM-PRESSURE-SENSOR-ADDED) and that REQ-MEASUREMENT-001.C7 remains open on the brew path, replacing the prior text ('Pressure is still measured, on both paths') that asserted both paths as an established fact with nothing in the graph backing the brew side. Blind review confirmed the correction is accurate and introduces no new overclaim.
+links:
+  - target: SOL-BREW-PRESSURE-RATIONALE-CORRECTED.C1
+    type: satisfies

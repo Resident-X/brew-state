@@ -1,0 +1,17 @@
+id: SOL-BREW-PRESSURE-RATIONALE-CORRECTED
+type: deliverable
+category: solution
+title: DEC-PROFILE-COMMANDS-FLOW's rationale is corrected to stop asserting brew-path pressure is measured
+status: active
+version: 1
+text: |
+  DEC-PROFILE-COMMANDS-FLOW's rationale, in its "Consequences" paragraph, states: "Pressure is still measured, on both paths, and is not made redundant by being capped." That claim is true for the steam path -- DEC-STEAM-PRESSURE-SENSOR-ADDED adds a transducer there -- but not for the brew path, which reference-machine.md's "Already fitted" section records as carrying no pressure transducer, and which no decision has since added one to. REQ-MEASUREMENT-001.C7 ("Pressure in the brew path is measured rather than inferred from pump drive") has zero addresses, derives-from, or justified-by links reaching it: nothing in the graph has yet made it true.
+
+  Discovered while enumerating controller channels for SOL-CONTROLLER-CHANNEL-ENUMERATION: the enumeration draws only from what the machine carries or a decision has added, and applying that rule to pressure sensing surfaced the mismatch between what DEC-PROFILE-COMMANDS-FLOW's rationale asserts and what the graph actually supports.
+
+  This item corrects the rationale text so it no longer reads as though C7 is already satisfied. It does not add a brew-side pressure-sensing decision -- that is a design choice with its own trade-offs (part selection, siting, cost) and belongs to whatever slice next takes up REQ-MEASUREMENT-001.C7, not to a maintenance correction of existing prose.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C7
+    type: targets
