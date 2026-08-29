@@ -1,0 +1,17 @@
+id: EVD-SOL-READ-AHEAD-END-TEST-STILL-NEEDS-SAFE-SAMPLE.C1-TEST
+type: evidence
+title: Read-ahead end-condition test's sample point no longer underflows (SOL-READ-AHEAD-END-TEST-STILL-NEEDS-SAFE-SAMPLE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-29T10:29:06Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_reading_ahead_stops_at_the_end_condition
+text: |-
+  sample_at is now derived as ENDS[0]/2u, independent of state.delivery_lead_millis, so the subtraction that previously underflowed when the lead exceeded 2*ENDS[0] no longer exists. A precondition assertion (lead > ENDS[0] - sample_at) refuses with a clear message rather than silently wrapping if a future lead value is too short for the read-ahead window to cross the near-ending course's stop by the sample point. task fw:test: native_test:test_control PASSED in 2.87s (previously multi-minute due to the wraparound loop), all 366 host test cases pass, no regressions.
+links:
+  - target: SOL-READ-AHEAD-END-TEST-STILL-NEEDS-SAFE-SAMPLE.C1
+    type: satisfies
