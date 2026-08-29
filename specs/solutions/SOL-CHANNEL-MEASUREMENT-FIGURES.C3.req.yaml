@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-MEASUREMENT-FIGURES.C3
+type: criterion
+title: The two block temperature rows take their accuracy from the declared sensing error their own commanded margin is widened by
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each block sensor already has a declared error that its own loop's commanded margin is widened by, and the accuracy written against that row is that same figure rather than a second one derived here. A separately derived number would let the specification and the margin drift while both went on reading as derived from the same requirement, and the margin is the thing that keeps the commanded target clear of the protection trip point. The row also records the estimated provenance the figure carries and what displaces it: a bench characterisation of the part actually fitted, or a decision settling which sensor this design specifies.
+
+  Out of scope: the wand disc channel, which has no declared error and whose lag and coupling to milk temperature the machine's declaration records as an uncharacterised hypothesis; and selecting or characterising any temperature-sensing part.
+links:
+  - target: SOL-CHANNEL-MEASUREMENT-FIGURES
+    type: criterion-of

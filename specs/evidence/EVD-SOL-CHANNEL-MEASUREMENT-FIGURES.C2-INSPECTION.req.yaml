@@ -1,0 +1,17 @@
+id: EVD-SOL-CHANNEL-MEASUREMENT-FIGURES.C2-INSPECTION
+type: evidence
+title: Every figure names its declaration source and served requirement criterion, cost excluded as a basis (SOL-CHANNEL-MEASUREMENT-FIGURES.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-29T22:31:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/controller-io.md — 'What the control needs of each channel' section and per-cell provenance clauses; SOL-CHANNEL-MEASUREMENT-FIGURES.C2 v2 (four admissible sources)
+text: |-
+  Blind review traced every new cell's cited figure to one of the four admissible sources (tolerance.declaration, control.declaration + control.c/steam_control.c value sites, cadence.declaration, steam_control.declaration) and confirmed no cell cites cost as a basis. Two mis-citations found in first pass (sensing-error value site, cost-ordering attribution) were corrected and re-verified.
+links:
+  - target: SOL-CHANNEL-MEASUREMENT-FIGURES.C2
+    type: satisfies

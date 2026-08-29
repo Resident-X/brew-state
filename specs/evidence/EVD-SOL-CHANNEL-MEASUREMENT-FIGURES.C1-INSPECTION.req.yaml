@@ -1,0 +1,17 @@
+id: EVD-SOL-CHANNEL-MEASUREMENT-FIGURES.C1-INSPECTION
+type: evidence
+title: Every sensing/actuation row carries filled Accuracy, Resolution, Update-rate cells (SOL-CHANNEL-MEASUREMENT-FIGURES.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-29T22:31:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/controller-io.md — Sensing channels and Actuation channels tables (all 15 rows, 3 added columns)
+text: |-
+  Programmatic inspection (blind review agent) confirmed zero empty cells across all 15 data rows x 3 new columns. 'Not applicable' used for quantities with no continuous concept (contact closures, on/off drives); 'not established'/'not derivable' used where no admissible declared figure reaches the channel. Matches C1's coverage predicate exactly.
+links:
+  - target: SOL-CHANNEL-MEASUREMENT-FIGURES.C1
+    type: satisfies

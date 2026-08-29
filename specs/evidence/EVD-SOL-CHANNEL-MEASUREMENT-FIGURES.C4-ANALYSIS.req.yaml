@@ -1,0 +1,17 @@
+id: EVD-SOL-CHANNEL-MEASUREMENT-FIGURES.C4-ANALYSIS
+type: evidence
+title: Every channel's update rate stated against the declared step interval, sufficiency openness carried across (SOL-CHANNEL-MEASUREMENT-FIGURES.C4)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-29T22:31:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/controller-io.md — Update rate column, all 15 rows; firmware/src/control/control.h:51 (CONTROL_STEP_INTERVAL_MS=10u)
+text: |-
+  Analysis confirmed all 15 rows state update rate as an explicit whole multiple (x1 in every case) of the 10ms/100Hz step-interval-ms, each carrying the source's own 'sufficiency not established' caveat. No row claims an unsupported sub-cadence.
+links:
+  - target: SOL-CHANNEL-MEASUREMENT-FIGURES.C4
+    type: satisfies

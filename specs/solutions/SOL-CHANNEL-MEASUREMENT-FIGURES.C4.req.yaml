@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-MEASUREMENT-FIGURES.C4
+type: criterion
+title: Each channel's update rate is stated against the control loop's declared step interval
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Every sensing channel has to be sampled and every actuation command issued within the step the control law already commits to, so each row states its update rate as that interval or as a stated whole multiple of it, and says which. The interval is itself an estimate, chosen so the loop samples far faster than the brew path's thermal constants, with nothing yet establishing that it is fast enough for the disturbances this machine actually sees; a row inheriting that openness says so rather than presenting its rate as a sufficiency that has been shown.
+
+  Out of scope: measuring the control law's execution time on target hardware, which is on-target work under a later phase; and revising the step interval itself, which belongs to the control-law work its own declaration points at.
+links:
+  - target: SOL-CHANNEL-MEASUREMENT-FIGURES
+    type: criterion-of
