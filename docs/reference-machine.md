@@ -98,7 +98,7 @@ Sensing:
 - Steam thermoblock temperature sensor, on the block itself
 - Steam wand temperature sensor, in the wand itself -- a metal conduction disc on the wand's exterior, isolated from the wand body by an O-ring, wired today to drive the milk-temperature gauge below directly rather than read digitally. *(Provenance: owner's direct account of the physical wand, not yet bench-verified.)* **Hypothesis, not established:** the disc lags real milk temperature, and is believed to respond to both the wand's own internal heat and the milk it contacts externally, with external contact suspected to dominate the faster response -- but the relative weight and lag of each path has not been characterised, and nothing here establishes whether the O-ring's isolation is adequate to make this a usable milk-temperature reading at all.
 - Water level sensor in the tank (magnet/reed type)
-- Flow meter in the water path, wired to the OEM controller
+- Flow meter in the water path, wired to the OEM controller -- fitted roughly 5-7 cm ahead of the coffee (Ulka EP5) pump, which serves both the brew and hot-water paths, on the suction line drawing from the tank. It sits below the tank's water level, so the suction line stays flooded rather than needing to self-prime by lift. No meter is fitted on the steam path. *(Provenance: owner's direct account of the physical machine, not yet bench-verified.)*
 - Two microswitches, one on each control knob
 
 **Nothing measures the brew path downstream of the coffee block.** That is a

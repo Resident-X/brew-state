@@ -2,7 +2,7 @@ id: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
 type: decision
 title: Flow is read on the low-pressure side, from the meter the machine already carries
 status: active
-version: 1
+version: 2
 decided_by: david
 rationale: |
   Context: A delivery profile commands flow, and several requirements rest on flow being observed
@@ -10,22 +10,28 @@ rationale: |
   actually moved water, ending a delivery on a quantity the machine measures, and showing the
   operator what a delivery is doing while it runs. The reference machine already carries a flow meter
   in the water path, wired to the OEM controller this project replaces, so the question is not
-  whether to buy one but which flow the machine reads. Where in the path that meter sits is not
-  established, and the machine draws through two pumps -- one for coffee, one for steam -- from a
-  single tank, past a three-way diverter that routes the coffee block's outlet to either the group or
-  the hot water spout.
+  whether to buy one but which flow the machine reads. The meter's position is established
+  (docs/reference-machine.md, "Already fitted"): it sits on the coffee (Ulka EP5) pump's own suction
+  line, roughly 5-7 cm ahead of the pump, drawing from the tank, on the low-pressure side rather than
+  the shared supply. The machine draws through two pumps -- one for coffee and hot water, one for
+  steam -- from a single tank, past a three-way diverter that routes the coffee block's outlet to
+  either the group or the hot water spout.
 
   Trade-offs: Reading the fitted meter costs nothing to acquire and is what the cost discipline makes
-  the default for every channel, but it measures wherever it happens to sit: if that is on the shared
-  supply ahead of both pumps, it sees the sum of whatever is drawing, and a brew delivery cannot be
-  told from a steam draw by the meter alone. Moving or adding a meter on the coffee pump's own inlet
-  separates the coffee side from the steam side for one inexpensive part, though brew and hot water
-  share that pump and are told apart only with the diverter's commanded state. That inlet is a suction
-  line from a tank rather than a pressurised feed, which cuts both ways: the part sees no working
-  pressure and need not be rated for any, but a leak there admits air rather than losing water, and
-  air on the suction side of a vibratory pump is the loss-of-prime condition the machine is trying to
-  detect. A restriction added to that line is a priming and cavitation risk in its own right, so what
-  the meter costs the pump has to be established rather than assumed. Sensing downstream of the
+  the default for every channel, and it already sits where that discipline would put it: on the
+  coffee pump's own suction inlet rather than the shared tank supply. Structurally, that means a
+  steam-only draw, which runs through the separate steam pump entirely, has no path through this
+  meter at all -- but structural separation is not the same as a demonstrated reading, and whether
+  the meter actually behaves that way once wired up, rather than just being plumbed that way, is a
+  bench question, not a paper one. Brew and hot water still share this pump and are told apart only
+  with the diverter's commanded state. That inlet is a suction line from a tank rather than a
+  pressurised feed, which cuts both ways: the part sees no working pressure and need not be rated for
+  any, but a leak there admits air rather than losing water, and air on the suction side of a
+  vibratory pump is the loss-of-prime condition the machine is trying to detect. The meter sits below
+  the tank's water level, so the suction line stays flooded rather than needing to self-prime by
+  lift, which bears on that risk without settling it -- what the meter's restriction costs the pump
+  under real operation still has to be established rather than assumed, notwithstanding the owner's
+  account that it has not caused a noticeable problem in factory operation. Sensing downstream of the
   pump measures closest to what the cup receives, but a meter that survives brew pressure with useful
   resolution is a different class of component at several times the cost, and it adds a pressurised
   joint to plumbing this project deliberately leaves as built. Inferring flow from pump drive and
@@ -33,23 +39,26 @@ rationale: |
   moves with grind, dose, distribution and puck age -- the variables a delivery exists to hold
   constant.
 
-  Reversibility: Reversible as a fitting change, since the meter is plumbed rather than designed in
-  and the requirement layer names neither a location nor a technology. The decision to leave the plumbing as the factory built it rules on water-path topology -- its
-  options are re-routings, preheating brew water through the steam side or moving hot water onto it --
-  and inserting a fitting re-routes nothing. This project is already committed to that class of work:
-  pressure is required to be measured in both the brew and steam paths, no transducer is fitted on
-  either, and the roadmap already carries both. A meter or a tee inserted in an existing line is the
-  same job. Reusing the fitted meter where its position serves avoids even that, which is the first
-  reason to prefer it.
+  Reversibility: Reversible as a fitting change if it is ever needed, since the meter is plumbed
+  rather than designed in and the requirement layer names neither a location nor a technology. The
+  decision to leave the plumbing as the factory built it rules on water-path topology -- its options
+  are re-routings, preheating brew water through the steam side or moving hot water onto it -- and a
+  fitting change re-routes nothing. This project is already committed to that class of work: pressure
+  is required to be measured in both the brew and steam paths, no transducer is fitted on either, and
+  the roadmap already carries both. A meter or a tee inserted in an existing line would be the same
+  job. Reusing the fitted meter as it already sits avoids even that -- the first reason to prefer it,
+  and now confirmed rather than merely hoped for.
 
   Consequences: The measured quantity is water drawn on the low-pressure side, not water delivered to
   the cup. The volume held between the meter and the point of delivery has to be established on this
   machine rather than assumed, and the three-way diverter means there are two such volumes -- one to
   the group and one to the hot water spout -- so a reading must be attributed to a destination before
-  it can be related to what a drink received. Whether the fitted meter's position makes the brew draw
-  distinguishable is the first thing the bench has to establish. Gravimetric endpoints remain the more
-  direct measure of what a drink received and this decision does not displace them. What resolution
-  the reading must reach is set by the smallest difference between drinks an operator would notice.
+  it can be related to what a drink received. The bench still has to establish whether the meter's
+  confirmed position actually delivers on that structural separation once wired up and read for real,
+  and whether hot water is reliably told apart from brew via the diverter's commanded state as
+  intended. Gravimetric endpoints remain the more direct measure of what a drink received and this
+  decision does not displace them. What resolution the reading must reach is set by the smallest
+  difference between drinks an operator would notice.
 options_considered:
   - option: Read flow on the low-pressure side, reusing the fitted meter where its position allows
     reason_rejected: ""

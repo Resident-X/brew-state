@@ -4,25 +4,29 @@ category: task
 title: The flow the machine already senses is read, positioned and resolved
 status: active
 level: task
-version: 1
+version: 2
 text: |
   The flow the machine already senses becomes flow the machine can use. A meter is fitted in the water
   path and wired to the OEM controller this project replaces, so the reading exists but is not
-  available to anything being built, and where in the path it sits was never established. What it
-  measures, what it resolves, and whether a brew delivery can be told from a steam draw by it are
-  established on the bench rather than assumed from the part.
+  available to anything being built. Its position is established (docs/reference-machine.md, "Already
+  fitted"): on the coffee (brew and hot-water) pump's own suction line, roughly 5-7 cm ahead of the
+  pump, drawing from a tank that sits above it -- not a supply shared with steam. What it measures,
+  what it resolves, and whether a brew delivery can be told from a steam draw by it are established on
+  the bench rather than assumed from the part.
 
-  Position is the first question because it decides the rest. The machine draws through two pumps from
-  one tank, and a meter on the shared supply sees whatever is drawing rather than the delivery in
-  progress. Where the fitted meter cannot distinguish a coffee delivery, or cannot
-  resolve what a delivery is judged by, the correction is a meter on the
-  coffee pump's own inlet -- a suction line from the tank, so an inexpensive part rated for no working
-  pressure -- rather than a downstream meter that would have to survive brew pressure. What such a
-  restriction costs a vibratory pump in priming and cavitation margin is established on the bench
-  before it is adopted.
+  That position is exactly what DEC-FLOW-SENSED-UPSTREAM-OF-PUMP prefers, so no meter needs to move
+  for position's sake -- though DEL-BENCH-FLOW-INSTRUMENTATION.C2's resolution requirement is a
+  separate, still-open question, and if the fitted meter cannot resolve finely enough, a different or
+  additional meter is still what C2 requires regardless of position. What is not yet established is
+  whether the confirmed position actually makes a coffee delivery distinguishable from a steam draw
+  once read for real, and what the existing suction-line restriction costs the vibratory pump in
+  priming and cavitation margin under real operation -- the owner's account is that it has not caused
+  a noticeable problem in factory use, but that is not yet bench-verified evidence. The meter sits
+  below the tank's water level, so the suction line stays flooded rather than needing to self-prime by
+  lift, which bears on that cavitation risk without settling it.
 
-  What the reading resolves is set by the smallest difference between drinks an operator would notice,
-  which is a property of the deliveries the machine is judged by rather than of what the part
+  What the reading resolves is set by the smallest difference between drinks an operator would
+  notice, which is a property of the deliveries the machine is judged by rather than of what the part
   conveniently provides. This work does not wait on the sensitivity analysis: the roadmap carries
   instrumentation as the exception to procurement following that analysis, because bench
   characterisation, and so the committed model, is blocked without it.

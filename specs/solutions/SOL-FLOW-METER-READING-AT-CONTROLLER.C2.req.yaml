@@ -1,0 +1,28 @@
+id: SOL-FLOW-METER-READING-AT-CONTROLLER.C2
+type: criterion
+title: The meter's signal line is wired to an STM32F4 pre-hardware target on an input matching its signal type
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Per DEC-BENCH-SENSING-BOARD-BOUGHT-NOW, an STM32F4-family board bought for bench sensing is wired
+  to the meter's signal line on a peripheral matching the signal type the prior criterion establishes.
+  If the signal is an analogue voltage or current, the HW_SENSOR_FLOW channel in
+  firmware/include/hw_interface.h and its backing table in firmware/src/hw/stm32/hw_stm32.c, which
+  carries the channel as SENSOR_INPUT_NONE today, are updated to name the real ADC input in place of
+  that placeholder -- the same shape every other populated row of that table already uses. If the
+  signal is instead a pulse or frequency train, as is typical for this class of meter, the existing
+  table entry is not sufficient: the read path needs a timer input-capture peripheral and a pulse
+  counter, which is new peripheral plumbing alongside hw_sensor_read rather than a value substituted
+  into the existing ADC-poll table, since that function implements only an ADC poll today. Either way,
+  the physical connection (board, pin, meter terminal) is documented in docs/reference-machine.md, and
+  the code comment at hw_stm32.c's SENSOR_INPUT_NONE entry, which currently explains the absence by
+  the meter being wired to the OEM controller rather than this board, is updated to match.
+
+  Out of scope: the final production controller selection, which this wiring does not constitute or
+  foreclose per DEC-PREHARDWARE-TARGET-FAMILY, and driving any SSR or heater channel from this board,
+  which DEC-BENCH-SENSING-BOARD-BOUGHT-NOW explicitly excludes.
+links:
+  - target: SOL-FLOW-METER-READING-AT-CONTROLLER
+    type: criterion-of

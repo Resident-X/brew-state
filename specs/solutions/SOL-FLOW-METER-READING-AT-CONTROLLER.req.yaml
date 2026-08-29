@@ -1,0 +1,32 @@
+id: SOL-FLOW-METER-READING-AT-CONTROLLER
+type: deliverable
+category: solution
+title: The fitted flow meter's reading, wired to a bench sensing board and decoded to the machine's flow convention
+status: active
+version: 1
+text: |
+  The flow meter the machine already carries is characterised on the bench rather than assumed from
+  the part: its signal type and scaling are read off its markings or a datasheet, then it is wired to
+  an STM32F4 bench sensing board (DEC-BENCH-SENSING-BOARD-BOUGHT-NOW) on whichever peripheral its
+  actual signal type calls for -- an ADC input if it is an analogue voltage, or a timer capture and
+  pulse counter if it is a pulse or frequency train, since the existing hw_stm32.c ADC-poll path only
+  covers the first case. The HW_SENSOR_FLOW channel this project's hardware seam already reserves is
+  wired live for the first time, converting whatever the meter emits into the millilitres-per-second-
+  in-thousandths convention every other channel already uses, and proven first in the firmware host
+  build against a synthetic signal before ever touching the board. Only once wired and decoded is the
+  pump run on the bench with water actually moving, to demonstrate the reading responds -- the first
+  real signal this project has read off physical hardware rather than a model.
+
+  Out of scope: calibrating the reading's absolute accuracy against a reference flow standard,
+  resolving what quantisation the reading needs to distinguish drinks, and any claim about the
+  machine's eventual production controller -- the board this wiring lands on is bench instrumentation,
+  not a controller selection.
+links:
+  - target: DEL-BENCH-FLOW-INSTRUMENTATION.C1
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C5
+    type: targets
+  - target: DEC-BENCH-SENSING-BOARD-BOUGHT-NOW
+    type: justified-by
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
+    type: justified-by

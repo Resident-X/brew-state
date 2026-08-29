@@ -1,0 +1,20 @@
+id: SOL-FLOW-METER-READING-AT-CONTROLLER.C4
+type: criterion
+title: With water drawn on the bench, the wired board reports a live flow reading that responds to the pump running
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  With the meter wired per the earlier wiring criterion and the flow-decode firmware from the earlier
+  firmware criterion flashed to the board, the coffee pump is run on the bench and the board's
+  HW_SENSOR_FLOW reading is observed to move from absent or zero to a non-zero value while water is
+  drawn, and back down when the pump stops. The raw observation -- a captured serial log, a scope
+  trace, or a description of what was seen -- is supplied by whoever runs the bench and becomes the
+  evidence artifact for this criterion.
+
+  Out of scope: quantitative accuracy against a reference flow standard, and the resolution needed to
+  distinguish between drinks, which DEL-BENCH-FLOW-INSTRUMENTATION.C2 covers separately.
+links:
+  - target: SOL-FLOW-METER-READING-AT-CONTROLLER
+    type: criterion-of

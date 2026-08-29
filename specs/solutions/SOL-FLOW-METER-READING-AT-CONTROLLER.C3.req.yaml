@@ -1,0 +1,26 @@
+id: SOL-FLOW-METER-READING-AT-CONTROLLER.C3
+type: criterion
+title: Firmware converts the raw signal into a flow-rate reading exposed on the HW_SENSOR_FLOW channel
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The HW_SENSOR_FLOW channel's read path in firmware/src/hw/stm32/hw_stm32.c is extended so that a
+  sample converts the raw ADC counts, or the captured pulse timing, into millilitres per second in
+  thousandths -- the convention firmware/include/hw_interface.h already fixes for this channel -- and
+  returns it with HW_READING_VALID status, rather than the HW_READING_ABSENT the channel returns while
+  the table entry stays SENSOR_INPUT_NONE. The existing ADC read path scales every channel by one
+  shared constant, SENSOR_FULL_SCALE_MILLI, applied identically regardless of what the channel
+  measures; reusing that same constant for flow without checking it actually corresponds to a sane
+  full-scale flow rate would silently produce a wrongly-scaled reading rather than an absent one, so
+  the conversion is not assumed to reuse it correctly by default -- it is checked against the meter's
+  own scaling from the earlier characterisation criterion, and a flow-specific scale factor is used
+  instead if the shared constant does not fit. The conversion is exercised in the firmware host build
+  against a synthetic or recorded signal trace, so the test passes without the physical board present.
+
+  Out of scope: calibrating the conversion's absolute accuracy against a reference flow standard, and
+  the on-target demonstration with real water flow, which the next criterion covers.
+links:
+  - target: SOL-FLOW-METER-READING-AT-CONTROLLER
+    type: criterion-of

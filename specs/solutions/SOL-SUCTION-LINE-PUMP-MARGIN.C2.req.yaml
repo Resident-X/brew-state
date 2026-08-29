@@ -1,0 +1,23 @@
+id: SOL-SUCTION-LINE-PUMP-MARGIN.C2
+type: criterion
+title: The bench measurements are judged against the machine's own factory-use history and recorded as adequate or a margin risk
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The prior criterion's measurements are judged against the machine's own pre-project operating
+  history -- the owner's account that this configuration has not caused a noticed problem in factory
+  use -- since no manufacturer datasheet for the Ulka EP5's rated flow or priming time has been found
+  (firmware/params/thermoblock.params already records this absence for the same pump). The judgement
+  and its basis are recorded in docs/reference-machine.md's flow-meter entry, explicitly stating that
+  this establishes only the with-meter behaviour, not the meter's cost relative to a without-meter
+  baseline. SOL-SUCTION-LINE-METER-COST-DIFFERENTIAL is the tracked follow-on that measures that
+  differential once independent pump control exists; this criterion's judgement is the interim
+  evidence until that lands, not a substitute for it.
+
+  Out of scope: redesigning or relocating the meter if the with-meter behaviour is found concerning,
+  which would be follow-on work rather than part of this measurement.
+links:
+  - target: SOL-SUCTION-LINE-PUMP-MARGIN
+    type: criterion-of
