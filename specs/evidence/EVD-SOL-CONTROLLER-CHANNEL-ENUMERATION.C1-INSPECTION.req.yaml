@@ -1,0 +1,17 @@
+id: EVD-SOL-CONTROLLER-CHANNEL-ENUMERATION.C1-INSPECTION
+type: evidence
+title: Every enumerated channel traces to reference-machine.md or a naming decision (SOL-CONTROLLER-CHANNEL-ENUMERATION.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-29T12:53:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/controller-io.md
+text: |-
+  Blind review (fresh-context agent, cold read of docs/controller-io.md against docs/reference-machine.md and the graph) confirmed every sensing, actuation and protective-device row traces to reference-machine.md's declared configuration or a named decision (DEC-STEAM-PRESSURE-SENSOR-ADDED, DEC-FLOW-SENSED-UPSTREAM-OF-PUMP), and that not-fitted/not-decided channels (brew-path pressure, current sensing, RTC) are called out as open rather than invented. Review found and this fix resolved a completeness gap (over-pressure relief devices missing from the Protective devices table) before this evidence was recorded.
+links:
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION.C1
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-BREW-PRESSURE-RATIONALE-CORRECTED.C1
+type: criterion
+title: DEC-PROFILE-COMMANDS-FLOW's rationale states pressure measurement is decided for steam only, and that C7 remains open on the brew path
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  DEC-PROFILE-COMMANDS-FLOW's rationale is amended so its "Consequences" paragraph states that pressure measurement is decided for the steam path only, and that REQ-MEASUREMENT-001.C7 remains open on the brew path pending its own sensing decision, rather than asserting both paths are already measured.
+links:
+  - target: SOL-BREW-PRESSURE-RATIONALE-CORRECTED
+    type: criterion-of

@@ -1,0 +1,17 @@
+id: EVD-SOL-CONTROLLER-CHANNEL-ENUMERATION.C4-INSPECTION
+type: evidence
+title: Safety-relevant channels marked and separated (SOL-CONTROLLER-CHANNEL-ENUMERATION.C4)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-29T12:53:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/controller-io.md
+text: |-
+  The Safety-relevant column marks every heater-switching channel Yes, per SOL-CONTROLLER-CHANNEL-ENUMERATION's own text ('anything that switches a heater is in the safety-marked set'). The dedicated Protective devices section enumerates the three reused thermostats, the thermal fuse, and all three over-pressure relief entries from reference-machine.md's Protection table (including the steam side's documented absence, recorded as an open safety question rather than omitted). Blind review found the over-pressure relief devices missing from this table before the fix; corrected before this evidence was recorded.
+links:
+  - target: SOL-CONTROLLER-CHANNEL-ENUMERATION.C4
+    type: satisfies
