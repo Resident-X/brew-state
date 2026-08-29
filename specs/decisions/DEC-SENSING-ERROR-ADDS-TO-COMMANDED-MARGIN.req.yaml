@@ -1,0 +1,67 @@
+id: DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN
+type: decision
+title: Declared sensing error adds to the commanded margin's model-error corner rather than being combined with it by worst-case comparison
+status: active
+version: 1
+text: |
+  SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR needs to turn a declared sensing-error figure and an
+  already-established model-error margin into one commanded margin, on each of the two loops. DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
+  answers a related but different question -- how several plant coefficients, each an alternative hypothesis
+  about the one plant actually fitted, combine into a single conservative corner -- and its own scope excludes
+  this case: a sensor reads with its own error regardless of which plant coefficient turns out to be real, so
+  the two kinds of declared error are simultaneous rather than alternative, and a rule built for alternatives
+  does not answer how simultaneous ones combine.
+
+  A simultaneous degradation combines by addition: the commanded margin is the model-error solution's own
+  worst corner, on that loop, plus the declared sensing error for that loop's guarded channel. The combined
+  margin is never smaller than the model-error-only margin and is strictly larger whenever the declared
+  sensing error is nonzero, regardless of which model-error corner is binding -- satisfying REQ-MEASUREMENT-001.C4's
+  requirement that sensing error be carried explicitly in every case, not only when it happens to dominate the
+  model-error term.
+rationale: |
+  Context: REQ-ROBUST-CONTROL-001.C3 requires commanded margin to account for model error as well as sensing
+  error; REQ-MEASUREMENT-001.C4 requires sensing error to be carried explicitly in that margin.
+  SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR built the model-error half and left the sensing half a
+  named, uncovered gap. DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE already answers how several plant
+  coefficients combine into one figure, but its own scope, narrowed alongside this decision, marks that rule
+  as answering alternative-hypothesis combination rather than simultaneous-degradation combination -- a
+  question this decision exists to answer instead.
+
+  Trade-offs: Reusing worst-corner enumeration -- taking the larger of the model-error corner and the sensing
+  error -- was considered and rejected: whenever the sensing error is smaller than the binding model-error
+  corner, a max discards it from the number entirely, and REQ-ROBUST-CONTROL-001's own rationale names model
+  error as ordinarily the larger of the two, meaning a max would carry no sensing contribution in the ordinary
+  case, contradicting REQ-MEASUREMENT-001.C4 outright. Root-sum-square combination was considered and
+  rejected: it is the right shape for two independent random variables whose joint extreme is unlikely, but a
+  declared sensing-error figure and a declared model-error corner are both worst-case bounds already, not
+  distributions to combine statistically, and a protection-adjacent margin should not trade a bound it already
+  has for a tighter one that assumes independence it has not established. Addition is chosen because a sensing
+  error is present at every instant regardless of which model-error corner is real -- the two degradations
+  are simultaneous, not competing -- so the conservative figure for "both happen at once" is their sum, not
+  whichever is larger.
+
+  Reversibility: Reversible while this decision has one consumer. SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
+  reads this decision rather than encoding its own combination logic, so a future change to how sensing error
+  combines with model error means revisiting this decision and its one consumer, not hunting for the rule
+  inlined in a solution's prose.
+
+  Consequences: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR computes each loop's commanded margin as
+  that loop's model-error solution's own worst corner plus that loop's declared sensing error. Because the two
+  declared-error kinds now combine by different rules -- plant coefficients among themselves by worst-corner
+  enumeration under DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE, and a sensing error on top of that by
+  addition under this decision -- a future declared-error kind needing to enter the same commanded margin must
+  be classified as one or the other (an alternative hypothesis about the plant, or a simultaneous degradation)
+  before either rule can be reused for it.
+options_considered:
+  - option: 'Addition: the commanded margin is the model-error solution''s own worst corner plus the declared sensing error, on each loop'
+    reason_rejected: ""
+  - option: Worst-case max of the model-error corner and the declared sensing error
+    reason_rejected: whenever sensing error is smaller than the binding model-error corner it is dropped from the number entirely, contradicting REQ-MEASUREMENT-001.C4's requirement that sensing error be carried explicitly, in exactly the case REQ-ROBUST-CONTROL-001's own rationale names as ordinary
+  - option: Root-sum-square combination of the model-error corner and the declared sensing error
+    reason_rejected: treats two already-worst-case bounds as independent random variables to combine statistically, trading a bound the design already has for a tighter one that assumes independence never established
+chosen: 'Addition: the commanded margin is the model-error solution''s own worst corner plus the declared sensing error, on each loop'
+links:
+  - target: REQ-ROBUST-CONTROL-001.C3
+    type: addresses
+  - target: REQ-MEASUREMENT-001.C4
+    type: addresses

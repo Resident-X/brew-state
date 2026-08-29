@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: A demand contending for the mass a running delivery already holds is deferred and admitted once that delivery ends
 status: active
-version: 1
+version: 2
 text: |
   Both deliveries this machine serves reach the drinker through one heated mass: the group and the hot
   water arm draw the same casting down, and a delivery is committed the moment it is admitted -- nothing
@@ -38,6 +38,14 @@ text: |
   outright for contending with another; contention here is always resolved by waiting, never by declining.
   And it adds no second waiting slot beyond the one demand already held -- a third contender finds the
   second, not a queue.
+
+  The demand this slice holds is asked in terms of the delivery point and the mass behind it, not in terms
+  of which requirement asked for the delivery: a profile-commanded extraction and a target-commanded hot
+  water draw are both, to this admission path, simply a demand naming a delivery point. This is why the
+  same hold/resume mechanism this slice builds -- proven here against a hot water demand contending with an
+  extraction -- is also what discharges the deferral half of REQ-DELIVERY-PROFILE-001.C3: a profile
+  commanded while another delivery holds the same mass is held by this same check, and admitted once that
+  mass frees, exactly as a hot water demand is.
 rationale: |
   Refusing a contending demand outright was considered and rejected: the requirement this slice serves
   asks for a deferred demand to proceed once conditions return, not to be declined, and a hot water draw
@@ -58,8 +66,18 @@ rationale: |
   statement about which delivery points share a casting rather than about any one kitchen's arrangement: a
   machine whose two delivery points answer different identifiers is exercised through the same admission
   path and takes neither the hold nor the wait, proven by the fixture built for exactly that case.
+
+  Targets REQ-DELIVERY-PROFILE-001.C3 as well as REQ-HOT-WATER-001.C4 because the hold this slice builds is
+  generic over the delivery point named, not over which requirement's vocabulary commanded it: a profile
+  and a target both arrive at this admission path as a demand for a delivery point, and the fixture proving
+  the hold and resume against a hot water demand exercises the identical check a profile-commanded
+  extraction goes through. Recorded here, on the solution that actually built the mechanism, rather than
+  left as a fact only a PR description states, per this project's discipline against findings that
+  disappear once a branch merges.
 links:
   - target: DEL-SIM-BREW-LOOP.C8
     type: derives-from
+  - target: REQ-DELIVERY-PROFILE-001.C3
+    type: targets
   - target: REQ-HOT-WATER-001.C4
     type: targets

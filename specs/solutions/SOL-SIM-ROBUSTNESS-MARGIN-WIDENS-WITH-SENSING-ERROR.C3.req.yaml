@@ -1,0 +1,15 @@
+id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C3
+type: criterion
+title: The sensing-error mapping and its corner verdicts are committed in the same repeatable form the model-error margin already uses
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each loop's declared sensing-error figure, its addition to that loop's model-error corner, and the corner
+  verdicts this solution adds are committed in the same repeatable form the model-error margin's own mapping
+  already uses, so both contributions to each loop's commanded margin are checked from one committed record
+  rather than two. Out of scope: re-committing the model-error corners the prior solution already recorded.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
+    type: criterion-of

@@ -1,0 +1,19 @@
+id: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR.C1
+type: criterion
+title: Commanded margin on each loop widens with that loop's declared sensing error, added on top of its model-error margin rather than weighed against it
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |
+  Each loop's guarded temperature channel gains a declared sensing-error figure, sourced from the fitted
+  sensor's own specified accuracy rather than assumed or left at the model-error solution's implicit zero.
+  That figure widens the commanded margin by being added on top of the model-error solution's own worst
+  corner, on that loop, rather than being weighed against it by worst-case enumeration: sensing error is
+  present regardless of which model-error corner is real, so it stacks rather than competes. The combined
+  margin on each loop is never smaller than that loop's model-error-only margin and is strictly larger
+  whenever the declared sensing error is nonzero, independent of which model-error corner is binding. Out of
+  scope: any channel other than the one temperature channel each of the two loops guards.
+links:
+  - target: SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR
+    type: criterion-of

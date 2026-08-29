@@ -2,19 +2,73 @@ id: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
 type: decision
 title: Declared-error coefficients with a path to the protected quantity combine by worst-corner enumeration, not by summing every coefficient or by root-sum-square
 status: active
-version: 1
+version: 2
 text: |
-  More than one plant coefficient can carry a declared model error at once, and two places need to turn that set of per-coefficient errors into one conservative figure: the commanded margin against the protection trip point (REQ-ROBUST-CONTROL-001.C3), and the authority probe's evaluation of the least-capable plant it will still admit a delivery against (REQ-ROBUST-CONTROL-001.C5). Both are protection mechanisms — a bound the controller must not cross, not a statistical estimate of typical behaviour — so both need the same answer to the same question: given several coefficients each carrying their own declared error, what single conservative figure do they combine into?
+  More than one plant coefficient can carry a declared model error at once, and two places need to turn that
+  set of per-coefficient errors into one conservative figure: the commanded margin against the protection
+  trip point (REQ-ROBUST-CONTROL-001.C3), and the authority probe's evaluation of the least-capable plant it
+  will still admit a delivery against (REQ-ROBUST-CONTROL-001.C5). Both are protection mechanisms -- a bound
+  the controller must not cross, not a statistical estimate of typical behaviour -- so both need the same
+  answer to the same question: given several coefficients each carrying their own declared error, what single
+  conservative figure do they combine into?
 
-  Only a coefficient whose declared error has an established causal path to the quantity being protected — the trip-point gap, or the probe's thermal path — contributes to that figure at all. A coefficient the plant description declares an error for but whose effect reaches no such quantity (the unweighable class REQ-PARAMETER-SENSITIVITY-001.C3 already names) contributes nothing, because it has no path to contribute through, not because it is excluded by a separate rule.
+  Only a coefficient whose declared error has an established causal path to the quantity being protected --
+  the trip-point gap, or the probe's thermal path -- contributes to that figure at all. A coefficient the
+  plant description declares an error for but whose effect reaches no such quantity (the unweighable class
+  REQ-PARAMETER-SENSITIVITY-001.C3 already names) contributes nothing, because it has no path to contribute
+  through, not because it is excluded by a separate rule.
+
+  Scope: this decision rules on combining several plant coefficients, each an alternative hypothesis about
+  the one plant actually fitted -- only one of them is true, and worst-corner enumeration asks which single
+  corner the design must survive. It does not rule on combining a plant coefficient's declared error with a
+  declared sensing error: a sensor reads with its own error regardless of which plant coefficient turns out to
+  be real, so the two are simultaneous rather than alternative, and DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN
+  answers that combination separately.
 rationale: |
-  Context: REQ-ROBUST-CONTROL-001's rationale states plainly that the requirement is silent on how commanded margin is computed, leaving that a decision with real alternatives. SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR's own scope excludes "computing how commanded margin should widen with the established range", handing the question to whichever slice builds that margin. The existing declared-error handling already enumerates corners rather than computing a statistical bound: a per-parameter sweep runs each coefficient carrying a declared error to its own corner independently, and one joint corner runs the mains-driven element ratings together because the reference description's own construction already states that dependence. Nothing in the graph before this decision said how a margin or a probe bound should combine more than one coefficient's contribution into a single number.
+  Context: REQ-ROBUST-CONTROL-001's rationale states plainly that the requirement is silent on how commanded
+  margin is computed, leaving that a decision with real alternatives. SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR's
+  own scope excludes "computing how commanded margin should widen with the established range", handing the
+  question to whichever slice builds that margin. The existing declared-error handling already enumerates
+  corners rather than computing a statistical bound: a per-parameter sweep runs each coefficient carrying a
+  declared error to its own corner independently, and one joint corner runs the mains-driven element ratings
+  together because the reference description's own construction already states that dependence. Nothing in
+  the graph before this decision said how a margin or a probe bound should combine more than one coefficient's
+  contribution into a single number.
 
-  Trade-offs: The figure this decision defines is the largest single-corner degradation across every enumerated corner — one corner per coefficient that has a path to the protected quantity, run independently, plus one corner per stated joint dependence, run with those coefficients moving together — taking the worst (maximum-degradation) corner rather than summing every coefficient's contribution across all corners at once. Root-sum-square combination was considered and rejected: it treats the coefficients as independent random variables and gives a tighter figure, but a simultaneous worst-case combination of declared errors can exceed an RSS bound, which is exactly the failure mode a protection mechanism exists to rule out. Summing every coefficient's contribution simultaneously, regardless of whether the plant description states any dependence between them, was also considered and rejected: it is more conservative than corner enumeration but shifts every coefficient with a declared error to its worst corner at once even where nothing states they move together, which can produce a figure far more conservative than the declared error actually implies and is not the reasoning the existing per-parameter and joint-corner sweeps use anywhere else in this codebase. Corner enumeration taking the worst corner is chosen because it is that same reasoning, extended from "does the response settle at this corner" to "is this figure adequate at this corner", with no third convention introduced.
+  Trade-offs: The figure this decision defines is the largest single-corner degradation across every
+  enumerated corner -- one corner per coefficient that has a path to the protected quantity, run
+  independently, plus one corner per stated joint dependence, run with those coefficients moving together --
+  taking the worst (maximum-degradation) corner rather than summing every coefficient's contribution across
+  all corners at once. Root-sum-square combination was considered and rejected: it treats the coefficients as
+  independent random variables and gives a tighter figure, but a simultaneous worst-case combination of
+  declared errors can exceed an RSS bound, which is exactly the failure mode a protection mechanism exists to
+  rule out. Summing every coefficient's contribution simultaneously, regardless of whether the plant
+  description states any dependence between them, was also considered and rejected: it is more conservative
+  than corner enumeration but shifts every coefficient with a declared error to its worst corner at once even
+  where nothing states they move together, which can produce a figure far more conservative than the declared
+  error actually implies and is not the reasoning the existing per-parameter and joint-corner sweeps use
+  anywhere else in this codebase. Corner enumeration taking the worst corner is chosen because it is that same
+  reasoning, extended from "does the response settle at this corner" to "is this figure adequate at this
+  corner", with no third convention introduced.
 
-  Reversibility: Reversible while corner enumeration has few consumers. Both consumers this decision serves — the commanded-margin computation and the authority probe — read this decision rather than encoding their own combination logic, so changing the rule later means revisiting both call sites rather than one, and any additional consumer built against this decision's stated rule would need to be revisited too if the rule changes.
+  Reversibility: Reversible while corner enumeration has few consumers. Both consumers this decision serves --
+  the commanded-margin computation and the authority probe -- read this decision rather than encoding their
+  own combination logic, so changing the rule later means revisiting both call sites rather than one, and any
+  additional consumer built against this decision's stated rule would need to be revisited too if the rule
+  changes.
 
-  Consequences: The commanded-margin computation (SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR) and the authority probe's degraded-plant evaluation (SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY) both compute their figure the same way: enumerate corners, take the worst. A coefficient with no established path to the quantity a given consumer protects does not enter that consumer's corner enumeration at all — the commanded margin and the authority probe's degraded plant can therefore weigh a different subset of coefficients, each scoped to its own protected quantity's actual dependence, without a special exclusion list for either.
+  Consequences: The commanded-margin computation (SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR) and the
+  authority probe's degraded-plant evaluation (SOL-SIM-ROBUSTNESS-REFUSAL-HOLDS-WHEN-BELIEF-OVERSTATES-CAPABILITY)
+  both compute their figure the same way: enumerate corners, take the worst. A coefficient with no established
+  path to the quantity a given consumer protects does not enter that consumer's corner enumeration at all --
+  the commanded margin and the authority probe's degraded plant can therefore weigh a different subset of
+  coefficients, each scoped to its own protected quantity's actual dependence, without a special exclusion list
+  for either. A third consumer, SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-SENSING-ERROR, was found to need a
+  different combination for a different kind of declared error -- a sensing error, not a plant coefficient --
+  and rather than stretch this decision's worst-corner rule to a case its own alternative-hypothesis reasoning
+  does not fit, the scope statement above marks the boundary and DEC-SENSING-ERROR-ADDS-TO-COMMANDED-MARGIN
+  answers the sensing case on its own terms. This decision's rule is unchanged for the two consumers it already
+  served; only its stated scope narrowed to make the boundary explicit rather than implicit.
 options_considered:
   - option: 'Worst-corner enumeration: one corner per coefficient with a path to the protected quantity, run independently, plus one corner per stated joint dependence, run together; the figure is the largest (most-degrading) single corner, not a sum across all corners'
     reason_rejected: ""
