@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The controller and the mains-side parts are assessed against the channel enumeration, judged in interface resources rather than connector count
 status: active
-version: 1
+version: 3
 text: |
   The machine's channel enumeration is already complete enough to assess candidates against: every sensing and
   actuation channel carries its signal, the peripheral kind it demands, its count and whether its failure bears
@@ -24,9 +24,14 @@ text: |
   that it presents both crossings of each cycle and that its barrier keeps the mains-referenced side away from
   everything the operator and the low-voltage circuits can reach.
 
-  What is bought, what the machine already carries and is reused, and what the whole comes to are recorded
-  against the declared spend, with any channel departing from a reused or commodity part carrying its reason
-  against that channel.
+  The list this produces is a specification the builder decides against rather than a set of choices made for
+  them: each channel states what a part has to satisfy and what the existing device already achieves, so a
+  candidate can be judged against the row. Which part serves a channel and whether it is bought, reused or
+  salvaged is the builder's act, recorded once made. What is bought, what the machine already carries and is
+  reused, what is salvaged from a donor machine, and what the whole comes to are kept against the declared spend
+  as those decisions land, with any channel departing from a reused or commodity part carrying its reason against
+  that channel. A salvaged part is not reuse: it costs the same nothing but has not shown it survives this
+  machine, so it carries its own verification against the channel it serves.
 
   Out of scope, and deliberately so: formally selecting the machine's controller, which three active nodes hold
   open against measured plant parameters and which this item does not settle -- an assessment showing a candidate
@@ -38,13 +43,15 @@ text: |
 links:
   - target: DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM
     type: justified-by
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: justified-by
   - target: DEL-COMPONENT-SPECIFICATION.C4
     type: derives-from
   - target: DEL-COMPONENT-SPECIFICATION.C5
     type: derives-from
-  - target: REQ-HARDWARE-HEADROOM-001.C1
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C2
     type: targets
-  - target: REQ-HARDWARE-HEADROOM-001.C2
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
     type: targets
   - target: REQ-COST-DISCIPLINE-001.C1
     type: targets
@@ -54,9 +61,7 @@ links:
     type: targets
   - target: REQ-COST-DISCIPLINE-001.C6
     type: targets
-  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+  - target: REQ-HARDWARE-HEADROOM-001.C1
     type: targets
-  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C2
+  - target: REQ-HARDWARE-HEADROOM-001.C2
     type: targets
-  - target: DEC-PREHARDWARE-TARGET-FAMILY
-    type: justified-by

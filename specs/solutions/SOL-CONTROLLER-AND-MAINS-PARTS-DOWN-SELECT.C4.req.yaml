@@ -2,14 +2,16 @@ id: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C4
 type: criterion
 title: The channel enumeration is brought current with the actuation decision before candidates are assessed against it
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
   The enumeration a candidate is assessed against has to describe the machine this project is building, not the one
-  it is replacing. Two rows no longer do. The heater rows record the original controller's mechanical relay and
+  it is replacing. Five rows no longer do. The heater rows record the original controller's mechanical relay and
   leave this design's drive scheme not established, where a per-half-cycle scheme now requires a device that can be
-  commanded that often. The supply-timing row records a half-wave front end presenting one conduction window per
+  commanded that often. The pump rows leave the same question open, where the decision settles it the other way by
+  retaining the phase-capable arrangement already fitted and leaving only the granularity of modulation to
+  measurement. The supply-timing row records a half-wave front end presenting one conduction window per
   cycle, where resolving half-cycles requires both crossings. Each affected row is brought current and names the
   decision that changed it, in the same form the enumeration already uses for channels added by decision, so the
   assessment below runs against a live list rather than a stale one.

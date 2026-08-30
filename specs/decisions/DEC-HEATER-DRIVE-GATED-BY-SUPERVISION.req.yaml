@@ -3,7 +3,7 @@ type: decision
 category: strategic
 title: Bench heater drive is admissible on the protective devices the machine already carries, and the board is sized to a worst-case envelope as the prospective controller
 status: active
-version: 1
+version: 2
 text: |
   Heater channels may be wired and driven during bench characterisation, and the parts that switch them may be bought and fitted now. This is a deliberate relaxation of an earlier gate, not a correction of one: the decision it supersedes blocked heater drive on the proof-of-life interlock having no covering work and on the steam-side relief question being open, and both of those remain true. What has changed is the judgement about whether they need to be true before the machine may be heated on a bench.
 
@@ -14,6 +14,20 @@ text: |
   The protective chain the delivered machine requires is unchanged and unweakened. The proof-of-life interlock is still owed, still has no covering work, and still gates the assembled machine; supervision is not proof of life and is not offered as a substitute for it. Nor is any element of the chain disabled, delayed or bypassed here -- the devices that exist keep acting, and what is absent is absent because it has not been built, which is a different thing from an override. A mechanical relief fitting may likewise be added now; an unresolved relief question is a reason to fit one, not a reason to withhold a component list.
 
   The board bought is sized to a worst-case input, output and compute envelope rather than to the channels currently in view, and serves as both the bench instrument and the prospective machine controller. Buying instrumentation, measuring the machine with it, then discarding it for a second board costs more than buying once with headroom, and a real target board is needed for on-target timing verification in any case. Formal controller selection still happens against measured plant parameters and is not settled here.
+
+  Since this was decided, the device class on the two heater channels has changed underneath it.
+  DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM requires a device commandable every half-cycle, which retires the
+  mechanical relay and puts a semiconductor in its place -- and where a relay's dominant failure is an open
+  contact, a triac's is a short. The argument above is unaffected, because it never rested on the switching
+  device: a thermostat acting on temperature cannot distinguish an element held on by a welded contact from
+  one held on by a shorted triac, and both of the reused protective devices act on temperature with no
+  controller involvement. What moves is likelihood rather than the bound, so those devices are exercised more
+  often rather than differently, and bench work stays admissible on the same footing.
+
+  What the change does move is the delivered machine. Bench admissibility is not the requirement chain's final
+  state; the assembled machine is, and there the proof-of-life interlock is now the only element standing
+  between a failed-energised switching device and an element that stays hot. It was already required and
+  already owed; it is now load-bearing in a way it was not when the channel failed open.
 rationale: |
   Context: DEC-BENCH-SENSING-BOARD-BOUGHT-NOW bought a board for bench characterisation and excluded heater and switching channels from it, gating that exclusion on REQ-SAFETY-CHAIN-001.C2 and .C3 having no covering deliverable and on the steam-side relief question being open, and stating that heater drive was blocked on both independent of whether the board was purchased. That gate is not mis-drawn; it is drawn on whether those mitigations exist, and they still do not. But it blocks the thermal bench characterisation the board was bought to enable, and thermal behaviour is the largest part of the plant model the roadmap's next phase must measure. Holding it costs the project its next phase; releasing it requires an argument about what actually bounds the hazard while the mitigations are outstanding.
 
@@ -37,6 +51,8 @@ links:
     type: supersedes
   - target: DEC-PREHARDWARE-TARGET-FAMILY
     type: addresses
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C3
+    type: addresses
   - target: REQ-HARDWARE-HEADROOM-001.C1
     type: addresses
   - target: REQ-HARDWARE-HEADROOM-001.C2
@@ -50,6 +66,4 @@ links:
   - target: REQ-SAFETY-CHAIN-001.C5
     type: addresses
   - target: REQ-SAFETY-CHAIN-001.C6
-    type: addresses
-  - target: OBL-PHYSICAL-CONFIGURATION-001.C3
     type: addresses

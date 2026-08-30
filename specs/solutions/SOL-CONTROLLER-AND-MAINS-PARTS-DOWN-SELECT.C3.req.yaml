@@ -1,16 +1,32 @@
 id: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C3
 type: criterion
-title: The purchase list records bought against reused parts and totals them against the declared spend
+title: Every channel carries a specification a candidate part is judged against, with provenance and cost recorded as each choice is made
 status: active
-version: 1
+version: 3
 measurement_type: binary
 verification: inspection
 text: |
-  The list names, for every channel, whether its part is bought or is one the machine already carries and is
-  reused, and totals the bought parts against the spend the build is declared to be held to. A channel whose
-  part departs from a reused or commodity default carries the reason for that departure against that channel
-  rather than against the list as a whole. Reused parts are counted as reuse against the total rather than
-  omitted from it. Out of scope: revising the declared spend itself, and any procurement act.
+  The list is a specification the builder decides against, not a set of choices made on their behalf.
+  Each channel states the property a part must satisfy and what the machine's existing device already
+  achieves, so a candidate can be held against the row and judged adequate or not. Which part serves a
+  channel, and where it comes from, is the builder's act; the list records it once made and does not
+  predict it.
+
+  Three provenance classes are distinguished, because they differ on more than price. A part already
+  carried by this machine costs nothing and has demonstrated it survives this machine's environment,
+  which is more than a datasheet establishes. A part salvaged from a donor machine costs nothing and
+  has demonstrated neither, so its row records how it was verified against the specification it is
+  admitted against, weighed on what that channel's failure costs rather than on what the part costs. A
+  part bought new carries its datasheet and its price.
+
+  The spend the build is held to is declared in the list rather than held in anyone's head, and the
+  running total of what has been decided is kept against it, so a channel decided late is judged
+  against what remains rather than against the headroom the first channel enjoyed. Reused and salvaged
+  parts are counted as such rather than omitted from the count.
+
+  Out of scope: choosing any part, which is the builder's decision and not this document's; revising
+  the declared spend itself; any procurement act; and characterising a part once obtained, which is
+  bench work under the measurement phase.
 links:
   - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT
     type: criterion-of
