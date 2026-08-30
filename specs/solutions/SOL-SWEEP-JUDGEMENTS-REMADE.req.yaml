@@ -1,0 +1,25 @@
+id: SOL-SWEEP-JUDGEMENTS-REMADE
+type: deliverable
+category: solution
+title: Every surviving mutant is judged again against the code as it now stands
+status: active
+version: 1
+text: |
+  The mutation sweep the plant model is held to fails on the tree as it stands. Ten mutants it draws survive the tests and carry no judgement, and two judgements it does hold are about mutants it no longer produces at all. The sweep reports that as a failure and the firmware verification gate stops there, so the gate does not currently pass end to end on the mainline.
+
+  The graph records the opposite. The criterion asking the sweep to report a clean run over the whole population it drew is satisfied by evidence stating it does, and that evidence was true when it was recorded. What happened since is the mechanism the judgement record was deliberately built with: each judgement is keyed by the mutant's line and column so that editing the code a judgement was made about moves the mutant, strands the judgement, and fails the sweep rather than carrying a decision forward past the code it was made about. Successive work on the plant model has moved that code, and the judgements were not re-made as it moved.
+
+  This is not a defect in the arithmetic and no survivor here has been shown to be one -- until each is judged, whether any could change behaviour at all is undecided, which is the whole reason the sweep reports them as unreviewed rather than as faults found.
+
+  What has to hold once this is corrected: every mutant the sweep draws is killed by a test or carries a judgement made against the code at its own line, no judgement remains about a mutant the sweep does not produce, and the verification gate passes end to end again. Whether any individual survivor turns out to be equivalent, to need a test written, or to be a real defect is not decided here -- that is the judgement the correction consists of.
+rationale: |
+  Recorded rather than corrected in the slice that found it, because judging ten surviving mutants is a reading of what each piece of arithmetic means and cannot honestly be done as a side errand of unrelated work. A judgement made quickly to turn the gate green would be exactly the failure the judgement record exists to prevent: a decision written to move a number rather than because somebody worked out what the mutant does.
+
+  Found while running the full firmware verification gate over an unrelated estimator change. Confirmed to pre-date that change rather than to have been caused by it: the sweep was run against the mainline as it stands, and the surviving-mutant set and the stale-judgement set it reports there are identical, entry for entry, to the ones reported on the branch. The branch touches none of the three directories the sweep draws its population from.
+
+  Attached here rather than raised against the solution whose criterion it lapses, because that solution's criteria were satisfied by the evidence recorded against them at the time and the correction needed now is to the behaviour rather than to what the criterion asked for.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
