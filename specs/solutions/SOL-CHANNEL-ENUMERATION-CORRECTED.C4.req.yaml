@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-ENUMERATION-CORRECTED.C4
+type: criterion
+title: The operator interface's buttons and LED indicators are added to the enumeration
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The operator interface's eight discrete pushbuttons and its LED indicator segments are added to the enumeration as channels on a second microcontroller board, distinct from the two knob microswitches already enumerated, cited to the circuit diagram's switch and LED-driver nets.
+
+  Out of scope: confirming the individual button labels and the exact LED element and indicator-function counts beyond the best reading the scanned sheet supports, which needs a recount at the panel or against a cleaner copy. Also out of scope: resolving whether a replacement controller could retain the board these channels sit on, which DEC-U8-BOARD-RETENTION-UNVERIFIED holds open pending a bench capture.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED
+    type: criterion-of

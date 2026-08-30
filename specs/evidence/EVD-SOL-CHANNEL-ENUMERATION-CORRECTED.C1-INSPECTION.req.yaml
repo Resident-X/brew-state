@@ -1,0 +1,17 @@
+id: EVD-SOL-CHANNEL-ENUMERATION-CORRECTED.C1-INSPECTION
+type: evidence
+title: Three temperature sensors declared NTC-type, cited to the service manual parts list (SOL-CHANNEL-ENUMERATION-CORRECTED.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-30T00:06:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/reference-machine.md and docs/controller-io.md — sensing table, three temperature-sensor rows, each citing EM70025/EM70020/EM70024
+text: |-
+  Blind review confirmed all three sensors declared NTC-type against the actual service manual parts list, replacing the prior not-recorded claim, with confidence correctly hedged per source line (wand names NTC outright, others name thermistor/scan artefact) after correction.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED.C1
+    type: satisfies

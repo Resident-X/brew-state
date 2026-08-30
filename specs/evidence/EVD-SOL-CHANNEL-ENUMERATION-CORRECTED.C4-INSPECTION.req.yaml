@@ -1,0 +1,17 @@
+id: EVD-SOL-CHANNEL-ENUMERATION-CORRECTED.C4-INSPECTION
+type: evidence
+title: Operator-panel buttons and LED indicators added to the enumeration (SOL-CHANNEL-ENUMERATION-CORRECTED.C4)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-30T00:06:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/reference-machine.md buttons/LED bullets; docs/controller-io.md new sensing/actuation rows
+text: |-
+  Blind review confirmed 8 buttons (count certain, labels best-reading) and ~10 LED elements across ~6 functions added as channels distinct from the knob microswitches, with U8-retention correctly left open throughout.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED.C4
+    type: satisfies

@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-ENUMERATION-CORRECTED.C1
+type: criterion
+title: The three temperature sensors are declared NTC-type, cited to the service manual parts list
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The coffee thermoblock, steam thermoblock and steam-wand temperature sensors are each declared NTC-type in reference-machine.md, replacing the current "not recorded by either manufacturer document" claim. Each declaration cites the service manual's own part line: Coffee NIC Wire (EM70025) for the coffee block, Steam Soleplate Thermistor (EM70020) for the steam block, Steam Arm NTC (EM70024) for the wand disc.
+
+  Out of scope: establishing any of the three sensors' electrical figures -- beta, base resistance at a reference temperature, and tolerance class -- which no parts-list line carries and which a datasheet or a bench characterisation settles instead.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED
+    type: criterion-of
