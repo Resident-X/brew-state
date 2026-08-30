@@ -372,7 +372,9 @@ bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters
      * span exceeds what this structure's own limits declare tolerable. So
      * every channel a state's observation set names is walked the same way
      * correct_against walks it, and the state at the far end of that walk is
-     * probed here too. A channel the walk cannot complete -- unmeasured, or
+     * probed here too -- for the write the correction ends with as well as the
+     * read it begins with, because either refusing drops the correction just
+     * as completely. A channel the walk cannot complete -- unmeasured, or
      * paired with no state -- names nothing to probe and is passed over,
      * exactly as correct_against passes over it every step.
      */
@@ -398,10 +400,39 @@ bool estimator_init(estimator_t *estimator, const plant_parameters_t *parameters
                 continue;
             }
 
-            /* Discarded, on the same terms `reachable` above is: only whether
-             * the structure keeps this state is asked here, not its value. */
-            float correction_target_reachable = 0.0f;
-            if (!plant_model_state(&estimator->model, corrected, &correction_target_reachable)) {
+            /*
+             * Read for two reasons here, unlike `reachable` above, which is
+             * discarded: whether the structure keeps this state at all, and
+             * what it currently holds, so the write below can be the value
+             * that was just read. Writing back what was read is what makes
+             * this probe cost the structure nothing -- the store lands the
+             * value already there, so a structure admitted through it is left
+             * exactly as `plant_model_init` left it, and one refused by it
+             * was never going to be admitted anyway.
+             */
+            float correction_target_held = 0.0f;
+            if (!plant_model_state(&estimator->model, corrected, &correction_target_held)) {
+                return false;
+            }
+
+            /*
+             * Answering a read of this state is not the whole of what the
+             * correction needs from it. `correct_against` reads the state,
+             * subtracts its share of the disagreement, and writes the result
+             * back through `plant_model_set_state` -- and that write can
+             * refuse on exactly the terms the read can. A structure that
+             * answers the read and refuses the write is admitted by the probe
+             * above and then has every correction against it dropped by the
+             * write's own refusal, one call further down the same per-step
+             * path, arriving at the identical externally observable failure:
+             * the reading arrives, the correction is computed, nothing takes
+             * it, and the reconstruction runs on prediction alone until the
+             * unobserved span exceeds what this structure's limits declare
+             * tolerable. So the write is proved here too, on the same terms
+             * the read is, rather than left to convention among the
+             * structures written so far.
+             */
+            if (!plant_model_set_state(&estimator->model, corrected, correction_target_held)) {
                 return false;
             }
         }

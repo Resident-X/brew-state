@@ -1,0 +1,23 @@
+id: EVD-SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C3-TEST
+type: evidence
+title: Writing back what was read leaves every state and the trajectory after it unchanged (SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C3)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-30T12:17:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_plant/test_plant.c::test_writing_back_what_was_read_leaves_every_state_as_it_was
+text: |
+  The admission probe proves the correction-target state writable by writing back exactly the value it has just read, so the store lands the value already there and an admitted structure is left as its own initialisation left it. That is only true while a write of what was read is a write of nothing, which is asserted here rather than assumed.
+
+  test_writing_back_what_was_read_leaves_every_state_as_it_was in firmware/test/test_plant/test_plant.c drives an instance of the reference machine's structure off rest, reads every state it answers, writes each back with the value it gave, and finds every state unchanged -- every state, not only the ones written, so a write reaching a second field would show -- and then advances both it and an instance never written to along the same actuation, finding the trajectories identical. PASSED under the native_test environment.
+
+  test_writing_back_what_was_read_leaves_the_vessel_where_it_was in firmware/test/test_plant_boiler/test_plant_boiler.c asks the same of the single-vessel architecture, where two of the names answered share one field and a write under either lands on the state the other reads -- the shape where a write-back would stop being an identity first. PASSED under the native_boiler_test environment, 49 of 49 cases.
+
+  The first test was checked against the defect rather than only against the build: storing a value scaled by 1.0001 rather than the value given, in the reference structure's own state write, makes it fail on the difference.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C3
+    type: satisfies

@@ -1,0 +1,21 @@
+id: EVD-SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C1-TEST
+type: evidence
+title: correction_read_only_fixture refused at admission for an unwritable correction target (SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-30T12:17:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator_correction_read_only_fixture/test_estimator_correction_read_only_fixture.c::test_a_structure_refusing_the_correction_write_is_refused
+text: |
+  estimator_init's admission check (firmware/src/estimator/estimator.c) now writes the correction-target state as well as reading it: for every channel in each reconstructed state's own observation set, the state reached by the same two-hop walk correct_against takes is read, and the value just read is written straight back through plant_model_set_state. A refusal of that write refuses admission on the same terms a refusal of either read already does.
+
+  A new plant structure, correction_read_only_fixture, was built to answer a read of both PLANT_STATE_BREW_OUTLET_TEMPERATURE_C and PLANT_STATE_BREW_HEATED_MASS_TEMPERATURE_C -- so every read the previous admission check made succeeds against it -- while refusing a write of the second. test_a_structure_refusing_the_correction_write_is_refused pins that shape directly against plant_model_state and plant_model_set_state, then asserts estimator_init returns false -- PASSED under the native_correction_read_only_fixture_test PlatformIO environment. test_a_refused_instance_answers_nothing confirms the refused instance answers nothing from estimator_state or estimator_step -- PASSED.
+
+  The two tests were checked against the defect rather than only against the build: with the plant_model_set_state probe removed from estimator_init, both fail, the first reporting that a structure refusing a write of the correction-target state was admitted. Independently confirmed at the host-exercise level: running .pio/build/native_correction_read_only_fixture/program prints "host exercise: this structure cannot carry a reconstruction the estimator can keep corrected", the control_init-refused branch, with zero unmet expectations.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C1
+    type: satisfies

@@ -1104,6 +1104,94 @@ static void test_this_structure_answers_the_writes_it_answers_the_reads_for(void
     TEST_ASSERT_FALSE(plant_model_set_state(&model, (plant_state_t)PLANT_STATE_COUNT, 1.0f));
 }
 
+/// SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C3: Admitting a structure leaves
+/// that structure's model exactly as initialisation left it.
+///
+/// Admission proves the correction-target state is writable by writing back
+/// what it just read, which is harmless only while a write of what was read is
+/// a write of nothing. This architecture is the one where that is least
+/// obviously true: two of the names it answers are one vessel, so a write under
+/// either lands on the state the other reads. Asked here even though this
+/// structure is itself refused at admission -- it refuses the state the
+/// reconstruction is held as, which the suite below shows -- because what is
+/// being protected is the property rather than this structure's own admission,
+/// and an architecture sharing one field between two names is where a
+/// write-back would stop being an identity first.
+static void test_writing_back_what_was_read_leaves_the_vessel_where_it_was(void)
+{
+    plant_parameters_t parameters;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+    plant_model_t untouched;
+    plant_actuation_t heating = {{0u}};
+    unsigned written = 0u;
+
+    heating.level_permille[HEATING_CHANNEL] = ACTUATION_FULL_SCALE;
+
+    TEST_ASSERT_TRUE(
+        plant_parameters_load(DESCRIPTION, sizeof(DESCRIPTION) - 1u, &parameters, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_init(&untouched, &parameters));
+
+    /* Driven off rest first: an identity asserted where every state sits at
+     * ambient would hold for a write that discarded its argument entirely. */
+    for (int step = 0; step < SETTLE_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &heating, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&untouched, &heating, 0.0f, STEP_MS));
+    }
+
+    /* Every state answered, written back with what it gave. A refused state is
+     * passed over rather than written blind, exactly as admission passes over
+     * one it has nothing to write back. */
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float held = 0.0f;
+        if (!plant_model_state(&model, (plant_state_t)state, &held)) {
+            continue;
+        }
+        TEST_ASSERT_TRUE(plant_model_set_state(&model, (plant_state_t)state, held));
+        written++;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(written > 0u, "no state was written back, so nothing was shown");
+
+    /*
+     * Every state, and then the trajectory: a shared field written twice under
+     * two names would show here if either write moved it, and a displacement
+     * too small to fail the comparison would still separate the two runs once
+     * the equations advanced from it.
+     */
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float moved = 0.0f;
+        float still = 0.0f;
+        char message[112];
+
+        if (!plant_model_state(&model, (plant_state_t)state, &moved)) {
+            continue;
+        }
+        TEST_ASSERT_TRUE(plant_model_state(&untouched, (plant_state_t)state, &still));
+        (void)snprintf(message, sizeof(message),
+                       "state %d moved when what was read was written straight back", state);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(still, moved, message);
+    }
+
+    for (int step = 0; step < SETTLE_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &heating, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&untouched, &heating, 0.0f, STEP_MS));
+    }
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float advanced = 0.0f;
+        float unwritten = 0.0f;
+        char message[120];
+
+        if (!plant_model_state(&model, (plant_state_t)state, &advanced)) {
+            continue;
+        }
+        TEST_ASSERT_TRUE(plant_model_state(&untouched, (plant_state_t)state, &unwritten));
+        (void)snprintf(message, sizeof(message),
+                       "state %d advanced differently after being written back", state);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(unwritten, advanced, message);
+    }
+}
+
 /// SOL-UNMEASURED-STATE-RECONSTRUCTION.C13: Every plant structure answers a
 /// state written through the seam.
 ///
@@ -2222,6 +2310,7 @@ int main(void)
     RUN_TEST(test_the_suites_own_description_declares_no_assumed_error);
     RUN_TEST(test_this_structure_answers_the_writes_it_answers_the_reads_for);
     RUN_TEST(test_writing_either_temperature_moves_the_one_vessel);
+    RUN_TEST(test_writing_back_what_was_read_leaves_the_vessel_where_it_was);
     RUN_TEST(test_a_draw_cools_the_vessel_faster_than_no_draw);
     RUN_TEST(test_the_vessel_settles_where_the_drawn_energy_balance_puts_it);
     RUN_TEST(test_the_drawn_loss_is_taken_between_the_vessel_and_the_feed);
