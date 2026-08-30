@@ -4,7 +4,7 @@ category: constraint
 title: The machine's local configuration is declared in one place the requirements point at
 status: active
 priority: must
-version: 2
+version: 3
 text: |
   The requirements in this graph hold for any machine of this shape. What they have actually been checked against is one machine, on one supply, protected by one set of devices, and none of that is visible in the requirements themselves.
 
@@ -21,6 +21,13 @@ rationale: |
   Requires the supply as a span rather than a nominal because a single figure is true only at an instant, and because a resistive load turns supply movement into delivered power movement squared. A design bounding its error against the midpoint has bounded it against a condition the machine passes through rather than one it sits at. The same reasoning puts the conditions the machine operates across here: ambient is the other quantity that varies, is never declared, and gets silently taken at whatever the design assumed.
 
   Requires what a load draws while energised for the same reason it requires the thermal characteristics measured, and to the same standard. Duty is the half of delivered energy that gets modelled; the watts are the half that gets assumed, and a rating describes a component in free air rather than that component in this machine on this supply. A budget spent in assumed watts, and a response time bounded by them, are both wrong by however far the assumption is, and neither has anywhere to report that.
+
+  Requires the supply frequency measured on this machine rather than inherited, on the same footing as what a load
+  draws while energised. A frequency is the easiest of the declared values to take on trust, because every supply
+  in a region nominally shares one, and it is the value a waveform-tied actuation scheme is least able to survive
+  being wrong about: the error appears as delivered energy and as misplaced switching instants rather than as a
+  reading anyone would question. Whether the machine goes on watching its supply while running is a different
+  question, left where it belongs with the machine's response to timing failure.
 links:
   - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C3
     type: derives-from

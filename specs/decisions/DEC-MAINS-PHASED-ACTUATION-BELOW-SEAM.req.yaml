@@ -1,0 +1,87 @@
+id: DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM
+type: decision
+category: strategic
+title: Actuation is mains-phased below the hardware seam while the control period stays crystal-derived
+status: active
+version: 1
+text: |
+  The control law runs on a period the controller itself keeps, and commands each actuation channel a
+  level as it does today. Below the hardware seam a separate layer converts that level into a decision,
+  taken once per supply half-cycle, to energise the channel or leave it idle for that half-cycle. The
+  residual a level leaves between whole half-cycles is carried forward rather than discarded, so the
+  delivered average tracks the commanded level exactly while the error sits at a frequency the heated
+  masses and the water path already filter.
+
+  The supply's timing is read as an input rather than followed as a clock. Its period is measured, and
+  an edge arriving outside a plausible window, or not arriving at all, is treated as a supply fault to
+  be reported rather than smoothed over. The machine's own period does not move when the supply's does.
+
+  The switching devices this asks for differ per channel. The heaters are switched by a device that can
+  be commanded every half-cycle, which the mechanical relays the original controller used cannot do. The
+  pumps keep the phase-capable arrangement the original controller already gave them. The detection front
+  end presents both crossings of each cycle rather than one, which the original half-wave circuit does
+  not, since a scheme resolving half-cycles cannot be timed against a reference that reports every second
+  one.
+
+  Not settled here: which parts are bought to do any of this, which is procurement work judged against the
+  headroom constraint; the phase offset between a true crossing and a detected edge, which no declared
+  figure bounds and which this decision does not invent; and whether modulating the pump by whole cycles
+  is fine enough, which is a measurement rather than a judgement.
+rationale: |
+  Context: The machine's actuation is quantised by the supply whether or not anything says so. A command
+  window equal to a half-cycle delivers nothing, one half-cycle, or two depending on where it lands, and
+  the beat between a controller's own oscillator and the supply moves that landing slowly. Nothing in the
+  graph required or ruled on any of this: the obligation on bounded work in the control path mentions a
+  supply-tied period only conditionally, and the constraint on local configuration requires only that any
+  such dependence be valid at the declared frequency. The dependence was assumed across several nodes and
+  asserted by no criterion.
+
+  Trade-offs: Taking the control period from the supply removes the beat completely and needs no residual
+  arithmetic, but hands the period to something outside the machine and turns a lost or spurious edge into
+  a control step skipped or taken twice. Predicting the crossing through a loop that flywheels over missing
+  edges keeps the period steady through a disturbance, at the cost of continuing to switch large loads
+  against a reference no longer known to be real; on channels that heat, noticing is worth more than
+  continuing. Leaving the alignment to the switching device is simplest and costs the ability to say how
+  many half-cycles were actually delivered, which is the quantity the energy account is kept in. Carrying
+  the residual in a layer of the machine's own costs a small amount of arithmetic per channel per
+  half-cycle and keeps both the period and the account.
+
+  Reversibility: The whole scheme sits below the hardware seam, which already takes a level per channel and
+  says nothing about how it is realised. Reverting to a plainer drive changes that layer and touches neither
+  the control law, the estimator, nor any requirement. What is not cheap to reverse is the switching devices
+  and the detection front end, which are bought parts; that is why the criteria this decision drives name
+  the property each part must have rather than the part.
+
+  Consequences: The supply frequency stops being adequate as a value inherited from a component marking and
+  becomes a quantity the machine measures, which the local-configuration constraint's provenance criterion
+  then reports honestly. Supply timing becomes a second source of timing failure alongside the controller's
+  own overruns, needing detection and a defined effect. Modulating the pump by whole cycles makes the flow
+  reading quantised in whole strokes, so the window that reading is averaged over becomes a figure to
+  establish rather than assume, and the first channel whose effective rate is not the control step. Phase
+  modulation of the pump is not adopted and not forbidden: the measured window either holds the band a
+  delivery is judged by or it does not, and that measurement is what would reopen it.
+options_considered:
+  - option: Keep the control period crystal-derived and convert commanded levels to per-half-cycle energise-or-idle decisions in a mains-phased layer below the hardware seam
+    reason_rejected: ""
+  - option: Derive the control period from the supply's own crossings
+    reason_rejected: hands the control period to something outside the machine, so a lost or spurious edge becomes a control step skipped or taken twice
+  - option: Predict the crossing with a loop that flywheels through missing edges
+    reason_rejected: keeps large loads switching against a reference no longer known to be real, where noticing the disturbance is worth more than continuing through it
+  - option: Leave the alignment to the switching device's own internal synchronisation
+    reason_rejected: leaves the number of half-cycles actually delivered opaque, which is the quantity the delivered-energy account is kept in
+  - option: Drive the pump piecewise, by whole cycles at low levels and by phase within the cycle above a threshold
+    reason_rejected: puts a discontinuity in plant gain inside the closed-loop flow trim, needing hysteresis and scheduled gains; reopened by measurement rather than ruled out
+chosen: Keep the control period crystal-derived and convert commanded levels to per-half-cycle energise-or-idle decisions in a mains-phased layer below the hardware seam
+links:
+  - target: OBL-REALTIME-DISCIPLINE-001.C3
+    type: addresses
+  - target: OBL-REALTIME-DISCIPLINE-001.C5
+    type: addresses
+  - target: REQ-MACHINE-CONFIGURATION-001.C4
+    type: addresses
+  - target: REQ-MACHINE-CONFIGURATION-001.C8
+    type: addresses
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C5
+    type: addresses
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C6
+    type: addresses

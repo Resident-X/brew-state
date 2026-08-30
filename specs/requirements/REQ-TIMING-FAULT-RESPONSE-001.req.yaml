@@ -1,14 +1,20 @@
 id: REQ-TIMING-FAULT-RESPONSE-001
 type: requirement
 category: functional
-title: The machine detects and responds to its own timing failures
+title: The machine detects and responds to timing failures in its control path
 status: active
 priority: must
-version: 1
+version: 2
 text: |
-  A late answer and a wrong answer have the same effect on the machine, and the obligation above this one says so. What it does not say is what the machine does when lateness happens anyway.
+  A late answer and a wrong answer have the same effect on the machine, and the obligation above this one
+  says so. What it does not say is what the machine does when lateness happens anyway.
 
-  Overruns occur on hardware that was analysed carefully, which makes the machine's response to its own timing failure a behaviour rather than a contingency.
+  Overruns occur on hardware that was analysed carefully, which makes the machine's response to its own
+  timing failure a behaviour rather than a contingency.
+
+  Not every timing source in the control path is one the machine owns. Where its actuation is quantised
+  against the supply, the supply's timing enters that path as a source the machine can only observe, and
+  a failure of it reaches the delivery in progress the same way an overrun does.
 rationale: |
   Authored because the timing obligation had nothing beneath it. Its criteria about worst-case analysis and measurement on target are properties of how the work is done and belong to the delivery chain; these are properties of the running machine, and no node stated them.
 
@@ -20,9 +26,9 @@ rationale: |
 
   The shared-state criterion is stated as an observable property rather than as a mechanism, because the failure it prevents is visible from outside: a value read part-way through being written is wrong in ways that do not reproduce, and no amount of retrying finds it.
 links:
+  - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
+    type: justified-by
   - target: OBL-REALTIME-DISCIPLINE-001.C2
     type: derives-from
   - target: OBL-REALTIME-DISCIPLINE-001.C5
     type: derives-from
-  - target: DEC-SIMULATION-FIDELITY-ASSUMED-UNTIL-MEASURED
-    type: justified-by

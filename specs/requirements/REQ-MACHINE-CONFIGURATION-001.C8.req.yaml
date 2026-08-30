@@ -1,0 +1,19 @@
+id: REQ-MACHINE-CONFIGURATION-001.C8
+type: criterion
+title: The supply frequency is established by measuring the machine's own supply rather than inherited from a nameplate
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A frequency taken from a component's marking describes that component rather than the circuit the machine is
+  plugged into. Where actuation is quantised by the supply, the error in it lands directly in delivered energy and
+  in the placement of every switching instant, and it does so silently.
+
+  This is a statement about the provenance of a declared value, not about what the machine watches while running:
+  the declaration is entitled to a figure taken from this supply rather than from a nameplate, and whether the
+  machine goes on observing its supply afterwards is settled elsewhere. How far a detected crossing may sit from
+  the true one is a separate question again and is not settled here.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of

@@ -1,0 +1,19 @@
+id: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1
+type: criterion
+title: A candidate controller is shown to serve every enumerated channel simultaneously in timing and conversion resources
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  A candidate controller is assessed against every row of the channel enumeration at once, not row by row
+  in isolation: the capture channels, conversion inputs and interrupt lines the rows collectively demand
+  have to be simultaneously available on pins the candidate brings out to a connector. The channels the
+  graph anticipates but has not yet built are counted in the same total, so a later addition does not mean
+  a second board. Where a candidate is a purpose-built board from an adjacent application, its spare
+  capacity is spare for that application first and the assessment states what remains after its own
+  function is served. A candidate that fails is recorded with the channel that defeated it rather than
+  dropped silently. Out of scope: buying the part, and characterising it once bought.
+links:
+  - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT
+    type: criterion-of
