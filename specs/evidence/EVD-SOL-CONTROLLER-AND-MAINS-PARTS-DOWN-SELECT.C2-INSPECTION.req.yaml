@@ -1,0 +1,17 @@
+id: EVD-SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C2-INSPECTION
+type: evidence
+title: Each switched load and the front end specified by property, against the OEM capability floor (SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-30T08:28:09Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/component-specification.md — What each switched load needs of its device; Isolation, which every row above shares; What the supply-timing front end needs
+text: |-
+  Six mains loads carry command rate, continuous current across the declared 230-253 V span, dissipation at the machine's internal ambient, and required failure state. Currents derive from the measured 52.7 and 47.0 ohm element resistances in reference-machine.md; the steam reading's lower-bound caveat is carried through in the conservative direction for device sizing. The assumed temperature coefficient and the triac on-state drop are both marked as unsourced rather than presented as derived. The front end is specified as presenting both crossings, isolated, and read as an input rather than a clock, with phase offset explicitly left unbounded. Every OEM device is recorded per channel as the capability floor, which makes visible that meeting the half-cycle requirement regresses the heater failure mode from fails-open to fails-shorted. Isolation is specified once across all six loads per OBL-ELECTRICAL-THERMAL-SAFETY-001.C6. Blind review confirmed the currents by recomputation and the dissipation magnitude against the textbook form.
+links:
+  - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C2
+    type: satisfies
