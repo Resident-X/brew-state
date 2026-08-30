@@ -1,0 +1,18 @@
+id: REQ-TIMING-FAULT-RESPONSE-001.C5
+type: criterion
+title: Supply timing that has become implausible is detected rather than trusted
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The other criteria here concern deadlines the controller sets for itself. A machine that quantises its
+  actuation against the supply also depends on a timing source it does not own, and a failure of that
+  source presents as a command delivered at the wrong energy rather than as a late one, so the detection
+  that catches an overrun does not catch it.
+
+  What the machine then does about it depends on which delivery is in progress and on which channel was
+  being commanded, and is not fixed here.
+links:
+  - target: REQ-TIMING-FAULT-RESPONSE-001
+    type: criterion-of

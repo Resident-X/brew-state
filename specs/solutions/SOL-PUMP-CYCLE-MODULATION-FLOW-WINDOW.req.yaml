@@ -1,0 +1,39 @@
+id: SOL-PUMP-CYCLE-MODULATION-FLOW-WINDOW
+type: deliverable
+category: solution
+title: The flow-averaging window that cycle-modulated pumping requires is measured, and it is the test that would reopen finer modulation
+status: active
+version: 1
+text: |
+  A pump modulated by whole supply cycles delivers its water in discrete strokes, so the rate read back over
+  any window is quantised by how many whole strokes fell inside it, however finely the commanded level itself
+  is resolved. The trim that holds a delivery to its commanded rate consumes that reading, so the window the
+  reading is averaged over sets both how finely the trim can see a departure and how quickly it can respond
+  to one, and the two pull against each other.
+
+  This item establishes that window on the bench: the pump is run at commanded levels across its usable range
+  against a weighed delivery, and the shortest averaging window whose reported rate stays inside the band a
+  delivery is judged by is found and recorded, together with what the trim loop gives up at that window. The
+  figure is derived rather than assumed -- an order-of-magnitude estimate from the declared full-scale flow
+  and the stroke rate puts it well above the control step interval, but the declared full scale is itself an
+  estimate carried with a wide spread, so nothing here rests on that arithmetic.
+
+  The finding is recorded either way. If a window that slow leaves the trim able to hold the band, modulating
+  by whole cycles is sufficient and no finer modulation is needed. If it does not, that is the measurement
+  that reopens modulating within the cycle, and it is recorded as such rather than left as a preference.
+
+  This item needs the pump driven for a controlled interval independent of the original controller, which does
+  not exist yet, and shares that precondition with the meter's cost differential.
+
+  Out of scope: the meter's own accuracy, which no declared figure of this design bounds; the phase offset
+  between a true crossing and a detected edge; and implementing any modulation scheme, which is firmware work
+  this measurement only informs.
+links:
+  - target: DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM
+    type: justified-by
+  - target: DEL-BENCH-FLOW-INSTRUMENTATION.C2
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C6
+    type: targets
+  - target: SOL-FLOW-METER-READING-AT-CONTROLLER
+    type: depends-on

@@ -1,0 +1,62 @@
+id: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT
+type: deliverable
+category: solution
+title: The controller and the mains-side parts are assessed against the channel enumeration, judged in interface resources rather than connector count
+status: active
+version: 1
+text: |
+  The machine's channel enumeration is already complete enough to assess candidates against: every sensing and
+  actuation channel carries its signal, the peripheral kind it demands, its count and whether its failure bears
+  on safety. What has never been done is the step between that list and a purchase -- taking a candidate and
+  showing, channel by channel, that its timing and conversion resources reach every channel the enumeration
+  names and leave room for the ones the graph anticipates.
+
+  The judgement is made in resources rather than in connectors. A candidate is assessed on whether the capture
+  channels, conversion inputs and interrupt lines each channel needs are simultaneously available on pins the
+  board actually brings out, with the channels the graph already anticipates counted in. A purpose-built board
+  from an adjacent application is admissible and may be the best value, but its spare capacity is spare for its
+  own function first, and that is what the assessment has to see through.
+
+  The mains side is specified alongside it and is independent of which controller is chosen. Each switched load
+  is specified by the property its switching device must have rather than by a part: whether it must be
+  commandable every half-cycle or only per delivery, what it carries continuously, what it must dissipate where
+  it is mounted, and what state it fails into. The supply-timing front end is specified the same way, including
+  that it presents both crossings of each cycle and that its barrier keeps the mains-referenced side away from
+  everything the operator and the low-voltage circuits can reach.
+
+  What is bought, what the machine already carries and is reused, and what the whole comes to are recorded
+  against the declared spend, with any channel departing from a reused or commodity part carrying its reason
+  against that channel.
+
+  Out of scope, and deliberately so: formally selecting the machine's controller, which three active nodes hold
+  open against measured plant parameters and which this item does not settle -- an assessment showing a candidate
+  adequate is an input to that selection, not the selection itself. Also out of scope: characterising any part
+  once bought, which is bench work under the measurement phase; establishing the phase offset between a true
+  crossing and a detected edge, which no declared figure bounds; the bench capture of the original two-wire
+  operator link, which its own assumption decision holds open; and the proof-of-life interlock, which has its own
+  requirement criteria and is not settled by choosing parts.
+links:
+  - target: DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM
+    type: justified-by
+  - target: DEL-COMPONENT-SPECIFICATION.C4
+    type: derives-from
+  - target: DEL-COMPONENT-SPECIFICATION.C5
+    type: derives-from
+  - target: REQ-HARDWARE-HEADROOM-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C2
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C1
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C2
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C5
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C6
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C2
+    type: targets
+  - target: DEC-PREHARDWARE-TARGET-FAMILY
+    type: justified-by

@@ -1,0 +1,20 @@
+id: SOL-PUMP-CYCLE-MODULATION-FLOW-WINDOW.C1
+type: criterion
+title: The shortest flow-averaging window that holds the band a delivery is judged by is measured and recorded
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The pump is run at commanded levels spanning its usable range against a weighed delivery on the open hot-water
+  path with no puck, and for each level the reported rate is averaged over a range of window lengths. The shortest
+  window whose reported rate stays inside the declared flow departure band -- the same band the flow row's
+  resolution is already stated against, and carried with the same provenance, an estimate placed between a pump
+  ripple and a choked-puck shortfall neither of which a bench has recorded -- is recorded as the required window,
+  together with the response the trim loop gives up by averaging that long. Where no window inside a usable
+  response time holds the band, that is recorded as the outcome rather than the measurement being reported as
+  inconclusive. Out of scope: the meter's own accuracy, revising the band itself, implementing any modulation
+  scheme, and running against a puck at working pressure.
+links:
+  - target: SOL-PUMP-CYCLE-MODULATION-FLOW-WINDOW
+    type: criterion-of

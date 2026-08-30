@@ -1,0 +1,17 @@
+id: REQ-TIMING-FAULT-RESPONSE-001.C6
+type: criterion
+title: A supply-timing fault has a defined effect on the delivery in progress
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Detection without a defined response leaves the machine acting on timing it has already judged unreliable,
+  which is the state the corresponding criterion for the controller's own overruns exists to prevent.
+
+  What the effect is depends on which delivery is in progress and on which channel was being commanded, and is
+  not fixed here; what is required is that the effect is decided rather than emergent, and that a delivery
+  carried through a supply fault is distinguishable afterwards from one that was not.
+links:
+  - target: REQ-TIMING-FAULT-RESPONSE-001
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C3
+type: criterion
+title: The purchase list records bought against reused parts and totals them against the declared spend
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The list names, for every channel, whether its part is bought or is one the machine already carries and is
+  reused, and totals the bought parts against the spend the build is declared to be held to. A channel whose
+  part departs from a reused or commodity default carries the reason for that departure against that channel
+  rather than against the list as a whole. Reused parts are counted as reuse against the total rather than
+  omitted from it. Out of scope: revising the declared spend itself, and any procurement act.
+links:
+  - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT
+    type: criterion-of

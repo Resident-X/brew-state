@@ -6,11 +6,15 @@ status: active
 priority: must
 authority: internal
 managed: true
-version: 2
+version: 3
 text: |
-  Where actuation is tied to the supply waveform, the control period is set by something outside the controller. The control law shares its execution resources with sensing, flow observation and liveness signalling, and those resources may be contended. Whether that works is a question about worst cases, not typical ones.
+  Where actuation is tied to the supply waveform, the machine's own period and the supply's are two clocks that
+  have to be reconciled, and which of them governs the control path is a choice rather than a given. The control
+  law shares its execution resources with sensing, flow observation and liveness signalling, and those resources
+  may be contended. Whether that works is a question about worst cases, not typical ones.
 
-  A late answer and a wrong answer have the same effect on the machine. Timing is therefore a correctness property here rather than a performance concern.
+  A late answer and a wrong answer have the same effect on the machine. Timing is therefore a correctness property
+  here rather than a performance concern.
 rationale: |
   Authority is internal. This is the project's own commitment about how it builds, and it is the obligation the design notes' choice of a bare hardware abstraction over a higher-level framework has to answer to. Without it, that choice is a preference with a plausible story rather than a decision serving a stated requirement.
 

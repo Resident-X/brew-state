@@ -1,0 +1,22 @@
+id: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C2
+type: criterion
+title: Each switched load and the supply-timing front end are specified by the property the part must have
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each switched load and the supply-timing front end are specified by the property the part must have, not by a
+  chosen part number: for each load whether its device must be commandable every half-cycle or only per delivery,
+  what it carries continuously, what it must dissipate where it is mounted, and what state it fails into -- a
+  device whose dominant failure leaves its load energised is a different proposition on a heated channel than one
+  that fails open, and the specification says which each channel gets. For the front end, that it presents both
+  crossings of each cycle and that its barrier separates the mains-referenced side from every low-voltage circuit
+  and control an operator can reach. The original controller's own devices are recorded per channel as the
+  capability floor, so a choice that regresses a channel is visible as a regression. Out of scope: which controller
+  is chosen, since this specification does not depend on it; the interlock that acts on a failed-energised output,
+  which has its own requirement criteria; and the phase offset between a true crossing and a detected edge, which
+  no declared figure bounds.
+links:
+  - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT
+    type: criterion-of
