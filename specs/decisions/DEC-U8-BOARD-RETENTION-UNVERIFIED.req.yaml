@@ -1,0 +1,30 @@
+id: DEC-U8-BOARD-RETENTION-UNVERIFIED
+type: decision
+category: assumption
+title: The OEM operator-interface board is assumed replaced in full, pending a bench-verified alternative
+status: active
+version: 1
+validation_horizon: DEL-COMPONENT-SPECIFICATION.C4
+text: |
+  The circuit diagram shows the two OEM microcontroller boards talking over exactly two wires — CMDTX from the board driving heaters, pumps, valves and reading zero-cross, and SLVOK from the board reading buttons and driving LEDs and the two gauge steppers. If a new controller could speak whatever protocol currently runs on those two wires, the entire button/LED/stepper board could be retained untouched: no rewiring eight buttons, roughly ten LED segments, or two stepper motors onto new hardware.
+
+  Neither chip's firmware is available, and there is no documented protocol for that link — both are proprietary Holtek parts. Nothing on paper settles whether the link is a simple, easily-replicated framing or something more particular to the two chips' own timing. The question is answerable empirically, on the bench, with a logic analyser on the two lines while the original board is still intact and powered, watching what a button press or a gauge move actually puts on the wire — but nobody has done that yet.
+rationale: |
+  Context: reference-machine.md already states the OEM control electronics are being replaced entirely, written before this project's own reading of the service manual identified the two-wire link between the two OEM boards or what rides on it. That link raises a real architectural option — retaining the button/LED/stepper board and driving it over its native link — that the existing full-replacement statement forecloses without having considered it.
+
+  Trade-offs: Assuming full replacement for now costs nothing today, since no board-selection or wiring work is committed yet, and keeps the default the project has already been designing against (every channel driven directly by the new controller, which is what the corrected enumeration and the eventual procurement-facing I/O list both assume). Assuming retention instead, without the bench capture, would bake an unverified guess about undocumented proprietary firmware into a design decision — exactly the failure this project's discipline exists to catch, and the two prior corrections in this same slice (the sensor-type and valve-voltage claims) are direct instances of guessing where a primary source could have settled it instead. Blocking all further hardware-facing work until the bench capture happens was rejected as disproportionate: the capture is cheap and can run in parallel with the correction and the procurement-list work, and neither depends on its answer.
+
+  Reversibility: Cheap in the direction that matters. If the bench capture shows the link is not worth chasing, nothing changes — the default already assumes full replacement. If it shows the link is simple enough to speak, the retained-board option becomes real and this decision is superseded, but nothing built under the full-replacement default (enumeration, headroom argument, procurement list) becomes wrong; it becomes conservative, not incorrect, since a controller that can drive every channel directly can still choose to talk to the retained board instead.
+
+  Consequences: The corrected enumeration and any procurement-facing I/O summary built from it should present the button/LED/stepper channels as real requirements a candidate controller must be able to serve directly, not assume they can be handed to a retained OEM board. The bench capture (logic analyser on CMDTX/SLVOK, GND, while the intact board is powered, correlated against button presses and gauge moves) is the concrete next step that would supersede this decision.
+options_considered:
+  - option: Assume the OEM control electronics, including the button/LED/stepper board, are replaced in full by the new controller until a bench capture of the CMDTX/SLVOK link says otherwise
+    reason_rejected: ""
+  - option: Assume the button/LED/stepper board is retained and driven over its existing native link without empirical verification of that link's protocol
+    reason_rejected: bakes an unverified guess about undocumented proprietary firmware into a design decision, exactly the failure this project's discipline exists to catch
+  - option: Block all further hardware-facing work until the bench capture happens
+    reason_rejected: disproportionate; the capture is cheap, can run in parallel, and nothing else in flight depends on its answer
+chosen: Assume the OEM control electronics, including the button/LED/stepper board, are replaced in full by the new controller until a bench capture of the CMDTX/SLVOK link says otherwise
+links:
+  - target: DEL-COMPONENT-SPECIFICATION.C4
+    type: addresses

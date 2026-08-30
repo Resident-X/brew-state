@@ -1,0 +1,17 @@
+id: EVD-SOL-CHANNEL-ENUMERATION-CORRECTED.C2-INSPECTION
+type: evidence
+title: Solenoid valve coil class declared mains-AC and OEM switching devices named as capability evidence (SOL-CHANNEL-ENUMERATION-CORRECTED.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-30T00:06:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/reference-machine.md — valve bullet and 'What the OEM boards switch each mains load with' table; docs/controller-io.md valve/heater/pump rows
+text: |-
+  Blind review confirmed the mains-AC coil class is stated as a machine fact surviving board replacement, distinct from the OEM switching-device table (relay/opto-triac/relay) framed correctly as capability evidence, not a specification.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED.C2
+    type: satisfies

@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-ENUMERATION-CORRECTED.C3
+type: criterion
+title: A zero-cross detection channel is added to the enumeration, cited to the circuit diagram
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A zero-cross detection channel is added to the enumeration where none existed: a mains-referenced optocoupler feeding an interrupt pin on the microcontroller that drives the heaters, pumps and valves, cited to the circuit diagram, on the board this project's own declared intent replaces entirely.
+
+  Out of scope: characterising the timing relationship between the detected edge and the true mains crossing, which the half-wave front end certainly offsets and which no document bounds. Also out of scope: deciding whether this project drives any load by phase control or burst firing, which is what would make the channel a requirement rather than a recorded capability.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED
+    type: criterion-of

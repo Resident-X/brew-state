@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-ENUMERATION-CORRECTED.C2
+type: criterion
+title: Solenoid valve coil class is declared mains-AC, and OEM mains-load switching devices are named as capability evidence
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Both solenoid valves' coil voltage class is declared mains-AC in reference-machine.md, replacing the current "coil voltage class (mains vs low-voltage DC) not recorded" claim, citing the circuit diagram showing each valve switched by a 12V-coil relay whose contacts carry the AC line directly to the valve coil. Alongside it, the OEM switching device for every mains load is named as OEM-capability evidence, not as a specification: mechanical relay for each heater element, opto-triac plus triac for each pump, mechanical relay for each valve.
+
+  Out of scope: establishing operating points the schematic does not give -- the valve coils' current or VA, the relay coil currents and contact ratings, and the triac ratings. Also out of scope: resolving which of the schematic tags COF VALVE and HOT VALVE drives which physical valve part number, a pairing the source leaves open and which this correction records as open rather than guesses.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED
+    type: criterion-of

@@ -1,0 +1,21 @@
+id: SOL-CHANNEL-ENUMERATION-CORRECTED
+type: deliverable
+category: solution
+title: 'The machine''s channel declaration is corrected against the service manual: sensor type, valve voltage class, OEM switching devices, zero-cross sensing, and the operator interface''s buttons and indicators'
+status: active
+version: 1
+text: |
+  The machine's declared configuration in docs/reference-machine.md, and the controller I/O enumeration docs/controller-io.md derives from it, both under-identified components the actual Sunbeam EM7000 service manual (spare parts list and circuit diagrams) already settles. This solution corrects the declaration against that primary source and extends the enumeration to include what it settles.
+
+  Three corrections replace an existing "not recorded" claim with a fact the service manual states directly: the coffee thermoblock, steam thermoblock and steam-wand sensors are all NTC-type, named as such in the parts list (Coffee NIC Wire EM70025, Steam Soleplate Thermistor EM70020, Steam Arm NTC EM70024); both solenoid valves' coils are mains-AC, switched by a 12V-coil relay's contacts rather than driven at low voltage, shown directly in the circuit diagram; and the two OEM control boards' actual switching devices for every mains load are named — mechanical relay for both heater elements, opto-triac plus triac for both pumps, mechanical relay for both valves — recorded as evidence of what the OEM hardware does, not as a specification for the machine this project builds.
+
+  Two channels the enumeration never carried at all are added, because the service manual shows they exist: a zero-cross detection circuit (a mains-referenced optocoupler feeding a microcontroller interrupt) on the board being replaced, and the operator interface's eight discrete pushbuttons and LED indicator segments on a second microcontroller board, distinct from the two knob microswitches already enumerated.
+
+  One prior open alternative is settled: the two analogue gauges are driven by a dedicated two-channel stepper driver IC on that same second board, not by a separate board reached over a serial link.
+
+  Out of scope: selecting or characterising any part for a new controller; whether the second microcontroller board (buttons, LEDs, steppers) can be retained and driven by a new controller over the two-wire link it already uses to talk to the first board, which is a live architectural question this solution does not resolve and records as its own decision instead; the concise, procurement-oriented I/O summary a board down-select needs, which is separate work; and the flow meter's actual interface type, which the circuit diagram leaves genuinely ambiguous and which this solution records as still open rather than guesses at.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C1
+    type: targets

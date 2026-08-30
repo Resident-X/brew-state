@@ -1,0 +1,14 @@
+id: SOL-CHANNEL-ENUMERATION-CORRECTED.C5
+type: criterion
+title: The gauge drive mechanism is corrected to name the on-board stepper driver IC
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The two analogue gauges' drive mechanism is corrected in reference-machine.md to name a dedicated two-channel stepper driver IC on the second microcontroller board, replacing the open "driver-IC interface — not established which" alternative, cited to the circuit diagram.
+
+  Out of scope: selecting stepper driver hardware for a replacement controller, which under the full-replacement default does not inherit the OEM driver, and establishing the two motors' own step size, phase current or needle gearing -- part-selection and characterisation questions this correction leaves to component specification.
+links:
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED
+    type: criterion-of
