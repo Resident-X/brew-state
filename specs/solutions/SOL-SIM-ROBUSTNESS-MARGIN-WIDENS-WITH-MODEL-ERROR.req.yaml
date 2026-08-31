@@ -31,3 +31,5 @@ links:
     type: targets
   - target: REQ-ROBUST-CONTROL-001.C3
     type: targets
+  - target: SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR
+    type: depends-on

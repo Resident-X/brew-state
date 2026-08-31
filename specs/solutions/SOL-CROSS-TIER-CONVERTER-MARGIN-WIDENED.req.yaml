@@ -66,3 +66,7 @@ links:
     type: derives-from
   - target: REQ-PREENERGISATION-VERIFICATION-001.C2
     type: targets
+  - target: SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS
+    type: depends-on
+  - target: SOL-PLANT-MODEL-AGREES-ACROSS-TIERS
+    type: depends-on

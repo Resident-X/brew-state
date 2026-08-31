@@ -1,0 +1,17 @@
+id: EVD-SOL-LINT-SWEEP-PROJECT-FIT.C3-INSPECTION
+type: evidence
+title: Rules that cannot be satisfied here are raised upstream, not worked around (SOL-LINT-SWEEP-PROJECT-FIT.C3)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T09:31:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/staircase/issues/1218
+text: |-
+  5 rules (orphaned_seam_registry_entry, unresolved_backticked_token, unresolved_camelcase_identifier, decision_authoring.title_as_statement, cited_test_file_absent) cannot be satisfied from inside this repository: the first three resolve against a seam_registry.yaml that lives only in the staircase engine's Go source tree (absent here), title_as_statement is a documented detector limitation on non-copula phrasing, and cited_test_file_absent fires on live Taskfile citations (verified check_structure_exclusive.py, fw:check and fw:sweep all exist) that its sibling rule cited_test_non_go_artifact already tolerates. No graph node was edited to please any of these; docs/lint-classification.md records the reasoning and github.com/Resident-X/staircase#1218 is the upstream filing, with a follow-up comment covering the fourth (cited_test_file_absent) finding.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT.C3
+    type: satisfies

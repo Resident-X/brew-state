@@ -78,3 +78,5 @@ links:
     type: derives-from
   - target: REQ-PREENERGISATION-VERIFICATION-001.C2
     type: targets
+  - target: SOL-CROSS-TIER-CONVERTER-MARGIN-WIDENED
+    type: depends-on

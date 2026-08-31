@@ -66,3 +66,5 @@ links:
     type: derives-from
   - target: REQ-BREW-TEMP-001.C3
     type: targets
+  - target: SOL-DELIVERY-INFEASIBLE-PROFILE-REFUSED
+    type: depends-on

@@ -48,3 +48,5 @@ links:
     type: derives-from
   - target: REQ-SEQUENCE-CONSISTENCY-001.C2
     type: targets
+  - target: SOL-COMMANDED-COURSE-ACTED-ON-AHEAD-OF-EFFECT
+    type: depends-on

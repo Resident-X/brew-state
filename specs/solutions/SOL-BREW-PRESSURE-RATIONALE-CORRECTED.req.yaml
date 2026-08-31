@@ -15,3 +15,5 @@ links:
     type: derives-from
   - target: REQ-MEASUREMENT-001.C7
     type: targets
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: justified-by

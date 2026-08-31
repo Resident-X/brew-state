@@ -1,0 +1,16 @@
+id: EVD-SOL-LINT-SWEEP-PROJECT-FIT.C4-TEST
+type: evidence
+title: Real defects fixed through the authoring surface; validate stays clean (SOL-LINT-SWEEP-PROJECT-FIT.C4)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-31T09:31:44Z"
+valid_until: until-superseded
+artifact:
+  kind: inline
+text: |-
+  12 missing depends-on/justified-by links (real gaps found by classifying every unwired_prerequisite mention against the rule's own decision logic, each source and target node read via show before linking) were added with staircase author update --add-link, listed in docs/lint-classification.md. staircase validate --format json reports valid:true, errors:0, warnings:0 afterward (1397 nodes). The 10 missing_scope_boundary hits are real but frozen (attested) -- remedy is supersession, out of scope per this criterion's own text ('the remedy is supersession, which is a deliberate act with its own reasoning rather than part of a lint sweep'). The 3 cited_test_file_absent hits on pre-existing evidence were investigated and found to be detector false positives, not defects (see C3 evidence) -- nothing to fix under this criterion. Artifact recorded inline rather than as an external file reference: citing the bare staircase validate invocation as an external artifact previously (mis-)tripped cited_test_file_absent on this evidence node itself -- corrected during blind review.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT.C4
+    type: satisfies
