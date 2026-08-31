@@ -1,0 +1,13 @@
+id: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C4
+type: criterion
+title: The wiring record's criteria carry evidence
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each criterion of the wiring-record solution has passing evidence recording what was checked and
+  against which document, so that inspectable work is not left standing as unverified.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED
+    type: criterion-of

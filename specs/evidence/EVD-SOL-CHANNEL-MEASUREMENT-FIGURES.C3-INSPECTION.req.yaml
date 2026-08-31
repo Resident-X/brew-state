@@ -9,7 +9,7 @@ observed_at: "2026-08-29T22:31:37Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/controller-io.md — Coffee thermoblock, Steam thermoblock, Steam wand rows, Accuracy column
+  reference: docs/sunbeam-em7000/controller-io.md — Coffee thermoblock, Steam thermoblock, Steam wand rows, Accuracy column
 text: |-
   Blind review confirmed coffee row cites CONTROL_SENSING_ERROR_C, steam row cites STEAM_CONTROL_SENSING_ERROR_C (its own figure, not a reading of the brew channel's), and the wand-disc row explicitly refuses to borrow either, citing the uncharacterised-hypothesis record in reference-machine.md instead. Both block rows name the two displacers (bench characterisation, sensor-selection decision).
 links:

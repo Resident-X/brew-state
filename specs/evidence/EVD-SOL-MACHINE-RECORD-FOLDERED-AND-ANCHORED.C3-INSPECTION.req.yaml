@@ -1,0 +1,23 @@
+id: EVD-SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C3-INSPECTION
+type: evidence
+title: The record names its derived documents as derived and states which governs (SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C3)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/connector-pinouts.md
+text: |-
+  The wiring record names all three artefacts and says what each is for, marking the bill of materials
+  and the electrical requirements sheet as derived views cut for sourcing rather than sources of record,
+  and stating that where they disagree with the channel enumeration the enumeration wins.
+
+  DEC-MACHINE-RECORD-FOLDER-PER-MACHINE carries the same rule at the decision layer, so the precedence is
+  recorded where it can be cited rather than only where it happens to be written. Checked by reading both
+  and confirming they state the same order.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C3
+    type: satisfies

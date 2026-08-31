@@ -1,0 +1,14 @@
+id: REQ-MACHINE-RECORD-001.C1
+type: criterion
+title: Every channel a controller must serve is discoverable without opening the machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The record names each channel the machine senses or drives, what kind of signal it carries and how
+  many of it there are, so that a controller can be specified against the list rather than against
+  the machine. Someone who has never seen this machine can enumerate what a replacement owes it.
+links:
+  - target: REQ-MACHINE-RECORD-001
+    type: criterion-of

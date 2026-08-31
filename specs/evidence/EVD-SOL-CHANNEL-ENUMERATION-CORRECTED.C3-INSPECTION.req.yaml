@@ -9,7 +9,7 @@ observed_at: "2026-08-30T00:06:31Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/reference-machine.md zero-cross bullet; docs/controller-io.md sensing table new row
+  reference: docs/sunbeam-em7000/reference-machine.md zero-cross bullet; docs/sunbeam-em7000/controller-io.md sensing table new row
 text: |-
   Blind review confirmed the zero-cross channel is added with correct circuit citation (1N4007/120k/PC817 into U3's interrupt), correctly safety-marked per OBL-ELECTRICAL-THERMAL-SAFETY-001.C6's isolation-failure axis after fix, and hedged as contingent on an undecided drive strategy.
 links:

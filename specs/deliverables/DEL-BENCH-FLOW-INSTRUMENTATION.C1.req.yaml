@@ -11,7 +11,7 @@ text: |
   measurement channel alongside the temperature channels, in the thousandths-of-unit convention the
   sensing interface already uses, so water movement is observed rather than derived from pump drive.
   Where that meter sits in the path is a precondition for attributing a reading to anything, and that
-  position is now established (docs/reference-machine.md) rather than something this criterion still
+  position is now established (docs/sunbeam-em7000/reference-machine.md) rather than something this criterion still
   has to locate -- so what remains is making the established reading actually reach the controller,
   not finding where the meter is. Whether the position distinguishes a coffee delivery is a separate
   criterion.

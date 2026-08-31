@@ -42,7 +42,7 @@ text: |
   them as open is deliberate -- the boundary is stated without pre-empting that substitution.
 
   How the panel is actually wired -- which conductor carries what, and why the keys and indicators share
-  lines -- is recorded in docs/connector-pinouts.md rather than here. This decision settles which devices
+  lines -- is recorded in docs/sunbeam-em7000/connector-pinouts.md rather than here. This decision settles which devices
   stay; that artefact records how they are reached, and it is the thing to amend when a harness is traced
   rather than any node.
 

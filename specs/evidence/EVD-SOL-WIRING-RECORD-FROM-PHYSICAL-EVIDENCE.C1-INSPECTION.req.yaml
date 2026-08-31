@@ -1,0 +1,30 @@
+id: EVD-SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C1-INSPECTION
+type: evidence
+title: Connector and harness allocations have one home, and every claim states how it was established (SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/connector-pinouts.md
+text: |-
+  The wiring record is a single document carrying both harnesses. The front panel's nine-way connector
+  is tabulated pin by pin, and the gauge assembly's nine-way harness conductor by conductor, each row
+  naming what it carries and the grade of the claim.
+
+  The grades are defined before they are used and are ranked against each other: Traced means the
+  hardware answered directly, by following copper or by reading a part off the board it is soldered to;
+  Read means a scan or a datasheet with nothing confirmed against the machine; Observed means somebody
+  watched the running machine; Inferred means it follows from other rows. Traced outranks Observed, and
+  the document says why rather than asserting it -- the one claim it has had to withdraw was an Observed
+  one, and a null result is what a mistimed glance produces for free.
+
+  Checked by reading every row of both connector tables and every provenance parenthetical in the
+  surrounding prose. No row carries a claim without a grade, and no grade is used that the legend does
+  not define.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C1
+    type: satisfies

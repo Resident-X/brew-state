@@ -1,0 +1,14 @@
+id: REQ-MACHINE-RECORD-001.C5
+type: criterion
+title: What is specific to the machine the design was built against is separable from what holds for any machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A reader can tell which material describes the one machine this was built against and which holds
+  for any machine of its shape, without reading the content to work it out. Someone fitting a
+  different machine can identify everything they must replace.
+links:
+  - target: REQ-MACHINE-RECORD-001
+    type: criterion-of

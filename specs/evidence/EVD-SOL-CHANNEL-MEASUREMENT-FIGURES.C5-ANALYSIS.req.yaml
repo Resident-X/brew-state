@@ -9,7 +9,7 @@ observed_at: "2026-08-29T22:31:37Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/controller-io.md — Flow meter row, Resolution column; firmware/params/tolerance.declaration (flow-departure-band=200 milli-ml-s)
+  reference: docs/sunbeam-em7000/controller-io.md — Flow meter row, Resolution column; firmware/params/tolerance.declaration (flow-departure-band=200 milli-ml-s)
 text: |-
   Analysis confirmed the flow row's resolution is stated as +/-0.2 mL/s, the flow-departure-band itself, explicitly not derived from meter convenience, marked @estimated with its provenance (placed between unmeasured pump-ripple floor and choked-puck shortfall) carried across.
 links:

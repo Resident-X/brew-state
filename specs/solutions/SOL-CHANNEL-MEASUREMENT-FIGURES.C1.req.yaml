@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  Both the sensing and the actuation table in docs/controller-io.md gain three columns: the absolute accuracy the control needs of the channel, the resolution it needs the channel to distinguish, and how often a fresh reading or command has to arrive. A quantity that does not apply to a row -- the accuracy of a contact closure with two states -- says so in the cell rather than being left blank, and so does a quantity that no declared figure of this design reaches. Coverage is the predicate: no row in either table is left with an empty cell in any of the three columns.
+  Both the sensing and the actuation table in docs/sunbeam-em7000/controller-io.md gain three columns: the absolute accuracy the control needs of the channel, the resolution it needs the channel to distinguish, and how often a fresh reading or command has to arrive. A quantity that does not apply to a row -- the accuracy of a contact closure with two states -- says so in the cell rather than being left blank, and so does a quantity that no declared figure of this design reaches. Coverage is the predicate: no row in either table is left with an empty cell in any of the three columns.
 
   Out of scope: naming, against each cell recorded as not yet derivable, the work that will settle it, which DEL-COMPONENT-SPECIFICATION.C3 requires separately; and the protective devices table, whose rows present no signal a controller reads or drives and so demand nothing of the control.
 links:

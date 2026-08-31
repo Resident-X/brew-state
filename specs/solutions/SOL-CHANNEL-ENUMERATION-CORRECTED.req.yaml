@@ -5,7 +5,7 @@ title: 'The machine''s channel declaration is corrected against the service manu
 status: active
 version: 1
 text: |
-  The machine's declared configuration in docs/reference-machine.md, and the controller I/O enumeration docs/controller-io.md derives from it, both under-identified components the actual Sunbeam EM7000 service manual (spare parts list and circuit diagrams) already settles. This solution corrects the declaration against that primary source and extends the enumeration to include what it settles.
+  The machine's declared configuration in docs/sunbeam-em7000/reference-machine.md, and the controller I/O enumeration docs/sunbeam-em7000/controller-io.md derives from it, both under-identified components the actual Sunbeam EM7000 service manual (spare parts list and circuit diagrams) already settles. This solution corrects the declaration against that primary source and extends the enumeration to include what it settles.
 
   Three corrections replace an existing "not recorded" claim with a fact the service manual states directly: the coffee thermoblock, steam thermoblock and steam-wand sensors are all NTC-type, named as such in the parts list (Coffee NIC Wire EM70025, Steam Soleplate Thermistor EM70020, Steam Arm NTC EM70024); both solenoid valves' coils are mains-AC, switched by a 12V-coil relay's contacts rather than driven at low voltage, shown directly in the circuit diagram; and the two OEM control boards' actual switching devices for every mains load are named — mechanical relay for both heater elements, opto-triac plus triac for both pumps, mechanical relay for both valves — recorded as evidence of what the OEM hardware does, not as a specification for the machine this project builds.
 

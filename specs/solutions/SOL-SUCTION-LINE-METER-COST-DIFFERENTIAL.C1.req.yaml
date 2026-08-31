@@ -11,7 +11,7 @@ text: |
   delivered mass is weighed at the open hot-water spout twice under otherwise identical conditions:
   once with the fitted meter in the suction line, once with it removed. The two weighed masses, and
   the two prime times, are recorded and their difference is the meter's measured cost. The result is
-  written into docs/reference-machine.md's flow-meter entry alongside the qualitative finding
+  written into docs/sunbeam-em7000/reference-machine.md's flow-meter entry alongside the qualitative finding
   SOL-SUCTION-LINE-PUMP-MARGIN already recorded, superseding it as the load-bearing evidence for
   DEL-BENCH-FLOW-INSTRUMENTATION.C6.
 

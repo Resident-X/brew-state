@@ -9,7 +9,7 @@ observed_at: "2026-08-30T08:27:57Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: 'docs/controller-io.md — rows: coffee/steam thermoblock element switching, coffee/steam pump, mains zero-cross detection'
+  reference: 'docs/sunbeam-em7000/controller-io.md — rows: coffee/steam thermoblock element switching, coffee/steam pump, mains zero-cross detection'
 text: |-
   Both heater rows now state a per-half-cycle energise-or-idle drive and record the HF3FD/012HST relay as a capability floor rather than a specification. Both pump rows state the retained phase-capable MOC3021-into-triac arrangement and name cycle granularity as the open measurement. The mains zero-cross row requires both crossings of every cycle and marks the half-wave OEM feed as failing that property. Each row names DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM in the same form the enumeration already uses for channels added by decision. Rates and resolution are stated in supply half-cycles rather than milliseconds, so the rows hold on a 60 Hz supply; the 50 Hz of reference-machine.md is marked provisional against REQ-MACHINE-CONFIGURATION-001.C8. Verified by blind review, which confirmed the five-row count against the diff and the frequency arithmetic.
 links:

@@ -16,7 +16,7 @@ text: |
   table entry is not sufficient: the read path needs a timer input-capture peripheral and a pulse
   counter, which is new peripheral plumbing alongside hw_sensor_read rather than a value substituted
   into the existing ADC-poll table, since that function implements only an ADC poll today. Either way,
-  the physical connection (board, pin, meter terminal) is documented in docs/reference-machine.md, and
+  the physical connection (board, pin, meter terminal) is documented in docs/sunbeam-em7000/reference-machine.md, and
   the code comment at hw_stm32.c's SENSOR_INPUT_NONE entry, which currently explains the absence by
   the meter being wired to the OEM controller rather than this board, is updated to match.
 

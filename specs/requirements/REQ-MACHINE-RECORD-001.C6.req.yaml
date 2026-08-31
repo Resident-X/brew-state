@@ -1,0 +1,14 @@
+id: REQ-MACHINE-RECORD-001.C6
+type: criterion
+title: What is derived from the record agrees with it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Any document, list or figure derived from the record states what the record states. Where the record
+  is corrected, what was derived from it is corrected with it rather than left standing at the earlier
+  reading.
+links:
+  - target: REQ-MACHINE-RECORD-001
+    type: criterion-of

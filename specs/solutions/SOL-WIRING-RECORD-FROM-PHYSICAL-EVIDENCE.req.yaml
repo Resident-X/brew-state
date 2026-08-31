@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The machine's wiring is recorded from physical evidence, graded by how each claim was established, and every document derived from it reconciled
 status: active
-version: 2
+version: 3
 text: |
   The machine's declared configuration and its channel enumeration were both written from a scanned
   service manual, and both inherited that source's errors with no way to notice them. Three readings of
@@ -81,9 +81,9 @@ text: |
   output, and the time it takes, to be established. Enumerating the two heater mains-presence channels establishes the availability half for those two outputs: the confirmation exists, and it is prompt and electrical rather than a slow thermal response. Two things are not established here. How long it takes is measurement work. And the criterion says each output, where this establishes two: the pumps, the valves and the gauges have no confirmation channel at all, which is a gap this item surfaces rather than closes.
 
   Three artefacts carry this record and are named here so the graph says what they are rather than
-  leaving them to be found by browsing. docs/connector-pinouts.md is the wiring record itself, and is
-  normative about the operator interface. docs/controller-io-bom.csv lists every channel with its pin
-  cost, quantity, retention state and the OEM part it has to serve or beat. docs/control-board-electrical-requirements.csv restates the same surface as requirement groups in the terms
+  leaving them to be found by browsing. docs/sunbeam-em7000/connector-pinouts.md is the wiring record itself, and is
+  normative about the operator interface. docs/sunbeam-em7000/controller-io-bom.csv lists every channel with its pin
+  cost, quantity, retention state and the OEM part it has to serve or beat. docs/sunbeam-em7000/control-board-electrical-requirements.csv restates the same surface as requirement groups in the terms
   a board is chosen by, with a placement column proposing how the channels partition across boards. The
   two spreadsheets are derived views and not sources of record: where they disagree with the channel
   enumeration, the enumeration wins.
@@ -97,6 +97,14 @@ links:
   - target: OBL-PHYSICAL-CONFIGURATION-001.C4
     type: targets
   - target: REQ-ACTUATION-CONFIRMATION-001.C2
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C1
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C2
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C4
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C6
     type: targets
   - target: SOL-CHANNEL-ENUMERATION-CORRECTED
     type: depends-on

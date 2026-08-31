@@ -1,0 +1,14 @@
+id: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C5
+type: criterion
+title: The candidate controller analysis totals demand against the arrangement the machine actually has
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The recorded simultaneity analysis states one demand total, taken against the board partitioning the
+  tracing established, rather than a pair of totals costing an arrangement the machine does not have.
+  Where the assessment leaves a row uncleared, the evidence says so rather than reading as a clean bill.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED
+    type: criterion-of

@@ -1,0 +1,31 @@
+id: EVD-SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C6-INSPECTION
+type: evidence
+title: Fitted behaviours that no criterion requires are recorded where a replacement would meet them (SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C6)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/connector-pinouts.md
+text: |-
+  Three fitted behaviours that no requirement criterion asks for are recorded in the wiring record: the
+  power-on sweep of both gauge needles to full scale and back, which homes them against end stops; global
+  indicator brightness modulation, produced by gating the shared anode rail rather than any individual
+  line; and a low-water annunciation whose audible half is the buzzer and whose visual half is the gauge
+  assembly's indicator, the two being separable.
+
+  None was made a requirement criterion. The reasoning for that is carried by
+  DEC-OPERATOR-INTERFACE-REPRODUCED rather than by the record -- a criterion naming a sweep states
+  mechanism and would forbid replacing the gauges -- and the record's part is to describe the behaviours
+  in enough detail that the decision's reference to them resolves. The obligation sits on the delivery chain instead, in
+  DEC-OPERATOR-INTERFACE-REPRODUCED, expressed by reference to this record rather than by restating it --
+  so a replacement meets the behaviours where they are described, and the description stays correctable
+  without a requirement being amended.
+
+  Checked by reading each behaviour's passage in the record and confirming the decision resolves to it.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C6
+    type: satisfies

@@ -90,7 +90,7 @@ rationale: |
   set for the model-error solution's own trip-point figures: a number this solution's build brief requires
   be recorded with a marked provenance is a declared-configuration fact, and REQ-MACHINE-CONFIGURATION-001.C5
   already requires the declaration to mark which of its values were measured and which were taken on trust.
-  No sensor part has been selected for either guarded channel -- confirmed against docs/reference-machine.md,
+  No sensor part has been selected for either guarded channel -- confirmed against docs/sunbeam-em7000/reference-machine.md,
   which names only "the sensor is on the block" for each thermoblock, and against REQ-MEASUREMENT-001's own
   rationale, which leaves sensor type, interface and compensation scheme an open decision -- so the figure
   this solution declares is an estimate at a plausible accuracy class, exactly as thermoblock.params already

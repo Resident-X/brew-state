@@ -9,7 +9,7 @@ text: |
   The fitted flow meter's part number or model is read directly off the unit, or from its known
   Sunbeam/OEM part reference, and, where a datasheet is available, its output signal type
   (pulse/frequency train vs. analogue voltage or current) and scaling (a K-factor in pulses per
-  litre, or a voltage-flow curve) are recorded in docs/reference-machine.md alongside the existing
+  litre, or a voltage-flow curve) are recorded in docs/sunbeam-em7000/reference-machine.md alongside the existing
   "Already fitted" entry. Where no datasheet can be found, the signal is characterised directly on
   the bench with a scope or multimeter instead, and the observed signal shape and approximate
   scaling are recorded with the origin marked as bench-observed rather than manufacturer-stated.

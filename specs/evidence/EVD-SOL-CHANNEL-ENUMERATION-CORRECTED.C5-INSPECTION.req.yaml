@@ -9,7 +9,7 @@ observed_at: "2026-08-30T00:06:31Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/reference-machine.md gauge bullet; docs/controller-io.md gauge rows
+  reference: docs/sunbeam-em7000/reference-machine.md gauge bullet; docs/sunbeam-em7000/controller-io.md gauge rows
 text: |-
   Blind review confirmed the VID66-08 on-board stepper driver is named as the as-built fact, while the enumeration's Peripheral class cells correctly state what a replacing controller must independently provide under the full-replacement default, fixed after initially assuming inherited retention.
 links:

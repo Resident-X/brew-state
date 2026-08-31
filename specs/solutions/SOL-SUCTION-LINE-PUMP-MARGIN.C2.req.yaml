@@ -10,7 +10,7 @@ text: |
   history -- the owner's account that this configuration has not caused a noticed problem in factory
   use -- since no manufacturer datasheet for the Ulka EP5's rated flow or priming time has been found
   (firmware/params/thermoblock.params already records this absence for the same pump). The judgement
-  and its basis are recorded in docs/reference-machine.md's flow-meter entry, explicitly stating that
+  and its basis are recorded in docs/sunbeam-em7000/reference-machine.md's flow-meter entry, explicitly stating that
   this establishes only the with-meter behaviour, not the meter's cost relative to a without-meter
   baseline. SOL-SUCTION-LINE-METER-COST-DIFFERENTIAL is the tracked follow-on that measures that
   differential once independent pump control exists; this criterion's judgement is the interim

@@ -1,7 +1,7 @@
 id: EVD-SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1-ANALYSIS
 type: evidence
 title: A candidate controller shown to serve every enumerated channel simultaneously in timing and conversion resources (SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1)
-status: active
+status: superseded
 version: 1
 result: pass
 method: analysis
@@ -9,7 +9,7 @@ observed_at: "2026-08-30T08:28:23Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/component-specification.md — Does a candidate controller serve every channel at once
+  reference: docs/sunbeam-em7000/component-specification.md — Does a candidate controller serve every channel at once
 text: |-
   Demand is totalled off the peripheral-class column of both controller-io.md tables and given for the two panel options DEC-U8-BOARD-RETENTION-UNVERIFIED leaves open: 37 pins direct-drive, 17 over the existing serial link, each summing from its stated per-resource costs. The candidate is the STM32F407VGT6 named by DEC-PREHARDWARE-TARGET-FAMILY, figures from ST datasheet DS8626. Simultaneity is argued resource by resource rather than by connector count: four conversion inputs on one ADC unit, three timer channels against ten I/O-capable timers with the shared-timebase contention called out, 37 pins against about 78 usable once the HSE crystal and SWD pins are deducted. The external-interrupt block is named as the resource with a structural rather than numeric constraint, since line n serves pin n of one port only. The five channels the graph anticipates are counted in and shown to fit. Compute and memory are recorded as unquantified on both sides rather than claimed as headroom, and the narrower usable subset of any specific board is flagged as a check owed before purchase. No candidate failed, so no defeated-by-channel record is kept. Selection remains open per DEC-PREHARDWARE-TARGET-FAMILY and DEC-HEATER-DRIVE-GATED-BY-SUPERVISION.
 links:

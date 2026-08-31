@@ -21,7 +21,7 @@ That means the graph is the substance here, and anything under `specs/` describe
 
 **If you want the detail**, `specs/requirements/` holds the functional and constraint requirements, `specs/definitions/` the vocabulary, and `specs/decisions/` the choices that have been made and why — including the options that were rejected.
 
-**If you are rebuilding this on your own machine**, read [`docs/reference-machine.md`](docs/reference-machine.md) first. Everything specific to *our* machine — supply voltage, mains frequency, element ratings, protection trip points — lives in that one file. The requirement graph is written without those values so that replacing that file is the whole job.
+**If you are rebuilding this on your own machine**, read [`docs/sunbeam-em7000/reference-machine.md`](docs/sunbeam-em7000/reference-machine.md) first. Everything specific to *our* machine — supply voltage, mains frequency, element ratings, protection trip points — lives in that one file. The requirement graph is written without those values so that replacing that file is the whole job.
 
 ## Two different promises
 

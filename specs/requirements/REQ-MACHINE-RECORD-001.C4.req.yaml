@@ -1,0 +1,14 @@
+id: REQ-MACHINE-RECORD-001.C4
+type: criterion
+title: An obligation expressed by reference to the record can resolve what it points at
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Where a node obliges behaviour by referring to the record instead of restating it, what that
+  reference resolves to is determinate: the record carries the behaviour, and a reader following the
+  reference arrives somewhere rather than at a description that was never written down.
+links:
+  - target: REQ-MACHINE-RECORD-001
+    type: criterion-of

@@ -1,0 +1,29 @@
+id: EVD-SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C2-INSPECTION
+type: evidence
+title: The declared configuration states where each part physically is, distinguishing the two front assemblies (SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/reference-machine.md
+text: |-
+  The declared configuration states that both Holtek microcontrollers sit on the main control board, and
+  separates the two front assemblies rather than treating them as one front panel. The button and
+  indicator panel is stated as passive -- ten switches in five parallel pairs, eight indicator elements,
+  the buzzer, no active parts. The gauge assembly is stated as not passive: it carries the stepper driver
+  and the low-water indicator.
+
+  Each carries its own provenance and the grades differ, which is the point of the criterion rather than
+  an inconsistency. The button board is traced from the physical spare part. The gauge assembly's
+  contents are traced from the opened machine. Where the two microcontrollers sit rests on the owner's
+  account and is marked as not bench-verified, so the reader can see which half of the partitioning is
+  which.
+
+  Checked by reading the board-partitioning paragraph and the sensing and actuation lists it governs.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C2
+    type: satisfies

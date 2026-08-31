@@ -1,0 +1,31 @@
+id: EVD-SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C3-INSPECTION
+type: evidence
+title: Switch and indicator counts state what the physical boards carry, not what the diagram numbers (SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C3)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/reference-machine.md
+text: |-
+  The counts are stated from the boards. Ten switches wired as five parallel pairs, and eight indicator
+  elements in five functions -- PWR, MAN, ONE, TWO, PRG -- both traced from the physical spare-part panel
+  board. The function previously recorded as MIN is stated as MAN, which is what pairs it with its key.
+
+  The circuit diagram's numbering is explicitly not adopted, and the diagram's sixth indicator function,
+  WATER, is recorded as real but not on this board.
+
+  The fuller treatment of the numbering collision is in the wiring record rather than in the declared
+  configuration, and was checked there: that the diagram's S1 to S8 is the main board's input list rather
+  than the panel's switch list, and that the panel's own S1 to S10 silkscreen is separate local numbering
+  which collides with it. The declared configuration carries the counts; the wiring record carries why
+  the diagram's numbers cannot be read as those counts.
+
+  Checked by comparing the stated counts against the traced panel board and against the circuit diagram,
+  and confirming the record prefers the board wherever they disagree.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C3
+    type: satisfies

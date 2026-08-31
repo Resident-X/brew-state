@@ -9,7 +9,7 @@ observed_at: "2026-08-27T06:15:07Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: firmware/params/thermoblock.md:240; docs/reference-machine.md:28-49,130-136,153
+  reference: firmware/params/thermoblock.md:240; docs/sunbeam-em7000/reference-machine.md:28-49,130-136,153
 text: |-
   Inspected both documents' rewritten sections: thermoblock.md's element-ratings paragraph and reference-machine.md's Heating and load, Thermal and hydraulic characteristics, and What depends on these values sections. Neither presents the brew rating as disputed or the two elements as equally rated. Swept specs/, firmware/, and docs/ via grep for the retired 1000/1200/2000/2200 W figures and equally-rated framing; remaining hits are either correctly-framed historical mentions of the retired figures or unrelated pre-existing test/illustrative constants outside this slice's scope.
 links:

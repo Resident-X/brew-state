@@ -11,7 +11,7 @@ rationale: |
 
   Reversibility: Low. This is a small, low-complexity part being added to a design still at the simulation and pre-hardware tier, with no plumbing or firmware seam already committed to its absence -- superseding this decision would mean reverting the sensing-dependent criteria in the steam-loop solutions that justify themselves by it, not unwinding any hardware already built.
 
-  Consequences: SOL-SIM-STEAM-BAND-SUSTAINED and SOL-SIM-STEAM-READINESS-GATE both assume this channel exists and are justified by this decision. docs/reference-machine.md's declared sensing list is not amended to claim the part is already fitted -- it remains an accurate record of the physical machine as documented -- and instead carries a note pointing here, so the assumption is visible without corrupting the document's own provenance discipline.
+  Consequences: SOL-SIM-STEAM-BAND-SUSTAINED and SOL-SIM-STEAM-READINESS-GATE both assume this channel exists and are justified by this decision. docs/sunbeam-em7000/reference-machine.md's declared sensing list is not amended to claim the part is already fitted -- it remains an accurate record of the physical machine as documented -- and instead carries a note pointing here, so the assumption is visible without corrupting the document's own provenance discipline.
 options_considered:
   - option: Add a steam-path pressure transducer
     reason_rejected: ""

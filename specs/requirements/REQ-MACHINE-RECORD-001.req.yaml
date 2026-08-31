@@ -1,0 +1,54 @@
+id: REQ-MACHINE-RECORD-001
+type: requirement
+category: constraint
+title: The machine the design is built against is recorded in one place the delivery chain works from
+status: active
+priority: must
+version: 1
+text: |
+  The requirements in this graph say what the machine must do, and hold for any machine of its shape.
+  Building one means working against a particular machine: its connectors, the channels it senses and
+  drives, the devices already fitted, and what each demands of whatever controls it. Those facts are not
+  requirements and must not become them. A criterion naming a connector pin, a step size or a logic
+  threshold would rot the first time a harness or a part changed, and would forbid the substitution the
+  design is meant to survive.
+
+  So they live in a record instead, and the delivery chain works from it. That arrangement is already
+  load-bearing rather than merely tidy: obligations in this graph are expressed by reference to the
+  record rather than by restating it, which is what keeps mechanism out of the requirement layer. But it
+  leaves those obligations pointing at something, and a reference to a record that nothing requires to
+  exist, to be current, or to say how it knows what it claims is a promise with nothing behind it.
+
+  This is what stands behind it. The record exists; its claims carry how they were established; what
+  belongs to one machine is separable from what holds for any; and what is derived from it agrees with
+  it. What the record contains, which machine it describes, and how it is arranged are not fixed here.
+  Those follow the machine and the project, and are settled on the delivery chain where they can change
+  without a requirement being amended.
+rationale: |
+  The graph already declares the machine's configuration in one place, so an adopter substitutes a
+  document rather than auditing a graph for values never marked as one machine's. That declaration
+  covers measured quantities: supply span, protective trip points, thermal and hydraulic
+  characteristics, what a load draws while energised. It does not reach the machine's interfaces --
+  what is wired to what, which channels exist, and what each demands of a controller.
+
+  Those interface facts accumulated across several documents with nothing obliging them to exist or stay
+  current, while decisions on the delivery chain had already begun obliging behaviour by reference to
+  them. One decision requires a replacement to reproduce the operator interface as the record describes
+  it, precisely so that no criterion has to name a gauge sweep or a modulation scheme. That is the right
+  shape, and it is why the gap matters: the reference layer was doing real work while the thing it
+  referred to was held up by nothing.
+
+  This is deliberately a constraint on the record's shape rather than on its contents. A requirement
+  naming the documents would need amending whenever the project reorganised them. A requirement naming a
+  channel would be the mechanism leak the record exists to prevent. What is asserted here is only what
+  must be true of any such record for the references into it to mean anything.
+
+  The adopter is the consumer that makes this more than bookkeeping. Someone rebuilding this on another
+  machine cannot ask questions, and every fact left unmarked as specific to the reference machine is one
+  they inherit without noticing. Separability is therefore a property the record must have rather than a
+  courtesy, and it is one a reader can actually check.
+links:
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C3
+    type: derives-from
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C6
+    type: derives-from

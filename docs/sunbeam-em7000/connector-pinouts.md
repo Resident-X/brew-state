@@ -14,6 +14,28 @@ satisfies that decision.
 together*. The graph does not carry this detail and should not — a criterion that named a pin would
 rot the first time a harness changed. Nodes refer to this artefact instead.
 
+## What this record is, and which part of it wins
+
+This folder is one machine's record: a Sunbeam Café Series `EM7000`. Everything in it describes that
+machine or what a replacement controller owes it. Material that holds for any machine of this shape
+lives outside the folder. Someone fitting a different machine replaces this folder and keeps the rest;
+`DEC-MACHINE-RECORD-FOLDER-PER-MACHINE` is why it is arranged that way.
+
+Three documents describe the machine and two are cut from them:
+
+| Document | Role |
+|---|---|
+| `reference-machine.md` | The declared configuration — what is fitted, and the measured values |
+| `connector-pinouts.md` | This file. What each connector and harness carries |
+| `controller-io.md` | The channel enumeration — every channel a controller must serve |
+| `controller-io-bom.csv` | **Derived.** Every channel with its pin cost, quantity and retention state |
+| `control-board-electrical-requirements.csv` | **Derived.** The same surface as requirement groups, in the terms a board is chosen by |
+
+**The two spreadsheets are derived views, not sources of record.** They are cut from the enumeration
+and this file for sourcing a controller, and where they disagree with what they were cut from, the
+source wins and the spreadsheet is the thing that gets corrected. A disagreement between them and the
+enumeration is a defect in them, not an open question.
+
 ## What outranks what
 
 Where a physical board and the service manual disagree, **the board wins**. The manual has now been
