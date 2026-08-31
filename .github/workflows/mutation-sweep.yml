@@ -18,6 +18,35 @@
 # because Mull's package for this release of Ubuntu is built against Ubuntu's
 # build of LLVM 19. Taking both from the same distribution is what makes them
 # agree.
+#
+# Five jobs rather than one, because the suites the sweep draws mutants
+# against do not all cost the same to sweep, and running them one after
+# another in a single job means the total wall time is their sum.
+#
+# `discover` asks mull_sweep.py itself which environment:suite:directory
+# triples exist, over --list-shards -- the same tree-derived population every
+# other mode reads, not a list written here that would go stale the way the
+# scope patterns this file used to carry already did once.
+#
+# A directory can still hold one file with more mutants than the suite it is
+# swept against can finish quickly, so the sweep is split a second way, by
+# which operator a mutant belongs to -- but an operator's own name is a fact
+# the compiler has to report, not one this file could carry without the same
+# staleness risk a hand-picked group list already produced here once: it
+# silently dropped every mutant whose operator was not in the three names
+# chosen, and read as a *better* score for having found less to look at.
+# `discover-mutators` asks the compiler instead, once per environment:directory
+# pair rather than once per shard (an operator present in a directory's
+# sources is present regardless of which suite later exercises it), each a
+# fast --dry-run build that discovers mutants without executing one. `combine`
+# folds what every discover-mutators job found back into `discover`'s own
+# triples, cross-joined, with nothing to combine for a pair that drew nothing.
+#
+# `sweep` matrixes one job per fully-expanded shard, so the total wall time
+# becomes the slowest single shard rather than the sum of every suite's own
+# total. `merge` folds every shard's raw findings back into one population and
+# judges it exactly as a single process always has -- the score and the
+# verdict are unchanged by how many processes found the mutants.
 
 name: Mutation sweep
 
@@ -37,10 +66,156 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sweep:
-    name: Sweep the plant model's arithmetic
+  discover:
+    name: List the suites the sweep would run
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    outputs:
+      shards: ${{ steps.list.outputs.shards }}
+      # Deduplicated from the same triples: which operators a directory's
+      # sources mutate to is a fact about the sources, not about which suite
+      # later exercises them, so discover-mutators only needs to ask once per
+      # environment:directory pair rather than once per shard.
+      mutator_pairs: ${{ steps.list.outputs.mutator_pairs }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install what reads the sweep's configuration
+        env:
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: python3 -m pip install "pyyaml==${PYYAML_VERSION}"
+
+      - name: List every environment:suite:directory triple, derived from the tree
+        id: list
+        run: |
+          set -euo pipefail
+          cd firmware
+          shards="$(python3 tools/mull_sweep.py --project . --list-shards)"
+          echo "shards=${shards}" >> "$GITHUB_OUTPUT"
+          pairs="$(echo "${shards}" | jq -c '[.[] | {environment, directory}] | unique')"
+          echo "mutator_pairs=${pairs}" >> "$GITHUB_OUTPUT"
+
+  discover-mutators:
+    name: Find which operators one directory's sources actually mutate to
+    needs: discover
+    strategy:
+      fail-fast: false
+      matrix:
+        pair: ${{ fromJSON(needs.discover.outputs.mutator_pairs) }}
+    runs-on: ubuntu-24.04
+    # A dry run: this builds once and discovers what the compiler produced
+    # without executing a single mutant, so it costs about what one baseline
+    # build costs rather than what a swept suite does.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the mutation toolchain
+        env:
+          # renovate: datasource=github-releases depName=mull-project/mull
+          MULL_RELEASE: "0.34.0"
+          # The LLVM build the package for this runner's distribution is made
+          # against, which is not the newest LLVM 19 -- it is whichever one
+          # that distribution ships, and the two have to agree. Not an
+          # independent choice, so not something to bump on its own -- kept
+          # equal to the sweep job's own pin below by hand for the same reason
+          # that pin is not computed from anywhere either.
+          MULL_LLVM: "19.1.1"
+        run: |
+          set -euo pipefail
+          package="Mull-19-${MULL_RELEASE}-LLVM-${MULL_LLVM}-ubuntu-amd64-24.04.deb"
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          curl -fsSL -o "/tmp/${package}" \
+            "https://github.com/mull-project/mull/releases/download/${MULL_RELEASE}/${package}"
+          # dpkg does not resolve dependencies; apt is asked to finish the job
+          # rather than leaving the package half-installed and the run confusing.
+          sudo dpkg -i "/tmp/${package}" || sudo apt-get -f install -y
+
+      - name: Install PlatformIO and what reads the sweep's configuration
+        env:
+          # renovate: datasource=pypi depName=platformio
+          PLATFORMIO_VERSION: "6.1.19"
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: python3 -m pip install "platformio==${PLATFORMIO_VERSION}" "pyyaml==${PYYAML_VERSION}"
+
+      - name: Discover this pair's operators
+        env:
+          PAIR_ENVIRONMENT: ${{ matrix.pair.environment }}
+          PAIR_DIRECTORY: ${{ matrix.pair.directory }}
+        run: |
+          set -euo pipefail
+          cd firmware
+          slug="${PAIR_DIRECTORY//\//-}"
+          # --list-mutators-out, not stdout: the build this runs streams its
+          # own output there too, and capturing stdout to parse would be
+          # parsing the build alongside the result.
+          python3 tools/mull_sweep.py --project . --pio "$(command -v pio)" \
+            --list-mutators-in "${PAIR_ENVIRONMENT}:${PAIR_DIRECTORY}" \
+            --list-mutators-out mutators.json
+          jq -n --arg environment "${PAIR_ENVIRONMENT}" --arg directory "${PAIR_DIRECTORY}" \
+            --argjson mutators "$(cat mutators.json)" \
+            '{environment: $environment, directory: $directory, mutators: $mutators}' \
+            > "discovery-${PAIR_ENVIRONMENT}-${slug}.json"
+          echo "DISCOVERY_PATH=firmware/discovery-${PAIR_ENVIRONMENT}-${slug}.json" >> "$GITHUB_ENV"
+          echo "DISCOVERY_NAME=discovery-${PAIR_ENVIRONMENT}-${slug}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ env.DISCOVERY_NAME }}
+          path: ${{ env.DISCOVERY_PATH }}
+          retention-days: 1
+
+  combine:
+    name: Cross the discovered operators with every suite's own triples
+    needs: [discover, discover-mutators]
+    runs-on: ubuntu-24.04
+    outputs:
+      shards: ${{ steps.combine.outputs.shards }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install what reads the sweep's configuration
+        env:
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: python3 -m pip install "pyyaml==${PYYAML_VERSION}"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: discoveries
+          pattern: discovery-*
+          merge-multiple: true
+
+      - name: Combine every discovery with the tree's own triples
+        id: combine
+        run: |
+          set -euo pipefail
+          cd firmware
+          shards="$(python3 tools/mull_sweep.py --project . --combine-shards "$(pwd)/../discoveries")"
+          echo "shards=${shards}" >> "$GITHUB_OUTPUT"
+
+  sweep:
+    name: Sweep one suite's mutants
+    needs: combine
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.combine.outputs.shards) }}
+    runs-on: ubuntu-24.04
+    # Left at the whole single job's old budget rather than cut down to match
+    # a directory-narrowed shard's expected share, because no run has reported
+    # what one of those actually costs yet -- test_control alone, undivided,
+    # was the slowest suite the single job swept. Tighten this once a shard's
+    # own duration is something observed rather than guessed at twice already.
+    timeout-minutes: 90
 
     steps:
       # Actions are pinned to the commit a release points at rather than to the
@@ -51,11 +226,6 @@ jobs:
       # can bump both together.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The checkout otherwise leaves a credential in .git/config for the
-          # rest of the job. Nothing here pushes anything -- the sweep reads the
-          # tree and reports -- so the token is not wanted after the clone, and
-          # leaving it behind is what turns an uploaded artefact or a stray
-          # `git config` dump into a leak.
           persist-credentials: false
 
       - name: Install the mutation toolchain
@@ -100,8 +270,55 @@ jobs:
           python3 -c "import sys; sys.path.insert(0, 'tools'); import mull_toolchain, json; \
             print(json.dumps({k: str(v) for k, v in mull_toolchain.resolved(warn=print).items()}, indent=2))"
 
-      - name: Sweep the plant model's arithmetic
+      - name: Sweep this shard's mutants
+        env:
+          SHARD_ENVIRONMENT: ${{ matrix.shard.environment }}
+          SHARD_SUITE: ${{ matrix.shard.suite }}
+          SHARD_DIRECTORY: ${{ matrix.shard.directory }}
+          SHARD_MUTATORS: ${{ matrix.shard.mutators }}
         run: |
           set -euo pipefail
           cd firmware
-          python3 tools/mull_sweep.py --project . --pio "$(command -v pio)"
+          # Artifact names cannot carry a directory's own slashes.
+          slug="${SHARD_DIRECTORY//\//-}-${SHARD_MUTATORS}"
+          report="shard-report-${SHARD_ENVIRONMENT}-${SHARD_SUITE}-${slug}.json"
+          python3 tools/mull_sweep.py --project . --pio "$(command -v pio)" \
+            --shard "${SHARD_ENVIRONMENT}:${SHARD_SUITE}" \
+            --shard-directory "${SHARD_DIRECTORY}" \
+            --shard-mutators "${SHARD_MUTATORS}" \
+            --shard-report "${report}"
+          echo "SHARD_REPORT_PATH=firmware/${report}" >> "$GITHUB_ENV"
+          echo "SHARD_NAME=${SHARD_ENVIRONMENT}-${SHARD_SUITE}-${slug}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: shard-${{ env.SHARD_NAME }}
+          path: ${{ env.SHARD_REPORT_PATH }}
+          retention-days: 1
+
+  merge:
+    name: Judge the combined population against the triage record
+    needs: sweep
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install what reads the sweep's configuration
+        env:
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: python3 -m pip install "pyyaml==${PYYAML_VERSION}"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: shard-reports
+          pattern: shard-*
+          merge-multiple: true
+
+      - name: Merge every shard and judge the combined population
+        run: |
+          set -euo pipefail
+          cd firmware
+          python3 tools/mull_sweep.py --project . --merge-reports "$(pwd)/../shard-reports"

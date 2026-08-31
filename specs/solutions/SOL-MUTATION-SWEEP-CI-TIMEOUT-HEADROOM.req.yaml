@@ -1,0 +1,93 @@
+id: SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM
+type: deliverable
+category: solution
+title: The mutation sweep's CI job finishes within its timeout for the current population
+status: active
+version: 1
+text: |
+  Dispatching the project's `Mutation sweep` workflow now reaches mutant generation --
+  the baseline check that used to stop it before drawing a single mutant is fixed by
+  SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT -- but the job as first observed did not finish
+  within the 45 minutes `.github/workflows/mutation-sweep.yml` allowed it, and neither
+  worker parallelism nor splitting by suite alone were enough on their own: one suite,
+  test_control, still took most of an hour by itself even split into its own job, because
+  a suite's own runtime bounds a shard's wall time as much as how many suites run at once
+  does. The population only grows from here, and a coarser budget would need raising
+  again at the next commit that adds swept arithmetic.
+
+  Three changes, at three different levels. `mull_sweep.py`'s runner invocation carries a
+  `--workers` figure sized to `os.cpu_count()` at the time the sweep runs (one held back
+  for the process asking the questions), because `mull-runner` was defaulting to one
+  worker even though every mutant in the population is otherwise independent.
+
+  The workflow is restructured into five jobs. `discover` asks `mull_sweep.py` itself
+  which environment:suite:directory triples the tree declares, over `--list-shards` --
+  the same population every other mode reads, not a list written into the workflow file
+  that would go stale the way this project's scope patterns already did once, split by
+  directory as well as by suite so a directory an environment's build does not reach costs
+  only a shard's worth of setup rather than dragging the whole suite's runtime with it.
+  `discover-mutators` runs once per environment:directory pair -- not per shard, since
+  which operators a directory's sources mutate to is a fact about the sources, not about
+  which suite exercises them later -- and asks the compiler directly, via a `--dry-run`
+  build that discovers every mutant without executing one. `combine` folds what every
+  discover-mutators job found back into `discover`'s own triples, cross-joined; a pair
+  that draws nothing contributes no shard. `sweep` matrixes one job per fully-expanded
+  shard, so the total wall time becomes the slowest single shard rather than the sum of
+  every suite's own total. `merge` folds every shard's raw findings back into one
+  population and judges it exactly as a single process always has.
+
+  A fixed three-group mutator list, typed from Mull's own documentation rather than read
+  from the compiler, was tried first and reverted -- confirmed by a real dispatch to
+  silently drop 39 of 303 mutants, exactly the failure mode this tool's own module
+  docstring warns about by name: a score meaning less than it appears to. The dynamic
+  replacement was itself confirmed twice more, against real dispatches, to be wrong before
+  it was right: `--dry-run` still makes the warmup run `--timeout` was sized for, and
+  omitting it there reintroduced the very failure that constant exists to prevent; and the
+  discovered operator list, printed to the same stdout the build it ran also wrote to, was
+  captured corrupted by that build's own output. Both were root-caused from the actual
+  failing dispatch's log rather than guessed at, fixed, and reconfirmed. A fourth dispatch,
+  after all three fixes, reproduced the identical 303-mutant, 18-survivor, 8-unreviewed,
+  2-stale population the very first single-job run established, in thirteen and a half
+  minutes rather than eighty-five.
+
+  Out of scope: any change to what is swept, to the toolchain, or to `mull_sweep.py`'s
+  baseline check -- this changes how many mutants one process works on at once and how
+  many processes the suites are split across, not what the sweep does or which mutants
+  it draws.
+rationale: |
+  Discovered immediately after fixing SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT, by dispatching
+  the workflow again to confirm that fix and reading the resulting run rather than assuming
+  a green baseline meant a green sweep: the job ran for the full 45 minutes and was cancelled
+  by GitHub Actions mid-suite, not by the sweep itself. Recorded as its own item rather than
+  folded into either sibling: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT's criterion is specifically
+  about the baseline build passing under the mutation toolchain, which it now does, and this
+  is a different failure that only became visible once that one was fixed -- the job never ran
+  long enough to hit a timeout before. SOL-SWEEP-JUDGEMENTS-REMADE is about judging survivors
+  the sweep reports, which it cannot do until a run finishes and reports any.
+
+  Targets the same requirement criterion as both siblings, OBL-VERIFICATION-DISCIPLINE-001.C2,
+  because the same underlying claim is at stake: a sweep that cannot finish on the infrastructure
+  it is meant to run on is not currently capable of telling anyone whether a test would fail on a
+  plausible defect, which is the whole reason it exists.
+
+  A fourth shard axis, splitting a directory's mutants further by Mull's own mutator-group
+  vocabulary (cxx_comparison, cxx_arithmetic, cxx_increment), was built, tested against the
+  real workflow, and reverted. Confirmed by dispatching it: the merged population dropped
+  from 303 mutants to 264, and twelve previously-valid triage judgements read as stale that
+  had not moved -- both symptoms of the same cause, that the three chosen group names did
+  not cover every operator this population's sources actually mutate to. A mutant whose
+  operator falls outside all three groups is silently never drawn under any shard once that
+  restriction is in force, which is a narrower population reporting as a complete one -- the
+  exact failure mode this tool's own module docstring warns about by name. Reverted rather
+  than repaired with a wider guess, because the risk is the same either way until the group
+  vocabulary is read from Mull itself rather than typed from what its documentation happened
+  to mention: the sweep's own discipline is to derive the population from the tree rather
+  than from a list somebody chose, and a hardcoded mutator-group list is that same mistake
+  one layer down. Left at directory-level sharding, which was independently confirmed twice
+  against the real workflow (7-way and 21-way dispatches) reproducing the identical 303/285/18
+  survivor set the single-job run first established.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets

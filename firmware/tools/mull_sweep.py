@@ -82,6 +82,20 @@ COULD_NOT_LOOK = 2
 #: Where the judgement about each surviving mutant is written down.
 TRIAGE_RECORD = "mutation_triage.yaml"
 
+#: How many mutants the runner tries at once.
+#:
+#: Left at the runner's own default -- one -- every mutant in the population is
+#: a full rebuild and a full run of whichever suite is being swept, one after
+#: the other, on however many cores the host actually has. That is not a
+#: correctness requirement of anything the sweep checks: two mutants running
+#: at once do not interact, each gets its own compile and its own process, and
+#: the report the runner writes is keyed by mutant either way. Read from the
+#: host at call time rather than fixed at a number this file remembers, so a
+#: runner with more or fewer cores than whatever wrote this gets a figure that
+#: still fits it; one worker is kept in reserve for the process asking the
+#: questions rather than answering them.
+WORKER_COUNT = max(1, (os.cpu_count() or 2) - 1)
+
 #: How long the unmutated suite is allowed before the runner calls it hung.
 #:
 #: This bounds only the warm-up and baseline runs, which the runner makes once
@@ -310,7 +324,9 @@ def _quoted(pattern: str) -> str:
     return "'" + pattern.replace("'", "''") + "'"
 
 
-def write_scope(directory: str, includes: list[str], excludes: list[str]) -> str:
+def write_scope(
+    directory: str, includes: list[str], excludes: list[str], mutators: list[str] | None = None
+) -> str:
     """Write the derived scope where the mutation toolchain will read it.
 
     Written somewhere of the sweep's own rather than over the project's own
@@ -328,6 +344,13 @@ def write_scope(directory: str, includes: list[str], excludes: list[str]) -> str
     double-quoted YAML scalar starts an escape, so writing `\\.` back out that way
     produces a document the parser rejects or, worse, one it reads as a different
     pattern. A single-quoted scalar has no escapes at all beyond a doubled quote.
+
+    `mutators`, when given, narrows which operator the plugin instruments rather
+    than which sources it looks at -- a --shard-mutators split rather than a
+    --shard-directory one. Omitted rather than written empty when there is no
+    restriction, because an empty `mutators:` list is Mull's own way of asking
+    for none at all, which is the opposite of every operator this sweep means by
+    leaving the key out entirely.
     """
     path = os.path.join(directory, mull_toolchain.CONFIG_NAME)
     lines = [
@@ -338,6 +361,9 @@ def write_scope(directory: str, includes: list[str], excludes: list[str]) -> str
     lines.extend(f"  - {_quoted(pattern)}" for pattern in includes)
     lines.append("excludePaths:")
     lines.extend(f"  - {_quoted(pattern)}" for pattern in excludes)
+    if mutators:
+        lines.append("mutators:")
+        lines.extend(f"  - {_quoted(mutator)}" for mutator in mutators)
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
     return path
@@ -445,23 +471,34 @@ def artefact(project: str, environment: str) -> str:
     return path
 
 
-def run_mull(runner: str, program: str, config: str, project: str) -> dict:
-    """Run every mutant the program carries, and read the report back."""
+def run_mull(runner: str, program: str, config: str, project: str, dry_run: bool = False) -> dict:
+    """Run every mutant the program carries, and read the report back.
+
+    `dry_run` asks the runner to discover and report the mutants a scope draws
+    without executing a single one of them -- what a shard's own mutator axis
+    is derived from, since which operators a directory's sources actually
+    produce is a fact the compiler has to be asked, not one this tool could
+    read out of Mull's documentation and have stay true of every mutation
+    release. Timeout and worker count are the execution budget; discovery
+    alone needs neither.
+    """
     with tempfile.TemporaryDirectory() as reports:
         environment = dict(os.environ, MULL_CONFIG=config)
+        command = [runner, program, "--reporters", "Elements", "--report-dir", reports,
+                   "--report-name", "sweep"]
+        # The timeout governs the warmup run against the unmutated program,
+        # which --dry-run still makes -- discovering what a scope draws
+        # presupposes the thing being discovered from is testable at all, so
+        # skipping a single mutant's own execution does not skip this. Only
+        # --workers is dry-run-specific: there is nothing to parallelise when
+        # nothing is being executed.
+        command.extend(["--timeout", str(BASELINE_TIMEOUT_MS)])
+        if dry_run:
+            command.append("--dry-run")
+        else:
+            command.extend(["--workers", str(WORKER_COUNT)])
         result = subprocess.run(
-            [
-                runner,
-                program,
-                "--reporters",
-                "Elements",
-                "--report-dir",
-                reports,
-                "--report-name",
-                "sweep",
-                "--timeout",
-                str(BASELINE_TIMEOUT_MS),
-            ],
+            command,
             cwd=project,
             env=environment,
             capture_output=True,
@@ -470,6 +507,15 @@ def run_mull(runner: str, program: str, config: str, project: str) -> dict:
         )
         report = os.path.join(reports, "sweep.json")
         if not os.path.isfile(report):
+            if result.returncode == 0:
+                # The runner's own zero-mutants case: nothing in the scope it
+                # was handed produced a mutant, so there is nothing to write a
+                # report about. Legitimate on a shard whose --shard-directory
+                # narrows the population to a directory this environment's
+                # build does not reach -- an empty population is a fact about
+                # the scope, not a failure of the run, and the caller folds an
+                # empty result in exactly like any other.
+                return {"files": {}}
             raise SweepError(
                 f"the mutant runner produced no report ({runner} exited {result.returncode}): "
                 f"{result.stderr.strip() or result.stdout.strip()}"
@@ -514,6 +560,24 @@ def collect(project: str, report: dict, found: dict[str, dict]) -> None:
                 "status": status,
                 "killed": killed,
             }
+
+
+def discovered_mutators(report: dict) -> list[str]:
+    """Every distinct operator a dry-run's mutants actually belong to, sorted.
+
+    Read from what the compiler produced rather than from Mull's own
+    documentation, on the same reasoning the population itself is read from
+    the tree: a name typed here from what a release happened to document
+    would go stale the moment an operator is renamed, added, or dropped, and
+    would go quietly stale -- a --shard-mutators axis built from such a list
+    would silently stop drawing whatever it left out, exactly the failure a
+    fixed group list already produced once.
+    """
+    found = set()
+    for contents in report.get("files", {}).values():
+        for mutant in contents.get("mutants", []):
+            found.add(mutant["mutatorName"])
+    return sorted(found)
 
 
 def outside_the_population(
@@ -637,6 +701,152 @@ def classify(
     return unreviewed, gaps, stale, retired
 
 
+def judge(
+    project: str,
+    found: dict[str, dict],
+    includes: list[str],
+    excludes: list[str],
+    described: list[Structure],
+    judgements: dict[str, dict],
+    survivors_only: bool,
+) -> int:
+    """Score what the sweep found and judge it against the triage record.
+
+    The one path every complete population reaches, whether it was drawn by a
+    single run over every suite or folded together from one shard per suite:
+    what decides the score is the mutants found and what is recorded about
+    them, not how many processes it took to find them.
+    """
+    if not found:
+        print(
+            "mull_sweep: the swept sources produced no mutants at all, which means the scope or "
+            "the instrumentation is not doing what it says rather than that the code is perfect",
+            file=sys.stderr,
+        )
+        return FOUND_THE_PROBLEM
+
+    intruders = outside_the_population(project, found, includes, excludes)
+    if intruders:
+        print(
+            "mull_sweep: mutants came back from sources the population does not take in, so the "
+            "score below would be computed over more than the plant model's arithmetic: "
+            f"{', '.join(intruders)}. The derived scope did not reach the compiler -- the "
+            "instrumented population is whatever was compiled, not what was asked for.",
+            file=sys.stderr,
+        )
+        return FOUND_THE_PROBLEM
+
+    missing = unswept(project, found, described)
+    if missing:
+        print(
+            f"mull_sweep: no mutant came back from {', '.join(missing)}, which the tree says "
+            "describes a machine. The scope named it and an environment was built for it, so "
+            "the population it should have contributed is missing rather than empty -- and the "
+            "score below would be over the rest of the model while reading as over all of it.",
+            file=sys.stderr,
+        )
+        return FOUND_THE_PROBLEM
+
+    survivors = {name: mutant for name, mutant in found.items() if not mutant["killed"]}
+    killed = len(found) - len(survivors)
+    score = round(100 * killed / len(found))
+
+    print(
+        f"mull_sweep: {len(found)} mutants, {killed} killed by the tests, "
+        f"{len(survivors)} survived ({score}% killed)"
+    )
+
+    if survivors_only:
+        for mutant in sorted(survivors.values(), key=lambda m: (m["source"], m["line"], m["column"])):
+            print(
+                f"  {mutant['source']}:{mutant['line']}:{mutant['column']} "
+                f"{mutant['mutator']} -> {mutant['replacement']}   [{mutant['id']}]"
+            )
+        return 0
+
+    unreviewed, gaps, stale, retired = classify(found, judgements)
+
+    if unreviewed:
+        # Deliberately a count of survivors, not of defects. Which of these is a
+        # gap and which cannot change any behaviour is exactly what nobody has
+        # decided yet, and printing it as a defect count would be asserting the
+        # thing this run cannot establish.
+        print(
+            f"mull_sweep: {len(unreviewed)} surviving mutant(s) have not been reviewed. This is a "
+            "count of survivors and not a count of defects: until each is judged, whether it "
+            f"could change any behaviour at all is undecided. Record each in {TRIAGE_RECORD}.",
+            file=sys.stderr,
+        )
+        for name in unreviewed:
+            mutant = survivors[name]
+            print(
+                f"  {mutant['source']}:{mutant['line']}:{mutant['column']} "
+                f"{mutant['mutator']} -> {mutant['replacement']}\n    {name}",
+                file=sys.stderr,
+            )
+
+    if gaps:
+        print(
+            f"mull_sweep: {len(gaps)} surviving mutant(s) are recorded as real gaps in what the "
+            "tests catch",
+            file=sys.stderr,
+        )
+        for name in gaps:
+            print(f"  {name}\n    {judgements[name]['reason']}", file=sys.stderr)
+
+    if stale:
+        print(
+            f"mull_sweep: {len(stale)} judgement(s) in {TRIAGE_RECORD} are about mutants this "
+            "sweep did not produce at all. The code they were made about has moved or gone, so "
+            "they have to be made again rather than carried forward.",
+            file=sys.stderr,
+        )
+        for name in stale:
+            print(f"  {name}", file=sys.stderr)
+
+    if retired:
+        # Not a failure. A test covering a mutant that once needed judging is
+        # the sweep working, and a mutant whose only effect is an out-of-bounds
+        # access changes sides between hosts according to how the frame was laid
+        # out -- so failing here would make the record valid on one machine.
+        print(
+            f"mull_sweep: {len(retired)} judgement(s) in {TRIAGE_RECORD} are about mutants a test "
+            "kills on this host, so they are no longer load-bearing here. Keep them if they are "
+            "needed on another host; they cost nothing."
+        )
+        for name in retired:
+            print(f"  {name}")
+
+    if unreviewed or gaps or stale:
+        return FOUND_THE_PROBLEM
+
+    equivalent = sum(
+        1 for name in survivors if judgements[name]["verdict"] == EQUIVALENT
+    )
+    analysed = len(survivors) - equivalent
+    print(
+        f"mull_sweep: every surviving mutant is accounted for with a reason -- {equivalent} that "
+        f"cannot change what the program does, {analysed} that only the sanitized build could "
+        "notice -- so nothing here is a gap in what the tests catch"
+    )
+    return 0
+
+
+def fold(found: dict[str, dict], shard: dict[str, dict]) -> None:
+    """Fold one shard's already-collected mutants into the combined population.
+
+    The same merge `collect` makes across suites within one process, made again
+    across the separate processes a matrixed run splits the suites into: a
+    mutant killed by any shard is killed, and every other field is a structural
+    fact about the mutant itself that does not vary by which suite reached it.
+    """
+    for name, mutant in shard.items():
+        existing = found.get(name)
+        merged = dict(mutant)
+        merged["killed"] = mutant["killed"] or (existing or {}).get("killed", False)
+        found[name] = merged
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", default=".", help="the PlatformIO project directory")
@@ -664,6 +874,53 @@ def main(argv: list[str]) -> int:
         "--population-only",
         action="store_true",
         help="derive and report the population, and run the checks about it, without sweeping",
+    )
+    parser.add_argument(
+        "--list-shards",
+        action="store_true",
+        help="print every environment:suite:directory triple as a JSON array and exit, "
+        "building nothing",
+    )
+    parser.add_argument(
+        "--list-mutators-in",
+        help="build this ENVIRONMENT:DIRECTORY once and report the distinct operators a "
+        "dry run finds there, as a JSON array, rather than sweeping",
+    )
+    parser.add_argument(
+        "--list-mutators-out",
+        help="write --list-mutators-in's result here instead of stdout, which the build it "
+        "runs also writes to",
+    )
+    parser.add_argument(
+        "--combine-shards",
+        help="a directory of JSON files, each {environment, directory, mutators: [...]} from "
+        "--list-mutators-in, one per environment:directory pair this sweep declares; cross "
+        "them with --list-shards' own triples and print the fully-expanded shard list, "
+        "building nothing",
+    )
+    parser.add_argument(
+        "--shard",
+        help="sweep only this ENVIRONMENT:SUITE pair, one shard of a matrixed run, and write "
+        "its raw findings to --shard-report rather than judging them",
+    )
+    parser.add_argument(
+        "--shard-report",
+        help="where --shard writes this shard's raw findings, as JSON",
+    )
+    parser.add_argument(
+        "--shard-directory",
+        help="restrict --shard's mutants to this one directory from --list-shards, rather "
+        "than the whole population",
+    )
+    parser.add_argument(
+        "--shard-mutators",
+        help="restrict --shard's mutants to this one operator from --list-mutators-in, "
+        "rather than every operator the directory draws",
+    )
+    parser.add_argument(
+        "--merge-reports",
+        help="a directory of JSON files written by --shard-report; fold them together and judge "
+        "the combined population in place of sweeping directly",
     )
     args = parser.parse_args(argv)
 
@@ -757,6 +1014,246 @@ def main(argv: list[str]) -> int:
             print(f"  {structure.name}: describes a machine")
         return 0
 
+    if args.list_shards:
+        # No compiler needed, on the same reasoning --population-only above
+        # already stands on: everything a shard's identity depends on is
+        # decided before one is built. Printed as one JSON array rather than
+        # one shard per line so a caller can feed it straight to a matrix
+        # strategy without a parsing step of its own.
+        #
+        # Each environment:suite pair is split once more, by directory, on the
+        # same reasoning the pair split was made for: one suite's own runtime,
+        # not the number of mutants alone, is what a single shard's wall time
+        # is bounded by, and splitting the mutants a suite is asked about
+        # across concurrent shards is what shortens that suite's own
+        # contribution rather than only how many suites run at once. A
+        # directory an environment's build does not reach contributes a shard
+        # that reports no mutants at all, which costs a shard's worth of setup
+        # and nothing else -- cheaper, on a host with room for more jobs at
+        # once, than working out in advance which pairs would benefit and
+        # keeping that list in step with the tree.
+        shards = [
+            {
+                "environment": environment.name,
+                "suite": suite,
+                "directory": os.path.relpath(directory, project).replace(os.sep, "/"),
+            }
+            for environment in environments
+            for suite in suites(environment)
+            for directory in directories
+        ]
+        print(json.dumps(shards))
+        return 0
+
+    if args.combine_shards:
+        # No compiler needed here either: everything this reads is either the
+        # same tree-derived triples --list-shards already produces without
+        # one, or a discover-mutators shard's own output, already run.
+        discovered: dict[tuple[str, str], list[str]] = {}
+        names = sorted(
+            name for name in os.listdir(args.combine_shards) if name.endswith(".json")
+        )
+        for name in names:
+            path = os.path.join(args.combine_shards, name)
+            try:
+                with open(path, "r", encoding="utf-8") as handle:
+                    entry = json.load(handle)
+                discovered[(entry["environment"], entry["directory"])] = entry["mutators"]
+            except (json.JSONDecodeError, KeyError, TypeError) as error:
+                # A discover-mutators shard that failed to upload whole rather
+                # than one that failed the job outright: the matrix's own
+                # fail-fast: false already surfaces the latter, so a report
+                # good enough to open but not to trust is the case worth a
+                # message of its own here.
+                print(f"mull_sweep: {path} is not a discovery report --shard-mutators can use: {error}", file=sys.stderr)
+                return COULD_NOT_LOOK
+
+        combined = [
+            {
+                "environment": environment.name,
+                "suite": suite,
+                "directory": os.path.relpath(directory, project).replace(os.sep, "/"),
+                "mutators": mutator,
+            }
+            for environment in environments
+            for suite in suites(environment)
+            for directory in directories
+            for mutator in discovered.get(
+                (environment.name, os.path.relpath(directory, project).replace(os.sep, "/")), []
+            )
+        ]
+        print(json.dumps(combined))
+        return 0
+
+    if args.list_mutators_in:
+        if ":" not in args.list_mutators_in:
+            print(
+                f"mull_sweep: --list-mutators-in wants ENVIRONMENT:DIRECTORY, got "
+                f"'{args.list_mutators_in}'",
+                file=sys.stderr,
+            )
+            return COULD_NOT_LOOK
+        probe_environment_name, probe_directory = args.list_mutators_in.split(":", 1)
+        probe_environment = next(
+            (e for e in environments if e.name == probe_environment_name), None
+        )
+        known_directories = {
+            os.path.relpath(directory, project).replace(os.sep, "/") for directory in directories
+        }
+        if probe_environment is None or probe_directory not in known_directories:
+            print(
+                f"mull_sweep: '{args.list_mutators_in}' names no environment or no directory "
+                "this sweep's population draws from",
+                file=sys.stderr,
+            )
+            return COULD_NOT_LOOK
+
+        try:
+            toolchain = mull_toolchain.resolved(
+                warn=lambda note: print(f"mull_sweep: {note}", file=sys.stderr)
+            )
+        except mull_toolchain.ToolchainError as error:
+            print(f"mull_sweep: {error}", file=sys.stderr)
+            return COULD_NOT_LOOK
+
+        probe_includes = [scope_pattern(project, os.path.join(project, probe_directory))]
+        try:
+            with tempfile.TemporaryDirectory() as derived:
+                # Any suite the environment declares does as well as another:
+                # the operators a directory's sources compile to are a fact
+                # about the sources, not about which suite later exercises
+                # them, and --dry-run never runs a test either way.
+                probe_suite = suites(probe_environment)[0]
+                config = write_scope(derived, probe_includes, excludes)
+                discard_objects(probe_environment, project)
+                print(f"mull_sweep: {probe_environment.name}:{probe_directory}", flush=True)
+                build_and_run(project, args.pio, probe_environment.name, probe_suite, config)
+                report = run_mull(
+                    toolchain["runner"],
+                    artefact(project, probe_environment.name),
+                    config,
+                    project,
+                    dry_run=True,
+                )
+        except SweepError as error:
+            print(f"mull_sweep: {error}", file=sys.stderr)
+            return COULD_NOT_LOOK
+
+        mutators = json.dumps(discovered_mutators(report))
+        if args.list_mutators_out:
+            # Not stdout: build_and_run's own build and test output streams
+            # there too, so a caller capturing stdout to parse would be
+            # parsing the build alongside the result, exactly what corrupted
+            # the first real dispatch of this path.
+            with open(args.list_mutators_out, "w", encoding="utf-8") as handle:
+                handle.write(mutators)
+        else:
+            print(mutators)
+        return 0
+
+    if args.shard:
+        if ":" not in args.shard:
+            print(
+                f"mull_sweep: --shard wants ENVIRONMENT:SUITE, got '{args.shard}'",
+                file=sys.stderr,
+            )
+            return COULD_NOT_LOOK
+        shard_environment_name, shard_suite = args.shard.split(":", 1)
+        shard_environment = next(
+            (e for e in environments if e.name == shard_environment_name), None
+        )
+        if shard_environment is None or shard_suite not in suites(shard_environment):
+            print(
+                f"mull_sweep: '{args.shard}' names no environment:suite this sweep declares",
+                file=sys.stderr,
+            )
+            return COULD_NOT_LOOK
+        if not args.shard_report:
+            print("mull_sweep: --shard needs --shard-report to write its result to", file=sys.stderr)
+            return COULD_NOT_LOOK
+
+        shard_includes = includes
+        if args.shard_directory:
+            known = {os.path.relpath(directory, project).replace(os.sep, "/") for directory in directories}
+            if args.shard_directory not in known:
+                print(
+                    f"mull_sweep: --shard-directory '{args.shard_directory}' names no directory "
+                    "this sweep's population draws from",
+                    file=sys.stderr,
+                )
+                return COULD_NOT_LOOK
+            shard_includes = [scope_pattern(project, os.path.join(project, args.shard_directory))]
+
+        # Not checked against a known list the way --shard-directory is:
+        # there is no such list any more, on purpose, and a value naming an
+        # operator this scope does not produce is not a mistake worth
+        # refusing over -- it draws nothing, which run_mull already reports
+        # as the legitimate empty population it is.
+        shard_mutators = [args.shard_mutators] if args.shard_mutators else None
+
+        try:
+            toolchain = mull_toolchain.resolved(
+                warn=lambda note: print(f"mull_sweep: {note}", file=sys.stderr)
+            )
+        except mull_toolchain.ToolchainError as error:
+            print(f"mull_sweep: {error}", file=sys.stderr)
+            return COULD_NOT_LOOK
+
+        shard_found: dict[str, dict] = {}
+        try:
+            with tempfile.TemporaryDirectory() as derived:
+                # Re-derived rather than passed in from whatever listed the
+                # shards: the scope is a pure function of the tree every shard
+                # already checked out identically, so re-deriving it here costs
+                # nothing and needs no artefact carrying it between jobs. A
+                # --shard-directory narrows only the include side -- the
+                # excludes still keep test code and vendored sources out,
+                # exactly as they would for the whole population. A
+                # --shard-mutators operator narrows which mutants the plugin
+                # instruments, independently of which sources it looks at.
+                config = write_scope(derived, shard_includes, excludes, shard_mutators)
+                discard_objects(shard_environment, project)
+                print(f"mull_sweep: {shard_environment.name}:{shard_suite}", flush=True)
+                build_and_run(project, args.pio, shard_environment.name, shard_suite, config)
+                report = run_mull(
+                    toolchain["runner"], artefact(project, shard_environment.name), config, project
+                )
+                collect(project, report, shard_found)
+        except SweepError as error:
+            print(f"mull_sweep: {error}", file=sys.stderr)
+            return COULD_NOT_LOOK
+
+        os.makedirs(os.path.dirname(os.path.abspath(args.shard_report)) or ".", exist_ok=True)
+        with open(args.shard_report, "w", encoding="utf-8") as handle:
+            json.dump(shard_found, handle)
+        return 0
+
+    if args.merge_reports:
+        names = sorted(
+            name for name in os.listdir(args.merge_reports) if name.endswith(".json")
+        )
+        if not names:
+            print(f"mull_sweep: no shard reports found under {args.merge_reports}", file=sys.stderr)
+            return COULD_NOT_LOOK
+        found: dict[str, dict] = {}
+        for name in names:
+            path = os.path.join(args.merge_reports, name)
+            try:
+                with open(path, "r", encoding="utf-8") as handle:
+                    fold(found, json.load(handle))
+            except (json.JSONDecodeError, KeyError, TypeError) as error:
+                # A sweep shard that failed to upload whole rather than one
+                # that failed the job outright -- the matrix's own
+                # fail-fast: false already surfaces the latter.
+                print(f"mull_sweep: {path} is not a shard report --merge-reports can use: {error}", file=sys.stderr)
+                return COULD_NOT_LOOK
+        try:
+            judgements = read_triage(project)
+        except SweepError as error:
+            print(f"mull_sweep: {error}", file=sys.stderr)
+            return COULD_NOT_LOOK
+        return judge(project, found, includes, excludes, described, judgements, args.survivors_only)
+
     try:
         toolchain = mull_toolchain.resolved(
             warn=lambda note: print(f"mull_sweep: {note}", file=sys.stderr)
@@ -799,119 +1296,7 @@ def main(argv: list[str]) -> int:
         print(f"mull_sweep: {error}", file=sys.stderr)
         return COULD_NOT_LOOK
 
-    if not found:
-        print(
-            "mull_sweep: the swept sources produced no mutants at all, which means the scope or "
-            "the instrumentation is not doing what it says rather than that the code is perfect",
-            file=sys.stderr,
-        )
-        return FOUND_THE_PROBLEM
-
-    intruders = outside_the_population(project, found, includes, excludes)
-    if intruders:
-        print(
-            "mull_sweep: mutants came back from sources the population does not take in, so the "
-            "score below would be computed over more than the plant model's arithmetic: "
-            f"{', '.join(intruders)}. The derived scope did not reach the compiler -- the "
-            "instrumented population is whatever was compiled, not what was asked for.",
-            file=sys.stderr,
-        )
-        return FOUND_THE_PROBLEM
-
-    missing = unswept(project, found, described)
-    if missing:
-        print(
-            f"mull_sweep: no mutant came back from {', '.join(missing)}, which the tree says "
-            "describes a machine. The scope named it and an environment was built for it, so "
-            "the population it should have contributed is missing rather than empty -- and the "
-            "score below would be over the rest of the model while reading as over all of it.",
-            file=sys.stderr,
-        )
-        return FOUND_THE_PROBLEM
-
-    survivors = {name: mutant for name, mutant in found.items() if not mutant["killed"]}
-    killed = len(found) - len(survivors)
-    score = round(100 * killed / len(found))
-
-    print(
-        f"mull_sweep: {len(found)} mutants, {killed} killed by the tests, "
-        f"{len(survivors)} survived ({score}% killed)"
-    )
-
-    if args.survivors_only:
-        for mutant in sorted(survivors.values(), key=lambda m: (m["source"], m["line"], m["column"])):
-            print(
-                f"  {mutant['source']}:{mutant['line']}:{mutant['column']} "
-                f"{mutant['mutator']} -> {mutant['replacement']}   [{mutant['id']}]"
-            )
-        return 0
-
-    unreviewed, gaps, stale, retired = classify(found, judgements)
-
-    if unreviewed:
-        # Deliberately a count of survivors, not of defects. Which of these is a
-        # gap and which cannot change any behaviour is exactly what nobody has
-        # decided yet, and printing it as a defect count would be asserting the
-        # thing this run cannot establish.
-        print(
-            f"mull_sweep: {len(unreviewed)} surviving mutant(s) have not been reviewed. This is a "
-            "count of survivors and not a count of defects: until each is judged, whether it "
-            f"could change any behaviour at all is undecided. Record each in {TRIAGE_RECORD}.",
-            file=sys.stderr,
-        )
-        for name in unreviewed:
-            mutant = survivors[name]
-            print(
-                f"  {mutant['source']}:{mutant['line']}:{mutant['column']} "
-                f"{mutant['mutator']} -> {mutant['replacement']}\n    {name}",
-                file=sys.stderr,
-            )
-
-    if gaps:
-        print(
-            f"mull_sweep: {len(gaps)} surviving mutant(s) are recorded as real gaps in what the "
-            "tests catch",
-            file=sys.stderr,
-        )
-        for name in gaps:
-            print(f"  {name}\n    {judgements[name]['reason']}", file=sys.stderr)
-
-    if stale:
-        print(
-            f"mull_sweep: {len(stale)} judgement(s) in {TRIAGE_RECORD} are about mutants this "
-            "sweep did not produce at all. The code they were made about has moved or gone, so "
-            "they have to be made again rather than carried forward.",
-            file=sys.stderr,
-        )
-        for name in stale:
-            print(f"  {name}", file=sys.stderr)
-
-    if retired:
-        # Not a failure. A test covering a mutant that once needed judging is
-        # the sweep working, and a mutant whose only effect is an out-of-bounds
-        # access changes sides between hosts according to how the frame was laid
-        # out -- so failing here would make the record valid on one machine.
-        print(
-            f"mull_sweep: {len(retired)} judgement(s) in {TRIAGE_RECORD} are about mutants a test "
-            "kills on this host, so they are no longer load-bearing here. Keep them if they are "
-            "needed on another host; they cost nothing."
-        )
-        for name in retired:
-            print(f"  {name}")
-
-    if unreviewed or gaps or stale:
-        return FOUND_THE_PROBLEM
-
-    equivalent = sum(
-        1 for name in survivors if judgements[name]["verdict"] == EQUIVALENT
-    )
-    analysed = len(survivors) - equivalent
-    print(
-        f"mull_sweep: every surviving mutant is accounted for with a reason -- {equivalent} that "
-        f"cannot change what the program does, {analysed} that only the sanitized build could "
-        "notice -- so nothing here is a gap in what the tests catch"
-    )
-    return 0
+    return judge(project, found, includes, excludes, described, judgements, args.survivors_only)
 
 
 if __name__ == "__main__":

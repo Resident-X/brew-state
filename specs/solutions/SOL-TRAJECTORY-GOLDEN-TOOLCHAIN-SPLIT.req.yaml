@@ -1,0 +1,77 @@
+id: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT
+type: deliverable
+category: solution
+title: The golden-trajectory test passes under both the ordinary and mutation-build toolchains
+status: active
+version: 1
+text: |
+  Dispatching the project's `Mutation sweep` workflow against the current tree fails
+  before any mutant is introduced. The compiled-in golden trajectory test compares
+  computed values against hardcoded hex-literal floats, byte for byte, and one of those
+  comparisons mismatches by a single byte under the mutation build's toolchain even
+  though the arithmetic itself is unchanged. `mull_sweep.py` treats a baseline that
+  does not pass as fatal and stops before drawing a single mutant, so the sweep never
+  reaches the point of reporting a survivor either way.
+
+  The mismatch traces to the mutation build being deliberately built differently from
+  the build the golden values were recorded against: it is compiled by a pinned
+  clang-19 rather than whatever compiler the host resolves ordinarily, and with
+  optimisation turned off rather than the host build's usual level, so that a mutant
+  is not credited to a line the optimiser would have removed anyway. Both of those are
+  legitimate reasons for a compiler to sequence the same floating-point expression
+  differently, and the trajectory test's own history already records exactly this
+  class of drift happening once before, from a source change rather than a toolchain
+  one. What decides whether this particular row actually diverges turns out to be the
+  host architecture as much as the compiler flag: recorded on an x86_64 host -- which
+  is what the project's own mutation-toolchain CI runs on -- and confirmed unchanged
+  on arm64, where the same flag and the same compiler still reach the ordinary value.
+  Nothing in the sweep or its configuration currently accounts for the baseline itself
+  varying this way, so this is a gap in the sweep's design rather than an arithmetic
+  defect.
+
+  The fix carries a toolchain-and-architecture-keyed expected value for the one cell
+  shown to diverge, alongside the single value carried today for every cell that does
+  not, selected at compile time. The alternate is documented the same way the existing
+  values already are when a recorded figure changes for a legitimate reason: what
+  differs, why, and how the difference was confirmed to be inert on both architectures
+  actually exercised. Every comparison stays an exact byte comparison on every host --
+  nothing here is loosened to a tolerance, and nothing here changes what the comparison
+  is checking, only which literal it is checking against. Out of scope: any value that
+  reads the same regardless of host keeps its single existing literal; no other test in
+  the suite is touched; the mutation build's compiler pin and optimisation level are
+  not changed, since they are what the sweep is for.
+rationale: |
+  Recorded as its own item rather than folded into SOL-SWEEP-JUDGEMENTS-REMADE, which
+  this maintenance item was discovered while preflighting: that solution's own text is
+  about survivor judgements going stale in mutation_triage.yaml once the sweep reaches
+  them, and its criterion is specific to that mechanism. What blocks the sweep here is
+  earlier and different -- the baseline build itself does not pass, for a reason that
+  has nothing to do with any mutant or any judgement record, so nothing in the sibling
+  solution's approach touches it. Folding this into that solution's text would have
+  described a fix that does not match what was actually broken.
+
+  Discovered by dispatching the project's `Mutation sweep` GitHub Actions workflow (the
+  only way to exercise Mull's real toolchain) against the tree as it stands, rather than
+  trusting the sweep's last recorded pass: that workflow has run five times, all on one
+  day, and six plant-model commits landed after it without ever being swept. The mismatch
+  was confirmed to be toolchain-driven rather than a regression by reading the mutation
+  build's own compiler substitution and optimisation override, and by the trajectory
+  test's own comment history recording the identical class of one-bit drift once before
+  from a source change -- the same arithmetic, sequenced differently, is a known and
+  previously-judged-inert kind of divergence, not a new one.
+
+  A tolerance-based comparison under the mutation build was considered and rejected: this
+  test's value to the sweep specifically is the bit-level sensitivity that lets it catch a
+  mutant nothing else would, and a tolerance wide enough to absorb toolchain rounding would
+  also absorb some of what a mutant could change. Excluding the test from the mutation
+  build was considered and rejected for the same reason from the other side: it would
+  remove the sweep's coverage of whatever arithmetic this test alone pins, not just the
+  toolchain-sensitive cells within it. Toolchain-keyed literals were chosen because they
+  are the only option that keeps every comparison exact -- and therefore keeps every
+  comparison as sensitive to a real mutant as it is today -- while accounting for the one
+  thing that is actually different between the two builds.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets

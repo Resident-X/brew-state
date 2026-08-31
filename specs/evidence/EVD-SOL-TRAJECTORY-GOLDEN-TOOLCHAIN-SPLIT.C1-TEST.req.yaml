@@ -1,0 +1,35 @@
+id: EVD-SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT.C1-TEST
+type: evidence
+title: Real CI dispatches show the mutation-build baseline passes cleanly (SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-31T16:35:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/33412995975
+text: |
+  Confirmed by dispatching the project's `Mutation sweep` GitHub Actions workflow
+  (workflow_dispatch) against this branch multiple times. Before this fix, the baseline
+  check for `native_mutation:test_plant` errored before drawing a single mutant, on the
+  exact test this criterion names: "Memory Mismatch. Byte 0 Expected 0xDB Was 0xDC" at
+  the golden trajectory's last row, brew column. After the fix, every dispatch's baseline
+  check for both `native_mutation:test_plant` and `native_mutation:test_control` passes
+  cleanly, and the sweep proceeds into mutant generation.
+
+  Also confirmed locally on this host (arm64): `pio test -e native_test -f test_plant`
+  and `pio test -e native_mutation -f test_plant` both pass, including
+  test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified specifically --
+  the arm64 build reaches the ordinary literal (the `#if defined(...) &&
+  defined(__x86_64__)` guard correctly does not fire there), matching what the fix's own
+  architecture-scoping claims.
+
+  Most recent confirming CI run, run after the blind review's fixes were applied:
+  https://github.com/Resident-X/brew-state/actions/runs/33412995975 -- all 21
+  directory-sharded sweep shards completed with no baseline ERRORED, the same result as
+  every earlier confirming dispatch.
+links:
+  - target: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT.C1
+    type: satisfies

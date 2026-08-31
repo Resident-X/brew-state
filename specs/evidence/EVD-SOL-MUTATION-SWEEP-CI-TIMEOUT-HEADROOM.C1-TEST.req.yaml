@@ -1,0 +1,42 @@
+id: EVD-SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1-TEST
+type: evidence
+title: Real CI dispatches show the sharded sweep completes in ~14-20min reproducing the correct population (SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-31T16:35:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/33412995975
+text: |
+  Confirmed by the project's `Mutation sweep` GitHub Actions workflow, dispatched
+  repeatedly against this branch as the 5-job pipeline (discover, discover-mutators,
+  combine, sweep, merge) was built and debugged. Each of three real bugs found along the
+  way -- a hardcoded three-group mutator list that silently dropped 39 of 303 mutants, a
+  missing baseline timeout on --dry-run discovery, and discovered-operator output
+  contaminated by the build's own stdout -- was root-caused from an actual failing
+  dispatch's log, fixed, and reconfirmed by dispatching again, never assumed fixed from
+  local reasoning alone.
+
+  Most recent confirming dispatch, after the blind review's own fixes (restored
+  one-sweep-per-ref concurrency, malformed-JSON refusal in --combine-shards and
+  --merge-reports) were applied:
+  https://github.com/Resident-X/brew-state/actions/runs/33412995975 -- discover, all 9
+  discover-mutators shards, combine, every sweep shard, and merge all completed (merge's
+  exit 1 is the correct signal for real unjudged survivors, not an infrastructure
+  failure). The merge job reported exactly the population the original single-job
+  baseline run first established: 303 mutants, 285 killed, 18 survived (94%), the same 8
+  unreviewed survivors by file:line:column identity, the same 2 stale triage judgements,
+  and the same 1 retired judgement -- confirming the sharded pipeline reproduces the
+  identical, correct result rather than a faster wrong one. Total wall time ~20 minutes,
+  against the original single job's ~85 minutes.
+
+  Local coverage: the 125 tests in firmware/tools/tests/test_mull_sweep.py (covering
+  --list-shards, --list-mutators-in/--list-mutators-out, --combine-shards,
+  --shard/--shard-directory/--shard-mutators, --merge-reports, run_mull's dry-run
+  distinction, and discovered_mutators()/fold()'s merge semantics) all pass locally.
+links:
+  - target: SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1
+    type: satisfies

@@ -1,0 +1,29 @@
+id: SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1
+type: criterion
+title: A full dispatch of the Mutation sweep workflow completes in about 14 minutes with a result for every swept suite
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  `mull_sweep.py`'s runner invocation carries a `--workers` figure sized to
+  `os.cpu_count()` at the time the sweep runs (one held back for the process asking
+  the questions), so the runner uses however many cores the host actually has rather
+  than the runner's own default of one. `.github/workflows/mutation-sweep.yml` is
+  restructured into `discover` (lists every environment:suite:directory triple via
+  `--list-shards`), `discover-mutators` (one job per environment:directory pair, a
+  `--dry-run` build that asks the compiler which operators it actually produced there,
+  via `--list-mutators-in`), `combine` (cross-joins the discovered operators back into
+  the original triples via `--combine-shards`), `sweep` (matrixed over the fully-expanded
+  shard list, one job per environment:suite:directory:operator, running `--shard` with
+  `--shard-directory` and `--shard-mutators`), and `merge` (folds every shard's artefact
+  together via `--merge-reports` and judges the combined population against
+  `mutation_triage.yaml`). Dispatching the workflow against the branch carrying this fix
+  and SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT's completes in about fourteen minutes with a
+  result recorded for every suite the tree declares, reproducing the identical 303-mutant,
+  18-survivor population the original single-job run established. Out of scope: judging
+  any mutant that verdict reports as a survivor, which belongs to SOL-SWEEP-JUDGEMENTS-REMADE,
+  and any change to what is swept or to the toolchain itself.
+links:
+  - target: SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM
+    type: criterion-of
