@@ -1,0 +1,14 @@
+id: SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C2
+type: criterion
+title: Every structure the estimator already admits keeps being admitted, and is left as its initialisation set it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every structure the estimator already admits keeps being admitted, unchanged, and each is left with its model exactly as its own initialisation left it. The structures behind the plant-structure seam today each store what a write gives them, so none is newly refused by the added probe; and a probe that has to write a value distinguishable from the one already held is a probe that has to put back what it displaced, so leaving the model where it found it is asserted here rather than assumed.
+
+  Verified by every existing host exercise and host-tier suite for every structure continuing to pass unchanged under the added check, with no test's expected admission outcome flipping from what it asserts today, and by the states of an admitted structure being those its initialisation set. Whether a structure not yet written would pass is out of scope — this only confirms the added check is not made stricter, or made destructive, for a structure that already satisfies it.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-TAKEN
+    type: criterion-of

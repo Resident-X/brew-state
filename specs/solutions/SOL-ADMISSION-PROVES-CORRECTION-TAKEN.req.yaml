@@ -1,0 +1,23 @@
+id: SOL-ADMISSION-PROVES-CORRECTION-TAKEN
+type: deliverable
+category: solution
+title: Admission proves the value written to the correction-target state is the value it afterwards holds
+status: active
+version: 1
+text: |
+  Admission now proves three things about a structure before it is admitted: that the quantity a reconstruction answers can be read, that the state that quantity is corrected through can be read, and that the same state can be written. The third of those proves the write is accepted. It does not prove the value the write carried is the value the state afterwards holds.
+
+  A structure whose write reports success and discards its argument passes every probe admission makes and then has every correction against it dropped exactly as completely as one that refused the write outright: the reading arrives, the correction is computed, the write reports that it was taken, and the state carries on from where it already was until the accumulated gap exceeds the declared loss-tolerance window and the reconstruction is withdrawn. That is the identical externally observable failure the previous two corrections along this chain were made for, reached one step further down it. Nothing in the tree has that shape today — every structure's write stores what it was given — and nothing requires that to hold for a structure written next.
+
+  What has to hold once this is corrected: admitting a structure proves the correction-target state carries the value written to it, not only that the write was accepted, and does so without leaving the structure's model displaced from where its own initialisation put it. Which of admission's own probe writing a distinguishable value and reading it back before restoring what was there, or a wider statement of what the plant-model seam guarantees a write does to the state it names, is the right place to prove that is not decided here.
+rationale: |
+  Recorded as a maintenance item found while building SOL-ADMISSION-PROVES-CORRECTION-WRITABLE, rather than folded into that solution, because proving the write is accepted already fully satisfies that solution's own criteria: its first criterion asks admission to prove the correction-target state can be written rather than only read, and its own verification text scopes it to a structure that refuses the write. Nobody had asked that solution to prove what the write does to the state, so folding this in would have meant solving something nobody had specified yet rather than completing the specified work more thoroughly — the same reason its two predecessors along this chain were recorded rather than absorbed.
+
+  Left open which layer proves the value lands, because the two that close it differ in what they cost rather than in whether they work, and neither was evaluated here. A probe that writes a distinguishable value has to put back what it displaced, and a proof that has to undo itself is a proof that can leave a structure displaced if the undo is ever wrong — which is the property the sibling criterion on that solution exists to protect. A statement at the seam of what a write does to the state it names costs no probe at all but is only as good as what checks it. This node's job is to make the finding durable and traceable to the requirement criterion it protects; the choice belongs to whoever picks it up.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
+    type: targets
+  - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE
+    type: depends-on

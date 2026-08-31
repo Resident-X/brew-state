@@ -1,0 +1,16 @@
+id: SOL-SWEEP-JUDGEMENTS-REMADE.C1
+type: criterion
+title: The sweep reports a clean run again, every survivor judged against the code at its own line
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Restores OBL-VERIFICATION-DISCIPLINE-001.C2: the sweep run over the population drawn from the structures in the tree exits reporting that every surviving mutant is accounted for, with no unreviewed survivor and no judgement about a mutant it did not produce, so the firmware verification gate passes end to end again.
+
+  Each survivor is judged individually, against the code at the line the sweep names it at, and the judgement says what the mutant does rather than only which verdict it was given -- a survivor recorded as equivalent states why no observable behaviour can differ, and one that needs a test gets the test rather than the verdict. A judgement stranded by code that moved is made again rather than re-pointed at the new line, because the reason it is keyed to a line at all is that a decision must not outlive the code it was made about.
+
+  Verified by the sweep's own report over the derived population. Whether any particular survivor is equivalent, needs a test, or is a real defect is out of scope here: this asks that each has been judged, not what any judgement concludes. The percentage killed is informational rather than the gate, on the same terms the criterion this restores already scopes it out.
+links:
+  - target: SOL-SWEEP-JUDGEMENTS-REMADE
+    type: criterion-of

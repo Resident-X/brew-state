@@ -1,0 +1,23 @@
+id: EVD-SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C2-TEST
+type: evidence
+title: Every previously admitted structure still admitted under the added write probe (SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-30T12:17:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/test/test_estimator/test_estimator.c::test_a_structure_that_keeps_the_state_is_accepted
+text: |
+  No structure the estimator admitted before the added write probe is refused by it. The five structures behind the plant-structure seam prior to this change each store what a write gives them for exactly the states they answer a read for, so none is newly turned away.
+
+  Verified by the whole host test tier passing unchanged under the added check: task fw:test runs every structure's suite across the native, native_fixture, native_flow_fixture, native_boiler, native_outlet_only_fixture and native_correction_read_only_fixture test environments, plus 679 tests over the build-time check tools, with no test's expected admission outcome -- accepted, or refused for want of a state -- flipping from what it asserted before. test_a_structure_that_keeps_the_state_is_accepted in firmware/test/test_estimator/test_estimator.c carries this criterion in its doc comment and asserts the reference machine's structure is still admitted; the suites for fixture, boiler and outlet_only_fixture continue to assert their existing refusals, each for the read it already failed rather than for the added write.
+
+  Independently confirmed at the host-exercise level: run_host_artefacts completed 8 runs under the analysis, each artefact taking the same branch it took before -- the two structures that carry a reconstruction still reaching the control path, the rest still refused at control_init.
+
+  Scope: this confirms the added check is not made stricter for a structure that already satisfied it. Whether a structure not yet written would pass is out of scope, on the terms the criterion itself states.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C2
+    type: satisfies

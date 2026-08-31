@@ -127,6 +127,7 @@ tasks:
       - "{{.PIO}} run -e native_flow_fixture"
       - "{{.PIO}} run -e native_boiler"
       - "{{.PIO}} run -e native_outlet_only_fixture"
+      - "{{.PIO}} run -e native_correction_read_only_fixture"
       - "{{.PIO}} run -e stm32"
 
   fw:test:

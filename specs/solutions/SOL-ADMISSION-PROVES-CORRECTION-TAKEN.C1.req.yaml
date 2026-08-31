@@ -1,0 +1,14 @@
+id: SOL-ADMISSION-PROVES-CORRECTION-TAKEN.C1
+type: criterion
+title: A structure is refused admission if the correction-target state does not carry the value written to it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Restores REQ-MODEL-STRUCTURE-SEAM-001.C2: the admission check that runs when a structure is brought up under the estimator is extended so that, for every reconstructed value, it proves the correction-target state carries the value written to it, not only that the write was accepted. A structure failing this probe is refused on the same terms a structure failing any of the existing probes already is.
+
+  Verified by a test built directly against the failure this restores: a structure that accepts a write of the correction-target state and leaves the state as it was is refused at admission, where today it is admitted. Whether a structure recomputes that state from another on its next step, which the seam already treats as the structure's own answer rather than a refusal, is out of scope.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-TAKEN
+    type: criterion-of

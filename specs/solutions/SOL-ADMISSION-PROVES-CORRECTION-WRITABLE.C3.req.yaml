@@ -1,0 +1,14 @@
+id: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C3
+type: criterion
+title: Admitting a structure leaves that structure's model exactly as initialisation left it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Restores REQ-MODEL-STRUCTURE-SEAM-001.C2: admitting a structure leaves that structure's model exactly as its initialisation left it. Proving that the correction-target state can be written means writing to it, and a proof that displaced the state it wrote to would leave every admitted structure starting from somewhere its own initialisation never put it — a reconstruction beginning at a value nothing chose, on the one path every structure the machine can run passes through.
+
+  Verified by a test that reads every state a structure answers, writes back exactly what it read, and finds both the states themselves and the trajectory the equations advance along afterwards identical to an instance that was never written to. Whether a structure not yet written keeps that property is out of scope: this asserts it of the structures behind the seam today, on the same terms SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C2 asserts their admission outcomes are unchanged.
+links:
+  - target: SOL-ADMISSION-PROVES-CORRECTION-WRITABLE
+    type: criterion-of

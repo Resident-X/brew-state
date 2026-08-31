@@ -219,6 +219,11 @@ static void test_a_state_outside_the_enumerated_set_is_refused(void)
 /// the reference machine answers both names a reconstructed value is reached
 /// by, so the widened reachability check that also probes the
 /// correction-target state does not newly refuse it here.
+///
+/// SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C2: Every structure the estimator
+/// already admits keeps being admitted, unchanged. The same structure answers
+/// a write of the correction-target state as well as a read of it, so the
+/// probe that now writes back what it read does not newly refuse it either.
 static void test_a_structure_that_keeps_the_state_is_accepted(void)
 {
     estimator_t estimator;

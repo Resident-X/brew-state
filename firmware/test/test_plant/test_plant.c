@@ -4100,6 +4100,88 @@ static void test_a_written_state_is_what_the_next_step_advances_from(void)
     TEST_ASSERT_TRUE(advanced > 5.0f);
 }
 
+/// SOL-ADMISSION-PROVES-CORRECTION-WRITABLE.C3: Admitting a structure leaves
+/// that structure's model exactly as initialisation left it.
+///
+/// The estimator proves at admission that the correction-target state can be
+/// written by writing back the value it has just read from it. That probe is
+/// only harmless if a write of what was read is a write of nothing -- if a
+/// structure clamped, rounded, transformed or coupled on the way in, admission
+/// would silently displace the model of every structure it admits, and the
+/// displacement would show up later as a reconstruction starting from
+/// somewhere it was never put. Nothing else asserts that property: the write
+/// tests beside this one write a value chosen to be different, which is
+/// exactly the case where a transformation on the way in would not show.
+///
+/// The instance is driven off rest first, so the states are distinct and
+/// non-trivial: an identity asserted at rest would hold for a write that
+/// discarded its argument entirely.
+static void test_writing_back_what_was_read_leaves_every_state_as_it_was(void)
+{
+    const plant_actuation_t working = {
+        {ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE, ACTUATION_FULL_SCALE / 2u}};
+    plant_model_t model;
+    plant_model_t untouched;
+    float before[PLANT_STATE_COUNT];
+    float after[PLANT_STATE_COUNT];
+
+    TEST_ASSERT_TRUE(plant_model_init(&model, &parameters));
+    TEST_ASSERT_TRUE(plant_model_init(&untouched, &parameters));
+    for (int step = 0; step < SHORT_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&untouched, &working, 0.0f, STEP_MS));
+    }
+    read_all_states(&model, before);
+
+    /*
+     * Every state the structure answers, written back with what it just gave.
+     * A state it refuses to read is passed over rather than written blind --
+     * admission does the same, because it has nothing to write back.
+     */
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        float held = 0.0f;
+        char message[104];
+
+        if (!plant_model_state(&model, (plant_state_t)state, &held)) {
+            continue;
+        }
+        (void)snprintf(message, sizeof(message), "state %d answered a read and refused a write",
+                       state);
+        TEST_ASSERT_TRUE_MESSAGE(plant_model_set_state(&model, (plant_state_t)state, held),
+                                 message);
+    }
+
+    /*
+     * Every state, not only the ones written: a write that reached a second
+     * field would leave the one it was aimed at correct and the other wrong,
+     * which is the shape a per-state comparison alone would miss.
+     */
+    read_all_states(&model, after);
+    for (int state = 0; state < PLANT_STATE_COUNT; state++) {
+        char message[112];
+
+        (void)snprintf(message, sizeof(message),
+                       "state %d moved when what was read was written straight back", state);
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(before[state], after[state], message);
+    }
+
+    /*
+     * And the equations carry on from the same place: a displacement too small
+     * to fail the comparison above would still separate the two trajectories
+     * once the model was advanced from it.
+     */
+    for (int step = 0; step < SHORT_STEPS; step++) {
+        TEST_ASSERT_TRUE(plant_model_step(&model, &working, 0.0f, STEP_MS));
+        TEST_ASSERT_TRUE(plant_model_step(&untouched, &working, 0.0f, STEP_MS));
+    }
+
+    float advanced[PLANT_STATE_COUNT];
+    float unwritten[PLANT_STATE_COUNT];
+    read_all_states(&model, advanced);
+    read_all_states(&untouched, unwritten);
+    TEST_ASSERT_EQUAL_MEMORY(unwritten, advanced, sizeof(unwritten));
+}
+
 /// SOL-PLANT-FLOW-REPORTED.C1: The plant seam names the rate water is drawn as
 /// a reported quantity.
 ///
@@ -7023,6 +7105,7 @@ int main(void)
     RUN_TEST(test_every_state_this_structure_keeps_takes_a_write);
     RUN_TEST(test_writing_one_state_leaves_the_others_where_they_were);
     RUN_TEST(test_a_state_written_to_an_instance_that_cannot_take_it_is_refused);
+    RUN_TEST(test_writing_back_what_was_read_leaves_every_state_as_it_was);
     RUN_TEST(test_the_seam_names_the_drawn_rate_as_a_quantity);
     RUN_TEST(test_the_reference_structure_answers_the_drawn_rate);
     RUN_TEST(test_the_drawn_rate_follows_the_commanded_pump_level);
