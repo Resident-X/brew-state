@@ -123,6 +123,28 @@
 # accessor's own copy of the spec-table guard is judged on its own terms rather
 # than by pointing at the walk's.
 
+# The thermoblock's and the boiler's steam-pressure judgements were re-made at
+# new lines again when the commanded margin arrived: `plant_parameter_scale`,
+# `plant_parameter_position` and `plant_parameter_supply_driven` were added to
+# the end of plant_parameters.c, which moves nothing already in that file, and
+# each structure gained a `plant_structure_supply_driven_parameters` accessor
+# above its own steam-pressure relation, which does. Both comparisons are
+# character for character the ones the judgements were written about, so the
+# reasoning stands unaltered at the new lines.
+#
+# The three new range guards those functions added -- one per function -- are
+# the same compiled-in spec-table size check judged equivalent twice already,
+# made a third, fourth and fifth time on the same terms. The two range-boundary
+# comparisons in `plant_parameter_scale` were closed by a test instead: nothing
+# before called it with a coefficient already sitting at the edge of its
+# declared range, so `>` and `>=` had never been told apart there, and a corner
+# consumer scaling by a declared error small enough to land exactly on that
+# edge is not implausible enough to leave unwatched. The boiler's own
+# `plant_structure_supply_driven_parameters` was closed the same way: it is
+# this structure's file rather than the shared one, so the thermoblock-side
+# test could not have reached it, and nothing had asked this structure the
+# question before.
+
 survivors:
   cxx_lt_to_le:src/plant/common/plant_parameters.c:49:19:
     verdict: equivalent
@@ -234,7 +256,38 @@ survivors:
       every structure in the tree declares a single-figure number of parameters,
       so both forms accept every table any build of this program can present.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:127:31:
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:592:57:
+    verdict: equivalent
+    reason: >-
+      The same spec-table size guard a third time, in `plant_parameter_scale`:
+      `spec_count > PLANT_PARAMETER_LIMIT` widened to `>=`. The judgement is the
+      two entries above's, made again for the same reason they were: the guards
+      are separately editable, so a change to one would not move another. The
+      table is compiled in, chosen by which structure the environment names, and
+      every structure in the tree declares a single-figure number of parameters,
+      so both forms accept every table any build of this program can present.
+
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:630:57:
+    verdict: equivalent
+    reason: >-
+      The same spec-table size guard again, in `plant_parameter_position`:
+      `spec_count > PLANT_PARAMETER_LIMIT` widened to `>=`. Same judgement, same
+      reason: the table is compiled in, chosen by which structure the
+      environment names, and every structure in the tree declares a
+      single-figure number of parameters, so both forms accept every table any
+      build of this program can present.
+
+  cxx_gt_to_ge:src/plant/common/plant_parameters.c:651:57:
+    verdict: equivalent
+    reason: >-
+      The same spec-table size guard again, in `plant_parameter_supply_driven`:
+      `spec_count > PLANT_PARAMETER_LIMIT` widened to `>=`. Same judgement, same
+      reason: the table is compiled in, chosen by which structure the
+      environment names, and every structure in the tree declares a
+      single-figure number of parameters, so both forms accept every table any
+      build of this program can present.
+
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:149:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
@@ -255,7 +308,7 @@ survivors:
       admissible argument, null or not, distinguishes the two forms while this
       structure serves no delivery point.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:114:31:
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:134:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`

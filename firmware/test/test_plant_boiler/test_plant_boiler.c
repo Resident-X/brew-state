@@ -540,6 +540,31 @@ static void test_the_structure_reads_its_own_coefficients_and_no_others(void)
     TEST_ASSERT_EQUAL(PLANT_PARAMETER_MISSING, fault.fault);
 }
 
+/// SOL-SWEEP-JUDGEMENTS-REMADE.C1: the one element rating this architecture
+/// has is answered as supply-driven, and a coefficient with no such
+/// relationship -- ambient temperature, which no supply moves -- is answered
+/// false rather than left at whatever the caller passed in.
+///
+/// This structure's own half of plant_parameter_supply_driven is otherwise
+/// untested here: the wide suite's equivalent test names the thermoblock's two
+/// element ratings and never links against this structure, so nothing before
+/// this called plant_structure_supply_driven_parameters through a boiler
+/// build at all.
+static void test_the_one_element_rating_is_answered_as_supply_driven(void)
+{
+    size_t at = 0u;
+    bool driven = true;
+
+    TEST_ASSERT_TRUE(plant_parameter_position("vessel.heater_power_w", &at));
+    TEST_ASSERT_TRUE(plant_parameter_supply_driven(at, &driven));
+    TEST_ASSERT_TRUE(driven);
+
+    driven = true;
+    TEST_ASSERT_TRUE(plant_parameter_position("ambient_temperature_c", &at));
+    TEST_ASSERT_TRUE(plant_parameter_supply_driven(at, &driven));
+    TEST_ASSERT_FALSE(driven);
+}
+
 /*
  * What the equations compute, against an independent statement of the same
  * physics.
@@ -2298,6 +2323,7 @@ int main(void)
     RUN_TEST(test_every_state_this_structure_keeps_carries_what_it_names);
     RUN_TEST(test_a_state_read_from_an_uninitialised_instance_is_refused_here_too);
     RUN_TEST(test_the_structure_reads_its_own_coefficients_and_no_others);
+    RUN_TEST(test_the_one_element_rating_is_answered_as_supply_driven);
     RUN_TEST(test_the_vessel_step_is_the_energy_balance_it_claims);
     RUN_TEST(test_a_half_duty_delivers_half_the_power);
     RUN_TEST(test_a_vessel_that_loses_nothing_heats_at_the_rate_its_power_implies);
