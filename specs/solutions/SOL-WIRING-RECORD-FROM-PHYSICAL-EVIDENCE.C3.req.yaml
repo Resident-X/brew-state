@@ -1,0 +1,18 @@
+id: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C3
+type: criterion
+title: Switch and indicator counts state what the physical boards carry, not what the diagram numbers
+status: active
+version: 1
+text: |
+  The diagram's switch numbering is the main board's list of inputs, and the panel silkscreen is a
+  separate local numbering that collides with it. Reading the two as one produced a count that folded
+  three devices in twice and a second count that missed the pairing entirely.
+
+  Each count states what the board carries, which designator scheme it is quoted in, and how many
+  signals the controller actually sees.
+
+  Out of scope: the debounce interval the panel expects, which no source carries; and confirming
+  which physical connector pin is numbered one, which the record marks as provisional.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE
+    type: criterion-of

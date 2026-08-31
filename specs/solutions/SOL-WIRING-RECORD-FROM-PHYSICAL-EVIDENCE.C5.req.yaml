@@ -1,0 +1,19 @@
+id: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C5
+type: criterion
+title: Every document derived from the wiring record states figures that reconcile with it
+status: active
+version: 1
+text: |
+  The declared configuration, the channel enumeration and the component specification each drew on
+  the same investigation at a different stage, so a pin total in one could contradict a channel count
+  in another and a derived view could cost a channel its own source did not carry.
+
+  Each states one set of figures, and a total quoted anywhere is reproducible from the rows it claims
+  to sum.
+
+  Out of scope: the accuracy, resolution and update rate columns, which reconcile against the
+  delivery bands rather than against the wiring record; and any figure the record marks as not
+  established, which stays marked rather than being given a value.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE
+    type: criterion-of

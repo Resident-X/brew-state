@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The controller and the mains-side parts are assessed against the channel enumeration, judged in interface resources rather than connector count
 status: active
-version: 3
+version: 4
 text: |
   The machine's channel enumeration is already complete enough to assess candidates against: every sensing and
   actuation channel carries its signal, the peripheral kind it demands, its count and whether its failure bears
@@ -37,8 +37,7 @@ text: |
   open against measured plant parameters and which this item does not settle -- an assessment showing a candidate
   adequate is an input to that selection, not the selection itself. Also out of scope: characterising any part
   once bought, which is bench work under the measurement phase; establishing the phase offset between a true
-  crossing and a detected edge, which no declared figure bounds; the bench capture of the original two-wire
-  operator link, which its own assumption decision holds open; and the proof-of-life interlock, which has its own
+  crossing and a detected edge, which no declared figure bounds; the bench capture of the original two-wire operator link, which no longer arises -- DEC-U8-BOARD-RETENTION-UNVERIFIED withdrew it once both microcontrollers were found on the main board, leaving a retained panel board that carries no controller to speak to; and the proof-of-life interlock, which has its own
   requirement criteria and is not settled by choosing parts.
 links:
   - target: DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM

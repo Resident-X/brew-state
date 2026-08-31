@@ -1,0 +1,102 @@
+id: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE
+type: deliverable
+category: solution
+title: The machine's wiring is recorded from physical evidence, graded by how each claim was established, and every document derived from it reconciled
+status: active
+version: 1
+text: |
+  The machine's declared configuration and its channel enumeration were both written from a scanned
+  service manual, and both inherited that source's errors with no way to notice them. Three readings of
+  the same sheets produced three different accounts of the operator interface, each stated as settled,
+  because nothing in the record distinguished a figure somebody had verified from one somebody had read
+  off a scan.
+
+  What was missing was not more reading but somewhere to put physical evidence. A photograph of a
+  spare-part board, a traced harness, a behaviour observed on a running machine and a value read off a
+  drawing are not the same kind of claim, and a document that renders them alike will keep producing
+  confident wrong answers.
+
+  This establishes a standing artefact for connector and harness allocations, in which every claim
+  carries how it was established -- traced, read, inferred, or observed on the running machine -- and in
+  which the rule that a physical board outranks the manual is stated with the evidence for it. The
+  manual has now been caught twice reusing designators across boards, so that rule is a finding rather
+  than a preference.
+
+  Three claims about where things are turn out to be wrong. Both microcontrollers sit on the main
+  control board rather than on two boards linked by two wires. The button and indicator panel is a
+  passive assembly carrying ten switches wired as five parallel pairs, eight indicator elements in five
+  groups, and the buzzer; the gauge assembly is not passive, carrying the stepper motor driver and the
+  low-water indicator. And the circuit diagram's S1 to S8 is the main board's list of ground-switched
+  inputs rather than the panel's list of switches -- the panel's own S1 to S10 silkscreen is local
+  numbering that collides with it, which is why the sheet numbers no S9 or S10 and why it draws three of
+  its eight with plain switch symbols. Those three are the tank level sensor and the two knob
+  microswitches, elsewhere in the machine.
+
+  Four channels the enumeration never carried are added, each fitted and driven: a mains-presence sense
+  on each thermoblock element, which reports whether mains actually reached it; the panel buzzer; and
+  the low-water indicator on the gauge assembly. Two figures previously recorded as not established are
+  read off the same sheets: the temperature sensors are hundred-kilohm thermistors against
+  one-percent ten-kilohm dividers, and the flow meter's signal is digital rather than analogue.
+
+  Fitted behaviours that no criterion requires are recorded rather than left to disappear. The machine
+  sweeps both gauge needles to full scale and back at power-on, homing them against end stops. It
+  modulates indicator brightness by gating the shared anode rail, so brightness is global rather than
+  per element. And it annunciates low water both audibly and visually, through two devices a
+  replacement could keep or drop independently. None of these belongs in a requirement: a criterion
+  naming a stepper sweep would forbid ever replacing the gauges. They are interface facts, and what
+  obliges a replacement to meet them is a decision on this chain rather than a requirement above it.
+
+  The documents derived from that record are then reconciled. The declared configuration, the channel
+  enumeration and the component specification each carried figures from a different stage of the same
+  investigation, so a pin total in one contradicted a channel count in another and a derived view costed
+  a channel its own source did not carry.
+
+  Two records made before the tracing are left standing rather than rewritten, and named so that what
+  overtook them is discoverable. SOL-CHANNEL-ENUMERATION-CORRECTED and its attested criteria state
+  eight pushbuttons on a second microcontroller board, a stepper driver a replacing controller must
+  provide for itself, and a flow meter interface the diagram leaves ambiguous; its evidence nodes record
+  the same. EVD-SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1-ANALYSIS totals controller demand against a
+  panel option that no longer exists. Each recorded an analysis genuinely performed against the record
+  as it then stood, and rewriting them would falsify the trail rather than repair it. What is corrected
+  is the record they read from, not the reading.
+
+  The graph carries none of the pin-level detail and should not. A criterion naming a conductor would
+  rot the first time a harness changed, and the nodes that need it refer to the artefact instead.
+
+  The decision that obliges a replacement to meet those behaviours is DEC-OPERATOR-INTERFACE-REPRODUCED,
+  which adopts this record by reference rather than restating it, so a behaviour found later or a claim
+  corrected later changes the obligation without that node being amended. Named here so the obligation is
+  reachable from the record rather than only from the journey it addresses.
+
+  One preserved record is named individually because nothing else points forward from it:
+  EVD-SOL-CHANNEL-ENUMERATION-CORRECTED.C4-INSPECTION records eight buttons and roughly ten indicator
+  elements across six functions as inspected, and states the panel-retention question as correctly left
+  open. Its inspection was honest against the record as it then stood; the counts and the retention
+  question are both superseded here.
+
+  One targeted criterion is served in part rather than in whole, and says so here rather than only in
+  the enumeration. REQ-ACTUATION-CONFIRMATION-001.C2 requires the confirmation available for each
+  output, and the time it takes, to be established. Enumerating the two heater mains-presence channels establishes the availability half for those two outputs: the confirmation exists, and it is prompt and electrical rather than a slow thermal response. Two things are not established here. How long it takes is measurement work. And the criterion says each output, where this establishes two: the pumps, the valves and the gauges have no confirmation channel at all, which is a gap this item surfaces rather than closes.
+
+  Three artefacts carry this record and are named here so the graph says what they are rather than
+  leaving them to be found by browsing. docs/connector-pinouts.md is the wiring record itself, and is
+  normative about the operator interface. docs/controller-io-bom.csv lists every channel with its pin
+  cost, quantity, retention state and the OEM part it has to serve or beat. docs/control-board-electrical-requirements.csv restates the same surface as requirement groups in the terms
+  a board is chosen by, with a placement column proposing how the channels partition across boards. The
+  two spreadsheets are derived views and not sources of record: where they disagree with the channel
+  enumeration, the enumeration wins.
+links:
+  - target: DEC-OPERATOR-INTERFACE-REPRODUCED
+    type: justified-by
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C1
+    type: targets
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C4
+    type: targets
+  - target: REQ-ACTUATION-CONFIRMATION-001.C2
+    type: targets
+  - target: SOL-CHANNEL-ENUMERATION-CORRECTED
+    type: depends-on
+  - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT
+    type: depends-on
