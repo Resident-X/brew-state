@@ -2,7 +2,7 @@ id: DEC-DEVICE-RETENTION-BOUNDARY
 type: decision
 title: Operator-interface and load devices are retained while the control electronics are replaced
 status: active
-version: 1
+version: 2
 text: |
   The retrofit replaces the machine's control electronics while leaving in place most of the devices
   those electronics drive and read. Which side of that line each device falls on is what a controller
@@ -48,7 +48,12 @@ text: |
 
   One qualification the word passive would obscure. The button panel carries no active parts. The gauge
   assembly does -- the stepper driver sits there rather than on the main board -- so retaining it retains
-  silicon, and an out-of-production part at that. Retention there is an obtainability risk rather than a saving, and a different question from the unknown condition of a reused part, which is answered by testing this driver rather than by counting how many remain obtainable, and it is not the same act as retaining a switch or an indicator element.
+  silicon, and an out-of-production part at that. Retention there is an obtainability risk rather than a saving, and a different question from the unknown condition of a reused part, which is answered by testing this driver rather than by counting how many remain obtainable, and it is not the same act as retaining a switch or an indicator element. Retaining it also fixes an
+  input threshold its control lines have to clear, which the replacing controller's output levels must
+  be checked against rather than assumed to meet. That is a check the retention imposes, not a supply
+  rail it dictates: parts on either common logic rail may qualify, and the wiring record carries the
+  figure and the ways of settling it, so both stay correctable there without this decision being
+  amended.
 rationale: |
   Context: The project had already recorded that the OEM control electronics are replaced. It had not
   recorded what happens to the devices themselves, so every electrical characteristic a retained
@@ -94,7 +99,14 @@ rationale: |
   logic supply, a zero-cross front end, a heater switching device and the controller. And because the
   conditioning networks are replaced along with the board, the pull-up values and thermistor dividers this machine happens to carry are inputs to a new
   design rather than constraints on it -- while the indicator series resistors and the gauge driver,
-  sitting on retained assemblies, are constraints rather than inputs.
+  sitting on retained assemblies, are constraints rather than inputs. The gauge driver's is the sharper
+  of those two, because it constrains the controller's output levels tightly enough to reach back to its
+  supply rail unless shifting parts are added: its inputs are not guaranteed to read a logic high driven
+  from the rail a replacement might otherwise have chosen freely, so retaining that assembly either adds
+  those parts, narrows which controllers qualify, or obliges a bench measurement to turn a typical
+  figure into an established one. That is a cost of retention landing where the boundary put it, not an argument against
+  retention -- but it belongs in the record, because a board chosen without it would fail on a channel
+  nobody was watching.
 options_considered:
   - option: Retain the operator-interface and load devices and replace only the control electronics
     reason_rejected: ""

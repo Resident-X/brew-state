@@ -174,6 +174,7 @@ the compute demand being unquantified in both directions.
 | External interrupt lines | 16 | 1 | 15, with the constraint below |
 | Flash / RAM | 1 MB / 192 KB | Not stated by the enumeration | Unquantified — see below |
 | Core | Cortex-M4 at 168 MHz | Not stated by the enumeration | Unquantified — see below |
+| Output logic level, gauge-driver lines | 3.3 V I/O. `VOH` is guaranteed to `VDD` − 0.4 V — about 2.9 V — at rated sink current, rising close to the rail at light load, but the guarantee is the figure a board is chosen against | 5 lines clearing the retained `VID66-08`'s 3.15 V `VIH` | **Not cleared on guaranteed figures** — see below. Resolved either by five level shifters or by a bench measurement of `VOH` into a ~10 µA load |
 
 **Simultaneity holds, and the resource that would bite first is named.** No two channels contend for
 the same unit at these counts: the four conversion inputs fit one ADC with twelve channels to spare,
@@ -187,9 +188,22 @@ of exactly one port at a time, so sixteen interrupt-driven channels cannot be pl
 channel is demanded, so the constraint does not bind — but it is the resource that would bind first
 if a later channel wanted its own interrupt, and it is invisible to a pin count.
 
-**No candidate failed.** Only one candidate was assessed, and it clears every row, so there is no
-defeated-by-channel record to keep here. Should a cheaper part be assessed later and fail, the
-channel that defeated it belongs in this section rather than in a discarded note.
+**One row is not cleared, and it is a channel rather than a count.** Every numeric row has room to
+spare. The row that does not clear is the last: this part's outputs are 3.3 V, and the gauge driver
+retained by `DEC-DEVICE-RETENTION-BOUNDARY` guarantees nothing below a 3.15 V input high. On
+guaranteed figures — `VOH ≥ VDD − 0.4 V`, about 2.9 V — the five gauge lines are not driven reliably.
+
+This does not defeat the candidate, and it is recorded here rather than in a discarded note because
+it is not that kind of finding. In practice a 3.3 V CMOS output into the ~10 µA these inputs leak sits
+within millivolts of the rail and would clear 3.15 V comfortably; what is missing is a guarantee, not
+a mechanism. Two things close it: five level shifters on the gauge lines, cheap but a part on the
+board — or a bench measurement of this part's `VOH` into that load, which converts a typical into an
+established figure for this design. Either is admissible. Choosing neither, and specifying the board
+as though the row were clear, is what this table exists to prevent.
+
+It is also a cost that belongs to **retention** rather than to the gauges: a controller driving the
+movements directly sets its own thresholds and the row disappears. That trade sits with
+`DEC-DEVICE-RETENTION-BOUNDARY`, not here.
 
 ### Room for the channels the graph anticipates
 
@@ -271,9 +285,9 @@ chosen; it is not predicted here.
 | Coffee, steam and wand temperature sensing | Analogue resistance, NTC, at the accuracy `controller-io.md` states per channel | `EM70025`, `EM70020` and the wand disc sensor, fitted and working | *undecided* | *undecided* | |
 | Flow sensing | A pulse train on a general-purpose port pin, pulled up to the 5 V rail; open-drain versus push-pull, and the K-factor, stay open | The fitted OEM meter | *undecided* | *undecided* | |
 | Steam-path pressure sensing | Analogue conversion; range and accuracy not yet specified, the part not yet selected | None — added by decision, never fitted | *undecided* | *undecided* | |
-| Gauge drive, both gauges | Two direction levels, two step clocks needing timer channels, and a shared reset. The controller does not provide stepper drive: the `VID66-08` sits on the gauge assembly, which is retained, so the driver is inherited. That is not a saving — the part is out of production, which makes an unobtainable device a single point of failure on a channel with no fallback, and is an obtainability risk, distinct from the unknown-condition question `OBL-PHYSICAL-CONFIGURATION-001.C3` asks. Specifying a controller that could drive the movements directly keeps both options | OEM `VID66-08` on the gauge assembly, two-channel, serving both gauges today and inherited rather than bought | *undecided* | *undecided* |  |
+| Gauge drive, both gauges | Two direction levels, two step clocks needing timer channels, and a shared reset — **all five clearing a 3.15 V input threshold**, which is the retained driver's guaranteed `VIH` and does not relax with its supply. A 5 V drive clears it outright; a 3.3 V part qualifies only if its own `VOH` guarantee reaches 3.15 V at the current these inputs draw, and otherwise the channel carries five level shifters. Figures and their provenance in [`connector-pinouts.md`](connector-pinouts.md). The controller does not provide stepper drive: the `VID66-08` sits on the gauge assembly, which is retained, so the driver is inherited. That is not a saving — the part is out of production, which makes an unobtainable device a single point of failure on a channel with no fallback, and is an obtainability risk, distinct from the unknown-condition question `OBL-PHYSICAL-CONFIGURATION-001.C3` asks. Specifying a controller that could drive the movements directly keeps both options | OEM `VID66-08` on the gauge assembly, two-channel, serving both gauges today and inherited rather than bought | *undecided* | *undecided* |  |
 | Heater mains-presence confirm, both elements | Two isolated AC-sense inputs reporting whether mains actually reached each element, which distinguishes a relay that did not close, a welded contact and an open thermal cutout from a command that was obeyed. Reinforced isolation, mains-crossing | OEM `LTV814` AC-input optocoupler through a 120 kΩ 1 W resistor, fitted and working | *undecided* | *undecided* | |
-| Low-water indication, visual | One output sinking an indicator cathode on the gauge assembly, on a supply local to that board rather than the button panel's gated rail | The fitted indicator, retained with the gauge assembly | *undecided* | *undecided* | |
+| Low-water indication, visual | One output sinking an indicator cathode on the gauge assembly, whose anode rail is the button panel's gated rail extended over the gauge harness | The fitted indicator, retained with the gauge assembly | *undecided* | *undecided* | |
 | Operator panel — keys, indicators, buzzer | Five bidirectional lines carrying both the key pairs and the indicator cathodes, one timer output gating the anode rail, and one buzzer output — seven pins for the whole panel. The keys are ten switches in five parallel pairs; the indicators are eight elements in five groups. Pinout in [`connector-pinouts.md`](connector-pinouts.md) | The OEM panel board, retained as a passive assembly | *undecided* | *undecided* | |
 | Low-voltage supply | Whatever the chosen controller and gate drives need, isolated from the mains side | The OEM board's own supply, on a board being replaced | *undecided* | *undecided* | |
 | Wiring, connectors, mains-rated terminals | Rated for the currents above; mains-referenced runs separated from low-voltage per `OBL-ELECTRICAL-THERMAL-SAFETY-001.C6`; AS/NZS 3000 in this jurisdiction | Existing loom, condition unassessed | *undecided* | *undecided* | |
