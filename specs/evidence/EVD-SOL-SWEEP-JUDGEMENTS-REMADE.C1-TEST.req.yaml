@@ -1,0 +1,17 @@
+id: EVD-SOL-SWEEP-JUDGEMENTS-REMADE.C1-TEST
+type: evidence
+title: Mutation sweep reports a clean run — every survivor re-judged (SOL-SWEEP-JUDGEMENTS-REMADE.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-08-31T17:24:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: ci://github.com/Resident-X/brew-state/actions/runs/33419414164#judge-the-combined-population-against-the-triage-record
+text: |-
+  Mutation sweep run 33419414164 on req/DEL-MAINTENANCE/re-judge-surviving-mutants: 303 mutants, 288 killed by the tests, 15 survived, all judged (12 equivalent, 3 analysis), 0 unreviewed, 0 stale, exit 0. Closed by: two re-keyed judgements (thermoblock plant_structure.c:149:31, boiler plant_structure.c:134:31) at their post-commanded-margin line numbers with unchanged reasoning; three new equivalent judgements for the repeated spec_count > PLANT_PARAMETER_LIMIT guard (plant_parameters.c:592:57, :630:57, :651:57); and two new tests closing genuine gaps rather than recording them -- test_a_scale_landing_exactly_on_the_declared_bound_is_accepted (test_plant.c) kills the plant_parameter_scale inclusive-boundary mutants at :614:37/:614:67, and test_the_one_element_rating_is_answered_as_supply_driven (test_plant_boiler.c) kills the boiler-only plant_structure_supply_driven_parameters null-guard mutant at boiler/plant_structure.c:116:15.
+links:
+  - target: SOL-SWEEP-JUDGEMENTS-REMADE.C1
+    type: satisfies

@@ -2559,6 +2559,48 @@ static void test_scaling_refuses_a_position_this_structure_does_not_have(void)
     TEST_ASSERT_EQUAL_MEMORY(&parameters, &scaled, sizeof(scaled));
 }
 
+/// SOL-SWEEP-JUDGEMENTS-REMADE.C1: a coefficient already sitting exactly at
+/// the edge of its declared range is a corner in its own right, and scaling it
+/// by a factor of one -- which changes nothing -- is accepted rather than
+/// refused.
+///
+/// "outside the declared range is refused" and "the edge itself is in range"
+/// are two different promises, and the refusal test above cannot stand in for
+/// this one: every factor it tries lands well past the edge, so a guard that
+/// refused the edge too would still pass it. discover_bounds finds each edge
+/// the same way test_every_declared_bound_is_enforced_at_its_edge already
+/// trusts it to -- by bisecting the loader's own accept/refuse answer down to
+/// the adjacent representable float -- so the value placed here is the exact
+/// float plant_parameter_scale's own range check is made against, not an
+/// approximation of it.
+static void test_a_scale_landing_exactly_on_the_declared_bound_is_accepted(void)
+{
+    double low[COEFFICIENT_COUNT];
+    double high[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+
+    all_bounds(low, high);
+
+    for (size_t index = 0u; index < COEFFICIENT_COUNT; index++) {
+        const double *const edges[2] = {low, high};
+
+        for (size_t edge = 0u; edge < 2u; edge++) {
+            plant_parameters_t loaded;
+            plant_parameter_error_t fault;
+            size_t at = 0u;
+            const size_t used = describe_at_bound(edges[edge], index, text, sizeof(text));
+
+            memset(&fault, 0, sizeof(fault));
+            TEST_ASSERT_TRUE_MESSAGE(plant_parameters_load(text, used, &loaded, &fault),
+                                     NOMINAL[index].name);
+            TEST_ASSERT_TRUE_MESSAGE(plant_parameter_position(NOMINAL[index].name, &at),
+                                     NOMINAL[index].name);
+            TEST_ASSERT_TRUE_MESSAGE(plant_parameter_scale(&loaded, at, 1.0f),
+                                     NOMINAL[index].name);
+        }
+    }
+}
+
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: the position a
 /// coefficient occupies is answered by the name the description calls it, and
 /// nothing else is answered at all.
@@ -7114,6 +7156,7 @@ int main(void)
     RUN_TEST(test_a_value_with_no_error_is_undeclared_rather_than_zero);
     RUN_TEST(test_a_scale_outside_the_declared_range_is_refused_rather_than_clamped);
     RUN_TEST(test_a_scale_inside_the_declared_range_writes_that_coefficient_alone);
+    RUN_TEST(test_a_scale_landing_exactly_on_the_declared_bound_is_accepted);
     RUN_TEST(test_scaling_refuses_a_position_this_structure_does_not_have);
     RUN_TEST(test_the_position_of_every_coefficient_is_answered_by_name);
     RUN_TEST(test_whether_a_position_is_supply_driven_is_answered_for_every_one);
