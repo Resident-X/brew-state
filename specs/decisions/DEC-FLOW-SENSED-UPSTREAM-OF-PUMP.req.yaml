@@ -11,7 +11,7 @@ rationale: |
   operator what a delivery is doing while it runs. The reference machine already carries a flow meter
   in the water path, wired to the OEM controller this project replaces, so the question is not
   whether to buy one but which flow the machine reads. The meter's position is established
-  (docs/reference-machine.md, "Already fitted"): it sits on the coffee (Ulka EP5) pump's own suction
+  (docs/sunbeam-em7000/reference-machine.md, "Already fitted"): it sits on the coffee (Ulka EP5) pump's own suction
   line, roughly 5-7 cm ahead of the pump, drawing from the tank, on the low-pressure side rather than
   the shared supply. The machine draws through two pumps -- one for coffee and hot water, one for
   steam -- from a single tank, past a three-way diverter that routes the coffee block's outlet to

@@ -1,0 +1,14 @@
+id: REQ-MACHINE-RECORD-001.C2
+type: criterion
+title: Each claim in the record states how it was established
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every claim carries the kind of evidence behind it, and the kinds are distinguished from each other
+  rather than levelled. A reader can tell a figure somebody measured from one read off a drawing,
+  from one inferred from other claims, and can see which claims would fall if a premise did.
+links:
+  - target: REQ-MACHINE-RECORD-001
+    type: criterion-of

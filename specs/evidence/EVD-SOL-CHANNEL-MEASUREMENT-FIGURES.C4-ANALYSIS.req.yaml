@@ -9,7 +9,7 @@ observed_at: "2026-08-29T22:31:37Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/controller-io.md — Update rate column, all 15 rows; firmware/src/control/control.h:51 (CONTROL_STEP_INTERVAL_MS=10u)
+  reference: docs/sunbeam-em7000/controller-io.md — Update rate column, all 15 rows; firmware/src/control/control.h:51 (CONTROL_STEP_INTERVAL_MS=10u)
 text: |-
   Analysis confirmed all 15 rows state update rate as an explicit whole multiple (x1 in every case) of the 10ms/100Hz step-interval-ms, each carrying the source's own 'sufficiency not established' caveat. No row claims an unsupported sub-cadence.
 links:

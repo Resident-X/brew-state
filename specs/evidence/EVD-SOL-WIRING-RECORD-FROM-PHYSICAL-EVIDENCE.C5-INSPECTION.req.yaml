@@ -1,0 +1,31 @@
+id: EVD-SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C5-INSPECTION
+type: evidence
+title: Every document derived from the wiring record states figures that reconcile with it (SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C5)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-io-bom.csv
+text: |-
+  Arithmetic reconciles across the five documents that carry it. The headroom demand table totals 30
+  pins, decomposing as 4 conversion inputs, 1 capture, 5 timer compare outputs, 1 external interrupt, 5
+  bidirectional panel lines and 14 plain digital outputs. The wiring record's per-assembly costs are 7
+  for the button panel and 6 for the gauge assembly, which the enumeration states as thirteen. The bill of
+  materials totals 33 on the NTC option and 36 on the PT1000 option, the 3 between them being what an RTD
+  converter costs over direct thermistor conversion. The 3 between the bill of materials' 33 and the
+  demand table's 30 is a different quantity: the brew-path pressure channel no decision has yet added,
+  plus a display link.
+
+  The shared anode rail is counted once, in the panel's seven, and the gauge assembly's reach to it is
+  recorded as a second connector pin rather than a second controller pin -- which is the reconciliation
+  the corrected rail observation could most easily have broken and did not.
+
+  Both spreadsheets parse at a uniform 11 columns. Checked by re-deriving each total from its own
+  document's rows and comparing across all five.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C5
+    type: satisfies

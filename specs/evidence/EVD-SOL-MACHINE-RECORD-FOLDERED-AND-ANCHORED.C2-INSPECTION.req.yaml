@@ -1,0 +1,27 @@
+id: EVD-SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C2-INSPECTION
+type: evidence
+title: Every reference to a relocated document resolves (SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/
+text: |-
+  Sixty-one lines were rewritten across forty-six files, carrying seventy-one occurrences of the path: forty files under specs, four under
+  firmware and the published README, and the two spreadsheets whose own prose cites the wiring record.
+
+  Verified three ways. A search for any path naming one of the six moved documents without the folder
+  segment returns nothing outside the append-only lifecycle event trail, which is deliberately left as
+  written. A search for a doubled folder segment returns nothing. And the whole diff was checked as a
+  multiset: every one of the sixty-one changed lines is explained by inserting the folder segment and by
+  nothing else, so no content moved under cover of the sweep.
+
+  Markdown links were separately resolved from disk: seventeen relative links, all resolving, and no
+  moved document links upward out of its new folder.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C2
+    type: satisfies

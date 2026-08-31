@@ -1,0 +1,27 @@
+id: EVD-SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C5-INSPECTION
+type: evidence
+title: The candidate analysis totals demand against the arrangement the machine actually has (SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C5)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/component-specification.md
+text: |-
+  The recorded analysis states one demand total of thirty pins, taken against the board partitioning the
+  tracing established. The earlier analysis it replaces carried a pair -- thirty-seven direct-drive and
+  seventeen over the OEM serial link -- costing two panel arrangements a since-superseded decision left
+  open, one of which the machine does not have.
+
+  The replaced evidence is marked superseded rather than rewritten, and the new record names it, since no
+  link type expresses supersession between evidence nodes.
+
+  The verdict is unchanged and the reason is stated: the criterion asks about timing and conversion
+  resources, and the uncleared drive-level row is neither, so the new evidence records that row
+  explicitly rather than reading as a clean bill the document does not give.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C5
+    type: satisfies

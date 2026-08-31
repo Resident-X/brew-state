@@ -9,7 +9,7 @@ observed_at: "2026-08-30T08:28:34Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/component-specification.md — The component list; What each channel requires; Against the declared figure
+  reference: docs/sunbeam-em7000/component-specification.md — The component list; What each channel requires; Against the declared figure
 text: |-
   Sixteen channels each state the property a part must satisfy and the capability floor the machine's existing device already achieves, so a candidate can be judged adequate or not against the row. Part chosen, provenance and cost are present as columns and stand undecided throughout: which part serves a channel and where it comes from is the builder's act, recorded once made, and the criterion scopes that choice out of this document. Three provenance classes are defined and distinguished on evidence rather than price alone, with salvaged rows required to record how the part was verified against its specification, weighed on what the channel's failure costs per REQ-COST-DISCIPLINE-001.C4. The declared spend of 250 USD is written down rather than held in anyone's head, satisfying REQ-COST-DISCIPLINE-001.C5, and the running total shows 16 channels specified, 0 decided, 250 remaining, which is the shape the tally takes as rows close per REQ-COST-DISCIPLINE-001.C6. No departure justification is owed under C2 because no departure has been decided.
 links:

@@ -1,0 +1,22 @@
+id: EVD-SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C4-INSPECTION
+type: evidence
+title: The wiring record's criteria carry evidence (SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C4)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: specs/evidence/
+text: |-
+  All six criteria of SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE now carry passing inspection evidence,
+  each naming what was checked and the document it was checked against.
+
+  Before this they carried none. The engine's sufficiency analysis classified each as a leaf-gap and
+  named the fix; it now returns ready for each. Checked by running sufficiency against every one of the
+  six criteria.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C4
+    type: satisfies

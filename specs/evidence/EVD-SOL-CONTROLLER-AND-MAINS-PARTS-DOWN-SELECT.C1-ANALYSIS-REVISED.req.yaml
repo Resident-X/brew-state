@@ -1,0 +1,49 @@
+id: EVD-SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1-ANALYSIS-REVISED
+type: evidence
+title: A candidate controller serves all 30 enumerated channels simultaneously in timing and conversion resources (SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/component-specification.md
+text: |
+  Re-run of the simultaneity analysis after the wiring record corrected the demand it was totalled from.
+  Supersedes the earlier analysis, whose verdict stands and whose figures do not.
+
+  Demand is now 30 pins, not the 37-and-17 pair the earlier analysis carried. That pair costed two panel
+  options DEC-U8-BOARD-RETENTION-UNVERIFIED then left open -- direct drive, or the whole operator
+  interface reached over the OEM serial link. Tracing the machine closed that: both microcontrollers are
+  on the main board, there is no panel controller to speak to, and the second option describes an
+  arrangement the machine does not have. One total remains. It breaks down as 4 conversion inputs, 1
+  capture, 5 timer compare outputs, 1 external interrupt, 5 bidirectional panel lines and 14 plain
+  digital outputs.
+
+  The candidate is unchanged: the STM32F407VGT6 named by DEC-PREHARDWARE-TARGET-FAMILY, figures from ST
+  datasheet DS8626. Simultaneity is argued resource by resource rather than by connector count. Four
+  conversion inputs sit on one ADC unit with twelve channels spare, and three units can convert
+  concurrently. Six timer channels -- five compare, one capture -- fit inside the ten I/O-capable timers,
+  with the shared-timebase contention called out so that fitting them on one timer is not mistaken for
+  placing them there. Thirty pins fit inside about 78 usable once the SWD pins and the HSE crystal pair
+  are deducted, the crystal being spoken for because DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM requires a
+  crystal-derived control period. The external-interrupt block is named as the resource with a structural
+  rather than numeric constraint, since line n serves pin n of exactly one port. The channels the graph
+  anticipates are counted in. Compute and memory stay unquantified on both sides rather than claimed as
+  headroom.
+
+  One row of the assessment is not cleared, and it is recorded here because a reader of this evidence
+  will meet it in the document. The retained gauge driver guarantees no input high below 3.15 V, and this
+  candidate's outputs are 3.3 V with a VOH guarantee of VDD minus 0.4 V. That is a drive-level question
+  rather than a timing or conversion resource, so it falls outside what this criterion asks and does not
+  bear on this verdict. It is a cost of retention, it is carried by DEC-DEVICE-RETENTION-BOUNDARY, and it
+  is closed by level shifters on five lines or by a bench measurement. Recording it here keeps this
+  evidence from reading as a clean bill the document does not give.
+
+  No candidate failed on the resources this criterion covers, so no defeated-by-channel record is kept.
+  Selection remains open per DEC-PREHARDWARE-TARGET-FAMILY and DEC-HEATER-DRIVE-GATED-BY-SUPERVISION.
+links:
+  - target: SOL-CONTROLLER-AND-MAINS-PARTS-DOWN-SELECT.C1
+    type: satisfies

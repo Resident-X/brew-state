@@ -1,0 +1,19 @@
+id: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C1
+type: criterion
+title: The material describing one machine sits in a folder named for that machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every document describing the machine this design was built against is in one directory whose name
+  identifies that machine. Documentation that holds for any machine of this shape is outside it. A reader
+  can tell which is which from the path, without opening a file.
+
+  This is a boundary on the documentation set, not on the repository. The firmware's parameter
+  declarations also carry values measured on this machine and deliberately stay where the build reads
+  them; what keeps those identifiable is that each names the declaration it came from, which is a
+  separate obligation and not this one.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED
+    type: criterion-of

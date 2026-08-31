@@ -1,0 +1,27 @@
+id: EVD-SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C4-INSPECTION
+type: evidence
+title: The channel enumeration carries every channel the tracing found, not only those the manual drew (SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C4)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T00:00:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-io.md
+text: |-
+  Four channels the tracing found that no prior document and no graph node carried are present in the
+  enumeration with signal, peripheral class, count, retention state and safety marking: a mains-presence
+  sense on each of the two heating elements, the buzzer, and the low-water indicator on the gauge
+  assembly.
+
+  The enumeration's governing prose is consistent with them rather than merely appended to: the statement
+  of how many channels are not paced by the control loop was corrected from one to five as those channels
+  entered, and each of the five says in its own cell what paces it instead.
+
+  Checked by counting the rows of both enumeration tables against the channels named in the wiring record,
+  and by reading the pacing prose against the rows it governs.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C4
+    type: satisfies

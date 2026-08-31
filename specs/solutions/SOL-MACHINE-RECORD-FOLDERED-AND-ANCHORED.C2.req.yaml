@@ -1,0 +1,14 @@
+id: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C2
+type: criterion
+title: Every reference to a relocated document resolves
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  No reference anywhere in the repository points at a path a document no longer occupies. This covers
+  the graph, the firmware parameter declarations, the published README and the documents themselves,
+  and it includes relative links inside the moved folder as well as paths naming it from outside.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED
+    type: criterion-of

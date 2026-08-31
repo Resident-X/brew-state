@@ -9,7 +9,7 @@ closes_by: cascade
 text: |
   A coffee delivery is distinguishable from a steam draw by the flow reading together with the state
   the machine commands. The fitted meter already sits on the coffee pump's own suction line rather
-  than the shared tank supply (docs/reference-machine.md), so a steam-only draw, which uses a separate
+  than the shared tank supply (docs/sunbeam-em7000/reference-machine.md), so a steam-only draw, which uses a separate
   pump, should not register on it at all -- but whether that holds in practice, and whether brew is in
   turn distinguishable from hot water only via the diverter's commanded state as intended, is what the
   bench still has to establish. What the meter costs that pump is a separate criterion.

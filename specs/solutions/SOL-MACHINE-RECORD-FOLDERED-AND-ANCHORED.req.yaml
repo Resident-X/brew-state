@@ -1,0 +1,37 @@
+id: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED
+type: deliverable
+category: solution
+title: The machine's record is anchored by a requirement, gathered into a folder named for the machine, and its criteria evidenced
+status: active
+version: 1
+text: |
+  The machine's record existed and was being referred to before anything required it to. Documents
+  describing the one machine this design was built against sat in the project's documentation directory
+  beside analyses generated from the emulation that hold for any machine of this shape, with nothing but
+  the reading to tell them apart. Meanwhile a decision on the delivery chain had begun obliging a
+  replacement to reproduce the operator interface as the record describes it -- a reference into
+  material that nothing required to exist, to be current, or to say how it knew what it claimed.
+
+  This closes that in three moves. The record gets a requirement stating what must be true of it, with
+  no mention of what it contains or where it sits, so the requirement survives the project reorganising
+  either. It gets a folder named for the machine, which states the boundary structurally instead of in
+  prose an adopter has to find and believe, and gives them a unit to substitute rather than an audit to
+  perform. And the documents derived from the record for sourcing are named as derived, so a
+  disagreement between a bill of materials and the enumeration it was cut from resolves rather than
+  standing.
+
+  It also repairs two things the merged work left behind. The wiring record's criteria carried no
+  evidence at all, so work anyone could inspect was recorded as unverified. And the simultaneity
+  analysis for the candidate controller still totalled demand across two panel arrangements, one of
+  which the tracing had already shown the machine does not have.
+links:
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MACHINE-RECORD-001.C3
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C5
+    type: targets
+  - target: REQ-MACHINE-RECORD-001.C6
+    type: targets

@@ -9,9 +9,9 @@ observed_at: "2026-08-29T12:53:14Z"
 valid_until: until-superseded
 artifact:
   kind: external
-  reference: docs/controller-io.md
+  reference: docs/sunbeam-em7000/controller-io.md
 text: |-
-  docs/controller-io.md's Sensing and Actuation tables state signal, peripheral class (using C2's own five-term vocabulary: analogue conversion, counter or timer capture, plain digital level, serial bus, modulated output) and count for every row, marking 'not established' honestly where the source does not support a firm classification. Separate controller inputs (e.g. two temperature sensors, two solenoid valves) occupy separate rows per C2's own rule.
+  docs/sunbeam-em7000/controller-io.md's Sensing and Actuation tables state signal, peripheral class (using C2's own five-term vocabulary: analogue conversion, counter or timer capture, plain digital level, serial bus, modulated output) and count for every row, marking 'not established' honestly where the source does not support a firm classification. Separate controller inputs (e.g. two temperature sensors, two solenoid valves) occupy separate rows per C2's own rule.
 links:
   - target: SOL-CONTROLLER-CHANNEL-ENUMERATION.C2
     type: satisfies

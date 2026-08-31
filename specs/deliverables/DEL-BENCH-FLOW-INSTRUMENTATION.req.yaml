@@ -8,7 +8,7 @@ version: 2
 text: |
   The flow the machine already senses becomes flow the machine can use. A meter is fitted in the water
   path and wired to the OEM controller this project replaces, so the reading exists but is not
-  available to anything being built. Its position is established (docs/reference-machine.md, "Already
+  available to anything being built. Its position is established (docs/sunbeam-em7000/reference-machine.md, "Already
   fitted"): on the coffee (brew and hot-water) pump's own suction line, roughly 5-7 cm ahead of the
   pump, drawing from a tank that sits above it -- not a supply shared with steam. What it measures,
   what it resolves, and whether a brew delivery can be told from a steam draw by it are established on

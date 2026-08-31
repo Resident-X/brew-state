@@ -1,0 +1,14 @@
+id: REQ-MACHINE-RECORD-001.C3
+type: criterion
+title: Where two parts of the record disagree, which one governs is stated
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The record says which of its documents wins when they conflict, and says it in the record rather
+  than leaving it to be worked out from which was written last. A document derived from another for a
+  particular use is marked as derived, so a disagreement resolves rather than standing.
+links:
+  - target: REQ-MACHINE-RECORD-001
+    type: criterion-of

@@ -1,0 +1,14 @@
+id: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED.C3
+type: criterion
+title: The record names its derived documents as derived and states which governs
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Documents cut from the record for a particular use say so, and the record states that where a
+  derived document disagrees with the source it was cut from, the source wins. A reader meeting a
+  contradiction between two of these documents knows which one is wrong.
+links:
+  - target: SOL-MACHINE-RECORD-FOLDERED-AND-ANCHORED
+    type: criterion-of
