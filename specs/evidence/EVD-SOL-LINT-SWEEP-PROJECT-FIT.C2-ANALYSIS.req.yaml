@@ -1,0 +1,16 @@
+id: EVD-SOL-LINT-SWEEP-PROJECT-FIT.C2-ANALYSIS
+type: evidence
+title: No rule in this sweep has a configuration surface to supply (SOL-LINT-SWEEP-PROJECT-FIT.C2)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-31T09:31:44Z"
+valid_until: until-superseded
+artifact:
+  kind: inline
+text: |-
+  Inspected .staircase/config.yaml (project/hierarchy/build_order/embedder/default_actor only, no lint/vocabulary section), .staircase/schema.yaml (node-type schema only), and staircase capabilities --format json (lint-config plan/apply operate on numeric threshold maps; none of the 10 reporting families expose a thresholds object, only detection_shape). Group 2 (could-fit-with-vocabulary) is therefore empty, which the criterion's own text names as a valid outcome: 'where the engine offers no such surface, that absence is the finding and the rule moves to the third group.' The criterion's 'deliberately introduced violation' clause applies per-rule to group 2; with group 2 empty it is vacuously satisfied. Recorded as analysis rather than test: this was direct inspection of config/capabilities surfaces, not an automated pass/fail run, and citing the bare CLI invocations as external test artifacts previously (mis-)tripped graph.evidence_test_liveness.cited_test_file_absent on this evidence node itself -- corrected during blind review to inline, since the claim is fully carried by this text.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT.C2
+    type: satisfies

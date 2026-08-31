@@ -1,0 +1,17 @@
+id: EVD-SOL-LINT-SWEEP-PROJECT-FIT.C5-INSPECTION
+type: evidence
+title: Every remaining warning is accounted for by group, not counted down (SOL-LINT-SWEEP-PROJECT-FIT.C5)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-08-31T09:31:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/lint-classification.md
+text: |-
+  docs/lint-classification.md's three group tables sum to all 787 warnings the sweep reports at snapshot snap-1788168637676348000-b84ea5d9 (down from 806 pre-slice; the 19-hit drop in unwired_prerequisite reflects 12 links closing 19 location-hits, several nodes carrying more than one unlinked mention). No rule was suppressed or reconfigured to lower a count -- the change came entirely from fixing real gaps (C4) and none of the reductions came from touching an attested/sealed criterion. No target count is claimed anywhere in the document.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT.C5
+    type: satisfies

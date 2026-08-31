@@ -28,3 +28,5 @@ links:
     type: derives-from
   - target: REQ-MEASUREMENT-001.C5
     type: targets
+  - target: SOL-SUCTION-LINE-PUMP-MARGIN
+    type: depends-on

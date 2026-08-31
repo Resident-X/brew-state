@@ -1,0 +1,17 @@
+id: EVD-SOL-LINT-SWEEP-PROJECT-FIT.C1-ANALYSIS
+type: evidence
+title: Every reporting lint rule classified into fits/could-fit/cannot-satisfy (SOL-LINT-SWEEP-PROJECT-FIT.C1)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-08-31T09:31:44Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/lint-classification.md
+text: |-
+  docs/lint-classification.md classifies all 10 rules the sweep reports against snapshot snap-1788168637676348000-b84ea5d9 into three groups (fits/could-fit/cannot-satisfy), citing lint explain <rule-id> for each rule's intent and staircase lint --rule <id> --limit N for the sampled locations it fires on. The 11 rules with no executor (skipped[]) are correctly excluded as out of scope per the criterion text.
+links:
+  - target: SOL-LINT-SWEEP-PROJECT-FIT.C1
+    type: satisfies

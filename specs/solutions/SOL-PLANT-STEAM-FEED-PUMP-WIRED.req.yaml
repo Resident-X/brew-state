@@ -47,3 +47,5 @@ links:
     type: derives-from
   - target: REQ-MODEL-STRUCTURE-SEAM-001.C2
     type: targets
+  - target: SOL-PLANT-STEAM-DRAW-CHANNELS
+    type: depends-on

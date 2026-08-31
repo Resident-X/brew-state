@@ -27,3 +27,5 @@ links:
     type: derives-from
   - target: REQ-ROBUST-CONTROL-001.C5
     type: targets
+  - target: SOL-SIM-ROBUSTNESS-SURVIVES-ARBITRARILY-WRONG-MODEL
+    type: depends-on

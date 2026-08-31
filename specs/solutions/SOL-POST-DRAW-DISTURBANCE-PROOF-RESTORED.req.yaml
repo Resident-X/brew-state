@@ -93,3 +93,7 @@ links:
     type: targets
   - target: REQ-HOT-WATER-001.C3
     type: targets
+  - target: SOL-BREW-RECOVERS-AFTER-DRAW
+    type: depends-on
+  - target: SOL-COURSE-COMMANDED-DELIVERY-HOLDS-THE-BAND
+    type: depends-on
