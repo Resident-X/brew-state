@@ -1844,14 +1844,40 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
      * where it is going -- about a third of a kelvin short, at 84.19. Close
      * enough that the hand-computed balance says what the row is for, and not so
      * close that the two are the same number.
+     *
+     * The last row's brew column carries a second recording alongside the one
+     * above, read on an x86_64 host built under `PLANT_TEST_MUTATION_TOOLCHAIN`:
+     * 0x1.50bfb8p+6 rather than 0x1.50bfb6p+6, one unit in the last place
+     * higher. This is not a retaking -- the equations this row exercises did
+     * not change -- but the mutation sweep's own build compiles this file with
+     * a different compiler and with optimisation off, deliberately, so that a
+     * mutant is not credited to a line the optimiser would have removed. Both
+     * are legitimate reasons for the same single-precision expression to round
+     * its last bit differently, the same way the HEATING row above already did
+     * once from a source change rather than a toolchain one.
+     *
+     * The architecture is named alongside the toolchain flag rather than the
+     * flag alone, because it turns out to matter as much as the compiler does:
+     * built by the same flag on an arm64 host, this row comes back
+     * 0x1.50bfb6p+6 -- the ordinary value, not the one recorded here. The
+     * project's own mutation-toolchain build runs on GitHub's ubuntu-24.04
+     * runners, which are x86_64, so that is what this alternate is scoped to;
+     * an arm64 host asking for the mutation build still gets the ordinary
+     * literal, correctly, because that is the value it actually produces.
      */
+#if defined(PLANT_TEST_MUTATION_TOOLCHAIN) && defined(__x86_64__)
+#define TRAJECTORY_LAST_ROW_BREW 0x1.50bfb8p+6f
+#else
+#define TRAJECTORY_LAST_ROW_BREW 0x1.50bfb6p+6f
+#endif
     static const float EXPECTED[][PLANT_QUANTITY_COUNT] = {
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.c8692p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.5108f2p+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f, 0x1p+2f},
-        {0x1.50bfb6p+6f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
+        {TRAJECTORY_LAST_ROW_BREW, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
     };
+#undef TRAJECTORY_LAST_ROW_BREW
     static const int STEPS[] = {0, 10, 30, 60, 1100};
     static const plant_actuation_t *const UNDER[] = {&AT_REST, &AT_REST, &HEATING, &WORKING,
                                                      &WORKING};

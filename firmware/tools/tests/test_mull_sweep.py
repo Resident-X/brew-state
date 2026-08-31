@@ -17,6 +17,7 @@ and both are decided from what the tool says about itself.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import stat
@@ -306,6 +307,23 @@ class ThePopulationFollowsTheTree(unittest.TestCase):
         self.assertEqual(includes, written["includePaths"])
         self.assertEqual(excludes, written["excludePaths"])
 
+    def test_a_mutators_restriction_is_written_and_read_back_the_same_way(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = mull_sweep.write_scope(
+                directory, [".*/a/.*"], [".*/test/.*"], ["cxx_eq_to_ne"]
+            )
+            written = mull_sweep.load_yaml(path)
+        self.assertEqual(["cxx_eq_to_ne"], written["mutators"])
+
+    def test_no_mutators_restriction_leaves_the_key_out_entirely(self):
+        # Not written empty: an empty mutators: list is Mull's own way of
+        # asking for none of them, the opposite of every operator this sweep
+        # means by omitting the key.
+        with tempfile.TemporaryDirectory() as directory:
+            path = mull_sweep.write_scope(directory, [".*/a/.*"], [".*/test/.*"])
+            written = mull_sweep.load_yaml(path)
+        self.assertNotIn("mutators", written)
+
     def test_the_population_this_project_ships_covers_every_structure_that_claims_a_machine(self):
         """SOL-PLANT-RECONSTRUCTABLE-STATE.C7: the population follows the
         structures declaring they describe a machine, so arithmetic added to one
@@ -568,6 +586,38 @@ class TheDerivedScopeReachesTheCompiler(unittest.TestCase):
         with open(os.path.join(TOOLS, "pio_mutation.py"), encoding="utf-8") as handle:
             source = handle.read()
         self.assertIn('CONFIG = os.environ.get("MULL_CONFIG") or os.path.join(', source)
+
+
+class AnEmptyScopeIsAResultNotAFailure(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1: a scope with no mutant in it is a report of nothing, not a crash.
+
+    A --shard-directory whose scope an environment's build does not reach --
+    every directory sharded against every suite, deliberately, rather than
+    worked out in advance -- draws no mutant at all. mull-runner writes no
+    report file for that and exits clean, which the run_mull that used to
+    assume any missing report meant a broken run could not tell apart from the
+    runner having actually failed.
+    """
+
+    def fake_run(self, returncode: int):
+        def run(command, cwd=None, env=None, capture_output=None, text=None, check=None):
+            return subprocess.CompletedProcess(command, returncode, stdout="", stderr="")
+
+        return run
+
+    def test_no_report_and_a_clean_exit_is_an_empty_population(self):
+        original = mull_sweep.subprocess.run
+        mull_sweep.subprocess.run = self.fake_run(0)
+        self.addCleanup(setattr, mull_sweep.subprocess, "run", original)
+        report = mull_sweep.run_mull("mull-runner", "/program", "/mull.yml", "/project")
+        self.assertEqual({"files": {}}, report)
+
+    def test_no_report_and_a_failing_exit_is_still_refused(self):
+        original = mull_sweep.subprocess.run
+        mull_sweep.subprocess.run = self.fake_run(1)
+        self.addCleanup(setattr, mull_sweep.subprocess, "run", original)
+        with self.assertRaises(mull_sweep.SweepError):
+            mull_sweep.run_mull("mull-runner", "/program", "/mull.yml", "/project")
 
 
 class TheClaimIsCheckedInsideEveryBuild(unittest.TestCase):
@@ -1046,6 +1096,498 @@ class AMutantIsCaughtWhenAnySuiteKillsIt(unittest.TestCase):
         name = next(iter(found))
         self.assertEqual("cxx_lt_to_le:src/plant/common/x.c:1:7", name)
         self.assertNotIn("/p/", name)
+
+
+class TheMutatorAxisIsReadFromADryRunNotFromADocumentedList(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1: which operators a shard can split by is read from what the compiler produced.
+
+    A fixed list of group names typed from Mull's own documentation was tried
+    first and reverted: it dropped every mutant whose operator the list left
+    out, silently, because a scope restricted to named operators draws nothing
+    from an operator not named. discovered_mutators reads the operators a
+    dry-run actually reported instead, so the axis can never leave one out
+    that the population it is splitting really has.
+    """
+
+    def report(self, *entries: tuple[str, str]) -> dict:
+        """A dry-run report naming one mutator per (source, mutator) pair."""
+        files: dict = {}
+        for source, mutator in entries:
+            files.setdefault(source, {"mutants": []})["mutants"].append(
+                {
+                    "id": "x",
+                    "mutatorName": mutator,
+                    "replacement": "",
+                    "location": {"start": {"line": 1, "column": 1}},
+                }
+            )
+        return {"files": files}
+
+    def test_every_distinct_operator_present_is_returned(self):
+        report = self.report(
+            ("/p/a.c", "cxx_eq_to_ne"), ("/p/a.c", "cxx_lt_to_le"), ("/p/b.c", "cxx_add_to_sub")
+        )
+        self.assertEqual(
+            ["cxx_add_to_sub", "cxx_eq_to_ne", "cxx_lt_to_le"],
+            mull_sweep.discovered_mutators(report),
+        )
+
+    def test_the_same_operator_from_two_files_is_reported_once(self):
+        report = self.report(("/p/a.c", "cxx_eq_to_ne"), ("/p/b.c", "cxx_eq_to_ne"))
+        self.assertEqual(["cxx_eq_to_ne"], mull_sweep.discovered_mutators(report))
+
+    def test_an_empty_report_names_no_operators(self):
+        self.assertEqual([], mull_sweep.discovered_mutators({"files": {}}))
+
+
+class ADryRunDiscoversMutantsWithoutRunningAnyOfThem(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1: run_mull's dry-run path asks the runner to discover rather than execute -- but still makes the warmup run --timeout was sized for.
+
+    --dry-run skips a mutant's own execution, but the runner still makes its
+    warmup run against the unmutated program first, on the same reasoning an
+    ordinary sweep does -- discovering what a scope draws presupposes the
+    thing being discovered from is testable at all. Omitting --timeout there
+    reintroduces exactly the failure BASELINE_TIMEOUT_MS exists to prevent:
+    the runner's own undocumented three-second default, too short for a suite
+    whose baseline already runs close to it, reports "Original test failed"
+    for a suite that never actually failed. Only --workers is dry-run-specific
+    -- there is nothing to parallelise when nothing is being executed.
+    """
+
+    def fake_run(self, recorded: list):
+        def run(command, cwd=None, env=None, capture_output=None, text=None, check=None):
+            recorded.append(command)
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+        return run
+
+    def test_dry_run_passes_the_flag_and_the_timeout_but_not_the_worker_count(self):
+        recorded: list = []
+        original = mull_sweep.subprocess.run
+        mull_sweep.subprocess.run = self.fake_run(recorded)
+        self.addCleanup(setattr, mull_sweep.subprocess, "run", original)
+        mull_sweep.run_mull("mull-runner", "/program", "/mull.yml", "/project", dry_run=True)
+        command = recorded[0]
+        self.assertIn("--dry-run", command)
+        self.assertIn("--timeout", command)
+        self.assertNotIn("--workers", command)
+
+    def test_an_ordinary_run_carries_both_the_timeout_and_the_worker_count_and_not_the_flag(self):
+        recorded: list = []
+        original = mull_sweep.subprocess.run
+        mull_sweep.subprocess.run = self.fake_run(recorded)
+        self.addCleanup(setattr, mull_sweep.subprocess, "run", original)
+        mull_sweep.run_mull("mull-runner", "/program", "/mull.yml", "/project")
+        command = recorded[0]
+        self.assertNotIn("--dry-run", command)
+        self.assertIn("--timeout", command)
+        self.assertIn("--workers", command)
+
+
+# --- Matrixing the sweep across shards ---------------------------------------
+
+
+class AShardIsFoldedTheSameWayASuiteIs(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1: folding one shard's raw findings into the combined population is the same merge collect() makes within one process.
+
+    Matrixing the sweep across CI jobs moves where a suite's report is folded
+    in -- one process per shard instead of one process for all of them -- but
+    what "caught" means cannot move with it. A mutant killed by any shard has
+    to stay killed regardless of the order the shards happen to finish or the
+    order their reports happen to be read back in, the same way collect()
+    already guarantees within one process.
+    """
+
+    def mutant(self, name: str, killed: bool) -> dict:
+        return {
+            "id": name,
+            "source": "src/plant/common/x.c",
+            "line": 1,
+            "column": 7,
+            "mutator": "cxx_lt_to_le",
+            "replacement": "<=",
+            "status": "Killed" if killed else "Survived",
+            "killed": killed,
+        }
+
+    def test_a_mutant_killed_by_a_later_shard_is_caught(self):
+        found: dict = {}
+        mull_sweep.fold(found, {"x": self.mutant("x", False)})
+        mull_sweep.fold(found, {"x": self.mutant("x", True)})
+        self.assertTrue(found["x"]["killed"])
+
+    def test_a_mutant_killed_by_an_earlier_shard_stays_caught(self):
+        found: dict = {}
+        mull_sweep.fold(found, {"x": self.mutant("x", True)})
+        mull_sweep.fold(found, {"x": self.mutant("x", False)})
+        self.assertTrue(found["x"]["killed"])
+
+    def test_a_mutant_no_shard_kills_survives(self):
+        found: dict = {}
+        mull_sweep.fold(found, {"x": self.mutant("x", False)})
+        mull_sweep.fold(found, {"x": self.mutant("x", False)})
+        self.assertFalse(found["x"]["killed"])
+
+    def test_mutants_at_different_places_from_different_shards_are_both_kept(self):
+        found: dict = {}
+        mull_sweep.fold(found, {"x": self.mutant("x", True)})
+        mull_sweep.fold(found, {"y": self.mutant("y", False)})
+        self.assertEqual(2, len(found))
+        self.assertTrue(found["x"]["killed"])
+        self.assertFalse(found["y"]["killed"])
+
+
+class TheShardsAreDerivedFromTheSameTreeEveryOtherModeReads(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1: --list-shards names every environment:suite pair the tree declares, without a compiler.
+
+    A matrix built from a list written in the workflow file would go stale the
+    same way the scope patterns this file used to carry already did once --
+    a suite added later would sweep nothing until somebody remembered to add a
+    line for it. --list-shards is read by the workflow instead so the matrix is
+    exactly what --population-only already proves is decided before a compiler
+    is needed.
+    """
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+
+    def sweep(self, *extra):
+        return subprocess.run(
+            [
+                sys.executable,
+                os.path.join(TOOLS, "mull_sweep.py"),
+                "--project",
+                self.tree.root,
+                "--plant-root",
+                os.path.relpath(self.tree.plant, self.tree.root),
+                "--include-dir",
+                os.path.relpath(self.tree.include, self.tree.root),
+                *extra,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def test_the_one_declared_pair_is_split_by_every_directory_in_the_population(self):
+        result = self.sweep("--list-shards")
+        self.assertEqual(0, result.returncode, result.stderr)
+        shards = json.loads(result.stdout)
+        self.assertEqual(
+            [
+                {
+                    "environment": "native_alpha_mutation",
+                    "suite": "test_alpha",
+                    "directory": "src/plant/common",
+                },
+                {
+                    "environment": "native_alpha_mutation",
+                    "suite": "test_alpha",
+                    "directory": "src/plant/alpha",
+                },
+            ],
+            shards,
+        )
+
+    def test_a_second_declared_suite_is_also_split_by_directory(self):
+        options = mutation_environment("alpha", "test_alpha")
+        options["test_filter"] = "test_alpha,test_alpha_again"
+        self.tree.declare([("native_alpha_mutation", options)])
+        result = self.sweep("--list-shards")
+        self.assertEqual(0, result.returncode, result.stderr)
+        shards = json.loads(result.stdout)
+        self.assertEqual(4, len(shards))
+        self.assertEqual(
+            {"test_alpha", "test_alpha_again"}, {shard["suite"] for shard in shards}
+        )
+        self.assertEqual(
+            {"src/plant/common", "src/plant/alpha"},
+            {shard["directory"] for shard in shards},
+        )
+
+    def test_a_missing_shard_report_flag_refuses_without_a_compiler(self):
+        result = self.sweep("--shard", "native_alpha_mutation:test_alpha")
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("--shard-report", result.stderr)
+
+    def test_a_shard_naming_an_undeclared_pair_is_refused_without_a_compiler(self):
+        result = self.sweep(
+            "--shard", "native_alpha_mutation:test_nobody_declared", "--shard-report", "/dev/null"
+        )
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("native_alpha_mutation:test_nobody_declared", result.stderr)
+
+    def test_a_shard_naming_an_undeclared_environment_is_refused_without_a_compiler(self):
+        result = self.sweep(
+            "--shard", "nobody_declared_this_environment:test_alpha", "--shard-report", "/dev/null"
+        )
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("nobody_declared_this_environment:test_alpha", result.stderr)
+
+    def test_a_shard_directory_not_in_the_population_is_refused_without_a_compiler(self):
+        result = self.sweep(
+            "--shard",
+            "native_alpha_mutation:test_alpha",
+            "--shard-report",
+            "/dev/null",
+            "--shard-directory",
+            "src/plant/nowhere",
+        )
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("src/plant/nowhere", result.stderr)
+
+    def test_list_mutators_in_wants_environment_colon_directory(self):
+        result = self.sweep("--list-mutators-in", "native_alpha_mutation")
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("ENVIRONMENT:DIRECTORY", result.stderr)
+
+    def test_list_mutators_in_an_undeclared_environment_is_refused_without_a_compiler(self):
+        result = self.sweep("--list-mutators-in", "nobody_declared_this:src/plant/common")
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("nobody_declared_this:src/plant/common", result.stderr)
+
+    def test_list_mutators_in_a_directory_not_in_the_population_is_refused_without_a_compiler(self):
+        result = self.sweep("--list-mutators-in", "native_alpha_mutation:src/plant/nowhere")
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("native_alpha_mutation:src/plant/nowhere", result.stderr)
+
+    def test_every_pair_list_shards_names_is_accepted_by_list_mutators_in(self):
+        # A second round trip: --list-shards' environment and directory fields
+        # have to be exactly what --list-mutators-in accepts, since that is how
+        # the discover-mutators job is meant to be driven from the same list.
+        listed = json.loads(self.sweep("--list-shards").stdout)
+        pairs = {(shard["environment"], shard["directory"]) for shard in listed}
+        for environment, directory in pairs:
+            result = self.sweep("--list-mutators-in", f"{environment}:{directory}")
+            self.assertNotIn("names no environment or no directory", result.stderr, (environment, directory))
+
+    def test_list_mutators_out_is_still_refused_the_same_way_without_a_compiler(self):
+        # The refusal paths run before a build is ever started, so routing the
+        # eventual result to a file instead of stdout changes nothing about
+        # them -- this is the same check as the two refusal tests above, aimed
+        # at the flag combination the workflow actually uses.
+        result = self.sweep(
+            "--list-mutators-in",
+            "native_alpha_mutation:src/plant/nowhere",
+            "--list-mutators-out",
+            "/dev/null",
+        )
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("native_alpha_mutation:src/plant/nowhere", result.stderr)
+
+    def test_every_directory_list_shards_names_is_accepted_by_shard_directory(self):
+        # A round trip: whatever --list-shards prints in a shard's "directory"
+        # field has to be exactly what --shard-directory accepts back, since
+        # that is how the workflow carries one to the other. Refused past the
+        # directory check (no real toolchain here) is still evidence the
+        # refusal above is not this test's failure mode.
+        listed = json.loads(self.sweep("--list-shards").stdout)
+        for shard in listed:
+            result = self.sweep(
+                "--shard",
+                f"{shard['environment']}:{shard['suite']}",
+                "--shard-report",
+                "/dev/null",
+                "--shard-directory",
+                shard["directory"],
+            )
+            self.assertNotIn("names no directory", result.stderr, shard)
+
+
+class TheCombinedShardListCrossesDiscoveredMutatorsWithTheOriginalTriples(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1: --combine-shards folds a discover-mutators job's output back into --list-shards' own triples.
+
+    A discover-mutators shard runs once per environment:directory pair and
+    reports which operators it found there; --combine-shards is the step that
+    turns those separate small reports back into one shard list, without a
+    compiler, the same way --merge-reports turns several sweep shards back
+    into one population.
+    """
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+        self.discovered = tempfile.TemporaryDirectory()
+        self.addCleanup(self.discovered.cleanup)
+
+    def write_discovery(self, environment: str, directory: str, mutators: list) -> None:
+        path = os.path.join(self.discovered.name, f"{environment}-{directory.replace('/', '-')}.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump({"environment": environment, "directory": directory, "mutators": mutators}, handle)
+
+    def combine(self):
+        return subprocess.run(
+            [
+                sys.executable,
+                os.path.join(TOOLS, "mull_sweep.py"),
+                "--project",
+                self.tree.root,
+                "--plant-root",
+                os.path.relpath(self.tree.plant, self.tree.root),
+                "--include-dir",
+                os.path.relpath(self.tree.include, self.tree.root),
+                "--combine-shards",
+                self.discovered.name,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def test_one_directorys_discovered_operators_become_one_shard_each(self):
+        self.write_discovery(
+            "native_alpha_mutation", "src/plant/alpha", ["cxx_eq_to_ne", "cxx_lt_to_le"]
+        )
+        result = self.combine()
+        self.assertEqual(0, result.returncode, result.stderr)
+        shards = json.loads(result.stdout)
+        self.assertEqual(
+            [
+                {
+                    "environment": "native_alpha_mutation",
+                    "suite": "test_alpha",
+                    "directory": "src/plant/alpha",
+                    "mutators": "cxx_eq_to_ne",
+                },
+                {
+                    "environment": "native_alpha_mutation",
+                    "suite": "test_alpha",
+                    "directory": "src/plant/alpha",
+                    "mutators": "cxx_lt_to_le",
+                },
+            ],
+            shards,
+        )
+
+    def test_a_directory_with_no_discovered_operators_contributes_no_shard(self):
+        # common was never written a discovery file for at all here -- the
+        # same state as an environment whose build never reaches it.
+        self.write_discovery("native_alpha_mutation", "src/plant/alpha", ["cxx_eq_to_ne"])
+        result = self.combine()
+        self.assertEqual(0, result.returncode, result.stderr)
+        shards = json.loads(result.stdout)
+        self.assertFalse(any(shard["directory"] == "src/plant/common" for shard in shards))
+
+    def test_no_discovery_files_at_all_produces_no_shards_rather_than_an_error(self):
+        # Not a refusal: nothing discovered anywhere is a fact this step folds
+        # in as-is, the same way an empty --shard result is not an error.
+        result = self.combine()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([], json.loads(result.stdout))
+
+    def test_a_discovery_file_that_is_not_valid_json_is_refused_rather_than_crashing(self):
+        # A shard that failed to upload whole -- an interrupted artefact
+        # rather than a failed job, which the matrix's fail-fast: false
+        # already surfaces on its own.
+        path = os.path.join(self.discovered.name, "truncated.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write('{"environment": "native_alpha_mutation", "director')
+        result = self.combine()
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("truncated.json", result.stderr)
+
+    def test_a_discovery_file_missing_a_required_field_is_refused_rather_than_crashing(self):
+        path = os.path.join(self.discovered.name, "incomplete.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump({"environment": "native_alpha_mutation"}, handle)
+        result = self.combine()
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("incomplete.json", result.stderr)
+
+
+class TheMergedShardsAreJudgedExactlyAsOneRunWouldBe(unittest.TestCase):
+    """SOL-MUTATION-SWEEP-CI-TIMEOUT-HEADROOM.C1: --merge-reports reaches the same checks and the same verdict a single-process run reaches.
+
+    The population, scope and triage checks main() runs inline after sweeping
+    everything itself are the same checks judge() runs after --merge-reports
+    folds several shards' files together -- the same function, reached by a
+    different path. What is under test here is that the path change is
+    invisible to the verdict: a shard set standing in for what one process
+    would have found reports the same unswept/intruder/triage failures a
+    monolithic run would have, and the same clean pass when nothing is wrong.
+    """
+
+    def setUp(self):
+        self.tree = PopulationTree()
+        self.addCleanup(self.tree.cleanup)
+        self.reports = tempfile.TemporaryDirectory()
+        self.addCleanup(self.reports.cleanup)
+
+    def write_shard(self, name: str, found: dict) -> None:
+        path = os.path.join(self.reports.name, f"{name}.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(found, handle)
+
+    def killed_mutant(self, source: str, line: int = 1) -> dict:
+        return {
+            "id": f"cxx_lt_to_le:{source}:{line}:7",
+            "source": source,
+            "line": line,
+            "column": 7,
+            "mutator": "cxx_lt_to_le",
+            "replacement": "<=",
+            "status": "Killed",
+            "killed": True,
+        }
+
+    def merge(self):
+        return subprocess.run(
+            [
+                sys.executable,
+                os.path.join(TOOLS, "mull_sweep.py"),
+                "--project",
+                self.tree.root,
+                "--plant-root",
+                os.path.relpath(self.tree.plant, self.tree.root),
+                "--include-dir",
+                os.path.relpath(self.tree.include, self.tree.root),
+                "--merge-reports",
+                self.reports.name,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def test_a_clean_population_folded_from_two_shards_passes(self):
+        self.write_shard("common", {"a": self.killed_mutant("src/plant/common/plant_step.c")})
+        self.write_shard("alpha", {"b": self.killed_mutant("src/plant/alpha/plant_structure.c")})
+        result = self.merge()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("2 mutants, 2 killed", result.stdout)
+
+    def test_a_survivor_in_one_shard_is_reported_unreviewed(self):
+        self.write_shard("common", {"a": self.killed_mutant("src/plant/common/plant_step.c")})
+        survivor_mutant = self.killed_mutant("src/plant/alpha/plant_structure.c")
+        survivor_mutant["killed"] = False
+        survivor_mutant["status"] = "Survived"
+        self.write_shard("alpha", {"b": survivor_mutant})
+        result = self.merge()
+        self.assertEqual(mull_sweep.FOUND_THE_PROBLEM, result.returncode)
+        self.assertIn("have not been reviewed", result.stderr)
+
+    def test_a_structure_missing_from_every_shard_is_reported_unswept(self):
+        # Only "common" reported -- "alpha", the one machine-describing
+        # structure this fixture declares, contributed nothing.
+        self.write_shard("common", {"a": self.killed_mutant("src/plant/common/plant_step.c")})
+        result = self.merge()
+        self.assertEqual(mull_sweep.FOUND_THE_PROBLEM, result.returncode)
+        self.assertIn("no mutant came back from alpha", result.stderr)
+
+    def test_no_shard_reports_at_all_is_refused_without_reading_the_tree_as_empty(self):
+        result = self.merge()
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("no shard reports found", result.stderr)
+
+    def test_a_shard_report_that_is_not_valid_json_is_refused_rather_than_crashing(self):
+        self.write_shard("common", {"a": self.killed_mutant("src/plant/common/plant_step.c")})
+        path = os.path.join(self.reports.name, "truncated.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write('{"a": {"id": "a", "kille')
+        result = self.merge()
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, result.returncode)
+        self.assertIn("truncated.json", result.stderr)
 
 
 # --- What the sweep concludes from a survivor -------------------------------

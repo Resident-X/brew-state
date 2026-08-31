@@ -1,0 +1,23 @@
+id: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT.C1
+type: criterion
+title: The golden-trajectory test passes cleanly under both env:native_test and env:native_mutation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  firmware/test/test_plant/test_plant.c's golden-trajectory test passes cleanly under
+  `pio test -e native_test` and `env:native_mutation` on both x86_64 and arm64 hosts,
+  using an exact hex-literal comparison in every case rather than a tolerance. Every
+  cell whose value is unchanged across toolchain and architecture keeps its single
+  existing literal; only the one cell shown to diverge, and only on the combination
+  that produces the divergence, selects a second literal, documented in the same
+  style the file already uses for a recorded value changing for a legitimate reason.
+  Dispatching the `Mutation sweep` workflow (which runs on x86_64) against the branch
+  carrying this fix proceeds past the baseline check and reaches mutant generation.
+  Out of scope: judging any mutant the sweep then reports as a survivor, and any
+  other test in the suite -- both belong to SOL-SWEEP-JUDGEMENTS-REMADE or a future
+  slice, not this one.
+links:
+  - target: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT
+    type: criterion-of
