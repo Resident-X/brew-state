@@ -139,8 +139,7 @@ lines the enumeration collectively demands are *simultaneously* available.
 
 Totalled across both tables of `controller-io.md`. One total is given. A second column here previously costed the alternative of
 reaching that panel over the machine's existing two-wire link, which `DEC-U8-BOARD-RETENTION-UNVERIFIED`
-left open. That option no longer arises: physical inspection places both microcontrollers on the main
-board and finds the panel passive, so the two wires connect two chips this project replaces rather than
+left open. That option no longer arises: inspection of the panel board places no controller on the panel, and the owner's account places both microcontrollers on the main board and finds the panel passive, so the two wires connect two chips this project replaces rather than
 two boards, and the panel board is retained, but carries no controller to speak to. The column is struck rather than costed.
 
 | Resource | Count | (struck) | Notes |

@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The machine's wiring is recorded from physical evidence, graded by how each claim was established, and every document derived from it reconciled
 status: active
-version: 1
+version: 2
 text: |
   The machine's declared configuration and its channel enumeration were both written from a scanned
   service manual, and both inherited that source's errors with no way to notice them. Three readings of
@@ -18,9 +18,11 @@ text: |
 
   This establishes a standing artefact for connector and harness allocations, in which every claim
   carries how it was established -- traced, read, inferred, or observed on the running machine -- and in
-  which the rule that a physical board outranks the manual is stated with the evidence for it. The
-  manual has now been caught twice reusing designators across boards, so that rule is a finding rather
-  than a preference.
+  which the rule that a physical board outranks the manual is stated with the evidence for it. The manual has now been caught three times putting the wrong designator on the right part -- on the
+  panel switches, on the panel resistors, and on the two integrated circuits themselves, where its U8
+  and U9 are swapped relative to the boards. So that rule is a finding rather than a preference. The
+  third instance is the one that bites, because a designator taken from the manual already names a
+  decision node in this graph; the record reconciles the two conventions rather than renaming anything.
 
   Three claims about where things are turn out to be wrong. Both microcontrollers sit on the main
   control board rather than on two boards linked by two wires. The button and indicator panel is a

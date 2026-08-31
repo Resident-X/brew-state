@@ -17,16 +17,44 @@ rot the first time a harness changed. Nodes refer to this artefact instead.
 ## What outranks what
 
 Where a physical board and the service manual disagree, **the board wins**. The manual has now been
-caught twice reusing designators across boards — once on switches (`S1`–`S10` on the panel are not
-the `S1`–`S8` the circuit diagram numbers) and once on resistors (`R62`/`R63` on the panel are LED
-series resistors, not the 47 Ω line resistors carrying those numbers on the main-board sheet). Its
-topology has been broadly right and its labelling repeatedly wrong, which is the pattern to expect
-from it: read it for how a circuit works, not for what anything is called.
+caught three times putting the wrong designator on the right part — once on switches (`S1`–`S10` on
+the panel are not the `S1`–`S8` the circuit diagram numbers), once on resistors (`R62`/`R63` on the
+panel are LED series resistors, not the 47 Ω line resistors carrying those numbers on the main-board
+sheet), and once **on the integrated circuits themselves**.
 
-Every row below carries its own provenance and its own confidence. **Traced** means somebody
-followed the copper. **Read** means it comes off a scan or a datasheet and nobody has confirmed it
-against the machine. **Observed** means somebody watched the running machine do it. **Inferred**
-means it follows from other rows rather than from any of those.
+That third one is the worst of them and is set out in full below. Briefly: the manual's `U8` and `U9`
+are **swapped** relative to the boards. Its topology has been broadly right and its labelling
+repeatedly wrong, which is the pattern to expect from it: read it for how a circuit works, not for
+what anything is called.
+
+### `U8` and `U9` are swapped, and one of them names a graph node
+
+On the physical boards, **`U9` is the `HT66F50`** microcontroller and **`U8` is the `VID66-08`**
+stepper driver. The service manual's circuit diagram has them the other way round. *(Provenance:
+**Traced** — the machine was opened and the parts read off the boards.)*
+
+This is not a cosmetic difference, because a designator was already load-bearing in this project. The
+decision node `DEC-U8-BOARD-RETENTION-UNVERIFIED` is named for the microcontroller, and takes its
+`U8` from the manual. Under board numbering that identifier now points at the stepper driver, which
+the decision is not about. **Wherever `U8` appears in the graph or in prose in this project, it means
+the `HT66F50` microcontroller** — the manual's numbering — *except* where a sentence explicitly quotes
+the board silkscreen, which `reference-machine.md` and `controller-io-bom.csv` each do once and label
+as such. The node keeps its identifier because renaming it would break every reference for no gain.
+
+That is a deliberate exception to the rule this section opens with. Everywhere else the board wins;
+here the project stays on the manual's numbering because an identifier already in use is worth more
+as a stable handle than as an accurate description. The exception is named rather than quietly taken,
+because an unnamed one is indistinguishable from an oversight. Anyone reading a board is on the other
+convention, and this paragraph is the only place that reconciles them — so prefer the part number to
+either designator whenever it actually matters.
+
+Every row below carries its own provenance and its own confidence. **Traced** means somebody had the
+hardware in front of them and established the claim from it directly — either by following the copper
+or by reading a part off the board it is soldered to. Those are different acts and the rows say which,
+but they share what makes the grade strong: the machine itself answered, not a document about it.
+**Read** means it comes off a scan or a datasheet and nobody has confirmed it against the machine.
+**Observed** means somebody watched the running machine do it. **Inferred** means it follows from
+other rows rather than from any of those.
 
 They are not ranked in that order. **Traced** is the strongest: copper does not change while you look
 away. **Read** comes next and travels furthest — a datasheet figure is a manufacturer's guarantee, and
@@ -123,15 +151,21 @@ harness.)* That number
 is load-bearing for everything below — two of the conclusions in this section follow from *and there
 are nine* and from nothing else — so it is worth stating separately from the reasoning it feeds.
 
-This assembly is a sandwich of boards and gauge movements and cannot be opened without disassembly,
-so what follows is **inferred** rather than traced. It is inferred from three things that agree, and
-it replaces an earlier reading that fitted none of them.
+The machine has since been opened, so this section is no longer uniformly inferred. **What the
+driver is and where it sits is now traced.** How the nine conductors are allocated between the
+driver, the indicator and the rail is still inferred, and is marked as such row by row.
 
-**The stepper driver is on this board, not on the main board.** The `VID66-08` and its decoupling
-capacitor appear on circuit-diagram sheet 3-3 and are **absent from photographs of the main-board
-spare part**. The parts exist and are not on the main board, and this is the only other board they
-could be on. *(Provenance: absence established from replacement-part photographs, which may not show
-both sides of the board or the same revision; presence on this board not directly observed.)*
+**The stepper driver is on this board, not on the main board — confirmed by opening the machine.**
+The `VID66-08` and its decoupling capacitor were read off the gauge assembly directly. *(Provenance:
+**Traced** — parts identified on the physical board.)* This was previously carried as an inference
+from the parts' absence from photographs of the main-board spare, and it was the weakest claim in
+this section and the premise several others stood on. It now stands on its own.
+
+One discrepancy is recorded rather than reconciled: the decoupling capacitor is **`C17`** on the
+board, where the circuit diagram sheet draws `C16` in that position. Whether the sheet is mis-numbered, or
+whether both capacitors exist, is not established — and the `U8`/`U9` swap is not evidence either way,
+since transposing two designators between two parts is a different error from an off-by-one on a
+single one. Nothing here depends on which.
 
 **The wire count only closes this way, and it closes exactly.** Two bipolar motors driven from the
 main board would need eight phase conductors. Add the water indicator's cathode and the anode rail
@@ -191,9 +225,9 @@ different evidence, so each names its own:
 
 The pin naming — `DIR` plus `F` — is the conventional direction-and-step-frequency pair, and what
 follows is now read from the part's datasheet rather than inferred from the naming. *(Provenance:
-`VID6608` datasheet, Hong Kong VID Company, revision 1, 2022, read. That the fitted part matches this
-revision is inferred from the circuit diagram's marking, not traced — a second-sourced or older
-variant could carry different thresholds.)*
+`VID6608` datasheet, Hong Kong VID Company, revision 1, 2022, read. The part number is read off the board itself; that
+the fitted part matches this *revision* of the datasheet is not established, and a second-sourced or
+older variant could carry different thresholds.)*
 
 `DIRA` and `DIRB` are levels, not waveforms: high picks one direction, low the other, sampled when
 the step clock edges, static between steps. Ordinary outputs.
@@ -322,27 +356,28 @@ It also means circuit-diagram sheet 3-3 spans **three** physical boards — main
 board — which is the third time that sheet has grouped by function across a board boundary without
 saying so.
 
-### What would confirm it
+### What the inspection settled, and what it left
 
 The rail question is settled the other way round from an earlier reading of this section: the water
 lamp dims in step with the power element, so both front assemblies hang off the one gated rail. With
 that, the conductor count closes exactly and the six-or-seven pin question is closed at **six** — the
 totals elsewhere in this project are built on six and need no spare held against this.
 
-**Six is settled only on the premise that the driver is on this assembly**, and that premise is the
-section's weakest. Two questions remain. Where the driver's two supply pins are joined changes no
-count at all. Whether a 16-pin part is actually on the board changes *everything*: if it is not, the
-channel costs eight phase-drive lines and a stepper driver in the parts list rather than six logic
-pins. That claim still rests wholly on absence from a photograph of the main-board spare, which is
-the one place this section would most repay a screwdriver.
+**Six is settled, and the premise it stood on is now traced rather than inferred.** The driver is on
+this assembly; the machine was opened and the part read off the board. The question that would have
+changed the whole channel — whether a 16-pin part is there at all, and so whether the controller owes
+six logic pins or eight phase-drive lines and a driver in the parts list — is closed.
+
+What remains changes no count. Where the driver's two supply pins are joined is one node either way.
+Whether the fitted part matches the datasheet revision read here is worth knowing before its
+thresholds are relied on, but it would move a figure rather than a channel.
 
 ## Open
 
 - Which physical pin is number 1 on the panel connector, and the buzzer's terminal order.
-- Direct confirmation that the `VID66-08` is on the gauge assembly at all, which currently rests on
-  its absence from photographs of the main-board spare.
 - Where the `VID66-08`'s two supply pins are joined — on the main board or on the gauge assembly.
   They are one node either way, so this changes no count.
+- Whether the sheet's `C16` and the board's `C17` are the same part under two numbers, or two parts.
 - Confirmation that the fitted driver matches the datasheet revision read here, rather than being an
   older or second-sourced variant with different thresholds.
 - The needle-referred step and the gearing behind it. The *shaft* step is settled at 1/12°; what is

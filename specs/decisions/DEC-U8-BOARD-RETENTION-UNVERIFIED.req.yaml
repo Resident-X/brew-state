@@ -3,7 +3,7 @@ type: decision
 category: strategic
 title: The operator-interface channels are served directly, there being no panel-mounted controller to speak to instead
 status: active
-version: 2
+version: 3
 text: |
   The circuit diagram shows the two OEM microcontrollers exchanging signals over exactly two wires --
   CMDTX from the part driving heaters, pumps, valves and reading zero-cross, and SLVOK from the part
@@ -38,7 +38,22 @@ text: |
 
   One boundary this decision does not reach: the gauge assembly. It is a second front-mounted board,
   it carries the stepper driver and the low-water indicator, and it is retained rather than replaced
-  -- so the conclusion here, that no front assembly carries a controller to be spoken to, is reached for the button panel and holds for the gauge assembly too, which carries a motor driver rather than a controller.
+  -- so the conclusion here, that no front assembly carries a controller to be spoken to, is reached for
+  the button panel and holds for the gauge assembly too, which carries a motor driver rather than a
+  controller. That much is no longer an inference: the machine has since been opened and the driver read
+  off the gauge board directly, where it had previously been placed there by its absence from
+  photographs of the main-board spare. Where the two microcontrollers sit still rests on the owner's
+  account rather than on that inspection, and is recorded with that provenance.
+
+  A note on the identifier this node carries, because opening the machine made it ambiguous. The boards
+  silkscreen the HT66F50 microcontroller U9 and the VID66-08 stepper driver U8; the service manual's
+  circuit diagram has those two designators the other way round. This node is named for the
+  microcontroller and takes its U8 from the manual, so under board numbering its identifier now points
+  at the stepper driver, which this decision is not about. The identifier stays, because renaming it
+  would break every reference for no gain: throughout this project U8 means the HT66F50, and
+  connector-pinouts.md is where the two conventions are reconciled. It is the third instance of the manual
+  misapplying designators, after the panel switches and the panel resistors, and the first to land on
+  integrated circuits rather than on discrete components.
 rationale: |
   Context: reference-machine.md stated the OEM control electronics are replaced entirely, written before
   this project's reading of the service manual identified the two-wire link between the two Holtek parts
@@ -46,8 +61,13 @@ rationale: |
   retaining the button, indicator and stepper board and driving it over its native link -- which the
   existing full-replacement statement foreclosed without having considered it. This decision was first
   recorded as an assumption pending a bench capture that would settle whether the link could be spoken.
-  It is no longer an assumption. Physical inspection finds no 28-pin part on the front panel: both
-  microcontrollers sit on the main control board, the panel is a passive assembly carrying the indicator elements, ten switches wired as five parallel pairs, and the buzzer, and it is reached by one nine-way harness. The two wires are a connection between two chips on one board.
+  It is no longer an assumption, though the evidence retiring it is of two kinds and they establish
+  different halves of the claim. Tracing the physical panel spare board finds no 28-pin part on it,
+  which settles that the panel carries no controller. That both microcontrollers sit on the main board
+  instead rests on the owner's account of the machine and is not yet bench-verified; the later opening
+  of the machine confirmed what the gauge assembly carries and did not reach this question. Either way
+  the conclusion holds, because it turns on the panel carrying no controller rather than on where the
+  controllers are. So: the panel carries no 28-pin part, the panel is a passive assembly carrying the indicator elements, ten switches wired as five parallel pairs, and the buzzer, and it is reached by one nine-way harness. The two wires are a connection between two chips on one board.
 
   Trade-offs: When the option was live, assuming full replacement cost nothing, kept the default the
   project was already designing against, and avoided baking an unverified guess about undocumented
