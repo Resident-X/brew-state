@@ -1,0 +1,73 @@
+id: DEC-OPERATOR-INTERFACE-REPRODUCED
+type: decision
+title: The operator interface the machine already presents is reproduced rather than redesigned, as the wiring record defines it
+status: active
+version: 1
+text: |
+  The machine already presents an operator interface, and the operator already knows it. Five keys.
+  Indicators whose brightness ramps while the machine heats. Two gauges that sweep to full scale and
+  back at power-on. Low water announced both audibly and visually, on two devices that can fail or be
+  dropped independently of each other.
+
+  None of that is required by any criterion, and none of it should be. A requirement that named a
+  stepper sweep, or a rail-modulation scheme, would bind this design to the gauges and indicators this
+  machine happens to carry, and would have to be superseded the first time one of them was replaced.
+  The requirement layer states what the operator gets; it does not state which parts produce it.
+
+  So the obligation to meet that interface belongs here, on the delivery chain, and it is expressed by
+  reference rather than by restatement. What "the existing operator interface" consists of is whatever
+  the wiring record says it consists of, and that record changes as tracing continues. A replacement
+  reproduces the behaviours it describes; it does not have to reproduce the parts.
+
+  That distinction is the point. The gauges may be replaced, the indicators may be driven differently,
+  the sounder may be a different part. What may not happen is that a behaviour the operator relies on
+  disappears because nothing wrote it down and nothing required it.
+rationale: |
+  Context: Tracing the machine's harnesses surfaced several behaviours the operator interface performs
+  that no document had recorded and no criterion requires: indicator brightness modulated by gating a
+  shared anode rail, both gauge needles homed against end stops by a power-on sweep, and low water
+  annunciated on an audible device and a visual one that a replacement could keep or drop separately.
+  Each is load-bearing in its own way -- without the homing sweep a step count runs from an unknown
+  origin and the needles read plausibly and wrongly -- and each would disappear into a retrofit with
+  nothing raising the loss, because the loss is noticed by the operator rather than by the project.
+  Writing them into requirement criteria was considered and rejected on discipline grounds: a criterion
+  naming a sweep states mechanism, and would forbid replacing the gauges rather than describing what the
+  operator must still get.
+
+  Trade-offs: Reproducing the existing interface keeps what the operator already knows and matches the
+  stance the operator persona is written in, where the internals stay opaque by choice and the retrofit
+  succeeds to the extent it lets them stay that way. It costs the design its freedom to rearrange the
+  operator surface, which nothing in this project wants to do anyway. Redesigning the interface around
+  whatever the new controller makes convenient would buy that freedom and spend the operator's
+  familiarity, making the retrofit visible to the one person it is meant to be invisible to. Deciding
+  device by device as each is reached defers the same choices without avoiding any of them, and leaves
+  each behaviour unprotected until its turn comes -- which is the state that let three of them go
+  unrecorded in the first place.
+
+  Reversibility: Cheap, and deliberately so. This decision names no behaviour and no part; it points at
+  the wiring record and adopts whatever that record describes. A behaviour found later, or a claim
+  corrected later, changes the obligation without this node being amended. Narrowing the interface later
+  -- deciding some behaviour is not worth reproducing -- stays available and becomes a deliberate edit
+  to the record rather than a silent omission, which is the whole difference this decision buys.
+
+  Consequences: The wiring record becomes normative rather than merely descriptive: what it documents
+  about the operator interface is what a replacement has to reproduce. Behaviours recorded there are
+  obligations, so removing one is an act somebody performs on the artefact rather than an absence
+  nobody notices. What is preserved is what the operator perceives and not the components producing it
+  -- the gauge movements, the indicator elements and the sounder remain replaceable parts, and a
+  replacement that drives them differently while producing the same visible and audible result
+  satisfies this. And the enumeration's retention states stay a separate question: this decision governs
+  behaviour, while which physical devices are kept is settled by the device-retention boundary.
+options_considered:
+  - option: Reproduce the existing operator interface, defined by reference to the wiring record
+    reason_rejected: ""
+  - option: Redesign the operator interface around the new controller
+    reason_rejected: spends the operator's familiarity with a surface that already works, and makes the retrofit visible to the one person it is meant to be invisible to
+  - option: Decide device by device as each is reached
+    reason_rejected: defers the same choices without avoiding any of them, and leaves each behaviour unprotected until its turn comes - the state that let three of them go unrecorded
+chosen: Reproduce the existing operator interface, defined by reference to the wiring record
+links:
+  - target: JRN-OPERATE-INTERFACE-001.C1
+    type: addresses
+  - target: JRN-OPERATE-INTERFACE-001.C3
+    type: addresses

@@ -1,0 +1,18 @@
+id: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C1
+type: criterion
+title: Connector and harness allocations have one home, and every claim in it states how it was established
+status: active
+version: 1
+text: |
+  Physical tracing, a reading off a scanned drawing, an inference from other rows and an observation
+  of the running machine are different grades of evidence, and a record that renders them alike
+  invites the next reader to trust the weakest as though it were the strongest.
+
+  The record marks each claim with its grade, states which sources outrank which and why, and says
+  what would settle anything it leaves open.
+
+  Out of scope: tracing harnesses nobody has opened yet, which the record marks as open rather than
+  filling in; and selecting any replacement part, which belongs to component selection.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE
+    type: criterion-of

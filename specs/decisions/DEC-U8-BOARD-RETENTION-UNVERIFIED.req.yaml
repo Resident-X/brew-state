@@ -1,30 +1,106 @@
 id: DEC-U8-BOARD-RETENTION-UNVERIFIED
 type: decision
-category: assumption
-title: The OEM operator-interface board is assumed replaced in full, pending a bench-verified alternative
+category: strategic
+title: The operator-interface channels are served directly, there being no panel-mounted controller to speak to instead
 status: active
-version: 1
-validation_horizon: DEL-COMPONENT-SPECIFICATION.C4
+version: 3
 text: |
-  The circuit diagram shows the two OEM microcontroller boards talking over exactly two wires — CMDTX from the board driving heaters, pumps, valves and reading zero-cross, and SLVOK from the board reading buttons and driving LEDs and the two gauge steppers. If a new controller could speak whatever protocol currently runs on those two wires, the entire button/LED/stepper board could be retained untouched: no rewiring eight buttons, roughly ten LED segments, or two stepper motors onto new hardware.
+  The circuit diagram shows the two OEM microcontrollers exchanging signals over exactly two wires --
+  CMDTX from the part driving heaters, pumps, valves and reading zero-cross, and SLVOK from the part
+  reading buttons and driving indicators and the two gauge steppers. Read as a link between two
+  boards, that raised a real architectural option: if a new controller could speak whatever protocol
+  runs on those two wires, the entire button, indicator and stepper board could be retained untouched,
+  with no channel rewired onto new hardware.
 
-  Neither chip's firmware is available, and there is no documented protocol for that link — both are proprietary Holtek parts. Nothing on paper settles whether the link is a simple, easily-replicated framing or something more particular to the two chips' own timing. The question is answerable empirically, on the bench, with a logic analyser on the two lines while the original board is still intact and powered, watching what a button press or a gauge move actually puts on the wire — but nobody has done that yet.
+  Neither chip's firmware is available, and there is no documented protocol for that link -- both are
+  proprietary Holtek parts. Nothing on paper settled whether the link was a simple, easily-replicated
+  framing or something particular to the two chips' own timing. This decision therefore assumed full
+  replacement and named a bench capture, a logic analyser on the two lines while the original board
+  was intact and powered, as the work that would settle it.
+
+  That premise does not hold. The owner's direct account of the physical machine, not yet
+  bench-verified and recorded with that provenance in reference-machine.md, finds no 28-pin part on
+  the front panel: both microcontrollers sit on the main control board, and the panel is a passive assembly
+  carrying the indicator elements, ten switches wired as five parallel pairs, and the buzzer, reached by one nine-way harness. The two wires are a connection between two chips on one board rather
+  than a link between two boards, and this project replaces both chips. The panel board is retained, as a passive assembly; what it does not carry is a controller, so there is nothing to speak to and no protocol to reverse-engineer, and the bench capture named above answers a
+  question that does not arise.
+
+  The conclusion this decision reached is unchanged: every one of those channels is something a
+  replacement controller must serve directly. What changes is its standing. It was a conservative
+  assumption pending a bench capture, and it now rests on an inspection of the machine instead -- weaker
+  than a bench capture as evidence goes, but answering a different and more basic question than the
+  one the capture was aimed at, and enough to retire it -- the enumeration and any procurement-facing
+  list built on it were not merely safe but correct. The inference that put the channels on a separate
+  board came from the circuit diagram, and a circuit diagram groups by function rather than by board;
+  it cannot establish where a part is mounted. That is the reading error this correction records, and
+  it is the reason the panel's device elements separate cleanly from the circuit that drove them,
+  which `DEC-DEVICE-RETENTION-BOUNDARY` now relies on.
+
+  One boundary this decision does not reach: the gauge assembly. It is a second front-mounted board,
+  it carries the stepper driver and the low-water indicator, and it is retained rather than replaced
+  -- so the conclusion here, that no front assembly carries a controller to be spoken to, is reached for
+  the button panel and holds for the gauge assembly too, which carries a motor driver rather than a
+  controller. That much is no longer an inference: the machine has since been opened and the driver read
+  off the gauge board directly, where it had previously been placed there by its absence from
+  photographs of the main-board spare. Where the two microcontrollers sit still rests on the owner's
+  account rather than on that inspection, and is recorded with that provenance.
+
+  A note on the identifier this node carries, because opening the machine made it ambiguous. The boards
+  silkscreen the HT66F50 microcontroller U9 and the VID66-08 stepper driver U8; the service manual's
+  circuit diagram has those two designators the other way round. This node is named for the
+  microcontroller and takes its U8 from the manual, so under board numbering its identifier now points
+  at the stepper driver, which this decision is not about. The identifier stays, because renaming it
+  would break every reference for no gain: throughout this project U8 means the HT66F50, and
+  connector-pinouts.md is where the two conventions are reconciled. It is the third instance of the manual
+  misapplying designators, after the panel switches and the panel resistors, and the first to land on
+  integrated circuits rather than on discrete components.
 rationale: |
-  Context: reference-machine.md already states the OEM control electronics are being replaced entirely, written before this project's own reading of the service manual identified the two-wire link between the two OEM boards or what rides on it. That link raises a real architectural option — retaining the button/LED/stepper board and driving it over its native link — that the existing full-replacement statement forecloses without having considered it.
+  Context: reference-machine.md stated the OEM control electronics are replaced entirely, written before
+  this project's reading of the service manual identified the two-wire link between the two Holtek parts
+  or what rides on it. Read as a link between two boards, that raised a real architectural option --
+  retaining the button, indicator and stepper board and driving it over its native link -- which the
+  existing full-replacement statement foreclosed without having considered it. This decision was first
+  recorded as an assumption pending a bench capture that would settle whether the link could be spoken.
+  It is no longer an assumption, though the evidence retiring it is of two kinds and they establish
+  different halves of the claim. Tracing the physical panel spare board finds no 28-pin part on it,
+  which settles that the panel carries no controller. That both microcontrollers sit on the main board
+  instead rests on the owner's account of the machine and is not yet bench-verified; the later opening
+  of the machine confirmed what the gauge assembly carries and did not reach this question. Either way
+  the conclusion holds, because it turns on the panel carrying no controller rather than on where the
+  controllers are. So: the panel carries no 28-pin part, the panel is a passive assembly carrying the indicator elements, ten switches wired as five parallel pairs, and the buzzer, and it is reached by one nine-way harness. The two wires are a connection between two chips on one board.
 
-  Trade-offs: Assuming full replacement for now costs nothing today, since no board-selection or wiring work is committed yet, and keeps the default the project has already been designing against (every channel driven directly by the new controller, which is what the corrected enumeration and the eventual procurement-facing I/O list both assume). Assuming retention instead, without the bench capture, would bake an unverified guess about undocumented proprietary firmware into a design decision — exactly the failure this project's discipline exists to catch, and the two prior corrections in this same slice (the sensor-type and valve-voltage claims) are direct instances of guessing where a primary source could have settled it instead. Blocking all further hardware-facing work until the bench capture happens was rejected as disproportionate: the capture is cheap and can run in parallel with the correction and the procurement-list work, and neither depends on its answer.
+  Trade-offs: When the option was live, assuming full replacement cost nothing, kept the default the
+  project was already designing against, and avoided baking an unverified guess about undocumented
+  proprietary firmware into a design decision. Assuming retention would have done the opposite. Blocking
+  hardware-facing work until a bench capture happened was rejected as disproportionate. That comparison
+  is now historical: the retained-board alternative does not exist to be weighed, because there is no controller on that board. What remains is the same conclusion reached on better grounds -- every channel on the
+  panel is one a replacement controller must serve directly, and now because nothing else can serve it
+  rather than because nobody has checked whether something else could.
 
-  Reversibility: Cheap in the direction that matters. If the bench capture shows the link is not worth chasing, nothing changes — the default already assumes full replacement. If it shows the link is simple enough to speak, the retained-board option becomes real and this decision is superseded, but nothing built under the full-replacement default (enumeration, headroom argument, procurement list) becomes wrong; it becomes conservative, not incorrect, since a controller that can drive every channel directly can still choose to talk to the retained board instead.
+  Reversibility: The question this decision held open is closed rather than reversible. Work built under
+  the full-replacement default -- the enumeration, the headroom argument, the procurement-facing list --
+  does not become wrong or even conservative; it becomes correct. What would reopen it is not a bench
+  capture but a different machine: the reading rests on inspection of this one, recorded with that
+  provenance rather than as a document claim, and a second machine of the same model wired differently
+  would be a different case.
 
-  Consequences: The corrected enumeration and any procurement-facing I/O summary built from it should present the button/LED/stepper channels as real requirements a candidate controller must be able to serve directly, not assume they can be handed to a retained OEM board. The bench capture (logic analyser on CMDTX/SLVOK, GND, while the intact board is powered, correlated against button presses and gauge moves) is the concrete next step that would supersede this decision.
+  Consequences: The enumeration and any procurement-facing list present the button, indicator, buzzer and
+  stepper channels as things a candidate controller must serve directly, which they already did. The
+  bench capture this decision once named as its next step -- a logic analyser on the two lines while the
+  original board was intact -- answers a question that does not arise, and is withdrawn rather than left
+  outstanding. The headroom table in component-specification.md loses the second column that costed the
+  retained-panel alternative. And the inference that put the panel channels on a separate board came from
+  a circuit diagram, which groups by function rather than by board and cannot establish where a part is
+  mounted; that reading error is what DEC-DEVICE-RETENTION-BOUNDARY relies on having been corrected,
+  because it is what lets the panel's device elements separate cleanly from the circuit that drove them.
 options_considered:
-  - option: Assume the OEM control electronics, including the button/LED/stepper board, are replaced in full by the new controller until a bench capture of the CMDTX/SLVOK link says otherwise
+  - option: Serve the operator-interface channels directly, no panel-mounted controller existing to speak to instead
     reason_rejected: ""
-  - option: Assume the button/LED/stepper board is retained and driven over its existing native link without empirical verification of that link's protocol
-    reason_rejected: bakes an unverified guess about undocumented proprietary firmware into a design decision, exactly the failure this project's discipline exists to catch
-  - option: Block all further hardware-facing work until the bench capture happens
-    reason_rejected: disproportionate; the capture is cheap, can run in parallel, and nothing else in flight depends on its answer
-chosen: Assume the OEM control electronics, including the button/LED/stepper board, are replaced in full by the new controller until a bench capture of the CMDTX/SLVOK link says otherwise
+  - option: Retain a panel board and drive it over the OEM two-wire link
+    reason_rejected: the panel board is retained, but it carries no controller - both microcontrollers sit on the main board, so those two wires connect two chips this project replaces
+  - option: Block hardware-facing work until a bench capture of the link answers the question
+    reason_rejected: the question does not arise, so the capture is withdrawn rather than outstanding
+chosen: Serve the operator-interface channels directly, no panel-mounted controller existing to speak to instead
 links:
   - target: DEL-COMPONENT-SPECIFICATION.C4
     type: addresses

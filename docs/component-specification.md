@@ -137,21 +137,22 @@ lines the enumeration collectively demands are *simultaneously* available.
 
 ### What the enumeration demands
 
-Totalled across both tables of `controller-io.md`. Two totals are given because the
-operator-interface panel dominates the count and `DEC-U8-BOARD-RETENTION-UNVERIFIED` leaves open
-whether it is driven directly or reached over the machine's existing two-wire link.
+Totalled across both tables of `controller-io.md`. One total is given. A second column here previously costed the alternative of
+reaching that panel over the machine's existing two-wire link, which `DEC-U8-BOARD-RETENTION-UNVERIFIED`
+left open. That option no longer arises: inspection of the panel board places no controller on the panel, and the owner's account places both microcontrollers on the main board and finds the panel passive, so the two wires connect two chips this project replaces rather than
+two boards, and the panel board is retained, but carries no controller to speak to. The column is struck rather than costed.
 
-| Resource | Direct-drive panel | Panel over serial link | Notes |
+| Resource | Count | (struck) | Notes |
 |---|---|---|---|
-| Analogue conversion inputs | 4 | 4 | Coffee, steam and wand temperature, plus the steam-path pressure transducer that `DEC-STEAM-PRESSURE-SENSOR-ADDED` adds and which is not yet fitted |
-| Timer input capture | 1 | 1 | Flow meter. The enumeration marks the interface itself unconfirmed — a pulse output is expected but the schematic reading admits it may land on an analogue pin instead, so this row may move to the conversion count |
-| Timer compare outputs | 2 | 2 | Both pumps, whose phase-capable arrangement is retained and which are provisioned for a firing instant within the cycle rather than a whole-cycle level |
-| External-interrupt pins | 1 | 1 | Mains zero-cross, on both edges |
-| Plain digital inputs | 11 | 3 | Tank level, two control-knob microswitches, and the panel's eight pushbuttons |
-| Plain digital outputs | 14 | 4 | Two heater channels, two valve channels, and the panel's ten indicator elements |
-| Stepper driver channels | 2 channels — **4 pins** | 0 | The two gauges, driven through a driver IC rather than into the windings, at a step and a direction pin each. The OEM `VID66-08` is two-channel and serves both today |
-| Serial peripherals | 0 | 1 peripheral — **2 pins** | The existing two-wire operator link |
-| **Pin total** | **37** | **17** | Summing the pin costs above: 4 + 1 + 2 + 1 + 11 + 14 + 4 direct-drive; 4 + 1 + 2 + 1 + 3 + 4 + 2 over the link. The panel's contribution is approximate in the sense that the enumeration calls its own counts a best reading rather than a hard figure; the arithmetic is not |
+| Analogue conversion inputs | 4 | — | Coffee, steam and wand temperature, plus the steam-path pressure transducer that `DEC-STEAM-PRESSURE-SENSOR-ADDED` adds and which is not yet fitted |
+| Timer input capture | 1 | — | Flow meter. Its signal is established digital: a pulse train pulled up to the 5 V rail and landing on a general-purpose port pin. Whether the output is open-drain or push-pull, and the K-factor, both stay open |
+| Timer compare outputs | 5 | — | Both pumps, provisioned for a firing instant within the cycle; the panel's anode rail gate, whose modulation is how indicator brightness varies; and the two gauge step clocks, which need an even rate to sweep smoothly rather than stutter |
+| External-interrupt pins | 1 | — | Mains zero-cross, on both edges |
+| Plain digital inputs | 5 | — | Tank level, the two control-knob microswitches, and the two mains-presence sense channels on the heating elements. The panel's keys are not here: they share lines with the indicators and are counted in the row below |
+| Plain digital outputs | 14 | — | Two heater channels, two valve channels, the buzzer, the water indicator on the gauge assembly, the panel's five shared lines, and the two gauge direction lines plus the driver reset. The panel's five are bidirectional — each sinks its indicator group's current and is read as an input once the anode rail is blanked — so eight indicator elements and five keys together cost five pins. See [`connector-pinouts.md`](connector-pinouts.md) |
+| Stepper driver channels | 2 timer + 3 digital | — | The two gauges, through a `VID66-08` on the gauge assembly rather than into the windings. If that board is retained the driver is inherited: the controller supplies a direction level and a step clock per gauge plus a shared reset. The step clocks need timer channels — an uneven rate reads as needle stutter. Retaining an out-of-production driver is an obtainability risk, distinct from the unknown-condition question `OBL-PHYSICAL-CONFIGURATION-001.C3` asks, not a saving |
+| Serial peripherals | 0 | — | The two-wire operator link this row costed is not an inter-board link and cannot be retained; a display link is a separate question this table does not settle |
+| **Pin total** | **30** | — | Summing the pin costs above: 4 + 1 + 5 + 1 + 5 + 14. The gauge lines are counted in the timer and digital-output rows rather than in a row of their own. The controller I/O bill of materials reaches a higher figure for the same machine because it also carries the brew-path pressure channel no decision has yet added and a display link |
 
 ### What the candidate provides
 
@@ -163,21 +164,22 @@ flash instead of 1 MB; it is not assessed here, because choosing it would narrow
 `DEC-HEATER-DRIVE-GATED-BY-SUPERVISION` asks to be sized generously and would do so on no evidence,
 the compute demand being unquantified in both directions.
 
-| Resource | Provided | Demanded (direct-drive) | Remaining |
+| Resource | Provided | Demanded | Remaining |
 |---|---|---|---|
-| General-purpose I/O | 82 raw; about 78 usable | 37 | About 41. The raw count includes the SWD pins and PH0/PH1, which carry the HSE crystal — and `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` requires a crystal-derived control period, so those two are spoken for by this design rather than optional |
+| General-purpose I/O | 82 raw; about 78 usable | 30 | About 48. The raw count includes the SWD pins and PH0/PH1, which carry the HSE crystal — and `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` requires a crystal-derived control period, so those two are spoken for by this design rather than optional |
 | 12-bit ADC units / external channels | 3 units. ADC1 and ADC2 bring out 16 external channels each in this package; ADC3 brings out fewer, several of its inputs sitting on a port LQFP100 does not carry | 4 channels, on one unit | Ample, and the three units can convert concurrently if a later channel needs it |
-| 16-bit timers | 12 in total: 2 advanced motor-control, 8 general-purpose, and 2 basic with no I/O channels at all | 3 channels (2 compare, 1 capture) | Ample — but the usable pool for these channels is the 10 with I/O, not 12 |
+| 16-bit timers | 12 in total: 2 advanced motor-control, 8 general-purpose, and 2 basic with no I/O channels at all | 6 channels (5 compare, 1 capture) | Ample — but the usable pool for these channels is the 10 with I/O, not 12 |
 | 32-bit general-purpose timers | 2 | 0 | Both free |
 | External interrupt lines | 16 | 1 | 15, with the constraint below |
 | Flash / RAM | 1 MB / 192 KB | Not stated by the enumeration | Unquantified — see below |
 | Core | Cortex-M4 at 168 MHz | Not stated by the enumeration | Unquantified — see below |
+| Output logic level, gauge-driver lines | 3.3 V I/O. `VOH` is guaranteed to `VDD` − 0.4 V — about 2.9 V — at rated sink current, rising close to the rail at light load, but the guarantee is the figure a board is chosen against | 5 lines clearing the retained `VID66-08`'s 3.15 V `VIH` | **Not cleared on guaranteed figures** — see below. Resolved either by five level shifters or by a bench measurement of `VOH` into a ~10 µA load |
 
 **Simultaneity holds, and the resource that would bite first is named.** No two channels contend for
 the same unit at these counts: the four conversion inputs fit one ADC with twelve channels to spare,
-the three timer channels fit inside a single general-purpose timer let alone ten, and the
-thirty-seven pins fit inside seventy-eight. Fitting them on one timer is not the same as placing them
-there: a flow-pulse input capture and two mains-phased compare outputs on one timer would share a
+the six timer channels fit inside two general-purpose timers let alone ten, and the
+thirty pins fit inside seventy-eight. Fitting them on one timer is not the same as placing them
+there: a flow-pulse input capture, two mains-phased compare outputs, two gauge step clocks and an indicator rail gate would share a
 prescaler and a time base.
 With ten I/O-capable timers available there is no reason to accept it. The one resource with a structural constraint rather than a
 numeric one is the external-interrupt block: this part has sixteen lines, but line *n* serves pin *n*
@@ -185,9 +187,22 @@ of exactly one port at a time, so sixteen interrupt-driven channels cannot be pl
 channel is demanded, so the constraint does not bind — but it is the resource that would bind first
 if a later channel wanted its own interrupt, and it is invisible to a pin count.
 
-**No candidate failed.** Only one candidate was assessed, and it clears every row, so there is no
-defeated-by-channel record to keep here. Should a cheaper part be assessed later and fail, the
-channel that defeated it belongs in this section rather than in a discarded note.
+**One row is not cleared, and it is a channel rather than a count.** Every numeric row has room to
+spare. The row that does not clear is the last: this part's outputs are 3.3 V, and the gauge driver
+retained by `DEC-DEVICE-RETENTION-BOUNDARY` guarantees nothing below a 3.15 V input high. On
+guaranteed figures — `VOH ≥ VDD − 0.4 V`, about 2.9 V — the five gauge lines are not driven reliably.
+
+This does not defeat the candidate, and it is recorded here rather than in a discarded note because
+it is not that kind of finding. In practice a 3.3 V CMOS output into the ~10 µA these inputs leak sits
+within millivolts of the rail and would clear 3.15 V comfortably; what is missing is a guarantee, not
+a mechanism. Two things close it: five level shifters on the gauge lines, cheap but a part on the
+board — or a bench measurement of this part's `VOH` into that load, which converts a typical into an
+established figure for this design. Either is admissible. Choosing neither, and specifying the board
+as though the row were clear, is what this table exists to prevent.
+
+It is also a cost that belongs to **retention** rather than to the gauges: a controller driving the
+movements directly sets its own thresholds and the row disappears. That trade sits with
+`DEC-DEVICE-RETENTION-BOUNDARY`, not here.
 
 ### Room for the channels the graph anticipates
 
@@ -200,7 +215,7 @@ channel that defeated it belongs in this section rather than in a discarded note
 | Real-time clock | Not fitted, not decided | 0 pins running off the internal low-speed oscillator, 2 with the 32.768 kHz crystal that anything wanting to timestamp would need — the internal oscillator drifts too far to be useful for that |
 
 Roughly five further conversion inputs and two digital pins. Against twelve unused channels on one
-ADC unit and forty-five unused pins, every anticipated channel fits without displacing a current one,
+ADC unit and forty-eight unused pins, every anticipated channel fits without displacing a current one,
 which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4` ask to be shown.
 
 ### What this assessment does not establish
@@ -267,10 +282,12 @@ chosen; it is not predicted here.
 | Three-way valve switching | As above | Hongfa `HF32FA/012HSL` relay | *undecided* | *undecided* | |
 | Supply-timing front end | Both crossings of every cycle; a barrier holding under fault and under water, steam and thermal cycling; read as an input rather than followed as a clock | `PC817` optocoupler on a half-wave feed. Isolation adequate; **fails the both-crossings property**, which is the one this design added | *undecided* | *undecided* | |
 | Coffee, steam and wand temperature sensing | Analogue resistance, NTC, at the accuracy `controller-io.md` states per channel | `EM70025`, `EM70020` and the wand disc sensor, fitted and working | *undecided* | *undecided* | |
-| Flow sensing | Whatever the fitted meter's interface turns out to be — the enumeration marks it unconfirmed | The fitted OEM meter | *undecided* | *undecided* | |
+| Flow sensing | A pulse train on a general-purpose port pin, pulled up to the 5 V rail; open-drain versus push-pull, and the K-factor, stay open | The fitted OEM meter | *undecided* | *undecided* | |
 | Steam-path pressure sensing | Analogue conversion; range and accuracy not yet specified, the part not yet selected | None — added by decision, never fitted | *undecided* | *undecided* | |
-| Gauge drive, both gauges | Two bipolar stepper channels through a driver IC. Whether one two-channel part can serve both under a new controller is unverified and must be settled before a recovered part is counted on | OEM `VID66-08`, two-channel, serving both gauges today | *undecided* | *undecided* | |
-| Operator panel — buttons, indicators | Eight digital inputs and about ten outputs if direct-driven, or two pins over the existing link. Which, is not settled: `DEC-U8-BOARD-RETENTION-UNVERIFIED` leaves board retention open pending a bench-verified alternative | The OEM operator-interface board, working | *undecided* | *undecided* | |
+| Gauge drive, both gauges | Two direction levels, two step clocks needing timer channels, and a shared reset — **all five clearing a 3.15 V input threshold**, which is the retained driver's guaranteed `VIH` and does not relax with its supply. A 5 V drive clears it outright; a 3.3 V part qualifies only if its own `VOH` guarantee reaches 3.15 V at the current these inputs draw, and otherwise the channel carries five level shifters. Figures and their provenance in [`connector-pinouts.md`](connector-pinouts.md). The controller does not provide stepper drive: the `VID66-08` sits on the gauge assembly, which is retained, so the driver is inherited. That is not a saving — the part is out of production, which makes an unobtainable device a single point of failure on a channel with no fallback, and is an obtainability risk, distinct from the unknown-condition question `OBL-PHYSICAL-CONFIGURATION-001.C3` asks. Specifying a controller that could drive the movements directly keeps both options | OEM `VID66-08` on the gauge assembly, two-channel, serving both gauges today and inherited rather than bought | *undecided* | *undecided* |  |
+| Heater mains-presence confirm, both elements | Two isolated AC-sense inputs reporting whether mains actually reached each element, which distinguishes a relay that did not close, a welded contact and an open thermal cutout from a command that was obeyed. Reinforced isolation, mains-crossing | OEM `LTV814` AC-input optocoupler through a 120 kΩ 1 W resistor, fitted and working | *undecided* | *undecided* | |
+| Low-water indication, visual | One output sinking an indicator cathode on the gauge assembly, whose anode rail is the button panel's gated rail extended over the gauge harness | The fitted indicator, retained with the gauge assembly | *undecided* | *undecided* | |
+| Operator panel — keys, indicators, buzzer | Five bidirectional lines carrying both the key pairs and the indicator cathodes, one timer output gating the anode rail, and one buzzer output — seven pins for the whole panel. The keys are ten switches in five parallel pairs; the indicators are eight elements in five groups. Pinout in [`connector-pinouts.md`](connector-pinouts.md) | The OEM panel board, retained as a passive assembly | *undecided* | *undecided* | |
 | Low-voltage supply | Whatever the chosen controller and gate drives need, isolated from the mains side | The OEM board's own supply, on a board being replaced | *undecided* | *undecided* | |
 | Wiring, connectors, mains-rated terminals | Rated for the currents above; mains-referenced runs separated from low-voltage per `OBL-ELECTRICAL-THERMAL-SAFETY-001.C6`; AS/NZS 3000 in this jurisdiction | Existing loom, condition unassessed | *undecided* | *undecided* | |
 
@@ -278,7 +295,7 @@ chosen; it is not predicted here.
 
 | | |
 |---|---|
-| Channels specified | 16 |
+| Channels specified | 18 |
 | Channels whose part is decided | 0 |
 | Bought to date | 0 |
 | Reused to date | 0 |

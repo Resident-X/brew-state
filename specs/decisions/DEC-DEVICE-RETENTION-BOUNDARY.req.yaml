@@ -1,0 +1,122 @@
+id: DEC-DEVICE-RETENTION-BOUNDARY
+type: decision
+title: Operator-interface and load devices are retained while the control electronics are replaced
+status: active
+version: 2
+text: |
+  The retrofit replaces the machine's control electronics while leaving in place most of the devices
+  those electronics drive and read. Which side of that line each device falls on is what a controller
+  can be specified against, and it has not been recorded anywhere.
+
+  The boundary runs between three layers rather than two. A device element is retained and imposes a
+  characteristic on whatever drives or reads it. The conditioning network around that element -- the
+  pull-ups on the buttons and the dividers on the thermistors -- sits on the main board being replaced,
+  and is a design choice still open. The indicators' series resistors and the gauges' stepper driver are
+  the exception: they sit on the front assemblies and stay with them, so they are inherited rather than
+  chosen. The carrier
+  board is replaced outright. A retained button imposes that it is a dry contact to ground wanting a
+  pull-up; it does not impose a resistance.
+
+  Retained, as elements: the five operator-panel keys, which are ten switches wired in parallel pairs and
+  present as five signals; the two control-knob microswitches; the
+  tank water-level sensor; the flow meter; both thermoblock heating elements; both pumps; both
+  solenoid valves, whose coils are mains-voltage; both gauge stepper motors and the driver on the assembly carrying them; the panel indicator
+  elements, whose cathodes share the lines that carry the keys; the low-water indicator on that same
+  gauge assembly; the panel buzzer; the two mains-presence sense channels on the elements, whose isolation
+  barrier is on the load-driving side and comes with them; and every device in the protective chain --
+  the three thermostats, the thermal fuse and the over-pressure reliefs.
+
+  Replaced: both microcontrollers and the board carrying them; every conditioning and drive network on
+  that board; the logic power supply, whose transformer is rated far below what a replacement
+  controller, its sensing front ends and the retained relay coils together draw; the zero-cross
+  detection front end, which presents one crossing per cycle where the actuation scheme needs both;
+  and the heater switching relays, which cannot be commanded within a supply half-cycle.
+
+  Added: a pressure channel on the steam path, which a separate decision has already put on the
+  machine's bill of materials. A brew-path pressure channel is not added here. It is required by a
+  criterion that remains open, and no decision has yet put one on the machine; this boundary does not
+  stand in for the decision that would.
+
+  Left open here: the three temperature sensing elements. Whether they are retained or substituted for
+  a different element class turns on a resolution question this decision does not settle, and naming
+  them as open is deliberate -- the boundary is stated without pre-empting that substitution.
+
+  How the panel is actually wired -- which conductor carries what, and why the keys and indicators share
+  lines -- is recorded in docs/connector-pinouts.md rather than here. This decision settles which devices
+  stay; that artefact records how they are reached, and it is the thing to amend when a harness is traced
+  rather than any node.
+
+  One qualification the word passive would obscure. The button panel carries no active parts. The gauge
+  assembly does -- the stepper driver sits there rather than on the main board -- so retaining it retains
+  silicon, and an out-of-production part at that. Retention there is an obtainability risk rather than a saving, and a different question from the unknown condition of a reused part, which is answered by testing this driver rather than by counting how many remain obtainable, and it is not the same act as retaining a switch or an indicator element. Retaining it also fixes an
+  input threshold its control lines have to clear, which the replacing controller's output levels must
+  be checked against rather than assumed to meet. That is a check the retention imposes, not a supply
+  rail it dictates: parts on either common logic rail may qualify, and the wiring record carries the
+  figure and the ways of settling it, so both stay correctable there without this decision being
+  amended.
+rationale: |
+  Context: The project had already recorded that the OEM control electronics are replaced. It had not
+  recorded what happens to the devices themselves, so every electrical characteristic a retained
+  device imposes reached the controller specification as a constraint with nothing attributing it. The
+  obligation on physical configuration asks that a component a requirement depends on be identifiable
+  and that a reused part's condition be established before anything relies on it; neither is
+  answerable while the retained set is undeclared. The boundary is drawn on the device rather than on
+  the board because those are different questions, and the machine's construction makes the distinction
+  concrete -- on evidence of two grades, which the wiring record separates and this decision leans on: the panel's own wiring is traced from the physical spare-part board, while where the microcontrollers sit rests on the owner's direct account of the machine and is not yet bench-verified: both microcontrollers are on the main board, and the button and indicator panel is passive -- ten
+  switches in five parallel pairs, eight indicator elements and the buzzer, with no active parts.
+  The gauge assembly is not passive: it carries the stepper driver and the low-water indicator. So
+  the button panel's elements separate cleanly from the circuit that drove them, while the gauge
+  assembly is retained as a circuit rather than as a set of elements.
+
+  Trade-offs: Declaring the boundary now fixes the set of characteristics a candidate controller must
+  accommodate, which is what makes the specification finishable, and it names the reused parts so
+  their condition can be established before the design leans on them. Replacing every device alongside
+  the electronics would remove those inherited constraints, and would remove the unknown-condition
+  problem with them, at a cost the project has no reason to pay: the operator surface, the valves, the
+  pumps and the elements are serviceable and are most of what the machine is. Deciding retention
+  device by device as each is reached would defer the same choices without avoiding any of them, and
+  would leave the controller specification resting on a set that moves underneath it. Drawing the line
+  at the board rather than at the device was rejected as the wrong axis: it would treat a retained
+  switch contact and the pull-up that happened to serve it as one object, and would import component
+  values into a specification that only needs the characteristics behind them.
+
+  Reversibility: Cheap in the direction it is likely to move. Moving a device from retained to
+  replaced later widens the design's freedom rather than invalidating what was built under the
+  narrower assumption -- a controller specified to drive an inherited mains-voltage valve coil can
+  drive a new one. The costly direction is the reverse, and nothing here takes it. The one device
+  class where the question is genuinely live, temperature sensing, is left open rather than settled,
+  so nothing stated here has to be reversed when that is decided.
+
+  Consequences: The channel enumeration gains a retention state on every channel, including the
+  protective devices, which is the record the physical-configuration obligation needs. That record
+  cannot be carried as graph links, because allocation from a requirement to a physical component is
+  not wireable in this engine, so the enumeration document is the mechanism rather than a convenience.
+  Every retained device's condition becomes something to establish rather than assume, and the
+  protective chain is where that bites hardest: those parts are inherited, uncharacterised, and not
+  reachable by a controller that could notice one failing. The added steam pressure channel enters the
+  supply budget, which the extensibility constraint requires happen without the arbitration being
+  rewritten around it. Each of the four replaced items becomes a specification in its own right -- a
+  logic supply, a zero-cross front end, a heater switching device and the controller. And because the
+  conditioning networks are replaced along with the board, the pull-up values and thermistor dividers this machine happens to carry are inputs to a new
+  design rather than constraints on it -- while the indicator series resistors and the gauge driver,
+  sitting on retained assemblies, are constraints rather than inputs. The gauge driver's is the sharper
+  of those two, because it constrains the controller's output levels tightly enough to reach back to its
+  supply rail unless shifting parts are added: its inputs are not guaranteed to read a logic high driven
+  from the rail a replacement might otherwise have chosen freely, so retaining that assembly either adds
+  those parts, narrows which controllers qualify, or obliges a bench measurement to turn a typical
+  figure into an established one. That is a cost of retention landing where the boundary put it, not an argument against
+  retention -- but it belongs in the record, because a board chosen without it would fail on a channel
+  nobody was watching.
+options_considered:
+  - option: Retain the operator-interface and load devices and replace only the control electronics
+    reason_rejected: ""
+  - option: Replace every device alongside the control electronics
+    reason_rejected: Removes the inherited constraints and the unknown-condition problem, at a cost the project has no reason to pay - the operator surface, valves, pumps and elements are serviceable and are most of what the machine is
+  - option: Decide retention device by device as each is reached
+    reason_rejected: Defers the same choices without avoiding any of them, and leaves the controller specification resting on a set that moves underneath it
+chosen: Retain the operator-interface and load devices and replace only the control electronics
+links:
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C1
+    type: addresses
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C3
+    type: addresses

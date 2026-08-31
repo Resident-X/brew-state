@@ -6,7 +6,7 @@ status: active
 priority: must
 authority: internal
 managed: true
-version: 1
+version: 2
 text: |
   Much of what this machine will be made of is inherited from a machine of unknown history, and the parts that matter most are among them. The protective chain in particular is largely reused: thermostats bonded to castings, a one-shot device of unknown age, conductors that have been hot and wet for years.
 
@@ -19,3 +19,5 @@ rationale: |
   Deliberately minimal. This is not a demand for revision-controlled part numbering or a product data management system: both cost more than this project is worth and neither addresses the failure above. Five things earn their place, and the fifth is the test of the other four — if a substitution can be made without anything surfacing what relied on the original, the record was decorative.
 
   The reuse criterion is the one specific to this project rather than general good practice. A part bought new arrives in a known state. A part inherited from a machine of unknown age and duty has no known state at all, and several inherited parts are protective devices whose characteristic failure is to fail closed while appearing entirely intact.
+
+  The allocation link this rationale names as the mechanism that answers what depends on a part is not available. The schema declares its targets to be components, states that those are external identifiers rather than graph nodes, and the write-layer validator then rejects any such link as dangling because no component node type exists. So the question this obligation exists to keep answerable has no link-shaped answer, and the record lives in the channel enumeration instead, which DEC-DEVICE-RETENTION-BOUNDARY records and relies on. That is a working arrangement rather than the intended one: a document does not surface what depended on a part at the moment of substitution the way a link would, so the fifth criterion here is carried by discipline rather than by mechanism until the engine can express it.

@@ -1,0 +1,19 @@
+id: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C4
+type: criterion
+title: The channel enumeration carries every channel the tracing found, not only those the manual drew
+status: active
+version: 1
+text: |
+  Channels absent from the enumeration are channels a controller bought against it cannot serve, and
+  the absence is discovered when the part is already purchased.
+
+  Each channel found by tracing is enumerated on the same footing as every other row, with its
+  signal, the peripheral kind it demands, its count, whether its failure bears on safety, and whether
+  the retrofit retains it.
+
+  Out of scope: what accuracy or update rate each newly found channel needs, which is measurement
+  work rather than enumeration; and whether any of them earns a requirement criterion, which is a
+  question for the requirement layer rather than for the record.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE
+    type: criterion-of

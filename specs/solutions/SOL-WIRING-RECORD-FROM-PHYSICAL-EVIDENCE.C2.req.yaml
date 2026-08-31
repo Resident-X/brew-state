@@ -1,0 +1,19 @@
+id: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C2
+type: criterion
+title: The declared configuration states where each part physically is, distinguishing the two front assemblies
+status: active
+version: 1
+text: |
+  Board placement was inferred from a circuit diagram, which groups by function and cannot establish
+  where a part is mounted. Reading it as a board layout put the control silicon on a panel that has
+  none, and put a stepper driver on a board that does not carry it.
+
+  The record states which board each part sits on and on what evidence, and does not treat the two
+  front assemblies as one thing: the button and indicator panel is passive, and the gauge assembly is
+  not.
+
+  Out of scope: opening the gauge assembly, which the record marks as inferred rather than traced;
+  and the main board's own internal layout, which nothing depends on.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE
+    type: criterion-of

@@ -1,0 +1,20 @@
+id: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE.C6
+type: criterion
+title: Fitted behaviours that no criterion requires are recorded where a replacement would meet them
+status: active
+version: 1
+text: |
+  A behaviour the machine performs, that no criterion demands and no document mentions, is one a
+  replacement drops without anything raising the loss, and the loss is noticed by the operator rather
+  than by the project.
+
+  Each is recorded with what the machine does, what mechanism produces it where that is known, and
+  what a replacement would have to do to reproduce it.
+
+  Out of scope: requiring any of them. Stating a sweep or a modulation scheme as a requirement would
+  bind the machine to the gauges and indicators it happens to carry, which is mechanism where the
+  requirement layer states outcomes; what obliges a replacement to match them belongs to a decision
+  on this chain.
+links:
+  - target: SOL-WIRING-RECORD-FROM-PHYSICAL-EVIDENCE
+    type: criterion-of
