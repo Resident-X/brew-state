@@ -1,0 +1,25 @@
+Role,Part number,Key device,Search term / source,Confidence,Watch out for
+Controller board,VCC-GND STM32F407VET6 Mini,STM32F407VET6,"""STM32F407VET6 Mini"" / github.com/mcauser/VCC_GND_F407VE",confirmed,"NOT the BLACK_F407VE / silkscreen ""STM32_F4VE V2.0"" - same MCU, 85x72mm, has LCD+NRF sockets"
+Controller alt (larger),MCUDEV DevEBox STM32F407VET6,STM32F407VET6,github.com/mcauser/MCUDEV_DEVEBOX_F407VET6,confirmed,40.89x68.59mm. AMS1117 800mA vs Mini's RT9193 300mA
+Controller alt (official),Waveshare Core407V,STM32F407VET6/VGT6,waveshare.com/core407v.htm,confirmed,68.5x55.88mm. USD 20.99. No SD slot. Has switch-selected 5V input
+RTD converter,Adafruit 3328,MAX31865,"""Adafruit MAX31865 RTD"" PID 3328",confirmed,7Semi/generic screw-terminal versions are 30x20mm - different height
+I2C multiplexer [CONDITIONAL],Adafruit 2717,TCA9548A,"""Adafruit TCA9548A"" PID 2717",confirmed,"Only if both XDB401 ship on the same fixed 0x7F. Ask the supplier to program distinct addresses - then this is not needed at all. Mux address 0x70-0x77 if used"
+Gauge line buffer,SN74HCT541N,74HCT541,"""74HCT541 DIP-20""",confirmed,HCT not HC - HCT accepts 3.3V as a valid logic high
+Heater SSR,Fotek SSR-25DA,-,"""Fotek SSR-25DA""",confirmed,Zero-cross type. AliExpress/eBay only - not AU distributor stocked
+Heater SSR upgrade,Crydom D2425,-,Mouser AU / element14 AU / Raptor,confirmed,~AUD 140 ea vs Fotek ~AUD 15. Buy only if AU lead-time certainty matters
+Pump dimmer,"RobotDyn AC Light Dimmer Module, 2 Channel",BTA16-600B + MOC3021,"""RobotDyn AC dimmer 2 channel""",confirmed,"MOC3021 = random-phase (correct). MOC3041 = zero-cross only, cannot phase-cut. BTA16-600B tab is LIVE (MT2); -600BW is the isolated one"
+Pump dimmer alt,KRIDA 2CH AC Dimmer V2.0,unconfirmed opto,Tindie / bugrovs2012,inferred,ASK SELLER which opto is fitted before buying - KRIDA's is not confirmed random-phase
+Valve relays,Little Bird BK_RL4_01 / Core Electronics 4ch 10A,Songle SRD-05VDC-SL-C,"""4 channel 5V relay module 10A""",confirmed,"Open the JD-VCC jumper to split coil supply from logic. 71.4mA per coil"
+Valve relays (2ch),Core Electronics CE05114,Songle SRD-05VDC-SL-C,core-electronics.com.au,confirmed,Only AUD 0.70 cheaper than the 4ch
+5V supply,HLK-10M05,-,"""HLK-10M05"" LCSC / AliExpress",inferred,10W/2A. HLK-5M05 (5W) is marginal at 461mA + inrush
+5V supply alt,Mean Well IRM-10-5,-,element14 AU / Mouser AU / RS AU,confirmed,Better AU distribution than Hi-Link
+Pressure transducer,"XDB401, 3.3V supply, I2C output",-,AliExpress official store (buyer-sourced),confirmed,"G1/4 BSP. Fixed address 0x7F on BOTH units - mux is mandatory. 1.2MPa brew / 0.5MPa steam"
+NTC divider resistors,3x 4.7k 1% metal film,-,any,confirmed,Board has no onboard thermistor conditioning
+Gauge pull-ups,5x 4.7k to 5V,-,any,confirmed,Only if driving open-drain instead of the 74HCT541
+Valve snubbers,100nF X2 class + 100R,-,any,confirmed,X2 rating required - across mains contacts
+Master relay [DEFERRED],Schneider A9C22715 / Omron G2R-1-E-L / Songle SLA-05VDC-SL-A,-,RS AU / element14 AU / LCSC,confirmed,"Pick a variant WITH aux contacts (A9C22715 is 1NO+1NC; A9C22712 is 2NO only)"
+Watchdog [DEFERRED],Jaycar XC4267,-,Jaycar / Freetronics,confirmed,1 or 5 min timeout only - coarse vs the 10-50ms discussed
+Zero-cross detector [OPTIONAL],Mikroe Zero-Cross Click / Edwin Robotics ZC detector,-,mikroe.com / Tindie,confirmed,"For downstream relay-closed sensing. Mikroe has 3.3V/5V jumper; Edwin is 25x25mm USD 8, open-collector 5V"
+3-way valve [FUTURE],ODE / Sirai / Parker 1/8in BSP 230V 8-9W,-,scavenge or AliExpress,spec confirmed,"Spec is what matters: +140C, FKM/PTFE seals, 12-30 bar. Generic mains solenoids are often 80C water-inlet valves"
+2-way valve [FUTURE],ODE / Sirai / Parker 1/8in BSP 230V 5-9W,-,scavenge or AliExpress,spec confirmed,Same temp/seal caution
+OPV [FUTURE],not identified,-,espresso parts suppliers,not found,~5 bar. No manufacturer publishes body dimensions. Setpoint pairs with steam sensor full scale

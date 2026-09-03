@@ -1,0 +1,53 @@
+"# STALE IN ITS BOARD COLUMN - built against MKS Robin Nano V3.1; selection moved to a bare VCC-GND STM32F407VET6 Mini. Same MCU so pin/timer/ADC/EXTI reasoning transfers; the Header/Source column does not. See README.md.",,,,,,
+Pin,Header/Source,Channel,Function,Status,Passive/Extra Needed,Notes
+PC1,Onboard thermistor TH1,E5,Coffee thermoblock NTC,As-is - CONFIRMED,None - onboard 4.7k pull-up to 3.3V is fine,"Resolved by calc: 4.7k vs OEM's 10k gives ~6% less sensitivity at 95C, resolution still ~0.035-0.037C/count either way, far inside +/-2C requirement. Firmware must use a 4.7k-pullup lookup table (Marlin Table 1), not a 10k one. NTC beta still not bench-characterized, but that's a firmware calibration task, not a wiring blocker"
+PA2,Onboard thermistor TH2,E5,Steam thermoblock NTC,As-is - CONFIRMED,None,Same resolution as above
+PC0,Onboard thermistor TB,E5,Steam wand NTC,As-is - CONFIRMED,None,Same resolution as above
+PC9,SD-card SPI (repurposed),E5/E6 headroom,MAX31865 #1 chip-select,Needs daughter board,3x MAX31865 breakout (not bought day one - reserved),SD slot CS line; bus shared with PC10/PC11/PC12 below
+PC10,SD-card SPI (repurposed),E5/E6 headroom,Shared SPI SCK,Needs daughter board,Same MAX31865 breakouts,Shared clock line for all 3 RTD converters
+PC11,SD-card SPI (repurposed),E5/E6 headroom,Shared SPI MISO,Needs daughter board,Same MAX31865 breakouts,Shared with all 3
+PC12,SD-card SPI (repurposed),E5/E6 headroom,Shared SPI MOSI,Needs daughter board,Same MAX31865 breakouts,Shared with all 3
+PA13,EXP1 (PW_DET),E5/E6 headroom,MAX31865 #2 chip-select,Needs daughter board,Same MAX31865 breakouts,Repurposed EXP1 pin for 2nd RTD CS - TBD confirm free
+PA4,EXP1 (MT_DET1),E5/E6 headroom,MAX31865 #3 chip-select,Needs daughter board,Same MAX31865 breakouts,Repurposed EXP1 pin for 3rd RTD CS - TBD confirm free
+PD6,Stepper slot E0 (STEP),E3,MOT1 (coffee gauge) step clock,Needs passive - CONFIRMED FT,4.7k pull-up to 5V; open-drain GPIO config,"Confirmed FT (5V-tolerant) pin per ST datasheet DS8626 Rev9 Table 7, LQFP100 pin 87. No level shifter needed. VID6608 Vih>=3.15V now cleared with margin"
+PD3,Stepper slot E0 (DIR),E3,MOT1 direction,Needs passive - CONFIRMED FT,Same 4.7k pull-up to 5V,Confirmed FT, pin 84
+PD15,Stepper slot E1 (STEP),E3,MOT2 (milk-temp gauge) step clock,Needs passive - CONFIRMED FT,Same 4.7k pull-up to 5V,Confirmed FT, pin 86
+PA1,Stepper slot E1 (DIR),E3,MOT2 direction,Needs passive - CONFIRMED FT,Same 4.7k pull-up to 5V,Confirmed FT, pin 24
+PB3,Stepper slot E0 (EN),E3,Shared RESET (both gauges),Needs passive - CONFIRMED FT,Same 4.7k pull-up to 5V,"Confirmed FT, pin 89 - but defaults to JTDO/TRACESWO after reset, needs firmware remap to GPIO (disable JTAG on this pin) - a firmware note, not a hardware issue"
+PD9,Stepper slot E0 (UART/spare),-,Spare,Spare,-,Freed by not populating a real TMC driver chip in this slot
+PD8,Stepper slot E1 (UART/spare),-,Spare,Spare,-,Freed by not populating a real TMC driver chip in this slot
+PE4/PE3/PE2/PD5,Stepper slot X (unused),-,Spare (EN/STEP/DIR/UART),Spare,-,Whole slot unused - candidate source for any additional GPIO/CS needed
+PE1/PE0/PB9/PD7,Stepper slot Y (unused),-,Spare (EN/STEP/DIR/UART),Spare,-,Whole slot unused
+PB8/PB5/PB4/PD4,Stepper slot Z (unused),-,Spare (EN/STEP/DIR/UART),Spare,-,Whole slot unused
+PD2,EXP1,E1,Panel key/switch input 1,As-is,None - ground-switched, works at 3.3V or 5V,EXP1 has 5V+GND rail present for pull-ups
+PC8,EXP1,E1,Panel key/switch input 2,As-is,None,Same
+PC4,EXP1,E1,Panel key/switch input 3,As-is,None,Same
+PE6,EXP1,E1,Panel key/switch input 4 (was MT_DET2),As-is,None,Same
+PB2,EXP1,E1,Panel key/switch input 5 (was PW_OFF),As-is,None,Same
+PA15,EXP1,E1,Panel key/switch input 6,As-is,None,Same - note E1 needs 8 total inputs; PA13/PA4 above were reassigned to RTD CS, so 2 more are needed from EXP2 or a spare stepper slot pin
+PC5,EXP2,E1,Panel key/switch input 7,As-is,None,From EXP2 header
+PE13,EXP2,E1,Panel key/switch input 8,As-is,None,From EXP2 header - completes the 8 required for E1
+PD13,EXP2,E2,Indicator rail gate (PWM/timer),As-is,None - confirm timer-capable,Needs to be a timer/PWM-capable pin for brightness modulation - verify
+PC6,EXP2,E4,Buzzer output,As-is,None,Simple GPIO out via transistor per E4's own spec
+PE14,EXP2,E9,Mains zero-cross input,Needs passive (isolation is off-board),Confirm EXTI-capable; pull-up/level treatment depends on the dimmer module's ZC output type,From the RobotDyn/KRIDA dimmer module's shared zero-cross output pin
+PE15,EXP2,E8,Flow meter pulse input,Needs passive (maybe),1kOhm series resistor for protection; pull-up move to 3.3V if open-drain,Confirm open-drain vs push-pull on the OEM meter before finalizing
+PA0,Onboard "H-BED" heater output (unused),-,Spare,Spare,-,"SUPERSEDED: was E7 analog signal channel, but E7 moved to the XDB401 I2C variant (same part/range as the analog reference, same vendor) riding the I2C1 bus below. Divider no longer needed - freed back to spare, ADC-capable (ADC123_IN0)"
+PB0,Onboard "HE1" heater output (unused),-,Spare,Spare,-,"SUPERSEDED: same reason as PA0 above - freed back to spare, ADC-capable (ADC12_IN8)"
+PB1,Onboard "FAN2" output (unused),-,Spare,Spare,-,"SUPERSEDED: was the ratiometric excitation-sense channel, no longer needed since the I2C sensor reports an already-calibrated value internally - freed back to spare, ADC-capable (ADC12_IN9)"
+PB8/PB9 [SUPERSEDED - see LOCKED IN rows below],I2C1 (SCL/SDA),E7 + RTC (deferred),XDB401 I2C pressure transducer (x2, brew + steam) + future RTC module,Needs daughter board,"XDB401 I2C variant (same part/range as the previously-planned analog sensor, same vendor, same Gaggiuino-established supply chain)","REPLACES the analog+divider approach for E7. Removes noise exposure on the long analog wire run near mains switching (addresses E17's own flagged concern), removes the divider and excitation-sense channel entirely. Shares the I2C1 bus already reserved for a future RTC - confirm distinct I2C addresses between the two XDB401 units and the RTC before wiring (may need address-select or a low-cost I2C mux if the two pressure sensors ship with the same fixed address)"
+PD11,EXP2 (freed by the correction above),-,Spare,Spare,-,Freed back to the spare pool - not ADC-capable but fine for digital use
+PD10,EXP2 (freed by the correction above),-,Spare,Spare,-,Freed back to the spare pool - not ADC-capable but fine for digital use
+PE5,Onboard "HE0" heater output (unused),-,Spare,Spare,-,Newly identified - not ADC-capable (Port E has no ADC channels) but free for digital use
+PC14,Onboard "FAN1" output (unused),-,Spare - UNCERTAIN,Spare,-,"Possibly reserved as the LSE 32kHz oscillator pin if this board populates an RTC crystal - confirm before relying on it as free GPIO"
+PA9,WiFi header (repurposed),E14,Display link UART TX,Reserved / not populated,None,Deferred HMI headroom - do not consume for anything else
+PA10,WiFi header (repurposed),E14,Display link UART RX,Reserved / not populated,None,Deferred HMI headroom - do not consume for anything else
+PC15/PC3/PC2/PB13,WiFi header (repurposed),E14,Display link SPI (alt),Reserved / not populated,None,Spare alternative if a SPI-based display is chosen instead of UART
+PC13/PC7,WiFi header (repurposed),-,Spare,Spare,-,Unused if WiFi module not fitted
+PB8,Stepper slot Z (unused - repurposed),E7 + RTC (deferred),I2C1 SCL - LOCKED IN,Needs daughter board,"2x XDB401, 3.3V supply / I2C output variant (user-sourced from AliExpress official store, distinct from the 5-12V variant found in general research), one 1.2MPa (brew) + one 0.5MPa (steam), plus an I2C mux (TCA9548A class, ~USD2-5) ONLY IF both ship on the same fixed 0x7F address - supplier may program distinct addresses instead, decided at purchase","LOCKED IN. Steam range settled at 0.5MPa (5 bar) deliberately matched to a planned mechanical OPV at ~5 bar on the steam line: the OPV is the real system pressure ceiling in both normal and fault operation, so the sensor gets best resolution across the whole range the system will ever actually see, and clipping past full scale costs nothing because the OPV is already acting there. Sensor survival was never the issue (150% FS overload = 7.5 bar, above the JYPC-4 pump 5.5 bar deadhead); the question was measurement validity, and the OPV resolves it. Instantaneous 50-100Hz vibration-pump ripple is not resolvable by this sensor regardless of range (~0.1s settle time acts as an anti-alias filter), so finer resolution on the averaged signal it does report is the sound trade. OPV setpoint and sensor full scale must be chosen together, not independently. Also reports temperature over I2C per-unit (16-bit Q8.8) - expected to be laggy (internal compensation element, not a fast direct-contact probe, thermal mass/path between water and sensing element). Candidate use: the brew-line unit's temp reading, if placed near the group head/exit-to-coffee, could serve as a secondary/diagnostic signal for actual delivered temperature or group readiness - NOT the fast primary control loop, which stays on the thermoblock's own NTC. Response time not yet bench-characterized. Not yet authored to the graph - worth carrying forward if used for real"
+PB9,Stepper slot Y (unused - repurposed),E7 + RTC (deferred),I2C1 SDA - LOCKED IN,Needs daughter board,Same as PB8 row,Pairs with PB8 above for I2C1 - carries both XDB401 units, the mux, and the future RTC
+PD9,Stepper slot E0 (UART - repurposed),E10,SSR #1 gate (coffee heater),As-is,None - SSR input is 3-32VDC opto; series resistor sized at the SSR,"NEWLY ALLOCATED - was in the spare pool. The interconnect sheet said only 'Robin Nano GPIO' for this; it had never been given a pin. Should be a timer-capable pin: zero-cross burst-fire needs the firing decision timed against the PE14 zero-cross edge"
+PD8,Stepper slot E1 (UART - repurposed),E10,SSR #2 gate (steam heater),As-is,Same,"NEWLY ALLOCATED - same as above. Timer-capable preferred for the same burst-fire reason"
+PE4,Stepper slot X (unused),E11,Dimmer module trigger ch1 (coffee pump),As-is,None - module input is opto-isolated,"NEWLY ALLOCATED. Random-phase control: firing angle is timed from the PE14 zero-cross edge, so this wants a timer channel too"
+PE3,Stepper slot X (unused),E11,Dimmer module trigger ch2 (steam pump),As-is,Same,NEWLY ALLOCATED - same timer consideration
+PE2,Stepper slot X (unused),E12,Relay module IN1 (2-way coffee valve),As-is,None - opto-isolated input; confirm active-low on the specific module,"NEWLY ALLOCATED. Plain on/off, no timing requirement"
+PD5,Stepper slot X (unused),E12,Relay module IN2 (3-way diverter valve),As-is,Same,"NEWLY ALLOCATED. Plain on/off, no timing requirement"
