@@ -34,3 +34,5 @@ links:
     type: targets
   - target: REQ-SAFETY-CHAIN-001.C6
     type: targets
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY
+    type: depends-on

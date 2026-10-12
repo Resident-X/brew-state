@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-RULE-CHECK-GATE.C6
+type: criterion
+title: The check's report names each design, its verdict and every violation in terms a builder can act on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The check reports, for each design it found, whether it passed. For each violation it gives the rule broken, where on the design it is, and which design it belongs to. A reader holding only the repository and the named tools can tell what to fix without opening the design editor or knowing how the check was written. The command's exit status matches the report: it fails if any design fails. Out of scope: rendered layer images for the human layout review, and any record of the order being placed.
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: criterion-of

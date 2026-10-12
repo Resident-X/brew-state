@@ -1,0 +1,43 @@
+id: SOL-HW-BOARD-RULE-CHECK-GATE
+type: deliverable
+category: solution
+title: Every board design in the repository must pass KiCad's own electrical, layout and separation rule checks from one task-runner command, each check proven on a throwaway design
+status: active
+version: 1
+text: |
+  One task-runner command finds every board design in the repository and runs KiCad's own command-line electrical and layout rule checks on it. The checks cover the separation basis the design declares and agreement between layout and schematic. Any violation fails the command, and each check is shown to fail on a fault seeded for it in a throwaway design that is never ordered. The separation check holds each design to the signed separation basis, not to whatever figure the design declares.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION.C3
+    type: derives-from
+  - target: DEL-HW-DESIGN-VERIFICATION.C4
+    type: derives-from
+  - target: DEL-HW-DESIGN-VERIFICATION.C5
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-HW-BOARD-RULE-CHECK-GATE.C1
+    class: whole-set
+  - answered_by: SOL-HW-BOARD-RULE-CHECK-GATE.C6
+    class: served-statement
+  - answered_by: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    class: existing-capability
+  - answered_by: SOL-HW-BOARD-RULE-CHECK-GATE.C6
+    class: consumer-intent
+  - answered_by: SOL-HW-BOARD-RULE-CHECK-GATE.C4
+    class: consumer-self-sufficiency
+interfaces:
+  - the project's task runner (Taskfile.yml)
+  - KiCad's command-line electrical and design rule checks
+locus:
+  - marking: created
+    ref: board-design rule check run from the task runner
+  - marking: created
+    ref: throwaway board design kept only to prove the check
+  - marking: existing
+    ref: Taskfile.yml
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-VERIFICATION-RULE-GATE-1
+  target: DEL-HW-DESIGN-VERIFICATION

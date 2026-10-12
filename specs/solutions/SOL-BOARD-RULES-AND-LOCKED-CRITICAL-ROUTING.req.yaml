@@ -1,0 +1,44 @@
+id: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING
+type: deliverable
+category: solution
+title: Board rules are written and confirmed before routing, and the nets a board depends on are routed by hand and locked first
+status: active
+version: 1
+text: |-
+  The method's pre-routing and routing steps: write every design rule and net class with its figure and source, confirm them in effect on the board by readback, route power, decoupling, ground, mains and sensing paths deliberately and lock them, then let the external router place only what remains.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C1
+    type: derives-from
+  - target: DEL-HW-DESIGN-METHOD.C2
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C8
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
+    class: new-condition
+  - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
+    class: whole-set
+  - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+    class: served-statement
+  - answered_by: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    class: existing-capability
+  - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+    class: consumer-intent
+  - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - KiCad project design rules and net classes, read back from the open board
+  - KiCad's routing exporter and importer, and the external router run from its command line
+  - KiCad's command-line electrical and layout rule checks
+locus:
+  - marking: created
+    ref: 'the written board design method in the repository''s documentation: its rules-before-routing and critical-net routing sections'
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-METHOD-1
+  target: DEL-HW-DESIGN-METHOD

@@ -4,11 +4,13 @@ category: task
 title: A board design is checked against the design record automatically before it can be ordered
 status: active
 level: task
-version: 1
+version: 2
 text: |
   A check that any board design must pass before it is ordered, run the same way every time and by anyone. It compares the design with the record it was meant to realise: the channels and controller pin allocation it must connect, the parts the specification calls for and the manufacturer can supply, and the electrical and layout rules including the separation basis. It is proven on a throwaway design before a real board relies on it, by showing each check catches a fault deliberately placed for it.
 rationale: |
   A board is paid for before it can be powered, so the check before ordering is the cheapest place an error can be found. A trial on a throwaway board found a routing tool reporting no violations while the board's own rule check found twenty-five, so the proof has to be the design's own checks run in full, and each check has to be shown to fire before its silence is trusted.
+
+  The rule checks, their task-runner command and their seeded-fault proofs need nothing from the partition and are built alongside the design method. The connectivity check against the channel enumeration and pin allocation, and the parts check against the specification and catalogue, are sliced once the partition's per-board tasks fix the pin allocation and specification for the new boards, because both compare a design against those records; their solutions then carry the dependency on the partition, rather than the whole task carrying it.
 links:
   - target: DEL-CONTROLLER-HARDWARE.C3
     type: derives-from
@@ -22,7 +24,5 @@ links:
     type: targets
   - target: DEL-CONTROLLER-HARDWARE.C4
     type: derives-from
-  - target: DEL-HW-PARTITION-AND-FEASIBILITY
-    type: depends-on
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
