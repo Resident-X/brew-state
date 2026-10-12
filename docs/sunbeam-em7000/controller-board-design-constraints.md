@@ -65,7 +65,7 @@ The budget is spent against the circuit's rating, 10 A, not against the breaker'
 |---|---|---|---|---|
 | Sustained budget at the top of the span | 10 A, 2530 W | owner statement (the rating) | 10 A × 253 V | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C3`, `REQ-POWER-BUDGET-001.C6` |
 | Draw with every switched load on, at 253 V | at least 10.5 A, before the pending valve coils and low-voltage supply are added | inferred | Rows above | `REQ-POWER-BUDGET-001.C6` |
-| Shortfall when everything runs at once | at least 0.5 A | inferred | 10.5 A − 10 A | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C3` |
+| Shortfall when everything runs at once | at least 0.46 A | inferred | 10.46 A − 10 A, where 10.46 A is the 10.5 A above before rounding: (2576 + 48 + 22) W / 253 V = 2646 W / 253 V | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C3` |
 
 So at the top of the span, both elements at full duty already draw 10.18 A, over the budget before any pump runs. Full concurrent heating is not within the budget there. What can run together is decided by the controller's arbitration, planned ahead of time against these 253 V figures (`REQ-POWER-BUDGET-001.C6`), not discovered by reaching them.
 
@@ -91,40 +91,46 @@ Two further figures follow from the table and are owed by the design that meets 
 | Figure | Value | Grade | Derivation | From |
 |---|---|---|---|---|
 | Breaking capacity each fuse and breaker in the chain must have | At least the prospective fault current, 6 kA | project assumption (carried from the fault current) | A protective device that cannot break the fault it sees does not interrupt it | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C8` |
-| Time each protective device takes to clear, and the energy it lets through, at that fault current | **Pending** — a characteristic of the device fitted, read from that device's datasheet once it is chosen. Settled by the design task for each board, which the partition and feasibility task creates once the division between boards is chosen (`DEL-HW-PARTITION-AND-FEASIBILITY.C5`): it records, for the conductors its board carries, the clearing time and let-through of each protective device they rely on, and checks each conductor against them by calculation before layout, as part of that board's proof before order (`DEL-CONTROLLER-HARDWARE.C3`). The board design method's pre-layout proof (`SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1`) defines that step but records no figure for this machine | — | — | `REQ-ELECTRICAL-INSTALL-001.C7` |
+| Time each protective device takes to clear, and the energy it lets through, at that fault current | **Pending** — a characteristic of the device fitted, read from that device's datasheet once it is chosen. Settled by the design task for each board, which the partition and feasibility task creates once the division between boards is chosen (`DEL-HW-PARTITION-AND-FEASIBILITY.C5`): it records, for the conductors its board carries, the clearing time and let-through of each protective device they rely on, and checks each conductor against them by calculation before layout, applying the board design method to its board. The board design method's pre-layout proof (`SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1`) defines that step but records no figure for this machine | — | — | `REQ-ELECTRICAL-INSTALL-001.C7` |
 
 ### Proof-of-life removal interval
 
-The interval within which loss of the controller's proof of life must remove heater power. It is derived, not chosen, per `DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP`. Each heater is taken fully on at the top of the declared span, starting from the highest temperature the controller commands on it, with the lower bound of its thermal mass. The interval is the time to reach its retained protection's trip point, and the shorter of the two heaters sets it.
+The interval within which loss of the controller's proof of life must remove heater power. It is derived, not chosen, per `DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP`. Each heater is taken fully on at the top of the declared span, starting from the highest temperature its casting reaches while the controller is holding it, across the plant model's declared corners, with the lower bound of its thermal mass. The interval is the time that heater takes to reach its retained protection's trip point, and the shorter of the two heaters sets it.
+
+That starting temperature has not been derived yet, so the interval is pending.
+
+| Figure | Value | Grade | Derivation | From |
+|---|---|---|---|---|
+| Proof-of-life removal interval | **Pending** — its starting point, each casting's peak temperature under control across the plant model's declared corners, is not yet derived. Settled by deriving that peak for each thermoblock from the plant model and then deriving the interval here from it, naming the heater that sets it: `SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED` (`.C1` the peak, `.C2` the interval) | — | The time for each heater, fully on at 253 V from its casting's peak under control and with the lower bound of its thermal mass, to reach its trip point; the shorter of the two | `REQ-SAFETY-CHAIN-001.C3`, `REQ-SAFETY-CHAIN-001.C2` |
+
+The other inputs are settled, and are the ones the derivation will use:
 
 | Input | Coffee thermoblock | Steam thermoblock | Grade | Source |
 |---|---|---|---|---|
 | Trip point | 107 °C | 195 °C | parts list | `reference-machine.md` § Protection: 110 °C ±3 and 200 °C ±5, each taken at the low end of its tolerance (`DEC-PROTECTION-TRIP-POINTS-FROM-PARTS-LIST-LOW-TOLERANCE-END`; accounted for as `CONTROL_PROTECTION_TRIP_C` and `STEAM_CONTROL_PROTECTION_TRIP_C` in `firmware/params/control.declaration`) |
-| Highest temperature commanded | 100 °C | 138.9 °C | inferred | Coffee: a brew target is refused at or above the saturation temperature `CONTROL_SATURATION_C`, accounted for in `firmware/params/control.declaration` and valued at `firmware/src/control/control.c:71`, so 100 °C bounds every admitted target from above. Steam: the loop has two phases, both declared `@estimated` in `firmware/params/steam_control.declaration`. While nothing is drawn it commands `ready-temperature-c`, 125 °C. During a draw it commands pressure instead, held inside a band whose top is `draw-pressure-ceiling-bar`, 1400 milli-bar. Converted through the declared saturation relation in `firmware/params/thermoblock.params` (`steam.saturation_temperature_c` 100 °C and `steam.pressure_bar_per_k` 0.036 bar/K), that ceiling is the higher of the two, worked below |
 | Element power at 253 V | 1215 W | 1362 W | inferred, from measured resistances | 253² / 52.7 Ω and 253² / 47.0 Ω (`reference-machine.md` § Heating and load) |
 | Thermal mass, lower bound | 192 J/K | 216 J/K | inferred | `brew.thermal_mass_j_per_k` 320 J/K and `steam.thermal_mass_j_per_k` 360 J/K in `firmware/params/thermoblock.params`, each `@estimated` with a stated error of 0.4 of its value; lower bound = value × (1 − 0.4) |
 
-The arithmetic:
+Each of these, and what the arithmetic leaves out, errs toward a shorter time: each trip point is the low end of its tolerance, the power is taken at the element's cold resistance, which its rising resistance only lowers (and the steam element's 47.0 Ω is itself a lower bound), the thermal mass is its lower bound, and the arithmetic ignores both the loss to the room and the heat capacity of the water held in each block. The starting temperature is the one input that does not yet err that way, which is why the interval waits for it.
 
-- Steam starting temperature: the draw phase's ceiling, 100 °C + 1.4 bar / 0.036 bar/K = 100 + 38.9 = 138.9 °C. That is above the ready-holding phase's 125 °C, so the draw phase sets the steam side's starting point.
-- Coffee: 192 J/K × (107 − 100) K = 1344 J; 1344 J / 1215 W = **1.1 s**.
+**Figures from the commanded temperature, which the casting's peak will replace.** Until the peak is derived, the only starting temperatures the graph declares are the highest the controller commands. They are shown here with the times they give, so the derivation has something to be checked against. They are not the interval. Each is an upper limit on its heater's time, which bounds the interval only from the side the interlock cannot use: an interlock timed to one of these figures could act after the trip it exists to pre-empt.
+
+| Commanded temperature | Coffee thermoblock | Steam thermoblock | Grade | Source |
+|---|---|---|---|---|
+| Highest temperature commanded | 100 °C | 138.9 °C | inferred | Coffee: a brew target is refused at or above the saturation temperature `CONTROL_SATURATION_C`, accounted for in `firmware/params/control.declaration` and valued at `firmware/src/control/control.c:71`, so 100 °C bounds every admitted target from above. Steam: the loop has two phases, both declared `@estimated` in `firmware/params/steam_control.declaration`. While nothing is drawn it commands `ready-temperature-c`, 125 °C. During a draw it commands pressure instead, held inside a band whose top is `draw-pressure-ceiling-bar`, 1400 milli-bar. Converted through the declared saturation relation in `firmware/params/thermoblock.params` (`steam.saturation_temperature_c` 100 °C and `steam.pressure_bar_per_k` 0.036 bar/K), that ceiling is the higher of the two: 100 °C + 1.4 bar / 0.036 bar/K = 100 + 38.9 = 138.9 °C |
+
+The times from the commanded temperature:
+
+- Coffee: 192 J/K × (107 − 100) K = 1344 J; 1344 J / 1215 W = 1.1 s.
 - Steam: 216 J/K × (195 − 138.9) K = 216 × 56.1 = 12 120 J; 12 120 J / 1362 W = 8.9 s.
 
-| Figure | Value | Grade | Derivation | From |
-|---|---|---|---|---|
-| Proof-of-life removal interval | **1.1 s**, set by the coffee thermoblock | inferred | The shorter of the two times above | `REQ-SAFETY-CHAIN-001.C3`, `REQ-SAFETY-CHAIN-001.C2` |
+Why these do not bound the interval from below, as the interlock needs: in both loops the casting runs hotter than the commanded figure, by an amount no declared figure fixes. The coffee loop drives the temperature of the water leaving the block, not the block itself, and the two are not a fixed offset apart (`firmware/src/control/control.h`). During a draw the steam loop drives pressure, and the block stands hotter than its measured pressure implies through the saturation relation, by the pressure the draw has cost the path (`steam.pressure_fall_bar_per_ml`, `@estimated`, in `firmware/params/thermoblock.params`). A casting that starts hotter starts nearer its trip point and reaches it sooner, so each time above is longer than that heater's real time, by an amount not yet known: an upper limit, not the interval. The coffee side shows how much that matters: it has 7 K between its commanded ceiling and its trip point, and each kelvin the casting stands above 100 °C takes 192 J/K / 1215 W = 0.16 s from its 1.1 s. Which heater sets the interval is likewise left to the derivation, because the two castings' excesses over their commanded figures are not the same.
 
-The coffee thermoblock sets the interval. The steam side's 8.9 s would have to fall about eightfold (8.9 s / 1.1 s = 8.1) before it did.
-
-Every simplification in the inputs shortens the time, so the figure errs toward the interlock acting early. Loss to the room is ignored. So is the water held in each block, which adds heat capacity. Power is taken at the cold resistance, which a heating element's rising resistance only lowers, and the steam element's 47.0 Ω is itself a lower bound.
-
-One thing the derivation does not cover, because it starts from the highest *commanded* temperature as its basis requires. During a draw the steam block stands hotter than its measured pressure implies through the saturation relation, by the pressure the draw has cost the path (`steam.pressure_fall_bar_per_ml`, `@estimated`, in `firmware/params/thermoblock.params`). No declared figure bounds how much hotter. For the steam side to set the interval instead, the block would have to be at 195 − (1.1 s × 1362 W / 216 J/K) = 195 − 6.9 = 188 °C or above when proof of life is lost, 49 K above the temperature the band's ceiling implies.
-
-A measured thermal mass, a different trip point, or a change to the commanded temperatures or the steam pressure band re-derives this figure; the basis does not change.
+Once derived, a measured thermal mass, a different trip point, or a change to what the controller commands or to the plant model's corners re-derives the interval; the basis does not change.
 
 ### Load currents
 
-Each load's current while energised is stated in `component-specification.md` § What each switched load needs of its device, the *Carries continuously* column, from the measured element resistances in `reference-machine.md` § Heating and load. This record cites that table rather than restating it. The loads are the retained devices of `DEC-DEVICE-RETENTION-BOUNDARY`.
+Each load's current while energised is stated in `component-specification.md` § What each switched load needs of its device, the *Carries continuously* column, from the measured element resistances in `reference-machine.md` § Heating and load. The values below are that table's, cited here, and a change made there governs. The loads are the retained devices of `DEC-DEVICE-RETENTION-BOUNDARY`.
 
 | Load | Current at 253 V, the worst case | Grade | From |
 |---|---|---|---|
@@ -173,7 +179,7 @@ Every output the boards drive fails into the safe state: not heating, not pumpin
 
 | Output | State it must fail into | Grade | From |
 |---|---|---|---|
-| Both heater switches | De-energised. A semiconductor switch's ordinary failure is a short, so the device alone does not give this. The proof-of-life interlock in series removes heater power within the interval above, whatever the switching device does (`component-specification.md` § The regression this specification makes visible) | inferred | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C2`, `REQ-SAFETY-CHAIN-001.C2`, `.C3` |
+| Both heater switches | De-energised. A semiconductor switch's ordinary failure is a short, so the device alone does not give this. The proof-of-life interlock in series removes heater power within the proof-of-life removal interval above (pending), whatever the switching device does (`component-specification.md` § The regression this specification makes visible) | inferred | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C2`, `REQ-SAFETY-CHAIN-001.C2`, `.C3` |
 | Both pump drives | De-energised | inferred | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C2`, `DEF-SAFE-STATE` |
 | Both valve coils | De-energised. For the two-way valve this is also its open-to-drain, venting state (`reference-machine.md` § Protection, owner statements dated 2026-10-11) | inferred; the venting state is owner statement | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C2`, `DEF-SAFE-STATE` |
 | Panel indicator lines and anode rail gate, low-water indicator, buzzer, gauge driver lines | De-energised | inferred | `DEF-SAFE-STATE`, `DEL-CONTROLLER-HARDWARE.C8` |
@@ -191,4 +197,5 @@ Every pending mark in this section, with the work that ends it.
 | Valve coil current | Recording what each retained device imposes on its driver | `SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C4` |
 | Pump current | Recording what each retained device imposes on its driver | `SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C4` |
 | Rail budgets; the low-voltage supply's mains input, feed protection and output limit; the pump-branch and valve-branch fuse ratings | The design task for the board that carries each, once the partition and feasibility task has decided each function's form (`DEL-HW-PARTITION-AND-FEASIBILITY.C1`) and, for the fuses, once the coil and pump currents above are recorded | `DEL-HW-PARTITION-AND-FEASIBILITY.C5` |
+| Proof-of-life removal interval | Deriving each thermoblock's peak casting temperature under control from the plant model across its declared corners, then deriving the interval here from that peak | `SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED` |
 | Each protective device's clearing time and let-through at the prospective fault, and each conductor checked against it | The design task for each board, created by the partition and feasibility task, applying the board method's pre-layout proof to that board before it is ordered (the method itself only defines the step) | `DEL-HW-PARTITION-AND-FEASIBILITY.C5` |

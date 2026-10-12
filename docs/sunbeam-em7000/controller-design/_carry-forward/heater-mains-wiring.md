@@ -60,6 +60,7 @@ No rows were dropped. The drain hose and PTFE drop-leg tube are plumbing and wer
 ## Inconsistencies found and not resolved (to confirm)
 
 1. **Worst-case draw versus the 10 A chain.** `reference-machine.md`: both elements about 9.3 A at 230 V, worst case with both pumps 9.95 A at 240 V and 10.5 A at 253 V. The T10A fuse, the FN9222 (10 A at 50 °C) and the WB1565 trunk (10 A) all sit at that figure, and the "8-15 A uncovered band" starts below it. D8 is Chosen and `REQ-POWER-BUDGET-001` plans within the budget, so left as is; adequacy at the top of the supply range, and in-enclosure derating of the cable, are to confirm.
+   *Superseded 2026-10-13, kept as logged:* the supply and its worst case are now `reference-machine.md` § Supply and § Heating and load, and the 10 A filter and trunk described here were replaced by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`. Read those, not this item, for current figures.
 2. **IRM-10-5 internal fuse.** Old text said T2A internal; the BOM says the spec sheets read show none. Kept as unconfirmed; the external T2A is retained. Confirm in the user manual.
 3. **OEM connector types and pitches** (panel, gauge, flow meter CZ1, NTC plugs) are recorded in neither `connector-pinouts.md` nor `reference-machine.md`. The new landing-connector rows have no part numbers. Panel pin-1 orientation and buzzer terminal order are also not established.
 4. **XDB401 and PT1000 probe connectors** are not recorded; PVC-class hookup wire and PVC mains flex have no stated temperature rating near the thermoblocks and 140 C-class valves.
