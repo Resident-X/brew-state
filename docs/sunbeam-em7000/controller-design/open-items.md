@@ -61,6 +61,8 @@ Each node must be read with `show` before linking, and existing coverage checked
 - The proof-of-life interlock, deferred: downstream zero-cross sensing can verify that the master relay opened but cannot be the trip path, since `REQ-SAFETY-CHAIN-001` requires the chain to owe nothing to the controller or firmware.
 - The accuracy-versus-speed axis for temperature sensing, which nothing in the graph rules on, and recalibration as a maintenance activity, which follows from using a sensor that drifts.
 
+- **Stale slice files are cited by the graph.** 22 spec files cite `docs/sunbeam-em7000/controller-io.md`, 6 cite `component-specification.md`, 2 cite `controller-io-bom.csv` and 1 cites `control-board-electrical-requirements.csv` (evidence nodes such as `EVD-SOL-CHANNEL-MEASUREMENT-FIGURES.C1-INSPECTION`, solutions such as `SOL-CONTROLLER-CHANNEL-ENUMERATION`, and `DEC-U8-BOARD-RETENTION-UNVERIFIED`); `reference-machine.md` is cited by 24 and `connector-pinouts.md` by 5. Those nodes verified the old content. Deleting or rewriting the old files would orphan or invalidate that evidence. The graph work has to decide, node by node, whether to supersede the cited nodes against the refreshed files in this folder, repoint them, or leave the old files as the historical record. Read each node with `show` first.
+
 ## E. Housekeeping and unresolved items from the refresh
 
 - The mainboard's own height (an estimate; 25 mm of cavity makes it worth measuring) and the dimmer module's height (footprint 50 x 16 mm).
@@ -77,4 +79,4 @@ Each node must be read with `show` before linking, and existing coverage checked
 - Harness connector types are unidentified; panel and gauge parts are not specified.
 - The rail-gate and buzzer stage parts are in the BOM; the relay module's snubber count is 2.
 - All prices are estimates; no catalogue numbers have been checked against stock.
-- The old `controller-selection-working/` folder has been removed (git history, commit `07913f4`). The stale slice files in `docs/sunbeam-em7000/` are superseded by this folder once the owner accepts it.
+- The old `controller-selection-working/` folder has been removed (git history, commit `07913f4`). The four stale slice files in `docs/sunbeam-em7000/` (`controller-io.md`, `component-specification.md`, `controller-io-bom.csv`, `control-board-electrical-requirements.csv`) are superseded in content by this folder but are cited by path from graph nodes, so they stay until the graph is dealt with (section D).
