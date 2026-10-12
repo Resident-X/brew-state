@@ -27,8 +27,8 @@ selection, not the selection.
 ## What the supply is, and what changes off it
 
 Everything below is stated against a declared supply rather than against this machine's. The
-reference build runs at 230–240 V, 50 Hz (`reference-machine.md` § Supply), on a circuit assumed to
-be 10 A. Two things follow for an adopter elsewhere, and both are properties of their supply rather
+reference build runs on a declared span of 216–253 V at 50 Hz, from a 10 A circuit behind an upstream
+breaker declared as up to 20 A (`reference-machine.md` § Supply, which grades each). Two things follow for an adopter elsewhere, and both are properties of their supply rather
 than of this design:
 
 - **Frequency sets the switching cadence, not the control period.** Heater devices are specified as
@@ -53,8 +53,9 @@ measured, and nothing below depends on its exact value.
 ## What each switched load needs of its device
 
 Six mains loads, each specified by property. Currents are computed from the measured cold
-resistances in `reference-machine.md` § Heating and load across the declared 230–253 V span (230 V
-nominal, 240 V, and 253 V at the +10 % top of the permitted range); a cold resistance gives the
+resistances in `reference-machine.md` § Heating and load at three points of the declared 216–253 V
+span: 230 V nominal, 240 V, and 253 V, the span's top, which sets every current and dissipation a
+device is sized for (its 216 V bottom sets the least heat delivered and no device rating); a cold resistance gives the
 higher current if these elements behave as metal heating elements ordinarily do, resistance rising
 with temperature. **That coefficient is assumed, not declared** — no document here gives one for
 either element. It is called out because the whole direction of the sizing case turns on it: were

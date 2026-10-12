@@ -51,7 +51,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 - A decision adding the outlet water temperature probe (the declared sensing list in `SOL-CHANNEL-ENUMERATION-CORRECTED.C1` is three NTCs). `DEC-DEVICE-RETENTION-BOUNDARY` is unaffected because the NTCs stay.
 - A decision on the steam pressure tap position and the hot-side pressure question.
 - The vent policy, and the steam damper decision.
-- A decision declaring upstream protection and wiring rating (`REQ-ELECTRICAL-INSTALL-001.C7`, `OBL-ELECTRICAL-THERMAL-SAFETY-001.C8` and `.C9`).
+- Upstream protection is now declared (`reference-machine.md` § Supply: a circuit breaker of up to 20 A, project assumption) and which device interrupts which fault is decided by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`; the fault-current figures the wiring must be rated for are in `controller-board-design-constraints.md` (`REQ-ELECTRICAL-INSTALL-001.C7`, `OBL-ELECTRICAL-THERMAL-SAFETY-001.C8`). The wiring authority is named there too (`.C9`).
 - A commissioning identification deliverable (`REQ-STATE-ESTIMATION-001.C6`).
 - `SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET`'s premise "no sensor reports it" is partly dated; the group-side water temperature is still reconstructed.
 - The graph has no way to hold a solution waiting for an operator to build it (named in the old working README).

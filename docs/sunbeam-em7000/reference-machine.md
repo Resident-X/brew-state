@@ -20,9 +20,11 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 
 | Value | Figure | Provenance |
 |---|---|---|
-| Supply voltage | 230–240 V AC | Instruction manual, given as an installation instruction rather than a ratings table |
+| Supply voltage | 216–253 V AC | **Published, unverified**: the standard tolerance about the 230 V nominal, +10 % / −6 %, in AS 60038 *Standard voltages* (catalogue entry https://store.standards.org.au/product/as-60038-2022; the standard's text was not read at that source). The instruction manual's 230–240 V is an installation instruction — what to plug the machine into — and not the span that supply moves over |
 | Mains frequency | 50 Hz | **Inferred** from a pump part marked `230V 50HZ`. Not stated as a machine rating anywhere |
-| Circuit rating | 10 A assumed | Project assumption — the rating of an ordinary AU domestic outlet |
+| Circuit rating | 10 A | Owner statement, 2026-10-12: the outlet circuit the machine is plugged into |
+| Upstream protection | Circuit breaker, up to 20 A | **Project assumption — replace with your value.** An AU socket-outlet circuit is commonly protected at 16 A or 20 A, and the higher is the conservative figure to design against (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`). An AU plug is unfused, so nothing between this breaker and the machine's own inlet fuse interrupts a fault |
+| Prospective fault current at the outlet | 6 kA | **Project assumption — replace with your value**, from the breaking capacity printed on the breaker protecting your outlet or from your distributor's declared fault level. A compliant installation's breaker can break the fault current where it sits, and an outlet further down the same circuit sees less; 6 kA is a breaking capacity commonly printed on residential breakers. The breaker here has not been read |
 | Wiring authority | AS/NZS 3000 | Jurisdiction of the machine's market |
 
 ## Heating and load
@@ -176,7 +178,9 @@ If you replace this file, these are the parts of the graph your substitution rea
 
 | Declared value | What depends on it |
 |---|---|
-| Supply voltage, circuit rating | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C3`, `REQ-POWER-BUDGET-001`, `JRN-SERVE-GROUP-001.C2` and `.C5` |
+| Supply voltage span | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C3`, `REQ-POWER-BUDGET-001` and `.C6`, `JRN-SERVE-GROUP-001.C2` and `.C5`; every current, power and dissipation figure in this folder; the plant model's element-power uncertainty in `firmware/params/thermoblock.params`, which `SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN` brings to this span; the controller boards' figures in [`controller-board-design-constraints.md`](controller-board-design-constraints.md) |
+| Circuit rating | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C3`, `REQ-POWER-BUDGET-001`, `JRN-SERVE-GROUP-001.C2` and `.C5`; the supply budget in [`controller-board-design-constraints.md`](controller-board-design-constraints.md) |
+| Upstream protection, prospective fault current | `REQ-ELECTRICAL-INSTALL-001.C7`, `OBL-ELECTRICAL-THERMAL-SAFETY-001.C8`; the fault-current figures in [`controller-board-design-constraints.md`](controller-board-design-constraints.md) |
 | Mains frequency | `REQ-MACHINE-CONFIGURATION-001.C4`, `OBL-REALTIME-DISCIPLINE-001` |
 | Element ratings | `REQ-POWER-BUDGET-001`, `OBL-ELECTRICAL-THERMAL-SAFETY-001.C3` |
 | Thermostat trip points | `REQ-MEASUREMENT-001.C1`, `REQ-BREW-TEMP-001`, `REQ-SAFETY-CHAIN-001.C3` |
