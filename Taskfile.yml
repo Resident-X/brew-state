@@ -22,6 +22,10 @@ vars:
   FW_DIR: firmware
   # PlatformIO installs into its own virtual environment rather than onto PATH.
   PIO: '{{.PIO | default "$HOME/.platformio/penv/bin/pio"}}'
+  HW_DIR: hardware
+  # KiCad's command-line tool is often installed off the search path; point at
+  # it with KICAD_CLI=... (hardware/README.md gives the usual place per system).
+  KICAD_CLI: '{{.KICAD_CLI | default "kicad-cli"}}'
 
 tasks:
   sc:install:
@@ -388,3 +392,25 @@ tasks:
       # emulation tier are declared once, as EMULATION_READS in round_gate.py.
       # A further round-scoped check is added here, beside the tiers.
       - python3 {{.FW_DIR}}/tools/round_gate.py --task "{{.TASK_EXE}}" --host fw:build --host fw:check --host fw:test --host fw:run --emulation fw:emulate
+
+  hw:verify:
+    desc: The pre-order check — every board design in the repository through KiCad's own electrical, layout, schematic-parity and separation checks. Needs KiCad 10.0 or newer (set KICAD_CLI=/path/to/kicad-cli when kicad-cli is not on PATH), Python 3.9 or newer with PyYAML 5.1 or newer, and git
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      # The designs are found from what git tracks, so a board joins the check
+      # because it exists rather than because a line here names it.
+      - python3 {{.HW_DIR}}/tools/board_check.py --root . --kicad-cli "{{.KICAD_CLI}}"
+
+  hw:prove:
+    desc: Seed every fault the pre-order check guards against into a throwaway copy of the proof design and require the check to catch each — on demand, not part of the gate. Needs the same tools as hw:verify
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - python3 {{.HW_DIR}}/tools/board_prove.py --kicad-cli "{{.KICAD_CLI}}" {{.CLI_ARGS}}
+
+  hw:test:
+    desc: Run the tests covering the pre-order check's own tooling, against the real kicad-cli. Needs the same tools as hw:verify, and Task
+    dir: "{{.ROOT_DIR}}"
+    env:
+      KICAD_CLI: "{{.KICAD_CLI}}"
+    cmds:
+      - python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}
