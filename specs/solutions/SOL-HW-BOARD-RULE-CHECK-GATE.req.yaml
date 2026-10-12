@@ -13,7 +13,7 @@ text: |
   - The checking tool and its tests live in hardware/tools/.
   - The throwaway design and its synthetic basis record live in hardware/proof/.
   - The seeded-fault proof introduces each fault into a copy of the throwaway design in a temporary directory outside the repository, never into the tree itself, so the committed tree stays clean and the every-design check stays green; this differs from the firmware mutation tool, which edits its sources in place and restores them.
-  - The required tools are KiCad at version 10.0 or newer, the version chosen for this repository's board files, which older versions cannot open, and Python 3 with the PyYAML package for reading the basis record. Each is named, with its minimum, in the task's own description and in a hardware/README.md, and a missing one stops the command naming it, as the firmware mutation sweep already does for PyYAML.
+  - The required tools are KiCad at version 10.0 or newer, the version chosen for this repository's board files, which older versions cannot open, and Python 3.9 or newer with PyYAML 5.1 or newer for reading the basis record. Each is named, with its minimum, in the task's own description and in a hardware/README.md, and a missing one stops the command naming it, as the firmware mutation sweep already does for PyYAML.
   - The check reads designs and rules from files only. Konnect and any open editor session play no part in it.
 
   The separation basis record, the Mains net class, the MAINS and NOT_FOR_MANUFACTURE project variables and the hardware tree layout follow DEC-BOARD-SEPARATION-BASIS-RECORD.
