@@ -3,7 +3,8 @@
 
 Every case is driven against a synthetic repository: a handful of files laid out
 where the firmware tree, the analysis records and the task runner's declaration
-sit, a main recorded as the remote-tracking branch, and a branch changed from it.
+sit, a bare repository beside it standing in for the remote its main is pushed
+to, and a branch changed from that main.
 The task runner is a shell script that records which tasks it was asked for and
 fails the ones it is told to, so the gate's ordering, stopping and verdict are
 observed without a build behind them.
@@ -11,14 +12,14 @@ observed without a build behind them.
 
 from __future__ import annotations
 
+import ast
 import os
 import stat
 import subprocess
 import sys
 import tempfile
 import unittest
-
-import yaml
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPOSITORY = os.path.dirname(os.path.dirname(TOOLS))
@@ -62,17 +63,26 @@ BASELINE = {
 
 
 class SyntheticRepository:
-    """A repository whose main is recorded as origin/main, on a branch off it."""
+    """A repository whose main is pushed to a remote, on a branch off that main."""
 
-    def __init__(self, record_main: bool = True):
+    def __init__(self, with_remote: bool = True):
         self.directory = tempfile.TemporaryDirectory()
-        self.root = os.path.realpath(self.directory.name)
+        top = os.path.realpath(self.directory.name)
+        self.root = os.path.join(top, "work")
+        self.remote = os.path.join(top, "remote.git")
+        os.makedirs(self.root)
         self.git("init", "-q", "-b", "main")
         for path, content in BASELINE.items():
             self.write(path, content)
         self.commit("baseline")
-        if record_main:
-            self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        if with_remote:
+            subprocess.run(
+                ["git", "init", "-q", "--bare", "-b", "main", self.remote],
+                capture_output=True, check=True, env=GIT_ENVIRONMENT,
+            )
+            self.git("remote", "add", "origin", self.remote)
+            self.git("push", "-q", "origin", "main")
+            self.git("fetch", "-q", "origin")
         self.git("checkout", "-q", "-b", "feature")
 
     def cleanup(self) -> None:
@@ -100,6 +110,15 @@ class SyntheticRepository:
     def change_and_commit(self, path: str) -> None:
         self.write(path, BASELINE.get(path, "") + "changed\n")
         self.commit(f"change {path}")
+
+    def head(self) -> str:
+        return self.git("rev-parse", "HEAD").strip()
+
+    def tracking(self) -> str:
+        return self.git("rev-parse", "refs/remotes/origin/main").strip()
+
+    def remote_main(self) -> str:
+        return self.git("ls-remote", "origin", "refs/heads/main").split()[0]
 
     def scope(self) -> round_gate.Scope:
         return round_gate.scope(round_gate.changed(self.root))
@@ -130,10 +149,14 @@ class FakeTaskRunner:
             return handle.read().split()
 
 
-def run_gate(repository: SyntheticRepository, failing: tuple[str, ...] = ()):
+def run_gate(
+    repository: SyntheticRepository, failing: tuple[str, ...] = (), task: str | None = None
+):
     runner_directory = tempfile.TemporaryDirectory()
     runner = FakeTaskRunner(runner_directory.name, failing)
-    arguments = [sys.executable, os.path.join(TOOLS, "round_gate.py"), "--task", runner.path]
+    arguments = [
+        sys.executable, os.path.join(TOOLS, "round_gate.py"), "--task", task or runner.path
+    ]
     for name in HOST:
         arguments += ["--host", name]
     for name in EMULATION:
@@ -183,7 +206,10 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.assertNotEqual(0, result.returncode)
         self.assertEqual(["fw:build", "fw:check"], asked)
         self.assertIn("ROUND GATE FAILED: the host tier failed at fw:check", result.stdout)
-        self.assertIn("emulation tier was NOT REACHED", result.stdout)
+        closing = result.stdout.split("ROUND GATE FAILED")[1]
+        self.assertIn("emulation tier was NOT REACHED", closing)
+        self.assertIn("it would have run, because", closing)
+        self.assertIn("    firmware/src/control/loop.c", closing)
         self.assertNotIn("PASSED", result.stdout)
 
     def test_the_last_host_task_failing_still_fails_the_gate_when_emulation_would_be_skipped(self):
@@ -193,6 +219,35 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.assertNotEqual(0, result.returncode)
         self.assertEqual(HOST, asked)
         self.assertIn("host tier failed at fw:run", result.stdout)
+        # Both facts reach the closing lines: emulation was not reached, and it
+        # would have been skipped, judged by the paths named.
+        closing = result.stdout.split("ROUND GATE FAILED")[1]
+        self.assertIn("emulation tier was NOT REACHED", closing)
+        self.assertIn("it would have been skipped, because", closing)
+        self.assertIn("    docs/machine/notes.md", closing)
+        self.assertNotIn("PASSED", result.stdout)
+
+    def test_a_task_runner_that_cannot_start_fails_the_host_tier(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        self.repository.change_and_commit("firmware/src/control/loop.c")
+        missing = os.path.join(self.repository.root, "no-such-task-runner")
+        result, asked = run_gate(self.repository, task=missing)
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual([], asked)
+        self.assertIn("fw:build could not be started", result.stdout)
+        self.assertIn("ROUND GATE FAILED: the host tier failed at fw:build", result.stdout)
+        self.assertIn("emulation tier was NOT REACHED", result.stdout)
+        self.assertNotIn("PASSED", result.stdout)
+
+    def test_the_statements_name_the_base_and_head_commits_measured_between(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        base = self.repository.head()
+        self.repository.change_and_commit("docs/machine/notes.md")
+        head = self.repository.head()
+        result, _ = run_gate(self.repository)
+        closing = result.stdout.split("ROUND GATE PASSED")[1]
+        self.assertIn(f"merge-base {base} with origin/main", closing)
+        self.assertIn(f"HEAD {head}", closing)
 
     def test_an_emulation_failure_fails_the_gate(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
@@ -204,12 +259,103 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
 
     def test_an_unresolvable_base_runs_emulation_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
-        self.repository.git("update-ref", "-d", "refs/remotes/origin/main")
+        repository = SyntheticRepository(with_remote=False)
+        self.addCleanup(repository.cleanup)
+        repository.change_and_commit("docs/machine/notes.md")
+        result, asked = run_gate(repository)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + EMULATION, asked)
+        self.assertIn("could not tell what changed", result.stdout)
+        self.assertIn("origin/main could not be fetched", result.stdout)
+        self.assertIn(f"HEAD {repository.head()}", result.stdout)
+
+
+# --- The base is the remote's main, not a copy the branch can move -------------
+
+
+class TheBaseIsFetchedRatherThanTrusted(unittest.TestCase):
+    """The round gate is the only verification before a merge, so the base it
+    measures from must be one the branch's author cannot point at the branch."""
+
+    def setUp(self):
+        self.repository = SyntheticRepository()
+        self.addCleanup(self.repository.cleanup)
+        self.repository.change_and_commit("firmware/src/control/loop.c")
+
+    def test_a_local_origin_main_moved_onto_the_branch_is_corrected_by_the_fetch(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        published = self.repository.remote_main()
+        self.repository.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        result, asked = run_gate(self.repository)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + EMULATION, asked)
+        self.assertIn("    firmware/src/control/loop.c", result.stdout)
+        self.assertIn(f"merge-base {published} with origin/main", result.stdout)
+        self.assertEqual(published, self.repository.tracking())
+
+    def test_main_gaining_commits_on_the_remote_is_seen_without_a_local_fetch(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        # Pushed by path rather than by remote name, so the local copy of
+        # origin/main is left behind, as it is when someone else merges.
+        self.repository.git("push", "-q", self.repository.remote, "HEAD:refs/heads/main")
+        before = self.repository.tracking()
+        self.assertNotEqual(self.repository.remote_main(), before)
+        chosen = self.repository.scope()
+        self.assertFalse(chosen.run_emulation, chosen.reason)
+        self.assertIn("changes nothing", chosen.reason)
+        self.assertEqual(self.repository.remote_main(), self.repository.tracking())
+
+    def test_a_local_branch_named_like_the_base_does_not_shadow_it(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        self.repository.git("branch", "origin/main", "HEAD")
+        chosen = self.repository.scope()
+        self.assertTrue(chosen.run_emulation, chosen.reason)
+        self.assertEqual(["firmware/src/control/loop.c"], chosen.judged)
+
+    def test_an_object_replacement_of_mains_tip_is_not_followed(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        # Main's tip is replaced by a commit carrying the branch's own tree, so
+        # read through the replacement the base would already hold every change.
+        main_tip = self.repository.remote_main()
+        forged = self.repository.git(
+            "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "forged"
+        ).strip()
+        self.repository.git("replace", main_tip, forged)
+        chosen = self.repository.scope()
+        self.assertTrue(chosen.run_emulation, chosen.reason)
+        self.assertEqual(["firmware/src/control/loop.c"], chosen.judged)
+
+    def test_a_fetch_that_fails_runs_emulation_even_with_a_local_copy_present(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
+        self.repository.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        self.repository.git(
+            "remote", "set-url", "origin", os.path.join(self.repository.root, "gone.git")
+        )
         result, asked = run_gate(self.repository)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertEqual(HOST + EMULATION, asked)
         self.assertIn("could not tell what changed", result.stdout)
-        self.assertIn("origin/main", result.stdout)
+        self.assertIn("origin/main could not be fetched from origin", result.stdout)
+
+    def test_a_remote_that_does_not_answer_in_time_runs_emulation(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
+        self.repository.git("config", "remote.origin.uploadpack", "sleep 30; git-upload-pack")
+        with mock.patch.object(round_gate, "FETCH_SECONDS", 1):
+            change = round_gate.changed(self.repository.root)
+        self.assertIsNone(change.paths)
+        self.assertIn("did not answer within 1 s", change.problem)
+        self.assertTrue(round_gate.scope(change).run_emulation)
+
+    def test_git_that_cannot_be_run_runs_emulation_and_says_why(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
+        empty = tempfile.TemporaryDirectory()
+        self.addCleanup(empty.cleanup)
+        with mock.patch.dict(os.environ, {"PATH": empty.name}):
+            change = round_gate.changed(self.repository.root)
+        self.assertIsNone(change.paths)
+        chosen = round_gate.scope(change)
+        self.assertTrue(chosen.run_emulation)
+        self.assertIn("git could not be run", chosen.reason)
 
 
 class TheChangeIsMeasuredFromTheMergeBaseAndTheWorkingTree(unittest.TestCase):
@@ -221,7 +367,7 @@ class TheChangeIsMeasuredFromTheMergeBaseAndTheWorkingTree(unittest.TestCase):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
         self.repository.git("checkout", "-q", "main")
         self.repository.change_and_commit("firmware/src/control/loop.c")
-        self.repository.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        self.repository.git("push", "-q", "origin", "main")
         self.repository.git("checkout", "-q", "feature")
         self.repository.change_and_commit("docs/machine/notes.md")
         chosen = self.repository.scope()
@@ -252,6 +398,13 @@ class TheChangeIsMeasuredFromTheMergeBaseAndTheWorkingTree(unittest.TestCase):
         self.repository.write("firmware/src/control/new.c", "int new_one;\n")
         change = round_gate.changed(os.path.join(self.repository.root, "docs"))
         self.assertEqual(["firmware/src/control/new.c"], change.paths)
+
+    def test_a_relative_diff_configuration_does_not_hide_changes_outside_the_start(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        self.repository.git("config", "diff.relative", "true")
+        self.repository.change_and_commit("firmware/src/control/loop.c")
+        change = round_gate.changed(os.path.join(self.repository.root, "docs"))
+        self.assertEqual(["firmware/src/control/loop.c"], change.paths)
 
 
 # --- The selection, case by case ---------------------------------------------
@@ -339,14 +492,29 @@ class ThePathSelection(unittest.TestCase):
 
     def test_an_unresolvable_base_runs_it_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
-        repository = SyntheticRepository(record_main=False)
+        # The remote's main is rewritten to a history the branch shares nothing
+        # with: the fetch succeeds, and there is no merge-base to measure from.
+        self.repository.change_and_commit("docs/machine/notes.md")
+        self.repository.git("checkout", "-q", "--orphan", "unrelated")
+        self.repository.commit("unrelated")
+        self.repository.git("push", "-q", "--force", "origin", "unrelated:main")
+        self.repository.git("checkout", "-q", "feature")
+        change = round_gate.changed(self.repository.root)
+        self.assertIsNone(change.paths)
+        chosen = round_gate.scope(change)
+        self.assertTrue(chosen.run_emulation)
+        self.assertIn("merge-base of HEAD with origin/main could not be resolved", chosen.reason)
+
+    def test_a_repository_with_no_remote_runs_it_and_says_why(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
+        repository = SyntheticRepository(with_remote=False)
         self.addCleanup(repository.cleanup)
         repository.change_and_commit("docs/machine/notes.md")
         change = round_gate.changed(repository.root)
         self.assertIsNone(change.paths)
         chosen = round_gate.scope(change)
         self.assertTrue(chosen.run_emulation)
-        self.assertIn("merge-base of HEAD with origin/main could not be resolved", chosen.reason)
+        self.assertIn("origin/main could not be fetched from origin", chosen.reason)
 
     def test_an_unreadable_list_of_changed_paths_runs_it_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
@@ -386,13 +554,35 @@ class ThePathSelection(unittest.TestCase):
 # --- The declaration the task runner carries --------------------------------
 
 
+def task_commands(taskfile: str, name: str) -> list[str]:
+    """The entries under a task's `cmds`, read from the Taskfile as text.
+
+    Read as text so the host tier, which runs these tests, needs nothing beyond
+    the standard library. A task is a key indented two spaces under `tasks:`;
+    its commands are the list items indented six.
+    """
+    lines = taskfile.splitlines()
+    start = lines.index(f"  {name}:")
+    commands = []
+    for line in lines[start + 1:]:
+        if line.strip() and (len(line) - len(line.lstrip(" "))) <= 2:
+            break
+        if line.startswith("      - "):
+            commands.append(line[len("      - "):].strip())
+    return commands
+
+
 class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
     def setUp(self):
         with open(os.path.join(REPOSITORY, "Taskfile.yml"), encoding="utf-8") as handle:
-            self.tasks = yaml.safe_load(handle)["tasks"]
+            taskfile = handle.read()
+        self.round = task_commands(taskfile, "check:round")
+        self.verify = [
+            command[len("task: "):] for command in task_commands(taskfile, "fw:verify")
+        ]
 
     def round_arguments(self) -> list[str]:
-        (command,) = self.tasks["check:round"]["cmds"]
+        (command,) = self.round
         return command.split()
 
     def tasks_given(self, option: str) -> list[str]:
@@ -401,10 +591,9 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
 
     def test_the_round_hands_over_every_host_task_the_complete_verification_runs(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-        verify = [step["task"] for step in self.tasks["fw:verify"]["cmds"]]
         self.assertIn("tools/round_gate.py", " ".join(self.round_arguments()))
         self.assertEqual(
-            [name for name in verify if name not in ("fw:emulate", "fw:sweep")],
+            [name for name in self.verify if name not in ("fw:emulate", "fw:sweep")],
             self.tasks_given("--host"),
         )
         self.assertEqual(["fw:emulate"], self.tasks_given("--emulation"))
@@ -416,10 +605,33 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
 
     def test_the_complete_verification_keeps_its_declaration_of_every_gate(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-        verify = [step["task"] for step in self.tasks["fw:verify"]["cmds"]]
         self.assertEqual(
-            ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "fw:sweep"], verify
+            ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "fw:sweep"], self.verify
         )
+
+
+class TheRoundNeedsOnlyTheStandardLibrary(unittest.TestCase):
+    """The host tier discovers these tests and the round runs the gate, so a
+    third-party import in either fails the round on a machine that lacks it."""
+
+    def test_the_gate_and_its_tests_import_only_the_standard_library(self):
+        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
+        for path in (os.path.join(TOOLS, "round_gate.py"), os.path.abspath(__file__)):
+            with open(path, encoding="utf-8") as handle:
+                tree = ast.parse(handle.read())
+            imported = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported.update(alias.name.split(".")[0] for alias in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.level == 0:
+                    imported.add(node.module.split(".")[0])
+            foreign = sorted(
+                name for name in imported
+                if name not in sys.stdlib_module_names and name not in ("__future__", "round_gate")
+            )
+            with self.subTest(path=os.path.basename(path)):
+                self.assertIn("subprocess", imported)
+                self.assertEqual([], foreign)
 
 
 if __name__ == "__main__":

@@ -340,7 +340,7 @@ tasks:
       - python3 -m unittest discover -s emulation/tests {{.CLI_ARGS}}
 
   fw:mutate:
-    desc: Break each guarded property on purpose and require its check to notice — on demand, not part of the gate
+    desc: Break each guarded property on purpose and require its check to notice — on demand, part of neither the build round's gate nor the nightly complete verification
     dir: "{{.FW_DIR}}"
     cmds:
       - python3 tools/mutate.py {{.CLI_ARGS}}
@@ -354,7 +354,7 @@ tasks:
       - python3 tools/mull_sweep.py --project . --plant-root src/plant --include-dir include --pio {{.PIO}} {{.CLI_ARGS}}
 
   fw:verify:
-    desc: The full firmware gate — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic
+    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic
     cmds:
       - task: fw:build
       - task: fw:check
@@ -380,7 +380,7 @@ tasks:
   # ---------------------------------------------------------------------------
 
   check:round:
-    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with origin/main and counting uncommitted edits and new files; runs emulation anyway when it cannot tell what changed. Stops at a host failure, says which tiers ran and why one was skipped, and its exit status is the verdict. Never runs the full mutation sweep
+    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with origin/main, fetched fresh from origin, and counting uncommitted edits and new files; runs emulation anyway when it cannot tell what changed, including when origin cannot be fetched. Stops at a host failure, says which tiers ran and why one was skipped, and its exit status is the verdict. Never runs the full mutation sweep
     dir: "{{.ROOT_DIR}}"
     cmds:
       # The tasks are handed over rather than their commands copied, so the

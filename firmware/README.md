@@ -273,13 +273,17 @@ tier only when the branch changes something the emulation reads: anything under
 `firmware/`, the analysis records under `docs/` the emulation suite checks
 against, or the `Taskfile.yml` that runs it. What changed is measured from the
 branch's merge-base with `origin/main`, against the working tree, so uncommitted
-edits and new files count. That set of paths is declared once, as
-`EMULATION_READS` in [`tools/round_gate.py`](tools/round_gate.py). When the base
-cannot be resolved or the changed paths cannot be read, the gate runs emulation
-rather than skipping it. It stops at the first host-tier failure and says the
-emulation tier was not reached; otherwise its last lines say which tiers ran
-and, for a skipped one, why and which changed paths it judged by. Its exit
-status is the verdict. It never runs the full mutation sweep.
+edits and new files count. `origin/main` is fetched from `origin` first, because
+the copy already in the repository is one a branch can move onto itself. That
+set of paths is declared once, as `EMULATION_READS` in
+[`tools/round_gate.py`](tools/round_gate.py). When `origin` cannot be fetched,
+the base cannot be resolved or the changed paths cannot be read, the gate runs
+emulation rather than skipping it. Its statements name the base and `HEAD`
+commits it measured between. It stops at the first host-tier failure and says
+the emulation tier was not reached, and whether it would have run; otherwise
+its last lines say which tiers ran and, for a skipped one, why and which changed
+paths it judged by. Its exit status is the verdict. It never runs the full
+mutation sweep.
 
 The complete verification, `fw:verify`, runs nightly against `main`: every tier
 the round can skip, the emulation tier unconditionally, and the full sweep of
@@ -301,7 +305,8 @@ job that wants the download in its own step. What the tier establishes, how the
 peripheral models are written, and why a run is only evidence about the artefact
 the target build wrote are all in [`emulation/README.md`](emulation/README.md).
 
-One more runs on demand rather than in the gate:
+One more runs on demand, in neither the round gate nor the nightly complete
+verification:
 
 ```sh
 task fw:mutate                    # break each guarded property, require its check to notice
@@ -320,16 +325,17 @@ being unable to look, and treating the second as a catch would be this tool
 committing the failure it exists to detect. And because editing the build file
 makes the build system discard every linked artefact, the artefacts are re-made
 during the run and again at the end, so neither the next mutation nor the
-ordinary gate is left inspecting something that is no longer there.
+next round or nightly run is left inspecting something that is no longer there.
 
 It overlaps the tool tests under `tools/tests/` on purpose but does not replace
-them: those drive each check against synthetic broken subjects in the gate,
-where this drives the real checks against the real sources end to end, which is
-what catches a check that is correct in isolation and mis-wired in the build.
+them: those drive each check against synthetic broken subjects in the host
+tier, which both cadences run, where this drives the real checks against the
+real sources end to end, which is what catches a check that is correct in
+isolation and mis-wired in the build.
 
-It is out of the gate because it answers a question — are these checks real —
-that does not change between commits the way the checks' own results do. Run it
-when a check is added or reworked.
+It is out of both cadences because it answers a question — are these checks
+real — that does not change between commits the way the checks' own results do.
+Run it when a check is added or reworked.
 
 The second sweeps the plant model's arithmetic instead of the checks. It is the
 last step of `fw:verify` as well as being runnable alone, so the complete
@@ -356,8 +362,8 @@ questions, and the difference is the point: a list of specific defects that are
 caught establishes exactly the members of the list, and says nothing about the
 defects nobody thought to write down.
 
-It needs LLVM 19 and the matching Mull package, which the ordinary gate does
-not, so the environments it compiles — `native_mutation`,
+It needs LLVM 19 and the matching Mull package, which the round gate and the
+rest of the complete verification do not, so the environments it compiles — `native_mutation`,
 `native_fixture_mutation` and `native_boiler_mutation` — declare
 `custom_mutation_sweep` in `platformio.ini`
 and are left alone by the gates covering every host build. Those gates say so
