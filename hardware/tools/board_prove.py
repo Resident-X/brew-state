@@ -4,8 +4,8 @@
 Every failure condition the pre-order check enforces gets a fault seeded for it
 here. Each fault is introduced into a fresh copy of hardware/proof/gate-proof in
 a temporary directory outside the repository, made into a git work tree of its
-own so the check finds designs exactly as it does in the repository, and the
-shipped check is run on it. A fault counts as caught only when the check exits
+own and committed, so the check finds designs exactly as it does in the
+repository, and the shipped check is run on it. A fault counts as caught only when the check exits
 non-zero *and* reports a violation of the rule the fault was seeded for, with
 the text that names it; a check that failed for some other reason has not shown
 it can see this one. The clean copy must pass, or a fault being caught would
@@ -52,6 +52,9 @@ class Seed:
     def __init__(self, root: str):
         self.root = root
         self.design = os.path.join(root, DESIGN)
+        #: Edits made after the seeded copy is committed, for faults that are
+        #: about what the commit does not hold.
+        self.after: List[Callable[["Seed"], None]] = []
 
     def path(self, suffix: str) -> str:
         return os.path.join(self.design, NAME + suffix) if suffix.startswith(".") else os.path.join(self.design, suffix)
@@ -161,6 +164,61 @@ def stray(suffix: str):
     return seed_it
 
 
+def git(seed: Seed, *args: str) -> None:
+    subprocess.run(["git", "-C", seed.root, "-c", "user.name=board-prove", "-c", "user.email=board-prove@invalid",
+                    *args], check=True, capture_output=True)
+
+
+def untrack(suffix: str):
+    """Leave the file on disk but take it out of the commit."""
+    def seed_it(seed: Seed) -> None:
+        relative = os.path.relpath(seed.path(suffix), seed.root)
+        seed.after.append(lambda seed: (git(seed, "rm", "-q", "--cached", "--", relative),
+                                        git(seed, "commit", "-q", "-m", f"untrack {relative}")))
+    return seed_it
+
+
+def uncommitted_record(seed: Seed) -> None:
+    seed.after.append(lambda seed: seed.replace("separation-basis.yaml", "accepted_by: david", "accepted_by: someone-else"))
+
+
+def untracked_sheet(seed: Seed) -> None:
+    shutil.copy(seed.path(".kicad_sch"), seed.path("sub.kicad_sch"))
+    Q = sexpr.Quoted
+    sheet = ["sheet", ["at", "200", "100"], ["size", "20", "10"], ["uuid", Q("0b0e5c1a-0000-4000-8000-0000000000e1")],
+             ["property", Q("Sheetname"), Q("sub"), ["at", "200", "99", "0"]],
+             ["property", Q("Sheetfile"), Q("sub.kicad_sch"), ["at", "200", "111", "0"]]]
+    seed.schematic(lambda tree: tree.insert(len(tree) - 1, sheet))
+    untrack("sub.kicad_sch")(seed)
+
+
+def forged_rule(seed: Seed) -> None:
+    seed.write(".kicad_dru", seed.read(".kicad_dru") + f'(rule "{board_check.RESERVED}: rules loaded"\n'
+                                                       "\t(condition \"A.Type == 'Pad'\")\n\t(constraint assertion \"false\"))\n")
+
+
+def no_mains_but_assigned(seed: Seed) -> None:
+    def edit(data: dict) -> None:
+        data["text_variables"]["MAINS"] = "none"
+        data["net_settings"]["netclass_patterns"][0]["pattern"] = "/NOTHING_*"
+        data["net_settings"]["netclass_assignments"] = {"/UNROUTED": "Mains"}
+    seed.project(edit)
+
+
+def no_mains_but_schematic_class(seed: Seed) -> None:
+    def edit(data: dict) -> None:
+        data["text_variables"]["MAINS"] = "none"
+        data["net_settings"]["netclass_patterns"][0]["pattern"] = "/NOTHING_*"
+    seed.project(edit)
+    Q = sexpr.Quoted
+    flag = ["netclass_flag", Q(""), ["length", "2.54"], ["shape", "round"], ["at", "45.72", "78.74", "0"],
+            ["effects", ["font", ["size", "1.27", "1.27"]], ["justify", "left", "bottom"]],
+            ["uuid", Q("0b0e5c1a-0000-4000-8000-0000000000e2")],
+            ["property", Q("Netclass"), Q("Mains"), ["at", "46.4", "76.2", "0"],
+             ["effects", ["font", ["size", "1.27", "1.27"], "italic"], ["justify", "left"]]]]
+    seed.schematic(lambda tree: tree.insert(len(tree) - 1, flag))
+
+
 def drop_label(seed: Seed) -> None:
     def edit(tree: list) -> None:
         for item in sexpr.children(tree, "label"):
@@ -250,6 +308,7 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a project missing its layout", "discovery: a project needs both its schematic and layout", "design_discovery", "no layout beside it", remove(".kicad_pcb")),
     ("a layout committed without its project", "discovery: no board file escapes the check", "design_discovery", "a layout is tracked without", stray(".kicad_pcb")),
     ("a schematic committed without its project", "discovery: no board file escapes the check", "design_discovery", "a schematic is tracked without", stray(".kicad_sch")),
+    ("a sheet left out of the commit of the schematic naming it", "discovery: no half-committed board escapes the check", "design_discovery", "names the sheet hardware/proof/gate-proof/sub.kicad_sch, which is not tracked", untracked_sheet),
     # Rule checks
     ("an electrical rule violation", "rule checks: KiCad's ERC", "pin_not_connected", "Pin not connected", drop_label),
     ("a layout clearance violation", "rule checks: KiCad's DRC", "clearance", "netclass 'Default'", crowd),
@@ -262,8 +321,12 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a rule left at KiCad's own default of ignore", "rule checks: an ignored check is a failure, default or not", "ignored_check", "missing_courtyard", severity("drc", "missing_courtyard", None)),
     ("a custom rule set to ignore", "rule checks: an ignored check is a failure", "ignored_check", "severity to ignore",
      lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"hush\"\n\t(condition \"A.Type == 'Track'\")\n\t(severity ignore))\n")),
-    ("a rules file KiCad declines to load", "rule checks: the design's rules are read as written", "custom_rules", "KiCad did not load",
+    ("a rules file KiCad declines to load", "rule checks: the design's rules are read as written, and the rule KiCad rejects is named", "custom_rules", "gate-proof.kicad_dru rule 'typo' at line 9",
      lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"typo\"\n\t(condition \"A.Type == 'Pad'\")\n\t(constraint clearence (min 1mm)))\n")),
+    ("a rules file without its version header", "rule checks: the design's rules are read as written, and what KiCad rejects is named", "custom_rules", "does not begin with a (version 1) header",
+     mains_rule("(version 1)\n", "")),
+    ("an untracked custom rules file", "rule checks: the design's rules are read as the repository holds them", "custom_rules", "custom rules file is not tracked", untrack(".kicad_dru")),
+    ("a design rule taking a name reserved for the check's own rules", "rule checks: nothing the design writes passes for the check's own rules", "custom_rules", "reserved for the rules the check adds", forged_rule),
     # Separation
     ("a declared clearance below the signed figure", "separation: a declared figure is compared with the record", "separation_rule", "clearance of 2 mm, below the signed 3 mm", mains_rule("(constraint clearance (min 3mm))", "(constraint clearance (min 2mm))")),
     ("a declared creepage below the signed figure", "separation: a declared figure is compared with the record", "separation_rule", "creepage of 3.5 mm, below the signed 4 mm", mains_rule("(constraint creepage (min 4mm))", "(constraint creepage (min 3.5mm))")),
@@ -283,9 +346,13 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a design silent on whether it carries mains", "separation: MAINS is declared", "mains_declaration", "MAINS is not set", variables(lambda v: v.pop("MAINS"))),
     ("a design declaring an invalid MAINS value", "separation: MAINS is declared", "mains_declaration", "MAINS is 'yes'", variables(lambda v: v.update(MAINS="yes"))),
     ("a design declaring no mains while carrying a Mains-class net", "separation: MAINS agrees with the Mains class", "mains_declaration", "MAINS is none but", variables(lambda v: v.update(MAINS="none"))),
-    ("a design declaring mains with no net in the Mains class", "separation: MAINS agrees with the Mains class", "mains_declaration", "no copper on the layout is in the Mains",
+    ("a design declaring no mains while the project file assigns a net with no copper to Mains", "separation: MAINS agrees with the Mains class wherever it is declared", "mains_declaration", "/UNROUTED assigned in the project file", no_mains_but_assigned),
+    ("a design declaring no mains while its schematic puts a net in Mains", "separation: MAINS agrees with the Mains class wherever it is declared", "mains_declaration", "/LV_B in the schematic", no_mains_but_schematic_class),
+    ("a design declaring mains with no net in the Mains class", "separation: MAINS agrees with the Mains class", "mains_declaration", "no net in the schematic or on the layout is in the Mains",
      lambda seed: seed.project(lambda data: data["net_settings"]["netclass_patterns"][0].update(pattern="/NOTHING_*"))),
     ("a missing basis record", "separation: the basis record exists", "separation_basis", "no separation-basis.yaml", remove("separation-basis.yaml")),
+    ("a basis record that is not tracked", "separation: the basis record is the committed one", "separation_basis", "record is not tracked in the repository", untrack("separation-basis.yaml")),
+    ("a basis record with uncommitted changes", "separation: the basis record is the committed one", "separation_basis", "record has changes that are not committed", uncommitted_record),
     ("a basis record that cannot be parsed", "separation: the basis record is readable", "separation_basis", "cannot be parsed", record("mains_to_low_voltage:\n", "mains_to_low_voltage: [unclosed\n")),
     ("a basis record lacking a figure", "separation: the basis record states both figures", "separation_basis", "lacks mains_to_low_voltage.creepage_mm", record("  creepage_mm: 4.0\n", "")),
     ("a basis record with a figure that is not a positive number", "separation: the basis record states both figures", "separation_basis", "not a positive number", record("clearance_mm: 3.0", "clearance_mm: 0")),
@@ -306,7 +373,11 @@ def prepare(scratch: str) -> Seed:
 
 
 def check(seed: Seed, kicad_cli: str) -> Tuple[int, List[str], str]:
-    subprocess.run(["git", "-C", seed.root, "add", "-A"], check=True)
+    git(seed, "add", "-A")
+    git(seed, "commit", "-q", "--allow-empty", "-m", "seeded copy")
+    for edit in seed.after:
+        edit(seed)
+    seed.after = []
     result = subprocess.run([sys.executable, os.path.join(TOOLS, "board_check.py"), "--root", seed.root,
                              "--kicad-cli", kicad_cli], capture_output=True, text=True)
     return result.returncode, result.stdout.splitlines(), result.stderr.strip()

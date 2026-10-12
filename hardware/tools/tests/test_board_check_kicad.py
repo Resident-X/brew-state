@@ -102,7 +102,25 @@ class Discovery(Proved):
         self.assertCaught("an empty tree", "a layout that cannot be opened", "a schematic that cannot be opened",
                           "a project file that cannot be read", "a project missing its schematic",
                           "a project missing its layout", "a layout committed without its project",
-                          "a schematic committed without its project")
+                          "a schematic committed without its project",
+                          "a sheet left out of the commit of the schematic naming it")
+
+
+class OnlyWhatTheRepositoryHoldsIsChecked(Copy):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C1: Every board design in the repository is checked because it exists, not because it is listed.
+
+    KiCad is given only the files git tracks, so a library, sheet or rules file
+    left uncommitted beside a design cannot make the design pass here while the
+    repository's copy of it would not.
+    """
+
+    def test_a_footprint_library_left_out_of_the_commit_is_not_used(self):
+        library = os.path.join(self.seed.design, "proof.pretty")
+        for name in os.listdir(library):
+            board_prove.untrack(os.path.join("proof.pretty", name))(self.seed)
+        status, lines = self.check()
+        self.assertEqual(status, 1, lines)
+        self.assertIn("lib_footprint_issues", [v[2] for v in self.violations(lines)])
 
 
 # --- C2 -----------------------------------------------------------------------
@@ -115,7 +133,53 @@ class RuleChecks(Proved):
                           "a violation marked as excluded", "a custom rule marking its violations excluded",
                           "a layout rule set to ignore", "an electrical rule set to ignore",
                           "a rule left at KiCad's own default of ignore", "a custom rule set to ignore",
-                          "a rules file KiCad declines to load")
+                          "a rules file KiCad declines to load", "a rules file without its version header",
+                          "an untracked custom rules file", "a design rule taking a name reserved for the check's own rules")
+
+    def test_a_rule_written_to_look_like_the_checks_own_has_its_findings_reported(self):
+        """SOL-HW-BOARD-RULE-CHECK-GATE.C2: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement.
+
+        A design rule named as the check's marker once was is not taken for it:
+        its assertion failures on every pad are reported, not set aside.
+        """
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch)
+            board_prove.forged_rule(seed)
+            status, lines, stderr = board_prove.check(seed, KICAD_CLI)
+        self.assertEqual(status, 1, stderr)
+        forged = [line for line in lines if " | assertion_failure | " in line and "pre-order check: rules loaded" in line]
+        self.assertEqual(len(forged), 8, lines)
+
+
+class TheRejectedRuleIsNamed(Copy):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C6: The check's report names each design, its verdict and every violation in terms a builder can act on.
+
+    When KiCad drops a rules file, the report names the first form it rejects
+    and its line, found with KiCad alone, so the builder need not open the
+    editor to learn what is wrong.
+    """
+
+    def rejected(self, text: str):
+        self.seed.write(".kicad_dru", text)
+        status, lines = self.check()
+        self.assertEqual(status, 1, lines)
+        return [v for v in self.violations(lines) if v[2] == "custom_rules"]
+
+    def test_the_first_rejected_rule_is_named_wherever_it_sits(self):
+        rules = self.seed.read(".kicad_dru")
+        bad = "(rule \"bad {0}\"\n\t(condition \"A.Type == \")\n\t(constraint clearance (min 1mm)))\n"
+        typo = "(rule \"typo\"\n\t(condition \"A.Type == 'Pad'\")\n\t(constraint clearence (min 1mm)))\n"
+        found = self.rejected(rules.replace("(rule \"Mains", bad.format(1) + typo + "(rule \"Mains", 1))
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru rule 'bad 1' at line 5")
+        found = self.rejected(rules + "(rule \"fine\" (condition \"A.Type == 'Via'\") (constraint clearance (min 0.2mm)))\n"
+                              + typo + bad.format(2))
+        self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru rule 'typo' at line 10")
+        self.assertIn("this is the rule it rejects", found[0][4])
+
+    def test_a_form_that_is_not_a_rule_is_named(self):
+        found = self.rejected(self.seed.read(".kicad_dru") + "(rules \"x\")\n")
+        self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru the rules form at line 9")
 
 
 class ZonesAreRefilled(Copy):
@@ -195,7 +259,7 @@ class TheSignedFigurePrevails(Copy):
         rule; the zone case follows below, and the net class case is a seeded fault.
         """
         board_prove.encroach(self.seed)
-        self.seed.write(".kicad_dru", self.seed.read(".kicad_dru") + board_check.appended_rules((3.0, 4.0)))
+        self.seed.write(".kicad_dru", self.seed.read(".kicad_dru") + board_check.appended_rules((3.0, 4.0), "test"))
         layout = self.seed.read(".kicad_pcb")
 
         def clearance_against_r1():
@@ -219,7 +283,7 @@ class TheSignedFigurePrevails(Copy):
                 ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
                 ["polygon", ["pts", ["xy", "1", "1"], ["xy", "59", "1"], ["xy", "59", "19"], ["xy", "1", "19"]]]]
         self.seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
-        self.seed.write(".kicad_dru", self.seed.read(".kicad_dru") + board_check.appended_rules((3.0, 4.0)))
+        self.seed.write(".kicad_dru", self.seed.read(".kicad_dru") + board_check.appended_rules((3.0, 4.0), "test"))
         report = self.drc("--refill-zones")
         actual = [float(m) for v in report["violations"] if v["type"] == "creepage" and "Zone [/LV_A]" in json.dumps(v)
                   for m in re.findall(r"actual ([0-9.]+) mm", v["description"])]

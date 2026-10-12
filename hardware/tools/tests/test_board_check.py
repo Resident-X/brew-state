@@ -17,6 +17,7 @@ from __future__ import annotations
 import datetime
 import io
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -85,6 +86,16 @@ class Tree(unittest.TestCase):
     def write(self, path: str, text: str = "") -> str:
         return write(self.root, path, text)
 
+    def everything(self) -> board_check.Repository:
+        """The tree as a repository tracking every file in it."""
+        files = [os.path.relpath(os.path.join(d, n), self.root).replace(os.sep, "/")
+                 for d, _, names in os.walk(self.root) for n in names]
+        return board_check.Repository(self.root, files)
+
+    def git(self, *args: str) -> None:
+        subprocess.run(["git", "-C", self.root, "-c", "user.name=t", "-c", "user.email=t@invalid", *args],
+                       check=True, capture_output=True)
+
 
 # --- The S-expression reader ---------------------------------------------------
 
@@ -111,6 +122,17 @@ class TheReaderKeepsWhatKiCadMeans(unittest.TestCase):
         self.assertEqual(rules, [["version", "1"], ["rule", "r#1"]])
         with self.assertRaises(sexpr.SexprError):
             sexpr.parse('# a note (with a paren\n(version 1)')
+
+    def test_each_top_level_form_is_located_as_written(self):
+        text = '(version 1)\n# note\n(rule "a"\n\t(condition "x"))\n  bare (rule "b (c")\n'
+        spans = []
+        forms = sexpr.parse(text, comments=True, spans=spans)
+        self.assertEqual(len(spans), len(forms))
+        self.assertEqual([text[start:end] for start, end, _ in spans],
+                         ["(version 1)", '(rule "a"\n\t(condition "x"))', "bare", '(rule "b (c")'])
+        self.assertEqual([line for _, _, line in spans], [1, 3, 5, 5])
+        with self.assertRaisesRegex(sexpr.SexprError, "starting at line 2"):
+            sexpr.parse('(a)\n(b "open\n\n')
 
     def test_malformed_text_is_refused(self):
         for text in ("(rule", "(rule))", '(rule "open)', ""):
@@ -176,6 +198,17 @@ class EveryDesignIsFoundBecauseItExists(Tree):
         _, orphans, problems = board_check.discover(self.root, files)
         self.assertEqual([v.design for v in orphans], ["a/unused.kicad_sch"])
         self.assertEqual(problems["a/a.kicad_pro"], [])
+
+    def test_a_sheet_the_schematic_names_but_git_does_not_track_fails_by_name(self):
+        self.write("a/power.kicad_sch", schematic())
+        files = [self.write("a/a.kicad_pro"), self.write("a/a.kicad_pcb"),
+                 self.write("a/a.kicad_sch", schematic("power.kicad_sch", "gone.kicad_sch"))]
+        _, orphans, problems = board_check.discover(self.root, files)
+        self.assertEqual(orphans, [])
+        self.assertEqual([(v.rule, v.location) for v in problems["a/a.kicad_pro"]],
+                         [("design_discovery", "a/power.kicad_sch"), ("design_discovery", "a/gone.kicad_sch")])
+        self.assertIn("a/a.kicad_sch names the sheet a/power.kicad_sch, which is not tracked",
+                      problems["a/a.kicad_pro"][0].message)
 
     def test_a_schematic_that_cannot_be_read_fails_its_design(self):
         files = [self.write("a/a.kicad_pro"), self.write("a/a.kicad_pcb"), self.write("a/a.kicad_sch", "(kicad_sch (sheet")]
@@ -269,6 +302,69 @@ class TheRecordMustBeSigned(Tree):
         self.assertEqual(self.record(SIGNED_RECORD + "synthetic: false\n")[0], (3.0, 4.0))
 
 
+class TheRecordIsTheCommittedOne(Tree):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    The commit that adds or changes a record is its audit trail, so a record
+    that is untracked, ignored, staged, edited or deleted since its commit
+    gives no signed basis, and a nearer uncommitted record is not passed over
+    for a committed one further up.
+    """
+
+    design = board_check.Design("hardware/m/board/board.kicad_pro")
+
+    def setUp(self):
+        super().setUp()
+        subprocess.run(["git", "init", "-q", self.root], check=True)
+        self.write("hardware/m/separation-basis.yaml", SIGNED_RECORD)
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "record")
+
+    def repository(self) -> board_check.Repository:
+        return board_check.Repository(self.root, board_check.tracked_files("git", self.root))
+
+    def state(self, path: str = "hardware/m/separation-basis.yaml"):
+        return self.repository().uncommitted(path)
+
+    def test_a_record_committed_as_it_stands_is_read(self):
+        self.assertIsNone(self.state())
+        record = board_check.find_record(self.root, self.design.directory, self.repository().tracked)
+        self.assertEqual(board_check.read_record(board_check.require_yaml(), self.root, self.design, record, False,
+                                                 TODAY, self.state(record)), ((3.0, 4.0), []))
+
+    def test_every_way_a_record_can_differ_from_its_commit_is_named(self):
+        self.write("hardware/m/separation-basis.yaml", SIGNED_RECORD.replace("3.0", "5.0"))
+        self.assertEqual(self.state(), "has changes that are not committed")
+        self.git("add", "-A")
+        self.assertEqual(self.state(), "has changes that are not committed")
+        os.remove(os.path.join(self.root, "hardware/m/separation-basis.yaml"))
+        self.assertEqual(self.state(), "is deleted in the working tree but not in the last commit")
+        self.write("hardware/n/separation-basis.yaml", SIGNED_RECORD)
+        self.assertEqual(self.state("hardware/n/separation-basis.yaml"), "is not tracked in the repository")
+        self.git("add", "hardware/n/separation-basis.yaml")
+        self.assertEqual(self.state("hardware/n/separation-basis.yaml"), "is staged but has never been committed")
+        self.write(".gitignore", "hardware/o/\n")
+        self.write("hardware/o/separation-basis.yaml", SIGNED_RECORD)
+        self.assertEqual(self.state("hardware/o/separation-basis.yaml"), "is ignored by git")
+
+    def test_a_nearer_uncommitted_record_is_found_and_fails_rather_than_being_passed_over(self):
+        self.write("hardware/m/board/separation-basis.yaml", SIGNED_RECORD)
+        repository = self.repository()
+        record = board_check.find_record(self.root, self.design.directory, repository.tracked)
+        self.assertEqual(record, "hardware/m/board/separation-basis.yaml")
+        figures, problems = board_check.read_record(board_check.require_yaml(), self.root, self.design, record,
+                                                    False, TODAY, repository.uncommitted(record))
+        self.assertIsNone(figures)
+        self.assertEqual([(v.rule, v.location) for v in problems],
+                         [("separation_basis", "hardware/m/board/separation-basis.yaml")])
+        self.assertIn("record is not tracked in the repository", problems[0].message)
+
+    def test_a_tracked_record_deleted_from_disk_is_still_found(self):
+        os.remove(os.path.join(self.root, "hardware/m/separation-basis.yaml"))
+        self.assertEqual(board_check.find_record(self.root, self.design.directory, self.repository().tracked),
+                         "hardware/m/separation-basis.yaml")
+
+
 # --- The design's own rules --------------------------------------------------
 
 
@@ -280,7 +376,7 @@ class TheMainsRuleHasOneForm(Tree):
     def rules(self, text):
         if text is not None:
             self.write("b/b.kicad_dru", text)
-        rules, hidden = board_check.read_rules(self.root, self.design)
+        rules, hidden = board_check.read_rules(self.root, self.design, self.everything())
         return rules, hidden
 
     def verdict(self, text, signed=(3.0, 4.0)):
@@ -333,16 +429,33 @@ class RulesThatHideWhatTheyFind(Tree):
         for level in ("ignore", "exclusion"):
             with self.subTest(severity=level):
                 write(self.root, "b/b.kicad_dru", MAINS_RULE + f'(rule "quiet"\n\t(condition "A.Type == \'Via\'")\n\t(severity {level}))\n')
-                _, hidden = board_check.read_rules(self.root, self.design)
+                _, hidden = board_check.read_rules(self.root, self.design, self.everything())
                 self.assertEqual([(v.rule, v.location) for v in hidden], [("ignored_check", "b/b.kicad_dru rule 'quiet'")])
 
     def test_a_rule_at_error_or_warning_is_not_flagged(self):
         write(self.root, "b/b.kicad_dru", MAINS_RULE + '(rule "w" (condition "A.Type == \'Via\'") (severity warning))\n')
-        self.assertEqual(board_check.read_rules(self.root, self.design)[1], [])
+        self.assertEqual(board_check.read_rules(self.root, self.design, self.everything())[1], [])
+
+    def test_a_rules_file_git_does_not_track_fails_and_is_not_read(self):
+        write(self.root, "b/b.kicad_dru", MAINS_RULE)
+        rules, hidden = board_check.read_rules(self.root, self.design, board_check.Repository(self.root, []))
+        self.assertEqual(rules, [])
+        self.assertEqual([(v.rule, v.location) for v in hidden], [("custom_rules", "b/b.kicad_dru")])
+        self.assertIn("custom rules file is not tracked in the repository", hidden[0].message)
+        self.assertEqual(board_check.read_rules(self.root, board_check.Design("c/c.kicad_pro"),
+                                                board_check.Repository(self.root, [])), (None, []))
+
+    def test_a_rule_named_with_the_words_reserved_for_the_check_fails(self):
+        for name in ("pre-order check: rules loaded", "Pre-Order Check: signed separation basis", "my pre-order check"):
+            with self.subTest(name=name):
+                write(self.root, "b/b.kicad_dru", MAINS_RULE + f'(rule "{name}" (condition "A.Type == \'Pad\'") (constraint assertion "false"))\n')
+                _, hidden = board_check.read_rules(self.root, self.design, self.everything())
+                self.assertEqual([(v.rule, v.location) for v in hidden], [("custom_rules", f"b/b.kicad_dru rule '{name}'")])
+                self.assertIn("reserved for the rules the check adds", hidden[0].message)
 
     def test_a_rules_file_that_cannot_be_read_fails(self):
         write(self.root, "b/b.kicad_dru", MAINS_RULE + "(rule \"broken\"")
-        rules, hidden = board_check.read_rules(self.root, self.design)
+        rules, hidden = board_check.read_rules(self.root, self.design, self.everything())
         self.assertEqual(rules, [])
         self.assertEqual([v.rule for v in hidden], ["custom_rules"])
 
@@ -371,6 +484,108 @@ class RulesThatHideWhatTheyFind(Tree):
         found = board_check.kicad_violation(self.design, entry, "b/b.kicad_pcb")
         self.assertEqual(found.location, "Pad 1 of R1 @ (1.5, 2) mm")
         self.assertIn("excluded", found.message)
+
+
+class TheChecksOwnRulesCannotBeForged(unittest.TestCase):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C2: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement.
+
+    The check sets aside only the findings of the rules it adds itself, and it
+    knows them by a name drawn for the run, so a design rule written to look
+    like one of them has its findings reported like any other.
+    """
+
+    def entry(self, rule: str) -> dict:
+        return {"type": "assertion_failure", "description": f"Assertion failure (rule '{rule}')", "items": []}
+
+    def test_the_added_rules_are_named_for_the_run_and_carry_the_reserved_words(self):
+        text = board_check.appended_rules((3.0, 4.0), "0123abcd")
+        names = [form[1] for form in sexpr.parse(text) if sexpr.head(form) == "rule"]
+        self.assertEqual(names, ["pre-order check 0123abcd: rules loaded", "pre-order check 0123abcd: Mains item",
+                                 board_check.SIGNED_RULE])
+        self.assertTrue(all(board_check.RESERVED in name for name in names))
+        self.assertEqual(len([f for f in sexpr.parse(board_check.appended_rules(None, "n")) if sexpr.head(f) == "rule"]), 2)
+
+    def test_only_this_runs_rules_are_recognised(self):
+        report = {"violations": [self.entry("pre-order check: rules loaded"), self.entry("pre-order check other: rules loaded"),
+                                 self.entry(board_check.marker_rule("run")), {"type": "clearance", "description":
+                                 f"(rule '{board_check.marker_rule('run')}')"}]}
+        self.assertEqual(board_check.fired(report, board_check.marker_rule("run")), [report["violations"][2]])
+
+    def test_each_design_check_draws_its_own_name_and_reports_a_lookalike(self):
+        # A stand-in for kicad-cli that keeps every rules file it is given and
+        # reports a finding of the fixed name a design might copy, plus the
+        # marker of whichever run it is serving.
+        with tempfile.TemporaryDirectory() as root:
+            kept = os.path.join(root, "kept")
+            fake = os.path.join(root, "kicad-cli")
+            with open(fake, "w", encoding="utf-8") as handle:
+                handle.write(f"""#!{sys.executable}
+import glob, json, re, sys
+args = sys.argv[1:]
+out = args[args.index("-o") + 1]
+if args[:2] == ["sch", "erc"]:
+    report = {{"sheets": []}}
+elif args[:3] == ["sch", "export", "netlist"]:
+    open(out, "w").write("(export (nets))"); sys.exit(0)
+else:
+    rules = open(glob.glob("*.kicad_dru")[0]).read()
+    open({kept!r}, "a").write(rules + "\\n=====\\n")
+    marker = re.findall(r'rule "(pre-order check [0-9a-f]+: rules loaded)"', rules)[-1]
+    report = {{"violations": [
+        {{"type": "assertion_failure", "description": "Assertion failure (rule 'pre-order check: rules loaded')", "items": []}},
+        {{"type": "assertion_failure", "description": "Assertion failure (rule '" + marker + "')", "items": []}}]}}
+json.dump(report, open(out, "w"))
+""")
+            os.chmod(fake, 0o755)
+            for path, text in (("a/a.kicad_pro", '{"text_variables": {"MAINS": "none"}}'), ("a/a.kicad_sch", schematic()),
+                               ("a/a.kicad_pcb", "(kicad_pcb)")):
+                write(root, path, text)
+            repository = board_check.Repository(root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb"])
+            design = board_check.Design("a/a.kicad_pro")
+            runs = [board_check.check_design(design, repository, fake, board_check.require_yaml(), TODAY, [])
+                    for _ in range(2)]
+            with open(kept, encoding="utf-8") as handle:
+                names = re.findall(r'rule "(pre-order check ([0-9a-f]+): rules loaded)"', handle.read())
+        self.assertEqual(len(names), 2)
+        self.assertNotEqual(names[0][1], names[1][1], "two runs used the same name for the marker")
+        self.assertTrue(all(len(nonce) >= 16 for _, nonce in names))
+        for found in runs:
+            self.assertEqual([(v.rule, v.message) for v in found],
+                             [("assertion_failure", "Assertion failure (rule 'pre-order check: rules loaded')")])
+
+
+class MainsMembershipIsReadWhereverItIsDeclared(unittest.TestCase):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    A net sits in the Mains class whether the layout's copper, the schematic or
+    the project file's assignments put it there, so a design declaring no mains
+    is held to all three.
+    """
+
+    def test_the_schematic_netlist_gives_every_net_kicad_puts_in_mains(self):
+        netlist = sexpr.parse_one('(export (nets (net (code "1") (name "/A") (class "Mains"))'
+                                  ' (net (code "2") (name "/B") (class "Default"))'
+                                  ' (net (code "3") (name "/C") (class "Fast,Mains"))'
+                                  ' (net (code "4") (name "/D") (class "Mainsish"))'
+                                  ' (net (code "5") (name "/E"))))')
+        self.assertEqual(board_check.schematic_mains(netlist), {"/A", "/C"})
+
+    def test_the_layouts_mains_items_are_matched_to_its_own_net_names_brackets_and_all(self):
+        layout = sexpr.parse_one('(kicad_pcb (footprint "x" (pad "1" smd rect (net "/AC] of R9 [x")))'
+                                 ' (segment (net "/AC")) (zone (net "/LV")))')
+        names = board_check.layout_nets(layout)
+        self.assertEqual(names, {"/AC] of R9 [x", "/AC", "/LV"})
+        probe = [{"items": [{"description": "SMD pad 1 [/AC] of R9 [x] of X1"}]},
+                 {"items": [{"description": "Track [/AC] on F.Cu, length 2 mm"}]}]
+        self.assertEqual(board_check.mains_nets_from(probe, names), {"/AC] of R9 [x", "/AC"})
+        self.assertEqual(board_check.mains_nets_from(probe[1:], set()), {"/AC"})
+
+    def test_the_project_files_assignments_by_name_count_in_either_form(self):
+        project = {"net_settings": {"netclass_assignments": {"/A": "Mains", "/B": ["Default", "Mains"], "/C": "Default",
+                                                             "/D": "Fast, Mains", "/E": ["Mains2"]}}}
+        self.assertEqual(board_check.assigned_mains(project), {"/A", "/B", "/D"})
+        for empty in ({}, {"net_settings": {"netclass_assignments": None}}, {"net_settings": {"netclass_assignments": []}}):
+            self.assertEqual(board_check.assigned_mains(empty), set())
 
 
 # --- Local overrides ---------------------------------------------------------

@@ -10,7 +10,7 @@ to KiCad what it meant before.
 
 from __future__ import annotations
 
-from typing import List, Union
+from typing import List, Optional, Tuple, Union
 
 
 class SexprError(ValueError):
@@ -24,15 +24,18 @@ class Quoted(str):
 Node = Union[str, "List[Node]"]
 
 
-def parse(text: str, comments: bool = False) -> List[Node]:
+def parse(text: str, comments: bool = False, spans: Optional[List[Tuple[int, int, int]]] = None) -> List[Node]:
     """Every top-level form in `text`, in order.
 
     `comments` allows `#` comments outside strings, which KiCad accepts in a
-    custom rules file and nowhere else.
+    custom rules file and nowhere else. A `spans` list given here receives, for
+    each top-level form in turn, its (start, end) offsets in `text` and the line
+    it starts on, so a form can be quoted or pointed at exactly as written.
     """
     stack: List[List[Node]] = [[]]
     i, n = 0, len(text)
     line = 1
+    start, start_line = 0, 1
     while i < n:
         c = text[i]
         if c == "\n":
@@ -44,6 +47,8 @@ def parse(text: str, comments: bool = False) -> List[Node]:
             while i < n and text[i] != "\n":
                 i += 1
         elif c == "(":
+            if len(stack) == 1:
+                start, start_line = i, line
             stack.append([])
             i += 1
         elif c == ")":
@@ -52,8 +57,10 @@ def parse(text: str, comments: bool = False) -> List[Node]:
             done = stack.pop()
             stack[-1].append(done)
             i += 1
+            if len(stack) == 1 and spans is not None:
+                spans.append((start, i, start_line))
         elif c == '"':
-            j = i + 1
+            first, j = line, i + 1
             while j < n and text[j] != '"':
                 if text[j] == "\\":
                     j += 1
@@ -61,14 +68,18 @@ def parse(text: str, comments: bool = False) -> List[Node]:
                     line += 1
                 j += 1
             if j >= n:
-                raise SexprError(f"unterminated string starting at line {line}")
+                raise SexprError(f"unterminated string starting at line {first}")
             stack[-1].append(Quoted(text[i + 1:j]))
+            if len(stack) == 1 and spans is not None:
+                spans.append((i, j + 1, first))
             i = j + 1
         else:
             j = i
             while j < n and text[j] not in ' \t\r\n()"':
                 j += 1
             stack[-1].append(text[i:j])
+            if len(stack) == 1 and spans is not None:
+                spans.append((i, j, line))
             i = j
     if len(stack) != 1:
         raise SexprError(f"{len(stack) - 1} unclosed '(' at end of text")

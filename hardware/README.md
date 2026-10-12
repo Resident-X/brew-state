@@ -6,7 +6,7 @@ Board designs and the check every one of them has to pass before it is ordered.
 - `hardware/tools/` holds the pre-order check and its tests. They work for any machine.
 - `hardware/proof/` holds designs committed only to prove the check. They are never ordered.
 
-A **board design** is a KiCad project file (`.kicad_pro`) together with the schematic (`.kicad_sch`) and layout (`.kicad_pcb`) of the same name beside it. The check finds every design git tracks, wherever it sits. The layout above is a convention for readers, not something the check depends on. A design is checked once git tracks it: `git add` is enough, no commit is needed.
+A **board design** is a KiCad project file (`.kicad_pro`) together with the schematic (`.kicad_sch`) and layout (`.kicad_pcb`) of the same name beside it. The check finds every design git tracks, wherever it sits. The layout above is a convention for readers, not something the check depends on. A design is checked once git tracks it: `git add` is enough for the design's own files. The check reads a design only as the repository holds it. KiCad is given a copy of the tracked files alone, so a library, sheet or rules file left uncommitted beside a design is not used. A sheet the schematic names, or a custom rules file beside the project, that git does not track fails the design by name. The separation basis record has to be committed exactly as it stands (see below).
 
 ## What you need
 
@@ -42,14 +42,15 @@ For each design the check runs KiCad's own electrical rule check on the schemati
 - **Any violation KiCad reports**: electrical, layout, unconnected item, or layout-schematic disagreement. Warnings count.
 - **Any check set to ignore**, in the project's severities or in a custom rule's `(severity ignore)`. This applies even when ignore is KiCad's own default for that check, as it is for `missing_courtyard` and `footprint_filters_mismatch`. Set every check to error or warning.
 - **Any violation marked as excluded**, whether in the project file's exclusion lists or by a custom rule's `(severity exclusion)`. Fix the violation instead.
-- **A custom rules file KiCad declines to load.** KiCad drops a whole rules file it cannot parse, without saying so, and that would leave every custom rule unchecked. The check detects this and fails the design. Board Setup > Custom Rules in KiCad shows what it rejects.
-- **No mains declaration.** The project text variable `MAINS` must be `present` or `none`. A design that declares `none` may have no net in the `Mains` net class. A design that declares `present` must have copper in it.
+- **A custom rules file KiCad declines to load.** KiCad drops a whole rules file it cannot parse, without saying so, and that would leave every custom rule unchecked. The check detects this and fails the design. It then names the first rule KiCad rejects, with its line, or a missing `(version 1)` header. It finds that rule by re-running KiCad's layout check on the file's rules a few at a time, so the editor is never needed to find it.
+- **A custom rule whose name contains `pre-order check`.** Those words are reserved for the rules the check adds to the copy it checks. The rules the check recognises in KiCad's report are named afresh for every run, so no design rule can pass for one of them.
+- **No mains declaration.** The project text variable `MAINS` must be `present` or `none`. A design that declares `none` may have no net in the `Mains` net class, wherever that is declared: on the layout's copper, in the schematic (as KiCad's own netlist resolves it), or assigned by name in the project file, even to a net with no copper. A design that declares `present` must have a net in the class in its schematic or on its layout.
 
 A design that declares `MAINS` as `present` must also:
 
 - assign every mains-referenced net to the net class `Mains`;
 - state its separation in its own custom rules file (`<design>.kicad_dru`) as **one** rule, with no `(layer ...)` and the condition exactly `A.hasNetclass('Mains') && !B.hasNetclass('Mains')`. The rule holds both a `clearance` and a `creepage` constraint, each no less than the signed record's figures;
-- be held to a signed **separation basis record**. This is the `separation-basis.yaml` in the nearest folder at or above the design. Its keys are `standard`, `supply`, `working_voltage`, `pollution_degree`, `material_group`, `environment`, `barriers`, `mains_to_low_voltage` (a mapping holding `clearance_mm` and `creepage_mm`), `accepted_by`, `accepted_on` and `synthetic`; the check compares `mains_to_low_voltage.clearance_mm` and `.creepage_mm`, in millimetres. `accepted_by` names the acceptor by the identity they record acts under in this project's requirement graph. The record fails the design if it is missing or cannot be parsed, or if a figure is missing or not a positive number. It also fails if it is unsigned: an `accepted_by` that is missing or a placeholder (`unsigned`, `tbd`, `todo`, `none`, `placeholder`, or anything in angle brackets), or an `accepted_on` that is missing, is not a `YYYY-MM-DD` date, or is later than today. A record marked `synthetic` passes only a design whose project text variable `NOT_FOR_MANUFACTURE` is `true`.
+- be held to a signed **separation basis record**. This is the `separation-basis.yaml` in the nearest folder at or above the design. Its keys are `standard`, `supply`, `working_voltage`, `pollution_degree`, `material_group`, `environment`, `barriers`, `mains_to_low_voltage` (a mapping holding `clearance_mm` and `creepage_mm`), `accepted_by`, `accepted_on` and `synthetic`; the check compares `mains_to_low_voltage.clearance_mm` and `.creepage_mm`, in millimetres. `accepted_by` names the acceptor by the identity they record acts under in this project's requirement graph. The record fails the design if it is missing or cannot be parsed, or if a figure is missing or not a positive number. It also fails if it is unsigned: an `accepted_by` that is missing or a placeholder (`unsigned`, `tbd`, `todo`, `none`, `placeholder`, or anything in angle brackets), or an `accepted_on` that is missing, is not a `YYYY-MM-DD` date, or is later than today. A record marked `synthetic` passes only a design whose project text variable `NOT_FOR_MANUFACTURE` is `true`. The commit that adds or changes the record is its audit trail. A record that is untracked, ignored by git, staged but never committed, edited since its last commit, or deleted from the working tree therefore fails the design. A nearer uncommitted record is never passed over for a committed one further up.
 
 The layout check enforces the signed figures, not the design's own. On the temporary copy, the record's clearance and creepage are appended to the design's rules as the last rule, in the same condition form. In KiCad the last matching rule wins, so no later or narrower rule and no net class setting can undercut it. A design that declares a stricter figure is still held only to the record's.
 
@@ -73,13 +74,13 @@ Each violation line has five fields separated by ` | `: `VIOLATION`, the design,
 
 | Rule | Meaning |
 |---|---|
-| `design_discovery` | No design was found, a project lacks its schematic or layout, or a board file is tracked without a project |
+| `design_discovery` | No design was found, a project lacks its schematic or layout, a board file is tracked without a project, or a schematic names a sheet git does not track |
 | `design_unreadable` | A design file cannot be opened or parsed |
 | `ignored_check` | A check is set to ignore, or a custom rule hides what it finds |
-| `custom_rules` | KiCad did not load the design's custom rules |
+| `custom_rules` | KiCad did not load the design's custom rules (the location names the rule it rejects), the rules file is not tracked, or a rule takes a name reserved for the check |
 | `mains_declaration` | `MAINS` is missing or invalid, or disagrees with the `Mains` net class |
 | `separation_rule` | The design's own Mains separation rule is missing, narrowed, incomplete, or below the record |
-| `separation_basis` | The separation basis record is missing, unreadable, unsigned, or synthetic on an orderable board |
+| `separation_basis` | The separation basis record is missing, unreadable, unsigned, not committed as it stands, or synthetic on an orderable board |
 | `local_clearance_override` | A pad, footprint or Mains-class zone sets a clearance below the signed figure |
 
 The exit status is 0 when every design passes, 1 when any fails, and 2 when the check cannot run at all, for example because a tool is missing.
