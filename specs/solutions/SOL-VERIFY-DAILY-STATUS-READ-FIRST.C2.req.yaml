@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The operator session launcher's first act is one read of the daily status, shown above the target list. When the status is red, the list gains a first option to fix that failure, carrying the run's link. A red result adds the option and nothing else: the launcher does not investigate before the operator picks. Out of scope: the corrective work itself, which goes through the maintenance lane.
+  The operator session launcher for this project (start-work-coffee) makes one read of the daily status its first act, shown above the target list. When the status is red, the list gains a first option to fix that failure, carrying the run's link. A red result adds the option and nothing else: the launcher does not investigate before the operator picks. Out of scope: the corrective work itself, which goes through the maintenance lane.
 links:
   - target: SOL-VERIFY-DAILY-STATUS-READ-FIRST
     type: criterion-of

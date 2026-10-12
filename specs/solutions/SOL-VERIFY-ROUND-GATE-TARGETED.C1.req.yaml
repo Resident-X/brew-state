@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  A task-runner command for the build round runs every build, every build-time check, every host test and every host executable under the sanitizers on every invocation. It runs the emulation tier when the branch, measured from its merge-base with main and including uncommitted changes, touches the firmware's sources, its headers, its parameter descriptions and declarations, or the emulation suite. The set of paths that triggers emulation is declared once, beside the command. The command states which tiers it ran and, for a tier it skipped, why. It never runs the full mutation sweep. Out of scope: selecting individual tests within a tier.
+  A task-runner command for the build round runs every build, every build-time check, every host test and every host executable under the sanitizers on every invocation. It runs the emulation tier when the branch, measured from its merge-base with main and including uncommitted changes, touches the firmware's sources, its headers, its parameter descriptions and declarations, its build configuration, or the emulation suite. The set of paths that triggers emulation is declared once, beside the command. The command states which tiers it ran and, for a tier it skipped, why. It never runs the full mutation sweep. The complete verification keeps its own declaration of every gate, unchanged. Out of scope: selecting individual tests within a tier.
 links:
   - target: SOL-VERIFY-ROUND-GATE-TARGETED
     type: criterion-of

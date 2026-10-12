@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: demonstration
 text: |
-  A workflow runs the daily verification against main once a night and on manual dispatch, on hosted runners the code host provides. It provisions what the emulation tier needs on that platform before running. Its actions are pinned to full commit identifiers, its permissions are read-only, and it passes the project's workflow linter clean. It is shown working by a real run that completes against main. If the emulation tier cannot run on hosted runners, the work stops and reports why rather than dropping the tier. Out of scope: running on self-hosted runners, and pull-request verification.
+  A workflow runs the daily verification's gates against main once a night and on manual dispatch, on hosted runners the code host provides. It provisions what the emulation tier needs on that platform before running. The mutation sweep runs as the existing sharded sweep jobs, made callable from this workflow while still startable by hand, and the sweep workflow's own account of when it runs is updated to say so; the night's result is a failure if any gate or any shard fails. Its actions are pinned to full commit identifiers, its permissions are read-only, and it passes the project's workflow linter clean. It is shown working by a real run that completes against main. If the emulation tier cannot run on hosted runners, the work stops and reports why rather than dropping the tier. Out of scope: running on self-hosted runners, and pull-request verification.
 links:
   - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
     type: criterion-of
