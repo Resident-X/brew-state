@@ -1,0 +1,15 @@
+id: DEL-CONTROLLER-HARDWARE.C4
+type: criterion
+title: Separation between mains-referenced and low-voltage circuitry meets a basis declared and signed for before layout
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The distances and barriers rest on a basis that a named person has accepted, rather than on a figure chosen by whoever draws the board, and the finished layout is checked against that basis on every layer before it is ordered.
+
+  The environment the basis assumes is the one the machine runs in, with water, steam and repeated heating, not a bench.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

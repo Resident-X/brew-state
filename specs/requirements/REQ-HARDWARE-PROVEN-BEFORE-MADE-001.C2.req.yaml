@@ -1,0 +1,12 @@
+id: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C2
+type: criterion
+title: Hardware bought ahead of verification is limited to what the verification itself needs
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Samples and instruments bought to settle a property the verification cannot establish otherwise are admissible; anything else waits for the design it belongs to.
+links:
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001
+    type: criterion-of

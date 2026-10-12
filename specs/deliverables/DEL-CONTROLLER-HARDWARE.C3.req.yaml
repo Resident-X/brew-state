@@ -1,0 +1,15 @@
+id: DEL-CONTROLLER-HARDWARE.C3
+type: criterion
+title: No board is ordered until its design is proven against the design record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Before an order, the board's connectivity is shown to match the channel enumeration and the allocation of controller pins, its parts are shown to match the specification, and its electrical and layout rule checks pass.
+
+  The proof runs without judgement, and a failure blocks the order rather than being weighed against it. A board is paid for before it can be tested, so a design ordered on a claim of correctness has bought the claim untested.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

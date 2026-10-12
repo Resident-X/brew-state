@@ -1,0 +1,15 @@
+id: DEL-CONTROLLER-HARDWARE.C1
+type: criterion
+title: The constraints the boards are designed against are fixed, each with its source, before design begins
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Every constraint is recorded with where it comes from: a requirement in this graph, the machine as found — the enclosure the controller lives in, the harnesses that stay and the connectors they end in, with positions known to the accuracy the fit needs — or what the chosen manufacturer can make, stock and charge.
+
+  A constraint with no source is an assumption, and one discovered during layout sends the layout back to its start.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

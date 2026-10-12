@@ -1,0 +1,32 @@
+id: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+type: decision
+category: strategic
+title: The proof-of-life interlock is built into the first controller hardware
+status: active
+version: 1
+decided_by: david
+text: |
+  The interlock that makes heater power depend on the controller demonstrably running is built into the first controller hardware the project makes, rather than deferred to a later revision or left as reserved space. The graph already requires that power to the heaters is available only while the controller is demonstrably running, and that loss of that proof removes power without further action; until now nothing delivered it, and a heater switch that failed closed was covered only by the machine's retained thermostats and thermal fuse.
+
+  This decides when the interlock is delivered, not how it works: the mechanism, its timing bound and where it sits on the boards are design work inside the controller hardware.
+rationale: |
+  Context: the controller hardware is being designed now, and the boards that switch mains loads are where an interlock removing heater power would physically sit. The safety-chain criteria requiring it had no covering work, so the gap would otherwise survive into the built machine.
+
+  Trade-offs: building it in now costs board area, parts and design effort on the first spin, and adds something to bring up. Reserving space without fitting it costs almost nothing now but leaves the gap open in the machine as built, and fitting it later still needs a design, a verification and a bring-up of its own. Leaving it deferred costs nothing now and most later, since adding it after the boards exist means another board.
+
+  Reversibility: low cost to supersede before the boards are ordered; after ordering, removing or redesigning it is a board revision.
+
+  Consequences: the controller hardware's design, verification and bring-up include the interlock; the feasibility and fit work must find room for it; the safety-chain criteria gain a covering deliverable.
+options_considered:
+  - option: Build the interlock into the first controller hardware
+    reason_rejected: ""
+  - option: Reserve space and connections but do not fit it
+    reason_rejected: leaves a heater switch that fails closed covered only by the thermostats and thermal fuse in the machine as built, and fitting it later still needs its own design, verification and bring-up
+  - option: Leave it deferred
+    reason_rejected: adding it after the boards exist means another board revision
+chosen: Build the interlock into the first controller hardware
+links:
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: addresses
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: addresses

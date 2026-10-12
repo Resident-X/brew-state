@@ -1,0 +1,15 @@
+id: DEL-CONTROLLER-HARDWARE.C9
+type: criterion
+title: Spare capacity for the channel kinds the machine is expected to gain is reserved without weakening any other criterion
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The reservation covers further switched outputs, such as another valve, and further sensing inputs of the kinds already in use, such as temperature and pressure, each reserved on the board side its kind belongs to.
+
+  Where a reservation would cost an isolation distance, the fit, or the cost boundary, it yields, and it is recorded as not made with the reason rather than silently dropped.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

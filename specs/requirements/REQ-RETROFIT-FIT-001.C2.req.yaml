@@ -1,0 +1,12 @@
+id: REQ-RETROFIT-FIT-001.C2
+type: criterion
+title: A retained device connects through its existing harness without modification
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  A harness that does change is justified against that specific harness, naming what about the retrofit forces the change, rather than changed because a different connector was more convenient.
+links:
+  - target: REQ-RETROFIT-FIT-001
+    type: criterion-of

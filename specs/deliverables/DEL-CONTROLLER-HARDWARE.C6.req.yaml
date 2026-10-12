@@ -1,0 +1,15 @@
+id: DEL-CONTROLLER-HARDWARE.C6
+type: criterion
+title: The boards are brought up and verified on the bench before mains is connected
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  The low-voltage functions — supply, controller, sensing, and the drive to every output — are shown working with no mains present, and the mains side is first energised only under supervision after that.
+
+  A board fault first found at mains potential is found the most expensive way there is.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of
