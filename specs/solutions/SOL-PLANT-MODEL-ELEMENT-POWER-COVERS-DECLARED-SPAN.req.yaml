@@ -13,3 +13,5 @@ links:
     type: derives-from
   - target: REQ-MACHINE-CONFIGURATION-001.C1
     type: targets
+  - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
+    type: depends-on
