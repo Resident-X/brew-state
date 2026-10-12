@@ -77,4 +77,4 @@ Each node must be read with `show` before linking, and existing coverage checked
 - Harness connector types are unidentified; panel and gauge parts are not specified.
 - The rail-gate and buzzer stage parts are in the BOM; the relay module's snubber count is 2.
 - All prices are estimates; no catalogue numbers have been checked against stock.
-- This folder supersedes `controller-selection-working/` and the stale files in `docs/sunbeam-em7000/` once the review in `_carry-forward/` is accepted.
+- The old `controller-selection-working/` folder has been removed (git history, commit `07913f4`). The stale slice files in `docs/sunbeam-em7000/` are superseded by this folder once the owner accepts it.

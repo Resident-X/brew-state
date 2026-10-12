@@ -2,6 +2,8 @@
 
 How the old files map to the new set, written 2026-10-12. Each per-file log in this folder records, section by section, what was carried unchanged, updated, dropped or newly added. The old files are untouched and remain the reference for the review; nothing is to be deleted until the review is accepted.
 
+**The old working folder `controller-selection-working/` was deleted after the review; the paths below are historical. Recover any file with `git show 07913f4:docs/sunbeam-em7000/controller-selection-working/<file>`.**
+
 | Old file | New file | Log |
 |---|---|---|
 | `controller-selection-working/README.md` | `README.md` (state of play, document map), `decisions.md` (settled items, rejected options, corrections), `open-items.md` (open items) | this index |

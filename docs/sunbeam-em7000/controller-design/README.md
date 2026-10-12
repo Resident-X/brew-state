@@ -1,6 +1,6 @@
 # Replacement controller design: state of play
 
-Written 2026-10-12 at the close of staircase discussion session `3CD30AB4-5763-4EE0-8610-FD0C090674AA` (project `brew-state`, branch `worktree-controller-board-selection`). This folder is the current, consolidated record of the hardware design for replacing the Sunbeam EM7000's control system. It is a new set of files written to replace `docs/sunbeam-em7000/controller-selection-working/` and the stale slice files in `docs/sunbeam-em7000/`; those old files are left in place until the review in `_carry-forward/` is accepted.
+Written 2026-10-12 at the close of staircase discussion session `3CD30AB4-5763-4EE0-8610-FD0C090674AA` (project `brew-state`, branch `worktree-controller-board-selection`). This folder is the current, consolidated record of the hardware design for replacing the Sunbeam EM7000's control system. It is a new set of files that replaced the old working folder `docs/sunbeam-em7000/controller-selection-working/`, which has been removed (its files are in git history at commit `07913f4`), and that supersedes the stale slice files in `docs/sunbeam-em7000/` (`controller-io.md`, `component-specification.md`, `controller-io-bom.csv`, `control-board-electrical-requirements.csv`), which are left in place until the owner accepts this set.
 
 **These are working documents.** Not baselined, not traced to any criterion, and not evidence for anything. The graph is the only durable record, and nothing in this design has been authored into it yet.
 
