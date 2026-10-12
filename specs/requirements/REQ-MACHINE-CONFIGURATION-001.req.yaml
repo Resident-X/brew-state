@@ -4,7 +4,7 @@ category: constraint
 title: The machine's local configuration is declared in one place the requirements point at
 status: active
 priority: must
-version: 3
+version: 4
 text: |
   The requirements in this graph hold for any machine of this shape. What they have actually been checked against is one machine, on one supply, protected by one set of devices, and none of that is visible in the requirements themselves.
 

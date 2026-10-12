@@ -1,7 +1,7 @@
 id: REQ-MACHINE-CONFIGURATION-001.C8
 type: criterion
 title: The supply frequency is established by measuring the machine's own supply rather than inherited from a nameplate
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

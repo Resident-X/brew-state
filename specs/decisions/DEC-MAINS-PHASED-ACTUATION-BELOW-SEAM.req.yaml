@@ -79,9 +79,9 @@ links:
     type: addresses
   - target: REQ-MACHINE-CONFIGURATION-001.C4
     type: addresses
-  - target: REQ-MACHINE-CONFIGURATION-001.C8
-    type: addresses
   - target: REQ-TIMING-FAULT-RESPONSE-001.C5
     type: addresses
   - target: REQ-TIMING-FAULT-RESPONSE-001.C6
+    type: addresses
+  - target: REQ-MACHINE-CONFIGURATION-001.C9
     type: addresses
