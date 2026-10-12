@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-CONSTRAINTS.C4
+type: criterion
+title: Each property a replaced module provided is carried forward as a constraint on what replaces it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Isolation, defined output behaviour, input thresholds and default states that a bought module supplied without being specified are each stated, so the circuit replacing it is held to them.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: criterion-of

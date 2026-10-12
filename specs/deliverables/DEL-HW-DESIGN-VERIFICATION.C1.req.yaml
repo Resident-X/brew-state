@@ -1,0 +1,15 @@
+id: DEL-HW-DESIGN-VERIFICATION.C1
+type: criterion
+title: A board's connectivity is checked against the channel enumeration and the controller pin allocation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Every channel lands on the pin and connector the record assigns it, and nothing is connected that the record does not call for.
+
+  The firmware's own assignment of channels to pins is compared with the board as drawn, so a board and the code that drives it cannot disagree about which output is which.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION
+    type: criterion-of

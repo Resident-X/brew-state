@@ -1,0 +1,13 @@
+id: DEL-HW-PARTITION-AND-FEASIBILITY.C5
+type: criterion
+title: Each board the division produces has a design task carrying the interlock or headroom allotted to that board
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each such task delivers, for its board, the epic's proof before order, separation and held-off criteria and its layout review, with the design method applied to that board rather than only written. Each covers ordering and receiving its board, checks the manufacturer's production files against its assembly preview before payment, records the quoted order cost against the running total of the declared spend before ordering, and is a prerequisite of bring-up, so none of the epic's criteria can close on the gate or the method alone without a board having been designed, proven and made.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY
+    type: criterion-of

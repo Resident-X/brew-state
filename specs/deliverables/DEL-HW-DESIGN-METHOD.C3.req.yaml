@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C3
+type: criterion
+title: Each layout is reviewed against a written checklist using rendered views of every layer, with findings recorded and resolved
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The checklist is written before the layout it reviews, and a finding is closed by a change to the board or a recorded reason it stands.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

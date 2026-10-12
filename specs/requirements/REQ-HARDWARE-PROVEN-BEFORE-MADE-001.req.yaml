@@ -1,0 +1,18 @@
+id: REQ-HARDWARE-PROVEN-BEFORE-MADE-001
+type: requirement
+category: constraint
+title: Hardware is proven against its declared function before it is paid for
+status: active
+priority: must
+version: 1
+text: |
+  Hardware the build depends on is shown to meet its declared function before money is spent having it made, rather than built first and found wanting. A design that will be paid for before it can be tested is checked against what it is declared to do while changing it still costs nothing.
+
+  Scope is hardware the project designs and has made, and what is bought to make it.
+rationale: |
+  A board is paid for before it can be powered, so every error found after ordering costs a respin: the order, the parts, the wait, and the builder's time. Checks that can run before ordering are the cheapest place to find those errors, and a check that can be waved through by judging a failure unimportant protects nothing.
+
+  Buying ahead of verification is limited rather than forbidden because some facts can only be settled with a part in hand, such as a sample whose datasheet leaves a property unstated. Purchases made to settle those are part of the verification, not a departure from it.
+links:
+  - target: PER-BUILDER-001.C4
+    type: derives-from

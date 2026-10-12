@@ -1,0 +1,29 @@
+id: SOL-HW-EARLY-PURCHASES-JUSTIFIED
+type: deliverable
+category: solution
+title: Every purchase made before a board design is verified names the property it settles
+status: active
+version: 1
+text: |-
+  Records each sample or instrument bought ahead of design verification with the property the verification could not establish without it, so early buying stays limited to what verification needs.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C5
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C2
+    type: targets
+design_question_answers:
+  - answered_by: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C1
+    class: served-statement
+  - answered_by: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C1
+    class: existing-capability
+  - answered_by: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C1
+    class: consumer-intent
+  - answered_by: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C1
+    class: consumer-self-sufficiency
+interfaces: []
+locus:
+  - marking: created
+    ref: the controller boards' design-constraints record in the machine's record folder, purchases ahead of verification
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-CONSTRAINTS-001
+  target: DEL-HW-DESIGN-CONSTRAINTS

@@ -1,0 +1,20 @@
+id: REQ-RETROFIT-FIT-001
+type: requirement
+category: constraint
+title: The replacement control electronics drop into the machine as found
+status: active
+priority: should
+version: 1
+text: |
+  The retrofit replaces the machine's control electronics while keeping the devices they drive and read, and those devices reach the controller through harnesses and a space the machine already provides. The replacement is installed into that machine as found: it occupies the space the original electronics occupied and receives the retained devices' harnesses as they are.
+
+  Scope is the control electronics and the connections of retained devices to them. Devices the retrofit adds bring their own connections and are outside it.
+rationale: |
+  A harness that has to be cut, re-terminated or extended is work, cost and a new failure point added to every build, and it turns a reversible retrofit into one that is not. A controller that does not fit the space provided forces either a new enclosure or a modification to the machine, both of which the cost boundary exists to prevent.
+
+  Departures are allowed rather than forbidden, because some are forced by what the retrofit adds: a load switched by a device mounted elsewhere cannot keep a harness that ended at the old board. Requiring each departure to be justified against the specific harness keeps that the exception, in the same way the cost discipline treats a departure from a reused part.
+links:
+  - target: PER-BUILDER-001.C4
+    type: derives-from
+  - target: DEC-DEVICE-RETENTION-BOUNDARY
+    type: justified-by

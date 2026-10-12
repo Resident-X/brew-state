@@ -1,0 +1,32 @@
+id: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+type: decision
+category: tactical
+title: Controller boards are designed and verified in KiCad, driven by the agent through the Konnect MCP server
+status: active
+version: 1
+decided_by: david
+text: |
+  The controller boards are drawn, laid out and checked in KiCad, with the agent driving it through the Konnect MCP server for schematic capture, placement, routing and checks. Critical nets are routed deliberately and locked; Freerouting is used only for what remains after that. KiCad's own electrical and layout rule checks, run from its command-line tool, are the gate a design must pass, and rendered images of every layer are the evidence for the layout review. Konnect's bundled KiCad skills are used as they ship and wrapped by a project operator skill rather than edited.
+rationale: |
+  Context: designing boards with an agent needs a board tool the agent can drive and a gate it cannot talk its way past. A trial of this toolchain on a throwaway board, outside this repository, established both what works and what does not.
+
+  Trade-offs: KiCad is free, open and obtainable by any reader, which REQ-PUBLISHED-BUILD-PATH-001.C2 and OBL-OPEN-SOURCE-MAINTAINABILITY-001.C4 require; Konnect lets the agent drive it with readback of every change. Driving KiCad by hand alone was rejected because nothing then assists the layout judgement or keeps the agent in the loop. A manufacturer's own online editor was rejected despite its better catalogue integration, because it is proprietary and tied to an account, which those same criteria rule out. Paid tools were rejected on the same ground.
+
+  Reversibility: cheap until the first board is designed; after that, changing tool means redrawing the design.
+
+  Consequences: the trial established limits the method must design around. Konnect's own routing export refuses the rounded pads every standard surface-mount footprint uses, so routing goes through KiCad's exporter, Freerouting from the command line and KiCad's importer, followed by the rule checks. A router's report of no violations is not evidence: on the trial board it reported none while KiCad's rule check found twenty-five, from thinned tracks at fine-pitch pads and an edge clearance the export did not carry. Net classes written to the project are not seen by an open board until the project is reopened, so they are confirmed by reading them back. Konnect's placement score reports full marks when it cannot match decoupling capacitors to their IC, so that case is treated as unresolved. Tools Konnect loads mid-session are not visible to subagents, so board work stays in the main agent session. These limits are candidates to report upstream to Konnect.
+options_considered:
+  - option: KiCad driven through the Konnect MCP server, with the board's own rule checks as the gate
+    reason_rejected: ""
+  - option: KiCad driven by hand only
+    reason_rejected: nothing assists the layout judgement and the agent drops out of the loop
+  - option: A manufacturer's online editor
+    reason_rejected: proprietary and account-bound, which OBL-OPEN-SOURCE-MAINTAINABILITY-001.C4 rules out
+  - option: A paid board tool
+    reason_rejected: a paid licence is tooling a reader cannot obtain
+chosen: KiCad driven through the Konnect MCP server, with the board's own rule checks as the gate
+links:
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: addresses
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: addresses

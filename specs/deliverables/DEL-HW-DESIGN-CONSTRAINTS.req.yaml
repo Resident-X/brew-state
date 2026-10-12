@@ -1,0 +1,30 @@
+id: DEL-HW-DESIGN-CONSTRAINTS
+type: deliverable
+category: task
+title: The constraints the controller boards are designed against are fixed with their sources
+status: active
+level: task
+version: 1
+text: |
+  Before any board is designed, everything it must satisfy is written down with where it came from. Three sources feed it: the machine as found, inspected rather than remembered; this graph's requirements, reduced to the figures a board designer works to; and the chosen manufacturer, whose limits, stock and prices bound what can be built and what it costs. A fourth input is the set of properties each bought module in the earlier design provided without being asked, since replacing a module with a circuit loses those silently unless they are stated.
+rationale: |
+  A constraint discovered during layout sends the layout back to its start, and an unsourced one cannot be checked or challenged. Fixing them first, each with its source, is what lets feasibility and design proceed without being reopened, and what lets a reviewer tell a requirement from an assumption.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C1
+    type: derives-from
+  - target: REQ-RETROFIT-FIT-001.C1
+    type: targets
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C1
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C7
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C2
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C8
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C3
+    type: targets
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by

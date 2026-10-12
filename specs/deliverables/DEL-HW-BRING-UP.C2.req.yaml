@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C2
+type: criterion
+title: Every load is shown held off with the controller in reset, unpowered, disconnected or with its supply rising or failing
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Each case is exercised for each output rather than inferred from one. The supply rising at power-up and failing, and a cable between the boards or to a load's switch coming loose, are exercised as well.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

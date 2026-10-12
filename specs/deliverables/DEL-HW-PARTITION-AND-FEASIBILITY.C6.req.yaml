@@ -1,0 +1,13 @@
+id: DEL-HW-PARTITION-AND-FEASIBILITY.C6
+type: criterion
+title: A block-level cost estimate for each board is weighed against what remains of the declared spend before detailed design
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The estimate covers fabrication at the chosen outline and layer count against the manufacturer's price breaks, assembly with its setup fees, the parts, shipping and a likely second spin.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY
+    type: criterion-of

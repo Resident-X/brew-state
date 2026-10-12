@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-CONSTRAINTS.C3
+type: criterion
+title: The manufacturer's limits, part availability and pricing that bound the design are recorded with when they were read
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Availability and price change; a reading carrying its date is one a later reader can tell is stale.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: criterion-of

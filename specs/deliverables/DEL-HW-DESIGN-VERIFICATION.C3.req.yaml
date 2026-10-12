@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-VERIFICATION.C3
+type: criterion
+title: Electrical and layout rule checks, including the declared separation basis, are part of the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The rules are written down before layout, so the check enforces what was decided rather than what was drawn.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD.C2
+type: criterion
+title: Each carried-forward property is a constraint on whatever replaces the module, or is pending a bench measurement
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each property is stated as a constraint the replacing circuit must meet, not as a description of the module, and holds whether the function is later designed or kept as a module. Properties a datasheet or schematic can settle are settled here by reading it; only a property that needs a measurement on a part in hand is marked pending, naming the measurement, and where that measurement needs a sample bought, the purchase is recorded in the justified early purchases. A mark of pending names the work that will settle it and ends only when that work records the fact and its source; every document derived from the record shows the mark rather than a value. Out of scope: performing the bench measurements, and designing the replacing circuits.
+links:
+  - target: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD
+    type: criterion-of

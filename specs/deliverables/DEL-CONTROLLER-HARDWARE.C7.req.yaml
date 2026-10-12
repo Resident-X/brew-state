@@ -1,0 +1,15 @@
+id: DEL-CONTROLLER-HARDWARE.C7
+type: criterion
+title: Sensing accuracy is measured on the built boards while the switched loads operate
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The accuracy this graph claims for each sensing channel is measured on the boards as built, in the machine, with the loads they switch running.
+
+  A front end that is quiet on the bench and noisy under load passes every check that does not switch a load.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

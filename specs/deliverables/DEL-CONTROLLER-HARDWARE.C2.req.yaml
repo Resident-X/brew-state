@@ -1,0 +1,15 @@
+id: DEL-CONTROLLER-HARDWARE.C2
+type: criterion
+title: The boards are shown to be feasible against the fixed constraints before any is designed in detail
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  Feasibility covers fit in the space the machine provides, the retained harnesses reaching their connectors, and how the circuitry divides between boards, with that division chosen on this evidence rather than assumed.
+
+  A layout that is found not to fit only once it is complete has spent the design effort twice.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

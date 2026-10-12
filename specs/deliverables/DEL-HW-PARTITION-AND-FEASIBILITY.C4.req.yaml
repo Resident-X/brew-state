@@ -1,0 +1,13 @@
+id: DEL-HW-PARTITION-AND-FEASIBILITY.C4
+type: criterion
+title: Headroom reserved, and headroom that could not be reserved, is recorded with reasons
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each anticipated channel kind is either given a place or recorded as not given one, naming the criterion that reserving it would have weakened.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY
+    type: criterion-of

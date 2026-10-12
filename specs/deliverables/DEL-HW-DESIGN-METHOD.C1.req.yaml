@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C1
+type: criterion
+title: Design rules and net classes are written before routing begins
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each rule carries the figure it enforces and where that figure comes from, and the rules are confirmed in effect on the board before routing rather than assumed from having been written.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

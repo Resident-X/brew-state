@@ -1,0 +1,43 @@
+id: SOL-HW-REQUIREMENT-FIGURES-SOURCED
+type: deliverable
+category: solution
+title: Every figure the requirements impose on the controller boards is recorded with the criterion it comes from, or marked pending against the work that settles it
+status: active
+version: 1
+text: |
+  Reduces this graph's requirements to the figures a board designer works to, from supply range and upstream protection through rail budgets, load currents, sensing accuracy, separation inputs, fault current, the proof-of-life removal interval and each output's failure state, each with its source or a pending mark naming the work that settles it. The figures sit in the machine's folder beside its record, since several derive from this machine's declared configuration.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C2
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C3
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C8
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C7
+    type: targets
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by
+  - target: DEC-DEVICE-RETENTION-BOUNDARY
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
+    class: new-condition
+  - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C1
+    class: whole-set
+  - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C1
+    class: served-statement
+  - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C1
+    class: existing-capability
+  - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C1
+    class: consumer-intent
+  - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - the working mains inlet and protection analysis in the controller design folder
+  - the machine's channel enumeration
+locus:
+  - marking: created
+    ref: the controller boards' design-constraints record in the machine's record folder, requirement-derived figures
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-CONSTRAINTS-001
+  target: DEL-HW-DESIGN-CONSTRAINTS

@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C9
+type: criterion
+title: Heater power is held only while the controller's main loop is making progress
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The firmware half of the proof of life is written so that only a controller still making progress can produce it: a main loop that has stopped while its timers and interrupts still run, or an output stuck high or stuck low, does not keep heater power available, and this is shown on the built boards.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

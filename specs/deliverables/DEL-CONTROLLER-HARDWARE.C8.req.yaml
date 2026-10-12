@@ -1,0 +1,17 @@
+id: DEL-CONTROLLER-HARDWARE.C8
+type: criterion
+title: Every load the boards switch is held off while the controller is in reset, unpowered or disconnected
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  This holds for the drive to each heater switch, pump and valve, and for a cable between the boards or to a load's switch coming loose.
+
+  An output that stays off only because firmware chose to leave it off is not held off: the reset and unpowered cases are exactly the ones in which firmware chooses nothing.
+
+  The same holds while the controller's supply is rising at power-up or failing, when its pins are in no defined state.
+links:
+  - target: DEL-CONTROLLER-HARDWARE
+    type: criterion-of

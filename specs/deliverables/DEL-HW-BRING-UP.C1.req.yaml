@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C1
+type: criterion
+title: The low-voltage functions work with no mains present
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  Supply, controller, sensing and the drive to every output are each shown working before any mains connection exists.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

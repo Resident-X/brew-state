@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C3
+type: criterion
+title: Loss of the controller's proof of life is shown to remove heater power
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The interval from loss to removal is measured against the bound the safety chain requires.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

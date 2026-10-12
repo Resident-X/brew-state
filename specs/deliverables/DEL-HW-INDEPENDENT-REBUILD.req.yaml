@@ -1,0 +1,20 @@
+id: DEL-HW-INDEPENDENT-REBUILD
+type: deliverable
+category: task
+title: Someone other than the author has the boards made, assembled and checked from the repository
+status: active
+level: task
+version: 1
+text: |
+  Everything needed to have the boards made and assembled, and to check what arrives, is in the repository, and someone other than the author has followed it to working boards.
+rationale: |
+  An author cannot see the knowledge they did not know they were assuming. A board only its designer can reorder is not part of a published build path, and the only test of the path is someone else completing it.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C5
+    type: derives-from
+  - target: DEL-HW-BRING-UP
+    type: depends-on
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C4
+    type: targets

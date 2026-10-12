@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C7
+type: criterion
+title: The isolation of each built board carrying mains is tested before mains is connected
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The barrier between mains-referenced and low-voltage circuitry is tested on the boards as built, against the declared separation basis, by means a builder without a laboratory has: insulation resistance measured at a stated test voltage, creepage and clearance measured on the board, and withstand capability taken from the ratings of certified barrier parts rather than from a board-level withstand test.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

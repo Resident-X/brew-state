@@ -1,0 +1,28 @@
+id: DEL-HW-DESIGN-VERIFICATION
+type: deliverable
+category: task
+title: A board design is checked against the design record automatically before it can be ordered
+status: active
+level: task
+version: 1
+text: |
+  A check that any board design must pass before it is ordered, run the same way every time and by anyone. It compares the design with the record it was meant to realise: the channels and controller pin allocation it must connect, the parts the specification calls for and the manufacturer can supply, and the electrical and layout rules including the separation basis. It is proven on a throwaway design before a real board relies on it, by showing each check catches a fault deliberately placed for it.
+rationale: |
+  A board is paid for before it can be powered, so the check before ordering is the cheapest place an error can be found. A trial on a throwaway board found a routing tool reporting no violations while the board's own rule check found twenty-five, so the proof has to be the design's own checks run in full, and each check has to be shown to fire before its silence is trusted.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C3
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C5
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C6
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: DEL-CONTROLLER-HARDWARE.C4
+    type: derives-from
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY
+    type: depends-on
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by

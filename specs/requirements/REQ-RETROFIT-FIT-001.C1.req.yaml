@@ -1,0 +1,12 @@
+id: REQ-RETROFIT-FIT-001.C1
+type: criterion
+title: The replacement control electronics fit the space the machine provides for them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The fit is established in the machine as found, with the original mounting and the clearances the installed parts need, rather than against a nominal drawing of the space.
+links:
+  - target: REQ-RETROFIT-FIT-001
+    type: criterion-of
