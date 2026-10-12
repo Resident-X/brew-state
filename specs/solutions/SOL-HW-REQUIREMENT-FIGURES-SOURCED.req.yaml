@@ -3,9 +3,11 @@ type: deliverable
 category: solution
 title: Every figure the requirements impose on the controller boards is recorded with the criterion it comes from, or marked pending against the work that settles it
 status: active
-version: 1
+version: 2
 text: |
   Reduces this graph's requirements to the figures a board designer works to, from supply range and upstream protection through rail budgets, load currents, sensing accuracy, separation inputs, fault current, the proof-of-life removal interval and each output's failure state, each with its source or a pending mark naming the work that settles it. The figures sit in the machine's folder beside its record, since several derive from this machine's declared configuration.
+
+  Supply facts are not re-declared here. The machine's declared configuration holds them, and this record cites it. Where that declaration is wrong or silent, it is amended at its source. For this machine the amendment is: the supply span is the published standard tolerance about the 230 V nominal, 216-253 V, which is the span the load figures already use; the supplying circuit is a 10 A outlet circuit, by owner statement; and the upstream protection is a circuit breaker of up to 20 A, the conservative end of what an AU socket-outlet circuit carries, declared as a project assumption to replace. Which device interrupts a fault follows DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE: the 10 A inlet fuse downstream of the inlet, and the upstream breaker for the cord and inlet ahead of it.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C2
     type: derives-from
@@ -18,6 +20,10 @@ links:
   - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
     type: justified-by
   - target: DEC-DEVICE-RETENTION-BOUNDARY
+    type: justified-by
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE
     type: justified-by
 design_question_answers:
   - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2

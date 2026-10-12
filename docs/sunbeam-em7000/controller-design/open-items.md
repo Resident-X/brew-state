@@ -36,7 +36,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - The steam block trapped-pressure case: an S8 interlock on the steam heater, a hot-side relief valve, or both.
 - Whether to copy the OEM `Q7` and `Q8` stages as proposed (D18).
 - Steam pump drive (D4).
-- **Mains chain rating margin.** The trunk (1.0 mm2, 10 A), the T10A fuse and the FN9222 (10 A at 50 C) are at or under the machine's own worst case (9.95 A at 240 V, 10.5 A at 253 V); the valve branches (0.75 mm2 flex) have no branch fuse. D8 stands as chosen until you decide.
+- **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches. Remaining to confirm: the 15 A filter's coupler rating (IEC C14 is 10 A), its termination type, the TR5 series.
 - **Heater switching cadence:** whole-cycle (20 ms) bursts or half-cycle; the files disagree.
 - **Steam heater with the knob shut:** the firmware's 125 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case.
 - **SSR mounting:** the metal side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
@@ -66,7 +66,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 ## E. Housekeeping and unresolved items from the refresh
 
 - The mainboard's own height (an estimate; 25 mm of cavity makes it worth measuring) and the dimmer module's height (footprint 50 x 16 mm).
-- The T10A fuse, the FN9222 filter and the 10 A trunk all sit at the machine's own worst-case draw (9.95 A at 240 V, 10.5 A at 253 V, per `reference-machine.md`); whether that margin is acceptable is for the owner.
+- The 10 A chain margin is resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (15 A filter, trunk above the fuse); the 15 A filter's coupler rating is unverified and its termination type is not recorded.
 - Whether the IRM-10-5 has an internal fuse (the old text and the BOM disagreed).
 - Nothing specifies ferrules for the screw terminals, the FN9222's termination type, the earth conductor and chassis stud, or the temperature ratings of PVC wire and flex near the hot blocks.
 - The EARU SSR-40DA's zero-cross type, isolation rating, package and fail-short behaviour are unconfirmed; the dimmer's Z-C is believed full-wave but unmeasured; the BL0942 ZX delay and module isolation are unknown.

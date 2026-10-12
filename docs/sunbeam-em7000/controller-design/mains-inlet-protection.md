@@ -2,13 +2,13 @@
 
 Refreshed 2026-10-12 from `decisions.md` (which supersedes older text), the current design data in this folder, and the earlier working note of the same name. **Not baselined, not traced to any criterion, and not evidence for anything.** It records why the inlet parts and the 5 V supply were chosen and, more usefully, which variants of them are wrong, because most of the cost of this decision was spent discovering that the obvious part numbers are the wrong ones.
 
-Chosen parts (`decisions.md`): inlet is the Schaffner FN9222-10-06 with a T10A slow-blow on the active and an RN3404 MOV (D8, Chosen). The supply is one Mean Well IRM-10-5 on a hand-cut single-sided copper-clad carrier, a recommended (not required) T2A slow-blow fuse, and an output of 100 nF and 47-100 uF (D7, Chosen).
+Chosen parts (`decisions.md`): inlet is the Schaffner FN9222-15-06 with a T10A slow-blow on the active and an RN3404 MOV (D8, Chosen; filter and trunk rated above the fuse by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`). The supply is one Mean Well IRM-10-5 on a hand-cut single-sided copper-clad carrier, a recommended (not required) T2A slow-blow fuse, and an output of 100 nF and 47-100 uF (D7, Chosen).
 
 ## The problem this addresses
 
 The retrofit's protective chain interrupts on **temperature** and nothing else. The machine carries three thermostats (110 °C coffee, 200 °C steam, 110 °C pump) and a steam block thermal fuse of 240 °C (parts list; the fuse rating is published, unverified), see `reference-machine.md` § Protection. A short, an insulation breakdown, or a partial fault is not a thermal event and none of it responds. `OBL-ELECTRICAL-THERMAL-SAFETY-001.C8` already states this in exactly those terms.
 
-Upstream is an ordinary domestic circuit breaker. In an AU installation the plug is unfused, so "upstream" means a 16 or 20 A MCB. That leaves a band uncovered: a chafed conductor, an SSR failing part-shorted, carbon tracking across a damp terminal, or a solenoid coil shorting turn-to-turn draws something like 8-15 A indefinitely. That is below the breaker's threshold and well above what melts insulation. *(See Open items: the machine's own worst-case draw is itself near 10 A.)*
+Upstream is an ordinary domestic circuit breaker. In an AU installation the plug is unfused, so "upstream" means a 16 or 20 A MCB; the build declares up to 20 A. That leaves a band uncovered: a chafed conductor, an SSR failing part-shorted, carbon tracking across a damp terminal, or a solenoid coil shorting turn-to-turn draws something like 8-15 A indefinitely. That is below the breaker's threshold and well above what melts insulation. *(See Open items: the machine's own worst-case draw is itself near 10 A.)*
 
 The sharper form of the same point, and what `REQ-ELECTRICAL-INSTALL-001.C7` is asking for: **a 20 A breaker permits 20 A through every conductor the retrofit adds.** A local 10 A fuse is what makes it admissible to wire internal branches for the machine's actual draw rather than for the breaker's rating.
 
@@ -23,7 +23,7 @@ So the protection belongs **once, at the machine inlet**, upstream of everything
 ## The chain
 
 ```
-mains ──► FN9222-10-06 (IEC C14 inlet + EMI filter) ──► L ──► [T10A slow-blow] ──┬──► SSRs, dimmers,
+mains ──► FN9222-15-06 (IEC C14 inlet + EMI filter) ──► L ──► [T10A slow-blow] ──┬──► SSRs, dimmers,
                                                        N ──────────────────────┬─┼──► valves, 5V PSU
                                                                                │ │
                                                                          ┌─────┴─┴─────┐
@@ -36,11 +36,11 @@ earth: C14 inlet earth pin ──► chassis bonding stud, unbroken (Class I)
 
 | Position | Part | Why |
 |---|---|---|
-| Inlet + filter | Schaffner **FN9222-10-06** | C14 inlet and EMI filter in the panel cut-out, no fuseholder. Cx 0.1 µF, Cy 2.2 nF, L 0.225 mH @ 10 A, leakage 373 µA @ 250 V/50 Hz. Rated 10 A @ 50 °C. ENEC/CQC/UL/CSA, IP40 |
+| Inlet + filter | Schaffner **FN9222-15-06** | C14 inlet (coupler rating of the 15 A part UNVERIFIED) and EMI filter in the panel cut-out, no fuseholder. Rated 15 A @ 50 °C (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`). 10 A part's figures, not rechecked for 15 A: Cx 0.1 µF, Cy 2.2 nF, L 0.225 mH @ 10 A, leakage 373 µA @ 250 V/50 Hz. ENEC/CQC/UL/CSA, IP40 |
 | Fuse | Panel-mount M205 holder, **T10A slow-blow**, on active | Covers the 8-15 A band the breaker does not. Slow-blow is mandatory: the 5 V module's cold-start inrush is 40 A at 230 Vac, on top of heater switching |
 | Surge | Jaycar **RN3404**, 275 Vac, 6500 A, 190 J, 24 mm disc, L-N | Nothing else in the machine responds to a transient |
 
-Downstream branch protection that the T10A does not provide: a 1-2 A slow-blow fuse in each pump dimmer's AC-L in feed (protects the 4 A triac and the thin pump leads), and a T2A slow-blow in the live feed to the 5 V supply (below; recommended, not required). The trunk conductor from inlet through the T10A must be rated at or above 10 A for the fuse to protect it (see `wiring-and-connectors.csv`).
+Downstream branch protection that the T10A does not provide: a 1-2 A slow-blow fuse in each pump dimmer's AC-L in feed (protects the 4 A triac and the thin pump leads), and a single shared TR5 slow-blow (e.g. T500mA) on the valves' common switched-active feed, and a T2A slow-blow in the live feed to the 5 V supply (below; recommended, not required). The trunk conductor from inlet through the T10A is at least 1.5 mm² and rated well above 10 A (see `wiring-and-connectors.csv`).
 
 **Order is load-bearing.** The MOV sits **downstream of the fuse**. Its designed failure mode is a short; upstream of the fuse a failed MOV is an unfused arc across the mains. Downstream, it blows the fuse and the machine goes dark. The RN3404 is a plain disc with no thermal disconnect, so this is load-bearing, not optional. A thermally-protected TMOV from element14/Mouser is the better part if the freight is already being paid.
 
@@ -50,22 +50,17 @@ Downstream branch protection that the T10A does not provide: a 1-2 A slow-blow f
 
 **L-N only.** L-E and N-E modes leak to earth continuously and are an RCD nuisance-trip generator. Multi-mode protection is a switchboard SPD's job, not an appliance's.
 
-## OPEN DECISION: inlet chain rating margin
+## Decided: inlet chain rating margin
 
-Not decided here; the chosen parts are unchanged. For the owner.
+`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (Chosen): the chain is rated above its fuse and the valve branches are fused.
 
-Facts:
+- Filter: Schaffner **FN9222-15-06**, 15 A at 50 °C, same family, in place of the 10 A part. Whether its appliance coupler stays IEC C14 (10 A) is **UNVERIFIED**; check the datasheet, since a 10 A coupler would still cap the inlet.
+- Trunk downstream of the T10A: at least 1.5 mm², rated well above 10 A (Jaycar WB1568, 2 mm², 20 A), in place of the 1.0 mm² WB1565.
+- T10A slow-blow inlet fuse unchanged. It now protects conductors rated above it, not equal to it.
+- Valve branches (0.75 mm² flex): one shared subminiature TR5 slow-blow fuse (250 Vac) on their common switched-active feed, sized to coil inrush (coils 5-9 W each, about 0.02-0.04 A), e.g. T500mA. Series (Littelfuse 372 or Schurter MSF 250) to confirm. Pumps keep their 1-2 A branch fuses.
+- Upstream breaker is declared as up to 20 A (project assumption).
 
-- The trunk is 1.0 mm² rated 10 A (WB1565), chosen to match the T10A slow-blow fuse (`wiring-and-connectors.csv`).
-- The FN9222-10-06 is rated 10 A at 50 °C (datasheet), so it derates above 50 °C. The enclosure ambient is unmeasured; the earlier estimate for the 5 V supply's surroundings is 45-60 °C (estimate).
-- The machine's own worst case is about 9.95 A at 240 V and 10.5 A at 253 V (`reference-machine.md`), at or above every 10 A rating in the chain.
-- A slow-blow fuse carries more than its rating for a long time before it opens (its long-time overload band; the T10A curve was not read here).
-
-Concern: a cable rated equal to its fuse is the minimum for the fuse to protect it, not a margin. With enclosure derating of the cable and the filter, and the fuse's overload band, the conductor and filter can be loaded beyond rating before the fuse opens, and normal running at the top of the supply range is already at the rating.
-
-The valve branches use 0.75 mm² flex (WB1562) described as 10A-class and carry no branch fuse, while the pump branches get a 1-2 A fuse. The true rating of 0.75 mm² flex must be checked against the applicable standard: one reviewer believes it is commonly 7.5 A in AU, unverified. If so, the T10A does not protect the valve branches either, and a valve branch fault between 7.5 A and 10 A is uncovered.
-
-Owner to decide the rating margin of the trunk, filter and valve branches, and whether valve branches get a fuse. Options are not enumerated here.
+Facts that still matter: the filter derates above 50 °C and the enclosure ambient is unmeasured (earlier estimate for the 5 V supply's surroundings 45-60 °C); the machine's own worst case is about 9.95 A at 240 V and 10.5 A at 253 V (`reference-machine.md`); a slow-blow fuse carries more than its rating for a long time before it opens (the T10A curve was not read here). The true rating of 0.75 mm² flex is still unchecked against the applicable standard (one reviewer believes 7.5 A in AU, unverified); the valve fuse is sized to the coils, not the flex.
 
 ## Variant traps
 
@@ -144,7 +139,7 @@ The reasoning is the same one already applied to the future solenoid valves in `
 
 - **FN9222 dimension letters not mapped.** The datasheet's dimension table gives A 48, B 22.4, C 40 ±0.2, D 38.25, E 27.8, G 20.1, N 21.5, P 28.5 for the 10-15 A types, but the drawing that assigns those letters to length/width/depth and to the panel cut-out was not parsed. The BOM carries 48 x 38.25 x 27.8 mm from letters A/D/E, unconfirmed. **Confirm the mapping and the cut-out against the drawing before cutting the panel.**
 - **FN9222 termination type** (output tabs or screws) is not recorded in the inputs; to confirm against the datasheet (it decides the trunk crimp terminals).
-- **Fuse and filter sizing against the machine's own draw** (see OPEN DECISION: inlet chain rating margin, above). `reference-machine.md` puts both elements at about 9.3 A at 230 V, 9.7 A at 240 V, and the worst case with both pumps running at about 9.95 A at 240 V and **10.5 A at 253 V**. The T10A fuse, the FN9222 (10 A at 50 °C) and the 10 A trunk cable (`wiring-and-connectors.csv`) all sit at or just under that figure, and the "8-15 A band" above starts below it. `REQ-POWER-BUDGET-001` requires the controller to plan within the budget, but whether the T10A/10 A chain is adequate at the top of the supply range is **to confirm** (the sizing is an open owner decision, see the OPEN DECISION block above).
+- **Fuse and filter sizing against the machine's own draw** (decided: see Decided: inlet chain rating margin, above). `reference-machine.md` puts both elements at about 9.3 A at 230 V, 9.7 A at 240 V, and the worst case with both pumps running at about 9.95 A at 240 V and **10.5 A at 253 V**. The 15 A filter and the 20 A trunk sit above that figure and the T10A fuse protects them; the open points are the 15 A filter's coupler rating (IEC C14 is 10 A), its termination type, and the TR5 valve fuse series, all **to confirm**.
 - **Thermal fuse rating** in the machine: 240 °C steam block thermal fuse (parts list; rating published, unverified).
 - **Whether the machine has a hard mains switch at all**: not established, see above.
 - **IRM-10-5 internal fuse**: not established (the spec sheets read do not mention one); confirm in the user manual.
