@@ -1,0 +1,12 @@
+id: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
+type: criterion
+title: Figures that cannot yet be derived, and inputs already known to be unsettled, are carried as pending
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  A figure that cannot yet be derived is marked pending and names the work that will settle it, rather than being filled by assumption. At least these known-unsettled inputs are carried as pending: the supply module's isolation rating, on which sources disagree; the laminate's tracking resistance, which sits at a material-group boundary; the pollution degree the enclosure warrants; and why the original board takes two live feeds. A pending mark ends only when the named work records the figure and its source; any document derived from the record shows the mark rather than a value. Out of scope: settling any of these inputs, which belongs to the work each mark names.
+links:
+  - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
+    type: criterion-of

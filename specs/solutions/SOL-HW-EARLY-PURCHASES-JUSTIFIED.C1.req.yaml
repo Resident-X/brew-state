@@ -1,0 +1,12 @@
+id: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C1
+type: criterion
+title: Each purchase ahead of verification names the property it settles
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every sample or instrument bought for the boards before their design is verified, including any bought before this record existed, is recorded with what was bought, when, and the property the verification could not establish without it; a purchase ahead of verification that names no such property is listed with that absence shown, so the departure is visible rather than omitted. Each entry states its value with units, the kind of evidence behind it (measured, read off a drawing or datasheet, the owner's account, or inferred) kept distinct rather than levelled, and its source named so that a reader holding only the published repository can follow it without the author's private notes; where the machine's existing record or a working design document already states a fact, the entry cites it rather than restating it independently. Out of scope: purchases made after a design passes its verification, and weighing spend against the declared figure, which the partition and feasibility task does.
+links:
+  - target: SOL-HW-EARLY-PURCHASES-JUSTIFIED
+    type: criterion-of

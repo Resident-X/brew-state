@@ -1,0 +1,12 @@
+id: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C2
+type: criterion
+title: Every retained harness is recorded with the connector it ends in and its first pin
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  For every harness that reaches the controller from a device the retention boundary retains, the record identifies the connector it ends in (its family or the measured properties that identify it, pitch and way count), which contact is its first pin, what each contact carries, and where the harness enters the enclosure; a harness or contact not yet traced is marked as untraced naming the inspection that would trace it, rather than filled in from the earlier design. The set is every retained harness, not the ones a current design happens to use. Out of scope: selecting mating connectors on the new boards, and harnesses of devices the retrofit adds, which bring their own connections.
+links:
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD
+    type: criterion-of

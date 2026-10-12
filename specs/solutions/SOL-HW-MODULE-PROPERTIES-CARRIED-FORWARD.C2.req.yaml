@@ -1,0 +1,12 @@
+id: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD.C2
+type: criterion
+title: Each carried-forward property is a constraint on whatever replaces the module, or is marked unestablished
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Each property is stated as a constraint the replacing circuit must meet, not as a description of the module, and holds whether the function is later designed or kept as a module. A property the available datasheets, schematics and measurements cannot establish is marked unestablished, naming the datasheet reading or bench measurement that would establish it, rather than assumed; the mark ends only when that work is recorded, and every document derived from the record carries it. Out of scope: performing the bench measurements, and designing the replacing circuits.
+links:
+  - target: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD
+    type: criterion-of

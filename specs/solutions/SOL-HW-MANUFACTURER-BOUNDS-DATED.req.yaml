@@ -1,0 +1,36 @@
+id: SOL-HW-MANUFACTURER-BOUNDS-DATED
+type: deliverable
+category: solution
+title: The board manufacturer's fabrication and assembly limits, part availability and prices are recorded with the date each was read
+status: active
+version: 1
+text: |-
+  Records what the chosen manufacturer can make and assemble, which candidate parts it stocks in which library class and at what price, each reading dated and sourced so a later reader can tell when it has gone stale.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C3
+    type: derives-from
+  - target: REQ-COST-DISCIPLINE-001.C1
+    type: targets
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-HW-MANUFACTURER-BOUNDS-DATED.C2
+    class: whole-set
+  - answered_by: SOL-HW-MANUFACTURER-BOUNDS-DATED.C1
+    class: served-statement
+  - answered_by: SOL-HW-MANUFACTURER-BOUNDS-DATED.C1
+    class: existing-capability
+  - answered_by: SOL-HW-MANUFACTURER-BOUNDS-DATED.C1
+    class: consumer-intent
+  - answered_by: SOL-HW-MANUFACTURER-BOUNDS-DATED.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - the working bill of materials and part-number lists in the controller design folder
+locus:
+  - marking: created
+    ref: a manufacturer-constraints record kept outside the machine's folder, since the manufacturer's limits hold for any machine
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-CONSTRAINTS-001
+  target: DEL-HW-DESIGN-CONSTRAINTS

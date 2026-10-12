@@ -1,0 +1,12 @@
+id: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3
+type: criterion
+title: The mains lead arrangement and the position of every part whose location matters are recorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The record states how the mains leads enter and are arranged inside the enclosure, including each live feed the original board takes, and the physical position of every part whose location constrains the boards, such as the tank-level sensor, each with how it was established. A position or arrangement not yet established is marked unestablished with the inspection that would establish it named; that mark ends only when the inspection is recorded, and any document derived from the record carries the mark rather than a guessed value. Out of scope: explaining why the original board takes two live feeds, which the requirement-derived figures carry as pending, and any change to the machine's wiring.
+links:
+  - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD.C1
+type: criterion
+title: Every bought module's unspecified properties are stated
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  For every bought module the earlier design relied on, including the controller module, the pump drive modules, the valve relay module, the logic supply and its carrier and the energy meters, and any other module its bill of materials names, the record states the isolation it provided and what that isolation separated, its defined output behaviour including its state while powering up, in reset, unpowered and with its control signal disconnected, the input thresholds it presented, and its default states. Each entry states its value with units, the kind of evidence behind it (measured, read off a drawing or datasheet, the owner's account, or inferred) kept distinct rather than levelled, and its source named so that a reader holding only the published repository can follow it without the author's private notes; where the machine's existing record or a working design document already states a fact, the entry cites it rather than restating it independently. Out of scope: deciding whether each function stays a bought module or becomes a designed circuit, which the partition and feasibility task decides.
+links:
+  - target: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD
+    type: criterion-of
