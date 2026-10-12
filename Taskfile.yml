@@ -38,7 +38,7 @@ tasks:
       - ./engine/staircase --version || true
 
   sc:sync-skills:
-    desc: Install the upstream skills into .claude/skills at STAIRCASE_REF (verbatim; skills call ./engine/staircase). Replaces only skills a previous sync installed, so repo-local repo-* skills survive
+    desc: Install the upstream skills into .claude/skills at STAIRCASE_REF (verbatim; skills call ./engine/staircase). Replaces only skills a previous sync installed, so repo-local repo-* and *-coffee skills survive
     cmds:
       - |
         set -euo pipefail
@@ -55,7 +55,7 @@ tasks:
           [ -e "$path" ] || { echo "no skills at {{.STAIRCASE_REF}}; nothing changed" >&2; exit 1; }
           name=$(basename "$path")
           case "$name" in
-            repo-*) echo "upstream ships $name, which collides with the repo-local repo-* prefix" >&2; exit 1 ;;
+            repo-*|*-coffee) echo "upstream ships $name, which collides with a repo-local skill name (repo-* or *-coffee)" >&2; exit 1 ;;
           esac
           names+=("$name")
         done

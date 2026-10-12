@@ -8,9 +8,12 @@
 .staircase/models
 # Upstream Staircase skills — installed by `task sc:sync-skills` at the pinned
 # STAIRCASE_REF, like the binary below, not carried. Skills this repository
-# owns are named repo-* and stay tracked; the sync never touches them.
+# owns are named repo-* or *-coffee and stay tracked; the sync never touches
+# them. The *-coffee ones are this project's own versions of upstream operator
+# skills, adapted to this repository's verification and targets.
 /.claude/skills/*
 !/.claude/skills/repo-*/
+!/.claude/skills/*-coffee/
 # staircase binary — installed repo-locally via `task sc:install` (go install from source)
 /engine/
 # macOS
