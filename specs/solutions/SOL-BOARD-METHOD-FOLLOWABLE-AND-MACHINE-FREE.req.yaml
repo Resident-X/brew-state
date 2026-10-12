@@ -1,0 +1,42 @@
+id: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
+type: deliverable
+category: solution
+title: The board design method is followable by a fresh designer or agent and carries nothing specific to this machine
+status: active
+priority: must
+version: 1
+text: |
+  The method as a whole is written to be followed without its author, entered by agents through a project operator skill, named with the repository's repo- prefix so it is tracked and survives the skills sync, that wraps Konnect's bundled KiCad skills unedited, holds no figure, part choice or board shape of this machine, and is demonstrated by a fresh agent session following it to a throwaway design, never ordered, that passes the pre-order gate.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C5
+    type: derives-from
+  - target: DEL-HW-DESIGN-METHOD.C6
+    type: derives-from
+  - target: PER-ADOPTER-001.C3
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+design_question_answers:
+  - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
+    class: served-statement
+  - answered_by: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    class: existing-capability
+  - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
+    class: consumer-intent
+  - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2
+    class: consumer-self-sufficiency
+interfaces:
+  - Konnect's bundled KiCad skills, used as they ship
+  - KiCad's command-line electrical and layout rule checks
+locus:
+  - marking: created
+    ref: the written board design method in the repository's documentation, as a whole
+  - marking: created
+    ref: the project operator skill through which an agent enters the board design method, wrapping Konnect's bundled KiCad skills
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-METHOD-1
+  target: DEL-HW-DESIGN-METHOD

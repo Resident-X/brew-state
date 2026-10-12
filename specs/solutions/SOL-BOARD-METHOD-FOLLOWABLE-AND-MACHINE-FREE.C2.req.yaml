@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C2
+type: criterion
+title: The method contains no figure, part choice or board shape specific to this machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  No step, rule, checklist item or example in the method carries a figure, part choice or board shape specific to this machine; each such value is taken from the machine's own constraints record, named in the method as an input, so an adopter with a different machine reuses the method unchanged. A method text in which any such machine-specific value appears fails the step. Out of scope: the constraints record itself, which is per machine, and any board design produced by following the method.
+links:
+  - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
+    type: criterion-of

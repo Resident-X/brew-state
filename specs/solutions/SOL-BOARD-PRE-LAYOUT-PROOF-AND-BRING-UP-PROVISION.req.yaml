@@ -1,0 +1,35 @@
+id: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION
+type: deliverable
+category: solution
+title: Value-critical circuits are proven by simulation or calculation before layout, and every board is laid out for bring-up and a second spin
+status: active
+version: 1
+text: |-
+  The method's pre-layout and design-for-bring-up steps: name each circuit whose values decide whether it works, state the figure it must meet and show by simulation or calculation that it meets it before layout; and give every rail and key signal a test point, every rail an isolating link, and first power a means of current limiting.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C7
+    type: derives-from
+  - target: DEL-HW-DESIGN-METHOD.C8
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C8
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1
+    class: served-statement
+  - answered_by: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    class: existing-capability
+  - answered_by: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1
+    class: consumer-intent
+  - answered_by: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1
+    class: consumer-self-sufficiency
+interfaces: []
+locus:
+  - marking: created
+    ref: 'the written board design method in the repository''s documentation: its pre-layout circuit proof and design-for-bring-up sections'
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-METHOD-1
+  target: DEL-HW-DESIGN-METHOD

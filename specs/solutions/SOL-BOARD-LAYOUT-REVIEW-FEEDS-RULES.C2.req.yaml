@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C2
+type: criterion
+title: Every review finding that can be expressed as a rule is added to the rules
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  For every recorded review finding, the method requires a stated judgement of whether it can be expressed as a design rule or rule check; each one that can is added to the method's rules, with its figure and source like any other rule, so it is checked on every later board without being remembered. A finding judged expressible but not added, or one with no recorded judgement, fails the step. Out of scope: building the automated check that runs the rules, and findings that cannot be expressed as a rule, which stay on the checklist.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: criterion-of

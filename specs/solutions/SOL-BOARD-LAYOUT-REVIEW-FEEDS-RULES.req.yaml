@@ -1,0 +1,39 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+type: deliverable
+category: solution
+title: Each layout is reviewed against a checklist written beforehand, and findings that can be rules become rules
+status: active
+version: 1
+text: |-
+  The method's layout review step: a checklist written before the layout, a review of rendered views of every layer, every finding recorded and closed by a board change or a recorded reason, and every finding expressible as a rule added to the rules so later boards are checked for it automatically.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C3
+    type: derives-from
+  - target: DEL-HW-DESIGN-METHOD.C4
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+    class: new-condition
+  - answered_by: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+    class: whole-set
+  - answered_by: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+    class: served-statement
+  - answered_by: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    class: existing-capability
+  - answered_by: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+    class: consumer-intent
+  - answered_by: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - KiCad's rendered per-layer board views
+  - the method's written design rules
+locus:
+  - marking: created
+    ref: 'the written board design method in the repository''s documentation: its layout checklist and review-findings sections'
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-DESIGN-METHOD-1
+  target: DEL-HW-DESIGN-METHOD

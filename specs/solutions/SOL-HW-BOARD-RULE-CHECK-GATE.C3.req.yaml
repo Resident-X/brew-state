@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-RULE-CHECK-GATE.C3
+type: criterion
+title: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each design's rules state which nets are mains-referenced and the separation distance required between them and every low-voltage conductor, and the layout rule check enforces that distance, so a low-voltage conductor placed closer than it fails. The distance a design declares is compared with the signed separation basis record: a declared figure smaller than the signed one fails, and so does a missing basis record, so a design cannot pass by declaring less. A design with mains-referenced nets but no declared separation fails, and a design with no mains-referenced nets must say so explicitly, so silence is never read as compliance. Out of scope: choosing or signing for the separation figure itself, which the partition work declares; until it exists the check is proven against a synthetic basis record on the throwaway design.
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-RULE-CHECK-GATE.C4
+type: criterion
+title: One task-runner command runs the whole check with tools any reader can obtain
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The whole check runs from the project's task runner as one command. Every tool it needs is free and obtainable by a reader who is not the author, and the tool and its required version are named where the check is documented. This covers what a reader needs to run the check, not only to read it. A missing tool, or a tool version older than the one required, stops the command with an error naming that tool, rather than skipping the checks that need it and reporting success. The command needs nothing from the author's own machine, account or editor session. Out of scope: installing the tools on a reader's machine, and any account-bound or paid service.
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: criterion-of

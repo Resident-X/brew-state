@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+type: criterion
+title: Each layout is reviewed against a pre-written checklist using rendered views of every layer, with every finding recorded and closed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The method requires a written layout checklist that exists before the layout it reviews, and a review of that layout against it using rendered images of every copper, mask, paste, silkscreen and edge layer the board carries. Every finding is recorded and stays open until it is closed either by a change to the board or by a recorded reason it stands; a review with any finding left open, a layer not rendered, or a checklist dated after the layout fails the step. The checklist includes treating a placement score as unresolved whenever the tool cannot match decoupling capacitors to their device. The step is stated so a designer or an agent session with no prior context carries it out from the method's text alone, without reference to this project's graph identifiers or its author's context. Out of scope: the automated pre-order rule and connectivity check, which is a separate verification task, and the content of any particular board's findings.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: criterion-of
