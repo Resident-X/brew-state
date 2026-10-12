@@ -31,7 +31,7 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 
 | Value | Figure | Provenance |
 |---|---|---|
-| Coffee thermoblock element | 1004 W at 230 V, 1093 W at 240 V | Measured: 52.7 Ω cold, 20.3 °C ambient, converted at the declared supply |
+| Coffee thermoblock element | 1004 W at 230 V, 1093 W at 240 V | Measured: 52.7 Ω cold, 20.3 °C ambient, converted at 230 V nominal and at 240 V; the figures at 253 V, the declared span's top, are in the table below |
 | Steam thermoblock element | 1126 W at 230 V, 1226 W at 240 V | Measured: 47.0 Ω cold, 20.3 °C ambient — see note below on isolation |
 | Steam pump | 22 W (JYPC-4) | Service manual parts list |
 | Coffee pump | 48 W (Ulka EP5) | Manufacturer spec sheet for the fitted type |
