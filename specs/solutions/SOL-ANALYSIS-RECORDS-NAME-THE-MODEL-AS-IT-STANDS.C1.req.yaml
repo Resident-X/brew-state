@@ -1,0 +1,12 @@
+id: SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C1
+type: criterion
+title: Every digest the committed analysis records name is the one that file presently holds
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The protection-margin, parameter-dominance, stability and identifiability records each carry, for every file its analysis was run against, the digest that file holds now, so that regenerating any of them against an unchanged tree writes the same bytes back and the suite's check that each record names its inputs as they stand passes. Out of scope: changing what a record names or how its analysis computes it.
+links:
+  - target: SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS
+    type: criterion-of

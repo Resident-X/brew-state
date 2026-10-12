@@ -1,0 +1,23 @@
+id: SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS
+type: deliverable
+category: solution
+title: The committed analysis records name the thermoblock description as it presently stands
+status: active
+version: 1
+text: |
+  Four records the emulation analyses write each name the files they were run against and the digest each held at the time, so a reader can establish which machine description they describe: the protection-margin record, the parameter-dominance ranking, the stability-across-declared-error record and the parameter-identifiability record. A later edit to the thermoblock's parameter file moved that file's digest and none of the four was regenerated, so the suite's own check that each record names its inputs as they stand failed on main.
+
+  The edit changed only a document path inside the file's comments, from the flat documentation directory to the machine's own folder; no coefficient, declared error or bound moved. Regenerating each record against the description as it now stands therefore changes the digest it names and nothing else: every margin, ranking, corner count, verdict and identifiability finding comes out as before. The correction is the regeneration, which each analysis does unchanged; nothing about the methods is at fault.
+rationale: |
+  A record that names the model it was taken against is worth exactly as much as the naming being true; one naming a digest nothing presently holds reads as current while describing a file that no longer exists. It lands in the maintenance lane rather than as new requirements because nothing the graph says was wrong: each record's own criterion, that its figures are committed in a repeatable form against the model as it stands, still says the right thing, and it is the committed records, not the specification, that fell short. It is one item rather than four because one edit staled all four and one regeneration restores them. It was found when the board rule-check build ran the firmware gate and the gate failed on these records, files that build did not touch. An earlier correction of the same kind, SOL-DOMINANCE-RECORD-NAMES-THE-MODEL-AS-IT-STANDS, fixed the dominance record alone after a measurement moved a coefficient.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ROBUST-CONTROL-001.C3
+    type: targets
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets
+  - target: REQ-ROBUST-CONTROL-001.C1
+    type: targets
+  - target: REQ-STATE-ESTIMATION-001.C6
+    type: targets

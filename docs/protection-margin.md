@@ -14,7 +14,7 @@ Nothing here is a measurement. The trip point is a figure read off a parts list,
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `e229bfe18368931fada051fcaeca786fe6d52bd3423e310d3c08b835b565015c` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `582f14cfb080878c743f9474293cd66273d385c3a996a63d28b26b7cf2edf514` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
 | The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |

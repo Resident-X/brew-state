@@ -1,0 +1,12 @@
+id: SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C2
+type: criterion
+title: The committed figures and verdicts are the ones the present description produces
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The margins, rankings, corner counts, verdicts and identifiability findings in each committed record are the ones its analysis produces from the description as it now stands, not an earlier run's figures with the digests refreshed over them. Out of scope: any change to the declared errors, the combination rules or the analyses themselves.
+links:
+  - target: SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS
+    type: criterion-of
