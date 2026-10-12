@@ -6,7 +6,7 @@ version: 2
 measurement_type: binary
 verification: test
 text: |
-  When the merge-base with main cannot be resolved, or the list of changed paths cannot be read, the round gate runs the emulation tier rather than skipping it, and says why. Tests drive the path selection with a documents-only change outside what the emulation reads, a firmware source change, a parameter-file change, an emulation-suite change, a change to a documentation record the emulation suite checks against, a new firmware file not yet committed, an empty change and an unresolvable base, and each fails if the selection is wrong. Out of scope: choosing whether the host tier runs; it always runs.
+  When the merge-base with main cannot be resolved, or the list of changed paths cannot be read, the round gate runs the emulation tier rather than skipping it, and says why. Tests drive the path selection with a documents-only change outside what the emulation reads, a firmware source change, a parameter-file change, an emulation-suite change, a change to a documentation record the emulation suite checks against, a new firmware file not yet committed, a deleted firmware file, a file renamed out of the firmware tree, an empty change and an unresolvable base, and each fails if the selection is wrong. Out of scope: choosing whether the host tier runs; it always runs.
 links:
   - target: SOL-VERIFY-ROUND-GATE-TARGETED
     type: criterion-of
