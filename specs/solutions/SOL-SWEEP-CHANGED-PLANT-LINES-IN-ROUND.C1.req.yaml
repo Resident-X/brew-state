@@ -1,0 +1,12 @@
+id: SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1
+type: criterion
+title: The round gate sweeps the mutants drawn from the plant lines the branch changes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When the branch changes the plant model's sources, the round gate runs the mutation sweep restricted to mutants on the lines the branch changed, measured from its merge-base with main, and judges survivors exactly as the full sweep does against the same triage record. When the branch changes no plant line, the round runs no sweep and says so. Tests or a demonstration show a seeded surviving mutant on a changed line failing the round, and an unchanged line's mutants not being drawn. Out of scope: the full population, which the nightly sweeps.
+links:
+  - target: SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND
+    type: criterion-of

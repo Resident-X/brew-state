@@ -1,0 +1,17 @@
+id: SOL-VERIFY-DAILY-STATUS-READ-FIRST
+type: deliverable
+category: solution
+title: An operator session reads main's latest nightly result before offering work
+status: active
+version: 1
+text: |
+  An operator session reads main's latest nightly result before it offers any work. A task-runner command reads the nightly workflow's run history and states the latest completed run's conclusion, the commit it verified and a link to it. The operator session launcher shows that result first, and when it is red, offers fixing it as the first choice.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: targets
+  - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
+    type: depends-on

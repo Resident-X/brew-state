@@ -1,0 +1,17 @@
+id: SOL-VERIFY-ROUND-GATE-TARGETED
+type: deliverable
+category: solution
+title: A build round's gate runs the host tier in full and emulation only for changes it exercises
+status: active
+version: 1
+text: |
+  The task runner declares a build-round gate, the verification a build round runs once and the only verification a change gets before it merges. It runs the host tier in full, and the emulation tier only when the branch changes what the emulation exercises, measured from the branch's merge-base with main. The full mutation sweep leaves the round. The operator build skill names this gate as the build round's verification, and the firmware documentation and the sweep's own task description stop saying the sweep runs in every gate.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C1
+    type: targets

@@ -1,0 +1,17 @@
+id: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
+type: deliverable
+category: solution
+title: The full verification, mutation sweep included, runs nightly against main on hosted runners
+status: active
+version: 1
+text: |
+  The full verification runs nightly against main on hosted runners. A task-runner command runs every gate the round can skip, the emulation tier unconditionally and the full mutation sweep, each to completion even after another fails, and reports every failure. A scheduled workflow runs it against main each night, and can be started by hand. Its run history is the record of what main last verified.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C7
+    type: targets

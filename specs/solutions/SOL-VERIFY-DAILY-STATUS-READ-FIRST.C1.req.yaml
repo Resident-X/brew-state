@@ -1,0 +1,12 @@
+id: SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1
+type: criterion
+title: The daily status reader states main's latest nightly result and never reports a result it could not read
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A task-runner command reads the nightly workflow's run history for main and prints the latest run that completed with a success or failure conclusion: the conclusion, the commit it verified and a link to the run. When no completed run exists it says so. When the history cannot be read, it reports the result as unknown, with the reason, and exits non-zero rather than reporting green. Tests drive it with a passing run, a failing run, no runs, only in-progress runs and an unreadable history. Out of scope: investigating a failure.
+links:
+  - target: SOL-VERIFY-DAILY-STATUS-READ-FIRST
+    type: criterion-of

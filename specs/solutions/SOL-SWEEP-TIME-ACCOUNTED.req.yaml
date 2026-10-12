@@ -1,0 +1,15 @@
+id: SOL-SWEEP-TIME-ACCOUNTED
+type: deliverable
+category: solution
+title: The mutation sweep reports its build and execution time per shard
+status: active
+version: 1
+text: |
+  The mutation sweep reports where its time goes: for each shard, the time spent building and the time spent running mutants, with the number of mutants run against each suite. Further speed-ups are chosen from that measurement rather than assumed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
