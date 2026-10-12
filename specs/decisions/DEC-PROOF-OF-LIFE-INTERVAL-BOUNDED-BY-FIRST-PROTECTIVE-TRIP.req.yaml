@@ -7,7 +7,7 @@ version: 1
 text: |
   The interval within which loss of the controller's proof of life must remove heater power is derived from the time a heater takes to reach its retained protection's trip point when left fully on, and the shorter of the machine's two heaters sets it.
 
-  The derivation takes the worst case on every input: each heater driven at full power at the top of the declared supply span, starting from the highest temperature the controller commands on that heater, with the lower bound of its thermal mass. The trip points are the declared ones, 107 °C on the coffee thermoblock and 195 °C on the steam thermoblock. The interval is the shorter of the two times, so the interlock removes power before either retained protective device has to act.
+  The derivation takes the worst case on every input: each heater driven at full power at the top of the declared supply span, starting from the highest temperature that heater's casting reaches while the controller is holding it, taken across the plant model's declared corners, with the lower bound of its thermal mass. The casting, not the commanded variable, is the starting point: the coffee loop controls the water leaving the block and the steam loop controls pressure during a draw, and in both the casting runs hotter than the commanded figure by an amount that is not fixed. Until that peak is derived, the interval is pending rather than taken from the commanded figure. The trip points are the declared ones, 107 °C on the coffee thermoblock and 195 °C on the steam thermoblock. The interval is the shorter of the two times, so the interlock removes power before either retained protective device has to act.
 
   Both heated masses are flow-through thermoblocks. There is no steam vessel holding a stored volume at pressure, so the thermoblock's protection trip, not a vessel's pressure rating, is the first point at which the machine depends on its backstop rather than its controller.
 rationale: |
@@ -18,6 +18,8 @@ rationale: |
   Reversibility: The basis is cheap to change before the interlock's timing is fixed in hardware. Once the thermal masses are measured at commissioning the figure tightens or loosens without the basis changing. A different basis after the boards are built may mean a component change in the interlock's timing.
 
   Consequences: The figures record states the interval with this derivation, graded inferred, citing the declared trip points, the declared supply span and the estimated thermal masses. The interlock's design works to that interval. A later measurement of either thermoblock's thermal mass re-derives it.
+
+  Amendment: the first statement of this decision started from the highest temperature the controller commands. Review of the derived figure showed that bounds the commanded variable, not the casting, so it is not the worst case the decision requires: with 7 K between the coffee block's commanded ceiling and its trip point, each kelvin the casting stands above the commanded figure removes about a sixth of a second from the interval. The basis is the casting's peak under control instead.
 options_considered:
   - option: Time for a heater left fully on to reach its retained protection's trip point
     reason_rejected: ""
