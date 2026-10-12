@@ -1,0 +1,17 @@
+id: EVD-SOL-SWEEP-HOST-DEPENDENT-SURVIVORS-JUDGED.C1-TEST
+type: evidence
+title: The mutation sweep reports a clean run with both host-dependent survivors judged (SOL-SWEEP-HOST-DEPENDENT-SURVIVORS-JUDGED.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-12T21:12:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: task fw:sweep
+text: |-
+  task fw:sweep exited 0: 303 mutants, 286 killed, 17 survived, every survivor accounted for (12 that cannot change behaviour, 5 that only the sanitized build could notice). The run used the triage keys and verdicts now committed; the later commit 6382f4f only rewrapped two reasons' text so the cited test names read whole, which the sweep does not read. Before the two judgements were added the same sweep failed on cxx_ge_to_gt plant_parameters.c:593:12 and cxx_lt_to_le plant_parameters.c:660:35. Each judgement's hand experiment, the mutation applied and the sanitized native_test (and native_boiler_test) build run, aborted with SIGABRT in the cited tests.
+links:
+  - target: SOL-SWEEP-HOST-DEPENDENT-SURVIVORS-JUDGED.C1
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EVD-SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C2-TEST
+type: evidence
+title: The committed analysis figures are the ones the present description produces (SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C2)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-12T21:12:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests (python3 -m unittest discover -s emulation/tests -k committed, run from firmware/)
+text: |-
+  At 6382f4f each analysis's committed-record tests that assert the record is the one the present description produces pass, within the same 22-test run. Regenerating the four records from the current description changed one line in each, the thermoblock.params digest; no margin, ranking, corner count, verdict or identifiability finding moved, as expected from an edit that changed only a comment path.
+links:
+  - target: SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C2
+    type: satisfies
