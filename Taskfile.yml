@@ -13,6 +13,11 @@ vars:
   STAIRCASE_MODULE: github.com/Resident-X/staircase/engine/cmd/staircase
   STAIRCASE_REPO: git@github.com:Resident-X/staircase.git
   STAIRCASE_REF: f1fe0a769cce5f508437afeb982dda92bacc3a6a
+  # Upstream skills this repository replaces with its own copy of the same
+  # name. The sync never installs or removes them, and .gitignore tracks them.
+  # start-work is here because its targets are this project's epics, not the
+  # engine repository's.
+  REPO_SKILLS: start-work
   SPECS_DIR: specs
   FW_DIR: firmware
   # PlatformIO installs into its own virtual environment rather than onto PATH.
@@ -38,7 +43,7 @@ tasks:
       - ./engine/staircase --version || true
 
   sc:sync-skills:
-    desc: Install the upstream skills into .claude/skills at STAIRCASE_REF (verbatim; skills call ./engine/staircase). Replaces only skills a previous sync installed, so repo-local repo-* skills survive
+    desc: Install the upstream skills into .claude/skills at STAIRCASE_REF (verbatim; skills call ./engine/staircase). Replaces only skills a previous sync installed, so repo-local repo-* skills and the REPO_SKILLS this repository owns survive
     cmds:
       - |
         set -euo pipefail
@@ -57,6 +62,9 @@ tasks:
           case "$name" in
             repo-*) echo "upstream ships $name, which collides with the repo-local repo-* prefix" >&2; exit 1 ;;
           esac
+          case " {{.REPO_SKILLS}} " in
+            *" $name "*) echo "keeping this repository's own $name; upstream's is not installed" >&2; continue ;;
+          esac
           names+=("$name")
         done
         mkdir -p .claude/skills
@@ -66,6 +74,7 @@ tasks:
         if [ -f "$manifest" ]; then
           while IFS= read -r name; do
             case "$name" in ''|.|..|*/*) continue ;; esac
+            case " {{.REPO_SKILLS}} " in *" $name "*) continue ;; esac
             rm -rf ".claude/skills/$name"
           done < "$manifest"
         fi
