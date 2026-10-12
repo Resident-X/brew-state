@@ -1,0 +1,12 @@
+id: SOL-VERIFY-ROUND-GATE-TARGETED.C3
+type: criterion
+title: The build skill and the firmware documentation name the round gate as the build round's verification
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The project's instructions and the firmware documentation describe the two cadences, round and nightly, and what each runs, so a build round's gate worker finds the round gate as the tier the project declares for a build round. The mutation sweep's task description and the documentation's account of the gate no longer say the sweep runs in every gate. Out of scope: the nightly's own workflow, and the reader for its result.
+links:
+  - target: SOL-VERIFY-ROUND-GATE-TARGETED
+    type: criterion-of

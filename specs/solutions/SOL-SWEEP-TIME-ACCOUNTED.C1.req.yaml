@@ -1,0 +1,12 @@
+id: SOL-SWEEP-TIME-ACCOUNTED.C1
+type: criterion
+title: The sweep reports build and execution time per shard
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each sweep run states, for every environment and suite it covers, the time spent building, the time spent executing mutants, the number of mutants executed and the suite's unmutated run time, and a total. The figures appear both in the local run's output and in the hosted workflow's job summary. Out of scope: changing what the sweep runs, or how.
+links:
+  - target: SOL-SWEEP-TIME-ACCOUNTED
+    type: criterion-of

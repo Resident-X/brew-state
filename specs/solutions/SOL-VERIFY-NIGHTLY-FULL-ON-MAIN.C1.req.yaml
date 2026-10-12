@@ -1,0 +1,12 @@
+id: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1
+type: criterion
+title: The daily verification runs every gate to completion and reports every failure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A task-runner command for the daily verification runs every gate the complete verification declares, including the emulation tier and the full mutation sweep, with no result reused from an earlier run. Each gate runs to completion even after an earlier one fails, and the command exits non-zero naming every gate that failed. It is the command a single machine runs for the whole verification; the hosted nightly runs the same gates with the sweep in its sharded form. Out of scope: deciding which failures matter; every failure is reported.
+links:
+  - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
+    type: criterion-of

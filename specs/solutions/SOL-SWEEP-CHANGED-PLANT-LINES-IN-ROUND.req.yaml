@@ -1,0 +1,17 @@
+id: SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND
+type: deliverable
+category: solution
+title: A build round sweeps the mutants on the plant lines its branch changes
+status: active
+version: 1
+text: |
+  When a branch changes the plant model's arithmetic, its build round sweeps the mutants drawn from the lines it changed, so new plant arithmetic meets mutation testing before it merges rather than at the next nightly run.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets
+  - target: SOL-VERIFY-ROUND-GATE-TARGETED
+    type: depends-on

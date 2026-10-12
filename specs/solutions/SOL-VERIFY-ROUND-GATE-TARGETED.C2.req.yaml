@@ -1,0 +1,12 @@
+id: SOL-VERIFY-ROUND-GATE-TARGETED.C2
+type: criterion
+title: The round gate runs everything when it cannot tell what changed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When the merge-base with main cannot be resolved, or the list of changed paths cannot be read, the round gate runs the emulation tier rather than skipping it, and says why. Tests drive the path selection with a documents-only change, a firmware source change, a parameter-file change, an emulation-suite change, an empty change and an unresolvable base, and each fails if the selection is wrong. Out of scope: deciding what the round runs for changes outside the firmware.
+links:
+  - target: SOL-VERIFY-ROUND-GATE-TARGETED
+    type: criterion-of
