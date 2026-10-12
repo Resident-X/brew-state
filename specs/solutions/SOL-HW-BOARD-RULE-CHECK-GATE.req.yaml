@@ -9,7 +9,7 @@ text: |
 
   Placement, settled before build. The check is a new seam for board designs, kept apart from the firmware gate so that neither needs the other's tools:
   - An hw section in the project's task runner, alongside the firmware fw section, with one command that runs the whole check and an on-demand command that runs the seeded-fault proof.
-  - The path to KiCad's command-line tool is an overridable task-runner variable, in the way the firmware tasks locate their build tool, because the tool is often installed off the search path.
+  - The path to KiCad's command-line tool is an overridable task-runner variable, KICAD_CLI, in the way the firmware tasks locate their build tool, because the tool is often installed off the search path. Its default is the bare tool name found on the search path; hardware/README.md gives the usual install location on each common operating system, and the missing-tool error says how to set the variable.
   - The checking tool and its tests live in hardware/tools/.
   - The throwaway design and its synthetic basis record live in hardware/proof/.
   - The seeded-fault proof introduces each fault into a copy of the throwaway design in a temporary directory outside the repository, never into the tree itself, so the committed tree stays clean and the every-design check stays green; this differs from the firmware mutation tool, which edits its sources in place and restores them.
