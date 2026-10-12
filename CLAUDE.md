@@ -44,6 +44,19 @@ or against that.
   read by someone rebuilding this on a different machine, in a different country, on a different
   mains voltage. That is also the discipline test: requirements that name mechanism don't travel.
 
+## How this project verifies
+
+- **Trace-comment form.** The criterion id and its text head the test that verifies it: a `/// SOL-X.C2: <criterion text>` doc comment on a C test function, a `# SOL-X.C2: <criterion text>` comment opening a Python test. A machine-record document citing the criteria its figures come from is content, not a trace comment.
+- **Verification by kind.** A criterion verified by `test` gets a test. One verified by `inspection` or `analysis` gets a stated check of the delivered artefact against each clause, with the arithmetic shown for analysis.
+- **Three tiers before energisation** (`DEC-SIM-VERIFICATION-TOOLCHAIN`):
+  - **Host.** `task fw:build`, `fw:check`, `fw:test`, `fw:run`: the control logic, estimator and plant model compiled for the host and run under sanitizers, plus the build-time checks. Memory and undefined-behaviour defects are caught here and only here.
+  - **Emulation.** `task fw:emulate`: the target build's own artefact under emulation against modelled peripherals.
+  - **Target.** Worst-case timing on the real, un-energised board. A bench step, not a task.
+- **Mutation.** `task fw:sweep` alters the plant model's arithmetic and requires a test to notice. `task fw:mutate` (seeded property breaks) runs on demand, when a check is added or reworked. `DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL` sets when each runs.
+- **Gates.** `task fw:verify` declares the complete verification. When the Taskfile also declares a build-round tier (`task check:round`), a build round's gate runs that tier and not the complete one. Long gates outrun a single shell call's ten-minute limit: start the gate detached with its output and exit status captured to a log, then poll the log with repeated bounded foreground calls until the exit line appears, and never end a headless session while it runs.
+- **Generated records pin their inputs.** The analysis records under `docs/` (protection margin, parameter dominance, stability, identifiability) print the sha256 of each file they were generated from, and an emulation test fails when one goes stale. A change to any of those inputs (the `firmware/params/` descriptions and declarations), even a comment, regenerates the affected records with their own tools in the same change.
+- **Machine-record and hardware-design work** lands in `docs/sunbeam-em7000/` and its `controller-design/` working folder. Sources govern and derived views are corrected to match (`DEC-MACHINE-RECORD-FOLDER-PER-MACHINE`). A changed fact is chased through every document that restates it, and through any firmware parameter or simulation result that depends on it.
+
 ## Editing the graph
 
 - **Author via the engine, never hand-write `.req.yaml`.** Use the
