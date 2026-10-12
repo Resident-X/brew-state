@@ -145,6 +145,17 @@
 # test could not have reached it, and nothing had asked this structure the
 # question before.
 
+# Two more mutants in those same functions surfaced unjudged later with no
+# change to plant_parameters.c at all: the position guard in
+# `plant_parameter_scale` and the loop bound in `plant_parameter_supply_driven`.
+# Neither is new code. Each one's only effect is a read one entry past a
+# compiled-in static table, so each is killed or not according to what the
+# linker happened to place after that table -- the host-dependence the
+# value-token and spec-lookup entries below already describe. The sweep that
+# last re-judged this file did not report either as surviving; a later run with
+# the code unchanged reports both. Both are judged `analysis`, and for each the
+# sanitized tier was shown to catch it rather than argued to.
+
 survivors:
   cxx_lt_to_le:src/plant/common/plant_parameters.c:49:19:
     verdict: equivalent
@@ -286,6 +297,52 @@ survivors:
       environment names, and every structure in the tree declares a
       single-figure number of parameters, so both forms accept every table any
       build of this program can present.
+
+  cxx_ge_to_gt:src/plant/common/plant_parameters.c:593:12:
+    verdict: analysis
+    reason: >-
+      Position guard in `plant_parameter_scale`, `at >= spec_count` narrowed to
+      `>`, which admits the position exactly one past the structure's last. The
+      mutant then reads `specs[spec_count]` -- an entry past the end of the
+      compiled-in spec table -- and uses whatever offset and bounds it finds
+      there. Whether the call still answers false depends entirely on those
+      bytes: if the "bounds" read past the table refuse the scaled value, the
+      refusal is the one the original gives and the record is left untouched,
+      which is why the assertions do not tell the two apart on a host where
+      that is what follows the table. What differs is an out-of-bounds read of
+      a static array, and possibly a write through an offset nobody declared,
+      which the sanitized build reports.
+
+      The line is reached:
+      test_scaling_refuses_a_position_this_structure_does_not_have offers
+      exactly COEFFICIENT_COUNT. That is shown rather than argued. Applying this mutation by hand and running test_plant under
+      native_test, the sanitized build, aborts with SIGABRT in that test, where
+      the unsanitized sweep records the mutant as surviving. Repeat that if this
+      reasoning is ever in doubt.
+
+  cxx_lt_to_le:src/plant/common/plant_parameters.c:660:35:
+    verdict: analysis
+    reason: >-
+      Loop bound in `plant_parameter_supply_driven`, `which < named_count`
+      widened to `<=`, so a position no supply-driven name matches carries the
+      search one entry past the end of the structure's static list of such
+      names. The answer changes only if whatever follows that list is a
+      non-null pointer to a name the spec table also holds at the asked
+      position -- otherwise the loop ends with `driven` still false, the
+      original's answer, which is why no assertion distinguishes the two. What
+      differs is an out-of-bounds read of a static array, and a string read
+      through whatever pointer it yields, which the sanitized build reports.
+
+      The line is reached in both builds that link a machine-describing
+      structure:
+      test_whether_a_position_is_supply_driven_is_answered_for_every_one asks
+      every thermoblock position, most of which match nothing, and
+      test_the_one_element_rating_is_answered_as_supply_driven asks the boiler
+      about ambient temperature, which matches nothing. That is shown rather
+      than argued. Applying this mutation by hand and running test_plant under
+      native_test and test_plant_boiler under native_boiler_test, both
+      sanitized, aborts each with SIGABRT in exactly those tests, where the
+      unsanitized sweep records the mutant as surviving.
 
   cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:149:31:
     verdict: equivalent

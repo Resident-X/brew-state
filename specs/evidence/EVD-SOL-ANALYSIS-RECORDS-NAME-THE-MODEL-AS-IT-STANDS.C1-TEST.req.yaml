@@ -1,0 +1,17 @@
+id: EVD-SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C1-TEST
+type: evidence
+title: Every committed analysis record names the digest each file presently holds (SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-12T21:12:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/emulation/tests (python3 -m unittest discover -s emulation/tests -k committed, run from firmware/)
+text: |-
+  At 6382f4f the committed-record tests of the protection-margin, dominance, stability and identifiability analyses pass, 22 tests in 80 s, including each analysis's test_the_committed_record_names_the_files_it_was_run_against_as_they_stand. They had failed on main since a73ff54 moved a comment path in firmware/params/thermoblock.params without regenerating the four records; each record now names 582f14cf for that file, which shasum confirms it holds. The whole emulation suite (195 tests) also passed on the regenerated records.
+links:
+  - target: SOL-ANALYSIS-RECORDS-NAME-THE-MODEL-AS-IT-STANDS.C1
+    type: satisfies

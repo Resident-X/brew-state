@@ -1,0 +1,12 @@
+id: SOL-SWEEP-HOST-DEPENDENT-SURVIVORS-JUDGED.C1
+type: criterion
+title: The sweep reports a clean run, with both host-dependent survivors judged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The mutation sweep exits clean on the tree as it stands: the two survivors in the plant parameter table code each carry a judgement in the record, giving the out-of-bounds-only reasoning, the test that reaches the line, and the sanitized-build run that aborts on it. Out of scope: re-judging survivors the sweep already accounts for, and changing the sweep or its verdict vocabulary.
+links:
+  - target: SOL-SWEEP-HOST-DEPENDENT-SURVIVORS-JUDGED
+    type: criterion-of
