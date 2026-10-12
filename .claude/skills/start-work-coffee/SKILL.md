@@ -11,7 +11,7 @@ It replaces the upstream `start-work`, which is written for the Staircase engine
 
 ## Steps (in order)
 
-1. **Target first.** The session's first act is the target question. Build its list from one read, `./engine/staircase tree DEL-BREW-STATE-DELIVERY --open --depth 1 --format json` from the main checkout, and run nothing else before the operator answers. Sessions idle here, and everything after the pick must see the `main` of the moment the operator picks. List, in this order:
+1. **Target first.** The session's first act is the target question. Build its list from one read, `./engine/staircase tree DEL-BREW-STATE-DELIVERY --open --depth 1 --format json` from the main checkout, and run nothing else before the operator answers. The read comes before any fetch, so it reflects the main checkout's index and may lag `main`; that is acceptable for a menu, and step 4's `next` runs against the fresh worktree. Sessions idle here, and everything after the pick must see the `main` of the moment the operator picks. List, in this order:
    1. **Controller hardware** `DEL-CONTROLLER-HARDWARE`. Always first while it is open.
    2. **Maintenance** `DEL-MAINTENANCE`. Always listed. It is a continuous lane outside the roadmap's phases, so the tree read never shows it.
    3. Every other open child of the roadmap the tree read returns, in its phase order. Show each as `id — title` with its category (epic or task).

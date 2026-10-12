@@ -36,3 +36,7 @@ __pycache__/
 # carries no trailing slash — a trailing slash matches directories only and
 # would silently stop ignoring it now that it is a symlink.
 /.tooling
+# Operator scratch for a stage0 build (prompts, agent outputs, readiness reports) and
+# its shared cost log; the graph, not these, is the durable record
+.stage0/
+/.staircase/stage0-metrics.jsonl
