@@ -14,6 +14,14 @@ or against that.
 - **No deferred work.** No TODOs, no "future work", no stubs, no tech debt pushed to a later slice.
   If the slice says build it, build it completely and correctly now. Geniune discoveries are carried
   forward by authoring the correct nodes into the graph.
+- **The graph is the only durable record — PR prose is not.** A finding, decision, or known limitation
+  written into a PR body/description and nowhere else is lost the moment the PR merges and the branch
+  is gone: nothing re-reads old PR text, but `query`/`show` reach every node forever. Before closing out
+  a slice, check whether a discovery made mid-build (a defect, a limitation, an open question) is
+  already covered by an existing node; if not, author one — a `DEL-MAINTENANCE` child for a defect in
+  already-sealed work, a new/amended criterion for something no criterion ever required. A PR may
+  *summarize* what the graph now says, as a pointer for the human reading the diff, but the graph
+  entry has to exist first and independently — the PR is not where the record lives.
 - **Requirements are the baselined final state.** An incomplete requirement is *wrong*, not a
   placeholder for a future solution. Deferred work still needs a requirement in the graph.
 - **Emergent, corrective, and BAU work goes in `DEL-MAINTENANCE`.** It is a **continuous lane**
@@ -112,6 +120,9 @@ or against that.
 
 ## Repo etiquette
 
+- **Skills are installed, not tracked.** `task sc:init` (or `sc:update`) installs the upstream skills into
+  `.claude/skills/` at the pinned `STAIRCASE_REF`; git ignores them. A skill this repository owns is
+  named `repo-*` — the sync leaves those alone and git tracks them. Bump the pin deliberately.
 - Branch: `req/{REQ-ID}/{short-slug}`. **NEVER push to `main`** — PRs only. The tracked
   `.githooks/pre-push` hook refuses it, but treat that as a catch for the mistake rather than as
   enforcement: it is inert until `task repo:hooks` points `core.hooksPath` at that directory

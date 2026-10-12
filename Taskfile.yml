@@ -5,12 +5,14 @@ version: "3"
 # Resident-X/staircase repo — this Taskfile owns fetching and refreshing
 # them so brew-state needs no local checkout of Staircase.
 #
-# Pin STAIRCASE_REF to a tag/commit for reproducibility; `main` tracks HEAD.
+# STAIRCASE_REF is pinned to one upstream commit, so the binary, the skills and
+# the seeded schema always come from the same Staircase revision. Bump it
+# deliberately (to a later commit SHA), then run `task sc:update`.
 
 vars:
   STAIRCASE_MODULE: github.com/Resident-X/staircase/engine/cmd/staircase
   STAIRCASE_REPO: git@github.com:Resident-X/staircase.git
-  STAIRCASE_REF: main
+  STAIRCASE_REF: f1fe0a769cce5f508437afeb982dda92bacc3a6a
   SPECS_DIR: specs
   FW_DIR: firmware
   # PlatformIO installs into its own virtual environment rather than onto PATH.
@@ -36,15 +38,43 @@ tasks:
       - ./engine/staircase --version || true
 
   sc:sync-skills:
-    desc: Refresh .claude/skills from STAIRCASE_REF (verbatim — skills call ./engine/staircase, which this repo provides locally, so no rewrite is needed)
+    desc: Install the upstream skills into .claude/skills at STAIRCASE_REF (verbatim; skills call ./engine/staircase). Replaces only skills a previous sync installed, so repo-local repo-* skills survive
     cmds:
       - |
         set -euo pipefail
         tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-        git clone --depth 1 --branch {{.STAIRCASE_REF}} --filter=blob:none --sparse {{.STAIRCASE_REPO}} "$tmp"
+        # Fetch by commit: `git clone --branch` cannot take a SHA, and the ref is pinned to one.
+        git init -q "$tmp"
+        git -C "$tmp" remote add origin {{.STAIRCASE_REPO}}
+        git -C "$tmp" fetch -q --depth 1 --filter=blob:none origin {{.STAIRCASE_REF}}
         git -C "$tmp" sparse-checkout set .claude/skills
-        rm -rf .claude/skills && mkdir -p .claude
-        cp -R "$tmp/.claude/skills" .claude/skills
+        git -C "$tmp" checkout -q FETCH_HEAD
+        # Check the whole upstream set before touching anything installed.
+        names=()
+        for path in "$tmp"/.claude/skills/*; do
+          [ -e "$path" ] || { echo "no skills at {{.STAIRCASE_REF}}; nothing changed" >&2; exit 1; }
+          name=$(basename "$path")
+          case "$name" in
+            repo-*) echo "upstream ships $name, which collides with the repo-local repo-* prefix" >&2; exit 1 ;;
+          esac
+          names+=("$name")
+        done
+        mkdir -p .claude/skills
+        # The manifest names what the last sync installed, so a skill upstream
+        # removes is removed here too, and nothing outside the manifest is touched.
+        manifest=.claude/skills/.upstream-skills
+        if [ -f "$manifest" ]; then
+          while IFS= read -r name; do
+            case "$name" in ''|.|..|*/*) continue ;; esac
+            rm -rf ".claude/skills/$name"
+          done < "$manifest"
+        fi
+        for name in "${names[@]}"; do
+          rm -rf ".claude/skills/$name"
+          cp -R "$tmp/.claude/skills/$name" ".claude/skills/$name"
+        done
+        # Written last, so an interrupted run leaves the previous manifest to clean up from.
+        printf '%s\n' "${names[@]}" > "$manifest.new" && mv "$manifest.new" "$manifest"
         echo "skills synced verbatim from {{.STAIRCASE_REF}} (invoke via ./engine/staircase)"
 
   sc:seed-schema:
@@ -56,8 +86,11 @@ tasks:
           echo ".staircase/schema.yaml exists — leaving brew-state-owned copy untouched"; exit 0
         fi
         tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-        git clone --depth 1 --branch {{.STAIRCASE_REF}} --filter=blob:none --sparse {{.STAIRCASE_REPO}} "$tmp"
+        git init -q "$tmp"
+        git -C "$tmp" remote add origin {{.STAIRCASE_REPO}}
+        git -C "$tmp" fetch -q --depth 1 --filter=blob:none origin {{.STAIRCASE_REF}}
         git -C "$tmp" sparse-checkout set --skip-checks .staircase/schema.yaml
+        git -C "$tmp" checkout -q FETCH_HEAD
         mkdir -p .staircase && cp "$tmp/.staircase/schema.yaml" .staircase/schema.yaml
         echo "schema.yaml seeded (now brew-state-owned; evolve it additively here)"
 
