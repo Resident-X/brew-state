@@ -4,8 +4,8 @@ category: solution
 title: The enclosure, retained harnesses and position-sensitive parts are recorded from the machine as found, to the accuracy the boards' fit needs
 status: active
 version: 1
-text: |-
-  Extends the machine's existing record with the controller enclosure and its mounting, every retained harness and the connector it ends in with its first pin, the mains lead arrangement and the position of every part whose location matters, each fact graded by how it was established.
+text: |
+  Extends the machine's record in its own folder, docs/sunbeam-em7000: the enclosure and its mounting in the machine's reference record, and every retained harness, its connector and first pin, and what each retained device imposes on whatever drives or reads it in the wiring record, connector-pinouts.md. It also traces each live feed the original board takes and establishes the position, face and mounting of every location-dependent part, such as the tank-level sensor. Facts the boards' floorplan depends on are established by inspecting this machine; photographs of the same model published elsewhere are cited as published unverified and do not replace that inspection.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C1
     type: derives-from

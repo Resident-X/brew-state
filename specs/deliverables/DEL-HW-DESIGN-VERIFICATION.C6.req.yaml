@@ -1,7 +1,7 @@
 id: DEL-HW-DESIGN-VERIFICATION.C6
 type: criterion
 title: The manufacturer's production files are checked before payment
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

@@ -4,8 +4,8 @@ category: solution
 title: Every figure the requirements impose on the controller boards is recorded with the criterion it comes from, or marked pending against the work that settles it
 status: active
 version: 1
-text: |-
-  Reduces this graph's requirements to the figures a board designer works to, from supply range and upstream protection through rail budgets, load currents, sensing accuracy, separation inputs, fault current, the proof-of-life removal interval and each output's failure state, each with its source or a pending mark.
+text: |
+  Reduces this graph's requirements to the figures a board designer works to, from supply range and upstream protection through rail budgets, load currents, sensing accuracy, separation inputs, fault current, the proof-of-life removal interval and each output's failure state, each with its source or a pending mark naming the work that settles it. The figures sit in the machine's folder beside its record, since several derive from this machine's declared configuration.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C2
     type: derives-from

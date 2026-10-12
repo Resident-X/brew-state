@@ -1,12 +1,12 @@
 id: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C3
 type: criterion
-title: The upstream protection and the supply budget are declared as figures an adopter replaces
+title: The supplying circuit's rating is declared, with the boards' sustained draw budgeted against it
 status: active
 version: 1
 measurement_type: binary
 verification: analysis
-text: |-
-  The upstream protection the build relies on and the rating of the supplying circuit are declared as figures with their origin, so that a reader on a different supply sees a value to replace rather than a silence to inherit. The sustained draw of everything the boards switch is stated against that rating as a budget the controller plans within ahead of time, and the fault current each added conductor, including board copper, must survive is stated against the declared protection. Out of scope: signing for the separation basis, which the partition and feasibility task does, and the arbitration that keeps draw within the budget at run time.
+text: |
+  The rating of the supplying circuit is declared as a figure with its origin, so a reader on a different supply sees a value to replace rather than a silence to inherit, and the sustained draw of everything the boards switch is stated against it as a budget the controller plans within ahead of time. Out of scope: the arbitration that keeps draw within the budget at run time.
 links:
   - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
     type: criterion-of

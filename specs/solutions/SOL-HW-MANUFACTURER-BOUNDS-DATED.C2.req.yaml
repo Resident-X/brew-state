@@ -5,8 +5,8 @@ status: active
 version: 1
 measurement_type: binary
 verification: inspection
-text: |-
-  For every part class the boards are expected to need, channel by channel, the record gives catalogue candidates with stock, the library class that sets whether a setup fee applies, unit price and any per-part fee, each dated and sourced, with parts from the libraries that carry no setup fee listed first, and with any retained or commodity part already serving the channel named as the default the candidates are weighed against. Out of scope: selecting the part a board will carry, and the aggregate cost estimate against the declared spend, which the partition and feasibility task makes.
+text: |
+  For every part class the boards are expected to need, channel by channel, the record gives catalogue candidates with stock, the library class that sets whether a setup fee applies, unit price and any per-part fee, each dated and sourced, with parts from the libraries that carry no setup fee listed first. Parts already bought, such as the controller module, and any retained or commodity part already serving the channel are named as the defaults the candidates are weighed against, and the cost of shipping to the builder's country is recorded with the date it was quoted. Out of scope: selecting the part a board will carry, and the aggregate cost estimate against the declared spend, which the partition and feasibility task makes.
 links:
   - target: SOL-HW-MANUFACTURER-BOUNDS-DATED
     type: criterion-of

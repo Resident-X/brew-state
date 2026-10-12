@@ -1,12 +1,12 @@
 id: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3
 type: criterion
-title: The mains lead arrangement and the position of every part whose location matters are recorded
+title: The mains lead arrangement, the source of each live feed and the position of every location-dependent part are recorded
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
-text: |-
-  The record states how the mains leads enter and are arranged inside the enclosure, including each live feed the original board takes, and the physical position of every part whose location constrains the boards, such as the tank-level sensor, each with how it was established. A position or arrangement not yet established is marked unestablished with the inspection that would establish it named; that mark ends only when the inspection is recorded, and any document derived from the record carries the mark rather than a guessed value. Out of scope: explaining why the original board takes two live feeds, which the requirement-derived figures carry as pending, and any change to the machine's wiring.
+text: |
+  The record states how the mains leads enter and are arranged inside the enclosure, and traces each live feed the original board takes to the device upstream of it, so why the board takes more than one is established rather than guessed. For every part whose location constrains the boards, such as the tank-level sensor, it establishes whether the part is mounted on the original board or separately, on which face, and its position relative to the mounting points and to whatever it senses; if the tank-level sensor proves to be mounted on the board being replaced, the record names the retention decision as needing amendment, since that decision retains the sensor as a separate device. Every arrangement and position the boards' floorplan depends on is established by inspecting this machine; only one the floorplan does not use may be marked pending. A mark of pending names the work that will settle it and ends only when that work records the fact and its source; every document derived from the record shows the mark rather than a value. Each entry carries its value with units where it has one, its evidence grade in the status vocabulary the machine's record already uses (measured, owner statement, schematic, parts list, published unverified, inferred, unmeasured) kept distinct rather than levelled, and a source a reader holding only the published repository can follow; a published source outside the repository, such as a photograph of the same model, is cited by its address and graded published unverified. Where the machine's record or a working design document already states a fact, the entry cites it rather than restating it. Out of scope: amending the retention decision itself, and any change to the machine's wiring.
 links:
   - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD
     type: criterion-of

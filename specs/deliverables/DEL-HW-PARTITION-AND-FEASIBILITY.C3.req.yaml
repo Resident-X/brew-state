@@ -9,7 +9,7 @@ closes_by: cascade
 text: |
   The basis states the distances and barriers, the environment assumed, and who accepted it.
 
-  The distances come from the tables of a named published standard, read with the working voltage, pollution degree and material group stated, and are expressed against the declared supply so an adopter on a different supply recomputes them rather than inherits them.
+  The distances come from a named published standard, or from a cited, freely available derivation of its tables where the standard itself is not freely available, read with the working voltage, pollution degree and material group stated, and are expressed against the declared supply so an adopter on a different supply recomputes them rather than inherits them.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY
     type: criterion-of

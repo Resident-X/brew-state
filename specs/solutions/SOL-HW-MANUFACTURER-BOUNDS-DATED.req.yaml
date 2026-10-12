@@ -4,8 +4,8 @@ category: solution
 title: The board manufacturer's fabrication and assembly limits, part availability and prices are recorded with the date each was read
 status: active
 version: 1
-text: |-
-  Records what the chosen manufacturer can make and assemble, which candidate parts it stocks in which library class and at what price, each reading dated and sourced so a later reader can tell when it has gone stale.
+text: |
+  Records what the chosen manufacturer can make and assemble, held outside the machine's folder because it holds for any machine, and which candidate parts it stocks for this machine's channels, in which library class and at what price, held in the machine's folder. Each reading is dated and sourced so a later reader can tell when it has gone stale.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C3
     type: derives-from

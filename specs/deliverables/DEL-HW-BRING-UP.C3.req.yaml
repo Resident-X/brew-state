@@ -8,8 +8,6 @@ verification: test
 closes_by: cascade
 text: |
   The interval from loss to removal is measured against the bound the safety chain requires.
-
-  The proof of life is also shown not to be satisfied by a controller whose main loop has stopped while its timers and interrupts still run, or by an output stuck high or stuck low.
 links:
   - target: DEL-HW-BRING-UP
     type: criterion-of
