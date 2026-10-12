@@ -25,7 +25,7 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 | Circuit rating | 10 A | Owner statement, 2026-10-12: the outlet circuit the machine is plugged into |
 | Upstream protection | Circuit breaker, up to 20 A | **Project assumption — replace with your value.** An AU socket-outlet circuit is commonly protected at 16 A or 20 A, and the higher is the conservative figure to design against (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`). An AU plug is unfused, so nothing between this breaker and the machine's own inlet fuse interrupts a fault |
 | Prospective fault current at the outlet | 6 kA | **Project assumption — replace with your value**, from the breaking capacity printed on the breaker protecting your outlet or from your distributor's declared fault level. A compliant installation's breaker can break the fault current where it sits, and an outlet further down the same circuit sees less; 6 kA is a breaking capacity commonly printed on residential breakers. The breaker here has not been read |
-| Wiring authority | AS/NZS 3000 | Jurisdiction of the machine's market |
+| Wiring authority | AS/NZS 3000 | **Inferred** from the machine's market: it is an AU/NZ-market model (§ The machine), and AS/NZS 3000 is the wiring rules of that jurisdiction |
 
 ## Heating and load
 
@@ -34,7 +34,7 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 | Coffee thermoblock element | 1004 W at 230 V, 1093 W at 240 V | Measured: 52.7 Ω cold, 20.3 °C ambient, converted at 230 V nominal and at 240 V; the figures at 253 V, the declared span's top, are in the table below |
 | Steam thermoblock element | 1126 W at 230 V, 1226 W at 240 V | Measured: 47.0 Ω cold, 20.3 °C ambient — see note below on isolation |
 | Steam pump | 22 W (JYPC-4) | Service manual parts list |
-| Coffee pump | 48 W (Ulka EP5) | Manufacturer spec sheet for the fitted type |
+| Coffee pump | 48 W (Ulka EP5) | **Published, unverified**: manufacturer spec sheet for the fitted type |
 | Mains fuse (control supply) | 5 A | Circuit diagram |
 | **Total installed heating** | **2130 W at 230 V, 2319 W at 240 V** | Sum of the two measured elements |
 
@@ -42,9 +42,9 @@ The consequence matters: espresso and hot water are mutually exclusive in the **
 
 The steam reading carries one further caveat. The bench could not get the element off the circuit to read it in isolation, and a parallel path across it — a thermostat, most likely — can only pull a resistance reading down, never up. So 47.0 Ω is a lower bound on the true element resistance, and the 1126–1226 W it produces is a conservative ceiling on the steam side's power rather than a central estimate.
 
-Both elements together draw roughly **9.3 A at 230 V, 9.7 A at 240 V**. With both pumps running as well the worst case is about **2.39 kW, 9.95 A at 240 V**, essentially the full 10 A a domestic circuit provides:
+Both elements together draw roughly 9.3 A at 230 V, 9.7 A at 240 V and **10.18 A at 253 V**. With both pumps running as well they draw about 2.39 kW, 9.95 A at 240 V, and the worst case is at 253 V, the top of the declared span: about **2.65 kW, 10.5 A**, over the 10 A circuit the machine is plugged into:
 
-| | Installed heating | Worst case with both pumps, at 240 V | At 253 V (230 V nominal, +10%) |
+| | Installed heating, at 240 V | With both pumps, at 240 V | Worst case: with both pumps, at 253 V, the declared span's top (230 V nominal, +10 %) |
 |---|---|---|---|
 | Measured: 52.7 Ω / 47.0 Ω | 2319 W | 2.39 kW, 9.95 A | 2.65 kW, **10.5 A** |
 
@@ -189,7 +189,7 @@ If you replace this file, these are the parts of the graph your substitution rea
 | Sensing already fitted | `REQ-MEASUREMENT-001.C4`, `.C5`, `.C6`, `.C7`, `.C8`, `REQ-WATER-SUPPLY-001.C2`, `REQ-ACTUATION-CONFIRMATION-001.C5` |
 | Wiring authority | `OBL-ELECTRICAL-THERMAL-SAFETY-001.C9`, `REQ-ELECTRICAL-INSTALL-001` |
 
-The clearest case is the supply. At 240 V the two measured elements together draw about 9.95 A with both pumps running — essentially the whole of a 10 A circuit, rather than the roughly 330 W of headroom the manual's figures suggested — and at 253 V the arithmetic exceeds it outright. At 120 V the same installed heating is over 16 A, so concurrency is simply unavailable there regardless — which does not change any requirement, but does change what the machine can be asked for, and makes `DEC-PLUMBING-LEFT-AS-BUILT` a decision worth re-reading rather than inheriting.
+The clearest case is the supply. At 253 V, the top of the declared span and the figure the budget is spent against (`REQ-POWER-BUDGET-001.C6`), the two measured elements together draw about 10.18 A before either pump runs, and about 10.5 A with both: over a 10 A circuit outright, where the manual's figures suggested roughly 330 W of headroom at 240 V. Even at 240 V, inside the span, they draw about 9.95 A with both pumps running. At 120 V the same installed heating is over 16 A, so concurrency is simply unavailable there regardless — which does not change any requirement, but does change what the machine can be asked for, and makes `DEC-PLUMBING-LEFT-AS-BUILT` a decision worth re-reading rather than inheriting.
 
 ## What is not declared here
 
