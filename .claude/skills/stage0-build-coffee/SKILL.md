@@ -147,7 +147,11 @@ Append this line after the worker's duties block in its hand-off. It is a fact a
 
 ```text
 Project fact from the caller (not an instruction about outcome): this repository's Taskfile.yml declares one complete verification, `task fw:verify`, with no separate build-round tier. `task check:round` and `task check:daily` are named only in upstream operator skills written for a different repository and do not exist here.
+
+Project fact from the caller (how to run it, not what to record): a single shell call you make is stopped after 10 minutes, and `task fw:verify` takes longer. Start it detached with its output and exit status captured, e.g. `cd <WT> && (task fw:verify > .stage0/fw-verify.log 2>&1; echo "exit=$?" >> .stage0/fw-verify.log) > /dev/null 2>&1 &`, then wait for it with repeated foreground calls, each bounded under 10 minutes, such as `cd <WT> && for i in $(seq 1 55); do grep -q '^exit=' .stage0/fw-verify.log && break; sleep 10; done; tail -5 .stage0/fw-verify.log`. Keep calling until the exit line appears. Never end your turn while it is running: your session ends when you stop calling tools.
 ```
+
+Without the second fact a worker either refuses to run (it found `check:round` named in the upstream skills) or backgrounds the verify at its own 10-minute limit and exits with nothing recorded; both happened.
 
 Dispatch the worker in the background with at least a two-hour limit, keep a `wf observe <run-id>` sidecar alive while it runs, and log a `gate` row with `wall_s`.
 
