@@ -313,9 +313,9 @@ survivors:
       a static array, and possibly a write through an offset nobody declared,
       which the sanitized build reports.
 
-      The line is reached: test_scaling_refuses_a_position_this_structure_does_
-      not_have offers exactly COEFFICIENT_COUNT. That is shown rather than
-      argued. Applying this mutation by hand and running test_plant under
+      The line is reached:
+      test_scaling_refuses_a_position_this_structure_does_not_have offers
+      exactly COEFFICIENT_COUNT. That is shown rather than argued. Applying this mutation by hand and running test_plant under
       native_test, the sanitized build, aborts with SIGABRT in that test, where
       the unsanitized sweep records the mutant as surviving. Repeat that if this
       reasoning is ever in doubt.
@@ -334,8 +334,9 @@ survivors:
       through whatever pointer it yields, which the sanitized build reports.
 
       The line is reached in both builds that link a machine-describing
-      structure: test_whether_a_position_is_supply_driven_is_answered_for_every
-      _one asks every thermoblock position, most of which match nothing, and
+      structure:
+      test_whether_a_position_is_supply_driven_is_answered_for_every_one asks
+      every thermoblock position, most of which match nothing, and
       test_the_one_element_rating_is_answered_as_supply_driven asks the boiler
       about ambient temperature, which matches nothing. That is shown rather
       than argued. Applying this mutation by hand and running test_plant under
