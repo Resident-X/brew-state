@@ -6,7 +6,7 @@ version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  The project's instructions and the firmware documentation describe the two cadences, round and nightly, and what each runs, so a build round's gate worker finds the round gate as the tier the project declares for a build round. The project's instructions state that the round gate is the only verification a change gets before it merges, with no separate pull-request gate. The mutation sweep's task description and the documentation's account of the gate no longer say the sweep runs in every gate. This change merges only after SOL-VERIFY-NIGHTLY-FULL-ON-MAIN has merged, so the full sweep leaves the round only once the nightly runs it against main and the cadence the documentation describes exists. Out of scope: the nightly's own workflow, the reader for its result, and the operator skills installed from upstream.
+  The project's instructions and the firmware documentation describe the two cadences, round and nightly, and what each runs, so a build round's gate worker finds the round gate as the tier the project declares for a build round. The project's instructions state that the round gate is the only verification a change gets before it merges, with no separate pull-request gate. The mutation sweep's task description and the documentation's account of the gate no longer say the sweep runs in every gate. Out of scope: the nightly's own workflow, the reader for its result, and the operator skills installed from upstream.
 links:
   - target: SOL-VERIFY-ROUND-GATE-TARGETED
     type: criterion-of
