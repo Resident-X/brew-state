@@ -25,6 +25,8 @@ links:
     type: justified-by
   - target: DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE
     type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
+    type: justified-by
 design_question_answers:
   - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
     class: new-condition
@@ -44,6 +46,8 @@ interfaces:
 locus:
   - marking: created
     ref: the controller boards' design-constraints record in the machine's record folder, requirement-derived figures
+  - marking: existing
+    ref: the machine's declared configuration in the machine's own record folder, supply section
 plan_provenance:
   approved_plan_id: PLAN-DEL-HW-DESIGN-CONSTRAINTS-001
   target: DEL-HW-DESIGN-CONSTRAINTS

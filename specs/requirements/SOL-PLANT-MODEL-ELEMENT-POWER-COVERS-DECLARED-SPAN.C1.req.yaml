@@ -1,0 +1,12 @@
+id: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+type: criterion
+title: Each thermoblock element's power uncertainty covers the declared supply span
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The uncertainty fraction against each thermoblock element's power in the plant model is re-sized to cover the delivered-power swing across the declared 216-253 V supply span, with power scaling as the square of supply voltage, together with the effects the fraction already folds in. The account beside each fraction states the span it covers and how the fraction was derived from it. Out of scope: modelling supply-voltage dependence dynamically.
+links:
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
+    type: criterion-of

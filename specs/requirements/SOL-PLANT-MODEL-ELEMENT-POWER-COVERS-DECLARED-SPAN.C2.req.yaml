@@ -1,0 +1,12 @@
+id: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2
+type: criterion
+title: Simulation results resting on element power are re-obtained at the re-sized uncertainty
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every simulation check whose result rests on the element-power uncertainty is re-run with the re-sized fractions. A check that no longer passes is reported as a finding against the requirement criterion it verifies, and is not retuned to pass. The simulation's description of the supply it was run against states the declared span. Out of scope: changing control behaviour to recover a margin that no longer holds.
+links:
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
+    type: criterion-of
