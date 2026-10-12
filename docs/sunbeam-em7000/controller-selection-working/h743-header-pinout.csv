@@ -1,0 +1,89 @@
+"# WeAct MiniSTM32H743 header pinout, recovered from Hardware/STM32H7xx CoreBoard AltiumDesigner.IntLib (github.com/WeActStudio/MiniSTM32H7xx) by zlib-decompressing the OLE streams and parsing the length-prefixed pin name/designator records. Cross-checked against Hardware/STM32H7xx SchDoc V12.pdf. 92 header positions; 74 GPIO exposed. The ONLY port pins not on a header are PC13 (user button K1) and PE3 (user LED) - which the schematic independently confirms, so the two sources agree. PA13/PA14 are SWDIO/SWCLK on the separate 5-pin SWD header. Designators 3, 7, 10, 90 and 91 did not parse and are almost certainly power/GND - VERIFY those five against the schematic. Dual-row headers: designators pair up (11/12, 13/14, ...), one row odd and one even.",,
+Designator,Signal,Onboard peripheral on this pin / status
+1,3V3,
+2,GND,
+4,PE2,
+5,PE5,"DVP D6 - FREE - connector only, no camera fitted"
+6,PE4,"DVP D4 - FREE - connector only, no camera fitted"
+8,PE6,"DVP D7 - FREE - connector only, no camera fitted"
+9,NRST,
+11,PC1,
+12,PC0,
+13,PC3,
+14,PC2,
+15,VREF+,
+16,GND,
+17,PA1,
+18,PA0,
+19,PA3,
+20,PA2,
+21,PA5,
+22,PA4,"DVP HSYNC - FREE - connector only, no camera fitted"
+23,PA7,
+24,PA6,"DVP PIXCLK - FREE - connector only, no camera fitted"
+25,PC5,
+26,PC4,
+27,PB1,
+28,PB0,
+29,PE7,
+30,PB2,"QSPI (partial - verify) - ENCUMBERED - flash soldered, pairing unverified"
+31,PE9,
+32,PE8,
+33,PE11,TFT CS - ENCUMBERED - display soldered and always connected
+34,PE10,TFT LED - ENCUMBERED - display soldered and always connected
+35,PE13,TFT WR/RS - ENCUMBERED - display soldered and always connected
+36,PE12,TFT SCK - ENCUMBERED - display soldered and always connected
+37,PE15,
+38,PE14,TFT MOSI - ENCUMBERED - display soldered and always connected
+39,PB11,
+40,PB10,
+41,5V,
+42,3V3,
+43,GND,
+44,GND,
+45,PB12,
+46,PB13,
+47,PB14,
+48,PB15,
+49,PD8,
+50,PD9,
+51,PD10,
+52,PD11,
+53,PD12,
+54,PD13,
+55,PD14,
+56,PD15,
+57,PC6,"DVP D0 - FREE - connector only, no camera fitted"
+58,PC7,"DVP D1 - FREE - connector only, no camera fitted"
+59,PC8,microSD D0 (+QSPI) - Recoverable - slot fitted but empty
+60,PC9,microSD D1 - Recoverable - slot fitted but empty
+61,PA8,"DVP XCLK (MCO1) - FREE - connector only, no camera fitted"
+62,PA9,
+63,PA10,
+64,PA11,
+65,PA12,
+66,PA15,
+67,PC10,microSD D2 (+QSPI CLK) - Recoverable - slot fitted but empty
+68,PC11,microSD D3 (+QSPI BK1) - Recoverable - slot fitted but empty
+69,PC12,microSD CK - Recoverable - slot fitted but empty
+70,PD0,
+71,PD1,
+72,PD2,microSD CMD - Recoverable - slot fitted but empty
+73,PD3,"DVP D5 - FREE - connector only, no camera fitted"
+74,PD4,
+75,PD5,
+76,PD6,
+77,PD7,
+78,PB3,
+79,PB4,
+80,PB5,
+81,PB6,"QSPI (partial - verify) - ENCUMBERED - flash soldered, pairing unverified"
+82,PB7,"DVP VSYNC - FREE - connector only, no camera fitted"
+83,PB8,"DVP SCL / I2C1_SCL - FREE - connector only, no camera fitted"
+84,PB9,"DVP SDA / I2C1_SDA - FREE - connector only, no camera fitted"
+85,PE0,"DVP D2 - FREE - connector only, no camera fitted"
+86,PE1,"DVP D3 - FREE - connector only, no camera fitted"
+87,5V,
+88,GND,
+89,3V3,
+92,GND,

@@ -412,3 +412,20 @@ thresholds are relied on, but it would move a figure rather than a channel.
 - Whether a specific candidate controller's `VOH` clears the driver's 3.15 V `VIH`, if a 3.3 V part
   is chosen and level shifting is to be avoided. The threshold itself is no longer open; which parts
   meet it is a selection question.
+
+## Main-board sheet 3-3 read from the page images (2026-10-12)
+
+Read directly from the rendered service-manual page 25 (circuit diagram sheet 3-3) at 200 and 400 dpi.
+The manual's labelling is unreliable (see above), so the physical boards still win; this records what the
+drawing shows. Rail voltages are not printed: `VCC5` is read as 5 V because the `MC34063` feedback
+divider on sheet 3-1 is 3 kΩ over 1 kΩ on a 1.25 V reference, and `VCC12` as 12 V from its name.
+
+- **Buzzer stage.** `Q8`, `2N5401` PNP, emitter on `VCC5`. Base through `R57` 1 kΩ from `U8` pin 11 (`PC7`), with `R58` 10 kΩ from the base to `VCC5`. Collector to the buzzer `BZ`, whose other side goes through `R59` 100 Ω to ground. **No diode across the buzzer** and no value or polarity on its symbol. The stage is active-low: the output pulls the base low to sound it.
+- **Anode-rail gate.** `Q7`, `2N5401` PNP, emitter on `VCC5`, base through `R39` 2 kΩ from `U8` pin 15 (`PD1`), `R40` 100 kΩ from the base to `VCC5`. The collector is the shared anode rail for every indicator. Nothing on the drawing shows PWM, though it is how the lamp is observed to ramp.
+- **Indicators.** Series resistors: `R30`, `R31` 330 Ω for `PWR`, and 300 Ω for every other element (`R32A` to `R36B`). Each group's cathode node joins its key line.
+- **Keys and switches.** Each `S1` to `S5` has a 1 kΩ (`R41` to `R45`) in series between the line and the switch, whose other side goes to `MGND`; `S6`, `S7` and `S8` (`WAT`, `HOT`, `STM`) likewise through `R46` to `R48`. Each line then reaches the MCU through a 47 Ω (`R62` to `R69`). **No pull-up resistor or pull-up rail is drawn on any of these lines**, so the OEM appears to rely on the MCU's own pull-ups. **This disagrees with the earlier text above that reads the sheet's 1 kΩ resistors as pull-ups:** on the drawing they sit between the line and ground, in series with the switch. Which reading is right on the physical board is to be checked with a meter (a pressed key should read about 1 kΩ plus 47 Ω to ground at the main-board connector).
+- **Gauge driver.** `U9` `VID66-08`, both `VDD` pins on `VCC5` with `C16` 104. Control lines go straight to the MCU with no series resistors; `R52` and `R53` 10 kΩ pull two of them (`ACLK` and `BCLK`) up to `MVCC`. Which MCU line is `RST`, `DIRA`, `FA`, `DIRB` and `FB` is inferred from the label nesting, not read.
+- **Rails.** `MVCC` (the MCU rail) is `VCC5` through jumper `JP1` and diode `D11` (1N5817). How `Q9` gates it is unreadable.
+- **Thermistors.** `RT1` to `RT3` are 100 kΩ, each with a 10 kΩ 1% resistor (`R54` to `R56`) up to `MVCC` and a 104 capacitor to ground.
+- **Flow meter `CZ1`.** Pin 1 `VCC5`, pin 2 ground, pin 3 signal, with `R51` 2 kΩ from the signal to `VCC5`.
+
