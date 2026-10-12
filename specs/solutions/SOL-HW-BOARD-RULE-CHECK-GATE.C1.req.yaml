@@ -6,7 +6,7 @@ version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The check finds every board design in the repository and checks each one. A board design added to the tree is checked without any list being edited. If the check finds no board design to inspect, it fails rather than reporting success. A design the check cannot open or parse also fails, and is named, and so does a project file without both its schematic and its layout beside it, so a half-committed board cannot escape the check. Out of scope: deciding which board designs the project needs, which the partition and board-design work settles.
+  The check finds every board design in the repository and checks each one. A board design added to the tree is checked without any list being edited. If the check finds no board design to inspect, it fails rather than reporting success. A design the check cannot open or parse also fails, and is named, and so does a project file without both its schematic and its layout beside it. Every schematic or layout file tracked in the repository is either part of a design the check found or fails the check by name, so a board file committed without its project, or a half-committed board, cannot escape the check. Out of scope: deciding which board designs the project needs, which the partition and board-design work settles.
 links:
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: criterion-of
