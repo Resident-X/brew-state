@@ -3,9 +3,20 @@ type: deliverable
 category: solution
 title: Every board design in the repository must pass KiCad's own electrical, layout and separation rule checks from one task-runner command, each check proven on a throwaway design
 status: active
-version: 1
+version: 2
 text: |
   One task-runner command finds every board design in the repository and runs KiCad's own command-line electrical and layout rule checks on it. The checks cover the separation basis the design declares and agreement between layout and schematic. Any violation fails the command, and each check is shown to fail on a fault seeded for it in a throwaway design that is never ordered. The separation check holds each design to the signed separation basis, not to whatever figure the design declares.
+
+  Placement, settled before build. The check is a new seam for board designs, kept apart from the firmware gate so that neither needs the other's tools:
+  - An hw section in the project's task runner, alongside the firmware fw section, with one command that runs the whole check and an on-demand command that runs the seeded-fault proof.
+  - The path to KiCad's command-line tool is an overridable task-runner variable, in the way the firmware tasks locate their build tool, because the tool is often installed off the search path.
+  - The checking tool and its tests live in hardware/tools/.
+  - The throwaway design and its synthetic basis record live in hardware/proof/.
+  - The seeded-fault proof follows the firmware mutation tool's pattern: each fault is introduced into a temporary copy of the throwaway design and never committed, so the committed tree stays clean and the every-design check stays green.
+  - The required tool is KiCad at version 10.0 or newer, the version board files in this repository are saved in. It is named, with that minimum, in the task's own description and in a hardware/README.md.
+  - The check reads designs and rules from files only. Konnect and any open editor session play no part in it.
+
+  The separation basis record, the Mains net class, the MAINS and NOT_FOR_MANUFACTURE project variables and the hardware tree layout follow DEC-BOARD-SEPARATION-BASIS-RECORD.
 links:
   - target: DEL-HW-DESIGN-VERIFICATION.C3
     type: derives-from
@@ -16,6 +27,8 @@ links:
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
     type: justified-by
 design_question_answers:
   - answered_by: SOL-HW-BOARD-RULE-CHECK-GATE.C1

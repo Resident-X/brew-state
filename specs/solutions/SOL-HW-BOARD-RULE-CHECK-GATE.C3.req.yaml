@@ -2,11 +2,11 @@ id: SOL-HW-BOARD-RULE-CHECK-GATE.C3
 type: criterion
 title: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Each design's rules state which nets are mains-referenced and the separation distance required between them and every low-voltage conductor, and the layout rule check enforces that distance, so a low-voltage conductor placed closer than it fails. The distance a design declares is compared with the signed separation basis record: a declared figure smaller than the signed one fails, and so does a missing basis record, so a design cannot pass by declaring less. A design with mains-referenced nets but no declared separation fails, and a design with no mains-referenced nets must say so explicitly, so silence is never read as compliance. Out of scope: choosing or signing for the separation figure itself, which the partition work declares; until it exists the check is proven against a synthetic basis record on the throwaway design.
+  Each design declares whether it carries mains through its MAINS project variable, set to present or none; unset or any other value fails. A design that declares present assigns its mains-referenced nets to the Mains net class and states, in its own custom layout rules, the clearance and the creepage required between Mains nets and every other net; KiCad's layout rule check enforces those distances, so a low-voltage conductor placed closer fails. A design that declares present without those rules fails, and a design that declares none while any net sits in the Mains class fails. Each declared clearance and creepage is compared with the separation basis record (separation-basis.yaml) in the nearest folder at or above the design: a declared figure smaller than the record's fails, a missing record fails, and a record whose acceptor or acceptance date is missing or a placeholder fails, so a design cannot pass by declaring less or by citing an unsigned basis. A record marked synthetic is accepted only for a design marked not for manufacture. Out of scope: choosing or signing for the separation figure itself, which the partition work declares; until it exists the check is proven against a synthetic basis record on the throwaway design.
 links:
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: criterion-of
