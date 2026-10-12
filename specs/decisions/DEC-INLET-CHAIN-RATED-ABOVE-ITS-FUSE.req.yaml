@@ -10,7 +10,7 @@ text: |
   - The inlet filter is rated 15 A at 50 °C, the next rating up in the same filter family, in place of the 10 A part.
   - The internal trunk downstream of the fuse is at least 1.5 mm², rated well above 10 A, in place of the 1.0 mm² conductor rated exactly 10 A.
   - The inlet fuse stays at 10 A slow-blow. It is the device that interrupts a fault anywhere downstream of the inlet, and it now protects conductors rated above it rather than equal to it.
-  - The valve branches share one subminiature slow-blow fuse on their common switched feed, sized to the coils' inrush rather than to the flex. Every load branch is then covered by a fuse rated for that branch: the pumps by their existing branch fuses, the valves by this one.
+  - The valve branches share one subminiature slow-blow fuse on their common switched feed, sized to the coils' inrush rather than to the flex. The pumps keep their existing branch fuses and the valves gain this one. The two heater branches carry no fuse of their own: the 10 A inlet fuse is the device that protects them, so their conductors, including any board copper carrying their current, are rated for that fuse rather than for the element's own draw.
 
   Upstream of the inlet fuse, the supply cord and the inlet itself are protected only by the building's circuit breaker. For this machine that breaker is declared as up to 20 A: an AU socket-outlet circuit is commonly protected at 16 A or 20 A, and the higher figure is the conservative one to design against.
 rationale: |
