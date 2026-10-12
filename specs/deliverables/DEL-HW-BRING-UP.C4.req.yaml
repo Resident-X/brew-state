@@ -1,0 +1,15 @@
+id: DEL-HW-BRING-UP.C4
+type: criterion
+title: The mains side is first energised under supervision, after the low-voltage functions pass
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  The order is the safeguard: nothing reaches mains potential that has not already been shown working without it.
+
+  Supervision is concrete for one person working alone: the first energisation is through a residual-current-protected supply with the current limited, so a fault shows as a trip or a limited current rather than as damage.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

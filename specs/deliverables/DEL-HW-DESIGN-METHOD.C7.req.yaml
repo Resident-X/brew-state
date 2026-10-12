@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C7
+type: criterion
+title: Each board is designed for bring-up and for a second spin
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Rails and key signals carry test points, each rail can be isolated by a link, and first power can be current-limited, because a first spin is expected to need changes and must be diagnosable when it does.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

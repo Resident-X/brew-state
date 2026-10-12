@@ -1,0 +1,13 @@
+id: DEL-HW-INDEPENDENT-REBUILD.C2
+type: criterion
+title: Someone other than the author has followed it to working boards
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  Working means passing the checks the author's boards passed that need no machine: arrival inspection, the low-voltage functions, every load held off, removal of heater power on loss of proof of life, and isolation. Checks that need the machine itself are not required of a rebuilder, who may not own one.
+links:
+  - target: DEL-HW-INDEPENDENT-REBUILD
+    type: criterion-of

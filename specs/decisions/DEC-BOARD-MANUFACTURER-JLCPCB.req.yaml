@@ -1,0 +1,30 @@
+id: DEC-BOARD-MANUFACTURER-JLCPCB
+type: decision
+category: tactical
+title: Controller boards are made and assembled by JLCPCB from its public catalogue
+status: active
+version: 1
+decided_by: david
+text: |
+  The controller boards are fabricated and assembled by JLCPCB, with surface-mount parts placed from its public catalogue and only the parts that must be through-hole, chiefly connectors, fitted by hand. Parts from its Basic and Preferred libraries are chosen first, since each unique part outside them adds a setup fee.
+rationale: |
+  Context: designing boards rather than wiring modules makes the build reorderable by anyone, but only if the board house is one a reader can use and its parts are ones they can get.
+
+  Trade-offs: JLCPCB takes orders from anyone, publishes its catalogue with stock, price and library class, and assembles small runs cheaply, so a rebuilder elsewhere orders the same boards from the same files. A local fabricator with hand assembly was rejected: assembly by hand of fine-pitch surface-mount parts is where a hobbyist build fails, and a local house is not one every reader can reach. Hand-soldered through-hole boards, the earlier plan, were rejected because they cannot carry the controller and its front end compactly enough for the space the machine provides and are not reproducible by ordering.
+
+  Reversibility: moderate. The design files are portable, but part choices made against one catalogue would need re-matching against another.
+
+  Consequences: part selection works against the manufacturer's catalogue and records library class and price; assembly cost enters the declared spend; the design's output files follow the manufacturer's formats for fabrication, parts list and placement.
+options_considered:
+  - option: JLCPCB, assembling surface-mount parts from its public catalogue
+    reason_rejected: ""
+  - option: A local fabricator with hand assembly
+    reason_rejected: fine-pitch hand assembly is where a hobbyist build fails, and a local house is not available to every reader
+  - option: Hand-soldered through-hole boards
+    reason_rejected: too large for the space the machine provides and not reproducible by ordering
+chosen: JLCPCB, assembling surface-mount parts from its public catalogue
+links:
+  - target: PER-BUILDER-001.C4
+    type: addresses
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: addresses

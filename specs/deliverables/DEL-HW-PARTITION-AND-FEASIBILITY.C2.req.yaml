@@ -1,0 +1,13 @@
+id: DEL-HW-PARTITION-AND-FEASIBILITY.C2
+type: criterion
+title: A block-level floorplan shows every board fits with its connectors where the retained harnesses reach
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The floorplan uses the recorded enclosure, mounting and harness positions, and places the large parts, every connector and the proof-of-life interlock.
+links:
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY
+    type: criterion-of

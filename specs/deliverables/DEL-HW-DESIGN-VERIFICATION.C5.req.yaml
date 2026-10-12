@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-VERIFICATION.C5
+type: criterion
+title: Each check is shown to catch a fault seeded for it on a throwaway design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A check that has never been seen to fail gives no evidence by passing.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION
+    type: criterion-of

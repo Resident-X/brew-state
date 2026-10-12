@@ -1,0 +1,13 @@
+id: DEL-HW-INDEPENDENT-REBUILD.C1
+type: criterion
+title: The repository holds everything needed to order, assemble and check the boards
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Nothing in the path depends on a file, account or tool only the author holds.
+links:
+  - target: DEL-HW-INDEPENDENT-REBUILD
+    type: criterion-of

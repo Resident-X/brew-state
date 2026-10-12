@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-VERIFICATION.C4
+type: criterion
+title: The check runs from the project's task runner with tools a reader can obtain
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A check only its author can run is not one a rebuilder can rely on.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION
+    type: criterion-of

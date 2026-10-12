@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-CONSTRAINTS.C5
+type: criterion
+title: Each purchase made before a design is verified records the property it settles
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  A sample or instrument bought ahead of the design names the property the verification could not establish without it, so early buying stays limited to what verification needs.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: criterion-of

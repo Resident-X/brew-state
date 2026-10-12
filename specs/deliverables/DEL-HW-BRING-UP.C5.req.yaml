@@ -1,0 +1,15 @@
+id: DEL-HW-BRING-UP.C5
+type: criterion
+title: Sensing accuracy is measured in the machine with the loads switching
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Each channel's accuracy is measured against the figure the graph claims for it, under the conditions the machine runs in.
+
+  The method is one a builder without a laboratory can carry out, such as substituting precision reference resistances at a sensor's connector while the loads run, or comparing against a calibrated probe.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

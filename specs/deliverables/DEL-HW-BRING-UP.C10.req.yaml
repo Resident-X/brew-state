@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C10
+type: criterion
+title: Arrived boards are inspected before they are first powered
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each rail's resistance to ground is checked and polarised parts are checked for orientation, since assembly errors are cheapest found before power.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

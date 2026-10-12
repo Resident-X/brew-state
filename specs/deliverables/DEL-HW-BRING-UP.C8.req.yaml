@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C8
+type: criterion
+title: Bring-up firmware drives every output and reads every channel on the built boards
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  Bring-up cannot exercise what nothing commands, so firmware written for the built boards, with their actual pin assignment, is part of bringing them up.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

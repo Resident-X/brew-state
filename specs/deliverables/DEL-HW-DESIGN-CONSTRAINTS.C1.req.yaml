@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-CONSTRAINTS.C1
+type: criterion
+title: The machine as found is recorded to the accuracy the boards' fit needs
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The record covers the enclosure and its mounting, each retained harness and the connector it ends in with its first pin identified, how the mains leads are arranged, and the position of anything whose location matters, such as the tank-level sensor. Each fact states how it was established.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: criterion-of

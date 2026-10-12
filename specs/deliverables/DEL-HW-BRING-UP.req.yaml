@@ -1,0 +1,36 @@
+id: DEL-HW-BRING-UP
+type: deliverable
+category: task
+title: The built boards are brought up with every safety default demonstrated before the machine runs on them
+status: active
+level: task
+version: 1
+text: |
+  The boards are first powered with no mains present and their low-voltage functions shown working. Every load is then shown held off with the controller in reset, unpowered and disconnected, and loss of the controller's proof of life is shown to remove heater power. Only after that is the mains side energised, under supervision. In the machine, sensing accuracy is measured with the loads switching, and protective continuity of touchable parts is measured on the finished installation.
+rationale: |
+  A fault first found at mains potential is found the most expensive way there is, so everything that can be shown without mains is shown first. The safety defaults are demonstrated rather than inferred from the design, because they are exactly the behaviours a design review cannot see fail.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C6
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C7
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C8
+    type: derives-from
+  - target: PER-BUILDER-001.C2
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C2
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C6
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C8
+    type: targets
+  - target: REQ-MEASUREMENT-001.C1
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C6
+    type: targets

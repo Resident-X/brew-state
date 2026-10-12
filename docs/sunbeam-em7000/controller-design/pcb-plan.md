@@ -2,6 +2,8 @@
 
 Written 2026-10-12. This is a recommendation, not a decision (D21 in `decisions.md`), and it is the starting input for the discussion of what the graph should hold for an AI-assisted PCB manufacture method.
 
+**Superseded 2026-10-12.** The through-hole, hand-soldered, low-voltage-only plan below was replaced in discussion session `93DF4C50-C8BE-40D9-82BE-9E17E063C7E8` by the graph epic `DEL-CONTROLLER-HARDWARE`: designed boards, factory-assembled, with mains switching on its own board where the partition task decides. Kept as the record of the earlier position and of the footprint facts it lists.
+
 ## Position
 
 A low-voltage-only prototype PCB, hand-soldered through-hole, rather than building the whole controller on perfboard. The board carries: the H743 module on four 1x22 female header pieces, the five sensor dividers (4.7 kOhm low-TCR, 100 nF), the ULN2003A breakout, the 74HCT541 (DIP-20 in a socket), the two 2N5401 stages with their resistors, the key-line series resistors, the connectors, and the pull-ups and pull-downs. The mains parts stay off-board and are wired by harness: the SSRs, the dimmers, the relay module, the IRM-10-5 on its carrier, the BL0942 modules and the inlet chain.

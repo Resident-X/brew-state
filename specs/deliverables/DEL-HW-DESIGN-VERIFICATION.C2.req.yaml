@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-VERIFICATION.C2
+type: criterion
+title: A board's parts are checked against the specification and the manufacturer's catalogue
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Each part meets the property the specification states for its position and is one the manufacturer can supply.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION
+    type: criterion-of

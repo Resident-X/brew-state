@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C2
+type: criterion
+title: The nets that decide whether a board works are routed to stated rules and locked before any automated routing
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Power, decoupling, ground, mains and sensing paths are among them; automated routing only places what remains and cannot move what is locked.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

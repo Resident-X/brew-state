@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C4
+type: criterion
+title: A review finding that can be expressed as a rule is added to the rules
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Judgement that has been written down as a rule is checked on every later board without being remembered.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

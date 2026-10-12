@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C6
+type: criterion
+title: The method holds no data specific to this machine
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Figures, part choices and board shapes come from a machine's own constraints, so an adopter with a different machine reuses the method unchanged.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

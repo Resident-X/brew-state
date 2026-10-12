@@ -1,0 +1,50 @@
+id: DEL-HW-PARTITION-AND-FEASIBILITY
+type: deliverable
+category: task
+title: How the circuitry divides between boards is chosen on evidence that it fits, before detailed design
+status: active
+level: task
+version: 1
+text: |
+  With the constraints fixed, each function is given its form, a circuit the project designs or a module it buys, including whether the controller is designed onto the board or remains a module. The earlier design's modules, the controller module, the pump dimmers, the relay module, the supply carrier and the energy meters, are each reopened here, and a published reference design is preferred wherever one exists. The circuitry is then divided between boards and shown at block level to fit the space the machine provides, with each connector placed where its retained harness reaches and room found for the proof-of-life interlock. The separation basis between mains-referenced and low-voltage circuitry is declared and signed for here, before any layout, and spare capacity for the channels the machine is expected to gain is reserved wherever it costs no other criterion.
+
+  The owner's stated starting points are inputs to weigh, not mandates: both boards inside the existing controller enclosure; mains connections on its left and sensor and low-voltage harnesses on its right, where they enter today; heater switches kept off-board on heatsinks; valve relays and pump drive on a mains board; the controller board designed first and made as narrow as it can be, leaving room for the mains board; each board within the manufacturer's lowest price band; and the layer count chosen per board, with a ground plane favoured under the sensing.
+rationale: |
+  The division between boards decides what each board design task is, so it comes before them. Showing fit at block level costs hours; finding a misfit in a finished layout costs the layout. The separation basis is a safety figure that must be chosen by someone who signs for it and before the layout it constrains, not inferred from whatever the layout ended up with.
+links:
+  - target: DEL-CONTROLLER-HARDWARE.C2
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C4
+    type: derives-from
+  - target: DEL-CONTROLLER-HARDWARE.C9
+    type: derives-from
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: depends-on
+  - target: REQ-RETROFIT-FIT-001.C1
+    type: targets
+  - target: REQ-RETROFIT-FIT-001.C2
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: targets
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C7
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C2
+    type: targets
+  - target: PER-BUILDER-001.C5
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C3
+    type: targets
+  - target: REQ-SAFETY-CHAIN-001.C2
+    type: targets
+  - target: DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE
+    type: justified-by
+  - target: REQ-COST-DISCIPLINE-001.C5
+    type: targets
+  - target: REQ-COST-DISCIPLINE-001.C6
+    type: targets

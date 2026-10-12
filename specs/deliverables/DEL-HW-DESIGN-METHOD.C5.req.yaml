@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C5
+type: criterion
+title: The method is written so another designer or an agent can follow it
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+closes_by: cascade
+text: |
+  Following it needs no knowledge held only by its author. An agent session with no prior context following the method to a board that passes the gate counts as another designer.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

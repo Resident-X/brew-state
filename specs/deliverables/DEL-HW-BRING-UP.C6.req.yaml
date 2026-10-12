@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C6
+type: criterion
+title: Protective continuity of touchable parts is measured on the finished installation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Continuity that held in the original build does not survive being rebuilt by hand, so it is measured rather than assumed.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of

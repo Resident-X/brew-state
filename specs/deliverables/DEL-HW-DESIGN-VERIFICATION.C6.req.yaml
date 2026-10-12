@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-VERIFICATION.C6
+type: criterion
+title: The manufacturer's production files are checked before payment
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Part rotation and polarity in the placement file and the mapping of each position to its catalogue part are checked against the manufacturer's assembly preview, since these are where an assembled board most often goes wrong while the design itself is right.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION
+    type: criterion-of

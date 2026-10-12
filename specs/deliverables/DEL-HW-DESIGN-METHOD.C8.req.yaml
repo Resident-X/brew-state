@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C8
+type: criterion
+title: Circuits whose values decide whether they work are simulated or calculated before layout
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The method states which circuits these are, such as a sensing front end's noise and settling, a zero-crossing detector's delay and a drive stage's margin at worst-case supply, and records the result each must meet.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

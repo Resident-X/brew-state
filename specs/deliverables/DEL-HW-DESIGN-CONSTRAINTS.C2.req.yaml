@@ -1,0 +1,16 @@
+id: DEL-HW-DESIGN-CONSTRAINTS.C2
+type: criterion
+title: Every figure the requirements impose on the boards is recorded with its source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  This covers the supply range and frequency, the upstream protection the build relies on, the rail budgets, load currents, sensing accuracy, the inputs to the separation basis, the fault current each conductor must survive until its protection acts, the interval within which loss of the controller's proof of life must remove heater power, derived from the time to a hazardous state, and the state each output must fail into. Board copper carrying mains current counts as wiring. A figure that cannot yet be derived is marked pending against the work that will settle it.
+
+
+  Inputs already known to be unsettled are carried as pending rather than resolved by assumption: the supply module's isolation rating, on which sources disagree; the laminate's tracking resistance, which sits at a material-group boundary; the pollution degree the enclosure warrants; and why the original board takes two live feeds.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: criterion-of

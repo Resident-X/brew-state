@@ -16,5 +16,3 @@ rationale: |
 links:
   - target: PER-BUILDER-001.C4
     type: derives-from
-  - target: PER-BUILDER-001.C2
-    type: derives-from
