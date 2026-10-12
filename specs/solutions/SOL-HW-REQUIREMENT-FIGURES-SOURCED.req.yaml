@@ -27,6 +27,10 @@ links:
     type: justified-by
   - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-ef2e177605cee2d9)
+  fingerprint: 60b715798fb6c88853067cdada968909108e8d07a0b4435361186b81e4c173d7
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
     class: new-condition
