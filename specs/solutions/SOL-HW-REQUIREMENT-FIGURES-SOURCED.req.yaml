@@ -28,8 +28,8 @@ links:
   - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
     type: justified-by
 brief_confirmation:
-  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-08e54a005b1ae9d1)
-  fingerprint: 049658324813d0ab4ade506b624995c60fecfb624b0afd3e36c2d234f2f7f361
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-e090b9971ec8e977)
+  fingerprint: 1d784f283d58643b5b54df173bce187f4c9b2da171700ccb2371c22b6b0d7e70
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
