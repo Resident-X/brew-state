@@ -57,7 +57,7 @@ Where a judgement is visual, the agent looks at a rendered view of the board, ne
 
 ## Rules before routing
 
-Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and known to be in effect on the board itself.
+Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and either confirmed by KiCad on the board itself or enforced by KiCad's rule check before the board is ordered, the table saying which.
 
 Close the board in every editor before writing anything in this section, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, and keep it closed until step 4. An editor holding the board keeps its own copy of the project file and writes that copy over the file when it quits: a text variable and a net class pattern written to the project file while the board editor held the board open were measured to be gone after it quit. Konnect's tools that write net classes write the project file, so they are no exception.
 
@@ -70,7 +70,10 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
 
 - **Design rules** are the board-wide minimums (clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge, silkscreen), each custom rule in the board's rules file, and every net class's own clearance, track width and via sizes.
 - **Source** says where the figure comes from, for example: the machine's constraints record (name the figure in it); a requirement the board serves (name the requirement); the manufacturer's stated limits (name the manufacturer and the date of the capability page the figure was read from); the separation basis record; or a finding from a layout review that became a rule (name the review). "Default", "typical" or "what KiCad had" is not a source.
-- **Confirmed in effect** is filled in only by step 3 below.
+- **Confirmed in effect** says, for each kind of row, what stands behind it, and nothing else may be written there:
+  - a **custom rule** in the board's rules file: that KiCad loaded the rules file, from step 3's output;
+  - a **net class**: the nets step 3 lists for it;
+  - a **board-wide minimum**, and a **net class's own clearance, track width or via sizes** set in Board Setup: `not confirmed by step 3; enforced by the layout rule check in the pre-order check`. Step 3 cannot read these figures, so they are never marked confirmed. They stand on the figure and source written in the row, and KiCad's layout rule check holds the board to them in the pre-order check (step 7 of routing).
 
 A rule with no stated source fails this step. Give it a source or remove it.
 
@@ -97,7 +100,7 @@ Every board declares this in its project text variable `MAINS`, set to exactly `
 
 **Local clearance overrides can defeat the separation rule.** Pads, footprints and zones can each carry a clearance of their own, set outside the custom rules. A local clearance override on a pad or a footprint takes precedence over every custom rule in KiCad, which applies the larger of the two items' overrides. So a small override on either side of a mains/low-voltage pair would let low-voltage copper sit closer to mains than the separation rule allows. Treat a zone's own clearance the same way, although KiCad 10 (10.0.7) was measured not to let it outrank a custom rule. Set none of these below the separation basis record's clearance. The pre-order check fails any pad or footprint override that undercuts the signed figure, and any zone on a `Mains`-class net whose own clearance does. It checks a zone's clearance only on a `Mains`-class net. A zone's own clearance does not outrank the separation rule, so a low-voltage zone's cannot undercut it; a `Mains`-class zone is still held to the signed figure, so the board never states a smaller mains separation than the one it is checked against.
 
-### 3. Confirm every rule and net class in effect, by asking KiCad
+### 3. Confirm that KiCad loads the rules file and places each class's nets, by asking KiCad
 
 With the board still closed, from the board's folder, run:
 
@@ -111,11 +114,11 @@ The command never reads the rules or the classes from the files. It runs KiCad's
 - when KiCad did not load the rules file, naming the rule KiCad rejects;
 - when the board has no rules file. A board with no custom rules still has one, holding `(version 1)` alone;
 - when a named class is not one the design defines, or KiCad places no net of the board in it;
-- when `MAINS` is not exactly `present` or `none`.
+- when `MAINS` is not exactly `present` or `none`, or is `present` and `Mains` is not named.
 
 Otherwise it prints each class with the nets KiCad puts in it, and `RESULT | CONFIRMED`. Check each class's list against your intent: every net you meant to put in the class is there, and no other. A critical net missing from its list is in the wrong class.
 
-Fill in the table's last column from this output: for each net class, the nets listed; for each custom rule, that KiCad loaded the rules file. A row not confirmed this way fails this step. So does a failure of the command.
+Fill in the table's last column from this output: for each net class, the nets listed; for each custom rule, that KiCad loaded the rules file; for each board-wide minimum and each class figure set in Board Setup, that step 3 does not confirm it and the pre-order check's layout rule check enforces it, as step 1 says. A custom rule or net class row not filled in from this output fails this step, and so does a figure row marked confirmed. So does a failure of the command.
 
 What this confirms is that the rules file loads and that each class holds the nets intended. It does not show that each figure is the one KiCad applies, since a later rule can shadow an earlier one. The separation figure, the one that matters most, is enforced by the pre-order check's own rule whatever the board writes.
 
@@ -129,7 +132,7 @@ Out of scope for this section: the figures themselves, which come from the machi
 
 ## Routing: critical nets by hand and locked, then the rest
 
-The nets that decide whether a board works are never left to an automatic router. They are routed deliberately to their stated rules and locked. Automated routing is then run only one way: KiCad's exporter, the external router from its command line, then KiCad's importer (step 5). It places only what is left unrouted, and may not move a locked item. Locking is done by the board tooling's lock command on the closed board file (step 3). A check in the board tooling, never a comparison by hand and never the router's own report, confirms afterwards that nothing locked was moved and nothing was added to a critical net.
+The nets that decide whether a board works are never left to an automatic router. They are routed deliberately to their stated rules and locked. Automated routing is then run only one way: KiCad's exporter, the external router from its command line, then KiCad's importer (step 5). It places only what is left unrouted, and may not move a locked item. Locking is done by the board tooling's lock command on the closed board file (step 3). A check in the board tooling, never a comparison by hand and never the router's own report, confirms afterwards that nothing locked was moved and nothing was added to a critical net. Only the board's own tracks, arcs, vias and zones are locked and recorded; a copper zone inside a footprint is not covered.
 
 ### 1. Put every critical net in a named critical class
 
@@ -219,7 +222,8 @@ With the board still closed, give the same board, its own project file, and the 
 - a recorded item is no longer locked;
 - a recorded item is changed in any recorded property, with each changed property given as old → new;
 - a critical-class net carries a track, arc, via or zone that the record does not hold;
-- a critical class the record names is no longer defined by the design.
+- a critical class the record names is no longer defined by the design;
+- `MAINS` is not exactly `present` or `none`, or is `present` and the record's classes leave out `Mains`.
 
 The critical nets at comparison are every net the record names and every net the critical classes hold now, so a net that left its class after recording, for example because the import rewrote the project file, is still checked. An added item identical to a recorded one is still reported as added. Copper on nets outside both is the router's, and is ignored. A record taken of another board, a project file that is not the board's own, or a board KiCad's lock file shows open, fails the comparison without comparing anything. A failure fails this step whatever the router or the importer reported. Restore the board as it was before export, correct the cause, and repeat from step 2.
 

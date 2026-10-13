@@ -679,7 +679,8 @@ class WhatTheCommandsRefuse(Board):
     Locking and recording refuse a board with no valid mains declaration, a set
     of classes that leaves out Mains on a board declaring mains, and a named
     class that is undefined or holds no net; the rules confirmation refuses the
-    declaration and the classes the same way. A refusal changes nothing.
+    declaration and the classes the same way, and comparing fails a record whose
+    classes leave out Mains on a board declaring mains. A refusal changes nothing.
     """
 
     def setUp(self):
@@ -716,18 +717,34 @@ class WhatTheCommandsRefuse(Board):
                                 classes=("Power", "Ground", "Mains"), mains="present")
         self.write(layout(list(UNLOCKED_ITEMS.values()) + [AC_TRACK]), mains_project)
         before = self.board_text()
-        for command in ("lock", "record"):
+        for command in ("lock", "confirm", "record"):
             with self.subTest(command=command):
-                status, lines = self.on_classes(command, "Power", "Ground") if command == "lock" else self.record()
+                status, lines = self.record() if command == "record" else self.on_classes(command, "Power", "Ground")
                 self.assertEqual(status, 1, lines)
                 self.assertTrue(any(line.startswith("REFUSED | Mains | MAINS is present") for line in lines), lines)
+                self.assertEqual(self.findings(lines, "CLASS"), [], lines)
+                self.assertNotIn("CONFIRMED", lines[-1])
                 self.assertEqual(self.board_text(), before)
                 self.assertFalse(os.path.exists(self.record_path))
+        status, lines = self.on_classes("confirm", "Power", "Ground", "Mains")
+        self.assertEqual(status, 0, lines)
+        self.assertIn("CLASS | Mains | 1 net | /AC", lines)
         status, lines = self.on_classes("lock", "Power", "Ground", "Mains")
         self.assertEqual(status, 0, lines)
         self.assertIn("LOCKED | track [/AC]", "\n".join(lines))
         status, lines = self.record("Power", "Ground", "Mains")
         self.assertEqual(status, 0, lines)
+
+    def test_a_record_leaving_out_mains_on_a_board_declaring_mains_fails(self):
+        self.write(layout(ITEMS.values()))
+        self.recorded()
+        mains_project = project({"/PWR": "Power", "/AC": "Mains"}, [{"netclass": "Ground", "pattern": "/GND_*"}],
+                                classes=("Power", "Ground", "Mains"), mains="present")
+        self.write(layout(list(ITEMS.values()) + [AC_TRACK]), mains_project)
+        status, lines = self.compare()
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any(line.startswith("MAINS | Mains | MAINS is present") for line in lines), lines)
+        self.assertNotIn("PASS", lines[-1])
 
     def test_a_named_class_holding_no_net(self):
         with open(self.project, "w", encoding="utf-8") as handle:

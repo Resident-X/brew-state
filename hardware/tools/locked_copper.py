@@ -288,11 +288,11 @@ def open_in_editor(board: str) -> Optional[Tuple[str, str]]:
                   "is running the lock file is stale, left by a KiCad that did not close the board, so delete it")
 
 
-def mains_problems(project: dict, path: str, classes: Sequence[str], mains_named: bool) -> List[Tuple[str, str]]:
+def mains_problems(project: dict, path: str, classes: Sequence[str]) -> List[Tuple[str, str]]:
     """Why the board's mains declaration, or the classes named for it, cannot be acted on: (what, why).
 
-    `mains_named` asks also that a board declaring mains name Mains among its
-    critical classes, since its mains copper is the copper most worth protecting.
+    A board declaring mains names Mains among its critical classes, since its
+    mains copper is the copper most worth protecting.
     """
     variables = project.get("text_variables")
     mains = variables.get("MAINS") if isinstance(variables, dict) else None
@@ -300,7 +300,7 @@ def mains_problems(project: dict, path: str, classes: Sequence[str], mains_named
         said = "is not set" if mains is None else f"is {json.dumps(mains)}"
         return [(f"{path} text_variables.MAINS",
                  f"the project variable MAINS {said}; every board declares it as exactly present or none, so set it")]
-    if mains_named and mains == "present" and "Mains" not in classes:
+    if mains == "present" and "Mains" not in classes:
         return [("Mains", "MAINS is present, so Mains is a critical class and its copper is protected with the rest; "
                           "name it with --class Mains")]
     return []
@@ -329,12 +329,12 @@ def members(kicad_cli: str, board: str, project: str, layout: list, classes: Seq
     return found
 
 
-def named_classes(board: str, project: str, classes: Sequence[str], mains_named: bool) -> Tuple[list, List[Tuple[str, str]]]:
+def named_classes(board: str, project: str, classes: Sequence[str]) -> Tuple[list, List[Tuple[str, str]]]:
     """The board's layout, and every reason the classes named for it cannot be acted on before KiCad is asked."""
     layout = read_layout(board)
     settings = read_project(project)
     defined = defined_classes(settings, layout)
-    refusals = mains_problems(settings, project, classes, mains_named)
+    refusals = mains_problems(settings, project, classes)
     refusals += [(netclass, f"the design defines no net class of this name (it defines {', '.join(sorted(defined)) or 'none'}); "
                             "name each critical class exactly as the design does")
                  for netclass in classes if netclass not in defined]
@@ -626,7 +626,7 @@ def lock(board: str, project: str, classes: Sequence[str], kicad_cli: str, out) 
         refusals.append((project, why))
     if refusals:
         return refused(refusals, "REFUSED | the board was not changed", out)
-    layout, refusals = named_classes(board, project, classes, mains_named=True)
+    layout, refusals = named_classes(board, project, classes)
     if refusals:
         return refused(refusals, "REFUSED | the board was not changed", out)
     nets = members(kicad_cli, board, project, layout, classes)
@@ -670,7 +670,7 @@ def confirm(board: str, project: str, classes: Sequence[str], kicad_cli: str, ou
     why = own_project(board, project)
     if why is not None:
         return refused([(project, why)], "FAIL | nothing was confirmed", out)
-    layout, refusals = named_classes(board, project, classes, mains_named=False)
+    layout, refusals = named_classes(board, project, classes)
     if refusals:
         return refused(refusals, "FAIL | nothing was confirmed", out)
     rules = os.path.splitext(board)[0] + ".kicad_dru"
@@ -748,7 +748,7 @@ def record(board: str, project: str, classes: Sequence[str], out_path: str, kica
         refusals.append((project, why))
     if refusals:
         return refused(refusals, "REFUSED | no record was written", out)
-    layout, refusals = named_classes(board, project, classes, mains_named=True)
+    layout, refusals = named_classes(board, project, classes)
     if refusals:
         return refused(refusals, "REFUSED | no record was written", out)
     items = copper(layout, board)
@@ -793,8 +793,10 @@ def compare(board: str, project: str, record_path: str, kicad_cli: str, out) -> 
         return refused(mismatches, f"FAIL | the board, project file and record given are not one board's, so nothing "
                                    f"in {', '.join(classes)} is taken as a pass", out, "MISMATCH")
     layout = read_layout(board)
-    defined = defined_classes(read_project(project), layout)
-    findings = [("UNDEFINED", netclass, "the record names this critical class and the design no longer defines it, so its "
+    settings = read_project(project)
+    defined = defined_classes(settings, layout)
+    findings = [("MAINS", what, why) for what, why in mains_problems(settings, project, classes)]
+    findings += [("UNDEFINED", netclass, "the record names this critical class and the design no longer defines it, so its "
                                         "nets' copper is no longer protected; restore the class, or record afresh")
                 for netclass in classes if netclass not in defined]
     nets = members(kicad_cli, board, project, layout, classes)
