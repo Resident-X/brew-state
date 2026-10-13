@@ -20,14 +20,19 @@ What changed is measured from the branch's merge-base with the remote-tracking
 main, against the working tree, so uncommitted edits and new files not yet
 committed count as much as commits do. Measuring from main's tip instead would
 charge the branch with everything main gained since it branched. The
-remote-tracking main is fetched from the remote first, because the copy in the
-repository is one the branch's author can move: pointed at the branch itself,
-it would make every committed change vanish from the measurement, and this gate
-is the only verification before a merge. For the same reason the base is named
-by its full reference, which a local branch cannot shadow, and history is read
-without the repository's object replacements. When the base cannot be fetched
-or resolved, or the changed paths cannot be read, the gate cannot tell what
-changed, and it runs the emulation tier rather than guessing that nothing did.
+remote-tracking main is taken as the repository holds it, not fetched: a copy
+left behind by the remote only gives an older merge-base, and so a wider change,
+never a narrower one. The base is named by its full reference, which a local
+branch cannot shadow. When the base cannot be resolved, or the changed paths
+cannot be read, the gate cannot tell what changed, and it runs the emulation
+tier rather than guessing that nothing did.
+
+The selection is a cost measure, not a trust boundary. It guards its
+measurement against git state that is stale or unusually configured; it does
+not defend against whoever rewrites the hooks, configuration or references of
+the tree it runs in, who controls the gate itself. A change that escapes the
+selection meets the reviews before it merges and the nightly complete
+verification after.
 
 Everything it decides is printed as a plain statement -- which tiers ran, which
 was skipped and why, the paths it judged by -- so whoever reads the output can
@@ -42,23 +47,19 @@ from __future__ import annotations
 
 import argparse
 import os
-import signal
 import subprocess
 import sys
 from dataclasses import dataclass, field
 
 
-#: The remote a round's base is fetched from, and the branch on it that is main.
+#: The remote whose main a round is measured against, and the branch on it that
+#: is main.
 REMOTE = "origin"
 MAIN = "main"
 
 #: The remote-tracking branch a round is measured against, as written in what
 #: the gate says.
 BASE_REF = f"{REMOTE}/{MAIN}"
-
-#: How long the remote is given to answer before the gate stops waiting and
-#: treats the base as one it cannot fetch.
-FETCH_SECONDS = 60
 
 #: Every path the emulation tier reads, from the repository root. An entry
 #: ending in "/" covers everything beneath it. The firmware tree is taken whole
@@ -110,49 +111,10 @@ class Scope:
     judged: list[str] = field(default_factory=list)
 
 
-#: Git as the gate runs it: never asking for credentials, and reading history
-#: as committed rather than through the repository's object replacements, which
-#: could otherwise put the branch's own content in place of main's.
-GIT_ENVIRONMENT = {"GIT_TERMINAL_PROMPT": "0", "GIT_NO_REPLACE_OBJECTS": "1"}
-
-
 def _git(repo: str, *arguments: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["git", "-C", repo, *arguments],
-        capture_output=True,
-        text=True,
-        check=False,
-        env={**os.environ, **GIT_ENVIRONMENT},
+        ["git", "-C", repo, *arguments], capture_output=True, text=True, check=False
     )
-
-
-def _fetch(repo: str, remote: str, main: str) -> str:
-    """Refresh the remote-tracking main from the remote; why it failed, or "".
-
-    The reference is forced to the remote's tip whatever it held before. The
-    fetch runs in a session of its own, so a transport that wants a terminal
-    fails instead of waiting at a prompt, and one that does not answer in time
-    is stopped together with whatever it started.
-    """
-    process = subprocess.Popen(
-        ["git", "-C", repo, "fetch", "--quiet", "--no-tags", "--no-recurse-submodules",
-         remote, f"+refs/heads/{main}:refs/remotes/{remote}/{main}"],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-        text=True,
-        env={**os.environ, **GIT_ENVIRONMENT},
-        start_new_session=True,
-    )
-    try:
-        _, error = process.communicate(timeout=FETCH_SECONDS)
-    except subprocess.TimeoutExpired:
-        os.killpg(process.pid, signal.SIGKILL)
-        process.communicate()
-        return f"{remote} did not answer within {FETCH_SECONDS} s"
-    if process.returncode != 0:
-        return error.strip() or f"git fetch exited with status {process.returncode}"
-    return ""
 
 
 def _split(output: str) -> list[str]:
@@ -162,9 +124,8 @@ def _split(output: str) -> list[str]:
 def changed(repo: str, remote: str = REMOTE, main: str = MAIN) -> Change:
     """The paths the branch changes since its merge-base with the remote's main.
 
-    The remote's main is fetched first, so the base is the one the change will
-    merge into rather than whatever the repository's own copy was left at. The
-    comparison is from the merge-base to the working tree, which takes in staged
+    The remote's main is read from the repository's remote-tracking reference,
+    by its full name. The comparison is from the merge-base to the working tree, which takes in staged
     and unstaged edits, and new files git is not told to ignore are added to it.
     Renames are reported as a deletion and an addition, so a file moved out of a
     tree counts against the tree it left as well as the one it entered.
@@ -184,12 +145,10 @@ def _measure(repo: str, remote: str, main: str) -> Change:
         return Change(None, None, None, "HEAD could not be resolved to a commit")
     head = resolved.stdout.strip()
 
-    failure = _fetch(repo, remote, main)
-    if failure:
+    if _git(repo, "rev-parse", "--verify", "--quiet", f"{tracking}^{{commit}}").returncode != 0:
         return Change(
             head, None, None,
-            f"{named} could not be fetched from {remote} ({failure}), and the copy already "
-            "in the repository is not trusted, because the branch can move it",
+            f"there is no remote-tracking {named} ({tracking}) to measure from",
         )
 
     merge_base = _git(repo, "merge-base", head, tracking)
@@ -229,7 +188,7 @@ def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
             "Running the emulation tier rather than skipping it.",
         )
     against = (
-        f"measured from merge-base {change.base} with {base_ref} as just fetched, "
+        f"measured from merge-base {change.base} with {base_ref} "
         f"to {at} and the working tree"
     )
     read = [path for path in change.paths if reads(path)]

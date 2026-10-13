@@ -3,8 +3,8 @@
 
 Every case is driven against a synthetic repository: a handful of files laid out
 where the firmware tree, the analysis records and the task runner's declaration
-sit, a bare repository beside it standing in for the remote its main is pushed
-to, and a branch changed from that main.
+sit, a remote-tracking main pointed at the main they were committed to, and a
+branch changed from that main.
 The task runner is a shell script that records which tasks it was asked for and
 fails the ones it is told to, so the gate's ordering, stopping and verdict are
 observed without a build behind them.
@@ -63,26 +63,17 @@ BASELINE = {
 
 
 class SyntheticRepository:
-    """A repository whose main is pushed to a remote, on a branch off that main."""
+    """A repository whose remote-tracking main is its main, on a branch off it."""
 
-    def __init__(self, with_remote: bool = True):
+    def __init__(self, with_tracking: bool = True):
         self.directory = tempfile.TemporaryDirectory()
-        top = os.path.realpath(self.directory.name)
-        self.root = os.path.join(top, "work")
-        self.remote = os.path.join(top, "remote.git")
-        os.makedirs(self.root)
+        self.root = os.path.realpath(self.directory.name)
         self.git("init", "-q", "-b", "main")
         for path, content in BASELINE.items():
             self.write(path, content)
         self.commit("baseline")
-        if with_remote:
-            subprocess.run(
-                ["git", "init", "-q", "--bare", "-b", "main", self.remote],
-                capture_output=True, check=True, env=GIT_ENVIRONMENT,
-            )
-            self.git("remote", "add", "origin", self.remote)
-            self.git("push", "-q", "origin", "main")
-            self.git("fetch", "-q", "origin")
+        if with_tracking:
+            self.track("main")
         self.git("checkout", "-q", "-b", "feature")
 
     def cleanup(self) -> None:
@@ -114,11 +105,9 @@ class SyntheticRepository:
     def head(self) -> str:
         return self.git("rev-parse", "HEAD").strip()
 
-    def tracking(self) -> str:
-        return self.git("rev-parse", "refs/remotes/origin/main").strip()
-
-    def remote_main(self) -> str:
-        return self.git("ls-remote", "origin", "refs/heads/main").split()[0]
+    def track(self, commit: str) -> None:
+        """Point the remote-tracking main at a commit, as a fetch would leave it."""
+        self.git("update-ref", "refs/remotes/origin/main", commit)
 
     def scope(self) -> round_gate.Scope:
         return round_gate.scope(round_gate.changed(self.root))
@@ -259,51 +248,42 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
 
     def test_an_unresolvable_base_runs_emulation_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
-        repository = SyntheticRepository(with_remote=False)
+        repository = SyntheticRepository(with_tracking=False)
         self.addCleanup(repository.cleanup)
         repository.change_and_commit("docs/machine/notes.md")
         result, asked = run_gate(repository)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertEqual(HOST + EMULATION, asked)
         self.assertIn("could not tell what changed", result.stdout)
-        self.assertIn("origin/main could not be fetched", result.stdout)
+        self.assertIn("there is no remote-tracking origin/main", result.stdout)
         self.assertIn(f"HEAD {repository.head()}", result.stdout)
 
 
-# --- The base is the remote's main, not a copy the branch can move -------------
+# --- The base is guarded against accidental git state, not against tampering --
 
 
-class TheBaseIsFetchedRatherThanTrusted(unittest.TestCase):
-    """The round gate is the only verification before a merge, so the base it
-    measures from must be one the branch's author cannot point at the branch."""
+class TheBaseIsTheRemoteTrackingMain(unittest.TestCase):
+    """The selection is a cost measure: it guards against git state that is
+    stale or unusually configured, not against a producer rewriting the tree."""
 
     def setUp(self):
         self.repository = SyntheticRepository()
         self.addCleanup(self.repository.cleanup)
         self.repository.change_and_commit("firmware/src/control/loop.c")
 
-    def test_a_local_origin_main_moved_onto_the_branch_is_corrected_by_the_fetch(self):
+    def test_a_stale_remote_tracking_main_only_widens_the_change(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-        published = self.repository.remote_main()
-        self.repository.git("update-ref", "refs/remotes/origin/main", "HEAD")
-        result, asked = run_gate(self.repository)
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + EMULATION, asked)
-        self.assertIn("    firmware/src/control/loop.c", result.stdout)
-        self.assertIn(f"merge-base {published} with origin/main", result.stdout)
-        self.assertEqual(published, self.repository.tracking())
-
-    def test_main_gaining_commits_on_the_remote_is_seen_without_a_local_fetch(self):
-        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-        # Pushed by path rather than by remote name, so the local copy of
-        # origin/main is left behind, as it is when someone else merges.
-        self.repository.git("push", "-q", self.repository.remote, "HEAD:refs/heads/main")
-        before = self.repository.tracking()
-        self.assertNotEqual(self.repository.remote_main(), before)
+        # Main gained a firmware change the remote-tracking copy never heard
+        # of, and the branch was started from that newer main: the older base
+        # charges main's change to the branch, so emulation runs rather than
+        # being skipped for a branch that itself touches only documents.
+        self.repository.git("checkout", "-q", "main")
+        self.repository.change_and_commit("firmware/include/hw.h")
+        self.repository.git("checkout", "-q", "-B", "feature", "main")
+        self.repository.change_and_commit("docs/machine/notes.md")
         chosen = self.repository.scope()
-        self.assertFalse(chosen.run_emulation, chosen.reason)
-        self.assertIn("changes nothing", chosen.reason)
-        self.assertEqual(self.repository.remote_main(), self.repository.tracking())
+        self.assertTrue(chosen.run_emulation, chosen.reason)
+        self.assertEqual(["firmware/include/hw.h"], chosen.judged)
 
     def test_a_local_branch_named_like_the_base_does_not_shadow_it(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
@@ -311,40 +291,6 @@ class TheBaseIsFetchedRatherThanTrusted(unittest.TestCase):
         chosen = self.repository.scope()
         self.assertTrue(chosen.run_emulation, chosen.reason)
         self.assertEqual(["firmware/src/control/loop.c"], chosen.judged)
-
-    def test_an_object_replacement_of_mains_tip_is_not_followed(self):
-        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-        # Main's tip is replaced by a commit carrying the branch's own tree, so
-        # read through the replacement the base would already hold every change.
-        main_tip = self.repository.remote_main()
-        forged = self.repository.git(
-            "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "forged"
-        ).strip()
-        self.repository.git("replace", main_tip, forged)
-        chosen = self.repository.scope()
-        self.assertTrue(chosen.run_emulation, chosen.reason)
-        self.assertEqual(["firmware/src/control/loop.c"], chosen.judged)
-
-    def test_a_fetch_that_fails_runs_emulation_even_with_a_local_copy_present(self):
-        # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
-        self.repository.git("update-ref", "refs/remotes/origin/main", "HEAD")
-        self.repository.git(
-            "remote", "set-url", "origin", os.path.join(self.repository.root, "gone.git")
-        )
-        result, asked = run_gate(self.repository)
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + EMULATION, asked)
-        self.assertIn("could not tell what changed", result.stdout)
-        self.assertIn("origin/main could not be fetched from origin", result.stdout)
-
-    def test_a_remote_that_does_not_answer_in_time_runs_emulation(self):
-        # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
-        self.repository.git("config", "remote.origin.uploadpack", "sleep 30; git-upload-pack")
-        with mock.patch.object(round_gate, "FETCH_SECONDS", 1):
-            change = round_gate.changed(self.repository.root)
-        self.assertIsNone(change.paths)
-        self.assertIn("did not answer within 1 s", change.problem)
-        self.assertTrue(round_gate.scope(change).run_emulation)
 
     def test_git_that_cannot_be_run_runs_emulation_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
@@ -367,7 +313,7 @@ class TheChangeIsMeasuredFromTheMergeBaseAndTheWorkingTree(unittest.TestCase):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
         self.repository.git("checkout", "-q", "main")
         self.repository.change_and_commit("firmware/src/control/loop.c")
-        self.repository.git("push", "-q", "origin", "main")
+        self.repository.track("main")
         self.repository.git("checkout", "-q", "feature")
         self.repository.change_and_commit("docs/machine/notes.md")
         chosen = self.repository.scope()
@@ -492,12 +438,12 @@ class ThePathSelection(unittest.TestCase):
 
     def test_an_unresolvable_base_runs_it_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
-        # The remote's main is rewritten to a history the branch shares nothing
-        # with: the fetch succeeds, and there is no merge-base to measure from.
+        # The remote's main was rewritten to a history the branch shares
+        # nothing with: the base resolves, and there is no merge-base with it.
         self.repository.change_and_commit("docs/machine/notes.md")
         self.repository.git("checkout", "-q", "--orphan", "unrelated")
         self.repository.commit("unrelated")
-        self.repository.git("push", "-q", "--force", "origin", "unrelated:main")
+        self.repository.track("unrelated")
         self.repository.git("checkout", "-q", "feature")
         change = round_gate.changed(self.repository.root)
         self.assertIsNone(change.paths)
@@ -505,16 +451,18 @@ class ThePathSelection(unittest.TestCase):
         self.assertTrue(chosen.run_emulation)
         self.assertIn("merge-base of HEAD with origin/main could not be resolved", chosen.reason)
 
-    def test_a_repository_with_no_remote_runs_it_and_says_why(self):
+    def test_a_repository_with_no_remote_tracking_main_runs_it_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
-        repository = SyntheticRepository(with_remote=False)
+        repository = SyntheticRepository(with_tracking=False)
         self.addCleanup(repository.cleanup)
         repository.change_and_commit("docs/machine/notes.md")
         change = round_gate.changed(repository.root)
         self.assertIsNone(change.paths)
         chosen = round_gate.scope(change)
         self.assertTrue(chosen.run_emulation)
-        self.assertIn("origin/main could not be fetched from origin", chosen.reason)
+        self.assertIn(
+            "there is no remote-tracking origin/main (refs/remotes/origin/main)", chosen.reason
+        )
 
     def test_an_unreadable_list_of_changed_paths_runs_it_and_says_why(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
