@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T21:21:43.586113Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md § Designing for bring-up and a second spin (steps 1-4 and the out-of-scope line) inspected clause by clause against C2: what counts as a rail (ground and return excluded, mains-referenced rails held to the separation basis, producer-only nets carrying a test point), how to tell a key signal, a test point on every rail and key signal, an isolating link per rail (multi-source rails one link per source) with its fault-path withstand shown as a conductor row, a current-limit means per supply input that is not a protective device and needs only what a builder without a laboratory has, the connector pin table classing every external pin, and the fail rule judged on the record as it stood before placement with netlist cross-checks; carried out from the method''s text alone with no graph identifier. Accepted by WF-REVIEW and blind review over build rounds 1-9 (final run crun-a616c233b70ded5c).'
+  artifact_version: 5e23073773d3c02e0aae60f5eaf44583c1b39be7
+attested_by: crun-a616c233b70ded5c
+links:
+  - target: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C2
+    type: satisfies
