@@ -255,7 +255,7 @@ after that both build offline.
 Everything runs from the repository root through the task runner:
 
 ```sh
-task check:round   # a build round's gate: the host tier in full, the emulation tier only if the branch changes what it reads
+task check:round   # a build round's gate: the host tier in full, the emulation tier only if the branch changes what it reads, the sweep of the changed plant lines
 task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the arithmetic sweep
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
@@ -278,16 +278,52 @@ remote-tracking copy, not fetched. A stale one can mis-measure a branch, so it
 is kept rare by branching from a freshly fetched `main` rather than checked for.
 That set of paths is declared once, as
 `EMULATION_READS` in [`tools/round_gate.py`](tools/round_gate.py). When there is
-no remote-tracking `origin/main`, the base cannot be resolved or the changed
-paths cannot be read, the gate runs emulation rather than skipping it. The
+no remote-tracking `origin/main`, the base cannot be resolved, the changed
+paths or lines cannot be read, or the lines of a changed C source or header
+cannot, the gate runs emulation rather than skipping it. The
 selection saves time; it is not a trust boundary against whoever controls the
 tree it runs in, and a change that escapes it meets the reviews before it
-merges and the nightly complete verification after. Its statements name the base and `HEAD`
-commits it measured between. It stops at the first host-tier failure and says
-the emulation tier was not reached, and whether it would have run; otherwise
-its last lines say which tiers ran and, for a skipped one, why and which changed
-paths it judged by. Its exit status is the verdict. It never runs the full
-mutation sweep.
+merges and the nightly complete verification after. A branch that edits only
+the triage record, or removes a test that killed mutants on plant lines the
+branch does not change, changes no line the sweep below is restricted to, so
+what that does to the sweep is looked at only by the nightly. Its statements name the base and `HEAD`
+commits it measured between.
+
+After those tiers the round runs the mutation sweep restricted to the mutants
+on the lines the branch changes in the sweep's population, and never the full
+sweep. A changed line is a line on the new side of a zero-context diff from the
+same merge-base to the working tree, and every line of a new file not yet
+committed; a file with any hunk counts as changed, one that only deletes lines
+or is deleted outright included. The diff options and environment that shape
+a hunk are pinned; a content filter a repository declares in its gitattributes
+is the repository's own and is applied, and this repository declares none for
+the sweep's sources. A line the mutation tool's own changed-lines mode takes in
+beyond those is run but not drawn. Which files are in the population is the
+sweep's own derivation from the tree, as for the full sweep. Everything a
+changed file now carries is listed without running it, and only the mutants on
+changed lines are run, so a one-line change does not run the hundreds of
+mutants its file carries; a changed file whose mutants are missing rather than
+absent fails the round as a sweep that could not look. A survivor on a
+changed line is judged against `mutation_triage.yaml` as the full sweep judges
+it, and every judgement about a changed file is checked against everything that
+file now carries, so a judgement stranded by moved or deleted lines fails the
+round rather than the next night. A branch changing no line in the population
+runs no sweep and does not need the mutation toolchain; one that does needs
+LLVM 19 and the matching Mull package, and fails the round on a host without
+them. When the gate cannot tell which lines changed, the host and emulation
+tiers still run, and the round then fails, naming the cause and what to do: it
+cannot clear the change as touching no plant line, and it does not run the full
+sweep instead. A file whose own lines alone cannot be read fails the round that
+way only when it is in the sweep's population; a document no sweep draws from
+going unread does not.
+
+It stops at the first failing tier and says what was not reached, the sweep
+included, and whether the emulation tier would have run; otherwise its last
+lines, printed after the sweep, state the whole round's verdict: which tiers ran
+and, for a skipped one, why and which changed paths it judged by, and whether
+the sweep ran, was skipped because no changed line is in its population, or
+could not run, with how many changed lines it covered and whether it found a
+problem or could not look. Its exit status is the verdict.
 
 The complete verification, `fw:verify`, runs nightly against `main`: every tier
 the round can skip, the emulation tier unconditionally, and the full sweep of
@@ -344,14 +380,19 @@ Run it when a check is added or reworked.
 The second sweeps the plant model's arithmetic instead of the checks. It is the
 last step of `fw:verify` as well as being runnable alone, so the complete
 verification that runs nightly asks not only whether the checks pass but whether
-the tests would notice the model being wrong. It is not part of a build round's
-gate: what it answers does not move between commits the way test results do,
-and it is the longest step by far:
+the tests would notice the model being wrong. A build round's gate runs it only
+restricted to the lines the branch changes, described above, and never in full:
+the full population is the longest step by far, and most of it cannot have been
+moved by a given branch:
 
 ```sh
 task fw:sweep                     # alter every comparison and operator, require a test to notice
 task fw:sweep -- --survivors-only # list what survived without judging it
 ```
+
+The round's restricted sweep refuses `--survivors-only`, and every other flag
+of the full sweep's own, beside the changed lines it is handed, so no flag
+forwarded to it turns a run that judged nothing into a pass.
 
 Where `fw:mutate` breaks named properties one at a time, this generates the
 class those names are drawn from. Every comparison, arithmetic operator and
@@ -366,8 +407,9 @@ questions, and the difference is the point: a list of specific defects that are
 caught establishes exactly the members of the list, and says nothing about the
 defects nobody thought to write down.
 
-It needs LLVM 19 and the matching Mull package, which the round gate and the
-rest of the complete verification do not, so the environments it compiles — `native_mutation`,
+It needs LLVM 19 and the matching Mull package, which the rest of the round
+gate and of the complete verification do not -- the round needs them only when
+the branch changes a line in the population -- so the environments it compiles — `native_mutation`,
 `native_fixture_mutation` and `native_boiler_mutation` — declare
 `custom_mutation_sweep` in `platformio.ini`
 and are left alone by the gates covering every host build. Those gates say so

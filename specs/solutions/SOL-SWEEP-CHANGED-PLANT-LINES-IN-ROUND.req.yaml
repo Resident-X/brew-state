@@ -3,9 +3,13 @@ type: deliverable
 category: solution
 title: A build round sweeps the mutants on the plant lines its branch changes
 status: active
-version: 1
+version: 2
 text: |
   When a branch changes the plant model's arithmetic, its build round sweeps the mutants drawn from the lines it changed, so new plant arithmetic meets mutation testing before it merges rather than at the next nightly run.
+
+  Placement: the work extends the two existing seams rather than adding a third. The round gate's driver in the firmware tooling, which already measures the branch from its merge-base with the remote-tracking main to select the emulation tier, gains the changed lines per population file from the same measurement and a conditional sweep step after the tiers it already runs. The mutation sweep's driver, which derives the population, judges survivors against the triage record and records timing per unit, gains a restricted mode that takes those changed lines. Its staleness check gains a variant that does not report judgements outside the restricted population stale, and that checks every judgement in a changed file against that file's whole current population, listed the way the sweep's existing per-directory listing does. A separate script beside the round gate was rejected because it would duplicate the merge-base rule, which must stay single. Calling the mutation tool from the round gate directly was rejected because it would bypass the population derivation the criterion names. The sweep step is added after the existing tiers without reshaping the tier selection, so the board check's tier can join the same driver later.
+
+  Settled here: a changed line is a new-side line of a zero-context diff from the merge-base, plus every line of a new untracked population file, and a file with any hunk counts as changed, deletions included. When the change cannot be measured the round fails, naming the cause, because the governing decision requires that a plant change meet mutation testing before it merges and that the round never run the full sweep (operator ruling, 2026-10-13). The mutation toolchain is needed only when population lines change, and its absence then fails the round, as the sweep task already does on a host without it.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
@@ -17,3 +21,7 @@ links:
     type: depends-on
   - target: SOL-SWEEP-TIME-ACCOUNTED
     type: depends-on
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-46509868a83283df)
+  fingerprint: a3dcfe5ab053cdc641a7c65705906c631cd5a1f17ac1a8bccaf1624ac0fefa4f
+  gating_profile: ""
