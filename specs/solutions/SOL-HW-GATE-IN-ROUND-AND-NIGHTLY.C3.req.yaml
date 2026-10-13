@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |-
-  The project instructions, which name the build-round gate, and the hardware notes beside the check both state that the board check runs in the round for changes to board designs or the check and nightly on main, and that its seeded-fault proof runs nightly and on demand. Out of scope: rewriting the verification-cadence decision, which this follows.
+  The project instructions, which name the build-round gate, and the hardware notes beside the check both state that the board check runs in the round for changes to board designs, to anything they read or to the check, and nightly on main, and that its seeded-fault proof runs on demand. Out of scope: any cadence the verification-cadence decision does not set.
 links:
   - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
     type: criterion-of

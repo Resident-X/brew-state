@@ -3,7 +3,7 @@ type: decision
 category: operational
 title: Build-round verification is targeted, and the full verification runs nightly on main
 status: active
-version: 1
+version: 2
 text: |
   Verification runs at two cadences.
 
@@ -13,7 +13,9 @@ text: |
 
   The complete verification keeps its single declaration listing every gate. The nightly runs exactly that list; the round runs the subset this decision names. The mutation sweep keeps its sharded form on hosted runners, now started by the nightly as well as by hand.
 
-  The hand-curated seeded faults stay on demand, run when a check is added or reworked.
+  The board designs' pre-order check is a third tier on the same terms. The round runs it when the branch changes a KiCad file or anything a board design reads, including the separation basis record it is held to and the libraries and library tables it reaches, or the board check's own tooling and task definitions, measured from the merge-base with main in the same way as the emulation tier, and runs it anyway when it cannot tell what changed; a branch that changes none of those runs without the board tools. The complete verification's declaration lists the board check, so the nightly runs it.
+
+  The hand-curated seeded faults stay on demand, run when a check is added or reworked; that holds for the board check's seeded-fault proof as for the firmware's.
 rationale: |
   Context: The project declared one complete verification, and every build round ran all of it. That took over forty minutes, more than thirty of them in the mutation sweep, and longer whenever two sessions ran it on the same machine at once. A round that changed only documents waited the same forty minutes as one that rewrote the plant model. The sweep had been specified not to run on every change: SOL-PLANT-MUTATION-SWEEP.C3 put it on demand, "not wired into the gate that runs on every push", because what it answers, whether the tests notice the model being wrong, does not move between commits the way test results do. The complete verification later absorbed it anyway, and every round inherited its cost.
 
