@@ -13,6 +13,7 @@ These are needed in addition to the tools the pre-order check needs (KiCad 10, P
 | KiCad, with its command-line tool and the Python it bundles with its `pcbnew` module | KiCad 10.0.7 | https://www.kicad.org/download/ |
 | Freerouting, the external router | Freerouting 2.5.0, the file `freerouting-2.5.0.jar` | https://github.com/freerouting/freerouting/releases (the v2.5.0 release, asset `freerouting-2.5.0.jar`) |
 | A Java runtime, which Freerouting runs on | Eclipse Temurin OpenJDK 26.0.1 | https://adoptium.net/ or any other Java distribution. Freerouting 2.5.0 is built for Java 25, so it needs Java 25 or newer. |
+| resvg, the SVG rasteriser that turns the [layout review views](#layout-review-views) into images | resvg 0.48.1; the command refuses one older than 0.48 | https://github.com/linebender/resvg/releases, one prebuilt program for each common operating system; or `brew install resvg`, or `cargo install resvg`. Set `RESVG=/path/to/resvg` when it is not on the search path. |
 
 KiCad's bundled Python is the one that can `import pcbnew`. Its usual location:
 
@@ -53,7 +54,7 @@ While an editor holds a board open, KiCad keeps a lock file beside it, `~<board>
 
 Delete the project's lock file too, even though the board tooling looks only at the board's: a board editor reopening the board over a stale lock file with its own user and host name was measured to open it without asking and take over the board's lock file, but to leave the stale project lock file in place after it quit.
 
-Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers. What to look for is the layout review step's.
+Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers, and `task hw:views` renders every view the layout review judges a board on ([Layout review views](#layout-review-views)). What to look for is the layout review step's.
 
 ## Rules before routing
 
@@ -255,3 +256,25 @@ task hw:verify
 It checks only designs git tracks (`git add` is enough), as `hardware/README.md` explains. It must pass. A router's or editor's "no violations" is never accepted in its place. Reopen the board in the editor, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, only after this check and the comparison in step 6 have run, and only to continue work on it.
 
 Out of scope for this step: judging the quality of the layout, which is the layout review step.
+
+## Layout review views
+
+An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track. The layout review therefore judges a board on views that show each critical net against the board, the critical classes against each other, each integrated circuit with the parts on its supply nets, each side as it is assembled, and the assembled board in three dimensions. It also uses a table of the facts a picture cannot carry. With the board closed in every editor, render them from the board's folder:
+
+```
+task hw:views -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <critical class> [--class <critical class> ...] --out <work folder>/<board>-views
+```
+
+Name every critical class, as in routing step 3. The output folder is a working folder: it must be new or empty, and outside every design's folder. Never commit it. The views, their names, the index and the per-net fact table, and what the command refuses, are listed in [`hardware/README.md`](../hardware/README.md#the-layout-review-views). The command needs KiCad's command-line tool and resvg (see [Tools](#tools)).
+
+**Resolution.** The views are drawn at
+
+    pixels per millimetre = 3 / (the smaller of the board's minimum track width and minimum clearance, in millimetres)
+
+so the smallest track and the smallest gap each span at least three pixels. Both minimums are read from the board's design rules, Board Setup's minimum track width and minimum clearance, whose figures and sources the board's rules table already carries (step 1 of [Rules before routing](#rules-before-routing)). The method itself therefore carries no manufacturer's figure. A board whose rules state either minimum as none, zero or less fails the command, naming the missing figure.
+
+**Image size limit.** Every image is kept within a long edge of 1568 pixels, and within 1568 visual patches of 28 by 28 pixels. An image costs ⌈width / 28⌉ × ⌈height / 28⌉ patches. This is the standard tier of the model vendor's published limits, the tier for all models other than its high-resolution ones. An image over either limit is downscaled to the largest size that fits, keeping its aspect ratio, so an image within both is read at the resolution it was drawn at. The source is the "Resolution and token cost" section of https://platform.claude.com/docs/en/build-with-claude/vision, read on 2026-10-13. That section also gives a high-resolution tier, a long edge of 2576 pixels and 4784 patches, for the vendor's newer models. The views keep to the standard tier, so every reviewing model reads them whole. Every two-dimensional view larger than the limit, a crop included, is cut into tiles. Each three-dimensional view is one image within it.
+
+**Captions.** Every image carries a caption drawn into it. A two-dimensional view's caption states its layers and the colour of each, its net or class, its scale in pixels per millimetre and the board coordinates in millimetres it covers. A three-dimensional view's caption states its view direction and image size. The index repeats every caption, as text and as JSON, so a reviewer working from the files alone has every fact without the author's context.
+
+Out of scope for this section: judging the images, which is the layout review step.
