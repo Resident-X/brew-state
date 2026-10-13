@@ -51,18 +51,37 @@ while the others pass: every machine-describing structure is in the scope, an
 environment compiled by the mutation toolchain exists to compile it, and mutants
 actually came back from it. The first two are conclusions about configuration;
 only the third is evidence that the population was really swept.
+
+Every run that builds something also says where its time went, so the next
+speed-up is chosen from a measurement rather than guessed at. For each unit it
+builds and runs -- an environment and suite on a whole run, and on a shard
+whatever the shard was narrowed to -- it states the time spent building, the
+time the unmutated suite took, the time the mutation runner took, and how many
+mutant results came back, with a total summed over the units. Discovering a
+directory's operators is timed the same way, with the runner's listing time and
+the mutants it listed in place of those it ran. The figures are printed before
+the verdict, on every path including a failed one -- where the table says it is
+partial -- and are appended to the hosted job summary when the hosted
+environment provides one. They never change the exit status. A shard's report
+carries its mutant results and its timing as two named parts, the timing being
+its one unit's row, and the merge refuses a report missing either, carrying
+anything a shard does not write, or timing a unit an earlier report timed.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
+import math
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
+from typing import Callable
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -426,20 +445,40 @@ def suites(environment: build_environments.Environment) -> list[str]:
     return [suite.strip() for suite in declared.split(",") if suite.strip()]
 
 
-def build_and_run(project: str, pio: str, environment: str, suite: str, config: str) -> None:
-    """Build one suite under the mutation toolchain and require it to pass unmutated.
-
-    A suite that already fails would make every mutant under it look caught, for
-    the same reason `mutate.py` runs each of its commands once before breaking
-    anything. Nothing the sweep reported afterwards would mean anything.
+def build(project: str, pio: str, environment: str, suite: str, config: str) -> None:
+    """Build one suite under the mutation toolchain without running it.
 
     The derived scope is handed down through the environment because the decision
     it governs is made during compilation: the plugin instruments what the scope
     takes in, and the build script picks this up in preference to the project's
     own configuration file.
+
+    Built and run as two calls rather than one so that each can be timed on its
+    own -- a single call reports one figure for both, and which of the two a
+    speed-up should go after is exactly what that figure cannot say.
     """
     result = subprocess.run(
-        [pio, "test", "-e", environment, "-f", suite],
+        [pio, "test", "-e", environment, "-f", suite, "--without-testing"],
+        cwd=project,
+        env=dict(os.environ, MULL_CONFIG=config),
+        check=False,
+    )
+    if result.returncode != 0:
+        raise SweepError(f"'{suite}' does not build under the mutation toolchain")
+
+
+def run_unmutated(project: str, pio: str, environment: str, suite: str, config: str) -> None:
+    """Run the suite `build` just compiled, and require it to pass unmutated.
+
+    A suite that already fails would make every mutant under it look caught, for
+    the same reason `mutate.py` runs each of its commands once before breaking
+    anything. Nothing the sweep reported afterwards would mean anything.
+
+    The scope is handed down here too, although nothing is compiled, so the two
+    halves of what used to be one call run under the same environment it did.
+    """
+    result = subprocess.run(
+        [pio, "test", "-e", environment, "-f", suite, "--without-building"],
         cwd=project,
         env=dict(os.environ, MULL_CONFIG=config),
         check=False,
@@ -847,7 +886,376 @@ def fold(found: dict[str, dict], shard: dict[str, dict]) -> None:
         found[name] = merged
 
 
-def main(argv: list[str]) -> int:
+# --- Where the sweep's time goes ---------------------------------------------
+
+#: The phases one unit's time is split into, in the order they run.
+BUILD = "build"
+UNMUTATED = "unmutated"
+RUNNER = "runner"
+PHASES = (BUILD, UNMUTATED, RUNNER)
+
+#: What each phase is called where it is printed, for a unit that runs its
+#: mutants and for one that only lists them. The runner's phase is the one that
+#: differs: listing mutants is a different act from running them, and a reader
+#: comparing a discovery job with a sweep job has to be able to tell which
+#: figure is which without knowing how either was made.
+RUNNING = {BUILD: "build", UNMUTATED: "unmutated run", RUNNER: "mutation runner"}
+LISTING = {BUILD: "build", UNMUTATED: "unmutated run", RUNNER: "listing"}
+
+#: What the count is a count of. Runs, not mutants: the same mutant is run once
+#: per suite, so the counts summed over units are not the population, and a
+#: column calling them mutants would invite comparing them with the line that is.
+RUNS = "mutant runs"
+LISTED = "mutants listed"
+
+TOTAL = "total (summed, not elapsed)"
+
+#: What a reader of either rendering needs to read the figures, since a job
+#: summary is read by somebody who has nothing else to go on.
+RUNNING_NOTE = (
+    "Times are wall-clock seconds measured by mull_sweep.py; toolchain installation and other "
+    "workflow setup are outside these figures. The mutation runner's time includes its own "
+    "warm-up and baseline runs. Mutant runs count every mutant result a unit's report lists: "
+    "the same mutant runs once per suite, so they are not the population. The total sums the "
+    "rows' times; it is not the elapsed time of the run."
+)
+LISTING_NOTE = (
+    "Times are wall-clock seconds measured by mull_sweep.py; toolchain installation and other "
+    "workflow setup are outside these figures. Listing is the mutation runner's time listing "
+    "mutants without running them, including its own warm-up run. Mutants listed were not run. "
+    "The total sums the rows' times; it is not the elapsed time of the run."
+)
+MERGED_NOTE = (
+    "The total covers the shard rows only: discovering each directory's operators is timed in "
+    "that discovery job's own summary."
+)
+#: How a table printed on the way out of an error is marked, wherever the run
+#: stopped: part-way through its units, or part-way through the shard reports
+#: a merge was reading.
+PARTIAL = "partial: the run stopped before it finished"
+STOPPED_NOTE = (
+    "The run stopped on an error before it finished, so these rows cover only the units it "
+    "completed, or the shard reports it read, before the error; the total is not the whole run's."
+)
+
+#: What a shard's row carries, and nothing else.
+SHARD_ROW = frozenset({"identity", "listing", "seconds", "mutants"})
+
+#: What a shard's unit may be keyed by, in the order its name gives them. A
+#: shard always names its environment and suite, and its directory and operator
+#: only when it was narrowed to them.
+SHARD_IDENTITY = ("environment", "suite", "directory", "operator")
+SHARD_IDENTITY_REQUIRED = ("environment", "suite")
+
+
+class UnitTiming:
+    """Where one unit's time went: what was built, its phases' seconds, and its count.
+
+    A unit is identified by everything that distinguishes it on the path that
+    ran it -- an environment and suite on a whole run, and the directory and
+    operator too on a shard narrowed to them -- so two rows can never be the
+    same row reported twice.
+    """
+
+    def __init__(self, identity: dict[str, str], listing: bool = False):
+        self.identity = dict(identity)
+        self.listing = listing
+        self.seconds: dict[str, float] = {}
+        self.mutants: int | None = None
+
+    @property
+    def name(self) -> str:
+        return ":".join(self.identity.values())
+
+    def as_dict(self) -> dict:
+        return {
+            "identity": self.identity,
+            "listing": self.listing,
+            "seconds": self.seconds,
+            "mutants": self.mutants,
+        }
+
+    @property
+    def key(self) -> tuple[tuple[str, str], ...]:
+        """What makes two rows the same unit, whatever order their identity was written in."""
+        return tuple(sorted(self.identity.items()))
+
+    @classmethod
+    def from_shard_report(cls, entry: object) -> "UnitTiming":
+        """One unit's timing read back from a shard report, refused unless it is exactly a shard's row.
+
+        Every part of the row is checked against the one shape a shard writes,
+        because each departure from it would be totalled as something it is
+        not. A missing figure would count as a phase that took no time; a
+        figure that is not a finite, non-negative number would make the total
+        meaningless; a row that only listed its mutants belongs to a discovery
+        job's summary and is outside the merged total; and a field this tool
+        does not write is one whose meaning nothing here knows.
+        """
+
+        def refuse(why: str) -> SweepError:
+            return SweepError(f"a timing entry {why}: {entry!r}")
+
+        if not isinstance(entry, dict):
+            raise refuse("is not a mapping")
+        if set(entry) != SHARD_ROW:
+            raise refuse(f"does not carry exactly {', '.join(sorted(SHARD_ROW))}")
+        if entry["listing"] is not False:
+            raise refuse("is a discovery unit's, which the merged total does not cover")
+        identity = entry["identity"]
+        if (
+            not isinstance(identity, dict)
+            or not set(SHARD_IDENTITY_REQUIRED) <= set(identity) <= set(SHARD_IDENTITY)
+            or not all(isinstance(value, str) and value for value in identity.values())
+        ):
+            raise refuse(
+                f"is not keyed by a shard's {', '.join(SHARD_IDENTITY_REQUIRED)} and at most its "
+                f"{', '.join(field for field in SHARD_IDENTITY if field not in SHARD_IDENTITY_REQUIRED)}"
+            )
+        unit = cls({field: identity[field] for field in SHARD_IDENTITY if field in identity})
+        seconds = entry["seconds"]
+        if not isinstance(seconds, dict) or set(seconds) != set(PHASES):
+            raise refuse(f"does not time exactly the phases {', '.join(PHASES)}")
+        for phase in PHASES:
+            value = seconds[phase]
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or value < 0
+            ):
+                raise refuse(f"has no usable {phase} figure")
+            unit.seconds[phase] = float(value)
+        mutants = entry["mutants"]
+        if isinstance(mutants, bool) or not isinstance(mutants, int) or mutants < 0:
+            raise refuse("has no usable mutant count")
+        unit.mutants = mutants
+        return unit
+
+
+def figure(seconds: float) -> str:
+    """One time as it is printed, the same way in both renderings."""
+    return f"{round(seconds, 1):.1f}"
+
+
+def timing_table(
+    units: list[UnitTiming], markdown: bool = False, note: str | None = None, partial: bool = False
+) -> str:
+    """The timing of every unit given, as plain text or as a markdown table.
+
+    One function for both so the local run's output and the hosted summary
+    cannot come to disagree about a figure. Units that ran their mutants and
+    units that only listed them are tabled apart, because their third column
+    and their count measure different acts.
+
+    The total is summed from the figures as printed, so it is the sum a reader
+    adding up the column would reach. A table of a run that stopped part-way
+    says so in its title as well as its notes, since its total is not the run's
+    and a reader of a job summary has nothing else to tell them that.
+    """
+    tables = []
+    for listing in (False, True):
+        rows = [unit for unit in units if unit.listing == listing]
+        if not rows:
+            continue
+        names = LISTING if listing else RUNNING
+        headings = ["unit"] + [f"{names[phase]} (s)" for phase in PHASES]
+        headings.append(LISTED if listing else RUNS)
+        body = [
+            [unit.name]
+            + [figure(unit.seconds[phase]) for phase in PHASES]
+            + [str(unit.mutants)]
+            for unit in rows
+        ]
+        total = (
+            [TOTAL]
+            + [figure(sum(round(unit.seconds[phase], 1) for unit in rows)) for phase in PHASES]
+            + [str(sum(unit.mutants for unit in rows))]
+        )
+        notes = [LISTING_NOTE if listing else RUNNING_NOTE] + ([note] if note else [])
+        title = "time per discovery unit" if listing else "time per unit"
+        if partial:
+            notes.append(STOPPED_NOTE)
+            title += f" ({PARTIAL})"
+
+        if markdown:
+            lines = [
+                f"### mull_sweep: {title}",
+                "",
+                "| " + " | ".join(headings) + " |",
+                "|---|" + "---:|" * (len(headings) - 1),
+            ]
+            lines.extend("| " + " | ".join([f"`{row[0]}`"] + row[1:]) + " |" for row in body)
+            lines.append("| " + " | ".join([f"**{total[0]}**"] + total[1:]) + " |")
+            lines.append("")
+            lines.extend(notes)
+            lines.append("")
+        else:
+            widths = [
+                max(len(row[column]) for row in [headings, *body, total])
+                for column in range(len(headings))
+            ]
+
+            def line(row: list[str]) -> str:
+                cells = [row[0].ljust(widths[0])]
+                cells.extend(cell.rjust(width) for cell, width in zip(row[1:], widths[1:]))
+                return "  " + "  ".join(cells)
+
+            lines = [f"mull_sweep: {title}", line(headings)]
+            lines.extend(line(row) for row in body)
+            lines.append(line(total))
+            lines.extend(f"  {text}" for text in notes)
+        tables.append("\n".join(lines) + "\n")
+    return "\n".join(tables)
+
+
+class TimingRecord:
+    """Every unit one run has timed, and the places its timing is reported.
+
+    The clock is handed in so the attribution can be checked against one that
+    advances by known amounts. The summary is the hosted job summary's file,
+    given only when the hosted environment provides one; each phase's figure is
+    appended to it as the phase completes, so a job its time limit stops part
+    way through still shows where the time went until then.
+
+    Nothing here may change what the sweep concludes: a summary that cannot be
+    written is said so once and then left alone, and every unit a run completes
+    is taken in as it ran, never refused -- a suite an environment lists twice
+    is run twice and timed twice, and refusing the second would turn a run the
+    sweep judges into one it cannot look at. Which shard reports a merge may
+    total is a question about its input, settled where it reads them.
+    """
+
+    def __init__(self, clock: Callable[[], float] = time.monotonic, summary: str | None = None):
+        self.clock = clock
+        self.summary = summary or None
+        self.units: list[UnitTiming] = []
+
+    def phase(self, unit: UnitTiming, phase: str, action: Callable[[], object]) -> object:
+        start = self.clock()
+        result = action()
+        unit.seconds[phase] = self.clock() - start
+        names = LISTING if unit.listing else RUNNING
+        self.append_summary(f"- `{unit.name}` {names[phase]}: {figure(unit.seconds[phase])} s\n")
+        return result
+
+    def finish(self, unit: UnitTiming, mutants: int) -> None:
+        unit.mutants = mutants
+        self.add(unit)
+
+    def add(self, unit: UnitTiming) -> None:
+        """Take in a completed unit."""
+        self.units.append(unit)
+
+    def report(self, note: str | None = None, partial: bool = False) -> None:
+        """Print every completed unit's timing, and append it to the summary."""
+        if not self.units:
+            return
+        print(timing_table(self.units, note=note, partial=partial), flush=True)
+        self.append_summary(
+            "\n" + timing_table(self.units, markdown=True, note=note, partial=partial)
+        )
+
+    @contextlib.contextmanager
+    def reported(self, note: str | None = None):
+        """Report every unit completed inside the block, however the block is left.
+
+        On the way out of the block rather than at each of its exits, so no way
+        of leaving it -- a refusal, an error nothing here anticipated, an
+        interruption -- loses the timing of the units that finished. Left by an
+        error, the block did not finish, and its table is marked partial. The
+        verdict, or the error, is printed by whatever handles the block's
+        outcome, which runs after this, so the timing always precedes it. The
+        outcome itself passes through untouched.
+        """
+        try:
+            yield self
+        except BaseException:
+            self.report(note, partial=True)
+            raise
+        self.report(note)
+
+    def append_summary(self, text: str) -> None:
+        if not self.summary:
+            return
+        try:
+            with open(self.summary, "a", encoding="utf-8") as handle:
+                handle.write(text)
+        except OSError as error:
+            print(
+                f"mull_sweep: the job summary at {self.summary} cannot be written, so the timing "
+                f"is in this output only: {error}",
+                file=sys.stderr,
+            )
+            self.summary = None
+
+
+def mutant_results(report: dict) -> int:
+    """How many mutant results one report lists, across every source in it."""
+    return sum(len(contents.get("mutants", [])) for contents in report.get("files", {}).values())
+
+
+def sweep_unit(
+    timings: TimingRecord,
+    unit: UnitTiming,
+    project: str,
+    pio: str,
+    runner: str,
+    environment: str,
+    suite: str,
+    config: str,
+) -> dict:
+    """Build one unit, run it unmutated, and run or list its mutants, timing each.
+
+    The one place every path that builds something times it, so a path added
+    later reports through the same record by calling this rather than by
+    timing its own calls.
+    """
+    timings.phase(unit, BUILD, lambda: build(project, pio, environment, suite, config))
+    timings.phase(unit, UNMUTATED, lambda: run_unmutated(project, pio, environment, suite, config))
+    program = artefact(project, environment)
+    report = timings.phase(
+        unit, RUNNER, lambda: run_mull(runner, program, config, project, dry_run=unit.listing)
+    )
+    timings.finish(unit, mutant_results(report))
+    return report
+
+
+def read_shard_report(path: str, timed: list[UnitTiming]) -> tuple[dict, UnitTiming]:
+    """One shard's mutant results and timing, refused unless it is exactly what a shard writes.
+
+    Both parts come from the same run, so a report missing either is a shard
+    that did not upload whole -- and judging its mutants while leaving it out of
+    the total, or the other way round, would report on a run that did not
+    happen. A shard times one unit, so its timing is that unit's one row; and a
+    row timing a unit one of the reports already read has timed is the same
+    shard uploaded twice, which totalled again would count its time twice.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            document = json.load(handle)
+    except (OSError, json.JSONDecodeError) as error:
+        raise SweepError(f"it cannot be read as JSON: {error}") from error
+    if not isinstance(document, dict):
+        raise SweepError("it is not a mapping of named parts")
+    for part in ("mutants", "timing"):
+        if part not in document:
+            raise SweepError(f"it carries no '{part}' part")
+    extra = sorted(set(document) - {"mutants", "timing"})
+    if extra:
+        raise SweepError(f"it carries parts a shard does not write: {', '.join(extra)}")
+    mutants, timing = document["mutants"], document["timing"]
+    if not isinstance(mutants, dict):
+        raise SweepError("its 'mutants' part is not a mapping of mutant to finding")
+    if not isinstance(timing, dict):
+        raise SweepError("its 'timing' part is not the one unit's row a shard writes")
+    unit = UnitTiming.from_shard_report(timing)
+    if any(other.key == unit.key for other in timed):
+        raise SweepError(f"it times {unit.name}, which an earlier report already timed")
+    return mutants, unit
+
+
+def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", default=".", help="the PlatformIO project directory")
     parser.add_argument(
@@ -905,7 +1313,8 @@ def main(argv: list[str]) -> int:
     )
     parser.add_argument(
         "--shard-report",
-        help="where --shard writes this shard's raw findings, as JSON",
+        help="where --shard writes this shard's raw findings and its timing, as JSON with a "
+        "'mutants' part and a 'timing' part",
     )
     parser.add_argument(
         "--shard-directory",
@@ -923,6 +1332,10 @@ def main(argv: list[str]) -> int:
         "the combined population in place of sweeping directly",
     )
     args = parser.parse_args(argv)
+
+    # The hosted environment names the file its job summary is read from; a
+    # run anywhere else has none, and prints its timing only.
+    timings = TimingRecord(clock, os.environ.get("GITHUB_STEP_SUMMARY"))
 
     project = os.path.realpath(args.project)
     plant_root = os.path.join(project, args.plant_root)
@@ -1118,7 +1531,7 @@ def main(argv: list[str]) -> int:
 
         probe_includes = [scope_pattern(project, os.path.join(project, probe_directory))]
         try:
-            with tempfile.TemporaryDirectory() as derived:
+            with timings.reported(), tempfile.TemporaryDirectory() as derived:
                 # Any suite the environment declares does as well as another:
                 # the operators a directory's sources compile to are a fact
                 # about the sources, not about which suite later exercises
@@ -1127,13 +1540,13 @@ def main(argv: list[str]) -> int:
                 config = write_scope(derived, probe_includes, excludes)
                 discard_objects(probe_environment, project)
                 print(f"mull_sweep: {probe_environment.name}:{probe_directory}", flush=True)
-                build_and_run(project, args.pio, probe_environment.name, probe_suite, config)
-                report = run_mull(
-                    toolchain["runner"],
-                    artefact(project, probe_environment.name),
-                    config,
-                    project,
-                    dry_run=True,
+                unit = UnitTiming(
+                    {"environment": probe_environment.name, "directory": probe_directory},
+                    listing=True,
+                )
+                report = sweep_unit(
+                    timings, unit, project, args.pio, toolchain["runner"],
+                    probe_environment.name, probe_suite, config,
                 )
         except SweepError as error:
             print(f"mull_sweep: {error}", file=sys.stderr)
@@ -1141,8 +1554,8 @@ def main(argv: list[str]) -> int:
 
         mutators = json.dumps(discovered_mutators(report))
         if args.list_mutators_out:
-            # Not stdout: build_and_run's own build and test output streams
-            # there too, so a caller capturing stdout to parse would be
+            # Not stdout: the build's and the unmutated run's own output, and
+            # the timing table, stream there too, so a caller capturing stdout to parse would be
             # parsing the build alongside the result, exactly what corrupted
             # the first real dispatch of this path.
             with open(args.list_mutators_out, "w", encoding="utf-8") as handle:
@@ -1201,7 +1614,7 @@ def main(argv: list[str]) -> int:
 
         shard_found: dict[str, dict] = {}
         try:
-            with tempfile.TemporaryDirectory() as derived:
+            with timings.reported(), tempfile.TemporaryDirectory() as derived:
                 # Re-derived rather than passed in from whatever listed the
                 # shards: the scope is a pure function of the tree every shard
                 # already checked out identically, so re-deriving it here costs
@@ -1214,9 +1627,17 @@ def main(argv: list[str]) -> int:
                 config = write_scope(derived, shard_includes, excludes, shard_mutators)
                 discard_objects(shard_environment, project)
                 print(f"mull_sweep: {shard_environment.name}:{shard_suite}", flush=True)
-                build_and_run(project, args.pio, shard_environment.name, shard_suite, config)
-                report = run_mull(
-                    toolchain["runner"], artefact(project, shard_environment.name), config, project
+                # Keyed by whatever the shard was narrowed to, so no two shards
+                # of one matrix report as the same row.
+                identity = {"environment": shard_environment.name, "suite": shard_suite}
+                if args.shard_directory:
+                    identity["directory"] = args.shard_directory
+                if args.shard_mutators:
+                    identity["operator"] = args.shard_mutators
+                unit = UnitTiming(identity)
+                report = sweep_unit(
+                    timings, unit, project, args.pio, toolchain["runner"],
+                    shard_environment.name, shard_suite, config,
                 )
                 collect(project, report, shard_found)
         except SweepError as error:
@@ -1225,7 +1646,7 @@ def main(argv: list[str]) -> int:
 
         os.makedirs(os.path.dirname(os.path.abspath(args.shard_report)) or ".", exist_ok=True)
         with open(args.shard_report, "w", encoding="utf-8") as handle:
-            json.dump(shard_found, handle)
+            json.dump({"mutants": shard_found, "timing": unit.as_dict()}, handle)
         return 0
 
     if args.merge_reports:
@@ -1236,18 +1657,23 @@ def main(argv: list[str]) -> int:
             print(f"mull_sweep: no shard reports found under {args.merge_reports}", file=sys.stderr)
             return COULD_NOT_LOOK
         found: dict[str, dict] = {}
-        for name in names:
-            path = os.path.join(args.merge_reports, name)
-            try:
-                with open(path, "r", encoding="utf-8") as handle:
-                    fold(found, json.load(handle))
-            except (json.JSONDecodeError, KeyError, TypeError) as error:
-                # A sweep shard that failed to upload whole rather than one
-                # that failed the job outright -- the matrix's own
-                # fail-fast: false already surfaces the latter.
-                print(f"mull_sweep: {path} is not a shard report --merge-reports can use: {error}", file=sys.stderr)
-                return COULD_NOT_LOOK
         try:
+            with timings.reported(MERGED_NOTE):
+                for name in names:
+                    path = os.path.join(args.merge_reports, name)
+                    try:
+                        mutants, unit = read_shard_report(path, timings.units)
+                        fold(found, mutants)
+                    except (SweepError, KeyError, TypeError) as error:
+                        # A sweep shard that failed to upload whole rather than
+                        # one that failed the job outright -- the matrix's own
+                        # fail-fast: false already surfaces the latter.
+                        raise SweepError(
+                            f"{path} is not a shard report --merge-reports can use: {error}"
+                        ) from error
+                    timings.add(unit)
+            # Outside the block: by here every report has been read, so a
+            # triage record that cannot be read leaves the table whole.
             judgements = read_triage(project)
         except SweepError as error:
             print(f"mull_sweep: {error}", file=sys.stderr)
@@ -1275,7 +1701,7 @@ def main(argv: list[str]) -> int:
     # written only for the runner would mutate everything and then report over
     # part of it.
     try:
-        with tempfile.TemporaryDirectory() as derived:
+        with timings.reported(), tempfile.TemporaryDirectory() as derived:
             config = write_scope(derived, includes, excludes)
             for environment in environments:
                 # The instrumented population is baked into the objects, and the
@@ -1287,9 +1713,10 @@ def main(argv: list[str]) -> int:
                 discard_objects(environment, project)
                 for suite in suites(environment):
                     print(f"mull_sweep: {environment.name}:{suite}", flush=True)
-                    build_and_run(project, args.pio, environment.name, suite, config)
-                    report = run_mull(
-                        toolchain["runner"], artefact(project, environment.name), config, project
+                    unit = UnitTiming({"environment": environment.name, "suite": suite})
+                    report = sweep_unit(
+                        timings, unit, project, args.pio, toolchain["runner"],
+                        environment.name, suite, config,
                     )
                     collect(project, report, found)
     except SweepError as error:

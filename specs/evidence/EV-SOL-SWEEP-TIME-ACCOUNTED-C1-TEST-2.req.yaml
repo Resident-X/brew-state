@@ -1,0 +1,16 @@
+id: EV-SOL-SWEEP-TIME-ACCOUNTED-C1-TEST-2
+type: evidence
+title: test evidence for SOL-SWEEP-TIME-ACCOUNTED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T03:20:04.284073Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_mull_sweep.py::test_a_shards_report_carries_its_mutants_and_its_timing_as_two_parts,test_the_merged_table_covers_every_shard_with_their_total,test_a_report_missing_its_timing_is_refused,test_a_report_missing_its_mutant_results_is_refused,test_a_report_timing_anything_but_one_row_is_refused,test_two_reports_timing_the_same_unit_are_refused_rather_than_totalled_twice,test_a_table_cut_short_by_a_refused_report_is_labelled_partial_in_both_renderings,test_a_merge_that_read_every_report_is_not_labelled_partial,test_a_figure_that_is_not_a_finite_number_is_refused
+  artifact_version: 969d35805b2de0934edcd480fcf22685c5858320
+attested_by: crun-b38f58a8e58a1b09
+links:
+  - target: SOL-SWEEP-TIME-ACCOUNTED.C1
+    type: satisfies
