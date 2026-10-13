@@ -34,8 +34,8 @@ links:
   - target: REQ-PUBLISHED-BUILD-PATH-001.C2
     type: targets
 brief_confirmation:
-  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-726d914b74b4c776)
-  fingerprint: 3d0e5aa7e210a33c806042c3470e94cdeed55b8eb1f982ad716b0d038d409cc6
+  confirmer: claude-opus-5-5 (independent brief reviewer, fresh context)
+  fingerprint: 53c748716586e105ea73bde3e912681b4e328c4d869aa32e4c1fb93d618e4c1e
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
