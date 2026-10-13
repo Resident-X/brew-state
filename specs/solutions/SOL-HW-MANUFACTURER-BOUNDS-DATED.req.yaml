@@ -19,6 +19,10 @@ links:
     type: justified-by
   - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-114d0a9bc82ab747)
+  fingerprint: a4ca48cb42440f28afe894f617010f242ca2bee9ac1f02e03c6b76ab7c684d54
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-MANUFACTURER-BOUNDS-DATED.C2
     class: whole-set
