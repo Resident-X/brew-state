@@ -407,8 +407,34 @@ tasks:
     cmds:
       - python3 {{.HW_DIR}}/tools/board_prove.py --kicad-cli "{{.KICAD_CLI}}" {{.CLI_ARGS}}
 
+  hw:rules-confirm:
+    desc: Confirm, by asking KiCad, that it loads a board's custom rules file (an appended marker rule fires only if it does) and list the nets it places in each named class, failing on an undefined or empty class or a board with no MAINS declaration. Pass the layout, its own project file and each class after --, for example task hw:rules-confirm -- --board b.kicad_pcb --project b.kicad_pro --class Power --class Ground. Needs the same tools as hw:verify
+    # Run from where it is called, so the paths given are read as the caller wrote them.
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/locked_copper.py" --kicad-cli "{{.KICAD_CLI}}" confirm {{.CLI_ARGS}}
+
+  hw:copper-lock:
+    desc: Lock every track, arc, via and zone on a board's critical-class nets in the board file, with the board closed in every editor, changing nothing else; refuses an undefined or empty class, a class list leaving out Mains on a board declaring mains, and a board KiCad's lock file shows open. Pass the layout, its own project file and each critical class after --, for example task hw:copper-lock -- --board b.kicad_pcb --project b.kicad_pro --class Power --class Ground. Needs the same tools as hw:verify
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/locked_copper.py" --kicad-cli "{{.KICAD_CLI}}" lock {{.CLI_ARGS}}
+
+  hw:copper-record:
+    desc: Record every track, arc, via and zone on a board's critical-class nets immediately before the routing round trip's export, refusing an undefined or empty class, a class list leaving out Mains on a board declaring mains, any unlocked item, and a board KiCad's lock file shows open. Pass the layout, its own project file, each critical class and where to write the record (never inside any design's folder) after --, for example task hw:copper-record -- --board b.kicad_pcb --project b.kicad_pro --class Power --class Ground --record /tmp/b.record.json. Needs the same tools as hw:verify
+    # Run from where it is called, so the paths given are read as the caller wrote them.
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/locked_copper.py" --kicad-cli "{{.KICAD_CLI}}" record {{.CLI_ARGS}}
+
+  hw:copper-compare:
+    desc: Compare a board's critical-class copper after the routing round trip's import with the record taken before export, failing on any missing, unlocked, changed or added item, and refusing a board KiCad's lock file shows open. Pass the imported layout, its own project file and that board's record after --, for example task hw:copper-compare -- --board b.kicad_pcb --project b.kicad_pro --record /tmp/b.record.json. Needs the same tools as hw:verify
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/locked_copper.py" --kicad-cli "{{.KICAD_CLI}}" compare {{.CLI_ARGS}}
+
   hw:test:
-    desc: Run the tests covering the pre-order check's own tooling, against the real kicad-cli. Needs the same tools as hw:verify, and Task
+    desc: Run the tests covering the board tooling (the pre-order check and the locked-copper check), against the real kicad-cli. Needs the same tools as hw:verify, and Task
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"

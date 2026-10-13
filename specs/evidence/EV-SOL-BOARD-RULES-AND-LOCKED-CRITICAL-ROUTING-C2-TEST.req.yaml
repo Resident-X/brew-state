@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING-C2-TEST
+type: evidence
+title: test evidence for SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T08:24:19.785949Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_locked_copper.py::test_every_critical_item_is_locked_and_nothing_else_changes,test_kicad_reads_the_lock_where_it_writes_it,test_lock_record_and_compare_refuse_while_the_board_is_open,test_mains_left_out_on_a_board_declaring_mains,test_confirm_and_lock_through_the_tasks
+  artifact_version: 7b06babdd94d0a2b05afb59512d17844b5fb12b7
+attested_by: crun-45a2dcc251d2d144
+links:
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
+    type: satisfies

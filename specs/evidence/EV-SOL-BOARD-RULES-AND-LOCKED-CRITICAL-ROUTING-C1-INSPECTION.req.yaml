@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T08:24:19.594477Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md, ''Rules before routing'' steps 1-4, checked clause by clause against the criterion at 7b06bab: every sentence on what the layout rule check or pre-order check enforces now matches kicad-cli 10.0.7 pcb drc --severity-all measured on scratch copies of the synthetic proof board: board-wide minimums (clearance, track width, via diameter, hole, annular ring, copper-to-edge, hole-to-hole, silkscreen) and class clearance are reported (error; silk-to-edge as warning) and the pre-order check fails both severities; a class''s track width and via sizes are routing defaults only (no violation, pre-order check passes); a width or via size the board relies on is a custom rule conditioned on the class (track_width/via_diameter/hole_size measured enforced), confirmed by step 3 and enforced by the pre-order check'
+  artifact_version: 7b06babdd94d0a2b05afb59512d17844b5fb12b7
+attested_by: crun-45a2dcc251d2d144
+links:
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+    type: satisfies

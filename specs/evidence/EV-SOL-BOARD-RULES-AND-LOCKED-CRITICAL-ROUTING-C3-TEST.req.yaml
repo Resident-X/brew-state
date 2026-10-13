@@ -1,0 +1,20 @@
+id: EV-SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING-C3-TEST
+type: evidence
+title: test evidence for SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T08:24:19.845899Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_locked_copper.py::test_an_untouched_board_passes,test_each_kind_recorded_by_its_properties,test_a_missing_item_fails_by_name,test_an_item_no_longer_locked_fails_by_name,test_a_changed_item_fails_naming_the_property,test_an_added_item_fails_even_when_identical_to_a_recorded_one,test_a_change_confined_to_non_critical_nets_passes,test_by_assignment_and_by_pattern,test_by_a_class_the_layout_file_carries,test_a_net_that_leaves_its_class_still_has_its_added_copper_found,test_a_class_the_design_no_longer_defines_fails,test_an_unlocked_critical_item_is_refused_and_named,test_a_board_that_cannot_be_read,test_a_record_that_cannot_be_read,test_every_critical_item_is_locked_and_nothing_else_changes,test_a_board_with_no_valid_mains_declaration,test_mains_left_out_on_a_board_declaring_mains,test_a_named_class_holding_no_net,test_a_named_class_the_design_does_not_define,test_lock_record_and_compare_refuse_while_the_board_is_open,test_a_rules_file_kicad_drops_unread_fails,test_membership_by_a_class_the_layout_file_carries,test_record_then_compare_through_the_tasks,test_confirm_and_lock_through_the_tasks,test_a_record_leaving_out_mains_on_a_board_declaring_mains_fails
+  artifact_version: 7b06babdd94d0a2b05afb59512d17844b5fb12b7
+attested_by: crun-45a2dcc251d2d144
+text: |
+  The cited tests pass at 7b06bab against KiCad 10.0.7's kicad-cli (46 locked-copper tests, run by the fix rounds and by both blind reviews): each failure and refusal the criterion names, an untouched board and a non-critical-only change passing, membership by assignment, by pattern and by a class the layout file carries, and malformed input.
+
+  Known limit, stated in the method and the README rather than closed: only the board's own tracks, arcs, vias and zones are locked, recorded and compared. A copper zone held inside a footprint on a critical-class net is not covered. The router does not create or move such zones, so the round trip's guard is unaffected; a board that relies on one carries it unchecked by this tool.
+links:
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3
+    type: satisfies
