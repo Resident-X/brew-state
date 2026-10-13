@@ -21,3 +21,7 @@ links:
     type: depends-on
   - target: SOL-SWEEP-TIME-ACCOUNTED
     type: depends-on
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer)
+  fingerprint: 6902b3eaf7a274cfaea0a1fd38b833314b20239db90e9e3eec40e7a4eda9480f
+  gating_profile: ""
