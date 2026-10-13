@@ -16,6 +16,6 @@ links:
   - target: OBL-VERIFICATION-DISCIPLINE-001.C1
     type: targets
 brief_confirmation:
-  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-6e363a457cb4deef)
-  fingerprint: 8eb3ff6f26a33fa29f33a37a07400e0067c7e4d75a11711a082c92200b49d3d4
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-be2da7289f273847)
+  fingerprint: 2247a095390985fb9b6ebcf4ef4601dd06f246d7c29df12d81bb292642e25a54
   gating_profile: ""
