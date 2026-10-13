@@ -31,6 +31,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 
 ## C. Design decisions awaiting the owner
 
+- The supply cord, appliance inlet and inlet filter sit ahead of the inlet fuse, protected only by the building's breaker (up to 20 A). The chosen filter is rated 15 A and its IEC C14 coupler 10 A, both above the machine's own draw (at most 10.5 A at 253 V) and below the breaker. This section is held to fault withstand until the breaker clears rather than to the breaker's rating, the ordinary arrangement for an appliance drawing under 10 A; the owner to confirm that basis (`controller-board-design-constraints.md` § Fault current, `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`).
 - PCB go or no-go (`pcb-plan.md`).
 - Whether the BL0942 current reading replaces the mains-presence confirm (D20).
 - The steam block trapped-pressure case: an S8 interlock on the steam heater, a hot-side relief valve, or both.

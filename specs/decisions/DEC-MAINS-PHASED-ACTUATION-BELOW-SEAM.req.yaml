@@ -3,7 +3,7 @@ type: decision
 category: strategic
 title: Actuation is mains-phased below the hardware seam while the control period stays crystal-derived
 status: active
-version: 1
+version: 2
 text: |
   The control law runs on a period the controller itself keeps, and commands each actuation channel a
   level as it does today. Below the hardware seam a separate layer converts that level into a decision,
