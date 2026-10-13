@@ -3,15 +3,15 @@ type: deliverable
 category: solution
 title: Board rules are written and confirmed before routing, and the nets a board depends on are routed by hand and locked first
 status: active
-version: 2
+version: 3
 text: |
-  The method's pre-routing and routing steps, written as their own sections of the board design method at docs/board-design-method.md. Each solution under the same task adds its own sections to that file, and whichever is built first creates it. It sits outside the machine's record folder because nothing in it belongs to one machine.
+  The method's pre-routing and routing steps, written as their own sections of the board design method at docs/board-design-method.md. Each solution under the same task adds its own sections to that file, and whichever is built first creates it. Each section is written to be carried out from its own text alone and is checked by inspection here; the end-to-end demonstration that a fresh session follows the whole method belongs to the method's followability solution, which therefore waits on every section. It sits outside the machine's record folder because nothing in it belongs to one machine.
 
   Pre-routing: write every design rule and net class with its figure and source, then confirm each in effect on the board by reading it back. A net class written to the project is not seen by an open board until the project is reopened, so the readback is taken from the board after a reopen, never from the project file.
 
   Routing: route power, decoupling, ground, mains and sensing paths deliberately and lock them, then let the external router place only what remains. The round trip is KiCad's Specctra exporter, Freerouting run from its command line, and KiCad's Specctra importer. KiCad 10.0's command-line tool has neither Specctra command, so the exporter and importer are reached through KiCad's bundled Python module or its board editor; Konnect's own routing export is not used because it refuses rounded pads. Because the export and import act on the board file outside the editor Konnect drives, the board is closed in that editor before export and reopened after import, so neither side works on a stale copy. Freerouting needs a Java runtime, and the method tells the reader where to obtain both rather than relying on a copy another tool keeps privately.
 
-  The toolchain trial did not exercise a locked track through this round trip, so whether one survives it is unshown. The method therefore does not rely on the router or the importer to leave locked tracks alone: it records every critical-class track and via before export and checks after import that each is still present, locked and unchanged and that the router added none, before the board's own rule checks run. Those rule checks are the ones the board rule-check gate provides, which is why this solution depends on it.
+  The toolchain trial did not exercise a locked track through this round trip, so whether one survives it is unshown. The method therefore does not rely on the router or the importer to leave locked tracks alone: it records every critical-class track, via and zone before export and checks after import that each is still present, locked and unchanged and that the router added none, before the board's own rule checks run. Those rule checks are the ones the board rule-check gate provides, which is why this solution depends on it.
 links:
   - target: DEL-HW-DESIGN-METHOD.C1
     type: derives-from

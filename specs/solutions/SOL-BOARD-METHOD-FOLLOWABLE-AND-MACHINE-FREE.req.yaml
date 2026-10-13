@@ -4,7 +4,7 @@ category: solution
 title: The board design method is followable by a fresh designer or agent and carries nothing specific to this machine
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The method as a whole is written to be followed without its author, entered by agents through a project operator skill, named with the repository's repo- prefix so it is tracked and survives the skills sync, that wraps Konnect's bundled KiCad skills unedited, holds no figure, part choice or board shape of this machine, and is demonstrated by a fresh agent session following it to a throwaway design, never ordered, that passes the pre-order gate.
 links:
@@ -19,6 +19,12 @@ links:
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING
+    type: depends-on
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: depends-on
+  - target: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION
     type: depends-on
 design_question_answers:
   - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
