@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""The build round's gate: the host tier every time, emulation when it can matter.
+"""The build round's gate: the host tier every time, emulation when it can matter,
+and the mutants on the plant lines the branch changes.
 
 A build round runs one gate, and it is the only verification a change gets
 before it merges. The complete verification takes far longer than most changes
@@ -8,8 +9,18 @@ have moved. So the round runs the part that can never be skipped in full -- ever
 build, every build-time check, every host test and every host executable under
 the sanitizers, the only tier that catches memory and undefined-behaviour
 defects -- and runs the emulation tier only when the branch touches something
-the emulation reads. The full mutation sweep is not in the round at all; it runs
-nightly against main, with the rest of the complete verification.
+the emulation reads.
+
+After those, the round runs the mutation sweep restricted to the mutants on the
+lines the branch changes in the sweep's population, so new plant arithmetic
+meets mutation testing before it merges rather than at the next nightly run. It
+never runs the full sweep: that runs nightly against main, with the rest of the
+complete verification. Which files are in the population is the sweep's own
+derivation from the tree, so this script hands it every changed line and the
+sweep keeps the ones it draws mutants from. A branch that changes no line there
+runs no sweep and does not need the mutation toolchain. A branch that does, on
+a host without the toolchain, fails the round. The sweep is not reached when an
+earlier tier fails.
 
 What the round runs is named by the task runner, which hands the tasks to this
 script, so the commands behind each tier exist in one place and the round and
@@ -27,6 +38,17 @@ branch cannot shadow. When the base cannot be resolved, or the changed paths
 cannot be read, the gate cannot tell what changed, and it runs the emulation
 tier rather than guessing that nothing did.
 
+The changed lines come from the same measurement: a changed line is a line on
+the new side of a zero-context diff from that merge-base to the working tree,
+and every line of a new file not yet committed. A file counts as changed when it
+has any hunk at all, one that only deletes lines and a file deleted outright
+included, because the sweep's judgements about a file are tied to its lines and
+a deletion moves or removes them. When those lines cannot be told, the host and
+emulation tiers still run as they do for any change the gate cannot measure, and
+the sweep step then fails the round, saying why and what to do: it cannot clear
+the change as touching no plant line, and the round never runs the full sweep
+in place of the restricted one.
+
 The selection is a cost measure, not a trust boundary. It guards its
 measurement against git state that is unusually configured; it does not
 defend against whoever rewrites the hooks, configuration or references of
@@ -35,20 +57,27 @@ selection meets the reviews before it merges and the nightly complete
 verification after.
 
 Everything it decides is printed as a plain statement -- which tiers ran, which
-was skipped and why, the paths it judged by -- so whoever reads the output can
-report the gate's verdict without knowing how the tasks are laid out. The exit
-status is the verdict.
+was skipped and why, the paths it judged by, whether the sweep ran, was skipped,
+was not reached or could not run, and when it ran how many changed lines it
+covered and whether it found a problem or could not look -- so whoever reads the
+output can report the gate's verdict without knowing how the tasks are laid out.
+The closing lines come after the sweep, so they state the whole round's verdict.
+The exit status is the verdict.
 
 Usage: round_gate.py --task <executable> --host <task> [--host <task> ...]
-                     --emulation <task> [--emulation <task> ...] [--repo <dir>]
+                     --emulation <task> [--emulation <task> ...]
+                     --sweep <task> [--repo <dir>]
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 
 
@@ -94,12 +123,28 @@ class Change:
     `paths` is None exactly when what changed could not be told, and `problem`
     then says why. `head` and `base` are the commits measured between, as far
     as they were resolved.
+
+    `lines` maps every changed path to the new-side lines it changes, an empty
+    list for a path whose hunks only delete. It is None when the changed lines
+    could not be told, and `lines_problem` then says why; the paths can be known
+    while the lines are not, and the emulation tier is selected by the paths
+    alone. `root` is the repository's top level the paths are relative to.
     """
 
     head: str | None
     base: str | None
     paths: list[str] | None
     problem: str = ""
+    lines: dict[str, list[int]] | None = None
+    lines_problem: str = ""
+    root: str | None = None
+
+    @property
+    def lines_unknown_because(self) -> str:
+        """Why the changed lines could not be told, or "" when they were."""
+        if self.paths is None:
+            return self.problem
+        return self.lines_problem if self.lines is None else ""
 
 
 @dataclass
@@ -175,7 +220,79 @@ def _measure(repo: str, remote: str, main: str) -> Change:
             head, base, None,
             f"the files not yet committed could not be read ({untracked.stderr.strip()})",
         )
-    return Change(head, base, sorted(set(_split(diff.stdout)) | set(_split(untracked.stdout))))
+    tracked = _split(diff.stdout)
+    new = _split(untracked.stdout)
+    change = Change(head, base, sorted(set(tracked) | set(new)))
+    try:
+        change.root, change.lines = _lines(repo, base, tracked, new)
+    except LinesUnknown as error:
+        change.lines_problem = str(error)
+    return change
+
+
+class LinesUnknown(Exception):
+    """The lines a branch changes could not be told."""
+
+
+#: A zero-context hunk's header: where it starts on the new side, and how many
+#: lines it covers there, one when the count is left out.
+_HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+
+def _lines(
+    repo: str, base: str, tracked: list[str], new: list[str]
+) -> tuple[str, dict[str, list[int]]]:
+    """The top level, and the new-side lines each changed path changes.
+
+    A tracked path's lines are read from its own zero-context diff from the
+    base to the working tree, named as a literal path from the top level so no
+    character in it is read as a pattern. Only the hunk headers are read, which
+    say where each hunk sits on the new side and how long it is there; a hunk
+    that only deletes has no length there and contributes no line, though its
+    path still counts as changed. A new file's lines are all of them.
+    """
+    top = _git(repo, "rev-parse", "--show-toplevel")
+    if top.returncode != 0:
+        raise LinesUnknown(
+            f"the repository's top level could not be resolved ({top.stderr.strip()})"
+        )
+    root = top.stdout.strip()
+
+    lines: dict[str, list[int]] = {}
+    for path in tracked:
+        # Read as bytes: the hunks carry the file's own content, which need not
+        # be in any one encoding, and only the headers are read.
+        diff = subprocess.run(
+            ["git", "-C", repo, "diff", "-U0", "--no-relative", "--no-renames", "--no-ext-diff",
+             "--no-textconv", "--no-color", base, "--", f":(top,literal){path}"],
+            capture_output=True, check=False,
+        )
+        if diff.returncode != 0:
+            raise LinesUnknown(
+                f"the lines {path} changes since {base} could not be read "
+                f"({diff.stderr.decode(errors='replace').strip()})"
+            )
+        changed: list[int] = []
+        for line in diff.stdout.decode(errors="replace").splitlines():
+            hunk = _HUNK.match(line)
+            if hunk:
+                start = int(hunk.group(1))
+                count = 1 if hunk.group(2) is None else int(hunk.group(2))
+                changed.extend(range(start, start + count))
+        lines[path] = sorted(set(changed))
+    for path in new:
+        full = os.path.join(root, path)
+        if not os.path.isfile(full):
+            lines[path] = []
+            continue
+        try:
+            with open(full, "rb") as handle:
+                content = handle.read()
+        except OSError as error:
+            raise LinesUnknown(f"the new file {path} could not be read ({error})") from error
+        count = content.count(b"\n") + (1 if content and not content.endswith(b"\n") else 0)
+        lines[path] = list(range(1, count + 1))
+    return root, lines
 
 
 def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
@@ -218,26 +335,202 @@ def _statement(heading: str, chosen: Scope) -> None:
         _say(f"    {path}")
 
 
-def _run(task: str, name: str, tier: str, repo: str) -> int:
-    _say(f"round gate: running {name} ({tier} tier)")
+def _invoke(task: str, name: str, repo: str, arguments: tuple[str, ...] = ()) -> int:
     try:
-        status = subprocess.run([task, name], cwd=repo, check=False).returncode
+        return subprocess.run([task, name, *arguments], cwd=repo, check=False).returncode
     except OSError as error:
         _say(f"round gate: {name} could not be started ({error})")
         return 127
+
+
+def _run(task: str, name: str, tier: str, repo: str) -> int:
+    _say(f"round gate: running {name} ({tier} tier)")
+    status = _invoke(task, name, repo)
     _say(f"round gate: {name} {'passed' if status == 0 else f'FAILED with exit status {status}'}")
     return status
 
 
-def gate(task: str, host: list[str], emulation: list[str], repo: str) -> int:
+#: What the sweep's restricted mode writes back for the round to read: the
+#: outcome it reached, settled by the sweep from its own exit status. The exit
+#: status the round sees cannot say it: a sweep that found nothing to sweep and
+#: one that swept and passed both exit 0, and the task runner between the two
+#: need not pass a failing status through unchanged.
+PASSED = "passed"
+SKIPPED = "skipped"
+FOUND = "found-a-problem"
+NOT_LOOKED = "could-not-look"
+
+#: What to do about a change whose lines the round cannot tell.
+UNMEASURABLE_REMEDY = (
+    f"To let the round measure the change, fetch the remote's main (git fetch {REMOTE} {MAIN}) "
+    f"so the remote-tracking {BASE_REF} exists and shares history with this branch, and make "
+    "sure git can read the working tree; then run the round again. The round runs neither a "
+    "restricted nor the full sweep in place of a change it cannot measure."
+)
+
+NOT_REACHED = "The mutation sweep was NOT REACHED, so it neither passed nor failed."
+
+
+@dataclass
+class Sweep:
+    """What the sweep step concluded: whether it fails the round, and how to say so.
+
+    `verdict` is the clause the closing verdict line carries, and `detail` the
+    statement after it.
+    """
+
+    failed: bool
+    verdict: str
+    detail: str
+
+
+def _covered(account: dict) -> str:
+    lines, files = account.get("lines"), account.get("files")
+    if isinstance(lines, int) and isinstance(files, int):
+        return f" of the {lines} changed plant line(s) in {files} file(s)"
+    return ""
+
+
+def read_account(path: str) -> dict | None:
+    """The account the sweep wrote, or None when it wrote none that can be read."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            account = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    return account if isinstance(account, dict) else None
+
+
+def concluded(status: int, account: dict | None) -> Sweep:
+    """What the sweep step concluded from the account the sweep wrote and its exit status.
+
+    The sweep's own distinction between finding a problem and being unable to
+    look is kept, and the two are worded apart so neither is reported as the
+    other. The exit status is held to the account: a pass needs both, and an
+    account that is missing, or that disagrees with the status, is a sweep the
+    round cannot read, which fails it.
+    """
+    account = account or {}
+    outcome = account.get("outcome")
+    detail = str(account.get("detail") or "").strip()
+    if status == 0 and outcome == SKIPPED:
+        return Sweep(
+            False,
+            "the mutation sweep was correctly SKIPPED, because the branch changes no line in the "
+            "sweep's population",
+            "The mutation sweep was correctly SKIPPED: " + (detail or "no changed line is in it."),
+        )
+    if status == 0 and outcome == PASSED:
+        return Sweep(
+            False,
+            f"the mutation sweep{_covered(account)} ran and passed",
+            "The mutation sweep ran and passed: " + (detail or "every survivor is accounted for."),
+        )
+    if status != 0 and outcome == FOUND:
+        if account.get("state") == "ran":
+            return Sweep(
+                True,
+                f"the mutation sweep{_covered(account)} FOUND A PROBLEM (exit status {status})",
+                (
+                    "This is a finding, not a failure to look: the sweep's report above names each "
+                    "unreviewed survivor, gap or stranded judgement. " + detail
+                ).strip(),
+            )
+        return Sweep(
+            True,
+            f"the mutation sweep FOUND A PROBLEM before drawing any mutant (exit status {status})",
+            "This is a finding, not a failure to look: the sweep's output above says what it "
+            "found in the population it derives.",
+        )
+    if status != 0 and outcome == NOT_LOOKED:
+        if account.get("toolchain_missing"):
+            return Sweep(
+                True,
+                f"the mutation sweep COULD NOT RUN (exit status {status}): the branch changes lines "
+                "in the sweep's population and the mutation toolchain the sweep needs is MISSING "
+                "on this host",
+                "The sweep could not look, so it neither passed nor found a problem. "
+                + (detail or "Its output above says which tool was not found."),
+            )
+        return Sweep(
+            True,
+            f"the mutation sweep COULD NOT LOOK (exit status {status}), so it neither passed nor "
+            "found a problem",
+            detail or "Its output above says why.",
+        )
+    return Sweep(
+        True,
+        f"the mutation sweep COULD NOT RUN: it exited with status {status} and left no account the "
+        "round can read of whether it swept, skipped or found a problem",
+        "This is the sweep being unable to look, not a finding. Its output above is all there is.",
+    )
+
+
+def write_changed_lines(path: str, change: Change) -> None:
+    """Write the changed lines where the sweep's restricted mode reads them.
+
+    The top level is given with them because the paths are relative to it and
+    the sweep runs from its own project directory below it.
+    """
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(
+            {"root": change.root, "base": change.base, "head": change.head, "files": change.lines},
+            handle, sort_keys=True,
+        )
+
+
+def sweep_step(task: str, name: str, repo: str, change: Change) -> Sweep:
+    """Run the sweep over the lines the branch changes, or fail when they cannot be told."""
+    unknown = change.lines_unknown_because
+    if unknown:
+        _say(
+            f"round gate: NOT running {name} (mutation sweep): the round could not tell which "
+            f"plant lines the branch changes ({unknown})"
+        )
+        return Sweep(
+            True,
+            "the mutation sweep COULD NOT RUN, because the round could not tell which plant lines "
+            "the branch changes",
+            f"Cause: {unknown}. {UNMEASURABLE_REMEDY}",
+        )
+    with tempfile.TemporaryDirectory() as handover:
+        changed_lines = os.path.join(handover, "changed-lines.json")
+        account_path = os.path.join(handover, "sweep-account.json")
+        write_changed_lines(changed_lines, change)
+        lines = sum(len(changed) for changed in change.lines.values())
+        _say(
+            f"round gate: running {name} (mutation sweep) over the {lines} changed line(s) in "
+            f"{len(change.lines)} changed path(s); the sweep keeps the ones in its population"
+        )
+        status = _invoke(
+            task, name, repo,
+            ("--", "--changed-lines", changed_lines, "--changed-lines-result", account_path),
+        )
+        account = read_account(account_path)
+    _say(f"round gate: {name} exited with status {status}")
+    return concluded(status, account)
+
+
+def gate(task: str, host: list[str], emulation: list[str], sweep: str, repo: str) -> int:
     """Run the round, print what it did and why, and return its exit status."""
-    chosen = scope(changed(repo))
-    _say("round gate: the host tier always runs; the emulation tier runs only for a change it reads.")
+    change = changed(repo)
+    chosen = scope(change)
+    _say(
+        "round gate: the host tier always runs; the emulation tier runs only for a change it "
+        "reads; then the mutation sweep runs over the mutants on the plant lines the branch "
+        "changes, and never over the full population."
+    )
     _statement(
         "round gate: emulation tier WILL RUN, because" if chosen.run_emulation
         else "round gate: emulation tier WILL BE SKIPPED, because",
         chosen,
     )
+    if change.lines_unknown_because:
+        _say(
+            "round gate: the round cannot tell which plant lines the branch changes "
+            f"({change.lines_unknown_because}). The host tier, and the emulation tier as selected "
+            "above, still run, and the sweep step will then FAIL the round."
+        )
 
     for name in host:
         status = _run(task, name, "host", repo)
@@ -250,29 +543,42 @@ def gate(task: str, host: list[str], emulation: list[str], repo: str) -> int:
                 + ("run, because" if chosen.run_emulation else "been skipped, because"),
                 chosen,
             )
+            _say(NOT_REACHED)
             return 1
 
-    if not chosen.run_emulation:
-        _say()
-        _say(f"ROUND GATE PASSED: the host tier ran and passed ({', '.join(host)}).")
-        _statement("The emulation tier was correctly SKIPPED, because", chosen)
-        return 0
+    if chosen.run_emulation:
+        for name in emulation:
+            status = _run(task, name, "emulation", repo)
+            if status != 0:
+                _say()
+                _say(
+                    f"ROUND GATE FAILED: the emulation tier failed at {name} (exit status {status})."
+                )
+                _say(f"The host tier ran and passed ({', '.join(host)}).")
+                _say(NOT_REACHED)
+                return 1
 
-    for name in emulation:
-        status = _run(task, name, "emulation", repo)
-        if status != 0:
-            _say()
-            _say(f"ROUND GATE FAILED: the emulation tier failed at {name} (exit status {status}).")
-            _say(f"The host tier ran and passed ({', '.join(host)}).")
-            return 1
+    outcome = sweep_step(task, sweep, repo, change)
 
     _say()
-    _say(
-        f"ROUND GATE PASSED: the host tier ({', '.join(host)}) and the emulation tier "
-        f"({', '.join(emulation)}) both ran and passed."
-    )
-    _statement("The emulation tier ran because", chosen)
-    return 0
+    if chosen.run_emulation:
+        tiers = (
+            f"the host tier ({', '.join(host)}) and the emulation tier ({', '.join(emulation)}) "
+            "both ran and passed"
+        )
+    else:
+        tiers = f"the host tier ran and passed ({', '.join(host)})"
+    if outcome.failed:
+        _say(f"ROUND GATE FAILED: {outcome.verdict}.")
+        _say(tiers[0].upper() + tiers[1:] + ".")
+    else:
+        _say(f"ROUND GATE PASSED: {tiers}, and {outcome.verdict}.")
+    if chosen.run_emulation:
+        _statement("The emulation tier ran because", chosen)
+    else:
+        _statement("The emulation tier was correctly SKIPPED, because", chosen)
+    _say(outcome.detail)
+    return 1 if outcome.failed else 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -280,9 +586,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--task", required=True, help="the task runner executable")
     parser.add_argument("--host", action="append", required=True, help="a host-tier task, in order")
     parser.add_argument("--emulation", action="append", required=True, help="an emulation-tier task, in order")
+    parser.add_argument(
+        "--sweep", required=True,
+        help="the mutation sweep's task, run restricted to the lines the branch changes",
+    )
     parser.add_argument("--repo", default=os.getcwd(), help="the repository root (default: here)")
     arguments = parser.parse_args(argv)
-    return gate(arguments.task, arguments.host, arguments.emulation, arguments.repo)
+    return gate(arguments.task, arguments.host, arguments.emulation, arguments.sweep, arguments.repo)
 
 
 if __name__ == "__main__":

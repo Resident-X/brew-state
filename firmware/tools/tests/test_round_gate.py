@@ -7,12 +7,17 @@ sit, a remote-tracking main pointed at the main they were committed to, and a
 branch changed from that main.
 The task runner is a shell script that records which tasks it was asked for and
 fails the ones it is told to, so the gate's ordering, stopping and verdict are
-observed without a build behind them.
+observed without a build behind them. Asked for the sweep, it keeps the changed
+lines the gate handed over and writes back whatever account of the sweep it is
+told to, so what the gate says about each outcome is observed without the
+mutation toolchain; the sweep's own side of that exchange is driven in the
+sweep's tests.
 """
 
 from __future__ import annotations
 
 import ast
+import json
 import os
 import stat
 import subprocess
@@ -29,6 +34,7 @@ import round_gate  # noqa: E402
 
 HOST = ["fw:build", "fw:check", "fw:test", "fw:run"]
 EMULATION = ["fw:emulate"]
+SWEEP = "fw:sweep"
 
 #: Git told nothing about the user running the tests: no global or system
 #: configuration, and an identity of its own.
@@ -46,6 +52,7 @@ GIT_ENVIRONMENT = {
 BASELINE = {
     "firmware/src/control/loop.c": "int loop(void) { return 0; }\n",
     "firmware/src/control/old.c": "int old(void) { return 0; }\n",
+    "firmware/src/plant/common/plant_step.c": "one\ntwo\nthree\nfour\nfive\n",
     "firmware/include/hw.h": "#pragma once\n",
     "firmware/params/thermoblock.params": "mass 1.0\n",
     "firmware/platformio.ini": "[env:native]\nplatform = native\n",
@@ -114,18 +121,56 @@ class SyntheticRepository:
 
 
 class FakeTaskRunner:
-    """Stands in for the task runner: logs each task it is asked for, fails some."""
+    """Stands in for the task runner: logs each task it is asked for, fails some.
 
-    def __init__(self, directory: str, failing: tuple[str, ...] = ()):
+    Asked for the sweep, it keeps a copy of the changed lines it was handed and
+    of every argument, writes the account it was given where the gate asked for
+    one, and exits with the status it was given -- by default an account of a
+    sweep that found no changed line in its population.
+    """
+
+    SKIPPED = {"state": "skipped", "outcome": "skipped", "files": 0, "lines": 0,
+               "detail": "none of the changed path(s) is a source the sweep draws mutants from."}
+
+    def __init__(
+        self,
+        directory: str,
+        failing: tuple[str, ...] = (),
+        sweep_status: int = 0,
+        sweep_account: dict | None = SKIPPED,
+    ):
+        self.directory = directory
         self.log = os.path.join(directory, "asked.log")
         failures = os.path.join(directory, "failing")
         with open(failures, "w", encoding="utf-8") as handle:
             handle.write("".join(f"{name}\n" for name in failing))
+        account = os.path.join(directory, "account.json")
+        if sweep_account is not None:
+            with open(account, "w", encoding="utf-8") as handle:
+                json.dump(sweep_account, handle)
+        self.handed = os.path.join(directory, "handed.json")
+        self.arguments = os.path.join(directory, "sweep-arguments")
         self.path = os.path.join(directory, "task")
         with open(self.path, "w", encoding="utf-8") as handle:
             handle.write(
                 "#!/bin/sh\n"
                 f'echo "$1" >> "{self.log}"\n'
+                f'if [ "$1" = "{SWEEP}" ]; then\n'
+                f'  printf "%s\\n" "$@" > "{self.arguments}"\n'
+                '  shift\n'
+                '  lines=""; result=""\n'
+                '  while [ $# -gt 0 ]; do\n'
+                '    case "$1" in\n'
+                '      --changed-lines) lines="$2"; shift ;;\n'
+                '      --changed-lines-result) result="$2"; shift ;;\n'
+                '    esac\n'
+                '    shift\n'
+                '  done\n'
+                f'  [ -n "$lines" ] && cp "$lines" "{self.handed}"\n'
+                f'  [ -n "$result" ] && [ -f "{account}" ] && cp "{account}" "$result"\n'
+                '  echo "the sweep reporting on its own"\n'
+                f'  exit {sweep_status}\n'
+                'fi\n'
                 f'if grep -qx "$1" "{failures}"; then exit 3; fi\n'
                 "exit 0\n"
             )
@@ -137,12 +182,29 @@ class FakeTaskRunner:
         with open(self.log, encoding="utf-8") as handle:
             return handle.read().split()
 
+    def handed_lines(self) -> dict | None:
+        """The changed lines the gate handed the sweep, or None if it handed none."""
+        if not os.path.exists(self.handed):
+            return None
+        with open(self.handed, encoding="utf-8") as handle:
+            return json.load(handle)
+
+    def sweep_arguments(self) -> list[str]:
+        with open(self.arguments, encoding="utf-8") as handle:
+            return handle.read().splitlines()
+
 
 def run_gate(
-    repository: SyntheticRepository, failing: tuple[str, ...] = (), task: str | None = None
+    repository: SyntheticRepository,
+    failing: tuple[str, ...] = (),
+    task: str | None = None,
+    runner: FakeTaskRunner | None = None,
 ):
-    runner_directory = tempfile.TemporaryDirectory()
-    runner = FakeTaskRunner(runner_directory.name, failing)
+    if runner is None:
+        runner_directory = tempfile.TemporaryDirectory()
+        runner = FakeTaskRunner(runner_directory.name, failing)
+    else:
+        runner_directory = None
     arguments = [
         sys.executable, os.path.join(TOOLS, "round_gate.py"), "--task", task or runner.path
     ]
@@ -150,12 +212,14 @@ def run_gate(
         arguments += ["--host", name]
     for name in EMULATION:
         arguments += ["--emulation", name]
+    arguments += ["--sweep", SWEEP]
     result = subprocess.run(
         arguments, cwd=repository.root, capture_output=True, text=True, check=False,
         env=GIT_ENVIRONMENT,
     )
     asked = runner.asked()
-    runner_directory.cleanup()
+    if runner_directory is not None:
+        runner_directory.cleanup()
     return result, asked
 
 
@@ -172,7 +236,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.repository.change_and_commit("docs/machine/notes.md")
         result, asked = run_gate(self.repository)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST, asked)
+        self.assertEqual(HOST + [SWEEP], asked)
         self.assertIn("ROUND GATE PASSED", result.stdout)
         self.assertIn("emulation tier was correctly SKIPPED", result.stdout)
         # The skip names the paths it was judged by, so the reader can check it.
@@ -183,7 +247,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.repository.change_and_commit("firmware/src/control/loop.c")
         result, asked = run_gate(self.repository)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + EMULATION, asked)
+        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
         self.assertIn("emulation tier WILL RUN", result.stdout)
         self.assertIn("    firmware/src/control/loop.c", result.stdout)
         self.assertIn("both ran and passed", result.stdout)
@@ -252,7 +316,9 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.addCleanup(repository.cleanup)
         repository.change_and_commit("docs/machine/notes.md")
         result, asked = run_gate(repository)
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        # Emulation runs; the round then fails at the sweep step, which cannot
+        # clear an unmeasured change as touching no plant line.
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
         self.assertEqual(HOST + EMULATION, asked)
         self.assertIn("could not tell what changed", result.stdout)
         self.assertIn("there is no remote-tracking origin/main", result.stdout)
@@ -499,6 +565,370 @@ class ThePathSelection(unittest.TestCase):
         self.assertFalse(round_gate.reads("docs/machine/Taskfile.yml"))
 
 
+# --- The lines the branch changes ------------------------------------------
+
+PLANT = "firmware/src/plant/common/plant_step.c"
+
+
+class TheChangedLinesAreMeasuredTheWayThePathsAre(unittest.TestCase):
+    """The lines come from the same merge-base and working tree as the paths,
+    so the sweep is handed exactly the change the tiers were chosen by."""
+
+    def setUp(self):
+        self.repository = SyntheticRepository()
+        self.addCleanup(self.repository.cleanup)
+
+    def lines(self) -> dict:
+        change = round_gate.changed(self.repository.root)
+        self.assertIsNotNone(change.lines, change.lines_problem)
+        return change.lines
+
+    def test_a_modified_line_is_a_changed_line_and_its_neighbours_are_not(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\ntwo\nTHREE\nfour\nfive\n")
+        self.assertEqual({PLANT: [3]}, self.lines())
+
+    def test_separate_hunks_each_contribute_their_new_side_lines(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "ONE\ntwo\nthree\nfour\nFIVE\nsix\n")
+        self.assertEqual({PLANT: [1, 5, 6]}, self.lines())
+
+    def test_inserted_lines_are_changed_lines_on_the_new_side(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\ntwo\nnew a\nnew b\nthree\nfour\nfive\n")
+        self.assertEqual({PLANT: [3, 4]}, self.lines())
+
+    def test_a_hunk_that_only_deletes_still_counts_the_file_as_changed(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nthree\nfour\nfive\n")
+        self.assertEqual({PLANT: []}, self.lines())
+
+    def test_a_deleted_file_counts_as_changed_with_no_line_left(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.git("rm", "-q", PLANT)
+        self.repository.commit("delete")
+        self.assertEqual({PLANT: []}, self.lines())
+
+    def test_every_line_of_a_new_file_not_yet_committed_is_a_changed_line(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write("firmware/src/plant/common/added.c", "a\nb\nc\n")
+        self.repository.write("firmware/src/plant/common/unterminated.c", "a\nb")
+        self.repository.write("firmware/src/plant/common/empty.c", "")
+        self.assertEqual(
+            {
+                "firmware/src/plant/common/added.c": [1, 2, 3],
+                "firmware/src/plant/common/unterminated.c": [1, 2],
+                "firmware/src/plant/common/empty.c": [],
+            },
+            self.lines(),
+        )
+
+    def test_committed_and_uncommitted_lines_are_both_counted(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "ONE\ntwo\nthree\nfour\nfive\n")
+        self.repository.commit("first line")
+        self.repository.write(PLANT, "ONE\ntwo\nthree\nFOUR\nfive\n")
+        self.assertEqual({PLANT: [1, 4]}, self.lines())
+
+    def test_lines_main_changed_after_the_branch_left_it_are_not_charged_to_the_branch(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.git("checkout", "-q", "main")
+        self.repository.write(PLANT, "ONE\ntwo\nthree\nfour\nfive\n")
+        self.repository.commit("main's own change")
+        self.repository.track("main")
+        self.repository.git("checkout", "-q", "feature")
+        self.repository.write(PLANT, "one\ntwo\nthree\nfour\nFIVE\n")
+        self.assertEqual({PLANT: [5]}, self.lines())
+
+    def test_every_changed_path_is_handed_over_with_its_lines(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Which of them are in the sweep's population is the sweep's to say.
+        self.repository.change_and_commit("docs/machine/notes.md")
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        self.assertEqual({"docs/machine/notes.md": [2], PLANT: [2]}, self.lines())
+
+    def test_a_path_with_pattern_characters_is_read_as_the_path_it_is(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        odd = "firmware/src/plant/common/odd name [1]*.c"
+        self.repository.write(odd, "a\nb\n")
+        self.repository.commit("odd")
+        self.repository.track("HEAD")
+        self.repository.write(odd, "a\nB\n")
+        self.assertEqual({odd: [2]}, self.lines())
+
+    def test_content_in_no_particular_encoding_is_measured(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        with open(os.path.join(self.repository.root, PLANT), "wb") as handle:
+            handle.write(b"one\n\xff\xfe two\nthree\nfour\nfive\n")
+        self.assertEqual({PLANT: [2]}, self.lines())
+
+    def test_the_lines_are_relative_to_the_top_level_when_started_below_it(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\ntwo\nthree\nfour\nFIVE\n")
+        change = round_gate.changed(os.path.join(self.repository.root, "docs"))
+        self.assertEqual(self.repository.root, os.path.realpath(change.root))
+        self.assertEqual({PLANT: [5]}, change.lines)
+
+    def test_no_remote_tracking_main_leaves_the_lines_unknown_and_says_why(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        change = round_gate.changed(repository.root)
+        self.assertIsNone(change.lines)
+        self.assertIn("no remote-tracking origin/main", change.lines_unknown_because)
+
+    def test_an_unreadable_new_file_leaves_the_lines_unknown_while_the_paths_are_known(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        if os.geteuid() == 0:
+            self.skipTest("a superuser reads a file whatever its mode")
+        locked = "firmware/src/plant/common/locked.c"
+        self.repository.write(locked, "a\n")
+        full = os.path.join(self.repository.root, locked)
+        os.chmod(full, 0)
+        self.addCleanup(os.chmod, full, 0o644)
+        change = round_gate.changed(self.repository.root)
+        self.assertEqual([locked], change.paths)
+        self.assertIsNone(change.lines)
+        self.assertIn("could not be read", change.lines_unknown_because)
+
+
+def account(state: str, outcome: str, **fields) -> dict:
+    return {"state": state, "outcome": outcome, **fields}
+
+
+#: What the task runner this project uses exits with when a task's command
+#: fails, whatever status the command itself exited with.
+TASK_FAILED = 201
+
+
+class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
+    def setUp(self):
+        self.repository = SyntheticRepository()
+        self.addCleanup(self.repository.cleanup)
+        self.scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(self.scratch.cleanup)
+
+    def gate(self, failing=(), sweep_status=0, sweep_account=FakeTaskRunner.SKIPPED):
+        runner = FakeTaskRunner(self.scratch.name, failing, sweep_status, sweep_account)
+        result, asked = run_gate(self.repository, runner=runner)
+        return result, asked, runner
+
+    def closing(self, result) -> str:
+        """Everything from the verdict line on, which must be the last thing printed."""
+        verdicts = [line for line in result.stdout.splitlines() if line.startswith("ROUND GATE ")]
+        self.assertEqual(1, len(verdicts), result.stdout)
+        return result.stdout[result.stdout.index(verdicts[0]):]
+
+    def test_the_sweep_runs_after_host_and_emulation_and_is_handed_the_changed_lines(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        base = self.repository.head()
+        result, asked, runner = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
+        handed = runner.handed_lines()
+        self.assertEqual({PLANT: [2]}, handed["files"])
+        self.assertEqual(self.repository.root, os.path.realpath(handed["root"]))
+        self.assertEqual(base, handed["base"])
+        # The sweep is always handed the restriction; the round never asks for
+        # it unrestricted.
+        arguments = runner.sweep_arguments()
+        self.assertEqual(SWEEP, arguments[0])
+        self.assertIn("--changed-lines", arguments)
+        self.assertIn("--changed-lines-result", arguments)
+
+    def test_the_sweep_runs_after_the_host_tier_when_emulation_is_skipped(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.change_and_commit("docs/machine/notes.md")
+        result, asked, runner = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + [SWEEP], asked)
+        self.assertEqual({"docs/machine/notes.md": [2]}, runner.handed_lines()["files"])
+
+    def test_a_branch_changing_no_population_line_passes_and_says_the_sweep_was_skipped(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.change_and_commit("docs/machine/notes.md")
+        result, _, _ = self.gate()
+        closing = self.closing(result)
+        self.assertIn("ROUND GATE PASSED", closing)
+        self.assertIn(
+            "the mutation sweep was correctly SKIPPED, because the branch changes no line in the "
+            "sweep's population",
+            closing,
+        )
+        self.assertNotIn("sweep of the", closing.splitlines()[0])
+
+    def test_a_sweep_that_ran_and_passed_is_stated_with_the_lines_it_covered(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nTHREE\nFOUR\nfive\n")
+        result, _, _ = self.gate(sweep_account=account(
+            "ran", "passed", files=1, lines=3, mutants=4,
+            detail="4 mutant(s) lie on the changed lines.",
+        ))
+        self.assertEqual(0, result.returncode, result.stdout)
+        verdict = self.closing(result).splitlines()[0]
+        self.assertTrue(verdict.startswith("ROUND GATE PASSED"), verdict)
+        self.assertIn("both ran and passed", verdict)
+        self.assertIn(
+            "the mutation sweep of the 3 changed plant line(s) in 1 file(s) ran and passed", verdict
+        )
+
+    def test_a_seeded_surviving_mutant_reported_by_the_sweep_fails_the_round_as_a_finding(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The task runner reports the sweep's failure as its own status, not the
+        # sweep's; the account the sweep wrote says it found a problem.
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        result, asked, _ = self.gate(sweep_status=TASK_FAILED, sweep_account=account(
+            "ran", "found-a-problem", files=1, lines=1, mutants=1,
+            detail="1 unreviewed survivor(s).",
+        ))
+        self.assertEqual(1, result.returncode, result.stdout)
+        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
+        closing = self.closing(result)
+        self.assertIn(
+            "ROUND GATE FAILED: the mutation sweep of the 1 changed plant line(s) in 1 file(s) "
+            "FOUND A PROBLEM",
+            closing,
+        )
+        self.assertIn("This is a finding, not a failure to look", closing)
+        self.assertNotIn("COULD NOT", closing)
+        self.assertNotIn("PASSED", result.stdout)
+        # The verdict comes after the sweep's own output, never before it.
+        self.assertLess(
+            result.stdout.index("the sweep reporting on its own"),
+            result.stdout.index("ROUND GATE FAILED"),
+        )
+
+    def test_a_sweep_that_could_not_look_fails_the_round_and_is_not_called_a_finding(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        result, _, _ = self.gate(sweep_status=TASK_FAILED, sweep_account=account(
+            "could-not-run", "could-not-look", files=1, lines=1,
+            detail="the triage record cannot be read.",
+        ))
+        self.assertEqual(1, result.returncode, result.stdout)
+        closing = self.closing(result)
+        self.assertIn(
+            f"ROUND GATE FAILED: the mutation sweep COULD NOT LOOK (exit status {TASK_FAILED})",
+            closing,
+        )
+        self.assertIn("neither passed nor found a problem", closing)
+        self.assertIn("the triage record cannot be read.", closing)
+        self.assertNotIn("FOUND A PROBLEM", closing)
+
+    def test_a_missing_toolchain_fails_the_round_and_says_it_is_missing(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        result, _, _ = self.gate(sweep_status=TASK_FAILED, sweep_account=account(
+            "could-not-run", "could-not-look", files=1, lines=1, toolchain_missing=True,
+            detail="no clang-19 was found.",
+        ))
+        self.assertEqual(1, result.returncode, result.stdout)
+        closing = self.closing(result)
+        self.assertIn("ROUND GATE FAILED", closing)
+        self.assertIn("the mutation toolchain the sweep needs is MISSING on this host", closing)
+        self.assertIn("no clang-19 was found.", closing)
+        self.assertNotIn("FOUND A PROBLEM", closing)
+
+    def test_a_sweep_leaving_no_account_fails_the_round_rather_than_passing(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        result, _, _ = self.gate(sweep_status=0, sweep_account=None)
+        self.assertEqual(1, result.returncode, result.stdout)
+        self.assertIn(
+            "ROUND GATE FAILED: the mutation sweep COULD NOT RUN: it exited with status 0 and left "
+            "no account",
+            self.closing(result),
+        )
+        self.assertNotIn("PASSED", result.stdout)
+
+    def test_an_account_the_exit_status_contradicts_fails_the_round(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        for status, outcome in ((0, "found-a-problem"), (0, "could-not-look"), (1, "passed"),
+                                (TASK_FAILED, "skipped")):
+            with self.subTest(status=status, outcome=outcome):
+                result, _, _ = self.gate(
+                    sweep_status=status, sweep_account=account("ran", outcome, files=1, lines=1)
+                )
+                self.assertEqual(1, result.returncode, result.stdout)
+                self.assertIn("left no account the round can read", self.closing(result))
+                self.assertNotIn("PASSED", result.stdout)
+
+    def test_a_problem_found_before_any_mutant_is_drawn_is_still_a_finding(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        result, _, _ = self.gate(
+            sweep_status=TASK_FAILED, sweep_account=account("could-not-run", "found-a-problem")
+        )
+        self.assertEqual(1, result.returncode, result.stdout)
+        closing = self.closing(result)
+        self.assertIn("FOUND A PROBLEM before drawing any mutant", closing)
+        self.assertNotIn("COULD NOT", closing)
+
+    def test_a_host_failure_leaves_the_sweep_not_reached(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        result, asked, runner = self.gate(failing=("fw:test",))
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(["fw:build", "fw:check", "fw:test"], asked)
+        self.assertIsNone(runner.handed_lines())
+        self.assertIn("The mutation sweep was NOT REACHED", self.closing(result))
+
+    def test_an_emulation_failure_leaves_the_sweep_not_reached(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        result, asked, runner = self.gate(failing=("fw:emulate",))
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(HOST + EMULATION, asked)
+        self.assertIsNone(runner.handed_lines())
+        closing = self.closing(result)
+        self.assertIn("the emulation tier failed at fw:emulate", closing)
+        self.assertIn("The mutation sweep was NOT REACHED", closing)
+
+    def test_an_unmeasurable_change_runs_both_tiers_then_fails_naming_the_cause_and_remedy(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
+        runner = FakeTaskRunner(self.scratch.name)
+        result, asked = run_gate(repository, runner=runner)
+        self.assertEqual(1, result.returncode, result.stdout)
+        # Host and emulation run as they do for any change the gate cannot
+        # measure; the sweep runs neither restricted nor in full.
+        self.assertEqual(HOST + EMULATION, asked)
+        self.assertIsNone(runner.handed_lines())
+        closing = self.closing(result)
+        self.assertIn(
+            "ROUND GATE FAILED: the mutation sweep COULD NOT RUN, because the round could not "
+            "tell which plant lines the branch changes",
+            closing,
+        )
+        self.assertIn("there is no remote-tracking origin/main", closing)
+        self.assertIn("git fetch origin main", closing)
+        self.assertIn("neither a restricted nor the full sweep", closing)
+        self.assertIn("both ran and passed", closing)
+
+    def test_lines_that_cannot_be_read_fail_the_round_while_the_paths_still_select_emulation(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        if os.geteuid() == 0:
+            self.skipTest("a superuser reads a file whatever its mode")
+        locked = "docs/machine/locked.md"
+        self.repository.write(locked, "a\n")
+        full = os.path.join(self.repository.root, locked)
+        os.chmod(full, 0)
+        self.addCleanup(os.chmod, full, 0o644)
+        result, asked, runner = self.gate()
+        self.assertEqual(1, result.returncode, result.stdout)
+        # The paths are known and touch nothing emulation reads, so it is skipped.
+        self.assertEqual(HOST, asked)
+        self.assertIsNone(runner.handed_lines())
+        closing = self.closing(result)
+        self.assertIn("could not tell which plant lines the branch changes", closing)
+        self.assertIn("could not be read", closing)
+        self.assertIn("emulation tier was correctly SKIPPED", closing)
+
+
 # --- The declaration the task runner carries --------------------------------
 
 
@@ -546,10 +976,29 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
         )
         self.assertEqual(["fw:emulate"], self.tasks_given("--emulation"))
 
-    def test_the_round_never_runs_the_full_sweep(self):
-        # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-        self.assertNotIn("fw:sweep", self.round_arguments())
+    def test_the_round_hands_over_the_sweep_only_as_its_sweep_step(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The sweep reaches the round only as the gate's sweep step, which
+        # always restricts it, and never as a tier run as it stands.
+        self.assertEqual([SWEEP], self.tasks_given("--sweep"))
+        self.assertNotIn(SWEEP, self.tasks_given("--host") + self.tasks_given("--emulation"))
         self.assertNotIn("mull_sweep", " ".join(self.round_arguments()))
+
+    def test_the_task_descriptions_say_the_round_runs_the_changed_lines_sweep_and_never_the_full(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        with open(os.path.join(REPOSITORY, "Taskfile.yml"), encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+
+        def description(name: str) -> str:
+            start = lines.index(f"  {name}:")
+            return next(line for line in lines[start + 1:] if line.strip().startswith("desc:"))
+
+        round_description = description("check:round")
+        self.assertIn("changed-lines mutation sweep", round_description)
+        self.assertIn("never the full one", round_description)
+        sweep_description = description("fw:sweep")
+        self.assertIn("restricted to the lines the branch changes", sweep_description)
+        self.assertNotIn("never part of a build round", sweep_description)
 
     def test_the_complete_verification_keeps_its_declaration_of_every_gate(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
