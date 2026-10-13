@@ -10,12 +10,21 @@ compared with that record: each recorded item must still be there, locked and
 unchanged, and no critical-class net may carry an item the record does not
 hold. Copper on any other net is the router's to place, and is ignored.
 
+The critical nets at comparison are every net the record names as well as every
+net the critical classes hold then, and every class the record names must still
+be defined, so a change to class membership between the two -- a project file
+rewritten by the import, or a different one given -- cannot hide added copper.
+A record is of one board, taken with that board's own project file, and is
+compared only with that board opened with that project file.
+
 Which nets are in which class is asked of KiCad, through the same probe the
 pre-order check uses to learn the Mains class, run on the board itself with its
 project file, so the project file's assignments and patterns and any class the
 layout file carries all count as KiCad applies them. The layout is read with
 the pre-order check's own S-expression reader, in the one form KiCad writes
-it; anything else fails by name rather than being taken as no copper.
+it; anything else fails by name rather than being taken as no copper. The record
+is a working file, refused inside any design's folder so it is never committed
+or copied as part of a design.
 
     locked_copper.py record  --board B.kicad_pcb --project B.kicad_pro --class NAME [--class NAME ...] --record FILE
     locked_copper.py compare --board B.kicad_pcb --project B.kicad_pro --record FILE
@@ -218,6 +227,24 @@ def defined_classes(project: dict, layout: list) -> Set[str]:
     return named | {str(block[1]) for block in sexpr.children(layout, "net_class") if len(block) > 1}
 
 
+def class_name_problems(classes: Sequence[str]) -> List[Tuple[str, str]]:
+    """Every way a list of critical classes cannot be put to KiCad as given: (class, why)."""
+    problems = [(netclass, "a class name holding a quote or backslash cannot be put to KiCad in a rule; rename the class")
+                for netclass in classes if UNWRITABLE & set(netclass)]
+    if len(set(classes)) != len(classes):
+        problems.append((", ".join(classes), "a critical class is named more than once; name each once"))
+    return problems
+
+
+def own_project(board: str, project: str) -> Optional[str]:
+    """Why `project` is not the project file KiCad opens `board` with, or None when it is."""
+    beside = os.path.splitext(board)[0] + ".kicad_pro"
+    if os.path.realpath(project) == os.path.realpath(beside):
+        return None
+    return (f"KiCad opens {board} with the project file {beside} beside it, not {project}, so class membership "
+            "read with the one given would not be the board's own; give the board's own project file")
+
+
 def read_project(path: str) -> dict:
     try:
         with open(path, encoding="utf-8") as handle:
@@ -314,9 +341,9 @@ def compare_items(recorded: List[dict], current: List[dict]) -> List[Tuple[str, 
     items are present, a locked one is matched first, so the one left over is
     the addition and an unlocked copy cannot stand in for the locked original.
     Each recorded item left unmatched is paired, where it can be, with a left-over
-    item of the same kind on the same net -- the same item by uuid first, then
-    the one differing in fewest properties -- and reported as changed; whatever is
-    still unpaired is missing or added.
+    item of the same kind -- the same item by uuid first, on whichever critical
+    net it now is, then the one on the same net differing in fewest properties --
+    and reported as changed; whatever is still unpaired is missing or added.
     """
     findings = []
     waiting: Dict[str, List[dict]] = {}
@@ -335,8 +362,9 @@ def compare_items(recorded: List[dict], current: List[dict]) -> List[Tuple[str, 
             unmatched.append(item)
     left = [item for pool in waiting.values() for item in pool]
     for item in unmatched:
+        twin = next((now for now in left if item["uuid"] and now["kind"] == item["kind"]
+                     and now["uuid"] == item["uuid"]), None)
         same = [now for now in left if now["kind"] == item["kind"] and now["net"] == item["net"]]
-        twin = next((now for now in same if item.get("uuid") and now.get("uuid") == item["uuid"]), None)
         if twin is None and same:
             twin = min(same, key=lambda now: len(differences(item, now)))
         if twin is None:
@@ -356,17 +384,29 @@ def compare_items(recorded: List[dict], current: List[dict]) -> List[Tuple[str, 
 # --- The record ---------------------------------------------------------------------
 
 
+#: Everything a record holds, as recording writes it and comparing reads it.
+RECORD_KEYS = ("format", "board", "classes", "nets", "items")
+
+
 def write_record(path: str, board: str, classes: Sequence[str], nets: Dict[str, Set[str]], items: List[dict]) -> None:
+    """Write the record whole or not at all, so a failed write never leaves a partial record to compare against."""
     document = {
         "format": FORMAT,
-        "board": os.path.abspath(board),
+        "board": os.path.realpath(board),
         "classes": list(classes),
-        "nets": {netclass: sorted(names) for netclass, names in nets.items()},
+        "nets": {netclass: sorted(nets[netclass]) for netclass in classes},
         "items": items,
     }
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump(document, handle, indent=1)
-        handle.write("\n")
+    handle, partial = tempfile.mkstemp(prefix=".locked-copper-", dir=os.path.dirname(os.path.abspath(path)))
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            json.dump(document, stream, indent=1)
+            stream.write("\n")
+        os.replace(partial, path)
+    except BaseException:
+        if os.path.exists(partial):
+            os.remove(partial)
+        raise
 
 
 def _length(value) -> bool:
@@ -412,16 +452,34 @@ def read_record(path: str) -> dict:
         raise Unreadable(f"the record {path} cannot be read ({error})") from error
     if not isinstance(document, dict) or document.get("format") != FORMAT:
         raise Unreadable(f"{path} is not a locked-copper record (it does not say it is a {FORMAT})")
-    classes, items = document.get("classes"), document.get("items")
+    if set(document) != set(RECORD_KEYS):
+        raise Unreadable(f"the record {path} holds {', '.join(sorted(map(str, document)))}, where recording writes "
+                         f"exactly {', '.join(sorted(RECORD_KEYS))}")
+    board, classes, nets, items = (document[name] for name in ("board", "classes", "nets", "items"))
+    if not isinstance(board, str) or not os.path.isabs(board):
+        raise Unreadable(f"the record {path} does not name the board it was taken of by its full path")
     if not isinstance(classes, list) or not classes or not all(isinstance(name, str) and name for name in classes):
         raise Unreadable(f"the record {path} names no critical classes")
+    problems = class_name_problems(classes)
+    if problems:
+        raise Unreadable(f"the record {path} names its classes in a form recording refuses "
+                         f"({'; '.join(f'{name}: {why}' for name, why in problems)})")
+    if not isinstance(nets, dict) or set(nets) != set(classes) or not all(
+            isinstance(names, list) and all(isinstance(name, str) and name for name in names) for names in nets.values()):
+        raise Unreadable(f"the record {path} does not give the nets of each of its classes, {', '.join(classes)}, "
+                         "and of no other")
     if not isinstance(items, list):
         raise Unreadable(f"the record {path} holds no list of items")
+    critical = set().union(*nets.values())
     for index, item in enumerate(items):
         kind = item.get("kind") if isinstance(item, dict) else None
         wanted = ("kind", "net", "uuid", "locked") + (KINDS[kind][1] if kind in KINDS else ())
         if kind not in KINDS or set(item) != set(wanted) or not all(FORMS[name](item[name]) for name in wanted[1:]):
             raise Unreadable(f"the record {path} item {index + 1} is not a track, arc, via or zone in the form recording writes")
+        if item["net"] not in critical:
+            raise Unreadable(f"the record {path} item {index + 1} is on the net {item['net']}, which none of its classes holds")
+        if not item["locked"]:
+            raise Unreadable(f"the record {path} item {index + 1} is not locked, where recording takes only locked items")
     return document
 
 
@@ -433,29 +491,54 @@ def inside(path: str, folder: str) -> bool:
     return os.path.commonpath([path, folder]) == folder
 
 
+def design_folder(path: str, board: str) -> Optional[str]:
+    """The design's folder `path` would sit in, at any depth, or None.
+
+    That is the board's own folder, or any folder above `path` holding a
+    project file, whichever design it belongs to.
+    """
+    own = os.path.dirname(os.path.realpath(board))
+    if inside(path, own):
+        return own
+    folder = os.path.dirname(os.path.realpath(path))
+    while True:
+        try:
+            if any(name.endswith(".kicad_pro") for name in os.listdir(folder)):
+                return folder
+        except OSError:
+            pass
+        parent = os.path.dirname(folder)
+        if parent == folder:
+            return None
+        folder = parent
+
+
 def record(board: str, project: str, classes: Sequence[str], out_path: str, kicad_cli: str, out) -> int:
     """Record every track, arc, via and zone on the board's critical-class nets; the exit status."""
-    folder = os.path.dirname(os.path.abspath(board))
-    if inside(out_path, folder):
-        print(f"REFUSED | {clean(out_path)} | the record is a working file and is never kept in a design's folder, "
-              f"where it could be committed and copied as part of the design; write it outside {clean(folder)}", file=out)
+    refusals: List[Tuple[str, str]] = []
+    folder = design_folder(out_path, board)
+    if folder is not None:
+        refusals.append((out_path, "the record is a working file and is never kept in a design's folder, where it could be "
+                                   f"committed and copied as part of the design; {folder} holds a design's project file, "
+                                   "so write the record outside it"))
+    why = own_project(board, project)
+    if why is not None:
+        refusals.append((project, why))
+    if refusals:
+        for what, detail in refusals:
+            print(f"REFUSED | {clean(what)} | {clean(detail)}", file=out)
+        print("RESULT | REFUSED | no record was written", file=out)
         return 1
     layout = read_layout(board)
     defined = defined_classes(read_project(project), layout)
-    refused = False
-    for netclass in classes:
-        if netclass not in defined:
-            refused = True
-            print(f"REFUSED | {clean(netclass)} | the design defines no net class of this name (it defines "
-                  f"{', '.join(sorted(defined)) or 'none'}); name each critical class exactly as the design does", file=out)
-        elif UNWRITABLE & set(netclass):
-            refused = True
-            print(f"REFUSED | {clean(netclass)} | a class name holding a quote or backslash cannot be put to KiCad "
-                  "in a rule; rename the class", file=out)
-    if len(set(classes)) != len(classes):
-        refused = True
-        print(f"REFUSED | {clean(', '.join(classes))} | a critical class is named more than once; name each once", file=out)
-    if refused:
+    refusals = [(netclass, f"the design defines no net class of this name (it defines {', '.join(sorted(defined)) or 'none'}); "
+                           "name each critical class exactly as the design does")
+                for netclass in classes if netclass not in defined]
+    refusals += class_name_problems(classes)
+    if refusals:
+        for what, detail in refusals:
+            print(f"REFUSED | {clean(what)} | {clean(detail)}", file=out)
+        print("RESULT | REFUSED | no record was written", file=out)
         return 1
     items = copper(layout, board)
     nets = members(kicad_cli, board, project, layout, classes)
@@ -469,7 +552,12 @@ def record(board: str, project: str, classes: Sequence[str], out_path: str, kica
         print(f"RESULT | REFUSED | {len(loose)} of {len(kept)} critical-class items are not locked, so no record was written",
               file=out)
         return 1
-    write_record(out_path, board, classes, nets, kept)
+    try:
+        write_record(out_path, board, classes, nets, kept)
+    except OSError as error:
+        print(f"REFUSED | {clean(out_path)} | the record cannot be written there ({clean(str(error))})", file=out)
+        print("RESULT | REFUSED | no record was written", file=out)
+        return 1
     for netclass in classes:
         print(f"CLASS | {clean(netclass)} | {len(nets[netclass])} net{'s' if len(nets[netclass]) != 1 else ''}"
               + (f" | {clean(', '.join(sorted(nets[netclass])))}" if nets[netclass] else ""), file=out)
@@ -480,14 +568,29 @@ def record(board: str, project: str, classes: Sequence[str], out_path: str, kica
 def compare(board: str, project: str, record_path: str, kicad_cli: str, out) -> int:
     """Compare the board's critical-class copper with the record; the exit status."""
     document = read_record(record_path)
-    layout = read_layout(board)
-    read_project(project)
+    mismatches = []
+    if document["board"] != os.path.realpath(board):
+        mismatches.append((record_path, f"the record was taken of {document['board']}, not of {os.path.realpath(board)}; "
+                                        "a board is compared only with its own record, so record this board afresh"))
+    why = own_project(board, project)
+    if why is not None:
+        mismatches.append((project, why))
     classes = document["classes"]
+    if mismatches:
+        for what, detail in mismatches:
+            print(f"MISMATCH | {clean(what)} | {clean(detail)}", file=out)
+        print(f"RESULT | FAIL | the board, project file and record given are not one board's, so nothing in "
+              f"{', '.join(classes)} is taken as a pass", file=out)
+        return 1
+    layout = read_layout(board)
+    defined = defined_classes(read_project(project), layout)
+    findings = [("UNDEFINED", netclass, "the record names this critical class and the design no longer defines it, so its "
+                                        "nets' copper is no longer protected; restore the class, or record afresh")
+                for netclass in classes if netclass not in defined]
     nets = members(kicad_cli, board, project, layout, classes)
-    recorded_nets = {item["net"] for item in document["items"]}
-    critical = set().union(*nets.values()) | recorded_nets
+    critical = set().union(*nets.values(), *document["nets"].values())
     current = [item for item in copper(layout, board) if item["net"] in critical]
-    findings = compare_items(document["items"], current)
+    findings += compare_items(document["items"], current)
     for finding, item, detail in findings:
         print(f"{finding} | {clean(item)} | {clean(detail)}", file=out)
     if findings:

@@ -38,7 +38,8 @@ def setUpModule():
 
 #: The base board's items, by name, as KiCad 10 writes them. /PWR is in Power by
 #: the project's assignment, /GND_A and /GND_B in Ground by its pattern, /LV in
-#: no critical class.
+#: no critical class. /GND_B reaches the board only on a pad, so it is a critical
+#: net with no copper when recorded, as a net the router has yet to route is.
 ITEMS = {
     "track": '(segment (start 0 0) (end 5 0) (width 0.5) (locked yes) (layer "F.Cu") (net "/PWR") '
              '(uuid "00000000-0000-4000-8000-000000000001"))',
@@ -52,6 +53,11 @@ ITEMS = {
             '(polygon (pts (xy 30 30) (xy 40 30) (xy 40 40) (xy 30 40))))',
     "lv": '(segment (start 60 0) (end 65 0) (width 0.25) (layer "F.Cu") (net "/LV") '
           '(uuid "00000000-0000-4000-8000-000000000006"))',
+    "pad": '(footprint "test:Pad" (layer "F.Cu") (uuid "00000000-0000-4000-8000-0000000000f0") (at 25 25) '
+           '(property "Reference" "J1" (at 0 -2 0) (layer "F.SilkS") (uuid "00000000-0000-4000-8000-0000000000f1") '
+           '(effects (font (size 1 1) (thickness 0.15)))) '
+           '(pad "1" thru_hole circle (at 0 0) (size 1.7 1.7) (drill 1) (layers "*.Cu" "*.Mask") (net "/GND_B") '
+           '(uuid "00000000-0000-4000-8000-0000000000f2")))',
 }
 
 
@@ -59,7 +65,8 @@ def layout(items, extra: str = "") -> str:
     body = "".join(f"\t{item}\n" for item in items)
     return ('(kicad_pcb\n\t(version 20260206)\n\t(generator "pcbnew")\n\t(generator_version "10.0")\n'
             '\t(general (thickness 1.6))\n\t(paper "A4")\n'
-            '\t(layers\n\t\t(0 "F.Cu" signal)\n\t\t(2 "B.Cu" signal)\n\t\t(25 "Edge.Cuts" user)\n\t)\n'
+            '\t(layers\n\t\t(0 "F.Cu" signal)\n\t\t(4 "In1.Cu" signal)\n\t\t(6 "In2.Cu" signal)\n'
+            '\t\t(2 "B.Cu" signal)\n\t\t(25 "Edge.Cuts" user)\n\t)\n'
             + extra + body + ")\n")
 
 
@@ -190,6 +197,10 @@ class RecordingAndComparing(Board):
             ("track", "(end 5 0)", "(end 6 0)", "end (5, 0) mm -> (6, 0) mm"),
             ("track", '(layer "F.Cu")', '(layer "B.Cu")', "layer F.Cu -> B.Cu"),
             ("arc", "(mid 2 12)", "(mid 2 12.5)", "mid (2, 12) mm -> (2, 12.5) mm"),
+            ("arc", "(start 0 10)", "(start 0 9)", "start (0, 10) mm -> (0, 9) mm"),
+            ("arc", "(end 4 10)", "(end 4 11)", "end (4, 10) mm -> (4, 11) mm"),
+            ("via", '(layers "F.Cu" "B.Cu")', '(layers "F.Cu" "In1.Cu")', "layers B.Cu F.Cu -> F.Cu In1.Cu"),
+            ("track", '(net "/PWR")', '(net "/GND_A")', "net /PWR -> /GND_A"),
             ("via", "(drill 0.4)", "(drill 0.3)", "drill 0.4 mm -> 0.3 mm"),
             ("via", "(size 0.8)", "(size 0.9)", "diameter 0.8 mm -> 0.9 mm"),
             ("via", "(at 20 20)", "(at 20 21)", "at (20, 20) mm -> (20, 21) mm"),
@@ -205,6 +216,15 @@ class RecordingAndComparing(Board):
                 self.assertEqual(len(changed), 1, lines)
                 self.assertTrue(changed[0][1].startswith(name), lines)
                 self.assertEqual(changed[0][2], said)
+
+    def test_a_track_moved_off_the_critical_nets_is_missing(self):
+        self.recorded()
+        self.write(layout(dict(ITEMS, track=ITEMS["track"].replace('(net "/PWR")', '(net "/LV")')).values()))
+        status, lines = self.compare()
+        self.assertEqual(status, 1, lines)
+        missing = self.findings(lines, "MISSING")
+        self.assertEqual(len(missing), 1, lines)
+        self.assertTrue(missing[0][1].startswith("track [/PWR]"), lines)
 
     def test_a_change_with_a_new_uuid_is_still_reported_as_a_change(self):
         self.recorded()
@@ -275,7 +295,7 @@ class Membership(Board):
 
     def test_by_assignment_and_by_pattern(self):
         lines = self.recorded()
-        self.assertEqual(self.classes(lines), {"Power": ["/PWR"], "Ground": ["/GND_A"]})
+        self.assertEqual(self.classes(lines), {"Power": ["/PWR"], "Ground": ["/GND_A", "/GND_B"]})
 
     def test_by_a_class_the_layout_file_carries(self):
         block = '\t(net_class "Sense" "written by an older KiCad" (clearance 0.2) (add_net "/S1"))\n'
@@ -325,6 +345,95 @@ class Membership(Board):
         self.assertNotIn("PASS", lines[-1])
 
 
+class MembershipChangesBetweenRecordingAndComparing(Board):
+    """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
+
+    The critical nets at comparison are every net the record names as well as
+    every net the critical classes hold then, and a class the record names that
+    the design no longer defines fails, so a project file rewritten or replaced
+    between recording and comparing cannot hide added copper.
+    """
+
+    VIA_ON_GND_B = ('(via (at 25 25) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "/GND_B") '
+                    '(uuid "00000000-0000-4000-8000-0000000000b4"))')
+    TRACK_ON_PWR = ('(segment (start 0 5) (end 5 5) (width 0.5) (layer "F.Cu") (net "/PWR") '
+                    '(uuid "00000000-0000-4000-8000-0000000000b1"))')
+
+    def test_a_net_that_leaves_its_class_still_has_its_added_copper_found(self):
+        self.recorded()
+        cases = {
+            "the pattern dropped": (project({"/PWR": "Power"}, []), self.VIA_ON_GND_B, "/GND_B"),
+            "the assignment dropped": (project({}, [{"netclass": "Ground", "pattern": "/GND_*"}]), self.TRACK_ON_PWR, "/PWR"),
+        }
+        for what, (project_text, added, net) in cases.items():
+            with self.subTest(change=what):
+                self.write(layout(ITEMS.values()), project_text)
+                status, lines = self.compare()
+                self.assertEqual(status, 0, lines)
+                self.write(layout(list(ITEMS.values()) + [added]))
+                status, lines = self.compare()
+                self.assertEqual(status, 1, lines)
+                added_found = self.findings(lines, "ADDED")
+                self.assertEqual(len(added_found), 1, lines)
+                self.assertIn(f"[{net}]", added_found[0][1])
+                self.assertNotIn("PASS", lines[-1])
+
+    def test_a_class_the_design_no_longer_defines_fails(self):
+        self.recorded()
+        self.write(layout(list(ITEMS.values()) + [self.VIA_ON_GND_B]), project({"/PWR": "Power"}, [], classes=("Power",)))
+        status, lines = self.compare()
+        self.assertEqual(status, 1, lines)
+        self.assertEqual([finding[1] for finding in self.findings(lines, "UNDEFINED")], ["Ground"], lines)
+        self.assertEqual(len(self.findings(lines, "ADDED")), 1, lines)
+        self.write(layout(ITEMS.values()))
+        status, lines = self.compare()
+        self.assertEqual(status, 1, lines)
+        self.assertEqual(sorted(line.split(" | ")[0] for line in lines[:-1]), ["UNDEFINED"], lines)
+
+
+class OneBoardsRecord(Board):
+    """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
+
+    Recording and comparing each take the board with its own project file, and
+    a board is compared only with the record taken of it, so neither another
+    project file nor another board's record can stand in.
+    """
+
+    def test_a_project_file_not_the_boards_own_is_refused_and_fails(self):
+        self.recorded()
+        for elsewhere in (os.path.join(self.work, "b.kicad_pro"), os.path.join(self.folder, "other.kicad_pro")):
+            with self.subTest(project=elsewhere):
+                with open(elsewhere, "w", encoding="utf-8") as handle:
+                    handle.write(project({"/PWR": "Power"}, []))
+                status, lines = self.run_check("record", "--board", self.board, "--project", elsewhere,
+                                               "--class", "Power", "--record", os.path.join(self.work, "other.json"))
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(any(line.startswith(f"REFUSED | {elsewhere} | KiCad opens") for line in lines), lines)
+                self.assertFalse(os.path.exists(os.path.join(self.work, "other.json")))
+                self.write(layout(list(ITEMS.values()) + [MembershipChangesBetweenRecordingAndComparing.VIA_ON_GND_B]))
+                status, lines = self.run_check("compare", "--board", self.board, "--project", elsewhere,
+                                               "--record", self.record_path)
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(any(line.startswith(f"MISMATCH | {elsewhere} |") for line in lines), lines)
+                self.assertNotIn("PASS", lines[-1])
+                self.write(layout(ITEMS.values()))
+
+    def test_another_boards_record_fails(self):
+        self.recorded()
+        twin = os.path.join(os.path.dirname(self.folder), "twin")
+        os.makedirs(twin)
+        for name in ("b.kicad_pcb", "b.kicad_pro"):
+            with open(os.path.join(self.folder, name), encoding="utf-8") as source, \
+                    open(os.path.join(twin, name), "w", encoding="utf-8") as copy_of:
+                copy_of.write(source.read())
+        status, lines = self.run_check("compare", "--board", os.path.join(twin, "b.kicad_pcb"),
+                                       "--project", os.path.join(twin, "b.kicad_pro"), "--record", self.record_path)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any(line.startswith(f"MISMATCH | {self.record_path} | the record was taken of") for line in lines),
+                        lines)
+        self.assertNotIn("PASS", lines[-1])
+
+
 class TheRecordStep(Board):
     """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
 
@@ -340,6 +449,36 @@ class TheRecordStep(Board):
                 self.assertTrue(lines[0].startswith("REFUSED |") and "never kept in a design's folder" in lines[0], lines)
                 self.assertFalse(os.path.exists(inside))
 
+    def test_a_record_inside_any_designs_folder_is_refused(self):
+        other = os.path.join(os.path.dirname(self.folder), "other")
+        os.makedirs(other)
+        with open(os.path.join(other, "o.kicad_pro"), "w", encoding="utf-8") as handle:
+            handle.write(BASE_PROJECT)
+        for path in (os.path.join(other, "r.json"), os.path.join(other, "deep", "er", "r.json")):
+            with self.subTest(path=path):
+                status, lines = self.record(record_path=path)
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(lines[0].startswith(f"REFUSED | {path} |") and os.path.realpath(other) in lines[0], lines)
+                self.assertFalse(os.path.exists(path))
+        above = os.path.join(os.path.dirname(self.folder), "above.kicad_pro")
+        with open(above, "w", encoding="utf-8") as handle:
+            handle.write(BASE_PROJECT)
+        status, lines = self.record()
+        self.assertEqual(status, 1, lines)
+        self.assertIn("never kept in a design's folder", lines[0])
+        self.assertFalse(os.path.exists(self.record_path))
+
+    def test_a_record_that_cannot_be_written_is_refused_whole(self):
+        path = os.path.join(self.work, "no-such-folder", "b.record.json")
+        status, lines = self.record(record_path=path)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith(f"REFUSED | {path} | the record cannot be written"), lines)
+        self.assertEqual(lines[-1], "RESULT | REFUSED | no record was written")
+        self.assertEqual(os.listdir(self.work), [])
+        status, lines = self.record(record_path=self.work)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(os.path.isdir(self.work) and os.listdir(self.work) == [], os.listdir(self.work))
+
     def test_an_unlocked_critical_item_is_refused_and_named(self):
         self.write(layout(dict(ITEMS, via=ITEMS["via"].replace(" (locked yes)", "")).values()))
         status, lines = self.record()
@@ -350,7 +489,7 @@ class TheRecordStep(Board):
 
     def test_an_unlocked_item_off_the_critical_nets_is_not_refused(self):
         lines = self.recorded()
-        self.assertTrue(lines[-1].startswith("RESULT | RECORDED | 4 locked items on 2 critical-class nets"), lines)
+        self.assertTrue(lines[-1].startswith("RESULT | RECORDED | 4 locked items on 3 critical-class nets"), lines)
 
 
 class Malformed(Board):
@@ -388,7 +527,29 @@ class Malformed(Board):
             good = json.load(handle)
         tampered = copy.deepcopy(good)
         tampered["items"][0]["width" if "width" in tampered["items"][0] else "net"] = "wide"
+
+        def edited(change):
+            document = copy.deepcopy(good)
+            change(document)
+            return json.dumps(document)
+
+        def first_item(name, value):
+            return lambda document: document["items"][0].__setitem__(name, value)
+
         records = {
+            "no nets": edited(lambda document: document.pop("nets")),
+            "the nets of another class": edited(lambda document: document["nets"].__setitem__("Sense", [])),
+            "the nets of one class left out": edited(lambda document: document["nets"].pop("Ground")),
+            "a net that is not a name": edited(lambda document: document["nets"]["Power"].append(3)),
+            "an item on a net no class holds": edited(first_item("net", "/LV")),
+            "an item not locked": edited(first_item("locked", False)),
+            "no board": edited(lambda document: document.pop("board")),
+            "a board by a relative path": edited(lambda document: document.__setitem__("board", "b.kicad_pcb")),
+            "a class named twice": edited(lambda document: document.__setitem__("classes", ["Power", "Power", "Ground"])),
+            "a class that cannot be put to KiCad": edited(lambda document: (
+                document.__setitem__("classes", ["Power", "Gro'und"]),
+                document["nets"].__setitem__("Gro'und", document["nets"].pop("Ground")))),
+            "a key recording does not write": edited(lambda document: document.__setitem__("project", "b.kicad_pro")),
             "not JSON": "{ not json",
             "another kind of file": json.dumps({"format": "something else", "classes": ["Power"], "items": []}),
             "no classes": json.dumps(dict(good, classes=[])),

@@ -24,7 +24,7 @@ KiCad's bundled Python is the one that can `import pcbnew`. Its usual location:
 
 To check it, run `<KiCad's Python> -c "import pcbnew; print(pcbnew.Version())"`. It should print the KiCad version. The commands below write this Python as `KICAD_PYTHON` and the router's jar file as `FREEROUTING_JAR`. Replace them with the paths on your machine.
 
-The commands were exercised on macOS.
+The commands below are written for a POSIX shell, the terminal on macOS or Linux, and were exercised on macOS. On Windows, run them in PowerShell. The `task` commands are typed as written. In the others, write `$env:KICAD_PYTHON` and `$env:FREEROUTING_JAR` where a command says `"$KICAD_PYTHON"` and `"$FREEROUTING_JAR"`, and start a command that begins with KiCad's Python with `& `, for example `& $env:KICAD_PYTHON -c "import pcbnew; print(pcbnew.Version())"`. Set them with `$env:KICAD_PYTHON = "C:\Program Files\KiCad\10.0\bin\python.exe"`. The Windows forms have not been exercised.
 
 ## Rules before routing
 
@@ -64,7 +64,7 @@ Every board declares this in its project text variable `MAINS` (in KiCad: **File
 
   The condition is written exactly as shown, with no other spacing. The rule has no `(layer ...)` clause and no other narrowing by layer or area. It holds both a `clearance` and a `creepage` constraint, each in millimetres. `<clearance>` and `<creepage>` are no less than the separation basis record's mains-to-low-voltage clearance and creepage (`mains_to_low_voltage.clearance_mm` and `.creepage_mm` in the `separation-basis.yaml` that holds the board to its signed figures). In the table from step 1, both figures name that record as their source. The pre-order check accepts the rule in this form only, and holds the board to the record's figures whatever the rule states.
 
-**Local clearance overrides can defeat the separation rule.** Pads, footprints and zones can each carry a clearance of their own, set outside the custom rules. KiCad applies an override on a pad or a footprint ahead of every custom rule, taking the larger of the two items' overrides. So a small override on either side of a mains/low-voltage pair would let low-voltage copper sit closer to mains than the separation rule allows. KiCad 10.0.7 does not let a zone's own clearance outrank a custom rule. Treat it the same way all the same. Set none of these overrides below the separation basis record's clearance. The pre-order check fails any pad or footprint override, and any clearance on a `Mains`-class zone, that undercuts the signed figure.
+**Local clearance overrides can defeat the separation rule.** Pads, footprints and zones can each carry a clearance of their own, set outside the custom rules. A local clearance override on a pad or a footprint takes precedence over every custom rule in KiCad, which applies the larger of the two items' overrides. So a small override on either side of a mains/low-voltage pair would let low-voltage copper sit closer to mains than the separation rule allows. Treat a zone's own clearance the same way, although KiCad 10 (10.0.7) was measured not to let it outrank a custom rule. Set none of these below the separation basis record's clearance. The pre-order check fails any pad or footprint override, and any clearance on a `Mains`-class zone, that undercuts the signed figure.
 
 ### 3. Save, then close and reopen the project
 
@@ -115,12 +115,15 @@ From the board's folder, run:
 task hw:copper-record -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <critical class> [--class <critical class> ...] --record <work folder>/<board>.record.json
 ```
 
-Name every critical class with its own `--class`. Set `KICAD_CLI` as `hardware/README.md` describes if `kicad-cli` is not on your search path.
+Name every critical class with its own `--class`. Give the board's own project file, the one beside it with its name. Set `KICAD_CLI` as `hardware/README.md` describes if `kicad-cli` is not on your search path.
 
-The record lists every track, arc, via and zone on a net KiCad places in those classes, each with its properties and whether it is locked. It is a working file. Write it to a folder outside the board's folder, and never commit it. The command refuses a path inside the board's folder.
+The record lists every track, arc, via and zone on a net KiCad places in those classes, each with its properties and whether it is locked, and the nets each class holds. It is a working file. Write it to a folder that is not inside any design's folder, and never commit it.
 
-It also refuses, and writes no record, when:
-- a named class is not one the design defines;
+The command refuses, and writes no record, when:
+- the record's path is inside the board's folder, or inside any folder that holds a KiCad project file;
+- the record cannot be written where it was asked to go;
+- the project file is not the board's own;
+- a named class is not one the design defines, or a class is named twice;
 - any critical-class item is not locked. It names each one, so you can lock it and record again.
 
 It prints each critical class with the nets KiCad puts in it. Check those against your intent. A critical net missing from the list is in the wrong class.
@@ -163,13 +166,14 @@ From the board's folder, run:
 task hw:copper-compare -- --board <board>.kicad_pcb --project <board>.kicad_pro --record <work folder>/<board>.record.json
 ```
 
-This fails, naming each item, when:
+Give the same board, its own project file, and the record taken of that board in step 4. This fails, naming each item, when:
 - a recorded item is missing;
 - a recorded item is no longer locked;
 - a recorded item is changed in any recorded property, with each changed property given as old → new;
-- a critical-class net carries a track, arc, via or zone that the record does not hold.
+- a critical-class net carries a track, arc, via or zone that the record does not hold;
+- a critical class the record names is no longer defined by the design.
 
-An added item identical to a recorded one is still reported as added. Copper on nets outside the critical classes is the router's, and is ignored. A failure fails this step whatever the router or the importer reported. Restore the board as it was before export, correct the cause, and repeat from step 2.
+The critical nets at comparison are every net the record names and every net the critical classes hold now, so a net that left its class after recording, for example because the import rewrote the project file, is still checked. An added item identical to a recorded one is still reported as added. Copper on nets outside both is the router's, and is ignored. A record taken of another board, or a project file that is not the board's own, fails the comparison without comparing anything. A failure fails this step whatever the router or the importer reported. Restore the board as it was before export, correct the cause, and repeat from step 2.
 
 A board on which any critical-class net was placed by the router fails this step.
 
