@@ -17,6 +17,10 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5
+  fingerprint: d8b26660d0ba658de803289cad0000594f7de09f57f6516d1cb6e4ed68dcb486
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
     class: new-condition
