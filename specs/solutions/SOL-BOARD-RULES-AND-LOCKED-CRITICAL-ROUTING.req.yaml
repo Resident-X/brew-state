@@ -35,7 +35,7 @@ links:
     type: targets
 brief_confirmation:
   confirmer: claude-opus-5-5 (independent brief reviewer, fresh context)
-  fingerprint: 53c748716586e105ea73bde3e912681b4e328c4d869aa32e4c1fb93d618e4c1e
+  fingerprint: c6ec03d73620b89015268a74474d57c45e2a9d8d324b78e0e0ca14c3ca41faff
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
