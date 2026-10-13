@@ -51,7 +51,7 @@ design_question_answers:
   - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
     class: consumer-self-sufficiency
 interfaces:
-  - KiCad project design rules and net classes, read back from the open board
+  - KiCad's rule check on one board, asked through the board tooling whether it loaded the board's rules and which nets each class holds
   - KiCad's Specctra exporter and importer, reached through KiCad's bundled Python module or its board editor
   - Freerouting, run from its command line on a Java runtime
   - KiCad's command-line electrical and layout rule checks
