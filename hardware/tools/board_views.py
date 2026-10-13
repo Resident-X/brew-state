@@ -66,6 +66,7 @@ import sys
 import tempfile
 import zlib
 from typing import Dict, List, Optional, Sequence, Set, Tuple
+from xml.etree import ElementTree
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -756,14 +757,75 @@ def drawing(svg_path: str, colour: str, opacity: float = 1.0) -> str:
     return f'<g opacity="{opacity}">{body}</g>' if opacity < 1 else f"<g>{body}</g>"
 
 
-PATH_TOKEN = re.compile(r"[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+SVG_NUMBER = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+PATH_TOKEN = re.compile(r"[MmLlHhVvCcSsQqTtAaZz]|" + SVG_NUMBER.pattern)
 #: How many numbers each command of a vector path takes.
 PATH_ARGUMENTS = {"M": 2, "L": 2, "T": 2, "H": 1, "V": 1, "C": 6, "S": 4, "Q": 4, "A": 7}
-SVG_ELEMENT = re.compile(r"<(path|circle|ellipse|rect|line|polyline|polygon|image)\b([^>]*)>")
-SVG_ATTRIBUTE = re.compile(r"([A-Za-z_:][-\w:.]*)\s*=\s*\"([^\"]*)\"")
-SVG_STROKE = re.compile(r"stroke-width\s*[:=]\s*\"?\s*([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)")
-SVG_TRANSFORM = re.compile(r"\btransform\s*=\s*\"([^\"]*)\"")
-IDENTITY = re.compile(r"\s*(?:translate\(\s*0(?:\.0*)?[\s,]+0(?:\.0*)?\s*\)\s*|scale\(\s*1(?:\.0*)?(?:[\s,]+1(?:\.0*)?)?\s*\)\s*)*")
+
+#: An affine transform as SVG writes its matrix, (a, b, c, d, e, f): a point (x, y) goes to
+#: (a x + c y + e, b x + d y + f).
+Affine = Tuple[float, float, float, float, float, float]
+IDENTITY: Affine = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+TRANSFORM_STEP = re.compile(r"\s*(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^()]*)\)\s*,?")
+#: How many numbers each function of a transform list may take.
+TRANSFORM_ARGUMENTS = {"matrix": (6,), "translate": (1, 2), "scale": (1, 2), "rotate": (1, 3), "skewX": (1,),
+                       "skewY": (1,)}
+SVG_NAMESPACE = "{http://www.w3.org/2000/svg}"
+#: Elements whose content is never drawn where it stands, and elements that only group what they hold.
+SVG_UNDRAWN = {"defs", "title", "desc", "metadata", "style", "script", "clipPath", "mask", "pattern", "marker",
+               "symbol", "linearGradient", "radialGradient", "filter"}
+SVG_GROUPS = {"g", "a", "switch"}
+#: The stroke properties a drawn element inherits from the groups holding it.
+SVG_STROKE_PROPERTIES = ("stroke", "stroke-width", "stroke-linejoin", "stroke-linecap", "stroke-miterlimit")
+
+
+def compose(outer: Affine, inner: Affine) -> Affine:
+    """The transform that applies `inner` first and `outer` after it."""
+    a, b, c, d, e, f = outer
+    p, q, r, s, t, u = inner
+    return a * p + c * q, b * p + d * q, a * r + c * s, b * r + d * s, a * t + c * u + e, b * t + d * u + f
+
+
+def transform(text: str) -> Affine:
+    """An SVG transform list as one matrix, its first function applied last, as SVG applies them."""
+    found, at = IDENTITY, 0
+    while text[at:].strip():
+        step = TRANSFORM_STEP.match(text, at)
+        if step is None:
+            raise ValueError(f"'{text}' is not a transform list")
+        name, given = step.groups()
+        numbers = [float(token) for token in SVG_NUMBER.findall(given)]
+        if SVG_NUMBER.sub("", given).strip(" \t\r\n,") or len(numbers) not in TRANSFORM_ARGUMENTS[name]:
+            raise ValueError(f"'{name}({given})' in '{text}' does not give the numbers {name} takes")
+        if name == "matrix":
+            this = tuple(numbers)
+        elif name == "translate":
+            this = (1.0, 0.0, 0.0, 1.0, numbers[0], numbers[1] if len(numbers) > 1 else 0.0)
+        elif name == "scale":
+            this = (numbers[0], 0.0, 0.0, numbers[-1], 0.0, 0.0)
+        elif name == "rotate":
+            cos, sin = math.cos(math.radians(numbers[0])), math.sin(math.radians(numbers[0]))
+            cx, cy = numbers[1:] if len(numbers) == 3 else (0.0, 0.0)
+            this = (cos, sin, -sin, cos, cx - cos * cx + sin * cy, cy - sin * cx - cos * cy)
+        elif name == "skewX":
+            this = (1.0, 0.0, math.tan(math.radians(numbers[0])), 1.0, 0.0, 0.0)
+        else:
+            this = (1.0, math.tan(math.radians(numbers[0])), 0.0, 1.0, 0.0, 0.0)
+        found = compose(found, this)
+        at = step.end()
+    return found
+
+
+def mapped(matrix: Affine, point: Tuple[float, float]) -> Tuple[float, float]:
+    a, b, c, d, e, f = matrix
+    return a * point[0] + c * point[1] + e, b * point[0] + d * point[1] + f
+
+
+def stretch(matrix: Affine) -> float:
+    """The most the transform lengthens any distance: the largest singular value of its linear part."""
+    a, b, c, d, _, _ = matrix
+    total = a * a + b * b + c * c + d * d
+    return math.sqrt((total + math.sqrt(max(0.0, total * total - 4 * (a * d - b * c) ** 2))) / 2)
 
 
 def svg_arc(start, end, radii: Tuple[float, float], turned: float, large: bool, sweep: bool) -> List[Tuple[float, float]]:
@@ -834,42 +896,118 @@ def path_points(data: str) -> List[Tuple[float, float]]:
     return points
 
 
+def svg_properties(element) -> Dict[str, str]:
+    """An element's own presentation properties, its style attribute taking precedence over its attributes."""
+    found = {name: value.strip() for name, value in element.attrib.items()}
+    for declaration in element.attrib.get("style", "").split(";"):
+        if ":" in declaration:
+            name, value = declaration.split(":", 1)
+            found[name.strip()] = value.strip()
+    return found
+
+
+def svg_length(text: str, what: str) -> float:
+    found = re.fullmatch(r"\s*(" + SVG_NUMBER.pattern + r")\s*(?:px)?\s*", text)
+    if found is None:
+        raise ValueError(f"the {what} '{text}' is not a length in the plot's own units")
+    return float(found.group(1))
+
+
+def stroke_reach(element: str, stroke: Dict[str, str]) -> float:
+    """How far an element's stroke reaches past the outline it strokes, in the element's own units.
+
+    Half the stroke's width, lengthened where a mitred corner or a square end
+    reaches further; an unstroked element reaches no further than its outline.
+    """
+    paint = stroke.get("stroke")
+    if paint == "none" or (paint is None and "stroke-width" not in stroke):
+        return 0.0
+    half = abs(svg_length(stroke.get("stroke-width", "1"), "stroke width")) / 2
+    corners = 1.0
+    if element in ("path", "polyline", "polygon", "rect") and \
+            stroke.get("stroke-linejoin", "miter") in ("miter", "miter-clip", "arcs"):
+        corners = max(1.0, svg_length(stroke.get("stroke-miterlimit", "4"), "miter limit"))
+    if stroke.get("stroke-linecap", "butt") == "square":
+        corners = max(corners, math.sqrt(2))
+    return half * corners
+
+
+def element_points(element: str, given: Dict[str, str]) -> List[Tuple[float, float]]:
+    """The points bounding one drawn element's outline, in its own coordinates."""
+    def value(name: str) -> float:
+        return svg_length(given.get(name, "0"), name)
+
+    if element == "path":
+        return path_points(given.get("d", ""))
+    if element in ("circle", "ellipse"):
+        rx = value("r") if element == "circle" else value("rx")
+        ry = value("r") if element == "circle" else value("ry")
+        x0, y0, x1, y1 = value("cx") - rx, value("cy") - ry, value("cx") + rx, value("cy") + ry
+    elif element in ("rect", "image"):
+        x0, y0, x1, y1 = value("x"), value("y"), value("x") + value("width"), value("y") + value("height")
+    elif element == "line":
+        return [(value("x1"), value("y1")), (value("x2"), value("y2"))]
+    else:
+        given_points = given.get("points", "")
+        if SVG_NUMBER.sub("", given_points).strip(" \t\r\n,"):
+            raise ValueError(f"the {element} points '{given_points}' are not a list of numbers")
+        numbers = [float(token) for token in SVG_NUMBER.findall(given_points)]
+        return list(zip(numbers[0::2], numbers[1::2]))
+    # Every corner of the box, since a turn or a skew can put any of them outermost.
+    return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+
 def drawn_extent(svg_path: str) -> Optional[Tuple[float, float, float, float]]:
     """The bounds, in board coordinates, of everything KiCad drew in a layer's plot, strokes included; None when
-    it drew nothing."""
-    with open(svg_path, encoding="utf-8") as handle:
-        text = handle.read()
+    it drew nothing.
+
+    The board coordinates are the plot's own user units, the ones `drawing`
+    places its body in. Every transform down the groups holding an element is
+    composed and applied to its points, and its own stroke is bounded through
+    them. An element drawn fully transparent draws nothing, as KiCad's hidden,
+    searchable copy of each text is drawn; content whose extent rests on
+    something its own attributes do not state, a visible text's font, a
+    referenced element or an inner viewport, is refused rather than guessed.
+    """
     try:
-        for transform in SVG_TRANSFORM.findall(text):
-            if not IDENTITY.fullmatch(transform):
-                raise ValueError(f"it moves what it draws by '{transform}', so it is not in board coordinates")
-        points: List[Tuple[float, float]] = []
-        for element, attributes in SVG_ELEMENT.findall(text):
-            given = dict(SVG_ATTRIBUTE.findall(attributes))
+        root = ElementTree.parse(svg_path).getroot()
+    except (OSError, ElementTree.ParseError) as error:
+        raise Unreadable(f"KiCad's plot {svg_path} cannot be read ({error})") from error
+    boxes: List[Tuple[float, float, float, float]] = []
 
-            def value(name: str) -> float:
-                return float(given.get(name, "0"))
+    def visit(node, matrix: Affine, inherited: Dict[str, str]) -> None:
+        tag = node.tag if isinstance(node.tag, str) else ""
+        if tag.startswith("{") and not tag.startswith(SVG_NAMESPACE):
+            return
+        element = tag[len(SVG_NAMESPACE):] if tag.startswith(SVG_NAMESPACE) else tag
+        if element in SVG_UNDRAWN:
+            return
+        given = svg_properties(node)
+        if given.get("opacity") is not None and svg_length(given["opacity"], "opacity") <= 0:
+            return
+        if given.get("display") == "none":
+            return
+        here = compose(matrix, transform(given.get("transform", "")))
+        stroke = dict(inherited, **{name: given[name] for name in SVG_STROKE_PROPERTIES if name in given})
+        if element in SVG_GROUPS:
+            for child in node:
+                visit(child, here, stroke)
+        elif element in ("path", "circle", "ellipse", "rect", "line", "polyline", "polygon", "image"):
+            points = [mapped(here, point) for point in element_points(element, given)]
+            if points:
+                reach = stroke_reach(element, stroke) * stretch(here) if element != "image" else 0.0
+                boxes.append(grown((min(p[0] for p in points), min(p[1] for p in points),
+                                    max(p[0] for p in points), max(p[1] for p in points)), reach))
+        else:
+            raise ValueError(f"it draws a visible <{element}>, whose extent the command cannot bound from its "
+                             "attributes")
 
-            if element == "path":
-                points += path_points(given.get("d", ""))
-            elif element in ("circle", "ellipse"):
-                rx = value("r") if element == "circle" else value("rx")
-                ry = value("r") if element == "circle" else value("ry")
-                points += [(value("cx") - rx, value("cy") - ry), (value("cx") + rx, value("cy") + ry)]
-            elif element in ("rect", "image"):
-                points += [(value("x"), value("y")), (value("x") + value("width"), value("y") + value("height"))]
-            elif element == "line":
-                points += [(value("x1"), value("y1")), (value("x2"), value("y2"))]
-            else:
-                numbers = [float(token) for token in PATH_TOKEN.findall(given.get("points", "")) if not token.isalpha()]
-                points += list(zip(numbers[0::2], numbers[1::2]))
-        stroke = max([float(width) for width in SVG_STROKE.findall(text)] + [0.0]) / 2
+    try:
+        for child in root:
+            visit(child, IDENTITY, {})
     except (ValueError, KeyError) as error:
         raise Unreadable(f"KiCad's plot {svg_path} cannot be read for what it draws ({error})") from error
-    if not points:
-        return None
-    return grown((min(p[0] for p in points), min(p[1] for p in points), max(p[0] for p in points),
-                  max(p[1] for p in points)), stroke)
+    return union(boxes) if boxes else None
 
 
 def escape(text: str) -> str:

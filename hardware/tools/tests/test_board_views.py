@@ -9,8 +9,9 @@ signal tracks at the board's minimum width and minimum clearance, a note on a
 user layer, a rule area, a silkscreen text in a font no machine has, and parts
 whose three-dimensional models are kept in the design's folder, missing, hidden
 or not populated, a power track crossing the rule area, a net in two critical
-classes, and a connector courtyard and a silkscreen text reaching past the board
-outline. The views are rendered once, through the shipped task, and the
+classes, a connector courtyard and a silkscreen text reaching past the board
+outline, and a part turned 90 degrees, a text turned 45 degrees and a mirrored
+back-side text, which KiCad plots through transforms. The views are rendered once, through the shipped task, and the
 tests ask of the images, the index and the fact table what the criterion
 needs; the refusals are driven through the command itself. Nothing is skipped
 when a tool is absent: a command that cannot be exercised has not been shown
@@ -120,7 +121,10 @@ NO_SUCH_FONT = "Board Views Proof Face"
 #: it whole; C1 declares no model, C2's model is nowhere, R1 hides its model and D1 is not populated. A rule area
 #: on F.Cu and a user layer, which KiCad does not plot, crossed by a +3V3 track, and a silkscreen text in a font no
 #: machine has follow. J1's courtyard and fabrication outline overhang the board's right edge, at x = 60 mm, to
-#: 64.5 mm and 64 mm, and a silkscreen text sits below its bottom edge, at y = 40 mm, at y = 45 mm.
+#: 64.5 mm and 64 mm, and a silkscreen text sits below its bottom edge, at y = 40 mm, at y = 45 mm. R5 is placed
+#: turned 90 degrees with its reference turned with it, a silkscreen text turned 45 degrees sits above the board's
+#: top edge, at y = 0, about y = -4 mm, and a mirrored text on the back silkscreen sits left of its left edge, at
+#: x = 0, about x = -6 mm: KiCad plots each of the three through a transform.
 ITEMS = [
     footprint("U1", 20, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
                              pad(3, 2, -1, "SIG_A", "input"), pad(4, 2, 1, "SIG_B", "output")],
@@ -160,6 +164,15 @@ ITEMS = [
     + pad(1, 0, -1, "SIG_A", "passive") + " " + pad(2, 0, 1, "SIG_B", "passive") + ")",
     f'(gr_text "OFF BOARD" (at 30 45 0) (layer "F.SilkS") (uuid {uuid()}) '
     '(effects (font (size 1.5 1.5) (thickness 0.2))))',
+    f'(footprint "proof:Part" (layer "F.Cu") (uuid {uuid()}) (at 38 30 90) '
+    f'(property "Reference" "R5" (at 0 -3 90) (layer "F.SilkS") (uuid {uuid()}) '
+    '(effects (font (size 1 1) (thickness 0.15)))) '
+    f'(fp_rect (start -1.5 -2) (end 1.5 2) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd") '
+    f'(uuid {uuid()})) ' + pad(1, 0, -1, "SIG_A", "passive") + " " + pad(2, 0, 1, "SIG_B", "passive") + ")",
+    f'(gr_text "TILT" (at 30 -4 45) (layer "F.SilkS") (uuid {uuid()}) '
+    '(effects (font (size 1.5 1.5) (thickness 0.2))))',
+    f'(gr_text "BACK" (at -6 20 0) (layer "B.SilkS") (uuid {uuid()}) '
+    '(effects (font (size 1.5 1.5) (thickness 0.2)) (justify mirror)))',
 ]
 
 
@@ -618,7 +631,7 @@ class Views(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         unseen = {part["reference"]: part["reason"] for part in self.index["not_in_3d"]}
         self.assertEqual(unseen, {"C1": "no model", "C2": "model not found", "D1": "not populated",
-                                  "J1": "no model", "R1": "model hidden"})
+                                  "J1": "no model", "R1": "model hidden", "R5": "no model"})
         top = self.images("3d", file="3d-top.png")[0]
         _, _, rows = self.pixels(top)
         across, down = top["render_px"]["width"], top["render_px"]["height"]
@@ -720,6 +733,30 @@ class Views(unittest.TestCase):
         self.assertTrue(self.seen(silk, 30, 45, self.layer_colour("F.SilkS"), reach=1.0), "the text below the board")
         courtyard = [image for image in self.images("layer") if image["layers"][0]["name"] == "F.CrtYd"]
         self.assertTrue(self.seen(courtyard, 64.5, 12, self.layer_colour("F.CrtYd")), "J1's courtyard past the edge")
+
+    def test_turned_and_mirrored_items_kicad_plots_through_transforms_are_drawn_inside_the_frame(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        groups = {}
+        for image in self.index["images"]:
+            if image["view"] in ("layer", "assembly", "net", "class map"):
+                groups.setdefault(image["file"].rsplit("-r", 1)[0], []).append(image)
+        for name, images in groups.items():
+            with self.subTest(view=name):
+                # The mirrored back text's strokes reach x = -8.7 mm and the turned text's y = -6.06 mm, past the
+                # outline's left and top edges at 0.
+                self.assertLessEqual(min(i["region_mm"]["x0"] for i in images), -8.7 - board_views.BOARD_MARGIN_MM)
+                self.assertLessEqual(min(i["region_mm"]["y0"] for i in images), -6.06 - board_views.BOARD_MARGIN_MM)
+        for view, images in (("layer B.SilkS", [image for image in self.images("layer")
+                                                if image["layers"][0]["name"] == "B.SilkS"]),
+                             ("assembly bottom", self.images("assembly", side="bottom"))):
+            with self.subTest(view=view):
+                self.assertTrue(self.seen(images, -6, 20, self.layer_colour("B.SilkS"), reach=1.0), "the mirrored text")
+        for view, images in (("layer F.SilkS", [image for image in self.images("layer")
+                                                if image["layers"][0]["name"] == "F.SilkS"]),
+                             ("assembly top", self.images("assembly", side="top"))):
+            with self.subTest(view=view):
+                self.assertTrue(self.seen(images, 30, -4, self.layer_colour("F.SilkS"), reach=1.0), "the turned text")
+                self.assertTrue(self.seen(images, 35, 30, self.layer_colour("F.SilkS"), reach=0.6), "R5's reference")
 
     def test_a_font_kicad_substitutes_is_named_in_every_caption_the_index_and_the_report(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
@@ -831,7 +868,10 @@ class Pieces(unittest.TestCase):
     def test_the_extent_of_a_plot_holds_everything_drawn_in_it_strokes_included(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         cases = (
-            ('<path style="stroke-width:0.2" d="M 1,2\n3,4\nZ" />', (0.9, 1.9, 3.1, 4.1)),
+            ('<path style="stroke-width:0.2;stroke-linejoin:round" d="M 1,2\n3,4\nZ" />', (0.9, 1.9, 3.1, 4.1)),
+            # A mitred corner, the default, reaches up to the miter limit, by default 4, times the half-width.
+            ('<path style="stroke:#000;stroke-width:0.2" d="M 0 0 L 1 0 L 1 1" />', (-0.4, -0.4, 1.4, 1.4)),
+            ('<g transform="translate(5 0)"><path d="M 0 0 1 1" /></g>', (5, 0, 6, 1)),
             ('<path d="m 1 1 h 2 v 3 l -4 1" />', (-1, 1, 3, 5)),
             # Over the top of a circle of radius 5 about (5, 0), the arc reaches y = -5.
             ('<path d="M 0 0 A 5 5 0 0 1 10 0" />', (0, -5, 10, 0)),
@@ -854,8 +894,7 @@ class Pieces(unittest.TestCase):
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write('<svg viewBox="0 0 297 210"></svg>')
             self.assertIsNone(board_views.drawn_extent(path))
-            for body in ('<g transform="translate(5 0)"><path d="M 0 0 1 1" /></g>', '<path d="M 0 0 L 1" />',
-                         '<path d="3 4" />'):
+            for body in ('<path d="M 0 0 L 1" />', '<path d="3 4" />'):
                 with self.subTest(body=body):
                     with open(path, "w", encoding="utf-8") as handle:
                         handle.write(f'<svg viewBox="0 0 297 210">{body}</svg>')
@@ -868,6 +907,152 @@ class Pieces(unittest.TestCase):
         self.assertEqual(board_views.named(names[:3]), "R1, R2, R3")
         self.assertTrue(board_views.named(names).endswith(
             f"R{board_views.CAPTION_NAMES} and 3 more, which the index names"))
+
+
+class Transforms(unittest.TestCase):
+    """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+
+    def assertMaps(self, matrix, pairs):
+        for point, expected in pairs:
+            for got, want in zip(board_views.mapped(matrix, point), expected):
+                self.assertAlmostEqual(got, want, places=9, msg=f"{point} -> {expected}")
+
+    def extent(self, body):
+        with tempfile.TemporaryDirectory(prefix="board-views-transform-") as folder:
+            path = os.path.join(folder, "layer.svg")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 210">{body}</svg>')
+            return board_views.drawn_extent(path)
+
+    def assertExtent(self, body, expected):
+        found = self.extent(body)
+        self.assertIsNotNone(found, body)
+        for got, want in zip(found, expected):
+            self.assertAlmostEqual(got, want, places=6, msg=f"{body}: {found}")
+
+    def test_a_turn_about_a_centre_keeps_the_centre_and_turns_about_it(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        # KiCad's form for a reference turned with its footprint.
+        about = board_views.transform("rotate(-90.000000 35.0000 30.0000)")
+        self.assertMaps(about, [((35, 30), (35, 30)), ((36, 30), (35, 29)), ((35, 31), (36, 30))])
+        expected = board_views.compose(board_views.transform("translate(35 30)"),
+                                       board_views.compose(board_views.transform("rotate(-90)"),
+                                                           board_views.transform("translate(-35 -30)")))
+        for got, want in zip(about, expected):
+            self.assertAlmostEqual(got, want, places=9)
+        self.assertMaps(board_views.transform("rotate(45 10 0)"),
+                        [((11, 0), (10 + math.sqrt(0.5), math.sqrt(0.5)))])
+
+    def test_a_mirror_with_a_translation_applies_the_translation_first(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        # KiCad's form for mirrored text anchored at x = 40.
+        mirror = board_views.transform("scale(-1 1) translate(-80.000000 0)")
+        self.assertMaps(mirror, [((40, 36), (40, 36)), ((42, 36), (38, 36)), ((0, 0), (80, 0))])
+        self.assertMaps(board_views.transform("translate(10,0)scale(2)"), [((1, 1), (12, 2))])
+        self.assertMaps(board_views.transform(" scale(3) , translate(1 2) "), [((0, 0), (3, 6))])
+
+    def test_a_matrix_and_each_skew_map_points_as_svg_defines_them(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        self.assertMaps(board_views.transform("matrix(1 2 3 4 5 6)"), [((1, 1), (9, 12)), ((0, 0), (5, 6))])
+        self.assertMaps(board_views.transform("matrix(1,2,3,4,5,6)"), [((1, 0), (6, 8))])
+        self.assertMaps(board_views.transform("skewX(45)"), [((0, 1), (1, 1)), ((1, 0), (1, 0))])
+        self.assertMaps(board_views.transform("skewY(45)"), [((1, 0), (1, 1)), ((0, 1), (0, 1))])
+        self.assertMaps(board_views.transform("scale(2 3)"), [((1, 1), (2, 3))])
+        self.assertMaps(board_views.transform(""), [((4, 5), (4, 5))])
+        self.assertAlmostEqual(board_views.stretch(board_views.transform("scale(2 -3)")), 3)
+        self.assertAlmostEqual(board_views.stretch(board_views.transform("rotate(30) scale(-1 1)")), 1)
+        self.assertAlmostEqual(board_views.stretch(board_views.transform("skewX(45)")), (1 + math.sqrt(5)) / 2)
+
+    def test_a_malformed_transform_is_refused(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        for text in ("rotate(1 2)", "scale()", "matrix(1 2 3 4 5)", "translate(1 2) twist(3)", "rotate(nan)",
+                     "translate(1 2", "translate(1 x)"):
+            with self.subTest(text=text):
+                with self.assertRaises(ValueError):
+                    board_views.transform(text)
+                with self.assertRaises(board_views.Unreadable):
+                    self.extent(f'<g transform="{text}"><path d="M 0 0 L 1 1" /></g>')
+
+    def test_nested_groups_compose_their_transforms_and_the_stroke_is_bounded_through_them(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        # A 2 by 1 box turned 90 degrees, then moved 10 mm right: x 9 to 10, y 0 to 2.
+        self.assertExtent('<g transform="translate(10 0)"><g transform="rotate(90)">'
+                          '<rect x="0" y="0" width="2" height="1" /></g></g>', (9, 0, 10, 2))
+        # The element's own transform applies inside its group's.
+        self.assertExtent('<g transform="scale(2)"><path transform="translate(1 1)" d="M 0 0 L 1 0" /></g>',
+                          (2, 2, 4, 2))
+        # A stroke 0.2 wide scaled by 2 reaches 0.2 past the scaled line.
+        self.assertExtent('<g style="stroke:#000;stroke-width:0.2;stroke-linecap:round" transform="scale(2)">'
+                          '<line x1="0" y1="0" x2="1" y2="0" /></g>', (-0.2, -0.2, 2.2, 0.2))
+        # A circle turned and skewed still lies within its bounding box's mapped corners.
+        found = self.extent('<g transform="rotate(30 5 5) skewX(10)"><circle cx="5" cy="5" r="1" /></g>')
+        for angle in range(0, 360, 5):
+            x, y = board_views.mapped(board_views.transform("rotate(30 5 5) skewX(10)"),
+                                      (5 + math.cos(math.radians(angle)), 5 + math.sin(math.radians(angle))))
+            self.assertTrue(found[0] <= x <= found[2] and found[1] <= y <= found[3], (angle, x, y, found))
+
+    def test_each_element_is_bounded_by_its_own_stroke_and_not_the_widest_in_the_plot(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        self.assertExtent('<g style="stroke:#000;stroke-linecap:round">'
+                          '<line x1="0" y1="0" x2="1" y2="0" style="stroke-width:2" />'
+                          '<line x1="0" y1="10" x2="1" y2="10" stroke-width="0.2" /></g>', (-1, -1, 2, 10.1))
+        # An unstroked element reaches no further than its outline.
+        self.assertExtent('<g style="stroke:none;stroke-width:5"><rect x="0" y="0" width="1" height="1" /></g>',
+                          (0, 0, 1, 1))
+        # A stroke given no width is SVG's default 1 wide, and its reach is taken on every side.
+        self.assertExtent('<line x1="0" y1="0" x2="1" y2="0" stroke="#000" />', (-0.5, -0.5, 1.5, 0.5))
+
+    def test_kicads_hidden_text_is_passed_over_and_content_it_cannot_bound_is_refused(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        # KiCad's searchable copy of a mirrored text: transparent, so it draws nothing.
+        self.assertExtent('<g style="fill:none;stroke:#000;stroke-width:0.2;stroke-linecap:round;'
+                          'stroke-linejoin:round"><text x="40" y="36.75" transform="scale(-1 1) translate(-80 0)" '
+                          'opacity="0" stroke-opacity="0">BACK</text><path d="M 42 35.9 L 41.8 36" /></g>',
+                          (41.7, 35.8, 42.1, 36.1))
+        self.assertIsNone(self.extent('<g opacity="0"><path d="M 0 0 L 9 9" /></g><title>t</title>'
+                                      '<defs><path d="M 50 50 L 60 60" /></defs>'))
+        self.assertExtent('<inkscape:thing xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" />'
+                          '<path d="M 1 1 L 2 2" />', (1, 1, 2, 2))
+        for body in ('<text x="1" y="1">visible</text>', '<use href="#a" />', '<svg x="0" y="0"><path d="M 0 0" /></svg>',
+                     '<path d="M 0 0 L 1 1" style="stroke:#000;stroke-width:5%" />'):
+            with self.subTest(body=body):
+                with self.assertRaises(board_views.Unreadable):
+                    self.extent(body)
+
+
+class RealBoard(unittest.TestCase):
+    """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+
+    def test_the_repositorys_kicad_authored_proof_board_renders(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        with tempfile.TemporaryDirectory(prefix="board-views-gate-proof-") as root:
+            folder = os.path.join(root, "gate-proof")
+            shutil.copytree(os.path.dirname(PROOF_PROJECT), folder)
+            project_file = os.path.join(folder, "gate-proof.kicad_pro")
+            with open(project_file, encoding="utf-8") as handle:
+                data = json.load(handle)
+            data["board"]["design_settings"]["rules"].update(min_track_width=0.2, min_clearance=0.2)
+            with open(project_file, "w", encoding="utf-8") as handle:
+                json.dump(data, handle, indent=2)
+            out = os.path.join(root, "views")
+            stream, errors = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stderr(errors):
+                status = board_views.main(["--kicad-cli", KICAD_CLI, "--resvg", RESVG, "--board",
+                                           os.path.join(folder, "gate-proof.kicad_pcb"), "--project", project_file,
+                                           "--class", "Mains", "--out", out], out=stream)
+            lines = stream.getvalue().splitlines()
+            self.assertEqual(status, 0, lines + [errors.getvalue()])
+            self.assertTrue(lines[-1].startswith("RESULT | WRITTEN | "), lines)
+            with open(os.path.join(out, "index.json"), encoding="utf-8") as handle:
+                index = json.load(handle)
+            outline = board_views.outline_bounds(board_views.locked_copper.read_layout(
+                os.path.join(folder, "gate-proof.kicad_pcb")))
+            for image in index["images"]:
+                self.assertTrue(os.path.isfile(os.path.join(out, image["file"])), image["file"])
+            layers = [image for image in index["images"] if image["view"] == "layer"]
+            self.assertTrue(layers)
+            self.assertLessEqual(min(image["region_mm"]["x0"] for image in layers), outline[0])
+            self.assertGreaterEqual(max(image["region_mm"]["x1"] for image in layers), outline[2])
 
 
 class Refusals(unittest.TestCase):
