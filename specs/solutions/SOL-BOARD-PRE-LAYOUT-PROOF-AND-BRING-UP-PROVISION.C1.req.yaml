@@ -2,11 +2,11 @@ id: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1
 type: criterion
 title: Every value-critical circuit is shown by simulation or calculation to meet its figure before layout
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
-text: |-
-  The method requires, before layout starts, a list of every circuit on the board whose component values decide whether it works, with examples including a sensing front end's noise and settling, a zero-crossing detector's delay and a drive stage's margin at worst-case supply; for each, the figure it must meet and where that figure comes from, and the simulated or calculated result showing it is met. A board entering layout with any listed circuit lacking a figure or a result that meets it fails the step. Tools used are ones any reader can obtain. The step is stated so a designer or an agent session with no prior context carries it out from the method's text alone, without reference to this project's graph identifiers or its author's context. Out of scope: measurement of the built circuit, which belongs to bring-up, and the specific figures for this machine, which belong to its constraints record.
+text: |
+  The method requires, before layout starts, a list of every circuit on the board whose component values decide whether it works, with examples including a sensing front end's noise and settling, a zero-crossing detector's delay and a drive stage's margin at worst-case supply; for each, the figure it must meet and where that figure comes from, and the simulated or calculated result showing it is met. A figure's source is the machine's constraints record or the part's datasheet, never a typical value or a tool's default, and a figure its source does not yet bound fails the step until the source is amended rather than being supplied in the board's own record. Each result states the conditions it covers, and they include the worst of the declared supply span and of the parts' tolerances, and, for a sensing front end, the switched loads operating wherever the source bounds the interference they impose. A board entering layout with any listed circuit lacking a figure, a source of that kind, or a result that meets it under those conditions fails the step. Tools used are ones any reader can obtain. The step is stated so a designer or an agent session with no prior context carries it out from the method's text alone, without reference to this project's graph identifiers or its author's context. Out of scope: measurement of the built circuit, which belongs to bring-up; coupling that depends on the layout itself, which pre-layout proof cannot show; and the specific figures for this machine, which belong to its constraints record.
 links:
   - target: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION
     type: criterion-of
