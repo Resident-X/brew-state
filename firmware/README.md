@@ -255,13 +255,45 @@ after that both build offline.
 Everything runs from the repository root through the task runner:
 
 ```sh
-task fw:verify     # build every environment, run every check, run the tests, run the host builds, run the emulation tier, sweep the arithmetic
+task check:round   # a build round's gate: the host tier in full, the emulation tier only if the branch changes what it reads
+task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the arithmetic sweep
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
 task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
 task fw:run        # every host executable, against the descriptions its structure ships
 task fw:emulate    # the target build's own artefact, executed against models of the peripherals it drives
 ```
+
+Verification runs at two cadences. A build round runs `check:round` once, and
+it is the only verification a change gets before it merges. It runs the host
+tier in full every time — every build, every build-time check, every host test
+and every host executable under the sanitizers — because that tier is the only
+one that catches memory and undefined-behaviour defects. It runs the emulation
+tier only when the branch changes something the emulation reads: anything under
+`firmware/`, the analysis records under `docs/` the emulation suite checks
+against, or the `Taskfile.yml` that runs it. What changed is measured from the
+branch's merge-base with `origin/main`, against the working tree, so uncommitted
+edits and new files count. `origin/main` is the repository's own
+remote-tracking copy, not fetched. A stale one can mis-measure a branch, so it
+is kept rare by branching from a freshly fetched `main` rather than checked for.
+That set of paths is declared once, as
+`EMULATION_READS` in [`tools/round_gate.py`](tools/round_gate.py). When there is
+no remote-tracking `origin/main`, the base cannot be resolved or the changed
+paths cannot be read, the gate runs emulation rather than skipping it. The
+selection saves time; it is not a trust boundary against whoever controls the
+tree it runs in, and a change that escapes it meets the reviews before it
+merges and the nightly complete verification after. Its statements name the base and `HEAD`
+commits it measured between. It stops at the first host-tier failure and says
+the emulation tier was not reached, and whether it would have run; otherwise
+its last lines say which tiers ran and, for a skipped one, why and which changed
+paths it judged by. Its exit status is the verdict. It never runs the full
+mutation sweep.
+
+The complete verification, `fw:verify`, runs nightly against `main`: every tier
+the round can skip, the emulation tier unconditionally, and the full sweep of
+the plant model's arithmetic. It stays the single declaration of every gate, and
+the round hands the task runner the same tasks rather than copies of their
+commands.
 
 The emulation tier needs an emulator and the vendor's register description,
 neither of which is committed. They are fetched, pinned by digest, into
@@ -277,7 +309,8 @@ job that wants the download in its own step. What the tier establishes, how the
 peripheral models are written, and why a run is only evidence about the artefact
 the target build wrote are all in [`emulation/README.md`](emulation/README.md).
 
-One more runs on demand rather than in the gate:
+One more runs on demand, in neither the round gate nor the nightly complete
+verification:
 
 ```sh
 task fw:mutate                    # break each guarded property, require its check to notice
@@ -296,21 +329,24 @@ being unable to look, and treating the second as a catch would be this tool
 committing the failure it exists to detect. And because editing the build file
 makes the build system discard every linked artefact, the artefacts are re-made
 during the run and again at the end, so neither the next mutation nor the
-ordinary gate is left inspecting something that is no longer there.
+next round or nightly run is left inspecting something that is no longer there.
 
 It overlaps the tool tests under `tools/tests/` on purpose but does not replace
-them: those drive each check against synthetic broken subjects in the gate,
-where this drives the real checks against the real sources end to end, which is
-what catches a check that is correct in isolation and mis-wired in the build.
+them: those drive each check against synthetic broken subjects in the host
+tier, which both cadences run, where this drives the real checks against the
+real sources end to end, which is what catches a check that is correct in
+isolation and mis-wired in the build.
 
-It is out of the gate because it answers a question — are these checks real —
-that does not change between commits the way the checks' own results do. Run it
-when a check is added or reworked.
+It is out of both cadences because it answers a question — are these checks
+real — that does not change between commits the way the checks' own results do.
+Run it when a check is added or reworked.
 
 The second sweeps the plant model's arithmetic instead of the checks. It is the
-last step of `fw:verify` as well as being runnable alone, so the full gate asks
-not only whether the checks pass but whether the tests would notice the model
-being wrong:
+last step of `fw:verify` as well as being runnable alone, so the complete
+verification that runs nightly asks not only whether the checks pass but whether
+the tests would notice the model being wrong. It is not part of a build round's
+gate: what it answers does not move between commits the way test results do,
+and it is the longest step by far:
 
 ```sh
 task fw:sweep                     # alter every comparison and operator, require a test to notice
@@ -330,8 +366,8 @@ questions, and the difference is the point: a list of specific defects that are
 caught establishes exactly the members of the list, and says nothing about the
 defects nobody thought to write down.
 
-It needs LLVM 19 and the matching Mull package, which the ordinary gate does
-not, so the environments it compiles — `native_mutation`,
+It needs LLVM 19 and the matching Mull package, which the round gate and the
+rest of the complete verification do not, so the environments it compiles — `native_mutation`,
 `native_fixture_mutation` and `native_boiler_mutation` — declare
 `custom_mutation_sweep` in `platformio.ini`
 and are left alone by the gates covering every host build. Those gates say so

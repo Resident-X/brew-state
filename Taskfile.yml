@@ -340,13 +340,13 @@ tasks:
       - python3 -m unittest discover -s emulation/tests {{.CLI_ARGS}}
 
   fw:mutate:
-    desc: Break each guarded property on purpose and require its check to notice — on demand, not part of the gate
+    desc: Break each guarded property on purpose and require its check to notice — on demand, part of neither the build round's gate nor the nightly complete verification
     dir: "{{.FW_DIR}}"
     cmds:
       - python3 tools/mutate.py {{.CLI_ARGS}}
 
   fw:sweep:
-    desc: Alter every comparison and operator in the plant model's arithmetic and require a test to notice — part of the full gate, and runnable alone
+    desc: Alter every comparison and operator in the plant model's arithmetic and require a test to notice — part of the complete verification that runs nightly against main, never part of a build round's gate, and runnable alone
     dir: "{{.FW_DIR}}"
     cmds:
       # The structures the mutants are drawn from are discovered, so a structure
@@ -354,7 +354,7 @@ tasks:
       - python3 tools/mull_sweep.py --project . --plant-root src/plant --include-dir include --pio {{.PIO}} {{.CLI_ARGS}}
 
   fw:verify:
-    desc: The full firmware gate — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic
+    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic
     cmds:
       - task: fw:build
       - task: fw:check
@@ -371,3 +371,20 @@ tasks:
       # being wrong. It needs an LLVM toolchain matching the mutation plugin, so
       # a host without one fails the gate here rather than passing quietly.
       - task: fw:sweep
+
+  # ---------------------------------------------------------------------------
+  # Cadences. A build round runs check:round once, and it is the only
+  # verification a change gets before it merges; there is no separate
+  # pull-request gate. fw:verify stays the single declaration of the complete
+  # verification, which runs nightly against main.
+  # ---------------------------------------------------------------------------
+
+  check:round:
+    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with the local remote-tracking origin/main and counting uncommitted edits and new files (a stale origin/main can mis-measure a branch, so branch from a freshly fetched main); runs emulation anyway when it cannot tell what changed, including when there is no remote-tracking origin/main. Stops at a host failure, says which tiers ran and why one was skipped, and its exit status is the verdict. Never runs the full mutation sweep
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      # The tasks are handed over rather than their commands copied, so the
+      # round and fw:verify run the same thing. The paths that trigger the
+      # emulation tier are declared once, as EMULATION_READS in round_gate.py.
+      # A further round-scoped check is added here, beside the tiers.
+      - python3 {{.FW_DIR}}/tools/round_gate.py --task "{{.TASK_EXE}}" --host fw:build --host fw:check --host fw:test --host fw:run --emulation fw:emulate

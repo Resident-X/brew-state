@@ -1,0 +1,16 @@
+id: EV-SOL-VERIFY-ROUND-GATE-TARGETED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-VERIFY-ROUND-GATE-TARGETED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T01:25:12.369985Z"
+artifact:
+  kind: external
+  reference: Inspection of CLAUDE.md:52-58 (round and nightly cadences, what each runs, check:round named as the only pre-merge verification with no pull-request gate, and the selection's staleness wording now matching C1), firmware/README.md round/nightly section, Taskfile.yml check:round, fw:verify and fw:sweep descriptions (the sweep is described as nightly, not part of every gate), and firmware/emulation/README.md (emulation is path-gated in the round, unconditional in fw:verify)
+  artifact_version: a9023eb25a9ac0e10f8a88b37dc5872f117d36bb
+attested_by: crun-9db0354e8a1a9cdd
+links:
+  - target: SOL-VERIFY-ROUND-GATE-TARGETED.C3
+    type: satisfies

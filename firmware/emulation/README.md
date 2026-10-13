@@ -41,7 +41,10 @@ task fw:emulate
 
 `fw:emulate` builds the target environment, hands the emulator the artefact that
 build wrote, exercises every channel, runs the closed-loop check, and asserts
-both. It is also part of `task fw:verify`.
+both. It is also part of `task fw:verify`, the complete verification run
+nightly against main, which runs it unconditionally. A build round's gate,
+`task check:round`, runs it only when the branch changes a path it reads, as
+declared in [`../tools/round_gate.py`](../tools/round_gate.py).
 
 To re-run a single exercise by hand without the suite, each run leaves a
 complete emulator script beside the artefact:
