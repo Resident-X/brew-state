@@ -38,7 +38,7 @@ Every tool is free. The check stops with an error naming any tool that is missin
 - `task hw:test` runs the tests of the check itself, and of the locked-copper check's four commands, against the real `kicad-cli`.
 - `task hw:rules-confirm`, `task hw:copper-lock`, `task hw:copper-record` and `task hw:copper-compare` run the locked-copper check (below) on one board, before routing and around the routing round trip. They need the same tools as `hw:verify`, and read the paths given after `--` from the folder they are run in.
 
-How a board is designed so that it passes the check, from its rules to its routing, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
+How a board is designed so that it passes the check and works once built, from proving its value-critical circuits and providing for its bring-up before layout to its rules and its routing, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
 
 ## The locked-copper check
 

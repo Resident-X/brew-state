@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T21:21:43.523113Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md § Proving value-critical circuits before layout (steps 1-4 and the out-of-scope line), with the tools table''s ngspice row, inspected clause by clause against C1: the list of value-critical circuits with the four examples including the conductor withstand row; the figure''s source limited to the constraints record or a datasheet, an unbounded figure failing until its source is amended; conditions at the worst supply span, part tolerances (datasheet limits for modelled parts) and switched loads; the fail rule judged on the record as it stood before placement with netlist, source and reproduction cross-checks; free tools only (ngspice 47 and kicad-cli 10.0.7 commands exercised); no graph identifier or machine figure. Accepted by WF-REVIEW and blind review over build rounds 1-9 (final runs crun-a616c233b70ded5c, review passing on that run).'
+  artifact_version: 5e23073773d3c02e0aae60f5eaf44583c1b39be7
+attested_by: crun-a616c233b70ded5c
+links:
+  - target: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1
+    type: satisfies
