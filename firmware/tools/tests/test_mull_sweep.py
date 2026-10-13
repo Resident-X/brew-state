@@ -1546,7 +1546,7 @@ class TheMergedShardsAreJudgedExactlyAsOneRunWouldBe(unittest.TestCase):
     def write_shard(self, name: str, found: dict) -> None:
         path = os.path.join(self.reports.name, f"{name}.json")
         with open(path, "w", encoding="utf-8") as handle:
-            json.dump({"mutants": found, "timing": [timing_entry(name)]}, handle)
+            json.dump({"mutants": found, "timing": timing_entry(name)}, handle)
 
     def killed_mutant(self, source: str, line: int = 1) -> dict:
         return {
@@ -1967,8 +1967,62 @@ class TheSweepAccountsForItsTimePerUnit(SweepHarness):
             # appending, it refuses.
             status, output = self.sweep(summary=self.scratch.name)
             self.assertEqual(expected, status, outcome)
-            self.assertIn("cannot be written", output)
+            # Said once and then left alone, not retried and warned about at
+            # every phase and again at the table.
+            self.assertEqual(1, output.count("cannot be written"), output)
             self.assertEqual([7.0, 3.0, 50.0, 2.0], figures(output, ALPHA))
+
+    def verdict(self, output: str) -> str:
+        """What the sweep printed after its timing table: its verdict, and nothing of the timing."""
+        flat = " ".join(output.split())
+        return flat[flat.index(mull_sweep.RUNNING_NOTE) + len(mull_sweep.RUNNING_NOTE):]
+
+    def test_a_suite_listed_twice_reaches_the_verdict_it_reaches_listed_once_with_both_runs_timed(self):
+        # Both copies are built and run, as they always were, and their results
+        # folded and judged. The timing takes in both runs as they happened; a
+        # record refusing the second would turn a judged run into one the sweep
+        # could not look at.
+        for outcome in ("Killed", "Survived"):
+            self.tools.status = outcome
+            options = mutation_environment("alpha", "test_alpha")
+            self.tree.declare([("native_alpha_mutation", options)])
+            once_status, once = self.sweep()
+            options["test_filter"] = "test_alpha,test_alpha"
+            self.tree.declare([("native_alpha_mutation", options)])
+            twice_status, twice = self.sweep()
+            self.assertEqual(once_status, twice_status, twice)
+            self.assertNotEqual(mull_sweep.COULD_NOT_LOOK, twice_status, twice)
+            self.assertEqual(self.verdict(once), self.verdict(twice))
+            rows = [
+                [float(cell) for cell in line.split()[1:]]
+                for line in twice.splitlines()
+                if line.strip().startswith(ALPHA + " ")
+            ]
+            self.assertEqual([[7.0, 3.0, 50.0, 2.0]] * 2, rows)
+            self.assertEqual([14.0, 6.0, 100.0, 4.0], figures(twice, mull_sweep.TOTAL))
+
+    def test_only_a_run_stopped_by_an_error_labels_its_table_partial(self):
+        status, output = self.sweep(summary=self.summary)
+        self.assertEqual(0, status, output)
+        self.assertNotIn(mull_sweep.PARTIAL, output)
+        self.assertNotIn(mull_sweep.PARTIAL, self.written_summary())
+        os.remove(self.summary)
+
+        self.tools.failing.add(("unmutated", "test_alpha_again"))
+        status, output = self.sweep(summary=self.summary)
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+        self.assertIn(f"mull_sweep: time per unit ({mull_sweep.PARTIAL})", output)
+        self.assertIn(mull_sweep.STOPPED_NOTE, " ".join(output.split()))
+        written = self.written_summary()
+        self.assertIn(f"### mull_sweep: time per unit ({mull_sweep.PARTIAL})", written)
+        self.assertIn(mull_sweep.STOPPED_NOTE, written)
+
+    def test_a_run_stopped_by_an_error_nothing_anticipated_labels_its_table_partial(self):
+        self.tools.truncated.add("test_alpha_again")
+        error, output = self.sweep_raising(summary=self.summary)
+        self.assertIsInstance(error, json.JSONDecodeError)
+        self.assertIn(f"mull_sweep: time per unit ({mull_sweep.PARTIAL})", output)
+        self.assertIn(mull_sweep.STOPPED_NOTE, self.written_summary())
 
 
 class AShardReportsItsTimingForTheMerge(SweepHarness):
@@ -2007,19 +2061,17 @@ class AShardReportsItsTimingForTheMerge(SweepHarness):
         self.assertEqual({"mutants", "timing"}, set(report))
         self.assertEqual(3, len(report["mutants"]))
         self.assertEqual(
-            [
-                {
-                    "identity": {
-                        "environment": "native_alpha_mutation",
-                        "suite": "test_alpha_again",
-                        "directory": "src/plant/alpha",
-                        "operator": "cxx_add_to_sub",
-                    },
-                    "listing": False,
-                    "seconds": {"build": 11.0, "unmutated": 2.0, "runner": 130.0},
-                    "mutants": 3,
-                }
-            ],
+            {
+                "identity": {
+                    "environment": "native_alpha_mutation",
+                    "suite": "test_alpha_again",
+                    "directory": "src/plant/alpha",
+                    "operator": "cxx_add_to_sub",
+                },
+                "listing": False,
+                "seconds": {"build": 11.0, "unmutated": 2.0, "runner": 130.0},
+                "mutants": 3,
+            },
             report["timing"],
         )
         self.assertEqual([11.0, 2.0, 130.0, 3.0], figures(output, self.SHARD))
@@ -2060,7 +2112,7 @@ class AShardReportsItsTimingForTheMerge(SweepHarness):
         self.assertRefused("no 'timing' part")
 
     def test_a_report_missing_its_mutant_results_is_refused(self):
-        self.write("bad.json", {"timing": [timing_entry("test_alpha")]})
+        self.write("bad.json", {"timing": timing_entry("test_alpha")})
         self.assertRefused("no 'mutants' part")
 
     def test_a_report_in_the_shape_before_timing_is_refused_rather_than_folded(self):
@@ -2070,14 +2122,18 @@ class AShardReportsItsTimingForTheMerge(SweepHarness):
         self.write("bad.json", {"m": survivor("m")})
         self.assertRefused("no 'mutants' part")
 
-    def test_a_report_timing_no_unit_is_refused(self):
-        self.write("bad.json", {"mutants": {}, "timing": []})
-        self.assertRefused("times no unit")
+    def test_a_report_timing_anything_but_one_row_is_refused(self):
+        # A shard times one unit and writes its one row: none, several, or a
+        # list holding the one is not what a shard writes.
+        for timing in ([], [timing_entry("test_alpha")], [timing_entry("a"), timing_entry("b")]):
+            self.write("bad.json", {"mutants": {}, "timing": timing})
+            output = self.assertRefused("not the one unit's row a shard writes")
+            self.assertNotIn("time per unit", output, repr(timing))
 
     def test_a_timing_entry_missing_a_figure_is_refused(self):
         entry = timing_entry("test_alpha")
         del entry["seconds"]["runner"]
-        self.write("bad.json", {"mutants": {}, "timing": [entry]})
+        self.write("bad.json", {"mutants": {}, "timing": entry})
         self.assertRefused("does not time exactly the phases build, unmutated, runner")
 
     def test_a_shard_failing_unmutated_cannot_look_and_its_build_is_in_its_summary(self):
@@ -2107,13 +2163,13 @@ class AShardReportsItsTimingForTheMerge(SweepHarness):
         """A shard's report as the shard path writes it, with its one row changed as given."""
         row = timing_entry("test_alpha")
         row.update(entry)
-        return {"mutants": {}, "timing": [row]}
+        return {"mutants": {}, "timing": row}
 
     def test_a_figure_that_is_not_a_finite_number_is_refused(self):
         # json.load reads NaN and Infinity, and neither is less than zero.
         for bad in (float("nan"), float("inf"), float("-inf")):
             report = self.shard_report()
-            report["timing"][0]["seconds"]["build"] = bad
+            report["timing"]["seconds"]["build"] = bad
             self.write("bad.json", report)
             output = self.assertRefused("no usable build figure")
             self.assertNotIn("time per unit", output, repr(bad))
@@ -2130,7 +2186,7 @@ class AShardReportsItsTimingForTheMerge(SweepHarness):
 
     def test_a_row_timing_a_phase_a_shard_does_not_have_is_refused(self):
         report = self.shard_report()
-        report["timing"][0]["seconds"]["install"] = 40.0
+        report["timing"]["seconds"]["install"] = 40.0
         self.write("bad.json", report)
         self.assertRefused("does not time exactly the phases")
 
@@ -2161,18 +2217,11 @@ class AShardReportsItsTimingForTheMerge(SweepHarness):
         self.shard("test_alpha_again", "src/plant/alpha", "a-good")
         with open(os.path.join(self.reports, "a-good.json"), encoding="utf-8") as handle:
             report = json.load(handle)
-        report["timing"][0]["identity"] = dict(reversed(report["timing"][0]["identity"].items()))
+        report["timing"]["identity"] = dict(reversed(report["timing"]["identity"].items()))
         self.write("bad.json", report)
-        output = self.assertRefused("timed more than once")
+        output = self.assertRefused("which an earlier report already timed")
         self.assertEqual([11.0, 2.0, 130.0, 3.0], figures(output, self.SHARD))
         self.assertEqual([11.0, 2.0, 130.0, 3.0], figures(output, mull_sweep.TOTAL))
-
-    def test_one_report_timing_the_same_unit_twice_is_refused(self):
-        report = self.shard_report()
-        report["timing"].append(timing_entry("test_alpha"))
-        self.write("bad.json", report)
-        output = self.assertRefused("timed more than once")
-        self.assertNotIn("time per unit", output)
 
     def test_the_shards_read_before_a_refused_one_are_printed_before_the_refusal(self):
         self.shard("test_alpha_again", "src/plant/alpha", "a-good")
@@ -2180,6 +2229,35 @@ class AShardReportsItsTimingForTheMerge(SweepHarness):
         output = self.assertRefused("no 'timing' part")
         self.assertEqual([11.0, 2.0, 130.0, 3.0], figures(output, self.SHARD))
         self.assertLess(output.index("mull_sweep: time per unit"), output.index("bad.json"))
+
+    def test_a_table_cut_short_by_a_refused_report_is_labelled_partial_in_both_renderings(self):
+        # Read as the full total, the table of the shards read before the
+        # refusal would understate the sweep by every shard after it.
+        self.shard("test_alpha_again", "src/plant/alpha", "a-good")
+        self.write("bad.json", {"mutants": {}})
+        status, output = self.sweep("--merge-reports", self.reports, summary=self.summary)
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+        written = self.written_summary()
+        self.assertIn(f"mull_sweep: time per unit ({mull_sweep.PARTIAL})", output)
+        self.assertIn(f"### mull_sweep: time per unit ({mull_sweep.PARTIAL})", written)
+        self.assertIn(mull_sweep.STOPPED_NOTE, " ".join(output.split()))
+        self.assertIn(mull_sweep.STOPPED_NOTE, written)
+        self.assertEqual([11.0, 2.0, 130.0, 3.0], summary_figures(written, mull_sweep.TOTAL))
+
+    def test_a_merge_that_read_every_report_is_not_labelled_partial(self):
+        # The triage record is read after every report has been: its refusal
+        # stops the merge, but the table it printed covers every shard.
+        self.shard("test_alpha", "src/plant/common", "one")
+        self.shard("test_alpha_again", "src/plant/alpha", "two")
+        with open(os.path.join(self.project, mull_sweep.TRIAGE_RECORD), "w", encoding="utf-8") as handle:
+            handle.write("judgements:\n  a: fine\n")
+        status, output = self.sweep("--merge-reports", self.reports, summary=self.summary)
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+        self.assertIn("no 'survivors' mapping", output)
+        self.assertEqual([18.0, 5.0, 180.0, 5.0], figures(output, mull_sweep.TOTAL))
+        self.assertNotIn(mull_sweep.PARTIAL, output)
+        self.assertNotIn(mull_sweep.PARTIAL, self.written_summary())
+        self.assertLess(output.index("mull_sweep: time per unit"), output.index("no 'survivors'"))
 
 
 class DiscoveryTimesItsListing(SweepHarness):
@@ -2300,20 +2378,6 @@ class TheTwoRenderingsCarryTheSameFigures(unittest.TestCase):
             entry["seconds"]["build"] = bad
             with self.assertRaises(mull_sweep.SweepError, msg=repr(bad)):
                 mull_sweep.UnitTiming.from_shard_report(entry)
-
-    def test_the_record_refuses_a_unit_it_has_already_timed(self):
-        # On any path, not only the merge: the record is where a second row
-        # for one unit would be totalled, so it is where that is refused.
-        record = mull_sweep.TimingRecord(clock=lambda: 0.0)
-        first = mull_sweep.UnitTiming({"environment": "e", "suite": "one"})
-        record.finish(first, 1)
-        again = mull_sweep.UnitTiming({"suite": "one", "environment": "e"})
-        with self.assertRaises(mull_sweep.SweepError):
-            record.finish(again, 1)
-        other = mull_sweep.UnitTiming({"environment": "e", "suite": "two"})
-        with self.assertRaises(mull_sweep.SweepError):
-            record.add([other, mull_sweep.UnitTiming({"environment": "e", "suite": "two"})])
-        self.assertEqual([first], record.units)
 
 
 # --- What the sweep concludes from a survivor -------------------------------

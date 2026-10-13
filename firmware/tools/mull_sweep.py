@@ -60,11 +60,12 @@ time the unmutated suite took, the time the mutation runner took, and how many
 mutant results came back, with a total summed over the units. Discovering a
 directory's operators is timed the same way, with the runner's listing time and
 the mutants it listed in place of those it ran. The figures are printed before
-the verdict, on every path including a failed one, and are appended to the
-hosted job summary when the hosted environment provides one. They never change
-the exit status. A shard's report carries its mutant results and its timing as
-two named parts, and the merge refuses a report missing either, carrying
-anything a shard does not write, or timing a unit already timed.
+the verdict, on every path including a failed one -- where the table says it is
+partial -- and are appended to the hosted job summary when the hosted
+environment provides one. They never change the exit status. A shard's report
+carries its mutant results and its timing as two named parts, the timing being
+its one unit's row, and the merge refuses a report missing either, carrying
+anything a shard does not write, or timing a unit an earlier report timed.
 """
 
 from __future__ import annotations
@@ -928,6 +929,14 @@ MERGED_NOTE = (
     "The total covers the shard rows only: discovering each directory's operators is timed in "
     "that discovery job's own summary."
 )
+#: How a table printed on the way out of an error is marked, wherever the run
+#: stopped: part-way through its units, or part-way through the shard reports
+#: a merge was reading.
+PARTIAL = "partial: the run stopped before it finished"
+STOPPED_NOTE = (
+    "The run stopped on an error before it finished, so these rows cover only the units it "
+    "completed, or the shard reports it read, before the error; the total is not the whole run's."
+)
 
 #: What a shard's row carries, and nothing else.
 SHARD_ROW = frozenset({"identity", "listing", "seconds", "mutants"})
@@ -1029,7 +1038,9 @@ def figure(seconds: float) -> str:
     return f"{round(seconds, 1):.1f}"
 
 
-def timing_table(units: list[UnitTiming], markdown: bool = False, note: str | None = None) -> str:
+def timing_table(
+    units: list[UnitTiming], markdown: bool = False, note: str | None = None, partial: bool = False
+) -> str:
     """The timing of every unit given, as plain text or as a markdown table.
 
     One function for both so the local run's output and the hosted summary
@@ -1038,7 +1049,9 @@ def timing_table(units: list[UnitTiming], markdown: bool = False, note: str | No
     and their count measure different acts.
 
     The total is summed from the figures as printed, so it is the sum a reader
-    adding up the column would reach.
+    adding up the column would reach. A table of a run that stopped part-way
+    says so in its title as well as its notes, since its total is not the run's
+    and a reader of a job summary has nothing else to tell them that.
     """
     tables = []
     for listing in (False, True):
@@ -1061,6 +1074,9 @@ def timing_table(units: list[UnitTiming], markdown: bool = False, note: str | No
         )
         notes = [LISTING_NOTE if listing else RUNNING_NOTE] + ([note] if note else [])
         title = "time per discovery unit" if listing else "time per unit"
+        if partial:
+            notes.append(STOPPED_NOTE)
+            title += f" ({PARTIAL})"
 
         if markdown:
             lines = [
@@ -1103,7 +1119,11 @@ class TimingRecord:
     way through still shows where the time went until then.
 
     Nothing here may change what the sweep concludes: a summary that cannot be
-    written is said so once and then left alone.
+    written is said so once and then left alone, and every unit a run completes
+    is taken in as it ran, never refused -- a suite an environment lists twice
+    is run twice and timed twice, and refusing the second would turn a run the
+    sweep judges into one it cannot look at. Which shard reports a merge may
+    total is a question about its input, settled where it reads them.
     """
 
     def __init__(self, clock: Callable[[], float] = time.monotonic, summary: str | None = None):
@@ -1121,27 +1141,20 @@ class TimingRecord:
 
     def finish(self, unit: UnitTiming, mutants: int) -> None:
         unit.mutants = mutants
-        self.add([unit])
+        self.add(unit)
 
-    def add(self, units: list[UnitTiming]) -> None:
-        """Take in completed units, all of them or none, refusing a unit already timed.
+    def add(self, unit: UnitTiming) -> None:
+        """Take in a completed unit."""
+        self.units.append(unit)
 
-        A unit timed twice would be totalled twice, so the record refuses it
-        whichever path brought it here rather than leaving each path to check.
-        """
-        keys = {unit.key for unit in self.units}
-        for unit in units:
-            if unit.key in keys:
-                raise SweepError(f"{unit.name} is timed more than once, and would be totalled twice")
-            keys.add(unit.key)
-        self.units.extend(units)
-
-    def report(self, note: str | None = None) -> None:
+    def report(self, note: str | None = None, partial: bool = False) -> None:
         """Print every completed unit's timing, and append it to the summary."""
         if not self.units:
             return
-        print(timing_table(self.units, note=note), flush=True)
-        self.append_summary("\n" + timing_table(self.units, markdown=True, note=note))
+        print(timing_table(self.units, note=note, partial=partial), flush=True)
+        self.append_summary(
+            "\n" + timing_table(self.units, markdown=True, note=note, partial=partial)
+        )
 
     @contextlib.contextmanager
     def reported(self, note: str | None = None):
@@ -1149,15 +1162,18 @@ class TimingRecord:
 
         On the way out of the block rather than at each of its exits, so no way
         of leaving it -- a refusal, an error nothing here anticipated, an
-        interruption -- loses the timing of the units that finished. The
+        interruption -- loses the timing of the units that finished. Left by an
+        error, the block did not finish, and its table is marked partial. The
         verdict, or the error, is printed by whatever handles the block's
         outcome, which runs after this, so the timing always precedes it. The
         outcome itself passes through untouched.
         """
         try:
             yield self
-        finally:
-            self.report(note)
+        except BaseException:
+            self.report(note, partial=True)
+            raise
+        self.report(note)
 
     def append_summary(self, text: str) -> None:
         if not self.summary:
@@ -1205,13 +1221,15 @@ def sweep_unit(
     return report
 
 
-def read_shard_report(path: str) -> tuple[dict, list[UnitTiming]]:
-    """One shard's mutant results and timing, refused unless it carries both.
+def read_shard_report(path: str, timed: list[UnitTiming]) -> tuple[dict, UnitTiming]:
+    """One shard's mutant results and timing, refused unless it is exactly what a shard writes.
 
     Both parts come from the same run, so a report missing either is a shard
     that did not upload whole -- and judging its mutants while leaving it out of
     the total, or the other way round, would report on a run that did not
-    happen.
+    happen. A shard times one unit, so its timing is that unit's one row; and a
+    row timing a unit one of the reports already read has timed is the same
+    shard uploaded twice, which totalled again would count its time twice.
     """
     try:
         with open(path, "r", encoding="utf-8") as handle:
@@ -1229,9 +1247,12 @@ def read_shard_report(path: str) -> tuple[dict, list[UnitTiming]]:
     mutants, timing = document["mutants"], document["timing"]
     if not isinstance(mutants, dict):
         raise SweepError("its 'mutants' part is not a mapping of mutant to finding")
-    if not isinstance(timing, list) or not timing:
-        raise SweepError("its 'timing' part times no unit")
-    return mutants, [UnitTiming.from_shard_report(entry) for entry in timing]
+    if not isinstance(timing, dict):
+        raise SweepError("its 'timing' part is not the one unit's row a shard writes")
+    unit = UnitTiming.from_shard_report(timing)
+    if any(other.key == unit.key for other in timed):
+        raise SweepError(f"it times {unit.name}, which an earlier report already timed")
+    return mutants, unit
 
 
 def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
@@ -1613,8 +1634,9 @@ def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
                     identity["directory"] = args.shard_directory
                 if args.shard_mutators:
                     identity["operator"] = args.shard_mutators
+                unit = UnitTiming(identity)
                 report = sweep_unit(
-                    timings, UnitTiming(identity), project, args.pio, toolchain["runner"],
+                    timings, unit, project, args.pio, toolchain["runner"],
                     shard_environment.name, shard_suite, config,
                 )
                 collect(project, report, shard_found)
@@ -1624,10 +1646,7 @@ def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
 
         os.makedirs(os.path.dirname(os.path.abspath(args.shard_report)) or ".", exist_ok=True)
         with open(args.shard_report, "w", encoding="utf-8") as handle:
-            json.dump(
-                {"mutants": shard_found, "timing": [unit.as_dict() for unit in timings.units]},
-                handle,
-            )
+            json.dump({"mutants": shard_found, "timing": unit.as_dict()}, handle)
         return 0
 
     if args.merge_reports:
@@ -1643,9 +1662,8 @@ def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
                 for name in names:
                     path = os.path.join(args.merge_reports, name)
                     try:
-                        mutants, units = read_shard_report(path)
+                        mutants, unit = read_shard_report(path, timings.units)
                         fold(found, mutants)
-                        timings.add(units)
                     except (SweepError, KeyError, TypeError) as error:
                         # A sweep shard that failed to upload whole rather than
                         # one that failed the job outright -- the matrix's own
@@ -1653,7 +1671,10 @@ def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
                         raise SweepError(
                             f"{path} is not a shard report --merge-reports can use: {error}"
                         ) from error
-                judgements = read_triage(project)
+                    timings.add(unit)
+            # Outside the block: by here every report has been read, so a
+            # triage record that cannot be read leaves the table whole.
+            judgements = read_triage(project)
         except SweepError as error:
             print(f"mull_sweep: {error}", file=sys.stderr)
             return COULD_NOT_LOOK
