@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REQUIREMENT-FIGURES-SOURCED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-REQUIREMENT-FIGURES-SOURCED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T00:16:31.32562Z"
+artifact:
+  kind: external
+  reference: 'grep over docs/sunbeam-em7000/ (including controller-design/): no remaining citation of REQ-MACHINE-CONFIGURATION-001.C8 outside a superseded carry-forward note, no ''10 A circuit'' wording, no ''8-15 A band'' fuse claim; reference-machine.md § Supply declares 50 Hz nominal from the grid standard with live reading via the zero-cross channel (SOL-CHANNEL-ENUMERATION-CORRECTED.C3); restatements corrected in controller-io.md, component-specification.md (both), open-items.md, mains-inlet-protection.md, both electrical-requirements CSVs, both controller-io BOMs, control-system-bom.csv, wiring-and-connectors.csv; budget arithmetic unchanged (10 A x 253 V = 2530 W against 10.46 A)'
+  artifact_version: 1687ef4a27d52606903f1ddf1103b88ee155d63d
+attested_by: crun-25120cd792fc6293
+links:
+  - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C3
+    type: satisfies

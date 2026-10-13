@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REQUIREMENT-FIGURES-SOURCED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T00:16:30.661215Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-design-constraints.md: every Pending cell and the Pending marks table checked against the named node''s text read with show — DEL-HW-PARTITION-AND-FEASIBILITY.C1 (records a bought module''s figure such as the isolation rating), .C5 (each board task records rail budgets, branch fuse ratings, clearing time and let-through), .C3 (basis states pollution degree and material group), SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3/.C4, SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C2; each mark now says in words what that work records; the isolation-rating mark names the sources (mains-inlet-protection.md, control-system-bom.csv: 4.2 kVac) and DEL-HW-DESIGN-CONSTRAINTS.C2''s dispute'
+  artifact_version: 1687ef4a27d52606903f1ddf1103b88ee155d63d
+attested_by: crun-25120cd792fc6293
+links:
+  - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
+    type: satisfies
