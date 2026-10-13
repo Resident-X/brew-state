@@ -3,9 +3,13 @@ type: deliverable
 category: solution
 title: The enclosure, retained harnesses and position-sensitive parts are recorded from the machine as found, to the accuracy the boards' fit needs
 status: active
-version: 1
+version: 2
 text: |
-  Extends the machine's record in its own folder, docs/sunbeam-em7000: the enclosure and its mounting in the machine's reference record, and every retained harness, its connector and first pin, and what each retained device imposes on whatever drives or reads it in the wiring record, connector-pinouts.md. It also traces each live feed the original board takes and establishes the position, face and mounting of every location-dependent part, such as the tank-level sensor. Facts the boards' floorplan depends on are established by inspecting this machine; photographs of the same model published elsewhere are cited as published unverified and do not replace that inspection.
+  Extends the machine's record in its own folder, docs/sunbeam-em7000. The enclosure, its mounting and the position of every location-dependent part go in the machine's reference record, reference-machine.md, as a section on the controller enclosure. Every retained harness, its connector and first pin, each live feed the original board takes and the device upstream of it, and what each retained device imposes on whatever drives or reads it go in the wiring record, connector-pinouts.md. The records derived from those two then follow them: each pending mark in the board design constraints record, controller-board-design-constraints.md, that names this solution as the work that settles it ends with the recorded fact and its source, and the controller I/O and electrical-requirements tables that restate a changed fact are corrected to match.
+
+  Facts the boards' floorplan depends on are established by inspecting this machine; photographs of the same model published elsewhere are cited as published unverified and do not replace that inspection. The whole inspection is done with the machine unplugged: live feeds are traced by continuity, and no quantity is measured with the machine energised. A current comes from the device's own marking or its datasheet, and where neither gives one, from a bound worked out from the coil's resistance measured cold. A photograph taken for the record is optional; one that is committed goes in the record's folder under photos/ and is released by its owner into the public domain on the same terms as the rest of the repository.
+
+  The record states each value as found, with its evidence grade and its tolerance; the margin a design applies to a value is applied where the value is used, not in the record.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C1
     type: derives-from

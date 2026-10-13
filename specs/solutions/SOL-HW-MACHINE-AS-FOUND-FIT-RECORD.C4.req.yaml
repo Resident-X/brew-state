@@ -2,11 +2,21 @@ id: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C4
 type: criterion
 title: Each characteristic a retained device imposes on whatever drives or reads it is recorded
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  For every retained device, the wiring record states what the device requires of the circuit that drives or reads it: input thresholds such as the gauge driver's logic levels, contact type and current such as the dry-contact keys, the series resistances inherited on the front assemblies, and coil voltage and current such as the mains valve coils, each as a constraint a replacing board must meet. A mark of pending names the work that will settle it and ends only when that work records the fact and its source; every document derived from the record shows the mark rather than a value. Each entry carries its value with units where it has one, its evidence grade in the status vocabulary the machine's record already uses (measured, owner statement, schematic, parts list, published unverified, inferred, unmeasured) kept distinct rather than levelled, and a source a reader holding only the published repository can follow; a published source outside the repository, such as a photograph of the same model, is cited by its address and graded published unverified. Where the machine's record or a working design document already states a fact, the entry cites it rather than restating it. Out of scope: designing the circuits that meet these characteristics.
+  For every retained device, the wiring record states what the device requires of the circuit that drives or reads it, each as a constraint a replacing board must meet. By device class:
+  - each solenoid valve: its coil voltage, steady current and inrush current;
+  - each pump: its current at the top of the declared supply span;
+  - each heating element: its resistance;
+  - each key and microswitch, including the tank-level sensor where it is a switch: its contact type and rating;
+  - each temperature sensing element: its resistance at a stated reference temperature and its curve constant;
+  - the flow meter: its supply and output type;
+  - the buzzer: its type and drive;
+  - the gauge driver: its input thresholds, with the revision of the fitted part read from its marking;
+  - the series resistances inherited on the front assemblies.
+  No quantity is measured with the machine energised. A current is taken from the device's own marking or its datasheet. Where neither gives it, the current is a bound worked out from the coil's resistance measured cold at the stated supply voltage, with the derivation shown, which overstates an inductive coil's current rather than understating it. Each pending mark in the board design constraints record that names this solution, for valve coil current and for pump current, ends with the value and its source. A mark of pending names the work that will settle it and ends only when that work records the fact and its source; every document derived from the record shows the mark rather than a value. Each entry carries its value with units where it has one, its evidence grade in the status vocabulary the machine's record already uses (measured, inspected, owner statement, schematic, parts list, published unverified, inferred, unmeasured) kept distinct rather than levelled, and a source a reader holding only the published repository can follow; a published source outside the repository, such as a photograph of the same model, is cited by its address and graded published unverified. Where the machine's record or a working design document already states a fact, the entry cites it rather than restating it. Out of scope: designing the circuits that meet these characteristics, and the margin a design applies to these values.
 links:
   - target: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD
     type: criterion-of
