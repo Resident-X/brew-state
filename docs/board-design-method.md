@@ -1,8 +1,10 @@
 # Board design method
 
-This is how a controller board is designed in KiCad so that it passes the pre-order check and works once built. The method works for any machine. A machine's own figures come from its own records, and this document names each record only by the role it plays: the machine's constraints record, its separation basis record, the requirements a board serves, and the manufacturer's stated limits.
+This is how a controller board is designed in KiCad so that it passes the pre-order check and works once built. The method works for any machine. A machine's own figures come from its own records, and this document names each record only by the role it plays: the machine's constraints record, its separation basis record, the requirements a board serves, the board manufacturer's stated limits, and the datasheets of the parts on the board.
 
 A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
+
+The sections after the tools are carried out in the order they appear. The first two, proving value-critical circuits and designing for bring-up, are schematic work, finished and committed before any footprint is placed on the board; the rules and the routing follow. A board that fails any section's step is not ordered. The pre-order check does not read the records the first two sections keep, so passing it does not stand in for them.
 
 ## Tools
 
@@ -13,6 +15,7 @@ These are needed in addition to the tools the pre-order check needs (KiCad 10, P
 | KiCad, with its command-line tool and the Python it bundles with its `pcbnew` module | KiCad 10.0.7 | https://www.kicad.org/download/ |
 | Freerouting, the external router | Freerouting 2.5.0, the file `freerouting-2.5.0.jar` | https://github.com/freerouting/freerouting/releases (the v2.5.0 release, asset `freerouting-2.5.0.jar`) |
 | A Java runtime, which Freerouting runs on | Eclipse Temurin OpenJDK 26.0.1 | https://adoptium.net/ or any other Java distribution. Freerouting 2.5.0 is built for Java 25, so it needs Java 25 or newer. |
+| ngspice, the circuit simulator, as a program of its own. KiCad embeds ngspice only as a library, behind its simulator window, so the command-line program the steps below run is installed separately. | ngspice 47, on a netlist exported by KiCad 10.0.7's `kicad-cli` | https://ngspice.sourceforge.io/download.html. On macOS, `brew install ngspice` with Homebrew (https://brew.sh/), which is how the version opposite was installed. On Linux, the distribution's `ngspice` package. On Windows, the release archive from the download page, whose console program is `ngspice_con.exe`. |
 
 KiCad's bundled Python is the one that can `import pcbnew`. Its usual location:
 
@@ -54,6 +57,161 @@ While an editor holds a board open, KiCad keeps a lock file beside it, `~<board>
 Delete the project's lock file too, even though the board tooling looks only at the board's: a board editor reopening the board over a stale lock file with its own user and host name was measured to open it without asking and take over the board's lock file, but to leave the stale project lock file in place after it quit.
 
 Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers. What to look for is the layout review step's.
+
+## Proving value-critical circuits before layout
+
+Do this before any footprint is placed on the board. Its purpose is that every circuit whose component values decide whether it works is shown to work while changing it still costs only an edit to the schematic: each has a figure it must meet, the figure comes from a source, and a calculation or a simulation shows the circuit meeting it under the worst conditions it will see.
+
+This section and the next apply to every board that will be made, and to throwaway designs made to demonstrate this method. They do not apply to designs that exist only to prove the pre-order check's own tooling.
+
+### 1. List every value-critical circuit
+
+A circuit is **value-critical** when it works or fails on its component values, not only on its connections: wired exactly as drawn, it can still fail because a part was given the wrong value or rating. Go through the schematic block by block and ask of each: could this be connected correctly and still not do its job because of a value? If it could, it is value-critical. A connector carrying signals straight through to another board is not; most circuits with a resistor, a capacitor or a semiconductor chosen for its figures are.
+
+Every board that has these circuits lists them:
+
+- **A sensing front end**, the circuit between a sensor and the converter that reads it. Its noise and its settling time decide whether a reading is good enough to use.
+- **A zero-crossing detector**, the circuit that reports when the alternating supply crosses zero. Its delay, between the true crossing and the edge it reports, decides how accurately anything timed from that edge is timed.
+- **A drive stage**, the circuit that switches a load from a controller output. Its margin, the drive it gives against the drive its switching part needs to switch fully, decides whether it still switches at the lowest supply voltage.
+- **Every conductor that relies on a protective device**: each track, copper pour or wire that carries current from a supply protected by a fuse or breaker. It must survive a fault until that device clears it. Its figures are the device's clearing time and the energy it lets through (its let-through I²t) at the declared fault current, both read from the device's datasheet, with the fault current from the machine's constraints record. Its result is the energy the conductor withstands at the cross-section the board will give it, calculated with the arithmetic shown.
+
+### 2. State each circuit's figure and where it comes from
+
+Keep a table in a file named `circuit-proof.md` in the board's own folder, beside its KiCad project. Give it one row for every value-critical circuit:
+
+| Circuit | What its values decide | Figure | Source of the figure | How shown | Conditions covered | Result | Met |
+|---|---|---|---|---|---|---|---|
+
+- **Circuit** names the circuit and the reference designators of the parts whose values matter, for example `Input filter, R12 C7`.
+- **Figure** is the value the circuit must meet for the board to do its job, with its unit and which side of it passes, for example "settles to within one count of its final reading in at most" a stated time, or "withstands at least" a stated energy.
+- **Source of the figure** is one of two things: the machine's constraints record (name the figure in it), or the datasheet of the part the figure belongs to (name the part, its manufacturer, the datasheet's revision or date, and the table or graph the figure is read from). A value marked typical, with no minimum or maximum, is not a source, nor is a value a tool fills in by default, nor one estimated for this record.
+
+A figure its source does not yet bound, because the constraints record marks it pending or gives no value, or because the datasheet gives it only as typical, fails this step until the source is amended to give one. Never write into this record a figure the source does not hold: the remedy is to amend the source, and the board waits for it.
+
+### 3. Show that each circuit meets its figure, under the worst conditions it will see
+
+Each result is shown in one of three ways, and **How shown** says which, naming the file where there is one:
+
+- a **calculation**, with every step's arithmetic written out, in the record or in a file beside it, and every input value taken from the schematic or from a source as step 2 defines it;
+- a **short Python script**, committed in the board's folder, that prints the result;
+- a **simulation** with ngspice, as below.
+
+**Conditions covered** states the conditions each result holds under. They include:
+
+- **the worst of the declared supply span**: the lowest and the highest voltage the machine's constraints record declares for the supply the circuit runs from, whichever is worse for this figure;
+- **the worst of the parts' tolerances**: each part's value at the end of the tolerance its datasheet states that is worse for this figure, all of them at once;
+- **for a sensing front end, the switched loads operating**, wherever the source bounds the interference the machine's switched loads impose on the circuit, for example as a stated disturbance on its supply, its input or its ground. Where the source does not bound it, the cell says plainly: `Switched loads operating: not covered; left to measurement at bring-up.` This is the one condition a missing bound leaves open without failing the step. A missing figure still fails it.
+
+**Result** gives the value shown, under those conditions. **Met** is `yes` only when the result meets the figure under every condition the row lists.
+
+To simulate, run these from the board's folder, with `kicad-cli` written as the path to KiCad's command-line tool if it is not on your search path, as `hardware/README.md` describes. Keep the files in a folder named `circuit-proof` beside the record.
+
+1. Export the schematic as a SPICE netlist:
+
+   ```
+   kicad-cli sch export netlist --format spice --output circuit-proof/<board>.cir <board>.kicad_sch
+   ```
+
+   It writes one line per part, such as `R1 /IN /OUT 10k`, naming the nets each part joins.
+
+2. Write a simulation input for the circuit, `circuit-proof/<circuit>.cir`, that brings in the netlist, runs an analysis and measures the figure. For example, the time a resistor and capacitor take to charge to 63 % of a 5 V step:
+
+   ```
+   Input filter settling: time for OUT to reach 63 % of a 5 V step
+   .include <board>.cir
+   .tran 10u 5m uic
+   .meas tran t_settle WHEN v(/OUT)=3.16 RISE=1
+   .end
+   ```
+
+   The first line is a title. `.include` names the netlist, from the input's own folder. `.tran` runs a transient analysis, in time steps of 10 µs for 5 ms, starting from zero (`uic`). `.meas` measures the figure and gives it a name. Nodes are named as the netlist names them.
+
+   To cover the conditions, change values and run again inside a `.control` block, which takes the place of the `.meas` line. Keep the `.tran` line; each `run` repeats it. `alter` sets a part's value, a supply source's voltage included:
+
+   ```
+   .control
+   alter R1 = 9.9k
+   alter C1 = 90n
+   run
+   meas tran t_settle_low WHEN v(/OUT)=3.16 RISE=1
+   alter R1 = 10.1k
+   alter C1 = 110n
+   run
+   meas tran t_settle_high WHEN v(/OUT)=3.16 RISE=1
+   .endc
+   ```
+
+3. Run it in batch mode, with no window:
+
+   ```
+   ngspice -b circuit-proof/<circuit>.cir -o circuit-proof/<circuit>.log
+   ```
+
+4. Read the result from the log's line naming the measurement, for example `t_settle = 9.99665e-04` (ngspice pads it with spaces), and quote that line in **Result**.
+
+Three things were measured with ngspice 47 that decide whether the log can be believed:
+
+- **ngspice's exit status is not evidence.** It exits with success when a measurement fails and when it cannot solve the circuit. A log with a line containing `failed!`, `Error` or `singular matrix` holds no result, whatever value it also prints.
+- **Ground must be named `0` or `GND`.** ngspice takes either as its ground. A circuit whose reference net had another name ran with only a warning and gave a wrong result. If the board's reference net is named otherwise, add `Vgnd <net> 0 0` to the simulation input, after the `.include`, which ties that net to ground.
+- **Every part in the netlist needs a model.** KiCad's resistor, capacitor and simulation source symbols carry one. A part with none, such as a connector, exports as a line ngspice refuses (`Unable to find definition of model`), and the simulation stops. Mark such a part excluded from simulation in its symbol's properties, which leaves it out of the exported netlist while it stays on the board. If a part the circuit depends on has no model, show the circuit by calculation instead, or give its symbol the manufacturer's published model through KiCad's simulation model settings and commit the model file beside the input. That last route has not been exercised.
+
+The commands were exercised on macOS. On Windows, run `ngspice_con.exe` in place of `ngspice`, with the same arguments; that form has not been exercised.
+
+### 4. Commit the record before placement
+
+Commit `circuit-proof.md`, the exported netlist and every simulation input, script and calculation file it names, in a commit made before the first commit that places a footprint on the board. The order is then checkable from git history, from the board's folder:
+
+```
+git log --reverse --format=%h -- circuit-proof.md | head -1
+git log -S'(footprint ' --reverse --format=%h -- <board>.kicad_pcb | head -1
+git merge-base --is-ancestor <record commit> <placement commit>
+```
+
+The first prints the commit that added the record, the second the first commit that added a footprint to the board, and the third exits with success when the first is an ancestor of the second or the same commit. The record is in time when the third succeeds and the two commits differ. Before any footprint is placed the second prints nothing, and the record need only be committed.
+
+A later change to a listed circuit's parts or values, or to its figure at the source, reopens its row: export the netlist again, show the circuit again, and commit the record before the board is ordered.
+
+A board entering layout fails this step when a value-critical circuit is missing from the record, or a listed circuit lacks a figure, a source of the kind step 2 allows, or a result that meets its figure under the conditions step 3 requires, or when the record was not committed before placement. The remedy is a change to the circuit, shown again, or an amendment to the figure's source. Never the figure relaxed in this record, and never a shortfall judged unimportant.
+
+Out of scope for this section: measuring the built circuit, which belongs to bring-up; coupling that depends on the layout itself, which a proof made before layout cannot show; and the figures for a particular machine, which come from its constraints record.
+
+## Designing for bring-up and a second spin
+
+Do this before any footprint is placed on the board, alongside the previous section. A first spin of a board is expected to need changes, and it must be diagnosable when it does. So every board carries what bring-up needs to find out what is wrong: a test point on every rail and on each key signal, a link that isolates every rail from its loads, and a way to limit the current first power can draw. These are parts in the schematic, each with its own footprint, left on the board. The pre-order check's schematic parity, which fails a layout that disagrees with its schematic, then fails a board from which one of them is missing.
+
+### 1. Name every rail and every key signal
+
+A **rail** is every supply net on the board: each net that a regulator, converter, reference or supply input holds at a voltage to power other parts. That includes derived rails, made on the board from another, and reference rails, the voltages a converter or comparator measures against. Ground and return nets are not rails: they are the reference every rail is measured from, and carry no isolating link. A mains-referenced supply net is a rail like any other.
+
+A **key signal** is a signal bring-up must observe to tell whether a block of the board works. It includes each sensing front end's output, each drive stage's control input, the controller's reset, clock and programming interface, and any safety interlock's signal. Which signals of a particular board are key is that board's own design work; the test is whether, without probing the signal, bring-up could not tell whether its block works.
+
+### 2. Give every rail and key signal a test point, and every rail an isolating link
+
+A **test point** is a part in the schematic with its own reference designator, a pad or a test-point part on the net, that a multimeter or oscilloscope probe can touch on the built board.
+
+An **isolating link** is a part fitted in series in a rail, between where the rail is produced and everything it feeds, that a builder can open and close again with hand or soldering tools: a removable jumper on a two-pin header, a zero-ohm resistor, or a solder jumper. One link per rail, placed so that opening it separates the rail's source from all of its loads. The link divides the rail into two nets, its source side and its load side. They are still one rail, with one link and one test point. Put the test point on the source side, so the rail can be measured with its loads disconnected; the link's load-side pad then reaches the loads, for example to measure their resistance to ground before power is applied.
+
+A test point or link on a mains-referenced net is mains copper. It goes in the `Mains` net class with every other mains-referenced net, as step 2 of the rules section requires, and is held to the board's separation basis like any other mains copper.
+
+### 3. Give first power a means of current limiting
+
+The first time a board is powered, a short or a part fitted wrongly must not be able to draw enough current to do damage. The **current-limit means** is the way the board's draw on first power is limited. It is carried on the board, for example a current-limiting stage at its supply input, or it needs only what a builder without a laboratory has: a multimeter, hand and soldering tools, and ordinary parts, such as a series resistor or a lamp fitted in a link position, typically in place of the supply input's isolating link. A means that needs other instruments, such as a bench supply with its own current limit, does not count.
+
+### 4. Record the provisions, and commit them before placement
+
+Keep a table in a file named `bring-up-provision.md` in the board's own folder, beside its KiCad project. Give it one row for every rail and every key signal, and one row for first power:
+
+| Rail, key signal or first power | Net | Test point | Isolating link | What it is for |
+|---|---|---|---|---|
+
+- **Test point** and **Isolating link** name the parts by reference designator. Isolating link is filled in for rails only, and is `—` for a key signal.
+- **What it is for** says, for a rail, where it is produced; for a key signal, the block whose working it shows; and, in the first power row, the current-limit means and where it is fitted, by reference designator.
+
+Commit the record before the first commit that places a footprint on the board, checked from git history as step 4 of the previous section shows, with `bring-up-provision.md` in place of `circuit-proof.md`. A later change to the board's rails or key signals is recorded before the board is ordered.
+
+A board on which any rail lacks a test point or an isolating link, any key signal its record names lacks a test point, or first power cannot be current-limited by a means this section allows, fails this step. The remedy is to add the missing part to the schematic, and its row to the record.
+
+Out of scope for this section: carrying out bring-up on built boards, and choosing which signals of a particular board are key, which is that board's own design work.
 
 ## Rules before routing
 
