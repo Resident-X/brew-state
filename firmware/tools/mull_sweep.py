@@ -54,16 +54,18 @@ only the third is evidence that the population was really swept.
 
 A build round runs a narrower sweep than this, never the whole of it. Handed
 the lines a branch changes, measured by the round gate, it keeps those in the
-population it derives exactly as above, builds only the files they are in, and
-judges only the mutants on changed lines -- so new plant arithmetic meets the
-sweep before it merges, while the full population waits for the nightly run.
-Its judgements are the full sweep's, with one difference in staleness: a
-judgement about a file the branch did not touch is not this run's to call
-stale, and a judgement about a file it did is checked against everything that
-file now carries, so one stranded by moved or deleted lines fails the round.
-When no changed line is in the population it builds nothing and needs no
-toolchain, and it writes back which of those outcomes it reached, because both
-a sweep that passed and one with nothing to sweep exit 0.
+population it derives exactly as above, lists by a dry run everything the
+changed files now carry, and runs and judges only the mutants on changed lines
+-- so new plant arithmetic meets the sweep before it merges, while the full
+population waits for the nightly run. Its judgements are the full sweep's, with
+one difference in staleness: a judgement about a file the branch did not touch
+is not this run's to call stale, and a judgement about a file it did is checked
+against everything that file now carries, so one stranded by moved or deleted
+lines fails the round. When no changed line is in the population it builds
+nothing and needs no toolchain, and it writes back which of those outcomes it
+reached, because both a sweep that passed and one with nothing to sweep exit 0.
+Asked for by the round, it refuses to start without the changed lines rather
+than run the full sweep in their place.
 
 Every run that builds something also says where its time went, so the next
 speed-up is chosen from a measurement rather than guessed at. For each unit it
@@ -357,7 +359,11 @@ def _quoted(pattern: str) -> str:
 
 
 def write_scope(
-    directory: str, includes: list[str], excludes: list[str], mutators: list[str] | None = None
+    directory: str,
+    includes: list[str],
+    excludes: list[str],
+    mutators: list[str] | None = None,
+    git_diff: tuple[str, str] | None = None,
 ) -> str:
     """Write the derived scope where the mutation toolchain will read it.
 
@@ -383,6 +389,13 @@ def write_scope(
     restriction, because an empty `mutators:` list is Mull's own way of asking
     for none at all, which is the opposite of every operator this sweep means by
     leaving the key out entirely.
+
+    `git_diff`, when given, is a commit and the repository's top level, and
+    asks the plugin to instrument only the lines a zero-context diff from that
+    commit to the working tree puts on its new side -- the mutation tool's own
+    changed-lines mode, which the round's sweep runs a partly changed file
+    through. It narrows lines, not files: a file git has not been told about is
+    not in that diff, and is left out entirely.
     """
     path = os.path.join(directory, mull_toolchain.CONFIG_NAME)
     lines = [
@@ -396,6 +409,10 @@ def write_scope(
     if mutators:
         lines.append("mutators:")
         lines.extend(f"  - {_quoted(mutator)}" for mutator in mutators)
+    if git_diff:
+        reference, top = git_diff
+        lines.append(f"gitDiffRef: {_quoted(reference)}")
+        lines.append(f"gitProjectRoot: {_quoted(top)}")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
     return path
@@ -1310,12 +1327,24 @@ RESTRICTED_RAN = "ran"
 RESTRICTED_SKIPPED = "skipped"
 RESTRICTED_COULD_NOT_RUN = "could-not-run"
 
+#: Where the round gate says, in the environment, that the sweep was asked for
+#: by the round and where its account goes. The changed lines reach the sweep as
+#: arguments, which arrive only because the sweep's task forwards them; this
+#: arrives whatever the task's command forwards, so a restriction lost on the
+#: way is refused rather than run as the full sweep, which the round never runs.
+ROUND_ACCOUNT_VARIABLE = "MULL_SWEEP_ROUND_ACCOUNT"
+
 RESTRICTED_NOTE = (
-    "Restricted to the population files the branch changes: each unit builds them and runs every "
-    "mutant they carry, and only the mutants on changed lines are judged as survivors; the rest "
-    "are the files' whole current population, which each judgement about those files is checked "
-    "against."
+    "Restricted to the population files the branch changes. Each discovery unit lists, without "
+    "running any, every mutant the directories holding those files now carry, which each "
+    "judgement about a changed file is checked against. Each running unit runs only the mutants "
+    "on changed lines: through the mutation tool's own changed-lines mode for a file partly "
+    "changed, and whole for a file every line of which is changed, such as a new one."
 )
+
+#: What a running unit was narrowed to, as its timing row names it.
+PARTLY_CHANGED = "changed lines"
+WHOLLY_CHANGED = "whole files"
 
 
 def write_restricted_account(path: str | None, state: str, **fields: object) -> None:
@@ -1359,13 +1388,14 @@ def settle_restricted_account(path: str | None, status: int) -> None:
     write_restricted_account(path, **account)
 
 
-def read_changed_lines(path: str) -> tuple[str, dict[str, list[int]]]:
-    """The changed lines the round gate measured: its top level, and lines by path.
+def read_changed_lines(path: str) -> tuple[str, str, dict[str, list[int]]]:
+    """The changed lines the round gate measured: its top level, its base, and lines by path.
 
     Refused unless it is exactly what the gate writes -- an absolute top level,
-    and each changed path, relative to it, mapped to the new-side line numbers
-    it changes -- because a document read loosely would let a line nobody
-    measured into, or out of, the population being swept.
+    the commit the lines were measured from, and each changed path, relative to
+    the top level, mapped to the new-side line numbers it changes -- because a
+    document read loosely would let a line nobody measured into, or out of, the
+    population being swept.
     """
     try:
         with open(path, "r", encoding="utf-8") as handle:
@@ -1374,9 +1404,13 @@ def read_changed_lines(path: str) -> tuple[str, dict[str, list[int]]]:
         raise SweepError(f"the changed lines at {path} cannot be read as JSON: {error}") from error
     if not isinstance(document, dict):
         raise SweepError(f"the changed lines at {path} are not a mapping")
-    root, files = document.get("root"), document.get("files")
+    root, base, files = document.get("root"), document.get("base"), document.get("files")
     if not isinstance(root, str) or not os.path.isabs(root):
         raise SweepError(f"the changed lines at {path} name no absolute top level as 'root'")
+    if not isinstance(base, str) or not re.fullmatch(r"[0-9a-f]{7,64}", base):
+        raise SweepError(
+            f"the changed lines at {path} name no commit they were measured from as 'base'"
+        )
     if not isinstance(files, dict):
         raise SweepError(f"the changed lines at {path} carry no 'files' mapping of path to lines")
     for name, lines in files.items():
@@ -1390,7 +1424,7 @@ def read_changed_lines(path: str) -> tuple[str, dict[str, list[int]]]:
                 f"the changed lines at {path} give '{name}' something other than a list of line "
                 "numbers"
             )
-    return root, files
+    return root, base, files
 
 
 def changed_population(
@@ -1425,6 +1459,18 @@ def file_pattern(relative: str) -> str:
     return ".*/" + re.escape(relative)
 
 
+def line_count(path: str) -> int:
+    """How many lines a file has, counted as the round gate counts a new file's."""
+    with open(path, "rb") as handle:
+        content = handle.read()
+    return content.count(b"\n") + (1 if content and not content.endswith(b"\n") else 0)
+
+
+def object_of(environment: build_environments.Environment, project: str, source: str) -> str:
+    """Where the build leaves the object it compiles a project-relative source into."""
+    return os.path.join(environment.build_directory(project), os.path.splitext(source)[0] + ".o")
+
+
 def judged_source(name: str) -> str:
     """The source a triage key names, read from `<mutator>:<source>:<line>:<column>`."""
     parts = name.split(":")
@@ -1447,24 +1493,32 @@ def spans(lines: list[int]) -> str:
     return ", ".join(runs)
 
 
+def on_changed_lines(mutants: dict[str, dict], changed: dict[str, list[int]]) -> set[str]:
+    """The mutants among those given that lie on a changed line of a changed file."""
+    lines = {source: set(changed_lines) for source, changed_lines in changed.items()}
+    return {
+        name
+        for name, mutant in mutants.items()
+        if mutant["line"] in lines.get(mutant["source"].replace(os.sep, "/"), ())
+    }
+
+
 def classify_changed(
-    found: dict[str, dict], changed: dict[str, list[int]], judgements: dict[str, dict]
-) -> tuple[dict[str, dict], list[str], list[str], list[str], list[str]]:
+    carried: dict[str, dict],
+    drawn: dict[str, dict],
+    changed: dict[str, list[int]],
+    judgements: dict[str, dict],
+) -> tuple[list[str], list[str], list[str], list[str]]:
     """Split what a restricted run found against what has been judged about it.
 
-    `found` is every mutant the changed files carry; the mutants drawn are those
-    on changed lines, and only they are judged as survivors. A judgement about a
-    mutant outside the changed files is no business of this run, so it is never
-    reported stale here. A judgement about a mutant in a changed file is checked
-    against that file's whole current population, so one stranded by its lines
-    moving, or by its file being deleted, is caught now rather than at night.
+    `carried` is every mutant the changed files now carry, as listed without
+    running them, and `drawn` the mutants on changed lines as they were run;
+    only the drawn are judged as survivors. A judgement about a mutant outside
+    the changed files is no business of this run, so it is never reported stale
+    here. A judgement about a mutant in a changed file is checked against what
+    that file now carries, so one stranded by its lines moving, or by its file
+    being deleted, is caught now rather than at night.
     """
-    on_changed_lines = {source: set(lines) for source, lines in changed.items()}
-    drawn = {
-        name: mutant
-        for name, mutant in found.items()
-        if mutant["line"] in on_changed_lines.get(mutant["source"].replace(os.sep, "/"), ())
-    }
     survivors = {name: mutant for name, mutant in drawn.items() if not mutant["killed"]}
     unreviewed = sorted(name for name in survivors if name not in judgements)
     gaps = sorted(
@@ -1474,9 +1528,9 @@ def classify_changed(
     stale = sorted(
         name
         for name in judgements
-        if judged_source(name).replace(os.sep, "/") in changed and name not in found
+        if judged_source(name).replace(os.sep, "/") in changed and name not in carried
     )
-    return drawn, unreviewed, gaps, stale, retired
+    return unreviewed, gaps, stale, retired
 
 
 def sweep_changed_lines(
@@ -1490,22 +1544,33 @@ def sweep_changed_lines(
     """Sweep only the mutants on the lines a branch changes in the population.
 
     The population is the one the full sweep derives, so a file joins this run
-    for the same reason it joins that one. The build is narrowed to the changed
-    files, which keeps the mutants of every other file out of the run, and the
-    mutants each changed file carries are then filtered to the changed lines --
-    the same population whichever way it was drawn, a new file not yet committed
-    included, since its every line is a changed line. When no changed line is in
-    the population nothing is built and no toolchain is looked for.
+    for the same reason it joins that one. What each changed file now carries is
+    listed first, without running a mutant, over the directories the changed
+    files sit in; the mutants on changed lines among them are the population
+    this run owes. Only those are then run: a partly changed file through the
+    mutation tool's own changed-lines mode, measured from the same base the
+    round measured from, and a file every line of which is changed whole, since
+    that mode does not see a file git has not been told about. What ran is held
+    to what is owed, so the population is the same whichever way it was drawn:
+    a mutant owed and not run is a run that could not look, and one run and not
+    owed is not drawn. When no changed line is in the population nothing is
+    built and no toolchain is looked for.
     """
     record = args.changed_lines_result
+    covered: dict[str, int] = {}
+
+    def could_not_look(detail: str, **fields: object) -> int:
+        print(f"mull_sweep: {detail}", file=sys.stderr)
+        write_restricted_account(
+            record, RESTRICTED_COULD_NOT_RUN, detail=detail, **covered, **fields
+        )
+        return COULD_NOT_LOOK
 
     try:
-        root, files = read_changed_lines(args.changed_lines)
+        root, base, files = read_changed_lines(args.changed_lines)
         judgements = read_triage(project)
     except SweepError as error:
-        print(f"mull_sweep: {error}", file=sys.stderr)
-        write_restricted_account(record, RESTRICTED_COULD_NOT_RUN, detail=str(error))
-        return COULD_NOT_LOOK
+        return could_not_look(str(error))
 
     changed = changed_population(project, root, files, includes, excludes)
     # A changed file the triage record judges, though the population no longer
@@ -1529,12 +1594,12 @@ def sweep_changed_lines(
         return 0
 
     lines = sum(len(changed_lines) for changed_lines in changed.values())
-    covered = {"files": len(changed) + len(departed), "lines": lines}
+    covered.update(files=len(changed) + len(departed), lines=lines)
     print(
         f"mull_sweep: restricted to the {lines} changed line(s) in {covered['files']} population "
         "file(s) the branch changes:"
     )
-    present = [source for source in changed if os.path.isfile(os.path.join(project, source))]
+    present = sorted(source for source in changed if os.path.isfile(os.path.join(project, source)))
     for source, changed_lines in sorted({**changed, **departed}.items()):
         if source in departed:
             print(f"  {source}: no longer in the population")
@@ -1543,66 +1608,43 @@ def sweep_changed_lines(
         else:
             print(f"  {source}: {spans(changed_lines) or 'lines deleted only'}")
 
-    found: dict[str, dict] = {}
-    restricted_includes = [file_pattern(source) for source in present]
+    carried: dict[str, dict] = {}
+    executed: dict[str, dict] = {}
+    owed: set[str] = set()
     if present:
         try:
             toolchain = mull_toolchain.resolved(
                 warn=lambda note: print(f"mull_sweep: {note}", file=sys.stderr)
             )
         except mull_toolchain.ToolchainError as error:
-            print(
-                "mull_sweep: the branch changes lines in the population and the mutation "
-                f"toolchain is missing: {error}",
-                file=sys.stderr,
+            return could_not_look(
+                f"the branch changes lines in the population and the mutation toolchain is "
+                f"missing: {error}",
+                toolchain_missing=True,
             )
-            write_restricted_account(
-                record, RESTRICTED_COULD_NOT_RUN, toolchain_missing=True, detail=str(error),
-                **covered,
+        try:
+            owed = sweep_owed(
+                args, project, timings, environments, excludes, toolchain["runner"], base, root,
+                changed, present, carried, executed,
             )
-            return COULD_NOT_LOOK
+        except SweepError as error:
+            return could_not_look(str(error))
 
-    try:
-        if present:
-            with timings.reported(RESTRICTED_NOTE), tempfile.TemporaryDirectory() as derived:
-                config = write_scope(derived, restricted_includes, excludes)
-                for environment in environments:
-                    discard_objects(environment, project)
-                    for suite in suites(environment):
-                        print(f"mull_sweep: {environment.name}:{suite}", flush=True)
-                        unit = UnitTiming({"environment": environment.name, "suite": suite})
-                        report = sweep_unit(
-                            timings, unit, project, args.pio, toolchain["runner"],
-                            environment.name, suite, config,
-                        )
-                        collect(project, report, found)
-    except SweepError as error:
-        print(f"mull_sweep: {error}", file=sys.stderr)
-        write_restricted_account(record, RESTRICTED_COULD_NOT_RUN, detail=str(error), **covered)
-        return COULD_NOT_LOOK
-
-    intruders = outside_the_population(project, found, restricted_includes, excludes)
-    if intruders:
-        print(
-            "mull_sweep: mutants came back from sources outside the files the branch changes, so "
-            f"the run was not restricted to them: {', '.join(intruders)}. The narrowed scope did "
-            "not reach the compiler.",
-            file=sys.stderr,
-        )
-        write_restricted_account(
-            record, RESTRICTED_RAN, detail="the narrowed scope did not reach the compiler.",
-            mutants=0, **covered,
-        )
-        return FOUND_THE_PROBLEM
-
-    drawn, unreviewed, gaps, stale, retired = classify_changed(
-        found, {**changed, **departed}, judgements
+    drawn = {name: executed[name] for name in owed}
+    unreviewed, gaps, stale, retired = classify_changed(
+        {name: mutant for name, mutant in carried.items()
+         if mutant["source"].replace(os.sep, "/") in changed},
+        drawn, {**changed, **departed}, judgements,
     )
     survivors = {name: mutant for name, mutant in drawn.items() if not mutant["killed"]}
+    carried_by_changed = sum(
+        1 for mutant in carried.values() if mutant["source"].replace(os.sep, "/") in changed
+    )
     print(
         f"mull_sweep: {len(drawn)} mutant(s) on the changed lines, "
         f"{len(drawn) - len(survivors)} killed by the tests, {len(survivors)} survived; "
-        f"{len(found)} mutant(s) in the changed files altogether"
+        f"the changed files carry {carried_by_changed} mutant(s) altogether, and only those on "
+        "changed lines were run"
     )
     if args.survivors_only:
         list_survivors(survivors)
@@ -1625,6 +1667,137 @@ def sweep_changed_lines(
         )
     write_restricted_account(record, RESTRICTED_RAN, mutants=len(drawn), detail=detail, **covered)
     return status
+
+
+def sweep_owed(
+    args: argparse.Namespace,
+    project: str,
+    timings: TimingRecord,
+    environments: list[build_environments.Environment],
+    excludes: list[str],
+    runner: str,
+    base: str,
+    root: str,
+    changed: dict[str, list[int]],
+    present: list[str],
+    carried: dict[str, dict],
+    executed: dict[str, dict],
+) -> set[str]:
+    """List what the changed files carry, run the mutants owed on their changed lines, return those.
+
+    Fills `carried` with every mutant the changed files' directories now carry
+    and `executed` with every mutant run, and raises when either cannot be
+    trusted: a listing or a run reaching beyond its scope, a changed file whose
+    population came back missing rather than empty, or a mutant owed that was
+    not run.
+    """
+    directories = sorted({os.path.dirname(source) for source in present})
+    listing_includes = [scope_pattern(project, os.path.join(project, d)) for d in directories]
+    compiled: set[str] = set()
+    owed_by: dict[str, set[str]] = {}
+    configs = 0
+    with timings.reported(RESTRICTED_NOTE), tempfile.TemporaryDirectory() as derived:
+        os.makedirs(os.path.join(derived, "listing"))
+        listing = write_scope(os.path.join(derived, "listing"), listing_includes, excludes)
+        for environment in environments:
+            # Any suite the environment declares does as well as another: the
+            # mutants a source compiles to are a fact about the source, and a
+            # dry run never runs a test.
+            suite = suites(environment)[0]
+            discard_objects(environment, project)
+            print(f"mull_sweep: {environment.name}:{suite} (listing)", flush=True)
+            unit = UnitTiming({"environment": environment.name, "suite": suite}, listing=True)
+            report = sweep_unit(
+                timings, unit, project, args.pio, runner, environment.name, suite, listing
+            )
+            listed: dict[str, dict] = {}
+            collect(project, report, listed)
+            carried.update(listed)
+            owed_by[environment.name] = on_changed_lines(listed, changed)
+            compiled.update(
+                source for source in present
+                if os.path.isfile(object_of(environment, project, source))
+            )
+
+        intruders = outside_the_population(project, carried, listing_includes, excludes)
+        if intruders:
+            raise SweepError(
+                "the narrowed scope did not reach the compiler: the listing of the changed files' "
+                "directories came back with mutants from outside them "
+                f"({', '.join(intruders)}), so what it carries cannot be told from what the "
+                "build compiled"
+            )
+        listed_from = {mutant["source"].replace(os.sep, "/") for mutant in carried.values()}
+        for directory in directories:
+            if not any(source.startswith(directory + "/") for source in listed_from):
+                raise SweepError(
+                    f"no mutant came back from {directory}, where the branch changes a population "
+                    "file, so the population it carries is missing rather than empty: the scope "
+                    "did not reach the compiler for it, or no mutation build compiles it"
+                )
+        for source in present:
+            if source.endswith(".c") and source not in listed_from and source not in compiled:
+                raise SweepError(
+                    f"{source} carries no mutant and no mutation build compiled it, so its "
+                    "population is missing rather than empty: no environment built for the sweep "
+                    "reaches it"
+                )
+
+        whole = {
+            source for source in present
+            if changed[source] == list(range(1, line_count(os.path.join(project, source)) + 1))
+        }
+        for environment in environments:
+            owed_here = owed_by[environment.name]
+            if not owed_here:
+                # This environment's build carries no mutant on a changed
+                # line, so its suites have none to run.
+                continue
+            sources = {carried[name]["source"].replace(os.sep, "/") for name in owed_here}
+            for narrowed, chosen, git_diff in (
+                (PARTLY_CHANGED, sorted(sources - whole), (base, root)),
+                (WHOLLY_CHANGED, sorted(sources & whole), None),
+            ):
+                if not chosen:
+                    continue
+                configs += 1
+                directory = os.path.join(derived, f"run-{configs}")
+                os.makedirs(directory)
+                config = write_scope(
+                    directory, [file_pattern(source) for source in chosen], excludes,
+                    git_diff=git_diff,
+                )
+                discard_objects(environment, project)
+                for suite in suites(environment):
+                    print(f"mull_sweep: {environment.name}:{suite} ({narrowed})", flush=True)
+                    unit = UnitTiming(
+                        {"environment": environment.name, "suite": suite, "narrowed": narrowed}
+                    )
+                    report = sweep_unit(
+                        timings, unit, project, args.pio, runner, environment.name, suite, config
+                    )
+                    ran: dict[str, dict] = {}
+                    collect(project, report, ran)
+                    intruders = outside_the_population(
+                        project, ran, [file_pattern(source) for source in chosen], excludes
+                    )
+                    if intruders:
+                        raise SweepError(
+                            "the narrowed scope did not reach the compiler: mutants came back from "
+                            f"sources outside the files the branch changes ({', '.join(intruders)})"
+                        )
+                    fold(executed, ran)
+
+    owed = set().union(*owed_by.values()) if owed_by else set()
+    unrun = sorted(owed - set(executed))
+    if unrun:
+        raise SweepError(
+            f"{len(unrun)} mutant(s) on changed lines that the changed files carry were not run, "
+            "so the restricted run would be smaller than the population it owes -- the mutation "
+            "tool's changed-lines mode did not take in a line the round measured as changed: "
+            + ", ".join(unrun)
+        )
+    return owed
 
 
 def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
@@ -1714,6 +1887,22 @@ def main(argv: list[str], clock: Callable[[], float] = time.monotonic) -> int:
     )
     args = parser.parse_args(argv)
 
+    round_account = os.environ.get(ROUND_ACCOUNT_VARIABLE) or None
+    if round_account and not args.changed_lines:
+        # Refused before anything is derived or built: what would run next is
+        # the full sweep, and the round never runs it.
+        detail = (
+            "the round asked for the sweep and the changed lines it measured did not reach it, "
+            "because the command between them did not forward --changed-lines. The round never "
+            "runs the full sweep, so nothing was swept. Make the sweep's task hand its arguments "
+            "(CLI_ARGS) on to mull_sweep.py."
+        )
+        print(f"mull_sweep: {detail}", file=sys.stderr)
+        write_restricted_account(
+            args.changed_lines_result or round_account, RESTRICTED_COULD_NOT_RUN,
+            outcome=NOT_LOOKED, detail=detail,
+        )
+        return COULD_NOT_LOOK
     if args.changed_lines_result and not args.changed_lines:
         print("mull_sweep: --changed-lines-result needs --changed-lines", file=sys.stderr)
         return COULD_NOT_LOOK

@@ -279,10 +279,13 @@ is kept rare by branching from a freshly fetched `main` rather than checked for.
 That set of paths is declared once, as
 `EMULATION_READS` in [`tools/round_gate.py`](tools/round_gate.py). When there is
 no remote-tracking `origin/main`, the base cannot be resolved or the changed
-paths cannot be read, the gate runs emulation rather than skipping it. The
+paths or lines cannot be read, the gate runs emulation rather than skipping it. The
 selection saves time; it is not a trust boundary against whoever controls the
 tree it runs in, and a change that escapes it meets the reviews before it
-merges and the nightly complete verification after. Its statements name the base and `HEAD`
+merges and the nightly complete verification after. A branch that edits only
+the triage record, or removes a test that killed mutants on plant lines the
+branch does not change, changes no line the sweep below is restricted to, so
+what that does to the sweep is looked at only by the nightly. Its statements name the base and `HEAD`
 commits it measured between.
 
 After those tiers the round runs the mutation sweep restricted to the mutants
@@ -291,7 +294,11 @@ sweep. A changed line is a line on the new side of a zero-context diff from the
 same merge-base to the working tree, and every line of a new file not yet
 committed; a file with any hunk counts as changed, one that only deletes lines
 or is deleted outright included. Which files are in the population is the
-sweep's own derivation from the tree, as for the full sweep. A survivor on a
+sweep's own derivation from the tree, as for the full sweep. Everything a
+changed file now carries is listed without running it, and only the mutants on
+changed lines are run, so a one-line change does not run the hundreds of
+mutants its file carries; a changed file whose mutants are missing rather than
+absent fails the round as a sweep that could not look. A survivor on a
 changed line is judged against `mutation_triage.yaml` as the full sweep judges
 it, and every judgement about a changed file is checked against everything that
 file now carries, so a judgement stranded by moved or deleted lines fails the

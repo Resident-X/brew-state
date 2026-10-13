@@ -34,9 +34,9 @@ charge the branch with everything main gained since it branched. The
 remote-tracking main is taken as the repository holds it, not fetched. A copy
 left behind by the remote can mis-measure a branch, so it is kept rare by
 branching from a freshly fetched main rather than checked for here. The base is named by its full reference, which a local
-branch cannot shadow. When the base cannot be resolved, or the changed paths
-cannot be read, the gate cannot tell what changed, and it runs the emulation
-tier rather than guessing that nothing did.
+branch cannot shadow. When the base cannot be resolved, or the changed paths or
+the changed lines cannot be read, the gate cannot tell what changed, and it runs
+the emulation tier rather than guessing that nothing did.
 
 The changed lines come from the same measurement: a changed line is a line on
 the new side of a zero-context diff from that merge-base to the working tree,
@@ -127,8 +127,9 @@ class Change:
     `lines` maps every changed path to the new-side lines it changes, an empty
     list for a path whose hunks only delete. It is None when the changed lines
     could not be told, and `lines_problem` then says why; the paths can be known
-    while the lines are not, and the emulation tier is selected by the paths
-    alone. `root` is the repository's top level the paths are relative to.
+    while the lines are not, and the change then counts as one the gate cannot
+    tell, which runs the emulation tier whatever the paths are. `root` is the
+    repository's top level the paths are relative to.
     """
 
     head: str | None
@@ -298,10 +299,11 @@ def _lines(
 def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
     """Whether the emulation tier runs for the change, and why."""
     at = f"HEAD {change.head}" if change.head else "HEAD"
-    if change.paths is None:
+    unknown = change.lines_unknown_because
+    if unknown:
         return Scope(
             True,
-            f"could not tell what changed at {at}: {change.problem}. "
+            f"could not tell what changed at {at}: {unknown}. "
             "Running the emulation tier rather than skipping it.",
         )
     against = (
@@ -335,9 +337,11 @@ def _statement(heading: str, chosen: Scope) -> None:
         _say(f"    {path}")
 
 
-def _invoke(task: str, name: str, repo: str, arguments: tuple[str, ...] = ()) -> int:
+def _invoke(
+    task: str, name: str, repo: str, arguments: tuple[str, ...] = (), env: dict | None = None
+) -> int:
     try:
-        return subprocess.run([task, name, *arguments], cwd=repo, check=False).returncode
+        return subprocess.run([task, name, *arguments], cwd=repo, check=False, env=env).returncode
     except OSError as error:
         _say(f"round gate: {name} could not be started ({error})")
         return 127
@@ -369,6 +373,11 @@ UNMEASURABLE_REMEDY = (
 )
 
 NOT_REACHED = "The mutation sweep was NOT REACHED, so it neither passed nor failed."
+
+#: Where the sweep is told, through the environment, that the round asked for
+#: it and where its account goes. The sweep refuses to start without the
+#: changed lines when this is set, rather than run the full sweep.
+ROUND_ACCOUNT_VARIABLE = "MULL_SWEEP_ROUND_ACCOUNT"
 
 
 @dataclass
@@ -502,9 +511,14 @@ def sweep_step(task: str, name: str, repo: str, change: Change) -> Sweep:
             f"round gate: running {name} (mutation sweep) over the {lines} changed line(s) in "
             f"{len(change.lines)} changed path(s); the sweep keeps the ones in its population"
         )
+        # The account's place goes in the environment as well as the
+        # arguments: the arguments reach the sweep only if its task forwards
+        # them, and the environment reaches it regardless, so a restriction lost
+        # on the way is refused by the sweep rather than run as the full sweep.
         status = _invoke(
             task, name, repo,
             ("--", "--changed-lines", changed_lines, "--changed-lines-result", account_path),
+            env={**os.environ, ROUND_ACCOUNT_VARIABLE: account_path},
         )
         account = read_account(account_path)
     _say(f"round gate: {name} exited with status {status}")
@@ -528,8 +542,8 @@ def gate(task: str, host: list[str], emulation: list[str], sweep: str, repo: str
     if change.lines_unknown_because:
         _say(
             "round gate: the round cannot tell which plant lines the branch changes "
-            f"({change.lines_unknown_because}). The host tier, and the emulation tier as selected "
-            "above, still run, and the sweep step will then FAIL the round."
+            f"({change.lines_unknown_because}). The host and emulation tiers still run, and the "
+            "sweep step will then FAIL the round."
         )
 
     for name in host:
