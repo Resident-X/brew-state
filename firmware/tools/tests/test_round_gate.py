@@ -686,7 +686,7 @@ class TheChangedLinesAreMeasuredTheWayThePathsAre(unittest.TestCase):
         with mock.patch.dict(os.environ, environment or {}):
             return self.lines()
 
-    def test_no_setting_of_the_repository_or_environment_reshapes_the_hunks(self):
+    def test_the_diff_settings_and_environment_that_shape_hunks_are_pinned(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Lines 2 and 5 change and lines 3 and 4 between them do not. Each
         # setting below, left to itself, joins the two hunks, widens them with
@@ -712,6 +712,43 @@ class TheChangedLinesAreMeasuredTheWayThePathsAre(unittest.TestCase):
                 self.repository = repository
                 repository.write(PLANT, "one\nTWO\nthree\nfour\nFIVE\n")
                 self.assertEqual({PLANT: [2, 5]}, self.measured_under(settings, attributes, environment))
+
+    def test_a_content_filter_the_repository_declares_is_applied(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # A clean filter is the repository's statement of what its content is,
+        # not a way of showing a diff, so the measure is of the filtered
+        # content: the filter drops the first line, and the change on line 5
+        # is measured where the filtered file has it, on line 4.
+        self.repository.write(PLANT, "one\ntwo\nthree\nfour\nFIVE\n")
+        self.assertEqual({PLANT: [5]}, self.lines())
+        self.assertEqual(
+            {PLANT: [4]},
+            self.measured_under({"filter.drop.clean": "sed 1d"}, f"/{PLANT} filter=drop\n"),
+        )
+
+    def test_this_repository_declares_no_content_filter_for_the_sweeps_sources(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The measure applies a declared filter, so a filter on a C source or
+        # header here would move the lines the round charges a branch with.
+        # Every tracked one under the firmware is checked, which takes in all
+        # the sweep can draw from.
+        listed = subprocess.run(
+            ["git", "-C", REPOSITORY, "ls-files", "-z", "--", "firmware/*.c", "firmware/*.h"],
+            capture_output=True, text=True, check=True,
+        )
+        sources = [path for path in listed.stdout.split("\0") if path]
+        self.assertTrue(sources)
+        attributes = subprocess.run(
+            ["git", "-C", REPOSITORY, "check-attr", "-z", "--stdin", "filter"],
+            input="\0".join(sources) + "\0", capture_output=True, text=True, check=True,
+        )
+        fields = attributes.stdout.split("\0")
+        declared = {
+            fields[index]: fields[index + 2]
+            for index in range(0, len(fields) - 2, 3)
+            if fields[index + 2] != "unspecified"
+        }
+        self.assertEqual({}, declared)
 
     def test_the_diff_algorithm_and_hunk_placement_are_gits_defaults_whatever_is_configured(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes

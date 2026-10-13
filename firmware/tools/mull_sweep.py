@@ -1716,19 +1716,14 @@ def sweep_owed(
     trusted: a listing or a run reaching beyond its scope, a changed file or
     directory whose population came back missing rather than empty, or a mutant
     an environment owes that its own runs did not run. Missing and empty are
-    told apart by what the mutation build compiled: a source it left an object
-    for, carrying no mutant, carries no operator.
+    told apart as the full sweep tells them: a directory holding a changed
+    source must yield at least one mutant, since an object compiled is not a
+    source instrumented and a scope matching nothing still compiles. Within a
+    directory that yields, a changed C source the mutation build left no object
+    for is missing too; one it compiled, carrying no mutant, carries no operator.
     """
     directories = sorted({os.path.dirname(source) for source in present})
     listing_includes = [scope_pattern(project, os.path.join(project, d)) for d in directories]
-    directory_sources = {
-        directory: [
-            os.path.relpath(source, project).replace(os.sep, "/")
-            for source in sources_under(os.path.join(project, directory))
-            if source.endswith(".c") and in_scope(source, listing_includes, excludes)
-        ]
-        for directory in directories
-    }
     compiled: set[str] = set()
     owed_by: dict[str, set[str]] = {}
     executed_by: dict[str, set[str]] = {}
@@ -1752,8 +1747,8 @@ def sweep_owed(
             carried.update(listed)
             owed_by[environment.name] = on_changed_lines(listed, changed)
             compiled.update(
-                source for sources in directory_sources.values() for source in sources
-                if os.path.isfile(object_of(environment, project, source))
+                source for source in present
+                if source.endswith(".c") and os.path.isfile(object_of(environment, project, source))
             )
 
         intruders = outside_the_population(project, carried, listing_includes, excludes)
@@ -1766,14 +1761,12 @@ def sweep_owed(
             )
         listed_from = {mutant["source"].replace(os.sep, "/") for mutant in carried.values()}
         for directory in directories:
-            if not any(
-                source.startswith(directory + "/") for source in listed_from
-            ) and not compiled.intersection(directory_sources[directory]):
+            if not any(source.startswith(directory + "/") for source in listed_from):
                 raise SweepError(
                     f"no mutant came back from {directory}, where the branch changes a population "
-                    "file, and no mutation build compiled a source there, so the population it "
-                    "carries is missing rather than empty: the scope did not reach the compiler "
-                    "for it, or no mutation build compiles it"
+                    "file, so the population it carries is missing rather than empty, as the full "
+                    "sweep would say: the scope did not reach the compiler for it, or no mutation "
+                    "build compiles it"
                 )
         for source in present:
             if source.endswith(".c") and source not in listed_from and source not in compiled:

@@ -2579,7 +2579,9 @@ class ScopedTools(FakeTools):
 
     `ignore_scope` reports every source, as a scope that never reached the
     compiler would; `uncompiled` names sources the build leaves no object for
-    and the runner reports nothing from; `diff_misses` names lines the
+    and the runner reports nothing from; `uninstrumented` names sources the
+    build compiles and the runner reports nothing from, as a scope matching
+    nothing on this host's paths leaves them; `diff_misses` names lines the
     changed-lines mode leaves out although they changed, and `diff_misses_in`
     the same for one environment's build alone. The changed-lines mode reads
     the repository's own diff settings, as a tool computing its own diff may.
@@ -2590,6 +2592,7 @@ class ScopedTools(FakeTools):
         super().__init__(project)
         self.ignore_scope = False
         self.uncompiled: set[str] = set()
+        self.uninstrumented: set[str] = set()
         self.diff_misses: set[tuple[str, int]] = set()
         self.diff_misses_in: dict[str, set[tuple[str, int]]] = {}
         self.environment = ""
@@ -2630,6 +2633,8 @@ class ScopedTools(FakeTools):
         misses = self.diff_misses | self.diff_misses_in.get(self.environment, set())
         for source in self.sources():
             if not self.ignore_scope and not mull_sweep.in_scope(source, includes, excludes):
+                continue
+            if os.path.relpath(source, self.project) in self.uninstrumented:
                 continue
             instrumented = self.changed_lines(scope, source)
             if instrumented is not None and not instrumented:
@@ -3100,8 +3105,10 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertIn(f"{added} carries no mutant and no mutation build compiled it", account["detail"])
         self.assertNotIn("lie on the changed lines", output)
 
-    def test_a_changed_source_carrying_no_operator_that_was_compiled_passes(self):
+    def test_a_changed_source_carrying_no_operator_passes_where_its_directory_yields_mutants(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The directory's other file came back, so the scope reached the
+        # compiler there; this one was compiled and carries no operator.
         self.write("src/plant/alpha/added.c", "float f(float x) { return x; }\n")
         status, output, account = self.restricted()
         self.assertEqual(0, status, output)
@@ -3125,21 +3132,39 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
         self.assertEqual(("could-not-run", "could-not-look"), (account["state"], account["outcome"]))
         self.assertIn("no mutant came back from src/plant/alpha", account["detail"])
-        self.assertIn("no mutation build compiled a source there", account["detail"])
 
-    def test_a_changed_directory_whose_compiled_sources_carry_no_operator_passes(self):
+    def test_a_changed_directory_the_scope_matches_nothing_in_could_not_be_looked_at_though_it_compiles(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
-        # Nothing comes back from the directory because nothing in it carries
-        # an operator, and its source was compiled: its population is empty, not
-        # missing.
+        # The build compiles the changed source and leaves its object, but the
+        # scope instruments nothing in it, so its arithmetic comes back as no
+        # mutant at all. An object compiled is not a source instrumented.
+        self.tools.uninstrumented = {STRUCTURE}
+        self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; } /* survives */")
+        status, output, account = self.restricted()
+        self.assertTrue(os.path.isfile(os.path.join(
+            self.project, build_environments.BUILD_ROOT, "native_alpha_mutation",
+            os.path.splitext(STRUCTURE)[0] + ".o",
+        )))
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+        self.assertEqual(("could-not-run", "could-not-look"), (account["state"], account["outcome"]))
+        self.assertIn("no mutant came back from src/plant/alpha", account["detail"])
+        self.assertIn("missing rather than empty", account["detail"])
+        self.assertNotIn("lie on the changed lines", output)
+
+    def test_a_changed_directory_whose_compiled_sources_carry_no_operator_could_not_be_looked_at(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Nothing comes back from the directory, and its source was compiled.
+        # That is what a scope matching nothing looks like too, so the run
+        # cannot tell empty from missing and says so, as the full sweep does.
         self.write(STRUCTURE, "float a(float x) { return x; }\n")
         self.judge({JUDGED_SHARED: "equivalent"})
         self.commit("no operator in the structure")
         self.git("update-ref", "refs/remotes/origin/main", "HEAD")
         self.write("src/plant/alpha/extra.h", "#define EXTRA 1\n")
         status, output, account = self.restricted()
-        self.assertEqual(0, status, output)
-        self.assertEqual(("ran", "passed", 0), (account["state"], account["outcome"], account["mutants"]))
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+        self.assertEqual(("could-not-run", "could-not-look"), (account["state"], account["outcome"]))
+        self.assertIn("no mutant came back from src/plant/alpha", account["detail"])
 
     def test_a_mutant_one_environment_owes_and_only_another_ran_could_not_be_looked_at(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes

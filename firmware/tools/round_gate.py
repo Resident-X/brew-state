@@ -44,8 +44,10 @@ the new side of a zero-context diff from that merge-base to the working tree,
 and every line of a new file not yet committed. A file counts as changed when it
 has any hunk at all, one that only deletes lines and a file deleted outright
 included, because the sweep's judgements about a file are tied to its lines and
-a deletion moves or removes them. The diff is asked for in terms no setting of
-the user's or the repository's can widen, move or hide a hunk under. When those
+a deletion moves or removes them. The diff options and environment that shape
+a hunk are pinned; a content filter a repository declares in its gitattributes
+is the repository's own and is applied, and this repository declares none for
+the sweep's sources. When those
 lines cannot be told, the host and emulation tiers still run as they do for any
 change the gate cannot measure, and the sweep step then fails the round, saying
 why and what to do: it cannot clear the change as touching no plant line, and
@@ -178,7 +180,9 @@ PATH_DIFF = ("--no-relative", "--no-renames", "--no-ext-diff")
 #: context joining hunks (diff.interHunkContext), git's default algorithm and
 #: hunk placement (diff.algorithm, diff.indentHeuristic), the content itself
 #: rather than a conversion of it (textconv) or a "binary files differ" in place
-#: of its hunks (a -diff attribute), and no colour before a hunk's header.
+#: of its hunks (a -diff attribute), and no colour before a hunk's header. A
+#: content filter the repository declares in its gitattributes is not a diff
+#: option and is applied; this repository declares none for the sweep's sources.
 LINE_DIFF = PATH_DIFF + (
     "-U0", "--inter-hunk-context=0", "--diff-algorithm=myers", "--indent-heuristic",
     "--no-textconv", "--text", "--no-color",
@@ -281,8 +285,9 @@ def _lines(
 
     A tracked path's lines are read from its own zero-context diff from the
     base to the working tree, named as a literal path from the top level so no
-    character in it is read as a pattern, and shaped by LINE_DIFF alone so no
-    setting of the user's or the repository's widens, moves or hides a hunk.
+    character in it is read as a pattern, with the options and environment that
+    shape a hunk pinned by LINE_DIFF and RESHAPING_ENVIRONMENT; a content filter
+    the repository declares in its gitattributes is applied, as git applies it.
     Only the hunk headers are read, which say where each hunk sits on the new
     side and how long it is there; a hunk that only deletes has no length there
     and contributes no line, though its path still counts as changed. A new

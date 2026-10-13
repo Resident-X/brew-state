@@ -294,10 +294,11 @@ on the lines the branch changes in the sweep's population, and never the full
 sweep. A changed line is a line on the new side of a zero-context diff from the
 same merge-base to the working tree, and every line of a new file not yet
 committed; a file with any hunk counts as changed, one that only deletes lines
-or is deleted outright included. The diff is asked for in terms no git setting
-or environment of the user's or the repository's can widen, move or hide a hunk
-under, and a line the mutation tool's own changed-lines mode takes in beyond
-those is run but not drawn. Which files are in the population is the
+or is deleted outright included. The diff options and environment that shape
+a hunk are pinned; a content filter a repository declares in its gitattributes
+is the repository's own and is applied, and this repository declares none for
+the sweep's sources. A line the mutation tool's own changed-lines mode takes in
+beyond those is run but not drawn. Which files are in the population is the
 sweep's own derivation from the tree, as for the full sweep. Everything a
 changed file now carries is listed without running it, and only the mutants on
 changed lines are run, so a one-line change does not run the hundreds of
