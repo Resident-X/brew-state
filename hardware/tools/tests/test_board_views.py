@@ -5,8 +5,10 @@ The proof board is written from text in a temporary directory outside the
 repository: an integrated circuit with its supply pins typed and two decoupling
 parts on its rails, a second circuit with no pin typed as power, two critical
 classes, a ground pour on the back whose fill is cut around a power track, two
-signal tracks at the board's minimum width and minimum clearance, and a note on
-a user layer. The views are rendered once, through the shipped task, and the
+signal tracks at the board's minimum width and minimum clearance, a note on a
+user layer, a rule area, a silkscreen text in a font no machine has, and parts
+whose three-dimensional models are kept in the design's folder, missing, hidden
+or not populated. The views are rendered once, through the shipped task, and the
 tests ask of the images, the index and the fact table what the criterion
 needs; the refusals are driven through the command itself. Nothing is skipped
 when a tool is absent: a command that cannot be exercised has not been shown
@@ -72,14 +74,19 @@ def pad(number, x, y, net, pintype):
             f'(roundrect_rratio 0.25) (net "{net}") (pintype "{pintype}") (uuid {uuid()}))')
 
 
-def footprint(reference, x, y, pads):
-    return (f'(footprint "proof:Part" (layer "F.Cu") (uuid {uuid()}) (at {x} {y}) '
+def model(path, height=1, hidden=False):
+    return (f'(model "{path}"{" (hide yes)" if hidden else ""} (offset (xyz 0 0 0)) (scale (xyz 1 1 {height})) '
+            '(rotate (xyz 0 0 0)))')
+
+
+def footprint(reference, x, y, pads, models=(), attributes=""):
+    return (f'(footprint "proof:Part" (layer "F.Cu") (uuid {uuid()}) (at {x} {y}) {attributes}'
             f'(property "Reference" "{reference}" (at 0 -3 0) (layer "F.SilkS") (uuid {uuid()}) '
             '(effects (font (size 1 1) (thickness 0.15)))) '
             f'(fp_rect (start -2.5 -2.5) (end 2.5 2.5) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd") '
             f'(uuid {uuid()})) '
             f'(fp_rect (start -2 -2) (end 2 2) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab") '
-            f'(uuid {uuid()})) ' + " ".join(pads) + ")")
+            f'(uuid {uuid()})) ' + " ".join(list(pads) + list(models)) + ")")
 
 
 LAYER_TABLE = ['(0 "F.Cu" signal)', '(2 "B.Cu" signal)', '(13 "F.Paste" user)', '(15 "B.Paste" user)',
@@ -90,16 +97,36 @@ LAYER_TABLE = ['(0 "F.Cu" signal)', '(2 "B.Cu" signal)', '(13 "F.Paste" user)', 
 
 OUTLINE = '(gr_rect (start 0 0) (end 60 40) (stroke (width 0.05) (type default)) (fill no) (layer "Edge.Cuts") (uuid "00000000-0000-4000-8000-0000000000e0"))'
 
+#: A model the design keeps in its own folder: a red box 2 by 2 by 2 in VRML's units of 2.54 mm, which a model's
+#: scale stretches upward.
+MODEL = """#VRML V2.0 utf8
+Shape { appearance Appearance { material Material { diffuseColor 0.9 0.05 0.05 } } geometry Box { size 2 2 2 } }
+"""
+MODEL_COLOUR = (230, 13, 13)
+
+#: The font one silkscreen text asks for, which no machine has, so KiCad substitutes another.
+NO_SUCH_FONT = "Board Views Proof Face"
+
 #: The proof board's items: U1 has its supply pins typed and C1 and C2 across its rails; R1 has only one pad on
 #: a rail; U2 has no pin typed as power. The ground pour on B.Cu is cut around the +3V3 track crossing it, so its
 #: fill depends on another net's copper. SIG_A and SIG_B run at the minimum width, the minimum clearance apart.
+#: U1's model is in the design's folder, named through ${KIPRJMOD}; U2's is the same file named from that folder
+#: with no variable, stretched to 61 mm tall at the back of the board, so the angled view must zoom out to show
+#: it whole; C1 declares no model, C2's model is nowhere, R1 hides its model and D1 is not populated. A rule area
+#: on F.Cu and a user layer, which KiCad does not plot, and a silkscreen text in a font no machine has complete it.
 ITEMS = [
     footprint("U1", 20, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
-                             pad(3, 2, -1, "SIG_A", "input"), pad(4, 2, 1, "SIG_B", "output")]),
+                             pad(3, 2, -1, "SIG_A", "input"), pad(4, 2, 1, "SIG_B", "output")],
+              [model("${KIPRJMOD}/models/box.wrl")]),
     footprint("C1", 4, 20, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")]),
-    footprint("C2", 56, 20, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")]),
-    footprint("R1", 30, 12, [pad(1, 0, -1, "SIG_A", "passive"), pad(2, 0, 1, "+3V3", "passive")]),
-    footprint("U2", 45, 8, [pad(1, -1, 0, "SIG_A", "input"), pad(2, 1, 0, "SIG_B", "output")]),
+    footprint("C2", 56, 20, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")],
+              [model("${KIPRJMOD}/models/missing.step")]),
+    footprint("R1", 30, 12, [pad(1, 0, -1, "SIG_A", "passive"), pad(2, 0, 1, "+3V3", "passive")],
+              [model("${KIPRJMOD}/models/box.wrl", hidden=True)]),
+    footprint("U2", 45, 8, [pad(1, -1, 0, "SIG_A", "input"), pad(2, 1, 0, "SIG_B", "output")],
+              [model("models/box.wrl", height=12)]),
+    footprint("D1", 8, 8, [pad(1, -1, 0, "SIG_A", "passive"), pad(2, 1, 0, "SIG_B", "passive")],
+              [model("${KIPRJMOD}/models/box.wrl")], "(attr smd dnp)"),
     f'(segment (start 4 19) (end 18 19) (width 0.3) (layer "F.Cu") (net "+3V3") (uuid {uuid()}))',
     f'(segment (start 24 19) (end 40 19) (width 0.1) (layer "F.Cu") (net "SIG_A") (uuid {uuid()}))',
     f'(segment (start 24 19.2) (end 40 19.2) (width 0.1) (layer "F.Cu") (net "SIG_B") (uuid {uuid()}))',
@@ -109,6 +136,13 @@ ITEMS = [
     '(min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
     '(polygon (pts (xy 2 25) (xy 58 25) (xy 58 38) (xy 2 38))))',
     f'(gr_text "KEEP OUT" (at 30 4 0) (layer "Cmts.User") (uuid {uuid()}) (effects (font (size 1.5 1.5) (thickness 0.2))))',
+    f'(gr_text "FACE" (at 10 36 0) (layer "F.SilkS") (uuid {uuid()}) '
+    f'(effects (font (face "{NO_SUCH_FONT}") (size 1.5 1.5) (thickness 0.2))))',
+    f'(zone (net "") (net_name "") (layers "F.Cu" "Dwgs.User") (uuid {uuid()}) (name "KO1") (hatch edge 0.5) '
+    '(connect_pads (clearance 0)) (min_thickness 0.25) (filled_areas_thickness no) (keepout (tracks not_allowed) '
+    '(vias not_allowed) (pads allowed) (copperpour not_allowed) (footprints allowed)) (placement (enabled no) '
+    '(sheetname "")) (fill (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
+    '(polygon (pts (xy 50 2) (xy 56 2) (xy 56 6) (xy 50 6))))',
 ]
 
 
@@ -151,6 +185,9 @@ class Design:
             handle.write(layout() if board_text is None else board_text)
         with open(self.project, "w", encoding="utf-8") as handle:
             handle.write(project() if project_text is None else project_text)
+        os.makedirs(os.path.join(self.folder, "models"))
+        with open(os.path.join(self.folder, "models", "box.wrl"), "w", encoding="utf-8") as handle:
+            handle.write(MODEL)
 
     def args(self, classes=("Power", "Ground"), out=None):
         found = ["--board", self.board, "--project", self.project, "--out", out or self.out]
@@ -299,7 +336,7 @@ class Views(unittest.TestCase):
     def test_every_layer_the_board_carries_and_every_layer_holding_an_item_gets_an_image(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         layers = {image["layers"][0]["name"] for image in self.images("layer")}
-        self.assertEqual(layers, set(board_views.REQUIRED_LAYERS) | {"Cmts.User", "F.Fab", "F.CrtYd"})
+        self.assertEqual(layers, set(board_views.REQUIRED_LAYERS) | {"Cmts.User", "Dwgs.User", "F.Fab", "F.CrtYd"})
         note = [image for image in self.images("layer") if image["layers"][0]["name"] == "Cmts.User"]
         self.assertTrue(note)
         lit = [self.colour_at(note, x / 10, y / 10) for x in range(270, 330, 2) for y in range(30, 50, 2)]
@@ -473,10 +510,13 @@ class Views(unittest.TestCase):
         for image in self.index["images"]:
             with self.subTest(image=image["file"]):
                 width, height, rows = self.pixels(image)
-                top = image["content_px"]["height"] if "content_px" in image else height - (
-                    len(board_views.wrapped(image["caption"], width)) * board_views.LINE_PX + 2 * board_views.CAPTION_PAD_PX)
+                top = (image["content_px"] if "content_px" in image else image["render_px"])["height"]
                 lines = board_views.wrapped(image["caption"], width)
-                self.assertEqual(height - top, len(lines) * board_views.LINE_PX + 2 * board_views.CAPTION_PAD_PX)
+                needed = len(lines) * board_views.LINE_PX + 2 * board_views.CAPTION_PAD_PX
+                if image["view"] == "3d":
+                    self.assertGreaterEqual(height - top, needed)
+                else:
+                    self.assertEqual(height - top, needed)
                 text = sum(1 for row in rows[top + 2:] for pixel in row if sum(pixel[:3]) > 450)
                 self.assertGreater(text, 40 * len(lines), "no caption text is drawn")
                 if image["view"] != "3d":
@@ -501,7 +541,7 @@ class Views(unittest.TestCase):
         self.assertEqual(self.index["image_limit"], {"long_edge_px": 1568, "patches": 1568, "patch_px": 28})
         self.assertEqual(self.index["critical_classes"], {"Power": ["+3V3"], "Ground": ["GND"]})
         for image in self.index["images"]:
-            fields = {"file", "view", "caption", "size_px"} | ({"direction"} if image["view"] == "3d" else
+            fields = {"file", "view", "caption", "size_px"} | ({"direction", "zoom", "render_px"} if image["view"] == "3d" else
                                                               {"layers", "scale_px_per_mm", "region_mm", "tile"})
             self.assertLessEqual(fields, set(image), image["file"])
         overlay = self.images("net", net="GND")[0]
@@ -529,9 +569,198 @@ class Views(unittest.TestCase):
     def test_the_render_leaves_the_design_folder_untouched(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         design = self.views["design"]
-        self.assertEqual(sorted(os.listdir(design.folder)), ["proof.kicad_pcb", "proof.kicad_pro"])
+        self.assertEqual(sorted(os.listdir(design.folder)), ["models", "proof.kicad_pcb", "proof.kicad_pro"])
         with open(design.board, encoding="utf-8") as handle:
             self.assertEqual(handle.read(), layout())
+
+    # --- Nothing left out quietly ---
+
+    def red(self, pixel):
+        return pixel[0] > 140 and pixel[1] < 70 and pixel[2] < 70
+
+    def test_a_model_the_design_keeps_in_its_own_folder_is_drawn_in_three_dimensions(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        unseen = {part["reference"]: part["reason"] for part in self.index["not_in_3d"]}
+        self.assertEqual(unseen, {"C1": "no model", "C2": "model not found", "D1": "not populated",
+                                  "R1": "model hidden"})
+        top = self.images("3d", file="3d-top.png")[0]
+        _, _, rows = self.pixels(top)
+        across, down = top["render_px"]["width"], top["render_px"]["height"]
+        reds = [x for row in rows[:down] for x, pixel in enumerate(row[:across]) if self.red(pixel)]
+        # Seen from the top, x on the board runs across the image: U1's model, named through ${KIPRJMOD}, sits a
+        # third of the way across, and U2's, named from the design's folder with no variable, three quarters.
+        self.assertTrue(any(x < across * 0.5 for x in reds), "U1's model in the design's folder is not drawn")
+        self.assertTrue(any(x > across * 0.6 for x in reds), "U2's model named from the design's folder is not drawn")
+
+    def test_a_part_drawn_without_its_model_is_named_in_the_captions_the_index_and_the_report(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        missing = "KiCad cannot find its model: File not found: ${KIPRJMOD}/models/missing.step"
+        self.assertIn(f"MODEL | C2 | {missing}", self.views["result"].stdout)
+        for name in ("C1", "D1", "R1", "U1", "U2"):
+            self.assertNotIn(f"MODEL | {name} |", self.views["result"].stdout)
+        with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
+            text = handle.read().splitlines()
+        self.assertIn(f"NOT IN 3D | C2 | {missing}", text)
+        self.assertIn("NOT IN 3D | C1 | it declares no model", text)
+        self.assertIn("NOT IN 3D | R1 | the design hides its model", text)
+        self.assertIn("NOT IN 3D | D1 | marked do not populate, so the render leaves it out", text)
+        for image in self.images("3d"):
+            with self.subTest(image=image["file"]):
+                for words in ("drawn without a model KiCad cannot find: C2", "declaring none: C1",
+                              "the design hiding it: R1", "marked do not populate: D1"):
+                    self.assertIn(words, image["caption"])
+                self.assertNotIn("U1", image["caption"])
+
+    def test_a_three_dimensional_view_is_zoomed_out_until_no_part_reaches_its_frame(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        angled = self.images("3d", file="3d-angled.png")[0]
+        self.assertLess(angled["zoom"], 1, "U2's 61 mm model runs out of the angled view at KiCad's own framing")
+        self.assertIn(f"zoomed out to {angled['zoom']:.3g} so no part reaches the frame", angled["caption"])
+        for image in self.images("3d"):
+            with self.subTest(image=image["file"]):
+                _, _, rows = self.pixels(image)
+                across, down = image["render_px"]["width"], image["render_px"]["height"]
+                edge = rows[0][:across] + rows[down - 1][:across] + [rows[y][x] for y in range(down)
+                                                                     for x in (0, across - 1)]
+                self.assertTrue(all(pixel[:3] == BACKGROUND for pixel in edge), "a part reaches the frame")
+        _, _, rows = self.pixels(angled)
+        tallest = min(y for y, row in enumerate(rows[:angled["render_px"]["height"]]) if any(map(self.red, row)))
+        self.assertGreater(tallest, 0, "the top of U2's model is cut off")
+
+    def test_a_rule_area_kicad_does_not_plot_is_drawn_and_named(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        for layer in ("Dwgs.User", "F.Cu"):
+            with self.subTest(layer=layer):
+                images = [image for image in self.images("layer") if image["layers"][0]["name"] == layer]
+                self.assertTrue(self.seen(images, 53, 4, board_views.RULE_AREA[0], reach=0.3), "the hatching")
+                self.assertTrue(self.seen(images, 50, 2.6, board_views.RULE_AREA[0], reach=0.3), "the outline")
+                self.assertFalse(self.seen(images, 47, 4, board_views.RULE_AREA[0], reach=0.3), "outside it")
+                for image in images:
+                    self.assertEqual([area["name"] for area in image["rule_areas"]], ["KO1"])
+                    self.assertIn("rule areas, which KiCad does not plot, drawn as bright orange dashed hatched "
+                                  "outlines: KO1 on F.Cu, Dwgs.User (no tracks, vias or copper pour)", image["caption"])
+        for image in self.images("layer"):
+            if image["layers"][0]["name"] not in ("Dwgs.User", "F.Cu"):
+                self.assertEqual(image["rule_areas"], [], image["file"])
+        self.assertEqual([area["name"] for area in self.images("crop", circuit="U2")[0]["rule_areas"]], ["KO1"])
+        self.assertEqual(self.images("crop", circuit="U1")[0]["rule_areas"], [], "KO1 is nowhere near U1")
+        with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
+            self.assertIn("RULE AREA | KO1 | on F.Cu, Dwgs.User, no tracks, vias or copper pour; KiCad does not plot "
+                          "it, so the views draw it as a bright orange dashed hatched outline", handle.read())
+
+    def test_a_font_kicad_substitutes_is_named_in_every_caption_the_index_and_the_report(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        substituted = self.index["fonts_substituted"]
+        self.assertEqual([font["font"] for font in substituted], [NO_SUCH_FONT])
+        instead = substituted[0]["drawn_in"]
+        self.assertTrue(instead and instead != NO_SUCH_FONT)
+        self.assertIn(f"FONT | {NO_SUCH_FONT} | KiCad cannot find this font and drew its text in {instead}",
+                      self.views["result"].stdout)
+        with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
+            self.assertIn(f"FONT | {NO_SUCH_FONT} | not found, so KiCad drew its text in {instead}", handle.read())
+        for image in self.index["images"]:
+            self.assertIn(f"fonts KiCad could not find, their text drawn in another: {NO_SUCH_FONT} drawn in "
+                          f"{instead}", image["caption"], image["file"])
+
+    def test_a_board_carrying_every_layer_names_none_as_missing(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        self.assertEqual(self.index["layers_not_carried"], [])
+        self.assertNotIn("LAYER | ", self.views["result"].stdout)
+        for image in self.index["images"]:
+            self.assertNotIn("not carried by the board", image["caption"], image["file"])
+
+
+class Lacking(unittest.TestCase):
+    """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+
+    def test_a_fabrication_or_courtyard_layer_the_board_does_not_carry_is_named_where_it_would_be_drawn(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        kept = [entry for entry in LAYER_TABLE if '"B.Fab"' not in entry and '"B.CrtYd"' not in entry]
+        design = Design(layout(layers=kept))
+        status, lines, errors = design.run()
+        self.assertEqual(status, 0, lines + [errors])
+        for layer in ("B.Fab", "B.CrtYd"):
+            self.assertIn(f"LAYER | {layer} | the board does not carry this layer, so the views that show it leave it "
+                          "out; the captions and the index name it", lines)
+        with open(os.path.join(design.out, "index.json"), encoding="utf-8") as handle:
+            index = json.load(handle)
+        self.assertEqual(index["layers_not_carried"], ["B.Fab", "B.CrtYd"])
+        bottom = [image for image in index["images"] if image["view"] == "assembly" and image["side"] == "bottom"]
+        top = [image for image in index["images"] if image["view"] == "assembly" and image["side"] == "top"]
+        self.assertTrue(bottom and top)
+        for image in bottom:
+            self.assertEqual(image["absent_layers"], ["B.Fab", "B.CrtYd"])
+            self.assertEqual([layer["name"] for layer in image["layers"]], ["Edge.Cuts", "B.SilkS"])
+            self.assertIn("B.Fab, B.CrtYd not carried by the board, so not drawn", image["caption"])
+        for image in top:
+            self.assertEqual(image["absent_layers"], [])
+            self.assertNotIn("not carried", image["caption"])
+        with open(os.path.join(design.out, "index.txt"), encoding="utf-8") as handle:
+            self.assertIn("LAYER | B.Fab | not carried by the board, so the views that show it leave it out",
+                          handle.read())
+
+
+class Pieces(unittest.TestCase):
+    """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+
+    def test_the_copy_keeps_the_designs_names_and_finds_its_models_as_the_design_does_in_place(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        paths = ["${KIPRJMOD}/models/box.wrl", "$(KIPRJMOD)/models/box.wrl", "models/box.wrl", "models/nowhere.step",
+                 "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step", "/elsewhere/part.step",
+                 "kicad-embed://part.step"]
+        parts = [footprint(f"P{index}", 5 + 5 * index, 30, [], [model(path)]) for index, path in enumerate(paths)]
+        design = Design(layout(items=parts))
+        with open(os.path.join(design.folder, "proof.kicad_dru"), "w", encoding="utf-8") as handle:
+            handle.write("(version 1)\n")
+        with tempfile.TemporaryDirectory(prefix="board-views-stage-") as work:
+            staged, written = board_views.stage(design.board, design.project, work)
+            self.assertEqual(os.path.basename(staged), "proof.kicad_pcb")
+            self.assertEqual(sorted(os.listdir(os.path.dirname(staged))),
+                             ["proof.kicad_dru", "proof.kicad_pcb", "proof.kicad_pro"])
+            copied = board_views.locked_copper.read_layout(staged)
+        found = [board_views.unquoted(board_views.sexpr.child(node, "model")[1])
+                 for node in copied[1:] if board_views.sexpr.head(node) == "footprint"]
+        box = os.path.join(os.path.abspath(design.folder), "models", "box.wrl")
+        self.assertEqual(found, [box, box, box] + paths[3:])
+        self.assertEqual(set(written), {box})
+        self.assertIn(written[box], paths[:3])
+
+    def test_kicad_is_set_to_report_in_english_whatever_it_was_set_to(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        design = Design()
+        with tempfile.TemporaryDirectory(prefix="board-views-home-") as home:
+            environment = board_check.isolate_kicad(KICAD_CLI, board_check.require_kicad(KICAD_CLI), home)
+            common = os.path.join(home, os.listdir(home)[0], "kicad_common.json")
+            with open(common, encoding="utf-8") as handle:
+                settings = json.load(handle)
+            settings["system"]["language"] = "Deutsch"
+            with open(common, "w", encoding="utf-8") as handle:
+                json.dump(settings, handle)
+            board_views.english(home)
+            with open(common, encoding="utf-8") as handle:
+                self.assertEqual(json.load(handle)["system"]["language"], "English")
+            result = subprocess.run([KICAD_CLI, "pcb", "export", "glb", "--no-board-body", "-o",
+                                     os.path.join(design.root, "models.glb"), design.board], env=environment,
+                                    capture_output=True, text=True, timeout=600)
+        self.assertEqual(board_views.MODEL_NOT_ADDED.findall(result.stdout + "\n" + result.stderr),
+                         [("C2", "File not found: ${KIPRJMOD}/models/missing.step")])
+        with tempfile.TemporaryDirectory(prefix="board-views-home-") as empty:
+            with self.assertRaises(board_check.CannotRun):
+                board_views.english(empty)
+
+    def test_a_net_in_more_than_one_critical_class_is_named_on_the_class_map(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        membership = {"Power": {"+3V3", "+5V"}, "Sense": {"+3V3", "ADC"}, "Ground": {"GND"}}
+        self.assertEqual(board_views.shared_nets(["Power", "Sense", "Ground"], membership),
+                         {"+3V3": ["Power", "Sense"]})
+        self.assertEqual(board_views.shared_nets(["Ground"], membership), {})
+
+    def test_a_caption_names_at_most_its_share_and_leaves_the_rest_to_the_index(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        names = [f"R{index}" for index in range(1, board_views.CAPTION_NAMES + 4)]
+        self.assertEqual(board_views.named(names[:3]), "R1, R2, R3")
+        self.assertTrue(board_views.named(names).endswith(
+            f"R{board_views.CAPTION_NAMES} and 3 more, which the index names"))
 
 
 class Refusals(unittest.TestCase):
@@ -578,7 +807,7 @@ class Refusals(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         self.assertRefused(Design(layout(outline=None)), "REFUSED | Edge.Cuts | the board's edge layer holds no outline")
 
-    def test_a_board_stating_no_minimum_or_a_zero_minimum_is_refused_naming_the_figure(self):
+    def test_a_board_stating_no_minimum_a_zero_minimum_or_a_non_finite_one_is_refused_naming_the_figure(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         cases = (
             ({}, ["min_track_width", "min_clearance"]),
@@ -588,6 +817,9 @@ class Refusals(unittest.TestCase):
             ({"min_track_width": 0, "min_clearance": 0.1}, ["min_track_width"]),
             ({"min_track_width": -0.1, "min_clearance": 0.1}, ["min_track_width"]),
             ({"min_track_width": "0.1", "min_clearance": 0.1}, ["min_track_width"]),
+            ({"min_track_width": float("nan"), "min_clearance": 0.1}, ["min_track_width"]),
+            ({"min_track_width": 0.1, "min_clearance": float("inf")}, ["min_clearance"]),
+            ({"min_track_width": float("-inf"), "min_clearance": float("nan")}, ["min_track_width", "min_clearance"]),
         )
         for rules, named in cases:
             with self.subTest(rules=rules):
@@ -731,6 +963,13 @@ class Documentation(unittest.TestCase):
                       "clearance, in millimetres)", method)
         self.assertIn("https://platform.claude.com/docs/en/build-with-claude/vision, read on 2026-10-13", method)
         self.assertIn("1568 visual patches of 28 by 28 pixels", method)
+        section = method[method.index("## Layout review views"):]
+        for view in ("layer-<layer>", "assembly-top", "net-<net>", "classes", "crop-<reference>", "3d-angled"):
+            self.assertIn(view, section)
+        for fact in ("rule area", "cannot find", "zoomed out", "not carried"):
+            with self.subTest(fact=fact):
+                self.assertIn(fact, readme)
+                self.assertIn(fact, section)
         self.assertIn("KiCad 10.0", readme)
 
 

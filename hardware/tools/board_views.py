@@ -10,12 +10,22 @@ assembled board in three dimensions, with a table of the facts a picture
 cannot carry: each net's track widths, vias, zones and classes.
 
 Every view is drawn from a temporary copy of the board whose zones KiCad has
-refilled and saved, so a pour is drawn as the board's copper leaves it. A net's
-copper is taken from a filtered copy of that refilled board holding only the
-net's tracks, arcs, vias, zones and pads, which KiCad plots without refilling,
-so a pour is never drawn into space the filter emptied. KiCad's command-line
-export draws each layer as a vector image in board coordinates, and resvg turns
-each view into a PNG on a dark background, with a caption drawn into it.
+refilled and saved, so a pour is drawn as the board's copper leaves it. The copy
+keeps the design's own file names, and every model path the design's folder
+anchors is written out in full, so the copy reads as the design does in place. A
+net's copper is taken from a filtered copy of that refilled board holding only
+the net's tracks, arcs, vias, zones and pads, which KiCad plots without
+refilling, so a pour is never drawn into space the filter emptied. KiCad's
+command-line export draws each layer as a vector image in board coordinates, and
+resvg turns each view into a PNG on a dark background, with a caption drawn into
+it.
+
+Nothing is left out quietly. KiCad does not plot rule areas, so the command
+draws them itself. A part KiCad draws without its model, a font KiCad
+substitutes, and a fabrication or courtyard layer the board does not carry are
+each named in the captions of the views they touch, in the index and in the
+command's report. A three-dimensional view is zoomed out until no part reaches
+its frame.
 
 The resolution is the board's own: three pixels across the smaller of its
 minimum track width and minimum clearance, read from its design rules. Every
@@ -110,6 +120,25 @@ CLASS_COLOURS = (("#ff5050", "red"), ("#50a0ff", "blue"), ("#ffd040", "yellow"),
                  ("#e070ff", "violet"), ("#40e0e0", "cyan"), ("#ff9040", "orange"), ("#c0c0c0", "grey"))
 #: The whole board, drawn faint beneath a net or the class map.
 FAINT = ("#9a9a9a", "faint grey", 0.35)
+#: Rule areas, which KiCad does not plot, drawn by the command as dashed, hatched outlines in this colour.
+RULE_AREA = ("#ff8c1a", "bright orange")
+RULE_RESTRICTIONS = (("tracks", "tracks"), ("vias", "vias"), ("pads", "pads"), ("copperpour", "copper pour"),
+                     ("footprints", "footprints"))
+
+#: A three-dimensional view is first rendered this many pixels along its longer side, to find the zoom at which
+#: no part reaches the frame: the render must leave this many pixels clear on every side, and each try zooms out
+#: by the step.
+PROBE_PX = 240
+PROBE_CLEAR_PX = 4
+ZOOM_STEP = 0.8
+ZOOM_TRIES = 15
+
+#: How many references a caption names before it leaves the rest to the index.
+CAPTION_NAMES = 40
+
+#: KiCad's own words, read in English: the command sets KiCad's language so they are always these.
+FONT_SUBSTITUTED = re.compile(r"Font '([^'\n]*)' not found; substituting '([^'\n]*)'")
+MODEL_NOT_ADDED = re.compile(r"Could not add 3D model for (.*?)\.[ \t]*\n[ \t]*([^\n]*)")
 
 #: The three-dimensional views: name, how KiCad is asked to render it, and the direction a caption states.
 VIEWS_3D = (
@@ -228,8 +257,28 @@ def rasterise(resvg: str, svg: str, png: str) -> None:
                         f"{' '.join((result.stdout + result.stderr).split())[:300]}) ({TOOL_HELP}).")
 
 
-def kicad(command: List[str], cwd: str, what: str) -> None:
-    """Run a KiCad command in the command's own configuration, failing by name when it writes nothing."""
+def english(home: str) -> None:
+    """KiCad's own configuration in `home` set to report in English.
+
+    KiCad translates what it reports, and the command reads two of its reports,
+    a font it substitutes and a model it cannot find, so it fixes the language
+    they are written in rather than miss them on a machine set to another.
+    """
+    try:
+        found = [os.path.join(home, name, "kicad_common.json") for name in os.listdir(home)]
+        path = next(path for path in found if os.path.isfile(path))
+        with open(path, encoding="utf-8") as handle:
+            settings = json.load(handle)
+        settings.setdefault("system", {})["language"] = "English"
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(settings, handle, indent=2)
+    except (OSError, ValueError, StopIteration, AttributeError) as error:
+        raise CannotRun(f"KiCad's own configuration in {home} could not be set to report in English ({error}), so the "
+                        f"command could not read which fonts and models KiCad leaves out ({TOOL_HELP}).") from error
+
+
+def kicad(command: List[str], cwd: str, what: str) -> str:
+    """Run a KiCad command in the command's own configuration, failing by name when it fails; what KiCad said."""
     try:
         result = subprocess.run(command, cwd=cwd, capture_output=True, text=True, timeout=board_check.KICAD_TIMEOUT_S,
                                 env=board_check.KICAD_ENVIRONMENT)
@@ -238,6 +287,12 @@ def kicad(command: List[str], cwd: str, what: str) -> None:
     if result.returncode != 0:
         raise Unreadable(f"KiCad could not {what} (exit {result.returncode}: "
                          f"{' '.join((result.stdout + ' ' + result.stderr).split())[:300]})")
+    return result.stdout + "\n" + result.stderr
+
+
+def substituted(said: str) -> Dict[str, str]:
+    """Each font KiCad says it could not find, with the font it drew that text in instead."""
+    return {font: instead for font, instead in FONT_SUBSTITUTED.findall(said)}
 
 
 # --- Reading the board ---------------------------------------------------------------
@@ -459,7 +514,7 @@ def minimums(project: dict, path: str) -> Tuple[Optional[Tuple[float, float]], L
     figures, refusals = [], []
     for key, what in (("min_track_width", "minimum track width"), ("min_clearance", "minimum clearance")):
         value = rules.get(key)
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
             said = "states none" if value is None else f"states {json.dumps(value)}"
             refusals.append((f"{path} board.design_settings.rules.{key}",
                              f"the board's design rules {said} for its {what}, and the views' resolution is three "
@@ -508,6 +563,170 @@ def net_facts(layout: list, path: str, classes: Dict[str, Set[str]]) -> List[dic
             "zones": [{"layers": item["layers"]} for item in items if item["net"] == net and item["kind"] == "zone"],
         })
     return facts
+
+
+def unquoted(text: str) -> str:
+    return re.sub(r"\\(.)", r"\1", str(text))
+
+
+def quoted(text: str) -> sexpr.Quoted:
+    return sexpr.Quoted(text.replace("\\", "\\\\").replace('"', '\\"'))
+
+
+def in_place(path: str, folder: str) -> str:
+    """A model path as KiCad finds it for the design in `folder`, written out in full where the folder anchors it.
+
+    KiCad reads ${KIPRJMOD} as the design's folder, and looks first in that
+    folder for a path that names no variable, alias or scheme; a copy of the
+    design elsewhere finds the same file only when those are written out.
+    """
+    anchored = re.match(r"\$[{(]KIPRJMOD[)}]", path)
+    if anchored:
+        return os.path.abspath(folder) + path[anchored.end():]
+    if path and not path.startswith(("$", ":")) and "://" not in path and not os.path.isabs(path):
+        candidate = os.path.join(os.path.abspath(folder), path)
+        if os.path.exists(candidate):
+            return candidate
+    return path
+
+
+def stage(board: str, project: str, work: str) -> Tuple[str, Dict[str, str]]:
+    """A copy of the design in a folder of `work` that reads as the design does in place.
+
+    The layout, its project file and its custom rules keep the design's own
+    names, so a text variable naming the project or the file reads as it does in
+    place, and every model path the design's folder anchors is written out in
+    full. Returns the copy's layout and, for each model path written out, the
+    path as the design writes it.
+    """
+    folder = os.path.join(work, "design")
+    os.makedirs(folder)
+    layout = locked_copper.read_layout(board)
+    source = os.path.dirname(os.path.abspath(board))
+    written: Dict[str, str] = {}
+    for footprint in sexpr.children(layout, "footprint"):
+        for model in sexpr.children(footprint, "model"):
+            if len(model) > 1 and isinstance(model[1], str):
+                path = unquoted(model[1])
+                found = in_place(path, source)
+                if found != path:
+                    model[1] = quoted(found)
+                    written[found] = path
+    staged = os.path.join(folder, os.path.basename(board))
+    with open(staged, "w", encoding="utf-8") as handle:
+        handle.write(sexpr.dump(layout) + "\n")
+    shutil.copy2(project, os.path.join(folder, os.path.basename(project)))
+    rules = os.path.splitext(board)[0] + ".kicad_dru"
+    if os.path.exists(rules):
+        shutil.copy2(rules, os.path.join(folder, os.path.basename(rules)))
+    return staged, written
+
+
+def glb_names(path: str) -> Set[str]:
+    """The names of the nodes in a binary glTF file, which KiCad gives the reference of each part it drew."""
+    try:
+        with open(path, "rb") as handle:
+            data = handle.read()
+        length, kind = struct.unpack("<I4s", data[12:20])
+        if data[:4] != b"glTF" or kind != b"JSON":
+            raise ValueError("not a binary glTF file")
+        nodes = json.loads(data[20:20 + length]).get("nodes", [])
+    except (OSError, ValueError, struct.error) as error:
+        raise Unreadable(f"KiCad's three-dimensional export {path} cannot be read ({error})") from error
+    return {str(node["name"]) for node in nodes if isinstance(node, dict) and "name" in node}
+
+
+def left_out_in_3d(layout: list, said: str, drawn: Set[str], written: Dict[str, str]) -> List[dict]:
+    """Each part the three-dimensional views leave out or draw without a model, and why.
+
+    `said` is what KiCad reported loading the board's models, `drawn` the
+    references of the parts it drew any model for, and `written` the model
+    paths written out in full, mapped back to the paths the design writes.
+    """
+    missing: Dict[str, List[str]] = {}
+    for name, why in MODEL_NOT_ADDED.findall(said):
+        for full, original in written.items():
+            why = why.replace(full, original)
+        missing.setdefault(name, []).append(why.strip())
+    found = []
+    for footprint in (node for node in layout[1:] if sexpr.head(node) == "footprint"):
+        name = reference(footprint) or "?"
+        attributes = sexpr.child(footprint, "attr")
+        models = sexpr.children(footprint, "model")
+        hidden = [model for model in models if "hide" in model[2:] or any(
+            sexpr.head(part) == "hide" and len(part) > 1 and str(part[1]) == "yes" for part in model[2:])]
+        if attributes is not None and "dnp" in [str(part) for part in attributes[1:]]:
+            found.append({"reference": name, "reason": "not populated",
+                          "detail": "marked do not populate, so the render leaves it out"})
+        elif not models:
+            found.append({"reference": name, "reason": "no model", "detail": "it declares no model"})
+        elif len(hidden) == len(models):
+            found.append({"reference": name, "reason": "model hidden", "detail": "the design hides its model"})
+        elif name in missing:
+            found.append({"reference": name, "reason": "model not found",
+                          "detail": "KiCad cannot find its model: " + "; ".join(missing.pop(name))})
+        elif name not in drawn:
+            found.append({"reference": name, "reason": "model not found",
+                          "detail": "KiCad drew none of its models: "
+                                    + ", ".join(unquoted(model[1]) for model in models if len(model) > 1)})
+    return sorted(found, key=lambda part: natural(part["reference"]))
+
+
+def rule_areas(layout: list, carried: Sequence[str]) -> List[dict]:
+    """Every rule area on the board, its own or a footprint's, with its layers, restrictions and outline."""
+    zones = [node for node in layout[1:] if sexpr.head(node) == "zone"]
+    zones += [part for node in layout[1:] if sexpr.head(node) == "footprint" for part in node[1:]
+              if sexpr.head(part) == "zone"]
+    found = []
+    for zone in zones:
+        keepout = sexpr.child(zone, "keepout")
+        if keepout is None:
+            continue
+        layers = []
+        for form in sexpr.children(zone, "layer") + sexpr.children(zone, "layers"):
+            for name in form[1:]:
+                layers += [layer for layer in expand(str(name), carried) if layer not in layers]
+        refused = [words for key, words in RULE_RESTRICTIONS
+                   if (sexpr.child(keepout, key) or [None, None])[1:2] == ["not_allowed"]]
+        placement = sexpr.child(zone, "placement")
+        placing = placement is not None and (sexpr.child(placement, "enabled") or [None, None])[1:2] == ["yes"]
+        rules = [f"no {', '.join(refused[:-1])}{' or ' if len(refused) > 1 else ''}{refused[-1]}"] if refused else []
+        rules += ["a placement area"] if placing else []
+        outlines = []
+        for polygon in sexpr.children(zone, "polygon"):
+            points = []
+            for part in (sexpr.child(polygon, "pts") or [])[1:]:
+                if sexpr.head(part) == "xy":
+                    points.append(xy(part, "a rule area's outline"))
+                elif sexpr.head(part) == "arc":
+                    points += arc_points(*(xy(sexpr.child(part, key), "a rule area's outline")
+                                           for key in ("start", "mid", "end")))
+            if points:
+                outlines.append(points)
+        if not outlines:
+            continue
+        bounds = (min(p[0] for o in outlines for p in o), min(p[1] for o in outlines for p in o),
+                  max(p[0] for o in outlines for p in o), max(p[1] for o in outlines for p in o))
+        named = sexpr.child(zone, "name")
+        found.append({"name": unquoted(named[1]) if named is not None and len(named) > 1 and str(named[1]) else
+                      f"unnamed, at {covers(bounds)}", "layers": layers, "rules": rules or ["no restriction"],
+                      "outlines": outlines, "bounds_mm": {"x0": bounds[0], "y0": bounds[1], "x1": bounds[2],
+                                                         "y1": bounds[3]}})
+    return found
+
+
+def side_layers(wanted: Sequence[str], plotted) -> Tuple[List[str], List[str]]:
+    """The layers a view wants that the board carries, in order, and those it does not carry."""
+    return [layer for layer in wanted if layer in plotted], [layer for layer in wanted if layer not in plotted]
+
+
+def shared_nets(classes: Sequence[str], membership: Dict[str, Set[str]]) -> Dict[str, List[str]]:
+    """Each net in more than one of the critical classes, with those classes in the order they are named."""
+    shared: Dict[str, List[str]] = {}
+    for name in classes:
+        for net in membership[name]:
+            shared.setdefault(net, []).append(name)
+    return {net: names for net, names in sorted(shared.items(), key=lambda item: natural(item[0])) if len(names) > 1}
 
 
 # --- Drawing ---------------------------------------------------------------------
@@ -581,17 +800,21 @@ def scale_text(scale: float) -> str:
     return f"{mm_text(scale)} px/mm"
 
 
-def tiles(region: Tuple[float, float, float, float], scale: float, caption_for) -> List[dict]:
-    """The region cut into the fewest equal tiles that each fit, with their captions, at `scale` pixels per millimetre.
-
-    A region narrower than the narrowest image is widened about its centre, so
-    every tile shows more of the board rather than a squeezed caption.
-    """
+def shown(region: Tuple[float, float, float, float], scale: float) -> Tuple[float, float, float, float]:
+    """The region a view shows: one narrower than the narrowest image is widened about its centre, so the view
+    shows more of the board rather than a squeezed caption."""
     x0, y0, x1, y1 = region
-    width, height = math.ceil((x1 - x0) * scale - 1e-9), math.ceil((y1 - y0) * scale - 1e-9)
-    if width < MIN_WIDTH_PX:
-        middle = (x0 + x1) / 2
-        x0, width = middle - MIN_WIDTH_PX / scale / 2, MIN_WIDTH_PX
+    if math.ceil((x1 - x0) * scale - 1e-9) >= MIN_WIDTH_PX:
+        return region
+    middle = (x0 + x1) / 2
+    return middle - MIN_WIDTH_PX / scale / 2, y0, middle + MIN_WIDTH_PX / scale / 2, y1
+
+
+def tiles(region: Tuple[float, float, float, float], scale: float, caption_for) -> List[dict]:
+    """The region as it is shown cut into the fewest equal tiles that each fit, with their captions, at `scale`
+    pixels per millimetre."""
+    x0, y0, x1, y1 = shown(region, scale)
+    width, height = max(MIN_WIDTH_PX, math.ceil((x1 - x0) * scale - 1e-9)), math.ceil((y1 - y0) * scale - 1e-9)
     count = 0
     while True:
         count += 1
@@ -627,11 +850,54 @@ def colour_list(entries: Sequence[Tuple[str, str]]) -> str:
     return ", ".join(f"{name} {colour}" for name, colour in entries)
 
 
+def named(names: Sequence[str]) -> str:
+    """The names, up to as many as a caption carries, the rest left to the index."""
+    if len(names) <= CAPTION_NAMES:
+        return ", ".join(names)
+    return f"{', '.join(names[:CAPTION_NAMES])} and {len(names) - CAPTION_NAMES} more, which the index names"
+
+
+def on_stack(areas: List[dict], stack: Sequence[str], region) -> List[dict]:
+    """The rule areas on any of the layers in `stack` that reach into `region`."""
+    x0, y0, x1, y1 = region
+    return [area for area in areas if set(area["layers"]) & set(stack) and area["bounds_mm"]["x0"] < x1
+            and area["bounds_mm"]["x1"] > x0 and area["bounds_mm"]["y0"] < y1 and area["bounds_mm"]["y1"] > y0]
+
+
+def rule_area_drawing(areas: List[dict], scale: float) -> str:
+    """The rule areas as dashed, hatched outlines in board coordinates, their strokes sized in pixels at `scale`."""
+    if not areas:
+        return ""
+    px = 1 / scale
+    shapes = "".join(f'<polygon points="{" ".join(f"{x},{y}" for x, y in outline)}" fill="url(#rule-area-hatch)" '
+                     f'stroke="{RULE_AREA[0]}" stroke-width="{2 * px}" stroke-dasharray="{8 * px} {5 * px}"/>'
+                     for area in areas for outline in area["outlines"])
+    return (f'<defs><pattern id="rule-area-hatch" patternUnits="userSpaceOnUse" width="{10 * px}" '
+            f'height="{10 * px}" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="{10 * px}" '
+            f'stroke="{RULE_AREA[0]}" stroke-width="{1.5 * px}"/></pattern></defs>{shapes}')
+
+
+def rule_area_field(areas: List[dict]) -> str:
+    return (f"rule areas, which KiCad does not plot, drawn as {RULE_AREA[1]} dashed hatched outlines: "
+            + named([f"{area['name']} on {', '.join(area['layers'])} ({'; '.join(area['rules'])})" for area in areas]))
+
+
+def rule_area_entries(areas: List[dict]) -> List[dict]:
+    return [{"name": area["name"], "layers": area["layers"], "rules": area["rules"], "bounds_mm": area["bounds_mm"]}
+            for area in areas]
+
+
+def absent_field(absent: Sequence[str]) -> str:
+    return f"{', '.join(absent)} not carried by the board, so not drawn"
+
+
 class Renderer:
     """Writes each image of the views and keeps the index of them."""
 
-    def __init__(self, resvg: str, work: str, out: str, scale: float):
+    def __init__(self, resvg: str, work: str, out: str, scale: float, notes: List[str]):
         self.resvg, self.work, self.out, self.scale = resvg, work, out, scale
+        #: What every caption carries besides its own fields: what KiCad drew differently from the design.
+        self.notes = notes
         self.images: List[dict] = []
         self.names: Set[str] = set()
 
@@ -658,7 +924,7 @@ class Renderer:
             fields = describe() + [scale_text(self.scale), covers(tile["region"])]
             if tile["rows"] * tile["columns"] > 1:
                 fields.append(f"tile row {tile['row']} of {tile['rows']}, column {tile['column']} of {tile['columns']}")
-            return " | ".join(fields)
+            return " | ".join(fields + self.notes)
 
         planned = tiles(region, self.scale, caption_for)
         for tile in planned:
@@ -695,6 +961,7 @@ class Renderer:
                     f'xlink:href="{escape(os.path.basename(raw))}" href="{escape(os.path.basename(raw))}"/>'
                     f'{caption_svg(caption, across, down)}</svg>', name)
         self.images.append(dict(entry, file=name + ".png", caption=caption,
+                                render_px={"width": across, "height": down},
                                 size_px={"width": across, "height": height}))
 
 
@@ -715,7 +982,51 @@ def solid_box(aspect: float, captions: List[List[str]]) -> Tuple[int, int, int]:
     down = LONG_EDGE_PX
     while not fits(MIN_WIDTH_PX, down + band(MIN_WIDTH_PX)):
         down -= 8
+        if down < PROBE_PX:
+            raise Unreadable("the three-dimensional views' captions leave no room for the render within the size limit")
     return MIN_WIDTH_PX, down, band(MIN_WIDTH_PX)
+
+
+def reaches_frame(path: str, clear: int) -> bool:
+    """Whether anything KiCad rendered on a transparent background lies within `clear` pixels of the image's edge."""
+    width, height, rows = read_png(path)
+    return any(rows[y][x][3] for y in range(height) for x in range(width)
+               if min(x, y, width - 1 - x, height - 1 - y) < clear)
+
+
+def render(kicad_cli: str, work: str, board_file: str, how: List[str], size: Tuple[int, int], zoom: float,
+           name: str, board: str) -> Tuple[str, str]:
+    """KiCad's render of the board at `size` and `zoom` on a transparent background; its path and what KiCad said."""
+    raw = os.path.join(work, name)
+    if os.path.exists(raw):
+        os.remove(raw)
+    said = kicad([kicad_cli, "pcb", "render", *how, "-w", str(size[0]), "-h", str(size[1]), "--zoom", f"{zoom:.6g}",
+                  "--background", "transparent", "-o", raw, board_file], work, f"render {board} in three dimensions")
+    if not os.path.exists(raw):
+        raise Unreadable(f"KiCad wrote no three-dimensional render of {board}")
+    return raw, said
+
+
+def framing(kicad_cli: str, work: str, board_file: str, how: List[str], aspect: float, board: str,
+            direction: str) -> Tuple[float, str]:
+    """The largest zoom, no more than 1, at which no part of the board reaches the render's frame.
+
+    KiCad frames a render on the board, so a tall part seen at an angle can
+    run out of the image; the view is zoomed out until it does not. The zoom is
+    found on a small render, which KiCad frames the same way at any size.
+    """
+    least = 4 * PROBE_CLEAR_PX
+    size = (PROBE_PX, max(least, round(PROBE_PX / aspect))) if aspect >= 1 else \
+        (max(least, round(PROBE_PX * aspect)), PROBE_PX)
+    zoom, said = 1.0, ""
+    for _ in range(ZOOM_TRIES):
+        probe, heard = render(kicad_cli, work, board_file, how, size, zoom, "probe.png", board)
+        said += heard
+        if not reaches_frame(probe, PROBE_CLEAR_PX):
+            return zoom, said
+        zoom *= ZOOM_STEP
+    raise Unreadable(f"KiCad's three-dimensional render of {board} {direction} still reaches the edge of the image "
+                     f"zoomed out to {zoom / ZOOM_STEP:.3g}, so no view of it would show the whole board")
 
 
 # --- The command --------------------------------------------------------------------
@@ -764,48 +1075,62 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
     scale = PIXELS_PER_FEATURE / smallest
     copper = copper_order(carried)
     with tempfile.TemporaryDirectory(prefix="board-views-") as work:
-        staged = os.path.join(work, "out")
-        os.makedirs(staged)
-        shutil.copy2(board, os.path.join(work, "board.kicad_pcb"))
-        shutil.copy2(project, os.path.join(work, "board.kicad_pro"))
-        rules = os.path.splitext(board)[0] + ".kicad_dru"
-        if os.path.exists(rules):
-            shutil.copy2(rules, os.path.join(work, "board.kicad_dru"))
+        ready = os.path.join(work, "out")
+        os.makedirs(ready)
+        copy, written = stage(board, project, work)
+        copy = os.path.relpath(copy, work)
         report, why = board_check.run_kicad([kicad_cli, "pcb", "drc", "--refill-zones", "--save-board", "--format",
-                                             "json", "board.kicad_pcb"], work)
+                                             "json", copy], work)
         if report is None:
             raise Unreadable(f"KiCad could not refill and save the zones of a copy of {board}: {why}")
-        refilled = locked_copper.read_layout(os.path.join(work, "board.kicad_pcb"))
+        refilled = locked_copper.read_layout(os.path.join(work, copy))
         held = held_layers(refilled, carried)
         drawn = [layer for layer in carried if layer in REQUIRED_LAYERS or layer in copper or layer in held]
         drawn = copper + [layer for layer in drawn if layer not in copper]
         colours = layer_colours(carried)
+        fonts: Dict[str, str] = {}
         plotted: Dict[str, str] = {}
         for index, layer in enumerate(drawn):
-            plotted[layer] = plot(kicad_cli, work, "board.kicad_pcb", layer, f"layer-{index}.svg", board)
+            plotted[layer] = plot(kicad_cli, work, copy, layer, f"layer-{index}.svg", board, fonts)
         for layer in ("F.Fab", "B.Fab", "F.CrtYd", "B.CrtYd"):
             if layer in carried and layer not in plotted:
-                plotted[layer] = plot(kicad_cli, work, "board.kicad_pcb", layer, f"extra-{layer}.svg", board)
-        region = grown(outline, BOARD_MARGIN_MM)
-        renderer = Renderer(resvg, work, staged, scale)
+                plotted[layer] = plot(kicad_cli, work, copy, layer, f"extra-{layer}.svg", board, fonts)
+        areas = rule_areas(refilled, carried)
+        notes = ["fonts KiCad could not find, their text drawn in another: "
+                 + named([f"{font} drawn in {instead}" for font, instead in sorted(fonts.items())])] if fonts else []
+        region = shown(grown(outline, BOARD_MARGIN_MM), scale)
+        renderer = Renderer(resvg, work, ready, scale, notes)
         faint = "".join(drawing(plotted[layer], FAINT[0], FAINT[2]) for layer in reversed(copper)) \
             + drawing(plotted["Edge.Cuts"], FAINT[0], FAINT[2])
+        absent: List[str] = []
+
+        def marked(entry: dict, stack: Sequence[str], missing: Sequence[str],
+                   seen=region) -> Tuple[dict, str, List[str]]:
+            """The entry, drawing and caption fields of a view's rule areas and the layers the board lacks."""
+            here = on_stack(areas, stack, seen)
+            fields = ([rule_area_field(here)] if here else []) + ([absent_field(missing)] if missing else [])
+            absent.extend(layer for layer in missing if layer not in absent)
+            return (dict(entry, rule_areas=rule_area_entries(here), absent_layers=list(missing)),
+                    rule_area_drawing(here, scale), fields)
 
         for layer in drawn:
-            renderer.flat(f"layer-{layer}", region, drawing(plotted[layer], colours[layer][0]),
-                          {"view": "layer", "layers": [{"name": layer, "colour": colours[layer][1]}]},
-                          lambda layer=layer: [f"layer {layer}", f"drawn in {colours[layer][1]}"])
+            entry, areas_drawn, fields = marked({"view": "layer",
+                                                 "layers": [{"name": layer, "colour": colours[layer][1]}]}, [layer], [])
+            renderer.flat(f"layer-{layer}", region, drawing(plotted[layer], colours[layer][0]) + areas_drawn, entry,
+                          lambda layer=layer, fields=fields: [f"layer {layer}", f"drawn in {colours[layer][1]}"]
+                          + fields)
 
         for side, prefix in (("top", "F"), ("bottom", "B")):
-            stack = [layer for layer in ("Edge.Cuts", f"{prefix}.Fab", f"{prefix}.CrtYd", f"{prefix}.SilkS")
-                     if layer in plotted]
+            stack, missing = side_layers(("Edge.Cuts", f"{prefix}.Fab", f"{prefix}.CrtYd", f"{prefix}.SilkS"), plotted)
             entries = [(layer, colours[layer][1]) for layer in stack]
+            entry, areas_drawn, fields = marked(
+                {"view": "assembly", "side": side,
+                 "layers": [{"name": name, "colour": colour} for name, colour in entries]}, stack, missing)
             renderer.flat(f"assembly-{side}", region, "".join(drawing(plotted[layer], colours[layer][0])
-                                                              for layer in stack),
-                          {"view": "assembly", "side": side,
-                           "layers": [{"name": name, "colour": colour} for name, colour in entries]},
-                          lambda side=side, entries=entries: [f"assembly view of the {side} side, seen from the top",
-                                                              f"layers {colour_list(entries)}"])
+                                                              for layer in stack) + areas_drawn, entry,
+                          lambda side=side, entries=entries, fields=fields: [
+                              f"assembly view of the {side} side, seen from the top",
+                              f"layers {colour_list(entries)}"] + fields)
 
         critical = {}
         for name in classes:
@@ -816,8 +1141,8 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             copy_name = f"net-{index}.kicad_pcb"
             with open(os.path.join(work, copy_name), "w", encoding="utf-8") as handle:
                 handle.write(sexpr.dump(only_nets(refilled, {net})) + "\n")
-            net_drawings[net] = {layer: plot(kicad_cli, work, copy_name, layer, f"net-{index}-{layer}.svg", board)
-                                 for layer in copper}
+            net_drawings[net] = {layer: plot(kicad_cli, work, copy_name, layer, f"net-{index}-{layer}.svg", board,
+                                             fonts) for layer in copper}
             entries = [(layer, colours[layer][1]) for layer in copper]
             renderer.flat(f"net-{net}", region,
                           faint + "".join(drawing(net_drawings[net][layer], colours[layer][0])
@@ -835,44 +1160,64 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                          for name in classes for net in sorted(membership[name], key=natural)
                          for layer in reversed(copper))
         entries = [(name, class_colours[name][1]) for name in classes]
+        shared = shared_nets(classes, membership)
+        overlap = ["nets in more than one critical class, drawn in the colour of the class named last: "
+                   + named([f"{net} ({', '.join(names)})" for net, names in shared.items()])] if shared else []
         renderer.flat("classes", region, faint + mapped,
                       {"view": "class map", "classes": [{"name": name, "colour": colour} for name, colour in entries],
-                       "layers": [{"name": layer} for layer in copper],
+                       "layers": [{"name": layer} for layer in copper], "shared_nets": shared,
                        "beneath": f"the whole board's copper and edge in {FAINT[1]}"},
                       lambda: ["class map", f"classes {colour_list(entries)}",
                                f"copper on {', '.join(copper)}",
-                               f"over the whole board's copper and edge in {FAINT[1]}"])
+                               f"over the whole board's copper and edge in {FAINT[1]}"] + overlap)
 
         for circuit in circuits(refilled):
             prefix = "B" if circuit["side"] == "bottom" else "F"
             order = copper if circuit["side"] == "bottom" else list(reversed(copper))
-            stack = order + [layer for layer in (f"{prefix}.Fab", f"{prefix}.SilkS", "Edge.Cuts") if layer in plotted]
+            stack, missing = side_layers(order + [f"{prefix}.Fab", f"{prefix}.SilkS", "Edge.Cuts"], plotted)
             entries = [(layer, colours[layer][1]) for layer in stack]
             declared = bool(circuit["supply_nets"])
             supply = (f"supply nets {', '.join(circuit['supply_nets'])}" if declared else
                       "no supply nets declared: no pad is typed power input or power output")
             parts = (f"parts on them {', '.join(circuit['parts'])}" if circuit["parts"] else
                      "no two-pad part with both pads on them") if declared else "so no parts on supply nets are shown"
-            renderer.flat(f"crop-{circuit['reference']}", grown(circuit["bounds"], CROP_MARGIN_MM),
-                          "".join(drawing(plotted[layer], colours[layer][0]) for layer in stack),
-                          {"view": "crop", "circuit": circuit["reference"], "side": circuit["side"],
-                           "supply_nets_declared": declared, "supply_nets": circuit["supply_nets"],
-                           "parts": circuit["parts"],
-                           "layers": [{"name": name, "colour": colour} for name, colour in entries]},
-                          lambda circuit=circuit, entries=entries, supply=supply, parts=parts: [
+            cropped = shown(grown(circuit["bounds"], CROP_MARGIN_MM), scale)
+            entry, areas_drawn, fields = marked(
+                {"view": "crop", "circuit": circuit["reference"], "side": circuit["side"],
+                 "supply_nets_declared": declared, "supply_nets": circuit["supply_nets"], "parts": circuit["parts"],
+                 "layers": [{"name": name, "colour": colour} for name, colour in entries]}, stack, missing, cropped)
+            renderer.flat(f"crop-{circuit['reference']}", cropped,
+                          "".join(drawing(plotted[layer], colours[layer][0]) for layer in stack) + areas_drawn, entry,
+                          lambda circuit=circuit, entries=entries, supply=supply, parts=parts, fields=fields: [
                               f"crop around {circuit['reference']} ({circuit['side']} side)", supply, parts,
-                              f"layers {colour_list(entries)}"])
+                              f"layers {colour_list(entries)}"] + fields)
 
+        glb = os.path.join(work, "models.glb")
+        said = kicad([kicad_cli, "pcb", "export", "glb", "--no-dnp", "--no-board-body", "-o", glb, copy], work,
+                     f"load the three-dimensional models of {board}")
+        unseen = left_out_in_3d(refilled, said, glb_names(glb), written)
         aspect = (outline[2] - outline[0]) / max(outline[3] - outline[1], 1e-6)
-        fields = {name: [f"three-dimensional view {name}", direction] for name, _, direction in VIEWS_3D}
+        zooms = {}
+        for name, how, direction in VIEWS_3D:
+            zooms[name], heard = framing(kicad_cli, work, copy, how, aspect, board, direction)
+            fonts.update(substituted(heard))
+        left_out = []
+        for reason, words in (("model not found", "drawn without a model KiCad cannot find"),
+                              ("no model", "drawn without a model, declaring none"),
+                              ("model hidden", "drawn without a model, the design hiding it"),
+                              ("not populated", "not drawn, marked do not populate")):
+            these = [part["reference"] for part in unseen if part["reason"] == reason]
+            if these:
+                left_out.append(f"{words}: {named(these)}")
+        fields = {name: [f"three-dimensional view {name}", direction]
+                  + ([f"zoomed out to {zooms[name]:.3g} so no part reaches the frame"] if zooms[name] < 1 else [])
+                  + (left_out or ["every part drawn with its model"]) + notes
+                  for name, _, direction in VIEWS_3D}
         box = solid_box(aspect, list(fields.values()))
         for name, how, direction in VIEWS_3D:
-            raw = os.path.join(work, f"render-{name}.png")
-            kicad([kicad_cli, "pcb", "render", *how, "-w", str(box[0]), "-h", str(box[1]), "--background",
-                   "transparent", "-o", raw, "board.kicad_pcb"], work, f"render {board} in three dimensions")
-            if not os.path.exists(raw):
-                raise Unreadable(f"KiCad wrote no three-dimensional render of {board}")
-            renderer.solid(f"3d-{name}", raw, {"view": "3d", "direction": direction}, box, fields[name])
+            raw, heard = render(kicad_cli, work, copy, how, box[:2], zooms[name], f"render-{name}.png", board)
+            renderer.solid(f"3d-{name}", raw, {"view": "3d", "direction": direction, "zoom": zooms[name]}, box,
+                           fields[name])
 
         facts = net_facts(refilled, board, membership)
         header = {
@@ -886,12 +1231,26 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             },
             "image_limit": {"long_edge_px": LONG_EDGE_PX, "patches": PATCHES, "patch_px": PATCH_PX},
             "background": BACKGROUND,
+            "fonts_substituted": [{"font": font, "drawn_in": instead} for font, instead in sorted(fonts.items())],
+            "layers_not_carried": absent,
+            "rule_areas": rule_area_entries(areas),
+            "not_in_3d": unseen,
         }
-        write_outputs(staged, header, renderer.images, facts)
+        write_outputs(ready, header, renderer.images, facts)
         os.makedirs(out, exist_ok=True)
-        for name in sorted(os.listdir(staged)):
-            shutil.move(os.path.join(staged, name), os.path.join(out, name))
+        for name in sorted(os.listdir(ready)):
+            shutil.move(os.path.join(ready, name), os.path.join(out, name))
     locked_copper.class_lines(classes, membership, stream)
+    for font, instead in sorted(fonts.items()):
+        print(f"FONT | {font} | KiCad cannot find this font and drew its text in {instead}; the captions and the "
+              "index name it", file=stream)
+    for layer in absent:
+        print(f"LAYER | {layer} | the board does not carry this layer, so the views that show it leave it out; the "
+              "captions and the index name it", file=stream)
+    for part in unseen:
+        if part["reason"] == "model not found":
+            print(f"MODEL | {part['reference']} | {part['detail']}, so the three-dimensional views draw it without "
+                  "that model; their captions and the index name it", file=stream)
     print(f"RESOLUTION | {scale_text(scale)} | {PIXELS_PER_FEATURE} px across the smaller of the minimum track width "
           f"{mm_text(figures[0])} mm and the minimum clearance {mm_text(figures[1])} mm", file=stream)
     print(f"RESULT | WRITTEN | {len(renderer.images)} images, their index and the per-net fact table | {clean(out)}",
@@ -899,12 +1258,16 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
     return 0
 
 
-def plot(kicad_cli: str, work: str, board_file: str, layer: str, name: str, board: str) -> str:
-    """One layer of a board in `work` plotted as a vector image in board coordinates; its path."""
+def plot(kicad_cli: str, work: str, board_file: str, layer: str, name: str, board: str, fonts: Dict[str, str]) -> str:
+    """One layer of a board in `work` plotted as a vector image in board coordinates; its path.
+
+    Each font KiCad says it substituted is added to `fonts`.
+    """
     path = os.path.join(work, name)
-    kicad([kicad_cli, "pcb", "export", "svg", "--mode-single", "--layers", layer, "--page-size-mode", "1",
-           "--exclude-drawing-sheet", "--black-and-white", "--drill-shape-opt", "2", "-o", path, board_file],
-          work, f"plot {layer} of {board}")
+    said = kicad([kicad_cli, "pcb", "export", "svg", "--mode-single", "--layers", layer, "--page-size-mode", "1",
+                  "--exclude-drawing-sheet", "--black-and-white", "--drill-shape-opt", "2", "-o", path, board_file],
+                 work, f"plot {layer} of {board}")
+    fonts.update(substituted(said))
     if not os.path.exists(path):
         raise Unreadable(f"KiCad wrote no plot of {layer} of {board}")
     return path
@@ -928,6 +1291,14 @@ def write_outputs(folder: str, header: dict, images: List[dict], facts: List[dic
              f"LIMIT | every image within a long edge of {LONG_EDGE_PX} px and {PATCHES} patches of {PATCH_PX} by "
              f"{PATCH_PX} px"]
     lines += [f"CLASS | {name} | {', '.join(nets)}" for name, nets in header["critical_classes"].items()]
+    lines += [f"FONT | {font['font']} | not found, so KiCad drew its text in {font['drawn_in']}"
+              for font in header["fonts_substituted"]]
+    lines += [f"LAYER | {layer} | not carried by the board, so the views that show it leave it out"
+              for layer in header["layers_not_carried"]]
+    lines += [f"RULE AREA | {area['name']} | on {', '.join(area['layers'])}, {'; '.join(area['rules'])}; KiCad does "
+              f"not plot it, so the views draw it as a {RULE_AREA[1]} dashed hatched outline"
+              for area in header["rule_areas"]]
+    lines += [f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]]
     lines += [f"IMAGE | {image['file']} | {image['caption']}" for image in images]
     with open(os.path.join(folder, "index.txt"), "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
@@ -957,6 +1328,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
         require_resvg(args.resvg)
         with tempfile.TemporaryDirectory(prefix="board-views-kicad-") as home:
             board_check.KICAD_ENVIRONMENT = board_check.isolate_kicad(args.kicad_cli, version, home)
+            english(home)
             try:
                 return views(args.board, args.project, args.classes, args.out, args.kicad_cli, args.resvg, out)
             finally:

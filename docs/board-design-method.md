@@ -259,7 +259,7 @@ Out of scope for this step: judging the quality of the layout, which is the layo
 
 ## Layout review views
 
-An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track. The layout review therefore judges a board on views that show each critical net against the board, the critical classes against each other, each integrated circuit with the parts on its supply nets, each side as it is assembled, and the assembled board in three dimensions. It also uses a table of the facts a picture cannot carry. With the board closed in every editor, render them from the board's folder:
+An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track. The layout review therefore judges a board on an image of each layer (`layer-<layer>`) and on views that show each critical net against the board (`net-<net>`), the critical classes against each other (`classes`), each integrated circuit with the parts on its supply nets (`crop-<reference>`), each side as it is assembled (`assembly-top`, `assembly-bottom`), and the assembled board in three dimensions (`3d-top`, `3d-bottom`, `3d-angled`). It also uses a table of the facts a picture cannot carry. With the board closed in every editor, render them from the board's folder:
 
 ```
 task hw:views -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <critical class> [--class <critical class> ...] --out <work folder>/<board>-views
@@ -276,5 +276,15 @@ so the smallest track and the smallest gap each span at least three pixels. Both
 **Image size limit.** Every image is kept within a long edge of 1568 pixels, and within 1568 visual patches of 28 by 28 pixels. An image costs ⌈width / 28⌉ × ⌈height / 28⌉ patches. This is the standard tier of the model vendor's published limits, the tier for all models other than its high-resolution ones. An image over either limit is downscaled to the largest size that fits, keeping its aspect ratio, so an image within both is read at the resolution it was drawn at. The source is the "Resolution and token cost" section of https://platform.claude.com/docs/en/build-with-claude/vision, read on 2026-10-13. That section also gives a high-resolution tier, a long edge of 2576 pixels and 4784 patches, for the vendor's newer models. The views keep to the standard tier, so every reviewing model reads them whole. Every two-dimensional view larger than the limit, a crop included, is cut into tiles. Each three-dimensional view is one image within it.
 
 **Captions.** Every image carries a caption drawn into it. A two-dimensional view's caption states its layers and the colour of each, its net or class, its scale in pixels per millimetre and the board coordinates in millimetres it covers. A three-dimensional view's caption states its view direction and image size. The index repeats every caption, as text and as JSON, so a reviewer working from the files alone has every fact without the author's context.
+
+**Nothing left out quietly.** The views are drawn from a temporary copy that reads as the design does in place: it keeps the design's own file names, and every model path the design's folder anchors is written out in full. Where KiCad would still draw less than the design holds, the views say so rather than show less:
+
+- KiCad does not plot a rule area, so the command draws each one as a dashed, hatched outline on every view of a layer it is on, and the caption names it.
+- A part drawn without a model is named in the three-dimensional views' captions and in the index: one whose model KiCad cannot find, one declaring no model, one whose model the design hides, and one marked do not populate.
+- A font KiCad cannot find, whose text it draws in another, is named in every caption.
+- A fabrication or courtyard layer the board does not carry is named as not carried in the captions of the assembly views and crops that would show it.
+- A three-dimensional view is zoomed out until no part reaches its frame, and its caption states the zoom.
+
+The command reports a model KiCad cannot find, a font it substitutes and a layer the board does not carry as lines of their own as well. A board with any of them still gets its views: whether what they leave out matters is the review's judgement.
 
 Out of scope for this section: judging the images, which is the layout review step.
