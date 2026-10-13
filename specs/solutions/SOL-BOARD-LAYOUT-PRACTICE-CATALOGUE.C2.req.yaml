@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C2
+type: criterion
+title: Before placement, the method requires a written floorplan and a plan for each applicable catalogue item
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write the step into the method, before placement. The floorplan places the board's mains, low-voltage, analog sensing and digital regions and its connectors; the plan states, for each catalogue item that applies to the board, how the layout will meet it, and marks the items that do not apply with the reason. Every item of rule kind that applies is written into the board's rules by the existing rules step and confirmed in effect before routing. The floorplan and plan are committed before any part is placed, so the order is checkable from the repository's history, and a plan item the finished layout does not meet is a finding at review. Out of scope: the review itself, and producing the review views.
+links:
+  - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
+    type: criterion-of

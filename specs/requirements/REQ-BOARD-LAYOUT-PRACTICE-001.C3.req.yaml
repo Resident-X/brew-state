@@ -1,0 +1,12 @@
+id: REQ-BOARD-LAYOUT-PRACTICE-001.C3
+type: criterion
+title: The layout review is shown to report the defects it checks for
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  A board carrying known, deliberately placed layout defects is reviewed by the same means as a real board, and every defect is reported. A defect the review misses is a gap in the review, closed before the review is relied on.
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001
+    type: criterion-of

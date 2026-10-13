@@ -4,9 +4,9 @@ category: task
 title: Board designs are produced by a written method whose judgement steps are explicit and reviewed
 status: active
 level: task
-version: 1
+version: 2
 text: |
-  How a board is designed, as distinct from how a design is checked. Design rules and net classes are written before any routing; the nets that decide whether the board works, its power, decoupling, ground, mains and sensing paths, are routed deliberately to stated rules and locked before any automated routing touches the rest; and each layout is reviewed by eye against a written checklist using rendered views of every layer, with each finding recorded and resolved. A finding that can be expressed as a rule becomes one, so the next board is checked for it automatically. The method is written so another designer, or an agent, can follow it, and it holds nothing specific to this machine.
+  How a board is designed, as distinct from how a design is checked. The method carries a catalogue of published layout practice, and each board is planned against it before any part is placed: a floorplan, and how each applicable item will be met. Design rules and net classes are written before any routing, including every practice item that can be a rule; the nets that decide whether the board works, its power, decoupling, ground, mains and sensing paths, are routed deliberately to stated rules and locked before any automated routing touches the rest; and each layout is reviewed against a written checklist using rendered views of every layer and every critical net, with each finding recorded and resolved. The review confirms a board designed to the practice rather than being how it reaches it. A finding that can be expressed as a rule becomes one, so the next board is checked for it automatically. The method is written so another designer, or an agent, can follow it, and it holds nothing specific to this machine.
 rationale: |
   A board can pass every rule check and still be badly laid out, because rule checks test what was written down and layout quality is mostly what was not. The trial board recorded in DEC-BOARD-TOOLCHAIN-KICAD-KONNECT passed its connectivity yet routed ground as long thin traces and decoupling the long way round, and only the rendered view showed it. Making the judgement steps explicit, ordered and reviewed is what turns them from art into something a second designer can repeat, and turning each review finding into a rule moves judgement into checks over time. Keeping the method free of machine-specific data is what lets an adopter with a different machine reuse it.
 links:
@@ -23,4 +23,10 @@ links:
   - target: REQ-ELECTRICAL-INSTALL-001.C8
     type: targets
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C2
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
     type: targets

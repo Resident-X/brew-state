@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C4
+type: criterion
+title: Following the review step on a proof design reports every seeded layout defect
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  Build a throwaway proof design, never ordered, carrying deliberately placed layout defects of kinds the catalogue covers: at least ground drawn as thin traces, a decoupling capacitor routed the long way round to its pin, silkscreen over a pad, low-voltage copper inside the mains region, and a high-current pad without the copper it needs. Review it by following the method's review step as written, using the rendered views. Every seeded defect must be reported as a finding against the catalogue item that covers it; a defect not reported is a gap in the catalogue or the views, closed before this step counts as done. Out of scope: ordering the proof design, and defect kinds outside the catalogue.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: criterion-of

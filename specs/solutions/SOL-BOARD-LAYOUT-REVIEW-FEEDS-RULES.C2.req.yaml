@@ -2,11 +2,11 @@ id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C2
 type: criterion
 title: Every review finding that can be expressed as a rule is added to the rules
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |-
-  For every recorded review finding, the method requires a stated judgement of whether it can be expressed as a design rule or rule check; each one that can is added to the method's rules, with its figure and source like any other rule, so it is checked on every later board without being remembered. A finding judged expressible but not added, or one with no recorded judgement, fails the step. Out of scope: building the automated check that runs the rules, and findings that cannot be expressed as a rule, which stay on the checklist.
+text: |
+  For every recorded review finding, the method requires a stated judgement of whether it can be expressed as a design rule: a finding is expressible exactly when the automated pre-order rule check can enforce it, as a board-wide minimum, a net class's figure or a custom rule. Each one that can is added to the method's list of rules carried from layout reviews, written in the method's custom-rule form with its figure and source like any other rule and naming the review it came from, and the method's rules step requires every board's rules to carry each entry, so it is checked on every later board without being remembered. A figure that depends on one machine is written in the list by its role, its number living in that machine's board rules, so the method holds no machine's data. A finding that needs judgement on the rendered views instead is added to the layout practice catalogue when it holds for any board, or to the board's own checklist items when it holds for one machine only. A finding judged expressible but not added, or one with no recorded judgement, fails the step. Out of scope: building the automated check that runs the rules.
 links:
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: criterion-of

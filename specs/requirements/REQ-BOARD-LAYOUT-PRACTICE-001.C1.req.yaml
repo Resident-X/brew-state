@@ -1,0 +1,12 @@
+id: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+type: criterion
+title: Every board is judged against every applicable item of published layout practice before it is ordered
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each item of the practice states what it asks and the published source it comes from. A board's judgement records a verdict on every item that applies to it, and a board with an item unjudged, or judged failing and not resolved, is not ordered.
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001
+    type: criterion-of

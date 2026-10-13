@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-METHOD.C9
+type: criterion
+title: Layout practice is planned into each board before placement
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Before any part is placed, the board has a written floorplan and a plan, for each item of the method's layout practice that applies to it, of how the layout meets it; and before routing, every item that can be written as a rule is in the board's rules. The review then confirms a board drawn to that plan rather than being the means by which it improves.
+links:
+  - target: DEL-HW-DESIGN-METHOD
+    type: criterion-of

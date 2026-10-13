@@ -26,6 +26,10 @@ links:
     type: depends-on
   - target: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION
     type: depends-on
+  - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
+    type: depends-on
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS
+    type: depends-on
 design_question_answers:
   - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
     class: served-statement

@@ -1,12 +1,12 @@
 id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
 type: criterion
-title: Each layout is reviewed against a pre-written checklist using rendered views of every layer, with every finding recorded and closed
+title: Each layout is reviewed against a pre-written checklist with a recorded verdict on every item
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |-
-  The method requires a written layout checklist that exists before the layout it reviews, and a review of that layout against it using rendered images of every copper, mask, paste, silkscreen and edge layer the board carries. Every finding is recorded and stays open until it is closed either by a change to the board or by a recorded reason it stands; a review with any finding left open, a layer not rendered, or a checklist dated after the layout fails the step. The checklist includes treating a placement score as unresolved whenever the tool cannot match decoupling capacitors to their device. The step is stated so a designer or an agent session with no prior context carries it out from the method's text alone, without reference to this project's graph identifiers or its author's context. Out of scope: the automated pre-order rule and connectivity check, which is a separate verification task, and the content of any particular board's findings.
+text: |
+  Write the step into the method. The checklist is the method's layout practice catalogue plus any items particular to the board, and it is committed before any part of the layout is placed, so the order is checkable from the repository's history. The review judges the layout on the method's rendered review views, which show every copper, mask, paste, silkscreen and edge layer the board carries and every critical net, and records for every checklist item a verdict of pass, fail, not applicable or cannot judge, citing the view and the place on the board it rests on. After the item pass, a free pass records anything else the reviewer sees as a finding. The checklist, the verdicts and the findings are recorded beside the board's design files. A review with an item left without a verdict, a cannot-judge verdict unresolved, a view not rendered, or a checklist committed after the layout began fails the step. Any score or metric a tool reports while some of its inputs were not resolved, such as a placement score that could not match decoupling capacitors to their device, is treated as unresolved, never as a pass. The step is stated so a designer or an agent session with no prior context carries it out from the method's text alone, without reference to this project's graph identifiers or its author's context. Out of scope: the automated pre-order rule and connectivity check, which is a separate verification task; the content of the catalogue; producing the views; and the content of any particular board's findings.
 links:
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: criterion-of

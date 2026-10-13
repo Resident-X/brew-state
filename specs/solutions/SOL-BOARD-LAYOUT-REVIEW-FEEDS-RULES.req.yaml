@@ -1,11 +1,11 @@
 id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
 type: deliverable
 category: solution
-title: Each layout is reviewed against a checklist written beforehand, and findings that can be rules become rules
+title: Each layout is reviewed against the practice catalogue with a verdict on every item, and findings that can be rules become rules
 status: active
-version: 1
-text: |-
-  The method's layout review step: a checklist written before the layout, a review of rendered views of every layer, every finding recorded and closed by a board change or a recorded reason, and every finding expressible as a rule added to the rules so later boards are checked for it automatically.
+version: 2
+text: |
+  The method's layout review step, which confirms a board designed to the layout practice catalogue rather than being how it gets good. The checklist is the catalogue plus the board's own items, written before the layout. The reviewer, working without the designer's reasoning, judges every item on the rendered review views and records a verdict on each. Every finding stays open until a change to the board or a recorded reason closes it, and a safety finding closes only by a board change or a named person's signed acceptance. After any change the views are rendered again and the whole checklist is judged again. Every finding expressible as a rule is added to the method's rules so later boards are checked for it automatically. A proof board with deliberately placed defects shows the review finds what it claims to.
 links:
   - target: DEL-HW-DESIGN-METHOD.C3
     type: derives-from
@@ -15,6 +15,16 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C2
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
+    type: targets
+  - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
+    type: depends-on
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS
+    type: depends-on
 design_question_answers:
   - answered_by: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
     class: new-condition
@@ -29,7 +39,8 @@ design_question_answers:
   - answered_by: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
     class: consumer-self-sufficiency
 interfaces:
-  - KiCad's rendered per-layer board views
+  - the method's rendered review views
+  - the method's layout practice catalogue
   - the method's written design rules
 locus:
   - marking: created

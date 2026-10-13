@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3
+type: criterion
+title: A review closes only on a full repeated pass with no finding open
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write into the method how a review proceeds and closes. The reviewer works from the board files, the checklist and the rendered views alone, never from the designer's reasoning or session. Every finding stays open until it is closed by a change to the board or by a recorded reason it stands; a finding of safety severity, covering separation between mains and anything a person or a low-voltage circuit can reach, fusing, protective earthing or insulation, closes only by a change to the board or by a named person's signed acceptance recorded beside the board, never by the designing or reviewing agent. After any change to the board the views are rendered again, the automated pre-order check is passed again, and the whole checklist is judged again, not only the items the change addressed. The review closes only on a pass with no finding open. The method recommends, without requiring, a review by an experienced electrical engineer before the first order of any board that carries mains. Out of scope: who that engineer is, and the automated pre-order check itself.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: criterion-of

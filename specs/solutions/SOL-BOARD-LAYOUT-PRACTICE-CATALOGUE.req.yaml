@@ -1,0 +1,32 @@
+id: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
+type: deliverable
+category: solution
+title: The method carries a sourced layout practice catalogue that each board is planned against before placement
+status: active
+version: 1
+text: |
+  The method's layout practice catalogue and the design-time step that applies it. The catalogue is the one statement of what a well laid-out board looks like: the designer plans the board against it before placement, every item that can be a rule goes into the board's rules before routing, and the layout review later uses the same items as its baseline checklist. Quality is designed into the first layout from the catalogue rather than reached by repeated review.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C9
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+design_question_answers:
+  - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+    class: new-condition
+  - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+    class: whole-set
+  - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+    class: served-statement
+  - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+    class: existing-capability
+  - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+    class: consumer-intent
+  - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - the method's written design rules and its rules step
+  - the method's layout review step, which uses the catalogue as its baseline checklist
+locus:
+  - marking: created
+    ref: 'the board design method, docs/board-design-method.md: its layout practice catalogue and a floorplan-and-plan step before placement'
