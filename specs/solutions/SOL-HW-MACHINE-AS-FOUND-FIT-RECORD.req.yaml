@@ -23,6 +23,10 @@ links:
     type: justified-by
   - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer)
+  fingerprint: dcba555fe64d7dcad2b4caca2a1c6eb5f2afe0a1b3732310da763b036bf946ce
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C3
     class: new-condition
