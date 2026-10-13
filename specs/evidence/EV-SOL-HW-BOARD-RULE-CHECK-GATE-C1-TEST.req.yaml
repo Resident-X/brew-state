@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C1-TEST
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.356403Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_design_anywhere_is_found_with_its_schematic_and_layout,test_a_design_added_to_the_tree_is_checked_without_editing_any_list,test_a_project_without_its_schematic_or_layout_fails_by_name,test_a_board_file_without_its_project_fails_by_name,test_a_sheet_the_schematic_names_but_git_does_not_track_fails_by_name,test_a_schematic_that_cannot_be_read_fails_its_design,test_a_library_the_repository_does_not_hold_fails_by_name
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C1
+    type: satisfies

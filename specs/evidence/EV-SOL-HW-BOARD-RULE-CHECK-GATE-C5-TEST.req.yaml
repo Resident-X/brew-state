@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C5-TEST
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.914879Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_the_clean_design_passes_and_every_fault_is_caught_without_touching_the_tree,test_the_proof_design_is_marked_not_for_manufacture_and_carries_a_synthetic_record,test_every_rule_the_check_reports_of_its_own_has_a_seeded_fault
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C5
+    type: satisfies

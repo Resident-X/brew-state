@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C3-TEST-2
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.67097Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_every_separation_failure_fails,test_a_design_declaring_a_stricter_figure_is_held_to_the_record,test_kicad_ranks_pad_and_footprint_overrides_above_custom_rules,test_a_zone_fill_keeps_the_signed_figure_whatever_its_own_clearance,test_kicad_checks_no_clearance_between_tied_pads_and_the_check_fails_the_tie
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C3
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C3-TEST
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.606503Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_missing_record_fails,test_an_unsigned_record_fails,test_a_declared_figure_below_the_record_fails,test_no_rules_file_or_no_rule_in_the_form_fails,test_a_rule_narrowed_by_layer_or_area_fails,test_a_net_only_the_schematic_puts_in_mains_fails_naming_where_it_is_missing,test_a_pad_override_below_the_figure_fails_on_either_side_of_the_pair,test_a_net_tie_joining_mains_to_any_other_net_fails_naming_both
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C3
+    type: satisfies

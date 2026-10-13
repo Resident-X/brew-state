@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C4-TEST
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.731415Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_python_older_than_the_minimum_stops_naming_it,test_missing_or_old_pyyaml_stops_naming_it,test_a_missing_kicad_cli_stops_saying_how_to_point_at_it,test_an_old_or_unrecognisable_kicad_stops_naming_it,test_the_command_stops_with_status_2_and_reports_no_verdict,test_the_tools_and_their_minimums_are_named_where_the_check_is_documented,test_the_configuration_names_only_kicads_own_libraries_and_no_caller_variable_reaches_kicad
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C4
+    type: satisfies
