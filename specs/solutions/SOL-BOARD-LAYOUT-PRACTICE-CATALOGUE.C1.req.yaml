@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+type: criterion
+title: The method carries a baseline layout practice catalogue whose every item cites its published source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write the catalogue into the method. Each item states the question it asks of a board, the pattern that passes, what a failing board looks like in the review views, which of the method's review views it is judged on, whether it is of rule kind, enforced by the automated pre-order rule check through the board's rules, or of judgement kind, judged on the rendered views, its severity (safety, function, quality or cosmetic), and its published source with the section, or, for an item added from a layout review with no published source, that review. Each source is checked against the document itself, never cited from memory, and each item is stated fully enough to apply without reading its source. The rule-kind items are the method's one list of carried rules, joining on each board the rules the rules step already writes from the board's own constraints, each written in the form the rules step uses for its kind, a board-wide minimum, a net class's figure or a custom rule, with its figure and source; an item on separating mains from low voltage defers to the single form and the signed figure the rules step already fixes for that separation. The catalogue covers floorplan and partitioning, power paths and heat, grounding and return paths, decoupling and switching loops, sensing front ends, clocks, separation of mains from low voltage, connectors and mechanical fit, test access and bring-up, manufacture and assembly, and emissions. It holds no figure, part or board shape of any one machine: a figure that depends on the machine is named by its role, its number living in that machine's board rules. Out of scope: the review step that applies the catalogue to a finished layout, and producing the views.
+links:
+  - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
+    type: criterion-of

@@ -2,11 +2,11 @@ id: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
 type: criterion
 title: A fresh agent session follows the whole method to a throwaway design that passes the pre-order gate
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: demonstration
 text: |
-  Every step of the method is followable with no knowledge held only by its author: an agent session with no prior context, given only the method and the project operator skill, follows it to a throwaway design that passes the pre-order rule-check gate, never ordered and marked in its files as not for manufacture, and any step where it had to be told something not written down is a failure that is fixed in the method. The operator skill is named with the repository's own-skill prefix, repo-, so it is tracked and the skills sync leaves it untouched; it wraps Konnect's bundled KiCad skills as they ship without editing them, keeps board work in the main agent session because tools loaded mid-session are not visible to subagents, and every tool the method uses can be obtained by a reader who is not the author. Out of scope: designing this machine's real boards, and building the pre-order gate itself.
+  Every step of the method is followable with no knowledge held only by its author: an agent session with no prior context, given only the method and the project operator skill, follows it to a throwaway design whose floorplan and plan are committed before placement, whose layout review closes under the method's review step, and which passes the pre-order rule-check gate, never ordered and marked in its files as not for manufacture, and any step where it had to be told something not written down is a failure that is fixed in the method. The operator skill is named with the repository's own-skill prefix, repo-, so it is tracked and the skills sync leaves it untouched; it wraps Konnect's bundled KiCad skills as they ship without editing them, keeps board work in the main agent session because tools loaded mid-session are not visible to subagents, and every tool the method uses can be obtained by a reader who is not the author. Out of scope: designing this machine's real boards, and building the pre-order gate itself.
 links:
   - target: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE
     type: criterion-of

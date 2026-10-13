@@ -1,0 +1,12 @@
+id: REQ-BOARD-LAYOUT-PRACTICE-001.C4
+type: criterion
+title: A first-review layout failure against a planned item is corrected at its planning cause
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Practice is designed into the board, not reached by repeated review. A failure bearing on safety or on whether the board works, found in a board's first full review against an item its design-time plan said it would meet, is traced to the item of the practice or the step of planning that let it through, and that is corrected so a later board planned the same way would not repeat it; the board itself is changed as for any finding.
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001
+    type: criterion-of

@@ -1,0 +1,28 @@
+id: REQ-BOARD-LAYOUT-PRACTICE-001
+type: requirement
+category: constraint
+title: Boards are laid out to published layout practice
+status: active
+priority: must
+version: 1
+text: |
+  Every board the project makes is laid out to established, published layout practice. The board is judged against that practice item by item before it is ordered, each item traceable to the published source it comes from, or to the recorded review that added it, so the judgement rests on the practice and not on the reviewer's opinion. A board judged to fail an item that applies to it is changed; a failure is not accepted as unimportant.
+
+  Scope is the layout of boards the project designs: placement, partitioning, copper, grounding, separation, and what manufacture and assembly need. Whether a circuit's values are right is outside it.
+rationale: |
+  A board can pass every automated rule and connectivity check and still be laid out badly: ground drawn as thin traces, decoupling routed the long way round, a return path broken by a gap. A trial board did exactly that. Automated routing is not yet good enough to produce good layout unaided, and most of what decides layout quality cannot be expressed as an automated rule, so it has to be judged.
+
+  The standard aimed at is a layout an experienced electrical engineer reviewing the board would accept; published practice is how that standard is made checkable. Judgement without a stated standard drifts toward whatever the reviewer happens to know. Holding the board to published practice, item by item with its source, makes the standard the same for every board and every reviewer, human or agent, and lets an adopter see what their board is held to.
+
+  The outcomes this protects are already required elsewhere: precision sensing that holds its accuracy while kilowatt loads switch beside it, isolation between mains and anything a person can reach, and a build that does not pay for a second board to find what the first got wrong. Layout is where each of those is won or lost before anything is energised.
+
+  A finding that bears on safety cannot be closed by the agent that drew or reviewed the board judging it acceptable: only a change to the board, or a named person accepting it on the record, closes it, in the same way that the board's separation basis is accepted by a named person. Requiring an outside expert for every board was rejected because an adopter may have none to call on, and a requirement they cannot meet is one they will skip.
+
+  A review that has never been shown to find a defect is not evidence that a board has none, so the review's ability to see the defects it checks for is demonstrated rather than assumed.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001.C8
+    type: derives-from
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: derives-from

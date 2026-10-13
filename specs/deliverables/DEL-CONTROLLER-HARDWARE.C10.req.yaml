@@ -1,13 +1,13 @@
 id: DEL-CONTROLLER-HARDWARE.C10
 type: criterion
-title: Each layout is reviewed against a written layout checklist, using rendered views of every layer, before it is ordered
+title: Each layout is reviewed against a written layout checklist, using rendered views of every layer and every critical net, before it is ordered
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 closes_by: cascade
 text: |
-  Rule checks cannot see layout quality: a decoupling loop that is long, a return path broken by a gap, a supply track that is thin all pass them. The review looks at the board as drawn, against a checklist written before the layout, and its findings are recorded and resolved rather than only observed.
+  Rule checks cannot see layout quality: a decoupling loop that is long, a return path broken by a gap, a supply track that is thin all pass them. The review looks at the board as drawn, against a checklist written before the layout and drawn from published layout practice, using views that show which copper belongs to which critical net, and its findings are recorded and resolved rather than only observed.
 links:
   - target: DEL-CONTROLLER-HARDWARE
     type: criterion-of

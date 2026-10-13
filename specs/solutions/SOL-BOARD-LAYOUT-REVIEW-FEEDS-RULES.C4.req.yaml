@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C4
+type: criterion
+title: A first-review failure against a planned item is traced to and corrected at its planning cause
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write into the method that every finding of safety or function severity in a board's first full review, against an item the board's design-time plan said it would meet, is also recorded as a planning shortfall: the review names the catalogue item or the planning step that let it through, and that item or step is amended in the method, with the review named as its source, before the review closes, so a later board planned the same way would not repeat it. A shortfall recorded without an amendment, or an amendment that names no shortfall, fails the step. Out of scope: changing the board itself, which closes the finding as any other; findings in later review rounds of the same board.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: criterion-of

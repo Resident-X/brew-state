@@ -1,0 +1,39 @@
+id: SOL-BOARD-REVIEW-RENDER-VIEWS
+type: deliverable
+category: solution
+title: The views a layout review judges a board on are rendered from the board's files by one command
+status: active
+version: 1
+text: |
+  A task-runner command that renders, from a board's own design files, every view the layout review judges the board on, together with the facts a picture cannot carry. An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track; the review needs views that show each critical net against the board, the critical classes against each other, each integrated circuit with its decoupling close enough to judge, and the assembled board in three dimensions. The views are produced by the free tools the method already names, plus a filter over the board file built on the repository's existing board-file reader, and are proven on a throwaway proof design.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C3
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+    class: new-condition
+  - answered_by: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+    class: whole-set
+  - answered_by: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+    class: served-statement
+  - answered_by: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    class: existing-capability
+  - answered_by: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+    class: consumer-intent
+  - answered_by: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - KiCad's command-line board export and render
+  - the repository's board-file reader, hardware/tools/sexpr.py
+  - 'the task runner''s hw: commands'
+locus:
+  - marking: created
+    ref: a review-view render tool under hardware/tools with its tests, and its task-runner command
+  - marking: created
+    ref: 'the board design method, docs/board-design-method.md: the review views it names'

@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+type: criterion
+title: One task-runner command renders every layout review view of a board from its design files
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Build the command among the repository's existing hardware tasks, locating KiCad and reporting a missing tool the same way the pre-order check does, and name it, with the views it produces, in the method. From a board's layout and project files it writes: an image of each copper, mask, paste, silkscreen and edge layer the board carries; an assembly view of each side; for each net in a critical class, that net's copper drawn over a faint image of the whole board; a map drawing each critical class in its own colour; a crop around each integrated circuit and the parts on its supply nets, at a resolution in pixels per millimetre the method states; and top, bottom and angled three-dimensional views. Every image is on a dark background, and every whole-board view is tiled so that each tile, like each crop, meets a minimum resolution in pixels per millimetre the method states, chosen so that the manufacturer's smallest track width and clearance each span at least a stated number of pixels once the image is reduced to the largest size a reviewing model reads without downsampling. Each image has a caption stating its layers, its net or class, its scale and the board coordinates it covers, and the command writes a table of per-net facts: track width range, via count, zones and class. Tests on a throwaway proof design check that every view is written, that a net's overlay holds that net's copper and no other, that each crop contains its circuit and each crop and tile meets the stated resolution and, reduced to the largest size a reviewing model reads without downsampling, still spans the smallest track width and clearance over the stated number of pixels, and that an unknown class, a missing layer or an unreadable board fails the command with a message naming it. Out of scope: judging the images.
+links:
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS
+    type: criterion-of
