@@ -1,11 +1,11 @@
 id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
 type: deliverable
 category: solution
-title: Each layout is reviewed against the practice catalogue with a verdict on every item, and findings that can be rules become rules
+title: Each layout is reviewed against the practice catalogue with a verdict on every item, and its findings feed the catalogue
 status: active
 version: 2
 text: |
-  The method's layout review step, which confirms a board designed to the layout practice catalogue rather than being how it gets good. The checklist is the catalogue plus the board's own items, written before the layout. The reviewer, working without the designer's reasoning, judges every item on the rendered review views and records a verdict on each. Every finding stays open until a change to the board or a recorded reason closes it, and a safety finding closes only by a board change or a named person's signed acceptance. After any change the views are rendered again and the whole checklist is judged again. Every finding expressible as a rule is added to the method's rules so later boards are checked for it automatically. A proof board with deliberately placed defects shows the review finds what it claims to.
+  The method's layout review step, which confirms a board designed to the layout practice catalogue rather than being how it gets good. The checklist is the catalogue plus the board's own items, its baseline written before the layout. The reviewer, working from the board, the views, the pre-order check's report and the board's committed plan but never from the designer's reasoning, judges every item and records a verdict on each, and compares the layout with the plan. Every finding stays open until a change to the board or a reason showing the item is met, does not apply or is overridden closes it, never a judgement that it is unimportant, and a safety finding closes only by a board change or a named person's acceptance. After any change the views are rendered again and the whole checklist is judged again. Every finding expressible as a rule is added to the catalogue as a rule so later boards are checked for it automatically, and a first-review failure against a planned item is traced to and corrected at its planning cause.
 links:
   - target: DEL-HW-DESIGN-METHOD.C3
     type: derives-from
@@ -18,8 +18,6 @@ links:
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
     type: targets
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C2
-    type: targets
-  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
     type: targets
   - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
     type: depends-on

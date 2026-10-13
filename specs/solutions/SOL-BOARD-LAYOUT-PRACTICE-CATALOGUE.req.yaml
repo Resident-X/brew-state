@@ -34,3 +34,5 @@ interfaces:
 locus:
   - marking: created
     ref: 'the board design method, docs/board-design-method.md: its layout practice catalogue and a floorplan-and-plan step before placement'
+  - marking: modified
+    ref: 'the board design method, docs/board-design-method.md: its rules-before-routing step, which carries the catalogue''s rule-kind items onto every board'

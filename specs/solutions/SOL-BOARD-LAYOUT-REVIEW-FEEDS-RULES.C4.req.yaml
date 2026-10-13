@@ -1,12 +1,12 @@
 id: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C4
 type: criterion
-title: Following the review step on a proof design reports every seeded layout defect
+title: A first-review failure against a planned item is traced to and corrected at its planning cause
 status: active
 version: 1
 measurement_type: binary
-verification: demonstration
+verification: inspection
 text: |
-  Build a throwaway proof design, never ordered, committed clean so the pre-order check over every design in the repository stays passing, and a seeding script that writes a copy of it outside the tracked tree carrying deliberately placed layout defects: at least one for each area the catalogue covers, and among them ground drawn as thin traces, a decoupling capacitor routed the long way round to its pin, silkscreen over a pad, low-voltage copper inside the mains region, and a high-current pad without the copper it needs. The seeding script records the list of seeded defects and where each lies apart from the copy, where the review cannot read it. Review the design by following the method's review step as written, in a session that has no record of what was seeded or where and is given only the seeded copy's design files, the checklist, the rendered views and the automated pre-order check's report on the copy. Compare the review's findings with the seed list afterwards: every seeded defect must be reported as a finding against the catalogue item that covers it, and a defect not reported is a gap in the catalogue or the views, closed and the blind review repeated before this step counts as done. Out of scope: ordering the proof design.
+  Write into the method that every finding of safety or function severity in a board's first full review, against an item the board's design-time plan said it would meet, is also recorded as a planning shortfall: the review names the catalogue item or the planning step that let it through, and that item or step is amended in the method, with the review named as its source, before the review closes, so a later board planned the same way would not repeat it. A shortfall recorded without an amendment, or an amendment that names no shortfall, fails the step. Out of scope: changing the board itself, which closes the finding as any other; findings in later review rounds of the same board.
 links:
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: criterion-of
