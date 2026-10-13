@@ -1,12 +1,12 @@
 id: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD.C2
 type: criterion
-title: Each carried-forward property is a constraint on whatever replaces the module, or is pending a bench measurement
+title: Each property is carried forward as a sourced constraint, set aside with its reason, or pending against named work
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Each property is stated as a constraint the replacing circuit must meet, not as a description of the module, and holds whether the function is later designed or kept as a module. Properties a datasheet or schematic can settle are settled here by reading it; only a property that needs a measurement on a part in hand is marked pending, naming the measurement, and where that measurement needs a sample bought, the purchase is recorded in the justified early purchases. A mark of pending names the work that will settle it and ends only when that work records the fact and its source; every document derived from the record shows the mark rather than a value. Out of scope: performing the bench measurements, and designing the replacing circuits.
+  Each property carried forward is stated as a constraint the replacing circuit must meet, not as a description of the module, holds whether the function is later designed or kept as a module, and names the requirement criterion or decision that makes it binding. A property is not carried forward when no requirement or decision needs it, or when the replacing circuit must not inherit it, such as current passed through an open contact or a barrier the module lacked; it is recorded as set aside with that reason and, for one that must not be inherited, the criterion or decision it would breach. Default and failure states are stated as outcomes a designer can check rather than as the parts that produced them, and an output's failure state the record already gives is cited rather than restated. A constraint whose value no datasheet, schematic, requirement or decision fixes is marked pending, naming in words and by its node the work that will settle it: where the value rests on a figure the record already holds pending, the mark cites that figure's mark and the work that ends it; otherwise the partition and feasibility task's choice of form for a figure of the module it chooses, or the design task for the board that carries the circuit. Each such mark joins the record's table of pending marks, ends only when that work records the fact and its source, and is shown in place of a value in every document derived from the record. Out of scope: measuring parts, and designing the replacing circuits.
 links:
   - target: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD
     type: criterion-of
