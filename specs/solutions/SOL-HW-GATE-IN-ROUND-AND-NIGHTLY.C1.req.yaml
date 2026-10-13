@@ -1,0 +1,12 @@
+id: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+type: criterion
+title: The build round runs the board check when the branch changes a board design or the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The task runner build-round gate runs the board check, its tooling tests and nothing else from the hardware tree when the branch changes a tracked KiCad file anywhere, any file under the hardware tree, or the check tooling, measured from the merge-base with main as the emulation tier is measured, and runs it when it cannot tell what changed. A missing or too-old KiCad then stops the round naming the tool rather than skipping the tier, and a branch that changes none of those paths runs without KiCad. Out of scope: the seeded-fault proof in the round, which stays on demand and nightly.
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
+    type: criterion-of
