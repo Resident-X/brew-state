@@ -1219,25 +1219,29 @@ def project_mains(kicad_cli: str, scratch: str, project: str, names: Set[str], n
     return members["Mains"], ""
 
 
-def class_members(kicad_cli: str, work: str, stem: str, classes: Sequence[str], names: Set[str], nonce: str
-                  ) -> Tuple[Optional[Dict[str, Set[str]]], str]:
+#: Why class_members has no answer when KiCad ran but did not load its rules file.
+PROBES_NOT_LOADED = "KiCad did not load the rules that ask it which nets are in which net class"
+
+
+def class_members(kicad_cli: str, work: str, stem: str, classes: Sequence[str], names: Set[str], nonce: str,
+                  rules: str = "(version 1)\n") -> Tuple[Optional[Dict[str, Set[str]]], str]:
     """The nets of `names` KiCad places in each of `classes` on the board `<stem>.kicad_pcb` in `work`.
 
     The board is checked with the project file of the same stem beside it, as
-    KiCad opens one, and with a rules file of nothing but the marker and one
-    probe per class, written in place of any beside it. So KiCad applies the
+    KiCad opens one, and with a rules file of `rules` followed by the marker and
+    one probe per class, written in place of any beside it. So KiCad applies the
     project file's assignments and patterns and any class the layout file
     carries, exactly as it would on the board itself, and reports every item it
-    places in each class. The marker shows the probes were loaded, so an empty
-    answer means no net rather than an unread rules file.
+    places in each class. The marker shows the whole file was loaded, `rules`
+    with it, so an empty answer means no net rather than an unread rules file.
     """
     with open(os.path.join(work, f"{stem}.kicad_dru"), "w", encoding="utf-8") as handle:
-        handle.write("(version 1)\n\n" + marker(nonce) + "".join(class_probe(nonce, netclass) for netclass in classes))
+        handle.write(rules + "\n" + marker(nonce) + "".join(class_probe(nonce, netclass) for netclass in classes))
     report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", f"{stem}.kicad_pcb"], work)
     if report is None:
         return None, why
     if not fired(report, marker_rule(nonce)):
-        return None, "KiCad did not load the rules that ask it which nets are in which net class"
+        return None, PROBES_NOT_LOADED
     return {netclass: probed_nets(fired(report, probe_rule(nonce, netclass)), names) for netclass in classes}, ""
 
 

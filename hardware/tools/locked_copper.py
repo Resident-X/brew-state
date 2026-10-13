@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The locked-copper check: a board's critical-class copper, recorded before the routing round trip and compared after it.
+"""The locked-copper check: a board's rules confirmed, its critical-class copper locked, recorded before the routing round trip and compared after it.
 
 The nets a board depends on are routed by hand and locked before an external
 router is let loose on the rest, and nothing about the round trip -- KiCad's
@@ -9,6 +9,18 @@ classes is recorded immediately before export, and the imported board is
 compared with that record: each recorded item must still be there, locked and
 unchanged, and no critical-class net may carry an item the record does not
 hold. Copper on any other net is the router's to place, and is ignored.
+
+Before routing, the rules are confirmed by asking KiCad: its rule check is run
+on the board with the board's own custom rules file and a marker rule appended
+to it, which fires only if KiCad loaded the whole file, and with one probe per
+named class, which lists the nets KiCad places in it. The lock command marks
+every critical-class track, arc, via and zone locked in the board file, writing
+the lock exactly where KiCad writes it and touching nothing else.
+
+Every command but the rules confirmation acts on the board file itself, so each
+refuses while KiCad's lock file beside the board shows it open in an editor.
+A board must declare MAINS as present or none; on one that declares present,
+Mains is a critical class, and every critical class named must hold a net.
 
 The critical nets at comparison are every net the record names as well as every
 net the critical classes hold then, and every class the record names must still
@@ -26,13 +38,16 @@ it; anything else fails by name rather than being taken as no copper. The record
 is a working file, refused inside any design's folder so it is never committed
 or copied as part of a design.
 
+    locked_copper.py confirm --board B.kicad_pcb --project B.kicad_pro --class NAME [--class NAME ...]
+    locked_copper.py lock    --board B.kicad_pcb --project B.kicad_pro --class NAME [--class NAME ...]
     locked_copper.py record  --board B.kicad_pcb --project B.kicad_pro --class NAME [--class NAME ...] --record FILE
     locked_copper.py compare --board B.kicad_pcb --project B.kicad_pro --record FILE
 
 Every finding is one line of a fixed shape, a result line comes last, and the
-exit status is the verdict: 0 when the record is written or the board matches
-it, 1 when recording is refused or the board does not match, 2 when the check
-cannot run at all, for example because a tool is missing.
+exit status is the verdict: 0 when the rules are confirmed, the board is locked,
+the record is written or the board matches it, 1 when any of those is refused
+or fails, 2 when the check cannot run at all, for example because a tool is
+missing.
 """
 
 from __future__ import annotations
@@ -258,6 +273,47 @@ def read_project(path: str) -> dict:
     return project
 
 
+def editor_lock(board: str) -> str:
+    """The lock file KiCad writes beside a board while an editor holds it open, and deletes when it closes it."""
+    return os.path.join(os.path.dirname(board), "~" + os.path.basename(board) + ".lck")
+
+
+def open_in_editor(board: str) -> Optional[Tuple[str, str]]:
+    """(lock file, why) when KiCad's lock file shows the board open in an editor, or None."""
+    lock = editor_lock(board)
+    if not os.path.lexists(lock):
+        return None
+    return (lock, f"KiCad's lock file shows {board} open in an editor, which would work on a copy this command does "
+                  "not see and save it back over the file; close the board in every editor, and if no KiCad process "
+                  "is running the lock file is stale, left by a KiCad that did not close the board, so delete it")
+
+
+def mains_problems(project: dict, path: str, classes: Sequence[str], mains_named: bool) -> List[Tuple[str, str]]:
+    """Why the board's mains declaration, or the classes named for it, cannot be acted on: (what, why).
+
+    `mains_named` asks also that a board declaring mains name Mains among its
+    critical classes, since its mains copper is the copper most worth protecting.
+    """
+    variables = project.get("text_variables")
+    mains = variables.get("MAINS") if isinstance(variables, dict) else None
+    if mains not in ("present", "none"):
+        said = "is not set" if mains is None else f"is {json.dumps(mains)}"
+        return [(f"{path} text_variables.MAINS",
+                 f"the project variable MAINS {said}; every board declares it as exactly present or none, so set it")]
+    if mains_named and mains == "present" and "Mains" not in classes:
+        return [("Mains", "MAINS is present, so Mains is a critical class and its copper is protected with the rest; "
+                          "name it with --class Mains")]
+    return []
+
+
+def refused(refusals: List[Tuple[str, str]], result: str, out, finding: str = "REFUSED") -> int:
+    """Report each refusal and the result line; the exit status for a refusal."""
+    for what, detail in refusals:
+        print(f"{finding} | {clean(what)} | {clean(detail)}", file=out)
+    print(f"RESULT | {result}", file=out)
+    return 1
+
+
 # --- Asking KiCad which nets are critical -------------------------------------------
 
 
@@ -271,6 +327,30 @@ def members(kicad_cli: str, board: str, project: str, layout: list, classes: Seq
     if found is None:
         raise Unreadable(f"KiCad could not say which nets of {board} are in {', '.join(classes)}: {why}")
     return found
+
+
+def named_classes(board: str, project: str, classes: Sequence[str], mains_named: bool) -> Tuple[list, List[Tuple[str, str]]]:
+    """The board's layout, and every reason the classes named for it cannot be acted on before KiCad is asked."""
+    layout = read_layout(board)
+    settings = read_project(project)
+    defined = defined_classes(settings, layout)
+    refusals = mains_problems(settings, project, classes, mains_named)
+    refusals += [(netclass, f"the design defines no net class of this name (it defines {', '.join(sorted(defined)) or 'none'}); "
+                            "name each critical class exactly as the design does")
+                 for netclass in classes if netclass not in defined]
+    return layout, refusals + class_name_problems(classes)
+
+
+def empty_classes(nets: Dict[str, Set[str]]) -> List[Tuple[str, str]]:
+    return [(netclass, "KiCad places no net of the board in this class, so naming it protects nothing; assign the "
+                       "board's nets to it as intended, or stop naming it")
+            for netclass, held in nets.items() if not held]
+
+
+def class_lines(classes: Sequence[str], nets: Dict[str, Set[str]], out) -> None:
+    for netclass in classes:
+        print(f"CLASS | {clean(netclass)} | {len(nets[netclass])} net{'s' if len(nets[netclass]) != 1 else ''}"
+              + (f" | {clean(', '.join(sorted(nets[netclass])))}" if nets[netclass] else ""), file=out)
 
 
 # --- Describing items ---------------------------------------------------------------
@@ -483,7 +563,149 @@ def read_record(path: str) -> dict:
     return document
 
 
-# --- The two commands -------------------------------------------------------------------
+# --- Locking -------------------------------------------------------------------------
+
+
+#: The child KiCad writes an item's (locked yes) immediately before, for each kind.
+LOCK_BEFORE = {"track": ("layer",), "arc": ("layer",), "via": ("net",), "zone": ("layer", "layers")}
+
+
+def forms_within(text: str, start: int, end: int) -> List[Tuple[object, int, int]]:
+    """Every form inside the list written at text[start:end], each with its own offsets in `text`."""
+    spans: List[Tuple[int, int, int]] = []
+    forms = sexpr.parse(text[start + 1:end - 1], spans=spans)
+    return [(form, start + 1 + first, start + 1 + last) for form, (first, last, _) in zip(forms, spans)]
+
+
+def locked_text(text: str, path: str, critical: Set[str]) -> Tuple[str, List[dict], int]:
+    """The board's text with every unlocked item on `critical` nets locked: (text, items locked, items already locked).
+
+    Each lock is written where KiCad writes it, with the spacing the item's own
+    children are written with, and nothing else in the text is touched.
+    """
+    start, end = text.index("("), text.rindex(")") + 1
+    table = net_table(sexpr.parse_one(text))
+    edits: List[Tuple[int, int, str]] = []
+    changed, already = [], 0
+    for node, first, last in forms_within(text, start, end):
+        if sexpr.head(node) not in KIND_OF:
+            continue
+        try:
+            item = read_item(node, table)
+        except Unreadable as error:
+            raise Unreadable(f"the board {path} cannot be read: {error}") from error
+        if item["net"] not in critical:
+            continue
+        if item["locked"]:
+            already += 1
+            continue
+        parts = forms_within(text, first, last)
+        flag = [(at, to) for form, at, to in parts if sexpr.head(form) == "locked"]
+        if flag:
+            edits.append((flag[0][0], flag[0][1], "(locked yes)"))
+        else:
+            anchor = next((index for index, (form, _, _) in enumerate(parts)
+                           if sexpr.head(form) in LOCK_BEFORE[item["kind"]]), None)
+            if anchor is None or anchor == 0:
+                raise Unreadable(f"the board {path} cannot be read: {describe(item)} has no "
+                                 f"({' or '.join(LOCK_BEFORE[item['kind']])} ...) to write its lock before")
+            at = parts[anchor][1]
+            spacing = text[parts[anchor - 1][2]:at]
+            edits.append((at, at, "(locked yes)" + spacing))
+        changed.append(item)
+    for at, to, replacement in sorted(edits, reverse=True):
+        text = text[:at] + replacement + text[to:]
+    return text, changed, already
+
+
+def lock(board: str, project: str, classes: Sequence[str], kicad_cli: str, out) -> int:
+    """Lock every track, arc, via and zone on the board's critical-class nets in the board file; the exit status."""
+    refusals = [found for found in [open_in_editor(board)] if found is not None]
+    why = own_project(board, project)
+    if why is not None:
+        refusals.append((project, why))
+    if refusals:
+        return refused(refusals, "REFUSED | the board was not changed", out)
+    layout, refusals = named_classes(board, project, classes, mains_named=True)
+    if refusals:
+        return refused(refusals, "REFUSED | the board was not changed", out)
+    nets = members(kicad_cli, board, project, layout, classes)
+    refusals = empty_classes(nets)
+    if refusals:
+        return refused(refusals, "REFUSED | the board was not changed", out)
+    critical = set().union(*nets.values())
+    try:
+        with open(board, encoding="utf-8", newline="") as handle:
+            text = handle.read()
+        new, changed, already = locked_text(text, board, critical)
+    except (OSError, UnicodeDecodeError, ValueError) as error:
+        raise Unreadable(f"the board {board} cannot be read ({error})") from error
+    expected = [dict(item, locked=item["locked"] or item["net"] in critical) for item in copper(layout, board)]
+    if copper(sexpr.parse_one(new), board) != expected:
+        raise Unreadable(f"locking {board} would change more than its critical items' locks, so it was not changed")
+    if changed:
+        handle, partial = tempfile.mkstemp(prefix=".locked-copper-", dir=os.path.dirname(os.path.abspath(board)))
+        try:
+            with os.fdopen(handle, "w", encoding="utf-8", newline="") as stream:
+                stream.write(new)
+            shutil.copymode(board, partial)
+            os.replace(partial, board)
+        except BaseException:
+            if os.path.exists(partial):
+                os.remove(partial)
+            raise
+    for item in changed:
+        print(f"LOCKED | {clean(describe(item))} | locked now", file=out)
+    class_lines(classes, nets, out)
+    print(f"RESULT | LOCKED | {len(changed)} item{'s' if len(changed) != 1 else ''} locked now and {already} already "
+          f"locked, on {len(critical)} critical-class nets | {clean(board)}", file=out)
+    return 0
+
+
+# --- Confirming the rules ------------------------------------------------------------
+
+
+def confirm(board: str, project: str, classes: Sequence[str], kicad_cli: str, out) -> int:
+    """Ask KiCad whether it loads the board's custom rules file and which nets each class holds; the exit status."""
+    why = own_project(board, project)
+    if why is not None:
+        return refused([(project, why)], "FAIL | nothing was confirmed", out)
+    layout, refusals = named_classes(board, project, classes, mains_named=False)
+    if refusals:
+        return refused(refusals, "FAIL | nothing was confirmed", out)
+    rules = os.path.splitext(board)[0] + ".kicad_dru"
+    try:
+        with open(rules, encoding="utf-8", errors="replace") as handle:
+            existing = handle.read()
+    except FileNotFoundError:
+        return refused([(rules, "the board has no custom rules file, so there is nothing for KiCad to load; write its "
+                                "rules there, beginning with (version 1)")], "FAIL | nothing was confirmed", out, "RULES")
+    except OSError as error:
+        raise Unreadable(f"the custom rules file {rules} cannot be read ({error})") from error
+    nonce = secrets.token_hex(8)
+    with tempfile.TemporaryDirectory(prefix="locked-copper-") as work:
+        shutil.copy2(board, os.path.join(work, "board.kicad_pcb"))
+        shutil.copy2(project, os.path.join(work, "board.kicad_pro"))
+        nets, why = board_check.class_members(kicad_cli, work, "board", classes, board_check.layout_nets(layout),
+                                              nonce, rules=existing)
+        if nets is None and why == board_check.PROBES_NOT_LOADED:
+            place, what = board_check.rejected_form(kicad_cli, work, "board.kicad_pcb",
+                                                    os.path.join(work, "board.kicad_dru"), existing, nonce)
+            return refused([(f"{rules} {place}", "KiCad did not load the board's custom rules file: it drops the whole "
+                                                 f"file, without saying so, when any part of it is something it cannot "
+                                                 f"parse, so none of its rules is in effect; {what}")],
+                           "FAIL | KiCad does not load the board's custom rules", out, "RULES")
+    if nets is None:
+        raise Unreadable(f"KiCad could not check {board} with its rules: {why}")
+    class_lines(classes, nets, out)
+    refusals = empty_classes(nets)
+    if refusals:
+        return refused(refusals, "FAIL | a named class holds no net", out, "EMPTY")
+    print(f"RESULT | CONFIRMED | KiCad loads {clean(rules)} and places nets in each of {', '.join(classes)}", file=out)
+    return 0
+
+
+# --- Recording and comparing -------------------------------------------------------------
 
 
 def inside(path: str, folder: str) -> bool:
@@ -515,7 +737,7 @@ def design_folder(path: str, board: str) -> Optional[str]:
 
 def record(board: str, project: str, classes: Sequence[str], out_path: str, kicad_cli: str, out) -> int:
     """Record every track, arc, via and zone on the board's critical-class nets; the exit status."""
-    refusals: List[Tuple[str, str]] = []
+    refusals = [found for found in [open_in_editor(board)] if found is not None]
     folder = design_folder(out_path, board)
     if folder is not None:
         refusals.append((out_path, "the record is a working file and is never kept in a design's folder, where it could be "
@@ -525,23 +747,15 @@ def record(board: str, project: str, classes: Sequence[str], out_path: str, kica
     if why is not None:
         refusals.append((project, why))
     if refusals:
-        for what, detail in refusals:
-            print(f"REFUSED | {clean(what)} | {clean(detail)}", file=out)
-        print("RESULT | REFUSED | no record was written", file=out)
-        return 1
-    layout = read_layout(board)
-    defined = defined_classes(read_project(project), layout)
-    refusals = [(netclass, f"the design defines no net class of this name (it defines {', '.join(sorted(defined)) or 'none'}); "
-                           "name each critical class exactly as the design does")
-                for netclass in classes if netclass not in defined]
-    refusals += class_name_problems(classes)
+        return refused(refusals, "REFUSED | no record was written", out)
+    layout, refusals = named_classes(board, project, classes, mains_named=True)
     if refusals:
-        for what, detail in refusals:
-            print(f"REFUSED | {clean(what)} | {clean(detail)}", file=out)
-        print("RESULT | REFUSED | no record was written", file=out)
-        return 1
+        return refused(refusals, "REFUSED | no record was written", out)
     items = copper(layout, board)
     nets = members(kicad_cli, board, project, layout, classes)
+    refusals = empty_classes(nets)
+    if refusals:
+        return refused(refusals, "REFUSED | no record was written", out)
     critical = set().union(*nets.values())
     kept = [item for item in items if item["net"] in critical]
     loose = [item for item in kept if not item["locked"]]
@@ -555,18 +769,17 @@ def record(board: str, project: str, classes: Sequence[str], out_path: str, kica
     try:
         write_record(out_path, board, classes, nets, kept)
     except OSError as error:
-        print(f"REFUSED | {clean(out_path)} | the record cannot be written there ({clean(str(error))})", file=out)
-        print("RESULT | REFUSED | no record was written", file=out)
-        return 1
-    for netclass in classes:
-        print(f"CLASS | {clean(netclass)} | {len(nets[netclass])} net{'s' if len(nets[netclass]) != 1 else ''}"
-              + (f" | {clean(', '.join(sorted(nets[netclass])))}" if nets[netclass] else ""), file=out)
+        return refused([(out_path, f"the record cannot be written there ({error})")], "REFUSED | no record was written", out)
+    class_lines(classes, nets, out)
     print(f"RESULT | RECORDED | {len(kept)} locked items on {len(critical)} critical-class nets | {clean(out_path)}", file=out)
     return 0
 
 
 def compare(board: str, project: str, record_path: str, kicad_cli: str, out) -> int:
     """Compare the board's critical-class copper with the record; the exit status."""
+    found = open_in_editor(board)
+    if found is not None:
+        return refused([found], "FAIL | the board is open in an editor, so nothing is taken as a pass", out, "OPEN")
     document = read_record(record_path)
     mismatches = []
     if document["board"] != os.path.realpath(board):
@@ -577,11 +790,8 @@ def compare(board: str, project: str, record_path: str, kicad_cli: str, out) -> 
         mismatches.append((project, why))
     classes = document["classes"]
     if mismatches:
-        for what, detail in mismatches:
-            print(f"MISMATCH | {clean(what)} | {clean(detail)}", file=out)
-        print(f"RESULT | FAIL | the board, project file and record given are not one board's, so nothing in "
-              f"{', '.join(classes)} is taken as a pass", file=out)
-        return 1
+        return refused(mismatches, f"FAIL | the board, project file and record given are not one board's, so nothing "
+                                   f"in {', '.join(classes)} is taken as a pass", out, "MISMATCH")
     layout = read_layout(board)
     defined = defined_classes(read_project(project), layout)
     findings = [("UNDEFINED", netclass, "the record names this critical class and the design no longer defines it, so its "
@@ -602,17 +812,25 @@ def compare(board: str, project: str, record_path: str, kicad_cli: str, out) -> 
     return 0
 
 
+#: What each command's result line says when its input cannot be read.
+UNREAD_RESULT = {"confirm": "FAIL", "lock": "REFUSED", "record": "REFUSED", "compare": "FAIL"}
+
+
 def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--kicad-cli", default="kicad-cli", help="KiCad's command-line tool (default: kicad-cli on the search path)")
     commands = parser.add_subparsers(dest="command", required=True)
+    confirming = commands.add_parser("confirm", help="confirm KiCad loads the board's rules and list each class's nets")
+    locking = commands.add_parser("lock", help="lock every critical-class item in the board file, with the board closed")
     taking = commands.add_parser("record", help="record the critical-class copper before export")
-    taking.add_argument("--class", dest="classes", action="append", required=True, metavar="NAME",
-                        help="a critical net class, as the design names it; give each one")
     checking = commands.add_parser("compare", help="compare the imported board with the record")
-    for sub in (taking, checking):
+    for sub in (confirming, locking, taking):
+        sub.add_argument("--class", dest="classes", action="append", required=True, metavar="NAME",
+                         help="a critical net class, as the design names it; give each one")
+    for sub in (confirming, locking, taking, checking):
         sub.add_argument("--board", required=True, help="the layout file (.kicad_pcb)")
         sub.add_argument("--project", required=True, help="the layout's project file (.kicad_pro)")
+    for sub in (taking, checking):
         sub.add_argument("--record", required=True, help="the record: written by record, read by compare")
     args = parser.parse_args(argv)
     try:
@@ -621,6 +839,10 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
         with tempfile.TemporaryDirectory(prefix="locked-copper-kicad-") as home:
             board_check.KICAD_ENVIRONMENT = board_check.isolate_kicad(args.kicad_cli, version, home)
             try:
+                if args.command == "confirm":
+                    return confirm(args.board, args.project, args.classes, args.kicad_cli, out)
+                if args.command == "lock":
+                    return lock(args.board, args.project, args.classes, args.kicad_cli, out)
                 if args.command == "record":
                     return record(args.board, args.project, args.classes, args.record, args.kicad_cli, out)
                 return compare(args.board, args.project, args.record, args.kicad_cli, out)
@@ -628,8 +850,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
                 board_check.KICAD_ENVIRONMENT = None
     except Unreadable as error:
         print(f"UNREADABLE | {clean(str(error))}", file=out)
-        print(f"RESULT | {'REFUSED' if args.command == 'record' else 'FAIL'} | the input cannot be read, "
-              "so nothing is taken as a pass", file=out)
+        print(f"RESULT | {UNREAD_RESULT[args.command]} | the input cannot be read, so nothing is taken as a pass", file=out)
         return 1
     except CannotRun as error:
         print(f"CANNOT RUN | {clean(str(error))}", file=sys.stderr)

@@ -12,6 +12,7 @@ not been shown to work.
 from __future__ import annotations
 
 import copy
+import difflib
 import io
 import json
 import os
@@ -26,6 +27,7 @@ sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
 import locked_copper  # noqa: E402
+import sexpr  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
@@ -70,8 +72,8 @@ def layout(items, extra: str = "") -> str:
             + extra + body + ")\n")
 
 
-def project(assignments=None, patterns=None, classes=("Power", "Ground")) -> str:
-    """A project file defining `classes` beside Default, built from the proof design's own."""
+def project(assignments=None, patterns=None, classes=("Power", "Ground"), mains="none") -> str:
+    """A project file defining `classes` beside Default and declaring MAINS as `mains` (None: undeclared)."""
     with open(PROOF_PROJECT, encoding="utf-8") as handle:
         data = json.load(handle)
     settings = data["net_settings"]
@@ -80,7 +82,7 @@ def project(assignments=None, patterns=None, classes=("Power", "Ground")) -> str
                                        for index, name in enumerate(classes)]
     settings["netclass_assignments"] = assignments
     settings["netclass_patterns"] = patterns or []
-    data["text_variables"] = {}
+    data["text_variables"] = {} if mains is None else {"MAINS": mains}
     return json.dumps(data, indent=1)
 
 
@@ -119,6 +121,17 @@ class Board(unittest.TestCase):
         for name in classes or ("Power", "Ground"):
             args += ["--class", name]
         return self.run_check(*args)
+
+    def on_classes(self, command, *classes):
+        """Run `command` (confirm or lock) on the board with `classes`, Power and Ground by default."""
+        args = [command, "--board", self.board, "--project", self.project]
+        for name in classes or ("Power", "Ground"):
+            args += ["--class", name]
+        return self.run_check(*args)
+
+    def board_text(self):
+        with open(self.board, encoding="utf-8", newline="") as handle:
+            return handle.read()
 
     def compare(self, record_path=None):
         return self.run_check("compare", "--board", self.board, "--project", self.project,
@@ -570,11 +583,270 @@ class Malformed(Board):
         self.assertFailsUnread(*self.record())
 
 
+#: The base board's items with no lock on any of them.
+UNLOCKED_ITEMS = {name: text.replace(" (locked yes)", "") for name, text in ITEMS.items()}
+
+#: A track on a mains net, for the boards that declare mains.
+AC_TRACK = ('(segment (start 0 40) (end 5 40) (width 0.5) (layer "F.Cu") (net "/AC") '
+            '(uuid "00000000-0000-4000-8000-000000000007"))')
+
+#: A custom rules file KiCad loads.
+RULES = ('(version 1)\n(rule "Power width"\n\t(condition "A.hasNetclass(\'Power\')")\n'
+         '\t(constraint track_width (min 0.4mm)))\n')
+
+
+def without_locks(tree):
+    """A parsed layout with every (locked ...) child taken out of its tracks, arcs, vias and zones."""
+    return [[part for part in node if sexpr.head(part) != "locked"] if sexpr.head(node) in locked_copper.KIND_OF
+            else node for node in tree]
+
+
+class Locking(Board):
+    """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
+
+    The lock command marks every track, arc, via and zone on the named critical
+    classes locked in the board file, where KiCad itself writes the lock, and
+    changes nothing else in the file.
+    """
+
+    def test_every_critical_item_is_locked_and_nothing_else_changes(self):
+        items = dict(UNLOCKED_ITEMS, via=ITEMS["via"].replace("(locked yes)", "(locked no)"))
+        self.write(layout(items.values()))
+        before = self.board_text()
+        status, lines = self.on_classes("lock")
+        self.assertEqual(status, 0, lines)
+        after = self.board_text()
+        self.assertEqual(after.replace("(locked yes) ", ""), before.replace("(locked no) ", ""))
+        self.assertEqual(sexpr.dump(without_locks(sexpr.parse_one(after))),
+                         sexpr.dump(without_locks(sexpr.parse_one(before))))
+        locks = {item["net"] + " " + item["kind"]: item["locked"] for item in locked_copper.copper(sexpr.parse_one(after), self.board)}
+        self.assertEqual(locks, {"/PWR track": True, "/GND_A arc": True, "/GND_A via": True, "/PWR zone": True,
+                                 "/LV track": False})
+        self.assertEqual(len(self.findings(lines, "LOCKED")), 4, lines)
+        self.assertTrue(lines[-1].startswith("RESULT | LOCKED | 4 items locked now and 0 already locked"), lines)
+        self.recorded()
+
+    def test_kicad_reads_the_lock_where_it_writes_it(self):
+        with open(os.path.join(os.path.dirname(PROOF_PROJECT), "gate-proof.kicad_pcb"), encoding="utf-8") as handle:
+            text = handle.read()
+        added = ('\t(via\n\t\t(at 30 12)\n\t\t(size 0.8)\n\t\t(drill 0.4)\n\t\t(layers "F.Cu" "B.Cu")\n'
+                 '\t\t(net "/MAINS_N")\n\t\t(uuid "dee00000-0000-4000-8000-000000000003")\n\t)\n'
+                 '\t(arc\n\t\t(start 10 20)\n\t\t(mid 12 22)\n\t\t(end 14 20)\n\t\t(width 0.5)\n\t\t(layer "B.Cu")\n'
+                 '\t\t(net "/MAINS_L")\n\t\t(uuid "dee00000-0000-4000-8000-000000000004")\n\t)\n'
+                 '\t(zone\n\t\t(net "/MAINS_N")\n\t\t(layers "F.Cu" "B.Cu")\n\t\t(uuid "dee00000-0000-4000-8000-000000000005")\n'
+                 '\t\t(hatch edge 0.5)\n\t\t(connect_pads\n\t\t\t(clearance 3)\n\t\t)\n\t\t(min_thickness 0.25)\n'
+                 '\t\t(filled_areas_thickness no)\n\t\t(fill\n\t\t\t(thermal_gap 0.5)\n\t\t\t(thermal_bridge_width 0.5)\n\t\t)\n'
+                 '\t\t(polygon\n\t\t\t(pts\n\t\t\t\t(xy 26 14) (xy 29 14) (xy 29 17) (xy 26 17)\n\t\t\t)\n\t\t)\n\t)\n')
+        at = text.rindex("\t(embedded_fonts")
+        with open(PROOF_PROJECT, encoding="utf-8") as handle:
+            self.write(text[:at] + added + text[at:], handle.read())
+
+        def resave():
+            done = subprocess.run([KICAD_CLI, "pcb", "upgrade", "--force", self.board], capture_output=True, text=True,
+                                  timeout=120)
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            return self.board_text()
+
+        before = resave()
+        status, lines = self.on_classes("lock", "Mains")
+        self.assertEqual(status, 0, lines)
+        locked = self.board_text()
+        self.assertEqual(len(self.findings(lines, "LOCKED")), 6, lines)
+        self.assertEqual(resave(), locked, "KiCad, loading and saving the locked board, writes it differently")
+        changes = [line for line in difflib.ndiff(before.splitlines(), locked.splitlines()) if line[:1] in "+-"]
+        self.assertEqual(changes, ["+ \t\t(locked yes)"] * 6)
+
+    def test_an_already_locked_board_is_left_untouched(self):
+        before = self.board_text()
+        stamp = os.stat(self.board).st_mtime_ns
+        status, lines = self.on_classes("lock")
+        self.assertEqual(status, 0, lines)
+        self.assertTrue(lines[-1].startswith("RESULT | LOCKED | 0 items locked now and 4 already locked"), lines)
+        self.assertEqual((self.board_text(), os.stat(self.board).st_mtime_ns), (before, stamp))
+
+    def test_a_board_that_cannot_be_read_is_not_changed(self):
+        broken = layout(dict(UNLOCKED_ITEMS, via=UNLOCKED_ITEMS["via"].replace("(at 20 20)", "(at x 20)")).values())
+        self.write(broken)
+        status, lines = self.on_classes("lock")
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any(line.startswith("UNREADABLE |") for line in lines), lines)
+        self.assertEqual(self.board_text(), broken)
+
+
+class WhatTheCommandsRefuse(Board):
+    """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
+
+    Locking and recording refuse a board with no valid mains declaration, a set
+    of classes that leaves out Mains on a board declaring mains, and a named
+    class that is undefined or holds no net; the rules confirmation refuses the
+    declaration and the classes the same way. A refusal changes nothing.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.write(layout(UNLOCKED_ITEMS.values()))
+        with open(os.path.join(self.folder, "b.kicad_dru"), "w", encoding="utf-8") as handle:
+            handle.write(RULES)
+
+    def assertRefusedByAll(self, classes, refused, mentioning):
+        before = self.board_text()
+        for command in ("lock", "confirm"):
+            with self.subTest(command=command):
+                status, lines = self.on_classes(command, *classes)
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(any(line.split(" | ")[1:2] == [refused] and mentioning in line for line in lines), lines)
+                self.assertNotIn("CONFIRMED", lines[-1])
+                self.assertEqual(self.board_text(), before)
+        self.write(layout(ITEMS.values()))
+        status, lines = self.record(*classes)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any(line.split(" | ")[1:2] == [refused] and mentioning in line for line in lines), lines)
+        self.assertFalse(os.path.exists(self.record_path))
+        self.write(before)
+
+    def test_a_board_with_no_valid_mains_declaration(self):
+        for mains in (None, "yes", "Present", ""):
+            with self.subTest(mains=mains):
+                with open(self.project, "w", encoding="utf-8") as handle:
+                    handle.write(project({"/PWR": "Power"}, [{"netclass": "Ground", "pattern": "/GND_*"}], mains=mains))
+                self.assertRefusedByAll((), f"{self.project} text_variables.MAINS", "MAINS")
+
+    def test_mains_left_out_on_a_board_declaring_mains(self):
+        mains_project = project({"/PWR": "Power", "/AC": "Mains"}, [{"netclass": "Ground", "pattern": "/GND_*"}],
+                                classes=("Power", "Ground", "Mains"), mains="present")
+        self.write(layout(list(UNLOCKED_ITEMS.values()) + [AC_TRACK]), mains_project)
+        before = self.board_text()
+        for command in ("lock", "record"):
+            with self.subTest(command=command):
+                status, lines = self.on_classes(command, "Power", "Ground") if command == "lock" else self.record()
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(any(line.startswith("REFUSED | Mains | MAINS is present") for line in lines), lines)
+                self.assertEqual(self.board_text(), before)
+                self.assertFalse(os.path.exists(self.record_path))
+        status, lines = self.on_classes("lock", "Power", "Ground", "Mains")
+        self.assertEqual(status, 0, lines)
+        self.assertIn("LOCKED | track [/AC]", "\n".join(lines))
+        status, lines = self.record("Power", "Ground", "Mains")
+        self.assertEqual(status, 0, lines)
+
+    def test_a_named_class_holding_no_net(self):
+        with open(self.project, "w", encoding="utf-8") as handle:
+            handle.write(project({"/PWR": "Power"}, [{"netclass": "Ground", "pattern": "/GND_*"}],
+                                 classes=("Power", "Ground", "Sensing")))
+        self.assertRefusedByAll(("Power", "Ground", "Sensing"), "Sensing", "places no net")
+
+    def test_a_named_class_the_design_does_not_define(self):
+        self.assertRefusedByAll(("Power", "Sensing"), "Sensing", "defines no net class")
+
+    def test_a_project_file_not_the_boards_own(self):
+        elsewhere = os.path.join(self.work, "b.kicad_pro")
+        with open(elsewhere, "w", encoding="utf-8") as handle:
+            handle.write(BASE_PROJECT)
+        before = self.board_text()
+        for command in ("lock", "confirm"):
+            with self.subTest(command=command):
+                status, lines = self.run_check(command, "--board", self.board, "--project", elsewhere, "--class", "Power")
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(any(line.startswith(f"REFUSED | {elsewhere} | KiCad opens") for line in lines), lines)
+                self.assertEqual(self.board_text(), before)
+
+
+class OpenInAnEditor(Board):
+    """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
+
+    Locking, recording and comparing each refuse to run while KiCad's lock file
+    beside the board shows it open in an editor.
+    """
+
+    def test_lock_record_and_compare_refuse_while_the_board_is_open(self):
+        self.recorded()
+        lock_file = os.path.join(self.folder, "~b.kicad_pcb.lck")
+        with open(lock_file, "w", encoding="utf-8") as handle:
+            handle.write('{"hostname":"bench","username":"designer"}')
+        status, lines = self.compare()
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith(f"OPEN | {lock_file} | KiCad's lock file shows"), lines)
+        self.assertNotIn("PASS", lines[-1])
+        other = os.path.join(self.work, "other.json")
+        status, lines = self.record(record_path=other)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith(f"REFUSED | {lock_file} | KiCad's lock file shows"), lines)
+        self.assertFalse(os.path.exists(other))
+        self.write(layout(UNLOCKED_ITEMS.values()))
+        before = self.board_text()
+        status, lines = self.on_classes("lock")
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith(f"REFUSED | {lock_file} | KiCad's lock file shows"), lines)
+        self.assertEqual(self.board_text(), before)
+        os.remove(lock_file)
+        with open(os.path.join(self.folder, "~other.kicad_pcb.lck"), "w", encoding="utf-8") as handle:
+            handle.write('{"hostname":"bench","username":"designer"}')
+        status, lines = self.on_classes("lock")
+        self.assertEqual(status, 0, lines)
+
+
+class ConfirmingTheRules(Board):
+    """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
+
+    The rules confirmation passes only when KiCad's rule check shows, through
+    the appended marker, that it loaded the board's own custom rules file, and
+    lists each named class's nets as KiCad resolves them.
+    """
+
+    def write_rules(self, text):
+        path = os.path.join(self.folder, "b.kicad_dru")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        return path
+
+    def test_a_loaded_rules_file_and_each_class_are_confirmed(self):
+        path = self.write_rules(RULES)
+        before = self.board_text()
+        status, lines = self.on_classes("confirm")
+        self.assertEqual(status, 0, lines)
+        self.assertEqual(lines, ["CLASS | Power | 1 net | /PWR", "CLASS | Ground | 2 nets | /GND_A, /GND_B",
+                                 f"RESULT | CONFIRMED | KiCad loads {path} and places nets in each of Power, Ground"])
+        with open(path, encoding="utf-8") as handle:
+            self.assertEqual(handle.read(), RULES)
+        self.assertEqual(self.board_text(), before)
+
+    def test_a_rules_file_kicad_drops_unread_fails(self):
+        dropped = {
+            "a misspelled constraint": RULES.replace("track_width", "trak_width"),
+            "no version header": RULES.replace("(version 1)\n", ""),
+            "an unbalanced rule": RULES[:-2] + "\n",
+        }
+        for what, text in dropped.items():
+            with self.subTest(rules=what):
+                path = self.write_rules(text)
+                status, lines = self.on_classes("confirm")
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(any(line.startswith(f"RULES | {path}") and "did not load" in line for line in lines), lines)
+                self.assertEqual(self.findings(lines, "CLASS"), [], lines)
+                self.assertNotIn("CONFIRMED", lines[-1])
+
+    def test_a_board_with_no_rules_file_fails(self):
+        status, lines = self.on_classes("confirm")
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith("RULES |") and "no custom rules file" in lines[0], lines)
+
+    def test_membership_by_a_class_the_layout_file_carries(self):
+        block = '\t(net_class "Sense" "written by an older KiCad" (clearance 0.2) (add_net "/S1"))\n'
+        sense = ('(segment (start 50 0) (end 55 0) (width 0.25) (layer "F.Cu") (net "/S1") '
+                 '(uuid "00000000-0000-4000-8000-000000000005"))')
+        self.write(layout([sense, ITEMS["lv"]], extra=block), project(classes=()))
+        self.write_rules(RULES.replace("Power", "Sense"))
+        status, lines = self.on_classes("confirm", "Sense")
+        self.assertEqual(status, 0, lines)
+        self.assertEqual(lines[0], "CLASS | Sense | 1 net | /S1")
+
+
 class TheTaskRunnerCommands(Board):
     """SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C3: A tested check records critical-class copper before the routing round trip and fails the board after it on any missing, unlocked, changed or added item.
 
-    Recording and comparing are each run by a task-runner command beside the
-    pre-order check's own, with paths read from where the command is run.
+    Confirming the rules, locking, recording and comparing are each run by a
+    task-runner command beside the pre-order check's own, with paths read from
+    where the command is run.
     """
 
     def task(self, name, *argv):
@@ -594,6 +866,23 @@ class TheTaskRunnerCommands(Board):
                           "--record", "../work/b.record.json")
         self.assertNotEqual(moved.returncode, 0, moved.stdout)
         self.assertIn("UNLOCKED | zone [/PWR]", moved.stdout)
+
+    def test_confirm_and_lock_through_the_tasks(self):
+        classes = ("--board", "b.kicad_pcb", "--project", "b.kicad_pro", "--class", "Power", "--class", "Ground")
+        unread = self.task("hw:rules-confirm", *classes)
+        self.assertNotEqual(unread.returncode, 0, unread.stdout)
+        self.assertIn("no custom rules file", unread.stdout)
+        with open(os.path.join(self.folder, "b.kicad_dru"), "w", encoding="utf-8") as handle:
+            handle.write(RULES)
+        confirmed = self.task("hw:rules-confirm", *classes)
+        self.assertEqual(confirmed.returncode, 0, confirmed.stdout + confirmed.stderr)
+        self.assertIn("RESULT | CONFIRMED", confirmed.stdout)
+        self.write(layout(UNLOCKED_ITEMS.values()))
+        locked = self.task("hw:copper-lock", *classes)
+        self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
+        self.assertIn("RESULT | LOCKED | 4 items locked now", locked.stdout)
+        made = self.task("hw:copper-record", *classes, "--record", "../work/b.record.json")
+        self.assertEqual(made.returncode, 0, made.stdout + made.stderr)
 
     def test_a_missing_kicad_cannot_run(self):
         out = io.StringIO()
