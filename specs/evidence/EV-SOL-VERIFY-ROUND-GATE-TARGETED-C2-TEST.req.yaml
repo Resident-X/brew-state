@@ -1,0 +1,16 @@
+id: EV-SOL-VERIFY-ROUND-GATE-TARGETED-C2-TEST
+type: evidence
+title: test evidence for SOL-VERIFY-ROUND-GATE-TARGETED.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T01:25:12.241093Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py::test_a_documents_only_change_outside_what_emulation_reads_skips_it,test_a_firmware_source_change_runs_it,test_a_parameter_file_change_runs_it,test_an_emulation_suite_change_runs_it,test_a_change_to_a_record_the_emulation_suite_checks_runs_it,test_a_new_firmware_file_not_yet_committed_runs_it,test_a_deleted_firmware_file_runs_it,test_a_file_renamed_out_of_the_firmware_tree_runs_it,test_an_empty_change_skips_it_and_says_nothing_changed,test_an_unresolvable_base_runs_it_and_says_why,test_a_repository_with_no_remote_tracking_main_runs_it_and_says_why,test_an_unreadable_list_of_changed_paths_runs_it_and_says_why,test_git_that_cannot_be_run_runs_emulation_and_says_why
+  artifact_version: a9023eb25a9ac0e10f8a88b37dc5872f117d36bb
+attested_by: crun-9db0354e8a1a9cdd
+links:
+  - target: SOL-VERIFY-ROUND-GATE-TARGETED.C2
+    type: satisfies
