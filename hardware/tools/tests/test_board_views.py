@@ -701,9 +701,19 @@ class Views(unittest.TestCase):
     def test_a_part_drawn_without_its_model_is_named_in_the_captions_the_index_and_the_report(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         missing = "KiCad cannot find its model: File not found: ${KIPRJMOD}/models/missing.step"
-        self.assertIn(f"MODEL | C2 | {missing}", self.views["result"].stdout)
-        for name in ("C1", "D1", "R1", "U1", "U2"):
-            self.assertNotIn(f"MODEL | {name} |", self.views["result"].stdout)
+        report = self.views["result"].stdout.splitlines()
+        self.assertIn(f"MODEL | C2 | {missing}; the three-dimensional views' captions and the index name it", report)
+        # Whatever the reason a part is drawn without its model, the report names it, not only a model not found.
+        for name, detail in (("C1", "it declares no model"), ("R1", "the design hides its model"),
+                             ("D1", "marked do not populate, so the render leaves it out")):
+            self.assertIn(f"MODEL | {name} | {detail}; the three-dimensional views' captions and the index name it",
+                          report)
+        for name in ("U1", "U2"):
+            self.assertFalse(any(line.startswith(f"MODEL | {name} |") for line in report), name)
+        with open(os.path.join(self.out, "index.json"), encoding="utf-8") as handle:
+            unseen = json.load(handle)["not_in_3d"]
+        self.assertEqual(sorted(line.split(" | ")[1] for line in report if line.startswith("MODEL | ")),
+                         sorted(part["reference"] for part in unseen))
         with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
             text = handle.read().splitlines()
         self.assertIn(f"NOT IN 3D | C2 | {missing}", text)
@@ -915,6 +925,26 @@ class Pieces(unittest.TestCase):
             with self.assertRaises(board_check.CannotRun):
                 board_views.english(empty)
 
+    def test_nine_or_more_critical_classes_each_get_their_own_colour_named_apart_in_the_caption(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        self.assertEqual(board_views.class_colours(3), list(board_views.CLASS_COLOURS[:3]))
+        for count in (len(board_views.CLASS_COLOURS) + 1, 12, 40, 600):
+            with self.subTest(count=count):
+                colours = board_views.class_colours(count)
+                self.assertEqual(colours[:len(board_views.CLASS_COLOURS)], list(board_views.CLASS_COLOURS))
+                self.assertEqual(len({value for value, _ in colours}), count, "two classes drawn alike")
+                self.assertEqual(len({name for _, name in colours}), count, "two classes named alike")
+                for value, name in colours[len(board_views.CLASS_COLOURS):]:
+                    self.assertRegex(value, r"^#[0-9a-f]{6}$")
+                    self.assertEqual(name, value, "a colour past the named ones is named by its hex value")
+        classes = [f"Class{index}" for index in range(1, 10)]
+        caption = board_views.colour_list([(name, colour[1]) for name, colour in
+                                           zip(classes, board_views.class_colours(len(classes)))])
+        named = caption.split(", ")
+        self.assertEqual(len(named), 9)
+        self.assertEqual(len({entry.split(" ", 1)[1] for entry in named}), 9, caption)
+        self.assertNotIn("Class9 red", caption)
+
     def test_a_net_in_more_than_one_critical_class_is_named_on_the_class_map(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         membership = {"Power": {"+3V3", "+5V"}, "Sense": {"+3V3", "ADC"}, "Ground": {"GND"}}
@@ -1007,11 +1037,28 @@ class Pieces(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         five = footprint("U5", 50, 10, [pad(1, -2, -1, "+5V", "power_in"), pad(2, -2, 1, "GND", "power_in"),
                                         pad(3, 2, 0, "SIG_A", "input")])
-        # C1 is far nearer U5, but U5 is not on +3V3, so it is U1's; a two-pad circuit is never its own decoupling.
-        own = footprint("U7", 120, 10, [pad(1, 0, -1, "+3V3", "power_in"), pad(2, 0, 1, "GND", "power_in")])
-        found = self.circuits([self.rail("U1", 10, 10), five, self.capacitor("C1", 48, 10), own])
-        self.assertEqual((found["U1"]["parts"], found["U5"]["parts"]), (["C1", "U7"], []))
-        self.assertEqual(found["U7"]["parts"], [])
+        # C1 is far nearer U5, but U5 is not on +3V3, so it is U1's.
+        found = self.circuits([self.rail("U1", 10, 10), five, self.capacitor("C1", 48, 10)])
+        self.assertEqual((found["U1"]["parts"], found["U5"]["parts"]), (["C1"], []))
+
+    def test_a_two_pad_integrated_circuit_on_the_rail_is_never_another_circuits_decoupling(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        # U7 has two pads, one on each of U1's supply nets and right beside it, but is itself a circuit.
+        own = footprint("U7", 14, 10, [pad(1, 0, -1, "+3V3", "power_in"), pad(2, 0, 1, "GND", "power_in")])
+        found = self.circuits([self.rail("U1", 10, 10), own, self.capacitor("C1", 4, 10)])
+        self.assertEqual((found["U1"]["parts"], found["U7"]["parts"]), (["C1"], []))
+        self.assertLess(found["U1"]["bounds"][2], 13, "U1's crop is framed on U7")
+
+    def test_a_part_with_both_pads_on_one_net_is_never_decoupling(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        # FB1 and C2 each sit beside U1 with both pads on one of its supply nets: neither is one rail and one return.
+        bead = footprint("FB1", 4, 10, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "+3V3", "passive")])
+        grounded = footprint("C2", 16, 10, [pad(1, 0, -1, "GND", "passive"), pad(2, 0, 1, "GND", "passive")])
+        found = self.circuits([self.rail("U1", 10, 10), bead, grounded])
+        self.assertEqual(found["U1"]["parts"], [])
+        self.assertEqual(board_views.crop_fields(dict(found["U1"], side="top"))[-1],
+                         "no decoupling parts: no two-pad part across its supply nets is nearer it than every other "
+                         "circuit on them")
 
     def test_a_crops_supply_nets_and_parts_are_capped_and_its_caption_still_tiles(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
@@ -1536,6 +1583,17 @@ class Documentation(unittest.TestCase):
             with self.subTest(document=name):
                 self.assertIn("whose nearest pad is closest to it", text)
                 self.assertIn("as having no decoupling parts", text)
+                # A crop is widened to the narrowest image, so it can take in a neighbour's parts: the docs promise
+                # only what is delivered, that a crop frames and names its own and draws the rest unnamed.
+                self.assertIn(f"A crop is at least {board_views.MIN_WIDTH_PX} pixels wide", text)
+                self.assertIn("A crop is framed on, and names, only its own circuit and that circuit's decoupling "
+                              "parts", text)
+                self.assertIn("drawn but not named", text)
+                self.assertNotIn("never shows another circuit's decoupling", text)
+                self.assertIn("not itself an integrated circuit, with its two pads on two different nets", text)
+        self.assertIn("Each of them, whatever the reason, is also reported as a `MODEL` line", readme)
+        self.assertNotIn("A model KiCad cannot find is also reported as a `MODEL` line", readme)
+        self.assertIn("each part the three-dimensional views draw without its model, whatever the reason", method)
         views = readme[readme.index("## The layout review views"):]
         self.assertIn("a board KiCad's lock file shows open in an editor", views)
         self.assertIn("told apart even where letter case is not", views)

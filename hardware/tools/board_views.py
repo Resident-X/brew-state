@@ -55,6 +55,7 @@ because a tool is missing.
 from __future__ import annotations
 
 import argparse
+import colorsys
 import json
 import math
 import os
@@ -121,7 +122,8 @@ LAYER_COLOURS = {
 #: Colours for inner copper and for every other layer, taken in turn.
 OTHER_COLOURS = (("#e0b040", "amber"), ("#40c080", "green"), ("#b070f0", "purple"), ("#40c8c8", "cyan"),
                  ("#e08040", "orange"), ("#a0a0ff", "lavender"), ("#90d040", "lime"), ("#d07070", "rose"))
-#: Each critical class's colour on the class map, taken in the order the classes are named.
+#: Each critical class's colour on the class map, taken in the order the classes are named; a board naming more
+#: classes than these gives the rest evenly spaced hues, each named by its hex value (see class_colours).
 CLASS_COLOURS = (("#ff5050", "red"), ("#50a0ff", "blue"), ("#ffd040", "yellow"), ("#50e080", "green"),
                  ("#e070ff", "violet"), ("#40e0e0", "cyan"), ("#ff9040", "orange"), ("#c0c0c0", "grey"))
 #: The whole board, drawn faint beneath a net or the class map.
@@ -496,7 +498,8 @@ def circuits(layout: list) -> List[dict]:
     """Each integrated circuit, a footprint whose reference begins with U, with its supply nets and its decoupling.
 
     Its supply nets are the nets on its pads typed as power input or power
-    output. A decoupling part is a two-pad part with both pads on one
+    output. A decoupling part is a two-pad part, not itself an integrated
+    circuit, with its two pads on two different nets that are both one
     circuit's supply nets, the pattern of one rail and one return, and it is
     attributed to the one circuit sharing those nets whose nearest pad is
     closest to the part's pads, the earlier reference winning a tie. So a
@@ -513,7 +516,7 @@ def circuits(layout: list) -> List[dict]:
             found.append({"footprint": footprint, "reference": name, "supply_nets": supply, "attributed": []})
     for other in footprints:
         held = pads(other, table)
-        if len(held) != 2:
+        if len(held) != 2 or reference(other).startswith("U") or held[0][0] == held[1][0]:
             continue
         candidates = [circuit for circuit in found if circuit["footprint"] is not other and circuit["supply_nets"]
                       and all(net in circuit["supply_nets"] for net, _ in held)]
@@ -1154,6 +1157,31 @@ def covers(region) -> str:
     return f"board x {mm_text(x0)} to {mm_text(x1)} mm, y {mm_text(y0)} to {mm_text(y1)} mm"
 
 
+def class_colours(count: int) -> List[Tuple[str, str]]:
+    """A colour for each of `count` critical classes, as (hex value, name), no two alike however many there are.
+
+    The named colours come first; the rest take evenly spaced hues, lighter
+    than the named ones, each named by its own hex value so a caption never
+    names two classes alike. A hue whose hex value is already taken is made
+    darker until it is free.
+    """
+    chosen = list(CLASS_COLOURS[:count])
+    used = {value for value, _ in chosen}
+    extra = count - len(chosen)
+    for index in range(extra):
+        value = None
+        for step in range(40):
+            red, green, blue = colorsys.hls_to_rgb(index / extra, 0.8 - 0.01 * step, 0.75)
+            value = f"#{round(red * 255):02x}{round(green * 255):02x}{round(blue * 255):02x}"
+            if value not in used:
+                break
+        if value in used:
+            value = next(f"#{number:06x}" for number in range(0x808080, 0x1000000) if f"#{number:06x}" not in used)
+        used.add(value)
+        chosen.append((value, value))
+    return chosen
+
+
 def colour_list(entries: Sequence[Tuple[str, str]]) -> str:
     return ", ".join(f"{name} {colour}" for name, colour in entries)
 
@@ -1201,7 +1229,7 @@ def crop_fields(circuit: dict) -> List[str]:
     fields = [f"crop around {circuit['reference']} ({circuit['side']} side)"]
     if not circuit["supply_nets"]:
         return fields + ["no supply nets declared: no pad is typed power input or power output",
-                         "so no decoupling parts are shown"]
+                         "so no part is named as its decoupling"]
     fields.append(f"supply nets {named(circuit['supply_nets'])}")
     if circuit["parts"]:
         return fields + [f"decoupling parts, the two-pad parts across its supply nets nearer it than any other "
@@ -1542,8 +1570,8 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                           paint=lambda layer, net=net: drawing(net_drawings[net][layer], colours[layer][0]),
                           beneath=True)
 
-        class_colours = {name: CLASS_COLOURS[index % len(CLASS_COLOURS)] for index, name in enumerate(classes)}
-        entries = [(name, class_colours[name][1]) for name in classes]
+        class_colour = dict(zip(classes, class_colours(len(classes))))
+        entries = [(name, class_colour[name][1]) for name in classes]
         shared = shared_nets(classes, membership)
         overlap = ["nets in more than one critical class, drawn in the colour of the class named last: "
                    + named([f"{net} ({', '.join(names)})" for net, names in shared.items()])] if shared else []
@@ -1551,7 +1579,7 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                       {"view": "class map", "classes": [{"name": name, "colour": colour} for name, colour in entries],
                        "shared_nets": shared},
                       ["class map", f"classes {colour_list(entries)}"] + overlap,
-                      paint=lambda layer: "".join(drawing(net_drawings[net][layer], class_colours[name][0])
+                      paint=lambda layer: "".join(drawing(net_drawings[net][layer], class_colour[name][0])
                                                   for name in classes for net in sorted(membership[name], key=natural)),
                       beneath=True, coloured=False)
 
@@ -1623,9 +1651,8 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
         print(f"LAYER | {layer} | the board does not carry this layer, so the views that show it leave it out; the "
               "captions and the index name it", file=stream)
     for part in unseen:
-        if part["reason"] == "model not found":
-            print(f"MODEL | {part['reference']} | {part['detail']}, so the three-dimensional views draw it without "
-                  "that model; their captions and the index name it", file=stream)
+        print(f"MODEL | {part['reference']} | {part['detail']}; the three-dimensional views' captions and the index "
+              "name it", file=stream)
     print(f"RESOLUTION | {scale_text(scale)} | {PIXELS_PER_FEATURE} px across the smaller of the minimum track width "
           f"{mm_text(figures[0])} mm and the minimum clearance {mm_text(figures[1])} mm", file=stream)
     print(f"RESULT | WRITTEN | {len(renderer.images)} images, their index and the per-net fact table | {clean(out)}",
