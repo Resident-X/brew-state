@@ -4,8 +4,8 @@
 An image of one layer shows no net names, so a ground drawn as a thin trace
 looks like any other track. The review is therefore given, besides an image of
 every layer, views that show each critical net against the board, the critical
-classes against each other, each integrated circuit with the parts on its
-supply nets close enough to judge, each side as it is assembled, and the
+classes against each other, each integrated circuit with its own decoupling
+parts close enough to judge, each side as it is assembled, and the
 assembled board in three dimensions, with a table of the facts a picture
 cannot carry: each net's track widths, vias, zones and classes.
 
@@ -481,39 +481,61 @@ def pads(footprint: list, table: Dict[str, str]) -> List[Tuple[str, str]]:
     return found
 
 
+def pad_centres(footprint: list) -> List[Tuple[float, float]]:
+    """The centre of each of a footprint's pads on the board."""
+    what = f"a pad of the footprint {reference(footprint) or '?'}"
+    at = placement(footprint, what)
+    return [placed(xy(sexpr.child(pad, "at"), what), at) for pad in sexpr.children(footprint, "pad")]
+
+
 def natural(text: str):
     return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", text)]
 
 
 def circuits(layout: list) -> List[dict]:
-    """Each integrated circuit, a footprint whose reference begins with U, with its supply nets and the parts on them.
+    """Each integrated circuit, a footprint whose reference begins with U, with its supply nets and its decoupling.
 
     Its supply nets are the nets on its pads typed as power input or power
-    output; the parts on them are the two-pad parts with both pads on those
-    nets, the decoupling pattern of one rail and one return.
+    output. A decoupling part is a two-pad part with both pads on one
+    circuit's supply nets, the pattern of one rail and one return, and it is
+    attributed to the one circuit sharing those nets whose nearest pad is
+    closest to the part's pads, the earlier reference winning a tie. So a
+    circuit on a rail it shares holds only its own decoupling, and one nearer
+    no such part than every other circuit on the rail holds none.
     """
     table = locked_copper.net_table(layout)
     footprints = [node for node in layout[1:] if sexpr.head(node) == "footprint"]
     found = []
     for footprint in footprints:
         name = reference(footprint)
-        if not name.startswith("U"):
+        if name.startswith("U"):
+            supply = sorted({net for net, kind in pads(footprint, table) if net and kind in ("power_in", "power_out")})
+            found.append({"footprint": footprint, "reference": name, "supply_nets": supply, "attributed": []})
+    for other in footprints:
+        held = pads(other, table)
+        if len(held) != 2:
             continue
-        supply = sorted({net for net, kind in pads(footprint, table) if net and kind in ("power_in", "power_out")})
-        parts = []
-        for other in footprints:
-            held = pads(other, table)
-            if other is not footprint and supply and len(held) == 2 and all(net in supply for net, _ in held):
-                parts.append(other)
+        candidates = [circuit for circuit in found if circuit["footprint"] is not other and circuit["supply_nets"]
+                      and all(net in circuit["supply_nets"] for net, _ in held)]
+        if candidates:
+            ends = pad_centres(other)
+
+            def distance(circuit: dict) -> float:
+                return min(math.dist(near, end) for near in pad_centres(circuit["footprint"]) for end in ends)
+
+            min(candidates, key=lambda circuit: (distance(circuit), natural(circuit["reference"])))["attributed"].append(other)
+    result = []
+    for circuit in found:
+        footprint, parts = circuit["footprint"], circuit["attributed"]
         side = sexpr.child(footprint, "layer")
-        found.append({
-            "reference": name,
+        result.append({
+            "reference": circuit["reference"],
             "side": "bottom" if side is not None and len(side) > 1 and str(side[1]) == "B.Cu" else "top",
-            "supply_nets": supply,
+            "supply_nets": circuit["supply_nets"],
             "parts": sorted((reference(part) for part in parts), key=natural),
             "bounds": union(footprint_bounds(node) for node in [footprint] + parts),
         })
-    return sorted(found, key=lambda circuit: natural(circuit["reference"]))
+    return sorted(result, key=lambda circuit: natural(circuit["reference"]))
 
 
 def minimums(project: dict, path: str) -> Tuple[Optional[Tuple[float, float]], List[Tuple[str, str]]]:
@@ -559,8 +581,17 @@ def only_nets(layout: list, nets: Set[str]) -> list:
 
 
 def net_facts(layout: list, path: str, classes: Dict[str, Set[str]]) -> List[dict]:
-    """Every net on the board with its track width range, via count, zones and classes."""
+    """Every net on the board with its track width range, via count, zones and classes, a footprint's own zones
+    among them."""
     items = locked_copper.copper(layout, path)
+    table = locked_copper.net_table(layout)
+    for footprint in (node for node in layout[1:] if sexpr.head(node) == "footprint"):
+        for zone in sexpr.children(footprint, "zone"):
+            try:
+                items.append(locked_copper.read_item(zone, table))
+            except Unreadable as error:
+                raise Unreadable(f"the board {path} cannot be read: a zone of the footprint "
+                                 f"{reference(footprint) or '?'}: {error}") from error
     facts = []
     for net in sorted(board_check.layout_nets(layout), key=natural):
         widths = [item["width"] for item in items if item["net"] == net and item["kind"] in ("track", "arc")]
@@ -1072,11 +1103,26 @@ def shown(region: Tuple[float, float, float, float], scale: float) -> Tuple[floa
     return middle - MIN_WIDTH_PX / scale / 2, y0, middle + MIN_WIDTH_PX / scale / 2, y1
 
 
-def tiles(region: Tuple[float, float, float, float], scale: float, caption_for) -> List[dict]:
+def tiles(region: Tuple[float, float, float, float], scale: float, caption_for, what: str = "the view") -> List[dict]:
     """The region as it is shown cut into the fewest equal tiles that each fit, with their captions, at `scale`
-    pixels per millimetre."""
+    pixels per millimetre.
+
+    A caption too tall to fit within the size limit beside a single row of
+    pixels at every width a tile may take is refused before any search, since
+    no number of tiles would fit it; the caption is asked for as the tile
+    numbered highest it could be, so it is never shorter than a real tile's.
+    """
     x0, y0, x1, y1 = shown(region, scale)
     width, height = max(MIN_WIDTH_PX, math.ceil((x1 - x0) * scale - 1e-9)), math.ceil((y1 - y0) * scale - 1e-9)
+    widths = sorted({math.ceil(width / columns) for columns in range(1, width // MIN_WIDTH_PX + 1)})
+    most = max(height, width)
+    probe = caption_for({"region": (x0, y0, x1, y1), "row": most, "column": most, "rows": most, "columns": most,
+                         "content": (widths[-1], 1)})
+    if not any(fits(across, 1 + caption_height(probe, across)) for across in widths):
+        raise Unreadable(f"the caption of {what} is {caption_height(probe, widths[-1])} px tall at the widest tile it "
+                         f"may take, {widths[-1]} px, and too tall at every narrower one, so no tile of it fits within "
+                         f"the size limit of a long edge of {LONG_EDGE_PX} px and {PATCHES} patches of {PATCH_PX} by "
+                         f"{PATCH_PX} px")
     count = 0
     while True:
         count += 1
@@ -1147,6 +1193,21 @@ def rule_area_field(areas: List[dict]) -> str:
 def rule_area_entries(areas: List[dict]) -> List[dict]:
     return [{"name": area["name"], "layers": area["layers"], "rules": area["rules"], "bounds_mm": area["bounds_mm"]}
             for area in areas]
+
+
+def crop_fields(circuit: dict) -> List[str]:
+    """What a crop's caption says of its circuit: which it is, its supply nets and its decoupling parts, each list
+    no longer than a caption carries."""
+    fields = [f"crop around {circuit['reference']} ({circuit['side']} side)"]
+    if not circuit["supply_nets"]:
+        return fields + ["no supply nets declared: no pad is typed power input or power output",
+                         "so no decoupling parts are shown"]
+    fields.append(f"supply nets {named(circuit['supply_nets'])}")
+    if circuit["parts"]:
+        return fields + [f"decoupling parts, the two-pad parts across its supply nets nearer it than any other "
+                         f"circuit on them: {named(circuit['parts'])}"]
+    return fields + ["no decoupling parts: no two-pad part across its supply nets is nearer it than every other "
+                     "circuit on them"]
 
 
 def absent_field(absent: Sequence[str]) -> str:
@@ -1271,7 +1332,7 @@ class Renderer:
                 parts.append(f"tile row {tile['row']} of {tile['rows']}, column {tile['column']} of {tile['columns']}")
             return " | ".join(parts + notes)
 
-        planned = tiles(region, self.scale, caption_for)
+        planned = tiles(region, self.scale, caption_for, f"the view {wanted}")
         endings = [".png"] if len(planned) == 1 else [f"-r{tile['row']}c{tile['column']}.png" for tile in planned]
         for tile, name in zip(planned, self.names.claim(wanted, endings)):
             across, down = tile["content"]
@@ -1497,17 +1558,11 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
         for circuit in circuits(refilled):
             prefix = "B" if circuit["side"] == "bottom" else "F"
             order = copper if circuit["side"] == "bottom" else list(reversed(copper))
-            declared = bool(circuit["supply_nets"])
-            supply = (f"supply nets {', '.join(circuit['supply_nets'])}" if declared else
-                      "no supply nets declared: no pad is typed power input or power output")
-            parts = (f"parts on them {', '.join(circuit['parts'])}" if circuit["parts"] else
-                     "no two-pad part with both pads on them") if declared else "so no parts on supply nets are shown"
             renderer.flat(f"crop-{circuit['reference']}", order + [f"{prefix}.Fab", f"{prefix}.SilkS", "Edge.Cuts"],
                           {"view": "crop", "circuit": circuit["reference"], "side": circuit["side"],
-                           "supply_nets_declared": declared, "supply_nets": circuit["supply_nets"],
-                           "parts": circuit["parts"]},
-                          [f"crop around {circuit['reference']} ({circuit['side']} side)", supply, parts],
-                          around=circuit["bounds"])
+                           "supply_nets_declared": bool(circuit["supply_nets"]), "supply_nets": circuit["supply_nets"],
+                           "parts": circuit["parts"], "decoupling_parts": bool(circuit["parts"])},
+                          crop_fields(circuit), around=circuit["bounds"])
 
         glb = os.path.join(work, "models.glb")
         said = kicad([kicad_cli, "pcb", "export", "glb", "--no-dnp", "--no-board-body", "-o", glb, copy], work,

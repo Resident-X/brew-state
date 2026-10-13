@@ -2,8 +2,9 @@
 """The layout review views, rendered from a synthetic proof board against the real kicad-cli and resvg.
 
 The proof board is written from text in a temporary directory outside the
-repository: an integrated circuit with its supply pins typed and two decoupling
-parts on its rails, a second circuit with no pin typed as power, two critical
+repository: three integrated circuits sharing one rail, two of them with a
+decoupling part nearest them and one with none, a fourth circuit with no pin
+typed as power, two critical
 classes, a ground pour on the back whose fill is cut around a power track, two
 signal tracks at the board's minimum width and minimum clearance, a note on a
 user layer, a rule area, a silkscreen text in a font no machine has, and parts
@@ -31,6 +32,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -113,8 +115,9 @@ MODEL_COLOUR = (230, 13, 13)
 #: The font one silkscreen text asks for, which no machine has, so KiCad substitutes another.
 NO_SUCH_FONT = "Board Views Proof Face"
 
-#: The proof board's items: U1 has its supply pins typed and C1 and C2 across its rails; R1 has only one pad on
-#: a rail; U2 has no pin typed as power. The ground pour on B.Cu is cut around the +3V3 track crossing it, so its
+#: The proof board's items: U1, U3 and U4 share the +3V3 and GND rails, their supply pins typed, and C1 and C2
+#: sit across those rails, C1 nearest U1 and C2 nearest U3, so neither is nearest U4; R1 has only one pad on a
+#: rail; U2 has no pin typed as power. U3 and U4 declare no model. The ground pour on B.Cu is cut around the +3V3 track crossing it, so its
 #: fill depends on another net's copper. SIG_A and SIG_B run at the minimum width, the minimum clearance apart.
 #: U1's model is in the design's folder, named through ${KIPRJMOD}; U2's is the same file named from that folder
 #: with no variable, stretched to 61 mm tall at the back of the board, so the angled view must zoom out to show
@@ -138,6 +141,10 @@ ITEMS = [
               [model("models/box.wrl", height=12)]),
     footprint("D1", 8, 8, [pad(1, -1, 0, "SIG_A", "passive"), pad(2, 1, 0, "SIG_B", "passive")],
               [model("${KIPRJMOD}/models/box.wrl")], "(attr smd dnp)"),
+    footprint("U3", 48, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
+                             pad(3, 2, -1, "SIG_A", "input")]),
+    footprint("U4", 38, 12, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
+                             pad(3, 2, -1, "SIG_B", "input")]),
     f'(segment (start 4 19) (end 18 19) (width 0.3) (layer "F.Cu") (net "+3V3") (uuid {uuid()}))',
     f'(segment (start 24 19) (end 40 19) (width 0.1) (layer "F.Cu") (net "SIG_A") (uuid {uuid()}))',
     f'(segment (start 24 19.2) (end 40 19.2) (width 0.1) (layer "F.Cu") (net "SIG_B") (uuid {uuid()}))',
@@ -476,19 +483,68 @@ class Views(unittest.TestCase):
         crop = self.images("crop", circuit="U1")
         self.assertTrue(crop)
         self.assertEqual(crop[0]["supply_nets"], ["+3V3", "GND"])
-        self.assertEqual(crop[0]["parts"], ["C1", "C2"])
-        self.assertTrue(crop[0]["supply_nets_declared"])
-        covered = (min(i["region_mm"]["x0"] for i in crop), min(i["region_mm"]["y0"] for i in crop),
-                   max(i["region_mm"]["x1"] for i in crop), max(i["region_mm"]["y1"] for i in crop))
-        for name, x, y, pad in (("U1", 20, 20, (18.3, 21)), ("C1", 4, 20, (4, 21)), ("C2", 56, 20, (56, 21))):
+        self.assertEqual(crop[0]["parts"], ["C1"])
+        self.assertTrue(crop[0]["supply_nets_declared"] and crop[0]["decoupling_parts"])
+        covered = self.covered(crop)
+        for name, x, y, pad in (("U1", 20, 20, (18.3, 21)), ("C1", 4, 20, (4, 21))):
             with self.subTest(part=name):
-                self.assertTrue(covered[0] <= x - 2.5 and x + 2.5 <= covered[2] and covered[1] <= y - 2.5
-                                and y + 2.5 <= covered[3], f"{name} is outside the crop {covered}")
+                self.assertTrue(self.inside(covered, x, y), f"{name} is outside the crop {covered}")
                 self.assertTrue(self.near(self.colour_at(crop, *pad), self.layer_colour("F.Cu")), f"{name}'s pad")
-        self.assertGreater(len(crop), 1, "a crop wider than the size limit is not tiled")
         for image in crop:
             self.assertIn("supply nets +3V3, GND", image["caption"])
-            self.assertIn("parts on them C1, C2", image["caption"])
+            self.assertIn("decoupling parts, the two-pad parts across its supply nets nearer it than any other "
+                          "circuit on them: C1", image["caption"])
+
+    def covered(self, images):
+        return (min(i["region_mm"]["x0"] for i in images), min(i["region_mm"]["y0"] for i in images),
+                max(i["region_mm"]["x1"] for i in images), max(i["region_mm"]["y1"] for i in images))
+
+    def inside(self, covered, x, y, reach=2.5):
+        """Whether a part's outline, `reach` millimetres about (x, y), lies wholly within the covered region."""
+        return covered[0] <= x - reach and x + reach <= covered[2] and covered[1] <= y - reach and y + reach <= covered[3]
+
+    def touches(self, covered, x, y, reach=2.5):
+        """Whether any of a part's outline, `reach` millimetres about (x, y), lies within the covered region."""
+        return covered[0] < x + reach and x - reach < covered[2] and covered[1] < y + reach and y - reach < covered[3]
+
+    def test_two_circuits_on_a_shared_rail_each_crop_only_their_own_decoupling_and_neither_spans_the_board(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        own = {"U1": ("C1", 4, 20, ("C2", 56, 20)), "U3": ("C2", 56, 20, ("C1", 4, 20))}
+        for circuit, (part, x, y, (other, ox, oy)) in own.items():
+            with self.subTest(circuit=circuit):
+                crop = self.images("crop", circuit=circuit)
+                self.assertTrue(crop)
+                self.assertEqual(crop[0]["supply_nets"], ["+3V3", "GND"])
+                self.assertEqual(crop[0]["parts"], [part])
+                covered = self.covered(crop)
+                self.assertTrue(self.inside(covered, x, y), f"{part} is outside {circuit}'s crop {covered}")
+                self.assertFalse(self.touches(covered, ox, oy), f"{other} reaches into {circuit}'s crop {covered}")
+                self.assertTrue(self.near(self.colour_at(crop, x, y + 1), self.layer_colour("F.Cu")), f"{part}'s pad")
+                # The outline is 60 mm wide; a crop holding another circuit's decoupling on the rail spanned most of it.
+                self.assertLess(covered[2] - covered[0], 30, f"{circuit}'s crop spans the board: {covered}")
+                self.assertEqual(len(crop), 1, f"{circuit}'s crop is tiled, so it is larger than its circuit")
+                self.assertNotIn(other, crop[0]["caption"])
+
+    def test_a_circuit_whose_rails_only_candidates_sit_nearer_other_circuits_is_marked_as_having_no_decoupling(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        crop = self.images("crop", circuit="U4")
+        self.assertTrue(crop)
+        self.assertEqual((crop[0]["supply_nets"], crop[0]["parts"]), (["+3V3", "GND"], []))
+        self.assertTrue(crop[0]["supply_nets_declared"])
+        self.assertFalse(crop[0]["decoupling_parts"])
+        covered = self.covered(crop)
+        for other, x, y in (("C1", 4, 20), ("C2", 56, 20)):
+            self.assertFalse(self.touches(covered, x, y), f"{other} reaches into U4's crop {covered}")
+        marked = ("no decoupling parts: no two-pad part across its supply nets is nearer it than every other circuit "
+                  "on them")
+        with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+        for image in crop:
+            self.assertIn(marked, image["caption"])
+            line = next(line for line in lines if line.startswith(f"IMAGE | {image['file']} |"))
+            self.assertIn(marked, line)
+        for circuit in ("U1", "U3"):
+            self.assertNotIn("no decoupling parts", self.images("crop", circuit=circuit)[0]["caption"])
 
     def test_a_circuit_with_no_power_typed_pad_gets_its_crop_marked_as_declaring_no_supply_nets(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
@@ -500,7 +556,7 @@ class Views(unittest.TestCase):
         with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
             line = next(line for line in handle if line.startswith(f"IMAGE | {crop[0]['file']} |"))
         self.assertIn("no supply nets declared", line)
-        self.assertEqual({image["circuit"] for image in self.images("crop")}, {"U1", "U2"})
+        self.assertEqual({image["circuit"] for image in self.images("crop")}, {"U1", "U2", "U3", "U4"})
 
     # --- Resolution and size ---
 
@@ -631,7 +687,8 @@ class Views(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         unseen = {part["reference"]: part["reason"] for part in self.index["not_in_3d"]}
         self.assertEqual(unseen, {"C1": "no model", "C2": "model not found", "D1": "not populated",
-                                  "J1": "no model", "R1": "model hidden", "R5": "no model"})
+                                  "J1": "no model", "R1": "model hidden", "R5": "no model", "U3": "no model",
+                                  "U4": "no model"})
         top = self.images("3d", file="3d-top.png")[0]
         _, _, rows = self.pixels(top)
         across, down = top["render_px"]["width"], top["render_px"]["height"]
@@ -908,6 +965,129 @@ class Pieces(unittest.TestCase):
         self.assertTrue(board_views.named(names).endswith(
             f"R{board_views.CAPTION_NAMES} and 3 more, which the index names"))
 
+    def circuits(self, items):
+        design = Design(layout(items=items))
+        return {circuit["reference"]: circuit
+                for circuit in board_views.circuits(board_views.locked_copper.read_layout(design.board))}
+
+    def rail(self, reference, x, y, *extra):
+        return footprint(reference, x, y, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
+                                           pad(3, 2, 0, "SIG_A", "input"), *extra])
+
+    def capacitor(self, reference, x, y):
+        return footprint(reference, x, y, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")])
+
+    def test_each_decoupling_part_on_a_shared_rail_belongs_only_to_the_circuit_nearest_it(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        found = self.circuits([self.rail("U1", 10, 10), self.capacitor("C1", 4, 10),
+                               self.rail("U3", 90, 60), self.capacitor("C9", 96, 60)])
+        self.assertEqual((found["U1"]["parts"], found["U3"]["parts"]), (["C1"], ["C9"]))
+        self.assertLess(found["U1"]["bounds"][2], 20, "U1's crop reaches toward U3")
+        self.assertGreater(found["U3"]["bounds"][0], 80, "U3's crop reaches toward U1")
+        # With its own capacitor gone, U1 holds none: U3's is never shown as U1's.
+        found = self.circuits([self.rail("U1", 10, 10), self.rail("U3", 90, 60), self.capacitor("C9", 96, 60)])
+        self.assertEqual((found["U1"]["parts"], found["U3"]["parts"]), ([], ["C9"]))
+        self.assertEqual(board_views.crop_fields(dict(found["U1"], side="top"))[-1],
+                         "no decoupling parts: no two-pad part across its supply nets is nearer it than every other "
+                         "circuit on them")
+
+    def test_a_decoupling_part_goes_to_the_circuit_whose_nearest_pad_is_closest_not_whose_centre_is(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        # U1 is centred 17 mm from C1, but its supply pads reach to 2 mm from it; U2 is centred 7 mm away and its
+        # nearest pad is 5 mm away.
+        wide = footprint("U1", 20, 10, [pad(1, -15, -1, "+3V3", "power_in"), pad(2, -15, 1, "GND", "power_in"),
+                                        pad(3, 5, 0, "SIG_A", "input")])
+        found = self.circuits([wide, self.rail("U2", 10, 10), self.capacitor("C1", 3, 10)])
+        self.assertEqual((found["U1"]["parts"], found["U2"]["parts"]), (["C1"], []))
+        # Equally near two circuits, a part goes to the earlier reference, and to only one of them.
+        found = self.circuits([self.rail("U2", 0, 0), self.rail("U10", 8, 0), self.capacitor("C1", 2, 20)])
+        self.assertEqual((found["U2"]["parts"], found["U10"]["parts"]), (["C1"], []))
+
+    def test_a_part_on_rails_another_circuit_does_not_share_is_never_its_decoupling(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        five = footprint("U5", 50, 10, [pad(1, -2, -1, "+5V", "power_in"), pad(2, -2, 1, "GND", "power_in"),
+                                        pad(3, 2, 0, "SIG_A", "input")])
+        # C1 is far nearer U5, but U5 is not on +3V3, so it is U1's; a two-pad circuit is never its own decoupling.
+        own = footprint("U7", 120, 10, [pad(1, 0, -1, "+3V3", "power_in"), pad(2, 0, 1, "GND", "power_in")])
+        found = self.circuits([self.rail("U1", 10, 10), five, self.capacitor("C1", 48, 10), own])
+        self.assertEqual((found["U1"]["parts"], found["U5"]["parts"]), (["C1", "U7"], []))
+        self.assertEqual(found["U7"]["parts"], [])
+
+    def test_a_crops_supply_nets_and_parts_are_capped_and_its_caption_still_tiles(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        circuit = {"reference": "U1", "side": "top", "supply_nets": [f"N{index}" for index in range(1200)],
+                   "parts": [f"C{index}" for index in range(1200)]}
+        fields = board_views.crop_fields(circuit)
+        more = f"and {1200 - board_views.CAPTION_NAMES} more, which the index names"
+        self.assertTrue(fields[1].startswith("supply nets N0, N1") and fields[1].endswith(more), fields[1])
+        self.assertTrue(fields[2].endswith(more), fields[2])
+        self.assertNotIn(f"C{board_views.CAPTION_NAMES}", fields[2].split(": ", 1)[1].split(" and ")[0])
+        planned = board_views.tiles((0, 0, 10, 10), SCALE, lambda tile: " | ".join(fields), "the view crop-U1")
+        self.assertEqual(len(planned), 1)
+        self.assertTrue(board_views.fits(*planned[0]["size"]))
+
+    def test_a_caption_too_tall_for_any_tile_is_refused_at_once_naming_the_view(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        caption = "parts on them " + ", ".join(f"C{index}" for index in range(1200))
+        started = time.monotonic()
+        with self.assertRaises(board_views.Unreadable) as raised:
+            board_views.tiles((0, 0, 10, 10), SCALE, lambda tile: caption, "the view crop-U1")
+        self.assertLess(time.monotonic() - started, 5, "the refusal came only after a search")
+        self.assertIn("the caption of the view crop-U1 is", str(raised.exception))
+        self.assertIn("no tile of it fits within the size limit", str(raised.exception))
+        # A board region far larger than the limit, whose caption alone fits, is still tiled.
+        planned = board_views.tiles((0, 0, 200, 200), SCALE, lambda tile: "short", "the view big")
+        self.assertGreater(len(planned), 1)
+        self.assertTrue(all(board_views.fits(*tile["size"]) for tile in planned))
+
+    def test_a_crop_larger_than_the_size_limit_is_tiled_and_its_tiles_cover_it(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        with tempfile.TemporaryDirectory(prefix="board-views-crop-") as work:
+            out = os.path.join(work, "out")
+            os.makedirs(out)
+            renderer = board_views.Renderer(RESVG, work, out, SCALE, (0, 0, 10, 10), {}, {}, [], [], {},
+                                            board_views.Names())
+            renderer.flat("crop-U9", [], {"view": "crop", "circuit": "U9"}, ["crop around U9 (top side)"],
+                          around=(0, 0, 50, 50))
+            renderer.write()
+            images = renderer.images
+            self.assertGreater(len(images), 1, "a crop larger than the size limit is not tiled")
+            for image in images:
+                width, height = board_views.png_size(os.path.join(out, image["file"]))
+                self.assertTrue(board_views.fits(width, height), image["file"])
+                self.assertEqual(image["scale_px_per_mm"], SCALE)
+            margin = board_views.CROP_MARGIN_MM
+            self.assertLessEqual(min(i["region_mm"]["x0"] for i in images), -margin)
+            self.assertLessEqual(min(i["region_mm"]["y0"] for i in images), -margin)
+            self.assertGreaterEqual(max(i["region_mm"]["x1"] for i in images), 50 + margin - 1e-9)
+            self.assertGreaterEqual(max(i["region_mm"]["y1"] for i in images), 50 + margin - 1e-9)
+
+    def test_the_fact_table_counts_a_copper_zone_held_inside_a_footprint(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        held = (f'(footprint "proof:Pad" (layer "F.Cu") (uuid {uuid()}) (at 30 30) '
+                f'(property "Reference" "TP1" (at 0 -3 0) (layer "F.SilkS") (uuid {uuid()}) '
+                '(effects (font (size 1 1) (thickness 0.15)))) '
+                + pad(1, 0, 0, "GND", "passive") + " "
+                + f'(zone (net "GND") (layers "F.Cu" "B.Cu") (uuid {uuid()}) (hatch edge 0.5) '
+                '(connect_pads (clearance 0.5)) (min_thickness 0.25) (filled_areas_thickness no) '
+                '(fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
+                '(polygon (pts (xy 28 28) (xy 32 28) (xy 32 32) (xy 28 32)))) '
+                + f'(zone (net "") (net_name "") (layer "F.Cu") (uuid {uuid()}) (hatch edge 0.5) '
+                '(connect_pads (clearance 0)) (min_thickness 0.25) (filled_areas_thickness no) (keepout (tracks '
+                'not_allowed) (vias allowed) (pads allowed) (copperpour allowed) (footprints allowed)) '
+                '(fill (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
+                '(polygon (pts (xy 33 28) (xy 35 28) (xy 35 32) (xy 33 32)))))')
+        top = (f'(zone (net "GND") (layer "B.Cu") (uuid {uuid()}) (hatch edge 0.5) (connect_pads (clearance 0.5)) '
+               '(min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width '
+               '0.5)) (polygon (pts (xy 2 2) (xy 10 2) (xy 10 10) (xy 2 10))))')
+        design = Design(layout(items=[held, top]))
+        facts = board_views.net_facts(board_views.locked_copper.read_layout(design.board), design.board,
+                                      {"Ground": {"GND"}})
+        self.assertEqual(facts, [{"net": "GND", "classes": ["Ground"], "track_width_mm": None, "vias": 0,
+                                  "zones": [{"layers": ["B.Cu"]}, {"layers": ["B.Cu", "F.Cu"]}]}])
+        self.assertEqual(board_views.fact_line(facts[0]),
+                         "NET GND | class Ground | no tracks | 0 vias | 2 zones on B.Cu; B.Cu F.Cu")
+
 
 class Transforms(unittest.TestCase):
     """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
@@ -1153,6 +1333,12 @@ class Refusals(unittest.TestCase):
         lines = self.assertRefused(design, "Sensing", classes=("Power", "Ground", "Sensing"))
         self.assertIn("KiCad places no net of the board in this class", "\n".join(lines))
 
+    def test_a_class_named_twice_is_refused(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        lines = self.assertRefused(Design(), "REFUSED | Power, Ground, Power |", classes=("Power", "Ground", "Power"))
+        self.assertIn("a critical class is named more than once", "\n".join(lines))
+        self.assertEqual(sum(1 for line in lines if line.startswith("REFUSED | ")), 1, lines)
+
     def test_a_class_list_leaving_out_mains_on_a_board_declaring_mains_is_refused(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         design = Design(project_text=project(mains="present"))
@@ -1340,8 +1526,16 @@ class Documentation(unittest.TestCase):
                     self.assertIn(route, text)
                 self.assertIn("1568", text)
         self.assertIn(f"resvg {board_views.MIN_RESVG[0]}.{board_views.MIN_RESVG[1]} or newer", task)
-        for font in ("DejaVu Sans Mono", "https://dejavu-fonts.github.io/"):
-            self.assertIn(font, readme)
+        tools = method[method.index("## Tools"):method.index("KiCad's bundled Python is the one")]
+        for font in ("DejaVu Sans Mono", "https://dejavu-fonts.github.io/", "Menlo", "Consolas"):
+            with self.subTest(font=font):
+                self.assertIn(font, readme)
+                self.assertIn(font, tools)
+        self.assertIn("resvg and a monospaced font for the captions", method)
+        for name, text in (("README", readme), ("method", method)):
+            with self.subTest(document=name):
+                self.assertIn("whose nearest pad is closest to it", text)
+                self.assertIn("as having no decoupling parts", text)
         views = readme[readme.index("## The layout review views"):]
         self.assertIn("a board KiCad's lock file shows open in an editor", views)
         self.assertIn("told apart even where letter case is not", views)
