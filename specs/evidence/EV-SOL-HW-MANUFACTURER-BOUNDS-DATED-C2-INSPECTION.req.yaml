@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MANUFACTURER-BOUNDS-DATED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MANUFACTURER-BOUNDS-DATED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T12:24:25.290541Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-design-constraints.md inspected against SOL-HW-MANUFACTURER-BOUNDS-DATED.C2: § Pending marks holds the JLCONE prices as one pending mark and names every charge the manufacturer record grades unmeasured, with the work and node that settle each; § Readings left open matches; figureless stock, price, count and shipping cells in § Manufacturer stock and price, per channel now read unmeasured with how to read, or not applicable with why; mechanical sweep and table column count (0 flagged)'
+  artifact_version: 792d1cf7672fc6d749d65b55e90a28efc972479d
+attested_by: crun-d52f3d9957e012b6
+links:
+  - target: SOL-HW-MANUFACTURER-BOUNDS-DATED.C2
+    type: satisfies
