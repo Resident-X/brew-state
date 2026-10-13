@@ -20,12 +20,17 @@ command-line export draws each layer as a vector image in board coordinates, and
 resvg turns each view into a PNG on a dark background, with a caption drawn into
 it.
 
-Nothing is left out quietly. KiCad does not plot rule areas, so the command
-draws them itself. A part KiCad draws without its model, a font KiCad
-substitutes, and a fabrication or courtyard layer the board does not carry are
-each named in the captions of the views they touch, in the index and in the
-command's report. A three-dimensional view is zoomed out until no part reaches
-its frame.
+Every two-dimensional view, and every tile of one, is composed in one place,
+which alone frames it, puts it on the dark background, draws and names each
+rule area on a layer it shows (KiCad does not plot them), names each layer it
+wants that the board does not carry, and writes the caption fields every view
+shares. A whole-board view's frame is the extent of everything KiCad drew on
+any plotted layer, united with the outline and the rule areas, so nothing a
+layer holds falls outside it. A font KiCad substitutes is named in every
+caption, and a part the three-dimensional views draw without its model is named
+in theirs; both, and a layer the board does not carry, are named in the index
+and in the command's report too. A three-dimensional view is zoomed out until no
+part reaches its frame.
 
 The resolution is the board's own: three pixels across the smaller of its
 minimum track width and minimum clearance, read from its design rules. Every
@@ -751,6 +756,122 @@ def drawing(svg_path: str, colour: str, opacity: float = 1.0) -> str:
     return f'<g opacity="{opacity}">{body}</g>' if opacity < 1 else f"<g>{body}</g>"
 
 
+PATH_TOKEN = re.compile(r"[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+#: How many numbers each command of a vector path takes.
+PATH_ARGUMENTS = {"M": 2, "L": 2, "T": 2, "H": 1, "V": 1, "C": 6, "S": 4, "Q": 4, "A": 7}
+SVG_ELEMENT = re.compile(r"<(path|circle|ellipse|rect|line|polyline|polygon|image)\b([^>]*)>")
+SVG_ATTRIBUTE = re.compile(r"([A-Za-z_:][-\w:.]*)\s*=\s*\"([^\"]*)\"")
+SVG_STROKE = re.compile(r"stroke-width\s*[:=]\s*\"?\s*([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)")
+SVG_TRANSFORM = re.compile(r"\btransform\s*=\s*\"([^\"]*)\"")
+IDENTITY = re.compile(r"\s*(?:translate\(\s*0(?:\.0*)?[\s,]+0(?:\.0*)?\s*\)\s*|scale\(\s*1(?:\.0*)?(?:[\s,]+1(?:\.0*)?)?\s*\)\s*)*")
+
+
+def svg_arc(start, end, radii: Tuple[float, float], turned: float, large: bool, sweep: bool) -> List[Tuple[float, float]]:
+    """Points along a vector path's arc from start to end, close enough together for its bounds."""
+    rx, ry = abs(radii[0]), abs(radii[1])
+    if rx < 1e-12 or ry < 1e-12 or start == end:
+        return [start, end]
+    if abs(rx - ry) > 1e-9 or abs(turned % 180) > 1e-9:
+        # An elliptical or turned arc lies within twice its larger radius of its end.
+        reach = 2 * max(rx, ry)
+        return [start, (end[0] - reach, end[1] - reach), (end[0] + reach, end[1] + reach)]
+    half = ((start[0] - end[0]) / 2, (start[1] - end[1]) / 2)
+    radius = max(rx, math.hypot(*half))
+    lift = math.sqrt(max(0.0, radius * radius - half[0] ** 2 - half[1] ** 2) / max(half[0] ** 2 + half[1] ** 2, 1e-24))
+    sign = -1 if large == sweep else 1
+    centre = (sign * lift * half[1] + (start[0] + end[0]) / 2, -sign * lift * half[0] + (start[1] + end[1]) / 2)
+    first = math.atan2(start[1] - centre[1], start[0] - centre[0])
+    turn = math.atan2(end[1] - centre[1], end[0] - centre[0]) - first
+    if sweep and turn < 0:
+        turn += 2 * math.pi
+    elif not sweep and turn > 0:
+        turn -= 2 * math.pi
+    return [(centre[0] + radius * math.cos(first + turn * i / 64), centre[1] + radius * math.sin(first + turn * i / 64))
+            for i in range(65)]
+
+
+def path_points(data: str) -> List[Tuple[float, float]]:
+    """Every point a vector path passes through or is bounded by, its curves by their control points."""
+    tokens = PATH_TOKEN.findall(data)
+    points: List[Tuple[float, float]] = []
+    at = start = (0.0, 0.0)
+    command, index = None, 0
+    while index < len(tokens):
+        if tokens[index].isalpha():
+            command = tokens[index]
+            index += 1
+            if command in "Zz":
+                at = start
+                continue
+            if index >= len(tokens) or tokens[index].isalpha():
+                raise ValueError(f"the path command {command} has no numbers")
+        if command is None or command in "Zz":
+            raise ValueError("a path holds numbers no command takes")
+        upper, relative = command.upper(), command.islower()
+        count = PATH_ARGUMENTS[upper]
+        numbers = [float(token) for token in tokens[index:index + count] if not token.isalpha()]
+        if len(numbers) < count:
+            raise ValueError(f"the path command {command} is cut short")
+        index += count
+        ox, oy = at if relative else (0.0, 0.0)
+        if upper == "H":
+            at = (numbers[0] + ox, at[1])
+            points.append(at)
+        elif upper == "V":
+            at = (at[0], numbers[0] + oy)
+            points.append(at)
+        elif upper == "A":
+            end = (numbers[5] + ox, numbers[6] + oy)
+            points += svg_arc(at, end, (numbers[0], numbers[1]), numbers[2], bool(numbers[3]), bool(numbers[4]))
+            at = end
+        else:
+            pairs = [(numbers[k] + ox, numbers[k + 1] + oy) for k in range(0, count, 2)]
+            points += pairs
+            at = pairs[-1]
+        if upper == "M":
+            start = at
+            command = "l" if relative else "L"
+    return points
+
+
+def drawn_extent(svg_path: str) -> Optional[Tuple[float, float, float, float]]:
+    """The bounds, in board coordinates, of everything KiCad drew in a layer's plot, strokes included; None when
+    it drew nothing."""
+    with open(svg_path, encoding="utf-8") as handle:
+        text = handle.read()
+    try:
+        for transform in SVG_TRANSFORM.findall(text):
+            if not IDENTITY.fullmatch(transform):
+                raise ValueError(f"it moves what it draws by '{transform}', so it is not in board coordinates")
+        points: List[Tuple[float, float]] = []
+        for element, attributes in SVG_ELEMENT.findall(text):
+            given = dict(SVG_ATTRIBUTE.findall(attributes))
+
+            def value(name: str) -> float:
+                return float(given.get(name, "0"))
+
+            if element == "path":
+                points += path_points(given.get("d", ""))
+            elif element in ("circle", "ellipse"):
+                rx = value("r") if element == "circle" else value("rx")
+                ry = value("r") if element == "circle" else value("ry")
+                points += [(value("cx") - rx, value("cy") - ry), (value("cx") + rx, value("cy") + ry)]
+            elif element in ("rect", "image"):
+                points += [(value("x"), value("y")), (value("x") + value("width"), value("y") + value("height"))]
+            elif element == "line":
+                points += [(value("x1"), value("y1")), (value("x2"), value("y2"))]
+            else:
+                numbers = [float(token) for token in PATH_TOKEN.findall(given.get("points", "")) if not token.isalpha()]
+                points += list(zip(numbers[0::2], numbers[1::2]))
+        stroke = max([float(width) for width in SVG_STROKE.findall(text)] + [0.0]) / 2
+    except (ValueError, KeyError) as error:
+        raise Unreadable(f"KiCad's plot {svg_path} cannot be read for what it draws ({error})") from error
+    if not points:
+        return None
+    return grown((min(p[0] for p in points), min(p[1] for p in points), max(p[0] for p in points),
+                  max(p[1] for p in points)), stroke)
+
+
 def escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
@@ -892,14 +1013,32 @@ def absent_field(absent: Sequence[str]) -> str:
 
 
 class Renderer:
-    """Writes each image of the views and keeps the index of them."""
+    """Composes every image of the views and keeps the index of them.
 
-    def __init__(self, resvg: str, work: str, out: str, scale: float, notes: List[str]):
+    Every view is queued, and every image is written only once KiCad has
+    drawn all it will, so a fact KiCad reports late, such as a font it
+    substitutes, reaches every caption. Every two-dimensional view, and each
+    of its tiles, is composed by `flat` alone: it frames the view, the whole
+    board unless the view is a crop, puts it on the dark background, draws
+    the faint board beneath it when asked, draws and names every rule area on
+    a layer the view shows, names every layer the view wants that the board
+    does not carry, and writes the caption fields every view shares. What a
+    view adds is only what it is of: its layers and how each is painted.
+    """
+
+    def __init__(self, resvg: str, work: str, out: str, scale: float, frame, plotted: Dict[str, str],
+                 colours: Dict[str, Tuple[str, str]], copper: Sequence[str], areas: List[dict], fonts: Dict[str, str]):
         self.resvg, self.work, self.out, self.scale = resvg, work, out, scale
-        #: What every caption carries besides its own fields: what KiCad drew differently from the design.
-        self.notes = notes
+        #: The region every whole-board view shows: everything the plotted layers hold, the outline with it.
+        self.frame = frame
+        self.plotted, self.colours, self.copper, self.areas = plotted, colours, list(copper), areas
+        #: Each font KiCad says it could not find, with the one it drew instead, as it stands when images are written.
+        self.fonts = fonts
+        self.queued: List = []
         self.images: List[dict] = []
         self.names: Set[str] = set()
+        #: Every layer some view wanted that the board does not carry, in the order the views wanted them.
+        self.absent: List[str] = []
 
     def stem(self, wanted: str) -> str:
         stem = re.sub(r"[^A-Za-z0-9._+-]+", "_", wanted).strip("._") or "view"
@@ -910,59 +1049,103 @@ class Renderer:
         self.names.add(candidate)
         return candidate
 
-    def raster(self, svg_text: str, name: str) -> None:
+    def notes(self) -> List[str]:
+        """What every caption carries besides its own fields: what KiCad drew differently from the design."""
+        if not self.fonts:
+            return []
+        return ["fonts KiCad could not find, their text drawn in another: "
+                + named([f"{font} drawn in {instead}" for font, instead in sorted(self.fonts.items())])]
+
+    def image(self, name: str, width: int, height: int, content: str, top: int, caption: str, entry: dict) -> None:
+        """One image: the content above its caption, on the dark background, written and listed in the index."""
         svg = os.path.join(self.work, name + ".svg")
         with open(svg, "w", encoding="utf-8") as handle:
-            handle.write(svg_text)
+            handle.write(f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+                         f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+                         f'<rect width="{width}" height="{height}" fill="{BACKGROUND}"/>{content}'
+                         f'{caption_svg(caption, width, top)}</svg>')
         rasterise(self.resvg, svg, os.path.join(self.out, name + ".png"))
+        self.images.append(dict(entry, file=name + ".png", caption=caption, size_px={"width": width, "height": height}))
 
-    def flat(self, wanted: str, region, drawings: str, entry: dict, describe) -> None:
-        """A two-dimensional view of `region`, tiled where it does not fit, each tile with its caption."""
-        stem = self.stem(wanted)
+    def flat(self, wanted: str, layers: Sequence[str], entry: dict, describe: Sequence[str], paint=None,
+             around=None, beneath: bool = False, coloured: bool = True) -> None:
+        """Queue a two-dimensional view of `layers`, listed in the order they are drawn, the lowest first.
+
+        Each layer is drawn by `paint`, by default the layer as KiCad plotted it in
+        its own colour; a view whose colours mean something other than layers, such
+        as classes, is not `coloured` by layer. A view `around` a part's bounds is a
+        crop; every other view shows the whole board's frame. A view `beneath` which
+        the whole board is drawn faint shows its copper and edge in faint grey.
+        """
+        self.queued.append(lambda: self.compose(wanted, list(layers), entry, list(describe), paint, around, beneath,
+                                                coloured))
+
+    def compose(self, wanted, layers, entry, describe, paint, around, beneath, coloured) -> None:
+        region = self.frame if around is None else grown(around, CROP_MARGIN_MM)
+        shown_layers, missing = side_layers(layers, self.plotted)
+        under = list(reversed(self.copper)) + ["Edge.Cuts"] if beneath else []
+        here = on_stack(self.areas, shown_layers + under, shown(region, self.scale))
+        paint = paint or (lambda layer: drawing(self.plotted[layer], self.colours[layer][0]))
+        drawings = ("".join(drawing(self.plotted[layer], FAINT[0], FAINT[2]) for layer in under)
+                    + "".join(paint(layer) for layer in shown_layers) + rule_area_drawing(here, self.scale))
+        listed = [(layer, self.colours[layer][1]) for layer in shown_layers]
+        fields = describe + [f"layers {colour_list(listed) if coloured else ', '.join(shown_layers)}"]
+        fields += [f"over the whole board's copper and edge in {FAINT[1]}"] if beneath else []
+        fields += [rule_area_field(here)] if here else []
+        fields += [absent_field(missing)] if missing else []
+        self.absent.extend(layer for layer in missing if layer not in self.absent)
+        entry = dict(entry, layers=[{"name": name, "colour": colour} if coloured else {"name": name}
+                                    for name, colour in listed],
+                     rule_areas=rule_area_entries(here), absent_layers=missing)
+        if beneath:
+            entry["beneath"] = f"the whole board's copper and edge in {FAINT[1]}"
+        notes = self.notes()
 
         def caption_for(tile):
-            fields = describe() + [scale_text(self.scale), covers(tile["region"])]
+            parts = fields + [scale_text(self.scale), covers(tile["region"])]
             if tile["rows"] * tile["columns"] > 1:
-                fields.append(f"tile row {tile['row']} of {tile['rows']}, column {tile['column']} of {tile['columns']}")
-            return " | ".join(fields + self.notes)
+                parts.append(f"tile row {tile['row']} of {tile['rows']}, column {tile['column']} of {tile['columns']}")
+            return " | ".join(parts + notes)
 
+        stem = self.stem(wanted)
         planned = tiles(region, self.scale, caption_for)
         for tile in planned:
-            name = stem if len(planned) == 1 else f"{stem}-r{tile['row']}c{tile['column']}"
             across, down = tile["content"]
-            width, height = tile["size"]
             x0, y0, x1, y1 = tile["region"]
-            self.raster(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-                        f'viewBox="0 0 {width} {height}"><rect width="{width}" height="{height}" fill="{BACKGROUND}"/>'
-                        f'<svg x="0" y="0" width="{across}" height="{down}" viewBox="{x0} {y0} {x1 - x0} {y1 - y0}" '
-                        f'preserveAspectRatio="none" overflow="hidden">{drawings}</svg>'
-                        f'{caption_svg(tile["caption"], width, down)}</svg>', name)
-            self.images.append(dict(entry, file=name + ".png", caption=tile["caption"],
-                                    scale_px_per_mm=self.scale,
-                                    region_mm={"x0": x0, "y0": y0, "x1": x1, "y1": y1},
-                                    content_px={"width": across, "height": down},
-                                    size_px={"width": width, "height": height},
-                                    tile={"row": tile["row"], "column": tile["column"], "rows": tile["rows"],
-                                          "columns": tile["columns"]}))
+            self.image(stem if len(planned) == 1 else f"{stem}-r{tile['row']}c{tile['column']}", *tile["size"],
+                       f'<svg x="0" y="0" width="{across}" height="{down}" viewBox="{x0} {y0} {x1 - x0} {y1 - y0}" '
+                       f'preserveAspectRatio="none" overflow="hidden">{drawings}</svg>', down, tile["caption"],
+                       dict(entry, scale_px_per_mm=self.scale, region_mm={"x0": x0, "y0": y0, "x1": x1, "y1": y1},
+                            content_px={"width": across, "height": down},
+                            tile={"row": tile["row"], "column": tile["column"], "rows": tile["rows"],
+                                  "columns": tile["columns"]}))
 
     def solid(self, wanted: str, raw: str, entry: dict, box: Tuple[int, int, int], fields: List[str]) -> None:
-        """A three-dimensional render placed on the dark background with its caption, within the size limit."""
-        name = self.stem(wanted)
-        across, down, band = box
-        height = down + band
-        caption = " | ".join(fields + [f"image {across} x {height} px"])
-        width, shown = png_size(raw)
-        ratio = min(1.0, across / width, down / shown)
-        w, h = width * ratio, shown * ratio
-        self.raster(f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
-                    f'width="{across}" height="{height}" viewBox="0 0 {across} {height}">'
-                    f'<rect width="{across}" height="{height}" fill="{BACKGROUND}"/>'
-                    f'<image x="{(across - w) / 2}" y="{(down - h) / 2}" width="{w}" height="{h}" '
-                    f'xlink:href="{escape(os.path.basename(raw))}" href="{escape(os.path.basename(raw))}"/>'
-                    f'{caption_svg(caption, across, down)}</svg>', name)
-        self.images.append(dict(entry, file=name + ".png", caption=caption,
-                                render_px={"width": across, "height": down},
-                                size_px={"width": across, "height": height}))
+        """Queue a three-dimensional render, placed within the size limit above its caption."""
+        def compose():
+            across, down, band = box
+            height = down + band
+            caption = " | ".join(fields + [f"image {across} x {height} px"] + self.notes())
+            # A caption grown since the box was sized, by a font KiCad reported later, takes room from the render.
+            down = min(down, height - caption_height(caption, across))
+            if down < PROBE_PX:
+                raise Unreadable("the three-dimensional views' captions leave no room for the render within the size "
+                                 "limit")
+            width, tall = png_size(raw)
+            ratio = min(1.0, across / width, down / tall)
+            w, h = width * ratio, tall * ratio
+            self.image(self.stem(wanted), across, height,
+                       f'<image x="{(across - w) / 2}" y="{(down - h) / 2}" width="{w}" height="{h}" '
+                       f'xlink:href="{escape(os.path.basename(raw))}" href="{escape(os.path.basename(raw))}"/>',
+                       down, caption, dict(entry, render_px={"width": across, "height": down}))
+
+        self.queued.append(compose)
+
+    def write(self) -> None:
+        """Write every queued view."""
+        for compose in self.queued:
+            compose()
+        self.queued = []
 
 
 def solid_box(aspect: float, captions: List[List[str]]) -> Tuple[int, int, int]:
@@ -1096,41 +1279,18 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             if layer in carried and layer not in plotted:
                 plotted[layer] = plot(kicad_cli, work, copy, layer, f"extra-{layer}.svg", board, fonts)
         areas = rule_areas(refilled, carried)
-        notes = ["fonts KiCad could not find, their text drawn in another: "
-                 + named([f"{font} drawn in {instead}" for font, instead in sorted(fonts.items())])] if fonts else []
-        region = shown(grown(outline, BOARD_MARGIN_MM), scale)
-        renderer = Renderer(resvg, work, ready, scale, notes)
-        faint = "".join(drawing(plotted[layer], FAINT[0], FAINT[2]) for layer in reversed(copper)) \
-            + drawing(plotted["Edge.Cuts"], FAINT[0], FAINT[2])
-        absent: List[str] = []
-
-        def marked(entry: dict, stack: Sequence[str], missing: Sequence[str],
-                   seen=region) -> Tuple[dict, str, List[str]]:
-            """The entry, drawing and caption fields of a view's rule areas and the layers the board lacks."""
-            here = on_stack(areas, stack, seen)
-            fields = ([rule_area_field(here)] if here else []) + ([absent_field(missing)] if missing else [])
-            absent.extend(layer for layer in missing if layer not in absent)
-            return (dict(entry, rule_areas=rule_area_entries(here), absent_layers=list(missing)),
-                    rule_area_drawing(here, scale), fields)
+        reach = [outline] + [box for box in (drawn_extent(path) for path in plotted.values()) if box is not None]
+        reach += [(area["bounds_mm"]["x0"], area["bounds_mm"]["y0"], area["bounds_mm"]["x1"], area["bounds_mm"]["y1"])
+                  for area in areas]
+        frame = grown(union(reach), BOARD_MARGIN_MM)
+        renderer = Renderer(resvg, work, ready, scale, frame, plotted, colours, copper, areas, fonts)
 
         for layer in drawn:
-            entry, areas_drawn, fields = marked({"view": "layer",
-                                                 "layers": [{"name": layer, "colour": colours[layer][1]}]}, [layer], [])
-            renderer.flat(f"layer-{layer}", region, drawing(plotted[layer], colours[layer][0]) + areas_drawn, entry,
-                          lambda layer=layer, fields=fields: [f"layer {layer}", f"drawn in {colours[layer][1]}"]
-                          + fields)
+            renderer.flat(f"layer-{layer}", [layer], {"view": "layer"}, ["layer view"])
 
         for side, prefix in (("top", "F"), ("bottom", "B")):
-            stack, missing = side_layers(("Edge.Cuts", f"{prefix}.Fab", f"{prefix}.CrtYd", f"{prefix}.SilkS"), plotted)
-            entries = [(layer, colours[layer][1]) for layer in stack]
-            entry, areas_drawn, fields = marked(
-                {"view": "assembly", "side": side,
-                 "layers": [{"name": name, "colour": colour} for name, colour in entries]}, stack, missing)
-            renderer.flat(f"assembly-{side}", region, "".join(drawing(plotted[layer], colours[layer][0])
-                                                              for layer in stack) + areas_drawn, entry,
-                          lambda side=side, entries=entries, fields=fields: [
-                              f"assembly view of the {side} side, seen from the top",
-                              f"layers {colour_list(entries)}"] + fields)
+            renderer.flat(f"assembly-{side}", ["Edge.Cuts", f"{prefix}.Fab", f"{prefix}.CrtYd", f"{prefix}.SilkS"],
+                          {"view": "assembly", "side": side}, [f"assembly view of the {side} side, seen from the top"])
 
         critical = {}
         for name in classes:
@@ -1143,54 +1303,39 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                 handle.write(sexpr.dump(only_nets(refilled, {net})) + "\n")
             net_drawings[net] = {layer: plot(kicad_cli, work, copy_name, layer, f"net-{index}-{layer}.svg", board,
                                              fonts) for layer in copper}
-            entries = [(layer, colours[layer][1]) for layer in copper]
-            renderer.flat(f"net-{net}", region,
-                          faint + "".join(drawing(net_drawings[net][layer], colours[layer][0])
-                                          for layer in reversed(copper)),
-                          {"view": "net", "net": net, "classes": critical[net],
-                           "layers": [{"name": name, "colour": colour} for name, colour in entries],
-                           "beneath": f"the whole board's copper and edge in {FAINT[1]}"},
-                          lambda net=net, entries=entries: [
-                              f"net {net}", f"class {', '.join(critical[net])}",
-                              f"its copper on {colour_list(entries)}",
-                              f"over the whole board's copper and edge in {FAINT[1]}"])
+            renderer.flat(f"net-{net}", list(reversed(copper)),
+                          {"view": "net", "net": net, "classes": critical[net]},
+                          [f"net {net}", f"class {', '.join(critical[net])}"],
+                          paint=lambda layer, net=net: drawing(net_drawings[net][layer], colours[layer][0]),
+                          beneath=True)
 
         class_colours = {name: CLASS_COLOURS[index % len(CLASS_COLOURS)] for index, name in enumerate(classes)}
-        mapped = "".join(drawing(net_drawings[net][layer], class_colours[name][0])
-                         for name in classes for net in sorted(membership[name], key=natural)
-                         for layer in reversed(copper))
         entries = [(name, class_colours[name][1]) for name in classes]
         shared = shared_nets(classes, membership)
         overlap = ["nets in more than one critical class, drawn in the colour of the class named last: "
                    + named([f"{net} ({', '.join(names)})" for net, names in shared.items()])] if shared else []
-        renderer.flat("classes", region, faint + mapped,
+        renderer.flat("classes", list(reversed(copper)),
                       {"view": "class map", "classes": [{"name": name, "colour": colour} for name, colour in entries],
-                       "layers": [{"name": layer} for layer in copper], "shared_nets": shared,
-                       "beneath": f"the whole board's copper and edge in {FAINT[1]}"},
-                      lambda: ["class map", f"classes {colour_list(entries)}",
-                               f"copper on {', '.join(copper)}",
-                               f"over the whole board's copper and edge in {FAINT[1]}"] + overlap)
+                       "shared_nets": shared},
+                      ["class map", f"classes {colour_list(entries)}"] + overlap,
+                      paint=lambda layer: "".join(drawing(net_drawings[net][layer], class_colours[name][0])
+                                                  for name in classes for net in sorted(membership[name], key=natural)),
+                      beneath=True, coloured=False)
 
         for circuit in circuits(refilled):
             prefix = "B" if circuit["side"] == "bottom" else "F"
             order = copper if circuit["side"] == "bottom" else list(reversed(copper))
-            stack, missing = side_layers(order + [f"{prefix}.Fab", f"{prefix}.SilkS", "Edge.Cuts"], plotted)
-            entries = [(layer, colours[layer][1]) for layer in stack]
             declared = bool(circuit["supply_nets"])
             supply = (f"supply nets {', '.join(circuit['supply_nets'])}" if declared else
                       "no supply nets declared: no pad is typed power input or power output")
             parts = (f"parts on them {', '.join(circuit['parts'])}" if circuit["parts"] else
                      "no two-pad part with both pads on them") if declared else "so no parts on supply nets are shown"
-            cropped = shown(grown(circuit["bounds"], CROP_MARGIN_MM), scale)
-            entry, areas_drawn, fields = marked(
-                {"view": "crop", "circuit": circuit["reference"], "side": circuit["side"],
-                 "supply_nets_declared": declared, "supply_nets": circuit["supply_nets"], "parts": circuit["parts"],
-                 "layers": [{"name": name, "colour": colour} for name, colour in entries]}, stack, missing, cropped)
-            renderer.flat(f"crop-{circuit['reference']}", cropped,
-                          "".join(drawing(plotted[layer], colours[layer][0]) for layer in stack) + areas_drawn, entry,
-                          lambda circuit=circuit, entries=entries, supply=supply, parts=parts, fields=fields: [
-                              f"crop around {circuit['reference']} ({circuit['side']} side)", supply, parts,
-                              f"layers {colour_list(entries)}"] + fields)
+            renderer.flat(f"crop-{circuit['reference']}", order + [f"{prefix}.Fab", f"{prefix}.SilkS", "Edge.Cuts"],
+                          {"view": "crop", "circuit": circuit["reference"], "side": circuit["side"],
+                           "supply_nets_declared": declared, "supply_nets": circuit["supply_nets"],
+                           "parts": circuit["parts"]},
+                          [f"crop around {circuit['reference']} ({circuit['side']} side)", supply, parts],
+                          around=circuit["bounds"])
 
         glb = os.path.join(work, "models.glb")
         said = kicad([kicad_cli, "pcb", "export", "glb", "--no-dnp", "--no-board-body", "-o", glb, copy], work,
@@ -1211,13 +1356,16 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                 left_out.append(f"{words}: {named(these)}")
         fields = {name: [f"three-dimensional view {name}", direction]
                   + ([f"zoomed out to {zooms[name]:.3g} so no part reaches the frame"] if zooms[name] < 1 else [])
-                  + (left_out or ["every part drawn with its model"]) + notes
+                  + (left_out or ["every part drawn with its model"])
                   for name, _, direction in VIEWS_3D}
-        box = solid_box(aspect, list(fields.values()))
+        box = solid_box(aspect, [captions + renderer.notes() for captions in fields.values()])
         for name, how, direction in VIEWS_3D:
             raw, heard = render(kicad_cli, work, copy, how, box[:2], zooms[name], f"render-{name}.png", board)
+            fonts.update(substituted(heard))
             renderer.solid(f"3d-{name}", raw, {"view": "3d", "direction": direction, "zoom": zooms[name]}, box,
                            fields[name])
+        renderer.write()
+        absent = renderer.absent
 
         facts = net_facts(refilled, board, membership)
         header = {

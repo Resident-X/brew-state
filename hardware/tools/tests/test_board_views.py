@@ -8,7 +8,9 @@ classes, a ground pour on the back whose fill is cut around a power track, two
 signal tracks at the board's minimum width and minimum clearance, a note on a
 user layer, a rule area, a silkscreen text in a font no machine has, and parts
 whose three-dimensional models are kept in the design's folder, missing, hidden
-or not populated. The views are rendered once, through the shipped task, and the
+or not populated, a power track crossing the rule area, a net in two critical
+classes, and a connector courtyard and a silkscreen text reaching past the board
+outline. The views are rendered once, through the shipped task, and the
 tests ask of the images, the index and the fact table what the criterion
 needs; the refusals are driven through the command itself. Nothing is skipped
 when a tool is absent: a command that cannot be exercised has not been shown
@@ -40,6 +42,9 @@ REPO = os.path.dirname(os.path.dirname(TOOLS))
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
 RESVG = os.environ.get("RESVG") or "resvg"
 PROOF_PROJECT = os.path.join(REPO, "hardware", "proof", "gate-proof", "gate-proof.kicad_pro")
+
+#: The critical classes the proof board's views are rendered with: +3V3 is in both Power and Sense.
+CRITICAL = ("Power", "Ground", "Sense")
 
 #: The proof board's minimum track width and minimum clearance, and so its resolution.
 MINIMUM_MM = 0.1
@@ -113,7 +118,9 @@ NO_SUCH_FONT = "Board Views Proof Face"
 #: U1's model is in the design's folder, named through ${KIPRJMOD}; U2's is the same file named from that folder
 #: with no variable, stretched to 61 mm tall at the back of the board, so the angled view must zoom out to show
 #: it whole; C1 declares no model, C2's model is nowhere, R1 hides its model and D1 is not populated. A rule area
-#: on F.Cu and a user layer, which KiCad does not plot, and a silkscreen text in a font no machine has complete it.
+#: on F.Cu and a user layer, which KiCad does not plot, crossed by a +3V3 track, and a silkscreen text in a font no
+#: machine has follow. J1's courtyard and fabrication outline overhang the board's right edge, at x = 60 mm, to
+#: 64.5 mm and 64 mm, and a silkscreen text sits below its bottom edge, at y = 40 mm, at y = 45 mm.
 ITEMS = [
     footprint("U1", 20, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
                              pad(3, 2, -1, "SIG_A", "input"), pad(4, 2, 1, "SIG_B", "output")],
@@ -143,6 +150,16 @@ ITEMS = [
     '(vias not_allowed) (pads allowed) (copperpour not_allowed) (footprints allowed)) (placement (enabled no) '
     '(sheetname "")) (fill (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
     '(polygon (pts (xy 50 2) (xy 56 2) (xy 56 6) (xy 50 6))))',
+    f'(segment (start 48 4) (end 58 4) (width 0.3) (layer "F.Cu") (net "+3V3") (uuid {uuid()}))',
+    f'(footprint "proof:Connector" (layer "F.Cu") (uuid {uuid()}) (at 57 12) '
+    f'(property "Reference" "J1" (at 0 -3 0) (layer "F.SilkS") (uuid {uuid()}) '
+    '(effects (font (size 1 1) (thickness 0.15)))) '
+    f'(fp_rect (start -1.5 -2.5) (end 7.5 2.5) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd") '
+    f'(uuid {uuid()})) '
+    f'(fp_rect (start -1 -2) (end 7 2) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab") (uuid {uuid()})) '
+    + pad(1, 0, -1, "SIG_A", "passive") + " " + pad(2, 0, 1, "SIG_B", "passive") + ")",
+    f'(gr_text "OFF BOARD" (at 30 45 0) (layer "F.SilkS") (uuid {uuid()}) '
+    '(effects (font (size 1.5 1.5) (thickness 0.2))))',
 ]
 
 
@@ -153,8 +170,9 @@ def layout(items=None, layers=None, outline=OUTLINE) -> str:
             f'\t(general (thickness 1.6))\n\t(paper "A4")\n\t(layers\n{table}\n\t)\n' + body + ")\n")
 
 
-def project(classes=("Power", "Ground"), assignments=None, mains="none", rules="default") -> str:
-    """A project file defining `classes` beside Default, declaring MAINS as `mains`, with design rules `rules`."""
+def project(classes=("Power", "Ground"), assignments=None, mains="none", rules="default", patterns=()) -> str:
+    """A project file defining `classes` beside Default, declaring MAINS as `mains`, with design rules `rules`, and
+    assigning nets to classes by name and by `patterns` as well."""
     with open(PROOF_PROJECT, encoding="utf-8") as handle:
         data = json.load(handle)
     settings = data["net_settings"]
@@ -162,7 +180,7 @@ def project(classes=("Power", "Ground"), assignments=None, mains="none", rules="
     settings["classes"] = [default] + [dict(copy.deepcopy(template), name=name, priority=index)
                                        for index, name in enumerate(classes)]
     settings["netclass_assignments"] = {"+3V3": "Power", "GND": "Ground"} if assignments is None else assignments
-    settings["netclass_patterns"] = []
+    settings["netclass_patterns"] = [{"netclass": netclass, "pattern": pattern} for netclass, pattern in patterns]
     data["text_variables"] = {"MAINS": mains}
     data["board"]["design_settings"]["rules"] = (
         {"min_track_width": MINIMUM_MM, "min_clearance": MINIMUM_MM} if rules == "default" else rules)
@@ -206,9 +224,9 @@ class Design:
 def rendered():
     """The proof board's views, rendered once through the shipped task: (design, task result, index, facts)."""
     if not _RENDERED:
-        design = Design()
+        design = Design(project_text=project(classes=CRITICAL, patterns=[("Sense", "+3V3")]))
         result = subprocess.run(["task", "hw:views", f"KICAD_CLI={KICAD_CLI}", f"RESVG={RESVG}", "--",
-                                 *design.args()], cwd=REPO, capture_output=True, text=True, timeout=1800)
+                                 *design.args(CRITICAL)], cwd=REPO, capture_output=True, text=True, timeout=1800)
         index = facts = None
         if result.returncode == 0:
             with open(os.path.join(design.out, "index.json"), encoding="utf-8") as handle:
@@ -403,8 +421,8 @@ class Views(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         for image in self.images("net"):
             with self.subTest(image=image["file"]):
-                self.assertEqual(image["layers"], [{"name": "F.Cu", "colour": "red"}, {"name": "B.Cu", "colour": "blue"}])
-                self.assertIn("F.Cu red, B.Cu blue", image["caption"])
+                self.assertEqual(image["layers"], [{"name": "B.Cu", "colour": "blue"}, {"name": "F.Cu", "colour": "red"}])
+                self.assertIn("layers B.Cu blue, F.Cu red", image["caption"])
                 self.assertIn(f"net {image['net']}", image["caption"])
                 self.assertIn(f"class {', '.join(image['classes'])}", image["caption"])
 
@@ -414,13 +432,29 @@ class Views(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         mapped = self.images("class map")
         self.assertTrue(mapped)
-        power, ground = board_views.CLASS_COLOURS[0], board_views.CLASS_COLOURS[1]
-        self.assertEqual(mapped[0]["classes"], [{"name": "Power", "colour": power[1]}, {"name": "Ground", "colour": ground[1]}])
-        self.assertIn(f"Power {power[1]}, Ground {ground[1]}", mapped[0]["caption"])
-        self.assertTrue(self.near(self.colour_at(mapped, 30, 30), power[0]), "the +3V3 track")
+        power, ground, sense = board_views.CLASS_COLOURS[:3]
+        self.assertEqual(mapped[0]["classes"], [{"name": "Power", "colour": power[1]},
+                                                {"name": "Ground", "colour": ground[1]},
+                                                {"name": "Sense", "colour": sense[1]}])
+        self.assertIn(f"Power {power[1]}, Ground {ground[1]}, Sense {sense[1]}", mapped[0]["caption"])
         self.assertTrue(self.near(self.colour_at(mapped, 30, 35), ground[0]), "the ground pour")
         found = self.colour_at(mapped, 35, 19)
-        self.assertFalse(self.near(found, power[0]) or self.near(found, ground[0]), "SIG_A drawn as critical")
+        self.assertFalse(any(self.near(found, colour[0]) for colour in (power, ground, sense)), "SIG_A drawn as critical")
+
+    def test_the_class_map_names_a_net_in_more_than_one_critical_class_and_draws_it_in_the_last_ones_colour(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        mapped = self.images("class map")
+        power, sense = board_views.CLASS_COLOURS[0], board_views.CLASS_COLOURS[2]
+        self.assertTrue(self.near(self.colour_at(mapped, 30, 30), sense[0]), "the +3V3 track, in Power and Sense")
+        self.assertFalse(self.near(self.colour_at(mapped, 30, 30), power[0]))
+        for image in mapped:
+            with self.subTest(image=image["file"]):
+                self.assertEqual(image["shared_nets"], {"+3V3": ["Power", "Sense"]})
+                self.assertIn("nets in more than one critical class, drawn in the colour of the class named last: "
+                              "+3V3 (Power, Sense)", image["caption"])
+        overlay = self.images("net", net="+3V3")
+        self.assertEqual(overlay[0]["classes"], ["Power", "Sense"])
+        self.assertIn("class Power, Sense", overlay[0]["caption"])
 
     # --- Crops ---
 
@@ -537,12 +571,14 @@ class Views(unittest.TestCase):
                       "minimum clearance 0.1 mm", text)
         self.assertIn("CLASS | Power | +3V3", text)
         self.assertIn("CLASS | Ground | GND", text)
+        self.assertIn("CLASS | Sense | +3V3", text)
         self.assertEqual(self.index["resolution"]["min_track_width_mm"], MINIMUM_MM)
         self.assertEqual(self.index["image_limit"], {"long_edge_px": 1568, "patches": 1568, "patch_px": 28})
-        self.assertEqual(self.index["critical_classes"], {"Power": ["+3V3"], "Ground": ["GND"]})
+        self.assertEqual(self.index["critical_classes"], {"Power": ["+3V3"], "Ground": ["GND"], "Sense": ["+3V3"]})
         for image in self.index["images"]:
             fields = {"file", "view", "caption", "size_px"} | ({"direction", "zoom", "render_px"} if image["view"] == "3d" else
-                                                              {"layers", "scale_px_per_mm", "region_mm", "tile"})
+                                                              {"layers", "scale_px_per_mm", "region_mm", "tile",
+                                                               "rule_areas", "absent_layers"})
             self.assertLessEqual(fields, set(image), image["file"])
         overlay = self.images("net", net="GND")[0]
         self.assertEqual((overlay["classes"], overlay["scale_px_per_mm"]), (["Ground"], SCALE))
@@ -551,7 +587,7 @@ class Views(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         facts = {fact["net"]: fact for fact in self.views["facts"]["nets"]}
         self.assertEqual(set(facts), {"+3V3", "GND", "SIG_A", "SIG_B"})
-        self.assertEqual(facts["+3V3"], {"net": "+3V3", "classes": ["Power"], "track_width_mm": {"min": 0.3, "max": 0.5},
+        self.assertEqual(facts["+3V3"], {"net": "+3V3", "classes": ["Power", "Sense"], "track_width_mm": {"min": 0.3, "max": 0.5},
                                          "vias": 1, "zones": []})
         self.assertEqual(facts["GND"], {"net": "GND", "classes": ["Ground"], "track_width_mm": None, "vias": 0,
                                         "zones": [{"layers": ["B.Cu"]}]})
@@ -560,7 +596,7 @@ class Views(unittest.TestCase):
         with open(os.path.join(self.out, "facts.txt"), encoding="utf-8") as handle:
             text = handle.read().splitlines()
         self.assertEqual(text, [
-            "NET +3V3 | class Power | tracks 0.3 to 0.5 mm wide | 1 via | no zones",
+            "NET +3V3 | class Power, Sense | tracks 0.3 to 0.5 mm wide | 1 via | no zones",
             "NET GND | class Ground | no tracks | 0 vias | 1 zone on B.Cu",
             "NET SIG_A | class Default | tracks 0.1 to 0.1 mm wide | 0 vias | no zones",
             "NET SIG_B | class Default | tracks 0.1 to 0.1 mm wide | 0 vias | no zones",
@@ -582,7 +618,7 @@ class Views(unittest.TestCase):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         unseen = {part["reference"]: part["reason"] for part in self.index["not_in_3d"]}
         self.assertEqual(unseen, {"C1": "no model", "C2": "model not found", "D1": "not populated",
-                                  "R1": "model hidden"})
+                                  "J1": "no model", "R1": "model hidden"})
         top = self.images("3d", file="3d-top.png")[0]
         _, _, rows = self.pixels(top)
         across, down = top["render_px"]["width"], top["render_px"]["height"]
@@ -647,6 +683,43 @@ class Views(unittest.TestCase):
         with open(os.path.join(self.out, "index.txt"), encoding="utf-8") as handle:
             self.assertIn("RULE AREA | KO1 | on F.Cu, Dwgs.User, no tracks, vias or copper pour; KiCad does not plot "
                           "it, so the views draw it as a bright orange dashed hatched outline", handle.read())
+
+    def test_a_net_overlay_and_the_class_map_crossing_a_copper_rule_area_show_and_name_it(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        power = self.images("net", net="+3V3")
+        self.assertTrue(self.near(self.colour_at(power, 49, 4), self.layer_colour("F.Cu")), "the +3V3 track")
+        named = ("rule areas, which KiCad does not plot, drawn as bright orange dashed hatched outlines: KO1 on F.Cu, "
+                 "Dwgs.User (no tracks, vias or copper pour)")
+        for view, images in (("net +3V3", power), ("net GND", self.images("net", net="GND")),
+                             ("class map", self.images("class map"))):
+            with self.subTest(view=view):
+                self.assertTrue(self.seen(images, 53, 5, board_views.RULE_AREA[0], reach=0.3), "the hatching")
+                self.assertTrue(self.seen(images, 50, 2.6, board_views.RULE_AREA[0], reach=0.3), "the outline")
+                self.assertFalse(self.seen(images, 46, 4, board_views.RULE_AREA[0], reach=0.3), "outside it")
+                for image in images:
+                    self.assertEqual([area["name"] for area in image["rule_areas"]], ["KO1"], image["file"])
+                    self.assertIn(named, image["caption"], image["file"])
+
+    def test_every_whole_board_view_frames_whatever_its_layers_hold_beyond_the_outline(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        groups = {}
+        for image in self.index["images"]:
+            if image["view"] in ("layer", "assembly", "net", "class map"):
+                groups.setdefault(image["file"].rsplit("-r", 1)[0], []).append(image)
+        for name, images in groups.items():
+            with self.subTest(view=name):
+                # J1's courtyard reaches x = 64.5 mm and the text below the board y = 45.75 mm, past the outline's
+                # 60 by 40 mm.
+                self.assertGreaterEqual(max(i["region_mm"]["x1"] for i in images), 64.5 + board_views.BOARD_MARGIN_MM)
+                self.assertGreaterEqual(max(i["region_mm"]["y1"] for i in images), 45.7 + board_views.BOARD_MARGIN_MM)
+        top = self.images("assembly", side="top")
+        self.assertTrue(self.seen(top, 64.5, 12, self.layer_colour("F.CrtYd")), "J1's courtyard past the edge")
+        self.assertTrue(self.seen(top, 64, 12, self.layer_colour("F.Fab")), "J1's fabrication outline past the edge")
+        self.assertTrue(self.seen(top, 30, 45, self.layer_colour("F.SilkS"), reach=1.0), "the text below the board")
+        silk = [image for image in self.images("layer") if image["layers"][0]["name"] == "F.SilkS"]
+        self.assertTrue(self.seen(silk, 30, 45, self.layer_colour("F.SilkS"), reach=1.0), "the text below the board")
+        courtyard = [image for image in self.images("layer") if image["layers"][0]["name"] == "F.CrtYd"]
+        self.assertTrue(self.seen(courtyard, 64.5, 12, self.layer_colour("F.CrtYd")), "J1's courtyard past the edge")
 
     def test_a_font_kicad_substitutes_is_named_in_every_caption_the_index_and_the_report(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
@@ -754,6 +827,40 @@ class Pieces(unittest.TestCase):
         self.assertEqual(board_views.shared_nets(["Power", "Sense", "Ground"], membership),
                          {"+3V3": ["Power", "Sense"]})
         self.assertEqual(board_views.shared_nets(["Ground"], membership), {})
+
+    def test_the_extent_of_a_plot_holds_everything_drawn_in_it_strokes_included(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        cases = (
+            ('<path style="stroke-width:0.2" d="M 1,2\n3,4\nZ" />', (0.9, 1.9, 3.1, 4.1)),
+            ('<path d="m 1 1 h 2 v 3 l -4 1" />', (-1, 1, 3, 5)),
+            # Over the top of a circle of radius 5 about (5, 0), the arc reaches y = -5.
+            ('<path d="M 0 0 A 5 5 0 0 1 10 0" />', (0, -5, 10, 0)),
+            ('<path d="M 0 0 A 5 5 0 0 0 10 0" />', (0, 0, 10, 5)),
+            ('<circle cx="70" cy="-3" r="2" />', (68, -5, 72, -1)),
+            ('<rect x="-4" y="50" width="2" height="3" />', (-4, 50, -2, 53)),
+            ('<polygon points="5,5 9,1 2,8" />', (2, 1, 9, 8)),
+            ('<g style="stroke-width:1"><line x1="0" y1="0" x2="10" y2="0" /></g>', (-0.5, -0.5, 10.5, 0.5)),
+        )
+        with tempfile.TemporaryDirectory(prefix="board-views-extent-") as folder:
+            path = os.path.join(folder, "layer.svg")
+            for body, expected in cases:
+                with self.subTest(body=body):
+                    with open(path, "w", encoding="utf-8") as handle:
+                        handle.write(f'<svg viewBox="0 0 297 210"><g transform="translate(0 0) scale(1 1)">{body}'
+                                     '<text x="900" y="900" opacity="0">hidden</text></g></svg>')
+                    found = board_views.drawn_extent(path)
+                    for got, want in zip(found, expected):
+                        self.assertAlmostEqual(got, want, places=3)
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write('<svg viewBox="0 0 297 210"></svg>')
+            self.assertIsNone(board_views.drawn_extent(path))
+            for body in ('<g transform="translate(5 0)"><path d="M 0 0 1 1" /></g>', '<path d="M 0 0 L 1" />',
+                         '<path d="3 4" />'):
+                with self.subTest(body=body):
+                    with open(path, "w", encoding="utf-8") as handle:
+                        handle.write(f'<svg viewBox="0 0 297 210">{body}</svg>')
+                    with self.assertRaises(board_views.Unreadable):
+                        board_views.drawn_extent(path)
 
     def test_a_caption_names_at_most_its_share_and_leaves_the_rest_to_the_index(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
@@ -966,7 +1073,9 @@ class Documentation(unittest.TestCase):
         section = method[method.index("## Layout review views"):]
         for view in ("layer-<layer>", "assembly-top", "net-<net>", "classes", "crop-<reference>", "3d-angled"):
             self.assertIn(view, section)
-        for fact in ("rule area", "cannot find", "zoomed out", "not carried"):
+        for fact in ("rule area", "cannot find", "zoomed out", "not carried", "reaching past the outline",
+                     "every two-dimensional view that shows one of its layers", "do not draw rule areas",
+                     "pcb export glb"):
             with self.subTest(fact=fact):
                 self.assertIn(fact, readme)
                 self.assertIn(fact, section)
