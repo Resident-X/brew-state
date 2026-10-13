@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: What each bought module in the earlier design supplied without being specified is stated as a constraint on whatever replaces it
 status: active
-version: 1
-text: |-
-  For every bought module in the earlier design, states the isolation, output behaviour, input thresholds and default states it provided implicitly, so a circuit designed to replace it is held to them.
+version: 2
+text: |
+  For every bought module the earlier controller design specified, states the isolation, output behaviour, input thresholds and default states it would have provided without being specified, so a circuit designed in its place is held to them. The earlier design is the working design in the controller design folder: a paper direction whose modules were never bought, so no part is in hand to measure and each property is read from the module's datasheet or schematic. Lands as a new section of the controller boards' design-constraints record, its pending marks joining that record's table of pending marks.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C4
     type: derives-from
@@ -15,6 +15,10 @@ links:
     type: targets
   - target: DEC-DEVICE-RETENTION-BOUNDARY
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, fresh context)
+  fingerprint: 15fabd62432d5151a7855a1c8d4280e66b189a267c65f3c78d1bf3ddd7e0d18c
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD.C2
     class: new-condition

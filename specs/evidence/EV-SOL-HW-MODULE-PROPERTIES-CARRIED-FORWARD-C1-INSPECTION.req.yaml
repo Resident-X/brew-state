@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T07:51:34.02914Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-design-constraints.md § Carried-forward module properties: each bought module''s property rows inspected against the vendor sources; the RBdimmer firing row now attributes the 100 us pulse, 100 us minimum delay and 3000 us zero-cross debounce to rbdimmerESP32 (src/rbdimmerESP32.h, API.md, read 2026-10-13) and the one/two timer-tick pulse to legacy RBDDimmer (src/, read 2026-10-13), both re-read at source in this round'
+  artifact_version: 33c935e39666c74e6548fb78313d80d976bc348a
+attested_by: crun-47c636f5202d571c
+links:
+  - target: SOL-HW-MODULE-PROPERTIES-CARRIED-FORWARD.C1
+    type: satisfies
