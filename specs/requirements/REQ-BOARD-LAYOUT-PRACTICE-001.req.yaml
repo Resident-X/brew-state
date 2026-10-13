@@ -1,12 +1,12 @@
 id: REQ-BOARD-LAYOUT-PRACTICE-001
 type: requirement
 category: constraint
-title: Boards are laid out to published practice that an experienced electrical engineer would accept
+title: Boards are laid out to published layout practice
 status: active
 priority: must
 version: 1
 text: |
-  Every board the project has made is laid out to established, published layout practice, to the standard an experienced electrical engineer reviewing it would accept. The board is judged against that practice item by item before it is ordered, each item traceable to the published source it comes from, so the judgement rests on the practice and not on the reviewer's opinion.
+  Every board the project makes is laid out to established, published layout practice, to the standard an experienced electrical engineer reviewing it would accept. The board is judged against that practice item by item before it is ordered, each item traceable to the published source it comes from, so the judgement rests on the practice and not on the reviewer's opinion.
 
   Scope is the layout of boards the project designs: placement, partitioning, copper, grounding, separation, and what manufacture and assembly need. Whether a circuit's values are right is outside it.
 rationale: |
@@ -24,5 +24,5 @@ links:
     type: derives-from
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
     type: derives-from
-  - target: PER-BUILDER-001.C4
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
     type: derives-from

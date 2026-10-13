@@ -30,3 +30,5 @@ links:
     type: targets
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
     type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C4
+    type: targets

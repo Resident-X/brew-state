@@ -11,6 +11,10 @@ links:
     type: derives-from
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
     type: targets
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS
+    type: depends-on
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C4
+    type: targets
 design_question_answers:
   - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
     class: new-condition
