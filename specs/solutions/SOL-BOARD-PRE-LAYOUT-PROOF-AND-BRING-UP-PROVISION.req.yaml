@@ -3,9 +3,23 @@ type: deliverable
 category: solution
 title: Value-critical circuits are proven by simulation or calculation before layout, and every board is laid out for bring-up and a second spin
 status: active
-version: 1
-text: |-
+version: 2
+text: |
   The method's pre-layout and design-for-bring-up steps: name each circuit whose values decide whether it works, state the figure it must meet and show by simulation or calculation that it meets it before layout; and give every rail and key signal a test point, every rail an isolating link, and first power a means of current limiting.
+
+  Placement: extends the board design method file with two new sections placed before its rules-before-routing section, in this order: proving value-critical circuits before layout, then designing for bring-up and a second spin (both are schematic work, so both precede placement and routing). Each section follows the file's existing shape: numbered steps, a per-board record file in the board's own folder beside its KiCad project, a "fails this step" rule with its remedy, and a closing out-of-scope line. It reuses the rules step's list of figure sources (adding the parts' datasheets) and the pre-order check's schematic-parity check, which already guarantees that a test point or link present in the schematic is present on the board. No new tooling check is added: the criteria are verified by analysis and inspection of the committed records, and the rails of a board are not declared anywhere a tool could read. The provisions are a method requirement, not published layout practice, so they do not go into the layout practice catalogue.
+
+  Settled decisions:
+  - Circuit proof record: circuit-proof.md in the board's folder, one row per value-critical circuit with what its values decide, the figure, the figure's source, how it is shown (a committed simulation input or the arithmetic), the conditions covered, the result, and whether it is met. It is committed before the first placement commit, so the order is checkable from git history.
+  - What is value-critical: a circuit that works or fails on its component values, not only on its connections. The method's examples are generic: a sensing front end's noise and settling, a zero-crossing detector's delay, a drive stage's margin at worst-case supply, and a conductor checked against the energy its protective device lets through.
+  - Figures come from the machine's constraints record or a part's datasheet; "typical" or a tool default is not a source. A figure the source does not yet bound fails the step until the source is amended; the board's record never invents one.
+  - Conditions: each result states its conditions and covers the worst of the declared supply span and the parts' tolerances.
+  - Tools: a calculation with the arithmetic shown, a short Python script, or ngspice (free, open, and the simulator KiCad embeds) run in batch mode on a netlist exported from the schematic. The method names the exact commands and the version they were exercised with, following the tools table's existing convention; the route is exercised once on a small throwaway circuit while writing the method.
+  - Bring-up provision record: bring-up-provision.md in the board's folder, one row per rail and per key signal naming its test point by reference designator and, for a rail, its isolating link, plus a row stating the current-limit means for first power. A rail is every supply net, including derived and reference rails.
+  - What counts as a key signal: a signal bring-up must observe to tell whether a block works, such as each sensing front end's output, each drive stage's control input, the controller's reset, clock and programming interface, and any safety interlock. Which signals are key on a particular board stays that board's own design work.
+  - Current limiting: carried on the board, or needing only what a builder without a laboratory has, such as a series resistor or lamp fitted in a link position.
+  - Scope: the steps apply to every board that will be made and to throwaway designs that demonstrate the method, not to designs that exist only to prove the tooling; no existing design is brought into compliance by this work.
+  - The method text carries no graph identifier and no figure, part or board shape from this machine.
 links:
   - target: DEL-HW-DESIGN-METHOD.C7
     type: derives-from
