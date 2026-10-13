@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-VERIFICATION.C7
+type: criterion
+title: Every change to a board design is checked in its build round and again nightly on main
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |-
+  The check runs in the build round of every change that touches a board design, anything a design reads, or the check itself, and in the nightly full verification of main, so a board reaches the point of ordering already checked rather than only when someone remembers to run it.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION
+    type: criterion-of

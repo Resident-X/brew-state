@@ -3,9 +3,20 @@ type: deliverable
 category: solution
 title: Every board design in the repository must pass KiCad's own electrical, layout and separation rule checks from one task-runner command, each check proven on a throwaway design
 status: active
-version: 1
+version: 2
 text: |
   One task-runner command finds every board design in the repository and runs KiCad's own command-line electrical and layout rule checks on it. The checks cover the separation basis the design declares and agreement between layout and schematic. Any violation fails the command, and each check is shown to fail on a fault seeded for it in a throwaway design that is never ordered. The separation check holds each design to the signed separation basis, not to whatever figure the design declares.
+
+  Placement, settled before build. The check is a new seam for board designs, kept apart from the firmware gate so that neither needs the other's tools:
+  - An hw section in the project's task runner, alongside the firmware fw section, with one command that runs the whole check and an on-demand command that runs the seeded-fault proof.
+  - The path to KiCad's command-line tool is an overridable task-runner variable, KICAD_CLI, in the way the firmware tasks locate their build tool, because the tool is often installed off the search path. Its default is the bare tool name found on the search path; hardware/README.md gives the usual install location on each common operating system, and the missing-tool error says how to set the variable.
+  - The checking tool and its tests live in hardware/tools/.
+  - The throwaway design and its synthetic basis record live in hardware/proof/.
+  - The seeded-fault proof introduces each fault into a copy of the throwaway design in a temporary directory outside the repository, never into the tree itself, so the committed tree stays clean and the every-design check stays green; this differs from the firmware mutation tool, which edits its sources in place and restores them.
+  - The required tools are KiCad at version 10.0 or newer, the version chosen for this repository's board files, which older versions cannot open, and Python 3.9 or newer with PyYAML 5.1 or newer for reading the basis record. Each is named, with its minimum, in the task's own description and in a hardware/README.md, and a missing one stops the command naming it, as the firmware mutation sweep already does for PyYAML.
+  - The check reads designs and rules from files only. Konnect and any open editor session play no part in it.
+
+  The separation basis record, the Mains net class, the MAINS and NOT_FOR_MANUFACTURE project variables and the hardware tree layout follow DEC-BOARD-SEPARATION-BASIS-RECORD.
 links:
   - target: DEL-HW-DESIGN-VERIFICATION.C3
     type: derives-from
@@ -17,6 +28,12 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 independent brief reviewer (crun-7e5b52bff2dc3d28)
+  fingerprint: f8ecaba9721e3162006eb8d5c121df87ed4465c97c96f2e1307d40212796f3f2
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-BOARD-RULE-CHECK-GATE.C1
     class: whole-set

@@ -2,11 +2,11 @@ id: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
 type: criterion
 title: Every design rule and net class is written with its figure and source and confirmed in effect before routing
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |-
-  The method requires, before any track is routed, that every design rule and every net class is written down carrying the figure it enforces and where that figure comes from (the machine's constraints record, a requirement, or the manufacturer's stated limits), and that each is then confirmed in effect on the open board by reading it back from the board rather than assumed from having been written to the project. A rule with no stated source, or a net class written to the project but not read back from the board, fails the step. The step is stated so a designer or an agent session with no prior context carries it out from the method's text alone, without reference to this project's graph identifiers or its author's context. Out of scope: the figures themselves, which belong to a machine's constraints record, and the automated pre-order check that later enforces these rules.
+text: |
+  The method requires, before any track is routed, that every design rule and every net class is written down carrying the figure it enforces and where that figure comes from (the machine's constraints record, a requirement, or the manufacturer's stated limits), and that each is then confirmed in effect on the open board by reading it back from the board rather than assumed from having been written to the project. Among them, every board declares whether it carries mains through its MAINS project variable, set to present or none; a board that declares present assigns every mains-referenced net to the Mains net class and writes one custom layout rule holding both the clearance and the creepage between a Mains-class item and any item outside that class, with no narrowing by layer or area, with the separation basis record the board is held to as their stated source. A rule with no stated source, a net class written to the project but not read back from the board, or a board with no mains declaration, fails the step. The step is stated so a designer or an agent session with no prior context carries it out from the method's text alone, without reference to this project's graph identifiers or its author's context. Out of scope: the figures themselves, which belong to a machine's constraints record and its separation basis record, and the automated pre-order check that later enforces these rules.
 links:
   - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING
     type: criterion-of

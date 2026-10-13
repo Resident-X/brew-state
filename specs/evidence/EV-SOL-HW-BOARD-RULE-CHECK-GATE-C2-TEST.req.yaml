@@ -1,0 +1,20 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C2-TEST
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.484175Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_custom_rule_set_to_ignore_or_exclusion_fails,test_exclusions_in_the_project_file_each_fail,test_ignored_checks_kicad_reports_each_fail,test_a_rules_file_git_does_not_track_fails_and_is_not_read,test_two_rules_of_one_name_fail_once_naming_it
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+text: |
+  The cited tests pass at 5edf898: excluded violations, project exclusions, every check KiCad lists as ignored (its own defaults included), and custom rules at severity ignore or exclusion each fail the design, and a design rule dressed as the check's own still has its findings reported.
+
+  Known shortfall against this criterion, found by the final review at 5edf898 and not yet closed: two settings that make KiCad stop reporting a finding are not yet refused. Lowering a cell of the project's ERC pin-conflict map (erc.pin_map) below KiCad's default hides pin_to_pin violations without KiCad listing the check as ignored; a footprint's exemption attributes (allow_missing_courtyard, and presumably allow_soldermask_bridges) stop KiCad reporting the finding they name. Separately, a file the check reads itself that is not valid UTF-8 makes it stop with a traceback rather than a named failure; it still exits non-zero, so the order is still blocked. The separation guard is unaffected. Closing these is owed as a maintenance item tracing to this criterion.
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C2
+    type: satisfies

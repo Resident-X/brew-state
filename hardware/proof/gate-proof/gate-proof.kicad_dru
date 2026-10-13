@@ -1,0 +1,8 @@
+(version 1)
+# Separation between mains-referenced and low-voltage copper, taken from the
+# synthetic separation-basis.yaml beside this design. The figures are the
+# record's own, so the design declares exactly what it is held to.
+(rule "Mains separation"
+	(condition "A.hasNetclass('Mains') && !B.hasNetclass('Mains')")
+	(constraint clearance (min 3mm))
+	(constraint creepage (min 4mm)))

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C2-TEST-2
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.545366Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_kicad_violations_parity_exclusions_and_ignored_checks_each_fail,test_a_rule_written_to_look_like_the_checks_own_has_its_findings_reported,test_a_stale_fill_closer_than_the_signed_figure_does_not_fail_a_design_whose_refill_is_clean,test_an_unfilled_zone_is_filled_before_it_is_judged
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C2
+    type: satisfies

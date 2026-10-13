@@ -48,3 +48,5 @@ links:
     type: targets
   - target: REQ-COST-DISCIPLINE-001.C6
     type: targets
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
+    type: depends-on

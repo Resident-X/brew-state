@@ -2,11 +2,11 @@ id: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
 type: criterion
 title: Every net in a critical class is routed to its stated rules and locked before any automated routing runs
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |-
-  The method names the critical classes as including at least power, decoupling, ground, mains and sensing paths, and requires every net in every critical class to be routed deliberately to its stated rules and locked before any automated routing is run. Automated routing is run only through KiCad's exporter, the external router from its command line and KiCad's importer, places only what remains unrouted, and cannot move a locked track; a locked track changes only by a deliberate re-route that is itself locked again. The router's own report of no violations is not accepted as evidence; the board's own electrical and layout rule checks are run after import. A board on which any critical-class net was placed by the automated router fails the step. Out of scope: judging layout quality, which is the layout review step, and choosing which nets of a particular board are critical beyond the named classes, which is that board's own design work.
+text: |
+  The method names the critical classes as including at least power, decoupling, ground, mains and sensing paths, and requires every net in every critical class to be routed deliberately to its stated rules and locked before any automated routing is run. Automated routing is run only through KiCad's exporter, the external router from its command line and KiCad's importer, places only what remains unrouted, and cannot move a locked track; a locked track changes only by a deliberate re-route that is itself locked again. The board is closed in any editor holding it before export and reopened after import, so no editor works on a stale copy. Every track and via on a critical-class net is recorded before export by its net, layer, end points and width (a via by its position, size and layers). After import, each recorded item must still be present, locked and unchanged in those properties, and no critical-class net may carry a track or via that was not recorded; a missing, unlocked, altered or added one fails the step whatever the router or importer reported. The method names where a reader who is not the author obtains the external router and the runtime it needs. The router's own report of no violations is not accepted as evidence; the board's own electrical and layout rule checks are run after import. A board on which any critical-class net was placed by the automated router fails the step. Out of scope: judging layout quality, which is the layout review step, and choosing which nets of a particular board are critical beyond the named classes, which is that board's own design work.
 links:
   - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING
     type: criterion-of

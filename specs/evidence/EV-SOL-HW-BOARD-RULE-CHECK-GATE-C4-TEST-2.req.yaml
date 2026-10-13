@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C4-TEST-2
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:20.793376Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_the_task_runs_the_whole_check_on_the_repository,test_the_task_stops_naming_a_missing_kicad_rather_than_passing,test_kicad_run_as_the_user_finds_the_library_and_the_check_does_not
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C4
+    type: satisfies

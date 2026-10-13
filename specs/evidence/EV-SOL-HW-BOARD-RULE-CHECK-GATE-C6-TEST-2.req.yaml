@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-RULE-CHECK-GATE-C6-TEST-2
+type: evidence
+title: test evidence for SOL-HW-BOARD-RULE-CHECK-GATE.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T02:24:21.040877Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_each_design_gets_a_verdict_each_violation_one_line_and_the_exit_status_matches,test_a_clean_tree_reports_every_design_passing_and_exits_zero,test_the_first_rejected_rule_is_named_wherever_it_sits
+  artifact_version: 5edf89883c12cf0e420d24f3f3d92c3fbb0a573a
+attested_by: crun-0ae134b0477ea006
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C6
+    type: satisfies
