@@ -278,8 +278,9 @@ remote-tracking copy, not fetched. A stale one can mis-measure a branch, so it
 is kept rare by branching from a freshly fetched `main` rather than checked for.
 That set of paths is declared once, as
 `EMULATION_READS` in [`tools/round_gate.py`](tools/round_gate.py). When there is
-no remote-tracking `origin/main`, the base cannot be resolved or the changed
-paths or lines cannot be read, the gate runs emulation rather than skipping it. The
+no remote-tracking `origin/main`, the base cannot be resolved, the changed
+paths or lines cannot be read, or the lines of a changed C source or header
+cannot, the gate runs emulation rather than skipping it. The
 selection saves time; it is not a trust boundary against whoever controls the
 tree it runs in, and a change that escapes it meets the reviews before it
 merges and the nightly complete verification after. A branch that edits only
@@ -293,7 +294,10 @@ on the lines the branch changes in the sweep's population, and never the full
 sweep. A changed line is a line on the new side of a zero-context diff from the
 same merge-base to the working tree, and every line of a new file not yet
 committed; a file with any hunk counts as changed, one that only deletes lines
-or is deleted outright included. Which files are in the population is the
+or is deleted outright included. The diff is asked for in terms no git setting
+or environment of the user's or the repository's can widen, move or hide a hunk
+under, and a line the mutation tool's own changed-lines mode takes in beyond
+those is run but not drawn. Which files are in the population is the
 sweep's own derivation from the tree, as for the full sweep. Everything a
 changed file now carries is listed without running it, and only the mutants on
 changed lines are run, so a one-line change does not run the hundreds of
@@ -308,7 +312,9 @@ LLVM 19 and the matching Mull package, and fails the round on a host without
 them. When the gate cannot tell which lines changed, the host and emulation
 tiers still run, and the round then fails, naming the cause and what to do: it
 cannot clear the change as touching no plant line, and it does not run the full
-sweep instead.
+sweep instead. A file whose own lines alone cannot be read fails the round that
+way only when it is in the sweep's population; a document no sweep draws from
+going unread does not.
 
 It stops at the first failing tier and says what was not reached, the sweep
 included, and whether the emulation tier would have run; otherwise its last
@@ -382,6 +388,10 @@ moved by a given branch:
 task fw:sweep                     # alter every comparison and operator, require a test to notice
 task fw:sweep -- --survivors-only # list what survived without judging it
 ```
+
+The round's restricted sweep refuses `--survivors-only`, and every other flag
+of the full sweep's own, beside the changed lines it is handed, so no flag
+forwarded to it turns a run that judged nothing into a pass.
 
 Where `fw:mutate` breaks named properties one at a time, this generates the
 class those names are drawn from. Every comparison, arithmetic operator and

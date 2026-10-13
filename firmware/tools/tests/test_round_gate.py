@@ -676,6 +676,70 @@ class TheChangedLinesAreMeasuredTheWayThePathsAre(unittest.TestCase):
         self.assertEqual(self.repository.root, os.path.realpath(change.root))
         self.assertEqual({PLANT: [5]}, change.lines)
 
+    def measured_under(self, settings: dict[str, str], attributes: str = "",
+                       environment: dict[str, str] | None = None) -> dict:
+        """The lines measured with the repository configured and the environment set as given."""
+        for key, value in settings.items():
+            self.repository.git("config", key, value)
+        if attributes:
+            self.repository.write(".git/info/attributes", attributes)
+        with mock.patch.dict(os.environ, environment or {}):
+            return self.lines()
+
+    def test_no_setting_of_the_repository_or_environment_reshapes_the_hunks(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Lines 2 and 5 change and lines 3 and 4 between them do not. Each
+        # setting below, left to itself, joins the two hunks, widens them with
+        # context, hides them or shifts them, and would charge the branch with
+        # lines it never changed or drop the ones it did.
+        cases = {
+            "diff.interHunkContext": ({"diff.interHunkContext": "5"}, "", None),
+            "GIT_DIFF_OPTS": ({}, "", {"GIT_DIFF_OPTS": "-u3"}),
+            "a -diff attribute": ({}, "*.c -diff\n", None),
+            "a textconv driver": (
+                {"diff.shift.textconv": "sed 1d"}, "*.c diff=shift\n", None
+            ),
+            "color.ui": ({"color.ui": "always"}, "", None),
+            "diff.external": ({"diff.external": "true"}, "", None),
+            "GIT_EXTERNAL_DIFF": ({}, "", {"GIT_EXTERNAL_DIFF": "true"}),
+            "diff.relative": ({"diff.relative": "true"}, "", None),
+            "diff.context": ({"diff.context": "4"}, "", None),
+        }
+        for name, (settings, attributes, environment) in cases.items():
+            with self.subTest(setting=name):
+                repository = SyntheticRepository()
+                self.addCleanup(repository.cleanup)
+                self.repository = repository
+                repository.write(PLANT, "one\nTWO\nthree\nfour\nFIVE\n")
+                self.assertEqual({PLANT: [2, 5]}, self.measured_under(settings, attributes, environment))
+
+    def test_the_diff_algorithm_and_hunk_placement_are_gits_defaults_whatever_is_configured(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Each pair is an edit two diffs of the same change attribute to
+        # different lines: the configured one would charge the branch with
+        # lines git's default does not.
+        cases = {
+            "diff.algorithm": (
+                {"diff.algorithm": "histogram"},
+                "b\n{\nb\n{\nb\n", "{\nb\n{\nb\na\nb\n{\nb\n", [1, 5, 6],
+            ),
+            "diff.indentHeuristic": (
+                {"diff.indentHeuristic": "false"},
+                "}\n}\n  b\n\nf {\n  a\n\n", "}\n}\n}\n  b\n\nf {\n  a\n\n", [2],
+            ),
+        }
+        for name, (settings, old, new, expected) in cases.items():
+            with self.subTest(setting=name):
+                repository = SyntheticRepository()
+                self.addCleanup(repository.cleanup)
+                self.repository = repository
+                repository.write(PLANT, old)
+                repository.commit("old")
+                repository.track("HEAD")
+                repository.write(PLANT, new)
+                self.assertEqual({PLANT: expected}, self.lines())
+                self.assertEqual({PLANT: expected}, self.measured_under(settings))
+
     def test_no_remote_tracking_main_leaves_the_lines_unknown_and_says_why(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         repository = SyntheticRepository(with_tracking=False)
@@ -693,19 +757,57 @@ class TheChangedLinesAreMeasuredTheWayThePathsAre(unittest.TestCase):
         self.assertTrue(chosen.run_emulation)
         self.assertIn("could not tell what changed at HEAD head: unreadable", chosen.reason)
 
-    def test_an_unreadable_new_file_leaves_the_lines_unknown_while_the_paths_are_known(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+    def lock(self, path: str) -> None:
+        """Leave a file in the working tree that nothing can read."""
         if os.geteuid() == 0:
             self.skipTest("a superuser reads a file whatever its mode")
-        locked = "firmware/src/plant/common/locked.c"
-        self.repository.write(locked, "a\n")
-        full = os.path.join(self.repository.root, locked)
+        full = os.path.join(self.repository.root, path)
         os.chmod(full, 0)
         self.addCleanup(os.chmod, full, 0o644)
+
+    def test_an_unreadable_new_file_is_set_apart_while_every_other_line_is_told(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        locked = "firmware/src/plant/common/locked.c"
+        self.repository.write(locked, "a\n")
+        self.lock(locked)
+        self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
         change = round_gate.changed(self.repository.root)
-        self.assertEqual([locked], change.paths)
-        self.assertIsNone(change.lines)
-        self.assertIn("could not be read", change.lines_unknown_because)
+        self.assertEqual(sorted([locked, PLANT]), change.paths)
+        self.assertEqual({PLANT: [2]}, change.lines)
+        self.assertEqual([locked], list(change.unreadable))
+        self.assertIn("could not be read", change.unreadable[locked])
+        self.assertEqual("", change.lines_unknown_because)
+
+    def test_an_unreadable_source_runs_emulation_and_says_whose_lines_are_untold(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Whether the source is in the sweep's population is the sweep's to
+        # say; until it does, a line of the population may be untold, and the
+        # gate runs emulation as for any change it cannot tell.
+        change = round_gate.Change(
+            "head", "base", ["hardware/tools/locked.c"], lines={},
+            unreadable={"hardware/tools/locked.c": "permission denied"},
+        )
+        chosen = round_gate.scope(change)
+        self.assertTrue(chosen.run_emulation)
+        self.assertIn("could not tell which lines 1 changed source(s) change", chosen.reason)
+        self.assertEqual(["hardware/tools/locked.c: permission denied"], chosen.judged)
+
+    def test_an_unreadable_document_leaves_emulation_chosen_by_its_path(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The sweep draws from no document, so a document going unread leaves no
+        # line of its population untold.
+        locked = "docs/machine/locked.md"
+        self.repository.write(locked, "a\n")
+        self.lock(locked)
+        chosen = self.repository.scope()
+        self.assertFalse(chosen.run_emulation, chosen.reason)
+
+    def test_the_gate_and_the_sweep_agree_on_what_kind_of_file_is_swept(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.assertTrue(round_gate.could_be_swept("firmware/src/plant/common/plant_step.c"))
+        self.assertTrue(round_gate.could_be_swept("firmware/src/plant/common/plant_step.h"))
+        self.assertFalse(round_gate.could_be_swept("firmware/src/plant/common/notes.md"))
+        self.assertFalse(round_gate.could_be_swept("firmware/src/plant/common/plant_step.cpp"))
 
 
 def account(state: str, outcome: str, **fields) -> dict:
@@ -925,29 +1027,56 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.assertIn("neither a restricted nor the full sweep", closing)
         self.assertIn("both ran and passed", closing)
 
-    def test_lines_that_cannot_be_read_run_both_tiers_then_fail_the_round(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
-        # The paths are known and touch nothing emulation reads, but the change
-        # is one the gate cannot tell, so emulation runs as it does for any such
-        # change, and only then does the sweep step fail the round.
+    def lock(self, path: str) -> None:
         if os.geteuid() == 0:
             self.skipTest("a superuser reads a file whatever its mode")
-        locked = "docs/machine/locked.md"
-        self.repository.write(locked, "a\n")
-        full = os.path.join(self.repository.root, locked)
+        full = os.path.join(self.repository.root, path)
         os.chmod(full, 0)
         self.addCleanup(os.chmod, full, 0o644)
-        result, asked, runner = self.gate()
+
+    def test_lines_of_a_source_that_cannot_be_read_run_both_tiers_then_hand_it_to_the_sweep(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The paths are known and touch nothing emulation reads, but a source
+        # whose lines are untold may be in the population, so emulation runs as
+        # it does for any change the gate cannot tell; the sweep, whose
+        # population it is, is handed the source as unread and fails the round.
+        locked = "hardware/tools/locked.c"
+        self.repository.write(locked, "a\n")
+        self.lock(locked)
+        result, asked, runner = self.gate(sweep_status=TASK_FAILED, sweep_account=account(
+            "could-not-run", "could-not-look", lines_unknown=True,
+            detail="the round could not tell which lines 1 population file(s) change. Make each "
+            "of those files one git can read and diff, and run the round again.",
+        ))
         self.assertEqual(1, result.returncode, result.stdout)
-        self.assertEqual(HOST + EMULATION, asked)
-        self.assertIsNone(runner.handed_lines())
-        self.assertIn("emulation tier WILL RUN, because could not tell what changed", result.stdout)
+        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
+        handed = runner.handed_lines()
+        self.assertEqual({}, handed["files"])
+        self.assertEqual([locked], list(handed["unreadable"]))
+        self.assertIn("emulation tier WILL RUN, because could not tell which lines", result.stdout)
         closing = self.closing(result)
-        self.assertIn("could not tell which plant lines the branch changes", closing)
-        self.assertIn("could not be read", closing)
+        self.assertIn(
+            "ROUND GATE FAILED: the mutation sweep COULD NOT RUN (exit status "
+            f"{TASK_FAILED}), because the round could not tell which plant lines the branch "
+            "changes",
+            closing,
+        )
+        self.assertIn("run the round again", closing)
         self.assertIn("both ran and passed", closing)
-        self.assertIn("The emulation tier ran because", closing)
-        self.assertNotIn("SKIPPED", closing)
+        self.assertNotIn("FOUND A PROBLEM", closing)
+
+    def test_a_document_that_cannot_be_read_neither_runs_emulation_nor_fails_the_round(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # No sweep draws from a document, so its lines going unread leaves no
+        # line of the population untold.
+        locked = "docs/machine/locked.md"
+        self.repository.write(locked, "a\n")
+        self.lock(locked)
+        result, asked, runner = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout)
+        self.assertEqual(HOST + [SWEEP], asked)
+        self.assertEqual([locked], list(runner.handed_lines()["unreadable"]))
+        self.assertIn("ROUND GATE PASSED", self.closing(result))
 
     def test_the_sweep_is_told_through_the_environment_that_the_round_asked_for_it(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes

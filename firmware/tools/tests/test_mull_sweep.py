@@ -2580,8 +2580,10 @@ class ScopedTools(FakeTools):
     `ignore_scope` reports every source, as a scope that never reached the
     compiler would; `uncompiled` names sources the build leaves no object for
     and the runner reports nothing from; `diff_misses` names lines the
-    changed-lines mode leaves out although they changed. `ran` counts the
-    mutants each run that was not a dry run executed.
+    changed-lines mode leaves out although they changed, and `diff_misses_in`
+    the same for one environment's build alone. The changed-lines mode reads
+    the repository's own diff settings, as a tool computing its own diff may.
+    `ran` counts the mutants each run that was not a dry run executed.
     """
 
     def __init__(self, project: str):
@@ -2589,6 +2591,8 @@ class ScopedTools(FakeTools):
         self.ignore_scope = False
         self.uncompiled: set[str] = set()
         self.diff_misses: set[tuple[str, int]] = set()
+        self.diff_misses_in: dict[str, set[tuple[str, int]]] = {}
+        self.environment = ""
         self.ran: list[int] = []
 
     def sources(self) -> list[str]:
@@ -2600,6 +2604,7 @@ class ScopedTools(FakeTools):
     def run(self, command, cwd=None, env=None, check=False, capture_output=False, text=False):
         if command[0] == "pio":
             result = super().run(command, cwd, env, check, capture_output, text)
+            self.environment = command[command.index("-e") + 1]
             if "--without-testing" in command:
                 environment = command[command.index("-e") + 1]
                 for source in self.sources():
@@ -2622,6 +2627,7 @@ class ScopedTools(FakeTools):
         scope = mull_sweep.load_yaml(env["MULL_CONFIG"])
         includes, excludes = scope["includePaths"] or [], scope["excludePaths"] or []
         files = {}
+        misses = self.diff_misses | self.diff_misses_in.get(self.environment, set())
         for source in self.sources():
             if not self.ignore_scope and not mull_sweep.in_scope(source, includes, excludes):
                 continue
@@ -2641,7 +2647,7 @@ class ScopedTools(FakeTools):
                 }
                 for number, line in enumerate(lines, start=1)
                 if instrumented is None
-                or (number in instrumented and (relative, number) not in self.diff_misses)
+                or (number in instrumented and (relative, number) not in misses)
                 for column in [index + 1 for index, character in enumerate(line) if character == "+"]
             ]
             if mutants:
@@ -2908,9 +2914,11 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
             name for name in re.findall(r"\[(\S+)\]", full)
             if (mull_sweep.judged_source(name), int(name.split(":")[-2])) in changed
         )
-        status, output, _ = self.restricted(None, "--survivors-only")
-        self.assertEqual(0, status, output)
-        self.assertEqual(expected, sorted(re.findall(r"\[(\S+)\]", output)))
+        # None of them is judged, so the restricted run names every survivor it
+        # draws as unreviewed.
+        status, output, _ = self.restricted()
+        self.assertEqual(mull_sweep.FOUND_THE_PROBLEM, status, output)
+        self.assertEqual(expected, sorted(re.findall(r"^    (cxx_\S+)$", output, re.MULTILINE)))
         self.assertEqual(3, len(expected))
 
     def test_every_line_of_a_new_file_not_yet_committed_is_drawn(self):
@@ -3117,6 +3125,99 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
         self.assertEqual(("could-not-run", "could-not-look"), (account["state"], account["outcome"]))
         self.assertIn("no mutant came back from src/plant/alpha", account["detail"])
+        self.assertIn("no mutation build compiled a source there", account["detail"])
+
+    def test_a_changed_directory_whose_compiled_sources_carry_no_operator_passes(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Nothing comes back from the directory because nothing in it carries
+        # an operator, and its source was compiled: its population is empty, not
+        # missing.
+        self.write(STRUCTURE, "float a(float x) { return x; }\n")
+        self.judge({JUDGED_SHARED: "equivalent"})
+        self.commit("no operator in the structure")
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        self.write("src/plant/alpha/extra.h", "#define EXTRA 1\n")
+        status, output, account = self.restricted()
+        self.assertEqual(0, status, output)
+        self.assertEqual(("ran", "passed", 0), (account["state"], account["outcome"], account["mutants"]))
+
+    def test_a_mutant_one_environment_owes_and_only_another_ran_could_not_be_looked_at(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Both environments build the changed file; the second's run leaves
+        # out the changed line. The first ran that mutant, but against its own
+        # tests, so the second's tests never met it.
+        self.tree.declare([
+            ("native_alpha_mutation", mutation_environment("alpha", "test_alpha")),
+            ("native_alpha_again_mutation", mutation_environment("alpha", "test_alpha_again")),
+        ])
+        self.tools.diff_misses_in = {"native_alpha_again_mutation": {(STRUCTURE, 2)}}
+        self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
+        status, output, account = self.restricted()
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+        self.assertEqual(("could-not-run", "could-not-look"), (account["state"], account["outcome"]))
+        self.assertIn(
+            f"{mutant(STRUCTURE, 2, COLUMN)} in native_alpha_again_mutation", account["detail"]
+        )
+        self.assertNotIn("in native_alpha_mutation", account["detail"])
+
+    def test_lines_the_mutation_tools_own_diff_widens_to_are_run_but_not_drawn(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The repository joins hunks with context. The changed-lines mode reads
+        # that setting and runs line 5 between the two changed lines too, where
+        # a survivor nobody has judged sits; the round's own measure does not,
+        # so that survivor is not drawn and the branch is not charged with it.
+        self.git("config", "diff.interHunkContext", "5")
+        self.write(STRUCTURE, STRUCTURE_SOURCE.replace("float d(float x) { return x; }",
+                                                       "float d(float x) { return x + 4.0f; }")
+                   + "float f(float x) { return x * 6.0f; }\n")
+        status, output, account = self.restricted()
+        self.assertEqual(0, status, output)
+        self.assertEqual([2], self.tools.ran)
+        self.assertEqual(1, account["mutants"])
+        self.assertNotIn(mutant(STRUCTURE, 5, COLUMN), output)
+
+    def test_a_population_file_whose_lines_could_not_be_read_runs_nothing(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The mutants this run owes cannot be told, so it draws none rather
+        # than too few, and does not look for the toolchain.
+        self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
+        self.toolchain_error = "no toolchain on this host"
+        status, output, account = self.with_unreadable({
+            "src/plant/alpha/locked.c": "the new file src/plant/alpha/locked.c could not be read "
+            "(permission denied)",
+        })
+        self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+        self.assertEqual(("could-not-run", "could-not-look"), (account["state"], account["outcome"]))
+        self.assertTrue(account["lines_unknown"])
+        self.assertIn("src/plant/alpha/locked.c", account["detail"])
+        self.assertIn("permission denied", account["detail"])
+        self.assertIn("neither a restricted nor the full sweep", account["detail"])
+        self.assertIn("run the round again", account["detail"])
+        self.assertEqual([], self.tools.commands)
+        self.assertEqual([], self.resolved)
+
+    def test_a_path_outside_the_population_whose_lines_could_not_be_read_is_no_obstacle(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
+        status, output, account = self.with_unreadable({
+            "README.md": "the new file README.md could not be read (permission denied)",
+            "src/control/locked.c": "the new file src/control/locked.c could not be read",
+        })
+        self.assertEqual(0, status, output)
+        self.assertEqual(("ran", "passed", 1), (account["state"], account["outcome"], account["mutants"]))
+
+    def with_unreadable(self, unreadable: dict[str, str]) -> tuple[int, str, dict]:
+        """Sweep the lines the branch changes, as the round would hand them with paths unread."""
+        path = self.changed_lines()
+        with open(path, encoding="utf-8") as handle:
+            document = json.load(handle)
+        document["unreadable"] = unreadable
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(document, handle)
+        account = os.path.join(self.scratch.name, "account.json")
+        status, output = self.run_sweep("--changed-lines", path, "--changed-lines-result", account)
+        with open(account, encoding="utf-8") as handle:
+            return status, output, json.load(handle)
 
     def written_summary(self) -> str:
         with open(self.summary, encoding="utf-8") as handle:
@@ -3230,6 +3331,37 @@ class TheRoundNeverRunsTheFullSweepInPlaceOfTheRestrictedOne(ChangedLinesHarness
         self.assertEqual(0, status, output)
         self.assertEqual(("ran", "passed"), (account["state"], account["outcome"]))
 
+    def test_the_full_sweeps_own_flags_beside_the_changed_lines_are_refused(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # Forwarded beside the changed lines, --survivors-only would list the
+        # survivors without judging them and report a pass; every flag of the
+        # full sweep's own is refused alike, before anything is built.
+        self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; } /* survives */")
+        flags = {
+            "survivors_only": ("--survivors-only",),
+            "population_only": ("--population-only",),
+            "list_shards": ("--list-shards",),
+            "list_mutators_in": ("--list-mutators-in", "native_alpha_mutation:src/plant/alpha"),
+            "list_mutators_out": ("--list-mutators-out", "out.json"),
+            "combine_shards": ("--combine-shards", "shards"),
+            "shard": ("--shard", ALPHA),
+            "shard_report": ("--shard-report", "report.json"),
+            "shard_directory": ("--shard-directory", "src/plant/alpha"),
+            "shard_mutators": ("--shard-mutators", "cxx_add_to_sub"),
+            "merge_reports": ("--merge-reports", "reports"),
+        }
+        self.assertEqual(sorted(mull_sweep.FULL_SWEEP_ONLY), sorted(flags))
+        for name, flag in flags.items():
+            with self.subTest(flag=flag[0]):
+                status, output, account = self.restricted(None, *flag)
+                self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
+                self.assertEqual(
+                    ("could-not-run", "could-not-look"), (account["state"], account["outcome"])
+                )
+                self.assertIn(f"cannot be combined with {flag[0]}", account["detail"])
+                self.assertEqual([], self.tools.commands)
+                self.assertEqual([], self.resolved)
+
     def test_the_sweeps_task_forwards_its_arguments_to_the_sweep(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         with open(os.path.join(os.path.dirname(PROJECT), "Taskfile.yml"), encoding="utf-8") as handle:
@@ -3287,6 +3419,12 @@ class OnlyTheDerivedPopulationsFilesAreChanged(unittest.TestCase):
                 "elsewhere/src/plant/alpha/a.c": [4],
             }),
         )
+
+    def test_the_round_gate_takes_the_same_kinds_of_file_as_sources(self):
+        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # The gate runs emulation when a file of a kind the sweep draws from
+        # goes unread; a kind it disagreed about would go unread unnoticed.
+        self.assertEqual(round_gate.SWEPT_SUFFIXES, mull_sweep.SOURCE_SUFFIXES)
 
     def test_a_triage_key_names_its_source(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes

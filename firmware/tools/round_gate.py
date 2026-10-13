@@ -35,19 +35,24 @@ remote-tracking main is taken as the repository holds it, not fetched. A copy
 left behind by the remote can mis-measure a branch, so it is kept rare by
 branching from a freshly fetched main rather than checked for here. The base is named by its full reference, which a local
 branch cannot shadow. When the base cannot be resolved, or the changed paths or
-the changed lines cannot be read, the gate cannot tell what changed, and it runs
-the emulation tier rather than guessing that nothing did.
+the changed lines cannot be read, or the lines of a changed C source or header
+cannot, the gate cannot tell what changed, and it runs the emulation tier rather
+than guessing that nothing did.
 
 The changed lines come from the same measurement: a changed line is a line on
 the new side of a zero-context diff from that merge-base to the working tree,
 and every line of a new file not yet committed. A file counts as changed when it
 has any hunk at all, one that only deletes lines and a file deleted outright
 included, because the sweep's judgements about a file are tied to its lines and
-a deletion moves or removes them. When those lines cannot be told, the host and
-emulation tiers still run as they do for any change the gate cannot measure, and
-the sweep step then fails the round, saying why and what to do: it cannot clear
-the change as touching no plant line, and the round never runs the full sweep
-in place of the restricted one.
+a deletion moves or removes them. The diff is asked for in terms no setting of
+the user's or the repository's can widen, move or hide a hunk under. When those
+lines cannot be told, the host and emulation tiers still run as they do for any
+change the gate cannot measure, and the sweep step then fails the round, saying
+why and what to do: it cannot clear the change as touching no plant line, and
+the round never runs the full sweep in place of the restricted one. A path whose
+own lines alone cannot be read is handed to the sweep as such, and fails the
+round only when it is in the sweep's population; a document no sweep draws from
+going unread does not.
 
 The selection is a cost measure, not a trust boundary. It guards its
 measurement against git state that is unusually configured; it does not
@@ -124,12 +129,16 @@ class Change:
     then says why. `head` and `base` are the commits measured between, as far
     as they were resolved.
 
-    `lines` maps every changed path to the new-side lines it changes, an empty
-    list for a path whose hunks only delete. It is None when the changed lines
-    could not be told, and `lines_problem` then says why; the paths can be known
-    while the lines are not, and the change then counts as one the gate cannot
-    tell, which runs the emulation tier whatever the paths are. `root` is the
-    repository's top level the paths are relative to.
+    `lines` maps every changed path whose lines could be read to the new-side
+    lines it changes, an empty list for a path whose hunks only delete. It is
+    None when the changed lines could not be told at all, and `lines_problem`
+    then says why; the paths can be known while the lines are not, and the
+    change then counts as one the gate cannot tell, which runs the emulation
+    tier whatever the paths are. `unreadable` maps each changed path whose own
+    lines alone could not be read to why: whether that leaves a line of the
+    sweep's population untold is the sweep's to say, since the population is
+    its derivation. `root` is the repository's top level the paths are relative
+    to.
     """
 
     head: str | None
@@ -139,6 +148,7 @@ class Change:
     lines: dict[str, list[int]] | None = None
     lines_problem: str = ""
     root: str | None = None
+    unreadable: dict[str, str] = field(default_factory=dict)
 
     @property
     def lines_unknown_because(self) -> str:
@@ -157,9 +167,35 @@ class Scope:
     judged: list[str] = field(default_factory=list)
 
 
-def _git(repo: str, *arguments: str) -> subprocess.CompletedProcess:
+#: What every diff the change is measured by asks git for, so the paths come out
+#: whole and from the top level whatever the user's or the repository's
+#: configuration would make of them: no relative paths, no renames, no
+#: external diff program.
+PATH_DIFF = ("--no-relative", "--no-renames", "--no-ext-diff")
+
+#: What the diff the changed lines are read from asks for besides, each against
+#: a setting that would otherwise move or hide a hunk: no context and no
+#: context joining hunks (diff.interHunkContext), git's default algorithm and
+#: hunk placement (diff.algorithm, diff.indentHeuristic), the content itself
+#: rather than a conversion of it (textconv) or a "binary files differ" in place
+#: of its hunks (a -diff attribute), and no colour before a hunk's header.
+LINE_DIFF = PATH_DIFF + (
+    "-U0", "--inter-hunk-context=0", "--diff-algorithm=myers", "--indent-heuristic",
+    "--no-textconv", "--text", "--no-color",
+)
+
+#: Settings of the environment that reshape a diff whatever its command line
+#: says -- GIT_DIFF_OPTS overrides -U itself -- and are dropped before git runs.
+RESHAPING_ENVIRONMENT = ("GIT_DIFF_OPTS",)
+
+
+def _git(repo: str, *arguments: str, text: bool = True) -> subprocess.CompletedProcess:
+    environment = {
+        name: value for name, value in os.environ.items() if name not in RESHAPING_ENVIRONMENT
+    }
     return subprocess.run(
-        ["git", "-C", repo, *arguments], capture_output=True, text=True, check=False
+        ["git", "-C", repo, *arguments],
+        capture_output=True, text=text, check=False, env=environment,
     )
 
 
@@ -205,9 +241,7 @@ def _measure(repo: str, remote: str, main: str) -> Change:
         )
     base = merge_base.stdout.strip()
 
-    diff = _git(
-        repo, "diff", "--name-only", "--no-relative", "--no-renames", "--no-ext-diff", "-z", base
-    )
+    diff = _git(repo, "diff", "--name-only", *PATH_DIFF, "-z", base)
     if diff.returncode != 0:
         return Change(
             head, base, None,
@@ -225,7 +259,7 @@ def _measure(repo: str, remote: str, main: str) -> Change:
     new = _split(untracked.stdout)
     change = Change(head, base, sorted(set(tracked) | set(new)))
     try:
-        change.root, change.lines = _lines(repo, base, tracked, new)
+        change.root, change.lines, change.unreadable = _lines(repo, base, tracked, new)
     except LinesUnknown as error:
         change.lines_problem = str(error)
     return change
@@ -242,15 +276,18 @@ _HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 
 def _lines(
     repo: str, base: str, tracked: list[str], new: list[str]
-) -> tuple[str, dict[str, list[int]]]:
-    """The top level, and the new-side lines each changed path changes.
+) -> tuple[str, dict[str, list[int]], dict[str, str]]:
+    """The top level, the new-side lines each changed path changes, and the paths unread.
 
     A tracked path's lines are read from its own zero-context diff from the
     base to the working tree, named as a literal path from the top level so no
-    character in it is read as a pattern. Only the hunk headers are read, which
-    say where each hunk sits on the new side and how long it is there; a hunk
-    that only deletes has no length there and contributes no line, though its
-    path still counts as changed. A new file's lines are all of them.
+    character in it is read as a pattern, and shaped by LINE_DIFF alone so no
+    setting of the user's or the repository's widens, moves or hides a hunk.
+    Only the hunk headers are read, which say where each hunk sits on the new
+    side and how long it is there; a hunk that only deletes has no length there
+    and contributes no line, though its path still counts as changed. A new
+    file's lines are all of them. A path whose own lines cannot be read is set
+    apart with why, rather than leaving every other path's lines untold.
     """
     top = _git(repo, "rev-parse", "--show-toplevel")
     if top.returncode != 0:
@@ -260,19 +297,17 @@ def _lines(
     root = top.stdout.strip()
 
     lines: dict[str, list[int]] = {}
+    unreadable: dict[str, str] = {}
     for path in tracked:
         # Read as bytes: the hunks carry the file's own content, which need not
         # be in any one encoding, and only the headers are read.
-        diff = subprocess.run(
-            ["git", "-C", repo, "diff", "-U0", "--no-relative", "--no-renames", "--no-ext-diff",
-             "--no-textconv", "--no-color", base, "--", f":(top,literal){path}"],
-            capture_output=True, check=False,
-        )
+        diff = _git(repo, "diff", *LINE_DIFF, base, "--", f":(top,literal){path}", text=False)
         if diff.returncode != 0:
-            raise LinesUnknown(
+            unreadable[path] = (
                 f"the lines {path} changes since {base} could not be read "
                 f"({diff.stderr.decode(errors='replace').strip()})"
             )
+            continue
         changed: list[int] = []
         for line in diff.stdout.decode(errors="replace").splitlines():
             hunk = _HUNK.match(line)
@@ -290,10 +325,27 @@ def _lines(
             with open(full, "rb") as handle:
                 content = handle.read()
         except OSError as error:
-            raise LinesUnknown(f"the new file {path} could not be read ({error})") from error
+            unreadable[path] = f"the new file {path} could not be read ({error})"
+            continue
         count = content.count(b"\n") + (1 if content and not content.endswith(b"\n") else 0)
         lines[path] = list(range(1, count + 1))
-    return root, lines
+    return root, lines, unreadable
+
+
+#: What the sweep draws mutants from: C sources and headers. A path of any other
+#: kind is never in its population, so its lines going unread leaves no line of
+#: the population untold; which of these a given one is in, the sweep decides.
+SWEPT_SUFFIXES = (".c", ".h")
+
+
+def could_be_swept(path: str) -> bool:
+    """Whether a path is of a kind the sweep's population can hold."""
+    return path.endswith(SWEPT_SUFFIXES)
+
+
+def unread_sources(change: Change) -> list[str]:
+    """The changed paths of a kind the sweep draws from whose lines could not be read."""
+    return sorted(path for path in change.unreadable if could_be_swept(path))
 
 
 def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
@@ -305,6 +357,15 @@ def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
             True,
             f"could not tell what changed at {at}: {unknown}. "
             "Running the emulation tier rather than skipping it.",
+        )
+    untold = unread_sources(change)
+    if untold:
+        return Scope(
+            True,
+            f"could not tell which lines {len(untold)} changed source(s) change at {at}, so "
+            "whether the branch changes a line in the sweep's population cannot be told yet. "
+            "Running the emulation tier rather than skipping it:",
+            [f"{path}: {change.unreadable[path]}" for path in untold],
         )
     against = (
         f"measured from merge-base {change.base} with {base_ref} "
@@ -452,6 +513,13 @@ def concluded(status: int, account: dict | None) -> Sweep:
             "found in the population it derives.",
         )
     if status != 0 and outcome == NOT_LOOKED:
+        if account.get("lines_unknown"):
+            return Sweep(
+                True,
+                f"the mutation sweep COULD NOT RUN (exit status {status}), because the round could "
+                "not tell which plant lines the branch changes",
+                detail or "Its output above names the source whose lines could not be read.",
+            )
         if account.get("toolchain_missing"):
             return Sweep(
                 True,
@@ -479,11 +547,14 @@ def write_changed_lines(path: str, change: Change) -> None:
     """Write the changed lines where the sweep's restricted mode reads them.
 
     The top level is given with them because the paths are relative to it and
-    the sweep runs from its own project directory below it.
+    the sweep runs from its own project directory below it. The paths whose
+    lines could not be read go with them, so the sweep -- whose population it
+    is -- can refuse to run when one of them is in it.
     """
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(
-            {"root": change.root, "base": change.base, "head": change.head, "files": change.lines},
+            {"root": change.root, "base": change.base, "head": change.head, "files": change.lines,
+             "unreadable": change.unreadable},
             handle, sort_keys=True,
         )
 
@@ -544,6 +615,12 @@ def gate(task: str, host: list[str], emulation: list[str], sweep: str, repo: str
             "round gate: the round cannot tell which plant lines the branch changes "
             f"({change.lines_unknown_because}). The host and emulation tiers still run, and the "
             "sweep step will then FAIL the round."
+        )
+    elif unread_sources(change):
+        _say(
+            "round gate: the lines of a changed source could not be read. The host and emulation "
+            "tiers still run, and the sweep then FAILS the round if that source is in its "
+            "population."
         )
 
     for name in host:
