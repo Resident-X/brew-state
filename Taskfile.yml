@@ -380,7 +380,7 @@ tasks:
   # ---------------------------------------------------------------------------
 
   check:round:
-    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with the local remote-tracking origin/main (a stale one only widens the change) and counting uncommitted edits and new files; runs emulation anyway when it cannot tell what changed, including when there is no remote-tracking origin/main. Stops at a host failure, says which tiers ran and why one was skipped, and its exit status is the verdict. Never runs the full mutation sweep
+    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with the local remote-tracking origin/main and counting uncommitted edits and new files (a stale origin/main can mis-measure a branch, so branch from a freshly fetched main); runs emulation anyway when it cannot tell what changed, including when there is no remote-tracking origin/main. Stops at a host failure, says which tiers ran and why one was skipped, and its exit status is the verdict. Never runs the full mutation sweep
     dir: "{{.ROOT_DIR}}"
     cmds:
       # The tasks are handed over rather than their commands copied, so the

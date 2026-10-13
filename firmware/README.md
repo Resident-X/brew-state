@@ -274,8 +274,9 @@ tier only when the branch changes something the emulation reads: anything under
 against, or the `Taskfile.yml` that runs it. What changed is measured from the
 branch's merge-base with `origin/main`, against the working tree, so uncommitted
 edits and new files count. `origin/main` is the repository's own
-remote-tracking copy, not fetched: a stale one gives an older merge-base, and so
-a wider change, never a narrower one. That set of paths is declared once, as
+remote-tracking copy, not fetched. A stale one can mis-measure a branch, so it
+is kept rare by branching from a freshly fetched `main` rather than checked for.
+That set of paths is declared once, as
 `EMULATION_READS` in [`tools/round_gate.py`](tools/round_gate.py). When there is
 no remote-tracking `origin/main`, the base cannot be resolved or the changed
 paths cannot be read, the gate runs emulation rather than skipping it. The

@@ -259,19 +259,19 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.assertIn(f"HEAD {repository.head()}", result.stdout)
 
 
-# --- The base is guarded against accidental git state, not against tampering --
+# --- The base is guarded against unusual git state, not against tampering -----
 
 
 class TheBaseIsTheRemoteTrackingMain(unittest.TestCase):
     """The selection is a cost measure: it guards against git state that is
-    stale or unusually configured, not against a producer rewriting the tree."""
+    unusually configured, not against a producer rewriting the tree."""
 
     def setUp(self):
         self.repository = SyntheticRepository()
         self.addCleanup(self.repository.cleanup)
         self.repository.change_and_commit("firmware/src/control/loop.c")
 
-    def test_a_stale_remote_tracking_main_only_widens_the_change(self):
+    def test_a_stale_remote_tracking_main_charges_mains_later_change_to_the_branch(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
         # Main gained a firmware change the remote-tracking copy never heard
         # of, and the branch was started from that newer main: the older base

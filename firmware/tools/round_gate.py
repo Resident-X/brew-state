@@ -20,16 +20,16 @@ What changed is measured from the branch's merge-base with the remote-tracking
 main, against the working tree, so uncommitted edits and new files not yet
 committed count as much as commits do. Measuring from main's tip instead would
 charge the branch with everything main gained since it branched. The
-remote-tracking main is taken as the repository holds it, not fetched: a copy
-left behind by the remote only gives an older merge-base, and so a wider change,
-never a narrower one. The base is named by its full reference, which a local
+remote-tracking main is taken as the repository holds it, not fetched. A copy
+left behind by the remote can mis-measure a branch, so it is kept rare by
+branching from a freshly fetched main rather than checked for here. The base is named by its full reference, which a local
 branch cannot shadow. When the base cannot be resolved, or the changed paths
 cannot be read, the gate cannot tell what changed, and it runs the emulation
 tier rather than guessing that nothing did.
 
 The selection is a cost measure, not a trust boundary. It guards its
-measurement against git state that is stale or unusually configured; it does
-not defend against whoever rewrites the hooks, configuration or references of
+measurement against git state that is unusually configured; it does not
+defend against whoever rewrites the hooks, configuration or references of
 the tree it runs in, who controls the gate itself. A change that escapes the
 selection meets the reviews before it merges and the nightly complete
 verification after.
