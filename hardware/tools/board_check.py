@@ -79,9 +79,9 @@ def marker_rule(nonce: str) -> str:
     return f"{RESERVED} {nonce}: rules loaded"
 
 
-def probe_rule(nonce: str) -> str:
-    """The rule reporting every item KiCad places in the Mains class."""
-    return f"{RESERVED} {nonce}: Mains item"
+def probe_rule(nonce: str, netclass: str = "Mains") -> str:
+    """The rule reporting every item KiCad places in `netclass`."""
+    return f"{RESERVED} {nonce}: {netclass} item"
 
 #: A value standing in for a signature rather than being one.
 PLACEHOLDERS = {"unsigned", "tbd", "todo", "none", "placeholder"}
@@ -1020,8 +1020,7 @@ def appended_rules(signed: Optional[Tuple[float, float]], nonce: str) -> str:
     alone, from `nonce`, so no rule a design writes can pass for either and have
     its own findings taken for the check's.
     """
-    text = "\n" + marker(nonce)
-    text += f'(rule "{probe_rule(nonce)}"\n\t(condition "A.hasNetclass(\'Mains\')")\n\t(constraint assertion "false"))\n'
+    text = "\n" + marker(nonce) + class_probe(nonce, "Mains")
     if signed is not None:
         text += (f'(rule "{SIGNED_RULE}"\n\t(condition "{MAINS_CONDITION}")\n'
                  f'\t(constraint clearance (min {signed[0]:g}mm))\n\t(constraint creepage (min {signed[1]:g}mm)))\n')
@@ -1030,6 +1029,12 @@ def appended_rules(signed: Optional[Tuple[float, float]], nonce: str) -> str:
 
 def marker(nonce: str) -> str:
     return f'(rule "{marker_rule(nonce)}"\n\t(condition "A.Type != \'\'")\n\t(constraint assertion "false"))\n'
+
+
+def class_probe(nonce: str, netclass: str) -> str:
+    """The assertion KiCad fails for every item it places in `netclass`, however the class was given."""
+    return (f'(rule "{probe_rule(nonce, netclass)}"\n\t(condition "A.hasNetclass(\'{netclass}\')")\n'
+            '\t(constraint assertion "false"))\n')
 
 
 def fired(report: dict, rule: str) -> List[dict]:
@@ -1131,7 +1136,7 @@ def layout_nets(layout: list) -> Set[str]:
     return {net_of(["item", node]) for node in walk(layout, "net") if len(node) > 1} - {""}
 
 
-def mains_nets_from(probe: List[dict], names: Set[str]) -> Set[str]:
+def probed_nets(probe: List[dict], names: Set[str]) -> Set[str]:
     """The nets of the items KiCad's probe reports, matched against the layout's own net names.
 
     KiCad writes an item's net between square brackets, and a net name may
@@ -1208,14 +1213,32 @@ def project_mains(kicad_cli: str, scratch: str, project: str, names: Set[str], n
                      '\t(general (thickness 1.6))\n\t(paper "A4")\n'
                      '\t(layers\n\t\t(0 "F.Cu" signal)\n\t\t(2 "B.Cu" signal)\n\t\t(25 "Edge.Cuts" user)\n\t)\n'
                      + tracks + ")\n")
-    with open(os.path.join(work, "nets.kicad_dru"), "w", encoding="utf-8") as handle:
-        handle.write("(version 1)\n" + appended_rules(None, nonce))
-    report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "nets.kicad_pcb"], work)
+    members, why = class_members(kicad_cli, work, "nets", ["Mains"], names, nonce)
+    if members is None:
+        return None, why
+    return members["Mains"], ""
+
+
+def class_members(kicad_cli: str, work: str, stem: str, classes: Sequence[str], names: Set[str], nonce: str
+                  ) -> Tuple[Optional[Dict[str, Set[str]]], str]:
+    """The nets of `names` KiCad places in each of `classes` on the board `<stem>.kicad_pcb` in `work`.
+
+    The board is checked with the project file of the same stem beside it, as
+    KiCad opens one, and with a rules file of nothing but the marker and one
+    probe per class, written in place of any beside it. So KiCad applies the
+    project file's assignments and patterns and any class the layout file
+    carries, exactly as it would on the board itself, and reports every item it
+    places in each class. The marker shows the probes were loaded, so an empty
+    answer means no net rather than an unread rules file.
+    """
+    with open(os.path.join(work, f"{stem}.kicad_dru"), "w", encoding="utf-8") as handle:
+        handle.write("(version 1)\n\n" + marker(nonce) + "".join(class_probe(nonce, netclass) for netclass in classes))
+    report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", f"{stem}.kicad_pcb"], work)
     if report is None:
         return None, why
     if not fired(report, marker_rule(nonce)):
-        return None, "KiCad did not load the rules that ask it which nets the project file puts in Mains"
-    return mains_nets_from(fired(report, probe_rule(nonce)), names), ""
+        return None, "KiCad did not load the rules that ask it which nets are in which net class"
+    return {netclass: probed_nets(fired(report, probe_rule(nonce, netclass)), names) for netclass in classes}, ""
 
 
 #: Where each of the three statements of Mains membership is read from, in the
@@ -1521,7 +1544,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         # enforced against; the schematic's; and the project file's net
         # settings, by name and by pattern. They must agree net for net.
         names = layout_nets(tree)
-        on_layout = mains_nets_from(probe, names)
+        on_layout = probed_nets(probe, names)
         named = set(names) | set(netlist) | set(map(str, setting(project, "net_settings", "netclass_assignments") or {}))
         version = sexpr.child(tree, "version")
         in_project, why = project_mains(kicad_cli, scratch, os.path.join(copy, os.path.basename(design.project)),
@@ -1534,7 +1557,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     locate: Dict[str, Dict[str, str]] = {ON_LAYOUT: {}, IN_SCHEMATIC: {}, IN_PROJECT: {}}
     for entry in probe:
         for item in entry.get("items") or []:
-            for net in mains_nets_from([{"items": [item]}], names):
+            for net in probed_nets([{"items": [item]}], names):
                 locate[ON_LAYOUT].setdefault(net, item_text(item))
     for net, (_, pins) in netlist.items():
         if pins:

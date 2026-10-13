@@ -811,8 +811,8 @@ class MainsMembershipIsReadWhereverItIsDeclared(unittest.TestCase):
         self.assertEqual(names, {"/AC] of R9 [x", "/AC", "/LV"})
         probe = [{"items": [{"description": "SMD pad 1 [/AC] of R9 [x] of X1"}]},
                  {"items": [{"description": "Track [/AC] on F.Cu, length 2 mm"}]}]
-        self.assertEqual(board_check.mains_nets_from(probe, names), {"/AC] of R9 [x", "/AC"})
-        self.assertEqual(board_check.mains_nets_from(probe[1:], set()), {"/AC"})
+        self.assertEqual(board_check.probed_nets(probe, names), {"/AC] of R9 [x", "/AC"})
+        self.assertEqual(board_check.probed_nets(probe[1:], set()), {"/AC"})
 
 
 

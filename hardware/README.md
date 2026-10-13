@@ -3,7 +3,7 @@
 Board designs and the check every one of them has to pass before it is ordered.
 
 - `hardware/<machine>/` holds one machine's board designs, one KiCad project per board in its own folder, and the `separation-basis.yaml` they are held to.
-- `hardware/tools/` holds the pre-order check and its tests. They work for any machine.
+- `hardware/tools/` holds the pre-order check, the locked-copper check used around routing, and their tests. They work for any machine.
 - `hardware/proof/` holds designs committed only to prove the check. They are never ordered.
 
 A **board design** is a KiCad project file (`.kicad_pro`) together with the schematic (`.kicad_sch`) and layout (`.kicad_pcb`) of the same name beside it. The check finds every design git tracks, wherever it sits. The layout above is a convention for readers, not something the check depends on. A design is checked once git tracks it: `git add` is enough for the design's own files. The check reads a design only as the repository holds it. KiCad is given a copy of the tracked files alone, each in its place in the repository: everything in the design's folder, every sheet its schematic reaches, and every library its `sym-lib-table` and `fp-lib-table` name, wherever in the repository they sit. A library, sheet or rules file left uncommitted is therefore not used. A sheet the schematic names, a custom rules file or library table beside the project, or a library a table names, that git does not track fails the design by name. So does a library the repository cannot hold at all: one named by an absolute path, one outside the repository, or one reached through a path variable other than `${KIPRJMOD}` and those naming the libraries KiCad installs with itself (`${KICAD10_SYMBOL_DIR}`, `${KICAD10_FOOTPRINT_DIR}` and the like). Name a library from its table as `${KIPRJMOD}/` followed by its path from the design's folder. The separation basis record has to be committed exactly as it stands (see below).
@@ -35,7 +35,19 @@ Every tool is free. The check stops with an error naming any tool that is missin
 
 - `task hw:verify` runs the pre-order check on every board design in the repository. It exits 0 only when every design passes.
 - `task hw:prove` seeds each fault the check guards against into a throwaway copy of `hardware/proof/gate-proof`, in a temporary directory outside the repository. It requires the check to catch each fault. This command is on demand and is not part of the gate.
-- `task hw:test` runs the tests of the check itself against the real `kicad-cli`.
+- `task hw:test` runs the tests of the check itself, and of the locked-copper check, against the real `kicad-cli`.
+- `task hw:copper-record` and `task hw:copper-compare` run the locked-copper check (below) on one board, around the routing round trip. They need the same tools as `hw:verify`, and read the paths given after `--` from the folder they are run in.
+
+How a board is designed so that it passes the check, from its rules to its routing, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
+
+## The locked-copper check
+
+A board's critical nets are routed by hand and locked before an external router places the rest. The check makes sure the export, the router and the import changed none of them. It is not part of the pre-order check: it runs on one board, either side of the round trip.
+
+- **Recording**, `task hw:copper-record -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <name> [--class <name> ...] --record <file>`, writes every track, arc, via and zone on a net in the named classes to `<file>`. A track is recorded by its net, layer, end points and width, an arc also by its mid point, a via by its net, position, diameter, drill and layers, and a zone by its net, layers and outline. Each item also records whether it is locked. Which nets are in which class is asked of KiCad, on the board itself with its project file, so assignments, patterns and any class the layout file carries all count as KiCad applies them. Recording refuses, and writes nothing, in these cases: a class the design does not define, a class named twice, any item on those nets that is not locked, or a `<file>` inside the board's folder. The record is a working file, and is never kept with the design.
+- **Comparing**, `task hw:copper-compare -- --board <board>.kicad_pcb --project <board>.kicad_pro --record <file>`, reads the imported board against the record. It fails in these cases: a recorded item is missing, is no longer locked, or has changed in any recorded property, or a critical-class net carries an item the record does not hold. Items are matched by their recorded properties and counted, so an added copy of a recorded item is still an addition. Copper on other nets is ignored.
+
+Each finding is one line, `<FINDING> | <item> | <detail>`, where the finding is `MISSING`, `UNLOCKED`, `CHANGED` (the detail gives each changed property as old -> new) or `ADDED`. A `RESULT` line comes last. A board, project file or record that cannot be read is reported as `UNREADABLE`, and fails rather than passes. So does a KiCad run that does not load the rules asking it which nets are in which class. The exit status is 0 when the record is written or the board matches it, 1 when recording is refused or the board does not match, and 2 when the check cannot run at all, for example because a tool is missing.
 
 ## What a design must satisfy
 
