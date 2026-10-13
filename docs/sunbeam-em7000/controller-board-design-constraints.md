@@ -186,7 +186,7 @@ Every output the boards drive fails into the safe state: not heating, not pumpin
 
 ### Pending marks
 
-Every pending mark in this file, with the work that ends it: those in this section and those in § Carried-forward module properties below.
+Every pending mark in this file, with the work that ends it: those in this section, those in § Carried-forward module properties and those in § Manufacturer stock and price, per channel, both below.
 
 | Pending figure | Settled by | Node |
 |---|---|---|
@@ -200,6 +200,12 @@ Every pending mark in this file, with the work that ends it: those in this secti
 | Proof-of-life removal interval | Deriving each thermoblock's peak casting temperature under control from the plant model across its declared corners, then deriving the interval here from that peak | `SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED` |
 | Each protective device's clearing time and let-through at the prospective fault, and each conductor checked against it | The design task for each board, created by the partition and feasibility task, which records each device's clearing time and let-through with its source and checks each conductor against them in its proof before order (the board method itself only defines the step) | `DEL-HW-PARTITION-AND-FEASIBILITY.C5` |
 | The rating of the barrier in each part chosen for a function *Mains barrier* covers (heater switches, pump drives and their zero-cross output, valve switches), and of the pressure sensors' insulation from the water path (§ Carried-forward module properties, *Mains barrier* and *Pressure sensors*) | The partition and feasibility task's choice of form, which reads the rating of each part it chooses off that manufacturer's current datasheet and records it with its source; each barrier's rating is then judged against the barrier the declared separation basis states | `DEL-HW-PARTITION-AND-FEASIBILITY.C1`, `.C3` |
+| The steam-path pressure transducer's part, availability and price: the catalogue holds no stocked transducer (§ Manufacturer stock and price, per channel) | The partition and feasibility task's choice of form for the channel, which chooses the transducer and reads its figures from its own vendor | `DEL-HW-PARTITION-AND-FEASIBILITY.C1` |
+| The availability and price of a bought module the catalogue does not stock — the earlier design's controller module, pump dimmers, valve relay module and the solid-state relay listed with no stock — and of a heatsink for a switch kept off the board (§ Manufacturer stock and price, per channel) | The partition and feasibility task's choice of form for each function, which reads the chosen module's or part's figures from wherever it is bought | `DEL-HW-PARTITION-AND-FEASIBILITY.C1` |
+| The connector each retained harness ends in, and so the header each board carries for it (§ Manufacturer stock and price, per channel) | The machine-as-found record, which records each retained harness with the connector it ends in and its first pin; the header matching it is then read from the catalogue | `SOL-HW-MACHINE-AS-FOUND-FIT-RECORD.C2` |
+| The fuse cartridges for the pump branches and the shared valve feed: no stocked candidate, and their ratings pending (§ Manufacturer stock and price, per channel) | The design task for the board carrying each fuse, which records its rating with its source and the part that carries it | `DEL-HW-PARTITION-AND-FEASIBILITY.C5` |
+| The proof-of-life interlock's parts, which have no part class until its mechanism is chosen (§ Manufacturer stock and price, per channel) | The design task for the board carrying the interlock, where its mechanism is chosen as design work inside the controller hardware (`DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE`) | `DEL-HW-PARTITION-AND-FEASIBILITY.C5` |
+| The minimum quantity JLCPCB charges for each part, whether a class's loading fee also applies to a part fitted by hand, and the chargeable weight of a board order and its shipping cost (§ Manufacturer stock and price, per channel) | The block-level cost estimate for each board, against the manufacturer's charges and shipping, and then the design task's quoted order cost, recorded before ordering | `DEL-HW-PARTITION-AND-FEASIBILITY.C6`, `.C5` |
 
 ## Carried-forward module properties
 
@@ -380,3 +386,233 @@ The Schaffner FN9222-15-06, an appliance inlet with an EMI filter and no fuse ho
 ### Nothing in the earlier design provided
 
 **Removing heater power when the controller stops.** No module the earlier design specified provides it. *Held off undriven* covers a controller that is absent, not one that has hung: a hung controller can hold a drive input driven, and a heater switch's ordinary failure is a short. The design deferred the master relay and watchdog that would have been its answer, and recorded the watchdog's timeout as coarse (`controller-design/control-system-bom.csv`, *Master relay [DEFERRED]* and *Watchdog module [DEFERRED]*, the latter giving the timeout). The requirement stands without it (`OBL-ELECTRICAL-THERMAL-SAFETY-001.C2`, `REQ-SAFETY-CHAIN-001.C2`, `.C3`). The interlock that provides it is built into the first controller hardware (`DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE`), and the interval within which it must act is pending in § Proof-of-life removal interval. No property is carried forward from the deferred rows.
+
+## Manufacturer stock and price, per channel
+
+What the board manufacturer's catalogue offers for each channel this machine needs, with stock, library class and price, read on one day so a later reader can tell when it has gone stale (`DEL-HW-DESIGN-CONSTRAINTS.C3`). The manufacturer is JLCPCB (`DEC-BOARD-MANUFACTURER-JLCPCB`). What it can make and assemble, its order and assembly charges, its library classes and their fees, and which parts it fits by hand hold for any machine, and are recorded once in `docs/board-manufacturer-jlcpcb.md`, cited below by section. This section holds only what is specific to this machine: which parts its channels might use, and what shipping a board order to its builder costs.
+
+**The channels are the component specification's, and it governs.** Each subsection below cites a row of `docs/sunbeam-em7000/component-specification.md` § What each channel requires by its channel name, and that row's *Must satisfy* and *Capability floor already achieved* columns are the specification each candidate is weighed against; they are cited, not restated. Nothing here fills that table's *Part chosen*, *Provenance* or *Cost* columns: a candidate is not a choice. Choosing the part each channel carries, and estimating each board's cost against the declared spend, are the partition and feasibility task's (`DEL-HW-PARTITION-AND-FEASIBILITY.C1`, `.C6`).
+
+**The defaults candidates are weighed against.** The parts the machine already carries that can serve a channel are the ones the specification's *Capability floor already achieved* column names for it; each subsection names them, citing that column. They cost nothing and have shown they survive this machine (`REQ-COST-DISCIPLINE-001.C1`; `component-specification.md` § Provenance classes, *Reused*); whether a particular part is still fit is not judged here. No part has been bought ahead of verification: this record states none at the time of reading (§ Carried-forward module properties, *None of its parts were bought*, owner statement 2026-10-13), so none is named as a default.
+
+**How each candidate was read.** Each row's stock, library class and price are as JLCPCB's parts library (https://jlcpcb.com/parts) gave them on 2026-10-13, read at about 09:42 UTC through the library's own search, and its assembly type as the part's own page gave it the same day. The part's page, at the address in the row's *Source* column, shows the same live figures. Every such reading is graded **published unverified, read at source**, with the meaning § Evidence grades and § Carried-forward module properties, *What published unverified means here*, give it: the figure is the manufacturer's published claim, read at its source on 2026-10-13, and established on no part in hand. Stock moves by the hour and price between orders; a later reader re-reads a row at its address and replaces it with its new date.
+
+**Order of rows.** Within each part class, the parts from libraries that carry no setup fee under Economic assembly come first, Basic then Preferred, then Extended parts (`docs/board-manufacturer-jlcpcb.md` § Parts library classes and their fees). Within a class, the larger stock comes first. Each part class names the search made. Where none of a search's in-stock results was Basic or Preferred, the class says so.
+
+**Prices, breaks and the build quantity.** Prices are in US dollars as JLCPCB publishes them, the currency the declared spend is stated in (`component-specification.md` § The component list, *Declared spend: 250 USD*). Each price is the unit price at the part's smallest quantity break, and the break is given beside it. The build quantity is one machine's count of the part times 2, the minimum number of assembled boards either assembly service takes (`docs/board-manufacturer-jlcpcb.md` § Assembly limits, *Minimum number of assembled boards*). For every candidate below the build quantity falls inside the smallest break, so the one price given is the price at both. A part used fewer times than JLCPCB's minimum for it is charged at that minimum, and that minimum is not established for any part (`docs/board-manufacturer-jlcpcb.md` § Parts library classes and their fees, *Minimum quantity charged per part, any class*); it is held as a pending mark below.
+
+**Per-part fee.** Each row gives the fee its library class sets per unique part per order, under each assembly service (`docs/board-manufacturer-jlcpcb.md` § Parts library classes and their fees). A row whose assembly type is *Wave Soldering* is a through-hole part JLCPCB fits by hand, charged in addition 0.0164 USD per solder joint and 3.58 USD hand-soldering labour once per order (`docs/board-manufacturer-jlcpcb.md` § Which parts are fitted by hand, § Assembly charges). Whether the class's loading fee also applies to such a part is not stated on the pages read, and is held as a pending mark below.
+
+**Forms still open.** The partition and feasibility task reopens every module of the earlier design, deciding for each function whether it is a bought module or a circuit the project designs (`DEL-HW-PARTITION-AND-FEASIBILITY.C1`). Where a channel's form is open, candidates are given for each form. The earlier design's choice for a channel (`controller-design/control-system-bom.csv`, cited by row) is a candidate like any other, not a default: none of it was bought.
+
+**Not here: the proof-of-life interlock.** The interlock that removes heater power when the controller stops is built into the first controller hardware, but how it works is design work inside that hardware, which `DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE` leaves open. Until its mechanism is chosen there is no part class to read, so its parts are read once the mechanism is chosen. Their absence below is that, not an oversight, and is held as a pending mark.
+
+The columns of every table below:
+
+- *Count* — one machine's count of the part, for the channel instances the subsection covers, and the build quantity it gives (count × 2). Where a circuit the project designs could use more than one per instance, the count is the least it could use, and the break given holds well above it.
+- *JLCPCB part* — the catalogue number, with the maker's part number and the maker.
+- *Class* — Basic, Preferred or Extended.
+- *Stock* — parts in stock in JLCPCB's assembly library.
+- *Unit price (break)* — USD per part at the smallest break, the break's range in parts beside it.
+- *Per-part fee* — as above, under Economic and Standard assembly.
+- *Assembly* — *SMT Assembly*, placed by machine, or *Wave Soldering*, fitted by hand.
+- *Source* — the part's page; *Read* — the day it was read.
+
+### Controller
+
+Channel: § What each channel requires, *Controller*. Default: none — the floor column records that the machine carries no part serving this channel.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Microcontroller (designed onto the board), the family the pre-hardware target build is verified against (`DEC-PREHARDWARE-TARGET-FAMILY`, which nominates it for verification and does not select it). Searched "STM32F407VGT6" and "STM32F407": no Basic or Preferred part in the results | 1; build 2 | C28730, STM32F407VET6, STMicroelectronics | LQFP-100 (14 × 14) | Extended | 8 080 | 4.9321 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/STMicroelectronics-STM32F407VET6/C28730 | 2026-10-13 |
+| As above | 1; build 2 | C12345, STM32F407VGT6, STMicroelectronics | LQFP-100 (14 × 14) | Extended | 138 | 6.1521 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/STMicroelectronics-STM32F407VGT6/C12345 | 2026-10-13 |
+| Microcontroller (designed onto the board), the part the earlier design's controller module carries (`controller-design/control-system-bom.csv`, *WeAct MiniSTM32H743 (STM32H743VIT6)*). Searched "STM32H743VIT6" and "STM32H743": no Basic or Preferred part in the results | 1; build 2 | C5271084, STM32H743VIT6TR, STMicroelectronics | LQFP-100 (14 × 14) | Extended | 133 | 11.96 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/STMicroelectronics-STM32H743VIT6TR/C5271084 | 2026-10-13 |
+| As above | 1; build 2 | C114409, STM32H743VIT6, STMicroelectronics | LQFP-100 (14 × 14) | Extended | 6 | 11.4006 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/STMicroelectronics-STM32H743VIT6/C114409 | 2026-10-13 |
+| Microcontroller clock crystal, 8 MHz (designed onto the board). Searched "8MHz crystal" | 1; build 2 | C115962, X50328MSB2GI, YXC | SMD5032-2P | Basic | 235 665 | 0.2457 USD (1–99) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/YXC_CrystalOscillators-X50328MSB2GI/C115962 | 2026-10-13 |
+| As above | 1; build 2 | C12674, X49SM8MSD2SC, YXC | HC-49S-SMD | Basic | 138 823 | 0.0986 USD (1–49) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/YXC_CrystalOscillators-X49SM8MSD2SC/C12674 | 2026-10-13 |
+| Microcontroller clock crystal, 25 MHz (designed onto the board). Searched "25MHz crystal 3225" | 1; build 2 | C9006, X322525MOB4SI, YXC | SMD3225-4P | Basic | 183 375 | 0.0948 USD (1–49) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/YXC_CrystalOscillators-X322525MOB4SI/C9006 | 2026-10-13 |
+| Controller module (bought), the earlier design's WeAct MiniSTM32H743 (`controller-design/control-system-bom.csv`, first row) | 1 | **No stocked candidate.** Searched "WeAct STM32H743" and "MiniSTM32H743": no result | — | — | — | — | — | — | https://jlcpcb.com/parts | 2026-10-13 |
+| Controller module (bought), in the nominated family. Searched "STM32F407": two development boards in the catalogue | 1; build 2 | C22370035, LCKFB-LSPI-SkyStar-STM32F407VET6-LITE, LCSC-boards | — | Extended | 3 074 | 6.5077 USD (1–29) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/C22370035 | 2026-10-13 |
+| As above | 1; build 2 | C32710423, LCKFB-LSPI-SkyStar-STM32F407VGT6-PRO, LCSC-boards | — | Extended | 1 577 | 8.1386 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/C32710423 | 2026-10-13 |
+
+### Coffee and steam element switching
+
+Channels: § What each channel requires, *Coffee element switching* and *Steam element switching*. Default: the Hongfa `HF3FD/012HST` relay on each, as the floor column names it, and assesses there against the half-cycle requirement.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Triac, insulated tab (a circuit the project designs). Searched "BTA16-600B", "BTA24-600B", "TRIAC TO-220": no Basic or Preferred part in the results | 2; build 4 | C9100, BTA16-600BRG, STMicroelectronics | TO-220AB | Extended | 11 408 | 0.8416 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/STMicroelectronics-BTA16600BRG/C9100 | 2026-10-13 |
+| As above | 2; build 4 | C916866, BTA24-600BWRG, JSMSEMI | TO-220AB | Extended | 2 156 | 0.7846 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/JSMSEMI-BTA24600BWRG/C916866 | 2026-10-13 |
+| As above | 2; build 4 | C87396, BTA16-600BWRG, STMicroelectronics | TO-220AB | Extended | 1 470 | 1.1532 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/STMicroelectronics-BTA16600BWRG/C87396 | 2026-10-13 |
+| Triac, non-insulated tab (a circuit the project designs). Searched "BT139-600E" | 2; build 4 | C389357, BT139-600E,127, WeEn Semiconductors | TO-220AB | Extended | 1 752 | 1.406 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/WeEnSemiconductors-BT139_600E127/C389357 | 2026-10-13 |
+| Solid-state relay (bought), the earlier design's choice (`controller-design/control-system-bom.csv`, *EARU SSR-40DA solid state relay*). Searched "SSR-40DA" and "solid state relay 40A" | 2; build 4 | C52146148, SSR-40DA, KCOTY — **listed with no stock** | — | Extended | 0 | 4.2178 USD (1 and over) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/KCOTY-SSR40DA/C52146148 | 2026-10-13 |
+| Heatsink for a switch kept off the board (`controller-design/control-system-bom.csv`, *SSR heatsink*) | 2 | **No stocked candidate.** Searched "TO-220 heatsink": no in-stock result | — | — | — | — | — | — | https://jlcpcb.com/parts | 2026-10-13 |
+
+### Heater gate drive, both channels
+
+Channel: § What each channel requires, *Heater gate drive, both channels*. Default: none — the floor column records that the OEM relay needed no gate drive.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Opto-triac with zero-crossing detection, 600 V. Searched "MOC3063", "MOC3043", "TRIAC TO-220" (which returns opto-triacs too), "opto triac zero cross": no Basic or Preferred part in the results | 2; build 4 | C77950, MOC3063S-TA1, Lite-On | SMD-6P | Extended | 74 245 | 0.2165 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/LiteOn-MOC3063STA1/C77950 | 2026-10-13 |
+| As above | 2; build 4 | C78487, MOC3063, Lite-On | DIP-6 | Extended | 13 700 | 0.1919 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/LiteOn-MOC3063/C78487 | 2026-10-13 |
+| Opto-triac with zero-crossing detection, 800 V. Searched "MOC3083" | 2; build 4 | C115474, MOC3083S-TA1, Lite-On | SMD-6P | Extended | 50 050 | 0.2917 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/LiteOn-MOC3083STA1/C115474 | 2026-10-13 |
+| As above | 2; build 4 | C10797, MOC3083, Lite-On | DIP-6 | Extended | 16 378 | 0.2897 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/LiteOn-MOC3083/C10797 | 2026-10-13 |
+
+### Coffee and steam pump switching
+
+Channels: § What each channel requires, *Coffee pump switching* and *Steam pump switching*. Default: the OEM `MOC3021` opto-triac into a triac on each, as the floor column names it.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Opto-triac, random phase, as the OEM's (a circuit the project designs). Searched "MOC3021": no Basic or Preferred part in the results | 2; build 4 | C5242, MOC3021M, onsemi | DIP-6 | Extended | 44 395 | 0.3812 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/onsemi-MOC3021M/C5242 | 2026-10-13 |
+| As above | 2; build 4 | C115465, MOC3021S-TA1, Lite-On | SMD-6P | Extended | 29 990 | 0.1726 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/LiteOn-MOC3021STA1/C115465 | 2026-10-13 |
+| As above | 2; build 4 | C123202, MOC3021, Lite-On | DIP-6 | Extended | 22 362 | 0.1892 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/LiteOn-MOC3021/C123202 | 2026-10-13 |
+| Triac, 4 A class (a circuit the project designs). Searched "BT136" and "BT134": no Basic or Preferred part in the results | 2; build 4 | C3013770, BT134W, YFW | SOT-223 | Extended | 83 768 | 0.1357 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/YFW-BT134W/C3013770 | 2026-10-13 |
+| As above | 2; build 4 | C2980277, BT136S-600E, Minos | TO-252 | Extended | 12 068 | 0.1048 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/Minos-BT136S600E/C2980277 | 2026-10-13 |
+| As above | 2; build 4 | C2980276, BT136-600E, Minos | TO-220 | Extended | 9 585 | 0.1511 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/Minos-BT136600E/C2980276 | 2026-10-13 |
+| Phase-control dimmer module (bought), the earlier design's choice (`controller-design/control-system-bom.csv`, *RBdimmer AC Dimmer 4A 1ch, STANDARD*) | 2 | **No stocked candidate.** Searched "AC dimmer module": no in-stock result | — | — | — | — | — | — | https://jlcpcb.com/parts | 2026-10-13 |
+
+### Two-way and three-way valve switching
+
+Channels: § What each channel requires, *Two-way valve switching* and *Three-way valve switching*. Default: the Hongfa `HF32FA/012HSL` relay on each, as the floor column names it.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Relay, the OEM's family (a circuit the project designs). Searched "HF32FA-G/012-HSL", "HF32FA-G/005", "relay 10A 250VAC" | 2; build 4 | C91370, HF32FA-G/005-HSL1, Hongfa (5 V coil) | Through-hole, 17.6 × 10.1 mm | Extended | 3 671 | 1.6115 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/92559-HF32FA_G_005HSL1/C91370 | 2026-10-13 |
+| As above | 2; build 4 | C183617, HF32FA-G/012-HSL1, Hongfa (12 V coil) | Through-hole, 17.6 × 10.1 mm | Extended | 1 760 | 1.6653 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/195021-HF32FA_G_012HSL1/C183617 | 2026-10-13 |
+| Relay coil driver transistor (a circuit the project designs). Searched "MMBT3904", "2N7002" | 2; build 4 | C8545, 2N7002, Jiangsu Changjing | SOT-23 | Basic | 1 350 288 | 0.0178 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/9040-2N7002/C8545 | 2026-10-13 |
+| As above | 2; build 4 | C20526, MMBT3904 (hFE 100–300), Jiangsu Changjing | SOT-23 | Basic | 645 784 | 0.0116 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/21237-MMBT3904_RANGE_100_300/C20526 | 2026-10-13 |
+| Relay coil flyback diode (a circuit the project designs). Searched "1N4148W" | 2; build 4 | C81598, 1N4148W, Semtech | SOD-123 | Basic | 4 756 512 | 0.0124 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/ST_Semtech-1N4148W/C81598 | 2026-10-13 |
+| Solid-state switching of the valve coils (a circuit the project designs) | 2 of each; build 4 | The random-phase opto-triac and 4 A triac candidates of § Coffee and steam pump switching, the same parts read the same day | — | — | — | — | — | — | That subsection's rows | 2026-10-13 |
+| Relay module (bought), the earlier design's choice (`controller-design/control-system-bom.csv`, *Mechanical relay module 4ch*) | 1 | **No stocked candidate.** Searched "relay 10A 250VAC": the only in-stock result is a single relay (C28138, Songle SMI-12VDC-SL-C), not a module | — | — | — | — | — | — | https://jlcpcb.com/parts | 2026-10-13 |
+
+### Supply-timing front end
+
+Channel: § What each channel requires, *Supply-timing front end*. Default: the OEM `PC817` optocoupler on its half-wave feed, as the floor column names it, and assesses there against the both-crossings property.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Optocoupler with AC input (antiparallel emitters, so it reports both half-cycles). Searched "LTV-814", "PC814", "H11AA1", "AC input optocoupler": no Basic or Preferred part in the results | 1; build 2 | C108051, LTV-814S-TA1-A, Lite-On | SMD-4P | Extended | 19 465 | 0.1357 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/LiteOn-LTV_814S_TA1A/C108051 | 2026-10-13 |
+| As above | 1; build 2 | C10790, LTV-814, Lite-On | DIP-4 | Extended | 4 442 | 0.1082 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/LiteOn-LTV814/C10790 | 2026-10-13 |
+| As above | 1; build 2 | C416004, H11AA1M, onsemi | PDIP-6 | Extended | 1 176 | 0.6117 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/onsemi-H11AA1M/C416004 | 2026-10-13 |
+| Mains-side series resistor, 120 kΩ 1 W, the value and rating the OEM uses on its mains-sensing inputs (the floor column of *Heater mains-presence confirm, both elements*). Searched "2512 120K", "1W 120K resistor": the Basic and Preferred results are 0402–0805 parts rated at most 125 mW | 1 at least; build 2 | C5126146, FRC2512F1203TS, FOJAN | 2512 | Extended | 20 243 | 0.0333 USD (1–199) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/FOJAN-FRC2512F1203TS/C5126146 | 2026-10-13 |
+| As above | 1 at least; build 2 | C30707, 25121WF1203T4E, UNI-ROYAL | 2512 | Extended | 4 902 | 0.0451 USD (1–99) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/31464-25121WF1203T4E/C30707 | 2026-10-13 |
+
+### Coffee, steam and wand temperature sensing
+
+Channel: § What each channel requires, *Coffee, steam and wand temperature sensing*. Default: the fitted `EM70025`, `EM70020` and wand disc sensors, as the floor column names them. The sensing elements are off the board; the board carries their conditioning. The divider resistor's value is design work; the 10 kΩ parts below are read at that value, and a different value in the same series is a different part to read.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Divider resistor, 1 % (as a baseline). Searched by part number | 3; build 6 | C25804, 0603WAF1002T5E, UNI-ROYAL, 10 kΩ ±1 % ±100 ppm/°C | 0603 | Basic | 31 995 536 | 0.0022 USD (1–999) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/26547-0603WAF1002T5E/C25804 | 2026-10-13 |
+| Divider resistor, 0.1 %. Searched "10kΩ 0.1% 0603": no Basic or Preferred part among the 0.1 % results | 3; build 6 | C95204, RT0603BRD0710KL, YAGEO, 10 kΩ ±0.1 % ±25 ppm/°C thin film | 0603 | Extended | 2 141 230 | 0.0328 USD (1–199) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/YAGEO-RT0603BRD0710KL/C95204 | 2026-10-13 |
+| As above | 3; build 6 | C5126214, FRH0603B1002TS, FOJAN, 10 kΩ ±0.1 % ±100 ppm/°C thick film | 0603 | Extended | 549 192 | 0.011 USD (1–999) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/FOJAN-FRH0603B1002TS/C5126214 | 2026-10-13 |
+| Filter capacitor, 100 nF 50 V X7R. Searched "100nF 0603 50V" | 3; build 6 | C14663, CC0603KRX7R9BB104, YAGEO | 0603 | Basic | 53 317 730 | 0.014 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/YAGEO-CC0603KRX7R9BB104/C14663 | 2026-10-13 |
+
+### Flow sensing
+
+Channel: § What each channel requires, *Flow sensing*. Default: the fitted OEM flow meter, as the floor column names it; the meter is off the board.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Pull-up resistor to the 5 V rail. Searched by part number | 1; build 2 | C25804, 0603WAF1002T5E, UNI-ROYAL, 10 kΩ ±1 % | 0603 | Basic | 31 995 536 | 0.0022 USD (1–999) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/26547-0603WAF1002T5E/C25804 | 2026-10-13 |
+| Schmitt-trigger buffer taking a 5 V pulse into a lower-voltage input. Searched "74LVC1G17": no Basic or Preferred part in the results | 1; build 2 | C10425, SN74LVC1G17DCKR, Texas Instruments | SC-70-5 | Extended | 98 027 | 0.07 USD (1–99) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/TexasInstruments-SN74LVC1G17DCKR/C10425 | 2026-10-13 |
+
+### Steam-path pressure sensing
+
+Channel: § What each channel requires, *Steam-path pressure sensing*. Default: none — the floor column records that this channel was added by decision and never fitted.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Pressure transducer plumbed into the steam path, of the earlier design's kind (`controller-design/control-system-bom.csv`, *XDB401 3.3V I2C*) | 1 | **No stocked candidate.** Searched "pressure transducer", "pressure sensor" and "XDB401": no in-stock result. Searched "pressure": the in-stock pressure sensors returned are board-mounted parts (MPX5999D, MS561101BA03-50), not transducers fitted into a water path | — | — | — | — | — | — | https://jlcpcb.com/parts | 2026-10-13 |
+
+The board-side parts of this channel, its connector and any conditioning, follow the transducer's output form, which is chosen with the transducer (`DEL-HW-PARTITION-AND-FEASIBILITY.C1`).
+
+### Gauge drive, both gauges
+
+Channel: § What each channel requires, *Gauge drive, both gauges*. Default: the OEM `VID66-08` driver on the gauge assembly, inherited with it, as the floor column names it; it is not on the boards. The five lines it takes must clear its input threshold, as that row states.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Octal buffer with TTL-level inputs and 5 V outputs, the earlier design's part (`controller-design/control-system-bom.csv`, *74HCT541 octal buffer*). Searched "74HCT541", "74HCT245": no Basic or Preferred part in the results | 1; build 2 | C436096, SN74HCT541PWR, Texas Instruments | TSSOP-20 | Extended | 25 202 | 0.504 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/TexasInstruments-SN74HCT541PWR/C436096 | 2026-10-13 |
+| As above | 1; build 2 | C53552921, 74HCT541PW, MDD | TSSOP-20 | Extended | 2 518 | 0.2282 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/56738118-74HCT541PW/C53552921 | 2026-10-13 |
+| Quad buffer with TTL-level inputs and 5 V outputs, two serving five lines. Searched "74AHCT125": no Basic or Preferred part in the results | 2; build 4 | C842299, 74AHCT125S14-13, Diodes Incorporated | SO-14 | Extended | 3 721 | 0.2029 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/DiodesIncorporated-74AHCT125S1413/C842299 | 2026-10-13 |
+
+### Heater mains-presence confirm, both elements
+
+Channel: § What each channel requires, *Heater mains-presence confirm, both elements*. Default: the OEM `LTV814` optocoupler with its 120 kΩ 1 W resistor on each, as the floor column names them.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Optocoupler with AC input, the OEM's part. Searched "LTV-814": no Basic or Preferred part in the results | 2; build 4 | C108051, LTV-814S-TA1-A, Lite-On | SMD-4P | Extended | 19 465 | 0.1357 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/LiteOn-LTV_814S_TA1A/C108051 | 2026-10-13 |
+| As above | 2; build 4 | C10790, LTV-814, Lite-On | DIP-4 | Extended | 4 442 | 0.1082 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/LiteOn-LTV814/C10790 | 2026-10-13 |
+| Mains-side series resistor, 120 kΩ 1 W, the OEM's value and rating. Searched "2512 120K", "1W 120K resistor": the Basic and Preferred results are 0402–0805 parts rated at most 125 mW | 2; build 4 | C5126146, FRC2512F1203TS, FOJAN | 2512 | Extended | 20 243 | 0.0333 USD (1–199) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/FOJAN-FRC2512F1203TS/C5126146 | 2026-10-13 |
+| As above | 2; build 4 | C30707, 25121WF1203T4E, UNI-ROYAL | 2512 | Extended | 4 902 | 0.0451 USD (1–99) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/31464-25121WF1203T4E/C30707 | 2026-10-13 |
+
+### Low-water indication, visual
+
+Channel: § What each channel requires, *Low-water indication, visual*. Default: the fitted indicator, retained with the gauge assembly, as the floor column names it; it is not on the boards.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Small-signal switch sinking the indicator's cathode. Searched "2N7002", "MMBT3904" | 1; build 2 | C8545, 2N7002, Jiangsu Changjing | SOT-23 | Basic | 1 350 288 | 0.0178 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/9040-2N7002/C8545 | 2026-10-13 |
+| As above | 1; build 2 | C20526, MMBT3904 (hFE 100–300), Jiangsu Changjing | SOT-23 | Basic | 645 784 | 0.0116 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/21237-MMBT3904_RANGE_100_300/C20526 | 2026-10-13 |
+
+### Operator panel — keys, indicators, buzzer
+
+Channel: § What each channel requires, *Operator panel — keys, indicators, buzzer*. Default: the OEM panel board, retained as a passive assembly, as the floor column names it; it is not on the boards. The board serves it with the seven lines that row states.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| P-channel switch gating the indicators' anode rail. Searched "AO3401A" | 1; build 2 | C15127, AO3401A, Alpha & Omega | SOT-23 | Basic | 646 814 | 0.102 USD (1–49) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/Alpha_OmegaSemicon-AO3401A/C15127 | 2026-10-13 |
+| Buzzer driver switch. Searched "S8050", "2N7002" | 1; build 2 | C2146, S8050 J3Y (hFE 200–350), Jiangsu Changjing | SOT-23 | Basic | 1 376 339 | 0.0147 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/2503-S8050_J3Y_RANGE_200_350/C2146 | 2026-10-13 |
+| As above | 1; build 2 | C8545, 2N7002, Jiangsu Changjing | SOT-23 | Basic | 1 350 288 | 0.0178 USD (1–499) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/9040-2N7002/C8545 | 2026-10-13 |
+| Pull-up resistor on each of the five key lines, if fitted on the board rather than taken from the controller's own pull-ups; the keys are dry contacts to ground wanting a pull-up (`DEC-DEVICE-RETENTION-BOUNDARY`), and the indicators' series resistors stay on the panel. Searched by part number | 5; build 10 | C25804, 0603WAF1002T5E, UNI-ROYAL, read at 10 kΩ (the value is design work) | 0603 | Basic | 31 995 536 | 0.0022 USD (1–999) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/26547-0603WAF1002T5E/C25804 | 2026-10-13 |
+
+### Low-voltage supply
+
+Channel: § What each channel requires, *Low-voltage supply*. Default: the OEM board's own supply, on a board being replaced, as the floor column names it; § Rail budgets holds what the rails must supply as pending.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Isolated mains-to-5 V module (bought), the earlier design's choice (`controller-design/control-system-bom.csv`, *Mean Well IRM-10-5 [CHOSEN]*). Searched "IRM-10-5" | 1; build 2 | C2857903, IRM-10-5, Mean Well, 5 V 2 A | Through-hole module | Extended | 4 016 | 5.2192 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/MW_MEAN_WELL_Enterprises-IRM_105/C2857903 | 2026-10-13 |
+| Isolated mains-to-5 V module (bought). Searched "HLK-5M05", "HLK-PM01", "AC-DC module 5V": no Basic or Preferred part in the results | 1; build 2 | C209907, HLK-5M05, Hi-Link, 5 V 1 A | Through-hole, 38 × 23 mm | Extended | 8 095 | 2.913 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/HILINK-HLK5M05/C209907 | 2026-10-13 |
+| As above | 1; build 2 | C403745, HLK-10M05, Hi-Link, 5 V 2.2 A | Through-hole, 46.9 × 27.8 mm | Extended | 3 124 | 3.5637 USD (1–9) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/HILINK-HLK10M05/C403745 | 2026-10-13 |
+| Isolated mains converter the project designs | 1 | **No stocked candidate set.** Searched "flyback transformer": no in-stock result; "EE16 transformer": 16 in-stock results, none stating an insulation rating between its windings | — | — | — | — | — | — | https://jlcpcb.com/parts | 2026-10-13 |
+| 3.3 V regulator from the 5 V rail (either form). Searched "AMS1117-3.3", "3.3V LDO" | 1; build 2 | C6186, AMS1117-3.3, Advanced Monolithic Systems, 1 A | SOT-223 | Basic | 1 182 769 | 0.2083 USD (1–49) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/Advanced_MonolithicSystems-AMS1117_33/C6186 | 2026-10-13 |
+| As above | 1; build 2 | C5446, XC6206P332MR-G, Torex, 200 mA | SOT-23-3L | Basic | 412 953 | 0.1431 USD (1–49) | None Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/TorexSemicon-XC6206P332MRG/C5446 | 2026-10-13 |
+
+### Wiring, connectors, mains-rated terminals
+
+Channel: § What each channel requires, *Wiring, connectors, mains-rated terminals*. Default: the existing loom, condition unassessed, as the floor column names it. Which connector each retained harness ends in is not yet recorded, so the headers below are candidates for the families a harness might end in, not matches to it. Fuse counts follow § Upstream protection and fault current: one fuse on each pump branch and one shared by both valve branches.
+
+| Part class (form) | Count | JLCPCB part | Package | Class | Stock | Unit price (break) | Per-part fee | Assembly | Source | Read |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Low-voltage wire-to-board header, 2.5 mm pitch. Searched "B2B-XH-A", "B5B-XH-A": no Basic or Preferred part in the results | Not established; build twice the count | C158012, B2B-XH-A(LF)(SN), JST, 2 ways | Through-hole, 2.5 mm | Extended | 262 288 | 0.0407 USD (1–199) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/JST-B2B_XH_A_LF_SN/C158012 | 2026-10-13 |
+| As above | Not established; build twice the count | C157991, B5B-XH-A(LF)(SN), JST, 5 ways | Through-hole, 2.5 mm | Extended | 51 834 | 0.0855 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/JST-B5B_XH_A_LF_SN/C157991 | 2026-10-13 |
+| Mains wire-to-board header, 3.96 mm pitch, 10 A 250 V. Searched "B2P-VH" | Not established; build twice the count | C160315, B2P-VH(LF)(SN), JST, 2 ways | Through-hole, 3.96 mm | Extended | 282 106 | 0.0624 USD (1–99) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/JST-B2P_VH_LF_SN/C160315 | 2026-10-13 |
+| Screw terminal block, 5.0 mm pitch, 250 V. Searched "KF301-5.0-2P" | Not established; build twice the count | C474881, KF301-5.0-2P, Cixi Kefa, 2 ways | Through-hole, 5 mm | Extended | 49 050 | 0.1012 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/Cixi_KefaElec-KF301_5_02P/C474881 | 2026-10-13 |
+| 6.3 mm quick-connect tab, board-mounted. Searched "6.3mm quick connect terminal PCB" | Not established; build twice the count | C20626100, BTC-3-PCB485005D, BZXC | Through-hole | Extended | 5 004 | 0.035 USD (1–199) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/BZXC-BTC_3PCB485005D/C20626100 | 2026-10-13 |
+| Fuse holder, 5 × 20 mm, board-mounted. Searched "fuseholder", "fuse holder 5x20", "fuse clip" | 3; build 6 | C3131, 5x20 BLX-A fuse holder XC-7, Xucheng, 250 V 6.3 A | Through-hole | Extended | 124 968 | 0.0844 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/3520-5x20_BLX_AType_Fuse_holder_XC7/C3131 | 2026-10-13 |
+| As above, clip pair | 6 (two clips a fuse); build 12 | C3130, 5x20 fuse clip, Xucheng | Through-hole, 4.8 mm | Extended | 260 501 | 0.0325 USD (1–199) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/C3130 | 2026-10-13 |
+| Fuse cartridge, slow-blow, for the pump branches and the shared valve feed | 3 | **No stocked candidate.** Searched "5x20mm fuse" and "slow blow fuse 2A": no in-stock result. The ratings themselves are pending in § Pending marks | — | — | — | — | — | — | https://jlcpcb.com/parts | 2026-10-13 |
+
+### Shipping a minimum board order to the builder
+
+The builder is in Australia: the machine is an AU/NZ-market model supplied from Australia's grid (`reference-machine.md` § Supply). The cost depends on the order's chargeable weight, which JLCPCB computes at checkout and which is not established until a board's order is quoted, so the quote is given at three weights. Read from JLCPCB's shipping calculator, https://jlcpcb.com/shipping, with *Shipping to* Australia, on 2026-10-13 at about 09:34 UTC, graded published unverified, read at source. JLCPCB states the cost is "for reference only" and confirmed at checkout, and its discounted shipping rates are offered only through its JLCONE desktop application, so they may differ (`docs/board-manufacturer-jlcpcb.md` § Shipping). Import duties and taxes are not included.
+
+| Method, as the calculator names it | Delivery time, as quoted | Cost at 0.1 kg | Cost at 0.2 kg | Cost at 0.5 kg | Cost at 1 kg |
+|---|---|---|---|---|---|
+| Global Standard Direct Line | 10–14 business days | 6.10 USD | 6.89 USD | 9.62 USD | 14.30 USD |
+| UPS Worldwide Express Saver | 5–7 business days | 9.84 USD | 9.84 USD | 9.84 USD | 11.18 USD |
+| DHL Express | 2–4 business days | 21.23 USD | 21.23 USD | 21.23 USD | 24.15 USD |
+| FedEx Express | 5–7 business days | 28.83 USD | 28.83 USD | 28.83 USD | 34.47 USD |
+| FedEx International Connect Plus | 6–8 business days | no price given | no price given | no price given | 38.84 USD |
+| Sea shipment | 20–25 business days | no price given | no price given | no price given | no price given |
+
+The calculator also lists shipping on the builder's own DHL or UPS account, at 2.00 USD.
+
+### Readings left open
+
+Every reading this section leaves open is entered in § Pending marks above, with the work that settles it: the steam-path pressure transducer; the bought modules and heatsink the catalogue does not stock; the connector each retained harness ends in; the branch fuse cartridges; the proof-of-life interlock's parts; and the minimum quantity charged per part, the loading fee on a part fitted by hand, and the order's chargeable weight and shipping cost.
