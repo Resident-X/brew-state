@@ -13,7 +13,7 @@ These are needed in addition to the tools the pre-order check needs (KiCad 10, P
 | KiCad, with its command-line tool and the Python it bundles with its `pcbnew` module | KiCad 10.0.7 | https://www.kicad.org/download/ |
 | Freerouting, the external router | Freerouting 2.5.0, the file `freerouting-2.5.0.jar` | https://github.com/freerouting/freerouting/releases (the v2.5.0 release, asset `freerouting-2.5.0.jar`) |
 | A Java runtime, which Freerouting runs on | Eclipse Temurin OpenJDK 26.0.1 | https://adoptium.net/ or any other Java distribution. Freerouting 2.5.0 is built for Java 25, so it needs Java 25 or newer. |
-| resvg, the SVG rasteriser that turns the [layout review views](#layout-review-views) into images | resvg 0.48.1; the command refuses one older than 0.48 | https://github.com/linebender/resvg/releases, one prebuilt program for each common operating system; or `brew install resvg`, or `cargo install resvg`. Set `RESVG=/path/to/resvg` when it is not on the search path. |
+| resvg, the SVG rasteriser that turns the [layout review views](#layout-review-views) into images | resvg 0.48.1 and resvg 0.47.0; the command refuses one older than 0.47 | A prebuilt program from https://github.com/linebender/resvg/releases: the v0.47.0 release carries one for each of Windows (`resvg-win64.zip`), macOS and Linux (x86_64), and later releases carry them for macOS and Linux only. Or `brew install resvg` with Homebrew, on macOS or Linux. Or `cargo install resvg` with a Rust toolchain from https://rustup.rs/, on any operating system. Set `RESVG=/path/to/resvg` when it is not on the search path. |
 
 KiCad's bundled Python is the one that can `import pcbnew`. Its usual location:
 

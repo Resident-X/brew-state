@@ -76,8 +76,8 @@ import sexpr  # noqa: E402
 from board_check import CannotRun, clean  # noqa: E402
 from locked_copper import Unreadable  # noqa: E402
 
-#: The first resvg the command was exercised with.
-MIN_RESVG = (0, 48)
+#: The oldest resvg the command's tests pass against: 0.47.0, the last release carrying a Windows program.
+MIN_RESVG = (0, 47)
 
 #: Pixels across the smallest track width and the smallest clearance.
 PIXELS_PER_FEATURE = 3
@@ -222,9 +222,12 @@ def read_png(path: str) -> Tuple[int, int, List[List[Tuple[int, int, int, int]]]
 
 def require_resvg(resvg: str) -> str:
     """resvg at its minimum version, able to draw a caption's text; its version string."""
-    how = (f"Install resvg {MIN_RESVG[0]}.{MIN_RESVG[1]} or newer, one prebuilt program for each common operating "
-           "system, from https://github.com/linebender/resvg/releases (or with cargo install resvg). If it is "
-           "installed off the search path, run the task with RESVG=/path/to/resvg.")
+    how = (f"Install resvg {MIN_RESVG[0]}.{MIN_RESVG[1]} or newer: a prebuilt program from "
+           "https://github.com/linebender/resvg/releases, where the v0.47.0 release carries one for each of Windows "
+           "(resvg-win64.zip), macOS and Linux and later releases carry them for macOS and Linux only; or brew "
+           "install resvg with Homebrew, on macOS or Linux; or cargo install resvg with a Rust toolchain "
+           "(https://rustup.rs/), on any operating system. If it is installed off the search path, run the task with "
+           "RESVG=/path/to/resvg.")
     try:
         result = subprocess.run([resvg, "--version"], capture_output=True, text=True, timeout=120)
     except (OSError, subprocess.TimeoutExpired) as error:
@@ -1150,6 +1153,37 @@ def absent_field(absent: Sequence[str]) -> str:
     return f"{', '.join(absent)} not carried by the board, so not drawn"
 
 
+class Names:
+    """Every file name the command writes into its output folder, each one the only file it names.
+
+    Names are told apart as a filesystem that ignores letter case tells them
+    apart, the default on macOS and Windows, so two views whose names differ
+    only in case, or a tile of one view and the whole of another, never write
+    the same file.
+    """
+
+    def __init__(self):
+        self.taken: Set[str] = set()
+
+    def claim(self, wanted: str, endings: Sequence[str]) -> List[str]:
+        """The file names `wanted` gives with each of `endings`, under the first stem none of whose files is taken."""
+        stem = re.sub(r"[^A-Za-z0-9._+-]+", "_", wanted).strip("._") or "view"
+        candidate, index = stem, 1
+        while any((candidate + ending).casefold() in self.taken for ending in endings):
+            index += 1
+            candidate = f"{stem}-{index}"
+        files = [candidate + ending for ending in endings]
+        self.taken.update(name.casefold() for name in files)
+        return files
+
+
+def output_files(names: Names) -> Dict[str, str]:
+    """The names of the index and the fact table, each as text and JSON, claimed before any image's."""
+    files = dict(zip(("index_text", "index_json"), names.claim("index", [".txt", ".json"])))
+    files.update(zip(("facts_text", "facts_json"), names.claim("facts", [".txt", ".json"])))
+    return files
+
+
 class Renderer:
     """Composes every image of the views and keeps the index of them.
 
@@ -1165,8 +1199,9 @@ class Renderer:
     """
 
     def __init__(self, resvg: str, work: str, out: str, scale: float, frame, plotted: Dict[str, str],
-                 colours: Dict[str, Tuple[str, str]], copper: Sequence[str], areas: List[dict], fonts: Dict[str, str]):
-        self.resvg, self.work, self.out, self.scale = resvg, work, out, scale
+                 colours: Dict[str, Tuple[str, str]], copper: Sequence[str], areas: List[dict], fonts: Dict[str, str],
+                 names: Names):
+        self.resvg, self.work, self.out, self.scale, self.names = resvg, work, out, scale, names
         #: The region every whole-board view shows: everything the plotted layers hold, the outline with it.
         self.frame = frame
         self.plotted, self.colours, self.copper, self.areas = plotted, colours, list(copper), areas
@@ -1174,18 +1209,8 @@ class Renderer:
         self.fonts = fonts
         self.queued: List = []
         self.images: List[dict] = []
-        self.names: Set[str] = set()
         #: Every layer some view wanted that the board does not carry, in the order the views wanted them.
         self.absent: List[str] = []
-
-    def stem(self, wanted: str) -> str:
-        stem = re.sub(r"[^A-Za-z0-9._+-]+", "_", wanted).strip("._") or "view"
-        candidate, index = stem, 1
-        while candidate in self.names:
-            index += 1
-            candidate = f"{stem}-{index}"
-        self.names.add(candidate)
-        return candidate
 
     def notes(self) -> List[str]:
         """What every caption carries besides its own fields: what KiCad drew differently from the design."""
@@ -1195,15 +1220,16 @@ class Renderer:
                 + named([f"{font} drawn in {instead}" for font, instead in sorted(self.fonts.items())])]
 
     def image(self, name: str, width: int, height: int, content: str, top: int, caption: str, entry: dict) -> None:
-        """One image: the content above its caption, on the dark background, written and listed in the index."""
-        svg = os.path.join(self.work, name + ".svg")
+        """One image, the file `name`: the content above its caption, on the dark background, written and listed in
+        the index."""
+        svg = os.path.join(self.work, f"image-{len(self.images)}.svg")
         with open(svg, "w", encoding="utf-8") as handle:
             handle.write(f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
                          f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
                          f'<rect width="{width}" height="{height}" fill="{BACKGROUND}"/>{content}'
                          f'{caption_svg(caption, width, top)}</svg>')
-        rasterise(self.resvg, svg, os.path.join(self.out, name + ".png"))
-        self.images.append(dict(entry, file=name + ".png", caption=caption, size_px={"width": width, "height": height}))
+        rasterise(self.resvg, svg, os.path.join(self.out, name))
+        self.images.append(dict(entry, file=name, caption=caption, size_px={"width": width, "height": height}))
 
     def flat(self, wanted: str, layers: Sequence[str], entry: dict, describe: Sequence[str], paint=None,
              around=None, beneath: bool = False, coloured: bool = True) -> None:
@@ -1245,12 +1271,12 @@ class Renderer:
                 parts.append(f"tile row {tile['row']} of {tile['rows']}, column {tile['column']} of {tile['columns']}")
             return " | ".join(parts + notes)
 
-        stem = self.stem(wanted)
         planned = tiles(region, self.scale, caption_for)
-        for tile in planned:
+        endings = [".png"] if len(planned) == 1 else [f"-r{tile['row']}c{tile['column']}.png" for tile in planned]
+        for tile, name in zip(planned, self.names.claim(wanted, endings)):
             across, down = tile["content"]
             x0, y0, x1, y1 = tile["region"]
-            self.image(stem if len(planned) == 1 else f"{stem}-r{tile['row']}c{tile['column']}", *tile["size"],
+            self.image(name, *tile["size"],
                        f'<svg x="0" y="0" width="{across}" height="{down}" viewBox="{x0} {y0} {x1 - x0} {y1 - y0}" '
                        f'preserveAspectRatio="none" overflow="hidden">{drawings}</svg>', down, tile["caption"],
                        dict(entry, scale_px_per_mm=self.scale, region_mm={"x0": x0, "y0": y0, "x1": x1, "y1": y1},
@@ -1272,7 +1298,7 @@ class Renderer:
             width, tall = png_size(raw)
             ratio = min(1.0, across / width, down / tall)
             w, h = width * ratio, tall * ratio
-            self.image(self.stem(wanted), across, height,
+            self.image(self.names.claim(wanted, [".png"])[0], across, height,
                        f'<image x="{(across - w) / 2}" y="{(down - h) / 2}" width="{w}" height="{h}" '
                        f'xlink:href="{escape(os.path.basename(raw))}" href="{escape(os.path.basename(raw))}"/>',
                        down, caption, dict(entry, render_px={"width": across, "height": down}))
@@ -1369,6 +1395,12 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
     why = locked_copper.own_project(board, project)
     if why is not None:
         refusals.append((project, why))
+    found = locked_copper.open_in_editor(board)
+    if found is not None:
+        refusals.append((found[0], f"KiCad's lock file shows {board} open in an editor, whose changes the views, "
+                                   "drawn from the saved file, would not show; close the board in every editor, and if "
+                                   "no KiCad process is running the lock file is stale, left by a KiCad that did not "
+                                   "close the board, so delete it"))
     if refusals:
         return locked_copper.refused(refusals, "REFUSED | no views were written", stream)
     layout, refusals = locked_copper.named_classes(board, project, classes)
@@ -1421,7 +1453,9 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
         reach += [(area["bounds_mm"]["x0"], area["bounds_mm"]["y0"], area["bounds_mm"]["x1"], area["bounds_mm"]["y1"])
                   for area in areas]
         frame = grown(union(reach), BOARD_MARGIN_MM)
-        renderer = Renderer(resvg, work, ready, scale, frame, plotted, colours, copper, areas, fonts)
+        names = Names()
+        outputs = output_files(names)
+        renderer = Renderer(resvg, work, ready, scale, frame, plotted, colours, copper, areas, fonts, names)
 
         for layer in drawn:
             renderer.flat(f"layer-{layer}", [layer], {"view": "layer"}, ["layer view"])
@@ -1522,7 +1556,7 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             "rule_areas": rule_area_entries(areas),
             "not_in_3d": unseen,
         }
-        write_outputs(ready, header, renderer.images, facts)
+        write_outputs(ready, outputs, header, renderer.images, facts)
         os.makedirs(out, exist_ok=True)
         for name in sorted(os.listdir(ready)):
             shutil.move(os.path.join(ready, name), os.path.join(out, name))
@@ -1568,7 +1602,8 @@ def fact_line(fact: dict) -> str:
                        f"{fact['vias']} via{'s' if fact['vias'] != 1 else ''}", zones])
 
 
-def write_outputs(folder: str, header: dict, images: List[dict], facts: List[dict]) -> None:
+def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List[dict], facts: List[dict]) -> None:
+    """The index and the fact table, each as text and JSON, into `folder` under the names `files` gives them."""
     resolution = header["resolution"]
     lines = [f"BOARD | {header['board']}",
              f"RESOLUTION | {scale_text(resolution['px_per_mm'])} | {resolution['pixels_per_feature']} px across the "
@@ -1586,14 +1621,14 @@ def write_outputs(folder: str, header: dict, images: List[dict], facts: List[dic
               for area in header["rule_areas"]]
     lines += [f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]]
     lines += [f"IMAGE | {image['file']} | {image['caption']}" for image in images]
-    with open(os.path.join(folder, "index.txt"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(folder, files["index_text"]), "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
-    with open(os.path.join(folder, "index.json"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(folder, files["index_json"]), "w", encoding="utf-8") as handle:
         json.dump(dict(header, images=images), handle, indent=1)
         handle.write("\n")
-    with open(os.path.join(folder, "facts.txt"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(folder, files["facts_text"]), "w", encoding="utf-8") as handle:
         handle.write("".join(fact_line(fact) + "\n" for fact in facts))
-    with open(os.path.join(folder, "facts.json"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(folder, files["facts_json"]), "w", encoding="utf-8") as handle:
         json.dump({"board": header["board"], "nets": facts}, handle, indent=1)
         handle.write("\n")
 

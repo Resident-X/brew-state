@@ -1020,6 +1020,80 @@ class Transforms(unittest.TestCase):
                     self.extent(body)
 
 
+class OutputNames(unittest.TestCase):
+    """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+
+    def written(self, views):
+        """Net views written through the renderer into a fresh folder, with the index and the fact table, as the
+        command writes them: (the files in the folder, the index's images). Each view is (net, its extent in
+        millimetres), a large extent tiled and a small one not."""
+        with tempfile.TemporaryDirectory(prefix="board-views-names-") as work:
+            out = os.path.join(work, "out")
+            os.makedirs(out)
+            names = board_views.Names()
+            files = board_views.output_files(names)
+            renderer = board_views.Renderer(RESVG, work, out, SCALE, (0, 0, 10, 10), {}, {}, [], [], {}, names)
+            for net, extent in views:
+                renderer.flat(f"net-{net}", [], {"view": "net", "net": net}, [f"net {net}"], around=extent)
+            renderer.write()
+            header = {"board": "proof.kicad_pcb", "critical_classes": {}, "fonts_substituted": [],
+                      "layers_not_carried": [], "rule_areas": [], "not_in_3d": [],
+                      "resolution": {"px_per_mm": SCALE, "pixels_per_feature": 3, "min_track_width_mm": MINIMUM_MM,
+                                     "min_clearance_mm": MINIMUM_MM}}
+            board_views.write_outputs(out, files, header, renderer.images, [])
+            with open(os.path.join(out, files["index_json"]), encoding="utf-8") as handle:
+                images = json.load(handle)["images"]
+            with open(os.path.join(out, files["index_text"]), encoding="utf-8") as handle:
+                listed = [line.split(" | ")[1] for line in handle.read().splitlines() if line.startswith("IMAGE | ")]
+            self.assertEqual(listed, [image["file"] for image in images])
+            return sorted(os.listdir(out)), images
+
+    def assertDistinct(self, found, images, nets):
+        """Every image is its own file, told apart from every other however letter case folds, listed once in the
+        index, and each net's images are the ones its own views wrote."""
+        files = [image["file"] for image in images]
+        self.assertEqual(len({name.casefold() for name in found}), len(found), found)
+        self.assertEqual(len({name.casefold() for name in files}), len(files), files)
+        self.assertEqual(sorted(name for name in found if name.endswith(".png")), sorted(files))
+        self.assertEqual({"index.txt", "index.json", "facts.txt", "facts.json"} - set(found), set())
+        self.assertEqual(sorted({image["net"] for image in images}), sorted(nets))
+
+    def test_two_nets_whose_names_differ_only_in_case_write_two_files_each_listed_once(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        small = (0, 0, 5, 5)
+        found, images = self.written([("VCC", small), ("vcc", small), ("Vcc", small)])
+        self.assertDistinct(found, images, ["VCC", "vcc", "Vcc"])
+        self.assertEqual(len(images), 3, images)
+
+    def test_a_tiled_net_beside_an_untiled_net_named_as_one_of_its_tiles_write_distinct_files(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        large, small = (0, 0, 80, 80), (0, 0, 5, 5)
+        for order in ([("A", large), ("A-r1c1", small)], [("A-r1c1", small), ("A", large)]):
+            with self.subTest(first=order[0][0]):
+                found, images = self.written(order)
+                self.assertDistinct(found, images, ["A", "A-r1c1"])
+                tiled = [image for image in images if image["net"] == "A"]
+                self.assertGreater(len(tiled), 1, "the large net was not tiled, so the test proves nothing")
+                self.assertEqual(len([image for image in images if image["net"] == "A-r1c1"]), 1, images)
+                self.assertEqual(len({image["file"].rsplit("-r", 1)[0] for image in tiled}), 1,
+                                 "a tiled view's tiles do not share one stem")
+
+    def test_a_view_named_as_the_index_or_the_fact_table_never_takes_their_names(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        names = board_views.Names()
+        files = board_views.output_files(names)
+        self.assertEqual(files, {"index_text": "index.txt", "index_json": "index.json",
+                                 "facts_text": "facts.txt", "facts_json": "facts.json"})
+        self.assertEqual(names.claim("INDEX", [".TXT"]), ["INDEX-2.TXT"])
+        self.assertEqual(names.claim("view", [".png"]), ["view.png"])
+        self.assertEqual(names.claim("VIEW", [".png"]), ["VIEW-2.png"])
+        self.assertEqual(names.claim("view-2", [".png"]), ["view-2-2.png"])
+        self.assertEqual(names.claim("view", ["-r1c1.png", "-r1c2.png"]), ["view-r1c1.png", "view-r1c2.png"])
+        self.assertEqual(names.claim("View-r1c2", [".png"]), ["View-r1c2-2.png"])
+        self.assertEqual(names.claim("a/b c", [".png"]), ["a_b_c.png"])
+        self.assertEqual(names.claim("..", [".png"]), ["view-3.png"])
+
+
 class RealBoard(unittest.TestCase):
     """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
 
@@ -1159,6 +1233,20 @@ class Refusals(unittest.TestCase):
         design.project = stray
         self.assertRefused(design, "give the board's own project file")
 
+    def test_a_board_open_in_an_editor_is_refused(self):
+        """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
+        design = Design()
+        lock = os.path.join(design.folder, "~proof.kicad_pcb.lck")
+        with open(lock, "w", encoding="utf-8") as handle:
+            handle.write("{}")
+        lines = self.assertRefused(design, f"REFUSED | {lock} | KiCad's lock file shows {design.board} open in an editor")
+        self.assertIn("drawn from the saved file", "\n".join(lines))
+        os.remove(lock)
+        with open(os.path.join(design.folder, "~other.kicad_pcb.lck"), "w", encoding="utf-8") as handle:
+            handle.write("{}")
+        status, lines, _ = design.run()
+        self.assertEqual(status, 0, lines)
+
     def test_an_unreadable_board_fails_naming_it(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
         for text in ("(kicad_pcb (version 20260206) (layers", "(kicad_sch (version 1))", "\x00\xff"):
@@ -1198,8 +1286,10 @@ class Tools(unittest.TestCase):
             self.assertIn("resvg was not found", errors)
             self.assertIn("https://github.com/linebender/resvg/releases", errors)
             self.assertIn("RESVG=/path/to/resvg", errors)
-            errors = self.cannot_run(resvg=tool(folder, "old-resvg", 'echo "0.47.9"'))
-            self.assertIn("older than the 0.48", errors)
+            for route in ("resvg-win64.zip", "brew install resvg", "cargo install resvg", "https://rustup.rs/"):
+                self.assertIn(route, errors)
+            errors = self.cannot_run(resvg=tool(folder, "old-resvg", 'echo "0.46.9"'))
+            self.assertIn("older than the 0.47", errors)
             errors = self.cannot_run(resvg=tool(folder, "silent-resvg", "exit 3"))
             self.assertIn("did not report a resvg version", errors)
             errors = self.cannot_run(kicad_cli="/nonexistent/kicad-cli")
@@ -1245,9 +1335,16 @@ class Documentation(unittest.TestCase):
         for name, text in (("README", readme), ("method", method)):
             with self.subTest(document=name):
                 self.assertIn("https://github.com/linebender/resvg/releases", text)
-                self.assertIn("resvg 0.48", text)
+                self.assertIn(f"resvg {board_views.MIN_RESVG[0]}.{board_views.MIN_RESVG[1]}", text)
+                for route in ("resvg-win64.zip", "brew install resvg", "cargo install resvg", "https://rustup.rs/"):
+                    self.assertIn(route, text)
                 self.assertIn("1568", text)
-        self.assertIn("resvg 0.48 or newer", task)
+        self.assertIn(f"resvg {board_views.MIN_RESVG[0]}.{board_views.MIN_RESVG[1]} or newer", task)
+        for font in ("DejaVu Sans Mono", "https://dejavu-fonts.github.io/"):
+            self.assertIn(font, readme)
+        views = readme[readme.index("## The layout review views"):]
+        self.assertIn("a board KiCad's lock file shows open in an editor", views)
+        self.assertIn("told apart even where letter case is not", views)
         for view in ("layer-<layer>", "assembly-top", "net-<net>", "classes", "crop-<reference>", "3d-top",
                      "3d-angled", "index.txt", "index.json", "facts.txt", "facts.json"):
             self.assertIn(view, readme)
