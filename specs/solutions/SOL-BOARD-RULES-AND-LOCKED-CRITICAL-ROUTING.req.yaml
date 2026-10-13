@@ -33,6 +33,10 @@ links:
     type: justified-by
   - target: REQ-PUBLISHED-BUILD-PATH-001.C2
     type: targets
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-726d914b74b4c776)
+  fingerprint: 3d0e5aa7e210a33c806042c3470e94cdeed55b8eb1f982ad716b0d038d409cc6
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
     class: new-condition
