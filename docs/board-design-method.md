@@ -1,6 +1,6 @@
 # Board design method
 
-This is how a controller board is designed in KiCad so that it passes the pre-order check and works once built. The method works for any machine. A machine's own figures come from its own records, and this document names each record only by the role it plays: the machine's constraints record, its separation basis record, the requirements a board serves, the board manufacturer's stated limits, and the datasheets of the parts on the board.
+This is how a controller board is designed in KiCad so that it passes the pre-order check and works once built. The method works for any machine. A machine's own figures come from its own records, and this document names each record only by the role it plays: the machine's constraints record, its separation basis record, the requirements a board serves, the board manufacturer's stated limits, and the datasheets of the parts on the board. A physical constant or a property of a material comes from a published standard or reference, which the step that uses it names.
 
 A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
 
@@ -73,7 +73,7 @@ Every board that has these circuits lists them:
 - **A sensing front end**, the circuit between a sensor and the converter that reads it. Its noise and its settling time decide whether a reading is good enough to use.
 - **A zero-crossing detector**, the circuit that reports when the alternating supply crosses zero. Its delay, between the true crossing and the edge it reports, decides how accurately anything timed from that edge is timed.
 - **A drive stage**, the circuit that switches a load from a controller output. Its margin, the drive it gives against the drive its switching part needs to switch fully, decides whether it still switches at the lowest supply voltage.
-- **Every conductor that relies on a protective device**: each track, copper pour or wire that carries current from a supply protected by a fuse or breaker. It must survive a fault until that device clears it. Its figures are the device's clearing time and the energy it lets through (its let-through I²t) at the declared fault current, both read from the device's datasheet, with the fault current from the machine's constraints record. Its result is the energy the conductor withstands at the cross-section the board will give it, calculated with the arithmetic shown.
+- **Every conductor that relies on a protective device**: each track, copper pour or wire that carries current from a supply protected by a fuse or breaker. It must survive a fault until that device clears it. Its figures are the device's clearing time and the energy it lets through (its let-through I²t) at the declared fault current, both read from the device's datasheet, with the fault current from the machine's constraints record. Its result is the energy the conductor withstands at the cross-section the board will give it, calculated with the arithmetic shown, by the relation and from the inputs step 3 gives for it.
 
 ### 2. State each circuit's figure and where it comes from
 
@@ -92,9 +92,34 @@ A figure its source does not yet bound, because the constraints record marks it 
 
 Each result is shown in one of three ways, and **How shown** says which, naming the file where there is one:
 
-- a **calculation**, with every step's arithmetic written out, in the record or in a file beside it, and every input value taken from the schematic or from a source as step 2 defines it;
+- a **calculation**, with every step's arithmetic written out, in the record or in a file beside it;
 - a **short Python script**, committed in the board's folder, that prints the result;
 - a **simulation** with ngspice, as below.
+
+Whichever way it is shown, every input to it is sourced, as the figure is, and the row or the file beside it names where each input was read. Step 2's rule is for the figure a circuit must meet; an input to showing it may come from any of these:
+
+- the schematic, for a part's value and how it is connected;
+- a source as step 2 defines it, the machine's constraints record or a part's datasheet;
+- the board manufacturer's stated limits, for what the board is made of and to, such as its copper thickness (name the manufacturer and the date of the page the figure was read from), or the datasheet of the board material those limits name;
+- for a physical constant or a property of a material, a named published standard or reference (name it, with its edition and the clause or table the value is read from).
+
+A tool's default is not a source here either. ngspice, for one, simulates at 27 °C unless its input says otherwise: where a result depends on temperature, set it with a `.temp` line, for example `.temp 85`, at the end of the temperature range the machine's constraints record declares for the board that is worse for the figure, and list it under Conditions covered.
+
+**A conductor's withstand** is calculated from the adiabatic short-circuit relation, the one IEC 60949 gives for a conductor heated by a fault. It takes all of the fault's heat to stay in the conductor, so it errs safe:
+
+```
+k² × S² ≥ I²t        where   k = K × √( ln( (θf + β) / (θi + β) ) )
+```
+
+- **I²t** is the row's figure, the protective device's let-through at the declared fault current, in A²s.
+- **S** is the conductor's cross-section, in mm². For a track or a copper pour, it is the narrowest width the current passes through times the thinnest finished copper the board manufacturer's stated limits allow for the copper weight the board will be ordered with. A via the current passes through is a conductor too: its cross-section is its barrel's plating, the hole's circumference times the manufacturer's stated minimum plating thickness, times the number of vias that share the current. For a wire, it is the cross-section its datasheet states.
+- **K** and **β** are constants of the conductor's material. For copper, read both from IEC 60949. Where the row's two temperatures are ones IEC 60364-5-54 tabulates, a k it gives for copper at those temperatures may be used in place of the formula. Either way, name the standard, its edition and the table in the row.
+- **θi** is the conductor's temperature when the fault begins: the highest temperature the board material is rated to run at continuously, its maximum operating temperature, from the manufacturer's stated limits or the board material's datasheet. No conductor may run hotter than that in service, so starting from it errs safe.
+- **θf** is the highest temperature the conductor may reach before the device clears the fault. It is a temperature the board material's datasheet states the material withstands, without damage, for at least the device's clearing time, such as a thermal stress rating given as a temperature held for a stated time. A rating held for less than the clearing time is not a source for it. Where the conductor ends at a soldered joint, θf is no higher than the solder's melting point, from the solder's datasheet. A wire's θf is its insulation's short-circuit temperature, from its datasheet.
+
+The **Result** is k² × S² in A²s, with the width, copper, vias and temperatures it assumed, and **Met** is `yes` when it is no less than the figure. Where no source states a θi or a θf, the input is not bounded, and the row fails this step as an unbounded figure does, until a board material whose datasheet or stated limits give one is chosen.
+
+What the calculation assumes, the board is then held to. The width it assumed is written into the table the rules section keeps as a custom track-width rule on the conductor's net class, and a via's hole into a hole-size rule, each with this record's row as its source (step 1 of the rules section). The number of vias the row assumes is placed on the board. The copper weight it assumed is the weight the board is ordered with.
 
 **Conditions covered** states the conditions each result holds under. They include:
 
@@ -141,6 +166,8 @@ To simulate, run these from the board's folder, with `kicad-cli` written as the 
    .endc
    ```
 
+   Keep each circuit's simulation to that circuit. The netlist holds the whole board, and on a real board a circuit's supply usually comes from a regulator or a connector, which has no model and is excluded from simulation (below), so nothing in the netlist drives it. Give the circuit its supply in its own simulation input instead, after the `.include`, as a source on the supply's net, for example `Vsup +3V3 0 3.3` for a net a power symbol names `+3V3`, and set it to each end of the supply span with `alter Vsup = ...`. The rest of the board stays in the netlist, but a simulation source holds its net at the voltage it is given whatever else draws on it, so another block changes this circuit's result only through a net it shares with the circuit's own signal path, which makes it part of the circuit. Measure only at the circuit's own nets.
+
 3. Run it in batch mode, with no window:
 
    ```
@@ -153,25 +180,24 @@ Three things were measured with ngspice 47 that decide whether the log can be be
 
 - **ngspice's exit status is not evidence.** It exits with success when a measurement fails and when it cannot solve the circuit. A log with a line containing `failed!`, `Error` or `singular matrix` holds no result, whatever value it also prints.
 - **Ground must be named `0` or `GND`.** ngspice takes either as its ground. A circuit whose reference net had another name ran with only a warning and gave a wrong result. If the board's reference net is named otherwise, add `Vgnd <net> 0 0` to the simulation input, after the `.include`, which ties that net to ground.
-- **Every part in the netlist needs a model.** KiCad's resistor, capacitor and simulation source symbols carry one. A part with none, such as a connector, exports as a line ngspice refuses (`Unable to find definition of model`), and the simulation stops. Mark such a part excluded from simulation in its symbol's properties, which leaves it out of the exported netlist while it stays on the board. If a part the circuit depends on has no model, show the circuit by calculation instead, or give its symbol the manufacturer's published model through KiCad's simulation model settings and commit the model file beside the input. That last route has not been exercised.
+- **Every part in the netlist needs a model.** KiCad's resistor, capacitor and simulation source symbols carry one. A part with none, such as a connector or a regulator, exports as a line naming only the part, such as `J1 __J1`, which ngspice refuses, and the simulation stops. The log then holds a line beginning `Error on line`, the refused line, and a message that varies with the letter the part's reference begins with: `Unable to find definition of model` for `J1` or `U1`, and `model name is not found` for `P1`. Mark such a part excluded from simulation in its symbol's properties, which leaves it out of the exported netlist while it stays on the board. If a part the circuit depends on has no model, show the circuit by calculation instead, or give its symbol the manufacturer's published model through KiCad's simulation model settings and commit the model file beside the input. That last route has not been exercised.
 
 The commands were exercised on macOS. On Windows, run `ngspice_con.exe` in place of `ngspice`, with the same arguments; that form has not been exercised.
 
 ### 4. Commit the record before placement
 
-Commit `circuit-proof.md`, the exported netlist and every simulation input, script and calculation file it names, in a commit made before the first commit that places a footprint on the board. The order is then checkable from git history, from the board's folder:
+Commit `circuit-proof.md`, the exported netlist and every simulation input, script and calculation file it names, in a commit made before the first commit that places a footprint on the board. What this step judges is the record as it stood in that earlier commit, not the record as it stands now, so a record committed empty and filled in after placement does not pass. From the board's folder:
 
 ```
-git log --reverse --format=%h -- circuit-proof.md | head -1
 git log -S'(footprint ' --reverse --format=%h -- <board>.kicad_pcb | head -1
-git merge-base --is-ancestor <record commit> <placement commit>
+git show <placement commit>^:./circuit-proof.md
 ```
 
-The first prints the commit that added the record, the second the first commit that added a footprint to the board, and the third exits with success when the first is an ancestor of the second or the same commit. The record is in time when the third succeeds and the two commits differ. Before any footprint is placed the second prints nothing, and the record need only be committed.
+The first prints the first commit that added a footprint to the board. The second prints the record as it stood in the commit before that one, and fails with `does not exist in` if the record had not been committed by then. Judge steps 1 to 3 against what it prints: every value-critical circuit in the schematic as it stood then (`git show <placement commit>^:./<board>.kicad_sch`) has a row, and every row has its figure, its source and a result that meets it. Each file a row names is read the same way, for example `git show <placement commit>^:./circuit-proof/<circuit>.cir`, and fails the same way if it was not there. A row that was missing, empty or not met in that commit fails this step, however complete it is now. Before any footprint is placed the first command prints nothing, and the record is judged as it stands.
 
-A later change to a listed circuit's parts or values, or to its figure at the source, reopens its row: export the netlist again, show the circuit again, and commit the record before the board is ordered.
+A later change to a listed circuit's parts or values, or to its figure at the source, reopens its row: export the netlist again, show the circuit again, and commit the record before the board is ordered. A circuit added to the schematic after placement is proven, and its row committed, before any of its parts is placed.
 
-A board entering layout fails this step when a value-critical circuit is missing from the record, or a listed circuit lacks a figure, a source of the kind step 2 allows, or a result that meets its figure under the conditions step 3 requires, or when the record was not committed before placement. The remedy is a change to the circuit, shown again, or an amendment to the figure's source. Never the figure relaxed in this record, and never a shortfall judged unimportant.
+A board entering layout fails this step when, in the record as it stood before placement, a value-critical circuit is missing, or a listed circuit lacks a figure, a source of the kind step 2 allows, or a result that meets its figure under the conditions step 3 requires, or when the record had not been committed by then. The remedy is a change to the circuit, shown again, or an amendment to the figure's source. Never the figure relaxed in this record, and never a shortfall judged unimportant.
 
 Out of scope for this section: measuring the built circuit, which belongs to bring-up; coupling that depends on the layout itself, which a proof made before layout cannot show; and the figures for a particular machine, which come from its constraints record.
 
@@ -182,6 +208,14 @@ Do this before any footprint is placed on the board, alongside the previous sect
 ### 1. Name every rail and every key signal
 
 A **rail** is every supply net on the board: each net that a regulator, converter, reference or supply input holds at a voltage to power other parts. That includes derived rails, made on the board from another, and reference rails, the voltages a converter or comparator measures against. Ground and return nets are not rails: they are the reference every rail is measured from, and carry no isolating link. A mains-referenced supply net is a rail like any other.
+
+List the rails from the schematic itself, not from memory. Export its netlist in KiCad's own format, from the board's folder:
+
+```
+kicad-cli sch export netlist --output <board>.net <board>.kicad_sch
+```
+
+Each net in it is a `(net ...)` entry with its `(name ...)`, and a `(node ...)` for each part's pin on it that gives the pin's electrical type as `(pintype ...)`. Every net a power symbol names is a rail; the netlist gives such a net the symbol's own name, such as `+12V`, with no sheet path before it. Every net with a node whose pintype is `power_out`, such as a regulator's output, is a rail too, whatever it is named. Then go through each regulator, converter, reference and supply input in the schematic for a rail its symbol does not mark, such as a reference made by a divider, whose pins are passive. Every net on that list, ground and return nets aside, is a row of the record in step 4.
 
 A **key signal** is a signal bring-up must observe to tell whether a block of the board works. It includes each sensing front end's output, each drive stage's control input, the controller's reset, clock and programming interface, and any safety interlock's signal. Which signals of a particular board are key is that board's own design work; the test is whether, without probing the signal, bring-up could not tell whether its block works.
 
@@ -207,7 +241,7 @@ Keep a table in a file named `bring-up-provision.md` in the board's own folder, 
 - **Test point** and **Isolating link** name the parts by reference designator. Isolating link is filled in for rails only, and is `—` for a key signal.
 - **What it is for** says, for a rail, where it is produced; for a key signal, the block whose working it shows; and, in the first power row, the current-limit means and where it is fitted, by reference designator.
 
-Commit the record before the first commit that places a footprint on the board, checked from git history as step 4 of the previous section shows, with `bring-up-provision.md` in place of `circuit-proof.md`. A later change to the board's rails or key signals is recorded before the board is ordered.
+Commit the record before the first commit that places a footprint on the board. It is judged as it stood in the commit before placement, printed from git history as step 4 of the previous section shows, with `bring-up-provision.md` in place of `circuit-proof.md`: a rail or key signal of the schematic as it stood then whose row was missing or empty in that commit fails this step, however complete the row is now. A later change to the board's rails or key signals is recorded before the board is ordered.
 
 A board on which any rail lacks a test point or an isolating link, any key signal its record names lacks a test point, or first power cannot be current-limited by a means this section allows, fails this step. The remedy is to add the missing part to the schematic, and its row to the record.
 
@@ -227,7 +261,7 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
 |---|---|---|---|---|
 
 - **Design rules** are the board-wide minimums (clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge, silkscreen), each custom rule in the board's rules file, and every net class's own clearance, track width and via sizes.
-- **Source** says where the figure comes from, for example: the machine's constraints record (name the figure in it); a requirement the board serves (name the requirement); the manufacturer's stated limits (name the manufacturer and the date of the capability page the figure was read from); the separation basis record; or a finding from a layout review that became a rule (name the review). "Default", "typical" or "what KiCad had" is not a source.
+- **Source** says where the figure comes from, for example: the machine's constraints record (name the figure in it); a requirement the board serves (name the requirement); the manufacturer's stated limits (name the manufacturer and the date of the capability page the figure was read from); the separation basis record; the circuit-proof record, for a width or hole a circuit's proof assumed (name the circuit's row); or a finding from a layout review that became a rule (name the review). "Default", "typical" or "what KiCad had" is not a source.
 - **Confirmed in effect** says, for each kind of row, what stands behind it, and nothing else may be written there:
   - a **custom rule** in the board's rules file: that KiCad loaded the rules file, from step 3's output;
   - a **net class**: the nets step 3 lists for it;
@@ -246,7 +280,7 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
     	(constraint hole_size (min 0.6mm)))
     ```
 
-    `hole_size` holds every hole on the class's nets, pad holes as well as vias. Each such rule has its own row, with its figure and source, confirmed by step 3 like any custom rule and enforced by the layout rule check in the pre-order check.
+    `hole_size` holds every hole on the class's nets, pad holes as well as vias. Each such rule has its own row, with its figure and source, confirmed by step 3 like any custom rule and enforced by the layout rule check in the pre-order check. A width or a via's hole that a conductor's withstand calculation in the circuit-proof record assumed is written this way, on a net class holding that conductor's nets, with the record's row as its source and a figure no smaller than the row assumed.
 
 A rule with no stated source fails this step. Give it a source or remove it.
 
