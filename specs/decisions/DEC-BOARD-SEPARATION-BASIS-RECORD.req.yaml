@@ -1,0 +1,52 @@
+id: DEC-BOARD-SEPARATION-BASIS-RECORD
+type: decision
+title: Board separation is held to a signed basis record in the machine's hardware folder, and every board declares its mains nets
+status: active
+version: 1
+text: |
+  Board artefacts live in a hardware tree at the repository root, apart from docs. A folder named for the machine, hardware/<machine>/, holds that machine's board designs, one KiCad project per board in its own folder, and the separation basis record they are held to. Tooling that holds for any machine, such as the pre-order check, lives in hardware/tools/, and designs committed only to prove that tooling live in hardware/proof/. A board design is a KiCad project file together with the schematic and layout beside it; the check finds every one tracked anywhere in the repository, so the layout of the tree is a convention for readers and not a boundary the check depends on.
+
+  The separation basis record is a YAML file named separation-basis.yaml. A design is held to the record in the nearest folder at or above its own, so every board in a machine folder shares that machine's record and a proof design carries its own. Its keys are:
+  - standard: the standard or cited derivation the figures are read from;
+  - supply, working_voltage, pollution_degree, material_group: what the figures were read with, the supply being the declared one an adopter compares against their own;
+  - environment: the environment assumed;
+  - barriers: the barriers relied on, as a list;
+  - mains_to_low_voltage: a mapping holding clearance_mm and creepage_mm, the minimum distances in millimetres between mains-referenced and low-voltage conductors, which is the pair the check compares; a record may state further pairs under other keys for readers, and the check does not compare them;
+  - accepted_by: who accepted the basis;
+  - accepted_on: the calendar date they accepted it, written as an ISO 8601 date;
+  - synthetic: true on a record made only to prove the check; absent or false otherwise.
+
+  accepted_by holds the identity under which that person records acts in this project's graph, the actor identity the project configuration and every authoring event already use, so the acceptance and the graph's audit trail name the same person. A record is signed when accepted_by is a non-empty value other than a placeholder (unsigned, tbd, todo, none or placeholder, in any letter case, or anything in angle brackets) and accepted_on is a valid date no later than the day the check runs; the commit that adds or changes it is its audit trail, and no cryptographic signature is involved. A record that cannot be parsed, or lacks either figure, or states one that is not a positive number, fails like a missing one, so no figure is ever read as zero. A record marked synthetic satisfies only a design marked not for manufacture, so a proof record can never let an orderable board pass.
+
+  A design declares whether it carries mains through a project text variable, MAINS, set to present or none; an unset or other value fails, so silence is never read as compliance. A design that declares present assigns every mains-referenced net to a net class named Mains, and a design that declares present with no net in that class fails, because its separation rules would then apply to nothing. It states its separation in its own custom rules file as one rule whose condition is exactly a Mains-class item against an item outside the Mains class, written A.hasNetclass('Mains') && !B.hasNetclass('Mains'), with no further narrowing by layer or area, and holding both a clearance and a creepage constraint. That rule's minimums are the figures the design declares, and each must be no less than the record's mains_to_low_voltage figure. The check does not rely on the design's rules to enforce the signed figure, because in KiCad the last matching rule wins and a later rule, whether or not it names the Mains class, can override the Mains rule for the same pair. Instead it runs KiCad's own layout rule check on a temporary copy of the design whose rules file has the record's figures appended as its last rule, in the same condition form, so the signed figure takes precedence over anything the design writes. A design whose own rules undercut the signed figure therefore still fails wherever a low-voltage conductor sits closer than the record allows. The outcome that binds is that nothing the design writes, local clearance overrides on pads, footprints and zones included, lets a low-voltage conductor pass closer than the signed figure; where KiCad ranks some setting above custom rules, the check must neutralise or fail that setting rather than trust the appended rule alone. A design that declares none has no net in the Mains class. A design marks itself not for manufacture through a project text variable, NOT_FOR_MANUFACTURE, set to true.
+rationale: |
+  Context: The pre-order check has to hold each board design to a separation basis that a named person accepted before layout, rather than to whatever figure the design declares, and a design with no mains has to say so. No node fixed where that basis lives, what form it takes, what makes it signed, or how a design states which of its nets are mains. Whatever form the first implementation picked would become the contract for the partition work that produces the real basis and for the design method that writes every board's rules, so it is settled here once, ahead of either.
+
+  Trade-offs: A record a script can read lets the check compare figures instead of trusting a reader to; prose in a document cannot be compared, and its figures would be retyped into each board's rules by whoever draws it, which is exactly the figure the basis exists to overrule. Holding acceptance in the requirement graph as an attestation would reuse an existing audit trail, but it would make the check depend on the Staircase engine, which a rebuilder holding only the repository and free tools cannot be assumed to have. A cryptographic signature proves more than a named acceptor, but it needs a key only its holder has, so an adopter could neither re-sign for their own supply nor verify without key infrastructure, and no requirement asks for more than a named person's acceptance. Naming the acceptor by the project's existing actor identity ties the record to the same person the graph names, without inventing a second identity scheme. Inferring mains nets from their names would read an unrecognised name as safe; an explicit declaration costs one variable per board and makes silence a failure. Putting board artefacts under docs would mix design outputs with analyses, the confusion the machine-folder convention for docs was adopted to end; a separate hardware tree keeps design outputs apart, and naming its machine folder the same way keeps what an adopter must replace obvious.
+
+  Reversibility: Moderate. The folder layout is cheap to change because the check discovers designs wherever they are. The record's fields and the Mains, MAINS and NOT_FOR_MANUFACTURE names are read by the check and written by every board design, so renaming them is a sweep across both, caught by the check failing on the old form rather than silently passing.
+
+  Consequences: The partition work produces its basis in this record form, in the machine's hardware folder. The design method writes the Mains class, the separation rules and the MAINS variable on every board, with the record as the stated source of the separation figure. The pre-order check reads the record and the design and fails on a missing or unsigned record, a declared figure below the signed one, a missing or contradicted mains declaration, and a synthetic record applied to an orderable board. An adopter on another supply writes their own record from the same standard and signs it under their own identity.
+options_considered:
+  - option: A signed YAML basis record in the machine's hardware folder, a Mains net class with custom separation rules, and an explicit mains declaration on every board
+    reason_rejected: ""
+  - option: The basis as a prose document under docs
+    reason_rejected: its figures cannot be compared by the check and would be retyped into each board's rules by whoever draws it, the figure the basis exists to overrule
+  - option: Acceptance recorded as an attestation in the requirement graph and read by the check
+    reason_rejected: makes the check depend on the Staircase engine, which a rebuilder holding only the repository and free tools cannot be assumed to have
+  - option: A cryptographically signed record
+    reason_rejected: needs a key only its holder has, so an adopter can neither re-sign for their own supply nor verify without key infrastructure, and no requirement asks for more than a named acceptor
+  - option: The separation figure written only in each board's own rules
+    reason_rejected: the figure is then chosen by whoever draws the board, which the separation basis exists to prevent
+  - option: Mains nets inferred from their names
+    reason_rejected: an unrecognised name is read as safe, so silence passes as compliance
+chosen: A signed YAML basis record in the machine's hardware folder, a Mains net class with custom separation rules, and an explicit mains declaration on every board
+links:
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE.C3
+    type: addresses
+  - target: DEL-HW-PARTITION-AND-FEASIBILITY.C3
+    type: addresses
+  - target: DEL-CONTROLLER-HARDWARE.C4
+    type: addresses
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+    type: addresses

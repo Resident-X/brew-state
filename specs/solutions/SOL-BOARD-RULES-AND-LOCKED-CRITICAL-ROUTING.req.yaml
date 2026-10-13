@@ -19,6 +19,8 @@ links:
     type: justified-by
   - target: DEC-BOARD-MANUFACTURER-JLCPCB
     type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
 design_question_answers:
   - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
     class: new-condition

@@ -4,7 +4,7 @@ category: task
 title: A board design is checked against the design record automatically before it can be ordered
 status: active
 level: task
-version: 2
+version: 3
 text: |
   A check that any board design must pass before it is ordered, run the same way every time and by anyone. It compares the design with the record it was meant to realise: the channels and controller pin allocation it must connect, the parts the specification calls for and the manufacturer can supply, and the electrical and layout rules including the separation basis. It is proven on a throwaway design before a real board relies on it, by showing each check catches a fault deliberately placed for it.
 rationale: |

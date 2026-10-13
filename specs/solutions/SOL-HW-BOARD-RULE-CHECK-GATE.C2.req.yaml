@@ -2,11 +2,12 @@ id: SOL-HW-BOARD-RULE-CHECK-GATE.C2
 type: criterion
 title: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |
-  For each design, the check runs KiCad's own command-line electrical rule check on the schematic and design rule check on the layout. The layout check includes agreement between layout and schematic, and it reads the rules from the design's project files as written, not from an open editor session. A design with any reported violation fails, and the check exits non-zero. A violation the design marks as excluded, or a rule whose severity the design lowers to ignored, counts as a failure, not a pass: proceeding needs the check to pass, not a judgement that a failure does not matter. A routing tool's own no-violation report is never accepted in place of these checks. Out of scope: checking connectivity against the channel enumeration and controller pin allocation, and checking parts against the specification and the manufacturer's catalogue, which belong to the verification task's connectivity and parts criteria; and checking the manufacturer's production files, which each board's own design task does before payment.
+text: |+
+  For each design, the check runs KiCad's own command-line electrical rule check on the schematic and design rule check on the layout. The layout check includes agreement between layout and schematic. The layout check runs once per design, on a temporary copy: it reads the design's rules from its project files as written, never from an open editor session, together with the signed separation rule the separation criterion adds as the highest-precedence rule, and it refills copper zones first so a stale saved fill can neither hide nor invent a violation. A design with any reported violation fails, and the check exits non-zero. A violation the design marks as excluded, or any electrical or layout rule whose severity the design's project sets to ignore, whether or not that is KiCad's own default for the rule, counts as a failure, not a pass: proceeding needs the check to pass, not a judgement that a failure does not matter. A routing tool's own no-violation report is never accepted in place of these checks. Out of scope: checking connectivity against the channel enumeration and controller pin allocation, and checking parts against the specification and the manufacturer's catalogue, which belong to the verification task's connectivity and parts criteria; and checking the manufacturer's production files, which each board's own design task does before payment.
+
 links:
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2
+type: criterion
+title: The nightly full verification runs the board check against main
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  The single declaration of the complete verification lists the board check, so the nightly scheduled run against main runs it, to completion even after another gate fails, on a hosted runner that installs KiCad from a free, named source at the version the check requires, and reports its failures the way it reports every other gate. Out of scope: the seeded-fault proof, which stays on demand as the verification-cadence decision sets; runners for other operating systems; caching the KiCad install beyond what the runner offers.
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
+    type: criterion-of
