@@ -27,7 +27,7 @@ selection, not the selection.
 ## What the supply is, and what changes off it
 
 Everything below is stated against a declared supply rather than against this machine's. The
-reference build runs on a declared span of 216–253 V at 50 Hz, from a 10 A circuit behind an upstream
+reference build runs on a declared span of 216–253 V at 50 Hz, from a 10 A outlet behind an upstream
 breaker declared as up to 20 A (`reference-machine.md` § Supply, which grades each). Two things follow for an adopter elsewhere, and both are properties of their supply rather
 than of this design:
 
@@ -46,9 +46,9 @@ than of this design:
   Either way every current and dissipation figure below is recomputed from the adopter's own supply
   and element resistances; none of them is inherited.
 
-`REQ-MACHINE-CONFIGURATION-001.C8` rules a nameplate-derived frequency inadmissible as the declared
-value, and this machine's 50 Hz is inferred from a pump nameplate. It stands as provisional until
-measured, and nothing below depends on its exact value.
+This machine's 50 Hz is the supply's nominal, taken from the standard governing that supply rather
+than from a component's marking, as `REQ-MACHINE-CONFIGURATION-001.C9` requires. Nothing below depends
+on its exact value: whatever depends on the supply's timing reads it live while the machine runs.
 
 ## What each switched load needs of its device
 
