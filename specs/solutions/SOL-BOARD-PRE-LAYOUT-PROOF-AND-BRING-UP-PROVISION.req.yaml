@@ -29,7 +29,7 @@ design_question_answers:
 interfaces: []
 locus:
   - marking: created
-    ref: 'the written board design method in the repository''s documentation: its pre-layout circuit proof and design-for-bring-up sections'
+    ref: 'the board design method, docs/board-design-method.md: its pre-layout circuit proof and design-for-bring-up sections'
 plan_provenance:
   approved_plan_id: PLAN-DEL-HW-DESIGN-METHOD-1
   target: DEL-HW-DESIGN-METHOD

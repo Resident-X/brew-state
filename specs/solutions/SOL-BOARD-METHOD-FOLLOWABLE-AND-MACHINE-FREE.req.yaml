@@ -34,7 +34,7 @@ interfaces:
   - KiCad's command-line electrical and layout rule checks
 locus:
   - marking: created
-    ref: the written board design method in the repository's documentation, as a whole
+    ref: the board design method, docs/board-design-method.md, as a whole
   - marking: created
     ref: the project operator skill through which an agent enters the board design method, wrapping Konnect's bundled KiCad skills
 plan_provenance:

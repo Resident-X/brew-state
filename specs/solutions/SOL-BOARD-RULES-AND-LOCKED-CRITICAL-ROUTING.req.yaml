@@ -3,9 +3,15 @@ type: deliverable
 category: solution
 title: Board rules are written and confirmed before routing, and the nets a board depends on are routed by hand and locked first
 status: active
-version: 1
-text: |-
-  The method's pre-routing and routing steps: write every design rule and net class with its figure and source, confirm them in effect on the board by readback, route power, decoupling, ground, mains and sensing paths deliberately and lock them, then let the external router place only what remains.
+version: 2
+text: |
+  The method's pre-routing and routing steps, written as their own sections of the board design method at docs/board-design-method.md. This solution creates that file and the sibling solutions under the same task add their sections to it. It sits outside the machine's record folder because nothing in it belongs to one machine.
+
+  Pre-routing: write every design rule and net class with its figure and source, then confirm each in effect on the board by reading it back. A net class written to the project is not seen by an open board until the project is reopened, so the readback is taken from the board after a reopen, never from the project file.
+
+  Routing: route power, decoupling, ground, mains and sensing paths deliberately and lock them, then let the external router place only what remains. The round trip is KiCad's Specctra exporter, Freerouting run from its command line, and KiCad's Specctra importer. KiCad 10.0's command-line tool has neither Specctra command, so the exporter and importer are reached through KiCad's bundled Python module or its board editor; Konnect's own routing export is not used because it refuses rounded pads. Freerouting needs a Java runtime, and the method tells the reader where to obtain both rather than relying on a copy another tool keeps privately.
+
+  The toolchain trial ran this round trip on a board with no pre-routed or locked tracks, so whether a locked track survives it was never exercised. The method therefore does not rely on the router or the importer to leave locked tracks alone: it records every critical-class track before export and checks after import that each is still present, locked and unchanged, before the board's own rule checks run. Those rule checks are the ones the board rule-check gate provides, which is why this solution depends on it.
 links:
   - target: DEL-HW-DESIGN-METHOD.C1
     type: derives-from
@@ -20,6 +26,10 @@ links:
   - target: DEC-BOARD-MANUFACTURER-JLCPCB
     type: justified-by
   - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
     type: justified-by
 design_question_answers:
   - answered_by: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
@@ -36,11 +46,12 @@ design_question_answers:
     class: consumer-self-sufficiency
 interfaces:
   - KiCad project design rules and net classes, read back from the open board
-  - KiCad's routing exporter and importer, and the external router run from its command line
+  - KiCad's Specctra exporter and importer, reached through KiCad's bundled Python module or its board editor
+  - Freerouting, run from its command line on a Java runtime
   - KiCad's command-line electrical and layout rule checks
 locus:
   - marking: created
-    ref: 'the written board design method in the repository''s documentation: its rules-before-routing and critical-net routing sections'
+    ref: 'the board design method, docs/board-design-method.md: its rules-before-routing and critical-net routing sections'
 plan_provenance:
   approved_plan_id: PLAN-DEL-HW-DESIGN-METHOD-1
   target: DEL-HW-DESIGN-METHOD

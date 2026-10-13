@@ -33,7 +33,7 @@ interfaces:
   - the method's written design rules
 locus:
   - marking: created
-    ref: 'the written board design method in the repository''s documentation: its layout checklist and review-findings sections'
+    ref: 'the board design method, docs/board-design-method.md: its layout checklist and review-findings sections'
 plan_provenance:
   approved_plan_id: PLAN-DEL-HW-DESIGN-METHOD-1
   target: DEL-HW-DESIGN-METHOD
