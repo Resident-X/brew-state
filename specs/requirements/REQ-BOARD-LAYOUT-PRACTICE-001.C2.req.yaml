@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  Safety here covers separation between mains and anything a person or a low-voltage circuit can reach, fusing, protective earthing and insulation. The acceptance is a named person's, on the record; no agent that designed or reviewed the board closes such a finding by its own judgement.
+  Safety here covers separation between mains and anything a person or a low-voltage circuit can reach, fusing, protective earthing and insulation. The acceptance is a named person's, on the record, and concludes only what a failing item may be resolved by: that it is in fact met, does not apply, or is overridden by a named requirement; no agent that designed or reviewed the board closes such a finding by its own judgement.
 links:
   - target: REQ-BOARD-LAYOUT-PRACTICE-001
     type: criterion-of

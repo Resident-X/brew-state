@@ -1,12 +1,12 @@
 id: REQ-BOARD-LAYOUT-PRACTICE-001.C4
 type: criterion
-title: A board meets layout practice as first laid out, so its review confirms rather than corrects it
+title: A board's first full review finds no failure of safety or function against an item its plan covered
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  Practice is designed into the board, not reached by repeated review. A finding of safety or function severity in a board's first full review, against an item the board was planned to meet, shows that the planning fell short as well as the board, and the practice or the way boards are planned against it is corrected so later boards do not repeat it.
+  Practice is designed into the board, not reached by repeated review. The board's first full review finds no failure, bearing on safety or on whether the board works, against an item its design-time plan said it would meet; such a failure fails this criterion for that board even once the board is changed.
 links:
   - target: REQ-BOARD-LAYOUT-PRACTICE-001
     type: criterion-of

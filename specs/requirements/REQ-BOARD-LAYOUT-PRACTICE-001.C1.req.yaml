@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  Each item of the practice states what it asks and the published source it comes from. A board's judgement records a verdict on every item that applies to it, and a board with an item unjudged, or judged failing and not resolved, is not ordered.
+  Each item of the practice states what it asks and the published source it comes from, or the recorded review that added it. A board's judgement records a verdict on every item that applies to it, and a board with an item unjudged, or judged failing, is not ordered. A failing item is resolved by a change to the board, or by a recorded finding that the item is in fact met, does not apply to this board, or is overridden by a named requirement or item the board must also meet; never by judging the failure unimportant.
 links:
   - target: REQ-BOARD-LAYOUT-PRACTICE-001
     type: criterion-of
