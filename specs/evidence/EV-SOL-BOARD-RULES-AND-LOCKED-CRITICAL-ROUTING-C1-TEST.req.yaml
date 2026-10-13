@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING-C1-TEST
+type: evidence
+title: test evidence for SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T08:24:19.663503Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_locked_copper.py::test_a_loaded_rules_file_and_each_class_are_confirmed,test_a_rules_file_kicad_drops_unread_fails,test_a_board_with_no_rules_file_fails,test_a_board_with_no_valid_mains_declaration,test_a_named_class_holding_no_net,test_a_named_class_the_design_does_not_define,test_mains_left_out_on_a_board_declaring_mains
+  artifact_version: 7b06babdd94d0a2b05afb59512d17844b5fb12b7
+attested_by: crun-45a2dcc251d2d144
+links:
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C1
+    type: satisfies

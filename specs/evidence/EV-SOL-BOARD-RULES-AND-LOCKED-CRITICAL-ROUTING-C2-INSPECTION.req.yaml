@@ -1,0 +1,189 @@
+id: EV-SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T08:24:19.724139Z"
+artifact:
+  kind: inline
+attested_by: crun-45a2dcc251d2d144
+text: |
+  Verified commit: 7b06babdd94d0a2b05afb59512d17844b5fb12b7 on branch req/SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING/build-rules-routing. The method's board-editor and routing sections (steps 1-7) were checked clause by clause against the criterion at that commit. The full sequence was followed on a throwaway copy of the synthetic proof board at 587a9e7, whose round-trip tooling is unchanged at 7b06bab apart from the Mains checks in confirm and compare (518a0b8, covered by tests) and method text (518a0b8, 7b06bab); that run's record follows. It shows, for the first time, locked critical copper surviving KiCad 10.0.7's Specctra export, Freerouting 2.5.0 and the import unchanged.
+
+  # Demonstration: rules confirmed, critical copper locked, and the routing round trip checked
+
+  Verified commit: 587a9e7 (branch req/SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING/build-rules-routing). The tooling exercised (hardware/tools/locked_copper.py, hardware/tools/board_check.py, Taskfile.yml hw:rules-confirm / hw:copper-lock / hw:copper-record / hw:copper-compare) is the committed state at that commit; the working tree was clean apart from .stage0/. Supersedes the run at 6664ab6.
+
+  Releases: KiCad 10.0.7 (kicad-cli, its board editor and its bundled Python with pcbnew), Freerouting 2.5.0 (freerouting-2.5.0.jar, 64599107 bytes), Eclipse Temurin OpenJDK 26.0.1, Task 3.49.1, macOS 26.6.2, Konnect MCP server as installed.
+
+  Throwaway board: a copy of hardware/proof/gate-proof in the session scratchpad (`demo/`, never committed), MAINS=present, Mains membership by the project's `/MAINS_*` pattern, the proof's own rules file (Mains separation rule, 3 mm / 4 mm). The critical copper was prepared as text (prepare.py: both low-voltage nets' tracks dropped and left for the router; /MAINS_L as an F.Cu track, a through via at (12.5, 10) and a B.Cu track; the two /MAINS_N tracks kept; a /MAINS_N zone on B.Cu), all of it UNLOCKED, so that the lock command does the locking. Hand routing through Konnect was not exercised: Konnect's routing tools act over KiCad's IPC endpoint, which another KiCad already running on this machine (holding a different project, left untouched) held, so a board editor started here took an endpoint of its own that Konnect does not reach. Working folder `demo-work/` is a sibling of the design folder. Commands are run from the board's folder in the method's order (KICAD_CLI, KICAD_PYTHON, FREEROUTING_JAR set to the local paths); Java final-field warnings, pcbnew wx asserts, task echo lines and Freerouting's other INFO lines are elided.
+
+  ## Lock-file and editor measurements (KiCad 10.0.7, macOS, board editor started on its own)
+
+  - Opening a board writes `~<board>.kicad_pcb.lck` and `~<board>.kicad_pro.lck` beside it, each holding exactly `{"hostname":"Mac","username":"david"}` (no process id).
+  - `osascript -e 'quit app "pcbnew"'` removes both; a plain `kill` (SIGTERM) leaves both behind.
+  - Reopening over a stale lock with the same user and host opened without blocking (the quit AppleEvent then returned at once) and rewrote the board's lock file, but left the stale project lock file after quitting.
+  - Quitting the editor rewrote the project file with defaults filled in (7788 -> 14141 bytes) and wrote `<board>.kicad_prl`; MAINS and the Mains pattern came through unchanged.
+  - A text variable and a net class pattern written to the project file while the editor held the board were gone after it quit: the editor writes its own copy over the file.
+  - Konnect: no tool closes the board or the editor (project, config, verification, editor_navigation and pcb_routing toolsets loaded and read; list_toolboxes names UI control only in `verification`: `check_kicad_ui`, `launch_kicad_ui`). `open_project` naming a board reports only boards in the KiCad on `/tmp/kicad/api.sock`; a board editor started while another KiCad held it served `/tmp/kicad/api-<pid>.sock` and `open_project` reported the board not open (`requested_open: false`).
+
+  ## Run
+
+  ```
+  === Rules before routing, board closed (pgrep pcbnew: none)
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:rules-confirm -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Mains
+  CLASS | Mains | 2 nets | /MAINS_L, /MAINS_N
+  RESULT | CONFIRMED | KiCad loads gate-proof.kicad_dru and places nets in each of Mains
+  [exit 0]
+  --- negative A1: the rules file's constraint misspelled
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:rules-confirm -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Mains
+  RULES | gate-proof.kicad_dru rule 'Mains separation' at line 5 | KiCad did not load the board's custom rules file: it drops the whole file, without saying so, when any part of it is something it cannot parse, so none of its rules is in effect; KiCad loads every form before rule 'Mains separation' and none of the file once it is added, so this is the rule it rejects: check its constraint names, units and condition expression against KiCad's custom rules syntax (the Custom Design Rules section of KiCad's PCB Editor manual)
+  RESULT | FAIL | KiCad does not load the board's custom rules
+  task: Failed to run task "hw:rules-confirm": exit status 1
+  [exit 201]
+  --- negative A2: MAINS set to "yes"
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:rules-confirm -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Mains
+  REFUSED | gate-proof.kicad_pro text_variables.MAINS | the project variable MAINS is "yes"; every board declares it as exactly present or none, so set it
+  RESULT | FAIL | nothing was confirmed
+  task: Failed to run task "hw:rules-confirm": exit status 1
+  [exit 201]
+  $ open -a "/Applications/KiCad/PCB Editor.app" gate-proof.kicad_pcb      # routing section: reopen
+  $ pgrep -lx pcbnew
+  12349 pcbnew
+  --- lock files beside the board: ~gate-proof.kicad_pcb.lck, ~gate-proof.kicad_pro.lck, each {"hostname":"Mac","username":"david"}
+  --- Konnect open_project(path=<demo>/gate-proof.kicad_pcb): ipc_address ipc:///tmp/kicad/api.sock, requested_open false, open_boards [another project's board] -- the endpoint is held by another KiCad, as the method warns
+  === Routing step 3 attempted while the board editor holds the board
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-lock -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Mains
+  REFUSED | ~gate-proof.kicad_pcb.lck | KiCad's lock file shows gate-proof.kicad_pcb open in an editor, which would work on a copy this command does not see and save it back over the file; close the board in every editor, and if no KiCad process is running the lock file is stale, left by a KiCad that did not close the board, so delete it
+  RESULT | REFUSED | the board was not changed
+  task: Failed to run task "hw:copper-lock": exit status 1
+  [exit 201]
+  --- board unchanged: 0 lock flags
+  === Close the board
+  $ osascript -e 'quit app "pcbnew"'
+  [exit 0]
+  $ pgrep -lx kicad; pgrep -lx pcbnew
+  65207 kicad
+  (pcbnew: none)
+  --- lock files left: 0
+  --- project file rewritten by the editor's quit: yes; MAINS and Mains pattern: present [{'netclass': 'Mains', 'pattern': '/MAINS_*'}]
+  === Routing step 3: lock, board closed
+  --- negative C1: Mains left out on a board declaring mains
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-lock -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Default
+  REFUSED | Mains | MAINS is present, so Mains is a critical class and its copper is protected with the rest; name it with --class Mains
+  RESULT | REFUSED | the board was not changed
+  task: Failed to run task "hw:copper-lock": exit status 1
+  [exit 201]
+  --- negative C2: record before locking
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-record -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Mains --record ../demo-work/gate-proof.record.json
+  UNLOCKED | track [/MAINS_N] on F.Cu from (25.16, 12.54) mm to (25.16, 10) mm, width 0.5 mm (uuid 39a30a3c-03da-4866-a2e6-f7aeff8428ac) | every item on a critical-class net is locked before export; lock it and record again
+  UNLOCKED | track [/MAINS_N] on F.Cu from (10, 12.54) mm to (25.16, 12.54) mm, width 0.5 mm (uuid 9d0ae7c9-fa02-48c1-b9ed-1ff0ec855a7f) | every item on a critical-class net is locked before export; lock it and record again
+  UNLOCKED | track [/MAINS_L] on F.Cu from (10, 10) mm to (12.5, 10) mm, width 0.5 mm (uuid dee00000-0000-4000-8000-000000000001) | every item on a critical-class net is locked before export; lock it and record again
+  UNLOCKED | track [/MAINS_L] on B.Cu from (12.5, 10) mm to (15, 10) mm, width 0.5 mm (uuid dee00000-0000-4000-8000-000000000002) | every item on a critical-class net is locked before export; lock it and record again
+  UNLOCKED | via [/MAINS_L] at (12.5, 10) mm on B.Cu F.Cu, diameter 0.8 mm, drill 0.4 mm (uuid dee00000-0000-4000-8000-000000000003) | every item on a critical-class net is locked before export; lock it and record again
+  UNLOCKED | zone [/MAINS_N] on B.Cu with its first corner at (20, 7) mm (uuid dee00000-0000-4000-8000-000000000004) | every item on a critical-class net is locked before export; lock it and record again
+  RESULT | REFUSED | 6 of 6 critical-class items are not locked, so no record was written
+  task: Failed to run task "hw:copper-record": exit status 1
+  [exit 201]
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-lock -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Mains
+  LOCKED | track [/MAINS_N] on F.Cu from (25.16, 12.54) mm to (25.16, 10) mm, width 0.5 mm (uuid 39a30a3c-03da-4866-a2e6-f7aeff8428ac) | locked now
+  LOCKED | track [/MAINS_N] on F.Cu from (10, 12.54) mm to (25.16, 12.54) mm, width 0.5 mm (uuid 9d0ae7c9-fa02-48c1-b9ed-1ff0ec855a7f) | locked now
+  LOCKED | track [/MAINS_L] on F.Cu from (10, 10) mm to (12.5, 10) mm, width 0.5 mm (uuid dee00000-0000-4000-8000-000000000001) | locked now
+  LOCKED | track [/MAINS_L] on B.Cu from (12.5, 10) mm to (15, 10) mm, width 0.5 mm (uuid dee00000-0000-4000-8000-000000000002) | locked now
+  LOCKED | via [/MAINS_L] at (12.5, 10) mm on B.Cu F.Cu, diameter 0.8 mm, drill 0.4 mm (uuid dee00000-0000-4000-8000-000000000003) | locked now
+  LOCKED | zone [/MAINS_N] on B.Cu with its first corner at (20, 7) mm (uuid dee00000-0000-4000-8000-000000000004) | locked now
+  CLASS | Mains | 2 nets | /MAINS_L, /MAINS_N
+  RESULT | LOCKED | 6 items locked now and 0 already locked, on 2 critical-class nets | gate-proof.kicad_pcb
+  [exit 0]
+  --- diff of the board file across the lock:
+     6 > 		(locked yes)
+  === Routing step 4: record
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-record -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --class Mains --record ../demo-work/gate-proof.record.json
+  CLASS | Mains | 2 nets | /MAINS_L, /MAINS_N
+  RESULT | RECORDED | 6 locked items on 2 critical-class nets | ../demo-work/gate-proof.record.json
+  [exit 0]
+  === Routing step 5: keep copies, export, route, import
+  $ /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3 -c import pcbnew; b = pcbnew.LoadBoard('gate-proof.kicad_pcb'); assert pcbnew.ExportSpecctraDSN(b, '../demo-work/gate-proof.dsn')
+  [exit 0]
+      (wire (path F.Cu 500  25160 -12540  25160 -10000)(net /MAINS_N)(type fix))
+      (wire (path F.Cu 500  10000 -12540  25160 -12540)(net /MAINS_N)(type fix))
+      (wire (path F.Cu 500  10000 -10000  12500 -10000)(net /MAINS_L)(type fix))
+      (wire (path B.Cu 500  12500 -10000  15000 -10000)(net /MAINS_L)(type fix))
+      (via "Via[0-1]_800:400_um"  12500 -10000 (net /MAINS_L)(type fix))
+  $ java -jar /Users/david/.konnect/freerouting/freerouting-2.5.0.jar -de ../demo-work/gate-proof.dsn -do ../demo-work/gate-proof.ses --router.autorouter.max_passes=20 --gui.enabled=false
+  2026-10-13 17:49:47.152 INFO   [617E50\CA03AC] Auto-routing stage started on board '3767aa0d69e987d6e071ef4f404f5d32' with baseline score 466.67 for 2 unrouted items.
+  2026-10-13 17:49:47.211 INFO   [617E50\CA03AC] Auto-routing pass #1 on board '3767aa0d69e987d6e071ef4f404f5d32' was completed in 0.05 seconds with score 1000.00 (0 unrouted and 0 violations).
+  2026-10-13 17:49:47.214 INFO   [617E50\CA03AC] Auto-routing pass #2 on board '425103b4516df86ee5d87b13aafbbb74' was completed in 0.00 seconds with score 1000.00 (0 unrouted and 0 violations).
+  2026-10-13 17:49:47.218 INFO   [617E50\CA03AC] Auto-routing stage completed: started with 2 unrouted nets, completed in 0.09 seconds, final score: 1000.00 (0 unrouted and 0 violations), using 0.00 total CPU seconds, 0.00 GB total allocated, and 0.0 MB peak heap usage.
+  2026-10-13 17:49:47.238 INFO   Successfully saved output file '<scratchpad>/demo/../demo-work/gate-proof.ses' (1253 bytes).
+  [exit 0]
+  $ /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3 -c import pcbnew; b = pcbnew.LoadBoard('gate-proof.kicad_pcb'); assert pcbnew.ImportSpecctraSES(b, '../demo-work/gate-proof.ses'); b.Save('gate-proof.kicad_pcb')
+  [exit 0]
+  --- project file rewritten by the import's save: no
+  === Routing step 6: compare
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-compare -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --record ../demo-work/gate-proof.record.json
+  RESULT | PASS | all 6 recorded items present, locked and unchanged, and none added, in Mains
+  [exit 0]
+  --- items after import:
+     4 	(gr_line
+     7 	(segment
+     1 	(via
+     1 	(zone
+  locked: 6
+  === Routing step 7: pre-order check on a throwaway git repository holding only the imported design
+  $ python3 /Users/david/repos/coffee-wt-defeba/hardware/tools/board_check.py --root . --kicad-cli /Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
+  Checking board designs under <scratchpad>/verify-repo with KiCad 10.0.7
+  DESIGN | hardware/demo/gate-proof/gate-proof.kicad_pro | PASS
+  RESULT | PASS | all 1 designs passed
+  [exit 0]
+  --- negative C3: a stale lock file (left as a killed editor leaves it) beside the imported board
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-compare -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --record ../demo-work/gate-proof.record.json
+  OPEN | ~gate-proof.kicad_pcb.lck | KiCad's lock file shows gate-proof.kicad_pcb open in an editor, which would work on a copy this command does not see and save it back over the file; close the board in every editor, and if no KiCad process is running the lock file is stale, left by a KiCad that did not close the board, so delete it
+  RESULT | FAIL | the board is open in an editor, so nothing is taken as a pass
+  task: Failed to run task "hw:copper-compare": exit status 1
+  [exit 201]
+  --- negative C4: the via unlocked on the imported board
+  $ task --taskfile /Users/david/repos/coffee-wt-defeba/Taskfile.yml hw:copper-compare -- --board gate-proof.kicad_pcb --project gate-proof.kicad_pro --record ../demo-work/gate-proof.record.json
+  UNLOCKED | via [/MAINS_L] at (12.5, 10) mm on B.Cu F.Cu, diameter 0.8 mm, drill 0.4 mm (uuid dee00000-0000-4000-8000-000000000003) | was locked when recorded and is not locked now; lock it, and if it was moved, route it again deliberately and record afresh
+  RESULT | FAIL | 1 difference from the record of 6 items in Mains
+  task: Failed to run task "hw:copper-compare": exit status 1
+  [exit 201]
+  ```
+
+  ## Reading the log
+
+  The rules confirmation asked KiCad, on a copy of the board with its own rules file and the appended marker, and listed the Mains nets KiCad resolves through the project's pattern; a misspelled constraint made KiCad drop the whole rules file and the command failed naming the rejected rule; a MAINS of "yes" was refused. With the board open in the board editor, the lock command refused on KiCad's lock file and left the board unchanged; quitting the editor removed both lock files. With the board closed, the lock command refused a class list leaving out Mains on a board declaring mains, recording refused the six unlocked items by name, and the lock command then locked those six and nothing else (the board file's only change: six `(locked yes)` lines). The record took the six locked items; the exporter wrote each as `(type fix)`; Freerouting routed only the two low-voltage nets; the import's save did not rewrite the project file this time, since the editor's quit had already filled in KiCad's defaults. The comparison passed (7 segments: 4 locked Mains + 3 router-placed; 1 via; 1 zone; still 6 locked), and the pre-order check, on a throwaway git repository holding only the imported design, passed it. A stale lock file beside the board failed the comparison as OPEN; an unlocked via failed it by name. task's exit 201 wraps the check's exit 1.
+
+  Not exercised here: hand routing through Konnect's routing tools and Konnect's `launch_kicad_ui` (another KiCad held the IPC endpoint and was not disturbed); quitting KiCad's project window with `osascript -e 'quit app "KiCad"'` (the only one running belonged to other work); the Windows and Linux forms.
+
+  Also run at 587a9e7's content (code unchanged since): `task hw:test -- -p test_locked_copper.py` (45 tests, OK, 175 s) and `task hw:test -- -p 'test_board_check*.py'` (120 tests, OK, 686 s), KICAD_CLI set to KiCad 10.0.7's kicad-cli.
+
+  Round 4 (commit 518a0b8, on top of the verified 587a9e7) changed only method and README text (the rules table's confirmation per row kind, the footprint-zone note) and the two Mains checks in hardware/tools/locked_copper.py (confirm refuses, and compare fails a record, leaving out Mains on a board declaring mains); observed `KICAD_CLI=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli task hw:test -- -p test_locked_copper.py`: Ran 46 tests in 224.081s, OK.
+
+  ## Round 5 — what KiCad's layout rule check enforces, measured (commit 7b06bab)
+
+  Scratch copies of the synthetic `hardware/proof/gate-proof` board (outside the repo), each run with
+  `kicad-cli pcb drc --severity-all --format json --units mm` (KiCad 10.0.7); pre-order check runs via `board_prove.check` (board_check.py).
+
+  - baseline: 0 items; pre-order check `RESULT | PASS`, exit 0.
+  - class Mains track_width 1.0 (Mains tracks 0.5): 0 items; pre-order check exit 0 — **not enforced**.
+  - class Default via 1.2/0.6, via 0.6/0.3 on /LV_B: only `via_dangling | warning` (geometry), no size item — **not enforced**.
+  - class Default clearance 3.0: `clearance | error | (netclass 'Default' clearance 3.0000 mm; actual 0.8400 mm)` ×4 — enforced.
+  - board min_clearance 3.0: `clearance | error | (board minimum clearance ...)` ×8.
+  - board min_track_width 0.3: `track_width | error | (board setup constraints min width 0.3000 mm; actual 0.2500 mm)` ×3.
+  - board min_via_diameter 0.7: `via_diameter | error`.
+  - board min_through_hole_diameter 0.4: `drill_out_of_range | error`.
+  - board min_via_annular_width 0.2: `annular_width | error`.
+  - board min_copper_edge_clearance 8: `copper_edge_clearance | error` ×7.
+  - board min_hole_to_hole 1.0: `hole_to_hole | error`.
+  - board min_silk_clearance 0.5: `silk_overlap | error` (silk to silk) and `silk_edge_clearance | warning | Silkscreen clipped by board edge`.
+  - warning only (silk line crossing the edge): pre-order check `VIOLATION | ... | silk_edge_clearance`, `RESULT | FAIL`, exit 1 — warnings fail the board.
+  - custom `(condition "A.hasNetclass('Mains')") (constraint track_width (min 1mm))`: `track_width | error | (rule 'w' min width 1.0000 mm; actual 0.5000 mm)` ×3; pre-order check exit 1.
+  - custom via_diameter min 1.2mm on Default: `via_diameter | error | (rule 'v' ...)`; custom hole_size min 0.6mm: `drill_out_of_range | error | (rule 'h' ...)`.
+
+  Rewrite (docs/board-design-method.md :5, :60, :76-91, :136, :146): the layout rule check enforces board-wide minimums and class clearance (error, or warning for silk-to-edge, both failing the pre-order check); a class's track width and via sizes are routing defaults only; a width or via size the board relies on is a custom rule conditioned on the class, confirmed by step 3 and enforced by the pre-order check. hardware/README.md left unchanged: its enforcement sentences (separation, warnings count, net class cannot undercut the appended rule) hold as measured. No tooling change.
+links:
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING.C2
+    type: satisfies
