@@ -27,13 +27,14 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import copy
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS)
@@ -55,6 +56,11 @@ class Seed:
         #: Edits made after the seeded copy is committed, for faults that are
         #: about what the commit does not hold.
         self.after: List[Callable[["Seed"], None]] = []
+        #: Variables set in the check's own environment, for faults that are
+        #: about what the machine running the check holds.
+        self.environment: Dict[str, str] = {}
+        #: The kicad-cli the check is run with, known once it is run.
+        self.kicad_cli = "kicad-cli"
 
     def path(self, suffix: str) -> str:
         return os.path.join(self.design, NAME + suffix) if suffix.startswith(".") else os.path.join(self.design, suffix)
@@ -332,6 +338,93 @@ def empty_tree(seed: Seed) -> None:
     shutil.rmtree(os.path.join(seed.root, "hardware"))
 
 
+def second_condition(seed: Seed) -> None:
+    """The Mains rule in its form, then a second condition, which KiCad keeps in place of the first."""
+    seed.replace(".kicad_dru", f'(condition "{CONDITION}")', f'(condition "{CONDITION}")\n\t(condition "A.Type == \'Via\'")')
+
+
+def rule(name: str, condition: str, body: str = "(constraint clearance (min 1mm))"):
+    return lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + f'(rule "{name}"\n\t(condition "{condition}")\n\t{body})\n')
+
+
+def mains_constraint(text: str):
+    return mains_rule("\n\t(constraint creepage (min 4mm))", "\n\t(constraint creepage (min 4mm))\n\t" + text)
+
+
+def project_text(old: str, new: str):
+    return lambda seed: seed.replace(".kicad_pro", old, new)
+
+
+def table_entry(old: str, new: str):
+    return lambda seed: seed.replace("fp-lib-table", old, new)
+
+
+def empty_table(kind: str):
+    return lambda seed: seed.write(f"{kind}-lib-table", f"({kind}_lib_table\n\t(version 7)\n)\n")
+
+
+def machine_table_library(seed: Seed) -> None:
+    """The footprint library named only by the KiCad tables of whoever runs the check, not by the design's own.
+
+    The design's table drops the library and a copy of it outside the
+    repository is named from the global table of a KiCad configuration the
+    check is run under, as a library set up once on one machine would be. KiCad
+    run as that user finds every footprint; a reader without that setup would not.
+    """
+    outside = os.path.join(os.path.dirname(seed.root), "machine-libraries")
+    home = os.path.join(os.path.dirname(seed.root), "machine-kicad")
+    shutil.copytree(seed.path("proof.pretty"), os.path.join(outside, "proof.pretty"))
+    empty_table("fp")(seed)
+    seed.environment["KICAD_CONFIG_HOME"] = home
+    seed.after.append(lambda seed: machine_configuration(seed.kicad_cli, home, os.path.join(outside, "proof.pretty")))
+
+
+def machine_configuration(kicad_cli: str, home: str, library: str) -> None:
+    """A KiCad configuration in `home` whose own footprint table names `library` as 'proof'."""
+    os.makedirs(home, exist_ok=True)
+    subprocess.run([kicad_cli, "version"], env={**os.environ, "KICAD_CONFIG_HOME": home}, capture_output=True, check=True)
+    folder = next(os.path.join(home, name) for name in os.listdir(home) if os.path.isdir(os.path.join(home, name)))
+    with open(os.path.join(folder, "fp-lib-table"), "w", encoding="utf-8") as handle:
+        handle.write(f'(fp_lib_table\n\t(version 7)\n\t(lib (name "proof")(type "KiCad")(uri "{library}")(options "")(descr ""))\n)\n')
+
+
+def twice_named_sheet(seed: Seed) -> None:
+    shutil.copy(seed.path(".kicad_sch"), seed.path("sub.kicad_sch"))
+    Q = sexpr.Quoted
+    sheet = ["sheet", ["at", "200", "100"], ["size", "20", "10"], ["uuid", Q("0b0e5c1a-0000-4000-8000-0000000000e3")],
+             ["property", Q("Sheetname"), Q("sub"), ["at", "200", "99", "0"]],
+             ["property", Q("Sheetfile"), Q("sub.kicad_sch"), ["at", "200", "111", "0"]],
+             ["property", Q("Sheetfile"), Q("gate-proof.kicad_sch"), ["at", "200", "113", "0"]]]
+    seed.schematic(lambda tree: tree.insert(len(tree) - 1, sheet))
+
+
+def net_tie(group: str, extra_pad: bool):
+    """R1, whose pads carry /MAINS_L and /MAINS_N, made a net tie over `group`; with a third pad on /LV_A if asked."""
+    def seed_it(seed: Seed) -> None:
+        def edit(tree: list) -> None:
+            item = footprint(tree, "R1")
+            if extra_pad:
+                third = copy.deepcopy(pad(tree, "R1", "2"))
+                third[1] = sexpr.Quoted("3")
+                sexpr.child(third, "at")[1:3] = ["10.16", "8"]
+                third[third.index(sexpr.child(third, "net"))] = ["net", sexpr.Quoted("/LV_A")]
+                sexpr.child(third, "uuid")[1] = sexpr.Quoted("0b0e5c1a-0000-4000-8000-0000000000e4")
+                item.insert(item.index(pad(tree, "R1", "2")) + 1, third)
+            item.insert(item.index(sexpr.child(item, "at")) + 1, ["net_tie_pad_groups", sexpr.Quoted(group)])
+        seed.layout(edit)
+    return seed_it
+
+
+def unfilled_pour_by_mains(seed: Seed) -> None:
+    """A low-voltage pour around R1's mains pad 2, saved unfilled: filled, it keeps the signed clearance but not the creepage."""
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/LV_A")], ["layer", Q("F.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-0000000000a9")],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "0.2"]], ["min_thickness", "0.25"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
+            ["polygon", ["pts", ["xy", "20", "5"], ["xy", "34", "5"], ["xy", "34", "15"], ["xy", "20", "15"]]]]
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
+
+
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
@@ -352,6 +445,14 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a library named outside the repository", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "it lies outside the repository", library_uri("${KIPRJMOD}/../../../../proof.pretty")),
     ("a library named by an absolute path", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "named by an absolute path", library_uri("/opt/kicad-libs/proof.pretty")),
     ("a library reached through one machine's own path variable", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "reached through ${PROOF_LIBS}", library_uri("${PROOF_LIBS}/proof.pretty")),
+    ("a library table entry holding a clause KiCad does not write", "discovery: a library table is read only in the form KiCad writes", "design_library", "a (priority ...) clause, which is not one KiCad writes", table_entry('(descr "Footprints', '(priority 1)(descr "Footprints')),
+    ("a library table giving one nickname twice", "discovery: a library table is read only in the form KiCad writes", "design_library", "the nickname 'proof', which an earlier entry already takes", table_entry("\n)", '\n\t(lib (name "proof")(type "KiCad")(uri "${KIPRJMOD}/other.pretty")(options "")(descr ""))\n)')),
+    ("a library of a format other than KiCad's own", "discovery: a library table is read only in the form KiCad writes", "design_library", "the type 'Legacy'", table_entry('(type "KiCad")', '(type "Legacy")')),
+    ("a library table headed for the other kind of library", "discovery: a library table is read only in the form KiCad writes", "design_library", "headed (sym_lib_table ...), not (fp_lib_table ...)", table_entry("(fp_lib_table", "(sym_lib_table")),
+    ("a footprint library no table the design carries names", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "does not include the footprint library 'proof'", empty_table("fp")),
+    ("a symbol library no table the design carries names", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "does not include the symbol library 'proof'", empty_table("sym")),
+    ("a footprint library named only by the KiCad tables of the machine running the check", "discovery: the check needs nothing from the machine it runs on", "design_library", "does not include the footprint library 'proof'", machine_table_library),
+    ("a sheet naming its file twice", "discovery: no half-committed board escapes the check", "design_discovery", "has 2 Sheetfile properties", twice_named_sheet),
     # Rule checks
     ("an electrical rule violation", "rule checks: KiCad's ERC", "pin_not_connected", "Pin not connected", drop_label),
     ("a layout clearance violation", "rule checks: KiCad's DRC", "clearance", "netclass 'Default'", crowd),
@@ -372,6 +473,13 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      mains_rule("(version 1)\n", "")),
     ("an untracked custom rules file", "rule checks: the design's rules are read as the repository holds them", "custom_rules", "custom rules file is not tracked", untrack(".kicad_dru")),
     ("a design rule taking a name reserved for the check's own rules", "rule checks: nothing the design writes passes for the check's own rules", "custom_rules", "reserved for the rules the check adds", forged_rule),
+    ("a rule holding two conditions, of which KiCad keeps one", "rule checks: the design's rules are read only in a form KiCad reads the same way", "custom_rules", "rule 'Mains separation' | the rule holds 2 (condition ...) clauses", second_condition),
+    ("two rules sharing one name", "rule checks: the design's rules are read only in a form KiCad reads the same way", "custom_rules", "2 rules are named 'Mains separation'", rule("Mains separation", "A.Type == 'Via'")),
+    ("a project file giving one key twice", "rule checks: the project file is read only in the form KiCad writes", "project_file", "gives the key 'MAINS' more than once", project_text('"MAINS": "present"', '"MAINS": "none", "MAINS": "present"')),
+    ("a project file whose exclusions are not a list", "rule checks: the project file is read only in the form KiCad writes", "project_file", "drc_exclusions is", lambda seed: seed.project(lambda data: data["board"]["design_settings"].update(drc_exclusions={"clearance": "tolerated"}))),
+    ("a project file whose net class assignments are not an object", "rule checks: the project file is read only in the form KiCad writes", "project_file", "netclass_assignments is", lambda seed: seed.project(lambda data: data["net_settings"].update(netclass_assignments=["/LV_A"]))),
+    ("a project text variable that is not a string", "rule checks: the project file is read only in the form KiCad writes", "project_file", "text variable MAINS is true", lambda seed: seed.project(lambda data: data["text_variables"].update(MAINS=True))),
+    ("a stale fill hiding a creepage violation beside a mains pad", "rule checks: zones are refilled before they are judged", "creepage", f"rule '{board_check.SIGNED_RULE}' creepage", unfilled_pour_by_mains),
     # Separation
     ("a declared clearance below the signed figure", "separation: a declared figure is compared with the record", "separation_rule", "clearance of 2 mm, below the signed 3 mm", mains_rule("(constraint clearance (min 3mm))", "(constraint clearance (min 2mm))")),
     ("a declared creepage below the signed figure", "separation: a declared figure is compared with the record", "separation_rule", "creepage of 3.5 mm, below the signed 4 mm", mains_rule("(constraint creepage (min 4mm))", "(constraint creepage (min 3.5mm))")),
@@ -386,6 +494,13 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a Mains rule narrowed by area", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by its condition", mains_rule(CONDITION, CONDITION + " && A.intersectsArea('mains')")),
     ("a Mains rule holding only clearance", "separation: the Mains rule holds both distances", "separation_rule", "no creepage constraint", mains_rule("\n\t(constraint creepage (min 4mm))", "")),
     ("a Mains rule holding only creepage", "separation: the Mains rule holds both distances", "separation_rule", "no clearance constraint", mains_rule("\n\t(constraint clearance (min 3mm))", "")),
+    ("a Mains rule whose class name is spelt with a space", "separation: the Mains rule is read only in its exact form", "separation_rule", "narrowed by its condition or not in the required form", mains_rule("A.hasNetclass('Mains') &&", "A.hasNetclass('Ma ins') &&")),
+    ("a Mains rule holding a constraint the check does not read", "separation: the Mains rule is read only in its exact form", "separation_rule", "holds a (constraint hole_clearance ...) constraint", mains_constraint("(constraint hole_clearance (min 1mm))")),
+    ("a Mains rule stating its clearance twice", "separation: the Mains rule is read only in its exact form", "separation_rule", "holds 2 clearance constraints", mains_constraint("(constraint clearance (min 0.1mm))")),
+    ("a Mains rule figure written in other units", "separation: the Mains rule is read only in its exact form", "separation_rule", "where the check reads only (constraint clearance (min <number>mm))", mains_rule("(min 3mm)", "(min 118.2mil)")),
+    ("a Mains rule figure with a further limit", "separation: the Mains rule is read only in its exact form", "separation_rule", "where the check reads only (constraint creepage (min <number>mm))", mains_rule("(min 4mm)", "(min 4mm) (opt 5mm)")),
+    ("a net tie joining a Mains-class net to a low-voltage net", "separation: nothing exempts mains copper from the separation check", "mains_net_tie", "net tie R1 joins Mains-class /MAINS_N to /LV_A", net_tie("2, 3", True)),
+    ("a net tie naming a pad its footprint does not have", "separation: nothing exempts mains copper from the separation check", "mains_net_tie", "names pad 9, which the footprint does not have", net_tie("1, 9", False)),
     ("a mains-carrying design with no Mains rule", "separation: a mains-carrying design declares its basis", "separation_rule", "no custom rule has the condition", lambda seed: seed.write(".kicad_dru", "(version 1)\n")),
     ("a mains-carrying design with no rules file", "separation: a mains-carrying design declares its basis", "separation_rule", "no custom rules file", remove(".kicad_dru")),
     ("a design silent on whether it carries mains", "separation: MAINS is declared", "mains_declaration", "MAINS is not set", variables(lambda v: v.pop("MAINS"))),
@@ -403,6 +518,11 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a missing basis record", "separation: the basis record exists", "separation_basis", "no separation-basis.yaml", remove("separation-basis.yaml")),
     ("a basis record that is not tracked", "separation: the basis record is the committed one", "separation_basis", "record is not tracked in the repository", untrack("separation-basis.yaml")),
     ("a basis record with uncommitted changes", "separation: the basis record is the committed one", "separation_basis", "record has changes that are not committed", uncommitted_record),
+    ("a basis record holding a key it does not have", "separation: the basis record is read only in its one form", "separation_basis", "holds the key 'acceptd_by'", record("accepted_by: david\n", "accepted_by: david\nacceptd_by: someone-else\n")),
+    ("a basis record giving one key twice", "separation: the basis record is read only in its one form", "separation_basis", "gives the key 'clearance_mm' more than once", record("  clearance_mm: 3.0\n", "  clearance_mm: 1.0\n  clearance_mm: 3.0\n")),
+    ("a basis record using a merge key", "separation: the basis record is read only in its one form", "separation_basis", "merge key", record("mains_to_low_voltage:\n", "defaults: &figures\n  clearance_mm: 3.0\n  creepage_mm: 4.0\nmains_to_low_voltage:\n  <<: *figures\n")),
+    ("a basis record whose figure pair holds a key it does not have", "separation: the basis record is read only in its one form", "separation_basis", "mains_to_low_voltage holds 'clearance_mm_rms'", record("  creepage_mm: 4.0\n", "  creepage_mm: 4.0\n  clearance_mm_rms: 1.0\n")),
+    ("a basis record whose synthetic mark is not true or false", "separation: the basis record is read only in its one form", "separation_basis", "synthetic is 'yes'", record("synthetic: true", "synthetic: 'yes'")),
     ("a basis record that cannot be parsed", "separation: the basis record is readable", "separation_basis", "cannot be parsed", record("mains_to_low_voltage:\n", "mains_to_low_voltage: [unclosed\n")),
     ("a basis record lacking a figure", "separation: the basis record states both figures", "separation_basis", "lacks mains_to_low_voltage.creepage_mm", record("  creepage_mm: 4.0\n", "")),
     ("a basis record with a figure that is not a positive number", "separation: the basis record states both figures", "separation_basis", "not a positive number", record("clearance_mm: 3.0", "clearance_mm: 0")),
@@ -425,11 +545,13 @@ def prepare(scratch: str) -> Seed:
 def check(seed: Seed, kicad_cli: str) -> Tuple[int, List[str], str]:
     git(seed, "add", "-A")
     git(seed, "commit", "-q", "--allow-empty", "-m", "seeded copy")
+    seed.kicad_cli = kicad_cli
     for edit in seed.after:
         edit(seed)
     seed.after = []
     result = subprocess.run([sys.executable, os.path.join(TOOLS, "board_check.py"), "--root", seed.root,
-                             "--kicad-cli", kicad_cli], capture_output=True, text=True)
+                             "--kicad-cli", kicad_cli], capture_output=True, text=True,
+                            env={**os.environ, **seed.environment})
     return result.returncode, result.stdout.splitlines(), result.stderr.strip()
 
 

@@ -68,9 +68,9 @@ def schematic(*sheets: str) -> str:
     return f'(kicad_sch\n\t(version 20250114)\n{body})\n'
 
 
-def fake_tool(path: str, script: str) -> str:
+def fake_tool(path: str, script: str, interpreter: str = "/bin/sh") -> str:
     with open(path, "w", encoding="utf-8") as handle:
-        handle.write("#!/bin/sh\n" + script + "\n")
+        handle.write(f"#!{interpreter}\n" + script + "\n")
     os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
     return path
 
@@ -210,6 +210,26 @@ class EveryDesignIsFoundBecauseItExists(Tree):
         self.assertIn("a/a.kicad_sch names the sheet a/power.kicad_sch, which is not tracked",
                       problems["a/a.kicad_pro"][0].message)
 
+    def test_a_sheet_not_naming_exactly_one_file_fails_by_name(self):
+        cases = {
+            '(sheet (property "Sheetname" "s"))': "has no Sheetfile property",
+            '(sheet (property "Sheetname" "s") (property "Sheet file" "a.kicad_sch"))': "has no Sheetfile property",
+            '(sheet (property "Sheetname" "s") (property "Sheetfile"))': "has a Sheetfile property naming no file",
+            '(sheet (property "Sheetname" "s") (property "Sheetfile" "a.kicad_sch") (property "Sheetfile" "b.kicad_sch"))':
+                "has 2 Sheetfile properties",
+        }
+        for sheet, words in cases.items():
+            with self.subTest(sheet=sheet):
+                self.write("d/d.kicad_pro", "{}")
+                self.write("d/d.kicad_pcb", "(kicad_pcb)")
+                self.write("d/a.kicad_sch", schematic())
+                self.write("d/b.kicad_sch", schematic())
+                self.write("d/d.kicad_sch", f"(kicad_sch (version 20250114) {sheet})")
+                _, _, problems = board_check.discover(self.root, sorted(self.everything().tracked))
+                self.assertEqual([(v.rule, v.location) for v in problems["d/d.kicad_pro"]],
+                                 [("design_discovery", "d/d.kicad_sch sheet 's'")])
+                self.assertIn(words, problems["d/d.kicad_pro"][0].message)
+
     def test_a_schematic_that_cannot_be_read_fails_its_design(self):
         files = [self.write("a/a.kicad_pro"), self.write("a/a.kicad_pcb"), self.write("a/a.kicad_sch", "(kicad_sch (sheet")]
         _, _, problems = board_check.discover(self.root, files)
@@ -285,6 +305,33 @@ class WhatADesignReachesIsCheckedWithIt(Tree):
         self.assertIn("library table is not tracked in the repository", found[0].message)
         self.assertNotIn("hw/m/shared.pretty/R.kicad_mod", files)
 
+    def test_a_library_table_is_read_only_in_the_form_kicad_writes(self):
+        good = '(lib (name "a")(type "KiCad")(uri "${KIPRJMOD}/../shared.pretty")(options "")(descr ""))'
+        cases = {
+            "(sym_lib_table\n" + good + ")": ("hw/m/board/fp-lib-table", "headed (sym_lib_table ...), not (fp_lib_table ...)"),
+            "(fp_lib_table (version 7) (version 7)\n" + good + ")": ("hw/m/board/fp-lib-table", "(version ...) more than once"),
+            "(fp_lib_table\n" + good + " (nickname \"x\"))": ("hw/m/board/fp-lib-table", "a (nickname ...) form, which is not a library entry"),
+            "(fp_lib_table\n" + good.replace('(descr "")', '(descr "")(priority 1)') + ")": ("hw/m/board/fp-lib-table library 'a'", "a (priority ...) clause"),
+            "(fp_lib_table\n" + good.replace('(type "KiCad")', '(type "Legacy")') + ")": ("hw/m/board/fp-lib-table library 'a'", "the type 'Legacy'"),
+            "(fp_lib_table\n" + good.replace('(type "KiCad")', '') + ")": ("hw/m/board/fp-lib-table library 'a'", "no (type ...) clause"),
+            "(fp_lib_table\n" + good.replace('(uri', '(uri "/elsewhere")(uri') + ")": ("hw/m/board/fp-lib-table library 'a'", "2 (uri ...) clauses"),
+            "(fp_lib_table\n" + good.replace('(name "a")', '(name "a" "b")') + ")": ("hw/m/board/fp-lib-table library 'a'", "a (name ...) clause holding something other than one value"),
+            "(fp_lib_table\n" + good + "\n" + good.replace("shared.pretty", "other.pretty") + ")": ("hw/m/board/fp-lib-table library 'a'", "the nickname 'a', which an earlier entry already takes"),
+        }
+        for text, (where, words) in cases.items():
+            with self.subTest(table=text):
+                self.write("hw/m/board/fp-lib-table", text)
+                _, found = board_check.design_files(self.design, self.everything())
+                self.assertIn(("design_library", where), [(v.rule, v.location) for v in found])
+                self.assertTrue(any(words in v.message for v in found), found)
+
+    def test_the_flags_kicad_writes_on_an_entry_are_read_without_complaint(self):
+        self.write("hw/m/board/fp-lib-table", '(fp_lib_table (version 7)\n(lib (name "a")(type "KiCad")'
+                   '(uri "${KIPRJMOD}/../shared.pretty")(options "")(descr "")(disabled)(hidden)))')
+        files, found = board_check.design_files(self.design, self.everything())
+        self.assertEqual(found, [])
+        self.assertIn("hw/m/shared.pretty/R.kicad_mod", files)
+
     def test_a_library_table_that_cannot_be_read_fails(self):
         self.write("hw/m/board/sym-lib-table", "(sym_lib_table (lib")
         _, found = board_check.design_files(self.design, self.everything())
@@ -294,12 +341,8 @@ class WhatADesignReachesIsCheckedWithIt(Tree):
 # --- The separation basis record ---------------------------------------------
 
 
-class TheRecordMustBeSigned(Tree):
-    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
-
-    These are the record's own failure conditions: missing, unparseable,
-    lacking or misstating a figure, unsigned, or synthetic on an orderable board.
-    """
+class RecordTree(Tree):
+    """A record beside a design two folders down, read as the check reads it."""
 
     design = board_check.Design("hardware/m/board/board.kicad_pro")
 
@@ -314,6 +357,14 @@ class TheRecordMustBeSigned(Tree):
         self.assertIsNone(figures)
         self.assertTrue(any(v.rule == "separation_basis" and v.location.endswith(location_end) and words in v.message
                             for v in problems), problems)
+
+
+class TheRecordMustBeSigned(RecordTree):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    These are the record's own failure conditions: missing, unparseable,
+    lacking or misstating a figure, unsigned, or synthetic on an orderable board.
+    """
 
     def test_a_signed_record_gives_its_figures(self):
         self.assertEqual(self.record(SIGNED_RECORD), ((3.0, 4.0), []))
@@ -365,11 +416,56 @@ class TheRecordMustBeSigned(Tree):
         self.assertEqual(self.record(SIGNED_RECORD.replace("2026-10-01", "'2026-10-12'"))[0], (3.0, 4.0))
 
     def test_a_synthetic_record_passes_only_a_design_not_for_manufacture(self):
-        for marking in ("synthetic: true", "synthetic: yes", "synthetic: 'true'", "synthetic: 1"):
+        for marking in ("synthetic: true", "synthetic: yes", "synthetic: True"):
             with self.subTest(marking=marking):
                 self.assertFails(SIGNED_RECORD + marking + "\n", "synthetic", "marked synthetic")
                 self.assertEqual(self.record(SIGNED_RECORD + marking + "\n", not_for_manufacture=True)[0], (3.0, 4.0))
         self.assertEqual(self.record(SIGNED_RECORD + "synthetic: false\n")[0], (3.0, 4.0))
+
+
+class TheRecordIsReadInItsOneForm(RecordTree):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    The record is read only in the form its decision fixes: its own keys, any
+    further pair of distances for readers, each key once, no merge key, and a
+    synthetic mark that is true or false. Anything else fails by name rather
+    than being read past, so a record cannot say one thing to a reader and
+    another to the check.
+    """
+
+    def test_a_further_pair_of_distances_for_readers_is_accepted(self):
+        text = SIGNED_RECORD + "mains_to_earthed_metal:\n  clearance_mm: 2.0\n  creepage_mm: 2.5\n"
+        self.assertEqual(self.record(text), ((3.0, 4.0), []))
+
+    def test_every_key_the_decision_names_is_accepted(self):
+        text = SIGNED_RECORD + ("supply: 230 V 50 Hz\nworking_voltage: 250 V\npollution_degree: 2\nmaterial_group: IIIb\n"
+                                "environment: indoor\nbarriers: []\nsynthetic: false\n")
+        self.assertEqual(self.record(text), ((3.0, 4.0), []))
+
+    def test_a_key_the_record_does_not_have_fails_naming_it(self):
+        for extra in ("acceptd_by: someone\n", "other_pair:\n  clearance_mm: 1.0\n", "notes:\n  creepage_mm: 1.0\n  clearance_mm: 1\n  extra: 2\n", "7: seven\n"):
+            with self.subTest(extra=extra):
+                key = extra.split(":")[0]
+                self.assertFails(SIGNED_RECORD + extra, f"separation-basis.yaml {key}", f"holds the key '{key}'")
+
+    def test_a_key_the_figure_pair_does_not_have_fails_naming_it(self):
+        self.assertFails(SIGNED_RECORD.replace("  creepage_mm: 4.0\n", "  creepage_mm: 4.0\n  creepage_mm_rms: 1\n"),
+                         "mains_to_low_voltage.creepage_mm_rms", "holds 'creepage_mm_rms'")
+
+    def test_a_key_given_twice_fails_wherever_it_is(self):
+        self.assertFails(SIGNED_RECORD + "accepted_by: TBD\n", "separation-basis.yaml", "gives the key 'accepted_by' more than once")
+        self.assertFails(SIGNED_RECORD.replace("  clearance_mm: 3.0\n", "  clearance_mm: 1.0\n  clearance_mm: 3.0\n"),
+                         "separation-basis.yaml", "gives the key 'clearance_mm' more than once (again at line 4)")
+
+    def test_a_merge_key_fails(self):
+        text = SIGNED_RECORD.replace("mains_to_low_voltage:\n", "base: &f\n  clearance_mm: 1.0\n  creepage_mm: 1.0\nmains_to_low_voltage:\n  <<: *f\n")
+        self.assertFails(text, "separation-basis.yaml", "merge key (<<) at line 6")
+
+    def test_a_synthetic_mark_that_is_not_true_or_false_fails_whatever_the_design(self):
+        for marking in ("synthetic: 'true'", "synthetic: 1", "synthetic: maybe", "synthetic: null"):
+            for not_for_manufacture in (False, True):
+                with self.subTest(marking=marking, not_for_manufacture=not_for_manufacture):
+                    self.assertFails(SIGNED_RECORD + marking + "\n", "synthetic", "write true or false", not_for_manufacture)
 
 
 class TheRecordIsTheCommittedOne(Tree):
@@ -460,8 +556,30 @@ class TheMainsRuleHasOneForm(Tree):
 
     def test_the_rule_in_its_form_at_or_above_the_record_passes(self):
         self.assertEqual(self.verdict(MAINS_RULE), [])
-        self.assertEqual(self.verdict(MAINS_RULE.replace("3mm", "5mm").replace("4mm", "0.25in")), [])
-        self.assertEqual(self.verdict(MAINS_RULE.replace("A.hasNetclass('Mains') && !B", "A.hasNetclass('Mains')&&!B")), [])
+        self.assertEqual(self.verdict(MAINS_RULE.replace("3mm", "5mm").replace("4mm", "6.35mm")), [])
+        self.assertEqual(self.verdict(MAINS_RULE.replace("(constraint clearance", "(severity error)\n\t(constraint clearance")), [])
+
+    def test_a_condition_not_written_exactly_as_required_fails(self):
+        for written in ("A.hasNetclass('Mains')&&!B.hasNetclass('Mains')",
+                        "A.hasNetclass('Ma ins') && !B.hasNetclass('Mains')",
+                        "A.hasNetclass('Mains') && !B.hasNetclass('Mains ')",
+                        "A.hasNetclass(\\\"Mains\\\") && !B.hasNetclass('Mains')"):
+            with self.subTest(condition=written):
+                self.assertOnly(self.verdict(MAINS_RULE.replace(board_check.MAINS_CONDITION, written)),
+                                "not in the required form")
+
+    def test_a_second_condition_after_the_required_one_is_not_the_mains_rule(self):
+        text = MAINS_RULE.replace("Mains')\")", "Mains')\")\n\t(condition \"A.Type == 'Via'\")")
+        self.assertOnly(self.verdict(text), "not in the required form")
+        _, hidden = self.rules(text)
+        self.assertEqual([(v.rule, v.location) for v in hidden], [("custom_rules", "b/b.kicad_dru rule 'Mains separation'")])
+        self.assertIn("holds 2 (condition ...) clauses", hidden[0].message)
+
+    def test_a_constraint_the_check_does_not_read_or_stated_twice_fails(self):
+        self.assertOnly(self.verdict(MAINS_RULE.replace("(constraint creepage", "(constraint track_width (min 1mm))\n\t(constraint creepage")),
+                        "holds a (constraint track_width ...) constraint, which the check does not read")
+        self.assertOnly(self.verdict(MAINS_RULE.replace("(constraint creepage", "(constraint clearance (min 9mm))\n\t(constraint creepage")),
+                        "holds 2 clearance constraints")
 
     def test_no_rules_file_or_no_rule_in_the_form_fails(self):
         self.assertOnly(self.verdict(None), "no custom rules file")
@@ -476,15 +594,18 @@ class TheMainsRuleHasOneForm(Tree):
     def test_a_rule_holding_one_distance_or_split_in_two_fails(self):
         self.assertOnly(self.verdict(MAINS_RULE.replace("\t(constraint creepage (min 4mm))", "")), "no creepage")
         self.assertOnly(self.verdict(MAINS_RULE.replace("\t(constraint clearance (min 3mm))\n", "")), "no clearance")
-        self.assertOnly(self.verdict(MAINS_RULE.replace("(min 3mm)", "(max 9mm)")), "cannot be read as a distance")
+        for written in ("(max 9mm)", "(min 3mm) (opt 4mm)", "(min 118mil)", "(min 0.12in)", "(min 3)", '(min "3mm")',
+                        "(min .3mm)", "(min 3e0mm)", "(min 3 mm)"):
+            with self.subTest(figure=written):
+                self.assertOnly(self.verdict(MAINS_RULE.replace("(min 3mm)", written)),
+                                "where the check reads only (constraint clearance (min <number>mm))")
         split = MAINS_RULE.replace("\t(constraint creepage (min 4mm)))", ")") + MAINS_RULE.split("\n", 1)[1].replace(
             "\t(constraint clearance (min 3mm))\n", "")
         self.assertOnly(self.verdict(split), "more than one rule")
 
-    def test_a_declared_figure_below_the_record_fails_in_any_unit(self):
+    def test_a_declared_figure_below_the_record_fails(self):
         self.assertOnly(self.verdict(MAINS_RULE.replace("3mm", "2.9mm")), "clearance of 2.9 mm, below the signed 3 mm")
-        self.assertOnly(self.verdict(MAINS_RULE.replace("4mm", "150mil")), "creepage of 3.81 mm, below the signed 4 mm")
-        self.assertOnly(self.verdict(MAINS_RULE.replace("3mm", "2")), "clearance of 2 mm")
+        self.assertOnly(self.verdict(MAINS_RULE.replace("4mm", "3.81mm")), "creepage of 3.81 mm, below the signed 4 mm")
 
     def test_figures_are_not_compared_when_there_is_no_signed_basis(self):
         self.assertEqual(self.verdict(MAINS_RULE.replace("3mm", "0.1mm"), signed=None), [])
@@ -554,6 +675,38 @@ class RulesThatHideWhatTheyFind(Tree):
         found = board_check.kicad_violation(self.design, entry, "b/b.kicad_pcb")
         self.assertEqual(found.location, "Pad 1 of R1 @ (1.5, 2) mm")
         self.assertIn("excluded", found.message)
+
+
+class TheRulesFileIsReadInOneForm(Tree):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C2: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement.
+
+    KiCad loads a rule holding a clause twice and keeps only one of them, and
+    loads two rules of one name; the check reads neither, so each fails by name
+    rather than being read one way by the check and another by KiCad.
+    """
+
+    design = board_check.Design("b/b.kicad_pro")
+
+    def hidden(self, text: str):
+        self.write("b/b.kicad_dru", "(version 1)\n" + text)
+        return board_check.read_rules(self.root, self.design, self.everything())[1]
+
+    def test_a_clause_kicad_takes_once_given_twice_fails(self):
+        for clause, body in (("condition", "(condition \"A.Type == 'Pad'\")"), ("severity", "(severity warning)")):
+            with self.subTest(clause=clause):
+                found = self.hidden(f'(rule "r"\n\t{body}\n\t{body}\n\t(constraint clearance (min 1mm)))\n')
+                self.assertEqual([(v.rule, v.location) for v in found], [("custom_rules", "b/b.kicad_dru rule 'r'")])
+                self.assertIn(f"holds 2 ({clause} ...) clauses", found[0].message)
+
+    def test_one_of_each_clause_is_read_without_complaint(self):
+        self.assertEqual(self.hidden('(rule "r"\n\t(layer outer)\n\t(condition "A.Type == \'Pad\'")\n\t(severity warning)\n'
+                                     '\t(constraint clearance (min 1mm))\n\t(constraint track_width (min 1mm)))\n'), [])
+
+    def test_two_rules_of_one_name_fail_once_naming_it(self):
+        rule = '(rule "same"\n\t(condition "A.Type == \'Pad\'")\n\t(constraint clearance (min 1mm)))\n'
+        found = self.hidden(rule + rule + rule.replace("same", "other"))
+        self.assertEqual([(v.rule, v.location) for v in found], [("custom_rules", "b/b.kicad_dru rule 'same'")])
+        self.assertIn("2 rules are named 'same'", found[0].message)
 
 
 class TheChecksOwnRulesCannotBeForged(unittest.TestCase):
@@ -643,7 +796,7 @@ class MainsMembershipIsReadWhereverItIsDeclared(unittest.TestCase):
                                   ' (net (code "3") (name "/C") (class "Fast,Mains"))'
                                   ' (net (code "4") (name "/D") (class "Mainsish"))'
                                   ' (net (code "5") (name "/E"))))')
-        self.assertEqual(board_check.schematic_mains(netlist), {"/A", "/C"})
+        self.assertEqual(board_check.schematic_mains(board_check.schematic_nets(netlist)), {"/A", "/C"})
 
     def test_the_schematic_netlist_says_which_pins_each_net_joins(self):
         netlist = sexpr.parse_one('(export (nets (net (code "1") (name "/A") (class "Mains")'
@@ -769,6 +922,161 @@ class NoOverrideOutranksTheSignedFigure(unittest.TestCase):
 
     def test_the_custom_pad_shape_option_is_not_read_as_an_override(self):
         self.assertEqual(self.found(), [])
+
+
+NET_TIE = """(kicad_pcb
+	(footprint "x" (at 5 6) (property "Reference" "NT1") {groups}
+		(pad "1" smd rect (net "/MAINS_L")) (pad "2" smd rect (net "{net2}")) (pad "3" smd rect (net "/LV_A"))))"""
+
+
+class NothingExemptsMainsCopperFromSeparation(unittest.TestCase):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    A net tie joins its nets in copper and KiCad checks no clearance between
+    the pads it ties, so one joining a Mains-class net to any other joins
+    low-voltage copper to mains unchecked; one joining Mains-class nets only is
+    harmless.
+    """
+
+    design = board_check.Design("b/b.kicad_pro")
+
+    def found(self, groups: str, net2: str = "/MAINS_N"):
+        tree = sexpr.parse_one(NET_TIE.format(groups=groups, net2=net2))
+        return board_check.net_ties(self.design, tree, {"/MAINS_L", "/MAINS_N"})
+
+    def test_a_footprint_that_is_no_net_tie_or_ties_only_mains_nets_passes(self):
+        self.assertEqual(self.found(""), [])
+        self.assertEqual(self.found('(net_tie_pad_groups "1, 2")'), [])
+
+    def test_a_net_tie_joining_mains_to_any_other_net_fails_naming_both(self):
+        for groups, net2, words in (('(net_tie_pad_groups "1, 3")', "/MAINS_N", "joins Mains-class /MAINS_L to /LV_A"),
+                                    ('(net_tie_pad_groups "1,2")', "", "joins Mains-class /MAINS_L to (no net)"),
+                                    ('(net_tie_pad_groups "1, 2" "2, 3")', "/MAINS_N", "joins Mains-class /MAINS_N to /LV_A")):
+            with self.subTest(groups=groups, net2=net2):
+                found = self.found(groups, net2)
+                self.assertEqual([(v.rule, v.location) for v in found], [("mains_net_tie", "footprint NT1 at (5, 6) mm")])
+                self.assertIn(words, found[0].message)
+
+    def test_a_group_naming_a_pad_the_footprint_lacks_fails(self):
+        found = self.found('(net_tie_pad_groups "1, 7")')
+        self.assertEqual([v.rule for v in found], ["mains_net_tie"])
+        self.assertIn("names pad 7, which the footprint does not have", found[0].message)
+
+
+class TheProjectFileIsReadInOneForm(Tree):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C2: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement.
+
+    The settings the check reads from the project file -- its text variables,
+    exclusion lists and net class assignments -- are read only in the form KiCad
+    writes them, each key once; any other form fails the design by name before
+    anything is read from it.
+    """
+
+    design = board_check.Design("p/p.kicad_pro")
+
+    def check(self, text: str):
+        self.write("p/p.kicad_pro", text)
+        return board_check.check_design(self.design, self.everything(), "kicad-cli-never-run", board_check.require_yaml(), TODAY, [])
+
+    def test_a_key_given_twice_fails_and_nothing_else_is_read(self):
+        found = self.check('{"text_variables": {"MAINS": "none", "MAINS": "present"}}')
+        self.assertEqual([(v.rule, v.location) for v in found], [("project_file", "p/p.kicad_pro")])
+        self.assertIn("gives the key 'MAINS' more than once", found[0].message)
+        found = self.check('{"board": {"x": 1}, "board": {"design_settings": {}}}')
+        self.assertEqual([v.rule for v in found], ["project_file"])
+
+    def test_a_setting_not_of_the_type_kicad_writes_fails_naming_it(self):
+        cases = {
+            '{"text_variables": ["MAINS", "none"]}': "text_variables",
+            '{"text_variables": {"MAINS": "none"}, "board": {"design_settings": {"drc_exclusions": {"a": 1}}}}': "board.design_settings.drc_exclusions",
+            '{"text_variables": {"MAINS": "none"}, "erc": {"erc_exclusions": "clearance"}}': "erc.erc_exclusions",
+            '{"text_variables": {"MAINS": "none"}, "net_settings": {"netclass_assignments": ["/A"]}}': "net_settings.netclass_assignments",
+            '{"text_variables": {"MAINS": true}}': "text_variables.MAINS",
+            '{"text_variables": {"MAINS": "none", "NOT_FOR_MANUFACTURE": "yes"}}': "text_variables.NOT_FOR_MANUFACTURE",
+            '{"text_variables": {"MAINS": "none", "NOT_FOR_MANUFACTURE": "True"}}': "text_variables.NOT_FOR_MANUFACTURE",
+        }
+        for text, setting in cases.items():
+            with self.subTest(project=text):
+                found = self.check(text)
+                self.assertEqual([(v.rule, v.location) for v in found], [("project_file", f"p/p.kicad_pro {setting}")])
+
+    def test_the_forms_kicad_writes_are_read_without_complaint(self):
+        project = {"text_variables": {"MAINS": "none", "NOT_FOR_MANUFACTURE": "false"},
+                   "board": {"design_settings": {"drc_exclusions": []}}, "erc": {"erc_exclusions": None},
+                   "net_settings": {"netclass_assignments": None}}
+        self.assertEqual(board_check.project_form(self.design, project), [])
+        self.assertEqual(board_check.project_form(self.design, {}), [])
+
+
+class KiCadRunsWithAConfigurationOfTheChecksOwn(Tree):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C4: One task-runner command runs the whole check with tools any reader can obtain.
+
+    KiCad is run with a configuration the check makes, holding only the
+    libraries KiCad installs with itself, and with no KICAD variable from the
+    caller's environment, so nothing set up on the author's machine reaches the
+    result; a library only that machine supplies is reported by KiCad as one its
+    configuration does not include, and the check names it as the design's.
+    """
+
+    def fake(self, makes: str) -> str:
+        return fake_tool(os.path.join(self.root, "kicad-cli"), f"""
+import os, sys
+home = os.environ["KICAD_CONFIG_HOME"]
+for name in {makes!r}:
+    os.makedirs(os.path.join(home, name), exist_ok=True)
+with open(os.path.join(home, "seen-environment"), "w") as handle:
+    handle.write("\\n".join(sorted(os.environ)))
+print("10.0.7")
+""", sys.executable)
+
+    def test_the_configuration_names_only_kicads_own_libraries_and_no_caller_variable_reaches_kicad(self):
+        home = os.path.join(self.root, "home")
+        os.makedirs(home)
+        with mock.patch.dict(os.environ, {"KICAD10_FOOTPRINT_DIR": "/mine", "KICAD_CONFIG_HOME": "/my-config",
+                                          "KIPRJMOD": "/x", "KiCad_User_Libs": "/y", "HOME_STAYS": "1"}):
+            environment = board_check.isolate_kicad(self.fake(["10.0"]), "10.0.7", home)
+        self.assertEqual(environment["KICAD_CONFIG_HOME"], home)
+        self.assertEqual([name for name in environment if name.upper().startswith("KICAD") or name == "KIPRJMOD"],
+                         ["KICAD_CONFIG_HOME"])
+        self.assertIn("HOME_STAYS", environment)
+        with open(os.path.join(home, "seen-environment"), encoding="utf-8") as handle:
+            seen = handle.read().split()
+        self.assertIn("HOME_STAYS", seen)
+        self.assertEqual([name for name in seen if name.upper().startswith("KICAD") or name == "KIPRJMOD"], ["KICAD_CONFIG_HOME"])
+        for kind in ("sym", "fp"):
+            with open(os.path.join(home, "10.0", f"{kind}-lib-table"), encoding="utf-8") as handle:
+                entries = sexpr.children(sexpr.parse_one(handle.read()), "lib")
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(sexpr.child(entries[0], "type")[1], "Table")
+            self.assertEqual(sexpr.child(entries[0], "uri")[1], f"${{KICAD10_TEMPLATE_DIR}}/{kind}-lib-table")
+
+    def test_a_kicad_that_makes_no_single_configuration_folder_stops_the_check(self):
+        for makes in ([], ["10.0", "9.0"]):
+            with self.subTest(makes=makes):
+                home = tempfile.mkdtemp(dir=self.root)
+                with self.assertRaises(board_check.CannotRun) as raised:
+                    board_check.isolate_kicad(self.fake(makes), "10.0.7", home)
+                self.assertIn("configuration of its own", str(raised.exception))
+
+    def test_every_kicad_run_is_given_the_configuration(self):
+        board_check.KICAD_ENVIRONMENT = {"KICAD_CONFIG_HOME": "/isolated", "PATH": os.environ.get("PATH", "")}
+        self.addCleanup(setattr, board_check, "KICAD_ENVIRONMENT", None)
+        tool = fake_tool(os.path.join(self.root, "kicad-cli"), """
+import os, sys
+open(sys.argv[sys.argv.index("-o") + 1], "w").write(os.environ.get("KICAD_CONFIG_HOME", "unset"))
+""", sys.executable)
+        self.assertEqual(board_check.run_kicad([tool, "pcb", "drc"], self.root, "out.txt"), ("/isolated", ""))
+
+    def test_a_library_kicads_configuration_does_not_include_is_named_as_the_designs(self):
+        design = board_check.Design("d/d.kicad_pro")
+        missing = board_check.kicad_violation(design, {"type": "lib_footprint_issues", "description":
+                                              "The current configuration does not include the footprint library 'mine'",
+                                              "items": [{"description": "Footprint R1", "pos": {"x": 1, "y": 2}}]}, "d/d.kicad_pcb")
+        self.assertEqual((missing.rule, missing.location), ("design_library", "Footprint R1 @ (1, 2) mm"))
+        self.assertIn("name it in the design's own table through ${KIPRJMOD}", missing.message)
+        other = board_check.kicad_violation(design, {"type": "lib_symbol_issues", "description":
+                                            "Symbol 'R' doesn't match copy in library 'proof'", "items": []}, "d/d.kicad_sch")
+        self.assertEqual(other.rule, "lib_symbol_issues")
 
 
 # --- The tools ---------------------------------------------------------------

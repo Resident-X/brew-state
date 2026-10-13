@@ -17,6 +17,13 @@ separation figure. A design is read only as git holds it -- only tracked files
 are copied for KiCad, and the separation basis record must be committed exactly
 as it stands -- and nothing a design writes can pass for the check's own rules.
 
+Wherever KiCad can answer a question -- which nets are in a class, which rule
+file it loaded, what a zone fills to, which library a symbol comes from -- the
+check asks KiCad, run with a configuration of its own so nothing set up on one
+machine reaches the answer. Wherever the check has to read a file itself, it
+accepts the one form it reads exactly as KiCad does and fails any other form by
+name, rather than guessing what KiCad will make of it.
+
 Every finding is printed on one line of a fixed shape,
 
     VIOLATION | <design> | <rule> | <location> | <message>
@@ -200,6 +207,40 @@ def require_kicad(kicad_cli: str) -> str:
     return result.stdout.strip()
 
 
+#: The environment every KiCad run of the check is given, set by isolate_kicad;
+#: None runs KiCad as the caller's environment leaves it.
+KICAD_ENVIRONMENT: Optional[Dict[str, str]] = None
+
+
+def isolate_kicad(kicad_cli: str, version: str, home: str) -> Dict[str, str]:
+    """An environment running KiCad with a configuration of the check's own, in `home`.
+
+    KiCad otherwise reads the user's own configuration: their machine-wide
+    library tables, the path variables they defined, and any KICAD variable in
+    their environment. A design leaning on any of those would pass on the
+    machine it was drawn on and nowhere else. Here KiCad sees, besides the
+    design's own tables, only the libraries it installs with itself, named
+    through its own template variable so it finds them wherever it is
+    installed; a library from anywhere else is then reported by KiCad as one
+    its configuration does not include.
+    """
+    environment = {name: value for name, value in os.environ.items()
+                   if not name.upper().startswith("KICAD") and name.upper() != "KIPRJMOD"}
+    environment["KICAD_CONFIG_HOME"] = home
+    subprocess.run([kicad_cli, "version"], env=environment, capture_output=True, timeout=120)
+    folders = [name for name in os.listdir(home) if os.path.isdir(os.path.join(home, name))]
+    if len(folders) != 1:
+        raise CannotRun(f"KiCad did not set up a configuration of its own in {home} (found {folders or 'nothing'}), "
+                        f"so the check cannot keep this machine's KiCad settings out of the result ({TOOL_HELP}).")
+    major = version_tuple(version)[0]
+    for kind in ("sym", "fp"):
+        with open(os.path.join(home, folders[0], f"{kind}-lib-table"), "w", encoding="utf-8") as handle:
+            handle.write(f'({kind}_lib_table\n\t(version 7)\n\t(lib (name "KiCad")(type "Table")'
+                         f'(uri "${{KICAD{major}_TEMPLATE_DIR}}/{kind}-lib-table")(options "")'
+                         '(descr "The libraries KiCad installs with itself"))\n)\n')
+    return environment
+
+
 # --- Finding the designs -------------------------------------------------------
 
 
@@ -260,13 +301,18 @@ def tracked_files(git: str, root: str) -> List[str]:
 
 
 def sheet_files(root: str, schematic: str, tracked: Set[str], seen: Optional[Set[str]] = None,
-                missing: Optional[List[Tuple[str, str]]] = None) -> Set[str]:
+                missing: Optional[List[Tuple[str, str]]] = None,
+                unnamed: Optional[List[Tuple[str, str, int]]] = None) -> Set[str]:
     """Every schematic file a root schematic reaches through its hierarchical sheets.
 
     A sheet git does not track is never read, since the check reads a design
     only as the repository holds it; it is added to `missing` as (the sheet,
-    the schematic naming it) instead. Raises SexprError or OSError when a
-    tracked sheet cannot be read.
+    the schematic naming it) instead. A sheet is read in the one form KiCad 10
+    writes, naming its file in exactly one Sheetfile property; one naming its
+    file any other way, or more than once, is added to `unnamed` as (the
+    schematic, the sheet's name, how many files it names), since which file
+    KiCad would open for it is not something to guess. Raises SexprError or
+    OSError when a tracked sheet cannot be read.
     """
     seen = set() if seen is None else seen
     if schematic in seen:
@@ -275,15 +321,20 @@ def sheet_files(root: str, schematic: str, tracked: Set[str], seen: Optional[Set
     with open(os.path.join(root, schematic), encoding="utf-8") as handle:
         tree = sexpr.parse_one(handle.read())
     for sheet in sexpr.children(tree, "sheet"):
-        for prop in sexpr.children(sheet, "property"):
-            if len(prop) > 2 and prop[1] in ("Sheetfile", "Sheet file"):
-                target = os.path.normpath(os.path.join(os.path.dirname(schematic), prop[2])).replace(os.sep, "/")
-                if target not in tracked:
-                    if missing is not None and target not in seen:
-                        missing.append((target, schematic))
-                    seen.add(target)
-                    continue
-                sheet_files(root, target, tracked, seen, missing)
+        named = [prop for prop in sexpr.children(sheet, "property") if len(prop) > 1 and prop[1] == "Sheetfile"]
+        if len(named) != 1 or len(named[0]) < 3 or isinstance(named[0][2], list):
+            if unnamed is not None:
+                title = next((str(prop[2]) for prop in sexpr.children(sheet, "property")
+                              if len(prop) > 2 and prop[1] == "Sheetname"), "(unnamed)")
+                unnamed.append((schematic, title, len(named)))
+            continue
+        target = os.path.normpath(os.path.join(os.path.dirname(schematic), named[0][2])).replace(os.sep, "/")
+        if target not in tracked:
+            if missing is not None and target not in seen:
+                missing.append((target, schematic))
+            seen.add(target)
+            continue
+        sheet_files(root, target, tracked, seen, missing, unnamed)
     return seen
 
 
@@ -305,8 +356,9 @@ def discover(root: str, files: List[str]) -> Tuple[List[Design], List[Violation]
                     "its layout beside it, so commit the missing file or remove the project"))
         if design.schematic in tracked and os.path.exists(os.path.join(root, design.schematic)):
             missing: List[Tuple[str, str]] = []
+            unnamed: List[Tuple[str, str, int]] = []
             try:
-                owned.update(sheet_files(root, design.schematic, tracked, missing=missing))
+                owned.update(sheet_files(root, design.schematic, tracked, missing=missing, unnamed=unnamed))
             except (OSError, sexpr.SexprError) as error:
                 found.append(Violation(
                     design.project, "design_unreadable", design.schematic,
@@ -318,6 +370,12 @@ def discover(root: str, files: List[str]) -> Tuple[List[Design], List[Violation]
                     f"{parent} names the sheet {sheet}, which is not tracked in the repository, so the design "
                     "is only half committed and its schematic cannot be checked as the repository holds it; "
                     "commit the sheet, or remove it from the schematic"))
+            for parent, title, count in unnamed:
+                found.append(Violation(
+                    design.project, "design_discovery", f"{parent} sheet '{title}'",
+                    f"the sheet {('has no Sheetfile property', 'has a Sheetfile property naming no file')[count] if count < 2 else f'has {count} Sheetfile properties'}, "
+                    "where KiCad 10 writes exactly one naming the sheet's file, so which file it holds cannot be told "
+                    "and the design cannot be checked whole; give the sheet one Sheetfile property naming its file"))
     orphans = []
     for path in sorted(files):
         if path.endswith((".kicad_sch", ".kicad_pcb")) and path not in owned:
@@ -364,6 +422,76 @@ def library_path(design: Design, uri: str) -> Tuple[Optional[str], str]:
     return path, ""
 
 
+#: Each clause a library table entry may hold, and whether it must be there.
+LIBRARY_CLAUSES = {"name": True, "type": True, "uri": True, "options": False, "descr": False,
+                   "disabled": False, "hidden": False}
+
+
+def library_entries(design: Design, path: str, table: list) -> Tuple[List[Tuple[str, str]], List[Violation]]:
+    """The (nickname, location) of each library a table names, and every part of it not in the form KiCad writes.
+
+    The one form read is the table KiCad writes: a list headed for its kind,
+    an optional (version ...), and (lib ...) entries, each holding exactly one
+    name, one type of KiCad, one location, and at most one of each other clause
+    KiCad writes. Anything else -- another kind of library, which a reader may
+    not have the means to open, a nickname given twice, of which KiCad uses only
+    one, or a clause the check does not know -- fails by name rather than being
+    read past.
+    """
+    kind = os.path.basename(path).replace("-", "_")
+    found: List[Violation] = []
+
+    def fail(where: str, message: str) -> None:
+        found.append(Violation(design.project, "design_library", where,
+                               f"{message}; a library table holds only (version ...) and (lib (name ...) (type \"KiCad\") "
+                               "(uri ...) (options ...) (descr ...)) entries, as KiCad writes them, so write it in that form"))
+
+    if sexpr.head(table) != kind:
+        fail(path, f"the file is headed ({sexpr.head(table) or '...'} ...), not ({kind} ...)")
+        return [], found
+    entries: List[Tuple[str, str]] = []
+    seen: Set[str] = set()
+    versions = 0
+    for item in table[1:]:
+        if sexpr.head(item) == "version":
+            versions += 1
+            if versions > 1:
+                fail(path, "the table states its (version ...) more than once")
+            continue
+        if sexpr.head(item) != "lib":
+            fail(path, f"the table holds a ({sexpr.head(item) or str(item)} ...) form, which is not a library entry")
+            continue
+        clauses: Dict[str, List[list]] = {}
+        for clause in item[1:]:
+            clauses.setdefault(sexpr.head(clause) or str(clause), []).append(clause)
+        name_clause = clauses.get("name", [[]])[0]
+        name = str(name_clause[1]) if len(name_clause) > 1 else "(unnamed)"
+        where = f"{path} library '{name}'"
+        problems = [f"a ({clause} ...) clause, which is not one KiCad writes in a library entry"
+                    for clause in clauses if clause not in LIBRARY_CLAUSES]
+        for clause, required in LIBRARY_CLAUSES.items():
+            count = len(clauses.get(clause, []))
+            if count > 1:
+                problems.append(f"{count} ({clause} ...) clauses, of which KiCad reads only one")
+            elif required and count == 0:
+                problems.append(f"no ({clause} ...) clause")
+            elif count and clause in ("name", "type", "uri") and (len(clauses[clause][0]) != 2
+                                                                    or isinstance(clauses[clause][0][1], list)):
+                problems.append(f"a ({clause} ...) clause holding something other than one value")
+        library_type = clauses.get("type", [[]])[0]
+        if not problems and str(library_type[1]) != "KiCad":
+            problems.append(f"the type '{library_type[1]}', where the check reads only KiCad's own library format, "
+                            "the one a reader holding the named tools can open")
+        if not problems and name in seen:
+            problems.append(f"the nickname '{name}', which an earlier entry already takes, so KiCad uses only one of them")
+        if problems:
+            fail(where, "the library entry holds " + "; ".join(problems))
+            continue
+        seen.add(name)
+        entries.append((name, str(clauses["uri"][0][1])))
+    return entries, found
+
+
 def design_files(design: Design, repository: Repository) -> Tuple[List[str], List[Violation]]:
     """Every tracked file KiCad reads for a design, and every file it would read that a reader does not have.
 
@@ -394,16 +522,15 @@ def design_files(design: Design, repository: Repository) -> Tuple[List[str], Lis
             continue
         try:
             with open(os.path.join(repository.root, path), encoding="utf-8") as handle:
-                entries = sexpr.children(sexpr.parse_one(handle.read()), "lib")
+                table = sexpr.parse_one(handle.read())
         except (OSError, sexpr.SexprError) as error:
             found.append(Violation(design.project, "design_unreadable", path,
                                    f"the library table cannot be read ({error}); correct the file at that point, "
                                    "or restore it from the repository's history"))
             continue
-        for entry in entries:
-            name, uri = sexpr.child(entry, "name"), sexpr.child(entry, "uri")
-            name = str(name[1]) if name is not None and len(name) > 1 else "(unnamed)"
-            uri = str(uri[1]) if uri is not None and len(uri) > 1 else ""
+        entries, misread = library_entries(design, path, table)
+        found += misread
+        for name, uri in entries:
             target, why = library_path(design, uri)
             where = f"{path} library '{name}'"
             if why:
@@ -454,6 +581,43 @@ def positive_number(value) -> bool:
             and math.isfinite(value) and value > 0)
 
 
+#: The keys a separation basis record holds, and the two each mains_to_low_voltage-style pair holds.
+RECORD_KEYS = {"standard", "supply", "working_voltage", "pollution_degree", "material_group", "environment",
+               "barriers", "mains_to_low_voltage", "accepted_by", "accepted_on", "synthetic"}
+PAIR_KEYS = {"clearance_mm", "creepage_mm"}
+
+
+class RecordForm(Exception):
+    """The record is YAML, but not in the one form the check reads."""
+
+
+def strict_yaml(yaml, text: str):
+    """The YAML document in `text`, refusing a key given twice or a merge key.
+
+    PyYAML keeps the last of two equal keys and folds a merge key's mapping in
+    beneath the keys written beside it, so a record read past either could say
+    one thing to a reader and another to the check.
+    """
+    class Loader(yaml.SafeLoader):
+        pass
+
+    def mapping(loader, node, deep=False):
+        keys = set()
+        for key_node, _ in node.value:
+            if key_node.tag == "tag:yaml.org,2002:merge":
+                raise RecordForm(f"it uses a YAML merge key (<<) at line {key_node.start_mark.line + 1}, which the "
+                                 "check does not read; write every key out in full")
+            key = loader.construct_object(key_node, deep=True)
+            if key in keys:
+                raise RecordForm(f"it gives the key '{key}' more than once (again at line {key_node.start_mark.line + 1}), "
+                                 "and a reader and the check could each take a different one; give it once")
+            keys.add(key)
+        return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+    Loader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, mapping)
+    return yaml.load(text, Loader=Loader)
+
+
 def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_manufacture: bool,
                 today: datetime.date, uncommitted: Optional[str] = None
                 ) -> Tuple[Optional[Tuple[float, float]], List[Violation]]:
@@ -478,7 +642,9 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
                             "stands: commit it, or discard the change")
     try:
         with open(os.path.join(root, record), encoding="utf-8") as handle:
-            data = yaml.safe_load(handle)
+            data = strict_yaml(yaml, handle.read())
+    except RecordForm as error:
+        return fail(record, f"the separation basis record cannot be parsed as the check reads it: {error}")
     except Exception as error:  # a YAML error, or a file that cannot be read
         return fail(record, f"the separation basis record cannot be parsed ({' '.join(str(error).split())})")
     if not isinstance(data, dict):
@@ -490,6 +656,21 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
                     "the record lacks mains_to_low_voltage, the mapping holding clearance_mm and creepage_mm")
     figures = []
     problems = []
+    for key, value in sorted(data.items(), key=lambda item: str(item[0])):
+        key = str(key)
+        if key in RECORD_KEYS:
+            continue
+        if isinstance(value, dict) and set(map(str, value)) == PAIR_KEYS:
+            continue
+        problems.append(Violation(design.project, "separation_basis", f"{record} {key}",
+                                  f"the record holds the key '{key}', which is not one a separation basis record has: "
+                                  f"its keys are {', '.join(sorted(RECORD_KEYS))}, and any further pair of distances "
+                                  "for readers is a mapping holding exactly clearance_mm and creepage_mm; correct the "
+                                  "key's spelling, or remove it"))
+    for key in sorted(set(map(str, pair)) - PAIR_KEYS):
+        problems.append(Violation(design.project, "separation_basis", f"{record} mains_to_low_voltage.{key}",
+                                  f"mains_to_low_voltage holds '{key}', where it holds only clearance_mm and "
+                                  "creepage_mm, the figures compared; correct the key's spelling, or remove it"))
     for key in ("clearance_mm", "creepage_mm"):
         if key not in pair:
             problems.append(Violation(design.project, "separation_basis", f"{record} mains_to_low_voltage.{key}",
@@ -530,7 +711,11 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
                                   f"the record is unsigned: accepted_on {when.isoformat()} is later than today ({today.isoformat()})"))
 
     synthetic = data.get("synthetic")
-    if synthetic is not None and synthetic is not False and not not_for_manufacture:
+    if "synthetic" in data and not isinstance(synthetic, bool):
+        problems.append(Violation(design.project, "separation_basis", f"{record} synthetic",
+                                  f"synthetic is {synthetic!r}, where it is true on a record made only to prove the "
+                                  "check and false or absent otherwise; write true or false"))
+    elif synthetic is True and not not_for_manufacture:
         problems.append(Violation(design.project, "separation_basis", f"{record} synthetic",
                                   "the record is marked synthetic, made only to prove the check, and the design is not "
                                   "marked not for manufacture (NOT_FOR_MANUFACTURE=true), so a proof record cannot let it pass"))
@@ -543,31 +728,27 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
 # --- The design's own rules ----------------------------------------------------
 
 
-UNITS_MM = {"mm": 1.0, "": 1.0, "um": 0.001, "µm": 0.001, "nm": 1e-6, "mil": 0.0254, "mils": 0.0254, "in": 25.4}
-
-
-def figure_mm(token: str) -> Optional[float]:
-    match = re.fullmatch(r"\s*([0-9]*\.?[0-9]+)\s*([a-zµ]*)\s*", str(token))
-    if not match or match.group(2) not in UNITS_MM:
+def declared_mm(constraint: list) -> Optional[float]:
+    """The minimum of a (constraint <kind> (min <number>mm)), or None for any other form."""
+    if len(constraint) != 3 or sexpr.head(constraint[2]) != "min" or len(constraint[2]) != 2:
         return None
-    return float(match.group(1)) * UNITS_MM[match.group(2)]
+    match = re.fullmatch(r"([0-9]+(?:\.[0-9]+)?)mm", str(constraint[2][1]))
+    return float(match.group(1)) if match and not isinstance(constraint[2][1], sexpr.Quoted) else None
 
 
-def squash(text: str) -> str:
-    return "".join(str(text).split())
+def one_line(node) -> str:
+    """A form as KiCad's files write it, on one line, for quoting in a report."""
+    return re.sub(r"\s*\)", ")", " ".join(sexpr.dump(node).split()))
 
 
 def rule_name(rule: list) -> str:
     return str(rule[1]) if len(rule) > 1 and not isinstance(rule[1], list) else "(unnamed)"
 
 
-def constraint_min(rule: list, kind: str):
-    """The (min ...) token of the rule's `kind` constraint: None when absent, '' when it has no minimum."""
-    for constraint in sexpr.children(rule, "constraint"):
-        if len(constraint) > 1 and constraint[1] == kind:
-            minimum = sexpr.child(constraint, "min")
-            return minimum[1] if minimum is not None and len(minimum) > 1 else ""
-    return None
+#: The clauses KiCad takes once in a rule yet loads a rule holding twice, keeping
+#: only one of them; a rule holding any other clause twice KiCad declines to
+#: load at all, which the check finds through KiCad itself.
+ONCE_ONLY_CLAUSES = ("condition", "severity")
 
 
 def read_rules(root: str, design: Design, repository: Repository) -> Tuple[Optional[List[list]], List[Violation]]:
@@ -590,7 +771,23 @@ def read_rules(root: str, design: Design, repository: Repository) -> Tuple[Optio
                               "parse without saying so, so none of its rules would be checked")]
     rules = [form for form in forms if sexpr.head(form) == "rule"]
     found = []
+    names: Dict[str, int] = {}
     for rule in rules:
+        names[rule_name(rule)] = names.get(rule_name(rule), 0) + 1
+    for name, count in sorted(names.items()):
+        if count > 1:
+            found.append(Violation(
+                design.project, "custom_rules", f"{design.rules} rule '{name}'",
+                f"{count} rules are named '{name}', and KiCad loads them all, so the report could not say which of "
+                "them a finding comes from; give each rule a name of its own"))
+    for rule in rules:
+        for clause in ONCE_ONLY_CLAUSES:
+            count = len(sexpr.children(rule, clause))
+            if count > 1:
+                found.append(Violation(
+                    design.project, "custom_rules", f"{design.rules} rule '{rule_name(rule)}'",
+                    f"the rule holds {count} ({clause} ...) clauses; KiCad loads it and keeps only one of them, so "
+                    f"the rule would not mean what it reads as; give it one {clause}"))
         if RESERVED in rule_name(rule).lower():
             found.append(Violation(
                 design.project, "custom_rules", f"{design.rules} rule '{rule_name(rule)}'",
@@ -607,11 +804,19 @@ def read_rules(root: str, design: Design, repository: Repository) -> Tuple[Optio
 
 
 def mains_rule(design: Design, rules: Optional[List[list]], signed: Optional[Tuple[float, float]]) -> List[Violation]:
-    """What is wrong with the design's own Mains separation rule, if anything."""
+    """What is wrong with the design's own Mains separation rule, if anything.
+
+    The rule is read in one form: a name, exactly one condition written exactly
+    as MAINS_CONDITION, and exactly one (constraint clearance (min <n>mm)) and
+    one (constraint creepage (min <n>mm)). Every other form fails by name rather
+    than being read as near enough: whitespace inside a quoted net class name
+    changes the class, a second condition is one KiCad would keep in place of
+    the first, and a unit or a further limit KiCad reads differently from this
+    check would make the declared figure a guess.
+    """
     def fail(location: str, message: str) -> List[Violation]:
         return [Violation(design.project, "separation_rule", location, message)]
 
-    form = squash(MAINS_CONDITION)
     if rules is None:
         return fail(design.rules,
                     "MAINS is present but the design has no custom rules file, so it states no separation "
@@ -619,18 +824,18 @@ def mains_rule(design: Design, rules: Optional[List[list]], signed: Optional[Tup
                     "creepage constraint")
     exact, narrowed = [], []
     for rule in rules:
-        for condition in sexpr.children(rule, "condition"):
-            text = squash(condition[1]) if len(condition) > 1 else ""
-            if text == form:
-                exact.append(rule)
-            elif form in text or "hasNetclass('Mains')" in text:
-                narrowed.append(rule)
+        conditions = [str(condition[1]) if len(condition) > 1 else "" for condition in sexpr.children(rule, "condition")]
+        if conditions == [MAINS_CONDITION]:
+            exact.append(rule)
+        elif any("hasNetclass" in text and "Mains" in text for text in conditions):
+            narrowed.append(rule)
     if not exact:
         if narrowed:
             names = ", ".join(f"'{rule_name(rule)}'" for rule in narrowed)
             return fail(f"{design.rules} rule {names}",
                         f"the Mains separation rule is narrowed by its condition or not in the required form; "
-                        f"its condition must be exactly {MAINS_CONDITION}, with nothing narrowing it to a layer or an area")
+                        f"its one condition must be exactly {MAINS_CONDITION}, written as shown, with nothing "
+                        "narrowing it to a layer or an area")
         return fail(design.rules,
                     f"MAINS is present but no custom rule has the condition {MAINS_CONDITION}; add one holding "
                     "both a clearance and a creepage constraint")
@@ -644,14 +849,27 @@ def mains_rule(design: Design, rules: Optional[List[list]], signed: Optional[Tup
     found = []
     if sexpr.child(rule, "layer") is not None:
         found += fail(where, "the Mains separation rule is narrowed by layer; it must hold on every layer, so remove its (layer ...)")
+    constraints: Dict[str, List[list]] = {}
+    for constraint in sexpr.children(rule, "constraint"):
+        constraints.setdefault(str(constraint[1]) if len(constraint) > 1 else "", []).append(constraint)
+    for kind in sorted(set(constraints) - {"clearance", "creepage"}):
+        found += fail(where, f"the Mains separation rule holds a (constraint {kind or '...'} ...) "
+                             "constraint, which the check does not read; the rule holds only its clearance and its "
+                             "creepage, so state any other constraint in a rule of its own")
     for kind, index in (("clearance", 0), ("creepage", 1)):
-        token = constraint_min(rule, kind)
-        if token is None:
+        given = constraints.get(kind, [])
+        if not given:
             found += fail(where, f"the Mains separation rule holds no {kind} constraint; it must hold both clearance and creepage")
             continue
-        declared = figure_mm(token) if token != "" else None
+        if len(given) > 1:
+            found += fail(where, f"the Mains separation rule holds {len(given)} {kind} constraints, of which KiCad "
+                                 f"applies only one; state the {kind} once")
+            continue
+        declared = declared_mm(given[0])
         if declared is None:
-            found += fail(where, f"the Mains separation rule's {kind} minimum '{token}' cannot be read as a distance")
+            found += fail(where, f"the Mains separation rule's {kind} is written {one_line(given[0])}, where the "
+                                 f"check reads only (constraint {kind} (min <number>mm)): a minimum in millimetres "
+                                 "and nothing else; write it in that form")
         elif signed is not None and declared < signed[index] - 1e-9:
             found += fail(where, f"the design declares a {kind} of {declared:g} mm, below the signed "
                                  f"{signed[index]:g} mm in its separation basis record")
@@ -746,6 +964,48 @@ def overrides(design: Design, layout: list, signed_clearance: float, mains_nets:
     return found
 
 
+def net_ties(design: Design, layout: list, mains_nets: Set[str]) -> List[Violation]:
+    """Net-tie footprints joining a Mains-class net to a net outside the class.
+
+    A net tie joins its nets in copper, which is what it is for, and KiCad 10.0.7
+    checks no clearance between the pads it ties: a tie between a Mains-class
+    net and any other would join low-voltage copper to mains outright, with the
+    signed clearance unchecked where they meet. Each pad group is read as KiCad writes
+    it, a string of pad numbers separated by commas; a group naming a pad the
+    footprint does not have is not one whose nets can be told, and fails too.
+    """
+    found = []
+    for footprint in walk(layout, "footprint"):
+        groups = sexpr.child(footprint, "net_tie_pad_groups")
+        if groups is None:
+            continue
+        reference = next((str(prop[2]) for prop in sexpr.children(footprint, "property")
+                          if len(prop) > 2 and prop[1] == "Reference"), "?")
+        where = f"footprint {reference} at {at_text(footprint)}"
+        pads: Dict[str, Set[str]] = {}
+        for pad in sexpr.children(footprint, "pad"):
+            pads.setdefault(str(pad[1]) if len(pad) > 1 else "", set()).add(net_of(pad))
+        for group in groups[1:]:
+            numbers = [number.strip() for number in str(group).split(",")]
+            unknown = [number for number in numbers if number not in pads]
+            if isinstance(group, list) or unknown:
+                found.append(Violation(design.project, "mains_net_tie", where,
+                                       f"net tie group {one_line(group)} of {reference} names "
+                                       f"{'pad' + ('s ' if len(unknown) > 1 else ' ') + ', '.join(unknown) + ', which the footprint does not have' if unknown else 'no pad numbers'}, "
+                                       "so which nets it joins cannot be told; name the tied pads by number, separated by commas"))
+                continue
+            nets = set().union(*(pads[number] for number in numbers))
+            inside, outside = sorted(nets & mains_nets), sorted(nets - mains_nets)
+            if inside and outside:
+                found.append(Violation(design.project, "mains_net_tie", where,
+                                       f"net tie {reference} joins Mains-class {', '.join(inside)} to "
+                                       f"{', '.join(name or '(no net)' for name in outside)}, outside the class, through "
+                                       f"pads {', '.join(numbers)}; a net tie joins its nets in copper, so this joins low-voltage "
+                                       "copper to mains, and KiCad checks no clearance between the pads it ties: a net tie may "
+                                       "join only Mains-class nets to one another"))
+    return found
+
+
 # --- Running KiCad ------------------------------------------------------------
 
 
@@ -785,7 +1045,7 @@ def run_kicad(command: List[str], cwd: str, output: str = "report.json") -> Tupl
         os.remove(output)
     try:
         result = subprocess.run(command + ["-o", output], cwd=cwd, capture_output=True, text=True,
-                                timeout=KICAD_TIMEOUT_S)
+                                timeout=KICAD_TIMEOUT_S, env=KICAD_ENVIRONMENT)
     except subprocess.TimeoutExpired:
         return None, f"KiCad did not finish within {KICAD_TIMEOUT_S} s"
     said = " ".join((result.stdout + " " + result.stderr).split())
@@ -824,9 +1084,15 @@ def kicad_violation(design: Design, entry: dict, fallback: str, sheet: str = "")
     if sheet and sheet != "/":
         location = f"sheet {sheet}: {location}"
     message = entry.get("description", "")
+    rule = entry.get("type", "unknown")
+    if rule in ("lib_symbol_issues", "lib_footprint_issues") and "does not include" in message:
+        rule = "design_library"
+        message += ("; KiCad is run with the design's own library tables and the libraries it installs with itself, "
+                    "and nothing else, so a library only one machine's own tables name is not one a reader has: "
+                    "put the library in the repository and name it in the design's own table through ${KIPRJMOD}")
     if entry.get("severity") == "exclusion":
         message += " (the design marks this violation as excluded; an excluded violation still fails the check, so fix it)"
-    return Violation(design.project, entry.get("type", "unknown"), location, message)
+    return Violation(design.project, rule, location, message)
 
 
 def ignored(design: Design, report: dict, setting: str) -> List[Violation]:
@@ -840,8 +1106,8 @@ def exclusions(design: Design, project: dict) -> List[Violation]:
     """Violations the project file marks as excluded, each a failure whatever KiCad makes of the entry."""
     found = []
     lists = (
-        ((project.get("board") or {}).get("design_settings") or {}).get("drc_exclusions") or [],
-        (project.get("erc") or {}).get("erc_exclusions") or [],
+        setting(project, "board", "design_settings", "drc_exclusions") or [],
+        setting(project, "erc", "erc_exclusions") or [],
     )
     for entries, file_, scale in ((lists[0], design.layout, 1e-6), (lists[1], design.schematic, 1e-4)):
         for entry in entries:
@@ -905,9 +1171,9 @@ def schematic_nets(netlist: list) -> Dict[str, Tuple[List[str], List[str]]]:
     return nets
 
 
-def schematic_mains(netlist: list) -> Set[str]:
+def schematic_mains(nets: Dict[str, Tuple[List[str], List[str]]]) -> Set[str]:
     """The nets KiCad's own netlist of the schematic puts in the Mains class, wherever the schematic says so."""
-    return {name for name, (classes, _) in schematic_nets(netlist).items() if "Mains" in classes}
+    return {name for name, (classes, _) in nets.items() if "Mains" in classes}
 
 
 def quoted(text: str) -> str:
@@ -1046,6 +1312,72 @@ def rejected_form(kicad_cli: str, copy: str, layout: str, rules_copy: str, text:
             "its (version 1) header and (rule ...) forms, so correct or remove it")
 
 
+# --- The project file ----------------------------------------------------------
+
+
+class DuplicateKey(ValueError):
+    """A JSON object gives one key twice."""
+
+
+def unique_keys(pairs):
+    seen = {}
+    for key, value in pairs:
+        if key in seen:
+            raise DuplicateKey(key)
+        seen[key] = value
+    return seen
+
+
+def setting(project: dict, *path: str):
+    """The project file's setting at `path`, or None where any step of it is absent."""
+    value = project
+    for step in path:
+        if not isinstance(value, dict):
+            return None
+        value = value.get(step)
+    return value
+
+
+#: Each project-file setting the check reads itself, and the JSON type KiCad writes it as.
+PROJECT_SETTINGS = (
+    (("text_variables",), dict, "an object of text variables"),
+    (("board", "design_settings", "drc_exclusions"), list, "a list of exclusions"),
+    (("erc", "erc_exclusions"), list, "a list of exclusions"),
+    (("net_settings", "netclass_assignments"), dict, "an object assigning nets to classes"),
+)
+
+
+def project_form(design: Design, project: dict) -> List[Violation]:
+    """Every setting the check reads from the project file that is not in the form KiCad writes it in.
+
+    The check reads the project file's text variables, its exclusion lists and
+    the net names its class assignments give, and reads each only in the form
+    KiCad writes: each setting absent, null or of KiCad's own type, every text
+    variable a string, and NOT_FOR_MANUFACTURE true or false. Anything else
+    fails by name rather than being taken as absent.
+    """
+    found = []
+    for path, kind, said in PROJECT_SETTINGS:
+        value = setting(project, *path)
+        if value is not None and not isinstance(value, kind):
+            found.append(Violation(design.project, "project_file", f"{design.project} {'.'.join(path)}",
+                                   f"{'.'.join(path)} is {json.dumps(value)[:80]}, where KiCad writes {said}; "
+                                   "correct it, or let KiCad rewrite the project file by saving the design"))
+    variables = setting(project, "text_variables")
+    if isinstance(variables, dict):
+        for name, value in sorted(variables.items()):
+            if not isinstance(value, str):
+                found.append(Violation(design.project, "project_file", f"{design.project} text_variables.{name}",
+                                       f"the text variable {name} is {json.dumps(value)[:80]}, where KiCad writes "
+                                       "every text variable as a string; write it as one"))
+        marked = variables.get("NOT_FOR_MANUFACTURE")
+        if isinstance(marked, str) and marked not in ("true", "false"):
+            found.append(Violation(design.project, "project_file", f"{design.project} text_variables.NOT_FOR_MANUFACTURE",
+                                   f"the project text variable NOT_FOR_MANUFACTURE is '{marked}'; set it to true on a "
+                                   "design that is never to be ordered, and to false or leave it out otherwise"))
+    return found
+
+
 # --- One design ----------------------------------------------------------------
 
 
@@ -1057,18 +1389,26 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         return found
     try:
         with open(os.path.join(root, design.project), encoding="utf-8") as handle:
-            project = json.load(handle)
+            project = json.load(handle, object_pairs_hook=unique_keys)
         if not isinstance(project, dict):
             raise ValueError("it is not a JSON object")
+    except DuplicateKey as error:
+        found.append(Violation(design.project, "project_file", design.project,
+                               f"the project file gives the key '{error}' more than once in one object, and KiCad "
+                               "and the check could each take a different one; give it once"))
+        return found
     except (OSError, ValueError) as error:
         found.append(Violation(design.project, "design_unreadable", design.project,
                                f"the project file cannot be read ({error}); correct the file at that point, or "
                                "restore it from the repository's history"))
         return found
+    misread = project_form(design, project)
+    if misread:
+        return found + misread
 
     variables = project.get("text_variables") or {}
-    mains = variables.get("MAINS") if isinstance(variables, dict) else None
-    not_for_manufacture = isinstance(variables, dict) and variables.get("NOT_FOR_MANUFACTURE") == "true"
+    mains = variables.get("MAINS")
+    not_for_manufacture = variables.get("NOT_FOR_MANUFACTURE") == "true"
     if mains not in ("present", "none"):
         said = "is not set" if mains is None else f"is '{mains}'"
         found.append(Violation(design.project, "mains_declaration", f"{design.project} text_variables.MAINS",
@@ -1182,8 +1522,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         # settings, by name and by pattern. They must agree net for net.
         names = layout_nets(tree)
         on_layout = mains_nets_from(probe, names)
-        assignments = (project.get("net_settings") or {}).get("netclass_assignments")
-        named = set(names) | set(netlist) | (set(map(str, assignments)) if isinstance(assignments, dict) else set())
+        named = set(names) | set(netlist) | set(map(str, setting(project, "net_settings", "netclass_assignments") or {}))
         version = sexpr.child(tree, "version")
         in_project, why = project_mains(kicad_cli, scratch, os.path.join(copy, os.path.basename(design.project)),
                                         named, nonce, str(version[1]) if version is not None and len(version) > 1 else "20260206")
@@ -1202,8 +1541,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             locate[IN_SCHEMATIC][net] = "in the schematic at " + ", ".join(pins[:4]) + (", ..." if len(pins) > 4 else "")
     for net in in_project:
         locate[IN_PROJECT][net] = f"{design.project} net_settings"
-    sources = {ON_LAYOUT: on_layout, IN_SCHEMATIC: {net for net, (classes, _) in netlist.items() if "Mains" in classes},
-               IN_PROJECT: in_project}
+    sources = {ON_LAYOUT: on_layout, IN_SCHEMATIC: schematic_mains(netlist), IN_PROJECT: in_project}
     found += mains_agreement(design, mains, sources, locate)
 
     if mains == "present" and not on_layout:
@@ -1215,6 +1553,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                f"MAINS is none but the layout puts {', '.join(sorted(on_layout))} in the Mains net "
                                "class; set MAINS to present, or take them out of Mains"))
 
+    found += net_ties(design, tree, on_layout)
     if signed is not None:
         found += overrides(design, tree, signed[0], on_layout)
     return found
@@ -1230,7 +1569,17 @@ def run(root: str, kicad_cli: str, git: str = "git", out=sys.stdout,
     top = require_git(git, root)
     version = require_kicad(kicad_cli)
     today = today or datetime.date.today()
+    global KICAD_ENVIRONMENT
+    with tempfile.TemporaryDirectory(prefix="board-check-kicad-") as home:
+        KICAD_ENVIRONMENT = isolate_kicad(kicad_cli, version, home)
+        try:
+            return report(top, kicad_cli, git, version, today, yaml, out)
+        finally:
+            KICAD_ENVIRONMENT = None
 
+
+def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.date, yaml, out) -> int:
+    """Check every design under `top` and print the report; the exit status."""
     files = tracked_files(git, top)
     repository = Repository(top, files, git)
     designs, orphans, problems = discover(top, files)

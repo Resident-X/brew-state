@@ -97,16 +97,13 @@ class Discovery(Proved):
         """SOL-HW-BOARD-RULE-CHECK-GATE.C1: Every board design in the repository is checked because it exists, not because it is listed.
 
         An empty tree, a design that cannot be opened, a project missing its
-        schematic or layout, and a board file without its project each fail.
+        schematic or layout, a board file without its project, a sheet or
+        library the design reaches that the repository does not hold, and a
+        library table not in the form KiCad writes each fail.
         """
-        self.assertCaught("an empty tree", "a layout that cannot be opened", "a schematic that cannot be opened",
-                          "a project file that cannot be read", "a project missing its schematic",
-                          "a project missing its layout", "a layout committed without its project",
-                          "a schematic committed without its project",
-                          "a sheet left out of the commit of the schematic naming it",
-                          "a library the design's table names that git does not track", "a library table git does not track",
-                          "a library named outside the repository", "a library named by an absolute path",
-                          "a library reached through one machine's own path variable")
+        discovery = [fault[0] for fault in board_prove.FAULTS if fault[1].startswith("discovery:")]
+        self.assertGreaterEqual(len(discovery), 22)
+        self.assertCaught(*discovery)
 
 
 class OnlyWhatTheRepositoryHoldsIsChecked(Copy):
@@ -152,14 +149,15 @@ class OnlyWhatTheRepositoryHoldsIsChecked(Copy):
 
 class RuleChecks(Proved):
     def test_kicad_violations_parity_exclusions_and_ignored_checks_each_fail(self):
-        """SOL-HW-BOARD-RULE-CHECK-GATE.C2: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement."""
-        self.assertCaught("an electrical rule violation", "a layout clearance violation", "layout-schematic disagreement",
-                          "a violation marked as excluded", "a custom rule marking its violations excluded",
-                          "a layout rule set to ignore", "an electrical rule set to ignore",
-                          "a rule left at KiCad's own default of ignore", "a custom rule set to ignore",
-                          "a rules file KiCad declines to load", "a rules file that is not well-formed",
-                          "a rules file without its version header",
-                          "an untracked custom rules file", "a design rule taking a name reserved for the check's own rules")
+        """SOL-HW-BOARD-RULE-CHECK-GATE.C2: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement.
+
+        KiCad's own findings, schematic parity, exclusions, ignored checks, a
+        stale zone fill, rules files KiCad declines or reads differently from
+        the check, and project files not in KiCad's form each fail.
+        """
+        rule_checks = [fault[0] for fault in board_prove.FAULTS if fault[1].startswith("rule checks:")]
+        self.assertGreaterEqual(len(rule_checks), 21)
+        self.assertCaught(*rule_checks)
 
     def test_a_rule_written_to_look_like_the_checks_own_has_its_findings_reported(self):
         """SOL-HW-BOARD-RULE-CHECK-GATE.C2: A design passes only if KiCad's own electrical and layout rule checks find no violation, including no layout-schematic disagreement.
@@ -342,7 +340,57 @@ class TheSignedFigurePrevails(Copy):
         self.assertFalse([v for v in report["violations"] if v["type"] == "clearance"])
 
 
+class NetTiesAreExemptFromClearance(Copy):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    The premise the net-tie guard rests on, measured rather than assumed: KiCad
+    reports no clearance violation between the pads a net tie joins, even with
+    the signed rule appended, so only the check's own guard stops a tie from
+    joining low-voltage copper to mains with the signed clearance unchecked.
+    """
+
+    def test_kicad_checks_no_clearance_between_tied_pads_and_the_check_fails_the_tie(self):
+        # R1's third pad, on /LV_A, sits 0.2 mm from its mains pad 2.
+        board_prove.net_tie("2, 3", True)(self.seed)
+        self.seed.layout(lambda tree: board_prove.sexpr.child(board_prove.pad(tree, "R1", "3"), "at").__setitem__(
+            slice(1, 3), ["12", "0"]))
+        self.seed.write(".kicad_dru", self.seed.read(".kicad_dru") + board_check.appended_rules((3.0, 4.0), "test"))
+        between = [v for v in self.drc()["violations"] if v["type"] == "clearance"
+                   and sum(" of R1" in item["description"] for item in v["items"]) == 2]
+        self.assertEqual(between, [], "KiCad now checks clearance between the pads a net tie joins")
+        self.seed.write(".kicad_dru", self.seed.read(".kicad_dru").split("\n(rule \"pre-order check test")[0])
+        status, lines = self.check()
+        self.assertEqual(status, 1)
+        self.assertIn("mains_net_tie", [v[2] for v in self.violations(lines)])
+
+
 # --- C4 -----------------------------------------------------------------------
+
+
+class NothingFromTheMachineRunningTheCheck(unittest.TestCase):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C4: One task-runner command runs the whole check with tools any reader can obtain.
+
+    A library named only by the KiCad tables of whoever runs the check is one
+    KiCad, run as that user, finds without complaint; the check, which runs
+    KiCad with a configuration of its own, fails it by name.
+    """
+
+    def test_kicad_run_as_the_user_finds_the_library_and_the_check_does_not(self):
+        fault = next(fault for fault in board_prove.FAULTS if fault[4] is board_prove.machine_table_library)
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch)
+            board_prove.machine_table_library(seed)
+            status, lines, stderr = board_prove.check(seed, KICAD_CLI)
+            out = os.path.join(scratch, "drc.json")
+            subprocess.run([KICAD_CLI, "pcb", "drc", "--format", "json", "--severity-all", "-o", out,
+                            board_prove.NAME + ".kicad_pcb"], cwd=seed.design, check=True, capture_output=True,
+                           env={**os.environ, **seed.environment})
+            with open(out, encoding="utf-8") as handle:
+                as_the_user = json.load(handle)["violations"]
+        self.assertEqual([v for v in as_the_user if v["type"].startswith("lib_footprint")], [],
+                         "the seeded library was meant to be found by KiCad run as the user")
+        self.assertEqual(status, 1, stderr)
+        self.assertTrue(any(" | design_library | " in line and fault[3] in line for line in lines), lines)
 
 
 class OneCommand(unittest.TestCase):
@@ -408,7 +456,8 @@ class TheSeededFaultProof(unittest.TestCase):
             source = handle.read()
         own = set(re.findall(r'Violation\(\s*(?:[\w.]+|"[^"]*"),\s*"([a-z_]+)"', source))
         self.assertGreaterEqual(own, {"design_discovery", "design_unreadable", "ignored_check", "custom_rules",
-                                      "mains_declaration", "mains_class", "design_library", "local_clearance_override"})
+                                      "mains_declaration", "mains_class", "design_library", "local_clearance_override",
+                                      "project_file", "mains_net_tie", "separation_rule", "separation_basis"})
         seeded = {fault[2] for fault in board_prove.FAULTS}
         self.assertEqual(own - seeded, set(), "a rule the check reports of its own has no seeded fault proving it")
 
