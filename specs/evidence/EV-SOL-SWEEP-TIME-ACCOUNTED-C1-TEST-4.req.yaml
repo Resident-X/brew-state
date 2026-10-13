@@ -1,0 +1,16 @@
+id: EV-SOL-SWEEP-TIME-ACCOUNTED-C1-TEST-4
+type: evidence
+title: test evidence for SOL-SWEEP-TIME-ACCOUNTED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T03:20:04.399464Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_mull_sweep.py::test_both_renderings_carry_the_same_figures,test_both_totals_are_the_sum_of_the_rows_as_printed,test_both_renderings_carry_the_same_notes
+  artifact_version: 969d35805b2de0934edcd480fcf22685c5858320
+attested_by: crun-b38f58a8e58a1b09
+links:
+  - target: SOL-SWEEP-TIME-ACCOUNTED.C1
+    type: satisfies

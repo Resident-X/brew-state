@@ -15,3 +15,5 @@ links:
     type: targets
   - target: SOL-VERIFY-ROUND-GATE-TARGETED
     type: depends-on
+  - target: SOL-SWEEP-TIME-ACCOUNTED
+    type: depends-on
