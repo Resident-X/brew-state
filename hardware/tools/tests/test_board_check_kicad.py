@@ -103,7 +103,10 @@ class Discovery(Proved):
                           "a project file that cannot be read", "a project missing its schematic",
                           "a project missing its layout", "a layout committed without its project",
                           "a schematic committed without its project",
-                          "a sheet left out of the commit of the schematic naming it")
+                          "a sheet left out of the commit of the schematic naming it",
+                          "a library the design's table names that git does not track", "a library table git does not track",
+                          "a library named outside the repository", "a library named by an absolute path",
+                          "a library reached through one machine's own path variable")
 
 
 class OnlyWhatTheRepositoryHoldsIsChecked(Copy):
@@ -115,12 +118,33 @@ class OnlyWhatTheRepositoryHoldsIsChecked(Copy):
     """
 
     def test_a_footprint_library_left_out_of_the_commit_is_not_used(self):
-        library = os.path.join(self.seed.design, "proof.pretty")
-        for name in os.listdir(library):
-            board_prove.untrack(os.path.join("proof.pretty", name))(self.seed)
+        board_prove.untracked_library(self.seed)
         status, lines = self.check()
         self.assertEqual(status, 1, lines)
-        self.assertIn("lib_footprint_issues", [v[2] for v in self.violations(lines)])
+        rules = [v[2] for v in self.violations(lines)]
+        self.assertIn("design_library", rules)
+        self.assertIn("lib_footprint_issues", rules)
+
+    def test_libraries_and_sheets_above_the_designs_folder_are_checked_with_it(self):
+        # The libraries move to a folder beside the design's and a sheet to the
+        # folder above it; a copy of the design's folder alone would lose all
+        # three, and KiCad would report the missing symbols, footprints and sheet.
+        shared = os.path.join(os.path.dirname(self.seed.design), "lib")
+        os.makedirs(shared)
+        for name in ("proof.pretty", "proof.kicad_sym"):
+            shutil.move(self.seed.path(name), os.path.join(shared, name))
+        self.seed.replace("fp-lib-table", "${KIPRJMOD}/proof.pretty", "${KIPRJMOD}/../lib/proof.pretty")
+        self.seed.replace("sym-lib-table", "${KIPRJMOD}/proof.kicad_sym", "${KIPRJMOD}/../lib/proof.kicad_sym")
+        Q = board_prove.sexpr.Quoted
+        with open(os.path.join(os.path.dirname(self.seed.design), "notes.kicad_sch"), "w", encoding="utf-8") as handle:
+            handle.write('(kicad_sch\n\t(version 20250114)\n\t(generator "eeschema")\n\t(uuid "0b0e5c1a-0000-4000-8000-0000000000f0")\n'
+                         '\t(paper "A4")\n)\n')
+        sheet = ["sheet", ["at", "200", "100"], ["size", "20", "10"], ["uuid", Q("0b0e5c1a-0000-4000-8000-0000000000f1")],
+                 ["property", Q("Sheetname"), Q("notes"), ["at", "200", "99", "0"]],
+                 ["property", Q("Sheetfile"), Q("../notes.kicad_sch"), ["at", "200", "111", "0"]]]
+        self.seed.schematic(lambda tree: tree.insert(len(tree) - 1, sheet))
+        status, lines = self.check()
+        self.assertEqual(status, 0, lines)
 
 
 # --- C2 -----------------------------------------------------------------------
@@ -133,7 +157,8 @@ class RuleChecks(Proved):
                           "a violation marked as excluded", "a custom rule marking its violations excluded",
                           "a layout rule set to ignore", "an electrical rule set to ignore",
                           "a rule left at KiCad's own default of ignore", "a custom rule set to ignore",
-                          "a rules file KiCad declines to load", "a rules file without its version header",
+                          "a rules file KiCad declines to load", "a rules file that is not well-formed",
+                          "a rules file without its version header",
                           "an untracked custom rules file", "a design rule taking a name reserved for the check's own rules")
 
     def test_a_rule_written_to_look_like_the_checks_own_has_its_findings_reported(self):
@@ -230,6 +255,32 @@ class Separation(Proved):
     def test_every_separation_failure_fails(self):
         """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails."""
         self.assertCaught(*[fault[0] for fault in board_prove.FAULTS if fault[1].startswith("separation:")])
+
+
+class TheProjectFilesNetClassesAreResolvedByKiCad(unittest.TestCase):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    The project file's Mains nets are read as KiCad resolves its assignments
+    and patterns, for every net name given, whether or not any copper carries it.
+    """
+
+    def test_assignments_and_patterns_resolve_as_kicad_matches_them(self):
+        with open(os.path.join(board_prove.PROOF, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
+            project = json.load(handle)
+        settings = project["net_settings"]
+        settings["netclass_assignments"] = {"/GHOST": "Mains", "/LV_A": ["Default", "Mains"], "/LV_B": "Default"}
+        settings["netclass_patterns"].append({"netclass": "Mains", "pattern": "/re_[0-9]+"})
+        names = {"/MAINS_L", "/MAINS_N", "/mains_l", "/LV_A", "/LV_B", "/GHOST", "/re_12", "/RE_12", 'odd "name"'}
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            path = os.path.join(scratch, "p.kicad_pro")
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(project, handle)
+            found, why = board_check.project_mains(KICAD_CLI, scratch, path, names, "test")
+            self.assertEqual(found, {"/MAINS_L", "/MAINS_N", "/LV_A", "/GHOST", "/re_12"}, why)
+            settings["netclass_assignments"], settings["netclass_patterns"] = None, []
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(project, handle)
+            self.assertEqual(board_check.project_mains(KICAD_CLI, scratch, path, names, "test2"), (set(), ""))
 
 
 class TheSignedFigurePrevails(Copy):
@@ -357,7 +408,7 @@ class TheSeededFaultProof(unittest.TestCase):
             source = handle.read()
         own = set(re.findall(r'Violation\(\s*(?:[\w.]+|"[^"]*"),\s*"([a-z_]+)"', source))
         self.assertGreaterEqual(own, {"design_discovery", "design_unreadable", "ignored_check", "custom_rules",
-                                      "mains_declaration", "local_clearance_override"})
+                                      "mains_declaration", "mains_class", "design_library", "local_clearance_override"})
         seeded = {fault[2] for fault in board_prove.FAULTS}
         self.assertEqual(own - seeded, set(), "a rule the check reports of its own has no seeded fault proving it")
 

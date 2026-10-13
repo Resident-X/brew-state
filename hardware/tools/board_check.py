@@ -47,6 +47,9 @@ import sexpr  # noqa: E402
 MIN_PYTHON = (3, 9)
 MIN_KICAD = (10, 0)
 MIN_PYYAML = (5, 1)
+#: The first git whose status takes --porcelain=v1, which is how a committed
+#: record is told from one changed since.
+MIN_GIT = (2, 11)
 
 #: The one condition a design's Mains separation rule may carry, and the one the
 #: signed rule is appended with: a Mains-class item against any item outside it.
@@ -148,14 +151,22 @@ def require_yaml():
 
 def require_git(git: str, root: str) -> str:
     """The top of the git work tree holding `root`, which is where designs are looked for."""
+    how = f"Install git {MIN_GIT[0]}.{MIN_GIT[1]} or newer from https://git-scm.com/downloads ({TOOL_HELP})."
     try:
-        result = subprocess.run([git, "-C", root, "rev-parse", "--show-toplevel"],
-                                capture_output=True, text=True)
+        version = subprocess.run([git, "--version"], capture_output=True, text=True)
     except OSError as error:
         raise CannotRun(
             f"git is needed to find the board designs the repository tracks, and '{git}' could not be "
-            f"run ({error}). Install git from https://git-scm.com/downloads ({TOOL_HELP})."
+            f"run ({error}). {how}"
         ) from error
+    found = version_tuple(version.stdout)
+    if version.returncode != 0 or found is None or found < MIN_GIT:
+        said = " ".join((version.stdout + version.stderr).split())[:200] or f"exit {version.returncode}"
+        raise CannotRun(
+            f"git {MIN_GIT[0]}.{MIN_GIT[1]} or newer is needed to tell a committed file from one changed since, "
+            f"and '{git}' reports {said}. {how}"
+        )
+    result = subprocess.run([git, "-C", root, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     if result.returncode != 0:
         raise CannotRun(
             f"the check finds board designs through git, and {root} is not inside a git work tree "
@@ -317,6 +328,100 @@ def discover(root: str, files: List[str]) -> Tuple[List[Design], List[Violation]
                 f"(.kicad_pro) beside it names it, so it would otherwise escape the check; commit its "
                 "project beside it, or remove it"))
     return designs, orphans, problems
+
+
+#: The library tables a KiCad project may carry beside it.
+LIBRARY_TABLES = ("sym-lib-table", "fp-lib-table")
+
+#: Variables naming the libraries KiCad installs with itself, which a reader
+#: holding the named tools has; every other variable is set on one machine.
+KICAD_LIBRARY_VARIABLE = re.compile(r"KICAD\d*_(SYMBOL|FOOTPRINT|3DMODEL|TEMPLATE)_DIR")
+
+
+def library_path(design: Design, uri: str) -> Tuple[Optional[str], str]:
+    """Where in the repository a library table entry points, or why it points nowhere a reader has.
+
+    Returns (repository-relative path, '') for a library the repository can
+    hold, (None, '') for one KiCad installs with itself, and (None, why) for one
+    that only the machine the table was written on can reach.
+    """
+    text = str(uri).replace("\\", "/")
+    anchored = re.match(r"\$[{(]KIPRJMOD[)}]/*", text)
+    if anchored:
+        text = text[anchored.end():]
+    variables = re.findall(r"\$[{(]([^)}]*)[)}]", text)
+    if variables:
+        if all(KICAD_LIBRARY_VARIABLE.fullmatch(name) for name in variables):
+            return None, ""
+        foreign = ", ".join(f"${{{name}}}" for name in variables if not KICAD_LIBRARY_VARIABLE.fullmatch(name))
+        return None, (f"it is reached through {foreign}, which this machine's KiCad configuration defines and the "
+                      "repository does not")
+    if re.match(r"/|[A-Za-z]:/|~", text):
+        return None, "it is named by an absolute path, which holds only on the machine the table was written on"
+    path = os.path.normpath(os.path.join(design.directory, text)).replace(os.sep, "/")
+    if path == ".." or path.startswith("../"):
+        return None, "it lies outside the repository"
+    return path, ""
+
+
+def design_files(design: Design, repository: Repository) -> Tuple[List[str], List[Violation]]:
+    """Every tracked file KiCad reads for a design, and every file it would read that a reader does not have.
+
+    That is everything tracked in the design's own folder, the sheets its
+    schematic reaches wherever they sit, and each library its tables name
+    wherever in the repository it sits, so a design reaching above its own
+    folder is checked with what it reaches rather than without it. A library
+    the repository does not hold fails by name instead of KiCad quietly
+    loading it from wherever this machine keeps it, or not at all.
+    """
+    tracked = repository.tracked
+    prefix = design.directory + "/" if design.directory else ""
+    files = {path for path in tracked if path.startswith(prefix)}
+    try:
+        files |= sheet_files(repository.root, design.schematic, tracked) & tracked
+    except (OSError, sexpr.SexprError):
+        pass
+    found = []
+    for table in LIBRARY_TABLES:
+        path = prefix + table
+        untracked = repository.untracked(path)
+        if untracked is not None:
+            found.append(Violation(design.project, "design_library", path,
+                                   f"the library table {untracked}, so KiCad would load the design's libraries "
+                                   "here from a table the repository does not hold; commit it, or remove it"))
+            continue
+        if path not in tracked or not os.path.isfile(os.path.join(repository.root, path)):
+            continue
+        try:
+            with open(os.path.join(repository.root, path), encoding="utf-8") as handle:
+                entries = sexpr.children(sexpr.parse_one(handle.read()), "lib")
+        except (OSError, sexpr.SexprError) as error:
+            found.append(Violation(design.project, "design_unreadable", path,
+                                   f"the library table cannot be read ({error}); correct the file at that point, "
+                                   "or restore it from the repository's history"))
+            continue
+        for entry in entries:
+            name, uri = sexpr.child(entry, "name"), sexpr.child(entry, "uri")
+            name = str(name[1]) if name is not None and len(name) > 1 else "(unnamed)"
+            uri = str(uri[1]) if uri is not None and len(uri) > 1 else ""
+            target, why = library_path(design, uri)
+            where = f"{path} library '{name}'"
+            if why:
+                found.append(Violation(design.project, "design_library", where,
+                                       f"the library '{name}' is at {uri}, and {why}, so a reader holding only the "
+                                       "repository and the named tools cannot check the design with it; put the "
+                                       "library in the repository and name it from the table through ${KIPRJMOD}"))
+                continue
+            if target is None:
+                continue
+            held = {file for file in tracked if file == target or file.startswith(target + "/")}
+            if not held:
+                found.append(Violation(design.project, "design_library", where,
+                                       f"the library '{name}' is at {uri}, which is {target} in the repository, and "
+                                       "git tracks nothing there, so the design cannot be checked with the library "
+                                       "it names; commit the library, or correct the table"))
+            files |= held
+    return sorted(files), found
 
 
 # --- The separation basis record ---------------------------------------------
@@ -782,46 +887,127 @@ def mains_nets_from(probe: List[dict], names: Set[str]) -> Set[str]:
     return nets
 
 
-def schematic_mains(netlist: list) -> Set[str]:
-    """The nets KiCad's own netlist of the schematic puts in the Mains class, wherever the schematic says so."""
-    nets = set()
+def schematic_nets(netlist: list) -> Dict[str, Tuple[List[str], List[str]]]:
+    """Every net in KiCad's own netlist of the schematic: name -> (its net classes, the pins it joins)."""
+    nets = {}
     for group in walk(netlist, "nets"):
         for net in sexpr.children(group, "net"):
             name, kind = sexpr.child(net, "name"), sexpr.child(net, "class")
-            if name is None or kind is None or len(name) < 2 or len(kind) < 2:
+            if name is None or len(name) < 2:
                 continue
-            if "Mains" in [part.strip() for part in str(kind[1]).split(",")]:
-                nets.add(str(name[1]))
+            classes = [part.strip() for part in str(kind[1]).split(",")] if kind is not None and len(kind) > 1 else []
+            pins = []
+            for node in sexpr.children(net, "node"):
+                ref, pin = sexpr.child(node, "ref"), sexpr.child(node, "pin")
+                if ref is not None and len(ref) > 1:
+                    pins.append(f"{ref[1]} pin {pin[1]}" if pin is not None and len(pin) > 1 else str(ref[1]))
+            nets[str(name[1])] = (classes, pins)
     return nets
 
 
-def assigned_mains(project: dict) -> Set[str]:
-    """The nets the project file assigns to the Mains class by name, whether or not any copper or wire carries them."""
-    assignments = (project.get("net_settings") or {}).get("netclass_assignments") or {}
-    nets = set()
-    if isinstance(assignments, dict):
-        for net, classes in assignments.items():
-            named = classes if isinstance(classes, list) else str(classes).split(",")
-            if "Mains" in [str(name).strip() for name in named]:
-                nets.add(str(net))
-    return nets
+def schematic_mains(netlist: list) -> Set[str]:
+    """The nets KiCad's own netlist of the schematic puts in the Mains class, wherever the schematic says so."""
+    return {name for name, (classes, _) in schematic_nets(netlist).items() if "Mains" in classes}
+
+
+def quoted(text: str) -> str:
+    """A string as KiCad's files write one between double quotes."""
+    return '"' + str(text).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def project_mains(kicad_cli: str, scratch: str, project: str, names: Set[str], nonce: str,
+                  version: str = "20260206") -> Tuple[Optional[Set[str]], str]:
+    """The nets of `names` the project file's own net settings put in the Mains class, as KiCad resolves them.
+
+    The project file assigns nets to classes by name and by pattern, and KiCad
+    applies both to the layout, so the layout's membership alone cannot show
+    what the project file says: the layout file can carry classes of its own,
+    and a net the project names may have no copper. KiCad is therefore given
+    the project file beside a board of nothing but one track per net name,
+    holding no class of its own, and asked through the same probe which of
+    those tracks it places in Mains. The marker shows the probe was loaded, so
+    an empty answer means no net rather than an unread rules file. The board is
+    written in `version`, the file format of the design's own layout, which the
+    installed KiCad has already opened.
+    """
+    work = os.path.join(scratch, "net-settings")
+    os.makedirs(work, exist_ok=True)
+    shutil.copy2(project, os.path.join(work, "nets.kicad_pro"))
+    tracks = "".join(
+        f'\t(segment (start 0 {2 * index}) (end 1 {2 * index}) (width 0.1) (layer "F.Cu") (net {quoted(name)}) '
+        f'(uuid "00000000-0000-4000-8000-{index:012d}"))\n'
+        for index, name in enumerate(sorted(names)))
+    with open(os.path.join(work, "nets.kicad_pcb"), "w", encoding="utf-8") as handle:
+        handle.write(f'(kicad_pcb\n\t(version {version})\n\t(generator "pcbnew")\n\t(generator_version "10.0")\n'
+                     '\t(general (thickness 1.6))\n\t(paper "A4")\n'
+                     '\t(layers\n\t\t(0 "F.Cu" signal)\n\t\t(2 "B.Cu" signal)\n\t\t(25 "Edge.Cuts" user)\n\t)\n'
+                     + tracks + ")\n")
+    with open(os.path.join(work, "nets.kicad_dru"), "w", encoding="utf-8") as handle:
+        handle.write("(version 1)\n" + appended_rules(None, nonce))
+    report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "nets.kicad_pcb"], work)
+    if report is None:
+        return None, why
+    if not fired(report, marker_rule(nonce)):
+        return None, "KiCad did not load the rules that ask it which nets the project file puts in Mains"
+    return mains_nets_from(fired(report, probe_rule(nonce)), names), ""
+
+
+#: Where each of the three statements of Mains membership is read from, in the
+#: order a disagreement names them.
+ON_LAYOUT, IN_SCHEMATIC, IN_PROJECT = "on the layout", "in the schematic", "in the project file's net settings"
+
+
+def mains_agreement(design: Design, mains: Optional[str], sources: Dict[str, Set[str]],
+                    locate: Dict[str, Dict[str, str]]) -> List[Violation]:
+    """Every net the three statements of Mains membership do not all agree on.
+
+    The layout's membership is the one the separation rule is enforced
+    against, so a net any other source puts in Mains while the layout does not
+    would carry mains with nothing holding low-voltage copper away from it,
+    and a net only the layout puts there is one the design's own record of its
+    mains nets does not know about. Neither is read past by taking the union:
+    every source must name exactly the nets the others name.
+    """
+    found = []
+    for net in sorted(set().union(*sources.values())):
+        having = [place for place in (ON_LAYOUT, IN_SCHEMATIC, IN_PROJECT) if net in sources[place]]
+        lacking = [place for place in (ON_LAYOUT, IN_SCHEMATIC, IN_PROJECT) if net not in sources[place]]
+        if not lacking:
+            continue
+        where = next((locate[place][net] for place in having if net in locate.get(place, {})), "")
+        fix = ("take it out of Mains wherever it is, or set MAINS to present" if mains == "none" else
+               "assign it to Mains in the schematic, save the schematic so the project file carries the "
+               "assignment, and update the layout from the schematic; or take it out of Mains in all three")
+        if having == [ON_LAYOUT]:
+            fix += ("; a class only the layout gives a net comes from a (net_class ...) block in the layout file "
+                    "itself, which older KiCad versions wrote, so remove that block")
+        found.append(Violation(
+            design.project, "mains_class", f"net {net}" + (f": {where}" if where else ""),
+            f"net {net} is in the Mains net class {' and '.join(having)} but not {' or '.join(lacking)}; the "
+            "layout's Mains nets are the ones the separation rule is enforced against, so the schematic, the "
+            f"project file and the layout must name exactly the same Mains nets: {fix}"))
+    return found
 
 
 def rejected_form(kicad_cli: str, copy: str, layout: str, rules_copy: str, text: str, nonce: str
-                  ) -> Optional[Tuple[str, str]]:
+                  ) -> Tuple[str, str]:
     """Which part of a rules file KiCad declines to load, as (where, what), found with KiCad alone.
 
     The design's file is put back together a form at a time after its header,
     each candidate followed by the marker, and KiCad's layout check run on it:
     the first form whose addition stops the marker firing is the one KiCad
-    rejects. A bisection over the forms finds it in a handful of runs; None
-    means every form loads, so no single one can be named.
+    rejects. A bisection over the forms finds it in a handful of runs. When no
+    one form can be named, what is said is why: the file cannot be split into
+    forms at all, or every form loads and what KiCad rejects lies between them.
     """
     spans: List[Tuple[int, int, int]] = []
     try:
         forms = sexpr.parse(text, comments=True, spans=spans)
-    except sexpr.SexprError:
-        return None
+    except sexpr.SexprError as error:
+        line = re.search(r"line (\d+)", str(error))
+        return (f"at line {line.group(1)}" if line else "at its end",
+                f"the file is not well-formed ({error}), so it cannot be split into rules to find the one KiCad "
+                "rejects; balance its parentheses and close its quoted strings at that point")
     header = forms[0] if forms and sexpr.head(forms[0]) == "version" else None
     items = list(zip(forms, spans))[1 if header is not None else 0:]
     head_text = text[spans[0][0]:spans[0][1]] + "\n" if header is not None else ""
@@ -838,7 +1024,10 @@ def rejected_form(kicad_cli: str, copy: str, layout: str, rules_copy: str, text:
             return "the start of the file", "the file does not begin with a (version 1) header, without which KiCad loads none of it; add (version 1) as its first line"
         return f"the header at line {spans[0][2]}", f"its header {text[spans[0][0]:spans[0][1]]} is not one KiCad accepts; make it (version 1)"
     if loads(len(items)):
-        return None
+        return ("between its rules",
+                "KiCad loads every form of the file once the comments and spacing between them are left out, so what "
+                "it rejects lies there rather than in any one rule; KiCad reads a comment from a '#' to the end of "
+                "its line, so correct or remove the comments between the rules")
     good, bad = 0, len(items)
     while bad - good > 1:
         middle = (good + bad) // 2
@@ -902,16 +1091,21 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         return found
 
     nonce = secrets.token_hex(8)
+    files, unreachable = design_files(design, repository)
+    found += unreachable
     with tempfile.TemporaryDirectory(prefix="board-check-") as scratch:
         # Only what git tracks is copied, so KiCad checks the design as the
         # repository holds it and nothing left lying beside it on this machine.
-        copy = os.path.join(scratch, "design")
-        prefix = design.directory + "/" if design.directory else ""
-        for path in sorted(repository.tracked):
-            if path.startswith(prefix) and os.path.isfile(os.path.join(root, path)):
-                target = os.path.join(copy, path[len(prefix):])
+        # Each file keeps its place in the repository, so a sheet or a library
+        # the design reaches above its own folder is where KiCad looks for it.
+        replica = os.path.join(scratch, "repository")
+        for path in files:
+            if os.path.isfile(os.path.join(root, path)):
+                target = os.path.join(replica, path)
                 os.makedirs(os.path.dirname(target), exist_ok=True)
                 shutil.copy2(os.path.join(root, path), target)
+        copy = os.path.join(replica, design.directory)
+        os.makedirs(copy, exist_ok=True)
         rules_copy = os.path.join(copy, os.path.basename(design.rules))
         existing = "(version 1)\n"
         if rules is not None and os.path.exists(rules_copy):
@@ -923,7 +1117,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         schematic = os.path.basename(design.schematic)
         layout = os.path.basename(design.layout)
         erc, why = run_report([kicad_cli, "sch", "erc", "--format", "json", "--severity-all", "--units", "mm", schematic], copy)
-        netlist_nets: Optional[Set[str]] = None
+        netlist: Optional[Dict[str, Tuple[List[str], List[str]]]] = None
         if erc is None:
             found.append(Violation(design.project, "design_unreadable", design.schematic,
                                    f"the schematic cannot be checked: {why}"))
@@ -935,10 +1129,10 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             text, why = run_kicad([kicad_cli, "sch", "export", "netlist", "--format", "kicadsexpr", schematic],
                                   copy, "netlist.net")
             try:
-                netlist_nets = schematic_mains(sexpr.parse_one(text)) if text is not None else None
+                netlist = schematic_nets(sexpr.parse_one(text)) if text is not None else None
             except sexpr.SexprError as error:
                 why = f"KiCad's netlist could not be read ({error})"
-            if netlist_nets is None:
+            if netlist is None:
                 found.append(Violation(design.project, "design_unreadable", design.schematic,
                                        f"the schematic's net classes cannot be read from KiCad's netlist: {why}"))
 
@@ -959,46 +1153,70 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             found.append(kicad_violation(design, entry, design.layout))
 
         if not markers:
-            culprit = rejected_form(kicad_cli, copy, layout, rules_copy, existing, nonce) if rules is not None else None
-            where, what = culprit or (design.rules, "no single form of the file can be named: each loads, so correct "
-                                                    "the file as a whole against KiCad's custom rules syntax")
-            found.append(Violation(design.project, "custom_rules", f"{design.rules} {where}" if culprit else where,
+            if rules is None:
+                where, what = design.rules, ("the design has no custom rules file, and KiCad did not load the one "
+                                             "the check writes in its place either, which holds only the check's own "
+                                             "rules; run the check with KiCad 10.0 or newer")
+            else:
+                place, what = rejected_form(kicad_cli, copy, layout, rules_copy, existing, nonce)
+                where = f"{design.rules} {place}"
+            found.append(Violation(design.project, "custom_rules", where,
                                    "KiCad did not load the design's custom rules: it drops the whole file, without "
                                    "saying so, when any part of it is something it cannot parse, so neither the "
                                    f"design's own rules nor the signed separation rule were checked; {what}"))
             return found
 
-    if netlist_nets is None:
-        return found
-    try:
-        with open(os.path.join(root, design.layout), encoding="utf-8") as handle:
-            tree = sexpr.parse_one(handle.read())
-    except (OSError, sexpr.SexprError) as error:
-        found.append(Violation(design.project, "design_unreadable", design.layout,
-                               f"the layout cannot be read for its nets and clearance overrides ({error})"))
-        return found
-    # Mains-class membership as KiCad itself resolves it, from every place a
-    # design can declare it: the layout's copper, the schematic, and the
-    # project file's assignments by name, which need neither copper nor wire.
-    where: Dict[str, List[str]] = {}
-    for nets, place in ((mains_nets_from(probe, layout_nets(tree)), "on the layout"), (netlist_nets, "in the schematic"),
-                        (assigned_mains(project), "assigned in the project file")):
-        for net in nets:
-            where.setdefault(net, []).append(place)
-    present = {net for net, places in where.items() if places != ["assigned in the project file"]}
-    if mains == "present" and not present:
+        if netlist is None:
+            return found
+        try:
+            with open(os.path.join(copy, layout), encoding="utf-8") as handle:
+                tree = sexpr.parse_one(handle.read())
+        except (OSError, sexpr.SexprError) as error:
+            found.append(Violation(design.project, "design_unreadable", design.layout,
+                                   f"the layout cannot be read for its nets and clearance overrides ({error})"))
+            return found
+
+        # Three statements of which nets are in Mains, each as KiCad itself
+        # resolves it: the layout's, which is what the separation rule is
+        # enforced against; the schematic's; and the project file's net
+        # settings, by name and by pattern. They must agree net for net.
+        names = layout_nets(tree)
+        on_layout = mains_nets_from(probe, names)
+        assignments = (project.get("net_settings") or {}).get("netclass_assignments")
+        named = set(names) | set(netlist) | (set(map(str, assignments)) if isinstance(assignments, dict) else set())
+        version = sexpr.child(tree, "version")
+        in_project, why = project_mains(kicad_cli, scratch, os.path.join(copy, os.path.basename(design.project)),
+                                        named, nonce, str(version[1]) if version is not None and len(version) > 1 else "20260206")
+        if in_project is None:
+            found.append(Violation(design.project, "design_unreadable", f"{design.project} net_settings",
+                                   f"the project file's net classes cannot be resolved by KiCad: {why}"))
+            return found
+
+    locate: Dict[str, Dict[str, str]] = {ON_LAYOUT: {}, IN_SCHEMATIC: {}, IN_PROJECT: {}}
+    for entry in probe:
+        for item in entry.get("items") or []:
+            for net in mains_nets_from([{"items": [item]}], names):
+                locate[ON_LAYOUT].setdefault(net, item_text(item))
+    for net, (_, pins) in netlist.items():
+        if pins:
+            locate[IN_SCHEMATIC][net] = "in the schematic at " + ", ".join(pins[:4]) + (", ..." if len(pins) > 4 else "")
+    for net in in_project:
+        locate[IN_PROJECT][net] = f"{design.project} net_settings"
+    sources = {ON_LAYOUT: on_layout, IN_SCHEMATIC: {net for net, (classes, _) in netlist.items() if "Mains" in classes},
+               IN_PROJECT: in_project}
+    found += mains_agreement(design, mains, sources, locate)
+
+    if mains == "present" and not on_layout:
         found.append(Violation(design.project, "mains_declaration", design.layout,
-                               "MAINS is present but no net in the schematic or on the layout is in the Mains net "
-                               "class, so the separation rules would apply to nothing; assign every mains-referenced "
-                               "net to Mains"))
-    if mains == "none" and where:
+                               "MAINS is present but no net on the layout is in the Mains net class, so the "
+                               "separation rule would apply to nothing; assign every mains-referenced net to Mains"))
+    if mains == "none" and on_layout:
         found.append(Violation(design.project, "mains_declaration", f"{design.project} text_variables.MAINS",
-                               "MAINS is none but nets are in the Mains net class ("
-                               + "; ".join(f"{net} {', '.join(where[net])}" for net in sorted(where))
-                               + "); set MAINS to present, or take them out of Mains"))
+                               f"MAINS is none but the layout puts {', '.join(sorted(on_layout))} in the Mains net "
+                               "class; set MAINS to present, or take them out of Mains"))
 
     if signed is not None:
-        found += overrides(design, tree, signed[0], set(where))
+        found += overrides(design, tree, signed[0], on_layout)
     return found
 
 

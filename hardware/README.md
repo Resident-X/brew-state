@@ -6,7 +6,7 @@ Board designs and the check every one of them has to pass before it is ordered.
 - `hardware/tools/` holds the pre-order check and its tests. They work for any machine.
 - `hardware/proof/` holds designs committed only to prove the check. They are never ordered.
 
-A **board design** is a KiCad project file (`.kicad_pro`) together with the schematic (`.kicad_sch`) and layout (`.kicad_pcb`) of the same name beside it. The check finds every design git tracks, wherever it sits. The layout above is a convention for readers, not something the check depends on. A design is checked once git tracks it: `git add` is enough for the design's own files. The check reads a design only as the repository holds it. KiCad is given a copy of the tracked files alone, so a library, sheet or rules file left uncommitted beside a design is not used. A sheet the schematic names, or a custom rules file beside the project, that git does not track fails the design by name. The separation basis record has to be committed exactly as it stands (see below).
+A **board design** is a KiCad project file (`.kicad_pro`) together with the schematic (`.kicad_sch`) and layout (`.kicad_pcb`) of the same name beside it. The check finds every design git tracks, wherever it sits. The layout above is a convention for readers, not something the check depends on. A design is checked once git tracks it: `git add` is enough for the design's own files. The check reads a design only as the repository holds it. KiCad is given a copy of the tracked files alone, each in its place in the repository: everything in the design's folder, every sheet its schematic reaches, and every library its `sym-lib-table` and `fp-lib-table` name, wherever in the repository they sit. A library, sheet or rules file left uncommitted is therefore not used. A sheet the schematic names, a custom rules file or library table beside the project, or a library a table names, that git does not track fails the design by name. So does a library the repository cannot hold at all: one named by an absolute path, one outside the repository, or one reached through a path variable other than `${KIPRJMOD}` and those naming the libraries KiCad installs with itself (`${KICAD10_SYMBOL_DIR}`, `${KICAD10_FOOTPRINT_DIR}` and the like). Name a library from its table as `${KIPRJMOD}/` followed by its path from the design's folder. The separation basis record has to be committed exactly as it stands (see below).
 
 ## What you need
 
@@ -17,7 +17,7 @@ Every tool is free. The check stops with an error naming any tool that is missin
 | KiCad (its `kicad-cli`) | KiCad 10.0 | https://www.kicad.org/download/. This repository's board files are in KiCad 10's format, which older versions cannot open. |
 | Python | Python 3.9 | https://www.python.org/downloads/ |
 | PyYAML | PyYAML 5.1 | `pip install pyyaml`, or your system's `python3-yaml` package |
-| git | any | https://git-scm.com/downloads |
+| git | git 2.11 | https://git-scm.com/downloads |
 | Task | 3 | https://taskfile.dev/installation/ |
 
 `kicad-cli` is often installed off the search path. The tasks use the variable `KICAD_CLI`, which defaults to the bare name `kicad-cli`. If it is not on your search path, set the variable to the tool's full path, either on the command line (`task hw:verify KICAD_CLI=/path/to/kicad-cli`) or in the environment. Its usual location:
@@ -42,9 +42,10 @@ For each design the check runs KiCad's own electrical rule check on the schemati
 - **Any violation KiCad reports**: electrical, layout, unconnected item, or layout-schematic disagreement. Warnings count.
 - **Any check set to ignore**, in the project's severities or in a custom rule's `(severity ignore)`. This applies even when ignore is KiCad's own default for that check, as it is for `missing_courtyard` and `footprint_filters_mismatch`. Set every check to error or warning.
 - **Any violation marked as excluded**, whether in the project file's exclusion lists or by a custom rule's `(severity exclusion)`. Fix the violation instead.
-- **A custom rules file KiCad declines to load.** KiCad drops a whole rules file it cannot parse, without saying so, and that would leave every custom rule unchecked. The check detects this and fails the design. It then names the first rule KiCad rejects, with its line, or a missing `(version 1)` header. It finds that rule by re-running KiCad's layout check on the file's rules a few at a time, so the editor is never needed to find it.
+- **A custom rules file KiCad declines to load.** KiCad drops a whole rules file it cannot parse, without saying so, and that would leave every custom rule unchecked. The check detects this and fails the design. It then names the first rule KiCad rejects, with its line, or a missing `(version 1)` header. When no one rule can be named it says why: the file is not well-formed at a given line, or every rule loads on its own and what KiCad rejects lies in the comments between them. It finds that rule by re-running KiCad's layout check on the file's rules a few at a time, so the editor is never needed to find it.
 - **A custom rule whose name contains `pre-order check`.** Those words are reserved for the rules the check adds to the copy it checks. The rules the check recognises in KiCad's report are named afresh for every run, so no design rule can pass for one of them.
-- **No mains declaration.** The project text variable `MAINS` must be `present` or `none`. A design that declares `none` may have no net in the `Mains` net class, wherever that is declared: on the layout's copper, in the schematic (as KiCad's own netlist resolves it), or assigned by name in the project file, even to a net with no copper. A design that declares `present` must have a net in the class in its schematic or on its layout.
+- **No mains declaration.** The project text variable `MAINS` must be `present` or `none`. A design that declares `present` must have a net in the `Mains` net class on its layout, since that is where the separation rule is enforced. A design that declares `none` may have none there.
+- **Any disagreement about which nets are in `Mains`.** Three things say which nets are in the class, and each is read as KiCad itself resolves it: the layout (KiCad's layout check on the board), the schematic (KiCad's own netlist of it, which carries its net class directives), and the project file's net settings (its assignments by name and its patterns, which KiCad resolves for every net the layout, the schematic or an assignment names, copper or not). Every net must be in the class in all three or in none. A net in only some of them fails by name, saying which have it and which lack it. The usual fix is to save the schematic, so the project file carries its assignments, and update the layout from the schematic. A class only the layout gives a net comes from a `(net_class ...)` block that older KiCad versions wrote into the layout file, which KiCad 10 still honours.
 
 A design that declares `MAINS` as `present` must also:
 
@@ -75,10 +76,12 @@ Each violation line has five fields separated by ` | `: `VIOLATION`, the design,
 | Rule | Meaning |
 |---|---|
 | `design_discovery` | No design was found, a project lacks its schematic or layout, a board file is tracked without a project, or a schematic names a sheet git does not track |
-| `design_unreadable` | A design file cannot be opened or parsed |
+| `design_unreadable` | A design file or library table cannot be opened or parsed, or KiCad cannot resolve the project file's net classes |
 | `ignored_check` | A check is set to ignore, or a custom rule hides what it finds |
-| `custom_rules` | KiCad did not load the design's custom rules (the location names the rule it rejects), the rules file is not tracked, or a rule takes a name reserved for the check |
-| `mains_declaration` | `MAINS` is missing or invalid, or disagrees with the `Mains` net class |
+| `custom_rules` | KiCad did not load the design's custom rules (the location names the rule it rejects, or the line where the file stops being well-formed), the rules file is not tracked, or a rule takes a name reserved for the check |
+| `mains_declaration` | `MAINS` is missing or invalid, or disagrees with the layout's `Mains` net class |
+| `mains_class` | The layout, the schematic and the project file's net settings do not all put the same nets in `Mains` |
+| `design_library` | A library table beside the design, or a library it names, is not tracked, or names a library the repository cannot hold |
 | `separation_rule` | The design's own Mains separation rule is missing, narrowed, incomplete, or below the record |
 | `separation_basis` | The separation basis record is missing, unreadable, unsigned, not committed as it stands, or synthetic on an orderable board |
 | `local_clearance_override` | A pad, footprint or Mains-class zone sets a clearance below the signed figure |

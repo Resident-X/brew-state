@@ -221,6 +221,76 @@ class EveryDesignIsFoundBecauseItExists(Tree):
         self.assertEqual(board_check.tracked_files("git", self.root), [])
 
 
+def library_table(kind: str, *entries) -> str:
+    rows = "".join(f'\t(lib (name "{name}")(type "KiCad")(uri "{uri}")(options "")(descr ""))\n' for name, uri in entries)
+    return f"({kind}\n\t(version 7)\n{rows})\n"
+
+
+class WhatADesignReachesIsCheckedWithIt(Tree):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C1: Every board design in the repository is checked because it exists, not because it is listed.
+
+    KiCad is given a copy of the design holding every tracked file it reads,
+    each in its place in the repository, so a sheet or a library above the
+    design's own folder is checked rather than missing; and a library the
+    repository does not hold fails by name rather than being loaded from
+    wherever one machine keeps it.
+    """
+
+    design = board_check.Design("hw/m/board/board.kicad_pro")
+
+    def setUp(self):
+        super().setUp()
+        for path in ("hw/m/board/board.kicad_pro", "hw/m/board/board.kicad_pcb", "hw/m/board/notes.txt",
+                     "hw/m/shared.pretty/R.kicad_mod", "hw/m/shared.kicad_sym", "hw/m/power.kicad_sch", "elsewhere/x.txt"):
+            self.write(path, schematic() if path.endswith(".kicad_sch") else "")
+        self.write("hw/m/board/board.kicad_sch", schematic("../power.kicad_sch"))
+
+    def reach(self, *tables):
+        for kind, entries in tables:
+            self.write(f"hw/m/board/{'sym' if kind == 'sym_lib_table' else 'fp'}-lib-table", library_table(kind, *entries))
+        return board_check.design_files(self.design, self.everything())
+
+    def test_the_design_folder_its_sheets_and_its_libraries_above_it_are_all_copied(self):
+        files, found = self.reach(("fp_lib_table", [("shared", "${KIPRJMOD}/../shared.pretty")]),
+                                  ("sym_lib_table", [("syms", "${KIPRJMOD}/../shared.kicad_sym"),
+                                                     ("kicad", "${KICAD10_SYMBOL_DIR}/Device.kicad_sym")]))
+        self.assertEqual(found, [])
+        self.assertEqual(files, ["hw/m/board/board.kicad_pcb", "hw/m/board/board.kicad_pro", "hw/m/board/board.kicad_sch",
+                                 "hw/m/board/fp-lib-table", "hw/m/board/notes.txt", "hw/m/board/sym-lib-table",
+                                 "hw/m/power.kicad_sch", "hw/m/shared.kicad_sym", "hw/m/shared.pretty/R.kicad_mod"])
+
+    def test_a_library_the_repository_does_not_hold_fails_by_name(self):
+        cases = {
+            "${KIPRJMOD}/../missing.pretty": "git tracks nothing there",
+            "${KIPRJMOD}/../../../../outside.pretty": "it lies outside the repository",
+            "/opt/kicad-libs/R.pretty": "absolute path",
+            "C:/libs/R.pretty": "absolute path",
+            "${MY_LIBS}/R.pretty": "reached through ${MY_LIBS}",
+            "${KICAD10_3RD_PARTY}/R.pretty": "reached through ${KICAD10_3RD_PARTY}",
+        }
+        for uri, why in cases.items():
+            with self.subTest(uri=uri):
+                files, found = self.reach(("fp_lib_table", [("lib", uri)]))
+                self.assertEqual([(v.rule, v.location) for v in found],
+                                 [("design_library", "hw/m/board/fp-lib-table library 'lib'")])
+                self.assertIn(why, found[0].message)
+                self.assertIn(uri, found[0].message)
+
+    def test_a_library_table_git_does_not_track_fails_by_name(self):
+        self.git("init", "-q")
+        self.write("hw/m/board/fp-lib-table", library_table("fp_lib_table", ("shared", "${KIPRJMOD}/../shared.pretty")))
+        repository = board_check.Repository(self.root, [p for p in self.everything().tracked if not p.endswith("fp-lib-table")])
+        files, found = board_check.design_files(self.design, repository)
+        self.assertEqual([(v.rule, v.location) for v in found], [("design_library", "hw/m/board/fp-lib-table")])
+        self.assertIn("library table is not tracked in the repository", found[0].message)
+        self.assertNotIn("hw/m/shared.pretty/R.kicad_mod", files)
+
+    def test_a_library_table_that_cannot_be_read_fails(self):
+        self.write("hw/m/board/sym-lib-table", "(sym_lib_table (lib")
+        _, found = board_check.design_files(self.design, self.everything())
+        self.assertEqual([(v.rule, v.location) for v in found], [("design_unreadable", "hw/m/board/sym-lib-table")])
+
+
 # --- The separation basis record ---------------------------------------------
 
 
@@ -546,9 +616,14 @@ json.dump(report, open(out, "w"))
                     for _ in range(2)]
             with open(kept, encoding="utf-8") as handle:
                 names = re.findall(r'rule "(pre-order check ([0-9a-f]+): rules loaded)"', handle.read())
-        self.assertEqual(len(names), 2)
-        self.assertNotEqual(names[0][1], names[1][1], "two runs used the same name for the marker")
-        self.assertTrue(all(len(nonce) >= 16 for _, nonce in names))
+        # Each design check runs KiCad's layout check twice -- on the design, and
+        # on the board that resolves its project file's net classes -- under one name.
+        nonces = [nonce for _, nonce in names]
+        self.assertEqual(len(nonces), 4)
+        self.assertEqual(nonces[0], nonces[1])
+        self.assertEqual(nonces[2], nonces[3])
+        self.assertNotEqual(nonces[0], nonces[2], "two runs used the same name for the marker")
+        self.assertTrue(all(len(nonce) >= 16 for nonce in nonces))
         for found in runs:
             self.assertEqual([(v.rule, v.message) for v in found],
                              [("assertion_failure", "Assertion failure (rule 'pre-order check: rules loaded')")])
@@ -558,8 +633,8 @@ class MainsMembershipIsReadWhereverItIsDeclared(unittest.TestCase):
     """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
 
     A net sits in the Mains class whether the layout's copper, the schematic or
-    the project file's assignments put it there, so a design declaring no mains
-    is held to all three.
+    the project file's net settings put it there, and each of the three is read
+    as KiCad resolves it.
     """
 
     def test_the_schematic_netlist_gives_every_net_kicad_puts_in_mains(self):
@@ -569,6 +644,12 @@ class MainsMembershipIsReadWhereverItIsDeclared(unittest.TestCase):
                                   ' (net (code "4") (name "/D") (class "Mainsish"))'
                                   ' (net (code "5") (name "/E"))))')
         self.assertEqual(board_check.schematic_mains(netlist), {"/A", "/C"})
+
+    def test_the_schematic_netlist_says_which_pins_each_net_joins(self):
+        netlist = sexpr.parse_one('(export (nets (net (code "1") (name "/A") (class "Mains")'
+                                  ' (node (ref "R1") (pin "2")) (node (ref "J1") (pin "1"))) (net (name "/B"))))')
+        self.assertEqual(board_check.schematic_nets(netlist),
+                         {"/A": (["Mains"], ["R1 pin 2", "J1 pin 1"]), "/B": ([], [])})
 
     def test_the_layouts_mains_items_are_matched_to_its_own_net_names_brackets_and_all(self):
         layout = sexpr.parse_one('(kicad_pcb (footprint "x" (pad "1" smd rect (net "/AC] of R9 [x")))'
@@ -580,12 +661,58 @@ class MainsMembershipIsReadWhereverItIsDeclared(unittest.TestCase):
         self.assertEqual(board_check.mains_nets_from(probe, names), {"/AC] of R9 [x", "/AC"})
         self.assertEqual(board_check.mains_nets_from(probe[1:], set()), {"/AC"})
 
-    def test_the_project_files_assignments_by_name_count_in_either_form(self):
-        project = {"net_settings": {"netclass_assignments": {"/A": "Mains", "/B": ["Default", "Mains"], "/C": "Default",
-                                                             "/D": "Fast, Mains", "/E": ["Mains2"]}}}
-        self.assertEqual(board_check.assigned_mains(project), {"/A", "/B", "/D"})
-        for empty in ({}, {"net_settings": {"netclass_assignments": None}}, {"net_settings": {"netclass_assignments": []}}):
-            self.assertEqual(board_check.assigned_mains(empty), set())
+
+
+class TheThreeStatementsOfMainsMustAgree(unittest.TestCase):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C3: The separation basis is a written rule the layout check enforces at no less than the signed figure, and a mains-carrying design without it fails.
+
+    The layout's Mains nets are the ones the separation rule is enforced
+    against, so a net the schematic or the project file puts in Mains while the
+    layout does not would carry mains with nothing holding low-voltage copper
+    away from it. Taking the union of the three would read such a design as
+    carrying mains and pass it; every net must be in all three or in none.
+    """
+
+    design = board_check.Design("b/b.kicad_pro")
+    L, S, P = board_check.ON_LAYOUT, board_check.IN_SCHEMATIC, board_check.IN_PROJECT
+
+    def disagreements(self, layout, schematic, project, mains="present"):
+        locate = {self.L: {net: f"pad of {net}" for net in layout}, self.S: {}, self.P: {}}
+        found = board_check.mains_agreement(self.design, mains, {self.L: set(layout), self.S: set(schematic),
+                                                                 self.P: set(project)}, locate)
+        self.assertTrue(all(v.rule == "mains_class" and v.design == "b/b.kicad_pro" for v in found), found)
+        return found
+
+    def test_three_sources_naming_the_same_nets_agree(self):
+        self.assertEqual(self.disagreements({"/L", "/N"}, {"/L", "/N"}, {"/L", "/N"}), [])
+        self.assertEqual(self.disagreements(set(), set(), set(), "none"), [])
+
+    def test_a_net_only_the_schematic_puts_in_mains_fails_naming_where_it_is_missing(self):
+        found = self.disagreements(set(), {"/L"}, set())
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].location, "net /L")
+        self.assertIn("net /L is in the Mains net class in the schematic but not on the layout or in the project "
+                      "file's net settings", found[0].message)
+
+    def test_a_net_only_the_project_file_puts_in_mains_fails(self):
+        found = self.disagreements(set(), set(), {"/GHOST"})
+        self.assertIn("in the project file's net settings but not on the layout or in the schematic", found[0].message)
+
+    def test_a_net_only_the_layout_puts_in_mains_fails_pointing_at_the_layouts_own_class(self):
+        found = self.disagreements({"/L", "/LV"}, {"/L"}, {"/L"})
+        self.assertEqual([v.location for v in found], ["net /LV: pad of /LV"])
+        self.assertIn("on the layout but not in the schematic or in the project file's net settings", found[0].message)
+        self.assertIn("(net_class ...) block in the layout file", found[0].message)
+
+    def test_one_net_differing_fails_for_that_net_alone_whatever_the_others_agree_on(self):
+        found = self.disagreements({"/L", "/N"}, {"/L", "/N", "/LV_B"}, {"/L", "/N"})
+        self.assertEqual([v.location for v in found], ["net /LV_B"])
+        found = self.disagreements({"/L", "/N", "/LV_A"}, {"/L", "/N"}, {"/L", "/N", "/LV_A"})
+        self.assertIn("on the layout and in the project file's net settings but not in the schematic", found[0].message)
+
+    def test_a_design_declaring_no_mains_is_told_to_take_the_net_out_or_declare_mains(self):
+        found = self.disagreements(set(), {"/L"}, set(), mains="none")
+        self.assertIn("take it out of Mains wherever it is, or set MAINS to present", found[0].message)
 
 
 # --- Local overrides ---------------------------------------------------------
@@ -694,6 +821,20 @@ class AMissingToolStopsTheCheck(Tree):
             board_check.require_git("git", self.root)
         self.assertIn("not inside a git work tree", str(stop.exception))
 
+    def test_a_git_older_than_the_minimum_stops_naming_it(self):
+        def git_reporting(version: str) -> str:
+            return fake_tool(os.path.join(self.root, f"git-{version}"),
+                             f'if [ "$1" = "--version" ]; then echo "git version {version}"; else exec git "$@"; fi')
+        for version in ("2.10.5", "1.9.0"):
+            with self.subTest(version=version), self.assertRaises(board_check.CannotRun) as stop:
+                board_check.require_git(git_reporting(version), REPO)
+            self.assertIn("git 2.11 or newer", str(stop.exception))
+            self.assertIn(f"git version {version}", str(stop.exception))
+        with self.assertRaises(board_check.CannotRun) as stop:
+            board_check.require_git(fake_tool(os.path.join(self.root, "not-git"), "echo hello"), REPO)
+        self.assertIn("git 2.11 or newer", str(stop.exception))
+        self.assertEqual(board_check.require_git(git_reporting("2.11.0"), REPO), REPO)
+
     def test_the_command_stops_with_status_2_and_reports_no_verdict(self):
         stderr = io.StringIO()
         with mock.patch("sys.stderr", stderr), mock.patch("sys.stdout", io.StringIO()) as stdout:
@@ -710,7 +851,7 @@ class AMissingToolStopsTheCheck(Tree):
         verify = taskfile[taskfile.index("  hw:verify:"):]
         verify = verify[: verify.index("\n\n")]
         for text in (readme, verify):
-            for words in ("KiCad 10.0", "Python 3.9", "PyYAML 5.1", "git", "KICAD_CLI"):
+            for words in ("KiCad 10.0", "Python 3.9", "PyYAML 5.1", "git 2.11", "KICAD_CLI"):
                 self.assertIn(words, text)
         for location in ("/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli",
                          r"C:\Program Files\KiCad\10.0\bin\kicad-cli.exe", "/usr/bin/kicad-cli"):
@@ -718,6 +859,45 @@ class AMissingToolStopsTheCheck(Tree):
 
 
 # --- The report ------------------------------------------------------------------
+
+
+class WhyNoRejectedRuleCanBeNamedIsSaid(unittest.TestCase):
+    """SOL-HW-BOARD-RULE-CHECK-GATE.C6: The check's report names each design, its verdict and every violation in terms a builder can act on.
+
+    When KiCad drops a rules file and no single rule in it can be named, the
+    report says why, by cause, rather than claiming every form loads.
+    """
+
+    def rejected(self, text: str):
+        # A stand-in for kicad-cli whose layout check loads a rules file only
+        # when it holds no '#' comment.
+        with tempfile.TemporaryDirectory() as root:
+            fake = os.path.join(root, "kicad-cli")
+            with open(fake, "w", encoding="utf-8") as handle:
+                handle.write(f"""#!{sys.executable}
+import glob, json, re, sys
+args = sys.argv[1:]
+rules = open(glob.glob("*.kicad_dru")[0]).read()
+names = [] if "#" in rules else re.findall(r'rule "([^"]*)"', rules)
+json.dump({{"violations": [{{"type": "assertion_failure", "description": "(rule '" + n + "')"}} for n in names]}},
+          open(args[args.index("-o") + 1], "w"))
+""")
+            os.chmod(fake, 0o755)
+            return board_check.rejected_form(fake, root, "b.kicad_pcb", os.path.join(root, "b.kicad_dru"), text, "n")
+
+    def test_a_file_that_is_not_well_formed_is_said_to_be_so_at_its_line(self):
+        where, what = self.rejected("(version 1)\n(rule \"a\"\n\t(condition \"A.Type == 'Pad'\")\n")
+        self.assertEqual(where, "at its end")
+        self.assertIn("not well-formed (1 unclosed '(' at end of text)", what)
+        self.assertNotIn("each loads", what)
+        where, what = self.rejected("(version 1)\n(rule \"a\"))\n")
+        self.assertEqual(where, "at line 2")
+        self.assertIn("unbalanced ')' at line 2", what)
+
+    def test_a_file_whose_every_form_loads_alone_is_said_to_fail_between_them(self):
+        where, what = self.rejected("(version 1)\n# a comment KiCad will not take\n(rule \"a\" (condition \"A.Type == 'Pad'\"))\n")
+        self.assertEqual(where, "between its rules")
+        self.assertIn("comments", what)
 
 
 class EachViolationIsOneLine(unittest.TestCase):

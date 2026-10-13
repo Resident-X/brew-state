@@ -205,11 +205,12 @@ def no_mains_but_assigned(seed: Seed) -> None:
     seed.project(edit)
 
 
-def no_mains_but_schematic_class(seed: Seed) -> None:
-    def edit(data: dict) -> None:
-        data["text_variables"]["MAINS"] = "none"
-        data["net_settings"]["netclass_patterns"][0]["pattern"] = "/NOTHING_*"
-    seed.project(edit)
+def no_mains_patterns(data: dict) -> None:
+    data["net_settings"]["netclass_patterns"][0]["pattern"] = "/NOTHING_*"
+
+
+def mains_flag_on_lv_b(seed: Seed) -> None:
+    """A schematic net class directive putting /LV_B, R2 pin 2's net, in Mains."""
     Q = sexpr.Quoted
     flag = ["netclass_flag", Q(""), ["length", "2.54"], ["shape", "round"], ["at", "45.72", "78.74", "0"],
             ["effects", ["font", ["size", "1.27", "1.27"]], ["justify", "left", "bottom"]],
@@ -217,6 +218,43 @@ def no_mains_but_schematic_class(seed: Seed) -> None:
             ["property", Q("Netclass"), Q("Mains"), ["at", "46.4", "76.2", "0"],
              ["effects", ["font", ["size", "1.27", "1.27"], "italic"], ["justify", "left"]]]]
     seed.schematic(lambda tree: tree.insert(len(tree) - 1, flag))
+
+
+def no_mains_but_schematic_class(seed: Seed) -> None:
+    seed.project(lambda data: (data["text_variables"].update(MAINS="none"), no_mains_patterns(data)))
+    mains_flag_on_lv_b(seed)
+
+
+def schematic_only_mains(seed: Seed) -> None:
+    seed.project(no_mains_patterns)
+    mains_flag_on_lv_b(seed)
+
+
+def project_only_mains(seed: Seed) -> None:
+    def edit(data: dict) -> None:
+        no_mains_patterns(data)
+        data["net_settings"]["netclass_assignments"] = {"/UNROUTED": "Mains"}
+    seed.project(edit)
+
+
+def layout_only_mains(seed: Seed) -> None:
+    """A net class block in the layout file itself, as older KiCad versions wrote, putting /LV_A in Mains."""
+    Q = sexpr.Quoted
+    block = ["net_class", Q("Mains"), Q("written by an older KiCad"), ["clearance", "0.5"], ["add_net", Q("/LV_A")]]
+    seed.layout(lambda tree: tree.insert(tree.index(sexpr.child(tree, "paper")) + 1, block))
+
+
+def project_and_layout_not_schematic(seed: Seed) -> None:
+    seed.project(lambda data: data["net_settings"].update(netclass_assignments={"/LV_A": "Mains"}))
+
+
+def library_uri(new: str):
+    return lambda seed: seed.replace("fp-lib-table", "${KIPRJMOD}/proof.pretty", new)
+
+
+def untracked_library(seed: Seed) -> None:
+    for name in os.listdir(seed.path("proof.pretty")):
+        untrack(os.path.join("proof.pretty", name))(seed)
 
 
 def drop_label(seed: Seed) -> None:
@@ -309,6 +347,11 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a layout committed without its project", "discovery: no board file escapes the check", "design_discovery", "a layout is tracked without", stray(".kicad_pcb")),
     ("a schematic committed without its project", "discovery: no board file escapes the check", "design_discovery", "a schematic is tracked without", stray(".kicad_sch")),
     ("a sheet left out of the commit of the schematic naming it", "discovery: no half-committed board escapes the check", "design_discovery", "names the sheet hardware/proof/gate-proof/sub.kicad_sch, which is not tracked", untracked_sheet),
+    ("a library the design's table names that git does not track", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "library 'proof' is at ${KIPRJMOD}/proof.pretty, which is hardware/proof/gate-proof/proof.pretty in the repository, and git tracks nothing there", untracked_library),
+    ("a library table git does not track", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "library table is not tracked in the repository", untrack("fp-lib-table")),
+    ("a library named outside the repository", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "it lies outside the repository", library_uri("${KIPRJMOD}/../../../../proof.pretty")),
+    ("a library named by an absolute path", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "named by an absolute path", library_uri("/opt/kicad-libs/proof.pretty")),
+    ("a library reached through one machine's own path variable", "discovery: a design is checked with what it reaches, or fails naming what it cannot", "design_library", "reached through ${PROOF_LIBS}", library_uri("${PROOF_LIBS}/proof.pretty")),
     # Rule checks
     ("an electrical rule violation", "rule checks: KiCad's ERC", "pin_not_connected", "Pin not connected", drop_label),
     ("a layout clearance violation", "rule checks: KiCad's DRC", "clearance", "netclass 'Default'", crowd),
@@ -323,6 +366,8 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"hush\"\n\t(condition \"A.Type == 'Track'\")\n\t(severity ignore))\n")),
     ("a rules file KiCad declines to load", "rule checks: the design's rules are read as written, and the rule KiCad rejects is named", "custom_rules", "gate-proof.kicad_dru rule 'typo' at line 9",
      lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"typo\"\n\t(condition \"A.Type == 'Pad'\")\n\t(constraint clearence (min 1mm)))\n")),
+    ("a rules file that is not well-formed", "rule checks: the design's rules are read as written, and why no one rule can be named is said", "custom_rules", "gate-proof.kicad_dru at its end | KiCad did not load the design's custom rules",
+     lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"open\"\n\t(condition \"A.Type == 'Pad'\")\n")),
     ("a rules file without its version header", "rule checks: the design's rules are read as written, and what KiCad rejects is named", "custom_rules", "does not begin with a (version 1) header",
      mains_rule("(version 1)\n", "")),
     ("an untracked custom rules file", "rule checks: the design's rules are read as the repository holds them", "custom_rules", "custom rules file is not tracked", untrack(".kicad_dru")),
@@ -346,10 +391,15 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a design silent on whether it carries mains", "separation: MAINS is declared", "mains_declaration", "MAINS is not set", variables(lambda v: v.pop("MAINS"))),
     ("a design declaring an invalid MAINS value", "separation: MAINS is declared", "mains_declaration", "MAINS is 'yes'", variables(lambda v: v.update(MAINS="yes"))),
     ("a design declaring no mains while carrying a Mains-class net", "separation: MAINS agrees with the Mains class", "mains_declaration", "MAINS is none but", variables(lambda v: v.update(MAINS="none"))),
-    ("a design declaring no mains while the project file assigns a net with no copper to Mains", "separation: MAINS agrees with the Mains class wherever it is declared", "mains_declaration", "/UNROUTED assigned in the project file", no_mains_but_assigned),
-    ("a design declaring no mains while its schematic puts a net in Mains", "separation: MAINS agrees with the Mains class wherever it is declared", "mains_declaration", "/LV_B in the schematic", no_mains_but_schematic_class),
-    ("a design declaring mains with no net in the Mains class", "separation: MAINS agrees with the Mains class", "mains_declaration", "no net in the schematic or on the layout is in the Mains",
-     lambda seed: seed.project(lambda data: data["net_settings"]["netclass_patterns"][0].update(pattern="/NOTHING_*"))),
+    ("a design declaring no mains while the project file assigns a net with no copper to Mains", "separation: MAINS agrees with the Mains class wherever it is declared", "mains_class", "net /UNROUTED is in the Mains net class in the project file's net settings but not on the layout or in the schematic", no_mains_but_assigned),
+    ("a design declaring no mains while its schematic puts a net in Mains", "separation: MAINS agrees with the Mains class wherever it is declared", "mains_class", "net /LV_B is in the Mains net class in the schematic but not on the layout or in the project file's net settings; the layout's", no_mains_but_schematic_class),
+    ("a design declaring mains with no net in the Mains class", "separation: MAINS agrees with the Mains class", "mains_declaration", "no net on the layout is in the Mains net class",
+     lambda seed: seed.project(no_mains_patterns)),
+    ("a design declaring mains whose schematic alone puts a net in Mains", "separation: the layout, schematic and project file name the same Mains nets", "mains_class", "net /LV_B is in the Mains net class in the schematic but not on the layout or in the project file's net settings", schematic_only_mains),
+    ("a design declaring mains whose project file alone puts a net in Mains", "separation: the layout, schematic and project file name the same Mains nets", "mains_class", "net /UNROUTED is in the Mains net class in the project file's net settings but not on the layout or in the schematic", project_only_mains),
+    ("a design declaring mains whose layout alone puts a net in Mains", "separation: the layout, schematic and project file name the same Mains nets", "mains_class", "net /LV_A is in the Mains net class on the layout but not in the schematic or in the project file's net settings", layout_only_mains),
+    ("a design whose schematic puts one net more in Mains than its layout and project file", "separation: the layout, schematic and project file name the same Mains nets", "mains_class", "net /LV_B is in the Mains net class in the schematic but not on the layout or in the project file's net settings", mains_flag_on_lv_b),
+    ("a design whose project file and layout put one net more in Mains than its schematic", "separation: the layout, schematic and project file name the same Mains nets", "mains_class", "net /LV_A is in the Mains net class on the layout and in the project file's net settings but not in the schematic", project_and_layout_not_schematic),
     ("a missing basis record", "separation: the basis record exists", "separation_basis", "no separation-basis.yaml", remove("separation-basis.yaml")),
     ("a basis record that is not tracked", "separation: the basis record is the committed one", "separation_basis", "record is not tracked in the repository", untrack("separation-basis.yaml")),
     ("a basis record with uncommitted changes", "separation: the basis record is the committed one", "separation_basis", "record has changes that are not committed", uncommitted_record),
