@@ -2,7 +2,7 @@
 
 This is how a controller board is designed in KiCad so that it passes the pre-order check and works once built. The method works for any machine. A machine's own figures come from its own records, and this document names each record only by the role it plays: the machine's constraints record, its separation basis record, the requirements a board serves, and the manufacturer's stated limits.
 
-A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later enforces these rules, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
+A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
 
 ## Tools
 
@@ -57,7 +57,7 @@ Where a judgement is visual, the agent looks at a rendered view of the board, ne
 
 ## Rules before routing
 
-Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and either confirmed by KiCad on the board itself or enforced by KiCad's rule check before the board is ordered, the table saying which.
+Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and that the table says which of them KiCad confirms on the board itself, which KiCad's rule check enforces before the board is ordered, and which, a net class's track width and via sizes, are only the defaults routing starts from.
 
 Close the board in every editor before writing anything in this section, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, and keep it closed until step 4. An editor holding the board keeps its own copy of the project file and writes that copy over the file when it quits: a text variable and a net class pattern written to the project file while the board editor held the board open were measured to be gone after it quit. Konnect's tools that write net classes write the project file, so they are no exception.
 
@@ -73,7 +73,22 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
 - **Confirmed in effect** says, for each kind of row, what stands behind it, and nothing else may be written there:
   - a **custom rule** in the board's rules file: that KiCad loaded the rules file, from step 3's output;
   - a **net class**: the nets step 3 lists for it;
-  - a **board-wide minimum**, and a **net class's own clearance, track width or via sizes** set in Board Setup: `not confirmed by step 3; enforced by the layout rule check in the pre-order check`. Step 3 cannot read these figures, so they are never marked confirmed. They stand on the figure and source written in the row, and KiCad's layout rule check holds the board to them in the pre-order check (step 7 of routing).
+  - a **board-wide minimum**, and a **net class's own clearance**, set in Board Setup: `not confirmed by step 3; enforced by the layout rule check in the pre-order check`. Step 3 cannot read these figures, so they are never marked confirmed. They stand on the figure and source written in the row. KiCad's layout rule check reports copper, holes and silkscreen that break any of them, as an error, or as a warning for silkscreen clipped by the board edge, and the pre-order check (step 7 of routing) fails the board on either;
+  - a **net class's own track width and via sizes**: `routing default only; not enforced`. KiCad starts a track or via on the class's nets at these sizes, but its layout rule check does not hold copper to them: a narrower track or a smaller via on such a net raises no violation of the class's figure, and the pre-order check passes it. A track width or via size the board relies on, such as a mains or power track's width, is therefore also written as a custom rule in the board's rules file, conditioned on the class, one constraint per rule:
+
+    ```
+    (rule "Power track width"
+    	(condition "A.hasNetclass('Power')")
+    	(constraint track_width (min 1.0mm)))
+    (rule "Power via diameter"
+    	(condition "A.hasNetclass('Power')")
+    	(constraint via_diameter (min 1.2mm)))
+    (rule "Power hole size"
+    	(condition "A.hasNetclass('Power')")
+    	(constraint hole_size (min 0.6mm)))
+    ```
+
+    `hole_size` holds every hole on the class's nets, pad holes as well as vias. Each such rule has its own row, with its figure and source, confirmed by step 3 like any custom rule and enforced by the layout rule check in the pre-order check.
 
 A rule with no stated source fails this step. Give it a source or remove it.
 
@@ -118,7 +133,7 @@ The command never reads the rules or the classes from the files. It runs KiCad's
 
 Otherwise it prints each class with the nets KiCad puts in it, and `RESULT | CONFIRMED`. Check each class's list against your intent: every net you meant to put in the class is there, and no other. A critical net missing from its list is in the wrong class.
 
-Fill in the table's last column from this output: for each net class, the nets listed; for each custom rule, that KiCad loaded the rules file; for each board-wide minimum and each class figure set in Board Setup, that step 3 does not confirm it and the pre-order check's layout rule check enforces it, as step 1 says. A custom rule or net class row not filled in from this output fails this step, and so does a figure row marked confirmed. So does a failure of the command.
+Fill in the table's last column from this output: for each net class, the nets listed; for each custom rule, including one that holds a class's track width or via size, that KiCad loaded the rules file; for each board-wide minimum and each class clearance set in Board Setup, that step 3 does not confirm it and the pre-order check's layout rule check enforces it; and for each class's track width and via sizes, that they are a routing default only and not enforced, as step 1 says. A custom rule or net class row not filled in from this output fails this step, and so does a figure row marked confirmed, and a class track width or via size row marked enforced. So does a failure of the command.
 
 What this confirms is that the rules file loads and that each class holds the nets intended. It does not show that each figure is the one KiCad applies, since a later rule can shadow an earlier one. The separation figure, the one that matters most, is enforced by the pre-order check's own rule whatever the board writes.
 
@@ -128,7 +143,7 @@ The board editor does not see rules or classes written to the project, or a rule
 
 If an editor held the board open at any point in this section, close it now, and check that what you wrote is still in the project file and the rules file, since quitting the editor writes its own copy of the project file over the file. Write again whatever was lost, with the board closed, and repeat step 3 before reopening.
 
-Out of scope for this section: the figures themselves, which come from the machine's constraints record and its separation basis record, and the automated check that later enforces these rules, the pre-order check.
+Out of scope for this section: the figures themselves, which come from the machine's constraints record and its separation basis record, and the automated check that later holds the board to the rules its layout rule check enforces, the pre-order check.
 
 ## Routing: critical nets by hand and locked, then the rest
 
