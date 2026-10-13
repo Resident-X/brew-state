@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-RENDER-VIEWS-C1-TEST
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-13T23:35:11.722082Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views.py::test_a_part_drawn_without_its_model_is_named_in_the_captions_the_index_and_the_report,test_a_two_pad_integrated_circuit_on_the_rail_is_never_another_circuits_decoupling,test_a_part_with_both_pads_on_one_net_is_never_decoupling,test_a_part_on_rails_another_circuit_does_not_share_is_never_its_decoupling,test_each_decoupling_part_on_a_shared_rail_belongs_only_to_the_circuit_nearest_it,test_nine_or_more_critical_classes_each_get_their_own_colour_named_apart_in_the_caption,test_the_class_map_draws_each_critical_class_in_its_own_colour,test_two_circuits_on_a_shared_rail_each_crop_only_their_own_decoupling_and_neither_spans_the_board,test_the_command_its_views_and_its_tools_are_named_in_the_method_and_the_readme
+  artifact_version: 2befe967280a0f0987d2ff6a2b3e636cf6617eb3
+attested_by: crun-b3bcb83169177968
+links:
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
+    type: satisfies

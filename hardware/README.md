@@ -3,7 +3,7 @@
 Board designs and the check every one of them has to pass before it is ordered.
 
 - `hardware/<machine>/` holds one machine's board designs, one KiCad project per board in its own folder, and the `separation-basis.yaml` they are held to.
-- `hardware/tools/` holds the pre-order check, the locked-copper check used around routing, and their tests. They work for any machine.
+- `hardware/tools/` holds the pre-order check, the locked-copper check used around routing, the command that renders a board's layout review views, and their tests. They work for any machine.
 - `hardware/proof/` holds designs committed only to prove the check. They are never ordered.
 
 A **board design** is a KiCad project file (`.kicad_pro`) together with the schematic (`.kicad_sch`) and layout (`.kicad_pcb`) of the same name beside it. The check finds every design git tracks, wherever it sits. The layout above is a convention for readers, not something the check depends on. A design is checked once git tracks it: `git add` is enough for the design's own files. The check reads a design only as the repository holds it. KiCad is given a copy of the tracked files alone, each in its place in the repository: everything in the design's folder, every sheet its schematic reaches, and every library its `sym-lib-table` and `fp-lib-table` name, wherever in the repository they sit. A library, sheet or rules file left uncommitted is therefore not used. A sheet the schematic names, a custom rules file or library table beside the project, or a library a table names, that git does not track fails the design by name. So does a library the repository cannot hold at all: one named by an absolute path, one outside the repository, or one reached through a path variable other than `${KIPRJMOD}` and those naming the libraries KiCad installs with itself (`${KICAD10_SYMBOL_DIR}`, `${KICAD10_FOOTPRINT_DIR}` and the like). Name a library from its table as `${KIPRJMOD}/` followed by its path from the design's folder. The separation basis record has to be committed exactly as it stands (see below).
@@ -21,6 +21,8 @@ Every tool is free. The check stops with an error naming any tool that is missin
 | PyYAML | PyYAML 5.1 | `pip install pyyaml`, or your system's `python3-yaml` package |
 | git | git 2.11 | https://git-scm.com/downloads |
 | Task | 3 | https://taskfile.dev/installation/ |
+| resvg, for the layout review views only | resvg 0.47 | A prebuilt program from https://github.com/linebender/resvg/releases: the v0.47.0 release carries one for each of Windows (`resvg-win64.zip`), macOS and Linux (x86_64), and later releases carry them for macOS and Linux only. Or `brew install resvg` with Homebrew, on macOS or Linux. Or `cargo install resvg` with a Rust toolchain from https://rustup.rs/, on any operating system. It turns the views into images. The pre-order check does not need it. |
+| A monospaced font for the captions, for the layout review views only | DejaVu Sans Mono, or Menlo, Consolas, Liberation Mono or Courier New | The captions are drawn in the first of these that resvg finds among the system's fonts. macOS carries Menlo and Windows carries Consolas. Elsewhere, install DejaVu Sans Mono from https://dejavu-fonts.github.io/ or your system's package of it (for example `fonts-dejavu`). Without one the command stops with `CANNOT RUN`. |
 
 `kicad-cli` is often installed off the search path. The tasks use the variable `KICAD_CLI`, which defaults to the bare name `kicad-cli`. If it is not on your search path, set the variable to the tool's full path, either on the command line (`task hw:verify KICAD_CLI=/path/to/kicad-cli`) or in the environment. Its usual location:
 
@@ -31,11 +33,14 @@ Every tool is free. The check stops with an error naming any tool that is missin
 | Linux (distribution or PPA package) | `/usr/bin/kicad-cli` |
 | Linux (Flatpak) | not a file on the path: write a one-line script that runs `flatpak run --command=kicad-cli org.kicad.KiCad "$@"` and point `KICAD_CLI` at it |
 
+`resvg` is one program, wherever it was unpacked. The view tasks use the variable `RESVG`, which defaults to the bare name `resvg`. If it is not on your search path, set it to the program's full path, for example `task hw:views RESVG=/path/to/resvg -- ...`.
+
 ## The commands
 
 - `task hw:verify` runs the pre-order check on every board design in the repository. It exits 0 only when every design passes.
 - `task hw:prove` seeds each fault the check guards against into a throwaway copy of `hardware/proof/gate-proof`, in a temporary directory outside the repository. It requires the check to catch each fault. This command is on demand and is not part of the gate.
-- `task hw:test` runs the tests of the check itself, and of the locked-copper check's four commands, against the real `kicad-cli`.
+- `task hw:test` runs the tests of the check itself, of the locked-copper check's four commands and of the layout review views, against the real `kicad-cli` and `resvg`.
+- `task hw:views` renders every view the layout review judges one board on (below). It needs the same tools as `hw:verify`, and resvg.
 - `task hw:rules-confirm`, `task hw:copper-lock`, `task hw:copper-record` and `task hw:copper-compare` run the locked-copper check (below) on one board, before routing and around the routing round trip. They need the same tools as `hw:verify`, and read the paths given after `--` from the folder they are run in.
 
 How a board is designed so that it passes the check and works once built, from proving its value-critical circuits and providing for its bring-up before layout to its rules and its routing, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
@@ -53,6 +58,47 @@ Every command takes the board's own project file, the one beside it with its nam
 - **Comparing**, `task hw:copper-compare -- --board <board>.kicad_pcb --project <board>.kicad_pro --record <file>`, reads the imported board against the record. It fails in these cases: a recorded item is missing, is no longer locked, or has changed in any recorded property, or a critical-class net carries an item the record does not hold. Items are matched by their recorded properties and counted, so an added copy of a recorded item is still an addition. The critical nets at comparison are every net the record names as well as every net the critical classes hold then. A class the record names that the design no longer defines fails the comparison. So a change to class membership between recording and comparing, such as a project file the import rewrote, cannot hide added copper. Copper on nets outside both is ignored. The comparison also fails, comparing nothing, when the record was taken of another board, the project file is not the board's own, or the board is open in an editor.
 
 Each finding is one line, `<FINDING> | <item> | <detail>`, where the finding is `MISSING`, `UNLOCKED`, `CHANGED` (the detail gives each changed property as old -> new), `ADDED`, `UNDEFINED` (a recorded class the design no longer defines), `MAINS` (a board declaring mains whose record leaves out `Mains`, or a board with no valid declaration), `MISMATCH` (another board's record, or a project file not the board's own) or `OPEN` (the board is open in an editor). Recording, locking and confirming report each refusal as `REFUSED`; locking reports each item it locks as `LOCKED`; confirming reports a rules file KiCad did not load, or none, as `RULES` and a class holding no net as `EMPTY`; and confirming, locking and recording list each class's nets as `CLASS` lines. A `RESULT` line comes last. A board, project file or record that cannot be read is reported as `UNREADABLE`, and fails rather than passes. So does a KiCad run that does not load the rules asking it which nets are in which class. The exit status is 0 when the rules are confirmed, the board is locked, the record is written or the board matches it, 1 when any of those is refused or fails, and 2 when the check cannot run at all, for example because a tool is missing.
+
+## The layout review views
+
+`task hw:views -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <name> [--class <name> ...] --out <folder>` renders, from the board's own files, every view the layout review judges the board on. It reads the paths given after `--` from the folder it is run in. Name every critical class with its own `--class`. `<folder>` must be new or empty, and outside every design's folder.
+
+It writes these PNG images, each on a dark background:
+
+- `layer-<layer>`: one image of each copper, mask, paste, silkscreen and edge layer, and of every other layer that holds any item, such as a keep-out or a note on a user layer.
+- `assembly-top` and `assembly-bottom`: that side's fabrication, silkscreen and courtyard layers over the board edge.
+- `net-<net>`: for each net in a critical class, that net's copper, each copper layer in its own colour, over a faint grey image of the whole board's copper and edge.
+- `classes`: a map drawing each critical class's copper in its own colour, over the same faint image.
+- `crop-<reference>`: a crop around each integrated circuit (a footprint whose reference begins with `U`) and its own decoupling parts. Its supply nets are the nets on its pads typed as power input or power output. A decoupling part is a two-pad part, not itself an integrated circuit, with its two pads on two different nets that are both supply nets of the circuit, the pattern of one rail and one return. It belongs to the one circuit sharing those nets whose nearest pad is closest to it, so a crop never names another circuit's decoupling on a shared rail as its own. A crop is framed on, and names, only its own circuit and that circuit's decoupling parts. A crop is at least 640 pixels wide, so a crop of a small circuit is widened about its centre and can take in a neighbouring circuit's parts: those are drawn but not named, so a part that neither the crop's caption nor the index names as that circuit's decoupling is not its decoupling. A circuit to which no part belongs is marked in its caption and the index as having no decoupling parts. A circuit with no pad typed as a power pin still gets its crop, marked as having no supply nets declared.
+- `3d-top`, `3d-bottom` and `3d-angled`: the assembled board in three dimensions, each one image.
+
+KiCad refills and saves the zones of a temporary copy of the whole board first. The copy keeps the design's own file names, so a text variable naming the project or the file reads as it does in place. Every model path the design's folder anchors, through `${KIPRJMOD}` or from the folder with no variable, is written out in full, so KiCad finds the same models it finds in place. A net's copper is taken from a filtered copy of that board holding only the net's tracks, arcs, vias, zones and pads. That copy is never refilled, so a pour is drawn as the whole board's copper leaves it.
+
+Every two-dimensional view, and every tile of one, is composed in one place, which alone frames it, puts it on the dark background, draws its rule areas, names the layers it lacks and the fonts KiCad substituted, and writes its caption fields. So these hold for every two-dimensional view alike:
+- A whole-board view (`layer-<layer>`, `assembly-*`, `net-<net>`, `classes`) frames everything KiCad draws on the board's plotted layers, united with the outline and the rule areas, with a millimetre to spare. A courtyard, a part or a text reaching past the outline is drawn whole rather than cut off. A crop shows only what lies within the board coordinates its caption states, and draws everything there, whichever circuit it belongs to.
+- KiCad does not plot a rule area (a keep-out or placement area). The command draws each one as a bright orange dashed hatched outline on every two-dimensional view that shows one of its layers, the faint board beneath a net overlay or the class map included, wherever the view's region reaches it. It names the area in that view's caption, and in the index as a `RULE AREA` line. The three-dimensional views do not draw rule areas.
+- A fabrication or courtyard layer the board does not carry is named as not carried in the caption of every view that would show it, and in the index and the report as a `LAYER` line.
+- A font KiCad cannot find, whose text it draws in another, is named in every caption, the three-dimensional views' included, and in the index and the report as a `FONT` line.
+- On the class map, a net in more than one critical class is drawn in the colour of the class named last, and the caption names it.
+
+The three-dimensional views say what they leave out in their own captions, the index and the report:
+- A part they draw without a model is named in their captions and in the index as a `NOT IN 3D` line: one whose model KiCad cannot find, one declaring no model, one whose model the design hides, and one marked do not populate, which the render leaves out. Each of them, whatever the reason, is also reported as a `MODEL` line in the command's report. Which parts KiCad drew a model for is judged from KiCad's three-dimensional export of the same copy (`kicad-cli pcb export glb`), not from the rendered images.
+- A three-dimensional view is zoomed out until no part reaches its frame, and its caption states the zoom.
+
+The command sets its own KiCad configuration to report in English, so it reads which fonts and models KiCad leaves out whatever language the machine is set to.
+
+The resolution comes from the board's own design rules: three pixels across the smaller of its minimum track width and minimum clearance (Board Setup's minimums, `board.design_settings.rules.min_track_width` and `.min_clearance` in the project file). Every image is kept within a long edge of 1568 pixels and 1568 patches of 28 by 28 pixels, the size at which no reviewing model downsamples it. A two-dimensional view larger than that is cut into tiles, named `-r<row>c<column>`. Every file the command writes has a name no other of its files has, told apart even where letter case is not, as on macOS and Windows: a view whose name another file already takes, such as a net named only in a different case, has `-2`, `-3` and so on added to it. Each image carries a caption drawn into it. A two-dimensional view's caption states its layers, the colour of each layer or, on the class map, of each class, its net or class, its scale in pixels per millimetre and the board coordinates it covers. A three-dimensional view's caption states its direction and image size. The command also writes `index.txt` and `index.json`, which list every image with the same caption fields. It writes `facts.txt` and `facts.json` too, giving every net's track width range, via count, zones and classes. [`docs/board-design-method.md`](../docs/board-design-method.md#layout-review-views) gives the source of the size limit.
+
+Class membership is asked of KiCad, as the locked-copper check asks it. The command refuses each of these by name, writing nothing:
+- a project file that is not the board's own;
+- a board KiCad's lock file shows open in an editor, since the views are drawn from the saved file;
+- a class the design does not define, a class holding no net, or a class named twice;
+- a board whose `MAINS` is not exactly `present` or `none`, or is `present` when `Mains` is not named;
+- a board lacking an outer copper layer, a mask, a paste, a silkscreen, or an edge layer holding its outline;
+- a board whose design rules state no minimum track width or no minimum clearance, or zero or less;
+- an output folder inside any design's folder, one that already holds files, or one that is a file.
+
+A board that cannot be read fails as `UNREADABLE`. A missing or too-old KiCad or resvg stops the command with `CANNOT RUN`. So does a resvg that finds no font to draw the captions with. The exit status is 0 when the views are written, 1 when the command is refused or its input cannot be read, and 2 when it cannot run.
 
 ## What a design must satisfy
 

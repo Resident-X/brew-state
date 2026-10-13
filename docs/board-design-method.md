@@ -15,6 +15,8 @@ These are needed in addition to the tools the pre-order check needs (KiCad 10, P
 | KiCad, with its command-line tool and the Python it bundles with its `pcbnew` module | KiCad 10.0.7 | https://www.kicad.org/download/ |
 | Freerouting, the external router | Freerouting 2.5.0, the file `freerouting-2.5.0.jar` | https://github.com/freerouting/freerouting/releases (the v2.5.0 release, asset `freerouting-2.5.0.jar`) |
 | A Java runtime, which Freerouting runs on | Eclipse Temurin OpenJDK 26.0.1 | https://adoptium.net/ or any other Java distribution. Freerouting 2.5.0 is built for Java 25, so it needs Java 25 or newer. |
+| resvg, the SVG rasteriser that turns the [layout review views](#layout-review-views) into images | resvg 0.48.1 and resvg 0.47.0; the command refuses one older than 0.47 | A prebuilt program from https://github.com/linebender/resvg/releases: the v0.47.0 release carries one for each of Windows (`resvg-win64.zip`), macOS and Linux (x86_64), and later releases carry them for macOS and Linux only. Or `brew install resvg` with Homebrew, on macOS or Linux. Or `cargo install resvg` with a Rust toolchain from https://rustup.rs/, on any operating system. Set `RESVG=/path/to/resvg` when it is not on the search path. |
+| A monospaced font for the captions of the layout review views: DejaVu Sans Mono, or Menlo, Consolas, Liberation Mono or Courier New, the captions being drawn in the first of these that resvg finds among the system's fonts | Menlo, as macOS carries it | macOS carries Menlo and Windows carries Consolas. Elsewhere, install DejaVu Sans Mono from https://dejavu-fonts.github.io/ or your system's package of it (for example `fonts-dejavu`). Without one the command stops with `CANNOT RUN`. |
 | ngspice, the circuit simulator, as a program of its own. KiCad embeds ngspice only as a library, behind its simulator window, so the command-line program the steps below run is installed separately. | ngspice 47, on a netlist exported by KiCad 10.0.7's `kicad-cli` | https://ngspice.sourceforge.io/download.html. On macOS, `brew install ngspice` with Homebrew (https://brew.sh/), which is how the version opposite was installed. On Linux, the distribution's `ngspice` package. On Windows, the release archive from the download page, whose console program is `ngspice_con.exe`. |
 
 KiCad's bundled Python is the one that can `import pcbnew`. Its usual location:
@@ -56,7 +58,7 @@ While an editor holds a board open, KiCad keeps a lock file beside it, `~<board>
 
 Delete the project's lock file too, even though the board tooling looks only at the board's: a board editor reopening the board over a stale lock file with its own user and host name was measured to open it without asking and take over the board's lock file, but to leave the stale project lock file in place after it quit.
 
-Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers. What to look for is the layout review step's.
+Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers, and `task hw:views` renders every view the layout review judges a board on ([Layout review views](#layout-review-views)). What to look for is the layout review step's.
 
 ## Proving value-critical circuits before layout
 
@@ -520,3 +522,39 @@ task hw:verify
 It checks only designs git tracks (`git add` is enough), as `hardware/README.md` explains. It must pass. A router's or editor's "no violations" is never accepted in its place. Reopen the board in the editor, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, only after this check and the comparison in step 6 have run, and only to continue work on it.
 
 Out of scope for this step: judging the quality of the layout, which is the layout review step.
+
+## Layout review views
+
+An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track. The layout review therefore judges a board on an image of each layer (`layer-<layer>`) and on views that show each critical net against the board (`net-<net>`), the critical classes against each other (`classes`), each integrated circuit framed with its own decoupling parts (`crop-<reference>`), each side as it is assembled (`assembly-top`, `assembly-bottom`), and the assembled board in three dimensions (`3d-top`, `3d-bottom`, `3d-angled`). It also uses a table of the facts a picture cannot carry. With the board closed in every editor, render them from the board's folder:
+
+```
+task hw:views -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <critical class> [--class <critical class> ...] --out <work folder>/<board>-views
+```
+
+Name every critical class, as in routing step 3. The output folder is a working folder: it must be new or empty, and outside every design's folder. Never commit it. The views, their names, the index and the per-net fact table, and what the command refuses, are listed in [`hardware/README.md`](../hardware/README.md#the-layout-review-views). The command needs KiCad's command-line tool, resvg and a monospaced font for the captions (see [Tools](#tools)).
+
+**Resolution.** The views are drawn at
+
+    pixels per millimetre = 3 / (the smaller of the board's minimum track width and minimum clearance, in millimetres)
+
+so the smallest track and the smallest gap each span at least three pixels. Both minimums are read from the board's design rules, Board Setup's minimum track width and minimum clearance, whose figures and sources the board's rules table already carries (step 1 of [Rules before routing](#rules-before-routing)). The method itself therefore carries no manufacturer's figure. A board whose rules state either minimum as none, zero or less fails the command, naming the missing figure.
+
+**Image size limit.** Every image is kept within a long edge of 1568 pixels, and within 1568 visual patches of 28 by 28 pixels. An image costs ⌈width / 28⌉ × ⌈height / 28⌉ patches. This is the standard tier of the model vendor's published limits, the tier for all models other than its high-resolution ones. An image over either limit is downscaled to the largest size that fits, keeping its aspect ratio, so an image within both is read at the resolution it was drawn at. The source is the "Resolution and token cost" section of https://platform.claude.com/docs/en/build-with-claude/vision, read on 2026-10-13. That section also gives a high-resolution tier, a long edge of 2576 pixels and 4784 patches, for the vendor's newer models. The views keep to the standard tier, so every reviewing model reads them whole. Every two-dimensional view larger than the limit, a crop included, is cut into tiles. Each three-dimensional view is one image within it.
+
+**Captions.** Every image carries a caption drawn into it. A two-dimensional view's caption states its layers, the colour of each layer or, on the class map, of each class, its net or class, its scale in pixels per millimetre and the board coordinates in millimetres it covers. A three-dimensional view's caption states its view direction and image size. The index repeats every caption, as text and as JSON, so a reviewer working from the files alone has every fact without the author's context.
+
+**Nothing left out quietly.** The views are drawn from a temporary copy that reads as the design does in place: it keeps the design's own file names, and every model path the design's folder anchors is written out in full. Every two-dimensional view, and every tile of one, is composed in one place, which alone frames it, puts it on the dark background, draws its rule areas, names the layers it lacks and the fonts KiCad substituted, and writes its caption fields. So these hold for every two-dimensional view alike:
+
+- A whole-board view frames everything KiCad draws on the board's plotted layers, united with the outline and the rule areas, with a millimetre to spare, so a part or a text reaching past the outline is drawn whole rather than cut off. A crop is framed on, and names, only its own circuit and that circuit's decoupling parts, and it shows only what lies within the board coordinates its caption states. A crop is at least 640 pixels wide, so a crop of a small circuit is widened about its centre and can take in a neighbouring circuit's parts: everything within its coordinates is drawn, and another circuit's parts that fall there are drawn but not named, so a part that neither the crop's caption nor the index names as that circuit's decoupling is not its decoupling. A decoupling part is a two-pad part, not itself an integrated circuit, with its two pads on two different nets that are both a circuit's supply nets. It belongs to the one circuit sharing those nets whose nearest pad is closest to it, so a crop never names another circuit's decoupling on a shared rail as its own. A circuit to which none belongs is marked in its caption and the index as having no decoupling parts.
+- KiCad does not plot a rule area, so the command draws each one as a dashed, hatched outline on every two-dimensional view that shows one of its layers, the faint board beneath a net overlay or the class map included, wherever the view's region reaches the area, and that view's caption names it. The three-dimensional views do not draw rule areas.
+- A fabrication or courtyard layer the board does not carry is named as not carried in the caption of every view that would show it. The board must carry every other layer a view shows.
+- A font KiCad cannot find, whose text it draws in another, is named in every caption, the three-dimensional views' included.
+
+The three-dimensional views say what they leave out in their own captions and in the index:
+
+- A part drawn without a model is named: one whose model KiCad cannot find, one declaring no model, one whose model the design hides, and one marked do not populate. Which parts KiCad drew a model for is judged from KiCad's three-dimensional export of the same copy (`kicad-cli pcb export glb`), not from the rendered images, so a model the renderer loads but the export does not would be named as not found although it is drawn.
+- A three-dimensional view is zoomed out until no part reaches its frame, and its caption states the zoom.
+
+The command reports each part the three-dimensional views draw without its model, whatever the reason, a font KiCad substitutes and a layer the board does not carry as lines of their own as well. A board with any of them still gets its views: whether what they leave out matters is the review's judgement.
+
+Out of scope for this section: judging the images, which is the layout review step.

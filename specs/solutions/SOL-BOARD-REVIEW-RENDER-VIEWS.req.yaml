@@ -3,9 +3,11 @@ type: deliverable
 category: solution
 title: The views a layout review judges a board on are rendered from the board's files by one command
 status: active
-version: 1
+version: 2
 text: |
-  A task-runner command that renders, from a board's own design files, every view the layout review judges the board on, together with the facts a picture cannot carry. An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track; the review needs views that show each critical net against the board, the critical classes against each other, each integrated circuit with its decoupling close enough to judge, and the assembled board in three dimensions. The views are produced by the free tools the method already names, plus a filter over the board file built on the repository's existing board-file reader, and are proven on a throwaway proof design.
+  A task-runner command that renders, from a board's own design files, every view the layout review judges the board on, together with the facts a picture cannot carry. An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track; the review needs views that show each critical net against the board, the critical classes against each other, each integrated circuit with its decoupling close enough to judge, and the assembled board in three dimensions. The views are produced by KiCad's command-line export and render, by one free SVG rasteriser that the method adds to its tools because none it already names turns a vector export into an image, and by a filter over the board file built on the repository's existing board-file reader; they are proven on a throwaway proof design.
+
+  The resolution is derived per board rather than fixed in the method, so the method carries no manufacturer's figure: the board's own design rules already carry the manufacturer's smallest track width and clearance, each with its source, before routing. The image size limit is the one at which no reviewing model downsamples, taken from the model vendor's published figures, so a tile is read at the resolution it was drawn at.
 links:
   - target: DEL-HW-DESIGN-METHOD.C3
     type: derives-from
@@ -15,6 +17,10 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5
+  fingerprint: 24211e50dc7e4485e05c0cb5633f676e59eaf49c4cb6fa0eda08eb54a4a5d54c
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-REVIEW-RENDER-VIEWS.C1
     class: new-condition
