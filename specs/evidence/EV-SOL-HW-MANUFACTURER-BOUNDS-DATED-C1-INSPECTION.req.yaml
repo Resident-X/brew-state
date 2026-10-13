@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MANUFACTURER-BOUNDS-DATED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MANUFACTURER-BOUNDS-DATED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T12:24:25.227253Z"
+artifact:
+  kind: external
+  reference: 'docs/board-manufacturer-jlcpcb.md inspected clause by clause against SOL-HW-MANUFACTURER-BOUNDS-DATED.C1: JLCONE price recorded once (four figures read, every other configuration graded unmeasured, read in the JLCONE application, shipping effect pointed to); all sixteen numbered items of https://jlcpcb.com/help/article/in-what-cases-will-there-be-charged-extra (read 2026-10-13, table images read at source) carried with figure, condition, grade and full source address, item 5 tied to the ENIG price rows and item 3 to the slot minimums; mixed rows graded with their unmeasured part; every Source cell a full address; mechanical sweep of every price or limit cell and table column count (0 flagged)'
+  artifact_version: 792d1cf7672fc6d749d65b55e90a28efc972479d
+attested_by: crun-d52f3d9957e012b6
+links:
+  - target: SOL-HW-MANUFACTURER-BOUNDS-DATED.C1
+    type: satisfies
