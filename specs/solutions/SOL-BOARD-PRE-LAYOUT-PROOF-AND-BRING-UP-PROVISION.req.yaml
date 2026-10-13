@@ -31,6 +31,10 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 (brief reviewer)
+  fingerprint: 0104ce43482626d6ea34c7981e57f7de9bb82bcbc5274d75addda82e437f2757
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-PRE-LAYOUT-PROOF-AND-BRING-UP-PROVISION.C1
     class: served-statement
