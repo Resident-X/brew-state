@@ -57,7 +57,7 @@ Period comes from the Z-C capture on PA10 and from the BL0942. Z-C is believed f
 | The energy account: knowing half-cycles delivered | Exact for the heaters without a phase reference, per the cancellation argument, provided D is a whole number of half-periods |
 | Supply-fault detection: an edge outside a plausible window, or missing | The one real casualty for the heaters. BL0942 RMS voltage covers it more directly than counting edges. The shared Z-C also gives an edge-window check: loss of Z-C or of AC-N removes the pump timing reference, so firmware stops firing and raises a fault (module-interconnect) |
 | Supply timing read live, with the nominal frequency declared (REQ-MACHINE-CONFIGURATION-001.C9) | Served by the Z-C capture and the BL0942 |
-| Safety-relevant marking | `controller-io.md` marks the zero-cross channel so "not because it switches anything, which it does not, but because it is the only mains-referenced *sensing* channel." That is about the channel's isolation barrier being a place mains could bridge. The pump dimmer module's optical isolation (vendor aims for 2.5 kV or more) is to be measured, not assumed |
+| Safety-relevant marking | `controller-io.md` marks the zero-cross channel so "not because it switches anything, which it does not, but because it is the only mains-referenced *sensing* channel." That is about the channel's isolation barrier being a place mains could bridge. The pump dimmer module's optical isolation (the vendor page states no isolation figure, read 2026-10-13) is to be measured, not assumed |
 
 ## Heater drive electrics
 
