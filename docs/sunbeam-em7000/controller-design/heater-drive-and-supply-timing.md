@@ -56,7 +56,7 @@ Period comes from the Z-C capture on PA10 and from the BL0942. Z-C is believed f
 |---|---|
 | The energy account: knowing half-cycles delivered | Exact for the heaters without a phase reference, per the cancellation argument, provided D is a whole number of half-periods |
 | Supply-fault detection: an edge outside a plausible window, or missing | The one real casualty for the heaters. BL0942 RMS voltage covers it more directly than counting edges. The shared Z-C also gives an edge-window check: loss of Z-C or of AC-N removes the pump timing reference, so firmware stops firing and raises a fault (module-interconnect) |
-| Period measured rather than inherited from a nameplate | Served by the Z-C capture and the BL0942 |
+| Supply timing read live, with the nominal frequency declared (REQ-MACHINE-CONFIGURATION-001.C9) | Served by the Z-C capture and the BL0942 |
 | Safety-relevant marking | `controller-io.md` marks the zero-cross channel so "not because it switches anything, which it does not, but because it is the only mains-referenced *sensing* channel." That is about the channel's isolation barrier being a place mains could bridge. The pump dimmer module's optical isolation (vendor aims for 2.5 kV or more) is to be measured, not assumed |
 
 ## Heater drive electrics
@@ -89,7 +89,7 @@ This is exactly what the decision already specifies: "a decision, taken once per
 
 Two BL0942 modules (D17, Chosen; no BOM row yet; isolation to be measured), one per heater. Adopting them for **energy measurement** stands on its own merits, independent of the zero-cross question.
 
-**Why measure rather than infer.** Delivered power is not the commanded duty times a nominal figure. `component-specification.md` already spans 230 V / 240 V / 253 V, and power goes as V², so that range alone is **+21 %**; a full supply tolerance is wider still. Element resistance drift is a much weaker term (nichrome-class alloys run around 85 ppm/°C, roughly 1 % over a 100 °C rise), but the *measured* resistance is itself uncertain: `component-specification.md` records the steam element's 47.0 Ω as a **lower bound**, because the bench could not isolate it.
+**Why measure rather than infer.** Delivered power is not the commanded duty times a nominal figure. The declared supply span is 216–253 V (`reference-machine.md` § Supply), and power goes as V², so delivered power moves by about **−12 % to +21 %** about its 230 V value, about 37 % from the bottom of the span to the top. Element resistance drift is a much weaker term (nichrome-class alloys run around 85 ppm/°C, roughly 1 % over a 100 °C rise), but the *measured* resistance is itself uncertain: `component-specification.md` records the steam element's 47.0 Ω as a **lower bound**, because the bench could not isolate it.
 
 **Where it pays.** Not the temperature loop, which already rejects supply variation through feedback. The case is the **model-based state reconstruction**: an observer driven by heat input takes a 21 %-plus systematic error straight into its estimate, and no downstream feedback repairs a wrong input to an open-loop observer. *(Contingent on the estimator actually integrating heat input; `SOL-UNMEASURED-STATE-RECONSTRUCTION` has not been read against this claim.)*
 

@@ -3,9 +3,11 @@ type: deliverable
 category: solution
 title: Every figure the requirements impose on the controller boards is recorded with the criterion it comes from, or marked pending against the work that settles it
 status: active
-version: 1
+version: 2
 text: |
   Reduces this graph's requirements to the figures a board designer works to, from supply range and upstream protection through rail budgets, load currents, sensing accuracy, separation inputs, fault current, the proof-of-life removal interval and each output's failure state, each with its source or a pending mark naming the work that settles it. The figures sit in the machine's folder beside its record, since several derive from this machine's declared configuration.
+
+  Supply facts are not re-declared here. The machine's declared configuration holds them, and this record cites it. Where that declaration is wrong or silent, it is amended at its source. For this machine the amendment is: the supply span is the published standard tolerance about the 230 V nominal, 216-253 V, which is the span the load figures already use; the supply's frequency is declared as its nominal, 50 Hz, taken from the standard governing that supply rather than from a pump's marking, as REQ-MACHINE-CONFIGURATION-001.C9 requires; the supplying circuit is a 10 A outlet circuit, by owner statement; and the upstream protection is a circuit breaker of up to 20 A, the conservative end of what an AU socket-outlet circuit carries, declared as a project assumption to replace. Which device interrupts a fault follows DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE: the 10 A inlet fuse downstream of the inlet, and the upstream breaker for the cord and inlet ahead of it.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C2
     type: derives-from
@@ -19,6 +21,16 @@ links:
     type: justified-by
   - target: DEC-DEVICE-RETENTION-BOUNDARY
     type: justified-by
+  - target: DEC-MACHINE-RECORD-FOLDER-PER-MACHINE
+    type: justified-by
+  - target: DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE
+    type: justified-by
+  - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-e090b9971ec8e977)
+  fingerprint: 1d784f283d58643b5b54df173bce187f4c9b2da171700ccb2371c22b6b0d7e70
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C2
     class: new-condition
@@ -38,6 +50,8 @@ interfaces:
 locus:
   - marking: created
     ref: the controller boards' design-constraints record in the machine's record folder, requirement-derived figures
+  - marking: existing
+    ref: the machine's declared configuration in the machine's own record folder, supply section
 plan_provenance:
   approved_plan_id: PLAN-DEL-HW-DESIGN-CONSTRAINTS-001
   target: DEL-HW-DESIGN-CONSTRAINTS

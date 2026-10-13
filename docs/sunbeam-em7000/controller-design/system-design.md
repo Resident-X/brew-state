@@ -13,7 +13,7 @@ Two thermoblocks (coffee and steam, each about 1 kW), a Ulka EP5 coffee pump tha
 ## 3. Architecture
 
 ```
-mains inlet: Schaffner FN9222-10-06 filter, T10A fuse, RN3404 MOV
+mains inlet: Schaffner FN9222-15-06 filter, T10A fuse, RN3404 MOV
    |
    +-- Mean Well IRM-10-5 (on a hand-cut carrier) -> 5 V -> controller board, accessories
    +-- SSR #1 (coffee heater) ---- ULN2003A breakout (low-side) <- controller
@@ -77,7 +77,7 @@ Detailed in `temperature-sensing-front-end.md`. In short:
 ## 7. Safety layers
 
 - OEM thermostats (coffee 110 C, steam 200 C, pump 110 C) and thermal fuses stay in series with their loads. [PL]
-- Mains inlet: T10A slow-blow fuse, filter, MOV; a 1-2 A branch fuse on each dimmer's live; T2A on the IRM supply recommended, not required (`mains-inlet-protection.md`). **Open decision:** the trunk (1.0 mm2, 10 A), the T10A fuse and the FN9222 (10 A at 50 C) sit at or under the machine's own worst case (9.95 A at 240 V, 10.5 A at 253 V); the valve branches (0.75 mm2 flex) have no branch fuse.
+- Mains inlet: T10A slow-blow fuse, filter, MOV; a 1-2 A branch fuse on each dimmer's live; one shared TR5 fuse on the valve branches; T2A on the IRM supply recommended, not required (`mains-inlet-protection.md`). Chain rated above its fuse and the valve branches fused (`DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`): FN9222-15-06 filter (coupler rating unverified), trunk at least 1.5 mm2, one shared TR5 fuse on the valve branches.
 - Valve vent: normally open, fails to the venting state.
 - OPVs: steam OPV on the pump (and on the block if no check valve lies between); a new brew OPV.
 - Defaults while the controller is in reset: pull-downs hold the SSRs and dimmers off; the valve relays' pulls are intended to hold them de-energised, which depends on the relay module's input polarity and on 5 V tolerance of the driving pins, both still to verify (`passive-and-drive-components.csv`, `open-items.md`).

@@ -1,0 +1,17 @@
+id: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
+type: deliverable
+category: solution
+title: The plant model's element-power uncertainty covers the declared supply span
+status: active
+version: 1
+text: |
+  The machine's declared supply span was widened from 230-240 V to 216-253 V, the published standard tolerance about the 230 V nominal, when the controller boards' figures record was prepared. The plant model's element-power uncertainty was sized for the narrower span, roughly an 8 percent delivered-power swing. Across the declared span a resistive element's delivered power moves by roughly -12 to +21 percent about its 230 V value. So the model's stated uncertainty no longer covers the supply the machine is declared to run from, and the simulation results that rest on it were obtained against a narrower span than the one declared.
+
+  This restores the requirement that what is downstream works to the declared span, not to a narrower one inherited from where the design was first written: it re-sizes the uncertainty and re-runs the simulation results that depend on it.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-MACHINE-CONFIGURATION-001.C1
+    type: targets
+  - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
+    type: depends-on

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-REQUIREMENT-FIGURES-SOURCED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-REQUIREMENT-FIGURES-SOURCED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-13T00:16:29.913101Z"
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-design-constraints.md § Requirement-derived figures: mains frequency row now 50 Hz nominal graded owner statement 2026-10-13 and published unverified, cited to reference-machine.md § Supply and REQ-MACHINE-CONFIGURATION-001.C9; outlet rating row names the 10 A as the socket outlet''s; heater-branch fault row states conductors and board copper rated for the 10 A inlet fuse per DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE; valve failure-state row no longer grades the de-energised vent as owner statement (not established, inferred); every node id cited in the changed lines resolved with staircase show'
+  artifact_version: 1687ef4a27d52606903f1ddf1103b88ee155d63d
+attested_by: crun-25120cd792fc6293
+links:
+  - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED.C1
+    type: satisfies

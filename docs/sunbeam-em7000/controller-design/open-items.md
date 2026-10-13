@@ -31,12 +31,13 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 
 ## C. Design decisions awaiting the owner
 
+- The supply cord, appliance inlet and inlet filter sit ahead of the inlet fuse, protected only by the building's breaker (up to 20 A). The chosen filter is rated 15 A and its IEC C14 coupler 10 A, both above the machine's own draw (at most 10.5 A at 253 V) and below the breaker. This section is held to fault withstand until the breaker clears rather than to the breaker's rating, the ordinary arrangement for an appliance drawing under 10 A; the owner to confirm that basis (`controller-board-design-constraints.md` § Fault current, `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`).
 - PCB go or no-go (`pcb-plan.md`).
 - Whether the BL0942 current reading replaces the mains-presence confirm (D20).
 - The steam block trapped-pressure case: an S8 interlock on the steam heater, a hot-side relief valve, or both.
 - Whether to copy the OEM `Q7` and `Q8` stages as proposed (D18).
 - Steam pump drive (D4).
-- **Mains chain rating margin.** The trunk (1.0 mm2, 10 A), the T10A fuse and the FN9222 (10 A at 50 C) are at or under the machine's own worst case (9.95 A at 240 V, 10.5 A at 253 V); the valve branches (0.75 mm2 flex) have no branch fuse. D8 stands as chosen until you decide.
+- **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches. Remaining to confirm: the 15 A filter's coupler rating (IEC C14 is 10 A), its termination type, the TR5 series.
 - **Heater switching cadence:** whole-cycle (20 ms) bursts or half-cycle; the files disagree.
 - **Steam heater with the knob shut:** the firmware's 125 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case.
 - **SSR mounting:** the metal side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
@@ -51,11 +52,11 @@ Each node must be read with `show` before linking, and existing coverage checked
 - A decision adding the outlet water temperature probe (the declared sensing list in `SOL-CHANNEL-ENUMERATION-CORRECTED.C1` is three NTCs). `DEC-DEVICE-RETENTION-BOUNDARY` is unaffected because the NTCs stay.
 - A decision on the steam pressure tap position and the hot-side pressure question.
 - The vent policy, and the steam damper decision.
-- A decision declaring upstream protection and wiring rating (`REQ-ELECTRICAL-INSTALL-001.C7`, `OBL-ELECTRICAL-THERMAL-SAFETY-001.C8` and `.C9`).
+- Upstream protection is now declared (`reference-machine.md` § Supply: a circuit breaker of up to 20 A, project assumption) and which device interrupts which fault is decided by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`; the fault-current figures the wiring must be rated for are in `controller-board-design-constraints.md` (`REQ-ELECTRICAL-INSTALL-001.C7`, `OBL-ELECTRICAL-THERMAL-SAFETY-001.C8`). The wiring authority is named there too (`.C9`).
 - A commissioning identification deliverable (`REQ-STATE-ESTIMATION-001.C6`).
 - `SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET`'s premise "no sensor reports it" is partly dated; the group-side water temperature is still reconstructed.
 - The graph has no way to hold a solution waiting for an operator to build it (named in the old working README).
-- Whether a measured supply period is admissible evidence for the supply frequency: `reference-machine.md` records 50 Hz as inferred from a pump nameplate, which `REQ-MACHINE-CONFIGURATION-001.C8` does not admit, so it is provisional until measured. The Standard dimmer's Z-C capture measures the machine's own supply at no cost, but no accuracy is published for it, so whether it discharges that criterion is unsettled.
+- Settled 2026-10-13, kept for the record: whether a measured supply period is admissible evidence for the supply frequency. No one-off measurement is asked for any more. `REQ-MACHINE-CONFIGURATION-001.C9` has the declaration state the supply's nominal from its governing standard, which `reference-machine.md` § Supply now does (50 Hz), and has anything that depends on the supply's timing read it live while running. The Z-C capture is that live reading; its accuracy is still unpublished, which bears on the crossing offset `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM` leaves unbounded, not on the declared frequency.
 - Whether a surge-suppression criterion should exist at all: nothing in the graph requires transient protection (`OBL-ELECTRICAL-THERMAL-SAFETY-001.C8` is about fault current), so the MOV is fitted on judgement alone. See `mains-inlet-protection.md`.
 - Whether the machine has a hard mains switch at all: the five front-panel keys are logic channels, not a mains break. Establish by inspection.
 - The proof-of-life interlock, deferred: downstream zero-cross sensing can verify that the master relay opened but cannot be the trip path, since `REQ-SAFETY-CHAIN-001` requires the chain to owe nothing to the controller or firmware.
@@ -66,7 +67,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 ## E. Housekeeping and unresolved items from the refresh
 
 - The mainboard's own height (an estimate; 25 mm of cavity makes it worth measuring) and the dimmer module's height (footprint 50 x 16 mm).
-- The T10A fuse, the FN9222 filter and the 10 A trunk all sit at the machine's own worst-case draw (9.95 A at 240 V, 10.5 A at 253 V, per `reference-machine.md`); whether that margin is acceptable is for the owner.
+- The 10 A chain margin is resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE` (15 A filter, trunk above the fuse); the 15 A filter's coupler rating is unverified and its termination type is not recorded.
 - Whether the IRM-10-5 has an internal fuse (the old text and the BOM disagreed).
 - Nothing specifies ferrules for the screw terminals, the FN9222's termination type, the earth conductor and chassis stud, or the temperature ratings of PVC wire and flex near the hot blocks.
 - The EARU SSR-40DA's zero-cross type, isolation rating, package and fail-short behaviour are unconfirmed; the dimmer's Z-C is believed full-wave but unmeasured; the BL0942 ZX delay and module isolation are unknown.

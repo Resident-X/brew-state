@@ -1,0 +1,16 @@
+id: REQ-MACHINE-CONFIGURATION-001.C9
+type: criterion
+title: The supply's nominal frequency is declared, and anything that depends on its timing reads it live
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  A grid's frequency moves within the band its standard permits, from minute to minute and with load. A single reading of it is no better a figure than the nominal, and it is out of date as soon as it is taken.
+
+  The declaration states the supply's nominal frequency, taken from the standard governing that supply rather than from a component's marking. Anything whose behaviour depends on the supply's timing reads that timing while the machine runs, rather than relying on the declared figure, so a machine on a supply of a different nominal frequency, or a supply moving within its band, is followed rather than assumed.
+links:
+  - target: REQ-MACHINE-CONFIGURATION-001
+    type: criterion-of
+  - target: REQ-MACHINE-CONFIGURATION-001.C8
+    type: supersedes

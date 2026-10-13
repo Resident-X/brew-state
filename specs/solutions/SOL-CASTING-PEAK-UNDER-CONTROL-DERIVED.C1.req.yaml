@@ -1,0 +1,12 @@
+id: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+type: criterion
+title: Each thermoblock's peak casting temperature under control is derived from the plant model across its declared corners
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each thermoblock, the highest casting temperature the plant model reaches while the controller holds that heater is found across every operating phase the controller commands (warm-up, holding, delivery or draw, recovery) and across the declared corners of the model's coefficients. The figure is reported with the phase and corner that produce it, graded inferred from the model, and a test fails if the extraction reports a peak lower than any casting temperature the runs pass through. Out of scope: measuring the casting on the machine.
+links:
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED
+    type: criterion-of

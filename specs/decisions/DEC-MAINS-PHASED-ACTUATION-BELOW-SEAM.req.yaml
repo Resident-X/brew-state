@@ -3,7 +3,7 @@ type: decision
 category: strategic
 title: Actuation is mains-phased below the hardware seam while the control period stays crystal-derived
 status: active
-version: 1
+version: 2
 text: |
   The control law runs on a period the controller itself keeps, and commands each actuation channel a
   level as it does today. Below the hardware seam a separate layer converts that level into a decision,
@@ -52,9 +52,9 @@ rationale: |
   and the detection front end, which are bought parts; that is why the criteria this decision drives name
   the property each part must have rather than the part.
 
-  Consequences: The supply frequency stops being adequate as a value inherited from a component marking and
-  becomes a quantity the machine measures, which the local-configuration constraint's provenance criterion
-  then reports honestly. Supply timing becomes a second source of timing failure alongside the controller's
+  Consequences: The supply frequency stops being adequate as a value inherited from a component marking: the
+  declaration carries the supply's nominal frequency, and the machine reads the supply's timing live while running,
+  as the local-configuration constraint's frequency criterion requires. Supply timing becomes a second source of timing failure alongside the controller's
   own overruns, needing detection and a defined effect. Modulating the pump by whole cycles makes the flow
   reading quantised in whole strokes, so the window that reading is averaged over becomes a figure to
   establish rather than assume, and the first channel whose effective rate is not the control step. Phase
@@ -79,9 +79,9 @@ links:
     type: addresses
   - target: REQ-MACHINE-CONFIGURATION-001.C4
     type: addresses
-  - target: REQ-MACHINE-CONFIGURATION-001.C8
-    type: addresses
   - target: REQ-TIMING-FAULT-RESPONSE-001.C5
     type: addresses
   - target: REQ-TIMING-FAULT-RESPONSE-001.C6
+    type: addresses
+  - target: REQ-MACHINE-CONFIGURATION-001.C9
     type: addresses
