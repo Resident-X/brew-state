@@ -3,9 +3,13 @@ type: deliverable
 category: solution
 title: The mutation sweep reports its build and execution time per shard
 status: active
-version: 1
+version: 2
 text: |
   The mutation sweep reports where its time goes: for each shard, the time spent building and the time spent running mutants, with the number of mutants run against each suite. Further speed-ups are chosen from that measurement rather than assumed.
+
+  The work lands in the sweep tool itself as one small seam other paths reuse: a per-unit timing record taken from an injectable clock, and one renderer that produces both the plain-text table for the local run and the markdown table for the hosted job summary. The local run, each hosted shard and the hosted merge all record and render through that seam, and the shard report gains a timing part beside its mutant results so the merge can total every shard. The hosted workflow's sweep and merge jobs need no timing logic of their own.
+
+  Rejected: timing in the workflow's shell steps, which cannot be unit-tested, misses the local run and puts the logic in two places; parsing the test runner's or the mutation runner's log text, whose format is undocumented and can change with a release; and a separate timing file per shard, a second artefact to keep in step with the report.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from

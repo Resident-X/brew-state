@@ -2,11 +2,19 @@ id: SOL-SWEEP-TIME-ACCOUNTED.C1
 type: criterion
 title: The sweep reports build and execution time per shard
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Each sweep run states, for every environment and suite it covers, the time spent building, the time spent executing mutants, the number of mutants executed and the suite's unmutated run time, and a total. The figures appear both in the local run's output and in the hosted workflow's job summary. Out of scope: changing what the sweep runs, or how.
+  Each sweep run states, for every unit it builds and runs, the time spent building, the suite's unmutated run time, the time spent executing mutants and the number of mutant runs, with a total over the units. A unit is one environment and suite on the local run, and one environment, suite, directory and operator on a hosted shard; each row is keyed by its full identity on that path. Mutator discovery's builds and baseline runs appear as rows of their own. Toolchain installation and other workflow setup are named as outside the figures.
+
+  The build and the unmutated run are measured as two separate calls of the test runner, one that builds without testing and one that tests without building, so the unmutated suite must still pass before anything is mutated. Execution time is the mutation runner's wall time, labelled as including that runner's own warm-up and baseline runs. The mutant count is every mutant result the unit's report lists, labelled as runs rather than as the population, since the same mutant runs once per suite. Every figure states its unit, and the total is stated as summed time, not elapsed time.
+
+  The figures appear in the local run's output and in the hosted workflow's job summaries. Each sweep job writes its own rows to its job summary, and the merge job folds the timing out of every shard report and writes the whole table with its total. A shard report carries its mutant results and its timing as two named parts, and the merge treats a report missing either as a shard it could not look at. The summary is written only when the hosted environment provides a summary file. Timings are printed for every completed unit before the sweep's verdict lines, on the error path as well, and never change the exit status.
+
+  Tests drive a fake clock that advances by different amounts during the build, the unmutated run and the mutation run, and show each figure attributed to its own column, the total equal to the sum of the rows, the merged table covering every shard, a report missing its timing refused, and the summary file written when the hosted environment provides one and not otherwise.
+
+  Out of scope: changing what the sweep builds, mutates or judges.
 links:
   - target: SOL-SWEEP-TIME-ACCOUNTED
     type: criterion-of
