@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-CLASS-READ-ANY-SIZE-C1-TEST
+type: evidence
+title: test evidence for SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T07:15:24.622863Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_an_assertion_every_item_fails_is_reported_exactly_the_limit_times,test_the_board_is_past_the_limit_on_its_mains_nets_alone,test_the_mains_class_is_read_exactly_on_every_run,test_the_pre_order_check_sees_that_set,test_the_locked_copper_reading_sees_that_set,test_the_review_views_see_that_set,test_a_design_rule_failing_on_more_items_than_the_limit_fails_saying_the_report_was_cut_short
+  artifact_version: 1930ebc27abff6ddf1daaafd088379ea066a82ed
+attested_by: crun-8e62a88a68abd0cc
+links:
+  - target: SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1
+    type: satisfies
