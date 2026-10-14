@@ -503,6 +503,17 @@ def token_zone(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
 
 
+def custom_pad(seed: Seed) -> None:
+    """R2's pad 1, which /LV_A runs into, made a custom-shaped pad whose copper the check does not size."""
+    def edit(tree: list) -> None:
+        item = pad(tree, "R2", "1")
+        item[3] = "custom"
+        item.append(["options", ["clearance", "outline"], ["anchor", "circle"]])
+        item.append(["primitives", ["gr_poly", ["pts", ["xy", "0", "-0.8"], ["xy", "1.2", "0"], ["xy", "0", "0.8"]],
+                                    ["width", "0"], ["fill", "yes"]]])
+    seed.layout(edit)
+
+
 def drop_rule(name: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -598,6 +609,8 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      lambda seed: (long_pad(seed), reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (44.1, 10)])(seed))),
     ("a track running across a long pad from side to side", "workmanship: the way a track crosses a long pad is measured against the pad's axis", "workmanship_pad_entry", "runs across it 90.00 degrees off its long axis",
      lambda seed: (long_pad(seed), reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (46.5, 10)])(seed))),
+    ("a pad whose copper the check cannot size", "workmanship: a pad a track of its net meets is sized from the board file or named",
+     "workmanship_pad_copper", "cannot be measured at pad 1 of R2: its shape is custom", custom_pad),
     ("a route narrowed partway along", "workmanship: a track narrower than its class is measured against its figure", "workmanship_width", "0.15 mm wide, narrower than its net class's 0.25 mm",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (42.5, 10), (45, 10)], (0.25, 0.15))),
     ("a rules file without the corner rule", "workmanship: the rules file holds every workmanship rule", "workmanship_rule", "WORK-4 (corner) has no rule", drop_rule("Corners")),

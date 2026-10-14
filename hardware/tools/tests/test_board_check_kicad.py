@@ -484,7 +484,7 @@ class TheWorkmanshipRules(Proved):
         # Every KiCad check a workmanship item rests on, every measured rule, and the figures and rules the design must carry.
         self.assertGreaterEqual(rules, {"track_angle", "track_segment_length", "track_dangling", "via_dangling", "workmanship_pad_corner",
                                         "workmanship_detour", "workmanship_direction", "workmanship_pad_entry",
-                                        "workmanship_width", "workmanship_rule", "workmanship_figure"})
+                                        "workmanship_width", "workmanship_pad_copper", "workmanship_rule", "workmanship_figure"})
 
     def test_each_kicad_finding_and_measured_failure_names_the_item(self):
         found = outcomes()
