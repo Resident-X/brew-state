@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T01:02:05.741687Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md#layout-practice-catalogue: all 43 items checked for every field once, kind and severity well formed and every source dated; each rule-kind item (POWER-1, MAINS-1, MFG-1) checked to be judged on the pre-order check''s report and design-rules.md, with a Fails line naming the undersized figure against its source (POWER-1: below 0.381 mm per ampere of the class''s highest continuous current, AN-1149 § 5; MAINS-1: below the separation basis record''s mains_to_low_voltage figure; MFG-1: below the cited manufacturer capability page''s value); the Judged on field definition states why the rules table is read; the GROUND area states that GROUND-1 to GROUND-4 and EMI-1 bind low-voltage copper only, consistent with MAINS-2'
+  artifact_version: b7a9b2c5006d8ebecbd7ae5d630e39e17d09c798
+attested_by: crun-109155f0023cdfe4
+links:
+  - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
+    type: satisfies
