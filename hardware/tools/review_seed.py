@@ -13,16 +13,17 @@ review step begins only once the check passes a board. A seed the check catches
 is no test of the review, so a copy the check fails is refused.
 
 It then writes a review folder holding only what the review step gives a
-reviewer: the seeded copy at its path from the repository's root, with the
-floorplan, plan and rules records that travel with it; the method as written;
+reviewer: the seeded copy's KiCad files at its path from the repository's root,
+with the floorplan, plan and rules records that travel with it, and nothing else
+of its folder, so never the design's own review record; the method as written;
 the hardware readme the method points to for the views' index and per-net
 facts; every layout review view rendered from the copy; and the pre-order
 check's report on it. Nothing in the folder names the repository or the seeds,
 and nothing in it tells a seeded item or file from an unseeded one but the
 defect itself: every item a seed adds takes a fresh random identifier of the
 form the design's own items carry, KiCad itself refills and saves the seeded
-layout, so every item sits where and as KiCad writes it, the folder holds the
-committed design's files and no others, and every file in it carries one time.
+layout, so every item sits where and as KiCad writes it, the folder holds no
+file the committed design lacks, and every file in it carries one time.
 The design and the documents are taken as the repository's last commit holds
 them.
 The seed list, each seed's identifier, the catalogue item that covers it, its
@@ -68,6 +69,11 @@ NAME = "review-proof"
 CLASSES = ("Mains", "Power", "Supply", "Ground", "Sensing")
 #: What the review step gives a reviewer besides the design and its views, by path from the repository's root.
 DOCUMENTS = ("docs/board-design-method.md", "hardware/README.md")
+#: The records of the design's own folder the review step gives a reviewer, by path inside it: the floorplan and plan,
+#: the rules table, and the records the rules table reads its figures from.
+RECORDS = ("layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml")
+#: The endings of KiCad's own files of a design: its project, schematic, layout, rules and library files.
+KICAD_FILES = (".kicad_pro", ".kicad_sch", ".kicad_pcb", ".kicad_dru", ".kicad_sym", ".kicad_mod")
 VIEWS = "views"
 REPORT = "check-report.txt"
 
@@ -595,6 +601,18 @@ def leftovers(folder: str, files: List[str], remove: bool = False) -> List[str]:
     return found
 
 
+def given(name: str) -> bool:
+    """Whether the review step gives a reviewer the design's file `name`, by its path inside the design's folder.
+
+    It gives KiCad's files of the design, its library tables among them, and the
+    records named in RECORDS, and nothing else the folder holds: the design's own
+    review record tells what a review of the unseeded board found, and a file the
+    step does not name is one it does not give.
+    """
+    base = os.path.basename(name)
+    return name in RECORDS or base.endswith(KICAD_FILES) or base in board_check.LIBRARY_TABLES
+
+
 def documents() -> Dict[str, bytes]:
     """What the review step gives a reviewer besides the design, as the repository's last commit holds it."""
     found = {}
@@ -610,11 +628,13 @@ def documents() -> Dict[str, bytes]:
 def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str, resvg: str) -> Tuple[bool, str]:
     """The review folder written from the seeded copy; whether the views were rendered, and their report.
 
-    Only the committed design's files are copied, by content alone, and once the
-    folder is complete every file and folder in it is given the same time, so no
-    file in it is told from another by when it was written.
+    Only the committed design's files the review step gives a reviewer are copied,
+    by content alone, and once the folder is complete every file and folder in it
+    is given the same time, so no file in it is told from another by when it was
+    written.
     """
-    for name in seed.files:
+    files = [name for name in seed.files if given(name)]
+    for name in files:
         target = os.path.join(out, DESIGN, name)
         os.makedirs(os.path.dirname(target), exist_ok=True)
         shutil.copyfile(os.path.join(seed.design, name), target)
@@ -630,7 +650,7 @@ def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str
         command += ["--class", name]
     command += ["--out", os.path.join(out, VIEWS)]
     result = subprocess.run(command, cwd=os.path.join(out, DESIGN), capture_output=True, text=True)
-    leftovers(os.path.join(out, DESIGN), seed.files, remove=True)
+    leftovers(os.path.join(out, DESIGN), files, remove=True)
     stamp = time.time()
     for directory, _, names in os.walk(out, topdown=False):
         for name in names:

@@ -106,9 +106,9 @@ class TheSeededReviewFolder(unittest.TestCase):
         others = [path for path in files if not path.startswith(("views/", review_seed.DESIGN + "/"))]
         self.assertEqual(others, ["check-report.txt", "docs/board-design-method.md", "hardware/README.md"])
         design = [path for path in files if path.startswith(review_seed.DESIGN + "/")]
-        for name in ("layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml",
-                     "review-proof.kicad_pro", "review-proof.kicad_sch", "review-proof.kicad_pcb", "review-proof.kicad_dru"):
-            self.assertIn(f"{review_seed.DESIGN}/{name}", design)
+        self.assertEqual(design, sorted(f"{review_seed.DESIGN}/{name}" for name in (
+            "layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml",
+            "review-proof.kicad_pro", "review-proof.kicad_sch", "review-proof.kicad_pcb", "review-proof.kicad_dru")))
         method = "docs/board-design-method.md"
         with open(os.path.join(self.out, method), "rb") as given:
             self.assertEqual(given.read(), board_prove.committed(method)[method], "the method is given as committed")
@@ -189,11 +189,21 @@ class TheSeededReviewFolder(unittest.TestCase):
         self.assertTrue(any(ident in committed for ident in order[first:]),
                         "the seeded tracks and vias are grouped after every one the design already had")
 
+    def test_the_designs_own_review_record_is_withheld_from_the_folder(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The review is given only what the review step gives a reviewer, and the reviewing session has no record of what was found or seeded.
+        record = f"{review_seed.DESIGN}/layout-review.md"
+        self.assertIn(record, board_prove.committed(review_seed.DESIGN), "the premise: the design commits its review record")
+        given = files_under(self.out)
+        self.assertNotIn(record, given, "the design's own review record reached the review folder")
+        self.assertFalse(any(path.endswith("layout-review.md") for path in given), given)
+
     def test_the_folder_holds_the_committed_files_and_none_is_told_by_its_time_or_form(self):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where.
         held = board_prove.committed(review_seed.DESIGN)
         given = [path for path in files_under(self.out) if path.startswith(review_seed.DESIGN + "/")]
-        self.assertEqual(given, sorted(held), "the design folder holds other files than the committed design's")
+        self.assertEqual(given, sorted(path for path in held if review_seed.given(os.path.relpath(path, review_seed.DESIGN))),
+                         "the design folder holds other files than the committed design's the review step gives")
         times = {os.stat(os.path.join(directory, name)).st_mtime
                  for directory, folders, names in os.walk(self.out) for name in names + folders}
         times.add(os.stat(self.out).st_mtime)
@@ -318,6 +328,21 @@ class TheSeeds(unittest.TestCase):
             self.assertNotIn(item, prompt)
             self.assertNotIn(description, prompt)
         self.assertNotIn("seed", prompt.lower())
+
+
+class TheGivenFiles(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: Following the review step blind on a seeded copy of a proof design reports every seeded layout defect."""
+
+    def test_only_kicads_files_and_the_named_records_of_a_design_are_given(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The review is given only the copy's design files, the checklist, the rendered views, the pre-order check's report on the copy, and the committed floorplan and plan.
+        for name in ("test-proof.kicad_pro", "test-proof.kicad_sch", "test-proof.kicad_pcb", "test-proof.kicad_dru",
+                     "sub-sheet.kicad_sch", "parts.kicad_sym", "parts.pretty/pad.kicad_mod", "sym-lib-table", "fp-lib-table",
+                     "layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml"):
+            self.assertTrue(review_seed.given(name), name)
+        for name in ("layout-review.md", "circuit-proof.md", "bring-up.md", "notes.md", "README.md", "test-proof.kicad_prl",
+                     "notes/layout-plan.md", "old/design-rules.md", "layout-review.md.orig", "fp-info-cache"):
+            self.assertFalse(review_seed.given(name), name)
 
 
 class TheRefusals(unittest.TestCase):
