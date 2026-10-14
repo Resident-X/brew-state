@@ -704,9 +704,9 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 
 #### POWER-3. A current that changes layer passes through one via for every 200 mA
 
-- **Applies when:** the schematic carries a supply input or a part that switches a load, and the board has more than one copper layer.
+- **Applies when:** the schematic carries a supply input or a part that switches a load.
 - **Asks:** Where a path carrying supply or load current changes copper layer, does it pass through at least one via of the board's standard size for every 200 mA of the current it carries?
-- **Passes:** At each place a power path changes layer, the vias sharing its current number at least the path's continuous current divided by 200 mA, rounded up, each of the board's standard via size, the via size its rules give as the board's default.
+- **Passes:** At each place a power path changes layer, the vias sharing its current number at least the path's continuous current divided by 200 mA, rounded up, each of the board's standard via size, the via size its rules give as the board's default. A board of one copper layer, or one whose power paths never change layer, meets it with no such via; its plan row says which, and for a path that will change layer, the number of vias its current needs.
 - **Fails, as the views show it:** on `net-<net>` for a power net, a single via carrying the whole of a path's current from one layer to another; in `facts.txt`, a power net whose via count is lower than its layer changes need.
 - **Judged on:** `net-<net>` for each power-class net, `facts.txt`.
 - **Kind:** judgement. **Severity:** function.
@@ -917,7 +917,7 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Applies when:** the schematic carries a mains-referenced net, so the board declares `MAINS` `present`.
 - **Asks:** Do the board's rules hold the separation between mains and low-voltage copper to the clearance and creepage its signed separation basis record states, in the single form the rules step fixes?
 - **Passes:** The board's rules file holds the one `Mains separation` rule exactly as step 2 of [Rules before routing](#rules-before-routing) writes it, its condition `A.hasNetclass('Mains') && !B.hasNetclass('Mains')`, with a `clearance` and a `creepage` constraint no less than the separation basis record's mains-to-low-voltage figures, and the pre-order check passes the board. This item adds no rule of its own: it is that rule, and those figures are the signed ones the record holds.
-- **Fails, as the views show it:** the pre-order check reports a `clearance` or `creepage` violation, or a `separation_rule`, `separation_basis`, `local_clearance_override` or `mains_net_tie` failure.
+- **Fails, as the views show it:** the pre-order check reports a `clearance` or `creepage` violation, or a `mains_declaration`, `separation_rule`, `separation_basis`, `local_clearance_override` or `mains_net_tie` failure.
 - **Judged on:** the pre-order check's report.
 - **Kind:** rule. **Severity:** safety.
 - **Source:** Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.3 *Creepage Distance* ("An adequate creepage distance protects against tracking"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
@@ -944,9 +944,9 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 
 #### MAINS-4. A slot cut to lengthen creepage is wide enough to count
 
-- **Applies when:** the schematic carries a part with pins on both a mains-referenced net and a net outside the `Mains` class whose own spacing between its two sides, read from its datasheet, is less than the creepage the separation basis record states, so the layout makes up the difference with a slot or groove.
-- **Asks:** Is each slot or groove that the creepage relies on wider than 1 mm, does the creepage counted across it rely only on its width and twice its depth, and does it leave the board strong enough?
-- **Passes:** The slot is drawn on the board outline layer, wider than 1 mm along its whole length, and spans the full distance between the part's two sides. The creepage across a groove, the surface distance plus the groove's width plus twice its depth, is no less than the separation basis record's creepage. A slot cut through the board leaves no surface path across it, so its creepage is the shortest path along the surface round its ends, which is no less than that figure. It leaves enough board on either side that the board does not flex at it.
+- **Applies when:** the schematic carries a part with pins on both a mains-referenced net and a net outside the `Mains` class, such as an optocoupler, an isolator, a relay or a transformer.
+- **Asks:** Where such a part's own spacing between its two sides, read from its datasheet, is less than the creepage the separation basis record states, so the layout makes up the difference with a slot or groove, is each slot or groove that the creepage relies on wider than 1 mm, does the creepage counted across it rely only on its width and twice its depth, and does it leave the board strong enough?
+- **Passes:** A part whose own spacing is no less than the record's creepage needs no slot and meets it; its plan row gives the part's spacing from its datasheet and the record's figure. Where a part's spacing is less, the slot is drawn on the board outline layer, wider than 1 mm along its whole length, and spans the full distance between the part's two sides. The creepage across a groove, the surface distance plus the groove's width plus twice its depth, is no less than the separation basis record's creepage. A slot cut through the board leaves no surface path across it, so its creepage is the shortest path along the surface round its ends, which is no less than that figure. It leaves enough board on either side that the board does not flex at it.
 - **Fails, as the views show it:** on `layer-Edge.Cuts` and on `crop-<reference>` or `assembly-top`, no slot where the part's spacing needs one, a slot 1 mm wide or narrower, or a slot that stops short of the part's ends so a surface path runs round it.
 - **Judged on:** `layer-Edge.Cuts`, `assembly-top`, `assembly-bottom`, `crop-<reference>`.
 - **Kind:** judgement. **Severity:** safety.
@@ -1040,9 +1040,9 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 
 #### MFG-3. Vias in a soldered pad do not draw the solder away
 
-- **Applies when:** the schematic carries a part with an exposed pad, and the board places vias in its land.
-- **Asks:** Is each via in the land small enough, or capped on the part's side, that it does not draw solder away from the joint?
-- **Passes:** Each via in the land has a drill of 0.33 mm or smaller, or is capped with solder mask on the part's side, the cap at least 0.1 mm larger than the via's diameter.
+- **Applies when:** the schematic carries a part with an exposed pad on its underside.
+- **Asks:** Is each via in the exposed pad's land small enough, or capped on the part's side, that it does not draw solder away from the joint?
+- **Passes:** Each via in the land has a drill of 0.33 mm or smaller, or is capped with solder mask on the part's side, the cap at least 0.1 mm larger than the via's diameter. A land holding no via meets it; its plan row says whether the land will hold vias and, where it will, their drill or their cap.
 - **Fails, as the views show it:** on `layer-F.Mask` (or `layer-B.Mask` for a part on the bottom), large open vias in an exposed pad's land; on `crop-<reference>`, vias in the land larger than the rest of the board's.
 - **Judged on:** `layer-F.Mask`, `layer-B.Mask`, `crop-<reference>`.
 - **Kind:** judgement. **Severity:** quality.
@@ -1062,9 +1062,9 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 
 #### EMI-2. No noisy track runs along the board edge
 
-- **Applies when:** the schematic carries a clock, a switching converter, or an output switching at more than 50 kHz.
-- **Asks:** Are noisy tracks, clocks, switching nodes and fast-switching outputs, kept away from the outside edge of the board?
-- **Passes:** No noisy track runs along the board's outside edge; where several noisy tracks run together, ground tracks surround the group.
+- **Applies when:** the schematic carries a crystal or a ceramic resonator, a switching converter, or a controller, each a source of tracks that can switch faster than 50 kHz.
+- **Asks:** Are noisy tracks, clocks, switching nodes and outputs switching faster than 50 kHz, kept away from the outside edge of the board?
+- **Passes:** No noisy track runs along the board's outside edge; where several noisy tracks run together, ground tracks surround the group. The plan row names the board's nets that switch faster than 50 kHz, so the review knows which tracks are noisy.
 - **Fails, as the views show it:** on a `layer-<copper layer>` or `net-<net>`, a clock or switching track running along the board edge.
 - **Judged on:** every `layer-<copper layer>`, `net-<net>` for each critical net.
 - **Kind:** judgement. **Severity:** quality.
