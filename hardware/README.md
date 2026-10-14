@@ -38,7 +38,7 @@ Every tool is free. The check stops with an error naming any tool that is missin
 ## The commands
 
 - `task hw:verify` runs the pre-order check on every board design in the repository. It exits 0 only when every design passes.
-- `task hw:prove` seeds each fault the check guards against into a throwaway copy of `hardware/proof/gate-proof`, in a temporary directory outside the repository. It requires the check to catch each fault. This command is on demand and is not part of the gate.
+- `task hw:prove` seeds each fault the check guards against into a throwaway copy of `hardware/proof/gate-proof` as the last commit holds it, in a temporary directory outside the repository, so an uncommitted edit to the proof design is not what it proves. It requires the check to catch each fault. This command is on demand and is not part of the gate.
 - `task hw:review-seed -- --seeds <file> --out <folder>` seeds known layout defects into a throwaway copy of `hardware/proof/review-proof` and writes a folder to review it blind, with the seed list apart (see [The proof designs](#the-proof-designs)). This command is on demand and is not part of the gate. It needs the same tools as `hw:views`.
 - `task hw:test` runs the tests of the check itself, of the locked-copper check's four commands, of the layout review views and of the layout review proof's seeding command, against the real `kicad-cli` and `resvg`.
 - `task hw:views` renders every view the layout review judges one board on (below). It needs the same tools as `hw:verify`, and resvg.
