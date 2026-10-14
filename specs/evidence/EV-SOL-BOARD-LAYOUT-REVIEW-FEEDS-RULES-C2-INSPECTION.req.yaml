@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T02:26:12.848718Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/board-design-method.md at f4260f7fd6738765c14da04a44f8ff895c7d12a3, checked clause by clause against the criterion: Layout review step 5 (every finding judged against the pre-order check''s three rule forms; a no states why none can state it; rule findings added as rule-kind catalogue items naming the review; judgement findings to the catalogue or the board''s own items; machine figures by role), the Carried rules bullet of Rules before routing step 1, the catalogue''s Source field, and the cross-check ''Every finding was judged as a rule, and added''. Confirmed by WF-REVIEW runs crun-b9bbd03d85b7627b, crun-e14dda09ed4b0845 and a blind review'
+  artifact_version: f4260f7fd6738765c14da04a44f8ff895c7d12a3
+attested_by: crun-3ae5e150a1935289
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C2
+    type: satisfies
