@@ -3,9 +3,20 @@ type: deliverable
 category: solution
 title: The layout review is proven blind on a proof design seeded with known defects
 status: active
-version: 1
+version: 2
 text: |
   A proof that the layout review sees the defects it checks for. A clean throwaway proof design, with its own floorplan and plan, is committed so the pre-order check over every design stays passing; a seeding script writes a copy outside the tracked tree carrying deliberately placed defects, one or more for each area the catalogue covers, and records the seed list apart from it. A session with no record of the seeds reviews the copy by the method's review step, and its findings are compared with the seed list afterwards.
+
+  Settled before build:
+
+  - The proof design is its own folder beside the pre-order check's proof design under the hardware proof folder, not an extension of it: the check's proof design is deliberately tiny and its seeded faults anchor on its exact text. It is marked not for manufacture and carries a synthetic separation basis, as that proof design does, and it holds at least one part for each catalogue area, so every area has something to seed against: a mains connector and switching part with load-side pads, a regulator, an integrated circuit with decoupling, a crystal, a sense resistor and amplifier, a connector with transient protection, test points, an exposed-pad part, a ferrite, a ground zone, and every floorplan region. Its design rules record and every record that record names are committed with it, since rule-kind verdicts are taken from them. The design is drawn and laid out through the board toolchain's agent interface by the session that builds this solution, and passes the pre-order check from its first commit.
+  - The seeding script reuses the pre-order check's own seeded-fault mechanics (a fresh copy in a temporary work tree outside the repository, edited through the project's file reader and writer), generalised to take the design to copy rather than duplicated. It runs on demand, not as part of any gate.
+  - Every seed leaves the copy passing the pre-order check, and the script refuses a copy that does not: the method's review step begins only once the check passes a board, so a defect the check catches never reaches a review.
+  - The script assembles a review folder outside the repository holding only what the review step gives a reviewer: the seeded copy at its repository-relative path, the method as written, the rendered views of the copy, and the pre-order check's report on the copy, the floorplan and plan travelling with the copy. The seed list is written to a path the caller names, refused when it lies inside the review folder or inside a design folder; per seed it gives an id, the catalogue item that covers it, the layer, the board position and a description.
+  - The blind review is a fresh reasoning-tier session whose working directory is the review folder, granted read tools only, given a fixed prompt that asks it to follow the method's review step and names nothing seeded; nothing in the folder names the repository's location.
+  - The comparison is recorded as one demonstration evidence entry stating the verified commit, the tool versions and the commands, and for each seed whether it was found and by which finding against which catalogue item. Findings that match no seed are listed too: one that shows a real defect in the clean design is fixed in the design and the proof repeated; a false positive is recorded and does not fail the proof.
+  - A seed not reported is closed in this solution, as a catalogue amendment citing its published source or a fix to the rendered views, and the blind review is repeated in a new session.
+  - The hardware readme's description of the proof folder and the method's layout review section name the proof design and the command that seeds it.
 links:
   - target: DEL-HW-DESIGN-METHOD.C3
     type: derives-from
