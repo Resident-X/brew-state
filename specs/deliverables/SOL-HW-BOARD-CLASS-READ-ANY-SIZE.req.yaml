@@ -1,0 +1,19 @@
+id: SOL-HW-BOARD-CLASS-READ-ANY-SIZE
+type: deliverable
+category: solution
+title: A net class's membership is read completely on a board of any size
+status: active
+version: 1
+text: |
+  The pre-order check learns which nets KiCad places in a net class by appending assertion rules to the design's layout rules and reading which items fail them in one layout check run: a marker rule every item fails, and one probe rule per class. KiCad's command-line layout check reports at most a fixed number of failures of one kind (199 in KiCad 10.0.7), and the marker's and the probes' failures are the same kind. On a board with more items than that limit, the marker alone uses up the limit, and which items the class probe reports changes from run to run. Measured on a proof design of about three hundred items: the Mains probe alone reported all ten Mains items on every run; run together with the marker it reported the class empty or short in about one run in six. The check then intermittently fails a correct design on its Mains declaration, and the rendered review views and the locked-copper reading, which take class membership from the same reading, intermittently refuse. The check's own seeded-fault proof design has under a hundred items, so its proof never reached the limit. Every real controller board will exceed it.
+
+  This restores the behaviour SOL-HW-BOARD-RULE-CHECK-GATE.C3 requires, a design that declares mains present with no net in the Mains class fails and one that assigns its Mains nets passes, so that a pass or fail of the pre-order check depends on the design alone, as REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 needs from the verification that blocks an order.
+
+  Settled before build: the fix lands in the board tooling's one class-reading seam, which the check, the review views and the locked-copper reading all use, not in each caller. Class membership is read in a layout check run in which no other rule's failures count against the class probe's report limit, and a class read whose reports reach that limit is refused as possibly incomplete rather than taken as the whole class. The report limit is taken from what KiCad is observed to do, stated once in the tooling, and its value is confirmed by a test against the installed KiCad.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by

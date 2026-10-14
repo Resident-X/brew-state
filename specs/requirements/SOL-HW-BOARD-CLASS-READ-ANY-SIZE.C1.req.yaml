@@ -1,0 +1,12 @@
+id: SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1
+type: criterion
+title: A net class's membership is read completely and identically on every run, on a board of any size
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic board carrying more items than KiCad's per-kind report limit, with a known set of nets in the Mains class, reading the class's membership through the board tooling returns exactly that set on every one of repeated runs, and the pre-order check, the review-view render and the locked-copper reading each see that same set. A class whose membership reaches the report limit is refused with a message naming the class and the limit, rather than read as complete. Every design the pre-order check passes before the change still passes, and the check's seeded-fault proof still catches every fault it caught.
+links:
+  - target: SOL-HW-BOARD-CLASS-READ-ANY-SIZE
+    type: criterion-of
