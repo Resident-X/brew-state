@@ -49,6 +49,7 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import board_geometry  # noqa: E402
 import sexpr  # noqa: E402
 
 MIN_PYTHON = (3, 9)
@@ -755,6 +756,31 @@ def rule_name(rule: list) -> str:
     return str(rule[1]) if len(rule) > 1 and not isinstance(rule[1], list) else "(unnamed)"
 
 
+class Rule(list):
+    """One custom rule as parsed, with the line of the rules file it starts on (0 when not read from a file)."""
+
+    line = 0
+
+
+def rule_forms(text: str) -> List[Rule]:
+    """Every (rule ...) form of a custom rules file's text, in order, each with its line."""
+    spans: List[Tuple[int, int, int]] = []
+    forms = sexpr.parse(text, comments=True, spans=spans)
+    rules = []
+    for form, (_, _, line) in zip(forms, spans):
+        if sexpr.head(form) == "rule":
+            rule = Rule(form)
+            rule.line = line
+            rules.append(rule)
+    return rules
+
+
+def rule_at(rule: list) -> str:
+    """A rule as the report names it: its name, and its line when it was read from a file."""
+    line = getattr(rule, "line", 0)
+    return f"rule '{rule_name(rule)}'" + (f" at line {line}" if line else "")
+
+
 #: The clauses KiCad takes once in a rule yet loads a rule holding twice, keeping
 #: only one of them; a rule holding any other clause twice KiCad declines to
 #: load at all, which the check finds through KiCad itself.
@@ -774,12 +800,11 @@ def read_rules(root: str, design: Design, repository: Repository) -> Tuple[Optio
         return None, []
     try:
         with open(path, encoding="utf-8") as handle:
-            forms = sexpr.parse(handle.read(), comments=True)
+            rules: List[list] = list(rule_forms(handle.read()))
     except (OSError, sexpr.SexprError) as error:
         return [], [Violation(design.project, "custom_rules", design.rules,
                               f"the custom rules file cannot be read ({error}); KiCad drops a rules file it cannot "
                               "parse without saying so, so none of its rules would be checked")]
-    rules = [form for form in forms if sexpr.head(form) == "rule"]
     found = []
     names: Dict[str, int] = {}
     for rule in rules:
@@ -1043,6 +1068,642 @@ def net_ties(design: Design, layout: list, mains_nets: Set[str]) -> List[Violati
     return found
 
 
+# --- Workmanship --------------------------------------------------------------
+#
+# The workmanship area of the method's layout practice catalogue holds items of
+# two kinds of rule. The angle at a joint, the length of a segment, and a
+# track end or a via left unconnected are KiCad's to measure, through a custom
+# rule in the design's rules file or, for the track end and the via, unaided;
+# the check only requires that the rules are there. What KiCad does not
+# measure, the check measures itself from the layout file, each against a
+# figure the design sets, as a project text variable or, for two tracks
+# meeting at a pad, as the corner rule's own minimum, so no figure is ever the
+# check's own.
+
+
+#: Each measured rule: the catalogue item it is, what it measures, the project
+#: text variable its figure is set in, the figure's unit, and the least and
+#: most the figure may be (a most of None is open-ended).
+MEASURED = (
+    ("WORK-2", "route length", "WORK_DETOUR_RATIO",
+     "times the shortest straight-line tree joining the net's pads", 1.0, None),
+    ("WORK-4", "branch at a pad", "WORK_PAD_ANGLE_DEG", "degrees at least between two of three or more tracks of a "
+     "net that leave a pad on one layer", 0.0, 180.0),
+    ("WORK-8", "narrowing", "WORK_NECK_MM", "mm off its net's pads that a track narrower than its net class's "
+     "track width may run", 0.0, None),
+    ("WORK-9", "direction", "WORK_ANGLE_TOLERANCE_DEG", "degrees off the board's edges or 45 degrees to them, "
+     "and off a long pad's axis", 0.0, 22.5),
+    ("WORK-10", "pad entry", "WORK_PAD_ENTRY_RATIO", "times as long as wide, beyond which a pad is entered only "
+     "along its long axis", 1.0, None),
+)
+
+#: Each custom rule a design's rules file must hold, by the catalogue item it
+#: is, the KiCad constraint, and how its minimum is written.
+WORKMANSHIP_RULES = (
+    ("WORK-4", "corner", "track_angle", r"[0-9]+(?:\.[0-9]+)?", "(min <angle>), a bare number of degrees"),
+    ("WORK-5", "jog", "track_segment_length", r"[0-9]+(?:\.[0-9]+)?mm", "(min <length>mm)"),
+)
+
+#: The conditions a workmanship custom rule may carry: none, or one naming
+#: every track, so that the rule holds on every track of the board.
+EVERY_TRACK = ("A.Type == 'Track'",)
+
+#: The catalogue item each of KiCad's own workmanship findings is, so the
+#: report names the item whichever of them reports it.
+KICAD_WORKMANSHIP = {
+    "track_angle": "WORK-4 corners turned at 45 degrees or as arcs",
+    "track_segment_length": "WORK-5 no jog",
+    "track_dangling": "WORK-6 no stub",
+    "via_dangling": "WORK-7 no via a route does not need",
+}
+
+#: How near two points must be to be read as one, in mm: well under anything
+#: drawn, well over the nanometre KiCad rounds a coordinate to.
+TOUCH = 1e-4
+
+#: How far a straight piece standing in for part of an arc may lie off the
+#: arc, in mm: a fifth of the 0.005 mm KiCad allows itself by default when it
+#: draws an arc as straight pieces, so an arc of any radius is read as closely.
+ARC_SAG = 1e-3
+
+
+def workmanship_figures(design: Design, variables: dict) -> Tuple[Dict[str, float], List[Violation]]:
+    """The figure each measured rule is held to, read from the project's text variables, and every one missing or malformed."""
+    figures: Dict[str, float] = {}
+    found = []
+    for item, what, name, unit, least, most in MEASURED:
+        where = f"{design.project} text_variables.{name}"
+        value = variables.get(name)
+        if value is None:
+            found.append(Violation(design.project, "workmanship_figure", where,
+                                   f"{item} ({what}) has no figure: the project text variable {name} is not set, so "
+                                   f"the rule cannot be measured; set it to the figure the board's rules table gives "
+                                   f"for {item}, a plain decimal number of {unit}"))
+            continue
+        number_ = float(value) if re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", str(value).strip()) else None
+        if number_ is None or number_ < least or (most is not None and number_ >= most):
+            limits = f"no less than {least:g}" + (f" and less than {most:g}" if most is not None else "")
+            found.append(Violation(design.project, "workmanship_figure", where,
+                                   f"{item} ({what}) has a malformed figure: the project text variable {name} is "
+                                   f"'{value}', where it is a plain decimal number of {unit}, {limits}; write the "
+                                   f"figure the board's rules table gives for {item} in that form"))
+            continue
+        figures[name] = number_
+    return figures, found
+
+
+def written_minimum(rule: list, constraint: str, form: str) -> Optional[str]:
+    """The minimum a rule writes for a workmanship constraint, as written, or None when it writes it in no other form than
+    one (constraint <constraint> (min <figure>)) with the figure in `form`."""
+    holding = [node for node in sexpr.children(rule, "constraint") if len(node) > 1 and str(node[1]) == constraint]
+    minimum = holding[0][2] if len(holding) == 1 and len(holding[0]) == 3 else None
+    if (sexpr.head(minimum) == "min" and len(minimum) == 2 and not isinstance(minimum[1], (list, sexpr.Quoted))
+            and re.fullmatch(form, str(minimum[1]))):
+        return str(minimum[1])
+    return None
+
+
+def held(rules: Optional[List[list]], constraint: str, form: str) -> Tuple[List[list], List[Tuple[list, str]]]:
+    """Every rule holding a workmanship constraint, and those of them in force on every track, each with the minimum it writes."""
+    candidates, good = [], []
+    for rule in rules or []:
+        if not any(len(node) > 1 and str(node[1]) == constraint for node in sexpr.children(rule, "constraint")):
+            continue
+        candidates.append(rule)
+        conditions = tuple(str(condition[1]) if len(condition) > 1 else "" for condition in sexpr.children(rule, "condition"))
+        minimum = written_minimum(rule, constraint, form)
+        if minimum is not None and conditions in ((), EVERY_TRACK) and sexpr.child(rule, "layer") is None:
+            good.append((rule, minimum))
+    return candidates, good
+
+
+def figure_of(minimum: str) -> float:
+    """A workmanship rule's minimum as a number, in degrees or mm."""
+    return float(minimum[:-2] if minimum.endswith("mm") else minimum)
+
+
+def workmanship_rules(design: Design, rules: Optional[List[list]]) -> List[Violation]:
+    """Every workmanship custom rule the design's rules file lacks, does not hold on every track, or loosens.
+
+    The rule in force on every track is the last one with no condition, or
+    the every-track condition, and no layer, since KiCad applies the last rule
+    that matches; its minimum is the board's figure. Any other rule holding the
+    constraint, before or after it, with or without a condition, fails unless
+    it writes a minimum no looser than that figure: a later one would loosen the
+    item wherever it matches, and an earlier one would state a figure the board
+    is not held to.
+    """
+    found = []
+    for item, what, constraint, form, written in WORKMANSHIP_RULES:
+        candidates, good = held(rules, constraint, form)
+        if good:
+            in_force, figure = good[-1]
+            unit = "mm" if figure.endswith("mm") else " degrees"
+            for rule in candidates:
+                if rule is in_force:
+                    continue
+                minimum = written_minimum(rule, constraint, form)
+                if minimum is not None and figure_of(minimum) >= figure_of(figure):
+                    continue
+                writes = (f"writes {constraint} (min {minimum}), looser than" if minimum is not None
+                          else f"writes {constraint} in no other form than (min ...) as {written}, so it cannot be "
+                               "shown to be no looser than")
+                found.append(Violation(design.project, "workmanship_rule", f"{design.rules} {rule_at(rule)}",
+                                       f"{item} ({what}) is loosened: {rule_at(rule)} {writes} the board's figure of "
+                                       f"{figure_of(figure):g}{unit} in {rule_at(in_force)}, so the tracks it matches "
+                                       f"could break the item while KiCad's check passes; remove the rule, or write its "
+                                       f"minimum as {written} at {figure_of(figure):g}{unit} or tighter"))
+            continue
+        if candidates:
+            names = ", ".join(f"'{rule_name(rule)}'" for rule in candidates)
+            found.append(Violation(design.project, "workmanship_rule", f"{design.rules} rule {names}",
+                                   f"{item} ({what}) is not in force on every track: the rule holding its "
+                                   f"{constraint} constraint is narrowed by its condition or its layer, or does not "
+                                   f"write its minimum as {written}; write one rule with no condition, or the one "
+                                   f"condition {EVERY_TRACK[0]}, no layer, and (constraint {constraint} {written})"))
+        else:
+            found.append(Violation(design.project, "workmanship_rule", design.rules,
+                                   f"{item} ({what}) has no rule: the design's rules file holds no "
+                                   f"(constraint {constraint} ...), so KiCad does not measure it; add a rule holding "
+                                   f"(constraint {constraint} {written}) at the figure the board's rules table gives "
+                                   f"for {item}"))
+    return found
+
+
+def corner_minimum(rules: Optional[List[list]]) -> Optional[float]:
+    """The least angle the design's corner rule allows at a joint, as KiCad applies it, or None when no corner rule is in force.
+
+    Where several rules in force hold the constraint, KiCad applies the last
+    one in the file, so its figure is the one read.
+    """
+    _, good = held(rules, "track_angle", WORKMANSHIP_RULES[0][3])
+    return float(good[-1][1]) if good else None
+
+
+class Copper:
+    """One track or arc on the layout: its net, layer, ends, width and length, and for an arc its mid point."""
+
+    def __init__(self, net: str, layer: str, start, end, width: float, mid=None):
+        self.net, self.layer, self.start, self.end, self.width, self.mid = net, layer, start, end, width, mid
+        self.centre = self.radius = None
+        if mid is not None:
+            circle = circumcircle(start, mid, end)
+            if circle is not None:
+                self.centre, self.radius = circle
+        self.length = self.arc_length() if self.centre is not None else math.dist(start, end)
+
+    def kind(self) -> str:
+        return "arc" if self.mid is not None else "track"
+
+    def place(self) -> str:
+        return (f"{self.kind()} [{self.net}] on {self.layer} from ({coordinate(self.start[0])}, {coordinate(self.start[1])}) "
+                f"to ({coordinate(self.end[0])}, {coordinate(self.end[1])}) mm")
+
+    def sweep(self) -> float:
+        """The angle the arc turns through from start to end, by way of its mid point, signed."""
+        first, through, last = (math.atan2(p[1] - self.centre[1], p[0] - self.centre[0])
+                                for p in (self.start, self.mid, self.end))
+        sweep = (last - first) % (2 * math.pi)
+        if (through - first) % (2 * math.pi) > sweep:
+            sweep -= 2 * math.pi
+        return sweep
+
+    def arc_length(self) -> float:
+        return abs(self.sweep()) * self.radius
+
+    def heading(self, at) -> Tuple[float, float]:
+        """The direction the copper runs at one of its ends, as a unit vector along the line it lies on there."""
+        if self.centre is None:
+            dx, dy = self.end[0] - self.start[0], self.end[1] - self.start[1]
+        else:
+            dx, dy = -(at[1] - self.centre[1]), at[0] - self.centre[0]
+        size = math.hypot(dx, dy)
+        return (dx / size, dy / size) if size else (0.0, 0.0)
+
+    def points(self) -> List[Tuple[float, float]]:
+        """Points along the copper's centre line, an arc's close enough together that no straight piece between two lies
+        more than ARC_SAG off the arc, whatever its radius."""
+        if self.centre is None:
+            return [self.start, self.end]
+        first = math.atan2(self.start[1] - self.centre[1], self.start[0] - self.centre[0])
+        sweep = self.sweep()
+        step = 2 * math.acos(max(-1.0, 1 - ARC_SAG / self.radius))
+        pieces = max(32, math.ceil(abs(sweep) / step))
+        return [(self.centre[0] + self.radius * math.cos(first + sweep * i / pieces),
+                 self.centre[1] + self.radius * math.sin(first + sweep * i / pieces)) for i in range(pieces + 1)]
+
+
+def circumcircle(a, b, c):
+    """The centre and radius of the circle through three points, or None when they lie on one line."""
+    d = 2 * (a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1]))
+    if abs(d) < 1e-12:
+        return None
+    ux = ((a[0] ** 2 + a[1] ** 2) * (b[1] - c[1]) + (b[0] ** 2 + b[1] ** 2) * (c[1] - a[1])
+          + (c[0] ** 2 + c[1] ** 2) * (a[1] - b[1])) / d
+    uy = ((a[0] ** 2 + a[1] ** 2) * (c[0] - b[0]) + (b[0] ** 2 + b[1] ** 2) * (a[0] - c[0])
+          + (c[0] ** 2 + c[1] ** 2) * (b[0] - a[0])) / d
+    return (ux, uy), math.hypot(a[0] - ux, a[1] - uy)
+
+
+class Layout:
+    """The copper of a layout the measured rules read: every track, arc and pad, by net.
+
+    Whether a track meets a pad is judged from the copper by board_geometry's
+    contact rule, and a pad whose copper that rule cannot size is never
+    measured: it is listed in `unsized` when tracks of its net reach a layer it
+    is on, and the measures fail the board naming it.
+    """
+
+    def __init__(self, tree: list):
+        table = board_geometry.net_table(tree)
+        self.copper: List[Copper] = []
+        for node in tree[1:]:
+            head = sexpr.head(node)
+            if head not in ("segment", "arc"):
+                continue
+            what = f"a {'track' if head == 'segment' else 'arc'} of the layout"
+            layer = sexpr.child(node, "layer")
+            width = sexpr.child(node, "width")
+            self.copper.append(Copper(
+                board_geometry.item_net(node, table, what), str(layer[1]) if layer is not None and len(layer) > 1 else "",
+                board_geometry.xy(sexpr.child(node, "start"), what), board_geometry.xy(sexpr.child(node, "end"), what),
+                board_geometry.number(width, 1, what) if width is not None else 0.0,
+                board_geometry.xy(sexpr.child(node, "mid"), what) if head == "arc" else None))
+        self.pads = board_geometry.pads(tree)
+        self.edges = edge_angle(tree)
+        routed = {(copper.net, copper.layer) for copper in self.copper if copper.net}
+        self.unsized = [pad for pad in self.pads if not pad.sized() and pad.net
+                        and any(net == pad.net and pad.on(layer) for net, layer in routed)]
+
+    def pads_of(self, net: str, layer: str) -> List[board_geometry.Pad]:
+        """Every pad of a net on a layer whose copper the contact rule can size."""
+        return [pad for pad in self.pads if pad.net == net and pad.on(layer) and pad.sized()]
+
+    def reached(self, copper: Copper, end) -> List[board_geometry.Pad]:
+        """Every pad of the copper's net and layer that its end at `end` reaches."""
+        return [pad for pad in self.pads_of(copper.net, copper.layer)
+                if board_geometry.end_reaches(pad, end, copper.width)]
+
+
+def shape_sides(node: list, place) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    """Every straight side of one outline shape, each end carried to the board by `place`.
+
+    A line is one side. A rectangle is four, each shortened at both ends by
+    the radius its corners are rounded to, and none where that leaves nothing
+    straight. A polygon has a side between each two corners its outline runs
+    straight between, and none along a piece it writes as an arc. An arc, a
+    circle and a curve turn all along their length, so none has a direction
+    to give the edges and none is a side.
+    """
+    head = sexpr.head(node)[3:]
+    what = "a board edge"
+    if head == "line":
+        return [(place(board_geometry.xy(sexpr.child(node, "start"), what)),
+                 place(board_geometry.xy(sexpr.child(node, "end"), what)))]
+    if head == "rect":
+        (x0, y0), (x1, y1) = (board_geometry.xy(sexpr.child(node, key), what) for key in ("start", "end"))
+        radius = sexpr.child(node, "radius")
+        rounded = board_geometry.number(radius, 1, what) if radius is not None else 0.0
+        corners = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        sides = []
+        for a, b in zip(corners, corners[1:] + corners[:1]):
+            length = math.dist(a, b)
+            if length > 2 * rounded + TOUCH:
+                step = (rounded * (b[0] - a[0]) / length, rounded * (b[1] - a[1]) / length)
+                sides.append((place((a[0] + step[0], a[1] + step[1])), place((b[0] - step[0], b[1] - step[1]))))
+        return sides
+    if head == "poly":
+        ring = []
+        for part in (sexpr.child(node, "pts") or [])[1:]:
+            if sexpr.head(part) == "xy":
+                ring.append((board_geometry.xy(part, what), True))
+            elif sexpr.head(part) == "arc":
+                ring.append((board_geometry.xy(sexpr.child(part, "start"), what), False))
+                ring.append((board_geometry.xy(sexpr.child(part, "end"), what), True))
+        return [(place(a), place(ring[(index + 1) % len(ring)][0])) for index, (a, straight) in enumerate(ring)
+                if straight and math.dist(a, ring[(index + 1) % len(ring)][0]) > TOUCH]
+    return []
+
+
+def on_edge(node: list) -> bool:
+    layer = sexpr.child(node, "layer")
+    return layer is not None and len(layer) > 1 and str(layer[1]) == "Edge.Cuts"
+
+
+def edge_sides(tree: list) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    """Every straight side of the board's outline as drawn, its own shapes and its footprints', on the board."""
+    sides = []
+    for node in tree[1:]:
+        if sexpr.head(node).startswith("gr_") and on_edge(node):
+            sides += shape_sides(node, lambda point: point)
+    for footprint in sexpr.children(tree, "footprint"):
+        at = board_geometry.placement(footprint, f"the footprint {board_geometry.reference(footprint) or '?'}")
+        for node in footprint[1:]:
+            if sexpr.head(node).startswith("fp_") and on_edge(node):
+                sides += shape_sides(node, lambda point, at=at: board_geometry.placed(point, at))
+    return sides
+
+
+def edge_angle(tree: list) -> float:
+    """The direction of the board's edges, in degrees modulo 90: that of the longest straight side of its outline, or 0,
+    the board's own axes, for an outline with none."""
+    longest, angle = 0.0, 0.0
+    for a, b in edge_sides(tree):
+        if math.dist(a, b) > longest:
+            longest, angle = math.dist(a, b), math.degrees(math.atan2(b[1] - a[1], b[0] - a[0])) % 90
+    return angle
+
+
+def off_45(angle: float) -> float:
+    """How far an angle in degrees lies from the nearest multiple of 45 degrees."""
+    rest = angle % 45
+    return min(rest, 45 - rest)
+
+
+def off_axis(heading, axis) -> float:
+    """The angle in degrees between a direction and an axis, read as lines, so 0 to 90."""
+    cosine = abs(heading[0] * axis[0] + heading[1] * axis[1])
+    return math.degrees(math.acos(max(-1.0, min(1.0, cosine))))
+
+
+def pad_corners(design: Design, layout: Layout, corner: Optional[float], branch: float) -> List[Violation]:
+    """WORK-4 at a pad: every two tracks of a net that leave one of its pads on one layer closer together than the item allows.
+
+    KiCad's corner rule does not compare tracks that meet at a pad, so they
+    are measured here, each track's direction taken as it leaves the pad. Two
+    tracks meeting at a pad are one route turning there, held to `corner`,
+    the corner rule's own minimum; a route branches at a pad only where three
+    or more of its tracks leave it on one layer, and those are held to
+    `branch`. With no corner rule in force, which the check already fails,
+    two tracks meeting at a pad are not measured.
+    """
+    found = []
+    for pad in layout.pads:
+        if not pad.sized():
+            continue
+        for layer in sorted({copper.layer for copper in layout.copper if copper.net == pad.net and pad.on(copper.layer)}):
+            leaving = []
+            for copper in layout.copper:
+                if copper.net != pad.net or copper.layer != layer:
+                    continue
+                for end, other in ((copper.start, copper.end), (copper.end, copper.start)):
+                    if (board_geometry.end_reaches(pad, end, copper.width)
+                            and not board_geometry.end_reaches(pad, other, copper.width)):
+                        heading = copper.heading(end)
+                        if copper.centre is None and end == copper.end:
+                            heading = (-heading[0], -heading[1])
+                        elif copper.centre is not None:
+                            towards = (other[0] - end[0], other[1] - end[1])
+                            if heading[0] * towards[0] + heading[1] * towards[1] < 0:
+                                heading = (-heading[0], -heading[1])
+                        leaving.append((copper, heading))
+            if len(leaving) == 2:
+                least, held = corner, "the corner rule's track_angle allows"
+                said = f"{pad.net} turns through {pad.name()} on {layer}"
+                remedy = "turn the route through the pad straight or at 45 degrees, as at any other joint"
+            else:
+                least, held = branch, "WORK_PAD_ANGLE_DEG allows"
+                said = f"{pad.net} branches at {pad.name()} on {layer}, {len(leaving)} of its tracks leaving it"
+                remedy = "turn its branches to leave the pad square to one another or wider"
+            if least is None:
+                continue
+            for index, (first, a) in enumerate(leaving):
+                for second, b in leaving[index + 1:]:
+                    apart = math.degrees(math.acos(max(-1.0, min(1.0, a[0] * b[0] + a[1] * b[1]))))
+                    if apart < least - 1e-6:
+                        found.append(Violation(design.project, "workmanship_pad_corner",
+                                               f"net {pad.net}: {pad.name()} at ({coordinate(pad.centre[0])}, "
+                                               f"{coordinate(pad.centre[1])}) mm on {layer}: {first.place()}; {second.place()}",
+                                               f"WORK-4 corners turned at 45 degrees or as arcs: {said}, and two tracks "
+                                               f"leave it {apart:.2f} degrees apart, where {held} no less than {least:g} "
+                                               f"degrees; KiCad's corner rule does not compare tracks that meet at a pad, "
+                                               f"so {remedy}"))
+    return found
+
+
+def detours(design: Design, layout: Layout, ratio: float) -> List[Violation]:
+    """WORK-2: every net routed in tracks whose track length exceeds `ratio` times the shortest tree joining all its pads.
+
+    The tree joins the centres of every pad of the net, whatever joins them,
+    so zones never enter the measure: a zone cannot shorten the tree, so it
+    can neither exempt a net nor take a pad out of it, and a net whose
+    connection a zone carries only gains room against it. A pad's centre is
+    known whatever its copper, so every net is measured.
+    """
+    found = []
+    nets = board_geometry.by_net(layout.pads)
+    for net in sorted({copper.net for copper in layout.copper if copper.net}):
+        pads_ = nets.get(net, [])
+        if len(pads_) < 2:
+            continue
+        tree = board_geometry.pad_tree(pads_)
+        length = sum(copper.length for copper in layout.copper if copper.net == net)
+        if tree > 0 and length > ratio * tree + 1e-6:
+            first = sorted(pads_, key=lambda pad: (pad.reference, pad.number))[0]
+            found.append(Violation(design.project, "workmanship_detour",
+                                   f"net {net}: {len(pads_)} pads, from {first.name()} at "
+                                   f"({coordinate(first.centre[0])}, {coordinate(first.centre[1])}) mm",
+                                   f"WORK-2 routes run direct: {net}'s tracks are {length:.2f} mm long, {length / tree:.2f} "
+                                   f"times the {tree:.2f} mm of the shortest straight-line tree joining its pads, where "
+                                   f"WORK_DETOUR_RATIO allows {ratio:g} times; route it the direct way, or move its parts "
+                                   "together"))
+    return found
+
+
+def directions(design: Design, layout: Layout, tolerance: float) -> List[Violation]:
+    """WORK-9: every track not parallel to the board's edges or at 45 degrees to them.
+
+    A straight track runs one way along its length. An arc turns, so it is held
+    by the way it runs at its two ends: a fillet joining two tracks that each
+    run one of those ways leaves and meets them along those ways and passes,
+    while a flat arc standing in for a track drawn at an odd angle runs that
+    angle at its ends and fails.
+    """
+    found = []
+    for copper in layout.copper:
+        if copper.length <= TOUCH:
+            continue
+        ends = (copper.start,) if copper.centre is None else (copper.start, copper.end)
+        off, end = max((off_45(math.degrees(math.atan2(*reversed(copper.heading(end)))) - layout.edges), end) for end in ends)
+        if off > tolerance + 1e-9:
+            how = ("track runs" if copper.centre is None else "arc runs") + f" {off:.2f} degrees off the nearest of those directions"
+            if copper.centre is not None:
+                how += (f" at its end at ({coordinate(end[0])}, {coordinate(end[1])}) mm, which is the way an arc leaves "
+                        "or meets the route")
+            found.append(Violation(design.project, "workmanship_direction", f"net {copper.net}: {copper.place()}",
+                                   f"WORK-9 routing runs parallel to the board's edges or at 45 degrees to them: the "
+                                   f"{how}, where WORK_ANGLE_TOLERANCE_DEG allows {tolerance:g} degrees; redraw it "
+                                   "along one of them"))
+    return found
+
+
+def crossed(layout: Layout, copper: Copper) -> List[Tuple[Tuple[float, float], board_geometry.Pad]]:
+    """Each pad of its net whose copper the track's copper runs over with neither end reaching it, with a point of the
+    track's centre line where it does, at which its direction is read."""
+    found = []
+    line = copper.points()
+    for pad in layout.pads_of(copper.net, copper.layer):
+        if (not board_geometry.joins(pad, line, copper.width)
+                or any(board_geometry.end_reaches(pad, end, copper.width) for end in (copper.start, copper.end))):
+            continue
+        over = [(a, b) for a, b in zip(line, line[1:]) if board_geometry.line_reaches(pad, a, b, copper.width)]
+        if over:
+            a, b = min(over, key=lambda piece: board_geometry.distance_to_segment(pad.centre, *piece))
+            found.append((((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), pad))
+    return found
+
+
+def pad_entries(design: Design, layout: Layout, ratio: float, tolerance: float) -> List[Violation]:
+    """WORK-10: every track entering, or running across, a pad more than `ratio` times as long as it is wide other than along its long axis."""
+    found = []
+    for copper in layout.copper:
+        meetings = []
+        for end, other_end in ((copper.start, copper.end), (copper.end, copper.start)):
+            for pad in layout.reached(copper, end):
+                if not board_geometry.end_reaches(pad, other_end, copper.width):
+                    meetings.append((end, pad, "enters it"))
+        meetings += [(point, pad, "runs across it") for point, pad in crossed(layout, copper)]
+        for end, pad, how in meetings:
+            axis = pad.long_axis()
+            if axis is None or max(pad.size) <= ratio * min(pad.size) + 1e-9:
+                continue
+            off = off_axis(copper.heading(end), axis)
+            if off > tolerance + 1e-9:
+                found.append(Violation(design.project, "workmanship_pad_entry",
+                                       f"net {copper.net}: {copper.place()}, "
+                                       f"{'entering' if how == 'enters it' else 'running across'} {pad.name()} at "
+                                       f"({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm",
+                                       f"WORK-10 tracks enter a pad along its long axis from its end: {pad.name()} is "
+                                       f"{max(pad.size):g} by {min(pad.size):g} mm, more than the {ratio:g} times as long "
+                                       f"as wide WORK_PAD_ENTRY_RATIO sets, and the {copper.kind()} {how} {off:.2f} "
+                                       f"degrees off its long axis, where WORK_ANGLE_TOLERANCE_DEG allows "
+                                       f"{tolerance:g} degrees; bring the track straight into the pad's end"))
+    return found
+
+
+def off_pads(layout: Layout, copper: Copper, steps: int = 200) -> float:
+    """How much of a track's length lies off the copper of its net's pads on its layer."""
+    line = copper.points()
+    pads_ = layout.pads_of(copper.net, copper.layer)
+    off = 0.0
+    for a, b in zip(line, line[1:]):
+        piece = math.dist(a, b) / steps
+        for i in range(steps):
+            t = (i + 0.5) / steps
+            point = (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+            if not any(pad.distance(point) <= board_geometry.CONTACT for pad in pads_):
+                off += piece
+    return off
+
+
+def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, float]) -> List[Violation]:
+    """WORK-8: every run of track narrower than its net class's track width other than where it necks down into a pad.
+
+    `widths` is each net's class track width. A track narrower than that is
+    allowed only as part of a run of such tracks that reaches a pad of its net
+    and runs no more than `neck` in all off the copper of its net's pads. A track wider than its class's width,
+    a power path widened where there is room, is never a narrowing.
+    """
+    narrow = [copper for copper in layout.copper if copper.net in widths and copper.width < widths[copper.net] - 1e-6]
+    groups: List[List[Copper]] = []
+    for copper in narrow:
+        joined = [group for group in groups if any(
+            other.net == copper.net and other.layer == copper.layer
+            and min(math.dist(a, b) for a in (copper.start, copper.end) for b in (other.start, other.end)) <= TOUCH
+            for other in group)]
+        merged = [copper] + [item for group in joined for item in group]
+        groups = [group for group in groups if group not in joined] + [merged]
+    found = []
+    for group in groups:
+        length = sum(off_pads(layout, copper) for copper in group)
+        at_pad = any(layout.reached(copper, end) for copper in group for end in (copper.start, copper.end))
+        if at_pad and length <= neck + 1e-6:
+            continue
+        copper = min(group, key=lambda item: (item.start, item.end))
+        width = widths[copper.net]
+        found.append(Violation(design.project, "workmanship_width", f"net {copper.net}: {copper.place()}",
+                               f"WORK-8 one track width for each net class along a route: the track is "
+                               f"{min(item.width for item in group):g} mm wide, narrower than its net class's "
+                               f"{width:g} mm, along {length:.2f} mm of route off its pads "
+                               + ("that reaches no pad" if not at_pad else "from the pad it enters")
+                               + f", where WORK_NECK_MM allows a narrower track only within {neck:g} mm of a pad; "
+                                 "draw it at its class's width"))
+    return found
+
+
+def unsized_pads(design: Design, layout: Layout) -> List[Violation]:
+    """Every pad tracks of its net reach a layer of, whose copper the contact rule cannot size, so the measures that ask
+    whether a track meets it cannot be made."""
+    return [Violation(design.project, "workmanship_pad_copper",
+                      f"net {pad.net}: {pad.name()} at ({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm",
+                      f"WORK-4, WORK-8 and WORK-10 cannot be measured at {pad.name()}: {pad.unsized}, and the "
+                      f"check sizes a pad's copper only as a circle, an oval, a rectangle or a rounded rectangle, so it "
+                      f"cannot tell whether a track of {pad.net} meets it; give the pad one of those shapes")
+            for pad in layout.unsized]
+
+
+def measured(design: Design, layout: Layout, figures: Dict[str, float], corner: Optional[float]) -> List[Violation]:
+    """Every measured workmanship rule but the width rule, which needs the nets' classes, each whose figure the design sets.
+
+    `corner` is the corner rule's minimum, which two tracks meeting at a pad are held to.
+    """
+    found = unsized_pads(design, layout)
+    if "WORK_PAD_ANGLE_DEG" in figures:
+        found += pad_corners(design, layout, corner, figures["WORK_PAD_ANGLE_DEG"])
+    if "WORK_DETOUR_RATIO" in figures:
+        found += detours(design, layout, figures["WORK_DETOUR_RATIO"])
+    if "WORK_ANGLE_TOLERANCE_DEG" in figures:
+        found += directions(design, layout, figures["WORK_ANGLE_TOLERANCE_DEG"])
+        if "WORK_PAD_ENTRY_RATIO" in figures:
+            found += pad_entries(design, layout, figures["WORK_PAD_ENTRY_RATIO"], figures["WORK_ANGLE_TOLERANCE_DEG"])
+    return found
+
+
+def class_widths(project: dict) -> Tuple[Dict[str, Tuple[float, float]], List[str]]:
+    """Each net class's (priority, track width) from the project file, and every class whose width cannot be read.
+
+    A class that leaves its track width out, or writes it null, takes the
+    Default class's, as KiCad gives it; one that writes anything but a positive
+    number of millimetres is named, as is a Default class with no width. A
+    class with no priority ranks below every class that has one.
+    """
+    given: Dict[str, Tuple[float, Optional[float]]] = {}
+    unreadable = []
+    for netclass in setting(project, "net_settings", "classes") or []:
+        if not isinstance(netclass, dict) or not isinstance(netclass.get("name"), str):
+            continue
+        priority = netclass.get("priority")
+        rank = float(priority) if isinstance(priority, (int, float)) and not isinstance(priority, bool) else math.inf
+        width = netclass.get("track_width")
+        if width is None:
+            given[netclass["name"]] = (rank, None)
+        elif positive_number(width):
+            given[netclass["name"]] = (rank, float(width))
+        else:
+            unreadable.append(netclass["name"])
+    default = given.get("Default", (math.inf, None))[1]
+    if default is None and "Default" not in unreadable:
+        unreadable.append("Default")
+    widths = {name: (rank, width if width is not None else default) for name, (rank, width) in given.items()}
+    return {name: (rank, width) for name, (rank, width) in widths.items() if width is not None}, unreadable
+
+
+def net_widths(nets: Set[str], members: Dict[str, Set[str]], widths: Dict[str, Tuple[float, float]]) -> Dict[str, float]:
+    """Each net's class track width, as KiCad resolves it.
+
+    A net KiCad places in several classes takes the width of the one ranked
+    first, the lowest priority number; a net in none takes the Default class's.
+    """
+    found = {}
+    for net in nets:
+        held = sorted((widths[name][0], name) for name, inside in members.items() if net in inside and name in widths)
+        if held:
+            found[net] = widths[held[0][1]][1]
+        elif "Default" in widths:
+            found[net] = widths["Default"][1]
+    return found
+
+
 # --- Running KiCad ------------------------------------------------------------
 
 
@@ -1148,6 +1809,8 @@ def kicad_violation(design: Design, entry: dict, fallback: str, sheet: str = "")
         message += ("; KiCad is run with the design's own library tables and the libraries it installs with itself, "
                     "and nothing else, so a library only one machine's own tables name is not one a reader has: "
                     "put the library in the repository and name it in the design's own table through ${KIPRJMOD}")
+    if rule in KICAD_WORKMANSHIP:
+        message += f" (workmanship item {KICAD_WORKMANSHIP[rule]})"
     if entry.get("severity") == "exclusion":
         message += " (the design marks this violation as excluded; an excluded violation still fails the check, so fix it)"
     return Violation(design.project, rule, location, message)
@@ -1481,6 +2144,7 @@ PROJECT_SETTINGS = (
     (("board", "design_settings", "drc_exclusions"), list, "a list of exclusions"),
     (("erc", "erc_exclusions"), list, "a list of exclusions"),
     (("net_settings", "netclass_assignments"), dict, "an object assigning nets to classes"),
+    (("net_settings", "classes"), list, "a list of net classes"),
 )
 
 
@@ -1519,7 +2183,9 @@ def project_form(design: Design, project: dict) -> List[Violation]:
 
 
 def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
-                 already: List[Violation]) -> List[Violation]:
+                 already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None) -> List[Violation]:
+    """Every violation of one design. `read`, when given, receives each measured rule's figure as the design sets it,
+    as (item and what it measures, the text variable, the figure with its unit)."""
     root = repository.root
     found = list(already)
     if any(v.rule == "design_discovery" for v in already):
@@ -1552,9 +2218,20 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                f"the project text variable MAINS {said}; set it to present if the board carries "
                                "mains, or none if it does not, since silence is never read as compliance"))
 
+    figures, unset = workmanship_figures(design, variables)
+    found += unset
+    for item, what, name, unit, _, _ in MEASURED:
+        if name in figures and read is not None:
+            read.append((f"{item} {what}", name, f"{figures[name]:g} {unit}"))
+
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
     found += hidden
+    found += workmanship_rules(design, rules)
+    corner = corner_minimum(rules)
+    if corner is not None and read is not None:
+        read.append(("WORK-4 corner at a pad", "the rules file's track_angle", f"{corner:g} degrees at least between "
+                     "two tracks of a net that meet at a pad, as at any other joint"))
 
     signed = None
     if mains == "present":
@@ -1592,6 +2269,15 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         except (OSError, sexpr.SexprError) as unread:
             tree, error = None, unread
         items = net_items(tree) if tree is not None else {}
+        copper: Optional[Layout] = None
+        if tree is not None:
+            try:
+                copper = Layout(tree)
+            except board_geometry.Unreadable as unread:
+                found.append(Violation(design.project, "design_unreadable", design.layout,
+                                       f"the layout's copper cannot be read for its workmanship rules ({unread})"))
+                return found
+            found += measured(design, copper, figures, corner)
         rules_copy = os.path.join(copy, os.path.basename(design.rules))
         existing = "(version 1)\n"
         if rules is not None and os.path.exists(rules_copy):
@@ -1672,13 +2358,22 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         # settings, by name and by pattern. They must agree net for net.
         names = layout_nets(tree)
         project_copy = os.path.join(copy, os.path.basename(design.project))
-        on_layout, why = class_members(kicad_cli, scratch, project_copy, ["Mains"], names, nonce,
-                                       layout_version(tree), class_blocks(tree))
-        if on_layout is None:
+        widths, unwidthed = class_widths(project)
+        classes = sorted((set(widths) - {"Default"}) | {"Mains"})
+        members, why = class_members(kicad_cli, scratch, project_copy, classes, names, nonce,
+                                     layout_version(tree), class_blocks(tree))
+        if members is None:
             found.append(Violation(design.project, "design_unreadable", design.layout,
                                    f"the layout's net classes cannot be resolved by KiCad: {why}"))
             return found
-        on_layout = on_layout["Mains"]
+        on_layout = members["Mains"]
+        if "WORK_NECK_MM" in figures and copper.copper:
+            for name in unwidthed:
+                found.append(Violation(design.project, "project_file", f"{design.project} net_settings.classes '{name}'",
+                                       f"the net class {name} gives no track width a positive number of millimetres "
+                                       "can be read from, so WORK-8 cannot tell a track of the class narrower than it; "
+                                       "give the class its track width"))
+            found += narrowings(design, copper, figures["WORK_NECK_MM"], net_widths(names, members, widths))
         named = set(names) | set(netlist) | set(map(str, setting(project, "net_settings", "netclass_assignments") or {}))
         in_project, why = project_mains(kicad_cli, scratch, project_copy, named, nonce, layout_version(tree))
         if in_project is None:
@@ -1740,8 +2435,12 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
     print(f"Checking board designs under {top} with KiCad {version}", file=out)
 
     results: List[Tuple[str, List[Violation]]] = []
+    figures: Dict[str, List[Tuple[str, str, str]]] = {}
     for design in designs:
-        results.append((design.project, check_design(design, repository, kicad_cli, yaml, today, problems[design.project])))
+        read: List[Tuple[str, str, str]] = []
+        results.append((design.project, check_design(design, repository, kicad_cli, yaml, today, problems[design.project],
+                                                     read)))
+        figures[design.project] = read
     for orphan in orphans:
         results.append((orphan.design, [orphan]))
     if not designs:
@@ -1755,10 +2454,12 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
         if violations:
             failed += 1
             print(f"DESIGN | {clean(name)} | FAIL | {len(violations)} violation{'s' if len(violations) != 1 else ''}", file=out)
-            for violation in violations:
-                print(violation.line(), file=out)
         else:
             print(f"DESIGN | {clean(name)} | PASS", file=out)
+        for rule, variable, figure in figures.get(name, []):
+            print(f"FIGURE | {clean(name)} | {clean(rule)} | {clean(variable)} | {clean(figure)}", file=out)
+        for violation in violations:
+            print(violation.line(), file=out)
     if failed:
         print(f"RESULT | FAIL | {failed} of {len(results)} designs failed", file=out)
         return 1

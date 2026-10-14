@@ -6,3 +6,12 @@
 	(condition "A.hasNetclass('Mains') && !B.hasNetclass('Mains')")
 	(constraint clearance (min 3mm))
 	(constraint creepage (min 4mm)))
+# The workmanship rules of the method's workmanship area that KiCad measures:
+# WORK-4's corner at 135 degrees, written as a bare number, and WORK-5's
+# shortest straight run of 1 mm, each the item's own figure. The measured
+# rules' figures are the project text variables WORK_*, each at the figure its
+# item gives.
+(rule "Corners"
+	(constraint track_angle (min 135)))
+(rule "Jogs"
+	(constraint track_segment_length (min 1mm)))

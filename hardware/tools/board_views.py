@@ -76,6 +76,7 @@ import locked_copper  # noqa: E402
 import sexpr  # noqa: E402
 from board_check import CannotRun, clean  # noqa: E402
 from locked_copper import Unreadable  # noqa: E402
+from board_geometry import number, pad_centres, placed, placement, reference, xy  # noqa: E402
 
 #: The oldest resvg the command's tests pass against: 0.47.0, the last release carrying a Windows program.
 MIN_RESVG = (0, 47)
@@ -350,19 +351,6 @@ def held_layers(layout: list, carried: Sequence[str]) -> Set[str]:
     return held
 
 
-def number(node, index: int, what: str) -> float:
-    try:
-        return float(node[index])
-    except (TypeError, ValueError, IndexError) as error:
-        raise Unreadable(f"{what} is {sexpr.dump(node)}, not a position in millimetres") from error
-
-
-def xy(node, what: str) -> Tuple[float, float]:
-    if not isinstance(node, list) or len(node) < 3:
-        raise Unreadable(f"{what} has no position where KiCad writes one")
-    return number(node, 1, what), number(node, 2, what)
-
-
 def arc_points(start, mid, end) -> List[Tuple[float, float]]:
     """Points along the arc through start, mid and end, close enough together for its bounds."""
     (ax, ay), (bx, by), (cx, cy) = start, mid, end
@@ -403,19 +391,6 @@ def shape_points(node: list, what: str) -> List[Tuple[float, float]]:
     return []
 
 
-def placement(footprint: list, what: str) -> Tuple[float, float, float]:
-    at = sexpr.child(footprint, "at")
-    x, y = xy(at, what)
-    return x, y, number(at, 3, what) if len(at) > 3 else 0.0
-
-
-def placed(point: Tuple[float, float], at: Tuple[float, float, float]) -> Tuple[float, float]:
-    """A footprint's own point in board coordinates, turned as KiCad turns it."""
-    x, y, angle = at
-    cos, sin = math.cos(math.radians(angle)), math.sin(math.radians(angle))
-    return x + point[0] * cos + point[1] * sin, y - point[0] * sin + point[1] * cos
-
-
 def on_layer(node: list, layer: str) -> bool:
     found = sexpr.child(node, "layer")
     return found is not None and len(found) > 1 and str(found[1]) == layer
@@ -435,16 +410,6 @@ def outline_bounds(layout: list) -> Optional[Tuple[float, float, float, float]]:
     if not points:
         return None
     return (min(p[0] for p in points), min(p[1] for p in points), max(p[0] for p in points), max(p[1] for p in points))
-
-
-def reference(footprint: list) -> str:
-    for node in sexpr.children(footprint, "property"):
-        if len(node) > 2 and str(node[1]) == "Reference":
-            return str(node[2])
-    for node in sexpr.children(footprint, "fp_text"):
-        if len(node) > 2 and str(node[1]) == "reference":
-            return str(node[2])
-    return ""
 
 
 def footprint_bounds(footprint: list) -> Tuple[float, float, float, float]:
@@ -481,13 +446,6 @@ def pads(footprint: list, table: Dict[str, str]) -> List[Tuple[str, str]]:
         found.append((locked_copper.item_net(pad, table, f"a pad of {reference(footprint) or '?'}"),
                       str(kind[1]).split("+")[0] if kind is not None and len(kind) > 1 else ""))
     return found
-
-
-def pad_centres(footprint: list) -> List[Tuple[float, float]]:
-    """The centre of each of a footprint's pads on the board."""
-    what = f"a pad of the footprint {reference(footprint) or '?'}"
-    at = placement(footprint, what)
-    return [placed(xy(sexpr.child(pad, "at"), what), at) for pad in sexpr.children(footprint, "pad")]
 
 
 def natural(text: str):

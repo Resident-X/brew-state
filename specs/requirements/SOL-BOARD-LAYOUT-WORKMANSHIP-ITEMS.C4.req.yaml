@@ -2,11 +2,11 @@ id: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4
 type: criterion
 title: Following the review step blind on a seeded copy reports every seeded workmanship defect
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: demonstration
 text: |
-  Extend the proof design's seeding script so the seeded copy also carries workmanship defects, at least one for each workmanship item, among them obvious ones, a supply route detouring round the board and right-angled corners, and subtle ones, a short jog, a short stub and a corner a few degrees off 45. Record them in the seed list apart from the copy, as the existing seeds are. Review the copy blind by the method's review step, exactly as the existing seeded proof does, and compare the findings with the seed list: every seeded defect, the existing ones included, must be reported against the item that covers it. A workmanship defect the review misses is closed by sharpening the item or the views, or, where it can be measured, by making it a rule item the pre-order check measures, and the blind review is repeated until none is missed. Out of scope: ordering the proof design.
+  Extend the proof design's seeding script so the seeded copy also carries workmanship defects, at least one for each workmanship item, while every seeded copy still passes the pre-order check as the seeded layout-review proof requires. A judgement-kind item is seeded in copper, among them parts scattered so their connections wander. A rule-kind item is seeded through the rules: its figure loosened below its source, in the rules table and where the board sets it, with a copper defect the loosened figure admits, among them right-angled corners and a supply route detouring round the board, as the existing board-edge seed does for its item. Subtle measured defects, a short jog, a short stub and a corner a few degrees off 45, are proven by the pre-order check's own seeded faults, not by the review. Record the seeds in the seed list apart from the copy, as the existing seeds are. Review the copy blind by the method's review step, exactly as the existing seeded proof does, and compare the findings with the seed list: every seeded defect, the existing ones included, must be reported against the item that covers it. A workmanship defect the review misses is closed by sharpening the item or the views, or, where it can be measured, by making it a rule item the pre-order check enforces, and the blind review is repeated until none is missed. Out of scope: ordering the proof design.
 links:
   - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
     type: criterion-of

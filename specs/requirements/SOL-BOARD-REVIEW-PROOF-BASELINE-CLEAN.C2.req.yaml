@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C2
+type: criterion
+title: The catalogue and the method carry the amendments the proof design's review records as owed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Make each amendment the proof design's review record says the catalogue or the method owes, in the item form and against the catalogue's source rule: the power-path item covering the return path of every load current, not only its supply; the crystal keep-clear item measured from the crystal's body; and the amendment the record names to the method's planning step. Judge each finding the record marks as a rule candidate not yet judged, among them findings 1.5, 1.49, 1.50, 1.51, 2.4 and 2.8 and a gap left between copper of one net, by the review step's test of whether a finding can be a rule, and record each verdict in the review record. Out of scope: rules that verdict makes, which the measuring criterion carries.
+links:
+  - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN
+    type: criterion-of

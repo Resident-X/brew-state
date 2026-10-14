@@ -359,6 +359,11 @@
   "sheets": [],
   "text_variables": {
     "MAINS": "present",
-    "NOT_FOR_MANUFACTURE": "true"
+    "NOT_FOR_MANUFACTURE": "true",
+    "WORK_ANGLE_TOLERANCE_DEG": "0.1",
+    "WORK_DETOUR_RATIO": "1.3",
+    "WORK_NECK_MM": "1",
+    "WORK_PAD_ANGLE_DEG": "90",
+    "WORK_PAD_ENTRY_RATIO": "2"
   }
 }

@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS-C4-TEST
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T21:26:47.482176Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_seed.py::test_every_workmanship_item_is_seeded_and_the_subtle_measured_defects_are_proven_by_the_checks_faults,test_each_kicad_check_seed_takes_out_its_row_and_leaves_the_others,test_each_rule_kind_workmanship_seed_loosens_its_figure_in_the_rules_table_and_where_the_board_sets_it,test_the_designs_own_review_record_is_withheld_from_the_folder
+  artifact_version: 346b17e3ed806f2977c21f216bfc54a42d66b8cc
+attested_by: crun-ab54253324446b3a
+links:
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4
+    type: satisfies

@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The practice catalogue carries sourced workmanship items, measured where the board's files allow and judged on the views where they do not
 status: active
-version: 1
+version: 2
 text: |
   Why this exists. Boards for this project are to be laid out the way an experienced electrical engineer lays them out: neat, tidy and direct, not only electrically correct. That was asked for when the controller hardware was planned, but it was never written down, so the practice catalogue grew only electrical and manufacturing items and nothing asked a reviewer to look at workmanship. The result was a practice board that passed its pre-order check and four blind reviews against the whole catalogue while its copper looked beginner-drawn: square corners everywhere, the 5 V supply taking a long way down one edge beside the mains boundary, parts placed loosely so a signal looped across the board to reach its partner, and small jogs and stubs left beside two parts. No reviewer flagged any of it because no item asked. This solution closes that gap, so that every later board is planned and reviewed for workmanship as it already is for grounding or separation, and is not ordered until it meets it.
 
@@ -12,6 +12,15 @@ text: |
   Why two kinds of item. A reviewing model judges the overall look of a board well when it is told what an experienced engineer expects to see, so the qualities that are a matter of overall form, such as whether parts are grouped by what they connect to and whether the routing reads cleanly, are judgement items stated as a style guide: what good looks like, and what a failing board looks like in the views. But a corner angle, a jog of a fraction of a millimetre or a route twice as long as it needs to be is a few pixels on an image and easily missed, while it is exact in the board's file. So every quality that can be measured from the board's files is a rule item, measured by the pre-order check, and fails the board automatically. The blind proof then shows whether the split is right: a seeded workmanship defect the visual review misses becomes a measured rule.
 
   What it does not do. Choosing and checking a placement before routing, and checking critical routing before automated routing, are the method's in-progress checkpoints and belong to the solution for them; this solution supplies the items those checkpoints judge against.
+
+  Settled before build.
+
+  - Each rule-kind item takes the form that can enforce it. KiCad's own layout rule check already measures the angle at a joint between two segments and the length of a segment, and reports a track end or a via left unconnected without any rule, so the corner and jog items are custom rules in each board's rules file and the stub and unneeded-via items rest on KiCad's built-in report, all enforced by the check the board toolchain decision makes the gate and confirmed in effect by the rules-confirm step like any other custom rule. KiCad states a joint's angle as the interior angle between its segments, so a straight run is 180 degrees, a 45-degree bend 135 and a square corner 90; the figure is written as a bare number, because a unit KiCad does not accept makes it drop the whole rules file without a word, which the rules-confirm step's loading proof catches. KiCad also compares a track that branches off another; how a branch is treated so that the corner item does not fail a branch the practice accepts is found by probing KiCad, not assumed.
+  - What KiCad cannot measure, the pre-order check measures itself from the board file with its existing reader: a route's length against the direct distance it spans, a track's direction against the board's edges, an arc's held by the direction of its two ends and the edges read at their true shape, a pad entered off its long axis, and a route narrowed partway along away from a pad, since widening a power path where there is room is what the power-path item asks. That is the fourth, measured form of rule.
+  - A measured rule's figure is a project text variable, read through the check's existing project-file reader as the mains declaration already is, written in the board's rules table with its source, and confirmed in effect by the check's report, which states the figure it read for each measured rule. A missing or malformed figure fails the check, naming it; so does a rules file with no corner or jog rule.
+  - A route's detour is measured per net routed in tracks: the net's track length against the shortest tree joining, in straight lines, the centres of all the net's pads. Zones never enter the measure: a zone cannot shorten that tree, so it can neither exempt a net nor drop a pad, and a net whose connection a zone carries only gains room against it. Whether a track joins a pad is judged from the copper, the track's end cap reaching the pad's copper as KiCad's own connectivity judges it, never from the track's centre line alone, and the same contact decides every measure that asks whether a track enters or meets a pad; a pad whose copper the check cannot size from the board file fails the measures that need it, naming the pad, rather than being guessed. The pad-centre and shortest-tree geometry is written once, in its own module among the board tools beside the check, so it counts as the check's own tooling wherever the check's tooling is treated as such, so the check and the method's placement checkpoint both use it rather than each building its own.
+  - An item no free published document states cites the proof design's first recorded layout review, which records the workmanship defects that design carries before it is tidied.
+  - Every seeded copy still passes the pre-order check, as the seeded layout-review proof requires, so a defect a measured or KiCad rule catches cannot be seeded in copper alone. Each rule-kind item is proven by the check's own seeded fault for it; it reaches the blind review as a rules seed, its figure loosened below its source with a copper defect the loosened figure admits, as the existing board-edge seed does. Judgement-kind items are seeded in copper.
 links:
   - target: DEL-HW-DESIGN-METHOD.C9
     type: derives-from
@@ -37,3 +46,7 @@ links:
     type: derives-from
   - target: DEL-HW-DESIGN-VERIFICATION.C5
     type: derives-from
+brief_confirmation:
+  confirmer: claude-opus-5-5 independent brief reviewer
+  fingerprint: c9ad81c07a98446c28d4f890729e21c45775960f2ccc3ac3737909a49adc81f4
+  gating_profile: ""

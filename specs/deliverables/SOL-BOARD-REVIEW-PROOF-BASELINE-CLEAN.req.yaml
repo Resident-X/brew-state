@@ -1,0 +1,23 @@
+id: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN
+type: deliverable
+category: solution
+title: The layout review's proof design meets every catalogue item its own review found it failing, and the catalogue carries what that review owes
+status: active
+version: 1
+text: |
+  Why this exists. The layout review's proof design is the clean baseline the seeded layout-review proof and the workmanship proof place their seeds against, and the seeded proof's rule is that a finding showing a real defect in the clean design is fixed in the design and the proof repeated. The design's first recorded layout review, made while its workmanship was tidied, found it failing items that have nothing to do with workmanship and that it already failed when the seeded proof first committed it: the microcontroller placed far from the regulator that feeds it (finding 1.1, FLOOR-3), one via carrying the shunt's full load-current return where several are needed (1.2, POWER-3), parts within the keep-clear distance of the crystal (1.5, CLOCK-3), the connector's filter capacitor away from its connector (1.7, EMI-3), mains copper reaching under the isolating part toward its low-voltage pads (2.4, MAINS-3, a safety item), four-wire test pads reaching the shunt only through the planes (1.49), paste printed over an exposed pad's thermal vias (1.50), no mounting holes (1.51), and pads joined to ground with no thermal relief (2.8). The workmanship work fixed only what its own tidying introduced, and left these open in the design's review record. The same review also names amendments it owes the catalogue and the method, and rule candidates it marks as not yet judged.
+
+  What it does. Closes each of those findings by a change to the design, recorded as a new round of the design's review record, so the baseline is clean and the seeded proof again shows the review finds what is seeded and nothing that was already there; and carries the review's owed amendments into the catalogue and the method, judging each rule candidate by the review step's own test of whether a finding can be a rule.
+
+  Out of scope: any real board, and the workmanship items, which their own solution carries.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
+    type: depends-on

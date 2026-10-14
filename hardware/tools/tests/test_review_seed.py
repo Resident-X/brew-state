@@ -106,9 +106,9 @@ class TheSeededReviewFolder(unittest.TestCase):
         others = [path for path in files if not path.startswith(("views/", review_seed.DESIGN + "/"))]
         self.assertEqual(others, ["check-report.txt", "docs/board-design-method.md", "hardware/README.md"])
         design = [path for path in files if path.startswith(review_seed.DESIGN + "/")]
-        for name in ("layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml",
-                     "review-proof.kicad_pro", "review-proof.kicad_sch", "review-proof.kicad_pcb", "review-proof.kicad_dru"):
-            self.assertIn(f"{review_seed.DESIGN}/{name}", design)
+        self.assertEqual(design, sorted(f"{review_seed.DESIGN}/{name}" for name in (
+            "layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml",
+            "review-proof.kicad_pro", "review-proof.kicad_sch", "review-proof.kicad_pcb", "review-proof.kicad_dru")))
         method = "docs/board-design-method.md"
         with open(os.path.join(self.out, method), "rb") as given:
             self.assertEqual(given.read(), board_prove.committed(method)[method], "the method is given as committed")
@@ -189,11 +189,21 @@ class TheSeededReviewFolder(unittest.TestCase):
         self.assertTrue(any(ident in committed for ident in order[first:]),
                         "the seeded tracks and vias are grouped after every one the design already had")
 
+    def test_the_designs_own_review_record_is_withheld_from_the_folder(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The review is given only what the review step gives a reviewer, and the reviewing session has no record of what was found or seeded.
+        record = f"{review_seed.DESIGN}/layout-review.md"
+        self.assertIn(record, board_prove.committed(review_seed.DESIGN), "the premise: the design commits its review record")
+        given = files_under(self.out)
+        self.assertNotIn(record, given, "the design's own review record reached the review folder")
+        self.assertFalse(any(path.endswith("layout-review.md") for path in given), given)
+
     def test_the_folder_holds_the_committed_files_and_none_is_told_by_its_time_or_form(self):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where.
         held = board_prove.committed(review_seed.DESIGN)
         given = [path for path in files_under(self.out) if path.startswith(review_seed.DESIGN + "/")]
-        self.assertEqual(given, sorted(held), "the design folder holds other files than the committed design's")
+        self.assertEqual(given, sorted(path for path in held if review_seed.given(os.path.relpath(path, review_seed.DESIGN))),
+                         "the design folder holds other files than the committed design's the review step gives")
         times = {os.stat(os.path.join(directory, name)).st_mtime
                  for directory, folders, names in os.walk(self.out) for name in names + folders}
         times.add(os.stat(self.out).st_mtime)
@@ -216,12 +226,72 @@ class TheSeeds(unittest.TestCase):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: At least one seeded defect for each area the catalogue covers, and among them ground drawn as thin traces, a decoupling capacitor routed the long way round to its pin, low-voltage copper inside the mains region, and a high-current pad without the copper it needs.
         items = catalogue_items()
         areas = {item.split("-")[0] for item in items}
-        self.assertEqual(len(areas), 11, areas)
+        self.assertEqual(len(areas), 12, areas)
         seeded = [seed[1] for seed in review_seed.SEEDS]
         self.assertEqual(areas - {item.split("-")[0] for item in seeded}, set(), "a catalogue area has no seed")
         self.assertLessEqual({"GROUND-1", "DECOUPLE-1", "MAINS-2", "POWER-5"}, set(seeded))
         self.assertEqual(set(seeded) - set(items), set(), "a seed names an item the catalogue does not hold")
         self.assertEqual(len({seed[0] for seed in review_seed.SEEDS}), len(review_seed.SEEDS), "two seeds share an identifier")
+
+    def test_every_workmanship_item_is_seeded_and_the_subtle_measured_defects_are_proven_by_the_checks_faults(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        work = [item for item in catalogue_items() if item.startswith("WORK-")]
+        self.assertEqual(len(work), 10, work)
+        self.assertEqual(set(work) - {seed[1] for seed in review_seed.SEEDS}, set())
+        # A copy holding any of these fails the check, so the check's own seeded faults prove them, not the review.
+        faults = {fault[0]: fault[2] for fault in board_prove.FAULTS}
+        for name, rule in (("a short stub", "track_dangling"), ("an unneeded via", "via_dangling"),
+                           ("a short jog", "track_segment_length"), ("a corner a few degrees off 45", "track_angle")):
+            self.assertEqual(faults.get(name), rule, name)
+
+    def test_seeds_taking_a_nets_copper_areas_away_leave_the_boards_rule_areas(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        tree = sexpr.parse_one('(kicad_pcb (zone (net "/GND") (layer "F.Cu")) (zone (net "/MAINS_L") (layer "F.Cu")) '
+                               '(zone (name "R3 ground return") (layer "F.Cu") (keepout (copperpour not_allowed))))')
+        self.assertEqual([sexpr.child(zone, "net")[1] for zone in review_seed.zones(tree, review_seed.GND)], ["/GND"])
+        for item in ("GROUND-1", "POWER-5"):
+            edit = next(seed[5] for seed in review_seed.SEEDS if seed[1] == item)
+            with self.subTest(item=item), tempfile.TemporaryDirectory() as scratch:
+                seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+                edit(seed)
+                self.assertIn('(name "R3 ground return")', seed.read(".kicad_pcb"))
+
+    def test_each_kicad_check_seed_takes_out_its_row_and_leaves_the_others(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        for item, row in (("WORK-6", "| Stubs |"), ("WORK-7", "| Unconnected vias |")):
+            edit = next(seed[5] for seed in review_seed.SEEDS if seed[1] == item)
+            with self.subTest(item=item), tempfile.TemporaryDirectory() as scratch:
+                seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+                before = seed.read("design-rules.md").splitlines()
+                project, layout = seed.read(".kicad_pro"), seed.read(".kicad_pcb")
+                edit(seed)
+                after = seed.read("design-rules.md").splitlines()
+                self.assertEqual([line for line in before if line not in after], [next(line for line in before if line.startswith(row))])
+                self.assertIn("KiCad's", next(line for line in before if line.startswith(row)), "the row names KiCad's own check")
+                self.assertEqual(len(after), len(before) - 1)
+                self.assertEqual((seed.read(".kicad_pro"), seed.read(".kicad_pcb")), (project, layout),
+                                 "a KiCad check's seed changes nothing but its row, since KiCad reports its defect unaided")
+
+    def test_each_rule_kind_workmanship_seed_loosens_its_figure_in_the_rules_table_and_where_the_board_sets_it(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        rule_kind = {"WORK-2": ("WORK_DETOUR_RATIO", "2"), "WORK-4": (None, "(min 90)"), "WORK-5": (None, "(min 0.3mm)"),
+                     "WORK-8": ("WORK_NECK_MM", "8"), "WORK-9": ("WORK_ANGLE_TOLERANCE_DEG", "15"),
+                     "WORK-10": ("WORK_PAD_ENTRY_RATIO", "10")}
+        for ident, item, _, _, _, edit in review_seed.SEEDS:
+            if item not in rule_kind:
+                continue
+            variable, value = rule_kind[item]
+            with self.subTest(seed=ident), tempfile.TemporaryDirectory() as scratch:
+                seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+                table, project, rules = seed.read("design-rules.md"), seed.read(".kicad_pro"), seed.read(".kicad_dru")
+                edit(seed)
+                self.assertNotEqual(seed.read("design-rules.md"), table, "the rules table's row is not loosened")
+                if variable is not None:
+                    self.assertEqual(json.loads(project)["text_variables"][variable] != value, True)
+                    self.assertEqual(json.loads(seed.read(".kicad_pro"))["text_variables"][variable], value)
+                else:
+                    self.assertNotIn(value, rules)
+                    self.assertIn(value, seed.read(".kicad_dru"))
 
     def test_each_seed_changes_the_copy(self):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: Each seed is a deliberately placed layout defect in the copy.
@@ -258,6 +328,21 @@ class TheSeeds(unittest.TestCase):
             self.assertNotIn(item, prompt)
             self.assertNotIn(description, prompt)
         self.assertNotIn("seed", prompt.lower())
+
+
+class TheGivenFiles(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: Following the review step blind on a seeded copy of a proof design reports every seeded layout defect."""
+
+    def test_only_kicads_files_and_the_named_records_of_a_design_are_given(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The review is given only the copy's design files, the checklist, the rendered views, the pre-order check's report on the copy, and the committed floorplan and plan.
+        for name in ("test-proof.kicad_pro", "test-proof.kicad_sch", "test-proof.kicad_pcb", "test-proof.kicad_dru",
+                     "sub-sheet.kicad_sch", "parts.kicad_sym", "parts.pretty/pad.kicad_mod", "sym-lib-table", "fp-lib-table",
+                     "layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml"):
+            self.assertTrue(review_seed.given(name), name)
+        for name in ("layout-review.md", "circuit-proof.md", "bring-up.md", "notes.md", "README.md", "test-proof.kicad_prl",
+                     "notes/layout-plan.md", "old/design-rules.md", "layout-review.md.orig", "fp-info-cache"):
+            self.assertFalse(review_seed.given(name), name)
 
 
 class TheRefusals(unittest.TestCase):
