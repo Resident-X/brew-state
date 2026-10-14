@@ -25,8 +25,6 @@ on:
     # Off the hour, when scheduled runs are least likely to be delayed.
     - cron: "17 2 * * *"
   workflow_dispatch:
-  push:
-    branches: [req/SOL-VERIFY-NIGHTLY-FULL-ON-MAIN/nightly-full-verify]
 
 permissions:
   contents: read
@@ -42,6 +40,9 @@ jobs:
   gates:
     name: Every gate but the sweep
     runs-on: ubuntu-24.04
+    # The first observed runs took about twenty minutes, most of it the
+    # emulation tier, but stopped short of building and running every host
+    # environment; the budget stays wide until a run that does has been timed.
     timeout-minutes: 120
     steps:
       # Actions are pinned to the commit a release points at rather than to the
