@@ -12,8 +12,8 @@ hold. Copper on any other net is the router's to place, and is ignored.
 
 Before routing, the rules are confirmed by asking KiCad: its rule check is run
 on the board with the board's own custom rules file and a marker rule appended
-to it, which fires only if KiCad loaded the whole file, and with one probe per
-named class, which lists the nets KiCad places in it. The lock command marks
+to it, which fires on the items of one net only if KiCad loaded the whole file,
+and each named class's nets are then listed as KiCad places them. The lock command marks
 every critical-class track, arc, via and zone locked in the board file, writing
 the lock exactly where KiCad writes it and touching nothing else.
 
@@ -29,10 +29,11 @@ rewritten by the import, or a different one given -- cannot hide added copper.
 A record is of one board, taken with that board's own project file, and is
 compared only with that board opened with that project file.
 
-Which nets are in which class is asked of KiCad, through the same probe the
-pre-order check uses to learn the Mains class, run on the board itself with its
-project file, so the project file's assignments and patterns and any class the
-layout file carries all count as KiCad applies them. The layout is read with
+Which nets are in which class is asked of KiCad, through the same class read
+the pre-order check uses to learn the Mains class, on boards of one track per
+net of the board carrying its project file and its layout's own classes, so the
+project file's assignments and patterns and any class the layout file carries
+all count as KiCad applies them, however large the board. The layout is read with
 the pre-order check's own S-expression reader, in the one form KiCad writes
 it; anything else fails by name rather than being taken as no copper. The record
 is a working file, refused inside any design's folder so it is never committed
@@ -65,7 +66,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import board_check  # noqa: E402
 import sexpr  # noqa: E402
-from board_check import CannotRun, clean  # noqa: E402
+from board_check import UNWRITABLE, CannotRun, clean  # noqa: E402
 
 #: What a record says it is, so a file of any other kind is not read as one.
 FORMAT = "locked-copper record 1"
@@ -79,9 +80,6 @@ KINDS = {
     "zone": ("zone", ("net", "layers", "outline")),
 }
 KIND_OF = {keyword: kind for kind, (keyword, _) in KINDS.items()}
-
-#: Characters that cannot be written into the probe's condition or rule name.
-UNWRITABLE = set("'\"\\")
 
 
 class Unreadable(Exception):
@@ -318,12 +316,11 @@ def refused(refusals: List[Tuple[str, str]], result: str, out, finding: str = "R
 
 
 def members(kicad_cli: str, board: str, project: str, layout: list, classes: Sequence[str]) -> Dict[str, Set[str]]:
-    """The nets KiCad places in each of `classes` on the board itself, opened with its project file."""
+    """The nets of the board KiCad places in each of `classes`, with its project file and its layout's own classes."""
     with tempfile.TemporaryDirectory(prefix="locked-copper-") as work:
-        shutil.copy2(board, os.path.join(work, "board.kicad_pcb"))
-        shutil.copy2(project, os.path.join(work, "board.kicad_pro"))
-        found, why = board_check.class_members(kicad_cli, work, "board", classes, board_check.layout_nets(layout),
-                                               secrets.token_hex(8))
+        found, why = board_check.class_members(kicad_cli, work, project, classes, board_check.layout_nets(layout),
+                                               secrets.token_hex(8), board_check.layout_version(layout),
+                                               board_check.class_blocks(layout))
     if found is None:
         raise Unreadable(f"KiCad could not say which nets of {board} are in {', '.join(classes)}: {why}")
     return found
@@ -683,20 +680,30 @@ def confirm(board: str, project: str, classes: Sequence[str], kicad_cli: str, ou
     except OSError as error:
         raise Unreadable(f"the custom rules file {rules} cannot be read ({error})") from error
     nonce = secrets.token_hex(8)
+    net = board_check.marker_net(board_check.net_items(layout))
     with tempfile.TemporaryDirectory(prefix="locked-copper-") as work:
         shutil.copy2(board, os.path.join(work, "board.kicad_pcb"))
         shutil.copy2(project, os.path.join(work, "board.kicad_pro"))
-        nets, why = board_check.class_members(kicad_cli, work, "board", classes, board_check.layout_nets(layout),
-                                              nonce, rules=existing)
-        if nets is None and why == board_check.PROBES_NOT_LOADED:
+        with open(os.path.join(work, "board.kicad_dru"), "w", encoding="utf-8") as handle:
+            handle.write(existing + board_check.appended_rules(None, nonce, net))
+        report, why = board_check.run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all",
+                                              "board.kicad_pcb"], work)
+        if report is None:
+            raise Unreadable(f"KiCad could not check {board} with its rules: {why}")
+        if not board_check.fired(report, board_check.marker_rule(nonce)):
+            if board_check.cut_short(report):
+                return refused([(rules, f"KiCad's report was cut short at its limit of {board_check.REPORT_LIMIT} "
+                                        "assertion failures, the board's own assertion rules failing on that many "
+                                        "items, so the marker showing it loaded the rules was dropped from the report; "
+                                        "correct the items those rules fail on and confirm again")],
+                               "FAIL | KiCad's report was cut short", out, "RULES")
             place, what = board_check.rejected_form(kicad_cli, work, "board.kicad_pcb",
                                                     os.path.join(work, "board.kicad_dru"), existing, nonce)
             return refused([(f"{rules} {place}", "KiCad did not load the board's custom rules file: it drops the whole "
                                                  f"file, without saying so, when any part of it is something it cannot "
                                                  f"parse, so none of its rules is in effect; {what}")],
                            "FAIL | KiCad does not load the board's custom rules", out, "RULES")
-    if nets is None:
-        raise Unreadable(f"KiCad could not check {board} with its rules: {why}")
+    nets = members(kicad_cli, board, project, layout, classes)
     class_lines(classes, nets, out)
     refusals = empty_classes(nets)
     if refusals:

@@ -90,6 +90,16 @@ PLACEHOLDERS = {"unsigned", "tbd", "todo", "none", "placeholder"}
 #: hangs past it fails the design rather than the check waiting forever.
 KICAD_TIMEOUT_S = 900
 
+#: The most failures of one kind KiCad's command-line layout check reports, as
+#: KiCad 10.0.7 is observed to do. Past it KiCad reports that many and drops the
+#: rest, and which it drops changes from run to run, so a report holding this
+#: many failures of one kind cannot be read as holding them all.
+REPORT_LIMIT = 199
+
+#: Characters a name cannot hold and still be written into a rule's condition
+#: or a rule's name.
+UNWRITABLE = set("'\"\\")
+
 TOOL_HELP = "see hardware/README.md for what the check needs and where to get it"
 
 
@@ -905,11 +915,38 @@ def net_of(node) -> str:
     return str(name[1]) if name is not None and len(name) > 1 else ""
 
 
-def at_text(node) -> str:
-    at = sexpr.child(node, "at")
+def at_text(node, keyword: str = "at") -> str:
+    at = sexpr.child(node, keyword)
     if at is not None and len(at) > 2:
         return f"({at[1]}, {at[2]}) mm"
     return "(position not stated)"
+
+
+def net_items(layout: list) -> Dict[str, List[str]]:
+    """Every pad, track, arc, via and zone on the layout that carries a net, by net, each as a report names it."""
+    found: Dict[str, List[str]] = {}
+    for footprint in walk(layout, "footprint"):
+        reference = next((str(prop[2]) for prop in sexpr.children(footprint, "property")
+                          if len(prop) > 2 and prop[1] == "Reference"), "?")
+        for pad in sexpr.children(footprint, "pad"):
+            number = str(pad[1]) if len(pad) > 1 else "?"
+            found.setdefault(net_of(pad), []).append(
+                f"pad {number} [{net_of(pad)}] of {reference} (footprint at {at_text(footprint)})")
+    for keyword, kind, where in (("segment", "track", "start"), ("arc", "arc", "start"), ("via", "via", "at")):
+        for node in walk(layout, keyword):
+            found.setdefault(net_of(node), []).append(f"{kind} [{net_of(node)}] at {at_text(node, where)}")
+    for zone in walk(layout, "zone"):
+        points = next(walk(zone, "xy"), None)
+        corner = f" with a corner at ({points[1]}, {points[2]}) mm" if points is not None and len(points) > 2 else ""
+        found.setdefault(net_of(zone), []).append(f"zone [{net_of(zone)}]{corner}")
+    found.pop("", None)
+    return found
+
+
+def marker_net(items: Dict[str, List[str]]) -> Optional[str]:
+    """The net carrying the fewest items on the layout whose name a rule's condition can hold, or None when there is none."""
+    candidates = [(len(found), net) for net, found in items.items() if found and not UNWRITABLE & set(net)]
+    return min(candidates)[1] if candidates else None
 
 
 def overrides(design: Design, layout: list, signed_clearance: float, mains_nets: Set[str]) -> List[Violation]:
@@ -1009,26 +1046,33 @@ def net_ties(design: Design, layout: list, mains_nets: Set[str]) -> List[Violati
 # --- Running KiCad ------------------------------------------------------------
 
 
-def appended_rules(signed: Optional[Tuple[float, float]], nonce: str) -> str:
-    """The rules added after the design's own on the temporary copy, the signed one last of the design-facing ones.
+def appended_rules(signed: Optional[Tuple[float, float]], nonce: str, net: Optional[str] = None) -> str:
+    """The rules added after the design's own on the temporary copy, the signed one last.
 
-    The marker matches every item, so its absence from KiCad's report shows
-    KiCad did not load the rules file at all; the probe reports every item KiCad
-    itself places in the Mains class. Both are assertions, which KiCad evaluates
-    for every matching rule rather than letting a later one replace an earlier,
-    so neither changes what any other rule enforces. Both are named for this run
-    alone, from `nonce`, so no rule a design writes can pass for either and have
-    its own findings taken for the check's.
+    The marker matches the items of `net`, or every item when no net is given,
+    so its absence from KiCad's report shows KiCad did not load the rules file
+    at all. It is an assertion, which KiCad evaluates for every matching rule
+    rather than letting a later one replace an earlier, so it changes nothing
+    any other rule enforces. Matching one net's items keeps its failures few,
+    since KiCad reports only REPORT_LIMIT assertion failures and drops the
+    rest at random; a marker on every item of a large board would crowd the
+    design's own assertion failures out of the report. It is named for this run
+    alone, from `nonce`, so no rule a design writes can pass for it and have its
+    own findings taken for the check's.
     """
-    text = "\n" + marker(nonce) + class_probe(nonce, "Mains")
+    text = "\n" + marker(nonce, EVERY_ITEM if net is None else f"A.NetName == '{net}'")
     if signed is not None:
         text += (f'(rule "{SIGNED_RULE}"\n\t(condition "{MAINS_CONDITION}")\n'
                  f'\t(constraint clearance (min {signed[0]:g}mm))\n\t(constraint creepage (min {signed[1]:g}mm)))\n')
     return text
 
 
-def marker(nonce: str) -> str:
-    return f'(rule "{marker_rule(nonce)}"\n\t(condition "A.Type != \'\'")\n\t(constraint assertion "false"))\n'
+#: The marker's condition when it is to fire on every item.
+EVERY_ITEM = "A.Type != ''"
+
+
+def marker(nonce: str, condition: str = EVERY_ITEM) -> str:
+    return f'(rule "{marker_rule(nonce)}"\n\t(condition "{condition}")\n\t(constraint assertion "false"))\n'
 
 
 def class_probe(nonce: str, netclass: str) -> str:
@@ -1039,8 +1083,17 @@ def class_probe(nonce: str, netclass: str) -> str:
 
 def fired(report: dict, rule: str) -> List[dict]:
     """The assertion failures KiCad reports for one of the check's own rules."""
-    return [entry for entry in report.get("violations") or []
-            if entry.get("type") == "assertion_failure" and f"(rule '{rule}')" in entry.get("description", "")]
+    return [entry for entry in assertions(report) if f"(rule '{rule}')" in entry.get("description", "")]
+
+
+def assertions(report: dict) -> List[dict]:
+    """Every assertion failure KiCad reports, whichever rule it is of."""
+    return [entry for entry in report.get("violations") or [] if entry.get("type") == "assertion_failure"]
+
+
+def cut_short(report: dict) -> bool:
+    """Whether KiCad's report holds as many assertion failures as it reports, so it may be missing more."""
+    return len(assertions(report)) >= REPORT_LIMIT
 
 
 def run_kicad(command: List[str], cwd: str, output: str = "report.json") -> Tuple[Optional[str], str]:
@@ -1193,27 +1246,13 @@ def project_mains(kicad_cli: str, scratch: str, project: str, names: Set[str], n
     The project file assigns nets to classes by name and by pattern, and KiCad
     applies both to the layout, so the layout's membership alone cannot show
     what the project file says: the layout file can carry classes of its own,
-    and a net the project names may have no copper. KiCad is therefore given
-    the project file beside a board of nothing but one track per net name,
-    holding no class of its own, and asked through the same probe which of
-    those tracks it places in Mains. The marker shows the probe was loaded, so
-    an empty answer means no net rather than an unread rules file. The board is
-    written in `version`, the file format of the design's own layout, which the
-    installed KiCad has already opened.
+    and a net the project names may have no copper. KiCad is therefore asked
+    through class_members with the project file alone, carrying none of the
+    layout's own classes, for every net name given. The boards are written in
+    `version`, the file format of the design's own layout, which the installed
+    KiCad has already opened.
     """
-    work = os.path.join(scratch, "net-settings")
-    os.makedirs(work, exist_ok=True)
-    shutil.copy2(project, os.path.join(work, "nets.kicad_pro"))
-    tracks = "".join(
-        f'\t(segment (start 0 {2 * index}) (end 1 {2 * index}) (width 0.1) (layer "F.Cu") (net {quoted(name)}) '
-        f'(uuid "00000000-0000-4000-8000-{index:012d}"))\n'
-        for index, name in enumerate(sorted(names)))
-    with open(os.path.join(work, "nets.kicad_pcb"), "w", encoding="utf-8") as handle:
-        handle.write(f'(kicad_pcb\n\t(version {version})\n\t(generator "pcbnew")\n\t(generator_version "10.0")\n'
-                     '\t(general (thickness 1.6))\n\t(paper "A4")\n'
-                     '\t(layers\n\t\t(0 "F.Cu" signal)\n\t\t(2 "B.Cu" signal)\n\t\t(25 "Edge.Cuts" user)\n\t)\n'
-                     + tracks + ")\n")
-    members, why = class_members(kicad_cli, work, "nets", ["Mains"], names, nonce)
+    members, why = class_members(kicad_cli, scratch, project, ["Mains"], names, nonce, version)
     if members is None:
         return None, why
     return members["Mains"], ""
@@ -1223,26 +1262,97 @@ def project_mains(kicad_cli: str, scratch: str, project: str, names: Set[str], n
 PROBES_NOT_LOADED = "KiCad did not load the rules that ask it which nets are in which net class"
 
 
-def class_members(kicad_cli: str, work: str, stem: str, classes: Sequence[str], names: Set[str], nonce: str,
-                  rules: str = "(version 1)\n") -> Tuple[Optional[Dict[str, Set[str]]], str]:
-    """The nets of `names` KiCad places in each of `classes` on the board `<stem>.kicad_pcb` in `work`.
+def layout_version(layout: list) -> str:
+    """The file format a layout is written in, which the installed KiCad has opened it in."""
+    version = sexpr.child(layout, "version")
+    return str(version[1]) if version is not None and len(version) > 1 else "20260206"
 
-    The board is checked with the project file of the same stem beside it, as
-    KiCad opens one, and with a rules file of `rules` followed by the marker and
-    one probe per class, written in place of any beside it. So KiCad applies the
-    project file's assignments and patterns and any class the layout file
-    carries, exactly as it would on the board itself, and reports every item it
-    places in each class. The marker shows the whole file was loaded, `rules`
-    with it, so an empty answer means no net rather than an unread rules file.
+
+def class_blocks(layout: list) -> List[list]:
+    """The (net_class ...) blocks a layout file carries itself, which older KiCad versions wrote and KiCad 10 honours."""
+    return sexpr.children(layout, "net_class")
+
+
+def class_batches(names: Set[str], classes: Sequence[str]) -> List[List[str]]:
+    """`names`, in batches small enough that one run's assertion failures stay below KiCad's report limit.
+
+    One run reports the marker once and each net of its batch at most once per
+    class, so a batch of n nets read for k classes reports at most 1 + n * k
+    failures, and n is the most that keeps that below REPORT_LIMIT.
     """
-    with open(os.path.join(work, f"{stem}.kicad_dru"), "w", encoding="utf-8") as handle:
-        handle.write(rules + "\n" + marker(nonce) + "".join(class_probe(nonce, netclass) for netclass in classes))
-    report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", f"{stem}.kicad_pcb"], work)
-    if report is None:
-        return None, why
+    size = max(1, (REPORT_LIMIT - 2) // max(1, len(classes)))
+    ordered = sorted(names)
+    return [ordered[start:start + size] for start in range(0, len(ordered), size)]
+
+
+def batch_members(report: dict, classes: Sequence[str], names: Set[str], nonce: str
+                  ) -> Tuple[Optional[Dict[str, Set[str]]], str]:
+    """The nets of `names` KiCad's report of one class run places in each of `classes`, or why it cannot be read.
+
+    A report holding as many assertion failures as KiCad reports may have
+    dropped any number more, the marker's or any class's, so it is refused
+    rather than read as complete; a correct batching never reaches it.
+    """
+    if cut_short(report):
+        return None, (f"KiCad's report while reading which nets are in {', '.join(classes)} reached its limit of "
+                      f"{REPORT_LIMIT} failures of one kind, so it may leave out nets of "
+                      f"{'that class' if len(classes) == 1 else 'those classes'} and is not read as complete")
     if not fired(report, marker_rule(nonce)):
         return None, PROBES_NOT_LOADED
     return {netclass: probed_nets(fired(report, probe_rule(nonce, netclass)), names) for netclass in classes}, ""
+
+
+def merged(answers: List[Dict[str, Set[str]]], classes: Sequence[str]) -> Dict[str, Set[str]]:
+    """Each class's nets across every batch's answer."""
+    return {netclass: set().union(*(answer[netclass] for answer in answers)) for netclass in classes}
+
+
+def class_members(kicad_cli: str, scratch: str, project: str, classes: Sequence[str], names: Set[str], nonce: str,
+                  version: str, blocks: Sequence[list] = ()) -> Tuple[Optional[Dict[str, Set[str]]], str]:
+    """The nets of `names` KiCad places in each of `classes`, opened with the project file `project`.
+
+    KiCad is asked on boards of nothing but one track per net name, written in
+    a folder of their own in `scratch` in the file format `version`, each opened
+    with a copy of the project file and carrying `blocks`, the (net_class ...)
+    blocks of the layout whose classes are wanted. So KiCad applies the project
+    file's assignments and patterns and any class the layout file carries,
+    exactly as it would on the layout itself. Each board's layout check runs
+    with a marker and one probe per class: the marker fires on the one track
+    laid on the back copper, showing the rules were loaded, so an empty answer
+    means no net rather than an unread rules file; each probe fires on every
+    track KiCad places in its class. A board of one track per net reports each
+    net once per class however much copper the net carries on the layout, and
+    the nets are split into batches small enough that no run reaches KiCad's
+    report limit, so the answer is the whole of each class on every run, on a
+    board of any size. The batches' answers are merged.
+    """
+    work = tempfile.mkdtemp(prefix="classes-", dir=scratch)
+    shutil.copy2(project, os.path.join(work, "classes.kicad_pro"))
+    with open(os.path.join(work, "classes.kicad_dru"), "w", encoding="utf-8") as handle:
+        handle.write("(version 1)\n" + marker(nonce, "A.Layer == 'B.Cu'")
+                     + "".join(class_probe(nonce, netclass) for netclass in classes))
+    carried = "".join(f"\t{sexpr.dump(block)}\n" for block in blocks)
+    answers = []
+    for batch in class_batches(names, classes):
+        tracks = "".join(
+            f'\t(segment (start 0 {2 * index}) (end 1 {2 * index}) (width 0.1) '
+            f'(layer "{"B.Cu" if index == 0 else "F.Cu"}") (net {quoted(name)}) '
+            f'(uuid "00000000-0000-4000-8000-{index:012d}"))\n'
+            for index, name in enumerate(batch))
+        with open(os.path.join(work, "classes.kicad_pcb"), "w", encoding="utf-8") as handle:
+            handle.write(f'(kicad_pcb\n\t(version {version})\n\t(generator "pcbnew")\n\t(generator_version "10.0")\n'
+                         '\t(general (thickness 1.6))\n\t(paper "A4")\n'
+                         '\t(layers\n\t\t(0 "F.Cu" signal)\n\t\t(2 "B.Cu" signal)\n\t\t(25 "Edge.Cuts" user)\n\t)\n'
+                         + carried + tracks + ")\n")
+        report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "classes.kicad_pcb"],
+                                 work)
+        if report is None:
+            return None, why
+        answer, why = batch_members(report, classes, set(batch), nonce)
+        if answer is None:
+            return None, why
+        answers.append(answer)
+    return merged(answers, classes), ""
 
 
 #: Where each of the three statements of Mains membership is read from, in the
@@ -1473,16 +1583,23 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                 shutil.copy2(os.path.join(root, path), target)
         copy = os.path.join(replica, design.directory)
         os.makedirs(copy, exist_ok=True)
+        schematic = os.path.basename(design.schematic)
+        layout = os.path.basename(design.layout)
+        try:
+            with open(os.path.join(copy, layout), encoding="utf-8") as handle:
+                tree: Optional[list] = sexpr.parse_one(handle.read())
+            error = None
+        except (OSError, sexpr.SexprError) as unread:
+            tree, error = None, unread
+        items = net_items(tree) if tree is not None else {}
         rules_copy = os.path.join(copy, os.path.basename(design.rules))
         existing = "(version 1)\n"
         if rules is not None and os.path.exists(rules_copy):
             with open(rules_copy, encoding="utf-8", errors="replace") as handle:
                 existing = handle.read()
         with open(rules_copy, "w", encoding="utf-8") as handle:
-            handle.write(existing + appended_rules(signed, nonce))
+            handle.write(existing + appended_rules(signed, nonce, marker_net(items)))
 
-        schematic = os.path.basename(design.schematic)
-        layout = os.path.basename(design.layout)
         erc, why = run_report([kicad_cli, "sch", "erc", "--format", "json", "--severity-all", "--units", "mm", schematic], copy)
         netlist: Optional[Dict[str, Tuple[List[str], List[str]]]] = None
         if erc is None:
@@ -1510,8 +1627,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                    f"the layout cannot be checked: {why}"))
             return found
 
-        markers, probe = fired(drc, marker_rule(nonce)), fired(drc, probe_rule(nonce))
-        own = {id(entry) for entry in markers + probe}
+        markers = fired(drc, marker_rule(nonce))
+        own = {id(entry) for entry in markers}
         found += ignored(design, drc, "board.design_settings.rule_severities")
         for entry in drc.get("violations") or []:
             if id(entry) not in own:
@@ -1519,7 +1636,16 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         for entry in (drc.get("unconnected_items") or []) + (drc.get("schematic_parity") or []):
             found.append(kicad_violation(design, entry, design.layout))
 
-        if not markers:
+        # Assertions come only from a rules file, so a report full of them shows
+        # the file was loaded even where the marker's own were among those dropped.
+        if cut_short(drc):
+            found.append(Violation(
+                design.project, "custom_rules", design.rules,
+                f"KiCad's report was cut short: it reports at most {REPORT_LIMIT} assertion failures, and this run "
+                "reached that many, so any further failures were dropped from the report at random and the design "
+                "cannot be passed on what is left; correct the items the design's own assertion rules fail on until "
+                f"fewer than {REPORT_LIMIT} fail"))
+        elif not markers:
             if rules is None:
                 where, what = design.rules, ("the design has no custom rules file, and KiCad did not load the one "
                                              "the check writes in its place either, which holds only the check's own "
@@ -1535,10 +1661,7 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
 
         if netlist is None:
             return found
-        try:
-            with open(os.path.join(copy, layout), encoding="utf-8") as handle:
-                tree = sexpr.parse_one(handle.read())
-        except (OSError, sexpr.SexprError) as error:
+        if tree is None:
             found.append(Violation(design.project, "design_unreadable", design.layout,
                                    f"the layout cannot be read for its nets and clearance overrides ({error})"))
             return found
@@ -1548,21 +1671,25 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         # enforced against; the schematic's; and the project file's net
         # settings, by name and by pattern. They must agree net for net.
         names = layout_nets(tree)
-        on_layout = probed_nets(probe, names)
+        project_copy = os.path.join(copy, os.path.basename(design.project))
+        on_layout, why = class_members(kicad_cli, scratch, project_copy, ["Mains"], names, nonce,
+                                       layout_version(tree), class_blocks(tree))
+        if on_layout is None:
+            found.append(Violation(design.project, "design_unreadable", design.layout,
+                                   f"the layout's net classes cannot be resolved by KiCad: {why}"))
+            return found
+        on_layout = on_layout["Mains"]
         named = set(names) | set(netlist) | set(map(str, setting(project, "net_settings", "netclass_assignments") or {}))
-        version = sexpr.child(tree, "version")
-        in_project, why = project_mains(kicad_cli, scratch, os.path.join(copy, os.path.basename(design.project)),
-                                        named, nonce, str(version[1]) if version is not None and len(version) > 1 else "20260206")
+        in_project, why = project_mains(kicad_cli, scratch, project_copy, named, nonce, layout_version(tree))
         if in_project is None:
             found.append(Violation(design.project, "design_unreadable", f"{design.project} net_settings",
                                    f"the project file's net classes cannot be resolved by KiCad: {why}"))
             return found
 
     locate: Dict[str, Dict[str, str]] = {ON_LAYOUT: {}, IN_SCHEMATIC: {}, IN_PROJECT: {}}
-    for entry in probe:
-        for item in entry.get("items") or []:
-            for net in probed_nets([{"items": [item]}], names):
-                locate[ON_LAYOUT].setdefault(net, item_text(item))
+    for net in on_layout:
+        if items.get(net):
+            locate[ON_LAYOUT][net] = "on the layout at " + items[net][0]
     for net, (_, pins) in netlist.items():
         if pins:
             locate[IN_SCHEMATIC][net] = "in the schematic at " + ", ".join(pins[:4]) + (", ..." if len(pins) > 4 else "")

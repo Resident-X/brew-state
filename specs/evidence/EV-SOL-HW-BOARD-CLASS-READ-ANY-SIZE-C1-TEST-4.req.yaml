@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-CLASS-READ-ANY-SIZE-C1-TEST-4
+type: evidence
+title: test evidence for SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T07:15:24.796858Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_the_clean_design_passes_and_every_fault_is_caught_without_touching_the_tree,test_the_task_runs_the_whole_check_on_the_repository,test_a_clean_tree_reports_every_design_passing_and_exits_zero
+  artifact_version: 1930ebc27abff6ddf1daaafd088379ea066a82ed
+attested_by: crun-8e62a88a68abd0cc
+links:
+  - target: SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1
+    type: satisfies

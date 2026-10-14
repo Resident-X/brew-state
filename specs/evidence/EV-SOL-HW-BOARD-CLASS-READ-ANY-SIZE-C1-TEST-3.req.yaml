@@ -1,0 +1,16 @@
+id: EV-SOL-HW-BOARD-CLASS-READ-ANY-SIZE-C1-TEST-3
+type: evidence
+title: test evidence for SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T07:15:24.738714Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_locked_copper.py::test_a_marker_crowded_out_of_a_full_report_is_not_taken_for_unloaded_rules
+  artifact_version: 1930ebc27abff6ddf1daaafd088379ea066a82ed
+attested_by: crun-8e62a88a68abd0cc
+links:
+  - target: SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1
+    type: satisfies
