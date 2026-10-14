@@ -6,11 +6,11 @@ Written 2026-10-12. This is a recommendation, not a decision (D21 in `decisions.
 
 ## Position
 
-A low-voltage-only prototype PCB, hand-soldered through-hole, rather than building the whole controller on perfboard. The board carries: the H743 module on four 1x22 female header pieces, the five sensor dividers (4.7 kOhm low-TCR, 100 nF), the ULN2003A breakout, the 74HCT541 (DIP-20 in a socket), the two 2N5401 stages with their resistors, the key-line series resistors, the connectors, and the pull-ups and pull-downs. The mains parts stay off-board and are wired by harness: the SSRs, the dimmers, the relay module, the IRM-10-5 on its carrier, the BL0942 modules and the inlet chain.
+A low-voltage-only prototype PCB, hand-soldered through-hole, rather than building the whole controller on perfboard. The board carries: the H743 module on four 1x22 female header pieces, the six sensor dividers (4.7 kOhm low-TCR, 100 nF), the ULN2003A breakout, the 74HCT541 (DIP-20 in a socket), the two 2N5401 stages with their resistors, the key-line series resistors, the connectors, and the pull-ups and pull-downs. The mains parts stay off-board and are wired by harness: the SSRs, the dimmers, the relay module, the IRM-10-5 on its carrier, the BL0942 modules and the inlet chain.
 
 ## Why
 
-- About 37 assigned pins, about 40 passives and at least 8 connectors; hand-wiring is a few hundred joints.
+- About 38 assigned pins, about 40 passives and at least 8 connectors; hand-wiring is a few hundred joints.
 - The 16-bit ADC front end targets 0.05 to 0.2 C noise (estimate) and wants controlled grounding and short traces next to dimmer and SSR switching.
 - The machine vibrates and cycles in heat.
 - This repository is open source and meant to be rebuilt elsewhere; Gerbers and a schematic can be rebuilt, hand-wired perfboard cannot.

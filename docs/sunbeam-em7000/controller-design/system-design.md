@@ -26,7 +26,7 @@ mains inlet: Schaffner FN9222-15-06 filter, T10A fuse, RN3404 MOV
 
 controller board (low voltage only; prototype PCB or perfboard)
    WeAct MiniSTM32H743 on female headers
-   5 ADC dividers (3 NTC + 2 PT1000), 4.7 k low-TCR, ratiometric to the ADC reference
+   6 ADC dividers (3 NTC + 3 PT1000), 4.7 k low-TCR, ratiometric to the ADC reference
    74HCT541 level-up for the 5 gauge lines; two 2N5401 stages (rail gate, buzzer; proposed, D18)
    I2C1 and I2C2 to the two XDB401 pressure sensors
    connectors: gauge (9-way), panel (9-way), flow meter, thermistor plugs, tank level, knob microswitches
@@ -36,7 +36,7 @@ Mains parts stay off the controller board, wired by harness; only the low-voltag
 
 ## 4. Channels and pins
 
-The pin map is `h743-pin-allocation.csv` (37 header pins assigned, 18 free, with the alternate functions marked verified or not); the module wiring is `module-interconnect.csv`.
+The pin map is `h743-pin-allocation.csv` (38 header pins assigned, 17 free, with the alternate functions marked verified or not); the module wiring is `module-interconnect.csv`.
 
 | Channel | Pin(s) | Notes |
 |---|---|---|
@@ -46,7 +46,7 @@ The pin map is `h743-pin-allocation.csv` (37 header pins assigned, 18 free, with
 | Energy meters (BL0942) | PC7, PA3 (UART RX) | No BOM row yet; isolation to be measured |
 | Pressure sensors | PB8/PB9 (I2C1, brew), PB10/PB11 (I2C2, steam) | XDB401 1.2 MPa and 0.5 MPa |
 | NTCs | PC0, PC1, PC4 | 100 kOhm NTCs, 4.7 k dividers |
-| PT1000 channels | PA4 (outlet water probe), PA1 (commissioning chip) | ADC channel assignment not yet verified |
+| PT1000 channels | PA4 (outlet water probe), PA1 (commissioning chip), PA6 (steam-output monitor) | ADC channel assignment not yet verified |
 | Valve relays | PD7 (2-way vent), PD10 (3-way) plus PD14, PD15 spare | 4-channel module, 2 snubbers |
 | Gauge lines | PD0, PD1, PD4, PD5, PD6 | Through the 74HCT541 |
 | Key lines (5, shared with indicators) | PE4 to PE8 | Internal pull-up; 47 Ohm series; indicator sink current to check |

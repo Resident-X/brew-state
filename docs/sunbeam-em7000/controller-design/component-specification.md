@@ -98,7 +98,7 @@ Read from `h743-pin-allocation.csv`. The option of reaching the panel over the m
 | Energy-meter UART receive | Coffee, steam heater | PC7 (USART6_RX), PA3 (USART2_RX) | 2 | Verified; TX optional on PC6 / PA2; blocked on isolation test |
 | Pressure sensors, two I2C buses | Brew, steam | PB8/PB9 (I2C1), PB10/PB11 (I2C2) | 4 | Verified |
 | Analogue inputs, 16-bit | 3 NTC (coffee, steam, wand) | PC0, PC1, PC4 | 3 | Verified |
-| Analogue inputs, 16-bit | Outlet-water PT1000; commissioning PT1000 | PA4; PA1 | 2 | Assigned, ADC channel **not yet verified** |
+| Analogue inputs, 16-bit | Outlet-water PT1000; commissioning PT1000; steam-output PT1000 | PA4; PA1; PA6 | 3 | Assigned, ADC channel **not yet verified** |
 | Valve relay drive | 2-way, 3-way, 2 spare | PD7, PD10, PD14, PD15 | 4 | Verified, plain GPIO |
 | Gauge drive lines (via 74HCT541) | 2 direction, step clocks, reset | PD0, PD1, PD4, PD5, PD6 | 5 | Verified, plain GPIO |
 | Panel key/indicator lines | 5 bidirectional | PE4–PE8 | 5 | Verified, plain GPIO |
@@ -108,9 +108,9 @@ Read from `h743-pin-allocation.csv`. The option of reaching the panel over the m
 | Tank level, hot-water knob, steam knob switches | S6, S7, S8 | PE9, PE15, PC6 | 3 | Verified |
 | Flow-meter capture | Pulse train | PA8 (TIM1_CH1) | 1 | Verified |
 | Mains-presence confirm | Two isolated inputs | unassigned | 2 | Under review (see the confirm-channel row below) |
-| **Assigned total** | | | **37** | Matches the allocation file's budget line |
+| **Assigned total** | | | **38** | Matches the allocation file's budget line |
 
-The 37 assigned pins are all that the allocation file counts; the two unassigned mains-presence inputs would bring the demand to 39.
+The 38 assigned pins are all that the allocation file counts; the two unassigned mains-presence inputs would bring the demand to 40.
 
 ### What the selected controller provides
 
@@ -118,15 +118,15 @@ The selected controller is the WeAct MiniSTM32H743 (STM32H743VIT6, LQFP100) on f
 
 | Resource | Provided [pin allocation, header pinout] | Demanded | Remaining and caveat |
 |---|---|---|---|
-| Header GPIO | 74 port pins on headers (92 header positions including power and SWD; PC13 and PE3 are the only port pins off the headers; PA13/PA14 on the separate SWD header) | 37 assigned | 18 free; 19 are encumbered by onboard TFT, microSD, QSPI/SPI flash and USB. The design avoids every encumbered pin; the DVP camera pins are used freely because no camera is fitted. Five header designators (3, 7, 10, 90, 91) did not parse from the source library and are almost certainly power or ground: **to confirm** against the schematic |
-| 16-bit ADC channels | 3 ADCs; ADC channel map per DS12110 differs between ADC1/2 and ADC3 on this package | 5 channels (3 NTC, 2 PT1000) | PC0/PC1/PC4 verified; PA1 and PA4 **not yet verified** (expected ADC1_INP17 and ADC12_INP18). Free ADC-capable pins are not counted in the allocation file — **to confirm** from the header pinout before the headroom claim below is made firm. PC2/PC3 plain pads do not exist on LQFP100 and were deliberately avoided |
+| Header GPIO | 74 port pins on headers (92 header positions including power and SWD; PC13 and PE3 are the only port pins off the headers; PA13/PA14 on the separate SWD header) | 38 assigned | 17 free; 19 are encumbered by onboard TFT, microSD, QSPI/SPI flash and USB. The design avoids every encumbered pin; the DVP camera pins are used freely because no camera is fitted. Five header designators (3, 7, 10, 90, 91) did not parse from the source library and are almost certainly power or ground: **to confirm** against the schematic |
+| 16-bit ADC channels | 3 ADCs; ADC channel map per DS12110 differs between ADC1/2 and ADC3 on this package | 6 channels (3 NTC, 3 PT1000) | PC0/PC1/PC4 verified; PA1, PA4 and PA6 **not yet verified** (expected ADC1_INP17, ADC12_INP18 and ADC12_INP3). Free ADC-capable pins are not counted in the allocation file — **to confirm** from the header pinout before the headroom claim below is made firm. PC2/PC3 plain pads do not exist on LQFP100 and were deliberately avoided |
 | Timers | Allocation uses TIM1 (flow capture CH1, zero-cross capture CH3; PA9 CH2 expected for a pump DIM) and TIM3 (PB0 CH3, PB1 CH4, PB5 CH2) | 2 captures, timer-backed outputs | Each timer's channels share a counter and prescaler: TIM1's two captures are noted "no conflict expected" and TIM3 carries the anode-rail PWM beside the heater gates. The heater gates are plain-GPIO-sufficient so the shared TIM3 period does not bind, **to confirm** once firmware allocates periods |
 | Serial | USART2 and USART6 receive for the meters; I2C1 and I2C2 | 2 UART RX, 2 I2C | PC6 is both the optional USART6 TX and the steam-knob switch input S8: if the coffee meter needs commands, one of the two must move. **To confirm** whether the module needs commands |
 | Output level, gauge lines | 3.3 V I/O | 5 lines clearing the retained `VID66-08`'s 3.15 V VIH | Cleared by the 74HCT541 level-up buffer (D19, [chosen]); HCT accepts 3.3 V as a valid high [part-numbers]. The buffer's output reaching the driver at 5 V is **inferred** from its supply. The allocation file notes the 5 V-tolerance analysis behind the buffer was an F407 one and the H743 pin set differs: re-check, though the buffer is conservative either way |
 | 5 V-tolerance on open-drain stages | PB4, PB5 drive the OEM-copied Q8 and Q7 transistor stages open-drain (D18, [recommended]) | 2 pins | To be verified 5V-tolerant (PB4, PB5; see `open-items.md` section B); the allocation file says verify, otherwise add an NPN level shifter. **To confirm** |
 | Flash / RAM / compute | 2 MB / 1 MB / 480 MHz | Not stated by the design | Unquantified on both sides, as before; see below |
 
-**Simultaneity holds on the allocation as written, with the unverified rows named.** No channel is double-assigned among the 37, and the one overlap in the file (PC6) is on an optional TX. The five unverified items are PA1 and PA4 ADC channels, the PA10 and PB5 timer alternate functions, and PA9's timer channel (not required: plain GPIO is assigned). Until those five are checked against DS12110 the allocation is a plan, not a proven placement.
+**Simultaneity holds on the allocation as written, with the unverified rows named.** No channel is double-assigned among the 38, and the one overlap in the file (PC6) is on an optional TX. The six unverified items are the PA1, PA4 and PA6 ADC channels, the PA10 and PB5 timer alternate functions, and PA9's timer channel (not required: plain GPIO is assigned). Until those six are checked against DS12110 the allocation is a plan, not a proven placement.
 
 **One row of the earlier assessment is resolved by a part.** The earlier text found that a 3.3 V controller output could not be guaranteed to clear the gauge driver's 3.15 V input high, and offered level shifters or a bench measurement of VOH. The 74HCT541 buffer on the perfboard is that level shifter (one octal part, socketed). It is also a cost that belongs to **retention** of the gauge driver rather than to the gauges, which sits with `DEC-DEVICE-RETENTION-BOUNDARY`.
 
@@ -140,11 +140,11 @@ Several channels the earlier text carried as anticipated are now designed; the r
 |---|---|---|
 | Brew-path pressure transducer | `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred | Now designed: XDB401 on I2C1 (PB8/PB9), D12 [chosen]. No longer anticipated |
 | Current sensing | Earlier: not fitted, not decided | Now designed as the two BL0942 energy meters on USART RX (D17), blocked on the isolation test |
-| Weight-based endpoint control | Named in `REQ-HARDWARE-HEADROOM-001` as the immediate deferred capability | Not designed; 2 digital pins to a load-cell amplifier against 18 free header GPIO (some of which are the encumbered-but-usable pins; the 18 counts only the free ones) |
+| Weight-based endpoint control | Named in `REQ-HARDWARE-HEADROOM-001` as the immediate deferred capability | Not designed; 2 digital pins to a load-cell amplifier against 17 free header GPIO (some of which are the encumbered-but-usable pins; the 17 counts only the free ones) |
 | Direct group-head instrumentation | Named in the same requirement as the general case | Not designed; would cost 1–2 conversion inputs. Headroom in ADC-capable free pins is to confirm (above) |
 | Real-time clock | Not fitted, not decided | Not designed. Pin cost of a 32.768 kHz crystal option is not determined from the inputs; the earlier text said 0 pins on the internal oscillator and 2 with the crystal, and noted the internal oscillator drifts too far for timestamping — **carried, to confirm** on the H743 board |
 
-Against 18 free header GPIO, the anticipated channels that remain (weight, group-head instrumentation, an RTC crystal) fit by pin count on the allocation's own budget line, which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4` ask to be shown; the ADC-capable share of those 18 is the part not yet shown.
+Against 17 free header GPIO, the anticipated channels that remain (weight, group-head instrumentation, an RTC crystal) fit by pin count on the allocation's own budget line, which is what `REQ-HARDWARE-HEADROOM-001.C1` and `DEL-COMPONENT-SPECIFICATION.C4` ask to be shown; the ADC-capable share of those 17 is the part not yet shown.
 
 ### What this assessment does not establish
 
@@ -223,7 +223,7 @@ For the next reader, the items this refresh could not resolve from its inputs, a
 3. Whether the Standard dimmer's Z-C is full-wave, its output type and pulse width, and its optical isolation (the vendor page states no figure).
 4. BL0942 module isolation (blocks connection), and whether the module needs TX (PC6 clash with S8).
 5. D20: whether the BL0942 reading replaces the mains-presence confirm; two pins unassigned.
-6. Allocation rows not yet verified: PA1 and PA4 ADC channels, PA10 and PB5 timer AFs; 5 V-tolerance of PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; five unparsed header designators; QSPI pairing.
+6. Allocation rows not yet verified: PA1, PA4 and PA6 ADC channels, PA10 and PB5 timer AFs; 5 V-tolerance of PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; five unparsed header designators; QSPI pairing.
 7. Gauge step-clock timing requirement versus plain-GPIO assignment.
 8. Relay module input polarity; as-found valve coil VA; whether the valves are retained or replaced.
 9. Pressure-sensor accuracy against the requirement; XDB401 3.3 V variant output rate and thread.
