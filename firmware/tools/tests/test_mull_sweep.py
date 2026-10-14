@@ -34,6 +34,7 @@ sys.path.insert(0, TOOLS)
 import build_environments  # noqa: E402
 import mull_sweep  # noqa: E402
 import round_gate  # noqa: E402
+import workflow_declarations  # noqa: E402
 import mull_toolchain  # noqa: E402
 from check_support_status import Uninspectable  # noqa: E402
 from structure_symbols import discover  # noqa: E402
@@ -947,16 +948,25 @@ class TheSweepRunsWhereverTheToolsAre(unittest.TestCase):
         # A stated boundary of this work: the sweep compiles every swept source
         # afresh and runs the suite once per mutant, to answer a question that
         # does not change between commits the way the tests' own results do.
-        # Nothing else would notice `on: push` being added to that file.
-        workflow = os.path.join(
-            os.path.dirname(PROJECT), ".github", "workflows", "mutation-sweep.yml"
-        )
-        with open(workflow, encoding="utf-8") as handle:
-            declared = handle.read()
-        triggers = declared.split("on:", 1)[1].split("permissions:", 1)[0]
-        self.assertIn("workflow_dispatch", triggers)
-        for automatic in ("push:", "pull_request:", "schedule:"):
-            self.assertNotIn(automatic, triggers)
+        # Nothing else would notice `on: push` being added to that file, or to
+        # a workflow that calls it -- the nightly starts it on a schedule, and a
+        # push trigger there would start it on every push all the same.
+        starts = {
+            name: workflow_declarations.triggers(declared)
+            for name, declared in workflow_declarations.workflows()
+            if name == "mutation-sweep.yml"
+            or any(used.split("#", 1)[0].strip().endswith("/mutation-sweep.yml")
+                   for used in workflow_declarations.uses(declared))
+        }
+        sweep = starts["mutation-sweep.yml"]
+        self.assertIn("workflow_dispatch", sweep)
+        # Started by hand or by a caller, never on its own clock: the one
+        # schedule it runs on is the nightly's, so there is one night's record.
+        self.assertNotIn("schedule", sweep)
+        self.assertGreater(len(starts), 1, "nothing calls the sweep, so nothing runs it nightly")
+        for name, events in starts.items():
+            for automatic in ("push", "pull_request", "pull_request_target"):
+                self.assertNotIn(automatic, events, name)
 
     def test_the_sweep_stops_when_no_environment_declares_itself_swept(self):
         # The rule every discovering gate here follows. This one matters twice
@@ -991,48 +1001,68 @@ class TheHostedRunPullsInOnlyWhatItNames(unittest.TestCase):
     to a person, and so an updater can bump the digest and the comment together
     -- the shape those tools expect. Asserting both halves is what stops the
     pin degrading back into a tag the next time somebody edits the file.
+
+    The one reference held to neither half is a path in this repository -- the
+    nightly calling this workflow as `$/.github/workflows/mutation-sweep.yml` --
+    because it is read from the commit the run started on and has no ref that
+    could be re-aimed. That exemption is drawn on the path's own shape, so it
+    cannot become a way past the check for a remote reference.
     """
 
-    #: A pinned reference: a full commit digest, then the version it was.
-    PINNED = re.compile(r"^[0-9a-f]{40}$")
-
     def workflows(self):
-        directory = os.path.join(os.path.dirname(PROJECT), ".github", "workflows")
-        for name in sorted(os.listdir(directory)):
-            if name.endswith((".yml", ".yaml")):
-                with open(os.path.join(directory, name), encoding="utf-8") as handle:
-                    yield name, handle.read()
+        return workflow_declarations.workflows()
 
     def uses(self):
         for name, declared in self.workflows():
-            for line in declared.splitlines():
-                stripped = line.strip().lstrip("- ").strip()
-                if stripped.startswith("uses:"):
-                    yield name, stripped[len("uses:"):].strip()
+            for used in workflow_declarations.uses(declared):
+                yield name, used
 
     def test_there_is_something_to_check(self):
         # A gate over an empty set reports success in exactly the way a gate
-        # nobody ran does.
-        self.assertTrue(list(self.uses()), "no workflow step uses an action at all")
+        # nobody ran does -- and a set holding only local paths would be one.
+        remote = [used for _, used in self.uses() if not workflow_declarations.is_local(used)]
+        self.assertTrue(remote, "no workflow step uses a remote action at all")
 
-    def test_every_action_is_pinned_to_a_digest_rather_than_a_tag(self):
+    def test_every_action_is_pinned_to_a_digest_and_says_which_version_it_is(self):
         for workflow, used in self.uses():
-            reference = used.split("#", 1)[0].strip()
-            self.assertIn("@", reference, f"{workflow}: '{used}' names no version at all")
-            _, _, version = reference.partition("@")
-            self.assertRegex(
-                version,
-                self.PINNED,
-                f"{workflow}: '{used}' is pinned to a moving reference rather than a digest",
-            )
+            with self.subTest(workflow=workflow, used=used):
+                self.assertIsNone(workflow_declarations.unpinned(used))
 
-    def test_every_pinned_action_still_says_which_version_it_is(self):
-        for workflow, used in self.uses():
-            _, marker, comment = used.partition("#")
-            self.assertTrue(
-                marker and comment.strip(),
-                f"{workflow}: '{used}' is a digest with nothing saying which release it is",
-            )
+    def test_a_remote_action_named_by_a_tag_branch_or_short_digest_is_refused(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
+        # The exemption for a local path is what a careless edit would widen,
+        # so the check is shown still failing on every way a remote reference
+        # can stop being pinned.
+        for used in (
+            "actions/checkout@v4",
+            "actions/checkout@main",
+            "actions/checkout@3d3c42e # v7.0.1",
+            "actions/checkout",
+            "Resident-X/brew-state/.github/workflows/mutation-sweep.yml@main",
+            "3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "~/.github/workflows/mutation-sweep.yml",
+            "docker://alpine:3.20",
+        ):
+            with self.subTest(used=used):
+                self.assertIsNotNone(workflow_declarations.unpinned(used))
+
+    def test_a_digest_with_no_release_beside_it_is_refused(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
+        self.assertIn(
+            "nothing saying which release",
+            workflow_declarations.unpinned("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"),
+        )
+
+    def test_a_pinned_remote_and_a_path_in_this_repository_are_both_accepted(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
+        for used in (
+            "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1",
+            "owner/repo/.github/workflows/x.yml@3d3c42e5aac5ba805825da76410c181273ba90b1 # v1",
+            "$/.github/workflows/mutation-sweep.yml",
+            "./.github/workflows/mutation-sweep.yml",
+        ):
+            with self.subTest(used=used):
+                self.assertIsNone(workflow_declarations.unpinned(used))
 
     def test_the_versions_the_run_installs_are_named_rather_than_taken_as_latest(self):
         # A sweep whose result moved because a build tool was upgraded that

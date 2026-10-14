@@ -25,6 +25,7 @@ REPOSITORY = os.path.dirname(os.path.dirname(TOOLS))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from test_round_gate import declared_gates, task_commands  # noqa: E402
+import workflow_declarations  # noqa: E402
 
 GATES = ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "fw:sweep"]
 
@@ -233,7 +234,9 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         left_out = re.findall(r"--leave-out\s+(\S+)", invocations[0])
         self.assertEqual(["fw:sweep"], left_out)
         self.assertIn("fw:sweep", declared_gates(read("Taskfile.yml")))
-        self.assertRegex(self.nightly, r"uses:\s*\$/\.github/workflows/mutation-sweep\.yml")
+        self.assertIn(
+            "$/.github/workflows/mutation-sweep.yml", list(workflow_declarations.uses(self.nightly))
+        )
         self.assertRegex(self.sweep, r"(?m)^  workflow_call:")
         self.assertRegex(self.sweep, r"(?m)^  workflow_dispatch:")
 
@@ -247,10 +250,9 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
     def test_every_action_is_pinned_to_a_full_commit_and_permissions_are_read_only(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
         for text in (self.nightly, self.sweep):
-            for target in re.findall(r"uses:\s*(\S+)", text):
-                if target.startswith("$/"):
-                    continue
-                self.assertRegex(target, r"^[\w.-]+/[\w./-]+@[0-9a-f]{40}$")
+            for used in workflow_declarations.uses(text):
+                with self.subTest(used=used):
+                    self.assertIsNone(workflow_declarations.unpinned(used))
             permissions = re.findall(r"(?m)^\s*(\w[\w-]*):\s*(read|write|none)\s*$", text)
             self.assertTrue(permissions)
             self.assertEqual({("contents", "read")}, set(permissions))
@@ -262,10 +264,10 @@ class TheVerificationNeedsOnlyTheStandardLibrary(unittest.TestCase):
 
     def test_the_driver_and_its_tests_import_only_the_standard_library(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
-        local = ("__future__", "task_gate", "test_round_gate")
+        local = ("__future__", "task_gate", "test_round_gate", "workflow_declarations")
         for path in (
             os.path.join(TOOLS, "verify_gate.py"), os.path.join(TOOLS, "task_gate.py"),
-            os.path.abspath(__file__),
+            os.path.abspath(__file__), os.path.abspath(workflow_declarations.__file__),
         ):
             with open(path, encoding="utf-8") as handle:
                 tree = ast.parse(handle.read())
