@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C2
+type: criterion
+title: The method's review step runs the history command in place of its hand-run checks
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Change the method's layout review step so that its completion checks for each round standing as first recorded and for the closing round judging the board as it stands are made by running the history command and reading its verdict, naming the command and what its failure means, and remove the hand-run git commands those checks now give. Out of scope: the other completion checks.
+links:
+  - target: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK
+    type: criterion-of

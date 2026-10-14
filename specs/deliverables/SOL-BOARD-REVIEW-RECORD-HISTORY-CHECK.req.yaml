@@ -1,0 +1,21 @@
+id: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK
+type: deliverable
+category: solution
+title: A board's layout review record is checked by a command for rounds changed after they were recorded
+status: active
+version: 1
+text: |
+  Why this exists. The method's layout review step requires each round of a board's review record to stand as it was first recorded, so that the planning-shortfall check reads round 1 as first written and no finding is quietly dropped. The check is written as git commands for the reviewer to run by hand, and nothing runs it: during the workmanship build a commit replaced the layout review proof design's whole record with its latest round, deleting five earlier rounds, and no check failed. The history was restored by hand. A rule whose breach a command can detect belongs in a command that fails, not only in prose a reviewer must remember to follow.
+
+  What it does. Puts the review step's history checks, each round standing as first recorded and the closing round judging the board as it stands, into one command that reads a board's review record and the repository's history and fails, naming the round and what changed, when either does not hold; and has the method's review step run it in place of the hand-run git commands.
+
+  Out of scope: the review step's judgement checks, which a reviewer makes.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: depends-on
