@@ -23,3 +23,7 @@ links:
     type: depends-on
   - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5
+  fingerprint: 97c965630efa3d01e3bad6eb4fc30e8c4abf6dfd88787f268e884d54b8c9abd2
+  gating_profile: ""
