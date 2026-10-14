@@ -181,9 +181,9 @@ class APadsCopperIsItsShape(unittest.TestCase):
 class ATrackMeetsAPadByItsCopper(unittest.TestCase):
     # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
     """A track's end is a round cap of half its width, and KiCad's
-    connectivity joins it to a pad when that cap reaches the pad's copper, or
-    when the pad's centre lies on the track's copper; the centre line alone
-    never decides it.
+    connectivity joins a track to a pad wherever the track's copper reaches
+    the pad's, by an end cap or by running over it off its centre as much as
+    through it; the centre line alone never decides it.
     """
 
     PAD = board_geometry.pads(layout(footprint("U1", "45 10", '(pad "1" smd rect (at 0 0) (size 1.6 0.4) (layers "F.Cu"))')))[0]
@@ -199,12 +199,16 @@ class ATrackMeetsAPadByItsCopper(unittest.TestCase):
         self.assertTrue(board_geometry.line_reaches(self.PAD, (44, 10.3), (46, 10.3), 0.25), "running along the side, overlapping it")
         self.assertFalse(board_geometry.line_reaches(self.PAD, (44, 10.4), (46, 10.4), 0.25))
 
-    def test_kicad_joins_a_track_by_its_end_cap_or_by_the_pads_centre_on_its_copper(self):
-        self.assertTrue(board_geometry.joins(self.PAD, [(40, 10), (44.1, 10)], 0.25))
-        self.assertTrue(board_geometry.joins(self.PAD, [(45.1, 5), (45.1, 15)], 0.25), "the pad's centre lies on the track's copper")
-        self.assertFalse(board_geometry.joins(self.PAD, [(45.5, 5), (45.5, 15)], 0.25),
-                         "crossing the pad away from its centre with neither end on it does not join it")
-        self.assertFalse(board_geometry.joins(self.PAD, [(40, 10), (44, 10)], 0.25))
+    def test_kicad_joins_a_track_wherever_its_copper_reaches_the_pads(self):
+        self.assertTrue(board_geometry.joins(self.PAD, [(40, 10), (44.1, 10)], 0.25), "by its end cap")
+        self.assertTrue(board_geometry.joins(self.PAD, [(45.1, 5), (45.1, 15)], 0.25), "running over the pad's centre")
+        self.assertTrue(board_geometry.joins(self.PAD, [(45.5, 5), (45.5, 15)], 0.25),
+                        "running over the pad away from its centre, neither end on it")
+        self.assertTrue(board_geometry.joins(self.PAD, [(40, 10.3), (42, 10.3), (50, 10.3)], 0.25),
+                        "a later piece of the line running along the pad's side, its copper overlapping it")
+        self.assertFalse(board_geometry.joins(self.PAD, [(40, 10.4), (50, 10.4)], 0.25), "passing beside it")
+        self.assertFalse(board_geometry.joins(self.PAD, [(40, 10), (44, 10)], 0.25), "stopping short of it")
+        self.assertTrue(board_geometry.joins(self.PAD, [(44.1, 10)], 0.25), "a single point is its cap")
 
 
 class TheShortestStraightLineTree(unittest.TestCase):

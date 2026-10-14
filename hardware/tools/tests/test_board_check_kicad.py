@@ -35,9 +35,11 @@ TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
+import board_geometry  # noqa: E402
 import board_prove  # noqa: E402
 import board_views  # noqa: E402
 import locked_copper  # noqa: E402
+import sexpr  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
@@ -546,6 +548,37 @@ class KiCadReportsATrackEndingFreeUnaided(Copy):
                 status, lines = self.check()
                 self.assertEqual(status, 1, lines)
                 self.assertTrue([line for line in lines if " | track_dangling | " in line and "workmanship item WORK-6" in line], lines)
+
+
+class TheCheckReadsATrackMeetingAPadAsKiCadDoes(Copy):
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """Every measure that asks whether a track meets a pad rests on
+    board_geometry's contact rule, so this holds that rule to the installed
+    KiCad's own connectivity: /LV_A is redrawn as one track meeting R2's
+    1.6 mm round pad 1 just so or just missing it, and the rule must join the
+    two exactly when KiCad reports no unconnected item between them.
+    """
+
+    CASES = (
+        ("an end cap reaching the pad's edge by 0.025 mm", [(40, 10), (44.1, 10)], True),
+        ("an end cap stopping 0.025 mm short of it", [(40, 10), (44.05, 10)], False),
+        ("copper running over the pad 0.025 mm deep, off its centre, neither end on it", [(40, 10.9), (48, 10.9)], True),
+        ("copper running past the pad 0.025 mm clear of it", [(40, 10.95), (48, 10.95)], False),
+    )
+
+    def test_the_contact_rule_joins_a_track_to_a_pad_exactly_when_kicad_does(self):
+        for what, points, joined in self.CASES:
+            with self.subTest(track=what):
+                self.setUp()
+                board_prove.reroute("/LV_A", (board_prove.LV_A_ENDS,), points)(self.seed)
+                report = self.drc()
+                kicad = not any("pad 1 [/LV_A] of R2" in item["description"]
+                                for unconnected in report["unconnected_items"] for item in unconnected["items"])
+                self.assertEqual(kicad, joined, f"KiCad was expected {'to join' if joined else 'not to join'} {what}")
+                layout = board_check.Layout(sexpr.parse_one(self.seed.read(".kicad_pcb")))
+                pad = next(pad for pad in layout.pads if pad.name() == "pad 1 of R2")
+                ours = any(board_geometry.joins(pad, copper.points(), copper.width) for copper in layout.copper if copper.net == "/LV_A")
+                self.assertEqual(ours, kicad, f"the contact rule and KiCad disagree on {what}")
 
 
 # --- C6 -----------------------------------------------------------------------

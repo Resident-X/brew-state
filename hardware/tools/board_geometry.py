@@ -14,8 +14,10 @@ placement leaves the pads each net must join.
 Whether a track meets a pad is judged here too, once, from the copper and
 never from the track's centre line alone. A track's copper is its centre line
 swept by a circle of half its width, so its end is a round cap about its end
-point, and KiCad's connectivity joins a track to a pad when that cap reaches
-the pad's copper, or when the pad's centre lies on the track's copper. A pad's
+point, and KiCad's connectivity joins a track to a pad wherever the track's
+copper reaches the pad's copper: by an end cap that reaches it, or by the
+track running over it anywhere along its length, through the pad's centre or
+off it. The tests hold that reading to the installed KiCad's own report. A pad's
 copper is sized from its shape and size as the layout file writes them: a
 circle, an oval, a rectangle and a rounded rectangle are each a rectangle,
 perhaps of no width or height, grown on every side by a radius, and are sized
@@ -348,8 +350,10 @@ def line_reaches(pad: Pad, a: Point, b: Point, width: float) -> bool:
 def joins(pad: Pad, line: Sequence[Point], width: float) -> bool:
     """Whether a track along `line`, a centre line of straight pieces, is joined to a pad as KiCad's connectivity joins them.
 
-    KiCad joins them when the cap at either end of the track reaches the pad's
-    copper, or when the pad's centre lies on the track's copper.
+    KiCad joins them wherever the track's copper reaches the pad's: the cap
+    at either end reaching it, or any piece of the track running over it, off
+    the pad's centre as much as through it.
     """
-    return (end_reaches(pad, line[0], width) or end_reaches(pad, line[-1], width)
-            or any(distance_to_segment(pad.centre, a, b) <= width / 2 + CONTACT for a, b in zip(line, line[1:])))
+    if len(line) == 1:
+        return end_reaches(pad, line[0], width)
+    return any(line_reaches(pad, a, b, width) for a, b in zip(line, line[1:]))

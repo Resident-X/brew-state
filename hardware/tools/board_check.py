@@ -1121,6 +1121,11 @@ KICAD_WORKMANSHIP = {
 #: drawn, well over the nanometre KiCad rounds a coordinate to.
 TOUCH = 1e-4
 
+#: How far a straight piece standing in for part of an arc may lie off the
+#: arc, in mm: a fifth of the 0.005 mm KiCad allows itself by default when it
+#: draws an arc as straight pieces, so an arc of any radius is read as closely.
+ARC_SAG = 1e-3
+
 
 def workmanship_figures(design: Design, variables: dict) -> Tuple[Dict[str, float], List[Violation]]:
     """The figure each measured rule is held to, read from the project's text variables, and every one missing or malformed."""
@@ -1276,13 +1281,16 @@ class Copper:
         return (dx / size, dy / size) if size else (0.0, 0.0)
 
     def points(self) -> List[Tuple[float, float]]:
-        """Points along the copper's centre line, close enough together to measure distances to it."""
+        """Points along the copper's centre line, an arc's close enough together that no straight piece between two lies
+        more than ARC_SAG off the arc, whatever its radius."""
         if self.centre is None:
             return [self.start, self.end]
         first = math.atan2(self.start[1] - self.centre[1], self.start[0] - self.centre[0])
         sweep = self.sweep()
-        return [(self.centre[0] + self.radius * math.cos(first + sweep * i / 32),
-                 self.centre[1] + self.radius * math.sin(first + sweep * i / 32)) for i in range(33)]
+        step = 2 * math.acos(max(-1.0, 1 - ARC_SAG / self.radius))
+        pieces = max(32, math.ceil(abs(sweep) / step))
+        return [(self.centre[0] + self.radius * math.cos(first + sweep * i / pieces),
+                 self.centre[1] + self.radius * math.sin(first + sweep * i / pieces)) for i in range(pieces + 1)]
 
 
 def circumcircle(a, b, c):
@@ -1336,34 +1344,73 @@ class Layout:
         return [pad for pad in self.pads_of(copper.net, copper.layer)
                 if board_geometry.end_reaches(pad, end, copper.width)]
 
-    def joined(self, net: str) -> List[board_geometry.Pad]:
-        """Every pad of a net its tracks join, as KiCad's connectivity joins them."""
-        tracks = [copper for copper in self.copper if copper.net == net]
-        return [pad for pad in self.pads if pad.net == net and pad.sized() and any(
-            pad.on(copper.layer) and board_geometry.joins(pad, copper.points(), copper.width) for copper in tracks)]
+
+def shape_sides(node: list, place) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    """Every straight side of one outline shape, each end carried to the board by `place`.
+
+    A line is one side. A rectangle is four, each shortened at both ends by
+    the radius its corners are rounded to, and none where that leaves nothing
+    straight. A polygon has a side between each two corners its outline runs
+    straight between, and none along a piece it writes as an arc. An arc, a
+    circle and a curve turn all along their length, so none has a direction
+    to give the edges and none is a side.
+    """
+    head = sexpr.head(node)[3:]
+    what = "a board edge"
+    if head == "line":
+        return [(place(board_geometry.xy(sexpr.child(node, "start"), what)),
+                 place(board_geometry.xy(sexpr.child(node, "end"), what)))]
+    if head == "rect":
+        (x0, y0), (x1, y1) = (board_geometry.xy(sexpr.child(node, key), what) for key in ("start", "end"))
+        radius = sexpr.child(node, "radius")
+        rounded = board_geometry.number(radius, 1, what) if radius is not None else 0.0
+        corners = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        sides = []
+        for a, b in zip(corners, corners[1:] + corners[:1]):
+            length = math.dist(a, b)
+            if length > 2 * rounded + TOUCH:
+                step = (rounded * (b[0] - a[0]) / length, rounded * (b[1] - a[1]) / length)
+                sides.append((place((a[0] + step[0], a[1] + step[1])), place((b[0] - step[0], b[1] - step[1]))))
+        return sides
+    if head == "poly":
+        ring = []
+        for part in (sexpr.child(node, "pts") or [])[1:]:
+            if sexpr.head(part) == "xy":
+                ring.append((board_geometry.xy(part, what), True))
+            elif sexpr.head(part) == "arc":
+                ring.append((board_geometry.xy(sexpr.child(part, "start"), what), False))
+                ring.append((board_geometry.xy(sexpr.child(part, "end"), what), True))
+        return [(place(a), place(ring[(index + 1) % len(ring)][0])) for index, (a, straight) in enumerate(ring)
+                if straight and math.dist(a, ring[(index + 1) % len(ring)][0]) > TOUCH]
+    return []
+
+
+def on_edge(node: list) -> bool:
+    layer = sexpr.child(node, "layer")
+    return layer is not None and len(layer) > 1 and str(layer[1]) == "Edge.Cuts"
+
+
+def edge_sides(tree: list) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    """Every straight side of the board's outline as drawn, its own shapes and its footprints', on the board."""
+    sides = []
+    for node in tree[1:]:
+        if sexpr.head(node).startswith("gr_") and on_edge(node):
+            sides += shape_sides(node, lambda point: point)
+    for footprint in sexpr.children(tree, "footprint"):
+        at = board_geometry.placement(footprint, f"the footprint {board_geometry.reference(footprint) or '?'}")
+        for node in footprint[1:]:
+            if sexpr.head(node).startswith("fp_") and on_edge(node):
+                sides += shape_sides(node, lambda point, at=at: board_geometry.placed(point, at))
+    return sides
 
 
 def edge_angle(tree: list) -> float:
-    """The direction of the board's edges, in degrees modulo 90: that of the longest straight edge of its outline, or 0 for an outline with none."""
+    """The direction of the board's edges, in degrees modulo 90: that of the longest straight side of its outline, or 0,
+    the board's own axes, for an outline with none."""
     longest, angle = 0.0, 0.0
-    for node in tree[1:]:
-        head = sexpr.head(node)
-        layer = sexpr.child(node, "layer")
-        if layer is None or len(layer) < 2 or str(layer[1]) != "Edge.Cuts":
-            continue
-        sides = []
-        if head == "gr_line":
-            sides.append((board_geometry.xy(sexpr.child(node, "start"), "a board edge"),
-                          board_geometry.xy(sexpr.child(node, "end"), "a board edge")))
-        elif head == "gr_poly":
-            corners = [board_geometry.xy(point, "a board edge corner")
-                       for point in (sexpr.child(node, "pts") or [])[1:] if sexpr.head(point) == "xy"]
-            sides += list(zip(corners, corners[1:] + corners[:1]))
-        elif head == "gr_rect":
-            sides.append(((0.0, 0.0), (1.0, 0.0)))
-        for a, b in sides:
-            if math.dist(a, b) > longest:
-                longest, angle = math.dist(a, b), math.degrees(math.atan2(b[1] - a[1], b[0] - a[0])) % 90
+    for a, b in edge_sides(tree):
+        if math.dist(a, b) > longest:
+            longest, angle = math.dist(a, b), math.degrees(math.atan2(b[1] - a[1], b[0] - a[0])) % 90
     return angle
 
 
@@ -1435,17 +1482,18 @@ def pad_corners(design: Design, layout: Layout, corner: Optional[float], branch:
 
 
 def detours(design: Design, layout: Layout, ratio: float) -> List[Violation]:
-    """WORK-2: every net routed in tracks whose track length exceeds `ratio` times the shortest tree joining the pads they join.
+    """WORK-2: every net routed in tracks whose track length exceeds `ratio` times the shortest tree joining all its pads.
 
-    A pad no track of the net reaches, one a copper zone's fill joins, drops
-    out of the tree; a zone never exempts the net's tracks. A net with a pad
-    the contact rule cannot size is not measured, the board failing on that
-    pad by name.
+    The tree joins the centres of every pad of the net, whatever joins them,
+    so zones never enter the measure: a zone cannot shorten the tree, so it
+    can neither exempt a net nor take a pad out of it, and a net whose
+    connection a zone carries only gains room against it. A pad's centre is
+    known whatever its copper, so every net is measured.
     """
     found = []
-    unsized = {pad.net for pad in layout.unsized}
-    for net in sorted({copper.net for copper in layout.copper if copper.net} - unsized):
-        pads_ = layout.joined(net)
+    nets = board_geometry.by_net(layout.pads)
+    for net in sorted({copper.net for copper in layout.copper if copper.net}):
+        pads_ = nets.get(net, [])
         if len(pads_) < 2:
             continue
         tree = board_geometry.pad_tree(pads_)
@@ -1463,18 +1511,29 @@ def detours(design: Design, layout: Layout, ratio: float) -> List[Violation]:
 
 
 def directions(design: Design, layout: Layout, tolerance: float) -> List[Violation]:
-    """WORK-9: every straight track not parallel to the board's edges or at 45 degrees to them."""
+    """WORK-9: every track not parallel to the board's edges or at 45 degrees to them.
+
+    A straight track runs one way along its length. An arc turns, so it is held
+    by the way it runs at its two ends: a fillet joining two tracks that each
+    run one of those ways leaves and meets them along those ways and passes,
+    while a flat arc standing in for a track drawn at an odd angle runs that
+    angle at its ends and fails.
+    """
     found = []
     for copper in layout.copper:
-        if copper.mid is not None or copper.length <= TOUCH:
+        if copper.length <= TOUCH:
             continue
-        angle = math.degrees(math.atan2(copper.end[1] - copper.start[1], copper.end[0] - copper.start[0])) - layout.edges
-        off = off_45(angle)
+        ends = (copper.start,) if copper.centre is None else (copper.start, copper.end)
+        off, end = max((off_45(math.degrees(math.atan2(*reversed(copper.heading(end)))) - layout.edges), end) for end in ends)
         if off > tolerance + 1e-9:
+            how = ("track runs" if copper.centre is None else "arc runs") + f" {off:.2f} degrees off the nearest of those directions"
+            if copper.centre is not None:
+                how += (f" at its end at ({coordinate(end[0])}, {coordinate(end[1])}) mm, which is the way an arc leaves "
+                        "or meets the route")
             found.append(Violation(design.project, "workmanship_direction", f"net {copper.net}: {copper.place()}",
                                    f"WORK-9 routing runs parallel to the board's edges or at 45 degrees to them: the "
-                                   f"track runs {off:.2f} degrees off the nearest of those directions, where "
-                                   f"WORK_ANGLE_TOLERANCE_DEG allows {tolerance:g} degrees; redraw it along one of them"))
+                                   f"{how}, where WORK_ANGLE_TOLERANCE_DEG allows {tolerance:g} degrees; redraw it "
+                                   "along one of them"))
     return found
 
 
@@ -1484,7 +1543,8 @@ def crossed(layout: Layout, copper: Copper) -> List[Tuple[Tuple[float, float], b
     found = []
     line = copper.points()
     for pad in layout.pads_of(copper.net, copper.layer):
-        if any(board_geometry.end_reaches(pad, end, copper.width) for end in (copper.start, copper.end)):
+        if (not board_geometry.joins(pad, line, copper.width)
+                or any(board_geometry.end_reaches(pad, end, copper.width) for end in (copper.start, copper.end))):
             continue
         over = [(a, b) for a, b in zip(line, line[1:]) if board_geometry.line_reaches(pad, a, b, copper.width)]
         if over:
@@ -1576,7 +1636,7 @@ def unsized_pads(design: Design, layout: Layout) -> List[Violation]:
     whether a track meets it cannot be made."""
     return [Violation(design.project, "workmanship_pad_copper",
                       f"net {pad.net}: {pad.name()} at ({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm",
-                      f"WORK-2, WORK-4, WORK-8 and WORK-10 cannot be measured at {pad.name()}: {pad.unsized}, and the "
+                      f"WORK-4, WORK-8 and WORK-10 cannot be measured at {pad.name()}: {pad.unsized}, and the "
                       f"check sizes a pad's copper only as a circle, an oval, a rectangle or a rounded rectangle, so it "
                       f"cannot tell whether a track of {pad.net} meets it; give the pad one of those shapes")
             for pad in layout.unsized]

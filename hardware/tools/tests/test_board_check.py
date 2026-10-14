@@ -32,6 +32,7 @@ TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
+import board_geometry  # noqa: E402
 import sexpr  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
@@ -1710,7 +1711,8 @@ class TracksMeetingAtAPadAreMeasured(unittest.TestCase):
 class RouteLengthIsMeasuredAgainstThePadTree(unittest.TestCase):
     # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
     """A net's track length, on every layer, against its figure times the
-    shortest straight-line tree joining its pad centres.
+    shortest straight-line tree joining the centres of all its pads, which no
+    zone enters.
     """
 
     def test_a_direct_route_passes(self):
@@ -1741,24 +1743,32 @@ class RouteLengthIsMeasuredAgainstThePadTree(unittest.TestCase):
         self.assertEqual([v.rule for v in found], ["workmanship_detour"])
         self.assertIn("2.20 times the 10.00 mm", found[0].message)
 
-    def test_a_pad_only_a_zones_fill_joins_drops_out_of_the_tree(self):
-        # R3, 20 mm off, is joined by the net's zone and by no track: counted, it would stretch the tree to 30.6 mm and
-        # pass the loop; it drops out, and the loop is measured against the 10 mm joining the pads its tracks join.
+    def test_a_route_ending_in_a_zone_short_of_its_pad_is_measured_against_every_pad(self):
+        # The loop stops 2.5 mm short of R2's pad, inside a pour of its net over the pad: the pour joins them, and the
+        # route is still measured against the 10 mm joining both pads.
+        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 7))]
+        pour = zone("/A", [(19, 6), (21, 6), (21, 11), (19, 11)])
+        found = board_check.detours(DESIGN, board(*TWO_PADS, *loop, pour), 1.3)
+        self.assertEqual([(v.rule, v.location) for v in found], [("workmanship_detour", "net /A: 2 pads, from pad 1 of R1 at (10, 10) mm")])
+        self.assertIn("/A's tracks are 19.00 mm long, 1.90 times the 10.00 mm", found[0].message)
+
+    def test_a_pad_only_a_zone_joins_stays_in_the_tree_so_the_zone_only_gains_the_net_room(self):
+        # R3, 20.6 mm from the nearer of the others, is joined only by the net's pour: it stays in the tree, which grows
+        # to 30.62 mm, and the 22 mm loop passes against it.
         far = part("R3", "15 30", ("1", "/A", 0, 0, "circle", 1, 1))
         loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
-        found = board_check.detours(DESIGN, board(*TWO_PADS, far, *loop, zone("/A", [(0, 25), (30, 25), (30, 35)])), 1.3)
-        self.assertEqual([(v.rule, v.location) for v in found], [("workmanship_detour", "net /A: 2 pads, from pad 1 of R1 at (10, 10) mm")])
+        self.assertEqual(board_check.detours(DESIGN, board(*TWO_PADS, far, *loop, zone("/A", [(0, 25), (30, 25), (30, 35)])), 1.3), [])
+        found = board_check.detours(DESIGN, board(*TWO_PADS, far, *loop), 0.7)
+        self.assertIn("22.00 mm long, 0.72 times the 30.62 mm", found[0].message)
+        self.assertEqual(found[0].location, "net /A: 3 pads, from pad 1 of R1 at (10, 10) mm")
 
-    def test_a_pad_a_track_ends_short_of_is_joined_by_its_end_cap(self):
-        # The loop's ends stop 0.1 mm short of each round pad's edge, inside a 0.25 mm track's cap: both pads are joined.
-        loop = [seg("/A", (10, 9.4), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 9.4))]
-        found = board_check.detours(DESIGN, board(*TWO_PADS, *loop), 1.3)
+    def test_a_net_whose_pad_copper_cannot_be_sized_is_still_measured_from_its_pad_centres(self):
+        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
+        found = board_check.detours(DESIGN, board(TWO_PADS[0], APadTheCheckCannotSizeFailsByName.CUSTOM, *loop), 1.3)
         self.assertEqual([v.rule for v in found], ["workmanship_detour"])
-        self.assertEqual(board_check.detours(DESIGN, board(*TWO_PADS, *[seg("/A", (10, 9.3), (10, 4), 0.15), seg("/A", (10, 4), (20, 4), 0.15),
-                                                                         seg("/A", (20, 4), (20, 9.3), 0.15)]), 1.3), [],
-                         "a narrower track's caps fall short of both pads, which it then does not join")
+        self.assertIn("2.20 times the 10.00 mm", found[0].message)
 
-    def test_fewer_than_two_pads_joined_is_not_measured(self):
+    def test_a_net_of_one_pad_is_not_measured(self):
         loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
         self.assertEqual(board_check.detours(DESIGN, board(TWO_PADS[0], *loop), 1.3), [])
 
@@ -1787,8 +1797,36 @@ class DirectionIsMeasuredAgainstTheBoardsEdges(unittest.TestCase):
         found = board_check.directions(DESIGN, board(seg("/A", (0, 0), (10 * math.cos(angle), 10 * math.sin(angle)))), 0.1)
         self.assertIn("22.50 degrees off", found[0].message)
 
-    def test_an_arc_is_a_corner_and_not_a_direction(self):
-        self.assertEqual(board_check.directions(DESIGN, board(arc("/A", (0, 0), (1, 0.3), (2, 1))), 0.1), [])
+    @staticmethod
+    def bowed(start, heading: float, length: float, half_sweep: float) -> str:
+        """An arc from `start` along a chord `length` long at `heading` degrees, turning `half_sweep` degrees each side of it."""
+        chord, turn = math.radians(heading), math.radians(half_sweep)
+        end = (start[0] + length * math.cos(chord), start[1] + length * math.sin(chord))
+        rise = length / 2 * math.tan(turn / 2)
+        mid = ((start[0] + end[0]) / 2 - rise * math.sin(chord), (start[1] + end[1]) / 2 + rise * math.cos(chord))
+        return arc("/A", start, mid, end)
+
+    def test_a_fillet_between_tracks_along_the_edges_and_at_45_degrees_passes(self):
+        # A 2 mm fillet centred at (10, 12) leaves the track along x and meets the one at 45 degrees along it.
+        fillet = arc("/A", (10, 10), (10 + 2 * math.cos(math.radians(-67.5)), 12 + 2 * math.sin(math.radians(-67.5))),
+                     (10 + math.sqrt(2), 12 - math.sqrt(2)))
+        tracks = [seg("/A", (0, 10), (10, 10)), fillet, seg("/A", (10 + math.sqrt(2), 12 - math.sqrt(2)), (15, 12 - math.sqrt(2) + 5 - math.sqrt(2)))]
+        self.assertEqual(board_check.directions(DESIGN, board(*tracks), 0.1), [])
+        quarter = arc("/A", (0, 0), (math.sqrt(0.5) * 2, 2 - math.sqrt(0.5) * 2), (2, 2))
+        self.assertEqual(board_check.directions(DESIGN, board(quarter), 0.1), [], "a quarter circle turning square")
+
+    def test_flat_arcs_drawn_at_an_odd_angle_fail_by_the_way_they_run_at_their_ends(self):
+        # Two flat arcs meeting at 160 degrees, each bowed 2 degrees either side of a chord 10 degrees off the edges:
+        # each runs 12 degrees off at one end and 8 at the other.
+        first = self.bowed((0, 0), 10, 2.5, 2)
+        second = self.bowed((2.5 * math.cos(math.radians(10)), 2.5 * math.sin(math.radians(10))), -10, 2.5, 2)
+        found = board_check.directions(DESIGN, board(first, second), 0.1)
+        self.assertEqual([v.rule for v in found], ["workmanship_direction"] * 2)
+        for violation in found:
+            self.assertIn("the arc runs 12.00 degrees off the nearest of those directions at its end at", violation.message)
+            self.assertIn("arc [/A] on F.Cu from", violation.location)
+        self.assertEqual(board_check.directions(DESIGN, board(first, second), 12.1), [])
+        self.assertEqual(len(board_check.directions(DESIGN, board(first, second), 11.9)), 2, "the worse end decides")
 
     def test_the_directions_follow_a_board_whose_outline_is_turned(self):
         turned = '(gr_poly (pts (xy 0 0) (xy 86.6 50) (xy 56.6 101.96) (xy -30 51.96)) (layer "Edge.Cuts"))'
@@ -1799,6 +1837,83 @@ class DirectionIsMeasuredAgainstTheBoardsEdges(unittest.TestCase):
     def test_a_board_whose_longest_edge_is_a_line_takes_its_direction(self):
         lines = ('(gr_line (start 0 0) (end 80 80) (layer "Edge.Cuts")) (gr_line (start 0 0) (end 1 -1) (layer "Edge.Cuts"))')
         self.assertAlmostEqual(board(outline=lines).edges, 45.0)
+
+
+class TheEdgesAreReadAtTheirTrueShape(unittest.TestCase):
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """The board's edge direction is that of the longest straight side of its
+    outline as drawn: a rectangle's four real sides, a polygon's straight
+    runs, its footprints' outline shapes where they are placed, and nothing
+    from a shape that turns all along it.
+    """
+
+    #: A 20 mm square cut out of the board, turned 30 degrees.
+    CUTOUT = ('(gr_poly (pts (xy 40 20) (xy 57.32 30) (xy 47.32 47.32) (xy 30 37.32)) (layer "Edge.Cuts"))')
+    RECT = '(gr_rect (start 0 0) (end 100 60) (layer "Edge.Cuts"))'
+
+    def test_a_rectangle_outline_holds_its_own_sides_against_a_turned_cutout(self):
+        outline = self.RECT + " " + self.CUTOUT
+        self.assertAlmostEqual(board(outline=outline).edges, 0.0)
+        self.assertEqual(board_check.directions(DESIGN, board(seg("/A", (5, 5), (25, 5)), outline=outline), 0.1), [])
+        found = board_check.directions(DESIGN, board(seg("/A", (5, 5), (5 + 17.32, 15)), outline=outline), 0.1)
+        self.assertEqual([v.rule for v in found], ["workmanship_direction"])
+        self.assertIn("15.00 degrees off", found[0].message)
+
+    def test_a_rounded_rectangle_counts_only_its_straight_sides(self):
+        line = '(gr_line (start 0 0) (end 6.06 3.5) (layer "Edge.Cuts"))'
+        self.assertAlmostEqual(board(outline='(gr_rect (start 0 0) (end 10 10) (layer "Edge.Cuts")) ' + line).edges, 0.0)
+        rounded = '(gr_rect (start 0 0) (end 10 10) (radius 2) (layer "Edge.Cuts")) '
+        self.assertAlmostEqual(board(outline=rounded + line).edges, 30.0, places=1,
+                               msg="6 mm of each side is straight, shorter than the 7 mm line")
+        self.assertAlmostEqual(board(outline='(gr_rect (start 0 0) (end 10 10) (radius 5) (layer "Edge.Cuts")) ' + line).edges,
+                               30.0, places=1, msg="a rectangle rounded into a circle has no straight side")
+
+    def test_a_polygons_arc_pieces_are_not_sides_and_its_straight_runs_are(self):
+        # Read as corners alone, the arc's ends would make a 41 mm diagonal from (10, 0) to (0, 40).
+        outline = '(gr_poly (pts (xy 0 0) (xy 10 0) (arc (start 10 0) (mid 40 20) (end 10 40)) (xy 0 40)) (layer "Edge.Cuts"))'
+        self.assertAlmostEqual(board(outline=outline).edges, 0.0)
+
+    def test_an_arc_or_a_circle_on_the_edge_gives_no_direction(self):
+        for curved in ('(gr_circle (center 50 50) (end 100 50) (layer "Edge.Cuts"))',
+                       '(gr_arc (start 0 50) (mid 50 0) (end 100 50) (layer "Edge.Cuts"))'):
+            with self.subTest(shape=curved):
+                self.assertAlmostEqual(board(outline=curved + ' (gr_line (start 0 0) (end 3 3) (layer "Edge.Cuts"))').edges, 45.0)
+        self.assertEqual(board(outline='(gr_circle (center 50 50) (end 100 50) (layer "Edge.Cuts"))').edges, 0.0,
+                         "an outline with no straight side is held to the board's own axes")
+
+    def test_a_footprints_outline_shapes_count_where_the_footprint_places_them(self):
+        slot = ('(footprint "lib:slot" (layer "F.Cu") (at 50 30 30) (property "Reference" "H1" (at 0 0 0)) '
+                '(fp_line (start -40 0) (end 40 0) (layer "Edge.Cuts")))')
+        self.assertAlmostEqual(board(slot, outline='(gr_rect (start 0 0) (end 10 10) (layer "Edge.Cuts"))').edges, 60.0)
+        silk = slot.replace("Edge.Cuts", "F.SilkS")
+        self.assertAlmostEqual(board(silk, outline='(gr_rect (start 0 0) (end 10 10) (layer "Edge.Cuts"))').edges, 0.0)
+
+
+class AnArcIsReadAtItsTrueShape(unittest.TestCase):
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """The straight pieces an arc is measured along stand no further off it
+    than ARC_SAG, whatever its radius, so a wide arc's copper is found where it
+    is.
+    """
+
+    def test_no_piece_of_a_wide_arc_stands_further_off_it_than_the_sag(self):
+        wide = board(arc("/A", (-50, 0), (0, -50), (50, 0))).copper[0]
+        line = wide.points()
+        for a, b in zip(line, line[1:]):
+            middle = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+            self.assertLessEqual(50 - math.hypot(*middle), board_check.ARC_SAG + 1e-9)
+
+    def test_a_pad_the_arcs_copper_reaches_beyond_its_chords_is_joined(self):
+        # A round 1 mm pad 50.6 mm out from the arc's centre, midway between two of the 32 pieces a half circle was once
+        # read as: the 0.25 mm track's copper reaches it by 0.025 mm, where those pieces stood 0.06 mm inside the arc.
+        wide = board(arc("/A", (-50, 0), (0, -50), (50, 0))).copper[0]
+        angle = math.radians(-90 + 180 / 64)
+        at = f"{50.6 * math.cos(angle)} {50.6 * math.sin(angle)}"
+        pad = board_check.Layout(sexpr.parse_one("(kicad_pcb " + part("R1", at, ("1", "/A", 0, 0, "circle", 1, 1)) + ")")).pads[0]
+        self.assertTrue(board_geometry.joins(pad, wide.points(), wide.width))
+        far = board_check.Layout(sexpr.parse_one("(kicad_pcb " + part("R1", f"{50.65 * math.cos(angle)} {50.65 * math.sin(angle)}",
+                                                                        ("1", "/A", 0, 0, "circle", 1, 1)) + ")")).pads[0]
+        self.assertFalse(board_geometry.joins(far, wide.points(), wide.width), "0.025 mm further out it is not reached")
 
 
 class LongPadsAreEnteredAlongTheirAxis(unittest.TestCase):
@@ -1940,8 +2055,7 @@ class APadTheCheckCannotSizeFailsByName(unittest.TestCase):
               '(primitives (gr_poly (pts (xy 0 0) (xy 3 0) (xy 0 3)) (width 0) (fill yes)))))')
 
     def test_a_custom_pad_a_track_of_its_net_reaches_fails_naming_it(self):
-        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
-        layout = board(TWO_PADS[0], self.CUSTOM, *loop)
+        layout = board(TWO_PADS[0], self.CUSTOM, seg("/A", (10, 10), (20, 10)))
         found = board_check.measured(DESIGN, layout, FIGURES_READ, 135)
         self.assertEqual([(v.rule, v.location) for v in found],
                          [("workmanship_pad_copper", "net /A: pad 1 of U9 at (20, 10) mm")])

@@ -30,6 +30,7 @@ import concurrent.futures
 import copy
 import io
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -503,6 +504,61 @@ def token_zone(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
 
 
+def pour_short_of_pad(seed: Seed) -> None:
+    """/LV_A looping the long way round and ending 2.5 mm short of R2's pad 1, inside a pour of its net over the pad,
+    which once left the pad out of the route-length rule's tree and the net unmeasured."""
+    reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 7.5)])(seed)
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/LV_A")], ["layer", Q("F.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000502")],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "0.2"]], ["min_thickness", "0.25"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
+            ["polygon", ["pts", ["xy", "44", "7"], ["xy", "46", "7"], ["xy", "46", "11"], ["xy", "44", "11"]]]]
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
+
+
+def bowed(net: str, start: Tuple[float, float], heading: float, length: float, half_sweep: float, uuid: str) -> list:
+    """An arc from `start` along a chord `length` long at `heading` degrees, turning `half_sweep` degrees either side of it."""
+    Q = sexpr.Quoted
+    chord, turn = math.radians(heading), math.radians(half_sweep)
+    end = (start[0] + length * math.cos(chord), start[1] + length * math.sin(chord))
+    rise = length / 2 * math.tan(turn / 2)
+    mid = ((start[0] + end[0]) / 2 - rise * math.sin(chord), (start[1] + end[1]) / 2 + rise * math.cos(chord))
+    return ["arc", ["start", f"{start[0]:.6f}", f"{start[1]:.6f}"], ["mid", f"{mid[0]:.6f}", f"{mid[1]:.6f}"],
+            ["end", f"{end[0]:.6f}", f"{end[1]:.6f}"], ["width", "0.25"], ["layer", Q("F.Cu")], ["net", Q(net)], ["uuid", Q(uuid)]]
+
+
+def flat_arcs(seed: Seed) -> None:
+    """/LV_A drawn as two flat arcs meeting at 160 degrees, each bowed 2 degrees either side of a chord 10 degrees off the
+    board's edges, which the direction rule once passed by leaving every arc to the corner rule."""
+    def edit(tree: list) -> None:
+        tree.remove(track_at(tree, *LV_A_ENDS))
+        middle = (40 + 2.5, 10 + 2.5 * math.tan(math.radians(10)))
+        tree.insert(len(tree) - 1, bowed("/LV_A", (40, 10), 10, math.dist((40, 10), middle), 2, "0b0e5c1a-0000-4000-8000-000000000601"))
+        tree.insert(len(tree) - 1, bowed("/LV_A", middle, -10, math.dist(middle, (45, 10)), 2, "0b0e5c1a-0000-4000-8000-000000000602"))
+    seed.layout(edit)
+
+
+def rectangle_outline(seed: Seed) -> None:
+    """The board's outline redrawn as one rectangle, with a 3 mm square cut out of it turned to the off-angle /LV_A track,
+    which the direction rule once took for the board's edges, reading the rectangle as a side 1 mm long."""
+    Q = sexpr.Quoted
+    turn = math.atan2(0.3, 5)
+    corners = [(33 + 1.5 * (x * math.cos(turn) - y * math.sin(turn)), 16 + 1.5 * (x * math.sin(turn) + y * math.cos(turn)))
+               for x, y in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+
+    def edit(tree: list) -> None:
+        for item in [node for node in tree if sexpr.head(node) == "gr_line"
+                     and str((sexpr.child(node, "layer") or [None, None])[1]) == "Edge.Cuts"]:
+            tree.remove(item)
+        stroke = ["stroke", ["width", "0.1"], ["type", "default"]]
+        tree.insert(len(tree) - 1, ["gr_rect", ["start", "0", "0"], ["end", "60", "20"], stroke, ["fill", "no"],
+                                    ["layer", Q("Edge.Cuts")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000701")]])
+        tree.insert(len(tree) - 1, ["gr_poly", ["pts", *[["xy", f"{x:.6f}", f"{y:.6f}"] for x, y in corners]], stroke,
+                                    ["fill", "no"], ["layer", Q("Edge.Cuts")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000702")]])
+    seed.layout(edit)
+    reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (45, 10.3)])(seed)
+
+
 def custom_pad(seed: Seed) -> None:
     """R2's pad 1, which /LV_A runs into, made a custom-shaped pad whose copper the check does not size."""
     def edit(tree: list) -> None:
@@ -601,8 +657,14 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a route wandering the long way round to a pad its net's pour covers", "workmanship: a zone never exempts a net's tracks from the route-length rule",
      "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.3 times",
      lambda seed: (reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 10)])(seed), token_zone(seed))),
+    ("a route wandering the long way round to end in its net's pour short of its pad", "workmanship: a net's track length is measured against the tree joining all its pads",
+     "workmanship_detour", "/LV_A's tracks are 11.33 mm long, 2.27 times the 5.00 mm", pour_short_of_pad),
     ("a track off the board's edges and the 45 degrees to them", "workmanship: each track's direction is measured against the board's edges", "workmanship_direction", "3.43 degrees off",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (45, 10.3)])),
+    ("flat arcs drawn at an odd angle", "workmanship: an arc's direction is measured at its ends against the board's edges", "workmanship_direction",
+     "the arc runs 12.00 degrees off the nearest of those directions at its end at", flat_arcs),
+    ("a track off a rectangle outline's sides beside a cutout turned to it", "workmanship: the board's edges are read at their true shape",
+     "workmanship_direction", "track [/LV_A] on F.Cu from (40, 10) to (45, 10.3) mm", rectangle_outline),
     ("a track entering a long pad from its side", "workmanship: the way a track enters a long pad is measured against the pad's axis", "workmanship_pad_entry", "enters it 90.00 degrees off its long axis", long_pad),
     ("a track ending just short of a long pad's side", "workmanship: a track meets a pad where its end's copper reaches the pad's, as KiCad joins them",
      "workmanship_pad_entry", "enters it 90.00 degrees off its long axis",
