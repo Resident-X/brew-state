@@ -621,9 +621,9 @@ class AClassIsReadWholeOnABoardOfAnySize(unittest.TestCase):
 
     def test_the_review_views_see_that_set(self):
         # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
-        # The views read every class the design defines, Default too, whose
-        # items on this board far outnumber KiCad's report limit; the render is
-        # stopped once the membership it draws from has been read.
+        # The views read every class the design defines, Default too, with
+        # Mains alone carrying more items than KiCad's report limit; the render
+        # is stopped once the membership it draws from has been read.
         seen = {}
         members = locked_copper.members
 
