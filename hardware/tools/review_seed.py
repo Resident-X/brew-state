@@ -445,6 +445,18 @@ def side_entry(seed: board_prove.Seed) -> None:
     seed.replace("design-rules.md", "WORK_PAD_ENTRY_RATIO | 2 times", "WORK_PAD_ENTRY_RATIO | 10 times")
 
 
+def stubs_admitted(seed: board_prove.Seed) -> None:
+    """The stub figure raised to 2 mm, in the rules table and the project. KiCad's own check still reports any stub, so none is drawn."""
+    figure("Stubs", "| 0 mm |", "| 2 mm |", "WORK_STUB_MM", "2")(seed)
+    seed.replace("design-rules.md", "WORK_STUB_MM | 0 mm of track", "WORK_STUB_MM | 2 mm of track")
+
+
+def via_check_unrecorded(seed: board_prove.Seed) -> None:
+    """The rules table's row for KiCad's unconnected-via check taken out."""
+    line = next(item for item in seed.read("design-rules.md").splitlines() if item.startswith("| Unconnected vias |"))
+    seed.replace("design-rules.md", line + "\n", "")
+
+
 #: (identifier, the catalogue item that covers it, layer, board position in mm, what it is, the edit)
 SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove.Seed], None]]] = [
     ("S1", "GROUND-1", "F.Cu, In1.Cu, In2.Cu, B.Cu", (61, 30),
@@ -499,6 +511,10 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S19", "WORK-10", "design-rules.md, project text variables, F.Cu", (69.1375, 42.5),
      "a pad-entry ratio looser than its item's and a track entering a long pad from its side: WORK_PAD_ENTRY_RATIO 10 "
      "where the item gives 2, so U3's pin 5, entered from its side by S15's corner, passes", side_entry),
+    ("S20", "WORK-6", "design-rules.md, project text variables", (0, 0),
+     "a stub figure looser than its item's: WORK_STUB_MM 2 mm where the item gives 0", stubs_admitted),
+    ("S21", "WORK-7", "design-rules.md", (0, 0),
+     "the rules table's row for KiCad's unconnected-via check taken out", via_check_unrecorded),
 ]
 
 
