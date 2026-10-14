@@ -2,11 +2,11 @@ id: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
 type: criterion
 title: Each thermoblock's peak casting temperature under control is derived from the plant model across its declared corners
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  For each thermoblock, the highest casting temperature the plant model reaches while the controller holds that heater is found across every operating phase the controller commands (warm-up, holding, delivery or draw, recovery) and across the declared corners of the model's coefficients. The figure is reported with the phase and corner that produce it, graded inferred from the model, and a test fails if the extraction reports a peak lower than any casting temperature the runs pass through. Out of scope: measuring the casting on the machine.
+  For each thermoblock, the highest casting temperature the plant model reaches while the controller holds that heater is found across every operating phase the controller commands and across the declared corners of the model's coefficients. Each heater is run on its own, since the two heated masses are independent, at the highest target its control path admits for each delivery it serves, read from the control path's own admission rather than chosen, through: warm-up from a cold machine to the commanded figure; holding at it with no draw until settled; each delivery that heater serves (coffee and hot water on the coffee thermoblock, a steam draw on the steam thermoblock); recovery after each delivery, continued until the casting has passed its post-delivery maximum and settled back to its holding value; and each delivery that heater serves started back-to-back after each of its deliveries, while the block is still recovering from the first, as soon as the controller admits it. The corners are the control path's own enumeration: each end of each coefficient carrying a declared error, run on its own, plus each stated joint corner, and the figure is the worst single corner. The figure is reported with the phase and corner that produce it, graded inferred from the model, in a generated record that states the command regenerating it and prints the sha256 of each input it was generated from, and a test fails when that record is stale. The peak is taken over every casting temperature the runs report, once per control interval, and a test fails if the extraction reports a peak lower than any of them, and a test fails if the peak the figures record quotes for either thermoblock differs from the generated record's. Out of scope: measuring the casting on the machine.
 links:
   - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED
     type: criterion-of
