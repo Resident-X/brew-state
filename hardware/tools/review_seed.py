@@ -208,40 +208,64 @@ def to_front(footprint: list) -> None:
 GND = "/GND"
 
 
+def turn(tree: list, reference: str, angle: float) -> None:
+    """A footprint turned to `angle` about its own origin, as KiCad turns one: its pads and texts turned with it."""
+    footprint = board_prove.footprint(tree, reference)
+    at = sexpr.child(footprint, "at")
+    delta = angle - (float(at[3]) if len(at) > 3 else 0.0)
+    at[1:] = at[1:3] + ([f"{angle:g}"] if angle else [])
+    for node in sexpr.children(footprint, "pad") + sexpr.children(footprint, "property"):
+        own = sexpr.child(node, "at")
+        if own is not None and len(own) > 2:
+            turned = ((float(own[3]) if len(own) > 3 else 0.0) + delta) % 360
+            own[1:] = own[1:3] + ([f"{turned:g}"] if turned or sexpr.head(node) == "property" else [])
+
+
+def drop(tree: list, *ends: Tuple[Tuple[float, float], Tuple[float, float]]) -> None:
+    for a, b in ends:
+        tree.remove(segment(tree, a, b))
+
+
+def drop_via(tree: list, *at: Tuple[float, float]) -> None:
+    for point_ in at:
+        tree.remove(via(tree, point_))
+
+
+#: The ground network carried on In1.Cu once the planes and pours are gone:
+#: each run of 0.5 mm tracks joins the next point in turn, from the supply
+#: connector's ground pin to every ground via of the seeded copy.
+GROUND_TRACES = [
+    [(39.5, 3.5), (39.5, 6), (51, 6), (66.8, 6), (71.35, 6), (80, 6), (88.8, 6), (88.8, 23), (88.8, 41.9),
+     (88.8, 55.5), (69.5, 55.5), (66.5, 55.5), (63.6625, 55.5), (63.6625, 54)],
+    [(39.5, 6), (39.5, 11.7), (38.9, 11.7), (33.85, 11.7), (33.85, 16.3), (33.85, 28), (33.85, 38.1)],
+    [(33.85, 28), (40.3, 28)],
+    [(51, 6), (51, 10.6)],
+    [(66.8, 6), (66.8, 21.55)],
+    [(71.35, 6), (71.35, 13.35), (72.65, 13.35), (72.65, 14.65), (71.35, 14.65)],
+    [(80, 6), (80, 3.7)],
+    [(88.8, 41.9), (74.6, 41.9), (63.5, 41.9), (63.5, 44)],
+]
+
+
 def thin_ground(seed: board_prove.Seed) -> None:
-    """Every ground plane and pour taken away, and ground carried instead by 0.4 mm tracks on In1.Cu."""
+    """Every ground plane and pour taken away, and ground carried instead by 0.5 mm tracks on In1.Cu."""
     def edit(tree: list) -> None:
         for zone in zones(tree, GND):
             tree.remove(zone)
-        # Joined in turn: the supply connector's ground pin and the ground vias of every part, as one tree of tracks.
-        branches = [
-            [(39.5, 3.5), (40.3, 4.3), (40.3, 9.2), (38.9, 10.6), (38.9, 11.7), (38.9, 17.4), (38.9, 22.6), (40.85, 22.6),
-             (42.4, 22.6), (42.4, 30)],
-            [(38.9, 22.6), (35.325, 22.6), (35.325, 23)],
-            [(38.9, 17.4), (50, 17.4), (67.4, 17.4), (71.35, 17.4), (74.5, 17.4), (74.5, 20.7)],
-            [(71.35, 17.4), (71.35, 14.65), (71.35, 13.35), (72.65, 13.35), (72.65, 14.65)],
-            [(72.65, 13.35), (72.65, 7.5), (86.5, 7.5), (86.5, 9.75), (86.5, 26), (86.5, 41.7), (86.5, 52.6),
-             (65.5, 52.6), (65.5, 55.5), (66.5, 55.5), (69.5, 55.5)],
-            [(86.5, 41.7), (72.7, 41.7)],
-            [(65.5, 52.6), (65.5, 44.9), (64.6, 44.9), (64.6, 44)],
-        ]
-        for points in branches:
-            path(tree, GND, "In1.Cu", 0.4, points)
+        for points in GROUND_TRACES:
+            path(tree, GND, "In1.Cu", 0.5, points)
     seed.layout(edit)
 
 
 def long_way_decoupling(seed: board_prove.Seed) -> None:
-    """The controller's decoupling capacitor C4 moved across the controller, reached from the supply pin the long way round."""
+    """The controller's decoupling capacitor C4 moved 4 mm south, on a spur the supply reaches only after U4's supply pin."""
     def edit(tree: list) -> None:
-        for a, b in (((66.7, 15.825), (68.5, 15.825)), ((68.5, 15.825), (69.8, 15)), ((68.5, 17.375), (67.4, 18.6))):
-            tree.remove(segment(tree, a, b))
-        tree.remove(via(tree, (67.4, 18.6)))
-        move(tree, "C4", 74.5, 18.5)
-        reference = [prop for prop in sexpr.children(board_prove.footprint(tree, "C4"), "property") if prop[1] == "Reference"][0]
-        sexpr.child(reference, "at")[1:4] = ["0", "-1.6", "90"]
-        path(tree, "/+3V3", "F.Cu", 0.3, [(66.7, 15.825), (69.2, 15.825), (69.8, 15.225), (69.8, 15)])
-        path(tree, "/+3V3", "F.Cu", 0.3, [(70.075, 15), (70.075, 17.3), (74.5, 17.3), (74.5, 17.725)])
-        append(tree, track(GND, "F.Cu", (74.5, 19.275), (74.5, 20.7), 0.4), new_via(GND, (74.5, 20.7)))
+        drop(tree, ((68.05, 17.55), (69.3, 17.55)))
+        drop_via(tree, (69.3, 17.55))
+        move(tree, "C4", 68.05, 20.775)
+        path(tree, "/+3V3", "F.Cu", 0.3, [(68.05, 16), (68.05, 20)])
+        path(tree, GND, "F.Cu", 0.5, [(68.05, 21.55), (66.8, 21.55)])
+        append(tree, new_via(GND, (66.8, 21.55)))
     seed.layout(edit)
 
 
@@ -255,51 +279,50 @@ def bare_load_pads(seed: board_prove.Seed) -> None:
 
 
 def supply_through_mains(seed: board_prove.Seed) -> None:
-    """The +5V supply trunk to the load connector looped through the mains region, beyond the signed distances."""
+    """The +5V trunk to the load connector looped west through the mains region at x 22 mm, beyond the signed distances."""
     def edit(tree: list) -> None:
-        tree.remove(segment(tree, (37, 3.5), (37, 55.5)))
-        path(tree, "/+5V", "F.Cu", 0.8, [(37, 3.5), (37, 39.5), (22, 39.5), (22, 50), (37, 50), (37, 55.5)])
+        drop(tree, ((37, 42.2), (50.3, 55.5)))
+        path(tree, "/+5V", "F.Cu", 0.8, [(37, 42.2), (37, 47), (22, 47), (22, 50), (44.8, 50), (50.3, 55.5)])
     seed.layout(edit)
 
 
 def drive_through_sensing(seed: board_prove.Seed) -> None:
-    """The phototriac drive line LED_DRV rerouted on B.Cu through the analog sensing region."""
+    """The phototriac drive line LED_DRV rerouted on B.Cu down x 60 mm through the analog sensing region."""
     def edit(tree: list) -> None:
-        tree.remove(segment(tree, (64, 13), (64, 26)))
-        tree.remove(segment(tree, (64, 26), (33.8, 26)))
-        path(tree, "/LED_DRV", "B.Cu", 0.25, [(64, 13), (64, 40), (46, 40), (46, 26), (33.8, 26)])
+        drop(tree, ((68.6, 13), (48, 13)), ((48, 13), (37, 24)))
+        path(tree, "/LED_DRV", "B.Cu", 0.25, [(68.6, 13), (60, 13), (60, 36), (51, 36), (39, 24), (37, 24)])
     seed.layout(edit)
 
 
 def sense_off_the_load_track(seed: board_prove.Seed) -> None:
-    """The amplifier's sense track taken off the load-current track 8 mm short of the shunt, not from the shunt's pad."""
+    """The amplifier's sense track taken off the load-current track beside J4, 6 mm short of R1's pad, not from the pad."""
     def edit(tree: list) -> None:
-        tree.remove(segment(tree, (58.038, 52), (58.038, 46.4)))
-        path(tree, "/LOAD_RTN", "F.Cu", 0.4, [(50, 52), (50, 46.4), (58.038, 46.4)])
+        drop(tree, ((57.0375, 51), (57.0375, 48.7)))
+        path(tree, "/LOAD_RTN", "F.Cu", 0.8, [(53.8, 55.5), (53.8, 49.7), (54.8, 48.7), (57.0375, 48.7)])
     seed.layout(edit)
 
 
 def load_capacitor_away(seed: board_prove.Seed) -> None:
     """The crystal's XTAL1 load capacitor C5 moved away from the crystal and its partner, reached by a long track."""
     def edit(tree: list) -> None:
-        tree.remove(segment(tree, (76.8, 18.25), (83.625, 18.25)))
-        tree.remove(segment(tree, (85.175, 18.25), (86.5, 18.25)))
-        tree.remove(via(tree, (86.5, 18.25)))
-        move(tree, "C5", 84.4, 26)
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(76.8, 18.25), (81.5, 18.25), (81.5, 26), (83.625, 26)])
-        append(tree, track(GND, "F.Cu", (85.175, 26), (86.5, 26), 0.4), new_via(GND, (86.5, 26)))
+        drop(tree, ((80, 18.25), (80, 21.525)), ((80, 23.075), (80, 24.3)))
+        drop_via(tree, (80, 24.3))
+        turn(tree, "C5", 0)
+        move(tree, "C5", 86.8, 23)
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(80, 18.25), (80, 22), (81, 23), (86.025, 23)])
+        path(tree, GND, "F.Cu", 0.5, [(87.575, 23), (88.8, 23)])
+        append(tree, new_via(GND, (88.8, 23)))
     seed.layout(edit)
 
 
 def suppressor_away(seed: board_prove.Seed) -> None:
-    """The supply input's suppressor D1 moved 26 mm from its connector, onto a stub off the supply trunk."""
+    """The supply input's suppressor D1 moved 19 mm from its connector, onto the +5V trunk at y 28 mm."""
     def edit(tree: list) -> None:
-        tree.remove(segment(tree, (39.1, 9.2), (40.3, 9.2)))
-        tree.remove(via(tree, (40.3, 9.2)))
-        move(tree, "D1", 40.05, 30)
-        append(tree, track("/+5V", "F.Cu", (37, 30), (39, 30), 0.8),
-               track(GND, "F.Cu", (41.1, 30), (42.4, 30), 0.4),
-               new_via(GND, (42.4, 30)))
+        drop(tree, ((39.1, 9.2), (40.3, 9.2)))
+        drop_via(tree, (40.3, 9.2))
+        move(tree, "D1", 38.05, 28)
+        path(tree, GND, "F.Cu", 0.5, [(39.1, 28), (40.3, 28)])
+        append(tree, new_via(GND, (40.3, 28)))
     seed.layout(edit)
 
 
@@ -318,48 +341,164 @@ def edge_minimum_below_source(seed: board_prove.Seed) -> None:
 
 
 def bead_at_the_source(seed: board_prove.Seed) -> None:
-    """The amplifier's supply bead FB1 moved to the far end of the supply, by the regulator's trunk, away from the amplifier."""
+    """The amplifier's supply bead FB1 moved to the start of its supply, at C2 by the regulator, 30 mm from U3."""
     def edit(tree: list) -> None:
-        tree.remove(segment(tree, (66, 15.1), (66, 37)))
-        tree.remove(segment(tree, (69.14, 37), (69.14, 37.712)))
-        sexpr.child(segment(tree, (66, 37), (69.14, 37)), "net")[1] = Q("/+3V3A")
-        move(tree, "FB1", 66, 18)
-        append(tree, track("/+3V3", "F.Cu", (66, 15.1), (66, 17.212), 0.4),
-               track("/+3V3A", "F.Cu", (66, 18.788), (66, 37), 0.4),
-               track("/+3V3A", "F.Cu", (69.14, 37), (69.14, 39.288), 0.3))
+        drop(tree, ((51, 14), (51, 16.6875)), ((51, 16.6875), (71.925, 37.6125)), ((71.925, 39.1875), (71.925, 41.9)))
+        move(tree, "FB1", 51, 17.4)
+        path(tree, "/+3V3", "F.Cu", 0.3, [(51, 14), (51, 16.6125)])
+        path(tree, "/+3V3A", "F.Cu", 0.3, [(51, 18.1875), (71.925, 39.1125), (71.925, 41.9)])
     seed.layout(edit)
+
+
+def parts_apart(seed: board_prove.Seed) -> None:
+    """The LED resistor R4 moved 15 mm south of U1's pin it serves, its connection running down to it."""
+    def edit(tree: list) -> None:
+        drop(tree, ((31.81, 21.46), (33.675, 21.46)), ((35.325, 21.46), (35.325, 23)))
+        drop_via(tree, (35.325, 23))
+        turn(tree, "R4", -90)
+        move(tree, "R4", 33.85, 36)
+        path(tree, "/LED_K", "F.Cu", 0.25, [(31.81, 21.46), (32.85, 21.46), (33.85, 22.46), (33.85, 35.175)])
+        path(tree, GND, "F.Cu", 0.5, [(33.85, 36.825), (33.85, 38.1)])
+        append(tree, new_via(GND, (33.85, 38.1)))
+    seed.layout(edit)
+
+
+def needless_layer_change(seed: board_prove.Seed) -> None:
+    """XTAL1 dropped to B.Cu and straight back up, through two vias, on its run from U4 to the crystal."""
+    def edit(tree: list) -> None:
+        drop(tree, ((73.925, 14.5), (79.2, 14.5)))
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(73.925, 14.5), (75.4, 14.5)])
+        path(tree, "/XTAL1", "B.Cu", 0.25, [(75.4, 14.5), (77.6, 14.5)])
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(77.6, 14.5), (79.2, 14.5)])
+        append(tree, new_via("/XTAL1", (75.4, 14.5)), new_via("/XTAL1", (77.6, 14.5)))
+    seed.layout(edit)
+
+
+def figure(row: str, old: str, new: str, variable: Optional[str] = None, value: Optional[str] = None,
+           rules: Optional[Tuple[str, str]] = None):
+    """A rule's figure loosened below its source: in the rules table's row, and where the board sets it."""
+    def seed_it(seed: board_prove.Seed) -> None:
+        text = seed.read("design-rules.md")
+        line = next(item for item in text.splitlines() if item.startswith(f"| {row} |"))
+        seed.replace("design-rules.md", line, line.replace(old, new))
+        if variable is not None:
+            seed.project(lambda data: data["text_variables"].update({variable: value}))
+        if rules is not None:
+            seed.replace(".kicad_dru", *rules)
+    return seed_it
+
+
+def route_the_long_way(seed: board_prove.Seed) -> None:
+    """The detour ratio raised to 2, and the +3V3 trunk to U4 taken north round a loop from x 53 to 64 mm."""
+    figure("Route length", "| 1.3 |", "| 2 |", "WORK_DETOUR_RATIO", "2")(seed)
+    seed.replace("design-rules.md", "WORK_DETOUR_RATIO | 1.3 times", "WORK_DETOUR_RATIO | 2 times")
+    def edit(tree: list) -> None:
+        drop(tree, ((53, 14), (64, 14)))
+        path(tree, "/+3V3", "F.Cu", 0.3, [(53, 14), (53, 9.5), (64, 9.5), (64, 14)])
+    seed.layout(edit)
+
+
+def square_corners(seed: board_prove.Seed) -> None:
+    """The corner rule's minimum lowered to 90 degrees, and U3's supply brought into pin 5 round a square corner."""
+    figure("Corners", "| 135 |", "| 90 |", rules=("(constraint track_angle (min 135))", "(constraint track_angle (min 90))"))(seed)
+    def edit(tree: list) -> None:
+        drop(tree, ((71.925, 41.9), (70.775, 43.05)), ((70.775, 43.05), (69.1375, 43.05)))
+        path(tree, "/+3V3A", "F.Cu", 0.3, [(71.925, 41.9), (69.1375, 41.9), (69.1375, 43.05)])
+    seed.layout(edit)
+
+
+def jogs(seed: board_prove.Seed) -> None:
+    """The shortest straight run lowered to 0.3 mm, and a 0.4 mm offset jogged into the feedback track to R3."""
+    figure("Jogs", "| 1 mm |", "| 0.3 mm |", rules=("(constraint track_segment_length (min 1mm))",
+                                                   "(constraint track_segment_length (min 0.3mm))"))(seed)
+    def edit(tree: list) -> None:
+        drop(tree, ((71.575, 44.95), (71.575, 47.8)))
+        path(tree, "/AMP_FB", "F.Cu", 0.25, [(71.575, 44.95), (71.575, 46), (71.975, 46.4), (71.975, 47.4), (71.575, 47.8)])
+    seed.layout(edit)
+
+
+def narrowed(seed: board_prove.Seed) -> None:
+    """The neck figure raised to 8 mm, and the +3V3 trunk narrowed to 0.2 mm for its last 4 mm into U4."""
+    figure("Necks", "| 1 mm |", "| 8 mm |", "WORK_NECK_MM", "8")(seed)
+    seed.replace("design-rules.md", "WORK_NECK_MM | 1 mm off", "WORK_NECK_MM | 8 mm off")
+    def edit(tree: list) -> None:
+        for a, b in (((66, 16), (68.05, 16)), ((68.05, 16), (69.05, 15))):
+            sexpr.child(segment(tree, a, b), "width")[1] = "0.2"
+    seed.layout(edit)
+
+
+def odd_angle(seed: board_prove.Seed) -> None:
+    """The direction tolerance raised to 15 degrees, and the shunt's ground via moved so its track runs 13 degrees off."""
+    figure("Track directions", "| 0.1 degree |", "| 15 degrees |", "WORK_ANGLE_TOLERANCE_DEG", "15")(seed)
+    seed.replace("design-rules.md", "WORK_ANGLE_TOLERANCE_DEG | 0.1 degrees", "WORK_ANGLE_TOLERANCE_DEG | 15 degrees")
+    def edit(tree: list) -> None:
+        drop(tree, ((62.9625, 51), (62.9625, 54)))
+        drop_via(tree, (62.9625, 54))
+        path(tree, GND, "F.Cu", 0.5, [(62.9625, 51), (63.6625, 54)])
+        append(tree, new_via(GND, (63.6625, 54)))
+    seed.layout(edit)
+
+
+def side_entry(seed: board_prove.Seed) -> None:
+    """The pad-entry ratio raised to 10, so no pad on the board counts as long, with U3's pin 5 entered from its side."""
+    figure("Pad entries", "| 2 |", "| 10 |", "WORK_PAD_ENTRY_RATIO", "10")(seed)
+    seed.replace("design-rules.md", "WORK_PAD_ENTRY_RATIO | 2 times", "WORK_PAD_ENTRY_RATIO | 10 times")
 
 
 #: (identifier, the catalogue item that covers it, layer, board position in mm, what it is, the edit)
 SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove.Seed], None]]] = [
     ("S1", "GROUND-1", "F.Cu, In1.Cu, In2.Cu, B.Cu", (61, 30),
-     "ground drawn as thin traces: the four ground planes and pours removed and ground carried by 0.4 mm tracks on In1.Cu",
+     "ground drawn as thin traces: the four ground planes and pours removed and ground carried by 0.5 mm tracks on In1.Cu",
      thin_ground),
-    ("S2", "DECOUPLE-1", "F.Cu", (74.5, 18.5),
-     "a decoupling capacitor routed the long way round to its pin: C4 moved across U4, the supply reaching U4's VCC pin "
-     "before it", long_way_decoupling),
+    ("S2", "DECOUPLE-1", "F.Cu", (68.05, 20.775),
+     "a decoupling capacitor routed the long way round to its pin: C4 moved 4 mm south of U4's supply pin, the supply "
+     "reaching the pin before it", long_way_decoupling),
     ("S3", "POWER-5", "F.Cu, B.Cu", (24.19, 21.46),
      "a high-current pad without the copper it needs: the copper areas round U1's load-side pads removed on both sides",
      bare_load_pads),
-    ("S4", "MAINS-2", "F.Cu", (22, 45),
+    ("S4", "MAINS-2", "F.Cu", (22, 48.5),
      "low-voltage copper inside the mains region: the +5V trunk looped through the mains region at x 22 mm", supply_through_mains),
-    ("S5", "FLOOR-2", "B.Cu", (64, 34),
-     "a digital track through the analog sensing region: LED_DRV rerouted down x 64 mm and along y 40 mm", drive_through_sensing),
-    ("S6", "SENSE-1", "F.Cu", (50, 49),
-     "a sense connection off the load-current track: the amplifier's LOAD_RTN sense track tapped 8 mm short of R1's pad",
-     sense_off_the_load_track),
-    ("S7", "CLOCK-1", "F.Cu", (84.4, 26),
-     "a load capacitor away from the crystal: C5 moved 7.75 mm from Y1's pad and from C6", load_capacitor_away),
-    ("S8", "CONN-1", "F.Cu", (40.05, 30),
-     "a suppressor away from its connector: D1 moved 26 mm from J2 onto a stub off the +5V trunk", suppressor_away),
+    ("S5", "FLOOR-2", "B.Cu", (60, 32),
+     "a digital track through the analog sensing region: LED_DRV rerouted down x 60 mm and along y 36 mm", drive_through_sensing),
+    ("S6", "SENSE-1", "F.Cu", (53.8, 52),
+     "a sense connection off the load-current track: the amplifier's LOAD_RTN sense track tapped off the load track "
+     "beside J4, 6 mm short of R1's pad", sense_off_the_load_track),
+    ("S7", "CLOCK-1", "F.Cu", (86.8, 23),
+     "a load capacitor away from the crystal: C5 moved 6 mm from Y1's pad, beside the board's edge", load_capacitor_away),
+    ("S8", "CONN-1", "F.Cu", (38.05, 28),
+     "a suppressor away from its connector: D1 moved 24 mm from J2, onto the +5V trunk at y 28 mm", suppressor_away),
     ("S9", "TEST-2", "F.Cu", (66.5, 55.5),
      "test points on both sides: TP5 moved to the top side", test_point_on_top),
     ("S10", "MFG-1", "design-rules.md, Board Setup", (0, 0),
      "a board-wide minimum below its source: copper-to-edge set to 0.2 mm where the row's source recommends more than "
      "0.3 mm", edge_minimum_below_source),
-    ("S11", "EMI-4", "F.Cu", (66, 18),
-     "a supply ferrite bead at the far end of the supply: FB1 moved from U3 to the +3V3 trunk by U4, 20 mm from U3",
+    ("S11", "EMI-4", "F.Cu", (51, 17.4),
+     "a supply ferrite bead at the far end of the supply: FB1 moved from U3 to the start of its supply at C2, 30 mm from U3",
      bead_at_the_source),
+    ("S12", "WORK-1", "F.Cu", (33.85, 36),
+     "a part set apart from the part it serves: R4 moved 15 mm south of U1's pin 2, its connection running down to it",
+     parts_apart),
+    ("S13", "WORK-3", "F.Cu, B.Cu", (76.5, 14.5),
+     "a needless change of layer: XTAL1 dropped to B.Cu and straight back up through two vias on its run to the crystal",
+     needless_layer_change),
+    ("S14", "WORK-2", "design-rules.md, project text variables, F.Cu", (58.5, 9.5),
+     "a route-length figure looser than its item's and a supply route the long way round: WORK_DETOUR_RATIO 2 where the "
+     "item gives 1.3, and the +3V3 trunk to U4 taken north round a loop from x 53 to 64 mm", route_the_long_way),
+    ("S15", "WORK-4", "design-rules.md, rules file, F.Cu", (69.1375, 41.9),
+     "a corner figure looser than its item's and a square corner: the Corners rule at 90 where the item gives 135, and "
+     "U3's supply turning square into pin 5", square_corners),
+    ("S16", "WORK-5", "design-rules.md, rules file, F.Cu", (71.775, 46.2),
+     "a jog figure looser than its item's and a jog: the Jogs rule at 0.3 mm where the item gives 1 mm, and a 0.4 mm "
+     "offset in the feedback track from R2 to R3", jogs),
+    ("S17", "WORK-8", "design-rules.md, project text variables, F.Cu", (67, 16),
+     "a neck figure looser than its item's and a narrowed route: WORK_NECK_MM 8 where the item gives 1, and the +3V3 "
+     "trunk narrowed to 0.2 mm for its last 4 mm into U4", narrowed),
+    ("S18", "WORK-9", "design-rules.md, project text variables, F.Cu", (63.3, 52.5),
+     "a direction tolerance looser than its item's and a track at an odd angle: WORK_ANGLE_TOLERANCE_DEG 15 where the "
+     "item gives 0.1, and R1's ground track to its via running 13 degrees off the board's edges", odd_angle),
+    ("S19", "WORK-10", "design-rules.md, project text variables, F.Cu", (69.1375, 42.5),
+     "a pad-entry ratio looser than its item's and a track entering a long pad from its side: WORK_PAD_ENTRY_RATIO 10 "
+     "where the item gives 2, so U3's pin 5, entered from its side by S15's corner, passes", side_entry),
 ]
 
 

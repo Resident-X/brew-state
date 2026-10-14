@@ -216,12 +216,46 @@ class TheSeeds(unittest.TestCase):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: At least one seeded defect for each area the catalogue covers, and among them ground drawn as thin traces, a decoupling capacitor routed the long way round to its pin, low-voltage copper inside the mains region, and a high-current pad without the copper it needs.
         items = catalogue_items()
         areas = {item.split("-")[0] for item in items}
-        self.assertEqual(len(areas), 11, areas)
+        self.assertEqual(len(areas), 12, areas)
         seeded = [seed[1] for seed in review_seed.SEEDS]
         self.assertEqual(areas - {item.split("-")[0] for item in seeded}, set(), "a catalogue area has no seed")
         self.assertLessEqual({"GROUND-1", "DECOUPLE-1", "MAINS-2", "POWER-5"}, set(seeded))
         self.assertEqual(set(seeded) - set(items), set(), "a seed names an item the catalogue does not hold")
         self.assertEqual(len({seed[0] for seed in review_seed.SEEDS}), len(review_seed.SEEDS), "two seeds share an identifier")
+
+    def test_every_workmanship_item_is_seeded_for_the_review_or_proven_by_the_checks_own_fault(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        work = [item for item in catalogue_items() if item.startswith("WORK-")]
+        self.assertEqual(len(work), 10, work)
+        seeded = {seed[1] for seed in review_seed.SEEDS}
+        # KiCad reports a stub and an unneeded via unaided, so no copy holding one passes the check: the
+        # check's own seeded faults prove those two, with the subtle measured defects, rather than the review.
+        self.assertEqual(set(work) - seeded, {"WORK-6", "WORK-7"})
+        faults = {fault[0]: fault[2] for fault in board_prove.FAULTS}
+        for name, rule in (("a short stub", "workmanship_stub"), ("an unneeded via", "via_dangling"),
+                           ("a short jog", "track_segment_length"), ("a corner a few degrees off 45", "track_angle")):
+            self.assertEqual(faults.get(name), rule, name)
+
+    def test_each_rule_kind_workmanship_seed_loosens_its_figure_in_the_rules_table_and_where_the_board_sets_it(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        rule_kind = {"WORK-2": ("WORK_DETOUR_RATIO", "2"), "WORK-4": (None, "(min 90)"), "WORK-5": (None, "(min 0.3mm)"),
+                     "WORK-8": ("WORK_NECK_MM", "8"), "WORK-9": ("WORK_ANGLE_TOLERANCE_DEG", "15"),
+                     "WORK-10": ("WORK_PAD_ENTRY_RATIO", "10")}
+        for ident, item, _, _, _, edit in review_seed.SEEDS:
+            if item not in rule_kind:
+                continue
+            variable, value = rule_kind[item]
+            with self.subTest(seed=ident), tempfile.TemporaryDirectory() as scratch:
+                seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+                table, project, rules = seed.read("design-rules.md"), seed.read(".kicad_pro"), seed.read(".kicad_dru")
+                edit(seed)
+                self.assertNotEqual(seed.read("design-rules.md"), table, "the rules table's row is not loosened")
+                if variable is not None:
+                    self.assertEqual(json.loads(project)["text_variables"][variable] != value, True)
+                    self.assertEqual(json.loads(seed.read(".kicad_pro"))["text_variables"][variable], value)
+                else:
+                    self.assertNotIn(value, rules)
+                    self.assertIn(value, seed.read(".kicad_dru"))
 
     def test_each_seed_changes_the_copy(self):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: Each seed is a deliberately placed layout defect in the copy.
