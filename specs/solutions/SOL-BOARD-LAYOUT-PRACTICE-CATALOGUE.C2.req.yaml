@@ -2,11 +2,11 @@ id: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C2
 type: criterion
 title: Before placement, the method requires a written floorplan and a plan for each applicable catalogue item
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Write the step into the method, before placement, and amend the method's existing rules step so that it requires every board's rules to carry each rule-kind catalogue item that applies to the board, with that item as the rule's source. The floorplan places the board's mains, low-voltage, analog sensing and digital regions and its connectors; the plan states, for each catalogue item that applies to the board, how the layout will meet it, and marks the items that do not apply with the reason. The floorplan and plan are committed before any part is placed, so the order is checkable from the repository's history, and a plan item the finished layout does not meet is a finding at review. Out of scope: the review itself, and producing the review views.
+  Write the step into the method as its own section between designing for bring-up and the rules before routing, and amend the method's existing rules step so that it requires every board's rules to carry each rule-kind catalogue item that applies to the board, with that item, by its identifier, as the rule's source, and, where the item names a figure by its role, the record the board's figure was read from as well. The floorplan and plan are kept in a file named layout-plan.md in the board's own folder. The floorplan places the board's mains, low-voltage, analog sensing and digital regions, each with its bounds in board coordinates, and its connectors, each with the board edge and position it sits at; the plan has one row for every catalogue item, which, for an item that applies to the board, states how the layout will meet it, naming the regions, parts or nets it binds closely enough that a failure found at review can be traced to that row or to the item, and, for an item that does not apply, gives the reason against the item's condition. The floorplan and plan are committed before any part is placed, so the order is checkable from the repository's history, and they are judged in the same checkout of the commit before placement, found the same way, that the method already uses to judge the circuit proof and bring-up provision records; a plan missing, incomplete or uncommitted in that checkout fails the step. A plan item the finished layout does not meet is a finding at review. Out of scope: the review itself, and producing the review views.
 links:
   - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
     type: criterion-of
