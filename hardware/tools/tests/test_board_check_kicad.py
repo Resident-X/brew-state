@@ -17,6 +17,7 @@ report's shape across several designs -- and those are driven directly.
 from __future__ import annotations
 
 import concurrent.futures
+import datetime
 import hashlib
 import io
 import json
@@ -27,12 +28,16 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from typing import Tuple
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
 import board_prove  # noqa: E402
+import board_views  # noqa: E402
+import locked_copper  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
@@ -499,6 +504,167 @@ class TheReport(Copy):
         self.assertEqual(status, 0, lines)
         self.assertEqual(lines[1:], ["DESIGN | hardware/proof/gate-proof/gate-proof.kicad_pro | PASS",
                                      "RESULT | PASS | all 1 designs passed"])
+
+
+# --- Class membership on a board of any size -----------------------------------
+
+
+#: Ten Mains nets, nine in the class by the project file's pattern and one by
+#: its name, each carrying 22 tracks: 220 items between them, more than KiCad
+#: reports failures of one kind. Thirty low-voltage nets of three tracks each
+#: bring the board to 310 items.
+MAINS_NETS = {f"/MAINS_{index}" for index in range(9)} | {"/LIVE_FEED"}
+LV_NETS = {f"/LV_{index:02d}" for index in range(30)}
+
+LAYERS = ('\t(layers\n\t\t(0 "F.Cu" signal)\n\t\t(2 "B.Cu" signal)\n\t\t(13 "F.Paste" user)\n\t\t(15 "B.Paste" user)\n'
+          '\t\t(5 "F.SilkS" user "F.Silkscreen")\n\t\t(7 "B.SilkS" user "B.Silkscreen")\n\t\t(1 "F.Mask" user)\n'
+          '\t\t(3 "B.Mask" user)\n\t\t(25 "Edge.Cuts" user)\n\t)\n')
+
+
+def tracks_board(path: str, tracks) -> None:
+    """A KiCad 10 board at `path` holding nothing but the given (net, count) tracks, each a 1 mm segment, inside an outline."""
+    body = ""
+    for row, (net, count) in enumerate(tracks):
+        for column in range(count):
+            body += (f'\t(segment (start {2 * column} {3 * row}) (end {2 * column + 1} {3 * row}) (width 0.25) '
+                     f'(layer "F.Cu") (net {board_check.quoted(net)}) (uuid "00000000-0000-4000-8000-{row:06d}{column:06d}"))\n')
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write('(kicad_pcb\n\t(version 20260206)\n\t(generator "pcbnew")\n\t(generator_version "10.0")\n'
+                     '\t(general (thickness 1.6))\n\t(paper "A4")\n' + LAYERS
+                     + '\t(gr_rect (start -5 -5) (end 600 1000) (stroke (width 0.1) (type solid)) (fill no) '
+                       '(layer "Edge.Cuts") (uuid "00000000-0000-4000-8000-ffffffffffff"))\n' + body + ")\n")
+
+
+def over_limit_design(folder: str) -> Tuple[str, str]:
+    """The over-limit board and its project file, b.kicad_pcb and b.kicad_pro in `folder`."""
+    os.makedirs(folder, exist_ok=True)
+    board, project = os.path.join(folder, "b.kicad_pcb"), os.path.join(folder, "b.kicad_pro")
+    tracks_board(board, [(net, 22) for net in sorted(MAINS_NETS)] + [(net, 3) for net in sorted(LV_NETS)])
+    with open(os.path.join(board_prove.PROOF, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
+        data = json.load(handle)
+    data["net_settings"]["netclass_assignments"] = {"/LIVE_FEED": "Mains"}
+    data["board"]["design_settings"].setdefault("rules", {}).update(min_track_width=0.2, min_clearance=0.2)
+    with open(project, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, indent=1)
+    return board, project
+
+
+class TheReportLimitIsKiCads(unittest.TestCase):
+    """The report limit the class read is batched against is the one the installed KiCad keeps to."""
+
+    def test_an_assertion_every_item_fails_is_reported_exactly_the_limit_times(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            tracks_board(os.path.join(scratch, "b.kicad_pcb"), [("/N", board_check.REPORT_LIMIT + 50)])
+            with open(os.path.join(scratch, "b.kicad_dru"), "w", encoding="utf-8") as handle:
+                handle.write("(version 1)\n" + board_check.marker("limit"))
+            report, why = board_check.run_report([KICAD_CLI, "pcb", "drc", "--format", "json", "--severity-all",
+                                                  "b.kicad_pcb"], scratch)
+        self.assertIsNotNone(report, why)
+        self.assertEqual(len(board_check.fired(report, board_check.marker_rule("limit"))), board_check.REPORT_LIMIT)
+
+
+class AClassIsReadWholeOnABoardOfAnySize(unittest.TestCase):
+    """On a board whose Mains nets alone carry more items than KiCad reports, the class read and every reader of it see the class whole."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.scratch = tempfile.TemporaryDirectory(prefix="board-test-")
+        cls.folder = os.path.join(cls.scratch.name, "repository", "over")
+        cls.board, cls.project = over_limit_design(cls.folder)
+        cls.layout = locked_copper.read_layout(cls.board)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.scratch.cleanup()
+
+    def test_the_board_is_past_the_limit_on_its_mains_nets_alone(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        items = board_check.net_items(self.layout)
+        self.assertGreater(sum(len(items[net]) for net in MAINS_NETS), board_check.REPORT_LIMIT)
+        self.assertEqual(set(items), MAINS_NETS | LV_NETS)
+
+    def test_the_mains_class_is_read_exactly_on_every_run(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        for run in range(3):
+            with self.subTest(run=run), tempfile.TemporaryDirectory(prefix="board-test-") as work:
+                found, why = board_check.class_members(KICAD_CLI, work, self.project, ["Mains"],
+                                                       board_check.layout_nets(self.layout), f"run{run}",
+                                                       board_check.layout_version(self.layout),
+                                                       board_check.class_blocks(self.layout))
+                self.assertEqual(found, {"Mains": MAINS_NETS}, why)
+
+    def test_the_pre_order_check_sees_that_set(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        root = os.path.dirname(self.folder)
+        with open(os.path.join(self.folder, "b.kicad_sch"), "w", encoding="utf-8") as handle:
+            handle.write('(kicad_sch\n\t(version 20250114)\n\t(generator "eeschema")\n'
+                         '\t(uuid "0b0e5c1a-0000-4000-8000-0000000000f0")\n\t(paper "A4")\n)\n')
+        repository = board_check.Repository(root, ["over/b.kicad_pro", "over/b.kicad_sch", "over/b.kicad_pcb"])
+        found = board_check.check_design(board_check.Design("over/b.kicad_pro"), repository, KICAD_CLI,
+                                         board_check.require_yaml(), datetime.date.today(), [])
+        # The schematic holds no net, so each net the layout and the project
+        # file put in Mains is named as missing from the schematic alone.
+        said = {}
+        for violation in found:
+            match = re.match(r"net (\S+) is in the Mains net class (.*?) but not (.*?); ", violation.message)
+            if violation.rule == "mains_class" and match:
+                said[match.group(1)] = (match.group(2), match.group(3))
+        self.assertEqual(said, {net: ("on the layout and in the project file's net settings", "in the schematic")
+                                for net in MAINS_NETS}, found)
+        self.assertFalse([v for v in found if v.rule in ("mains_declaration", "design_unreadable")], found)
+
+    def test_the_locked_copper_reading_sees_that_set(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        self.assertEqual(locked_copper.members(KICAD_CLI, self.board, self.project, self.layout, ["Mains"]),
+                         {"Mains": MAINS_NETS})
+
+    def test_the_review_views_see_that_set(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        # The views read every class the design defines, Default too, whose
+        # items on this board far outnumber KiCad's report limit; the render is
+        # stopped once the membership it draws from has been read.
+        seen = {}
+        members = locked_copper.members
+
+        class Read(Exception):
+            pass
+
+        def spy(*args):
+            seen.update(members(*args))
+            raise Read()
+
+        with tempfile.TemporaryDirectory(prefix="board-test-") as out, \
+                mock.patch.object(locked_copper, "members", side_effect=spy):
+            with self.assertRaises(Read):
+                board_views.views(self.board, self.project, ["Mains"], os.path.join(out, "views"), KICAD_CLI,
+                                  "resvg", io.StringIO())
+        self.assertEqual(seen["Mains"], MAINS_NETS)
+        self.assertEqual(seen["Default"], LV_NETS)
+
+
+class AReportCutShortFailsTheCheck(unittest.TestCase):
+    """A design whose own assertion rules fail on more items than KiCad reports fails, rather than passing on what was left."""
+
+    def test_a_design_rule_failing_on_more_items_than_the_limit_fails_saying_the_report_was_cut_short(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch)
+            seed.write(".kicad_dru", seed.read(".kicad_dru") + '(rule "no tracks"\n\t(condition "A.Type == \'Track\'")\n'
+                                                               '\t(constraint assertion "false"))\n')
+
+            def crowd_with_tracks(tree):
+                for index in range(board_check.REPORT_LIMIT + 20):
+                    x, y = 2 * (index % 25), 40 + 2 * (index // 25)
+                    tree.insert(len(tree) - 1, board_prove.segment("/LV_B", x, y, x + 1, y,
+                                                                   f"0b0e5c1a-0000-4000-8000-{index:012d}"))
+
+            seed.layout(crowd_with_tracks)
+            status, lines, stderr = board_prove.check(seed, KICAD_CLI)
+        self.assertEqual(status, 1, stderr)
+        cut = [line for line in lines if " | custom_rules | " in line and "KiCad's report was cut short" in line]
+        self.assertEqual(len(cut), 1, lines)
+        self.assertFalse([line for line in lines if "did not load" in line], lines)
 
 
 if __name__ == "__main__":
