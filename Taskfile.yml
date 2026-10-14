@@ -361,23 +361,30 @@ tasks:
       - python3 tools/mull_sweep.py --project . --plant-root src/plant --include-dir include --pio {{.PIO}} {{.CLI_ARGS}}
 
   fw:verify:
-    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic
+    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic. Every gate runs to completion even after an earlier one fails, and the run fails naming every gate that did. Leave a gate out by name with task fw:verify -- --leave-out GATE (a name that is not a gate here is refused); the closing lines then say it was left out, so the run never reads as the complete verification passing
+    dir: "{{.ROOT_DIR}}"
     cmds:
-      - task: fw:build
-      - task: fw:check
-      - task: fw:test
-      - task: fw:run
-      # The tier below the host one: the artefact itself, executed, against
-      # models of the peripherals it drives. It is here rather than left to be
-      # remembered because the class of defect it nets -- a command addressing
-      # the wrong peripheral, or none -- is invisible to every gate above it,
-      # which all sit above the addressing.
-      - task: fw:emulate
-      # Last because it is the longest and because it asks the hardest question:
-      # not whether the checks pass, but whether the tests would notice the model
-      # being wrong. It needs an LLVM toolchain matching the mutation plugin, so
-      # a host without one fails the gate here rather than passing quietly.
-      - task: fw:sweep
+      # The gates are handed over in order rather than run as a plain list, so
+      # a gate failing does not stop the ones after it from running: this runs
+      # unattended, and what a later gate would have found is as much the
+      # night's result as the earlier failure.
+      #
+      # The host tier: every environment, every build-time check, the tests and
+      # the host executables under the sanitizers.
+      #
+      # Then the tier below it: the artefact itself, executed, against models of
+      # the peripherals it drives. It is here rather than left to be remembered
+      # because the class of defect it nets -- a command addressing the wrong
+      # peripheral, or none -- is invisible to every gate above it, which all sit
+      # above the addressing.
+      #
+      # Last the sweep, because it is the longest and because it asks the
+      # hardest question: not whether the checks pass, but whether the tests
+      # would notice the model being wrong. It needs an LLVM toolchain matching
+      # the mutation plugin, so a host without one fails the gate here rather
+      # than passing quietly. The hosted nightly leaves it out here and runs it
+      # sharded across runners instead.
+      - python3 {{.FW_DIR}}/tools/verify_gate.py --task "{{.TASK_EXE}}" --gate fw:build --gate fw:check --gate fw:test --gate fw:run --gate fw:emulate --gate fw:sweep {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
   # Cadences. A build round runs check:round once, and it is the only

@@ -329,7 +329,19 @@ The complete verification, `fw:verify`, runs nightly against `main`: every tier
 the round can skip, the emulation tier unconditionally, and the full sweep of
 the plant model's arithmetic. It stays the single declaration of every gate, and
 the round hands the task runner the same tasks rather than copies of their
-commands.
+commands. Unlike the round it does not stop at a failure: every gate runs to
+completion, the run fails naming every gate that failed, and its closing lines
+name every gate that ran and every gate left out. A gate can be left out by
+name, and a name that is not one of its gates is refused:
+
+```sh
+task fw:verify -- --leave-out fw:sweep   # every gate but the sweep; the closing lines say it was left out
+```
+
+`.github/workflows/nightly-verify.yml` runs it on hosted runners every night
+and on manual dispatch, leaving the sweep out of that job and running it as the
+sharded sweep workflow in the same run instead. The night fails if any gate or
+any shard does, and its run history is the record of what `main` last verified.
 
 The emulation tier needs an emulator and the vendor's register description,
 neither of which is committed. They are fetched, pinned by digest, into
@@ -444,10 +456,11 @@ indented lines, a final line with no newline after it, the two refusals that
 quote a line, the declared bounds being admissible values rather than the first
 refused ones, and a value token longer than the loader can hold.
 
-`.github/workflows/mutation-sweep.yml` runs it on a hosted runner, started by
-hand for the same reason the task is. Nothing in the toolchain discovery names a
-Homebrew path, but a verification tool is only portable once it has run
-somewhere other than the machine it was written on.
+`.github/workflows/mutation-sweep.yml` runs it on hosted runners, sharded across
+them, when the nightly verification calls it and when somebody starts it by
+hand. Nothing in the toolchain discovery names a Homebrew path, but a
+verification tool is only portable once it has run somewhere other than the
+machine it was written on.
 
 Set `PIO=/path/to/pio` if PlatformIO lives somewhere other than
 `~/.platformio/penv/bin/pio`, and `MULL_CLANG`, `MULL_IR_FRONTEND` or

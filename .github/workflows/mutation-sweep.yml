@@ -1,13 +1,16 @@
-# The plant model's mutation sweep, run on a hosted runner when somebody asks
-# for it.
+# The plant model's mutation sweep, run on hosted runners nightly against main
+# and whenever somebody asks for it.
 #
-# It is started by hand and by nothing else. The sweep answers a question --
-# does the test suite still notice a change to the model's arithmetic -- that
-# does not change between commits the way the tests' own results do, and it
-# compiles every swept source afresh and runs the suite once per mutant. Wiring
-# that into every push would spend most of its time re-establishing an answer
-# nobody was waiting for. The same reasoning keeps `task fw:mutate` out of the
-# gate, and the firmware README states it at greater length.
+# It is started by the nightly verification (nightly-verify.yml), which calls it
+# so its shards belong to the night's run and decide its result, and by hand.
+# Nothing else starts it. The sweep answers a question -- does the test suite
+# still notice a change to the model's arithmetic -- that does not change
+# between commits the way the tests' own results do, and it compiles every swept
+# source afresh and runs the suite once per mutant. Wiring that into every push
+# would spend most of its time re-establishing an answer nobody was waiting for,
+# so it runs once a night against main, where the rest of the complete
+# verification runs, and a build round sweeps only the lines its branch changes.
+# The firmware README states this at greater length.
 #
 # What this being here establishes is that the sweep runs somewhere other than
 # the machine it was written on. Nothing in the toolchain discovery names a
@@ -51,19 +54,26 @@
 name: Mutation sweep
 
 on:
+  workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# One sweep per ref at a time, and the newest dispatch is the one that matters.
-# The answer is about the state of a ref rather than about a moment, so a run
-# still going when another starts is establishing something about a ref that has
-# already moved on -- finishing it would burn a runner to produce an answer
-# nobody asked for any more.
+# Started by hand: one sweep per ref at a time, and the newest dispatch is the
+# one that matters. The answer is about the state of a ref rather than about a
+# moment, so a run still going when another starts is establishing something
+# about a ref that has already moved on -- finishing it would burn a runner to
+# produce an answer nobody asked for any more.
+#
+# Called from the nightly: the sweep is part of that night's result, and a
+# night cancelled by a later one would have none, so a called sweep is its own
+# group and is never cancelled. In a called workflow `github.workflow` is the
+# caller's name, which is what tells the two apart, and why the group is not
+# built from it -- it would land in a group the caller could be holding.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: mutation-sweep-${{ github.workflow == 'Mutation sweep' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.workflow == 'Mutation sweep' }}
 
 jobs:
   discover:

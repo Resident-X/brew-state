@@ -1174,14 +1174,19 @@ def task_commands(taskfile: str, name: str) -> list[str]:
     return commands
 
 
+def declared_gates(taskfile: str) -> list[str]:
+    """The gates the complete verification declares, in order: what it hands its driver."""
+    (command,) = task_commands(taskfile, "fw:verify")
+    words = command.split()
+    return [words[i + 1] for i, word in enumerate(words) if word == "--gate"]
+
+
 class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
     def setUp(self):
         with open(os.path.join(REPOSITORY, "Taskfile.yml"), encoding="utf-8") as handle:
             taskfile = handle.read()
         self.round = task_commands(taskfile, "check:round")
-        self.verify = [
-            command[len("task: "):] for command in task_commands(taskfile, "fw:verify")
-        ]
+        self.verify = declared_gates(taskfile)
 
     def round_arguments(self) -> list[str]:
         (command,) = self.round
@@ -1237,7 +1242,10 @@ class TheRoundNeedsOnlyTheStandardLibrary(unittest.TestCase):
 
     def test_the_gate_and_its_tests_import_only_the_standard_library(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
-        for path in (os.path.join(TOOLS, "round_gate.py"), os.path.abspath(__file__)):
+        for path in (
+            os.path.join(TOOLS, "round_gate.py"), os.path.join(TOOLS, "task_gate.py"),
+            os.path.abspath(__file__),
+        ):
             with open(path, encoding="utf-8") as handle:
                 tree = ast.parse(handle.read())
             imported = set()
@@ -1248,7 +1256,7 @@ class TheRoundNeedsOnlyTheStandardLibrary(unittest.TestCase):
                     imported.add(node.module.split(".")[0])
             foreign = sorted(
                 name for name in imported
-                if name not in sys.stdlib_module_names and name not in ("__future__", "round_gate")
+                if name not in sys.stdlib_module_names and name not in ("__future__", "round_gate", "task_gate")
             )
             with self.subTest(path=os.path.basename(path)):
                 self.assertIn("subprocess", imported)
