@@ -1,0 +1,137 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-14T09:38:57Z"
+artifact:
+  kind: inline
+text: |
+  # Blind seeded-defect demonstration: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+
+  - Verified commit: `68e314237e92dea6cc60908474095f646217ed57` on branch `req/SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF/seeded-defect-proof`; the final run, run 4, was on it.
+
+  ## Demonstration: the layout review step, blind, on a seeded copy of hardware/proof/review-proof
+
+  STATUS: COMPLETE. The final blind review (run 4, a fresh session on a copy seeded by the fixed command) reported every one of the 11 seeds as a finding against the catalogue item that covers it. No seed was missed in any run, and every real defect the earlier runs found in the clean design is fixed.
+
+  **The proof rests on run 4.** Runs 1 to 3 used the earlier seeding, which marked the seeded items in the copy. Every track and via a seed added carried a patterned identifier spelling the seed (`5eed0001-…` to `5eed0011-…`) where the design's own carry random ones, and all of them sat together at the end of the layout file. The project file lost KiCad's closing newline, and the edited files carried newer times than the untouched ones, so a listing by time put them first. A reviewer could have found where the seeds were without judging the board. 68e3142 removes every such mark. Each added item now takes a fresh random identifier, and KiCad itself refills and saves the seeded layout, so every item sits in KiCad's own order and form. Saving the committed layout this way leaves it byte-for-byte unchanged. The project file is written as KiCad writes it, and the folder holds exactly the committed design's files. Every file and folder carries the same time, and the design and documents are copied as HEAD holds them. Run 4 is the run on that unmarked copy. Runs 1 to 3 are kept for the record.
+
+  Run history: runs 1 and 2 were on 3afdc80 and b05b736, and run 3 on 8b36ccf. Those commits were later rebased onto the any-size net-class read (SOL-HW-BOARD-CLASS-READ-ANY-SIZE), which fixed the tooling defect that made the pre-order check and the views command intermittent on this design. The rebased commits are 7cf6c10 and b035a12, and the proof design's files in them are unchanged. 8b36ccf comes after them and fixes the last two defects run 2 found in the clean design. 68e3142 changes only the seeding command, its tests and the hardware readme's account of the command. The proof design is unchanged since 8b36ccf.
+
+  ## Tools
+
+  - KiCad 10.0.7 (`/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`), resvg 0.48.1, Python 3.14.6, PyYAML 6.0.3, git 2.52.0, Task 3.49.1, macOS.
+  - Design edits in 8b36ccf: KiCad 10.0.7's own Python (`pcbnew`, the bundled Python 3.9). Only the U4 model path and fab-layer text positions changed.
+  - Blind reviewer: Claude Code 2.1.285, model `claude-sonnet-5-5` (mid tier, below the design sessions' `claude-opus-5-5`), effort high, a fresh headless session per run. In runs 3 and 4 the session's own usage also lists `claude-haiku-4-5-20251001`, which Claude Code uses internally. Every review turn ran on `claude-sonnet-5-5`.
+
+  ## Commands
+
+  1. Seed and assemble (from the worktree root):
+     `task hw:review-seed KICAD_CLI=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli -- --seeds <scratchpad>/seeds-run<N>.json --out /tmp/board-review-<N>`
+     Output, every run: `CHECK | RESULT | PASS | all 1 designs passed`, `VIEWS | RESULT | WRITTEN | 115 images, their index and the per-net fact table`, `SEEDS | 11 seeds`, `RESULT | WRITTEN`.
+     The review folder is under /tmp, so its path names nothing of the repository. The seed list is in the session scratchpad, outside the folder and every design folder.
+  2. Fixed prompt: `task hw:review-seed -- --print-prompt > <scratchpad>/prompt.txt`. This is the `PROMPT` constant of hardware/tools/review_seed.py, and it names nothing seeded.
+  3. Blind review:
+     `cd /tmp/board-review-<N> && claude -p --model claude-sonnet-5-5 --effort high --output-format json --allowedTools "Read Grep Glob" --disallowedTools "Bash Edit Write NotebookEdit WebFetch WebSearch Task Agent" < <scratchpad>/prompt.txt`
+     Run 4's transcript shows 131 Read, 9 Grep and 1 Glob calls and no other tool. No call reached outside /tmp/board-review-4, and there were no permission denials. Run 3's showed 83 Read, 9 Grep and 1 Glob calls, all inside /tmp/board-review-3.
+     In run 4's folder, every file and folder carries one time. Every identifier the seeds added is a random version-4 UUID, and no two share a leading group. Saving its layout again through KiCad leaves it unchanged, and its design folder holds exactly the eight committed files. The review folder holds only `check-report.txt`, `docs/board-design-method.md`, `hardware/README.md`, `hardware/proof/review-proof/` and `views/`. The design folder is the seeded copy: project, schematic, layout, rules file, layout-plan.md, design-rules.md, constraints.md and separation-basis.yaml.
+  4. Verification of the final commit (68e3142), all with `KICAD_CLI=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`:
+     - `task hw:verify`: `RESULT | PASS | all 2 designs passed` (gate-proof and review-proof).
+     - `task hw:prove`: `RESULT | PASS | 93 of 93 faults caught`.
+     - `task hw:test`, run one module at a time with `-- -p <module>` to stay within one shell call's limit. All passed: test_review_seed 21, test_locked_copper 47, test_board_check 109, test_board_check_kicad 30, test_board_views 72.
+     - The three new tests of the unmarked folder were also run against run 3's folder, from the earlier seeding, and all three fail on it. The seeded layout is not as KiCad saves it, only 8 distinct leading groups among 64 added identifiers, and 136 distinct file times.
+     - The final design (8b36ccf) was verified as above with `task hw:verify` three times.
+
+  | Run | Commit | Folder | Turns | Time | Cost (USD) | Exit |
+  |---|---|---|---|---|---|---|
+  | 1 | 3afdc80 | /tmp/board-review-1 | 112 | 912 s | 3.98 | 0 |
+  | 2 (new session) | b05b736 | /tmp/board-review-2 | 97 | 871 s | 3.41 | 0 |
+  | 3 (new session) | 8b36ccf | /tmp/board-review-3 | 94 | 807 s | 2.94 | 0 |
+  | 4 (new session, final, unmarked copy) | 68e3142 | /tmp/board-review-4 | 142 | 826 s | 3.63 | 0 |
+
+  The seed list was identical in all four runs. Only the identifiers of the items the seeds add, and where KiCad files them, differ in run 4.
+
+  ## Seed list (all runs)
+
+  | Id | Covering item | Layer | Position (mm) | Seeded defect |
+  |---|---|---|---|---|
+  | S1 | GROUND-1 | F.Cu, In1.Cu, In2.Cu, B.Cu | (61, 30) | ground drawn as thin traces: the four ground planes and pours removed and ground carried by 0.4 mm tracks on In1.Cu |
+  | S2 | DECOUPLE-1 | F.Cu | (74.5, 18.5) | a decoupling capacitor routed the long way round to its pin: C4 moved across U4, the supply reaching U4's VCC pin before it |
+  | S3 | POWER-5 | F.Cu, B.Cu | (24.19, 21.46) | a high-current pad without the copper it needs: the copper areas round U1's load-side pads removed on both sides |
+  | S4 | MAINS-2 | F.Cu | (22, 45) | low-voltage copper inside the mains region: the +5V trunk looped through the mains region at x 22 mm |
+  | S5 | FLOOR-2 | B.Cu | (64, 34) | a digital track through the analog sensing region: LED_DRV rerouted down x 64 mm and along y 40 mm |
+  | S6 | SENSE-1 | F.Cu | (50, 49) | a sense connection off the load-current track: the amplifier's LOAD_RTN sense track tapped 8 mm short of R1's pad |
+  | S7 | CLOCK-1 | F.Cu | (84.4, 26) | a load capacitor away from the crystal: C5 moved 7.75 mm from Y1's pad and from C6 |
+  | S8 | CONN-1 | F.Cu | (40.05, 30) | a suppressor away from its connector: D1 moved 26 mm from J2 onto a stub off the +5V trunk |
+  | S9 | TEST-2 | F.Cu | (66.5, 55.5) | test points on both sides: TP5 moved to the top side |
+  | S10 | MFG-1 | design-rules.md, Board Setup | (0, 0) | a board-wide minimum below its source: copper-to-edge set to 0.2 mm where the row's source recommends more than 0.3 mm |
+  | S11 | EMI-4 | F.Cu | (66, 18) | a supply ferrite bead at the far end of the supply: FB1 moved from U3 to the +3V3 trunk by U4, 20 mm from U3 |
+
+  ## Comparison
+
+  | Seed | Run 1 | Run 2 | Run 3 | Run 4 (final, unmarked) |
+  |---|---|---|---|---|
+  | S1 GROUND-1 | FOUND, 1.7 against GROUND-1 | FOUND, 1.9 against GROUND-1 | FOUND, 1.8 against GROUND-1 | FOUND, 1.8 against GROUND-1 |
+  | S2 DECOUPLE-1 | FOUND, 1.8 against DECOUPLE-1 | FOUND, 1.12 against DECOUPLE-1 | FOUND, 1.11 against DECOUPLE-1 | FOUND, 1.11 against DECOUPLE-1 |
+  | S3 POWER-5 | FOUND, 1.6 against POWER-5 | FOUND, 1.8 against POWER-5 | FOUND, 1.7 against POWER-5 | FOUND, 1.7 against POWER-5 |
+  | S4 MAINS-2 | FOUND, 1.14 against MAINS-2 (safety) | FOUND, 1.19 against MAINS-2 (safety) | FOUND, 1.18 against MAINS-2 (safety) | FOUND, 1.18 against MAINS-2 (safety) |
+  | S5 FLOOR-2 | FOUND, 1.2 against FLOOR-2 | FOUND, 1.2 against FLOOR-2 | FOUND, 1.2 against FLOOR-2 | FOUND, 1.2 against FLOOR-2 |
+  | S6 SENSE-1 | FOUND, 1.10 against SENSE-1 | FOUND, 1.14 against SENSE-1 | FOUND, 1.13 against SENSE-1 | FOUND, 1.13 against SENSE-1 |
+  | S7 CLOCK-1 | FOUND, 1.12 against CLOCK-1 | FOUND, 1.16 against CLOCK-1 | FOUND, 1.15 against CLOCK-1 | FOUND, 1.15 against CLOCK-1 |
+  | S8 CONN-1 | FOUND, 1.15 against CONN-1 | FOUND, 1.20 against CONN-1 | FOUND, 1.19 against CONN-1 | FOUND, 1.19 against CONN-1 |
+  | S9 TEST-2 | FOUND, 1.16 against TEST-2 | FOUND, 1.21 against TEST-2 | FOUND, 1.20 against TEST-2 | FOUND, 1.20 against TEST-2 |
+  | S10 MFG-1 | FOUND, 1.17 against MFG-1 | FOUND, 1.22 against MFG-1 | FOUND, 1.21 against MFG-1 (rule-kind, from design-rules.md) | FOUND, 1.21 against MFG-1 (rule-kind, from design-rules.md) |
+  | S11 EMI-4 | FOUND, 1.1 by FLOOR-1 ("Also fails EMI-4"), EMI-4's verdict row `fail` citing it | FOUND, 1.25 against EMI-4 | FOUND, 1.24 against EMI-4 | FOUND, 1.24 against EMI-4 |
+
+  No seed was missed in any run, so no catalogue amendment, views fix or review-step correction was needed for a seed. In run 4 every item's verdict row is filled in: 43 catalogue items, none `cannot judge`, and the plan's own-items table holds only its `none` row.
+
+  ## Findings that match no seed
+
+  Run 4 (final):
+  - Consequences of the seeds, true findings rather than false positives:
+    - 1.1 FLOOR-1: S11's bead in the digital region.
+    - 1.3 FLOOR-3: S1 and S11.
+    - 1.4 POWER-2: S4's detour.
+    - 1.5 POWER-3: S1. With the planes and pours removed, one via carries the load return.
+    - 1.6 POWER-4: S1. U4's exposed-pad land has no planes or pour.
+    - 1.9 GROUND-2 and 1.10 GROUND-3: S1, and S5's track over no plane.
+    - 1.12 DECOUPLE-2 and 1.16 CLOCK-2: S1.
+    - 1.14 SENSE-4: S5.
+    - 1.17 CLOCK-3: S11.
+    - 1.22 EMI-1: S1 and S4.
+    - 1.25 plan row TEST-1: S9.
+    - 1.26 free pass: S9. TP5's moved fab reference overprints R1's value, the overprint the run-3 notes below already attribute to a seed that moves a part.
+  - 1.23 EMI-3 is the same false positive as in runs 1 to 3, again against C1, and recorded rather than failing the proof. This time it also cites the lone ground via that S1 leaves C1. The reasoning under run 3 below still holds.
+
+  Run 3:
+  - Consequences of the seeds, true findings rather than false positives:
+    - 1.1 FLOOR-1: S11's bead in the digital region.
+    - 1.3 FLOOR-3: S1 and S11.
+    - 1.4 POWER-2: S4's detour.
+    - 1.5 POWER-3: S1. With the planes and pours removed, one via carries the load return.
+    - 1.6 POWER-4: S1. U4's exposed-pad land has no planes or pour.
+    - 1.9 GROUND-2 and 1.10 GROUND-3: S1, and S5's track over no plane.
+    - 1.12 DECOUPLE-2 and 1.16 CLOCK-2: S1.
+    - 1.14 SENSE-4: S5.
+    - 1.17 CLOCK-3: S11, and S7's C5.
+    - 1.22 EMI-1: S1 and S4.
+    - 1.25 plan row TEST-1: S9.
+  - 1.23 EMI-3 is a false positive, recorded and not failing the proof. Runs 1 and 2 raised it too, against C1 in the clean placement. EMI-3's Applies when ("a capacitor from a line that leaves the board at a connector to ground") also reads on the input capacitor of a supply that enters at a connector. C1 is U2's input capacitor, which DECOUPLE-1 places at U2's pin. The item's source (SZZA009 § 2.5.4 and § 3.3) concerns filtering lines leaving the board, so the finding goes against the item's intent but is true to its literal text. The catalogue was not amended: the wording is not plainly wrong against the source, because filtering a supply where it enters the board is itself sound EMI practice, and no one-line clarification would be faithful to the source without a judgement about scope.
+  - The free pass raised nothing. The two clean-design defects run 2's free pass found were not raised again:
+    - U4 drawn without a 3D model (run 2, 1.27). Fixed in 8b36ccf: U4 now uses `QFN-20-1EP_4x4mm_P0.5mm_EP2.5x2.5mm.step`, the model KiCad 10.0.7 ships for the same 4 x 4 mm, 0.5 mm pitch QFN-20. The footprint's own library model (EP2.6x2.6mm) is not shipped. views/index.txt in run 3 lists only TP1 to TP6 as not in 3D, because KiCad's test-point footprints declare no model.
+    - Assembly-view text overprints (run 2, 1.28). Fixed in 8b36ccf. U3's value no longer prints over R2's, and every other overlap among a side's fab and silkscreen texts on the clean design is cleared too: U2/C1, Y1/C6/C5, FB1/C3/U3, C4, J2/D1, and the test points' doubled fab and silk references. Only fab-layer texts were moved. After the edit, a KiCad Python scan of every visible fab and silkscreen text, side by side, finds no overlap. Overprints that remain in the seeded copy, such as TP5's moved fab reference beside R1's value, follow from seeds that move parts.
+
+  Runs 1 and 2, kept for the record:
+  - Run 1's 1.11 (plan row SENSE-3 overstated how short R3's track is) and 1.20 (pads carried no pin types, so the crop views named no circuit's decoupling) were real defects of the clean design. Both are fixed in b05b736/b035a12 and were not raised again in runs 2 and 3.
+  - Run 2's 1.27 and 1.28 are fixed in 8b36ccf, as above.
+  - Every other unmatched finding in runs 1 and 2 was a consequence of a seed, or the EMI-3 false positive.
+
+  ## Blocker from round 1 (resolved)
+
+  Round 1 stopped on a defect outside this slice. The pre-order check and the views command read net-class membership unreliably on a board with more than KiCad's 199 reported violations of one type. SOL-HW-BOARD-CLASS-READ-ANY-SIZE fixed it, and this branch is rebased onto that fix. On 8b36ccf, `task hw:verify` passed three times out of three, the full `task hw:test` passed, and the seeding command's pre-order check and views ran without a refusal.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF-C1-TEST-3
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T09:31:04.571196Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_seed.py::test_a_seed_list_inside_the_review_folder_is_refused,test_a_seed_list_inside_a_design_folder_is_refused,test_a_review_folder_inside_the_repository_is_refused,test_a_review_folder_already_holding_files_is_refused,test_a_review_folder_that_is_a_file_is_refused
+  artifact_version: 68e314237e92dea6cc60908474095f646217ed57
+attested_by: crun-bfd9b5345532810e
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+    type: satisfies

@@ -1,0 +1,18 @@
+(version 1)
+# Every rule here has its row, figure and source in design-rules.md beside this file.
+(rule "Mains separation"
+	(condition "A.hasNetclass('Mains') && !B.hasNetclass('Mains')")
+	(constraint clearance (min 3mm))
+	(constraint creepage (min 4mm)))
+(rule "Mains track width"
+	(condition "A.hasNetclass('Mains')")
+	(constraint track_width (min 0.2mm)))
+(rule "Power track width"
+	(condition "A.hasNetclass('Power')")
+	(constraint track_width (min 0.4mm)))
+(rule "Ground track width"
+	(condition "A.hasNetclass('Ground')")
+	(constraint track_width (min 0.4mm)))
+(rule "Supply track width"
+	(condition "A.hasNetclass('Supply')")
+	(constraint track_width (min 0.2mm)))
