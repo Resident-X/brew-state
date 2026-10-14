@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C1
+type: criterion
+title: Every item the proof design's review records as failing is closed by a change to the design
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Change the layout review's proof design, and its floorplan, plan and rules table where they describe what changes, so that every finding its review record leaves open is closed by a change to the design, among them findings 1.1, 1.2, 1.5, 1.7, 2.4, 1.49, 1.50, 1.51 and 2.8, and record the closures as a new round of the design's review record with every catalogue item passing. Finding 2.4 bears on safety and is closed only by a change to the design. The changed design passes the pre-order check, the seeded proof's seeds are re-anchored where the change moves the copper they sit on, and the blind seeded review is repeated as the seeded proof does it, reporting every seed and no finding that shows a real defect in the clean design. Out of scope: any real board.
+links:
+  - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN
+    type: criterion-of

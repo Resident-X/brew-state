@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3
+type: criterion
+title: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Where judging the proof design's rule candidates makes a finding a rule, put it in force in the form of rule that can enforce it, KiCad's own or the pre-order check's measured form, with its figure named by its role and set in each board's rules with its source, and write it into the catalogue item it enforces. Every design committed to the repository passes with it in force, and a test shows it fails on a fault seeded for it in a throwaway design built outside the repository and passes on the clean one. Out of scope: candidates the review step judges cannot be a rule.
+links:
+  - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN
+    type: criterion-of
