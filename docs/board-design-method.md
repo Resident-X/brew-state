@@ -392,7 +392,7 @@ Out of scope for this section: the layout review itself, which [Layout review](#
 
 ## Rules before routing
 
-Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and that the table says which of them KiCad confirms on the board itself, which KiCad's rule check enforces before the board is ordered, and which, a net class's track width and via sizes, are only the defaults routing starts from.
+Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and that the table says which of them KiCad confirms on the board itself, which KiCad's rule check enforces before the board is ordered, which the pre-order check measures itself, and which, a net class's track width and via sizes, are only the defaults routing starts from.
 
 Close the board in every editor before writing anything in this section, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, and keep it closed until step 4. An editor holding the board keeps its own copy of the project file and writes that copy over the file when it quits: a text variable and a net class pattern written to the project file while the board editor held the board open were measured to be gone after it quit. Konnect's tools that write net classes write the project file, so they are no exception.
 
@@ -403,14 +403,17 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
 | Rule or net class | Figure | Where it is set in KiCad | Source of the figure | Confirmed in effect |
 |---|---|---|---|---|
 
-- **Design rules** are the board-wide minimums (clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge, silkscreen), each custom rule in the board's rules file, and every net class's own clearance, track width and via sizes.
+- **Design rules** are the board-wide minimums (clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge, silkscreen), each custom rule in the board's rules file, every measured rule's figure, every check of KiCad's own that a rule-kind item names in place of a rule, and every net class's own clearance, track width and via sizes.
 - **Source** says where the figure comes from, for example: the machine's constraints record (name the figure in it); a requirement the board serves (name the requirement); the manufacturer's stated limits (name the manufacturer and the date of the capability page the figure was read from); the separation basis record; the circuit-proof record, for a width, a copper pour's connection width or a hole a circuit's proof assumed (name the circuit's row); a rule-kind item of the [Layout practice catalogue](#layout-practice-catalogue) (name the item by its identifier, and, where the item names its figure by its role, also the record the board's figure was read from, as in `POWER-1; the machine's constraints record, the load supply's continuous current`); or a finding from a layout review that became a rule (name the review). "Default", "typical" or "what KiCad had" is not a source.
-- **Carried rules.** Every rule-kind item of the catalogue that applies to the board, by its *Applies when* and as the plan in `layout-plan.md` records it, and every rule-kind item among the board's own items there, puts each rule it gives into this table, one row per rule, with the item as its source. Write each rule in the form the item gives it, a board-wide minimum, a net class's figure or a custom rule. Where the item names a net class by its role, such as `<power class>`, write the board's own name for that class in its place; the `Mains` class is named as it is. Where the item names a figure by its role, read the figure from the record the role names. A board that has more than one class in a role carries the rule once for each. An applicable rule-kind item whose rules are missing from this table, or from the board, fails this step.
+- **Carried rules.** Every rule-kind item of the catalogue that applies to the board, by its *Applies when* and as the plan in `layout-plan.md` records it, and every rule-kind item among the board's own items there, puts each rule it gives into this table, one row per rule, with the item as its source. Write each rule in the form the item gives it: a board-wide minimum, a net class's figure, a custom rule, KiCad's own check where the item names one in place of a rule, or a measured rule's figure. Where the item names a net class by its role, such as `<power class>`, write the board's own name for that class in its place; the `Mains` class is named as it is. Where the item names a figure by its role, read the figure from the record the role names. A board that has more than one class in a role carries the rule once for each. An applicable rule-kind item whose rules are missing from this table, or from the board, fails this step.
+- **Where it is set in KiCad** names, for a measured rule, the project text variable that holds its figure, for example `WORK_DETOUR_RATIO`, written into the project file with the board closed as `MAINS` is (step 2). Write the figure as a plain decimal number, in the unit the item gives, with no unit after it: a missing figure, or one written any other way, fails the pre-order check, naming it. For KiCad's own check that an item names in place of a rule, it names that check, for example `KiCad's via_dangling check, reported unaided`.
 - **Confirmed in effect** says, for each kind of row, what stands behind it, and nothing else may be written there:
-  - a **custom rule** in the board's rules file: that KiCad loaded the rules file, from step 3's output;
+  - a **custom rule** in the board's rules file: that KiCad loaded the rules file, from step 3's output. A rule's figure written with a unit KiCad does not take for its constraint, such as `deg` after a `track_angle` minimum, makes KiCad drop the whole rules file without a word, every rule in it with it; step 3 and the pre-order check both catch that, by a marker rule that fires only when KiCad loaded the file;
+  - a **measured rule**: the pre-order check's `FIGURE` line for it, which states the figure the check read from the project file, quoted from the check's report;
+  - **KiCad's own check**, named in place of a rule: `reported unaided by the layout rule check in the pre-order check`;
   - a **net class**: the nets step 3 lists for it;
   - a **board-wide minimum**, and a **net class's own clearance**, set in Board Setup: `not confirmed by step 3; enforced by the layout rule check in the pre-order check`. Step 3 cannot read these figures, so they are never marked confirmed. They stand on the figure and source written in the row. KiCad's layout rule check reports copper, holes and silkscreen that break any of them, as an error, or as a warning for silkscreen clipped by the board edge, and the pre-order check (step 7 of routing) fails the board on either;
-  - a **net class's own track width and via sizes**: `routing default only; not enforced`. KiCad starts a track or via on the class's nets at these sizes, but its layout rule check does not hold copper to them: a narrower track or a smaller via on such a net raises no violation of the class's figure, and the pre-order check passes it. A track width or via size the board relies on, such as a mains or power track's width, is therefore also written as a custom rule in the board's rules file, conditioned on the class, one constraint per rule:
+  - a **net class's own track width and via sizes**: `routing default only; not enforced`. KiCad starts a track or via on the class's nets at these sizes, but its layout rule check does not hold copper to them: a narrower track or a smaller via on such a net raises no violation of the class's figure. The class's track width is also the width the measured rule of `WORK-8` holds every track of the class to away from its pads, which the row of that rule's figure records; it is not a minimum KiCad enforces. A track width or via size the board relies on, such as a mains or power track's width, is therefore also written as a custom rule in the board's rules file, conditioned on the class, one constraint per rule:
 
     ```
     (rule "Power track width"
@@ -608,7 +611,7 @@ Commit the board's design files as they are to be judged. With the board closed 
 
 - **Board judged**: the commit holding the design files the round judges;
 - **Views**: the `task hw:views` command as it was run, and any further view rendered in the round (step 2), with the command that rendered it;
-- **Pre-order check**: the board's `DESIGN` line from the report, and every `VIOLATION` line under it.
+- **Pre-order check**: the board's `DESIGN` line from the report, and every `FIGURE` and `VIOLATION` line under it.
 
 A round judges the board only as that commit holds it, and only on those views.
 
@@ -624,7 +627,7 @@ Go through the checklist in order, the catalogue's items as the round's commit h
 - **Rests on** cites each view the verdict rests on, by the name the views' index gives it, a tile's included, and the place on the board, in the board coordinates the view's caption states, or `whole board` for an item judged over all of it. Judge each item on every view its *Judged on* names.
 - **Why**: for `not applicable`, the reason against the item's *Applies when*, stating what the schematic lacks, which the schematic must bear out: an item whose condition the schematic meets applies, and cannot be judged not applicable. For `fail`, the number of the finding it raises (step 4), or of the finding an earlier round raised against it and closed by a reason (step 7). For `cannot judge`, the view the item needs and why the views rendered do not show it.
 
-A **rule-kind item**'s verdict rests on two things, and Rests on cites both: the pre-order check's report, the board's `DESIGN` line reading `PASS` with no `VIOLATION` line under it; and the board's rules table, `design-rules.md`, by the row of every rule the item gives, each rule present there with a figure the item's own figure and source bear out, read from the record its role names where the item names its figure by its role. Both are needed because the check holds the board only to the figure its rules state: a figure smaller than the item requires passes the check, and only the rules table shows it. Either one falling short is a `fail`.
+A **rule-kind item**'s verdict rests on two things, and Rests on cites both: the pre-order check's report, the board's `DESIGN` line reading `PASS` with no `VIOLATION` line under it, and for a measured rule its `FIGURE` line, giving the figure the check read; and the board's rules table, `design-rules.md`, by the row of every rule the item gives, each rule present there with a figure the item's own figure and source bear out, read from the record its role names where the item names its figure by its role. Both are needed because the check holds the board only to the figure its rules state, the figure in its rules file, its Board Setup or its project text variable: a figure looser than the item requires passes the check, and only the rules table, read against the item, shows it. Either one falling short is a `fail`.
 
 A `cannot judge` verdict is resolved within the round, before the review can close: render the views again, or render the view the item needs that the views command does not make, for example with `kicad-cli pcb export svg`, and judge the item again on it. Write the verdict reached in the same row, after the `cannot judge` and the view rendered to resolve it.
 
@@ -650,7 +653,7 @@ Give every finding a row in the round's findings table, numbered `<round>.<n>`, 
 
 ### 5. Turn every finding that can be a rule into one
 
-For every finding, write in Rule whether it can be expressed as a design rule. It can exactly when the pre-order check can enforce it through the board's rules: as a board-wide minimum, a net class's figure or a custom rule, in a form step 1 of [Rules before routing](#rules-before-routing) says KiCad's layout rule check enforces. Write `yes` with the rule, or `no` with why none of those three forms can state it, so that it needs judgement on the views. Then, before the review closes:
+For every finding, write in Rule whether it can be expressed as a design rule. It can exactly when the pre-order check can enforce it through the board's rules, in one of the four forms step 1 of [Rules before routing](#rules-before-routing) uses: a board-wide minimum, a net class's figure or a custom rule, which KiCad's layout rule check enforces, or a measured rule, for a quality a measurement from the board's files can state that KiCad does not measure, which the pre-order check then measures. A finding a measurement can state is a rule in whichever of those forms can enforce it, preferring KiCad's own. Write `yes` with the rule and its form, or `no` with why none of the four forms can state it, so that it needs judgement on the views. A measured rule that is new is added to the pre-order check, with a seeded fault proving it, before the review closes. Then, before the review closes:
 
 - A finding that can be a rule is added to the catalogue as a rule-kind item, with its rule, its figure and its source like any other rule-kind item, its Source naming the review it came from. From then on step 1 of the rules section carries it into the rules of every later board it applies to, and the pre-order check checks it, without anyone remembering it.
 - A finding that needs judgement on the views is added to the catalogue as a judgement-kind item when it holds for any board, or to the board's own items in `layout-plan.md` when it holds for this board only, its Source naming the review.
@@ -687,8 +690,8 @@ Judge the record against the board and the repository rather than taking its wor
 
 - **Every round judged the whole checklist.** Each round's verdict table has exactly one row for every item of the catalogue in the round's commit and every row of the board's own items table in that commit, and names no other. Every verdict is one of the four, and no `cannot judge` is left without a verdict after it.
 - **Every view was rendered.** Render the views again from the round's commit with the round's command: its classes are the critical classes routing locked; the index holds a `layer-` view of every copper, mask, paste, silkscreen and edge layer the board carries and a `net-` view of every net the critical classes hold; and every view a verdict cites is in it, or is a further view the round names with its command.
-- **Every verdict rests where it says.** Each `not applicable` gives a reason the schematic bears out. Each rule-kind verdict cites the report's line and the rules table's rows, and a `pass` has a `PASS` line with no violation under it and every rule the item gives in the table with a figure its source bears out.
-- **Every finding was judged as a rule, and added.** Each finding has a Rule entry. Each `no` gives why none of the three forms can state the finding, and a `no` whose finding one of them can state, as step 1 of [Rules before routing](#rules-before-routing) defines them, fails, as a `not applicable` the schematic does not bear out does. One judged `yes` names in Added as a rule-kind item of the catalogue, as committed, that states it: a new one whose Source names the review, or one that already stated it. One judged `no` names a judgement-kind item of the catalogue or one of the board's own items that states it, new with its Source naming the review, or already there.
+- **Every verdict rests where it says.** Each `not applicable` gives a reason the schematic bears out. Each rule-kind verdict cites the report's line and the rules table's rows, and a `pass` has a `PASS` line with no violation under it, a measured rule's `FIGURE` line giving the figure its row gives, and every rule the item gives in the table with a figure its source bears out.
+- **Every finding was judged as a rule, and added.** Each finding has a Rule entry. Each `no` gives why none of the four forms can state the finding, and a `no` whose finding one of them can state, as step 1 of [Rules before routing](#rules-before-routing) defines them, fails, as a `not applicable` the schematic does not bear out does. One judged `yes` names in Added as a rule-kind item of the catalogue, as committed, that states it: a new one whose Source names the review, or one that already stated it. One judged `no` names a judgement-kind item of the catalogue or one of the board's own items that states it, new with its Source naming the review, or already there.
 - **The baseline came first.** Every row of the board's own items table in the commit before placement is in each round's commit, with the same fields from Applies when to Source, so no baseline item is removed, narrowed, loosened or lowered after the layout began. Every row of the board's own items table that the commit before placement lacks names, in its Source, the review that added it. That commit is the one step 3 of [Planning the layout](#planning-the-layout) finds.
 - **Each round stands as it was first recorded.** For each round, the first commit that `git log --reverse --format=%H -G '^#+ Round <n>$' -- <board folder>/layout-review.md` lists is that round's end-of-round commit. In it, the round's opening lines and verdict table are as the record now gives them, and so are its findings, none removed or added, each with the same number, Raised by, Severity and What and where. That commit comes before every commit after the round's Board judged commit that changes the board's design files: it is an ancestor of each, `git merge-base --is-ancestor <record commit> <change commit>` exiting with status 0, and is none of them. The planning shortfall check below therefore reads round 1 as it was first recorded.
 - **Every severity is the one this step gives.** Each row of each verdict table gives the item's own kind and severity, as the round's commit holds the item. Each finding's Severity is the severity of the item that raised it, or of the item whose plan row it departs from, read from the catalogue or the board's own items table in the round's commit; for a departure from the floorplan's region or connector table, and for a free-pass finding, it is the severity the catalogue's definitions give what its What and where says is wrong. And whatever raised it, a finding whose What and where bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing or on insulation has safety severity. The two checks below key on the severity a finding records, so a finding recorded below its severity fails here rather than closing by a reason with no acceptance or escaping its planning shortfall.
@@ -752,7 +755,7 @@ Every item carries the same fields:
 - **Passes** is the pattern that passes.
 - **Fails, as the views show it** is what a failing board looks like in the [layout review views](#layout-review-views).
 - **Judged on** names the views it is judged on: an image of one layer, `layer-<layer>`, such as `layer-F.Cu`; a critical net against the board, `net-<net>`; the critical classes against each other, `classes`; an integrated circuit with its decoupling, `crop-<reference>`; a side as assembled, `assembly-top` or `assembly-bottom`; the assembled board in three dimensions, `3d-top`, `3d-bottom` or `3d-angled`; or the fact table, `facts.txt`, which gives every net's track width range, via count, zones and classes. A rule-kind item is judged on the pre-order check's report and on the board's rules table, `design-rules.md`: the check holds the board to whatever figure its rules state, so a figure smaller than the item's source requires passes the check, and only the rules table, its figure read against the item, shows it. Its *Fails* names what such an undersized figure looks like in that table.
-- **Kind** is one of two. A **rule-kind** item is enforced by the automated pre-order check, through the board's rules: it gives its rule in the form the rules step uses for its kind, a board-wide minimum, a net class's figure or a custom rule, with its figure and source. A net class it names by its role, such as `<power class>`, is replaced by the board's own name for that class; only the `Mains` class is named literally, since its name is fixed. A **judgement-kind** item is judged on the rendered views. A practice only partly expressible as a rule is two items, one of each kind, so every item has a single kind.
+- **Kind** is one of two. A **rule-kind** item is enforced by the automated pre-order check, through the board's rules: it gives its rule in one of the four forms the rules step uses, with its figure and source. Three of them KiCad's own layout rule check enforces: a board-wide minimum, a net class's figure, and a custom rule in the board's rules file (an item whose quality KiCad reports unaided, such as a via left unconnected, gives no rule and names KiCad's check). The fourth is a **measured rule**, a quality KiCad does not measure, such as how much longer a route is than its pads' places need: the pre-order check measures it itself from the board's files, against a figure the board sets as a project text variable, and the check's report states the figure it read. A net class it names by its role, such as `<power class>`, is replaced by the board's own name for that class; only the `Mains` class is named literally, since its name is fixed. A **judgement-kind** item is judged on the rendered views. A practice only partly expressible as a rule is two items, one of each kind, so every item has a single kind.
 - **Severity** is one of four:
   - **safety**: the item bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing, or on insulation;
   - **function**: a board failing it may not do its job, or may not meet a figure it is held to, such as a sensing accuracy;
@@ -760,7 +763,7 @@ Every item carries the same fields:
   - **cosmetic**: a board failing it works as well, and only its appearance or legibility suffers.
 - **Source** is a published document any reader can obtain without charge, such as a part or tool manufacturer's application note, design guide or datasheet, cited by its title, publisher, section, address and the date it was read, and checked against the document itself, never cited from memory. A standard that must be bought, or a book that could not be opened and read, is not a source. An item added from a layout review names that review, beside its published source where it has one and in place of one where it has none. Each item is stated fully enough to apply without reading its source.
 
-The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-floor), [power paths and heat](#power-paths-and-heat-power), [grounding and return paths](#grounding-and-return-paths-ground), [decoupling and switching loops](#decoupling-and-switching-loops-decouple), [sensing front ends](#sensing-front-ends-sense), [clocks](#clocks-clock), [separation of mains from low voltage](#separation-of-mains-from-low-voltage-mains), [connectors and mechanical fit](#connectors-and-mechanical-fit-conn), [test access and bring-up](#test-access-and-bring-up-test), [manufacture and assembly](#manufacture-and-assembly-mfg) and [emissions](#emissions-emi).
+The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-floor), [power paths and heat](#power-paths-and-heat-power), [grounding and return paths](#grounding-and-return-paths-ground), [decoupling and switching loops](#decoupling-and-switching-loops-decouple), [sensing front ends](#sensing-front-ends-sense), [clocks](#clocks-clock), [separation of mains from low voltage](#separation-of-mains-from-low-voltage-mains), [connectors and mechanical fit](#connectors-and-mechanical-fit-conn), [test access and bring-up](#test-access-and-bring-up-test), [manufacture and assembly](#manufacture-and-assembly-mfg), [emissions](#emissions-emi) and [workmanship](#workmanship-work).
 
 ### Floorplan and partitioning (FLOOR)
 
@@ -1223,5 +1226,125 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** `crop-<reference>` of the controller, `assembly-top`, `assembly-bottom`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.5 *Keeping Noise Close to the Chip* ("Place the resistor as close as possible to the microcomputer, overlapping the microcomputer ground if possible"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+### Workmanship (WORK)
+
+These items ask what an experienced electrical engineer expects of any board before they look at what it does: parts placed by what they connect to, and copper that runs neat, tidy and direct. A board can pass every other item and still be laid out like a first attempt. The qualities a board's files hold exactly, an angle, a length, a width, are rule items the pre-order check measures, because a few pixels on an image are easily missed. The qualities of overall form are judgement items, each stated as what good looks like and what a failing board looks like in the views.
+
+KiCad's layout rule check compares every two tracks that meet on one copper layer anywhere but at a pad, at a via as much as in open copper, and does not compare tracks that meet at a pad or that meet at a via on different layers (KiCad 10.0.7, measured on a throwaway board). So a track that branches off the middle of another, or off a via on its own layer, makes an angle with each side of it, and `WORK-4` fails the branch however it leaves. A route therefore branches only at a pad: the track runs to the pad and leaves it again. That is also the shape `WORK-2` measures a route against, the shortest tree joining a net's pads.
+
+#### WORK-1. Connected parts sit together, so their connections run short and uncrossed
+
+- **Applies when:** always.
+- **Asks:** Is each part placed next to the parts it connects to, in the order its connections run, so that every connection is short and none crosses another on the way?
+- **Passes:** Parts joined by a connection sit close together, in the order the circuit runs from part to part, each turned so that its pads face the pads they join. The tracks between them are short and run side by side rather than across one another, and a track crosses to another layer only to pass a track it cannot go round. A part that serves one pin, such as a resistor or a capacitor on it, sits beside that pin.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, a part set well apart from every part it connects to, or turned so that its pads face away from them; on a `layer-<copper layer>` or `net-<net>`, a track running across the board, or looping round other parts, to reach a partner that could have been placed beside it, or tracks crossing one another between layers where turning or swapping two parts would have kept them apart.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`, `net-<net>` for each critical net.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 4 *Summary* ("a careful positioning of the integrated circuits is essential to achieve short interconnect lines") and § 1.4.1 *Proportionality of Loops and Dipoles* ("Loops and dipoles are antennas"; "the larger the laid-out area of the loop, the stronger the radiation"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and `hardware/proof/review-proof/layout-review.md`, round 1, which records parts placed loosely enough that a signal loops across that board to reach its partner.
+
+#### WORK-2. Every net routed in tracks runs no longer than its pads' places need
+
+- **Applies when:** always.
+- **Asks:** Is every net routed in tracks no longer, in all its tracks together, than 1.2 times the shortest straight-line tree joining the centres of its pads?
+- **Passes:** The board's project text variable `WORK_DETOUR_RATIO` is set to 1.2, or less, with its row in the board's rules table, and the pre-order check reports no `workmanship_detour` violation. The check measures each net that has tracks and at least two pads: the length of all its tracks and arcs on every layer, against the minimum spanning tree of its pad centres in straight lines. A net that carries a copper zone is not measured, since the zone carries its connection. A route drawn the direct way, turning at 45 degrees and branching at its pads, runs at most 1.08 times the straight line between each two pads it joins, the most a run along and at 45 degrees to the board's edges adds to a straight line: between two pads in a direction θ off the nearest of those directions it runs cos θ + (√2 − 1) sin θ times the line, at worst 1.08 at 22.5 degrees. So 1.2 leaves room for leaving and entering pads; one that wanders or loops round the board does not.
+- **Fails, as the views show it:** the pre-order check reports a `workmanship_detour` violation; or, in `design-rules.md`, no row for `WORK_DETOUR_RATIO`, a figure above 1.2, or no source named.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.1 *Inductance* ("Inductance increases with increasing length"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and, for the figure of 1.2, `hardware/proof/review-proof/layout-review.md`, round 1, which records the routes of that board that wander and loop, measured against this tree.
+
+#### WORK-3. Routing reads cleanly: nothing wanders, doubles back or changes layer that does not need to
+
+- **Applies when:** always.
+- **Asks:** Seen whole, does every route take the path an experienced engineer would draw, with no loop, wander or double-back the placement does not force, no needless change of layer, and the tracks of related nets running together in orderly lines?
+- **Passes:** Each route leaves its pad, turns as few times as it needs and arrives, running beside its neighbours at an even spacing where they share a path. A route changes layer only to pass something it cannot go round. A net that a copper zone carries, which `WORK-2` does not measure, reaches its pads as directly as one in tracks.
+- **Fails, as the views show it:** on a `layer-<copper layer>` or `net-<net>`, a route that turns back on itself, makes a loop or a wide detour round a part it could have passed, or drops to another layer and comes straight back; on `classes`, a supply and its return taking different ways round the board; tracks sharing a path at uneven spacings or crossing one another without need.
+- **Judged on:** every `layer-<copper layer>`, `net-<net>` for each critical net, `classes`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 1.4.1 *Proportionality of Loops and Dipoles* ("Loops and dipoles are antennas"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *High-Speed Layout Guidelines*, SCAA082A, November 2006, revised August 2017, § 2.5 *Traces, Vias, and Other PCB Components* ("Vias also increase the trace length"), https://www.ti.com/lit/pdf/scaa082, read 2026-10-14.
+
+#### WORK-4. Corners are turned at 45 degrees or as arcs, never square or acute
+
+- **Applies when:** always.
+- **Asks:** Does every corner a track turns meet at 135 degrees or more between its two straight runs, or as an arc, with no right-angled and no acute corner?
+- **Passes:** The board's rules file holds this custom rule, and the pre-order check reports no `track_angle` violation:
+
+  ```
+  (rule "Corners"
+  	(constraint track_angle (min 135)))
+  ```
+
+  KiCad states the angle at a joint as the angle between its two tracks, so a straight run is 180, a 45-degree bend 135 and a square corner 90; the figure is a bare number, since a unit KiCad does not take drops the whole rules file. The rule has no condition, or the one condition `A.Type == 'Track'`, and no layer, so it holds on every track. A branch is made at a pad (see the opening of this area).
+- **Fails, as the views show it:** the pre-order check reports a `track_angle` violation, or a `workmanship_rule` violation naming `WORK-4`; or, in `design-rules.md`, no row for the rule or a figure below 135.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** Texas Instruments, *High-Speed Layout Guidelines*, SCAA082A, November 2006, revised August 2017, § 2.5 *Traces, Vias, and Other PCB Components* ("Avoid right-angle bends in a trace and try to route them at least with two 45° corners. To minimize any impedance change, the best routing would be a round bend"), https://www.ti.com/lit/pdf/scaa082, read 2026-10-14; and Texas Instruments, *High-Speed Interface Layout Guidelines*, SPRAAR7J, November 2018, revised February 2023, § 3.11 *Signal Bending* ("When bending is required, maintain a bend angle greater than 135°"), https://www.ti.com/lit/pdf/spraar7, read 2026-10-14.
+
+#### WORK-5. No jog: no straight run is shorter than 1 mm
+
+- **Applies when:** always.
+- **Asks:** Is every straight run of track, between two bends or between a bend and a pad, at least 1 mm long, so that no small kink or offset is left in a route?
+- **Passes:** The board's rules file holds this custom rule, and the pre-order check reports no `track_segment_length` violation:
+
+  ```
+  (rule "Jogs"
+  	(constraint track_segment_length (min 1mm)))
+  ```
+
+  The rule has no condition, or the one condition `A.Type == 'Track'`, and no layer. KiCad measures the run into a pad as much as one between two bends, so a track leaves a pad, or a via, straight for at least 1 mm before it turns.
+- **Fails, as the views show it:** the pre-order check reports a `track_segment_length` violation, or a `workmanship_rule` violation naming `WORK-5`; or, in `design-rules.md`, no row for the rule, or a figure below 1 mm.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** cosmetic.
+- **Source:** `hardware/proof/review-proof/layout-review.md`, round 1, which records the jogs left in that board's routes beside two parts, each shorter than 1 mm.
+
+#### WORK-6. No stub: no track ends free
+
+- **Applies when:** always.
+- **Asks:** Does every track end on a pad, a via, a copper zone or another track of its own net, with no length of track left ending in free space?
+- **Passes:** The board's project text variable `WORK_STUB_MM` is set to 0, with its row in the board's rules table, and the pre-order check reports no `workmanship_stub` violation and no `track_dangling` violation. The check finds each track end that touches no pad, via, zone outline or other copper of its net on its layer, and measures the stub as the run of track from that end back to where it first joins anything else; KiCad's own layout rule check also reports a track end left unconnected, as `track_dangling`.
+- **Fails, as the views show it:** the pre-order check reports a `workmanship_stub` or `track_dangling` violation; or, in `design-rules.md`, no row for `WORK_STUB_MM`, or a figure above 0.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** `hardware/proof/review-proof/layout-review.md`, round 1, which records the stubs left in that board's routes beside two parts.
+
+#### WORK-7. No via a route does not need
+
+- **Applies when:** always.
+- **Asks:** Does every via join copper on two or more layers, so that none is left joining nothing or copper on one layer only?
+- **Passes:** The pre-order check reports no `via_dangling` violation. KiCad's own layout rule check reports a via that is unconnected or connected on only one layer, unaided, so this item needs no rule written in the board's rules file. Its row in the board's rules table names KiCad's check.
+- **Fails, as the views show it:** the pre-order check reports a `via_dangling` violation; or, in `design-rules.md`, no row for the check.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** Texas Instruments, *High-Speed Layout Guidelines*, SCAA082A, November 2006, revised August 2017, § 2.5 *Traces, Vias, and Other PCB Components* ("Do not use vias on traces with sensitive signals, if unnecessary"), https://www.ti.com/lit/pdf/scaa082, read 2026-10-14.
+
+#### WORK-8. One track width for each net class along a route, narrower only where it enters a pad
+
+- **Applies when:** always.
+- **Asks:** Is every track at least its net class's track width, except where it necks down within 1 mm of a pad to enter it?
+- **Passes:** The board's project text variable `WORK_NECK_MM` is set to 1, or less, with its row in the board's rules table, and the pre-order check reports no `workmanship_width` violation. The check reads each net class's track width from the project file and the nets KiCad places in each class, a net in several classes taking the width of the one ranked first; a track narrower than that width passes only as part of a run of such tracks that reaches a pad of its net and is no longer than `WORK_NECK_MM` in all. A track wider than its class's width never fails, so a power path widened where there is room, as `POWER-2` asks, passes. A rule that requires a different width on some tracks writes it as the class's own figure.
+- **Fails, as the views show it:** the pre-order check reports a `workmanship_width` violation; or, in `design-rules.md`, no row for `WORK_NECK_MM`, or a figure above 1 mm.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** Texas Instruments, *High-Speed Interface Layout Guidelines*, SPRAAR7J, November 2018, revised February 2023, § 3.2 *High-Speed Differential Signal Rules* ("Maintain constant trace width after the SoC BGA escape to avoid impedance mismatches in the transmission lines"), https://www.ti.com/lit/pdf/spraar7, read 2026-10-14; and, for the figure of 1 mm, `hardware/proof/review-proof/layout-review.md`, round 1, which records that board's tracks narrowed partway along.
+
+#### WORK-9. Tracks run parallel to the board's edges or at 45 degrees to them
+
+- **Applies when:** always.
+- **Asks:** Does every straight track run parallel to the board's edges, or at 45 degrees to them, within 0.1 degree?
+- **Passes:** The board's project text variable `WORK_ANGLE_TOLERANCE_DEG` is set to 0.1, or less, with its row in the board's rules table, and the pre-order check reports no `workmanship_direction` violation. The check takes the direction of the board's edges from the longest straight side of its outline, and holds every straight track to a multiple of 45 degrees from it; an arc is a corner, which `WORK-4` judges.
+- **Fails, as the views show it:** the pre-order check reports a `workmanship_direction` violation; or, in `design-rules.md`, no row for `WORK_ANGLE_TOLERANCE_DEG`, or a figure above 0.1.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** cosmetic.
+- **Source:** `hardware/proof/review-proof/layout-review.md`, round 1, which records that board's tracks drawn at odd angles.
+
+#### WORK-10. A track enters a long pad along its long axis, from its end
+
+- **Applies when:** the schematic carries a part with a pad at least twice as long as it is wide, such as an integrated circuit's lead or a crystal's pad.
+- **Asks:** Does every track entering a pad at least twice as long as it is wide run in along the pad's long axis, through one of its short ends, within 0.1 degree?
+- **Passes:** The board's project text variable `WORK_PAD_ENTRY_RATIO` is set to 2, or less, with its row in the board's rules table, `WORK_ANGLE_TOLERANCE_DEG` is set as `WORK-9` asks, and the pre-order check reports no `workmanship_pad_entry` violation. The check finds each track that has one end on such a pad's copper and the other off it, and holds its direction there to the pad's long axis. A pad less than twice as long as it is wide, such as a chip resistor's, may be entered from any side, square to that side.
+- **Fails, as the views show it:** the pre-order check reports a `workmanship_pad_entry` violation; or, in `design-rules.md`, no row for `WORK_PAD_ENTRY_RATIO`, or a figure above 2.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** `hardware/proof/review-proof/layout-review.md`, round 1, which records that board's tracks entering long pads from their sides and at a slant; and, for the figure of 2, Altium, *Altium Designer* documentation, *SMT Rule Types*, *SMD Entry* ("The longer edge of the pad is considered the side"; "the ends are the shorter edges"; "the side option is only applied if the Side length > 2x End length"), https://www.altium.com/documentation/altium-designer/pcb/design-rule-types/smt, read 2026-10-14.
 
 Out of scope for this section: applying the catalogue to a finished layout, which the [layout review](#layout-review) does, and producing the views it is judged on, which [Layout review views](#layout-review-views) describes.

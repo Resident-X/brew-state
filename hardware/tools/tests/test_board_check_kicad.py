@@ -467,6 +467,61 @@ class TheSeededFaultProof(unittest.TestCase):
         self.assertEqual(own - seeded, set(), "a rule the check reports of its own has no seeded fault proving it")
 
 
+# --- Workmanship ---------------------------------------------------------------------
+
+
+class TheWorkmanshipRules(Proved):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    Each rule, KiCad's and measured alike, fails on a fault seeded for it in a
+    throwaway copy of the gate's proof design outside the repository, and the
+    clean copy passes with every rule in force.
+    """
+
+    def test_every_workmanship_rule_fails_on_its_seeded_fault(self):
+        workmanship = [fault[0] for fault in board_prove.FAULTS if fault[1].startswith("workmanship:")]
+        self.assertCaught(*workmanship)
+        rules = {fault[2] for fault in board_prove.FAULTS if fault[1].startswith("workmanship:")}
+        # Every KiCad check a workmanship item rests on, every measured rule, and the figures and rules the design must carry.
+        self.assertGreaterEqual(rules, {"track_angle", "track_segment_length", "via_dangling", "workmanship_stub",
+                                        "workmanship_detour", "workmanship_direction", "workmanship_pad_entry",
+                                        "workmanship_width", "workmanship_rule", "workmanship_figure"})
+
+    def test_each_kicad_finding_and_measured_failure_names_the_item(self):
+        found = outcomes()
+        for name, item in (("a right-angled corner", "WORK-4"), ("a short jog", "WORK-5"), ("an unneeded via", "WORK-7"),
+                           ("a short stub", "WORK-6"), ("a route wandering the long way round", "WORK-2"),
+                           ("a route narrowed partway along", "WORK-8"),
+                           ("a track off the board's edges and the 45 degrees to them", "WORK-9"),
+                           ("a track entering a long pad from its side", "WORK-10")):
+            with self.subTest(fault=name):
+                caught, line = found[name]
+                self.assertTrue(caught, line)
+                self.assertIn(item, line)
+                self.assertRegex(line.split(" | ")[3], r"\(\d+(\.\d+)?, \d+(\.\d+)?\) mm", "a failure names where on the board it is")
+
+
+class KiCadComparesTracksEverywhereButAtAPad(Copy):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    The method tells a designer to branch a route at a pad because KiCad's
+    corner rule compares every two tracks meeting on one layer anywhere else;
+    this holds that to what the installed KiCad does.
+    """
+
+    def test_a_branch_at_a_pad_passes_and_one_off_a_track_or_a_via_fails(self):
+        at_pad = board_prove.reroute("/LV_A", (board_prove.LV_A_ENDS,), [(40, 10), (45, 10), (45, 7)])
+        at_pad(self.seed)
+        drc = self.drc()
+        self.assertFalse([v for v in drc["violations"] if v["type"] == "track_angle"], drc["violations"])
+        self.setUp()
+        board_prove.reroute("/LV_A", (board_prove.LV_A_ENDS,), [(40, 10), (42, 10), (45, 10)])(self.seed)
+        self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.segment("/LV_A", 42, 10, 42, 6, "0b0e5c1a-0000-4000-8000-0000000002ff")))
+        angles = [v for v in self.drc()["violations"] if v["type"] == "track_angle"]
+        self.assertTrue(angles, "a branch off the middle of a route is compared with each side of it")
+        self.assertIn("actual 90.000", angles[0]["description"])
+
+
 # --- C6 -----------------------------------------------------------------------
 
 
@@ -502,8 +557,9 @@ class TheReport(Copy):
     def test_a_clean_tree_reports_every_design_passing_and_exits_zero(self):
         status, lines = self.check()
         self.assertEqual(status, 0, lines)
-        self.assertEqual(lines[1:], ["DESIGN | hardware/proof/gate-proof/gate-proof.kicad_pro | PASS",
-                                     "RESULT | PASS | all 1 designs passed"])
+        self.assertEqual(lines[1], "DESIGN | hardware/proof/gate-proof/gate-proof.kicad_pro | PASS")
+        self.assertEqual([line for line in lines[2:] if not line.startswith("FIGURE | ")],
+                         ["RESULT | PASS | all 1 designs passed"])
 
 
 # --- Class membership on a board of any size -----------------------------------

@@ -114,6 +114,18 @@ For each design the check runs KiCad's own electrical rule check on the schemati
 - **No mains declaration.** The project text variable `MAINS` must be `present` or `none`. A design that declares `present` must have a net in the `Mains` net class on its layout, since that is where the separation rule is enforced. A design that declares `none` may have none there.
 - **Any disagreement about which nets are in `Mains`.** Three things say which nets are in the class, and each is read as KiCad itself resolves it: the layout (KiCad's answer for the layout's nets with the layout's project file and its own net classes, read as [the class read](#how-a-class-is-read) reads them), the schematic (KiCad's own netlist of it, which carries its net class directives), and the project file's net settings (its assignments by name and its patterns, which KiCad resolves for every net the layout, the schematic or an assignment names, copper or not). Every net must be in the class in all three or in none. A net in only some of them fails by name, saying which have it and which lack it. The usual fix is to save the schematic, so the project file carries its assignments, and update the layout from the schematic. A class only the layout gives a net comes from a `(net_class ...)` block that older KiCad versions wrote into the layout file, which KiCad 10 still honours.
 
+- **Workmanship that breaks a rule of the method's workmanship area** (`WORK-` items of the layout practice catalogue in [`docs/board-design-method.md`](../docs/board-design-method.md#workmanship-work)). KiCad measures three of them: the angle at a joint between two tracks, the length of a straight run, and a via left unconnected. The design's rules file must hold a `track_angle` rule and a `track_segment_length` rule, each with no condition or the one condition `A.Type == 'Track'` and no layer, so they hold on every track; a rules file lacking either, or holding it narrowed, fails as `workmanship_rule`. KiCad reports a via unconnected or connected on one layer only, and a track end left unconnected, unaided. KiCad compares every two tracks meeting on one layer anywhere but at a pad, a branch included, so a route branches at a pad. What KiCad does not measure the check measures itself from the layout file, each against a figure the design sets as a project text variable, a plain decimal number:
+
+  | Variable | Item | What the check measures |
+  |---|---|---|
+  | `WORK_DETOUR_RATIO` | `WORK-2` | Each net with tracks and two or more pads and no copper zone: the length of all its tracks and arcs, against this many times the minimum spanning tree of its pad centres in straight lines (`workmanship_detour`) |
+  | `WORK_STUB_MM` | `WORK-6` | Each track end touching no pad, via, zone outline or other copper of its net: the run of track from it back to where it joins anything, against this many mm (`workmanship_stub`) |
+  | `WORK_NECK_MM` | `WORK-8` | Each run of track narrower than its net class's track width (from the project file, the class KiCad ranks first for a net in several): passes only when it reaches a pad of its net and is no longer than this many mm; a track wider than its class's width never fails (`workmanship_width`) |
+  | `WORK_ANGLE_TOLERANCE_DEG` | `WORK-9`, `WORK-10` | Each straight track's direction, against a multiple of 45 degrees from the board's edges, taken from the longest straight side of the outline (`workmanship_direction`), and the angle at which a track enters a long pad, against the pad's long axis |
+  | `WORK_PAD_ENTRY_RATIO` | `WORK-10` | Each track with one end on the copper of a pad at least this many times as long as it is wide and the other end off it: its direction there, against the pad's long axis (`workmanship_pad_entry`) |
+
+  A variable that is missing, or not a plain decimal number within its range, fails as `workmanship_figure`, naming it. The report states, under each design's verdict line, the figure it read for each measured rule.
+
 A design that declares `MAINS` as `present` must also:
 
 - assign every mains-referenced net to the net class `Mains`;
@@ -136,7 +148,7 @@ Wherever KiCad can answer a question, the check asks KiCad: which nets are in `M
 |---|---|---|
 | Custom rules (`.kicad_dru`) | Each rule has its own name, and at most one `(condition ...)`, one `(layer ...)` and one `(severity ...)`. KiCad loads a rule with two conditions and keeps only one of them, and loads two rules of one name. | `custom_rules` |
 | The Mains rule in it | Exactly one condition, written exactly `A.hasNetclass('Mains') && !B.hasNetclass('Mains')`, with no other spacing; exactly one `(constraint clearance (min <n>mm))` and one `(constraint creepage (min <n>mm))`, in millimetres with no further limit; no other constraint. | `separation_rule` |
-| Project file (`.kicad_pro`) | Every key once in each object; `text_variables` an object of strings; `NOT_FOR_MANUFACTURE` `true` or `false` when present; the exclusion lists lists; `net_settings.netclass_assignments` an object. Its net classes and patterns are resolved by KiCad itself. | `project_file` |
+| Project file (`.kicad_pro`) | Every key once in each object; `text_variables` an object of strings; `NOT_FOR_MANUFACTURE` `true` or `false` when present; the exclusion lists lists; `net_settings.netclass_assignments` an object; `net_settings.classes` a list, each class's `track_width` a positive number or left out, when it takes the `Default` class's. Its net classes and patterns are resolved by KiCad itself. | `project_file` |
 | Separation basis record | Every key once and no YAML merge key (`<<`); only the keys listed below, plus any further pair of distances for readers, a mapping holding exactly `clearance_mm` and `creepage_mm`; `mains_to_low_voltage` holding only those two; `synthetic` `true` or `false` when present. | `separation_basis` |
 | Library tables (`sym-lib-table`, `fp-lib-table`) | Headed for their own kind; at most one `(version ...)`; `(lib ...)` entries each holding one `name`, one `type` of `KiCad`, one `uri`, and at most one each of `options`, `descr`, `disabled` and `hidden`; each nickname once. | `design_library` |
 | Hierarchical sheets | Each `(sheet ...)` names its file in exactly one `Sheetfile` property. | `design_discovery` |
@@ -149,16 +161,17 @@ KiCad 10.0.7's command-line layout check reports at most 199 failures of one kin
 
 ## The report
 
-The report has one verdict line per design, one line per violation under it, and a result line last:
+The report has one verdict line per design, one line under it for each measured workmanship rule's figure, one line per violation, and a result line last:
 
 ```
 DESIGN | hardware/proof/gate-proof/gate-proof.kicad_pro | PASS
+FIGURE | hardware/proof/gate-proof/gate-proof.kicad_pro | WORK-2 route length | WORK_DETOUR_RATIO | 1.2 times the shortest straight-line tree joining the net's pads
 DESIGN | hardware/m/board/board.kicad_pro | FAIL | 1 violation
 VIOLATION | hardware/m/board/board.kicad_pro | clearance | Track [/LV_A] on F.Cu, length 2.0000 mm @ (28.085, 9) mm; PTH pad 2 [/MAINS_N] of R1 @ (25.16, 10) mm | Clearance violation (rule 'pre-order check: signed separation basis' clearance 3.0000 mm; actual 2.0000 mm)
 RESULT | FAIL | 1 of 2 designs failed
 ```
 
-Each violation line has five fields separated by ` | `: `VIOLATION`, the design, the rule broken, where it is, and the message. The message is KiCad's own for anything KiCad found, and says what to change for anything else. The rule is KiCad's own check name (for example `clearance`, `creepage`, `pin_not_connected`, `footprint_symbol_mismatch`), or one of the check's own:
+Each figure line has five fields separated by ` | `: `FIGURE`, the design, the item and what it measures, the project text variable, and the figure read with its unit. Each violation line has five fields separated by ` | `: `VIOLATION`, the design, the rule broken, where it is, and the message. The message is KiCad's own for anything KiCad found, and says what to change for anything else. The rule is KiCad's own check name (for example `clearance`, `creepage`, `pin_not_connected`, `footprint_symbol_mismatch`), or one of the check's own:
 
 | Rule | Meaning |
 |---|---|
@@ -174,12 +187,21 @@ Each violation line has five fields separated by ` | `: `VIOLATION`, the design,
 | `separation_basis` | The separation basis record is missing, unreadable, not in its one form, unsigned, not committed as it stands, or synthetic on an orderable board |
 | `local_clearance_override` | A pad, footprint or Mains-class zone sets a clearance below the signed figure |
 | `mains_net_tie` | A net tie joins a `Mains`-class net to a net outside the class, or names a pad its footprint does not have |
+| `workmanship_rule` | The rules file lacks the `track_angle` (`WORK-4`) or `track_segment_length` (`WORK-5`) rule, or holds it narrowed by a condition or a layer |
+| `workmanship_figure` | A measured workmanship rule's project text variable is missing or not a plain decimal number within its range |
+| `workmanship_detour` | A net's tracks are longer than its figure allows against the shortest tree joining its pads (`WORK-2`) |
+| `workmanship_stub` | A track ends free, on a run longer than its figure allows (`WORK-6`) |
+| `workmanship_width` | A run of track narrower than its net class's width is not a neck within its figure of a pad (`WORK-8`) |
+| `workmanship_direction` | A straight track runs off the board's edges and the 45 degrees to them by more than its figure (`WORK-9`) |
+| `workmanship_pad_entry` | A track enters a long pad off its long axis (`WORK-10`) |
+
+KiCad's own `track_angle`, `track_segment_length`, `track_dangling` and `via_dangling` findings name, in their message, the workmanship item each is.
 
 The exit status is 0 when every design passes, 1 when any fails, and 2 when the check cannot run at all, for example because a tool is missing.
 
 ## The proof designs
 
-`hardware/proof/gate-proof` is a deliberately tiny board. Two mains nets run through a connector and a resistor, and two low-voltage nets do the same. Its symbol and footprint libraries are carried beside it, so it needs nothing from a local KiCad installation's libraries. It is marked `NOT_FOR_MANUFACTURE=true` and carries its own synthetic `separation-basis.yaml`. It passes the check as committed, and `task hw:prove` shows each failure condition above failing on a copy of it.
+`hardware/proof/gate-proof` is a deliberately tiny board. Two mains nets run through a connector and a resistor, and two low-voltage nets do the same. Its symbol and footprint libraries are carried beside it, so it needs nothing from a local KiCad installation's libraries. It is marked `NOT_FOR_MANUFACTURE=true` and carries its own synthetic `separation-basis.yaml`, and its rules file and project text variables carry the workmanship rules, each figure's source given in its rules file. It passes the check as committed, and `task hw:prove` shows each failure condition above failing on a copy of it.
 
 `hardware/proof/review-proof` proves the layout review step of [`docs/board-design-method.md`](../docs/board-design-method.md#layout-review) rather than the check. It is a four-layer board carrying at least one part for every area of the method's layout practice catalogue: a mains terminal and a phototriac with load-side pads, a regulator, a controller with its decoupling and crystal, an exposed-pad part, a current-sense shunt and amplifier, a ferrite bead, a supply input with a transient suppressor, test points, ground planes and every floorplan region. Beside it are its floorplan and plan (`layout-plan.md`), its rules table (`design-rules.md`) and the synthetic records they read their figures from (`constraints.md` and `separation-basis.yaml`). It is laid out clean, is marked `NOT_FOR_MANUFACTURE=true`, and passes the check as committed.
 

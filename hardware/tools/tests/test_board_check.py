@@ -17,6 +17,7 @@ from __future__ import annotations
 import datetime
 import io
 import json
+import math
 import os
 import re
 import stat
@@ -1445,6 +1446,371 @@ json.dump(report, open(out, "w"))
         self.assertFalse([v for v in found if "did not load" in v.message], found)
         found = self.check(3, marker=False)
         self.assertTrue([v for v in found if v.rule == "custom_rules" and "did not load" in v.message], found)
+
+
+# --- Workmanship ---------------------------------------------------------------------
+
+
+def seg(net: str, a, b, width: float = 0.25, layer: str = "F.Cu") -> str:
+    return (f'(segment (start {a[0]} {a[1]}) (end {b[0]} {b[1]}) (width {width}) (layer "{layer}") (net "{net}") '
+            '(uuid "00000000-0000-4000-8000-000000000000"))')
+
+
+def arc(net: str, a, mid, b, width: float = 0.25, layer: str = "F.Cu") -> str:
+    return (f'(arc (start {a[0]} {a[1]}) (mid {mid[0]} {mid[1]}) (end {b[0]} {b[1]}) (width {width}) (layer "{layer}") '
+            f'(net "{net}") (uuid "00000000-0000-4000-8000-000000000000"))')
+
+
+def via(net: str, at, size: float = 0.8) -> str:
+    return f'(via (at {at[0]} {at[1]}) (size {size}) (drill 0.4) (layers "F.Cu" "B.Cu") (net "{net}"))'
+
+
+def zone(net: str, corners, layer: str = "F.Cu") -> str:
+    points = " ".join(f"(xy {x} {y})" for x, y in corners)
+    return f'(zone (net "{net}") (layer "{layer}") (polygon (pts {points})))'
+
+
+def part(reference: str, at: str, *pads) -> str:
+    """A footprint at `at` holding pads given as (number, net, x, y, shape, width, height[, angle])."""
+    body = ""
+    for number, net, x, y, shape, width, height, *angle in pads:
+        body += (f'(pad "{number}" smd {shape} (at {x} {y} {angle[0] if angle else ""}) (size {width} {height}) '
+                 f'(layers "F.Cu" "F.Mask") (net "{net}"))')
+    return f'(footprint "lib:part" (layer "F.Cu") (at {at}) (property "Reference" "{reference}" (at 0 0 0)) {body})'
+
+
+def board(*items: str, outline: str = '(gr_rect (start 0 0) (end 100 60) (layer "Edge.Cuts"))') -> board_check.Layout:
+    return board_check.Layout(sexpr.parse_one("(kicad_pcb (version 20260206) " + outline + " " + " ".join(items) + ")"))
+
+
+#: Two round pads 10 mm apart on /A, R1's at (10, 10) and R2's at (20, 10).
+TWO_PADS = (part("R1", "10 10", ("1", "/A", 0, 0, "circle", 1, 1)), part("R2", "20 10", ("1", "/A", 0, 0, "circle", 1, 1)))
+DESIGN = board_check.Design("a/a.kicad_pro")
+
+
+class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    Each measured rule's figure is a project text variable, and one missing or
+    malformed fails the design, naming it, rather than being read as some
+    figure of the check's own.
+    """
+
+    def test_every_figure_given_is_read(self):
+        figures, found = board_check.workmanship_figures(DESIGN, FIGURES)
+        self.assertEqual(found, [])
+        self.assertEqual(figures, {"WORK_DETOUR_RATIO": 1.5, "WORK_STUB_MM": 0.0, "WORK_NECK_MM": 1.0,
+                                   "WORK_ANGLE_TOLERANCE_DEG": 0.1, "WORK_PAD_ENTRY_RATIO": 2.0})
+
+    def test_each_missing_figure_fails_naming_its_item_and_variable(self):
+        figures, found = board_check.workmanship_figures(DESIGN, {})
+        self.assertEqual(figures, {})
+        self.assertEqual([(v.rule, v.location) for v in found],
+                         [("workmanship_figure", f"a/a.kicad_pro text_variables.{name}") for _, _, name, _, _, _ in board_check.MEASURED])
+        self.assertIn("WORK-2 (route length) has no figure", found[0].message)
+
+    def test_a_figure_written_any_way_but_a_plain_number_within_its_range_fails(self):
+        for name, value in (("WORK_STUB_MM", "0mm"), ("WORK_STUB_MM", "-1"), ("WORK_STUB_MM", ""), ("WORK_DETOUR_RATIO", "0.9"),
+                            ("WORK_DETOUR_RATIO", "1e1"), ("WORK_ANGLE_TOLERANCE_DEG", "22.5"), ("WORK_PAD_ENTRY_RATIO", "two")):
+            with self.subTest(name=name, value=value):
+                figures, found = board_check.workmanship_figures(DESIGN, {**FIGURES, name: value})
+                self.assertNotIn(name, figures)
+                self.assertEqual(len(found), 1, found)
+                self.assertEqual(found[0].rule, "workmanship_figure")
+                self.assertIn(f"{name} is '{value}'", found[0].message)
+
+    def test_the_figures_at_the_ends_of_their_ranges_are_read(self):
+        figures, found = board_check.workmanship_figures(DESIGN, {**FIGURES, "WORK_DETOUR_RATIO": "1", "WORK_ANGLE_TOLERANCE_DEG": "22.4"})
+        self.assertEqual(found, [])
+        self.assertEqual((figures["WORK_DETOUR_RATIO"], figures["WORK_ANGLE_TOLERANCE_DEG"]), (1.0, 22.4))
+
+
+class TheRulesFileHoldsTheWorkmanshipRules(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    The corner and jog items are KiCad's to measure, so the check requires
+    only that the rules file holds each, on every track; the unconnected-via
+    item needs no rule.
+    """
+
+    def rules(self, text: str):
+        return [form for form in sexpr.parse(text, comments=True) if sexpr.head(form) == "rule"]
+
+    def found(self, text: str):
+        return [(v.rule, v.message.split(":")[0]) for v in board_check.workmanship_rules(DESIGN, self.rules(text))]
+
+    def test_both_rules_with_no_condition_or_the_every_track_condition_pass(self):
+        self.assertEqual(self.found(WORKMANSHIP), [])
+        every = WORKMANSHIP.replace('(rule "Jogs"', '(rule "Jogs"\n\t(condition "A.Type == \'Track\'")')
+        self.assertEqual(self.found(every), [])
+
+    def test_a_rules_file_or_a_design_without_them_fails_for_each(self):
+        expected = [("workmanship_rule", "WORK-4 (corner) has no rule"), ("workmanship_rule", "WORK-5 (jog) has no rule")]
+        self.assertEqual(self.found("(version 1)"), expected)
+        self.assertEqual([(v.rule, v.message.split(":")[0]) for v in board_check.workmanship_rules(DESIGN, None)], expected)
+
+    def test_a_rule_narrowed_to_some_tracks_or_a_layer_is_not_in_force(self):
+        for narrowed in (WORKMANSHIP.replace('(rule "Corners"', '(rule "Corners"\n\t(condition "A.hasNetclass(\'Power\')")'),
+                         WORKMANSHIP.replace('(rule "Corners"', '(rule "Corners"\n\t(layer "F.Cu")')):
+            with self.subTest(rules=narrowed):
+                found = board_check.workmanship_rules(DESIGN, self.rules(narrowed))
+                self.assertEqual([v.rule for v in found], ["workmanship_rule"])
+                self.assertIn("WORK-4 (corner) is not in force on every track", found[0].message)
+                self.assertEqual(found[0].location, "a/a.kicad_dru rule 'Corners'")
+
+    def test_a_minimum_written_in_another_form_is_not_taken_as_the_rule(self):
+        for rule in (WORKMANSHIP.replace("(min 135)", "(min 135deg)"), WORKMANSHIP.replace("(min 0.5mm)", "(min 20mil)"),
+                     WORKMANSHIP.replace("(min 135)", "(max 135)"), WORKMANSHIP.replace("(min 135)", "(min 135) (opt 150)")):
+            with self.subTest(rules=rule):
+                self.assertEqual([v.rule for v in board_check.workmanship_rules(DESIGN, self.rules(rule))], ["workmanship_rule"])
+
+    def test_a_good_rule_beside_a_narrowed_one_is_enough(self):
+        both = WORKMANSHIP + '(rule "Power corners"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_angle (min 150)))\n'
+        self.assertEqual(self.found(both), [])
+
+
+class StubsAreMeasured(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    A track end touching no pad, via, zone or other copper of its net is a
+    stub, and the stub is the run of track from it back to where it joins.
+    """
+
+    def test_a_route_from_pad_to_pad_has_no_stub(self):
+        self.assertEqual(board_check.stubs(DESIGN, board(*TWO_PADS, seg("/A", (10, 10), (20, 10))), 0), [])
+
+    def test_a_track_ending_in_free_space_fails_with_the_length_of_the_free_run(self):
+        found = board_check.stubs(DESIGN, board(*TWO_PADS, seg("/A", (10, 10), (20, 10)), seg("/A", (20, 10), (20, 7)),
+                                                 seg("/A", (20, 7), (22, 5))), 0)
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0].rule, "workmanship_stub")
+        self.assertIn("free end at (22, 5) mm", found[0].location)
+        self.assertIn(f"free-ended run is {3 + math.hypot(2, 2):.3f} mm long where WORK_STUB_MM allows 0 mm", found[0].message)
+
+    def test_a_stub_within_the_figure_passes_and_one_past_it_fails(self):
+        layout = board(*TWO_PADS, seg("/A", (10, 10), (20, 10)), seg("/A", (15, 10), (15, 8)))
+        self.assertEqual(board_check.stubs(DESIGN, layout, 2), [])
+        self.assertEqual(len(board_check.stubs(DESIGN, layout, 1.9)), 1)
+
+    def test_a_track_ending_on_a_via_a_zone_or_another_track_of_its_net_is_joined(self):
+        for joined in (via("/A", (15, 5)), zone("/A", [(14, 4), (16, 4), (16, 6), (14, 6)]), seg("/A", (10, 5), (20, 5))):
+            with self.subTest(joined=joined):
+                found = board_check.stubs(DESIGN, board(*TWO_PADS, seg("/A", (10, 10), (20, 10)), seg("/A", (15, 10), (15, 5)),
+                                                        joined), 0)
+                self.assertEqual([v for v in found if "(15, 5)" in v.location], [])
+
+    def test_copper_of_another_net_or_another_layer_joins_nothing(self):
+        for other in (seg("/B", (10, 5), (20, 5)), seg("/A", (10, 5), (20, 5), layer="B.Cu"), zone("/B", [(14, 4), (16, 4), (16, 6), (14, 6)])):
+            with self.subTest(other=other):
+                found = board_check.stubs(DESIGN, board(*TWO_PADS, seg("/A", (10, 10), (20, 10)), seg("/A", (15, 10), (15, 5)), other), 0)
+                self.assertTrue([v for v in found if "free end at (15, 5) mm" in v.location], found)
+
+    def test_an_arc_ending_free_is_a_stub_too(self):
+        found = board_check.stubs(DESIGN, board(*TWO_PADS, seg("/A", (10, 10), (20, 10)),
+                                                 arc("/A", (20, 10), (20 + math.sqrt(0.5), 10 - 1 + math.sqrt(0.5)), (21, 9))), 0)
+        self.assertEqual(len(found), 1)
+        self.assertIn("arc [/A]", found[0].location)
+
+
+class RouteLengthIsMeasuredAgainstThePadTree(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    A net's track length, on every layer, against its figure times the
+    shortest straight-line tree joining its pad centres.
+    """
+
+    def test_a_direct_route_passes(self):
+        self.assertEqual(board_check.detours(DESIGN, board(*TWO_PADS, seg("/A", (10, 10), (20, 10))), 1.3), [])
+
+    def test_a_route_looping_round_fails_with_its_length_against_the_tree(self):
+        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
+        found = board_check.detours(DESIGN, board(*TWO_PADS, *loop), 1.3)
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].rule, "workmanship_detour")
+        self.assertEqual(found[0].location, "net /A: 2 pads, from pad 1 of R1 at (10, 10) mm")
+        self.assertIn("/A's tracks are 22.00 mm long, 2.20 times the 10.00 mm of the shortest straight-line tree", found[0].message)
+        self.assertIn("where WORK_DETOUR_RATIO allows 1.3 times", found[0].message)
+        self.assertEqual(board_check.detours(DESIGN, board(*TWO_PADS, *loop), 2.2), [])
+
+    def test_every_layer_and_every_arc_counts(self):
+        bottom = board(*TWO_PADS, seg("/A", (10, 10), (15, 10)), via("/A", (15, 10)), seg("/A", (15, 10), (20, 10), layer="B.Cu"),
+                       arc("/A", (20, 10), (21, 11), (20, 12)), seg("/A", (20, 12), (20, 10.5)))
+        found = board_check.detours(DESIGN, bottom, 1.3)
+        self.assertEqual(len(found), 1, "half a circle of 1 mm radius and its return take the net past 1.3 times its tree")
+        self.assertIn(f"{10 + math.pi + 1.5:.2f} mm long", found[0].message)
+
+    def test_a_net_with_a_zone_or_fewer_than_two_pads_is_not_measured(self):
+        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
+        self.assertEqual(board_check.detours(DESIGN, board(*TWO_PADS, *loop, zone("/A", [(0, 0), (1, 0), (1, 1)])), 1.3), [])
+        self.assertEqual(board_check.detours(DESIGN, board(TWO_PADS[0], *loop), 1.3), [])
+
+    def test_a_net_of_many_pads_is_measured_against_its_tree_not_a_chain(self):
+        three = TWO_PADS + (part("R3", "15 20", ("1", "/A", 0, 0, "circle", 1, 1)),)
+        # The tree joins R1 and R2 to R3, about 22.4 mm; a route through R1, R2 and back to R3 is 10 + 11.2 mm.
+        through = [seg("/A", (10, 10), (20, 10)), seg("/A", (20, 10), (15, 20))]
+        self.assertEqual(board_check.detours(DESIGN, board(*three, *through), 1.0), [])
+
+
+class DirectionIsMeasuredAgainstTheBoardsEdges(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one."""
+
+    def test_tracks_along_the_edges_and_at_45_degrees_pass(self):
+        tracks = [seg("/A", (0, 0), (10, 0)), seg("/A", (10, 0), (10, 5)), seg("/A", (10, 5), (13, 8)), seg("/A", (13, 8), (10, 11))]
+        self.assertEqual(board_check.directions(DESIGN, board(*tracks), 0.1), [])
+
+    def test_a_track_a_few_degrees_off_fails_with_how_far_off_it_runs(self):
+        found = board_check.directions(DESIGN, board(seg("/A", (0, 0), (10, 0.5))), 0.1)
+        self.assertEqual([v.rule for v in found], ["workmanship_direction"])
+        self.assertIn(f"{math.degrees(math.atan2(0.5, 10)):.2f} degrees off", found[0].message)
+        self.assertEqual(board_check.directions(DESIGN, board(seg("/A", (0, 0), (10, 0.5))), 3), [])
+
+    def test_a_track_midway_between_two_directions_is_22_5_degrees_off(self):
+        angle = math.radians(22.5)
+        found = board_check.directions(DESIGN, board(seg("/A", (0, 0), (10 * math.cos(angle), 10 * math.sin(angle)))), 0.1)
+        self.assertIn("22.50 degrees off", found[0].message)
+
+    def test_an_arc_is_a_corner_and_not_a_direction(self):
+        self.assertEqual(board_check.directions(DESIGN, board(arc("/A", (0, 0), (1, 0.3), (2, 1))), 0.1), [])
+
+    def test_the_directions_follow_a_board_whose_outline_is_turned(self):
+        turned = '(gr_poly (pts (xy 0 0) (xy 86.6 50) (xy 56.6 101.96) (xy -30 51.96)) (layer "Edge.Cuts"))'
+        along = seg("/A", (10, 10), (10 + 8.66, 10 + 5))
+        self.assertEqual(board_check.directions(DESIGN, board(along, outline=turned), 0.1), [])
+        self.assertEqual(len(board_check.directions(DESIGN, board(seg("/A", (0, 0), (10, 0)), outline=turned), 0.1)), 1)
+
+    def test_a_board_whose_longest_edge_is_a_line_takes_its_direction(self):
+        lines = ('(gr_line (start 0 0) (end 80 80) (layer "Edge.Cuts")) (gr_line (start 0 0) (end 1 -1) (layer "Edge.Cuts"))')
+        self.assertAlmostEqual(board(outline=lines).edges, 45.0)
+
+
+class LongPadsAreEnteredAlongTheirAxis(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one."""
+
+    LEAD = part("U1", "10 10", ("1", "/A", 0, 0, "roundrect", 1, 0.3))
+
+    def test_a_track_running_in_along_the_long_axis_passes(self):
+        self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10, 10), (15, 10))), 2, 0.1), [])
+
+    def test_a_track_entering_from_the_side_or_at_a_slant_fails(self):
+        for track, off in ((seg("/A", (10, 10), (10, 15)), 90.0), (seg("/A", (10, 10), (13, 13)), 45.0)):
+            with self.subTest(track=track):
+                found = board_check.pad_entries(DESIGN, board(self.LEAD, track), 2, 0.1)
+                self.assertEqual([v.rule for v in found], ["workmanship_pad_entry"])
+                self.assertIn(f"enters it {off:.2f} degrees off its long axis", found[0].message)
+                self.assertIn("entering pad 1 of U1 at (10, 10) mm", found[0].location)
+
+    def test_a_turned_pad_is_entered_along_its_turned_axis(self):
+        turned = part("U1", "10 10 90", ("1", "/A", 0, 0, "roundrect", 1, 0.3, 90))
+        self.assertEqual(board_check.pad_entries(DESIGN, board(turned, seg("/A", (10, 10), (10, 15))), 2, 0.1), [])
+        self.assertEqual(len(board_check.pad_entries(DESIGN, board(turned, seg("/A", (10, 10), (15, 10))), 2, 0.1)), 1)
+
+    def test_a_pad_short_of_the_ratio_may_be_entered_from_any_side(self):
+        chip = part("R1", "10 10", ("1", "/A", 0, 0, "roundrect", 0.8, 1.45))
+        self.assertEqual(board_check.pad_entries(DESIGN, board(chip, seg("/A", (10, 10), (15, 10))), 2, 0.1), [])
+        self.assertEqual(len(board_check.pad_entries(DESIGN, board(chip, seg("/A", (10, 10), (15, 10))), 1.5, 0.1)), 1)
+
+    def test_a_track_wholly_on_the_pad_or_of_another_net_is_not_judged(self):
+        self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10, 10), (10, 10.1))), 2, 0.1), [])
+        self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/B", (10, 10), (10, 15))), 2, 0.1), [])
+
+    def test_an_arc_is_judged_by_the_way_it_runs_where_it_enters(self):
+        # A quarter circle centred at (10, 11) leaves the pad's centre running along x, along the long axis.
+        along = arc("/A", (10, 10), (10 + math.sqrt(0.5), 11 - math.sqrt(0.5)), (11, 11))
+        self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, along), 2, 0.1), [])
+        across = arc("/A", (10, 10), (11 - math.sqrt(0.5), 10 + math.sqrt(0.5)), (11, 11))
+        self.assertEqual(len(board_check.pad_entries(DESIGN, board(self.LEAD, across), 2, 0.1)), 1)
+
+
+class NarrowingIsMeasuredAgainstTheClassWidth(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    A track narrower than its net class's width passes only as a neck within
+    the figure of a pad; a track widened past it never fails.
+    """
+
+    def found(self, *tracks, neck: float = 1.0):
+        return board_check.narrowings(DESIGN, board(*TWO_PADS, *tracks), neck, {"/A": 0.4})
+
+    def test_a_route_at_its_class_width_or_widened_passes(self):
+        self.assertEqual(self.found(seg("/A", (10, 10), (20, 10), 0.4)), [])
+        self.assertEqual(self.found(seg("/A", (10, 10), (11, 10), 0.4), seg("/A", (11, 10), (19, 10), 1.2),
+                                    seg("/A", (19, 10), (20, 10), 0.4)), [])
+
+    def test_a_neck_into_a_pad_within_the_figure_passes(self):
+        self.assertEqual(self.found(seg("/A", (10, 10), (10.6, 10), 0.2), seg("/A", (10.6, 10), (11, 10), 0.3),
+                                    seg("/A", (11, 10), (20, 10), 0.4)), [])
+
+    def test_a_neck_longer_than_the_figure_fails(self):
+        found = self.found(seg("/A", (10, 10), (12, 10), 0.2), seg("/A", (12, 10), (20, 10), 0.4))
+        self.assertEqual([v.rule for v in found], ["workmanship_width"])
+        self.assertIn("0.2 mm wide, narrower than its net class's 0.4 mm, along 2.00 mm of route from the pad it enters", found[0].message)
+        self.assertEqual(self.found(seg("/A", (10, 10), (12, 10), 0.2), seg("/A", (12, 10), (20, 10), 0.4), neck=2), [])
+
+    def test_a_route_narrowed_partway_along_fails_however_short_the_narrowing(self):
+        found = self.found(seg("/A", (10, 10), (14, 10), 0.4), seg("/A", (14, 10), (14.5, 10), 0.2), seg("/A", (14.5, 10), (20, 10), 0.4))
+        self.assertEqual([v.rule for v in found], ["workmanship_width"])
+        self.assertIn("that reaches no pad", found[0].message)
+
+    def test_a_net_with_no_class_width_is_not_judged(self):
+        self.assertEqual(board_check.narrowings(DESIGN, board(*TWO_PADS, seg("/A", (10, 10), (20, 10), 0.1)), 1, {}), [])
+
+    def test_each_class_width_is_read_and_a_class_with_none_takes_the_defaults(self):
+        project = {"net_settings": {"classes": [{"name": "Default", "track_width": 0.25, "priority": 2147483647},
+                                                {"name": "Power", "track_width": 0.8, "priority": 1},
+                                                {"name": "Sense", "track_width": None, "priority": 2},
+                                                {"name": "Odd", "track_width": "wide"}]}}
+        widths, unreadable = board_check.class_widths(project)
+        self.assertEqual(widths, {"Default": (2147483647.0, 0.25), "Power": (1.0, 0.8), "Sense": (2.0, 0.25)})
+        self.assertEqual(unreadable, ["Odd"])
+        self.assertEqual(board_check.class_widths({"net_settings": {"classes": [{"name": "Power", "track_width": 0.8}]}})[1],
+                         ["Default"])
+
+    def test_a_net_in_several_classes_takes_the_width_of_the_class_ranked_first(self):
+        widths = {"Default": (math.inf, 0.25), "Power": (1.0, 0.8), "Sense": (2.0, 0.3)}
+        members = {"Power": {"/BOTH"}, "Sense": {"/BOTH", "/S"}}
+        self.assertEqual(board_check.net_widths({"/BOTH", "/S", "/OTHER"}, members, widths),
+                         {"/BOTH": 0.8, "/S": 0.3, "/OTHER": 0.25})
+
+
+class KiCadsWorkmanshipFindingsNameTheirItem(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one."""
+
+    def test_each_of_kicads_workmanship_findings_names_the_item_it_is(self):
+        for kind, item in (("track_angle", "WORK-4"), ("track_segment_length", "WORK-5"), ("track_dangling", "WORK-6"),
+                           ("via_dangling", "WORK-7")):
+            with self.subTest(kind=kind):
+                found = board_check.kicad_violation(DESIGN, {"type": kind, "description": "found", "items": []}, "a/a.kicad_pcb")
+                self.assertEqual(found.rule, kind)
+                self.assertIn(f"(workmanship item {item} ", found.message)
+        other = board_check.kicad_violation(DESIGN, {"type": "clearance", "description": "found", "items": []}, "a/a.kicad_pcb")
+        self.assertNotIn("workmanship", other.message)
+
+
+class TheReportStatesEachFigureRead(Tree):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    Under each design's verdict line, one FIGURE line for every measured rule
+    whose figure the design sets, before its violations.
+    """
+
+    def test_each_figure_read_has_its_line_under_its_designs_verdict(self):
+        for path in ("a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb"):
+            self.write(path, schematic() if path.endswith("sch") else "")
+
+        def check(design, repository, kicad_cli, yaml, today, already, read=None):
+            read.append(("WORK-6 stub", "WORK_STUB_MM", "0 mm of track ending free"))
+            return [board_check.Violation(design.project, "workmanship_stub", "here", "a stub")]
+
+        out = io.StringIO()
+        with mock.patch.object(board_check, "tracked_files", return_value=["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb"]), \
+                mock.patch.object(board_check, "check_design", side_effect=check):
+            status = board_check.report(self.root, "kicad-cli", "git", "10.0.7", TODAY, None, out)
+        self.assertEqual(status, 1)
+        self.assertEqual(out.getvalue().splitlines()[1:], [
+            "DESIGN | a/a.kicad_pro | FAIL | 1 violation",
+            "FIGURE | a/a.kicad_pro | WORK-6 stub | WORK_STUB_MM | 0 mm of track ending free",
+            "VIOLATION | a/a.kicad_pro | workmanship_stub | here | a stub",
+            "RESULT | FAIL | 1 of 1 designs failed"])
 
 
 class EachViolationIsOneLine(unittest.TestCase):

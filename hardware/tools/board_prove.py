@@ -566,7 +566,7 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (42, 10), (42.3, 10.3), (45, 10.3)])),
     ("an unneeded via", "workmanship: KiCad reports a via a route does not need, unaided", "via_dangling", "workmanship item WORK-7", unneeded_via),
     ("a short stub", "workmanship: a track ending free is measured against its figure", "workmanship_stub", "free-ended run is 1.500 mm long where WORK_STUB_MM allows 0 mm", stub),
-    ("a route wandering the long way round", "workmanship: a net's track length is measured against the tree joining its pads", "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.3 times",
+    ("a route wandering the long way round", "workmanship: a net's track length is measured against the tree joining its pads", "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.2 times",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 10)])),
     ("a track off the board's edges and the 45 degrees to them", "workmanship: each track's direction is measured against the board's edges", "workmanship_direction", "3.43 degrees off",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (45, 10.3)])),
