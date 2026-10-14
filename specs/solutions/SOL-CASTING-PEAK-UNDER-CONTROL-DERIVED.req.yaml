@@ -15,3 +15,5 @@ links:
     type: justified-by
   - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
     type: depends-on
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
+    type: depends-on

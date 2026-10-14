@@ -3,11 +3,15 @@ type: deliverable
 category: solution
 title: The plant model's element-power uncertainty covers the declared supply span
 status: active
-version: 1
+version: 2
 text: |
   The machine's declared supply span was widened from 230-240 V to 216-253 V, the published standard tolerance about the 230 V nominal, when the controller boards' figures record was prepared. The plant model's element-power uncertainty was sized for the narrower span, roughly an 8 percent delivered-power swing. Across the declared span a resistive element's delivered power moves by roughly -12 to +21 percent about its 230 V value. So the model's stated uncertainty no longer covers the supply the machine is declared to run from, and the simulation results that rest on it were obtained against a narrower span than the one declared.
 
   This restores the requirement that what is downstream works to the declared span, not to a narrower one inherited from where the design was first written: it re-sizes the uncertainty and re-runs the simulation results that depend on it.
+
+  Placement: the existing symmetric uncertainty seam is reused, not extended. The two element-power fractions in the reference thermoblock description (firmware/params/thermoblock.params, brew and steam heater power) and their reasoning in firmware/params/thermoblock.md are re-sized in place; corner construction (one minus and one plus the fraction per coefficient, and the low-only joint mains-droop corner at the smaller supply-driven fraction) is unchanged. An asymmetric uncertainty grammar was rejected: it would change the description parser, the plant types, the protection-margin computation and every analysis tool to express a lower bound that the symmetric fraction already covers. Re-centring the stored power so a symmetric fraction fits the swing was rejected: it moves the nominal the golden and nominal trajectories are pinned to, and the 230 V reference the ratings are stated at is the declared nominal. Adding the folded-in effects' magnitudes regardless of direction, as the present accounts do, was rejected: the hot-running derate and the steam element's parallel path only lower delivered power, so adding them to the upper excursion over-covers a side they never act on and widens refusals of courses the machine can make.
+
+  The fractions are live control data as well as simulation input: the target loads them from the embedded description, widens the commanded margin and evaluates the least-capable plant from them. That tightening on the target is the intended consequence of covering the declared span, as the commanded-margin and refusal criteria this work's consumers already verify require; it is not a control change.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
@@ -15,3 +19,5 @@ links:
     type: targets
   - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
     type: depends-on
+  - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
+    type: justified-by

@@ -2,11 +2,15 @@ id: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2
 type: criterion
 title: Simulation results resting on element power are re-obtained at the re-sized uncertainty
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Every simulation check whose result rests on the element-power uncertainty is re-run with the re-sized fractions. A check that no longer passes is reported as a finding against the requirement criterion it verifies, and is not retuned to pass. The simulation's description of the supply it was run against states the declared span. Out of scope: changing control behaviour to recover a margin that no longer holds.
+  Every simulation check whose result rests on the element-power uncertainty is re-run with the re-sized fractions: the host tier, the emulation tier, and the seeded mutation checks whose anchors quote the description. The four analysis records under docs/ that pin the description (protection margin, parameter stability, parameter dominance, parameter identifiability) are regenerated with their own tools in the same change.
+
+  A check that no longer passes is reported as a finding against the requirement criterion it verifies, and is not retuned to pass. Reporting it means: first search the graph for an existing criterion that already owns the shortfall; if none does, author a DEL-MAINTENANCE child solution in the same change that targets the requirement criterion the check verifies. The regenerated record keeps the failing verdict. The failing assertion is inverted to assert the present failing outcome, with a comment naming that child, so the gate stays green, the shortfall stays visible, and a change that restores the behaviour fails that assertion until the inversion is removed; the child's criterion requires removing it.
+
+  The simulation's description of the supply it was run against states the declared span. Out of scope: changing control behaviour to recover a margin that no longer holds.
 links:
   - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
     type: criterion-of

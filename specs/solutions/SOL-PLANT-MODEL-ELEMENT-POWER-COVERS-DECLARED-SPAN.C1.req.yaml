@@ -2,11 +2,15 @@ id: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
 type: criterion
 title: Each thermoblock element's power uncertainty covers the declared supply span
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  The uncertainty fraction against each thermoblock element's power in the plant model is re-sized to cover the delivered-power swing across the declared 216-253 V supply span, with power scaling as the square of supply voltage, together with the effects the fraction already folds in. The account beside each fraction states the span it covers and how the fraction was derived from it. Out of scope: modelling supply-voltage dependence dynamically.
+  The uncertainty fraction against each thermoblock element's power in the plant model is re-sized to cover the delivered-power swing across the declared 216-253 V supply span, with power scaling as the square of supply voltage, together with the effects the fraction already folds in.
+
+  Each fraction is the smallest symmetric fraction that covers both sides of the swing about the stored 230 V value. Each side is computed by compounding the effects that act on it multiplicatively: the low side compounds the low-supply ratio (216/230)^2 with the hot-running derate and, for the steam element, the parallel-path effect; the high side is the high-supply ratio (253/230)^2 alone, since those effects only lower delivered power. The fraction is the larger side's excursion: 0.21 for both elements, the upper side governing, which over-covers the lower side (about -14 percent for brew, -18 percent for steam).
+
+  The account beside each fraction states the span it covers, the per-side arithmetic, which side governs and that the other side is over-covered because the uncertainty is symmetric. Every other statement of the old span or of the roughly 8 percent swing in the description's reasoning and in test commentary is corrected to match, and any test whose stated reasoning depended on the old fraction (for example a deliberately wrong power described as outside the declared error) is re-anchored so it still exercises what it was written to exercise. Out of scope: modelling supply-voltage dependence dynamically, and an asymmetric uncertainty grammar.
 links:
   - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
     type: criterion-of
