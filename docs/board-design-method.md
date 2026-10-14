@@ -1266,7 +1266,7 @@ KiCad's layout rule check compares every two tracks that meet on one copper laye
 #### WORK-4. Corners are turned at 45 degrees or as arcs, never square or acute
 
 - **Applies when:** always.
-- **Asks:** Does every corner a track turns meet at 135 degrees or more between its two straight runs, or as an arc, with no right-angled and no acute corner?
+- **Asks:** Does every corner a track turns meet at 135 degrees or more between its two straight runs, or as an arc, with no right-angled and no acute corner, and do tracks that meet at a pad leave it square to one another or wider?
 - **Passes:** The board's rules file holds this custom rule, and the pre-order check reports no `track_angle` violation:
 
   ```
@@ -1274,11 +1274,11 @@ KiCad's layout rule check compares every two tracks that meet on one copper laye
   	(constraint track_angle (min 135)))
   ```
 
-  KiCad states the angle at a joint as the angle between its two tracks, so a straight run is 180, a 45-degree bend 135 and a square corner 90; the figure is a bare number, since a unit KiCad does not take drops the whole rules file. The rule has no condition, or the one condition `A.Type == 'Track'`, and no layer, so it holds on every track. A branch is made at a pad (see the opening of this area).
-- **Fails, as the views show it:** the pre-order check reports a `track_angle` violation, or a `workmanship_rule` violation naming `WORK-4`; or, in `design-rules.md`, no row for the rule or a figure below 135.
+  KiCad states the angle at a joint as the angle between its two tracks, so a straight run is 180, a 45-degree bend 135 and a square corner 90; the figure is a bare number, since a unit KiCad does not take drops the whole rules file. The rule has no condition, or the one condition `A.Type == 'Track'`, and no layer, so it holds on every track. A branch is made at a pad (see the opening of this area). KiCad does not compare tracks that meet at a pad, so the board's project text variable `WORK_PAD_ANGLE_DEG` is set to 90, with its row in the board's rules table, and the pre-order check reports no `workmanship_pad_corner` violation: it holds every two tracks of a net that meet on one layer at a pad to at least that angle between the ways they leave it, so a branch at a pad leaves square to the route or wider, and never at the acute angle that leaves a sliver of bare board between two tracks.
+- **Fails, as the views show it:** the pre-order check reports a `track_angle` or `workmanship_pad_corner` violation, or a `workmanship_rule` violation naming `WORK-4`; or, in `design-rules.md`, no row for the rule or a figure below 135, or no row for `WORK_PAD_ANGLE_DEG` or a figure below 90.
 - **Judged on:** the pre-order check's report, `design-rules.md`.
 - **Kind:** rule. **Severity:** quality.
-- **Source:** Texas Instruments, *High-Speed Layout Guidelines*, SCAA082A, November 2006, revised August 2017, § 2.5 *Traces, Vias, and Other PCB Components* ("Avoid right-angle bends in a trace and try to route them at least with two 45° corners. To minimize any impedance change, the best routing would be a round bend"), https://www.ti.com/lit/pdf/scaa082, read 2026-10-14; and Texas Instruments, *High-Speed Interface Layout Guidelines*, SPRAAR7J, November 2018, revised February 2023, § 3.11 *Signal Bending* ("When bending is required, maintain a bend angle greater than 135°"), https://www.ti.com/lit/pdf/spraar7, read 2026-10-14.
+- **Source:** Texas Instruments, *High-Speed Layout Guidelines*, SCAA082A, November 2006, revised August 2017, § 2.5 *Traces, Vias, and Other PCB Components* ("Avoid right-angle bends in a trace and try to route them at least with two 45° corners. To minimize any impedance change, the best routing would be a round bend"), https://www.ti.com/lit/pdf/scaa082, read 2026-10-14; and Texas Instruments, *High-Speed Interface Layout Guidelines*, SPRAAR7J, November 2018, revised February 2023, § 3.11 *Signal Bending* ("When bending is required, maintain a bend angle greater than 135°"), https://www.ti.com/lit/pdf/spraar7, read 2026-10-14; and, for tracks meeting at a pad, `hardware/proof/review-proof/layout-review.md`, round 2, finding 2.7.
 
 #### WORK-5. No jog: no straight run is shorter than 1 mm
 

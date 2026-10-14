@@ -48,7 +48,7 @@ accepted_on: 2026-10-01
 
 #: The figure of every measured workmanship rule, as a design sets them in its project text variables.
 FIGURES = {"WORK_DETOUR_RATIO": "1.5", "WORK_STUB_MM": "0", "WORK_NECK_MM": "1", "WORK_ANGLE_TOLERANCE_DEG": "0.1",
-           "WORK_PAD_ENTRY_RATIO": "2"}
+           "WORK_PAD_ENTRY_RATIO": "2", "WORK_PAD_ANGLE_DEG": "90"}
 
 #: The workmanship custom rules every design's rules file holds.
 WORKMANSHIP = """\
@@ -1500,7 +1500,7 @@ class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
         figures, found = board_check.workmanship_figures(DESIGN, FIGURES)
         self.assertEqual(found, [])
         self.assertEqual(figures, {"WORK_DETOUR_RATIO": 1.5, "WORK_STUB_MM": 0.0, "WORK_NECK_MM": 1.0,
-                                   "WORK_ANGLE_TOLERANCE_DEG": 0.1, "WORK_PAD_ENTRY_RATIO": 2.0})
+                                   "WORK_ANGLE_TOLERANCE_DEG": 0.1, "WORK_PAD_ENTRY_RATIO": 2.0, "WORK_PAD_ANGLE_DEG": 90.0})
 
     def test_each_missing_figure_fails_naming_its_item_and_variable(self):
         figures, found = board_check.workmanship_figures(DESIGN, {})
@@ -1567,6 +1567,41 @@ class TheRulesFileHoldsTheWorkmanshipRules(unittest.TestCase):
     def test_a_good_rule_beside_a_narrowed_one_is_enough(self):
         both = WORKMANSHIP + '(rule "Power corners"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_angle (min 150)))\n'
         self.assertEqual(self.found(both), [])
+
+
+class TracksMeetingAtAPadAreMeasured(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
+
+    KiCad's corner rule does not compare tracks that meet at a pad, so the
+    check holds the angle between them to the design's own figure.
+    """
+
+    PAD = part("R1", "10 10", ("1", "/A", 0, 0, "circle", 1, 1))
+
+    def test_tracks_leaving_a_pad_square_or_straight_through_pass(self):
+        tracks = (seg("/A", (10, 10), (15, 10)), seg("/A", (10, 10), (10, 15)), seg("/A", (5, 10), (10, 10)))
+        self.assertEqual(board_check.pad_corners(DESIGN, board(self.PAD, *tracks), 90), [])
+
+    def test_tracks_leaving_a_pad_at_45_degrees_fail_naming_the_pad_and_both_tracks(self):
+        found = board_check.pad_corners(DESIGN, board(self.PAD, seg("/A", (10, 10), (15, 10)), seg("/A", (13, 13), (10, 10))), 90)
+        self.assertEqual([v.rule for v in found], ["workmanship_pad_corner"])
+        self.assertIn("leave pad 1 of R1 45.00 degrees apart, where WORK_PAD_ANGLE_DEG allows no less than 90 degrees",
+                      found[0].message)
+        self.assertIn("pad 1 of R1 at (10, 10) mm on F.Cu", found[0].location)
+        self.assertEqual(board_check.pad_corners(DESIGN, board(self.PAD, seg("/A", (10, 10), (15, 10)),
+                                                               seg("/A", (13, 13), (10, 10))), 45), [])
+
+    def test_tracks_on_other_layers_or_nets_or_lying_wholly_on_the_pad_are_not_compared(self):
+        for other in (seg("/A", (10, 10), (13, 13), layer="B.Cu"), seg("/B", (10, 10), (13, 13)), seg("/A", (10, 10), (10.2, 10.2))):
+            with self.subTest(other=other):
+                self.assertEqual(board_check.pad_corners(DESIGN, board(self.PAD, seg("/A", (10, 10), (15, 10)), other), 90), [])
+
+    def test_an_arc_is_compared_by_the_way_it_leaves_the_pad(self):
+        # A quarter circle leaving the pad's centre heading along +x, beside a track along +x: 0 degrees apart.
+        leaving = arc("/A", (10, 10), (10 + math.sqrt(0.5) * 3, 13 - math.sqrt(0.5) * 3), (13, 13))
+        found = board_check.pad_corners(DESIGN, board(self.PAD, seg("/A", (10, 10), (15, 10)), leaving), 90)
+        self.assertEqual(len(found), 1)
+        self.assertIn("0.00 degrees apart", found[0].message)
 
 
 class StubsAreMeasured(unittest.TestCase):

@@ -119,6 +119,7 @@ For each design the check runs KiCad's own electrical rule check on the schemati
   | Variable | Item | What the check measures |
   |---|---|---|
   | `WORK_DETOUR_RATIO` | `WORK-2` | Each net with tracks and two or more pads and no copper zone: the length of all its tracks and arcs, against this many times the minimum spanning tree of its pad centres in straight lines (`workmanship_detour`) |
+  | `WORK_PAD_ANGLE_DEG` | `WORK-4` | Each two tracks of a net that meet on one layer at a pad, which KiCad's corner rule does not compare: the angle between the ways they leave it, against this many degrees at least (`workmanship_pad_corner`) |
   | `WORK_STUB_MM` | `WORK-6` | Each track end touching no pad, via, zone outline or other copper of its net: the run of track from it back to where it joins anything, against this many mm (`workmanship_stub`) |
   | `WORK_NECK_MM` | `WORK-8` | Each run of track narrower than its net class's track width (from the project file, the class KiCad ranks first for a net in several): passes only when it reaches a pad of its net and runs no more than this many mm off its net's pads' copper; a track wider than its class's width never fails (`workmanship_width`) |
   | `WORK_ANGLE_TOLERANCE_DEG` | `WORK-9`, `WORK-10` | Each straight track's direction, against a multiple of 45 degrees from the board's edges, taken from the longest straight side of the outline (`workmanship_direction`), and the angle at which a track enters a long pad, against the pad's long axis |
@@ -190,6 +191,7 @@ Each figure line has five fields separated by ` | `: `FIGURE`, the design, the i
 | `workmanship_rule` | The rules file lacks the `track_angle` (`WORK-4`) or `track_segment_length` (`WORK-5`) rule, or holds it narrowed by a condition or a layer |
 | `workmanship_figure` | A measured workmanship rule's project text variable is missing or not a plain decimal number within its range |
 | `workmanship_detour` | A net's tracks are longer than its figure allows against the shortest tree joining its pads (`WORK-2`) |
+| `workmanship_pad_corner` | Two tracks meeting at a pad leave it closer together than its figure allows (`WORK-4`) |
 | `workmanship_stub` | A track ends free, on a run longer than its figure allows (`WORK-6`) |
 | `workmanship_width` | A run of track narrower than its net class's width is not a neck within its figure of a pad (`WORK-8`) |
 | `workmanship_direction` | A straight track runs off the board's edges and the 45 degrees to them by more than its figure (`WORK-9`) |

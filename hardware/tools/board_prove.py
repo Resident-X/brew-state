@@ -565,6 +565,9 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a short jog", "workmanship: KiCad measures each straight run against the rules file's jog rule", "track_segment_length", "workmanship item WORK-5",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (42, 10), (42.3, 10.3), (45, 10.3)])),
     ("an unneeded via", "workmanship: KiCad reports a via a route does not need, unaided", "via_dangling", "workmanship item WORK-7", unneeded_via),
+    ("tracks meeting at a pad at 45 degrees", "workmanship: the angle between tracks meeting at a pad is measured against its figure", "workmanship_pad_corner", "leave pad 1 of R2 45.00 degrees apart",
+     lambda seed: seed.layout(lambda tree: [tree.insert(len(tree) - 1, segment("/LV_A", *a, *b, f"0b0e5c1a-0000-4000-8000-00000000040{index}"))
+                                            for index, (a, b) in enumerate((((40, 10), (41, 9)), ((41, 9), (44, 9)), ((44, 9), (45, 10))))])),
     ("a short stub", "workmanship: a track ending free is measured against its figure", "workmanship_stub", "free-ended run is 1.500 mm long where WORK_STUB_MM allows 0 mm", stub),
     ("a route wandering the long way round", "workmanship: a net's track length is measured against the tree joining its pads", "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.3 times",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 10)])),

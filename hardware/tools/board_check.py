@@ -1061,6 +1061,8 @@ def net_ties(design: Design, layout: list, mains_nets: Set[str]) -> List[Violati
 MEASURED = (
     ("WORK-2", "route length", "WORK_DETOUR_RATIO",
      "times the shortest straight-line tree joining the net's pads", 1.0, None),
+    ("WORK-4", "corner at a pad", "WORK_PAD_ANGLE_DEG", "degrees at least between two tracks of a net that meet on "
+     "one layer at a pad", 0.0, 180.0),
     ("WORK-6", "stub", "WORK_STUB_MM", "mm of track ending free", 0.0, None),
     ("WORK-8", "narrowing", "WORK_NECK_MM", "mm off its net's pads that a track narrower than its net class's "
      "track width may run", 0.0, None),
@@ -1369,6 +1371,44 @@ def stubs(design: Design, layout: Layout, allowed: float) -> List[Violation]:
     return found
 
 
+def pad_corners(design: Design, layout: Layout, least: float) -> List[Violation]:
+    """WORK-4 at a pad: every two tracks of a net that meet on one layer at one of its pads less than `least` degrees apart.
+
+    KiCad's corner rule does not compare tracks that meet at a pad, so a route
+    that branches at a pad, as the workmanship area asks, is held here to an
+    angle of its own: each track's direction is taken as it leaves the pad.
+    """
+    found = []
+    for pad in layout.pads:
+        for layer in sorted({copper.layer for copper in layout.copper if copper.net == pad.net and pad.on(copper.layer)}):
+            leaving = []
+            for copper in layout.copper:
+                if copper.net != pad.net or copper.layer != layer:
+                    continue
+                for end, other in ((copper.start, copper.end), (copper.end, copper.start)):
+                    if pad.contains(end) and not pad.contains(other):
+                        heading = copper.heading(end)
+                        if copper.centre is None and end == copper.end:
+                            heading = (-heading[0], -heading[1])
+                        elif copper.centre is not None:
+                            towards = (other[0] - end[0], other[1] - end[1])
+                            if heading[0] * towards[0] + heading[1] * towards[1] < 0:
+                                heading = (-heading[0], -heading[1])
+                        leaving.append((copper, heading))
+            for index, (first, a) in enumerate(leaving):
+                for second, b in leaving[index + 1:]:
+                    apart = math.degrees(math.acos(max(-1.0, min(1.0, a[0] * b[0] + a[1] * b[1]))))
+                    if apart < least - 1e-6:
+                        found.append(Violation(design.project, "workmanship_pad_corner",
+                                               f"net {pad.net}: {pad.name()} at ({coordinate(pad.centre[0])}, "
+                                               f"{coordinate(pad.centre[1])}) mm on {layer}: {first.place()}; {second.place()}",
+                                               f"WORK-4 corners turned at 45 degrees or as arcs: two tracks of {pad.net} leave "
+                                               f"{pad.name()} {apart:.2f} degrees apart, where WORK_PAD_ANGLE_DEG allows no "
+                                               f"less than {least:g} degrees; KiCad's corner rule does not compare tracks that "
+                                               "meet at a pad, so turn them to meet at it square or wider"))
+    return found
+
+
 def detours(design: Design, layout: Layout, ratio: float) -> List[Violation]:
     """WORK-2: every net routed in tracks whose track length exceeds `ratio` times the shortest tree joining its pads."""
     found = []
@@ -1506,6 +1546,8 @@ def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, fl
 def measured(design: Design, layout: Layout, figures: Dict[str, float]) -> List[Violation]:
     """Every measured workmanship rule but the width rule, which needs the nets' classes, each whose figure the design sets."""
     found = []
+    if "WORK_PAD_ANGLE_DEG" in figures:
+        found += pad_corners(design, layout, figures["WORK_PAD_ANGLE_DEG"])
     if "WORK_STUB_MM" in figures:
         found += stubs(design, layout, figures["WORK_STUB_MM"])
     if "WORK_DETOUR_RATIO" in figures:
