@@ -30,7 +30,6 @@ design_question_answers:
     class: consumer-self-sufficiency
 interfaces:
   - the method's written design rules and its rules step
-  - the method's layout review step, which uses the catalogue as its baseline checklist
 locus:
   - marking: created
     ref: 'the board design method, docs/board-design-method.md: its layout practice catalogue and a floorplan-and-plan step before placement'
