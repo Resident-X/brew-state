@@ -9,7 +9,16 @@ text: |
 
   This restores the behaviour SOL-HW-BOARD-RULE-CHECK-GATE.C3 requires, a design that declares mains present with no net in the Mains class fails and one that assigns its Mains nets passes, so that a pass or fail of the pre-order check depends on the design alone, as REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 needs from the verification that blocks an order.
 
-  Settled before build: the fix lands in the board tooling's one class-reading seam, which the check, the review views and the locked-copper reading all use, not in each caller. Class membership is read in a layout check run in which no other rule's failures count against the class probe's report limit, and a class read whose reports reach that limit is refused as possibly incomplete rather than taken as the whole class. The report limit is taken from what KiCad is observed to do, stated once in the tooling, and its value is confirmed by a test against the installed KiCad.
+  The same limit also bears on the check run itself: its every-item marker uses up the limit, so a design's own assertion-rule failures can be dropped from KiCad's report at random. That is a false pass against SOL-HW-BOARD-RULE-CHECK-GATE.C2, which this also restores.
+
+  Settled before build:
+
+  - The fix lands in the board tooling's one class-reading seam, which the pre-order check, the review views and the locked-copper reading all use, extended rather than patched in each caller. The check run stops carrying the class probe and takes the layout's Mains membership from that seam on the copied board.
+  - Membership is read on a board of one track per net, carrying the board's project file and the layout's own net-class assignments, as the project-file Mains read already does, so a class's report count is its net count, not its item count. The nets are split into batches small enough that the marker and every class's reports in one run stay below the report limit, and the batches' answers are merged. A run whose reports still reach the limit is refused, naming the class and the limit, as a guard a correct batching never trips. Refusing any class whose items reach the limit was rejected: a ground or default class on a real board has far more items than the limit, so it would turn the random failure into a certain one.
+  - The marker stays, so a rules file KiCad declines to load is still caught, but it fires on the items of one net only: on the one-track board, on one track; in the check run, on the net with the fewest items in the layout. If the check run's assertion failures reach the report limit, the design fails, saying KiCad's report was cut short. Dropping the marker was rejected for the same reason it exists.
+  - Class reads cost extra KiCad runs only on the one-track board, never extra runs of the full check.
+  - The report limit is stated once in the tooling beside its other KiCad constants, from what KiCad is observed to do, and a test against the installed KiCad confirms it: a temporary board carrying more items than the limit, with an assertion every item fails, reports exactly the limit.
+  - Tests build their over-limit board in a temporary folder, about three hundred items across about forty nets with the Mains nets alone carrying more items than the limit, never from a committed design. Batching, merging and both refusals are tested without KiCad on synthetic reports; the KiCad-backed tests are kept to a handful of small runs without zone refill.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
