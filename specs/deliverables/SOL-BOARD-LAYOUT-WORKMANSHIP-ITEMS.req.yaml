@@ -47,6 +47,6 @@ links:
   - target: DEL-HW-DESIGN-VERIFICATION.C5
     type: derives-from
 brief_confirmation:
-  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-e3602ba1e26d2c98)
-  fingerprint: 6491c462ad673ef56d2deb96c0a6cd6a7b468fd09de6fc5deb0bf2b6b6598d56
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-b57ddf8bbf7404de)
+  fingerprint: cff15fca82bef5c300d22edf385ec76c39cdb32175a1e7989d64bc06ed8c1a8e
   gating_profile: ""
