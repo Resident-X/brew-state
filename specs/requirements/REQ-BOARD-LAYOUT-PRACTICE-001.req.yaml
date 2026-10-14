@@ -4,11 +4,11 @@ category: constraint
 title: Boards are laid out to published layout practice
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   Every board the project makes is laid out to established, published layout practice. The board is judged against that practice item by item before it is ordered, each item traceable to the published source it comes from, or to the recorded review that added it, so the judgement rests on the practice and not on the reviewer's opinion. A board judged to fail an item that applies to it is changed; a failure is not accepted as unimportant.
 
-  Scope is the layout of boards the project designs: placement, partitioning, copper, grounding, separation, and what manufacture and assembly need. Whether a circuit's values are right is outside it.
+  Scope is the layout of boards the project designs: placement, partitioning, copper, grounding, separation, the workmanship of placement and routing, and what manufacture and assembly need. Whether a circuit's values are right is outside it.
 rationale: |
   A board can pass every automated rule and connectivity check and still be laid out badly: ground drawn as thin traces, decoupling routed the long way round, a return path broken by a gap. A trial board did exactly that. Automated routing is not yet good enough to produce good layout unaided, and most of what decides layout quality cannot be expressed as an automated rule, so it has to be judged.
 
@@ -19,6 +19,8 @@ rationale: |
   A finding that bears on safety cannot be closed by the agent that drew or reviewed the board judging it acceptable: only a change to the board, or a named person accepting it on the record, closes it, in the same way that the board's separation basis is accepted by a named person. Requiring an outside expert for every board was rejected because an adopter may have none to call on, and a requirement they cannot meet is one they will skip.
 
   A review that has never been shown to find a defect is not evidence that a board has none, so the review's ability to see the defects it checks for is demonstrated rather than assumed.
+
+  Workmanship is held to the same standard. A board can meet every electrical item and still be laid out the way a beginner would lay it out: square corners throughout, a supply run the long way round the board, parts scattered so their connections wander, small jogs and stubs left where a route was patched. A practice board did exactly that and passed its rule checks and four blind reviews against the whole practice, because nothing asked anyone to look. An experienced electrical engineer would not accept such a board, and the request that boards be laid out as one would lay them out was made when this work was planned but was never written down, so it went unchecked. Workmanship is not only appearance: a placement that scatters connected parts lengthens every loop the electrical items care about, and a board that is laid out cleanly is easier to inspect, probe, repair and copy. Where a quality of workmanship can be measured from the board's files it is measured, since a measurement is exact where a judgement on an image can miss a fault a few pixels wide; the rest is judged on the views against stated practice, like any other item.
 links:
   - target: REQ-ELECTRICAL-INSTALL-001.C8
     type: derives-from

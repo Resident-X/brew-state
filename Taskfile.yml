@@ -423,6 +423,13 @@ tasks:
     cmds:
       - python3 {{.HW_DIR}}/tools/board_prove.py --kicad-cli "{{.KICAD_CLI}}" {{.CLI_ARGS}}
 
+  hw:review-seed:
+    desc: Seed known layout defects, one or more for every area of the method's layout practice catalogue, into a throwaway copy of the layout review proof design (hardware/proof/review-proof), refuse the copy unless the pre-order check passes it, and write a review folder outside the repository holding only what the layout review step gives a reviewer (the seeded copy with its floorplan, plan and rules records, the method, the hardware readme, every review view and the check's report), with the seed list written apart — on demand, not part of the gate. Pass the seed list path and the new or empty review folder after --, for example task hw:review-seed -- --seeds /tmp/seeds.json --out /tmp/review; task hw:review-seed -- --print-prompt prints the fixed prompt a blind review is started with. Needs the same tools as hw:views
+    # Run from where it is called, so the paths given are read as the caller wrote them.
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/review_seed.py" --kicad-cli "{{.KICAD_CLI}}" --resvg "{{.RESVG}}" {{.CLI_ARGS}}
+
   hw:rules-confirm:
     desc: Confirm, by asking KiCad, that it loads a board's custom rules file (an appended marker rule fires only if it does) and list the nets it places in each named class, failing on an undefined or empty class or a board with no MAINS declaration. Pass the layout, its own project file and each class after --, for example task hw:rules-confirm -- --board b.kicad_pcb --project b.kicad_pro --class Power --class Ground. Needs the same tools as hw:verify
     # Run from where it is called, so the paths given are read as the caller wrote them.
@@ -457,7 +464,7 @@ tasks:
       - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_views.py" --kicad-cli "{{.KICAD_CLI}}" --resvg "{{.RESVG}}" {{.CLI_ARGS}}
 
   hw:test:
-    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check and the layout review views), against the real kicad-cli and resvg. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
+    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views and the layout review proof's seeding command), against the real kicad-cli and resvg. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"

@@ -1,0 +1,12 @@
+id: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+type: criterion
+title: A layout's placement and routing meet accepted workmanship practice
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Beyond working electrically, the board is placed and routed as an experienced electrical engineer would lay it out: connected parts placed together so their connections run short, routes direct and drawn cleanly, with no detour, loop, stub or jog that the layout does not need, and copper consistent in form across the board. Workmanship is judged item by item against published practice, as every other item of the practice is, and a quality of workmanship that can be measured from the board's files is measured rather than judged by eye. A board failing an applicable workmanship item is resolved as for any failing item, by a change to the board or a recorded finding that the item is met, does not apply or is overridden, never by judging the failure unimportant.
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001
+    type: criterion-of

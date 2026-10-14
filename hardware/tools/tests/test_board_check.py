@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import datetime
 import io
+import json
 import os
 import re
 import stat
@@ -723,10 +724,9 @@ class TheChecksOwnRulesCannotBeForged(unittest.TestCase):
     def test_the_added_rules_are_named_for_the_run_and_carry_the_reserved_words(self):
         text = board_check.appended_rules((3.0, 4.0), "0123abcd")
         names = [form[1] for form in sexpr.parse(text) if sexpr.head(form) == "rule"]
-        self.assertEqual(names, ["pre-order check 0123abcd: rules loaded", "pre-order check 0123abcd: Mains item",
-                                 board_check.SIGNED_RULE])
+        self.assertEqual(names, ["pre-order check 0123abcd: rules loaded", board_check.SIGNED_RULE])
         self.assertTrue(all(board_check.RESERVED in name for name in names))
-        self.assertEqual(len([f for f in sexpr.parse(board_check.appended_rules(None, "n")) if sexpr.head(f) == "rule"]), 2)
+        self.assertEqual(len([f for f in sexpr.parse(board_check.appended_rules(None, "n")) if sexpr.head(f) == "rule"]), 1)
 
     def test_only_this_runs_rules_are_recognised(self):
         report = {"violations": [self.entry("pre-order check: rules loaded"), self.entry("pre-order check other: rules loaded"),
@@ -769,13 +769,11 @@ json.dump(report, open(out, "w"))
                     for _ in range(2)]
             with open(kept, encoding="utf-8") as handle:
                 names = re.findall(r'rule "(pre-order check ([0-9a-f]+): rules loaded)"', handle.read())
-        # Each design check runs KiCad's layout check twice -- on the design, and
-        # on the board that resolves its project file's net classes -- under one name.
+        # Each design check runs KiCad's layout check on the design under a name
+        # of its own; a design with no nets has no class membership to ask about.
         nonces = [nonce for _, nonce in names]
-        self.assertEqual(len(nonces), 4)
-        self.assertEqual(nonces[0], nonces[1])
-        self.assertEqual(nonces[2], nonces[3])
-        self.assertNotEqual(nonces[0], nonces[2], "two runs used the same name for the marker")
+        self.assertEqual(len(nonces), 2)
+        self.assertNotEqual(nonces[0], nonces[1], "two runs used the same name for the marker")
         self.assertTrue(all(len(nonce) >= 16 for nonce in nonces))
         for found in runs:
             self.assertEqual([(v.rule, v.message) for v in found],
@@ -1206,6 +1204,229 @@ json.dump({{"violations": [{{"type": "assertion_failure", "description": "(rule 
         where, what = self.rejected("(version 1)\n# a comment KiCad will not take\n(rule \"a\" (condition \"A.Type == 'Pad'\"))\n")
         self.assertEqual(where, "between its rules")
         self.assertIn("comments", what)
+
+
+#: A stand-in for kicad-cli's layout check on the class read's boards of one
+#: track per net. It answers as KiCad does: the marker for each track on the back
+#: copper, each class's probe for each track whose net is in the class, and,
+#: past KiCad's report limit, that many of the failures chosen at random. Which
+#: nets are in which class comes from FAKE_MEMBERS (a class -> nets mapping,
+#: "*" for every net); FAKE_FLOOD adds that many failures of a further rule, and
+#: FAKE_LOG records each board's tracks.
+FAKE_CLASS_READ = r"""
+import json, os, random, re, sys
+args = sys.argv[1:]
+out = args[args.index("-o") + 1]
+board = open(args[args.index("-o") - 1]).read()
+rules = open(args[args.index("-o") - 1].replace(".kicad_pcb", ".kicad_dru")).read()
+tracks = re.findall(r'\(layer "([^"]+)"\) \(net "([^"]*)"\)', board)
+members = json.loads(os.environ["FAKE_MEMBERS"])
+marker = re.findall(r'rule "(pre-order check [0-9a-f]+: rules loaded)"', rules)
+probes = re.findall(r'rule "(pre-order check [0-9a-f]+: (.+?) item)"', rules)
+entries = []
+for layer, net in tracks:
+    item = {"description": "Track [" + net + "] on " + layer + ", length 1.0000 mm"}
+    if layer == "B.Cu" and marker:
+        entries.append({"type": "assertion_failure", "description": "Assertion failure (rule '" + marker[0] + "')", "items": [item]})
+    for rule, netclass in probes:
+        if members.get(netclass) == "*" or net in members.get(netclass, []):
+            entries.append({"type": "assertion_failure", "description": "Assertion failure (rule '" + rule + "')", "items": [item]})
+entries += [{"type": "assertion_failure", "description": "Assertion failure (rule 'flood')", "items": []}] * int(os.environ.get("FAKE_FLOOD", "0"))
+if len(entries) > 199:
+    entries = random.sample(entries, 199)
+with open(os.environ["FAKE_LOG"], "a") as log:
+    log.write(json.dumps({"tracks": len(tracks), "back": sum(layer == "B.Cu" for layer, _ in tracks)}) + "\n")
+json.dump({"violations": entries}, open(out, "w"))
+"""
+
+
+class AClassIsReadWholeOnABoardOfAnySize(unittest.TestCase):
+    """Which nets are in a class is read in batches small enough that no run reaches KiCad's report limit.
+
+    KiCad reports at most REPORT_LIMIT failures of one kind and drops the rest
+    at random, so a class read in one run on a large board comes back short or
+    empty from run to run. These drive the class read against a stand-in that
+    drops failures past the limit exactly as KiCad does.
+    """
+
+    def setUp(self):
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        self.root = scratch.name
+        self.fake = fake_tool(os.path.join(self.root, "kicad-cli"), FAKE_CLASS_READ, sys.executable)
+        self.project = write(self.root, "p.kicad_pro", "{}")
+        self.log = os.path.join(self.root, "runs.log")
+
+    def read(self, names, classes, members, flood=0):
+        open(self.log, "w").close()
+        with mock.patch.dict(os.environ, {"FAKE_MEMBERS": json.dumps(members), "FAKE_FLOOD": str(flood),
+                                          "FAKE_LOG": self.log}):
+            found, why = board_check.class_members(self.fake, self.root, os.path.join(self.root, self.project),
+                                                   classes, set(names), "0123abcd", "20260206")
+        with open(self.log, encoding="utf-8") as handle:
+            runs = [json.loads(line) for line in handle]
+        return found, why, runs
+
+    def test_every_net_in_every_class_is_read_whole_on_every_run(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        names = [f"/N{index}" for index in range(500)]
+        for classes in (["Mains"], ["Mains", "Default", "Power"]):
+            for _ in range(3):
+                with self.subTest(classes=classes):
+                    found, why, runs = self.read(names, classes, {name: "*" for name in classes})
+                    self.assertEqual(why, "")
+                    self.assertEqual(found, {name: set(names) for name in classes})
+                    self.assertEqual(sum(run["tracks"] for run in runs), len(names), "a net was read twice or not at all")
+                    for run in runs:
+                        self.assertEqual(run["back"], 1, "the marker is to fire on one track of each board")
+                        self.assertLess(1 + run["tracks"] * len(classes), board_check.REPORT_LIMIT)
+
+    def test_each_class_holds_only_its_own_nets_merged_across_batches(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        names = [f"/N{index:03d}" for index in range(450)]
+        mains = {names[0], names[196], names[197], names[449]}
+        found, why, runs = self.read(names, ["Mains", "Power"], {"Mains": sorted(mains), "Power": []})
+        self.assertEqual(why, "")
+        self.assertGreater(len(runs), 2)
+        self.assertEqual(found, {"Mains": mains, "Power": set()})
+
+    def test_no_nets_need_no_run_and_hold_no_class(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        found, why, runs = self.read([], ["Mains"], {"Mains": "*"})
+        self.assertEqual((found, why, runs), ({"Mains": set()}, "", []))
+
+    def test_a_run_whose_reports_reach_the_limit_is_refused_naming_the_class_and_the_limit(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        found, why, _ = self.read([f"/N{index}" for index in range(40)], ["Mains"], {"Mains": "*"},
+                                  flood=board_check.REPORT_LIMIT)
+        self.assertIsNone(found)
+        self.assertIn("which nets are in Mains reached its limit of 199 failures of one kind", why)
+        self.assertIn("is not read as complete", why)
+
+    def test_batches_cover_every_name_once_and_stay_below_the_limit(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        names = {f"/N{index}" for index in range(1000)}
+        for count in (1, 2, 5, 40):
+            classes = [f"C{index}" for index in range(count)]
+            batches = board_check.class_batches(names, classes)
+            self.assertEqual(sorted(name for batch in batches for name in batch), sorted(names))
+            self.assertTrue(all(1 + len(batch) * count < board_check.REPORT_LIMIT for batch in batches), count)
+            self.assertEqual(len(batches[0]), (board_check.REPORT_LIMIT - 2) // count, "the batches are smaller than they need be")
+        self.assertEqual(board_check.class_batches(set(), ["Mains"]), [])
+
+    def test_a_report_at_the_limit_is_refused_and_one_below_it_is_read(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        def report(count):
+            entries = [{"type": "assertion_failure", "description": f"(rule '{board_check.marker_rule('n')}')", "items": []}]
+            entries += [{"type": "assertion_failure", "description": f"(rule '{board_check.probe_rule('n', 'Mains')}')",
+                         "items": [{"description": f"Track [/N{index}] on F.Cu"}]} for index in range(count - 1)]
+            entries.append({"type": "track_dangling", "description": "not an assertion", "items": []})
+            return {"violations": entries}
+        names = {f"/N{index}" for index in range(board_check.REPORT_LIMIT)}
+        found, why = board_check.batch_members(report(board_check.REPORT_LIMIT - 1), ["Mains"], names, "n")
+        self.assertEqual(found, {"Mains": {f"/N{index}" for index in range(board_check.REPORT_LIMIT - 2)}}, why)
+        found, why = board_check.batch_members(report(board_check.REPORT_LIMIT), ["Mains"], names, "n")
+        self.assertIsNone(found)
+        self.assertIn("Mains", why)
+        self.assertIn(str(board_check.REPORT_LIMIT), why)
+        found, why = board_check.batch_members({"violations": []}, ["Mains"], names, "n")
+        self.assertEqual((found, why), (None, board_check.PROBES_NOT_LOADED))
+
+    def test_merging_unites_each_classs_nets_across_batches(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        self.assertEqual(board_check.merged([{"Mains": {"/A"}, "Power": set()}, {"Mains": {"/B"}, "Power": {"/P"}},
+                                             {"Mains": set(), "Power": set()}], ["Mains", "Power"]),
+                         {"Mains": {"/A", "/B"}, "Power": {"/P"}})
+        self.assertEqual(board_check.merged([], ["Mains"]), {"Mains": set()})
+
+
+class TheChecksMarkerFiresOnOneNet(unittest.TestCase):
+    """The marker showing KiCad loaded the rules fires on the layout's net with the fewest items, not on every item.
+
+    A marker on every item of a large board would itself fill KiCad's report
+    and crowd the design's own assertion failures out of it.
+    """
+
+    LAYOUT = ('(kicad_pcb (footprint "x" (at 10 20) (property "Reference" "R1")'
+              ' (pad "1" smd rect (at 0 0) (net "/BUSY")) (pad "2" smd rect (at 1 0) (net "/QUIET")) (pad "3" smd rect (at 2 0)))'
+              ' (segment (start 0 0) (end 1 0) (net "/BUSY")) (arc (start 0 1) (mid 1 2) (end 2 1) (net "/BUSY"))'
+              ' (via (at 5 5) (net "/QUIET")) (segment (start 3 3) (end 4 3) (net "it\'s"))'
+              ' (zone (net "/BUSY") (polygon (pts (xy 1 1) (xy 2 1) (arc (start 2 1) (mid 3 2) (end 2 3))))))')
+
+    def test_the_net_with_fewest_items_whose_name_a_condition_can_hold_is_chosen(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        items = board_check.net_items(sexpr.parse_one(self.LAYOUT))
+        self.assertEqual({net: len(found) for net, found in items.items()}, {"/BUSY": 4, "/QUIET": 2, "it's": 1})
+        self.assertEqual(items["/QUIET"], ["pad 2 [/QUIET] of R1 (footprint at (10, 20) mm)", "via [/QUIET] at (5, 5) mm"])
+        self.assertEqual(board_check.marker_net(items), "/QUIET")
+        self.assertIsNone(board_check.marker_net(board_check.net_items(sexpr.parse_one('(kicad_pcb (segment (net "")))'))))
+        self.assertIsNone(board_check.marker_net({"it's": ["track"]}))
+
+    def test_the_marker_is_written_for_that_net_or_every_item_when_there_is_none(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        def condition(text):
+            return [str(sexpr.child(form, "condition")[1]) for form in sexpr.parse(text) if sexpr.head(form) == "rule"][0]
+        self.assertEqual(condition(board_check.appended_rules(None, "n", "/QUIET")), "A.NetName == '/QUIET'")
+        self.assertEqual(condition(board_check.appended_rules(None, "n")), "A.Type != ''")
+
+
+class AReportCutShortFailsTheDesign(unittest.TestCase):
+    """A design whose assertion failures reach KiCad's report limit fails, since the report may be missing more."""
+
+    def check(self, design_failures: int, marker: bool = True):
+        with tempfile.TemporaryDirectory() as root:
+            fake = os.path.join(root, "kicad-cli")
+            with open(fake, "w", encoding="utf-8") as handle:
+                handle.write(f"""#!{sys.executable}
+import glob, json, re, sys
+args = sys.argv[1:]
+out = args[args.index("-o") + 1]
+if args[:2] == ["sch", "erc"]:
+    report = {{"sheets": []}}
+elif args[:3] == ["sch", "export", "netlist"]:
+    open(out, "w").write("(export (nets))"); sys.exit(0)
+else:
+    rules = open(glob.glob("*.kicad_dru")[0]).read()
+    found = re.findall(r'rule "(pre-order check [0-9a-f]+: rules loaded)"', rules)
+    entries = [{{"type": "assertion_failure", "description": "Assertion failure (rule 'every track')", "items": []}}] * {design_failures}
+    if {marker} and found:
+        entries.append({{"type": "assertion_failure", "description": "Assertion failure (rule '" + found[-1] + "')", "items": []}})
+    report = {{"violations": entries}}
+json.dump(report, open(out, "w"))
+""")
+            os.chmod(fake, 0o755)
+            for path, text in (("a/a.kicad_pro", '{"text_variables": {"MAINS": "none"}}'), ("a/a.kicad_sch", schematic()),
+                               ("a/a.kicad_pcb", "(kicad_pcb)"),
+                               ("a/a.kicad_dru", '(version 1)\n(rule "every track"\n\t(condition "A.Type == \'Track\'")\n'
+                                                 '\t(constraint assertion "false"))\n')):
+                write(root, path, text)
+            repository = board_check.Repository(root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb", "a/a.kicad_dru"])
+            return board_check.check_design(board_check.Design("a/a.kicad_pro"), repository, fake,
+                                            board_check.require_yaml(), TODAY, [])
+
+    def cut(self, found):
+        return [v for v in found if v.rule == "custom_rules" and "KiCad's report was cut short" in v.message]
+
+    def test_a_report_reaching_the_limit_fails_saying_it_was_cut_short(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        found = self.check(board_check.REPORT_LIMIT - 1)
+        self.assertEqual(len(self.cut(found)), 1, found)
+        self.assertEqual(self.cut(found)[0].location, "a/a.kicad_dru")
+        self.assertIn(f"at most {board_check.REPORT_LIMIT} assertion failures", self.cut(found)[0].message)
+
+    def test_a_report_below_the_limit_is_not_said_to_be_cut_short(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        found = self.check(board_check.REPORT_LIMIT - 2)
+        self.assertEqual(self.cut(found), [])
+        self.assertEqual({v.rule for v in found}, {"assertion_failure"})
+
+    def test_a_marker_crowded_out_of_a_full_report_is_not_taken_for_unloaded_rules(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        found = self.check(board_check.REPORT_LIMIT, marker=False)
+        self.assertEqual(len(self.cut(found)), 1, found)
+        self.assertFalse([v for v in found if "did not load" in v.message], found)
+        found = self.check(3, marker=False)
+        self.assertTrue([v for v in found if v.rule == "custom_rules" and "did not load" in v.message], found)
 
 
 class EachViolationIsOneLine(unittest.TestCase):

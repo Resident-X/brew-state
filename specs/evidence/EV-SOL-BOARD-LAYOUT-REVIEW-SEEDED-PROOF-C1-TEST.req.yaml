@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF-C1-TEST
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T09:31:04.454613Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_seed.py::test_the_seeded_layout_is_as_kicad_itself_saves_it,test_every_item_a_seed_adds_carries_an_identifier_of_the_designs_own_form_and_sits_among_its_like,test_the_folder_holds_the_committed_files_and_none_is_told_by_its_time_or_form,test_nothing_in_the_folder_names_the_seeds_or_the_repository,test_the_folder_holds_only_what_the_review_step_gives_a_reviewer,test_the_seeded_copy_passes_the_pre_order_check_and_the_folder_is_written,test_the_copy_carries_the_seeds_and_the_committed_design_does_not,test_the_seed_list_is_written_apart_with_each_seed_located
+  artifact_version: 68e314237e92dea6cc60908474095f646217ed57
+attested_by: crun-bfd9b5345532810e
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+    type: satisfies

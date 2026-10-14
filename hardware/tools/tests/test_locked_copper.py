@@ -842,6 +842,20 @@ class ConfirmingTheRules(Board):
                 self.assertEqual(self.findings(lines, "CLASS"), [], lines)
                 self.assertNotIn("CONFIRMED", lines[-1])
 
+    def test_a_marker_crowded_out_of_a_full_report_is_not_taken_for_unloaded_rules(self):
+        # SOL-HW-BOARD-CLASS-READ-ANY-SIZE.C1: A net class's membership is read completely and identically on every run, on a board of any size
+        # The marker fires on one net's items, so the board's own assertion
+        # rules failing on as many items as KiCad reports can crowd it out.
+        path = self.write_rules(RULES)
+        full = {"violations": [{"type": "assertion_failure", "description": "Assertion failure (rule 'own')", "items": []}]
+                * board_check.REPORT_LIMIT}
+        with mock.patch.object(board_check, "run_report", return_value=(full, "")), \
+                mock.patch.object(board_check, "rejected_form", side_effect=AssertionError("bisected a loaded file")):
+            status, lines = self.on_classes("confirm")
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith(f"RULES | {path} | KiCad's report was cut short at its limit of 199"), lines)
+        self.assertEqual(lines[-1], "RESULT | FAIL | KiCad's report was cut short")
+
     def test_a_board_with_no_rules_file_fails(self):
         status, lines = self.on_classes("confirm")
         self.assertEqual(status, 1, lines)
