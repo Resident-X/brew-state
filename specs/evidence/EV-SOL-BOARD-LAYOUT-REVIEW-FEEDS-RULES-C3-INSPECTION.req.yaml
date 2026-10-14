@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T02:26:12.902042Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/board-design-method.md at f4260f7fd6738765c14da04a44f8ff895c7d12a3, checked clause by clause against the criterion: Layout review reviewer inputs, step 3 (layout compared with the plan), step 4 (severity, safety defined), step 7 (closures: board change, or met / does not apply / overridden reasons, never unimportant; safety only by change or a named person''s accepted_by/accepted_on in the method''s own words), step 8 (re-render, pre-order check again, whole checklist again; closes only with no finding open; engineer review recommended) and the cross-checks incl. ''Every severity is the one this step gives''. Confirmed by WF-REVIEW runs crun-b9bbd03d85b7627b, crun-5830d51f6d485050, crun-e14dda09ed4b0845 and a blind review'
+  artifact_version: f4260f7fd6738765c14da04a44f8ff895c7d12a3
+attested_by: crun-3ae5e150a1935289
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C3
+    type: satisfies

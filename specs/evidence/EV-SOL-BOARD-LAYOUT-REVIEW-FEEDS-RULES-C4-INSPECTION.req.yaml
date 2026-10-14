@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T02:26:12.958373Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/board-design-method.md at f4260f7fd6738765c14da04a44f8ff895c7d12a3, checked clause by clause against the criterion: Layout review step 6 (a round-1 safety or function finding against a planned item recorded as a planning shortfall naming the item or step at fault, amended in the method with the review as its source, an amended step ending with its source note, before the review closes) and the cross-checks ''Each round stands as it was first recorded'' and ''Every planning shortfall has its amendment''. Confirmed by WF-REVIEW runs crun-b9bbd03d85b7627b, crun-5830d51f6d485050, crun-e14dda09ed4b0845 and a blind review'
+  artifact_version: f4260f7fd6738765c14da04a44f8ff895c7d12a3
+attested_by: crun-3ae5e150a1935289
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C4
+    type: satisfies

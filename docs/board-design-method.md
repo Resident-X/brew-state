@@ -4,7 +4,7 @@ This is how a controller board is designed in KiCad so that it passes the pre-or
 
 A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
 
-The sections after the tools, up to and including routing, are carried out in the order they appear. The first three, proving value-critical circuits, designing for bring-up and planning the layout, are finished and committed before any footprint is placed on the board; the rules and the routing follow. A board that fails any section's step is not ordered. The pre-order check does not read the records the first three sections keep, so passing it does not stand in for them. The last two sections, [Layout review views](#layout-review-views) and [Layout practice catalogue](#layout-practice-catalogue), are not steps carried out in order: they are reference lists the steps use. The catalogue cites only documents any reader can obtain without charge.
+The sections after the tools, up to and including the layout review, are carried out in the order they appear. The first three, proving value-critical circuits, designing for bring-up and planning the layout, are finished and committed before any footprint is placed on the board; the rules and the routing follow, and the layout review judges the finished layout before the board is ordered. A board that fails any section's step is not ordered. The pre-order check does not read the records the first three sections keep, or the layout review's, so passing it does not stand in for them. The last two sections, [Layout review views](#layout-review-views) and [Layout practice catalogue](#layout-practice-catalogue), are not steps carried out in order: they are reference lists the steps use. The catalogue cites only documents any reader can obtain without charge.
 
 ## Tools
 
@@ -58,7 +58,7 @@ While an editor holds a board open, KiCad keeps a lock file beside it, `~<board>
 
 Delete the project's lock file too, even though the board tooling looks only at the board's: a board editor reopening the board over a stale lock file with its own user and host name was measured to open it without asking and take over the board's lock file, but to leave the stale project lock file in place after it quit.
 
-Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers, and `task hw:views` renders every view the layout review judges a board on ([Layout review views](#layout-review-views)). What to look for is the layout review step's.
+Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers, and `task hw:views` renders every view the layout review judges a board on ([Layout review views](#layout-review-views)). What to look for is the [layout review](#layout-review) step's.
 
 ## Proving value-critical circuits before layout
 
@@ -324,7 +324,7 @@ Out of scope for this section: carrying out bring-up on built boards, and choosi
 
 ## Planning the layout
 
-Do this before any footprint is placed on the board, once the schematic the two previous sections prove and provide for is finished. Its purpose is that the first layout is designed to the [Layout practice catalogue](#layout-practice-catalogue) rather than brought up to it by review: the board has a written floorplan, and a plan of how its layout meets every catalogue item that applies to it, before any part is placed. The rules section then writes every rule-kind item that applies into the board's rules before routing, and the layout review confirms a board drawn to this plan.
+Do this before any footprint is placed on the board, once the schematic the two previous sections prove and provide for is finished. Its purpose is that the first layout is designed to the [Layout practice catalogue](#layout-practice-catalogue) rather than brought up to it by review: the board has a written floorplan, and a plan of how its layout meets every catalogue item that applies to it, before any part is placed. The rules section then writes every rule-kind item that applies into the board's rules before routing, and the [layout review](#layout-review) confirms a board drawn to this plan.
 
 Keep the floorplan and the plan in a file named `layout-plan.md` in the board's own folder, beside its KiCad project.
 
@@ -362,6 +362,17 @@ Below the floorplan, keep a plan table with one row for every item of the [Layou
 - For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from.
 - For an item that does not apply, the last column gives the reason against the item's condition, stating what the schematic lacks, for example `no crystal or ceramic resonator in the schematic` for `CLOCK-1`.
 
+Below the plan table, keep a table of the board's own items: practice this board must meet that no catalogue item states, such as a keep-out a part's datasheet asks for around it. Write each in the catalogue's item form ([How an item is read](#how-an-item-is-read)), one row per item, with how the layout will meet it:
+
+| Item | Applies when | Asks | Passes | Fails, as the views show it | Judged on | Kind | Severity | Source | How the layout meets it |
+|---|---|---|---|---|---|---|---|---|---|
+
+- **Item** is `BOARD-<n>`, numbered from 1 in the order the items are written. Like a catalogue identifier, it is never renumbered and never reused.
+- The columns from **Applies when** to **Source** are filled as the catalogue's fields are. Where the item comes from what this board must do rather than from published practice, its **Source** may name the requirement the board serves or the machine's record it comes from, by its role, in place of a published document. A rule-kind item's rules are carried into the board's rules table as a catalogue item's are ([Rules before routing](#rules-before-routing), step 1).
+- **How the layout meets it** is written as a `yes` row of the plan table is, naming the regions, parts and nets it binds.
+
+A board with no items of its own writes `none` in the Item column of the table's one row. The catalogue and these items together are the checklist the [layout review](#layout-review) judges the board against, and the table as committed before placement is that checklist's baseline. After that commit the table is only added to: no baseline row is removed, and none of its fields from Applies when to Source is changed. An item a review of the board adds later is appended below the others, its Source naming that review; it is judged from the review's next round on and is not part of the baseline. An item that is withdrawn keeps its row, marked withdrawn, as a catalogue item does.
+
 ### 3. Commit the floorplan and plan before placement
 
 Commit `layout-plan.md` before the first commit that places a footprint on the board. It is judged as it stood in the commit before placement, on the branch as pushed and in the checkout step 4 of [Proving value-critical circuits before layout](#proving-value-critical-circuits-before-layout) makes, found the same way, with `layout-plan.md` in place of `circuit-proof.md`. There, export the schematic's netlist in KiCad's own format, `kicad-cli sch export netlist --output <work folder>/check.net <board>.kicad_sch`, and cross-check the plan against it, the schematic and the catalogue in the checkout's own copy of this document, `docs/board-design-method.md`, rather than taking its word:
@@ -370,13 +381,14 @@ Commit `layout-plan.md` before the first commit that places a footprint on the b
 - every connector, terminal or header in the netlist, test points aside, has exactly one row in the connector table, with an edge and a position, and the table names no other part;
 - the plan table has exactly one row for every item of the catalogue as it stood in that commit, and names no other;
 - each row marked `no` gives a reason against the item's *Applies when* that the schematic bears out, so no item whose condition the schematic meets is marked `no`;
-- each row marked `yes` says how the layout meets the item, names at least one region, part or net it binds, and each region, part and net it names is one the floorplan or the netlist holds.
+- each row marked `yes` says how the layout meets the item, names at least one region, part or net it binds, and each region, part and net it names is one the floorplan or the netlist holds;
+- the board's own items table is there, either with its one `none` row or with a row for each item, each identifier `BOARD-<n>` used once, every column filled as step 2 says, each *Applies when* one the schematic meets, and each How the layout meets it naming at least one region, part or net, each one the floorplan or the netlist holds.
 
 A plan that is missing, incomplete or uncommitted in that checkout, or that fails a cross-check above, fails this step, however complete it is now. A part added to the schematic after placement is planned for, by amending the floorplan and every row whose item it bears on, and that change is committed before the part is placed.
 
-A plan item the finished layout does not meet is a finding at review.
+A plan item the finished layout does not meet is a finding at the [layout review](#layout-review).
 
-Out of scope for this section: the layout review itself, and producing the views it judges a board on, which [Layout review views](#layout-review-views) describes.
+Out of scope for this section: the layout review itself, which [Layout review](#layout-review) describes, and producing the views it judges a board on, which [Layout review views](#layout-review-views) describes.
 
 ## Rules before routing
 
@@ -393,7 +405,7 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
 
 - **Design rules** are the board-wide minimums (clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge, silkscreen), each custom rule in the board's rules file, and every net class's own clearance, track width and via sizes.
 - **Source** says where the figure comes from, for example: the machine's constraints record (name the figure in it); a requirement the board serves (name the requirement); the manufacturer's stated limits (name the manufacturer and the date of the capability page the figure was read from); the separation basis record; the circuit-proof record, for a width, a copper pour's connection width or a hole a circuit's proof assumed (name the circuit's row); a rule-kind item of the [Layout practice catalogue](#layout-practice-catalogue) (name the item by its identifier, and, where the item names its figure by its role, also the record the board's figure was read from, as in `POWER-1; the machine's constraints record, the load supply's continuous current`); or a finding from a layout review that became a rule (name the review). "Default", "typical" or "what KiCad had" is not a source.
-- **Carried rules.** Every rule-kind item of the catalogue that applies to the board, by its *Applies when* and as the plan in `layout-plan.md` records it, puts each rule it gives into this table, one row per rule, with the item as its source. Write each rule in the form the item gives it, a board-wide minimum, a net class's figure or a custom rule. Where the item names a net class by its role, such as `<power class>`, write the board's own name for that class in its place; the `Mains` class is named as it is. Where the item names a figure by its role, read the figure from the record the role names. A board that has more than one class in a role carries the rule once for each. An applicable rule-kind item whose rules are missing from this table, or from the board, fails this step.
+- **Carried rules.** Every rule-kind item of the catalogue that applies to the board, by its *Applies when* and as the plan in `layout-plan.md` records it, and every rule-kind item among the board's own items there, puts each rule it gives into this table, one row per rule, with the item as its source. Write each rule in the form the item gives it, a board-wide minimum, a net class's figure or a custom rule. Where the item names a net class by its role, such as `<power class>`, write the board's own name for that class in its place; the `Mains` class is named as it is. Where the item names a figure by its role, read the figure from the record the role names. A board that has more than one class in a role carries the rule once for each. An applicable rule-kind item whose rules are missing from this table, or from the board, fails this step.
 - **Confirmed in effect** says, for each kind of row, what stands behind it, and nothing else may be written there:
   - a **custom rule** in the board's rules file: that KiCad loaded the rules file, from step 3's output;
   - a **net class**: the nets step 3 lists for it;
@@ -578,7 +590,115 @@ task hw:verify
 
 It checks only designs git tracks (`git add` is enough), as `hardware/README.md` explains. It must pass. A router's or editor's "no violations" is never accepted in its place. Reopen the board in the editor, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, only after this check and the comparison in step 6 have run, and only to continue work on it.
 
-Out of scope for this step: judging the quality of the layout, which is the layout review step.
+Out of scope for this step: judging the quality of the layout, which is the [layout review](#layout-review) that follows.
+
+## Layout review
+
+Do this once routing is finished and the pre-order check passes the board, and before the board is ordered. Its purpose is to confirm that the finished layout is the one the board was planned to have. The board was designed to the [Layout practice catalogue](#layout-practice-catalogue) when its layout was planned; the review is how that is shown, not how the board gets good. Every item of the checklist gets a recorded verdict, every finding stays open until something stated here closes it, every finding that can be written as a rule becomes one so later boards are checked for it without anyone remembering it, and a failure the plan should have prevented is corrected at the planning that let it through.
+
+The **checklist** is every item of the catalogue together with the board's own items in `layout-plan.md` (step 2 of [Planning the layout](#planning-the-layout)). Its baseline is that file as committed before placement, which step 3 there judges.
+
+The **reviewer** is an agent session, or a person, that did not design the board. It works from these alone: the board's design files, the checklist, the [layout review views](#layout-review-views) rendered from the board, the pre-order check's report, and the board's committed `layout-plan.md`. It never works from the designer's reasoning, session or notes.
+
+Keep the review in one file named `layout-review.md` in the board's own folder, beside its KiCad project. It holds every round of the review, the first and every repeat, each under its own heading, `Round <n>`, numbered from 1, with its full set of verdicts, its findings and their closures. Commit the record at the end of each round, once its verdicts and findings are written and before any change to the board they call for, never part-way through a round, and again with every change that closes a finding. What a round recorded at its end, its opening lines, its verdict table and each finding's number, Raised by, Severity and What and where, is never changed afterwards; only Rule, Added as, Planning shortfall and Closed by are filled in later, as steps 5 to 7 complete them. So round 1 stays the board's first full review. A review is cited, wherever an item, a rule or a commit names it, by the record's path from the repository's root and the round, and a finding by its number as well, for example `<board folder>/layout-review.md, round 1, finding 1.3`.
+
+### 1. Start a round: commit the board, render its views, run the pre-order check
+
+Commit the board's design files as they are to be judged. With the board closed in every editor, render its views as [Layout review views](#layout-review-views) describes, naming every critical class, the classes step 3 of routing locked, and run the pre-order check, `task hw:verify`, as step 7 of routing does. Begin the round with:
+
+- **Board judged**: the commit holding the design files the round judges;
+- **Views**: the `task hw:views` command as it was run, and any further view rendered in the round (step 2), with the command that rendered it;
+- **Pre-order check**: the board's `DESIGN` line from the report, and every `VIOLATION` line under it.
+
+A round judges the board only as that commit holds it, and only on those views.
+
+### 2. Judge every checklist item
+
+Go through the checklist in order, the catalogue's items as the round's commit holds them and then the board's own items, and give every item one verdict in the round's verdict table:
+
+| Item | Kind | Severity | Verdict | Rests on | Why |
+|---|---|---|---|---|---|
+
+- **Item**, **Kind** and **Severity** are the item's identifier, kind and severity.
+- **Verdict** is one of `pass`, `fail`, `not applicable` or `cannot judge`.
+- **Rests on** cites each view the verdict rests on, by the name the views' index gives it, a tile's included, and the place on the board, in the board coordinates the view's caption states, or `whole board` for an item judged over all of it. Judge each item on every view its *Judged on* names.
+- **Why**: for `not applicable`, the reason against the item's *Applies when*, stating what the schematic lacks, which the schematic must bear out: an item whose condition the schematic meets applies, and cannot be judged not applicable. For `fail`, the number of the finding it raises (step 4), or of the finding an earlier round raised against it and closed by a reason (step 7). For `cannot judge`, the view the item needs and why the views rendered do not show it.
+
+A **rule-kind item**'s verdict rests on two things, and Rests on cites both: the pre-order check's report, the board's `DESIGN` line reading `PASS` with no `VIOLATION` line under it; and the board's rules table, `design-rules.md`, by the row of every rule the item gives, each rule present there with a figure the item's own figure and source bear out, read from the record its role names where the item names its figure by its role. Both are needed because the check holds the board only to the figure its rules state: a figure smaller than the item requires passes the check, and only the rules table shows it. Either one falling short is a `fail`.
+
+A `cannot judge` verdict is resolved within the round, before the review can close: render the views again, or render the view the item needs that the views command does not make, for example with `kicad-cli pcb export svg`, and judge the item again on it. Write the verdict reached in the same row, after the `cannot judge` and the view rendered to resolve it.
+
+A score or figure a tool reports while some of its inputs were not resolved, such as a placement score that could not match decoupling capacitors to their device, is unresolved, never a pass. No verdict rests on it: an item that would rest on it is `cannot judge` until it is judged on the views.
+
+### 3. Compare the layout with the plan, then make a free pass
+
+Read the layout against `layout-plan.md`: each region's bounds and what it holds, each connector's edge and position, each `yes` row of the plan table and each of the board's own items' How the layout meets it. A plan item the layout does not meet is a finding, even where the item it serves passes.
+
+Then make a **free pass**: look over every view for anything else wrong with the board that no item and no plan row asks about, and record each thing seen as a finding.
+
+### 4. Record every finding
+
+Give every finding a row in the round's findings table, numbered `<round>.<n>`, so `1.1` is the first finding of round 1:
+
+| Finding | Raised by | Severity | What and where | Rule | Added as | Planning shortfall | Closed by |
+|---|---|---|---|---|---|---|---|
+
+- **Raised by** is the item whose `fail` verdict raised it; `plan` with the plan row or the floorplan's row the layout departs from; or `free pass`.
+- **Severity** is the item's, for a finding raised by an item or by its plan row. For a departure from the floorplan's region or connector table, and for a free-pass finding, it is one of the catalogue's four severities ([How an item is read](#how-an-item-is-read)), chosen by their definitions. A finding that bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing or on insulation is of safety severity, whatever raised it.
+- **What and where** says what is wrong, with the view and the board coordinates that show it.
+- **Rule** and **Added as** are step 5's, **Planning shortfall** step 6's and **Closed by** step 7's.
+
+### 5. Turn every finding that can be a rule into one
+
+For every finding, write in Rule whether it can be expressed as a design rule. It can exactly when the pre-order check can enforce it through the board's rules: as a board-wide minimum, a net class's figure or a custom rule, in a form step 1 of [Rules before routing](#rules-before-routing) says KiCad's layout rule check enforces. Write `yes` with the rule, or `no` with why none of those three forms can state it, so that it needs judgement on the views. Then, before the review closes:
+
+- A finding that can be a rule is added to the catalogue as a rule-kind item, with its rule, its figure and its source like any other rule-kind item, its Source naming the review it came from. From then on step 1 of the rules section carries it into the rules of every later board it applies to, and the pre-order check checks it, without anyone remembering it.
+- A finding that needs judgement on the views is added to the catalogue as a judgement-kind item when it holds for any board, or to the board's own items in `layout-plan.md` when it holds for this board only, its Source naming the review.
+- A finding that an item of the catalogue, or of the board's own, already states, in the same kind, needs no new item.
+
+**Added as** names the item: the new item's identifier, or the item that already states it. A new catalogue item is written in the catalogue's item form, in the area it belongs to, and takes the next number that area has not used. A figure that depends on one machine is written in the item by its role, as the catalogue's other items write theirs, its number living in that machine's board rules, so the catalogue holds no machine's data.
+
+### 6. Trace a first-review failure against a planned item to its planning cause
+
+A finding of safety or function severity in round 1, raised by or through the plan row of an item the board's plan said it would meet, a catalogue item whose plan row is `yes` or one of the board's own items in the baseline, is also a planning shortfall. In Planning shortfall, name the catalogue item, or the step of this document's [Planning the layout](#planning-the-layout), that let it through, and amend that item or step in this document before the review closes, so that a later board planned the same way would not repeat it. An amended catalogue item names the review and the finding in its Source; an amended planning step carries, at the end of the step's text, a note naming them, written `Amended after <review>, finding <n>.`, for example `Amended after <board folder>/layout-review.md, round 1, finding 1.3.`, so a reader holding only a copy of this document can see where the step came from, and is amended in a commit whose message names them too. Planning shortfall gives the commit that made the amendment. Every other finding writes `—` there. The board itself is changed as for any other finding (step 7).
+
+A shortfall recorded without an amendment, or an amendment that names no shortfall, fails this step.
+
+### 7. Close every finding
+
+A finding stays open until one of these closes it, written in Closed by:
+
+- a change to the board, naming the commit that makes it, which the next round judges;
+- a recorded reason showing that the item is in fact met, written `met:`; that it does not apply to this board, written `does not apply:`; or that it is overridden by a requirement the board serves or an item of the catalogue or of the board's own that the board must also meet, written `overridden by:` with that requirement or item named.
+
+Never a judgement that the finding is unimportant.
+
+A finding of safety severity closes only by a change to the board, or by a named person's acceptance of one of those reasons, and never by the agent that designed or reviewed the board. The acceptance is recorded beside the board, in the review record, in the same form as the signature on the board's separation basis record: after the reason, Closed by gives `accepted_by:` with the person's name and `accepted_on:` with the date they accepted it, written `YYYY-MM-DD`, and the record is committed with them. The name is a person's, never an agent session's, and never a placeholder such as `unsigned`, `tbd`, `todo`, `none`, `placeholder` or anything in angle brackets; the date is no later than the day of the commit that adds it. That commit is the acceptance's audit trail; no cryptographic signature is involved.
+
+### 8. After any change, review the whole board again
+
+After any change to the board, begin a new round at step 1: render the views again, pass the pre-order check again, and judge the whole checklist again, not only the items the change addressed, then compare the layout with the plan and make the free pass again. An item added to the checklist since the last round is judged in it.
+
+The review **closes** on a round that judges the board's design files as they stand, in which the pre-order check passes the board, every item has a verdict and none is left `cannot judge`, every `fail` verdict raises a finding or cites one an earlier round closed by a reason, and every finding of every round is closed. A finding closed in that round by a change needs a further round. A board whose review has not closed is not ordered.
+
+Before the first order of any board that carries mains, a review by an experienced electrical engineer is recommended, besides this one. It is not required.
+
+Judge the record against the board and the repository rather than taking its word:
+
+- **Every round judged the whole checklist.** Each round's verdict table has exactly one row for every item of the catalogue in the round's commit and every row of the board's own items table in that commit, and names no other. Every verdict is one of the four, and no `cannot judge` is left without a verdict after it.
+- **Every view was rendered.** Render the views again from the round's commit with the round's command: its classes are the critical classes routing locked; the index holds a `layer-` view of every copper, mask, paste, silkscreen and edge layer the board carries and a `net-` view of every net the critical classes hold; and every view a verdict cites is in it, or is a further view the round names with its command.
+- **Every verdict rests where it says.** Each `not applicable` gives a reason the schematic bears out. Each rule-kind verdict cites the report's line and the rules table's rows, and a `pass` has a `PASS` line with no violation under it and every rule the item gives in the table with a figure its source bears out.
+- **Every finding was judged as a rule, and added.** Each finding has a Rule entry. Each `no` gives why none of the three forms can state the finding, and a `no` whose finding one of them can state, as step 1 of [Rules before routing](#rules-before-routing) defines them, fails, as a `not applicable` the schematic does not bear out does. One judged `yes` names in Added as a rule-kind item of the catalogue, as committed, that states it: a new one whose Source names the review, or one that already stated it. One judged `no` names a judgement-kind item of the catalogue or one of the board's own items that states it, new with its Source naming the review, or already there.
+- **The baseline came first.** Every row of the board's own items table in the commit before placement is in each round's commit, with the same fields from Applies when to Source, so no baseline item is removed, narrowed, loosened or lowered after the layout began. Every row of the board's own items table that the commit before placement lacks names, in its Source, the review that added it. That commit is the one step 3 of [Planning the layout](#planning-the-layout) finds.
+- **Each round stands as it was first recorded.** For each round, the first commit that `git log --reverse --format=%H -G '^#+ Round <n>$' -- <board folder>/layout-review.md` lists is that round's end-of-round commit. In it, the round's opening lines and verdict table are as the record now gives them, and so are its findings, none removed or added, each with the same number, Raised by, Severity and What and where. That commit comes before every commit after the round's Board judged commit that changes the board's design files: it is an ancestor of each, `git merge-base --is-ancestor <record commit> <change commit>` exiting with status 0, and is none of them. The planning shortfall check below therefore reads round 1 as it was first recorded.
+- **Every severity is the one this step gives.** Each row of each verdict table gives the item's own kind and severity, as the round's commit holds the item. Each finding's Severity is the severity of the item that raised it, or of the item whose plan row it departs from, read from the catalogue or the board's own items table in the round's commit; for a departure from the floorplan's region or connector table, and for a free-pass finding, it is the severity the catalogue's definitions give what its What and where says is wrong. And whatever raised it, a finding whose What and where bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing or on insulation has safety severity. The two checks below key on the severity a finding records, so a finding recorded below its severity fails here rather than closing by a reason with no acceptance or escaping its planning shortfall.
+- **Every planning shortfall has its amendment.** Each finding of safety or function severity in round 1 raised against a catalogue item whose plan row was `yes`, or one of the board's own items in the baseline, names an item or a step and a commit. That commit changes this document at that item or step. An amended item's Source names the review and the finding; an amended step's text ends with the note step 6 gives naming them, and the commit's message names them too.
+- **Every closure is one the method allows.** Each Closed by is a change naming a commit that changes the board's design files, or a reason of one of the three kinds. A safety finding's is a change, or a reason carrying an `accepted_by` and `accepted_on` as step 7 states.
+- **The closing round judged the board as it stands.** None of the board's design files has changed since the closing round's commit: `git diff --quiet <commit> -- <file> ...`, naming the board's project, schematic and its sheets, layout and rules file, exits with status 0.
+
+A review with an item left without a verdict, a `cannot judge` verdict unresolved, a view not rendered, or a baseline checklist committed after the layout began fails this step, and so does a record that fails a cross-check above. A baseline is committed after the layout began when step 3 of [Planning the layout](#planning-the-layout) fails it.
+
+Out of scope for this section: the pre-order check itself, which [`hardware/README.md`](../hardware/README.md) describes; the content of the catalogue; producing the views, which [Layout review views](#layout-review-views) describes; the content of any particular board's findings; and who the electrical engineer is.
 
 ## Layout review views
 
@@ -614,11 +734,11 @@ The three-dimensional views say what they leave out in their own captions and in
 
 The command reports each part the three-dimensional views draw without its model, whatever the reason, a font KiCad substitutes and a layer the board does not carry as lines of their own as well. A board with any of them still gets its views: whether what they leave out matters is the review's judgement.
 
-Out of scope for this section: judging the images, which is the layout review step.
+Out of scope for this section: judging the images, which is the [layout review](#layout-review) step.
 
 ## Layout practice catalogue
 
-This is the one statement of what a well laid-out board looks like. It is used three times on every board: the board is planned against it before placement ([Planning the layout](#planning-the-layout)), every rule-kind item that applies to it is written into its rules before routing ([Rules before routing](#rules-before-routing), step 1), and the layout review uses it as the baseline checklist a finished layout is judged item by item against. It holds no figure, part or board shape of any one machine. A figure that depends on the machine is named here by its role, such as the highest continuous current a class carries, and its number lives in that machine's records and its board's rules.
+This is the one statement of what a well laid-out board looks like. It is used three times on every board: the board is planned against it before placement ([Planning the layout](#planning-the-layout)), every rule-kind item that applies to it is written into its rules before routing ([Rules before routing](#rules-before-routing), step 1), and the [layout review](#layout-review) uses it as the baseline checklist a finished layout is judged item by item against, adding to it every finding that can be written as a rule or that holds for any board. It holds no figure, part or board shape of any one machine. A figure that depends on the machine is named here by its role, such as the highest continuous current a class carries, and its number lives in that machine's records and its board's rules.
 
 ### How an item is read
 
@@ -636,7 +756,7 @@ Every item carries the same fields:
   - **function**: a board failing it may not do its job, or may not meet a figure it is held to, such as a sensing accuracy;
   - **quality**: a board failing it works, but with less margin, reliability or ease of manufacture or bring-up than it should have;
   - **cosmetic**: a board failing it works as well, and only its appearance or legibility suffers.
-- **Source** is a published document any reader can obtain without charge, such as a part or tool manufacturer's application note, design guide or datasheet, cited by its title, publisher, section, address and the date it was read, and checked against the document itself, never cited from memory. A standard that must be bought, or a book that could not be opened and read, is not a source. An item added from a layout review with no published source names that review instead. Each item is stated fully enough to apply without reading its source.
+- **Source** is a published document any reader can obtain without charge, such as a part or tool manufacturer's application note, design guide or datasheet, cited by its title, publisher, section, address and the date it was read, and checked against the document itself, never cited from memory. A standard that must be bought, or a book that could not be opened and read, is not a source. An item added from a layout review names that review, beside its published source where it has one and in place of one where it has none. Each item is stated fully enough to apply without reading its source.
 
 The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-floor), [power paths and heat](#power-paths-and-heat-power), [grounding and return paths](#grounding-and-return-paths-ground), [decoupling and switching loops](#decoupling-and-switching-loops-decouple), [sensing front ends](#sensing-front-ends-sense), [clocks](#clocks-clock), [separation of mains from low voltage](#separation-of-mains-from-low-voltage-mains), [connectors and mechanical fit](#connectors-and-mechanical-fit-conn), [test access and bring-up](#test-access-and-bring-up-test), [manufacture and assembly](#manufacture-and-assembly-mfg) and [emissions](#emissions-emi).
 
@@ -1102,4 +1222,4 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.5 *Keeping Noise Close to the Chip* ("Place the resistor as close as possible to the microcomputer, overlapping the microcomputer ground if possible"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
-Out of scope for this section: the review step that applies the catalogue to a finished layout, and producing the views it is judged on.
+Out of scope for this section: applying the catalogue to a finished layout, which the [layout review](#layout-review) does, and producing the views it is judged on, which [Layout review views](#layout-review-views) describes.

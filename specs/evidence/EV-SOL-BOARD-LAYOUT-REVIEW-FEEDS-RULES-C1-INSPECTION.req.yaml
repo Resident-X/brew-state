@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T02:26:12.790985Z"
+artifact:
+  kind: external
+  reference: 'inspection: docs/board-design-method.md at f4260f7fd6738765c14da04a44f8ff895c7d12a3, checked clause by clause against the criterion: the Layout review section (checklist of catalogue plus board items; reviewer inputs; one record with numbered rounds committed at each round''s end; steps 1-3 views, verdicts incl. rule-kind on report plus rules table, cannot-judge resolution, unresolved scores, free pass; fail conditions and cross-checks incl. ''The baseline came first'' and ''Each round stands as it was first recorded''), Planning steps 2-3 (board''s own items table, fixed after placement, covered by the pre-placement check), the introduction and the review pointers; no graph identifiers. Confirmed by WF-REVIEW runs crun-b9bbd03d85b7627b, crun-5830d51f6d485050, crun-e14dda09ed4b0845 and a blind review'
+  artifact_version: f4260f7fd6738765c14da04a44f8ff895c7d12a3
+attested_by: crun-3ae5e150a1935289
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES.C1
+    type: satisfies
