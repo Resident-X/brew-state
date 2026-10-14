@@ -26,3 +26,7 @@ links:
     type: targets
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, crun-53b1e98525399a29)
+  fingerprint: eb2aed80baa7b8c35eb4e45267cf94f4935b9203d145d5ff14647326ad235ce3
+  gating_profile: ""
