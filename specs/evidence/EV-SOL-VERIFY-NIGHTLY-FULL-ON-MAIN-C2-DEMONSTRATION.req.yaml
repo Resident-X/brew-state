@@ -1,0 +1,26 @@
+id: EV-SOL-VERIFY-NIGHTLY-FULL-ON-MAIN-C2-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-14T09:39:02.220635Z"
+artifact:
+  kind: inline
+attested_by: crun-26eeda07a6bb2ae2
+text: |
+  Verified commit: ee0cece (the tree of 13b0816, the branch head every gate and review judged, plus only a temporary push trigger on this branch; the trigger was removed again in 16a299e, which restores 13b0816's tree exactly). A file not yet on the default branch cannot be started by manual dispatch, so the run was started by that temporary push trigger.
+
+  Run: https://github.com/Resident-X/brew-state/actions/runs/38545915324, workflow "Nightly verification" (.github/workflows/nightly-verify.yml), GitHub-hosted ubuntu-24.04 runners, 2026-10-14. The run completed.
+
+  Observed:
+  - The gates job provisioned the task runner, PlatformIO and the emulation tier on the hosted runner, then ran `task fw:verify -- --leave-out fw:sweep`. Every gate ran to completion after earlier ones failed. Its closing lines, verbatim: "VERIFICATION FAILED: 5 of the 5 gate(s) that ran failed: fw:build (exit status 201), fw:check (exit status 201), fw:test (exit status 201), fw:run (exit status 201), fw:emulate (exit status 201)." / "Gates that ran: fw:build (FAILED), fw:check (FAILED), fw:test (FAILED), fw:run (FAILED), fw:emulate (FAILED)." / "Gates left out: fw:sweep."
+  - The emulation tier ran on the hosted runner. Its failures are the committed analysis records not reproducing there: parameter stability brew.thermal_mass_j_per_k high corner brew_early 0.0187 committed against 0.0195, water.heat_capacity_j_per_ml_k low corner 0.00382 against 0.00474, and protection margin corner 20 worst departure 0.0558 against 0.0529.
+  - The mutation sweep ran as the existing sharded sweep workflow, called from this run: all 156 of its jobs (discovery, shards, merge and judgement) succeeded.
+  - The run's result is failure, because a gate failed, as the criterion requires.
+
+  The gate failures are genuine defects in main that the macOS host never showed, not this workflow's provisioning or wiring. They are recorded as their own maintenance items, SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC (GCC rejects a narrowing conversion in the fixture plant structures, so fw:build fails and fw:check and fw:run have nothing to read) and SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS (the golden trajectory and the analysis records do not reproduce across hosts). An earlier run of the same jobs at b56696f (run 38529890266) observed the same five failures and the same green sweep.
+links:
+  - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2
+    type: satisfies
