@@ -467,7 +467,7 @@ def reroute(net: str, removed, points, widths: Optional[Tuple[float, ...]] = Non
 
 
 def stub(seed: Seed) -> None:
-    """A /LV_A track leaving R2's pad 1 and ending 1.5 mm away in free space."""
+    """A /LV_A track leaving R2's pad 1 and ending 1.5 mm away in free space, which KiCad reports unaided."""
     seed.layout(lambda tree: tree.insert(len(tree) - 1, segment("/LV_A", 45, 10, 45, 8.5, "0b0e5c1a-0000-4000-8000-000000000201")))
 
 
@@ -565,10 +565,16 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a short jog", "workmanship: KiCad measures each straight run against the rules file's jog rule", "track_segment_length", "workmanship item WORK-5",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (42, 10), (42.3, 10.3), (45, 10.3)])),
     ("an unneeded via", "workmanship: KiCad reports a via a route does not need, unaided", "via_dangling", "workmanship item WORK-7", unneeded_via),
-    ("tracks meeting at a pad at 45 degrees", "workmanship: the angle between tracks meeting at a pad is measured against its figure", "workmanship_pad_corner", "leave pad 1 of R2 45.00 degrees apart",
+    ("a route turning at 45 degrees through a pad", "workmanship: two tracks meeting at a pad are measured against the corner rule's figure", "workmanship_pad_corner",
+     "/LV_A turns through pad 1 of R2 on F.Cu, and two tracks leave it 45.00 degrees apart, where the corner rule's track_angle allows no less than 135 degrees",
      lambda seed: seed.layout(lambda tree: [tree.insert(len(tree) - 1, segment("/LV_A", *a, *b, f"0b0e5c1a-0000-4000-8000-00000000040{index}"))
                                             for index, (a, b) in enumerate((((40, 10), (41, 9)), ((41, 9), (44, 9)), ((44, 9), (45, 10))))])),
-    ("a short stub", "workmanship: a track ending free is measured against its figure", "workmanship_stub", "free-ended run is 1.500 mm long where WORK_STUB_MM allows 0 mm", stub),
+    ("a branch leaving a pad at 45 degrees", "workmanship: tracks branching at a pad are measured against their figure", "workmanship_pad_corner",
+     "/LV_A branches at pad 1 of R2 on F.Cu, 3 of its tracks leaving it, and two tracks leave it 45.00 degrees apart, where WORK_PAD_ANGLE_DEG allows no less than 90 degrees",
+     lambda seed: seed.layout(lambda tree: [tree.insert(len(tree) - 1, segment("/LV_A", *a, *b, f"0b0e5c1a-0000-4000-8000-00000000041{index}"))
+                                            for index, (a, b) in enumerate((((40, 10), (41, 9)), ((41, 9), (44, 9)), ((44, 9), (45, 10)),
+                                                                            ((40, 10), (41, 11)), ((41, 11), (44, 11)), ((44, 11), (45, 10))))])),
+    ("a short stub", "workmanship: KiCad reports a track ending free, unaided", "track_dangling", "workmanship item WORK-6", stub),
     ("a route wandering the long way round", "workmanship: a net's track length is measured against the tree joining its pads", "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.3 times",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 10)])),
     ("a track off the board's edges and the 45 degrees to them", "workmanship: each track's direction is measured against the board's edges", "workmanship_direction", "3.43 degrees off",
@@ -585,8 +591,8 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      mains_rule("(min 135)", "(min 135deg)")),
     ("a measured rule with no figure", "workmanship: each measured rule's figure is set", "workmanship_figure", "WORK-2 (route length) has no figure",
      variables(lambda v: v.pop("WORK_DETOUR_RATIO"))),
-    ("a measured rule's figure written with a unit", "workmanship: each measured rule's figure is a plain number", "workmanship_figure", "WORK_STUB_MM is '0mm'",
-     variables(lambda v: v.update(WORK_STUB_MM="0mm"))),
+    ("a measured rule's figure written with a unit", "workmanship: each measured rule's figure is a plain number", "workmanship_figure", "WORK_NECK_MM is '1mm'",
+     variables(lambda v: v.update(WORK_NECK_MM="1mm"))),
     ("a measured rule's figure out of its range", "workmanship: each measured rule's figure is within its range", "workmanship_figure", "WORK_DETOUR_RATIO is '0.5'",
      variables(lambda v: v.update(WORK_DETOUR_RATIO="0.5"))),
     ("a project file whose net classes are not a list", "rule checks: the project file is read only in the form KiCad writes", "project_file", "net_settings.classes is",

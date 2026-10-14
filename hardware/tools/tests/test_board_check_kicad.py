@@ -482,7 +482,7 @@ class TheWorkmanshipRules(Proved):
         self.assertCaught(*workmanship)
         rules = {fault[2] for fault in board_prove.FAULTS if fault[1].startswith("workmanship:")}
         # Every KiCad check a workmanship item rests on, every measured rule, and the figures and rules the design must carry.
-        self.assertGreaterEqual(rules, {"track_angle", "track_segment_length", "via_dangling", "workmanship_stub",
+        self.assertGreaterEqual(rules, {"track_angle", "track_segment_length", "track_dangling", "via_dangling", "workmanship_pad_corner",
                                         "workmanship_detour", "workmanship_direction", "workmanship_pad_entry",
                                         "workmanship_width", "workmanship_rule", "workmanship_figure"})
 
@@ -518,6 +518,34 @@ class KiCadComparesTracksEverywhereButAtAPad(Copy):
         angles = [v for v in self.drc()["violations"] if v["type"] == "track_angle"]
         self.assertTrue(angles, "a branch off the middle of a route is compared with each side of it")
         self.assertIn("actual 90.000", angles[0]["description"])
+
+
+class KiCadReportsATrackEndingFreeUnaided(Copy):
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """The stub item rests on KiCad's own unconnected-track-end check, with no
+    rule and no figure of the check's own, so this holds that to what the
+    installed KiCad does for a stub wherever it leaves the route, and to the
+    check failing the design on it.
+    """
+
+    def test_a_stub_off_a_pad_off_a_track_or_lying_loose_is_reported_and_fails_the_design(self):
+        stubs = {
+            "off a pad": [("/LV_A", 45, 10, 45, 8.5)],
+            "off the middle of a track": [("/LV_A", 42, 10, 42, 8.5)],
+            "lying loose": [("/LV_A", 47, 6, 49, 6)],
+        }
+        for where, tracks in stubs.items():
+            with self.subTest(stub=where):
+                self.setUp()
+                self.seed.layout(lambda tree: [tree.insert(len(tree) - 1, board_prove.segment(*track, f"0b0e5c1a-0000-4000-8000-0000000005{index:02d}"))
+                                               for index, track in enumerate(tracks)])
+                if where == "off the middle of a track":
+                    board_prove.reroute("/LV_A", (board_prove.LV_A_ENDS,), [(40, 10), (42, 10), (45, 10)])(self.seed)
+                dangling = [v for v in self.drc()["violations"] if v["type"] == "track_dangling"]
+                self.assertTrue(dangling, f"KiCad reports no stub {where}")
+                status, lines = self.check()
+                self.assertEqual(status, 1, lines)
+                self.assertTrue([line for line in lines if " | track_dangling | " in line and "workmanship item WORK-6" in line], lines)
 
 
 # --- C6 -----------------------------------------------------------------------
@@ -556,6 +584,8 @@ class TheReport(Copy):
         status, lines = self.check()
         self.assertEqual(status, 0, lines)
         self.assertEqual(lines[1], "DESIGN | hardware/proof/gate-proof/gate-proof.kicad_pro | PASS")
+        self.assertIn("FIGURE | hardware/proof/gate-proof/gate-proof.kicad_pro | WORK-4 corner at a pad | the rules file's "
+                      "track_angle | 135 degrees at least between two tracks of a net that meet at a pad, as at any other joint", lines)
         self.assertEqual([line for line in lines[2:] if not line.startswith("FIGURE | ")],
                          ["RESULT | PASS | all 1 designs passed"])
 
