@@ -17,7 +17,14 @@ reviewer: the seeded copy at its path from the repository's root, with the
 floorplan, plan and rules records that travel with it; the method as written;
 the hardware readme the method points to for the views' index and per-net
 facts; every layout review view rendered from the copy; and the pre-order
-check's report on it. Nothing in the folder names the repository or the seeds.
+check's report on it. Nothing in the folder names the repository or the seeds,
+and nothing in it tells a seeded item or file from an unseeded one but the
+defect itself: every item a seed adds takes a fresh random identifier of the
+form the design's own items carry, KiCad itself refills and saves the seeded
+layout, so every item sits where and as KiCad writes it, the folder holds the
+committed design's files and no others, and every file in it carries one time.
+The design and the documents are taken as the repository's last commit holds
+them.
 The seed list, each seed's identifier, the catalogue item that covers it, its
 layer, its board position and what it is, is written apart from the folder, to
 a path the caller names, and is refused inside the review folder or inside a
@@ -43,6 +50,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import uuid
 from typing import Callable, Dict, List, Optional, Tuple
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -131,17 +140,23 @@ def mm(value: float) -> str:
     return f"{value:.6f}".rstrip("0").rstrip(".")
 
 
-def track(net: str, layer: str, a: Tuple[float, float], b: Tuple[float, float], width: float, uuid: str) -> list:
+def identifier() -> str:
+    """A fresh random identifier, of the same form as every one KiCad gave the design's own items."""
+    return str(uuid.uuid4())
+
+
+def track(net: str, layer: str, a: Tuple[float, float], b: Tuple[float, float], width: float) -> list:
     return ["segment", ["start", mm(a[0]), mm(a[1])], ["end", mm(b[0]), mm(b[1])], ["width", mm(width)],
-            ["layer", Q(layer)], ["net", Q(net)], ["uuid", Q(uuid)]]
+            ["layer", Q(layer)], ["net", Q(net)], ["uuid", Q(identifier())]]
 
 
-def new_via(net: str, at: Tuple[float, float], uuid: str) -> list:
+def new_via(net: str, at: Tuple[float, float]) -> list:
     return ["via", ["at", mm(at[0]), mm(at[1])], ["size", "0.9"], ["drill", "0.35"], ["layers", Q("F.Cu"), Q("B.Cu")],
-            ["net", Q(net)], ["uuid", Q(uuid)]]
+            ["net", Q(net)], ["uuid", Q(identifier())]]
 
 
 def append(tree: list, *items: list) -> None:
+    """Items added to the layout; where they fall in the file is settled when KiCad saves it (see settle_layout)."""
     for item in items:
         tree.insert(len(tree) - 1, item)
 
@@ -155,11 +170,11 @@ def snapped(tree: list, at: Tuple[float, float]) -> Tuple[float, float]:
     return at
 
 
-def path(tree: list, net: str, layer: str, width: float, points: List[Tuple[float, float]], prefix: str) -> None:
-    """Tracks joining `points` in turn, each named from `prefix` and its place along the path."""
+def path(tree: list, net: str, layer: str, width: float, points: List[Tuple[float, float]]) -> None:
+    """Tracks joining `points` in turn."""
     points = [snapped(tree, at) for at in points]
-    for index, (a, b) in enumerate(zip(points, points[1:]), start=1):
-        append(tree, track(net, layer, a, b, width, f"{prefix}{index:04d}"))
+    for a, b in zip(points, points[1:]):
+        append(tree, track(net, layer, a, b, width))
 
 
 def zones(tree: list, net: str) -> List[list]:
@@ -210,8 +225,8 @@ def thin_ground(seed: board_prove.Seed) -> None:
             [(86.5, 41.7), (72.7, 41.7)],
             [(65.5, 52.6), (65.5, 44.9), (64.6, 44.9), (64.6, 44)],
         ]
-        for number, points in enumerate(branches, start=1):
-            path(tree, GND, "In1.Cu", 0.4, points, f"5eed0001-0000-4000-8000-0{number:03d}0000")
+        for points in branches:
+            path(tree, GND, "In1.Cu", 0.4, points)
     seed.layout(edit)
 
 
@@ -224,12 +239,9 @@ def long_way_decoupling(seed: board_prove.Seed) -> None:
         move(tree, "C4", 74.5, 18.5)
         reference = [prop for prop in sexpr.children(board_prove.footprint(tree, "C4"), "property") if prop[1] == "Reference"][0]
         sexpr.child(reference, "at")[1:4] = ["0", "-1.6", "90"]
-        path(tree, "/+3V3", "F.Cu", 0.3, [(66.7, 15.825), (69.2, 15.825), (69.8, 15.225), (69.8, 15)],
-             "5eed0002-0000-4000-8000-00000000")
-        path(tree, "/+3V3", "F.Cu", 0.3, [(70.075, 15), (70.075, 17.3), (74.5, 17.3), (74.5, 17.725)],
-             "5eed0002-0000-4000-8000-00000001")
-        append(tree, track(GND, "F.Cu", (74.5, 19.275), (74.5, 20.7), 0.4, "5eed0002-0000-4000-8000-000000001001"),
-               new_via(GND, (74.5, 20.7), "5eed0002-0000-4000-8000-000000001002"))
+        path(tree, "/+3V3", "F.Cu", 0.3, [(66.7, 15.825), (69.2, 15.825), (69.8, 15.225), (69.8, 15)])
+        path(tree, "/+3V3", "F.Cu", 0.3, [(70.075, 15), (70.075, 17.3), (74.5, 17.3), (74.5, 17.725)])
+        append(tree, track(GND, "F.Cu", (74.5, 19.275), (74.5, 20.7), 0.4), new_via(GND, (74.5, 20.7)))
     seed.layout(edit)
 
 
@@ -246,8 +258,7 @@ def supply_through_mains(seed: board_prove.Seed) -> None:
     """The +5V supply trunk to the load connector looped through the mains region, beyond the signed distances."""
     def edit(tree: list) -> None:
         tree.remove(segment(tree, (37, 3.5), (37, 55.5)))
-        path(tree, "/+5V", "F.Cu", 0.8, [(37, 3.5), (37, 39.5), (22, 39.5), (22, 50), (37, 50), (37, 55.5)],
-             "5eed0004-0000-4000-8000-00000000")
+        path(tree, "/+5V", "F.Cu", 0.8, [(37, 3.5), (37, 39.5), (22, 39.5), (22, 50), (37, 50), (37, 55.5)])
     seed.layout(edit)
 
 
@@ -256,8 +267,7 @@ def drive_through_sensing(seed: board_prove.Seed) -> None:
     def edit(tree: list) -> None:
         tree.remove(segment(tree, (64, 13), (64, 26)))
         tree.remove(segment(tree, (64, 26), (33.8, 26)))
-        path(tree, "/LED_DRV", "B.Cu", 0.25, [(64, 13), (64, 40), (46, 40), (46, 26), (33.8, 26)],
-             "5eed0005-0000-4000-8000-00000000")
+        path(tree, "/LED_DRV", "B.Cu", 0.25, [(64, 13), (64, 40), (46, 40), (46, 26), (33.8, 26)])
     seed.layout(edit)
 
 
@@ -265,7 +275,7 @@ def sense_off_the_load_track(seed: board_prove.Seed) -> None:
     """The amplifier's sense track taken off the load-current track 8 mm short of the shunt, not from the shunt's pad."""
     def edit(tree: list) -> None:
         tree.remove(segment(tree, (58.038, 52), (58.038, 46.4)))
-        path(tree, "/LOAD_RTN", "F.Cu", 0.4, [(50, 52), (50, 46.4), (58.038, 46.4)], "5eed0006-0000-4000-8000-00000000")
+        path(tree, "/LOAD_RTN", "F.Cu", 0.4, [(50, 52), (50, 46.4), (58.038, 46.4)])
     seed.layout(edit)
 
 
@@ -276,10 +286,8 @@ def load_capacitor_away(seed: board_prove.Seed) -> None:
         tree.remove(segment(tree, (85.175, 18.25), (86.5, 18.25)))
         tree.remove(via(tree, (86.5, 18.25)))
         move(tree, "C5", 84.4, 26)
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(76.8, 18.25), (81.5, 18.25), (81.5, 26), (83.625, 26)],
-             "5eed0007-0000-4000-8000-00000000")
-        append(tree, track(GND, "F.Cu", (85.175, 26), (86.5, 26), 0.4, "5eed0007-0000-4000-8000-000000000001"),
-               new_via(GND, (86.5, 26), "5eed0007-0000-4000-8000-000000000002"))
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(76.8, 18.25), (81.5, 18.25), (81.5, 26), (83.625, 26)])
+        append(tree, track(GND, "F.Cu", (85.175, 26), (86.5, 26), 0.4), new_via(GND, (86.5, 26)))
     seed.layout(edit)
 
 
@@ -289,9 +297,9 @@ def suppressor_away(seed: board_prove.Seed) -> None:
         tree.remove(segment(tree, (39.1, 9.2), (40.3, 9.2)))
         tree.remove(via(tree, (40.3, 9.2)))
         move(tree, "D1", 40.05, 30)
-        append(tree, track("/+5V", "F.Cu", (37, 30), (39, 30), 0.8, "5eed0008-0000-4000-8000-000000000001"),
-               track(GND, "F.Cu", (41.1, 30), (42.4, 30), 0.4, "5eed0008-0000-4000-8000-000000000002"),
-               new_via(GND, (42.4, 30), "5eed0008-0000-4000-8000-000000000003"))
+        append(tree, track("/+5V", "F.Cu", (37, 30), (39, 30), 0.8),
+               track(GND, "F.Cu", (41.1, 30), (42.4, 30), 0.4),
+               new_via(GND, (42.4, 30)))
     seed.layout(edit)
 
 
@@ -316,9 +324,9 @@ def bead_at_the_source(seed: board_prove.Seed) -> None:
         tree.remove(segment(tree, (69.14, 37), (69.14, 37.712)))
         sexpr.child(segment(tree, (66, 37), (69.14, 37)), "net")[1] = Q("/+3V3A")
         move(tree, "FB1", 66, 18)
-        append(tree, track("/+3V3", "F.Cu", (66, 15.1), (66, 17.212), 0.4, "5eed0011-0000-4000-8000-000000000001"),
-               track("/+3V3A", "F.Cu", (66, 18.788), (66, 37), 0.4, "5eed0011-0000-4000-8000-000000000002"),
-               track("/+3V3A", "F.Cu", (69.14, 37), (69.14, 39.288), 0.3, "5eed0011-0000-4000-8000-000000000003"))
+        append(tree, track("/+3V3", "F.Cu", (66, 15.1), (66, 17.212), 0.4),
+               track("/+3V3A", "F.Cu", (66, 18.788), (66, 37), 0.4),
+               track("/+3V3A", "F.Cu", (69.14, 37), (69.14, 39.288), 0.3))
     seed.layout(edit)
 
 
@@ -404,12 +412,64 @@ def seed_list(seeds) -> dict:
                                         for ident, item, layer, (x, y), description, _ in seeds]}
 
 
-def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str, resvg: str) -> Tuple[bool, str]:
-    """The review folder written from the seeded copy; whether the views were rendered, and their report."""
-    shutil.copytree(seed.design, os.path.join(out, DESIGN), ignore=shutil.ignore_patterns(".git"))
+def settle_layout(seed: board_prove.Seed, kicad_cli: str) -> None:
+    """The seeded layout refilled and saved by KiCad itself, as it saves any board.
+
+    The seeds are written by this command, not by KiCad, so left as written they
+    would differ from every other item in where they sit in the file and how it
+    lays them out. KiCad's save writes every item in its own order and form, and
+    refilling the copper areas first leaves no fill drawn round where a part or
+    track used to be. Saving the committed design this way changes nothing in it,
+    so after it the only difference from the committed layout is the seeds
+    themselves. KiCad's own leftovers, such as the project's local settings file,
+    are taken away, so the copy holds the committed design's files and no others.
+    """
+    report = os.path.join(os.path.dirname(seed.root), "settle-layout.rpt")
+    result = subprocess.run([kicad_cli, "pcb", "drc", "--refill-zones", "--save-board", "--output", report,
+                             seed.path(".kicad_pcb")], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise board_check.CannotRun(f"KiCad could not refill and save the seeded layout: "
+                                    f"{(result.stdout + result.stderr).strip()}")
+    leftovers(seed.design, seed.files, remove=True)
+
+
+def leftovers(folder: str, files: List[str], remove: bool = False) -> List[str]:
+    """Every file under `folder` that is not one of `files`, by its path inside `folder`; taken away when `remove` is set."""
+    found = sorted(os.path.relpath(os.path.join(directory, name), folder)
+                   for directory, _, names in os.walk(folder) for name in names
+                   if os.path.relpath(os.path.join(directory, name), folder) not in files)
+    for name in found if remove else []:
+        os.remove(os.path.join(folder, name))
+    return found
+
+
+def documents() -> Dict[str, bytes]:
+    """What the review step gives a reviewer besides the design, as the repository's last commit holds it."""
+    found = {}
     for document in DOCUMENTS:
+        held = board_prove.committed(document)
+        if held is None:
+            with open(os.path.join(REPO, document), "rb") as handle:
+                held = {document: handle.read()}
+        found[document] = held[document]
+    return found
+
+
+def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str, resvg: str) -> Tuple[bool, str]:
+    """The review folder written from the seeded copy; whether the views were rendered, and their report.
+
+    Only the committed design's files are copied, by content alone, and once the
+    folder is complete every file and folder in it is given the same time, so no
+    file in it is told from another by when it was written.
+    """
+    for name in seed.files:
+        target = os.path.join(out, DESIGN, name)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copyfile(os.path.join(seed.design, name), target)
+    for document, content in documents().items():
         os.makedirs(os.path.dirname(os.path.join(out, document)), exist_ok=True)
-        shutil.copy2(os.path.join(REPO, document), os.path.join(out, document))
+        with open(os.path.join(out, document), "wb") as handle:
+            handle.write(content)
     with open(os.path.join(out, REPORT), "w", encoding="utf-8") as handle:
         handle.write("\n".join(report) + "\n")
     command = [sys.executable, os.path.join(TOOLS, "board_views.py"), "--kicad-cli", kicad_cli, "--resvg", resvg,
@@ -418,6 +478,12 @@ def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str
         command += ["--class", name]
     command += ["--out", os.path.join(out, VIEWS)]
     result = subprocess.run(command, cwd=os.path.join(out, DESIGN), capture_output=True, text=True)
+    leftovers(os.path.join(out, DESIGN), seed.files, remove=True)
+    stamp = time.time()
+    for directory, _, names in os.walk(out, topdown=False):
+        for name in names:
+            os.utime(os.path.join(directory, name), (stamp, stamp))
+        os.utime(directory, (stamp, stamp))
     return result.returncode == 0, (result.stdout + result.stderr).strip()
 
 
@@ -453,6 +519,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         seed = board_prove.prepare(scratch, DESIGN, NAME)
         for _, _, _, _, _, edit in SEEDS:
             edit(seed)
+        try:
+            settle_layout(seed, args.kicad_cli)
+        except board_check.CannotRun as error:
+            print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr)
+            return 2
         status, lines, stderr = board_prove.check(seed, args.kicad_cli)
         if status == 2:
             print(f"CANNOT RUN | the pre-order check could not run on the seeded copy: {board_check.clean(stderr)}",

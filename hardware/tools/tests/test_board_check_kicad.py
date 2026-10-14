@@ -268,7 +268,7 @@ class TheProjectFilesNetClassesAreResolvedByKiCad(unittest.TestCase):
     """
 
     def test_assignments_and_patterns_resolve_as_kicad_matches_them(self):
-        with open(os.path.join(board_prove.PROOF, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
+        with open(os.path.join(board_prove.REPO, board_prove.DESIGN, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
             project = json.load(handle)
         settings = project["net_settings"]
         settings["netclass_assignments"] = {"/GHOST": "Mains", "/LV_A": ["Default", "Mains"], "/LV_B": "Default"}
@@ -435,7 +435,7 @@ class TheSeededFaultProof(unittest.TestCase):
     """SOL-HW-BOARD-RULE-CHECK-GATE.C5: Each check this leaf enforces is shown to fail on a fault seeded for it in a throwaway design."""
 
     def test_the_clean_design_passes_and_every_fault_is_caught_without_touching_the_tree(self):
-        before = tree_digest(board_prove.PROOF)
+        before = tree_digest(os.path.join(board_prove.REPO, board_prove.DESIGN))
         out = io.StringIO()
         sys_stdout, sys.stdout = sys.stdout, out
         try:
@@ -446,14 +446,14 @@ class TheSeededFaultProof(unittest.TestCase):
         self.assertEqual(status, 0, out.getvalue())
         self.assertTrue(lines[0].startswith("CLEAN | "), lines[0])
         self.assertEqual(sum(line.startswith("CAUGHT | ") for line in lines), len(board_prove.FAULTS))
-        self.assertEqual(tree_digest(board_prove.PROOF), before, "the proof touched the committed design")
+        self.assertEqual(tree_digest(os.path.join(board_prove.REPO, board_prove.DESIGN)), before, "the proof touched the committed design")
 
     def test_the_proof_design_is_marked_not_for_manufacture_and_carries_a_synthetic_record(self):
-        with open(os.path.join(board_prove.PROOF, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
+        with open(os.path.join(board_prove.REPO, board_prove.DESIGN, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
             variables = json.load(handle)["text_variables"]
         self.assertEqual(variables.get("NOT_FOR_MANUFACTURE"), "true")
         self.assertEqual(variables.get("MAINS"), "present")
-        with open(os.path.join(board_prove.PROOF, "separation-basis.yaml"), encoding="utf-8") as handle:
+        with open(os.path.join(board_prove.REPO, board_prove.DESIGN, "separation-basis.yaml"), encoding="utf-8") as handle:
             self.assertIs(board_check.require_yaml().safe_load(handle)["synthetic"], True)
 
     def test_every_rule_the_check_reports_of_its_own_has_a_seeded_fault(self):
@@ -540,7 +540,7 @@ def over_limit_design(folder: str) -> Tuple[str, str]:
     os.makedirs(folder, exist_ok=True)
     board, project = os.path.join(folder, "b.kicad_pcb"), os.path.join(folder, "b.kicad_pro")
     tracks_board(board, [(net, 22) for net in sorted(MAINS_NETS)] + [(net, 3) for net in sorted(LV_NETS)])
-    with open(os.path.join(board_prove.PROOF, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
+    with open(os.path.join(board_prove.REPO, board_prove.DESIGN, "gate-proof.kicad_pro"), encoding="utf-8") as handle:
         data = json.load(handle)
     data["net_settings"]["netclass_assignments"] = {"/LIVE_FEED": "Mains"}
     data["board"]["design_settings"].setdefault("rules", {}).update(min_track_width=0.2, min_clearance=0.2)

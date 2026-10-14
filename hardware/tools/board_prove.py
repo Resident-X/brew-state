@@ -28,11 +28,13 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import copy
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -42,7 +44,7 @@ sys.path.insert(0, TOOLS)
 import board_check  # noqa: E402
 import sexpr  # noqa: E402
 
-PROOF = os.path.join(os.path.dirname(TOOLS), "proof", "gate-proof")
+REPO = os.path.dirname(os.path.dirname(TOOLS))
 DESIGN = "hardware/proof/gate-proof"
 NAME = "gate-proof"
 
@@ -66,6 +68,8 @@ class Seed:
         self.environment: Dict[str, str] = {}
         #: The kicad-cli the check is run with, known once it is run.
         self.kicad_cli = "kicad-cli"
+        #: Every file the design is copied with, by its path inside the design's folder.
+        self.files: List[str] = []
 
     def path(self, suffix: str) -> str:
         return os.path.join(self.design, self.name + suffix) if suffix.startswith(".") else os.path.join(self.design, suffix)
@@ -87,7 +91,7 @@ class Seed:
     def project(self, edit: Callable[[dict], None]) -> None:
         data = json.loads(self.read(".kicad_pro"))
         edit(data)
-        self.write(".kicad_pro", json.dumps(data, indent=2))
+        self.write(".kicad_pro", json.dumps(data, indent=2) + "\n")
 
     def layout(self, edit: Callable[[list], None]) -> None:
         tree = sexpr.parse_one(self.read(".kicad_pcb"))
@@ -540,25 +544,43 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
 ]
 
 
+def committed(path: str) -> Optional[Dict[str, bytes]]:
+    """Every file git holds at HEAD at or under `path`, by its path from the repository's root, or None when git cannot say."""
+    archive = subprocess.run(["git", "-C", REPO, "archive", "--format=tar", "HEAD", "--", path], capture_output=True)
+    if archive.returncode != 0:
+        return None
+    files = {}
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as tar:
+        for member in tar.getmembers():
+            if member.isfile():
+                files[member.name] = tar.extractfile(member).read()
+    return files or None
+
+
 def prepare(scratch: str, design: str = DESIGN, name: str = NAME) -> Seed:
     """A fresh copy of the design at `design`, from the repository's root, in its own git work tree under `scratch`.
 
-    Only the files git tracks in the design's folder are copied, so the copy is
-    the design as the repository holds it, not whatever else lies beside it.
+    The files are copied as the repository's last commit holds them, so the copy
+    is the committed design and not whatever else lies beside it or is edited in
+    the working tree; only where git cannot say, outside a git checkout, is the
+    folder copied as it stands.
     """
     root = os.path.join(scratch, "repository")
-    source = os.path.join(os.path.dirname(os.path.dirname(TOOLS)), design)
-    listed = subprocess.run(["git", "-C", source, "ls-files", "-z", "--", "."], capture_output=True)
-    tracked = [path for path in listed.stdout.decode("utf-8", errors="replace").split("\0") if path]
-    if listed.returncode != 0 or not tracked:
-        shutil.copytree(source, os.path.join(root, design))
+    held = committed(design)
+    if held is None:
+        shutil.copytree(os.path.join(REPO, design), os.path.join(root, design))
+        held = {os.path.relpath(os.path.join(directory, file), root): b""
+                for directory, _, files in os.walk(os.path.join(root, design)) for file in files}
     else:
-        for path in tracked:
-            target = os.path.join(root, design, path)
+        for path, content in held.items():
+            target = os.path.join(root, path)
             os.makedirs(os.path.dirname(target), exist_ok=True)
-            shutil.copy2(os.path.join(source, path), target)
+            with open(target, "wb") as handle:
+                handle.write(content)
     subprocess.run(["git", "init", "-q", root], check=True)
-    return Seed(root, design, name)
+    seed = Seed(root, design, name)
+    seed.files = sorted(os.path.relpath(path, design) for path in held)
+    return seed
 
 
 def check(seed: Seed, kicad_cli: str) -> Tuple[int, List[str], str]:

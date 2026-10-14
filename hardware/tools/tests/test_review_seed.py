@@ -20,6 +20,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -65,6 +66,11 @@ def contents(folder):
     return found
 
 
+UUID = re.compile(r'\(uuid "([^"]*)"\)')
+#: The form of every identifier KiCad gives an item: a random (version 4) UUID.
+RANDOM_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+
+
 def files_under(folder):
     return sorted(os.path.relpath(os.path.join(directory, name), folder)
                   for directory, _, names in os.walk(folder) for name in names)
@@ -103,9 +109,9 @@ class TheSeededReviewFolder(unittest.TestCase):
         for name in ("layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml",
                      "review-proof.kicad_pro", "review-proof.kicad_sch", "review-proof.kicad_pcb", "review-proof.kicad_dru"):
             self.assertIn(f"{review_seed.DESIGN}/{name}", design)
-        with open(METHOD, encoding="utf-8") as mine, open(os.path.join(self.out, "docs", "board-design-method.md"),
-                                                         encoding="utf-8") as given:
-            self.assertEqual(given.read(), mine.read(), "the method is given as written")
+        method = "docs/board-design-method.md"
+        with open(os.path.join(self.out, method), "rb") as given:
+            self.assertEqual(given.read(), board_prove.committed(method)[method], "the method is given as committed")
         with open(os.path.join(self.out, "views", "index.txt"), encoding="utf-8") as handle:
             index = handle.read()
         for view in ("layer-F.Cu", "layer-In1.Cu", "layer-B.Cu", "classes", "assembly-top", "crop-U4", "net-_GND", "3d-angled"):
@@ -147,6 +153,60 @@ class TheSeededReviewFolder(unittest.TestCase):
                 text = handle.read()
             for word in tell:
                 self.assertNotIn(word, text, f"{path} names {word!r}")
+
+    def test_the_seeded_layout_is_as_kicad_itself_saves_it(self):
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where.
+        # Saved again by KiCad, the layout is unchanged: every item, seeded or not, sits in KiCad's own order and form,
+        # so no seed is told by being grouped at the end of the file or written in another layout.
+        given = os.path.join(self.out, review_seed.DESIGN)
+        with tempfile.TemporaryDirectory() as scratch:
+            for name in ("review-proof.kicad_pcb", "review-proof.kicad_pro", "review-proof.kicad_dru"):
+                shutil.copyfile(os.path.join(given, name), os.path.join(scratch, name))
+            saved = subprocess.run([KICAD_CLI, "pcb", "drc", "--refill-zones", "--save-board", "--output",
+                                    os.path.join(scratch, "drc.rpt"), os.path.join(scratch, "review-proof.kicad_pcb")],
+                                   capture_output=True, text=True)
+            self.assertEqual(saved.returncode, 0, saved.stdout + saved.stderr)
+            with open(os.path.join(scratch, "review-proof.kicad_pcb"), encoding="utf-8") as again, \
+                    open(os.path.join(given, "review-proof.kicad_pcb"), encoding="utf-8") as handle:
+                self.assertEqual(handle.read(), again.read(), "the seeded layout is not as KiCad saves it")
+
+    def test_every_item_a_seed_adds_carries_an_identifier_of_the_designs_own_form_and_sits_among_its_like(self):
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where.
+        name = f"{review_seed.DESIGN}/review-proof.kicad_pcb"
+        committed = set(UUID.findall(board_prove.committed(name)[name].decode("utf-8")))
+        self.assertTrue(committed and all(RANDOM_UUID.match(ident) for ident in committed), "the premise: KiCad's own form")
+        with open(os.path.join(self.out, name), encoding="utf-8") as handle:
+            text = handle.read()
+        added = [ident for ident in UUID.findall(text) if ident not in committed]
+        self.assertGreater(len(added), 20, "the seeds add tracks and vias")
+        for ident in added:
+            self.assertRegex(ident, RANDOM_UUID, "a seeded item carries an identifier of a form the design's own do not")
+        self.assertEqual(len({ident[:8] for ident in added}), len(added),
+                         "seeded identifiers share a leading group, as numbered or patterned ones do and random ones do not")
+        order = [sexpr.child(item, "uuid")[1] for item in sexpr.parse_one(text)
+                 if isinstance(item, list) and item and item[0] in ("segment", "via")]
+        first = min(order.index(ident) for ident in added if ident in order)
+        self.assertTrue(any(ident in committed for ident in order[first:]),
+                        "the seeded tracks and vias are grouped after every one the design already had")
+
+    def test_the_folder_holds_the_committed_files_and_none_is_told_by_its_time_or_form(self):
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where.
+        held = board_prove.committed(review_seed.DESIGN)
+        given = [path for path in files_under(self.out) if path.startswith(review_seed.DESIGN + "/")]
+        self.assertEqual(given, sorted(held), "the design folder holds other files than the committed design's")
+        times = {os.stat(os.path.join(directory, name)).st_mtime
+                 for directory, folders, names in os.walk(self.out) for name in names + folders}
+        times.add(os.stat(self.out).st_mtime)
+        self.assertEqual(len(times), 1, "files in the folder carry different times, so an edited one stands out")
+        for path in given:
+            with open(os.path.join(self.out, path), "rb") as handle:
+                seeded, clean = handle.read(), held[path]
+            self.assertEqual(seeded.endswith(b"\n"), clean.endswith(b"\n"), f"{path} ends unlike the committed file")
+            self.assertEqual(seeded.lower().count(b"seed"), clean.lower().count(b"seed"), f"{path} names a seed")
+            if path.endswith(".kicad_pro"):
+                for text in (seeded, clean):
+                    self.assertEqual(text.decode("utf-8"), json.dumps(json.loads(text), indent=2) + "\n",
+                                     f"{path} is not written as KiCad writes a project file")
 
 
 class TheSeeds(unittest.TestCase):
@@ -266,6 +326,43 @@ class TheGeneralisedSeed(unittest.TestCase):
             self.assertEqual(default.name, board_prove.NAME)
             self.assertTrue(os.path.isfile(default.path(".kicad_pcb")))
             self.assertTrue(default.path(".kicad_pcb").endswith(os.path.join(board_prove.DESIGN, "gate-proof.kicad_pcb")))
+
+    def test_the_copy_is_the_committed_design_not_the_working_tree(self):
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The seeding script writes a copy of the clean proof design, as committed, outside the tracked tree.
+        with tempfile.TemporaryDirectory() as repo, tempfile.TemporaryDirectory() as scratch:
+            design = os.path.join(repo, "hardware", "proof", "test-proof")
+            os.makedirs(design)
+            for name, text in (("test-proof.kicad_pcb", "committed layout\n"), ("layout-plan.md", "committed plan\n")):
+                with open(os.path.join(design, name), "w", encoding="utf-8") as handle:
+                    handle.write(text)
+            for args in (["init", "-q"], ["add", "-A"], ["-c", "user.name=t", "-c", "user.email=t@invalid", "commit", "-q", "-m", "c"]):
+                subprocess.run(["git", "-C", repo, *args], check=True, capture_output=True)
+            with open(os.path.join(design, "test-proof.kicad_pcb"), "w", encoding="utf-8") as handle:
+                handle.write("edited, not committed\n")
+            with open(os.path.join(design, "untracked.md"), "w", encoding="utf-8") as handle:
+                handle.write("beside it\n")
+            with mock.patch.object(board_prove, "REPO", repo):
+                seed = board_prove.prepare(scratch, "hardware/proof/test-proof", "test-proof")
+            self.assertEqual(seed.files, ["layout-plan.md", "test-proof.kicad_pcb"])
+            self.assertEqual(seed.read(".kicad_pcb"), "committed layout\n")
+            self.assertEqual(sorted(os.listdir(seed.design)), ["layout-plan.md", "test-proof.kicad_pcb"])
+
+    def test_a_layout_kicad_cannot_save_stops_the_command(self):
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where.
+        with tempfile.TemporaryDirectory() as scratch:
+            seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+            seed.write(".kicad_pcb", "(kicad_pcb (version 1) (no-such-item")
+            with self.assertRaises(board_check.CannotRun):
+                review_seed.settle_layout(seed, KICAD_CLI)
+
+    def test_kicads_leftovers_are_taken_from_the_settled_copy(self):
+        # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where.
+        with tempfile.TemporaryDirectory() as scratch:
+            seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+            before = contents(seed.design)
+            review_seed.settle_layout(seed, KICAD_CLI)
+            self.assertEqual(sorted(os.listdir(seed.design)), seed.files)
+            self.assertEqual(contents(seed.design), before, "saving the committed design through KiCad changed it")
 
 
 if __name__ == "__main__":
