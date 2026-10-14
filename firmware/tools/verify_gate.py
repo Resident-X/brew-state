@@ -10,7 +10,10 @@ order declared, whether or not an earlier one failed, and the run fails naming
 each gate that did.
 
 The gates are named by the task runner, which hands them to this script, so the
-list exists in one place and a gate added later is added there. The hosted
+list exists in one place and a gate added later is added there. The task runner
+and the gates come from that declaration alone: words added to the task's
+command line arrive after a '--' that ends the declaration, and the only thing
+they may ask for is a gate left out. The hosted
 nightly leaves the sweep out by name and runs it in its sharded form instead;
 leaving out a name that is not a declared gate is refused, because a misspelt
 name would otherwise leave nothing out and say it had. A run with a gate left
@@ -84,31 +87,55 @@ def verify(task: str, gates: list[str], left_out: list[str], repo: str) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    argv = sys.argv[1:] if argv is None else argv
+    parser = argparse.ArgumentParser(
+        description=__doc__.splitlines()[0], allow_abbrev=False,
+        usage="%(prog)s --task TASK --gate GATE [--gate GATE ...] [--repo REPO] "
+              "-- [--leave-out GATE ...]",
+    )
     parser.add_argument("--task", required=True, help="the task runner executable")
     parser.add_argument(
         "--gate", action="append", required=True,
         help="a gate of the complete verification, in the order it runs",
     )
-    parser.add_argument(
-        "--leave-out", action="append", default=[], metavar="GATE",
-        help="a declared gate not to run this time; the closing lines name it",
-    )
     parser.add_argument("--repo", default=os.getcwd(), help="the repository root (default: here)")
-    arguments = parser.parse_args(argv)
+    # Whoever runs the task adds to its command line, and the task hands those
+    # words on after its own. They are kept apart from the declaration rather
+    # than parsed with it, so a forwarded --task or --gate cannot replace the
+    # task runner or the declared gates: after the separator, leaving a gate out
+    # is the one thing that can be asked for.
+    forwarded_parser = argparse.ArgumentParser(
+        prog=f"{parser.prog} ... --", allow_abbrev=False, add_help=False,
+    )
+    forwarded_parser.add_argument("--leave-out", action="append", default=[], metavar="GATE")
+
+    if "--" not in argv:
+        parser.error(
+            "the declaration must end with '--', after which only --leave-out may follow"
+        )
+    separator = argv.index("--")
+    arguments = parser.parse_args(argv[:separator])
+    forwarded, refused = forwarded_parser.parse_known_args(argv[separator + 1:])
+    if refused:
+        parser.error(
+            f"only --leave-out GATE may follow the declaration, not: {' '.join(refused)}"
+        )
 
     repeated = _duplicates(arguments.gate)
     if repeated:
         parser.error(f"a gate is declared more than once: {', '.join(repeated)}")
-    unknown = [name for name in arguments.leave_out if name not in arguments.gate]
+    unknown = [name for name in forwarded.leave_out if name not in arguments.gate]
     if unknown:
         parser.error(
             f"--leave-out names no declared gate: {', '.join(unknown)} "
             f"(the declared gates are {', '.join(arguments.gate)})"
         )
-    if all(name in arguments.leave_out for name in arguments.gate):
+    twice = _duplicates(forwarded.leave_out)
+    if twice:
+        parser.error(f"--leave-out names a gate more than once: {', '.join(twice)}")
+    if all(name in forwarded.leave_out for name in arguments.gate):
         parser.error("--leave-out leaves out every declared gate, so nothing would be verified")
-    return verify(arguments.task, arguments.gate, arguments.leave_out, arguments.repo)
+    return verify(arguments.task, arguments.gate, forwarded.leave_out, arguments.repo)
 
 
 if __name__ == "__main__":

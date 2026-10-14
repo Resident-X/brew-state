@@ -14,6 +14,7 @@ from __future__ import annotations
 import ast
 import os
 import re
+import shlex
 import stat
 import subprocess
 import sys
@@ -69,6 +70,7 @@ def run_verification(
                      "--task", task or runner.path, "--repo", directory]
         for name in gates:
             arguments += ["--gate", name]
+        arguments.append("--")
         for name in leave_out:
             arguments += ["--leave-out", name]
         result = subprocess.run(arguments, capture_output=True, text=True, check=False)
@@ -185,6 +187,106 @@ class AGateCanBeLeftOutByName(unittest.TestCase):
         self.assertEqual([], asked)
         self.assertIn("declared more than once: fw:test", result.stderr)
 
+    def test_a_gate_left_out_twice_is_refused(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
+        result, asked = run_verification(leave_out=("fw:sweep", "fw:emulate", "fw:sweep"))
+        self.assertEqual(2, result.returncode)
+        self.assertEqual([], asked)
+        self.assertIn("--leave-out names a gate more than once: fw:sweep", result.stderr)
+
+
+class OnlyAGateLeftOutMayBePassedOn(unittest.TestCase):
+    """The task hands its own command line on to the driver after the
+    declaration. Those words are a different source from the declaration and
+    are read apart from it: the task runner and the gates come from the
+    Taskfile, and what is passed on can only leave a declared gate out. These
+    run the Taskfile's own command, rendered as the task runner renders it, so
+    a declaration that let passed-on words reach the driver's other options is
+    caught here and not only a driver that did."""
+
+    def run_declared(self, forwarded: list[str], statuses: dict[str, int] | None = None):
+        (command,) = task_commands(read("Taskfile.yml"), "fw:verify")
+        with tempfile.TemporaryDirectory() as directory:
+            declared = FakeTaskRunner(directory, statuses)
+            substitute = os.path.join(directory, "substitute")
+            substituted = os.path.join(directory, "substitute.log")
+            with open(substitute, "w", encoding="utf-8") as handle:
+                handle.write(f'#!/bin/sh\necho "$1" >> "{substituted}"\nexit 0\n')
+            os.chmod(substitute, os.stat(substitute).st_mode | stat.S_IEXEC)
+            forwarded = [substitute if word == "SUBSTITUTE" else word for word in forwarded]
+            rendered = (
+                command.replace("{{.FW_DIR}}", os.path.join(REPOSITORY, "firmware"))
+                .replace("{{.TASK_EXE}}", declared.path)
+                .replace("{{.CLI_ARGS}}", shlex.join(forwarded))
+            )
+            self.assertNotIn("{{", rendered, "the declaration uses a variable this does not render")
+            words = shlex.split(rendered)
+            self.assertEqual("python3", words[0])
+            result = subprocess.run(
+                [sys.executable, *words[1:]], cwd=directory,
+                capture_output=True, text=True, check=False,
+            )
+            ran_substitute = os.path.exists(substituted)
+            return result, declared.asked(), ran_substitute
+
+    def test_a_task_runner_or_gate_passed_on_is_refused_and_nothing_runs(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
+        for forwarded in (
+            ["--task", "SUBSTITUTE"],
+            ["--task=SUBSTITUTE"],
+            ["--leave-out", "fw:sweep", "--task", "SUBSTITUTE"],
+            ["--gate", "fw:extra"],
+            ["--gate", "fw:build"],
+            ["--repo", "/"],
+            ["--", "--task", "SUBSTITUTE"],
+            ["--ta", "SUBSTITUTE"],
+        ):
+            with self.subTest(forwarded=forwarded):
+                result, asked, ran_substitute = self.run_declared(forwarded)
+                self.assertEqual(2, result.returncode, result.stdout + result.stderr)
+                self.assertEqual([], asked)
+                self.assertFalse(ran_substitute, "a task runner passed on was run")
+                self.assertIn("only --leave-out GATE may follow the declaration", result.stderr)
+                self.assertNotIn("PASSED", result.stdout)
+
+    def test_a_gate_left_out_through_the_declaration_runs_the_rest(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
+        result, asked, _ = self.run_declared(["--leave-out", "fw:sweep"], {"fw:check": 1})
+        self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(GATES[:-1], asked)
+        account = closing(result)
+        self.assertIn("failed: fw:check (exit status 1).", account)
+        self.assertIn("Gates left out: fw:sweep.", account)
+
+    def test_nothing_passed_on_runs_every_declared_gate(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
+        result, asked, _ = self.run_declared([])
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(GATES, asked)
+        self.assertIn("COMPLETE VERIFICATION PASSED", closing(result))
+
+    def test_an_undeclared_name_left_out_through_the_declaration_is_refused(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
+        result, asked, _ = self.run_declared(["--leave-out", "fw:swep"])
+        self.assertEqual(2, result.returncode)
+        self.assertEqual([], asked)
+        self.assertIn("--leave-out names no declared gate: fw:swep", result.stderr)
+
+    def test_an_invocation_with_no_end_to_its_declaration_is_refused(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
+        # Without the separator nothing tells the declaration from what was
+        # passed on, so the driver will not guess.
+        with tempfile.TemporaryDirectory() as directory:
+            runner = FakeTaskRunner(directory)
+            result = subprocess.run(
+                [sys.executable, os.path.join(TOOLS, "verify_gate.py"), "--task", runner.path,
+                 "--gate", "fw:build", "--gate", "fw:test"],
+                cwd=directory, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(2, result.returncode)
+            self.assertEqual([], runner.asked())
+        self.assertIn("the declaration must end with '--'", result.stderr)
+
 
 def read(path: str) -> str:
     with open(os.path.join(REPOSITORY, path), encoding="utf-8") as handle:
@@ -199,7 +301,10 @@ class TheTaskRunnerDeclaresTheCompleteVerification(unittest.TestCase):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
         (command,) = task_commands(self.taskfile, "fw:verify")
         self.assertIn("tools/verify_gate.py", command)
-        self.assertTrue(command.endswith("{{.CLI_ARGS}}"), command)
+        # What is passed on comes after the end of the declaration and nowhere
+        # else, so it cannot reach the driver's other options.
+        self.assertTrue(command.endswith(" -- {{.CLI_ARGS}}"), command)
+        self.assertEqual(1, command.count("{{.CLI_ARGS}}"), command)
         self.assertEqual(GATES, declared_gates(self.taskfile))
 
     def test_every_declared_gate_is_a_task_that_always_runs_afresh(self):
@@ -229,9 +334,20 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
 
     def test_the_nightly_runs_the_declaration_leaving_out_only_the_sweep_and_calls_the_shards(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
-        invocations = re.findall(r"(?m)^\s*task fw:verify\b(.*)$", self.nightly)
-        self.assertEqual(1, len(invocations), invocations)
-        left_out = re.findall(r"--leave-out\s+(\S+)", invocations[0])
+        # The invocation is the last thing its step runs and nothing follows it
+        # on its line, so the step's result is the declaration's result: an
+        # `|| true`, a `; exit 0` or a later command would turn a failed gate
+        # into a passed step.
+        steps = [
+            script for script in workflow_declarations.scripts(self.nightly)
+            if any("fw:verify" in line for line in script)
+        ]
+        self.assertEqual(1, len(steps), steps)
+        script = [line for line in steps[0] if line.strip()]
+        self.assertEqual(1, sum("fw:verify" in line for line in script), script)
+        invocation = re.fullmatch(r"task fw:verify --((?: --leave-out [\w:.-]+)+)", script[-1])
+        self.assertIsNotNone(invocation, f"the step does not end on the bare invocation: {script[-1]!r}")
+        left_out = invocation.group(1).split()[1::2]
         self.assertEqual(["fw:sweep"], left_out)
         self.assertIn("fw:sweep", declared_gates(read("Taskfile.yml")))
         self.assertIn(
@@ -247,15 +363,94 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertRegex(self.nightly, r"(?m)^  workflow_dispatch:")
         self.assertNotRegex(self.nightly, r"cancel-in-progress:\s*true")
 
+    def night(self, run_id: str, event: str) -> dict[str, str]:
+        """What a nightly run, and the sweep it calls, see: in a called
+        workflow the run, the ref and the workflow's name are the caller's."""
+        name, _ = workflow_declarations.find(self.nightly, "name")
+        return {"github.workflow": name, "github.ref": "refs/heads/main",
+                "github.run_id": run_id, "github.event_name": event}
+
+    def held(self, context: dict[str, str]) -> list[tuple[str, bool]]:
+        """Every concurrency group one night's run joins, its own and its sweep's."""
+        return (workflow_declarations.concurrency(self.nightly, context)
+                + workflow_declarations.concurrency(self.sweep, context))
+
+    def test_no_night_waits_on_or_cancels_another_night_or_its_own_sweep(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
+        # Two runs sharing a group do not both run: the later one waits, and a
+        # pending run is displaced by a newer one even when nothing cancels in
+        # progress. So a night keeps its result only if no group it joins --
+        # its own, or the called sweep's, which is evaluated in the caller's
+        # context -- is one another night joins too, and none of them is
+        # cancelled by a newer run.
+        nights = [self.night("1001", "schedule"), self.night("1002", "schedule"),
+                  self.night("1003", "workflow_dispatch")]
+        groups = []
+        for context in nights:
+            held = self.held(context)
+            self.assertTrue(held, "a night joins no concurrency group to check")
+            names = [group for group, _ in held]
+            with self.subTest(run=context["github.run_id"]):
+                self.assertEqual(len(names), len(set(names)),
+                                 f"the night and the sweep it calls share a group: {names}")
+                for group, cancels in held:
+                    self.assertFalse(cancels, f"a newer run cancels the group {group}")
+            groups.append(set(names))
+        for earlier, later in ((0, 1), (0, 2), (1, 2)):
+            self.assertEqual(set(), groups[earlier] & groups[later],
+                             "two nights join the same concurrency group")
+
+    def test_no_gate_or_shard_in_the_night_can_fail_or_be_skipped_without_failing_it(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
+        # A job or step allowed to fail reports success when it fails, and one
+        # with a condition can be skipped, which also reads as success. Neither
+        # has a place in a run whose result is the night's verdict, in the
+        # nightly or in the sweep it calls.
+        for workflow, declared in (("nightly", self.nightly), ("sweep", self.sweep)):
+            for _, key, value in workflow_declarations.entries(declared):
+                with self.subTest(workflow=workflow, key=key):
+                    self.assertNotIn(key, ("continue-on-error", "if"),
+                                     f"{workflow} declares {key}: {value}")
+        self.assertEqual(["gates", "sweep"], workflow_declarations.keys(self.nightly, "jobs"))
+
+    def test_a_step_in_a_form_the_workflow_reader_cannot_read_is_refused(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
+        # Each check over the workflows reads them through one reader; a step
+        # written in a form it skipped would carry an unpinned action or a
+        # condition past every check at once.
+        for declared in (
+            "jobs:\n  a:\n    steps:\n      - {uses: actions/checkout@v4}\n",
+            'jobs:\n  a:\n    steps:\n      - "uses": actions/checkout@v4\n',
+            "jobs:\n  a: {continue-on-error: true}\n",
+        ):
+            with self.subTest(declared=declared):
+                with self.assertRaises(ValueError):
+                    list(workflow_declarations.entries(declared))
+
     def test_every_action_is_pinned_to_a_full_commit_and_permissions_are_read_only(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
         for text in (self.nightly, self.sweep):
             for used in workflow_declarations.uses(text):
                 with self.subTest(used=used):
                     self.assertIsNone(workflow_declarations.unpinned(used))
-            permissions = re.findall(r"(?m)^\s*(\w[\w-]*):\s*(read|write|none)\s*$", text)
-            self.assertTrue(permissions)
-            self.assertEqual({("contents", "read")}, set(permissions))
+            # Every grant, at the top and on every job, is read access to the
+            # contents and nothing else; a one-line grant such as write-all
+            # reads as the broad grant it is.
+            workflow_declarations.find(text, "permissions")
+            grants = workflow_declarations.permissions(text)
+            self.assertTrue(grants)
+            self.assertEqual({("contents", "read")}, set(grants))
+
+    def test_a_broad_or_writing_grant_anywhere_is_seen(self):
+        # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
+        top = "permissions:\n  contents: read\njobs:\n  a:\n    runs-on: x\n"
+        for job_grant, seen in (
+            ("    permissions: write-all\n", ("*", "write-all")),
+            ("    permissions:\n      contents: write\n", ("contents", "write")),
+            ("    permissions:\n      id-token: write\n", ("id-token", "write")),
+        ):
+            with self.subTest(job_grant=job_grant):
+                self.assertIn(seen, workflow_declarations.permissions(top + job_grant))
 
 
 class TheVerificationNeedsOnlyTheStandardLibrary(unittest.TestCase):
