@@ -26,6 +26,7 @@ model exists.
 import os
 import re
 import sys
+import tempfile
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -831,6 +832,96 @@ def _quantity_keys(path):
     if not found:
         raise AssertionError("%s declares no quantity_key[] to report under" % path)
     return tuple(re.findall(r'"([^"]+)"', found.group(1)))
+
+
+class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
+    """SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: The simulation's
+    description of the supply it was run against states the declared span.
+    """
+
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: the records generated
+    # from the accounts state the declared span. The committed record has to carry
+    # the span the live description's accounts state, read through the one reader
+    # every record uses, so a description re-sized to another span leaves this
+    # record stale rather than naming the old one.
+    def test_the_committed_record_states_the_span_the_description_declares(self):
+        statement = sweep.supply_span_statement(FINDINGS["description"])
+        self.assertIn("declared 216–253 V span about the 230 V nominal", statement,
+                      "the reference description's accounts no longer state the declared "
+                      "216-253 V supply span about the 230 V nominal it is run against")
+        self.assertIn(statement, _committed_record(),
+                      "%s does not state the supply span the description it was run against "
+                      "declares. Re-run its tool" % sweep.REPORT_PATH)
+
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: the span a record
+    # states is the one the description's accounts state, and a description that
+    # states none, or two that disagree, is reported as such rather than given
+    # one -- a record that supplied a span of its own would go on naming it after
+    # the description had moved. The nominal is named where the accounts state
+    # exactly one, left out where they state none, and reported where they
+    # disagree.
+    def test_the_span_is_read_from_the_accounts_and_never_supplied(self):
+        for at, (text, expected, absent) in enumerate(_SUPPLY_CASES):
+            with self.subTest(case=at):
+                statement = _supply_statement_of(text, at)
+                self.assertIn(expected, statement)
+                for missing in absent:
+                    self.assertNotIn(missing, statement)
+
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: the simulation's
+    # description of the supply it was run against states the declared span --
+    # and only that. Nothing in the sweep checks that a declared error covers the
+    # power the span moves an element over, so a record saying it did would
+    # certify, for a description stating one span and keeping a fraction sized
+    # for another, a coverage nobody looked at. Every statement the reader can
+    # produce names the span as the supply run against and claims nothing about
+    # the fractions; where it names one span it sends the reader to the
+    # description's own account for how each was derived.
+    def test_the_statement_never_vouches_for_the_declared_errors(self):
+        for at, (text, _, _) in enumerate(_SUPPLY_CASES):
+            with self.subTest(case=at):
+                statement = _supply_statement_of(text, at)
+                for claim in ("sized to", "cover", "rather than only at"):
+                    self.assertNotIn(
+                        claim, statement,
+                        "the record's supply statement claims something about the declared "
+                        "errors that nothing in the analysis checked")
+                if "the declared" in statement:
+                    self.assertIn("run against is the declared", statement)
+                    self.assertIn("the description's account beside the rating; this record "
+                                  "does not check that derivation", statement)
+
+
+#: Descriptions put to the supply reader, each with what its statement has to
+#: carry and what it must not.
+_SUPPLY_CASES = (
+    ("brew.heater_power_w = 900.0 ~ 0.2 @measured On the declared 200-240 V supply "
+     "span.\nsteam.heater_power_w = 950.0 ~ 0.2 @measured On the same declared "
+     "200-240 V span.\n",
+     "declared 200–240 V span, as the description's accounts state it", ("nominal",)),
+    ("brew.heater_power_w = 900.0 ~ 0.2 @measured At the 220 V nominal of the declared "
+     "207.5-253 V supply span.\n",
+     "declared 207.5–253 V span about the 220 V nominal,", ()),
+    ("brew.heater_power_w = 900.0 ~ 0.2 @measured At a 230 V reference.\n",
+     "state no supply span", ("nominal",)),
+    ("brew.heater_power_w = 900.0 ~ 0.2 @measured On the declared 230-240 V supply "
+     "span.\nsteam.heater_power_w = 950.0 ~ 0.2 @measured On the declared 216-253 V "
+     "span.\n",
+     "more than one supply span, 216–253 V and 230–240 V", ()),
+    ("brew.heater_power_w = 900.0 ~ 0.2 @measured At the 230 V nominal of the declared "
+     "216-253 V span.\nsteam.heater_power_w = 950.0 ~ 0.2 @measured At the 220 V nominal "
+     "of the same declared 216-253 V span.\n",
+     "more than one nominal, 220 V and 230 V", ("about the 2",)),
+)
+
+
+def _supply_statement_of(text, at):
+    """The supply statement the reader gives for a description holding `text`."""
+    with tempfile.TemporaryDirectory() as workspace:
+        path = os.path.join(workspace, "description-%d.params" % at)
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        return sweep.supply_span_statement(path)
 
 
 if __name__ == "__main__":

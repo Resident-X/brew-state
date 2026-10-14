@@ -1562,6 +1562,8 @@ def report_text(findings, finding, drifted_findings, drifted_finding):
                        ("The bands a delivery is held to", findings["tolerance"])):
         write("| %s | `%s` | `%s` |" % (what, _relative(path), findings["digests"][path]))
     write("")
+    write(sweep.supply_span_statement(findings["description"]))
+    write("")
     write("Both readings are taken against these four files and no others, which is what makes "
           "them comparable: a difference between the two answers is then the difference between "
           "the two questions and not between two machines.")

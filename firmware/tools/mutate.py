@@ -741,11 +741,12 @@ MUTATIONS = (
         "why": "a coefficient in the reference description carries no account of where its "
                "figure came from",
         "file": "params/thermoblock.params",
-        "find": "brew.heater_power_w = 1004.0 ~ 0.1 @measured Coffee thermoblock element, measured "
-                "cold: 52.7 ohm at 20.3 degC ambient, converted to power at a 230 V reference "
-                "(P = V^2/R) -- the AU/NZ nameplate convention and the bottom of the declared "
-                "230-240 V supply span; the same reading gives 1093 W at 240 V.",
-        "replace": "brew.heater_power_w = 1004.0 ~ 0.1",
+        "find": "brew.heater_power_w = 1004.0 ~ 0.21 @measured Coffee thermoblock element, "
+                "measured cold: 52.7 ohm at 20.3 degC ambient, converted to power at a 230 V "
+                "reference (P = V^2/R) -- the AU/NZ nameplate convention and the 230 V nominal of "
+                "the declared 216-253 V supply span this description is run against; the same "
+                "reading gives 885 W at 216 V and 1215 W at 253 V.",
+        "replace": "brew.heater_power_w = 1004.0 ~ 0.21",
         "command": ORIGINS,
     },
     {

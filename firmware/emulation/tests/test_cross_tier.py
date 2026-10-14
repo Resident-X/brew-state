@@ -79,14 +79,14 @@ DIVERGENT_PUMP_COEFFICIENT = "pump.pressure_bar"
 DIVERGENT_PUMP_VALUE = "15.01"
 
 # And a third, written differently from both of the above because what it is for
-# is different: it is not a hair, it is a machine somewhere else. A fifth off the
-# coffee element's declared power, which is twice the error the description
-# admits for it and still a figure the structure accepts as a machine. What has
-# to be shown with it is which half of a draw a description reaches, and a
-# perturbation small enough to be argued about would leave that turning on
-# whether a difference survived rather than on where it landed.
+# is different: it is not a hair, it is a machine somewhere else. Over two fifths
+# above the coffee element's declared power, which is twice the error the
+# description admits for it and still a figure the structure accepts as a
+# machine. What has to be shown with it is which half of a draw a description
+# reaches, and a perturbation small enough to be argued about would leave that
+# turning on whether a difference survived rather than on where it landed.
 DRIFT_COEFFICIENT = "brew.heater_power_w"
-DRIFT_VALUE = "1200.0"
+DRIFT_VALUE = "1430.0"
 
 # A description no structure will accept as a machine, for the path where the
 # record the control path is told to drive from is not one. It is the shortest

@@ -816,6 +816,57 @@ def could_not_be_weighed(entry):
             % ", ".join("`%s`" % key for key in reached))
 
 
+#: How a coefficient's account in a description states the supply span the
+#: description is run against. The description's grammar has nowhere to put a
+#: supply, so it is stated in the element ratings' accounts and read from there.
+SUPPLY_SPAN = re.compile(r"declared (\d+(?:\.\d+)?)-(\d+(?:\.\d+)?) V (?:supply )?span")
+
+#: How such an account states the nominal that span is about, where it states one.
+SUPPLY_NOMINAL = re.compile(r"(\d+(?:\.\d+)?) V nominal")
+
+
+def supply_span_statement(path):
+    """The sentence a record carries saying what supply the description it was
+    run against declares.
+
+    Read from the description rather than written into each record, because
+    the supply is a fact of the machine described: a record that named a span of
+    its own would go on naming it after the description had been re-sized to a
+    different one. A description whose accounts state no span, or more than
+    one, is reported as such rather than given one, and the nominal is named
+    only where the accounts state exactly one.
+
+    What the sentence does not do is vouch for the declared errors. Whether
+    each element rating's fraction covers the delivered power that span moves it
+    over is derived in the description's own account beside it, and nothing
+    here checks that derivation, so the record points the reader to it rather
+    than certifying a coverage it never looked at.
+    """
+    with open(path, encoding="utf-8") as handle:
+        text = handle.read()
+    spans = sorted(set(SUPPLY_SPAN.findall(text)),
+                   key=lambda span: (float(span[0]), float(span[1])))
+    nominals = sorted(set(SUPPLY_NOMINAL.findall(text)), key=float)
+    if not spans:
+        return ("The description's accounts state no supply span, so this record cannot say what "
+                "supply it was run against.")
+    listed = " and ".join("%s–%s V" % span for span in spans)
+    if len(spans) > 1:
+        return ("The description's accounts state more than one supply span, %s, so this record "
+                "cannot say which supply it was run against." % listed)
+    if len(nominals) == 1:
+        about = " about the %s V nominal" % nominals[0]
+    elif nominals:
+        about = (", about which the accounts state more than one nominal, %s"
+                 % " and ".join("%s V" % nominal for nominal in nominals))
+    else:
+        about = ""
+    return ("The supply this was run against is the declared %s span%s, as the description's "
+            "accounts state it. How each element rating's declared error was derived from that "
+            "supply is set out in the description's account beside the rating; this record does "
+            "not check that derivation." % (listed, about))
+
+
 def digest_of(path):
     """What a file this sweep was run against presently holds.
 
@@ -1174,6 +1225,8 @@ def report_text(findings):
                        ("The steam side's design figures", findings["declaration"]),
                        ("The bands a delivery is held to", findings["tolerance"])):
         write("| %s | `%s` | `%s` |" % (what, _relative(path), findings["digests"][path]))
+    write("")
+    write(supply_span_statement(findings["description"]))
     write("")
     write("A replacement model is swept by naming it: `--description`, `--limits`, "
           "`--steam-declaration` and `--tolerance` each point the same sweep at another file. "

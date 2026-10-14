@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN-C1-TEST-3
+type: evidence
+title: test evidence for SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T06:39:45.793518Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_cross_tier.py::test_a_description_named_for_the_control_path_alone_reaches_the_loop,test_a_perturbation_kept_from_the_control_path_is_not_the_run_that_reaches_it
+  artifact_version: 95e3336d7e5214b3e39b1ed7ae541eecfb736fb7
+attested_by: crun-f8dea4d64c5ea550
+links:
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+    type: satisfies

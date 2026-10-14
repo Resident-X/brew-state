@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN-C1-TEST-2
+type: evidence
+title: test evidence for SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T06:39:45.60213Z"
+artifact:
+  kind: external
+  reference: firmware/test/test_control/test_control.c::test_the_enumeration_carries_the_stated_joint_corner_moving_the_pair_together
+  artifact_version: 95e3336d7e5214b3e39b1ed7ae541eecfb736fb7
+attested_by: crun-f8dea4d64c5ea550
+links:
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+    type: satisfies

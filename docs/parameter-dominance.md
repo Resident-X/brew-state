@@ -12,10 +12,12 @@ Nothing here is a measurement. It is analysis against an estimated model whose o
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `582f14cfb080878c743f9474293cd66273d385c3a996a63d28b26b7cf2edf514` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `05492d4ba05da02591dd5c8437ed131ce452a41521c09bb51ab80673fa1fd814` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
+
+The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
 
 A replacement model is swept by naming it: `--description`, `--limits`, `--steam-declaration` and `--tolerance` each point the same sweep at another file. Nothing about how the sweep runs or how the ranking is computed changes with them. `--workspace` gives that run its own scratch directory, which a second model needs: every run writes a perturbed description per coefficient per corner under the same names, so two models sharing a directory leave the second run's descriptions standing where the first's were.
 
@@ -35,8 +37,8 @@ The two margins are made comparable by convention rather than being the same kin
 | # | Coefficient | Declared error | Dominance | Set by | Worst deviation there | Sensitivity (per unit declared error) |
 |---|---|---|---|---|---|---|
 | 1 | `pump.flow_ml_per_s` | 0.6 | 8.85 | brew | 8.85 C | 14.7 |
-| 2 | `brew.thermal_mass_j_per_k` | 0.4 | 3.06 | brew | 3.06 C | 7.64 |
-| 3 | `brew.heater_power_w` | 0.1 | 1.74 | brew | 1.74 C | 17.4 |
+| 2 | `brew.heater_power_w` | 0.21 | 4.84 | brew | 4.84 C | 23.1 |
+| 3 | `brew.thermal_mass_j_per_k` | 0.4 | 3.06 | brew | 3.06 C | 7.64 |
 | 4 | `steam.pressure_bar_per_k` | 0.3 | 1.66 | steam | 0.332 bar | 5.53 |
 | 5 | `water.feed_temperature_c` | 0.5 | 1.61 | brew | 1.61 C | 3.23 |
 | 6 | `brew.loss_w_per_k` | 0.6 | 1.31 | brew | 1.31 C | 2.19 |
@@ -44,9 +46,9 @@ The two margins are made comparable by convention rather than being the same kin
 | 8 | `steam.thermal_mass_j_per_k` | 0.4 | 0.63 | steam | 0.126 bar | 1.58 |
 | 9 | `brew.outlet_held_volume_ml` | 0.6 | 0.5 | brew | 0.5 C | 0.833 |
 | 10 | `steam.loss_w_per_k` | 0.6 | 0.496 | steam | 0.0992 bar | 0.826 |
-| 11 | `water.heat_capacity_j_per_ml_k` | 0.03 | 0.368 | brew | 0.368 C | 12.3 |
-| 12 | `steam.saturation_temperature_c` | 0.02 | 0.356 | steam | 0.0713 bar | 17.8 |
-| 13 | `steam.heater_power_w` | 0.15 | 0.281 | steam | 0.0562 bar | 1.87 |
+| 11 | `steam.heater_power_w` | 0.21 | 0.403 | steam | 0.0807 bar | 1.92 |
+| 12 | `water.heat_capacity_j_per_ml_k` | 0.03 | 0.368 | brew | 0.368 C | 12.3 |
+| 13 | `steam.saturation_temperature_c` | 0.02 | 0.356 | steam | 0.0713 bar | 17.8 |
 | 14 | `ambient_temperature_c` | 0.25 | 0.208 | brew | 0.208 C | 0.833 |
 | 15 | `brew.outlet_conduction_time_constant_s` | 0.8 | 0.199 | brew | 0.199 C | 0.248 |
 | 16 | `steam.pressure_fall_bar_per_ml` | 0.7 | 0.0949 | steam | 0.019 bar | 0.136 |
@@ -54,7 +56,7 @@ The two margins are made comparable by convention rather than being the same kin
 
 ### What the order says
 
-6 of the 17 coefficients ranked move a delivery further than the whole of its own declared band on their declared error alone: `pump.flow_ml_per_s`, `brew.thermal_mass_j_per_k`, `brew.heater_power_w`, `steam.pressure_bar_per_k`, `water.feed_temperature_c`, `brew.loss_w_per_k`. Those are the rows scoring above 1, which on this metric is necessarily the head of the list — each of them is a coefficient whose present uncertainty, on its own and with everything else held where the description puts it, already accounts for more than the entire margin the design says it holds that delivery inside. That is a statement about how loosely this machine is presently described rather than about the control laws — every figure in the description is an estimate, and the error against each of them is an estimate of an estimate.
+6 of the 17 coefficients ranked move a delivery further than the whole of its own declared band on their declared error alone: `pump.flow_ml_per_s`, `brew.heater_power_w`, `brew.thermal_mass_j_per_k`, `steam.pressure_bar_per_k`, `water.feed_temperature_c`, `brew.loss_w_per_k`. Those are the rows scoring above 1, which on this metric is necessarily the head of the list — each of them is a coefficient whose present uncertainty, on its own and with everything else held where the description puts it, already accounts for more than the entire margin the design says it holds that delivery inside. That is a statement about how loosely this machine is presently described rather than about the control laws — every figure in the description is an estimate, and the error against each of them is an estimate of an estimate.
 
 A further 2 could not be given a figure at all, and are named under "What the sweep could not weigh" below rather than placed at the foot of this table: `brew.pressure_time_constant_s`, `pump.pressure_bar`. A coefficient the sweep could not weigh and one it weighed and found spending nothing are opposite findings, and a position in a ranked list cannot tell them apart.
 
@@ -65,8 +67,8 @@ The same coefficients against each side separately, in the order above. A coeffi
 | Coefficient | Brew deviation (C) | Brew dominance | Steam deviation (bar) | Steam dominance |
 |---|---|---|---|---|
 | `pump.flow_ml_per_s` | 8.85 | 8.85 | 0 | 0 |
+| `brew.heater_power_w` | 4.84 | 4.84 | 0 | 0 |
 | `brew.thermal_mass_j_per_k` | 3.06 | 3.06 | 0 | 0 |
-| `brew.heater_power_w` | 1.74 | 1.74 | 0 | 0 |
 | `steam.pressure_bar_per_k` | 0 | 0 | 0.332 | 1.66 |
 | `water.feed_temperature_c` | 1.61 | 1.61 | 0.00221 | 0.011 |
 | `brew.loss_w_per_k` | 1.31 | 1.31 | 0 | 0 |
@@ -74,9 +76,9 @@ The same coefficients against each side separately, in the order above. A coeffi
 | `steam.thermal_mass_j_per_k` | 0 | 0 | 0.126 | 0.63 |
 | `brew.outlet_held_volume_ml` | 0.5 | 0.5 | 0 | 0 |
 | `steam.loss_w_per_k` | 0 | 0 | 0.0992 | 0.496 |
+| `steam.heater_power_w` | 0 | 0 | 0.0807 | 0.403 |
 | `water.heat_capacity_j_per_ml_k` | 0.368 | 0.368 | 0.000735 | 0.00368 |
 | `steam.saturation_temperature_c` | 0 | 0 | 0.0713 | 0.356 |
-| `steam.heater_power_w` | 0 | 0 | 0.0562 | 0.281 |
 | `ambient_temperature_c` | 0.208 | 0.208 | 0.00773 | 0.0386 |
 | `brew.outlet_conduction_time_constant_s` | 0.199 | 0.199 | 0 | 0 |
 | `steam.pressure_fall_bar_per_ml` | 0 | 0 | 0.019 | 0.0949 |

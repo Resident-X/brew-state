@@ -772,6 +772,8 @@ def report_text(findings):
                        ("The steam side's design figures", findings["declaration"])):
         write("| %s | `%s` | `%s` |" % (what, _relative(path), findings["digests"][path]))
     write("")
+    write(sweep.supply_span_statement(findings["description"]))
+    write("")
     write("A replacement model is read by naming it: `--description`, `--limits`, "
           "`--tolerance` and `--steam-declaration` each point the same method at another file, "
           "and nothing about how the mapping is read or how a corner is delivered against "

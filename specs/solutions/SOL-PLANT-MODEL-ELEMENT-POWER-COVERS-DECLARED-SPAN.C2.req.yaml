@@ -2,11 +2,17 @@ id: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2
 type: criterion
 title: Simulation results resting on element power are re-obtained at the re-sized uncertainty
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Every simulation check whose result rests on the element-power uncertainty is re-run with the re-sized fractions. A check that no longer passes is reported as a finding against the requirement criterion it verifies, and is not retuned to pass. The simulation's description of the supply it was run against states the declared span. Out of scope: changing control behaviour to recover a margin that no longer holds.
+  Every simulation check whose result rests on the element-power uncertainty is re-run with the re-sized fractions: the host tier, the emulation tier, and the seeded mutation checks. The four analysis records under docs/ that pin the description (protection margin, parameter stability, parameter dominance, parameter identifiability) are regenerated with their own tools in the same change.
+
+  Two kinds of check rest on the fractions and are treated differently. A check that pins a fact of the description rather than a verdict on a requirement (the pinned value-and-fraction pairs, which element declares the wider error, which side of the joint mains-droop corner has an independent corner at the joint sag to compare against, a seeded mutation whose anchor quotes the description's text) is updated to the re-sized description; updating it is not retuning. In particular, with both fractions equal the joint corner's sag equals each element's own fraction, so the steam side gains the like-for-like comparison the coffee side already has: the stability analysis's joint-corner comparison, its record prose and its tests are brought to report and check both sides, with the steam side checked against a real re-run as the coffee side is, rather than asserting the steam side has no comparison.
+
+  A check that verifies a requirement criterion's verdict and no longer passes is reported as a finding against that criterion, and is not retuned to pass. Reporting it means: first search the graph for an existing criterion that already owns the shortfall; if none does, author a DEL-MAINTENANCE child solution in the same change that targets the requirement criterion the check verifies. The regenerated record keeps the failing verdict. The failing assertion is inverted to assert the present failing outcome, with a comment naming that child, so the gate stays green, the shortfall stays visible, and a change that restores the behaviour fails that assertion until the inversion is removed; the child's criterion requires removing it.
+
+  The simulation's description of the supply it was run against, the accounts and reasoning C1 names and the records generated from them, states the declared span. Out of scope: changing control behaviour to recover a margin that no longer holds.
 links:
   - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
     type: criterion-of

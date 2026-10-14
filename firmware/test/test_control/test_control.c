@@ -8223,56 +8223,87 @@ static void test_a_coefficient_with_no_path_to_the_gap_contributes_nothing(void)
 /// carries one corner per stated joint dependence, run with those coefficients
 /// moving together, alongside the independent one-at-a-time corners.
 ///
-/// Against the shipped description, the last corner of the enumeration is the
-/// joint one: it moves both of the coefficients the structure states the
-/// supply drives, in the one direction a supply moves them, at the smaller of
-/// the two declared errors -- the largest equal fractional sag both of them
-/// admit. What is asserted here is the shape of the enumeration rather than
-/// what the corner costs, because on this machine a mains droop leaves both
-/// blocks cooler and the clamp above is what decides its contribution.
+/// The last corner of the enumeration is the joint one: it moves both of the
+/// coefficients the structure states the supply drives, in the one direction a
+/// supply moves them, at the smaller of the two declared errors -- the largest
+/// equal fractional sag both of them admit. What is asserted here is the shape
+/// of the enumeration rather than what the corner costs, because on this
+/// machine a mains droop leaves both blocks cooler and the clamp above is what
+/// decides its contribution.
+///
+/// The shipped description declares the two elements the same error, so a sag
+/// taken from either one, or the larger, would match it there. The two are
+/// declared different errors instead, each way round, so only the smaller of
+/// the pair passes both.
+///
+/// SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1: Each thermoblock
+/// element's power uncertainty covers the declared supply span -- and a test
+/// whose reasoning depended on the old fractions is re-anchored so it still
+/// exercises what it was written to exercise.
 static void test_the_enumeration_carries_the_stated_joint_corner_moving_the_pair_together(void)
 {
-    unsigned joint = 0u;
-    size_t last = 0u;
-    protection_margin_corner_t the_joint_corner = {0u, 0u, false, false, 0.0f, false, 0.0f, 0.0f};
+    static const char *const ELEMENTS[] = {"brew.heater_power_w", "steam.heater_power_w"};
+    static const float WAYS_ROUND[][2] = {{0.1f, 0.15f}, {0.15f, 0.1f}};
 
-    hw_sim_reset();
-    hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
-    TEST_ASSERT_TRUE(control_init(&state, &parameters, &budget, &limits, &tolerance, &pump_trim));
+    for (size_t way = 0u; way < sizeof(WAYS_ROUND) / sizeof(WAYS_ROUND[0]); way++) {
+        const char *const description = description_declaring(ELEMENTS, WAYS_ROUND[way], 2u);
+        const plant_parameters_t believed = parameters_from(description);
+        const plant_parameter_budget_t declared = budget_from(description);
+        unsigned joint = 0u;
+        size_t last = 0u;
+        protection_margin_corner_t the_joint_corner = {
+            0u, 0u, false, false, 0.0f, false, 0.0f, 0.0f};
 
-    for (size_t which = 0u;; which++) {
-        protection_margin_corner_t corner;
+        hw_sim_reset();
+        hw_sim_set_sensor(HW_SENSOR_BREW_TEMPERATURE, HW_READING_VALID, 20000);
+        TEST_ASSERT_TRUE(
+            control_init(&state, &believed, &declared, &limits, &tolerance, &pump_trim));
 
-        if (!control_protection_margin_corner(&state, MARGIN_TARGET_C, which, &corner)) {
-            break;
+        for (size_t which = 0u;; which++) {
+            protection_margin_corner_t corner;
+
+            if (!control_protection_margin_corner(&state, MARGIN_TARGET_C, which, &corner)) {
+                break;
+            }
+            last = which;
+            if (corner.joint) {
+                joint++;
+                the_joint_corner = corner;
+            }
         }
-        last = which;
-        if (corner.joint) {
-            joint++;
-            the_joint_corner = corner;
-        }
+
+        TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, joint,
+                                       "the enumeration carries other than exactly one joint "
+                                       "corner, so it is not one corner per stated dependence");
+        TEST_ASSERT_TRUE_MESSAGE(the_joint_corner.joint && last > 0u,
+                                 "the joint corner is not last");
+        TEST_ASSERT_EQUAL_UINT_MESSAGE(2u, the_joint_corner.moves,
+                                       "the joint corner does not move the pair the structure "
+                                       "states the supply drives");
+        TEST_ASSERT_TRUE_MESSAGE(the_joint_corner.reaching_downwards,
+                                 "the joint corner reaches upwards, but a supply sags and nothing "
+                                 "states a cause that would raise two elements at once");
+
+        char message[224];
+        (void)snprintf(message, sizeof(message),
+                       "with the coffee element declared %.2f out and the steam element %.2f, the "
+                       "joint corner is not run at the largest equal fractional sag both admit",
+                       (double)WAYS_ROUND[way][0], (double)WAYS_ROUND[way][1]);
+
+        float brew_error = 0.0f;
+        float steam_error = 0.0f;
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&declared, ELEMENTS[0], &brew_error));
+        TEST_ASSERT_TRUE(plant_parameter_budget_for(&declared, ELEMENTS[1], &steam_error));
+        TEST_ASSERT_TRUE_MESSAGE(brew_error != steam_error, message);
+
+        /*
+         * Whichever way round the two are declared, the sag is the smaller of
+         * them: the larger would carry the tighter element outside the range
+         * its own declared error claims.
+         */
+        const float smaller = brew_error < steam_error ? brew_error : steam_error;
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(smaller, the_joint_corner.declared_error, message);
     }
-
-    TEST_ASSERT_EQUAL_UINT_MESSAGE(1u, joint,
-                                   "the enumeration carries other than exactly one joint corner, "
-                                   "so it is not one corner per stated dependence");
-    TEST_ASSERT_TRUE_MESSAGE(the_joint_corner.joint && last > 0u, "the joint corner is not last");
-    TEST_ASSERT_EQUAL_UINT_MESSAGE(2u, the_joint_corner.moves,
-                                   "the joint corner does not move the pair the structure states "
-                                   "the supply drives");
-    TEST_ASSERT_TRUE_MESSAGE(the_joint_corner.reaching_downwards,
-                             "the joint corner reaches upwards, but a supply sags and nothing "
-                             "states a cause that would raise two elements at once");
-
-    float brew_error = 0.0f;
-    float steam_error = 0.0f;
-    TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, "brew.heater_power_w", &brew_error));
-    TEST_ASSERT_TRUE(plant_parameter_budget_for(&budget, "steam.heater_power_w", &steam_error));
-
-    const float smaller = brew_error < steam_error ? brew_error : steam_error;
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(smaller, the_joint_corner.declared_error,
-                                    "the joint corner is not run at the largest equal fractional "
-                                    "sag both declared errors admit");
 }
 
 /// SOL-SIM-ROBUSTNESS-MARGIN-WIDENS-WITH-MODEL-ERROR.C1: The widened margin is

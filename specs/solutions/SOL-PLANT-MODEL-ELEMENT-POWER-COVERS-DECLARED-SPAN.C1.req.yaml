@@ -2,11 +2,15 @@ id: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
 type: criterion
 title: Each thermoblock element's power uncertainty covers the declared supply span
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  The uncertainty fraction against each thermoblock element's power in the plant model is re-sized to cover the delivered-power swing across the declared 216-253 V supply span, with power scaling as the square of supply voltage, together with the effects the fraction already folds in. The account beside each fraction states the span it covers and how the fraction was derived from it. Out of scope: modelling supply-voltage dependence dynamically.
+  The uncertainty fraction against each thermoblock element's power in the plant model is re-sized to cover the delivered-power swing across the declared 216-253 V supply span, with power scaling as the square of supply voltage, together with the effects the fraction already folds in.
+
+  Each fraction is the smallest symmetric fraction that covers both sides of the swing about the stored 230 V value. Each side is computed by compounding the effects that act on it multiplicatively: the low side compounds the low-supply ratio (216/230)^2 with the hot-running derate and, for the steam element, the parallel-path effect; the high side is the high-supply ratio (253/230)^2 alone, since those effects only lower delivered power. The fraction is the larger side's excursion: 0.21 for both elements, the upper side governing, which over-covers the lower side: brew's low side is about -14 percent (0.882 x 0.98); steam's low supply and hot derate give the same -14 percent, and the steam element's parallel path, which the bench could not quantify and which only lowers delivered power, has about 8 percent left below that within the 0.21 fraction. That allowance is smaller than the old declaration left it: with 230 V then the bottom of the 230-240 V span, the old low side was the hot derate alone and 0.15 left about 13 percent; the lower declared supply takes the difference, and 8 percent is still the margin the account states for an unquantified path.
+
+  The account beside each fraction, in firmware/params/thermoblock.params, and the element-power reasoning in firmware/params/thermoblock.md state the declared 216-253 V span about the 230 V nominal as the supply the simulation is run against; each account states the span it covers, the per-side arithmetic, which side governs and that the other side is over-covered because the uncertainty is symmetric. Every other statement of the old span or of the roughly 8 percent swing in the description's reasoning and in test commentary is corrected to match, and any test whose stated reasoning depended on the old fraction (for example a deliberately wrong power described as outside the declared error) is re-anchored so it still exercises what it was written to exercise. Out of scope: modelling supply-voltage dependence dynamically, and an asymmetric uncertainty grammar.
 links:
   - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
     type: criterion-of
