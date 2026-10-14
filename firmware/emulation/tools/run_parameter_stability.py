@@ -172,9 +172,13 @@ larger one would put the tighter of the two outside the range the description
 claims, and the whole standard here is that nothing beyond the declared range is
 run. Taking each element to its own declared corner instead would be a different
 claim -- two independent errors that happen to point the same way -- and it is
-not the one the description makes. Nothing is lost by the smaller figure: the
-steam rating's own wider corner is already run on its own, so what the joint
-corner adds is the simultaneity and not a wider excursion.
+not the one the description makes. Nothing is lost by the smaller figure: where
+one rating declares the wider error, its own wider corner is already run on its
+own, so what the joint corner adds is the simultaneity and not a wider
+excursion. On the reference description the two ratings declare the same error,
+both being sized to the same declared supply span, so the sag is each one's own
+declared error and the joint corner moves each element exactly as far as its own
+low corner does.
 
 Whether that stated dependence is the real one is a characterisation question
 and is not asked here. What is established is that the sweep does not silently
@@ -1487,6 +1491,8 @@ def report_text(findings):
                        ("The bands a delivery is held to", findings["tolerance"])):
         write("| %s | `%s` | `%s` |" % (what, _relative(path), findings["digests"][path]))
     write("")
+    write(sweep.supply_span_statement(findings["description"]))
+    write("")
     write("A replacement model is run by naming it: `--description`, `--limits`, "
           "`--steam-declaration` and `--tolerance` each point the same method at another file, "
           "and "
@@ -1784,10 +1790,8 @@ def report_text(findings):
               "Taking each element to its own declared corner instead would be a different claim "
               "— "
               "two independent errors that happen to point the same way — and not the one the "
-              "description makes. Nothing is lost by the smaller figure: the steam rating's own "
-              "wider corner is already run on its own above, so what this corner adds is the "
-              "simultaneity rather than a wider excursion."
-              % (FIGURE_FORMAT % joint["fraction"]))
+              "description makes. %s"
+              % (FIGURE_FORMAT % joint["fraction"], _what_the_smaller_figure_costs(findings)))
         write("")
         write("| What | Written as | Side | Early | Late | Verdict |")
         write("|---|---|---|---|---|---|")
@@ -1928,6 +1932,30 @@ def report_text(findings):
     return "\n".join(lines) + "\n"
 
 
+def _what_the_smaller_figure_costs(findings):
+    """The sentence saying what running the joint corner at the smaller of the
+    two declared errors gives up, which depends on whether the two differ.
+
+    Computed from the corners rather than written once, because which element
+    declares the wider error is a fact of the description: a sentence naming
+    the steam rating as the wider one went on saying so after the two had been
+    sized to the same supply span and declared the same error.
+    """
+    joint = findings["joint"]
+    wider = [name for name in MAINS_COUPLED
+             if any(not record["joint"] and record["coefficient"] == name
+                    and record["fraction"] > joint["fraction"]
+                    for record in findings["corners"])]
+    if wider:
+        return ("Nothing is lost by the smaller figure: %s declares the wider error, and its own "
+                "wider corner is already run on its own above, so what this corner adds is the "
+                "simultaneity rather than a wider excursion."
+                % _listed("`%s`" % name for name in wider))
+    return ("The two declare the same error, so the sag is each one's own declared error and "
+            "nothing is given up by taking the smaller: this corner moves each element exactly as "
+            "far as its own low corner above does, and what it adds is the simultaneity.")
+
+
 def joint_against_the_independent_corners(findings):
     """How the joint corner's separation on each side compares with the one that
     side's own element corner produces alone, where the two are comparable at
@@ -1956,12 +1984,12 @@ def joint_against_the_independent_corners(findings):
     The second is that the independent corner has to have been run at the joint
     corner's own sag rather than merely at that coefficient's own declared
     corner. Those are two different machines wherever the coefficient's declared
-    error is wider than the sag -- which on this description is true of the steam
-    rating and not of the coffee one, since the sag is the smaller of the two
-    declared errors and that is the coffee element's. So the coffee side has a
-    like-for-like comparison here and the steam side has none, and the steam side
-    is reported as having none rather than being compared against a machine moved
-    further or against the other side's element.
+    error is wider than the sag, since the sag is the smaller of the two declared
+    errors. A side whose element declares the wider error therefore has no
+    like-for-like comparison, and is reported as having none rather than being
+    compared against a machine moved further or against the other side's element.
+    Where the two elements declare the same error, as the reference description's
+    do, the sag is each one's own declared error and both sides are compared.
 
     Three lists come back: the sides on which the joint corner reproduced that
     side's own independent corner exactly, the sides on which it did not, and the

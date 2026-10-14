@@ -14,10 +14,12 @@ Nothing here is a measurement. The trip point is a figure read off a parts list,
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `582f14cfb080878c743f9474293cd66273d385c3a996a63d28b26b7cf2edf514` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `2ecf3153856014ee4071d8013e3bc73c0558155972200d9f9f97447a2744284e` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
 | The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
+
+The supply this was run against is the declared 216–253 V span the description's accounts state: the element ratings' declared errors are sized to the delivered power that span moves them over, so what follows was run across that supply rather than only at its nominal.
 
 A replacement model is read by naming it: `--description`, `--limits`, `--tolerance` and `--steam-declaration` each point the same method at another file, and nothing about how the mapping is read or how a corner is delivered against changes with them.
 
@@ -33,7 +35,7 @@ The highest target the loop takes is narrowed on its own admission path rather t
 
 What that costs the sweep below is worth stating plainly. It is commanded at the hottest target this design admits, which is as close to the margin as a delivery on this machine can be commanded — but it is not evidence that the margin refusal does anything, because removing that refusal outright would leave every figure in this record unchanged.
 
-How far this machine stands from the case where its margin does bind is a figure rather than a sentence: the declared error against `brew.heater_power_w` would have to widen from 0.1 to 0.806 of its own value before the protection margin overtook the ceiling that is presently tighter. That is read and not swept. No delivery below is run against a widened description, because a description nobody claims is not a machine a verdict can be taken about, and a table of failures against one would read as findings about this design.
+How far this machine stands from the case where its margin does bind is a figure rather than a sentence: the declared error against `brew.heater_power_w` would have to widen from 0.21 to 0.806 of its own value before the protection margin overtook the ceiling that is presently tighter. That is read and not swept. No delivery below is run against a widened description, because a description nobody claims is not a machine a verdict can be taken about, and a table of failures against one would read as findings about this design.
 
 ## What each declared error contributes to the margin
 
@@ -45,8 +47,8 @@ Every corner the enumeration covers, at the target the sweep was commanded at. A
 | 1 | independent | ambient_temperature_c | high | 0.25 | 1.25 | ran | 0.309 |
 | 2 | independent | brew.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0.0125 |
 | 3 | independent | brew.thermal_mass_j_per_k | high | 0.4 | 1.4 | ran | 0 |
-| 4 | independent | brew.heater_power_w | low | 0.1 | 0.9 | ran | 0 |
-| 5 | independent | brew.heater_power_w | high | 0.1 | 1.1 | ran | 0.496 |
+| 4 | independent | brew.heater_power_w | low | 0.21 | 0.79 | ran | 0 |
+| 5 | independent | brew.heater_power_w | high | 0.21 | 1.21 | ran | 1.04 |
 | 6 | independent | brew.loss_w_per_k | low | 0.6 | 0.4 | ran | 3.02 |
 | 7 | independent | brew.loss_w_per_k | high | 0.6 | 1.6 | ran | 0 |
 | 8 | independent | brew.outlet_held_volume_ml | low | 0.6 | 0.4 | ran | 0 |
@@ -55,8 +57,8 @@ Every corner the enumeration covers, at the target the sweep was commanded at. A
 | 11 | independent | brew.outlet_conduction_time_constant_s | high | 0.8 | 1.8 | ran | 0 |
 | 12 | independent | steam.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0 |
 | 13 | independent | steam.thermal_mass_j_per_k | high | 0.4 | 1.4 | ran | 0 |
-| 14 | independent | steam.heater_power_w | low | 0.15 | 0.85 | ran | 0 |
-| 15 | independent | steam.heater_power_w | high | 0.15 | 1.15 | ran | 0 |
+| 14 | independent | steam.heater_power_w | low | 0.21 | 0.79 | ran | 0 |
+| 15 | independent | steam.heater_power_w | high | 0.21 | 1.21 | ran | 0 |
 | 16 | independent | steam.loss_w_per_k | low | 0.6 | 0.4 | ran | 0 |
 | 17 | independent | steam.loss_w_per_k | high | 0.6 | 1.6 | ran | 0 |
 | 18 | independent | pump.pressure_bar | low | 0.4 | 0.6 | ran | 0 |
@@ -79,7 +81,7 @@ Every corner the enumeration covers, at the target the sweep was commanded at. A
 | 35 | independent | steam.pressure_fall_bar_per_ml | high | 0.7 | 1.7 | ran | 0 |
 | 36 | independent | steam.feed_flow_ml_per_s | low | 0.7 | 0.3 | ran | 0 |
 | 37 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
-| 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.1 | 0.9 | ran | 0 |
+| 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.21 | 0.79 | ran | 0 |
 
 The margin is 6.02 C: the un-widened gap of 1 C plus the worst single corner's 3.02 C (corner 6) plus the declared sensing error of 2 C. 39 of 39 corners ran and 4 cost the gap anything.
 
@@ -95,8 +97,8 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 | 1 | ambient_temperature_c | high | 1.25 | 0.0254 | within-band |
 | 2 | brew.thermal_mass_j_per_k | low | 0.6 | 0.0249 | within-band |
 | 3 | brew.thermal_mass_j_per_k | high | 1.4 | 0.0255 | within-band |
-| 4 | brew.heater_power_w | low | 0.9 | 0.025 | within-band |
-| 5 | brew.heater_power_w | high | 1.1 | 0.0288 | within-band |
+| 4 | brew.heater_power_w | low | 0.79 | 0.0234 | within-band |
+| 5 | brew.heater_power_w | high | 1.21 | 0.0721 | within-band |
 | 6 | brew.loss_w_per_k | low | 0.4 | 0.0253 | within-band |
 | 7 | brew.loss_w_per_k | high | 1.6 | 0.0237 | within-band |
 | 8 | brew.outlet_held_volume_ml | low | 0.4 | 0.0247 | within-band |
@@ -105,8 +107,8 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 | 11 | brew.outlet_conduction_time_constant_s | high | 1.8 | 0.0255 | within-band |
 | 12 | steam.thermal_mass_j_per_k | low | 0.6 | 0.0253 | within-band |
 | 13 | steam.thermal_mass_j_per_k | high | 1.4 | 0.0253 | within-band |
-| 14 | steam.heater_power_w | low | 0.85 | 0.0253 | within-band |
-| 15 | steam.heater_power_w | high | 1.15 | 0.0253 | within-band |
+| 14 | steam.heater_power_w | low | 0.79 | 0.0253 | within-band |
+| 15 | steam.heater_power_w | high | 1.21 | 0.0253 | within-band |
 | 16 | steam.loss_w_per_k | low | 0.4 | 0.0253 | within-band |
 | 17 | steam.loss_w_per_k | high | 1.6 | 0.0253 | within-band |
 | 18 | pump.pressure_bar | low | 0.6 | 0.0253 | within-band |
@@ -129,7 +131,7 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 | 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | 0.0253 | within-band |
 | 36 | steam.feed_flow_ml_per_s | low | 0.3 | 0.0253 | within-band |
 | 37 | steam.feed_flow_ml_per_s | high | 1.7 | 0.0253 | not-claimed |
-| 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.9 | 0.025 | within-band |
+| 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 0.0234 | within-band |
 
 ## What each declared error contributes to the steam side's margin
 
@@ -143,8 +145,8 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 1 | independent | ambient_temperature_c | high | 0.25 | 1.25 | ran | 0.342 |
 | 2 | independent | brew.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0 |
 | 3 | independent | brew.thermal_mass_j_per_k | high | 0.4 | 1.4 | ran | 0 |
-| 4 | independent | brew.heater_power_w | low | 0.1 | 0.9 | ran | 0 |
-| 5 | independent | brew.heater_power_w | high | 0.1 | 1.1 | ran | 0 |
+| 4 | independent | brew.heater_power_w | low | 0.21 | 0.79 | ran | 0 |
+| 5 | independent | brew.heater_power_w | high | 0.21 | 1.21 | ran | 0 |
 | 6 | independent | brew.loss_w_per_k | low | 0.6 | 0.4 | ran | 0 |
 | 7 | independent | brew.loss_w_per_k | high | 0.6 | 1.6 | ran | 0 |
 | 8 | independent | brew.outlet_held_volume_ml | low | 0.6 | 0.4 | ran | 0 |
@@ -153,8 +155,8 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 11 | independent | brew.outlet_conduction_time_constant_s | high | 0.8 | 1.8 | ran | 0 |
 | 12 | independent | steam.thermal_mass_j_per_k | low | 0.4 | 0.6 | ran | 0.585 |
 | 13 | independent | steam.thermal_mass_j_per_k | high | 0.4 | 1.4 | ran | 0 |
-| 14 | independent | steam.heater_power_w | low | 0.15 | 0.85 | ran | 0 |
-| 15 | independent | steam.heater_power_w | high | 0.15 | 1.15 | ran | 1.22 |
+| 14 | independent | steam.heater_power_w | low | 0.21 | 0.79 | ran | 0 |
+| 15 | independent | steam.heater_power_w | high | 0.21 | 1.21 | ran | 1.7 |
 | 16 | independent | steam.loss_w_per_k | low | 0.6 | 0.4 | ran | 4.42 |
 | 17 | independent | steam.loss_w_per_k | high | 0.6 | 1.6 | ran | 0 |
 | 18 | independent | pump.pressure_bar | low | 0.4 | 0.6 | ran | 0 |
@@ -177,7 +179,7 @@ Its target is not commanded but declared: `firmware/params/steam_control.declara
 | 35 | independent | steam.pressure_fall_bar_per_ml | high | 0.7 | 1.7 | ran | 0 |
 | 36 | independent | steam.feed_flow_ml_per_s | low | 0.7 | 0.3 | ran | 0 |
 | 37 | independent | steam.feed_flow_ml_per_s | high | 0.7 | 1.7 | ran | 0 |
-| 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.1 | 0.9 | ran | 0 |
+| 38 | joint | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.21 | 0.79 | ran | 0 |
 
 The steam margin is 6.42 C: the un-widened gap of 0 C plus the worst single corner's 4.42 C (corner 16) plus the declared sensing error of 2 C. 39 of 39 corners ran and 4 cost the gap anything.
 
@@ -193,8 +195,8 @@ The verdict is the pressure the draw came to rest at, taken over intervals 4400 
 | 1 | ambient_temperature_c | high | 1.25 | 1194 | within-band |
 | 2 | brew.thermal_mass_j_per_k | low | 0.6 | 1193 | within-band |
 | 3 | brew.thermal_mass_j_per_k | high | 1.4 | 1193 | within-band |
-| 4 | brew.heater_power_w | low | 0.9 | 1193 | within-band |
-| 5 | brew.heater_power_w | high | 1.1 | 1193 | within-band |
+| 4 | brew.heater_power_w | low | 0.79 | 1193 | within-band |
+| 5 | brew.heater_power_w | high | 1.21 | 1193 | within-band |
 | 6 | brew.loss_w_per_k | low | 0.4 | 1193 | within-band |
 | 7 | brew.loss_w_per_k | high | 1.6 | 1193 | within-band |
 | 8 | brew.outlet_held_volume_ml | low | 0.4 | 1193 | within-band |
@@ -203,8 +205,8 @@ The verdict is the pressure the draw came to rest at, taken over intervals 4400 
 | 11 | brew.outlet_conduction_time_constant_s | high | 1.8 | 1193 | within-band |
 | 12 | steam.thermal_mass_j_per_k | low | 0.6 | 1199 | within-band |
 | 13 | steam.thermal_mass_j_per_k | high | 1.4 | 1181 | within-band |
-| 14 | steam.heater_power_w | low | 0.85 | 1159 | within-band |
-| 15 | steam.heater_power_w | high | 1.15 | 1217 | within-band |
+| 14 | steam.heater_power_w | low | 0.79 | 1139 | within-band |
+| 15 | steam.heater_power_w | high | 1.21 | 1224 | within-band |
 | 16 | steam.loss_w_per_k | low | 0.4 | 1212 | within-band |
 | 17 | steam.loss_w_per_k | high | 1.6 | 1172 | within-band |
 | 18 | pump.pressure_bar | low | 0.6 | 1193 | within-band |
@@ -227,7 +229,7 @@ The verdict is the pressure the draw came to rest at, taken over intervals 4400 
 | 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | 1174 | within-band |
 | 36 | steam.feed_flow_ml_per_s | low | 0.3 | 1303 | within-band |
 | 37 | steam.feed_flow_ml_per_s | high | 1.7 | 999 | not-claimed |
-| 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.9 | 1172 | within-band |
+| 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 1139 | within-band |
 
 ## What could not be delivered against
 

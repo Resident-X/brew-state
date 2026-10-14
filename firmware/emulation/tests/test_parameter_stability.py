@@ -17,8 +17,8 @@ one-sided -- a machine the description does not claim, run here and nowhere else
 detector that has never been seen to say otherwise on the real apparatus is not a
 detector. One runs the whole method against a description the shipped one is not,
 because a method that can only be pointed at one model cannot be shown repeatable
-against a replacement. One re-runs a coefficient's own corner to establish that
-the joint corner is not that corner under another name.
+against a replacement. One re-runs each element's own corner, one draw a side,
+to establish that the joint corner is not that corner under another name.
 
 And two put a corner the machine's own loader really refuses through the paths
 that have to record it rather than raise: one through the whole method, against a
@@ -315,17 +315,17 @@ class EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling(unittest.TestCase
     # about the machine as described.
     #
     # The sag the joint corner is run at falls out of two of these figures and is
-    # pinned with them: it is the smaller of the two element errors, so it is the
-    # coffee element's own declared error and not the steam element's -- which is
-    # why the coffee side has a like-for-like comparison against the joint corner
-    # and the steam side has none.
+    # pinned with them: it is the smaller of the two element errors, and the two
+    # are now the same, both sized to the declared 216-253 V supply span -- so the
+    # sag is each element's own declared error, and both sides have a
+    # like-for-like comparison against the joint corner.
     def test_the_prose_facts_these_tables_encode_are_what_the_description_still_says(self):
         pinned = {
             "pump.pressure_bar": (15.0, 0.4),
             "pump.flow_ml_per_s": (7.0, 0.6),
             "steam.feed_flow_ml_per_s": (3.0, 0.7),
-            "brew.heater_power_w": (1004.0, 0.1),
-            "steam.heater_power_w": (1126.0, 0.15),
+            "brew.heater_power_w": (1004.0, 0.21),
+            "steam.heater_power_w": (1126.0, 0.21),
         }
         self.assertEqual(
             sorted(pinned), sorted(set(stability.ONE_SIDED) | set(stability.MAINS_COUPLED)),
@@ -355,17 +355,14 @@ class EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling(unittest.TestCase
 
         coupled = [declared[name][1] for name in stability.MAINS_COUPLED]
         self.assertAlmostEqual(FINDINGS["joint"]["fraction"], min(coupled), places=9)
-        self.assertAlmostEqual(
-            FINDINGS["joint"]["fraction"],
-            declared[stability.MAINS_COUPLED_BY_SIDE[sweep.BREW_SIDE]][1], places=9,
-            msg="the joint corner's sag is no longer the coffee element's own declared error, so "
-                "which side has a like-for-like comparison against it has moved")
-        self.assertNotAlmostEqual(
-            FINDINGS["joint"]["fraction"],
-            declared[stability.MAINS_COUPLED_BY_SIDE[sweep.STEAM_SIDE]][1], places=9,
-            msg="the two elements now declare the same error, so both sides would have a "
-                "comparable independent corner and the record's account of why one does not has "
-                "gone stale")
+        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+            with self.subTest(side=side):
+                self.assertEqual(
+                    FINDINGS["joint"]["fraction"],
+                    declared[stability.MAINS_COUPLED_BY_SIDE[side]][1],
+                    "the joint corner's sag is no longer the %s element's own declared error, so "
+                    "the two elements no longer declare the same error and which side has a "
+                    "like-for-like comparison against it has moved" % side)
 
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C1: checked for a
     # response that settles, not only a bounded deviation. This is the whole of
@@ -1193,15 +1190,25 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
     # voltage on both alike. The sag has to be the largest equal fraction both
     # declared errors admit, which is the smaller of the two; anything larger
     # would put the tighter of them outside the declared range, and anything
-    # smaller would be a sag nothing chose.
+    # smaller would be a sag nothing chose. The reference description's two
+    # elements declare the same error, so its run cannot tell the smaller from
+    # either; that is put to the sag with the two declaring different errors,
+    # each way round.
     def test_the_sag_is_the_largest_equal_fractional_movement_both_declared_errors_admit(self):
         declared = dict((name, fraction) for name, _, fraction in _covered())
         fractions = [declared[name] for name in stability.MAINS_COUPLED]
-        self.assertNotEqual(
-            fractions[0], fractions[1],
-            "the two coupled coefficients declare the same error, so this run is no evidence that "
-            "the smaller of the two is what the sag is taken from")
         self.assertAlmostEqual(FINDINGS["joint"]["fraction"], min(fractions), places=12)
+        for tighter in stability.MAINS_COUPLED:
+            with self.subTest(tighter=tighter):
+                sag, values = stability.joint_sag(
+                    [(name, 1000.0, 0.1 if name == tighter else 0.15)
+                     for name in stability.MAINS_COUPLED])
+                self.assertAlmostEqual(
+                    sag, 0.1, places=12,
+                    msg="the sag is not the smaller of two different declared errors, so it puts "
+                        "one coefficient outside its declared range or is a sag nothing chose")
+                for name in stability.MAINS_COUPLED:
+                    self.assertAlmostEqual(values[name], 900.0, places=9)
 
         # And the dependence is a statement about two named values: a model
         # carrying only one of them has nothing to move together.
@@ -1337,23 +1344,23 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4: the one dependence
     # the description's own construction implies -- and what that dependence
     # actually produces on this description has to be established from the runs
-    # rather than asserted. The coffee element's own corner at the same sag is
-    # re-run here and required to be what the joint corner produced on that side:
+    # rather than asserted. Each element's own corner at the same sag is re-run
+    # here and required to be what the joint corner produced on that element's side:
     # these relations carry no coupling between the two sides, so the record's
     # statement that the joint corner reproduces the independent one is a finding
     # about the description and has to be checked against a real pair of runs
     # rather than against the analysis's own bookkeeping.
     #
-    # The steam side is the other half and is the one this comparison got wrong
-    # first. The sag is the smaller of the two declared errors, which is the
-    # coffee element's, so the steam element's own corner was run at a wider
-    # movement and there is no like-for-like comparison to be had on that side at
-    # all. Comparing it against the *coffee* element's corner instead -- which is
-    # what matching by fraction alone did -- holds a perturbation up against
-    # something that never touched the steam delivery, reports "differing"
-    # because a coefficient with no path to that side does nothing to it, and
-    # writes that up as a coupling. The correct answer is that the comparison is
-    # not available, and the record has to say so without claiming a finding.
+    # The steam side is the other half, and the one this comparison got wrong
+    # first. While the steam element declared the wider error its own corner was
+    # run at a wider movement than the joint corner's sag and there was no
+    # like-for-like comparison on that side at all; comparing it against the
+    # *coffee* element's corner instead -- which is what matching by fraction
+    # alone did -- held a perturbation up against something that never touched
+    # the steam delivery and wrote that up as a coupling. Both elements now
+    # declare the same error, so the steam element's own low corner is at the
+    # joint corner's sag and the steam side is compared like for like: re-run
+    # here through its own draw, as the coffee side is through its own.
     def test_what_the_joint_corner_reproduces_is_established_from_the_runs(self):
         joint = FINDINGS["joint"]
         same, differing, incomparable = stability.joint_against_the_independent_corners(FINDINGS)
@@ -1395,39 +1402,39 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
                     "nowhere at all -- so the difference is between a perturbation and nothing, "
                     "not between two ways of reaching the same delivery" % (side, name))
 
-        # The coffee side is where the like-for-like comparison exists on this
-        # description, and it is checked against a real re-run rather than
-        # against the analysis's own bookkeeping.
+        # Both sides have a like-for-like comparison on this description, since
+        # both elements declare the same error, and each is checked against a
+        # real re-run rather than against the analysis's own bookkeeping.
         self.assertEqual(
-            [side for side, _ in same], [sweep.BREW_SIDE],
-            "the coffee side is no longer the one side whose own element carries the joint "
-            "corner's sag, so what this description makes comparable has changed")
+            sorted(side for side, _ in same), sorted([sweep.BREW_SIDE, sweep.STEAM_SIDE]),
+            "the joint corner is not reported as reproducing each side's own element corner at "
+            "the same sag, although both elements declare the same error and these relations "
+            "carry no path between the two sides")
         self.assertEqual(
-            incomparable, [sweep.STEAM_SIDE],
-            "the steam side is expected to have no comparison available: the sag is the smaller "
-            "of the two declared errors and the steam element declares the wider one, so its own "
-            "corner is a further-moved machine and there is nothing at this sag to hold the joint "
-            "corner against")
+            incomparable, [],
+            "a side is reported as having no comparison available, although both elements "
+            "declare the same error and so each one's own low corner is at the joint corner's sag")
         self.assertEqual(differing, [],
                          "a side is reported as reaching its delivery differently when the two "
                          "moved together, which these relations carry no path for")
 
+        declared = dict((n, (nominal, fraction)) for n, nominal, fraction in _covered())
         for side, name in same:
-            alone = sweep.brew_draw if side == sweep.BREW_SIDE else None
             with self.subTest(side=side, coefficient=name):
-                self.assertIsNotNone(
-                    alone, "only the coffee side is re-run here; a steam-side match would need "
-                           "its own draw and this assertion has gone stale")
-                declared = dict((n, (nominal, fraction))
-                                for n, nominal, fraction in _covered())
                 nominal, _ = declared[name]
                 written = cross_tier.description_with(
                     name, stability.VALUE_FORMAT % (nominal * (1.0 - joint["fraction"])),
-                    os.path.join(FINDINGS["workspace"], "joint-cross-check.params"),
+                    os.path.join(FINDINGS["workspace"], "joint-cross-check-%s.params" % side),
                     source=FINDINGS["description"])
-                run = alone(FINDINGS["executable"], written, FINDINGS["limits"],
-                            FINDINGS["courses"][side], FINDINGS["converter_scale"],
-                            "stability-joint-cross-check")
+                if side == sweep.BREW_SIDE:
+                    run = sweep.brew_draw(FINDINGS["executable"], written, FINDINGS["limits"],
+                                          FINDINGS["courses"][side], FINDINGS["converter_scale"],
+                                          "stability-joint-cross-check-brew")
+                else:
+                    run = sweep.steam_draw(FINDINGS["executable"], written, FINDINGS["limits"],
+                                           FINDINGS["declaration"], FINDINGS["steam_ready_c"],
+                                           FINDINGS["courses"][side],
+                                           "stability-joint-cross-check-steam")
                 first, last = FINDINGS["windows"][side]
                 settle = stability.settle_of(
                     FINDINGS["reference"][side]["delivered"], run["delivered"],
@@ -1442,33 +1449,82 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
 
     # SOL-SIM-ROBUSTNESS-STABILITY-ACROSS-DECLARED-ERROR.C4: run as a joint
     # corner and reported -- which means the record has to say what the
-    # comparison found and must not say what it did not. The side with no
-    # like-for-like comparison is the one a record can go wrong about most
-    # quietly: a sentence claiming the two sides are coupled reads as a finding,
-    # contradicts the description these runs were taken against, and nothing in a
-    # table of figures would show it up.
-    def test_the_record_does_not_claim_a_coupling_on_the_side_it_cannot_compare(self):
+    # comparison found and must not say what it did not. On this description both
+    # sides are compared, so the committed record has to report the joint corner
+    # as reproducing each side's own element corner, and must not say of either
+    # side that no comparison is available or that a coupling was found.
+    #
+    # The side with no like-for-like comparison is still the one a record can go
+    # wrong about most quietly, and a description whose elements declare
+    # different errors produces one: a sentence claiming the two sides are
+    # coupled would read as a finding, contradict the description, and nothing in
+    # a table of figures would show it up. So that case is put to the record
+    # writer too, with the steam element's own corner moved further than the
+    # joint corner's sag.
+    def test_the_record_reports_what_each_side_comparison_found_and_claims_no_coupling(self):
         record = _committed_record()
         section = record.split(stability.JOINT_HEADING, 1)[1].split("\n## ", 1)[0]
-        _, differing, incomparable = stability.joint_against_the_independent_corners(FINDINGS)
-        self.assertTrue(incomparable, "no side is without a comparison, so this test is not about "
-                                      "the case it exists for")
-        self.assertFalse(differing, "a side is reported as differing, and the assertion below "
+        same, differing, incomparable = stability.joint_against_the_independent_corners(FINDINGS)
+        self.assertFalse(differing, "a side is reported as differing, and the assertions below "
                                     "would then be refusing prose that had become correct")
-        for side in incomparable:
+        self.assertFalse(incomparable, "a side is without a comparison, although both elements "
+                                       "declare the same error")
+        for side, name in same:
             with self.subTest(side=side):
-                self.assertIn("On the %s side there is no like-for-like comparison" % side,
-                              section)
+                self.assertIn("the %s side's separation is the one `%s` produces on its own at "
+                              "the same sag" % (side, name), section)
+        self.assertNotIn("there is no like-for-like comparison", section,
+                         "the committed record says a side has no comparison available, although "
+                         "both sides were compared")
+        self.assertIn("The two declare the same error", section)
+        self.assertNotIn("declares the wider error", section)
         self.assertNotIn(
             "does not reproduce that side's own element corner", section,
             "the committed record reports a side as reaching its delivery differently when the "
             "two elements moved together, and no side did")
+        self.assertIn("carry no coupling between the two sides at all", section)
+
+        steam = stability.MAINS_COUPLED_BY_SIDE[sweep.STEAM_SIDE]
+        doctored = dict(FINDINGS)
+        doctored["corners"] = [
+            dict(record, fraction=FINDINGS["joint"]["fraction"] * 1.5)
+            if not record["joint"] and record["coefficient"] == steam else record
+            for record in FINDINGS["corners"]]
+        _, differing, incomparable = stability.joint_against_the_independent_corners(doctored)
+        self.assertEqual(incomparable, [sweep.STEAM_SIDE],
+                         "a steam element corner moved further than the joint corner's sag was "
+                         "still compared against it")
+        self.assertEqual(differing, [])
+        written = stability.report_text(doctored)
+        section = written.split(stability.JOINT_HEADING, 1)[1].split("\n## ", 1)[0]
+        self.assertIn("On the %s side there is no like-for-like comparison" % sweep.STEAM_SIDE,
+                      section)
+        self.assertIn("`%s` declares the wider error" % steam, section)
         self.assertNotIn(
             "That is what a description carrying a coupling between the two sides produces.",
             section,
-            "the committed record states that a coupling between the two sides was found, which "
-            "the description these runs were taken against says it does not carry")
-        self.assertIn("carry no coupling between the two sides at all", section)
+            "the record states that a coupling between the two sides was found on the side it "
+            "could not compare")
+        self.assertNotIn("does not reproduce that side's own element corner", section)
+
+class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
+    """SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: The simulation's
+    description of the supply it was run against states the declared span.
+    """
+
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: the records generated
+    # from the accounts state the declared span. The committed record has to carry
+    # the span the live description's accounts state, read through the one reader
+    # every record uses, so a description re-sized to another span leaves this
+    # record stale rather than naming the old one.
+    def test_the_committed_record_states_the_span_the_description_declares(self):
+        statement = sweep.supply_span_statement(FINDINGS["description"])
+        self.assertIn("declared 216–253 V span", statement,
+                      "the reference description's accounts no longer state the declared "
+                      "216-253 V supply span its element ratings are sized to")
+        self.assertIn(statement, _committed_record(),
+                      "%s does not state the supply span the description it was run against "
+                      "declares. Re-run its tool" % stability.REPORT_PATH)
 
 
 if __name__ == "__main__":

@@ -14,10 +14,12 @@ Nothing in `docs/parameter-dominance.md` is changed or restated by this record. 
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `582f14cfb080878c743f9474293cd66273d385c3a996a63d28b26b7cf2edf514` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `2ecf3153856014ee4071d8013e3bc73c0558155972200d9f9f97447a2744284e` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
+
+The supply this was run against is the declared 216–253 V span the description's accounts state: the element ratings' declared errors are sized to the delivered power that span moves them over, so what follows was run across that supply rather than only at its nominal.
 
 A replacement model is run by naming it: `--description`, `--limits`, `--steam-declaration` and `--tolerance` each point the same method at another file, and `--workspace` gives that run its own scratch directory. Nothing about how the corners are taken or how a verdict is reached changes with them, which is what makes this repeatable against the measured model that is meant to replace this estimated one.
 
@@ -83,8 +85,8 @@ This is deliberately not the reasoning `docs/parameter-identifiability.md` gives
 | `ambient_temperature_c` | high | ambient_temperature_c = 25 | 6.87e-05 | 3.82e-05 | settled within the band | 0.001 | 0.000807 | settled within the band |
 | `brew.thermal_mass_j_per_k` | low | brew.thermal_mass_j_per_k = 192 | 0.000687 | 0.000587 | settled within the band | 0 | 0 | settled within the band |
 | `brew.thermal_mass_j_per_k` | high | brew.thermal_mass_j_per_k = 448 | 0.0187 | 0.000198 | settled within the band | 0 | 0 | settled within the band |
-| `brew.heater_power_w` | low | brew.heater_power_w = 903.6 | 0.0497 | 0.0493 | settled within the band | 0 | 0 | settled within the band |
-| `brew.heater_power_w` | high | brew.heater_power_w = 1104.4 | 0.0459 | 0.000252 | settled within the band | 0 | 0 | settled within the band |
+| `brew.heater_power_w` | low | brew.heater_power_w = 793.16 | 0.132 | 0.0488 | settled within the band | 0 | 0 | settled within the band |
+| `brew.heater_power_w` | high | brew.heater_power_w = 1214.84 | 0.0784 | 0.000145 | settled within the band | 0 | 0 | settled within the band |
 | `brew.loss_w_per_k` | low | brew.loss_w_per_k = 0.48 | 0.0399 | 0.000687 | settled within the band | 0 | 0 | settled within the band |
 | `brew.loss_w_per_k` | high | brew.loss_w_per_k = 1.92 | 0.00127 | 0.000458 | settled within the band | 0 | 0 | settled within the band |
 | `brew.outlet_held_volume_ml` | low | brew.outlet_held_volume_ml = 1.6 | 0.000221 | 0.000137 | settled within the band | 0 | 0 | settled within the band |
@@ -93,8 +95,8 @@ This is deliberately not the reasoning `docs/parameter-identifiability.md` gives
 | `brew.outlet_conduction_time_constant_s` | high | brew.outlet_conduction_time_constant_s = 36 | 3.82e-05 | 7.63e-05 | settled within the band | 0 | 0 | settled within the band |
 | `steam.thermal_mass_j_per_k` | low | steam.thermal_mass_j_per_k = 216 | 0 | 0 | settled within the band | 0.003 | 0.00201 | settled within the band |
 | `steam.thermal_mass_j_per_k` | high | steam.thermal_mass_j_per_k = 504 | 0 | 0 | settled within the band | 0.003 | 0.00268 | settled within the band |
-| `steam.heater_power_w` | low | steam.heater_power_w = 957.1 | 0 | 0 | settled within the band | 0.0175 | 0.0139 | settled within the band |
-| `steam.heater_power_w` | high | steam.heater_power_w = 1294.9 | 0 | 0 | settled within the band | 0.013 | 0.01 | settled within the band |
+| `steam.heater_power_w` | low | steam.heater_power_w = 889.54 | 0 | 0 | settled within the band | 0.028 | 0.0222 | settled within the band |
+| `steam.heater_power_w` | high | steam.heater_power_w = 1362.46 | 0 | 0 | settled within the band | 0.0171 | 0.0134 | settled within the band |
 | `steam.loss_w_per_k` | low | steam.loss_w_per_k = 0.6 | 0 | 0 | settled within the band | 0.0119 | 0.01 | settled within the band |
 | `steam.loss_w_per_k` | high | steam.loss_w_per_k = 2.4 | 0 | 0 | settled within the band | 0.0125 | 0.011 | settled within the band |
 | `pump.pressure_bar` | low | pump.pressure_bar = 9 | 0 | 0 | settled within the band | 0 | 0 | settled within the band |
@@ -114,7 +116,7 @@ This is deliberately not the reasoning `docs/parameter-identifiability.md` gives
 | `steam.feed_flow_ml_per_s` | low | steam.feed_flow_ml_per_s = 0.9 | 0 | 0 | settled within the band | 0.0633 | 0.0498 | settled within the band |
 | `steam.pressure_fall_bar_per_ml` | low | steam.pressure_fall_bar_per_ml = 0.015 | 0 | 0 | settled within the band | 0.013 | 0.011 | settled within the band |
 | `steam.pressure_fall_bar_per_ml` | high | steam.pressure_fall_bar_per_ml = 0.085 | 0 | 0 | settled within the band | 0.013 | 0.0114 | settled within the band |
-| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | low together | brew.heater_power_w = 903.6, steam.heater_power_w = 1013.4 | 0.0497 | 0.0493 | settled within the band | 0.011 | 0.00897 | settled within the band |
+| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | low together | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | 0.132 | 0.0488 | settled within the band | 0.028 | 0.0222 | settled within the band |
 
 A separation of nothing is a corner that moved that side's delivery nowhere at all, which settles trivially and is not evidence that a loop recovered from anything. The corners that never moved the side they were judged on are the ones whose figures are zero, and `docs/parameter-dominance.md` is where what a coefficient does reach is recorded.
 
@@ -122,16 +124,14 @@ A separation of nothing is a corner that moved that side's delivery nowhere at a
 
 Every corner above moves one coefficient with every other held where the description puts it. The description says in as many words that two of its values are not independent: `brew.heater_power_w` and `steam.heater_power_w` are both fed from one supply, so a sagging mains makes both low at once. A sweep moving one coefficient at a time cannot exercise that by construction, whatever it does to each of them separately.
 
-So one further corner is run with both low together, at an **equal fractional sag of 0.1** — the smaller of the two declared errors, which is the largest equal fractional movement both admit. A shared supply droop is a shared fractional movement, since power goes as the square of the voltage on both elements alike; a larger figure would put the tighter of the two outside the range the description claims, and running nothing beyond the declared range is the whole standard here. Taking each element to its own declared corner instead would be a different claim — two independent errors that happen to point the same way — and not the one the description makes. Nothing is lost by the smaller figure: the steam rating's own wider corner is already run on its own above, so what this corner adds is the simultaneity rather than a wider excursion.
+So one further corner is run with both low together, at an **equal fractional sag of 0.21** — the smaller of the two declared errors, which is the largest equal fractional movement both admit. A shared supply droop is a shared fractional movement, since power goes as the square of the voltage on both elements alike; a larger figure would put the tighter of the two outside the range the description claims, and running nothing beyond the declared range is the whole standard here. Taking each element to its own declared corner instead would be a different claim — two independent errors that happen to point the same way — and not the one the description makes. The two declare the same error, so the sag is each one's own declared error and nothing is given up by taking the smaller: this corner moves each element exactly as far as its own low corner above does, and what it adds is the simultaneity.
 
 | What | Written as | Side | Early | Late | Verdict |
 |---|---|---|---|---|---|
-| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | brew.heater_power_w = 903.6, steam.heater_power_w = 1013.4 | brew | 0.0497 | 0.0493 | settled within the band |
-| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | brew.heater_power_w = 903.6, steam.heater_power_w = 1013.4 | steam | 0.011 | 0.00897 | settled within the band |
+| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | brew | 0.132 | 0.0488 | settled within the band |
+| `brew.heater_power_w + steam.heater_power_w (joint mains droop)` | brew.heater_power_w = 793.16, steam.heater_power_w = 889.54 | steam | 0.028 | 0.0222 | settled within the band |
 
-Where the two can be compared, this description makes the joint corner the independent one over again: the brew side's separation is the one `brew.heater_power_w` produces on its own at the same sag. That is not a fault in the run and it is a finding about the description rather than about the machine — these relations carry no coupling between the two sides at all, which the description names among the things it leaves out, so nothing the steam element does can reach the coffee delivery or the other way about. What the corner establishes here is that this analysis does not assume an independence the description never claimed; what it would find on a description carrying a shared supply budget is a different figure, and that is the description to re-run it against.
-
-On the steam side there is no like-for-like comparison to be made, and that is a consequence of the sag being the smaller of the two declared errors rather than a finding about the machine. The only independent corner this comparison could be made against is that side's own element moved alone by the same fraction, and that side's element carries the wider declared error — so its independent corner above is a further-moved machine and not the same machine moved alone. Its own corner is run and reported above, and the joint corner's own figures for that side are in the table above this paragraph. What is not available is the comparison, and nothing is claimed either way about a coupling from it: the other side is where that question is answered here.
+Where the two can be compared, this description makes the joint corner the independent one over again: the brew side's separation is the one `brew.heater_power_w` produces on its own at the same sag and the steam side's separation is the one `steam.heater_power_w` produces on its own at the same sag. That is not a fault in the run and it is a finding about the description rather than about the machine — these relations carry no coupling between the two sides at all, which the description names among the things it leaves out, so nothing the steam element does can reach the coffee delivery or the other way about. What the corner establishes here is that this analysis does not assume an independence the description never claimed; what it would find on a description carrying a shared supply budget is a different figure, and that is the description to re-run it against.
 
 Whether that stated dependence is the real one is a characterisation question and is not asked here. A general sweep over every pairing a description might one day declare is deliberately not what this is: the one dependence run is the one the reference description's own construction already implies.
 

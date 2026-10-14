@@ -816,6 +816,41 @@ def could_not_be_weighed(entry):
             % ", ".join("`%s`" % key for key in reached))
 
 
+#: How a coefficient's account in a description states the supply span its
+#: declared error is sized to. The description's grammar has nowhere to put a
+#: supply, so it is stated in the element ratings' accounts and read from there.
+SUPPLY_SPAN = re.compile(r"declared (\d+(?:\.\d+)?)-(\d+(?:\.\d+)?) V (?:supply )?span")
+
+
+def supply_span_statement(path):
+    """The sentence a record carries saying what supply the description it was
+    run against declares.
+
+    Read from the description rather than written into each record, because
+    the supply is a fact of the machine described: a record that named a span of
+    its own would go on naming it after the description had been re-sized to a
+    different one, which is how the element ratings' declared errors came to be
+    sized against a narrower span than the one declared. A description whose
+    accounts state no span, or more than one, is reported as such rather than
+    given one.
+    """
+    with open(path, encoding="utf-8") as handle:
+        spans = sorted(set(SUPPLY_SPAN.findall(handle.read())),
+                       key=lambda span: (float(span[0]), float(span[1])))
+    if not spans:
+        return ("The description's accounts state no supply span, so this record cannot say what "
+                "supply its element ratings' declared errors were sized to.")
+    listed = " and ".join("%s–%s V" % span for span in spans)
+    if len(spans) > 1:
+        return ("The description's accounts state more than one supply span, %s, so this record "
+                "cannot say which supply its element ratings' declared errors were sized to."
+                % listed)
+    return ("The supply this was run against is the declared %s span the description's accounts "
+            "state: the element ratings' declared errors are sized to the delivered power that "
+            "span moves them over, so what follows was run across that supply rather than only at "
+            "its nominal." % listed)
+
+
 def digest_of(path):
     """What a file this sweep was run against presently holds.
 
@@ -1174,6 +1209,8 @@ def report_text(findings):
                        ("The steam side's design figures", findings["declaration"]),
                        ("The bands a delivery is held to", findings["tolerance"])):
         write("| %s | `%s` | `%s` |" % (what, _relative(path), findings["digests"][path]))
+    write("")
+    write(supply_span_statement(findings["description"]))
     write("")
     write("A replacement model is swept by naming it: `--description`, `--limits`, "
           "`--steam-declaration` and `--tolerance` each point the same sweep at another file. "

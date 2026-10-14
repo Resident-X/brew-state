@@ -1666,5 +1666,25 @@ class AParameterHiddenByDriftIsNamedAsSuch(unittest.TestCase):
                 "Re-run firmware/emulation/tools/run_parameter_identifiability.py")
 
 
+class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
+    """SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: The simulation's
+    description of the supply it was run against states the declared span.
+    """
+
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: the records generated
+    # from the accounts state the declared span. The committed record has to carry
+    # the span the live description's accounts state, read through the one reader
+    # every record uses, so a description re-sized to another span leaves this
+    # record stale rather than naming the old one.
+    def test_the_committed_record_states_the_span_the_description_declares(self):
+        statement = sweep.supply_span_statement(FINDINGS["description"])
+        self.assertIn("declared 216–253 V span", statement,
+                      "the reference description's accounts no longer state the declared "
+                      "216-253 V supply span its element ratings are sized to")
+        self.assertIn(statement, _committed_record(),
+                      "%s does not state the supply span the description it was run against "
+                      "declares. Re-run its tool" % ident.REPORT_PATH)
+
+
 if __name__ == "__main__":
     unittest.main()
