@@ -1489,9 +1489,8 @@ DESIGN = board_check.Design("a/a.kicad_pro")
 
 
 class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    Each measured rule's figure is a project text variable, and one missing or
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """Each measured rule's figure is a project text variable, and one missing or
     malformed fails the design, naming it, rather than being read as some
     figure of the check's own.
     """
@@ -1526,9 +1525,8 @@ class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
 
 
 class TheRulesFileHoldsTheWorkmanshipRules(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    The corner and jog items are KiCad's to measure, so the check requires
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """The corner and jog items are KiCad's to measure, so the check requires
     only that the rules file holds each, on every track; the unconnected-via
     item needs no rule.
     """
@@ -1570,9 +1568,8 @@ class TheRulesFileHoldsTheWorkmanshipRules(unittest.TestCase):
 
 
 class TracksMeetingAtAPadAreMeasured(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    KiCad's corner rule does not compare tracks that meet at a pad, so the
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """KiCad's corner rule does not compare tracks that meet at a pad, so the
     check holds the angle between them to the design's own figure.
     """
 
@@ -1605,9 +1602,8 @@ class TracksMeetingAtAPadAreMeasured(unittest.TestCase):
 
 
 class StubsAreMeasured(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    A track end touching no pad, via, zone or other copper of its net is a
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """A track end touching no pad, via, zone or other copper of its net is a
     stub, and the stub is the run of track from it back to where it joins.
     """
 
@@ -1648,9 +1644,8 @@ class StubsAreMeasured(unittest.TestCase):
 
 
 class RouteLengthIsMeasuredAgainstThePadTree(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    A net's track length, on every layer, against its figure times the
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """A net's track length, on every layer, against its figure times the
     shortest straight-line tree joining its pad centres.
     """
 
@@ -1687,7 +1682,7 @@ class RouteLengthIsMeasuredAgainstThePadTree(unittest.TestCase):
 
 
 class DirectionIsMeasuredAgainstTheBoardsEdges(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one."""
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
 
     def test_tracks_along_the_edges_and_at_45_degrees_pass(self):
         tracks = [seg("/A", (0, 0), (10, 0)), seg("/A", (10, 0), (10, 5)), seg("/A", (10, 5), (13, 8)), seg("/A", (13, 8), (10, 11))]
@@ -1719,7 +1714,7 @@ class DirectionIsMeasuredAgainstTheBoardsEdges(unittest.TestCase):
 
 
 class LongPadsAreEnteredAlongTheirAxis(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one."""
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
 
     LEAD = part("U1", "10 10", ("1", "/A", 0, 0, "roundrect", 1, 0.3))
 
@@ -1766,9 +1761,8 @@ class LongPadsAreEnteredAlongTheirAxis(unittest.TestCase):
 
 
 class NarrowingIsMeasuredAgainstTheClassWidth(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    A track narrower than its net class's width passes only as a neck within
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """A track narrower than its net class's width passes only as a neck within
     the figure of a pad; a track widened past it never fails.
     """
 
@@ -1825,7 +1819,7 @@ class NarrowingIsMeasuredAgainstTheClassWidth(unittest.TestCase):
 
 
 class KiCadsWorkmanshipFindingsNameTheirItem(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one."""
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
 
     def test_each_of_kicads_workmanship_findings_names_the_item_it_is(self):
         for kind, item in (("track_angle", "WORK-4"), ("track_segment_length", "WORK-5"), ("track_dangling", "WORK-6"),
@@ -1839,9 +1833,8 @@ class KiCadsWorkmanshipFindingsNameTheirItem(unittest.TestCase):
 
 
 class TheReportStatesEachFigureRead(Tree):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    Under each design's verdict line, one FIGURE line for every measured rule
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """Under each design's verdict line, one FIGURE line for every measured rule
     whose figure the design sets, before its violations.
     """
 

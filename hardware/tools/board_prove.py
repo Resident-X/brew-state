@@ -542,7 +542,7 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a rule left at KiCad's own default of ignore", "rule checks: an ignored check is a failure, default or not", "ignored_check", "missing_courtyard", severity("drc", "missing_courtyard", None)),
     ("a custom rule set to ignore", "rule checks: an ignored check is a failure", "ignored_check", "severity to ignore",
      lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"hush\"\n\t(condition \"A.Type == 'Track'\")\n\t(severity ignore))\n")),
-    ("a rules file KiCad declines to load", "rule checks: the design's rules are read as written, and the rule KiCad rejects is named", "custom_rules", "gate-proof.kicad_dru rule 'typo' at line 9",
+    ("a rules file KiCad declines to load", "rule checks: the design's rules are read as written, and the rule KiCad rejects is named", "custom_rules", "gate-proof.kicad_dru rule 'typo' at line 18",
      lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"typo\"\n\t(condition \"A.Type == 'Pad'\")\n\t(constraint clearence (min 1mm)))\n")),
     ("a rules file that is not well-formed", "rule checks: the design's rules are read as written, and why no one rule can be named is said", "custom_rules", "gate-proof.kicad_dru at its end | KiCad did not load the design's custom rules",
      lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + "(rule \"open\"\n\t(condition \"A.Type == 'Pad'\")\n")),

@@ -202,12 +202,12 @@ class TheRejectedRuleIsNamed(Copy):
         self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru rule 'bad 1' at line 5")
         found = self.rejected(rules + "(rule \"fine\" (condition \"A.Type == 'Via'\") (constraint clearance (min 0.2mm)))\n"
                               + typo + bad.format(2))
-        self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru rule 'typo' at line 10")
+        self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru rule 'typo' at line 19")
         self.assertIn("this is the rule it rejects", found[0][4])
 
     def test_a_form_that_is_not_a_rule_is_named(self):
         found = self.rejected(self.seed.read(".kicad_dru") + "(rules \"x\")\n")
-        self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru the rules form at line 9")
+        self.assertEqual(found[0][3], "hardware/proof/gate-proof/gate-proof.kicad_dru the rules form at line 18")
 
 
 class ZonesAreRefilled(Copy):
@@ -471,9 +471,8 @@ class TheSeededFaultProof(unittest.TestCase):
 
 
 class TheWorkmanshipRules(Proved):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    Each rule, KiCad's and measured alike, fails on a fault seeded for it in a
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """Each rule, KiCad's and measured alike, fails on a fault seeded for it in a
     throwaway copy of the gate's proof design outside the repository, and the
     clean copy passes with every rule in force.
     """
@@ -502,9 +501,8 @@ class TheWorkmanshipRules(Proved):
 
 
 class KiCadComparesTracksEverywhereButAtAPad(Copy):
-    """SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one.
-
-    The method tells a designer to branch a route at a pad because KiCad's
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """The method tells a designer to branch a route at a pad because KiCad's
     corner rule compares every two tracks meeting on one layer anywhere else;
     this holds that to what the installed KiCad does.
     """
