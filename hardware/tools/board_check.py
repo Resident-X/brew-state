@@ -1062,8 +1062,8 @@ MEASURED = (
     ("WORK-2", "route length", "WORK_DETOUR_RATIO",
      "times the shortest straight-line tree joining the net's pads", 1.0, None),
     ("WORK-6", "stub", "WORK_STUB_MM", "mm of track ending free", 0.0, None),
-    ("WORK-8", "narrowing", "WORK_NECK_MM", "mm from a pad within which a track may be narrower than its "
-     "net class's track width", 0.0, None),
+    ("WORK-8", "narrowing", "WORK_NECK_MM", "mm off its net's pads that a track narrower than its net class's "
+     "track width may run", 0.0, None),
     ("WORK-9", "direction", "WORK_ANGLE_TOLERANCE_DEG", "degrees off the board's edges or 45 degrees to them, "
      "and off a long pad's axis", 0.0, 22.5),
     ("WORK-10", "pad entry", "WORK_PAD_ENTRY_RATIO", "times as long as wide, from which a pad is entered only "
