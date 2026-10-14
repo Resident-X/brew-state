@@ -40,6 +40,7 @@ Status words used throughout this folder:
 | D20 | Mains-presence confirm is replaced by the BL0942 current reading | Recommended; not decided (loses localisation of "did not close" versus "open downstream") | `h743-pin-allocation.csv` |
 | D21 | A low-voltage-only PCB (H743 on headers, dividers, ULN2003A breakout, 74HCT541, two transistor stages, connectors; mains modules off-board) as a prototype spin, bare boards hand-soldered | Superseded 2026-10-12 by the graph epic `DEL-CONTROLLER-HARDWARE`: designed boards made and assembled by the manufacturer `DEC-BOARD-MANUFACTURER-JLCPCB` names, through-hole only where needed | `pcb-plan.md` |
 | D22 | Cold-side steam pressure tap | Rejected | Cold-side reading adds an unmeasured flow-dependent two-phase block drop and cannot give the in-block pressure the saturation-temperature check needs |
+| D23 | A third PT1000 channel on PA6 is reserved permanently for a temperature monitor at the steam output, so the commissioning channel PA1 stays a spare and is not borrowed | Owner decision (channel; the probe, rating and placement at the steam output are not yet specified) | `h743-pin-allocation.csv`, `temperature-sensing-front-end.md` |
 
 ## Decisions awaiting the owner
 

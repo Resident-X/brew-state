@@ -20,7 +20,7 @@ Designator,Signal,Onboard peripheral on this pin / status
 21,PA5,
 22,PA4,"DVP HSYNC - FREE - connector only, no camera fitted"
 23,PA7,
-24,PA6,"DVP PIXCLK - FREE - connector only, no camera fitted"
+24,PA6,"DVP PIXCLK - ASSIGNED steam-output PT1000 (ADC12_INP3 expected, not yet verified) - connector only, no camera fitted"
 25,PC5,
 26,PC4,
 27,PB1,

@@ -23,7 +23,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 - BL0942 module isolation measurement, then BOM rows for the meters (decision D17).
 - XDB401 I2C variant: output rate, address (EEPROM-programmable, to confirm), thread.
 - Supplier rating of the PTFE tube at 160 to 200 C, or use the stainless capillary or 4 mm metal tube.
-- DS12110 checks: 5 V tolerance for PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; alternate functions for PA1 and PA4 (ADC channels), PA10 (TIM1_CH3) and PB5 (TIM3_CH2); H743 pin sink current against the key-line indicator current (about 16 mA on a two-element line, estimated).
+- DS12110 checks: 5 V tolerance for PB4, PB5, PA8, PD7, PD10, PD14, PD15, PA0 and PE4 to PE8; alternate functions for PA1, PA4 and PA6 (ADC channels), PA10 (TIM1_CH3) and PB5 (TIM3_CH2); H743 pin sink current against the key-line indicator current (about 16 mA on a two-element line, estimated).
 - Relay module input polarity from its schematic (on an active-low module a 3.3 V high may not turn the optocoupler off); confirm the 4-channel module and the cavity fit.
 - 5 V tolerance in DS12110 also for PD7, PD10, PD14, PD15 (relay inputs), PA0 (water indicator cathode) and PE4 to PE8 (key lines pulled toward the 5 V rail through LEDs).
 - The solenoid valves' pressure rating (a sibling JLT listing says 1.0 MPa, unverified) against the brew OPV setting.
