@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF-C1-TEST-4
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T09:31:04.630618Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_seed.py::test_the_seeded_fault_mechanics_copy_the_design_they_are_given,test_the_copy_is_the_committed_design_not_the_working_tree,test_a_layout_kicad_cannot_save_stops_the_command,test_kicads_leftovers_are_taken_from_the_settled_copy
+  artifact_version: 68e314237e92dea6cc60908474095f646217ed57
+attested_by: crun-bfd9b5345532810e
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
+    type: satisfies
