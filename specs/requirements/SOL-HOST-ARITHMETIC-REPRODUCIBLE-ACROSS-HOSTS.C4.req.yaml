@@ -1,0 +1,12 @@
+id: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C4
+type: criterion
+title: Host agreement is reached without a tolerance that absorbs a mutant's change
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  None of the golden-trajectory comparison or the record-staleness comparison gains a tolerance or rounding wide enough that a change a mutant makes to the plant's arithmetic passes it; a comparison left inexact states the bound it allows, and every plant-arithmetic mutant it failed on while exact still fails it. Out of scope: the mutation sweep's own judgements of individual survivors.
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS
+    type: criterion-of

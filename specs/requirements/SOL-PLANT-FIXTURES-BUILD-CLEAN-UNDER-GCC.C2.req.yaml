@@ -1,0 +1,12 @@
+id: SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2
+type: criterion
+title: A verification run builds the host tier with each supported host's default compiler
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  At least one verification run that recurs against main, the nightly full verification if no earlier one, compiles the host tier with GCC and at least one compiles it with clang, so a narrowing that one compiler accepts and the other rejects fails a run instead of reaching a contributor on the other platform. A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run. Which tier carries each compiler and how the build selects it are left to the build. Out of scope: running every tier under both compilers, and the target cross-compiler.
+links:
+  - target: SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC
+    type: criterion-of

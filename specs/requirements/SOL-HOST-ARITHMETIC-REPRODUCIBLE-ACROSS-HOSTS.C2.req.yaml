@@ -1,0 +1,12 @@
+id: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2
+type: criterion
+title: The committed analysis records regenerate to the same figures on every supported host
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Regenerating each committed analysis record under the documentation folder, with its own tool, on macOS arm64 with Apple clang and on Linux x86-64 with GCC writes back the committed bytes, so the emulation tier's record-staleness check passes on either host against the same commit. Out of scope: changing what any record reports or the inputs it is run against.
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS
+    type: criterion-of
