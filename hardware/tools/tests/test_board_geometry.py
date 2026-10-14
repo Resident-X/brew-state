@@ -103,38 +103,108 @@ class PadsArePlacedAsKiCadPlacesThem(unittest.TestCase):
 
 class APadsCopperIsItsShape(unittest.TestCase):
     # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
-    """A point is on a pad's copper by the pad's own shape, size and turn."""
+    """How far a point lies from a pad's copper, by the pad's own shape, size and turn."""
 
-    def pad(self, shape: str, size: str, angle: str = "") -> board_geometry.Pad:
-        return board_geometry.pads(layout(footprint("P1", "10 10", f'(pad "1" smd {shape} (at 0 0 {angle}) (size {size}) (layers "F.Cu"))')))[0]
+    def pad(self, shape: str, size: str, angle: str = "", extra: str = "") -> board_geometry.Pad:
+        return board_geometry.pads(layout(footprint("P1", "10 10", f'(pad "1" smd {shape} (at 0 0 {angle}) (size {size}) '
+                                                                   f'(layers "F.Cu") {extra})')))[0]
 
     def test_a_rectangle_holds_its_corners_and_not_past_them(self):
         pad = self.pad("rect", "2 1")
-        self.assertTrue(pad.contains((10.99, 10.49)))
-        self.assertFalse(pad.contains((11.01, 10)))
-        self.assertFalse(pad.contains((10, 10.51)))
+        self.assertEqual(pad.distance((10.99, 10.49)), 0)
+        self.assertAlmostEqual(pad.distance((11.01, 10)), 0.01)
+        self.assertAlmostEqual(pad.distance((11.3, 10.9)), 0.5, msg="past a corner the distance is to the corner")
 
-    def test_a_turned_rectangle_holds_points_along_its_turned_length(self):
-        pad = self.pad("roundrect", "2 1", "90")
-        self.assertTrue(pad.contains((10, 9.05)))
-        self.assertFalse(pad.contains((10.9, 10)))
+    def test_a_turned_rounded_rectangle_holds_points_along_its_turned_length(self):
+        pad = self.pad("roundrect", "2 1", "90", "(roundrect_rratio 0.25)")
+        self.assertEqual(pad.distance((10, 9.05)), 0)
+        self.assertAlmostEqual(pad.distance((10.9, 10)), 0.4)
+
+    def test_a_rounded_rectangle_leaves_out_its_corners_by_its_own_ratio_or_kicads_when_it_writes_none(self):
+        # A 2 by 1 mm pad rounded at a quarter of its 1 mm side: its corner is a 0.25 mm arc centred 0.75 and 0.25 mm off its centre.
+        for extra in ("(roundrect_rratio 0.25)", ""):
+            with self.subTest(extra=extra):
+                pad = self.pad("roundrect", "2 1", extra=extra)
+                self.assertAlmostEqual(pad.distance((11, 10.5)), math.hypot(0.25, 0.25) - 0.25)
+                self.assertEqual(pad.distance((10.75, 10.5)), 0)
+        self.assertAlmostEqual(self.pad("roundrect", "2 1", extra="(roundrect_rratio 0.5)").distance((11, 10.5)),
+                               math.hypot(0.5, 0.5) - 0.5)
 
     def test_a_circle_leaves_out_its_bounding_squares_corners(self):
         pad = self.pad("circle", "2 2")
-        self.assertTrue(pad.contains((10.7, 10.7)))
-        self.assertFalse(pad.contains((10.9, 10.9)))
+        self.assertEqual(pad.distance((10.7, 10.7)), 0)
+        self.assertAlmostEqual(pad.distance((10.9, 10.9)), math.hypot(0.9, 0.9) - 1)
 
     def test_an_oval_is_rounded_at_its_ends(self):
         pad = self.pad("oval", "3 1")
-        self.assertTrue(pad.contains((11.4, 10)))
-        self.assertFalse(pad.contains((11.45, 10.45)), "the corner of the bounding rectangle lies off a rounded end")
-        self.assertTrue(pad.contains((10.5, 10.49)))
+        self.assertEqual(pad.distance((11.4, 10)), 0)
+        self.assertGreater(pad.distance((11.45, 10.45)), 0, "the corner of the bounding rectangle lies off a rounded end")
+        self.assertEqual(pad.distance((10.5, 10.49)), 0)
+
+    def test_a_line_is_measured_to_the_copper_it_passes_and_is_nought_where_it_crosses_it(self):
+        pad = self.pad("rect", "2 1")
+        self.assertEqual(pad.distance_to_line((10, 8), (10, 12)), 0, "crossing through the middle, neither end on the pad")
+        self.assertAlmostEqual(pad.distance_to_line((8, 11), (12, 11)), 0.5, msg="passing beside the long side")
+        self.assertAlmostEqual(pad.distance_to_line((12, 10.5), (11, 11.5)), math.sqrt(0.5),
+                               msg="passing a corner diagonally, nearest at the corner and not at either end")
+        self.assertEqual(self.pad("circle", "1 1").distance_to_line((9, 9), (11, 11)), 0)
+        self.assertEqual(self.pad("oval", "3 1").distance_to_line((11, 9), (11, 11)), 0, "an oval's core is a line, crossed")
 
     def test_only_a_pad_longer_than_it_is_wide_has_a_long_axis(self):
         self.assertIsNone(self.pad("rect", "1.7 1.7").long_axis())
         self.assertIsNone(self.pad("circle", "1.6 1.6").long_axis())
         self.assertTrue(near(self.pad("rect", "0.8 1.45").long_axis(), (0, 1)))
         self.assertTrue(near(self.pad("rect", "0.8 1.45", "270").long_axis(), (-1, 0)))
+
+    def test_a_pad_whose_copper_is_not_a_shape_sized_here_raises_naming_it_rather_than_being_guessed(self):
+        for shape, extra, why in (("custom", '(options (clearance outline) (anchor rect)) (primitives (gr_poly (pts (xy 0 0) (xy 3 0) (xy 0 3)) (width 0) (fill yes)))',
+                                   "its shape is custom"),
+                                  ("roundrect", "(roundrect_rratio 0.25) (chamfer_ratio 0.2) (chamfer top_left)", "its corners are chamfered"),
+                                  ("trapezoid", "(rect_delta 0 0.3)", "its shape is trapezoid"),
+                                  ("rect", '(padstack (mode front_inner_back) (layer "Inner" (shape rect) (size 2 2)))',
+                                   "its copper is set layer by layer"),
+                                  ("rect", "(primitives (gr_circle (center 0 0) (end 2 0) (width 0) (fill yes)))", "it carries custom copper")):
+            with self.subTest(shape=shape, why=why):
+                pad = self.pad(shape, "1 1", extra=extra)
+                self.assertFalse(pad.sized())
+                self.assertEqual(pad.unsized, why)
+                for ask in (lambda: pad.distance((10, 10)), lambda: pad.distance_to_line((9, 10), (11, 10))):
+                    with self.assertRaises(board_geometry.Unsized) as raised:
+                        ask()
+                    self.assertIn("pad 1 of P1", str(raised.exception))
+        for shape, extra in (("circle", ""), ("oval", ""), ("rect", ""), ("roundrect", "(roundrect_rratio 0.1)"),
+                             ("rect", "(chamfer_ratio 0.2)")):
+            with self.subTest(shape=shape, extra=extra):
+                self.assertTrue(self.pad(shape, "1 1", extra=extra).sized())
+
+
+class ATrackMeetsAPadByItsCopper(unittest.TestCase):
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """A track's end is a round cap of half its width, and KiCad's
+    connectivity joins it to a pad when that cap reaches the pad's copper, or
+    when the pad's centre lies on the track's copper; the centre line alone
+    never decides it.
+    """
+
+    PAD = board_geometry.pads(layout(footprint("U1", "45 10", '(pad "1" smd rect (at 0 0) (size 1.6 0.4) (layers "F.Cu"))')))[0]
+
+    def test_an_end_short_of_the_pad_reaches_it_by_its_cap(self):
+        # The pad's left side is at x = 44.2: a 0.25 mm track ending at 44.1 reaches it by its 0.125 mm cap.
+        self.assertTrue(board_geometry.end_reaches(self.PAD, (44.1, 10), 0.25))
+        self.assertFalse(board_geometry.end_reaches(self.PAD, (44.1, 10), 0.15), "a narrower track's cap falls short")
+        self.assertTrue(board_geometry.end_reaches(self.PAD, (45, 10.3), 0.25), "reaching the long side from beside it")
+        self.assertFalse(board_geometry.end_reaches(self.PAD, (45, 10.4), 0.25))
+
+    def test_a_line_reaches_a_pad_where_its_copper_overlaps_the_pads(self):
+        self.assertTrue(board_geometry.line_reaches(self.PAD, (44, 10.3), (46, 10.3), 0.25), "running along the side, overlapping it")
+        self.assertFalse(board_geometry.line_reaches(self.PAD, (44, 10.4), (46, 10.4), 0.25))
+
+    def test_kicad_joins_a_track_by_its_end_cap_or_by_the_pads_centre_on_its_copper(self):
+        self.assertTrue(board_geometry.joins(self.PAD, [(40, 10), (44.1, 10)], 0.25))
+        self.assertTrue(board_geometry.joins(self.PAD, [(45.1, 5), (45.1, 15)], 0.25), "the pad's centre lies on the track's copper")
+        self.assertFalse(board_geometry.joins(self.PAD, [(45.5, 5), (45.5, 15)], 0.25),
+                         "crossing the pad away from its centre with neither end on it does not join it")
+        self.assertFalse(board_geometry.joins(self.PAD, [(40, 10), (44, 10)], 0.25))
 
 
 class TheShortestStraightLineTree(unittest.TestCase):

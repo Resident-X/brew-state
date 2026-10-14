@@ -493,6 +493,16 @@ def long_pad(seed: Seed) -> None:
     seed.layout(edit)
 
 
+def token_zone(seed: Seed) -> None:
+    """A 2 mm square /LV_A pour over R2's pad 1, which once took a net with any zone out of the route-length rule."""
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/LV_A")], ["layer", Q("F.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000501")],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "0.2"]], ["min_thickness", "0.25"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
+            ["polygon", ["pts", ["xy", "44", "9"], ["xy", "46", "9"], ["xy", "46", "11"], ["xy", "44", "11"]]]]
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
+
+
 def drop_rule(name: str):
     def seed_it(seed: Seed) -> None:
         text = seed.read(".kicad_dru")
@@ -577,9 +587,15 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a short stub", "workmanship: KiCad reports a track ending free, unaided", "track_dangling", "workmanship item WORK-6", stub),
     ("a route wandering the long way round", "workmanship: a net's track length is measured against the tree joining its pads", "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.3 times",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 10)])),
+    ("a route wandering the long way round to a pad its net's pour covers", "workmanship: a zone never exempts a net's tracks from the route-length rule",
+     "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.3 times",
+     lambda seed: (reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 10)])(seed), token_zone(seed))),
     ("a track off the board's edges and the 45 degrees to them", "workmanship: each track's direction is measured against the board's edges", "workmanship_direction", "3.43 degrees off",
      reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (45, 10.3)])),
     ("a track entering a long pad from its side", "workmanship: the way a track enters a long pad is measured against the pad's axis", "workmanship_pad_entry", "enters it 90.00 degrees off its long axis", long_pad),
+    ("a track ending just short of a long pad's side", "workmanship: a track meets a pad where its end's copper reaches the pad's, as KiCad joins them",
+     "workmanship_pad_entry", "enters it 90.00 degrees off its long axis",
+     lambda seed: (long_pad(seed), reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (44.1, 10)])(seed))),
     ("a track running across a long pad from side to side", "workmanship: the way a track crosses a long pad is measured against the pad's axis", "workmanship_pad_entry", "runs across it 90.00 degrees off its long axis",
      lambda seed: (long_pad(seed), reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (46.5, 10)])(seed))),
     ("a route narrowed partway along", "workmanship: a track narrower than its class is measured against its figure", "workmanship_width", "0.15 mm wide, narrower than its net class's 0.25 mm",

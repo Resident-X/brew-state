@@ -50,6 +50,9 @@ accepted_on: 2026-10-01
 FIGURES = {"WORK_DETOUR_RATIO": "1.5", "WORK_NECK_MM": "1", "WORK_ANGLE_TOLERANCE_DEG": "0.1",
            "WORK_PAD_ENTRY_RATIO": "2", "WORK_PAD_ANGLE_DEG": "90"}
 
+#: Those figures as the check reads them.
+FIGURES_READ = {name: float(value) for name, value in FIGURES.items()}
+
 #: The workmanship custom rules every design's rules file holds.
 WORKMANSHIP = """\
 (rule "Corners"
@@ -1695,6 +1698,14 @@ class TracksMeetingAtAPadAreMeasured(unittest.TestCase):
         self.assertEqual(len(found), 1)
         self.assertIn("0.00 degrees apart", found[0].message)
 
+    def test_tracks_ending_short_of_the_pad_meet_it_by_their_end_caps(self):
+        # Neither end lies on the 1 mm round pad: each stops 0.1 mm short of its edge, inside a 0.25 mm track's cap.
+        found = self.corners(seg("/A", (5, 10), (9.4, 10)), seg("/A", (10, 10.6), (10, 15)))
+        self.assertEqual([v.rule for v in found], ["workmanship_pad_corner"])
+        self.assertIn("90.00 degrees apart", found[0].message)
+        self.assertEqual(self.corners(seg("/A", (5, 10), (9.3, 10), 0.15), seg("/A", (10, 10.7), (10, 15), 0.15)), [],
+                         "tracks whose caps fall short of the pad do not meet it")
+
 
 class RouteLengthIsMeasuredAgainstThePadTree(unittest.TestCase):
     # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
@@ -1722,9 +1733,33 @@ class RouteLengthIsMeasuredAgainstThePadTree(unittest.TestCase):
         self.assertEqual(len(found), 1, "half a circle of 1 mm radius and its return take the net past 1.3 times its tree")
         self.assertIn(f"{10 + math.pi + 1.5:.2f} mm long", found[0].message)
 
-    def test_a_net_with_a_zone_or_fewer_than_two_pads_is_not_measured(self):
+    def test_a_zone_never_exempts_a_nets_tracks(self):
+        # A token zone of the net sat over R2's pad leaves the looping route measured as before.
         loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
-        self.assertEqual(board_check.detours(DESIGN, board(*TWO_PADS, *loop, zone("/A", [(0, 0), (1, 0), (1, 1)])), 1.3), [])
+        token = zone("/A", [(19.8, 9.8), (20.2, 9.8), (20.2, 10.2), (19.8, 10.2)])
+        found = board_check.detours(DESIGN, board(*TWO_PADS, *loop, token), 1.3)
+        self.assertEqual([v.rule for v in found], ["workmanship_detour"])
+        self.assertIn("2.20 times the 10.00 mm", found[0].message)
+
+    def test_a_pad_only_a_zones_fill_joins_drops_out_of_the_tree(self):
+        # R3, 20 mm off, is joined by the net's zone and by no track: counted, it would stretch the tree to 30.6 mm and
+        # pass the loop; it drops out, and the loop is measured against the 10 mm joining the pads its tracks join.
+        far = part("R3", "15 30", ("1", "/A", 0, 0, "circle", 1, 1))
+        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
+        found = board_check.detours(DESIGN, board(*TWO_PADS, far, *loop, zone("/A", [(0, 25), (30, 25), (30, 35)])), 1.3)
+        self.assertEqual([(v.rule, v.location) for v in found], [("workmanship_detour", "net /A: 2 pads, from pad 1 of R1 at (10, 10) mm")])
+
+    def test_a_pad_a_track_ends_short_of_is_joined_by_its_end_cap(self):
+        # The loop's ends stop 0.1 mm short of each round pad's edge, inside a 0.25 mm track's cap: both pads are joined.
+        loop = [seg("/A", (10, 9.4), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 9.4))]
+        found = board_check.detours(DESIGN, board(*TWO_PADS, *loop), 1.3)
+        self.assertEqual([v.rule for v in found], ["workmanship_detour"])
+        self.assertEqual(board_check.detours(DESIGN, board(*TWO_PADS, *[seg("/A", (10, 9.3), (10, 4), 0.15), seg("/A", (10, 4), (20, 4), 0.15),
+                                                                         seg("/A", (20, 4), (20, 9.3), 0.15)]), 1.3), [],
+                         "a narrower track's caps fall short of both pads, which it then does not join")
+
+    def test_fewer_than_two_pads_joined_is_not_measured(self):
+        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
         self.assertEqual(board_check.detours(DESIGN, board(TWO_PADS[0], *loop), 1.3), [])
 
     def test_a_net_of_many_pads_is_measured_against_its_tree_not_a_chain(self):
@@ -1813,6 +1848,20 @@ class LongPadsAreEnteredAlongTheirAxis(unittest.TestCase):
         self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10, 10), (10, 10.1))), 2, 0.1), [])
         self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/B", (10, 10), (10, 15))), 2, 0.1), [])
 
+    def test_a_track_ending_short_of_a_long_pads_side_enters_it_by_its_end_cap(self):
+        # The pad's long side is at y = 10.15; the track stops 0.1 mm short of it, inside its 0.125 mm cap.
+        found = board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10, 15), (10, 10.25))), 2, 0.1)
+        self.assertEqual([v.rule for v in found], ["workmanship_pad_entry"])
+        self.assertIn("enters it 90.00 degrees off its long axis", found[0].message)
+        self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10, 15), (10, 10.25), 0.15)), 2, 0.1), [],
+                         "a narrower track's cap falls short of the pad")
+
+    def test_a_track_whose_copper_runs_over_a_long_pads_end_off_its_centre_line_runs_across_it(self):
+        # The centre line at x = 10.55 passes 0.05 mm beyond the pad's rounded end; the 0.25 mm track's copper runs over it.
+        found = board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10.55, 8), (10.55, 12))), 2, 0.1)
+        self.assertEqual([v.rule for v in found], ["workmanship_pad_entry"])
+        self.assertIn("runs across it 90.00 degrees off its long axis", found[0].message)
+
     def test_an_arc_is_judged_by_the_way_it_runs_where_it_enters(self):
         # A quarter circle centred at (10, 11) leaves the pad's centre running along x, along the long axis.
         along = arc("/A", (10, 10), (10 + math.sqrt(0.5), 11 - math.sqrt(0.5)), (11, 11))
@@ -1877,6 +1926,31 @@ class NarrowingIsMeasuredAgainstTheClassWidth(unittest.TestCase):
         members = {"Power": {"/BOTH"}, "Sense": {"/BOTH", "/S"}}
         self.assertEqual(board_check.net_widths({"/BOTH", "/S", "/OTHER"}, members, widths),
                          {"/BOTH": 0.8, "/S": 0.3, "/OTHER": 0.25})
+
+
+class APadTheCheckCannotSizeFailsByName(unittest.TestCase):
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """Whether a track meets a pad is judged from the pad's copper, so a pad
+    whose copper the check cannot size fails the measures that need it,
+    naming the pad, rather than being guessed.
+    """
+
+    CUSTOM = ('(footprint "lib:part" (layer "F.Cu") (at 20 10) (property "Reference" "U9" (at 0 0 0)) '
+              '(pad "1" smd custom (at 0 0) (size 0.5 0.5) (layers "F.Cu") (net "/A") (options (clearance outline) (anchor rect)) '
+              '(primitives (gr_poly (pts (xy 0 0) (xy 3 0) (xy 0 3)) (width 0) (fill yes)))))')
+
+    def test_a_custom_pad_a_track_of_its_net_reaches_fails_naming_it(self):
+        loop = [seg("/A", (10, 10), (10, 4)), seg("/A", (10, 4), (20, 4)), seg("/A", (20, 4), (20, 10))]
+        layout = board(TWO_PADS[0], self.CUSTOM, *loop)
+        found = board_check.measured(DESIGN, layout, FIGURES_READ, 135)
+        self.assertEqual([(v.rule, v.location) for v in found],
+                         [("workmanship_pad_copper", "net /A: pad 1 of U9 at (20, 10) mm")])
+        self.assertIn("cannot be measured at pad 1 of U9: its shape is custom", found[0].message)
+
+    def test_a_custom_pad_no_track_of_its_net_reaches_is_not_needed(self):
+        self.assertEqual(board_check.measured(DESIGN, board(self.CUSTOM), FIGURES_READ, 135), [])
+        self.assertEqual(board_check.measured(DESIGN, board(self.CUSTOM, seg("/A", (10, 10), (10, 4), layer="B.Cu")),
+                                              FIGURES_READ, 135), [], "a track of its net on a layer the pad is not on")
 
 
 class KiCadsWorkmanshipFindingsNameTheirItem(unittest.TestCase):

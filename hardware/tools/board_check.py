@@ -1297,15 +1297,14 @@ def circumcircle(a, b, c):
     return (ux, uy), math.hypot(a[0] - ux, a[1] - uy)
 
 
-def distance_to_segment(point, a, b) -> float:
-    dx, dy = b[0] - a[0], b[1] - a[1]
-    size = dx * dx + dy * dy
-    t = 0.0 if size == 0 else max(0.0, min(1.0, ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / size))
-    return math.hypot(point[0] - (a[0] + t * dx), point[1] - (a[1] + t * dy))
-
-
 class Layout:
-    """The copper of a layout the measured rules read: every track, arc and pad, by net, and the nets a zone carries."""
+    """The copper of a layout the measured rules read: every track, arc and pad, by net.
+
+    Whether a track meets a pad is judged from the copper by board_geometry's
+    contact rule, and a pad whose copper that rule cannot size is never
+    measured: it is listed in `unsized` when tracks of its net reach a layer it
+    is on, and the measures fail the board naming it.
+    """
 
     def __init__(self, tree: list):
         table = board_geometry.net_table(tree)
@@ -1322,22 +1321,26 @@ class Layout:
                 board_geometry.xy(sexpr.child(node, "start"), what), board_geometry.xy(sexpr.child(node, "end"), what),
                 board_geometry.number(width, 1, what) if width is not None else 0.0,
                 board_geometry.xy(sexpr.child(node, "mid"), what) if head == "arc" else None))
-        self.zoned_nets: Set[str] = set()
-        for node in sexpr.children(tree, "zone"):
-            net = board_geometry.item_net(node, table, "a zone of the layout")
-            if net and sexpr.child(node, "keepout") is None:
-                self.zoned_nets.add(net)
         self.pads = board_geometry.pads(tree)
         self.edges = edge_angle(tree)
+        routed = {(copper.net, copper.layer) for copper in self.copper if copper.net}
+        self.unsized = [pad for pad in self.pads if not pad.sized() and pad.net
+                        and any(net == pad.net and pad.on(layer) for net, layer in routed)]
 
     def pads_of(self, net: str, layer: str) -> List[board_geometry.Pad]:
-        return [pad for pad in self.pads if pad.net == net and pad.on(layer)]
+        """Every pad of a net on a layer whose copper the contact rule can size."""
+        return [pad for pad in self.pads if pad.net == net and pad.on(layer) and pad.sized()]
 
-    def on_pad(self, net: str, layer: str, point) -> Optional[board_geometry.Pad]:
-        return next((pad for pad in self.pads_of(net, layer) if pad.contains(point)), None)
+    def reached(self, copper: Copper, end) -> List[board_geometry.Pad]:
+        """Every pad of the copper's net and layer that its end at `end` reaches."""
+        return [pad for pad in self.pads_of(copper.net, copper.layer)
+                if board_geometry.end_reaches(pad, end, copper.width)]
 
-    def zoned(self, net: str) -> bool:
-        return net in self.zoned_nets
+    def joined(self, net: str) -> List[board_geometry.Pad]:
+        """Every pad of a net its tracks join, as KiCad's connectivity joins them."""
+        tracks = [copper for copper in self.copper if copper.net == net]
+        return [pad for pad in self.pads if pad.net == net and pad.sized() and any(
+            pad.on(copper.layer) and board_geometry.joins(pad, copper.points(), copper.width) for copper in tracks)]
 
 
 def edge_angle(tree: list) -> float:
@@ -1389,13 +1392,16 @@ def pad_corners(design: Design, layout: Layout, corner: Optional[float], branch:
     """
     found = []
     for pad in layout.pads:
+        if not pad.sized():
+            continue
         for layer in sorted({copper.layer for copper in layout.copper if copper.net == pad.net and pad.on(copper.layer)}):
             leaving = []
             for copper in layout.copper:
                 if copper.net != pad.net or copper.layer != layer:
                     continue
                 for end, other in ((copper.start, copper.end), (copper.end, copper.start)):
-                    if pad.contains(end) and not pad.contains(other):
+                    if (board_geometry.end_reaches(pad, end, copper.width)
+                            and not board_geometry.end_reaches(pad, other, copper.width)):
                         heading = copper.heading(end)
                         if copper.centre is None and end == copper.end:
                             heading = (-heading[0], -heading[1])
@@ -1429,12 +1435,18 @@ def pad_corners(design: Design, layout: Layout, corner: Optional[float], branch:
 
 
 def detours(design: Design, layout: Layout, ratio: float) -> List[Violation]:
-    """WORK-2: every net routed in tracks whose track length exceeds `ratio` times the shortest tree joining its pads."""
+    """WORK-2: every net routed in tracks whose track length exceeds `ratio` times the shortest tree joining the pads they join.
+
+    A pad no track of the net reaches, one a copper zone's fill joins, drops
+    out of the tree; a zone never exempts the net's tracks. A net with a pad
+    the contact rule cannot size is not measured, the board failing on that
+    pad by name.
+    """
     found = []
-    by_net = board_geometry.by_net(layout.pads)
-    for net in sorted({copper.net for copper in layout.copper if copper.net}):
-        pads_ = by_net.get(net, [])
-        if len(pads_) < 2 or layout.zoned(net):
+    unsized = {pad.net for pad in layout.unsized}
+    for net in sorted({copper.net for copper in layout.copper if copper.net} - unsized):
+        pads_ = layout.joined(net)
+        if len(pads_) < 2:
             continue
         tree = board_geometry.pad_tree(pads_)
         length = sum(copper.length for copper in layout.copper if copper.net == net)
@@ -1467,20 +1479,17 @@ def directions(design: Design, layout: Layout, tolerance: float) -> List[Violati
 
 
 def crossed(layout: Layout, copper: Copper) -> List[Tuple[Tuple[float, float], board_geometry.Pad]]:
-    """Each pad of its net a straight track runs across with neither end on it, with the point of the track nearest its centre."""
+    """Each pad of its net whose copper the track's copper runs over with neither end reaching it, with a point of the
+    track's centre line where it does, at which its direction is read."""
     found = []
-    if copper.mid is not None:
-        return found
+    line = copper.points()
     for pad in layout.pads_of(copper.net, copper.layer):
-        if pad.contains(copper.start) or pad.contains(copper.end):
+        if any(board_geometry.end_reaches(pad, end, copper.width) for end in (copper.start, copper.end)):
             continue
-        dx, dy = copper.end[0] - copper.start[0], copper.end[1] - copper.start[1]
-        size = dx * dx + dy * dy
-        t = 0.0 if size == 0 else max(0.0, min(1.0, ((pad.centre[0] - copper.start[0]) * dx
-                                                    + (pad.centre[1] - copper.start[1]) * dy) / size))
-        nearest = (copper.start[0] + t * dx, copper.start[1] + t * dy)
-        if pad.contains(nearest):
-            found.append((nearest, pad))
+        over = [(a, b) for a, b in zip(line, line[1:]) if board_geometry.line_reaches(pad, a, b, copper.width)]
+        if over:
+            a, b = min(over, key=lambda piece: board_geometry.distance_to_segment(pad.centre, *piece))
+            found.append((((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), pad))
     return found
 
 
@@ -1490,9 +1499,9 @@ def pad_entries(design: Design, layout: Layout, ratio: float, tolerance: float) 
     for copper in layout.copper:
         meetings = []
         for end, other_end in ((copper.start, copper.end), (copper.end, copper.start)):
-            pad = layout.on_pad(copper.net, copper.layer, end)
-            if pad is not None and not pad.contains(other_end):
-                meetings.append((end, pad, "enters it"))
+            for pad in layout.reached(copper, end):
+                if not board_geometry.end_reaches(pad, other_end, copper.width):
+                    meetings.append((end, pad, "enters it"))
         meetings += [(point, pad, "runs across it") for point, pad in crossed(layout, copper)]
         for end, pad, how in meetings:
             axis = pad.long_axis()
@@ -1522,7 +1531,7 @@ def off_pads(layout: Layout, copper: Copper, steps: int = 200) -> float:
         for i in range(steps):
             t = (i + 0.5) / steps
             point = (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
-            if not any(pad.contains(point) for pad in pads_):
+            if not any(pad.distance(point) <= board_geometry.CONTACT for pad in pads_):
                 off += piece
     return off
 
@@ -1547,7 +1556,7 @@ def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, fl
     found = []
     for group in groups:
         length = sum(off_pads(layout, copper) for copper in group)
-        at_pad = any(layout.on_pad(copper.net, copper.layer, end) for copper in group for end in (copper.start, copper.end))
+        at_pad = any(layout.reached(copper, end) for copper in group for end in (copper.start, copper.end))
         if at_pad and length <= neck + 1e-6:
             continue
         copper = min(group, key=lambda item: (item.start, item.end))
@@ -1562,12 +1571,23 @@ def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, fl
     return found
 
 
+def unsized_pads(design: Design, layout: Layout) -> List[Violation]:
+    """Every pad tracks of its net reach a layer of, whose copper the contact rule cannot size, so the measures that ask
+    whether a track meets it cannot be made."""
+    return [Violation(design.project, "workmanship_pad_copper",
+                      f"net {pad.net}: {pad.name()} at ({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm",
+                      f"WORK-2, WORK-4, WORK-8 and WORK-10 cannot be measured at {pad.name()}: {pad.unsized}, and the "
+                      f"check sizes a pad's copper only as a circle, an oval, a rectangle or a rounded rectangle, so it "
+                      f"cannot tell whether a track of {pad.net} meets it; give the pad one of those shapes")
+            for pad in layout.unsized]
+
+
 def measured(design: Design, layout: Layout, figures: Dict[str, float], corner: Optional[float]) -> List[Violation]:
     """Every measured workmanship rule but the width rule, which needs the nets' classes, each whose figure the design sets.
 
     `corner` is the corner rule's minimum, which two tracks meeting at a pad are held to.
     """
-    found = []
+    found = unsized_pads(design, layout)
     if "WORK_PAD_ANGLE_DEG" in figures:
         found += pad_corners(design, layout, corner, figures["WORK_PAD_ANGLE_DEG"])
     if "WORK_DETOUR_RATIO" in figures:
