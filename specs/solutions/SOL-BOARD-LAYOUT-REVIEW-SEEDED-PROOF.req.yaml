@@ -26,6 +26,10 @@ links:
     type: justified-by
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: depends-on
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-c619d948b8711651)
+  fingerprint: 43430029e0d9b821ff3b5d6752cbc80870e074396cbd33246f7521fb1b67665d
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
     class: new-condition
