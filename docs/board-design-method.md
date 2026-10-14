@@ -4,7 +4,7 @@ This is how a controller board is designed in KiCad so that it passes the pre-or
 
 A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
 
-The sections after the tools are carried out in the order they appear. The first two, proving value-critical circuits and designing for bring-up, are schematic work, finished and committed before any footprint is placed on the board; the rules and the routing follow. A board that fails any section's step is not ordered. The pre-order check does not read the records the first two sections keep, so passing it does not stand in for them.
+The sections after the tools, up to and including routing, are carried out in the order they appear. The first three, proving value-critical circuits, designing for bring-up and planning the layout, are finished and committed before any footprint is placed on the board; the rules and the routing follow. A board that fails any section's step is not ordered. The pre-order check does not read the records the first three sections keep, so passing it does not stand in for them. The last two sections, [Layout review views](#layout-review-views) and [Layout practice catalogue](#layout-practice-catalogue), are not steps carried out in order: they are reference lists the steps use. The catalogue cites only documents any reader can obtain without charge.
 
 ## Tools
 
@@ -219,7 +219,7 @@ In that folder, judge steps 1 to 3, and cross-check the record against the schem
 - **Every figure and input is where the row says it was read.** Open each source the row names, the constraints record as it stood in that commit or the named datasheet's table or graph, and find the value there.
 - **Every result is reproduced.** Run each simulation input again, as step 3 does, with its log written to the work folder. It must exit with status 0 and print the measurement line **Result** quotes. Run each script again; it must print the result quoted.
 
-Remove the checkout once this step and step 4 of the next section have been judged in it, with `git worktree remove <work folder>/before-placement`.
+Remove the checkout once this step, step 4 of the next section and step 3 of [Planning the layout](#planning-the-layout) have been judged in it, with `git worktree remove <work folder>/before-placement`.
 
 A row that was missing, empty or not met in that commit, or that fails a cross-check, fails this step, however complete it is now.
 
@@ -322,6 +322,62 @@ A board on which any rail lacks a test point or an isolating link, any producer-
 
 Out of scope for this section: carrying out bring-up on built boards, and choosing which signals of a particular board are key, which is that board's own design work.
 
+## Planning the layout
+
+Do this before any footprint is placed on the board, once the schematic the two previous sections prove and provide for is finished. Its purpose is that the first layout is designed to the [Layout practice catalogue](#layout-practice-catalogue) rather than brought up to it by review: the board has a written floorplan, and a plan of how its layout meets every catalogue item that applies to it, before any part is placed. The rules section then writes every rule-kind item that applies into the board's rules before routing, and the layout review confirms a board drawn to this plan.
+
+Keep the floorplan and the plan in a file named `layout-plan.md` in the board's own folder, beside its KiCad project.
+
+### 1. Draw the floorplan
+
+The floorplan divides the board into regions and places its connectors. Give it a region table with exactly these four rows:
+
+| Region | Bounds | What it holds |
+|---|---|---|
+
+- **Region** is one of `mains`, `low voltage`, `analog sensing` and `digital`. The mains region holds every mains-referenced part and its copper; low voltage holds the low-voltage supplies, their regulators and the load drive stages; analog sensing holds every sensing front end, and any converter of its own part that the front ends feed; digital holds the controller and the logic it drives.
+- **Bounds** gives the region's extent in board coordinates, in millimetres, as the rectangles `(x1, y1)–(x2, y2)` that make it up, corner to opposite corner. Board coordinates are those KiCad's board editor shows and the layout review views state in their captions. Regions do not overlap.
+- **What it holds** names the blocks of the schematic placed in the region, for example `load drive stages, Q3–Q6, R20–R27`.
+
+A board that carries no mains records its mains region as `none`: a board whose schematic carries no mains-referenced net, which the rules section therefore declares `MAINS` `none` (step 2 there), writes `none: the board carries no mains` in Bounds. A board whose schematic carries no circuit of one of the other three kinds writes `none` in Bounds with what the schematic lacks, for example `none: the schematic carries no sensing front end`.
+
+Below it, keep a connector table with one row for every connector, terminal or header of the schematic, test points aside:
+
+| Connector | Edge | Position |
+|---|---|---|
+
+- **Connector** is its reference designator.
+- **Edge** is the board edge it sits at, `top`, `bottom`, `left` or `right` as seen from the board's front in board coordinates, or `none` for one that sits away from every edge, with the reason, such as a programming header reached only at bring-up.
+- **Position** is the board coordinates, in millimetres, of the connector's pin 1.
+
+### 2. Plan every catalogue item
+
+Below the floorplan, keep a plan table with one row for every item of the [Layout practice catalogue](#layout-practice-catalogue), in the catalogue's order:
+
+| Item | Applies | How the layout meets it, or why it does not apply |
+|---|---|---|
+
+- **Item** is the item's identifier, for example `GROUND-1`.
+- **Applies** is `yes` or `no`, read from the item's *Applies when* against the schematic. An item whose condition the schematic meets is `yes`; it cannot be marked `no`.
+- For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from.
+- For an item that does not apply, the last column gives the reason against the item's condition, stating what the schematic lacks, for example `no crystal or ceramic resonator in the schematic` for `CLOCK-1`.
+
+### 3. Commit the floorplan and plan before placement
+
+Commit `layout-plan.md` before the first commit that places a footprint on the board. It is judged as it stood in the commit before placement, on the branch as pushed and in the checkout step 4 of [Proving value-critical circuits before layout](#proving-value-critical-circuits-before-layout) makes, found the same way, with `layout-plan.md` in place of `circuit-proof.md`. There, export the schematic's netlist in KiCad's own format, `kicad-cli sch export netlist --output <work folder>/check.net <board>.kicad_sch`, and cross-check the plan against it, the schematic and the catalogue in the checkout's own copy of this document, `docs/board-design-method.md`, rather than taking its word:
+
+- the region table has its four rows, each with bounds or a `none` the schematic bears out: the mains region is `none` exactly when the schematic carries no mains-referenced net, and no two regions' rectangles overlap;
+- every connector, terminal or header in the netlist, test points aside, has exactly one row in the connector table, with an edge and a position, and the table names no other part;
+- the plan table has exactly one row for every item of the catalogue as it stood in that commit, and names no other;
+- each row marked `no` gives a reason against the item's *Applies when* that the schematic bears out, so no item whose condition the schematic meets is marked `no`;
+- each row marked `yes` says how the layout meets the item, and each region, part and net it names is one the floorplan or the netlist holds.
+
+A plan that is missing, incomplete or uncommitted in that checkout, or that fails a cross-check above, fails this step, however complete it is now. A part added to the schematic after placement is planned for, by amending the floorplan and every row whose item it bears on, and that change is committed before the part is placed.
+
+A plan item the finished layout does not meet is a finding at review.
+
+Out of scope for this section: the layout review itself, and producing the views it judges a board on, which [Layout review views](#layout-review-views) describes.
+
 ## Rules before routing
 
 Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and that the table says which of them KiCad confirms on the board itself, which KiCad's rule check enforces before the board is ordered, and which, a net class's track width and via sizes, are only the defaults routing starts from.
@@ -336,7 +392,8 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
 |---|---|---|---|---|
 
 - **Design rules** are the board-wide minimums (clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge, silkscreen), each custom rule in the board's rules file, and every net class's own clearance, track width and via sizes.
-- **Source** says where the figure comes from, for example: the machine's constraints record (name the figure in it); a requirement the board serves (name the requirement); the manufacturer's stated limits (name the manufacturer and the date of the capability page the figure was read from); the separation basis record; the circuit-proof record, for a width, a copper pour's connection width or a hole a circuit's proof assumed (name the circuit's row); or a finding from a layout review that became a rule (name the review). "Default", "typical" or "what KiCad had" is not a source.
+- **Source** says where the figure comes from, for example: the machine's constraints record (name the figure in it); a requirement the board serves (name the requirement); the manufacturer's stated limits (name the manufacturer and the date of the capability page the figure was read from); the separation basis record; the circuit-proof record, for a width, a copper pour's connection width or a hole a circuit's proof assumed (name the circuit's row); a rule-kind item of the [Layout practice catalogue](#layout-practice-catalogue) (name the item by its identifier, and, where the item names its figure by its role, also the record the board's figure was read from, as in `POWER-1; the machine's constraints record, the load supply's continuous current`); or a finding from a layout review that became a rule (name the review). "Default", "typical" or "what KiCad had" is not a source.
+- **Carried rules.** Every rule-kind item of the catalogue that applies to the board, by its *Applies when* and as the plan in `layout-plan.md` records it, puts each rule it gives into this table, one row per rule, with the item as its source. Write each rule in the form the item gives it, a board-wide minimum, a net class's figure or a custom rule. Where the item names a net class by its role, such as `<power class>`, write the board's own name for that class in its place; the `Mains` class is named as it is. Where the item names a figure by its role, read the figure from the record the role names. A board that has more than one class in a role carries the rule once for each. An applicable rule-kind item whose rules are missing from this table, or from the board, fails this step.
 - **Confirmed in effect** says, for each kind of row, what stands behind it, and nothing else may be written there:
   - a **custom rule** in the board's rules file: that KiCad loaded the rules file, from step 3's output;
   - a **net class**: the nets step 3 lists for it;
@@ -378,7 +435,7 @@ Every board declares this in its project text variable `MAINS`, set to exactly `
   	(constraint creepage (min <creepage>mm)))
   ```
 
-  The condition is written exactly as shown, with no other spacing. The rule has no `(layer ...)` clause and no other narrowing by layer or area. It holds both a `clearance` and a `creepage` constraint, each in millimetres. `<clearance>` and `<creepage>` are no less than the separation basis record's mains-to-low-voltage clearance and creepage (`mains_to_low_voltage.clearance_mm` and `.creepage_mm` in the `separation-basis.yaml` that holds the board to its signed figures). In the table from step 1, both figures name that record as their source. The pre-order check accepts the rule in this form only, and holds the board to the record's figures whatever the rule states.
+  The condition is written exactly as shown, with no other spacing. The rule has no `(layer ...)` clause and no other narrowing by layer or area. It holds both a `clearance` and a `creepage` constraint, each in millimetres. `<clearance>` and `<creepage>` are no less than the separation basis record's mains-to-low-voltage clearance and creepage (`mains_to_low_voltage.clearance_mm` and `.creepage_mm` in the `separation-basis.yaml` that holds the board to its signed figures). In the table from step 1, both figures name catalogue item `MAINS-1` and that record as their source; this rule is the one `MAINS-1` carries. The pre-order check accepts the rule in this form only, and holds the board to the record's figures whatever the rule states.
 
 **Local clearance overrides can defeat the separation rule.** Pads, footprints and zones can each carry a clearance of their own, set outside the custom rules. A local clearance override on a pad or a footprint takes precedence over every custom rule in KiCad, which applies the larger of the two items' overrides. So a small override on either side of a mains/low-voltage pair would let low-voltage copper sit closer to mains than the separation rule allows. Treat a zone's own clearance the same way, although KiCad 10 (10.0.7) was measured not to let it outrank a custom rule. Set none of these below the separation basis record's clearance. The pre-order check fails any pad or footprint override that undercuts the signed figure, and any zone on a `Mains`-class net whose own clearance does. It checks a zone's clearance only on a `Mains`-class net. A zone's own clearance does not outrank the separation rule, so a low-voltage zone's cannot undercut it; a `Mains`-class zone is still held to the signed figure, so the board never states a smaller mains separation than the one it is checked against.
 
@@ -410,7 +467,7 @@ The board editor does not see rules or classes written to the project, or a rule
 
 If an editor held the board open at any point in this section, close it now, and check that what you wrote is still in the project file and the rules file, since quitting the editor writes its own copy of the project file over the file. Write again whatever was lost, with the board closed, and repeat step 3 before reopening.
 
-Out of scope for this section: the figures themselves, which come from the machine's constraints record and its separation basis record, and the automated check that later holds the board to the rules its layout rule check enforces, the pre-order check.
+Out of scope for this section: the figures themselves, which come from the machine's constraints record and its separation basis record, the catalogue naming each such figure only by its role, and the automated check that later holds the board to the rules its layout rule check enforces, the pre-order check.
 
 ## Routing: critical nets by hand and locked, then the rest
 
@@ -558,3 +615,489 @@ The three-dimensional views say what they leave out in their own captions and in
 The command reports each part the three-dimensional views draw without its model, whatever the reason, a font KiCad substitutes and a layer the board does not carry as lines of their own as well. A board with any of them still gets its views: whether what they leave out matters is the review's judgement.
 
 Out of scope for this section: judging the images, which is the layout review step.
+
+## Layout practice catalogue
+
+This is the one statement of what a well laid-out board looks like. It is used three times on every board: the board is planned against it before placement ([Planning the layout](#planning-the-layout)), every rule-kind item that applies to it is written into its rules before routing ([Rules before routing](#rules-before-routing), step 1), and the layout review uses it as the baseline checklist a finished layout is judged item by item against. It holds no figure, part or board shape of any one machine. A figure that depends on the machine is named here by its role, such as the highest continuous current a class carries, and its number lives in that machine's records and its board's rules.
+
+### How an item is read
+
+Every item carries the same fields:
+
+- **Identifier**, its area and a number, such as `GROUND-1`. An identifier is never renumbered and never reused: a plan, a rule and a review cite items by it. A new item takes the next number its area has not used, and an item withdrawn keeps its identifier, marked withdrawn, so a citation of it still finds it.
+- **Applies when** states, in terms of what the board's schematic carries, the condition under which the item applies to a board. An item whose condition the schematic meets applies; it cannot be marked as not applying.
+- **Asks** is the question the item asks of a board.
+- **Passes** is the pattern that passes.
+- **Fails, as the views show it** is what a failing board looks like in the [layout review views](#layout-review-views).
+- **Judged on** names the views it is judged on: an image of one layer, `layer-<layer>`, such as `layer-F.Cu`; a critical net against the board, `net-<net>`; the critical classes against each other, `classes`; an integrated circuit with its decoupling, `crop-<reference>`; a side as assembled, `assembly-top` or `assembly-bottom`; the assembled board in three dimensions, `3d-top`, `3d-bottom` or `3d-angled`; or the fact table, `facts.txt`, which gives every net's track width range, via count, zones and classes. A rule-kind item is judged on the pre-order check's report.
+- **Kind** is one of two. A **rule-kind** item is enforced by the automated pre-order check, through the board's rules: it gives its rule in the form the rules step uses for its kind, a board-wide minimum, a net class's figure or a custom rule, with its figure and source. A net class it names by its role, such as `<power class>`, is replaced by the board's own name for that class; only the `Mains` class is named literally, since its name is fixed. A **judgement-kind** item is judged on the rendered views. A practice only partly expressible as a rule is two items, one of each kind, so every item has a single kind.
+- **Severity** is one of four:
+  - **safety**: the item bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing, or on insulation;
+  - **function**: a board failing it may not do its job, or may not meet a figure it is held to, such as a sensing accuracy;
+  - **quality**: a board failing it works, but with less margin, reliability or ease of manufacture or bring-up than it should have;
+  - **cosmetic**: a board failing it works as well, and only its appearance or legibility suffers.
+- **Source** is a published document any reader can obtain without charge, such as a part or tool manufacturer's application note, design guide or datasheet, cited by its title, publisher, section, address and the date it was read, and checked against the document itself, never cited from memory. A standard that must be bought, or a book that could not be opened and read, is not a source. An item added from a layout review with no published source names that review instead. Each item is stated fully enough to apply without reading its source.
+
+The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-floor), [power paths and heat](#power-paths-and-heat-power), [grounding and return paths](#grounding-and-return-paths-ground), [decoupling and switching loops](#decoupling-and-switching-loops-decouple), [sensing front ends](#sensing-front-ends-sense), [clocks](#clocks-clock), [separation of mains from low voltage](#separation-of-mains-from-low-voltage-mains), [connectors and mechanical fit](#connectors-and-mechanical-fit-conn), [test access and bring-up](#test-access-and-bring-up-test), [manufacture and assembly](#manufacture-and-assembly-mfg) and [emissions](#emissions-emi).
+
+### Floorplan and partitioning (FLOOR)
+
+#### FLOOR-1. Parts are grouped by function into their floorplan regions
+
+- **Applies when:** always.
+- **Asks:** Does every part sit in the region of the floorplan that holds its function, with like functions together rather than mixed?
+- **Passes:** Each part lies within the bounds `layout-plan.md` gives the region holding its block: mains, low voltage, analog sensing or digital. Fast logic, the controller among it, sits close to the low-voltage supply that feeds it; analog sensing sits farthest from fast logic and from switching stages.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the board coordinates in the caption, a sensing front end's parts scattered among the controller's or a switching stage's parts, or any part outside its region's bounds.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `classes`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning*, https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+#### FLOOR-2. Analog and digital signals stay in their own regions on every layer
+
+- **Applies when:** the schematic carries a sensing front end feeding a converter, on its own part or inside the controller.
+- **Asks:** Is every analog signal routed only within the analog sensing region, and every digital signal only within the digital region, on every copper layer?
+- **Passes:** No digital track crosses the analog sensing region, and no analog track crosses the digital region, on any layer. The two meet only at the converter, where the analog signal enters it.
+- **Fails, as the views show it:** on a `layer-<copper layer>` view, a digital track, such as a communication line or a drive output, running through the analog sensing region's bounds, or a sensing net on `net-<net>` running across the digital region.
+- **Judged on:** every `layer-<copper layer>`, `net-<net>` for each sensing net, `classes`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 2*, Analog Applications Journal 2Q 2013, SLYT512, the opening passage on split and partitioned planes ("Analog signals must be routed only in the board's analog section, and digital signals must be routed only in the board's digital section, with both on all layers", Figures 4 and 5), https://www.ti.com/lit/pdf/slyt512, read 2026-10-14; and Texas Instruments, *ADS8866* data sheet, SBAS614C, March 2019, § 12.1 *Layout Guidelines* ("Avoid crossing digital lines with the analog signal path"), https://www.ti.com/lit/ds/symlink/ads8866.pdf, read 2026-10-14.
+
+#### FLOOR-3. Supply entry, regulator and controller sit together, and the analog supply is taken from them
+
+- **Applies when:** the schematic carries a supply input feeding a regulator that powers a controller.
+- **Asks:** Do the supply input, the regulator it feeds and the controller sit next to one another, joined by a wide ground, with any analog supply filtered or regulated from the digital one rather than taken from the far side of the board?
+- **Passes:** The supply input's connector, the regulator and the controller are adjacent, with a solid or gridded ground spanning all three. Power reaches the digital circuits first and is filtered or regulated before it feeds the analog sensing region.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the regulator far from the supply input or from the controller, so that the supply crosses the board; on a ground `net-<net>`, the three joined only by thin tracks; on `classes`, the analog supply's copper running direct from the supply input past the digital region.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `net-<net>` for the ground and supply nets, `classes`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("Locate the microcomputer next to the voltage regulator, and the voltage regulator next to where VBatt enters the board"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Grounding in mixed-signal systems demystified, Part 2*, Analog Applications Journal 2Q 2013, SLYT512, section *Grounding when multiple data converters are used on a single board* ("The power should enter the board in the digital partition and be fed directly to the digital circuitry, then filtered or regulated to feed the analog circuitry"), https://www.ti.com/lit/pdf/slyt512, read 2026-10-14.
+
+### Power paths and heat (POWER)
+
+#### POWER-1. Every class carrying supply or load current has a minimum track width for its current
+
+- **Applies when:** the schematic carries a supply input or a part that switches a load, which puts nets carrying their current in a power class (step 1 of routing). The `Mains` class is such a class where its nets carry a load's current.
+- **Asks:** Is every track on a class carrying supply or load current at least 0.381 mm wide for each ampere of the highest continuous current any net of that class carries?
+- **Passes:** The board's rules hold, for each such class, this custom rule, and the pre-order check reports no `track_width` violation:
+
+  ```
+  (rule "<power class> track width"
+  	(condition "A.hasNetclass('<power class>')")
+  	(constraint track_width (min <width>mm)))
+  ```
+
+  `<width>` is 0.381 mm times the highest continuous current, in amperes, that any net of the class carries, read from the machine's constraints record or a requirement the board serves. The source gives 0.381 mm (15 mils) per ampere as the absolute minimum for a standard board. Where the circuit-proof record also holds a track width on the class, write one rule with the larger of the two figures and name both sources in its row: KiCad applies only the last of two rules whose conditions match the same track (KiCad, *PCB Editor* manual, version 10.0, *Custom rule syntax*).
+- **Fails, as the views show it:** the pre-order check reports a `track_width` violation on a track of the class, or the board's rules table has no row for this rule on a class the plan says it applies to.
+- **Judged on:** the pre-order check's report.
+- **Kind:** rule. **Severity:** function.
+- **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 5 *Traces and Ground Plane* ("make the traces an absolute minimum of 15 mils (0.381mm) per Ampere"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
+
+#### POWER-2. Power paths are short, direct and wide, with their parts close together
+
+- **Applies when:** the schematic carries a supply input or a part that switches a load.
+- **Asks:** Is every path carrying supply or load current as short, direct and wide as the board allows, between parts placed close together?
+- **Passes:** Each power net runs the shortest practical way between the parts it joins, at a width well above the minimum `POWER-1` sets wherever there is room, with no detour and no neck narrower than the rest of the path. The parts a high current flows through in turn sit next to one another.
+- **Fails, as the views show it:** on `net-<net>` for a power net, a track wandering around the board, or a wide track narrowing to a thin one partway along; in `facts.txt`, a power net whose track width range reaches down to the board's minimum.
+- **Judged on:** `net-<net>` for each power-class net, `facts.txt`, `classes`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 5 *Traces and Ground Plane* ("Make all of the power (high current) traces as short, direct, and thick as possible"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
+
+#### POWER-3. A current that changes layer passes through one via for every 200 mA
+
+- **Applies when:** the schematic carries a supply input or a part that switches a load, and the board has more than one copper layer.
+- **Asks:** Where a path carrying supply or load current changes copper layer, does it pass through at least one via of the board's standard size for every 200 mA of the current it carries?
+- **Passes:** At each place a power path changes layer, the vias sharing its current number at least the path's continuous current divided by 200 mA, rounded up, each of the board's standard via size, the via size its rules give as the board's default.
+- **Fails, as the views show it:** on `net-<net>` for a power net, a single via carrying the whole of a path's current from one layer to another; in `facts.txt`, a power net whose via count is lower than its layer changes need.
+- **Judged on:** `net-<net>` for each power-class net, `facts.txt`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 5 *Traces and Ground Plane* ("use one standard via per 200 mA of current if the trace will need to conduct a significant amount of current from one plane to the other"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
+
+#### POWER-4. An exposed thermal pad is soldered to a thermal land with solidly connected vias
+
+- **Applies when:** the schematic carries a part whose package has an exposed pad on its underside meant to carry heat into the board, as its datasheet states.
+- **Asks:** Does each such part sit on a copper thermal land it is soldered to, sized from its datasheet, with thermal vias carrying heat into an inner plane or the far side, each joined to that copper all the way round rather than through relief spokes?
+- **Passes:** A copper land under the exposed pad, its solderable area defined by the solder mask to the datasheet's maximum exposed-pad size, with as much copper beyond it as heat needs. On a board of more than one layer, thermal vias in the land join it to a plane, each connected with a continuous ring of copper on every layer it joins, never by relief spokes.
+- **Fails, as the views show it:** on `crop-<reference>` or `layer-F.Cu`, an exposed pad with no land or a land no bigger than the pad and no copper beyond; on a plane's `layer-<copper layer>`, the thermal vias joined to the plane by spokes, seen as a ring of gaps round each via.
+- **Judged on:** `crop-<reference>`, `layer-<copper layer>` for each layer the vias join, `layer-F.Mask` or `layer-B.Mask`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *PowerPAD Thermally Enhanced Package*, SLMA002H, revised July 2018, § 2.3 *Thermal Lands* and § 2.4 *Thermal Vias* ("it is recommended that all vias used under the package make internal connections to the planes using a continuous connection completely around the hole diameter"), https://www.ti.com/lit/pdf/slma002, read 2026-10-14.
+
+#### POWER-5. A leaded switching part that sheds heat through its leads has copper area on them
+
+- **Applies when:** the schematic carries a part that switches a load, such as a phototriac, a triac or a transistor, whose datasheet states that its heat leaves mainly through its leads or pads into the board.
+- **Asks:** Do that part's pads carry as much copper area, on both sides of the board, as there is room for, while keeping the separation its input and output sides need?
+- **Passes:** The part's load-side pads are joined to copper areas on both outer layers, as large as the space allows, with thermal vias between them where the layer count allows. Every pin the datasheet says is soldered is soldered, none left open or socketed. The copper stops short of the separation its isolated sides need, which `MAINS-1` holds where those sides are mains and low voltage.
+- **Fails, as the views show it:** on `layer-F.Cu` and `layer-B.Cu`, the part's load-side pads joined by bare tracks with no copper area round them.
+- **Judged on:** `layer-F.Cu`, `layer-B.Cu`, `assembly-top` or `assembly-bottom`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Vishay Semiconductors, *VO3526 Power Phototriac Design Considerations*, Application Note 33, document 81937, Rev. 1.1, 19 October 2011, section *PCB Design Considerations* ("The size of the pads and copper area on both top and bottom sides should be as big as possible while keeping a minimum safe distance between input and output pins"), https://www.vishay.com/docs/81937/appnote.pdf, read 2026-10-14.
+
+### Grounding and return paths (GROUND)
+
+#### GROUND-1. Ground is a plane, not a set of tracks
+
+- **Applies when:** always.
+- **Asks:** Is the board's ground a continuous plane, or on a board whose layers cannot give it one, a grid of copper joined at both ends of every run, rather than tracks?
+- **Passes:** The ground net is a copper zone covering as much of at least one layer as the other copper leaves free, unbroken across the regions it serves. On a two-layer board, the remaining space on both layers is filled with ground and the fills are joined to each other through as many vias as fit, every fill joined at two or more points rather than left as a dead end.
+- **Fails, as the views show it:** on `net-<net>` for a ground net, ground drawn as thin tracks threading between parts; a ground zone broken into islands joined only by narrow tracks; in `facts.txt`, a ground net with no zone.
+- **Judged on:** `net-<net>` for each ground net, every `layer-<copper layer>`, `facts.txt`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.2 *Two-Layer vs Four-Layer Boards* and § 2.2.3 *Gridding to Create Planes* ("A ground-fill-pattern geometry connected at only one point is just a ground shield, but if connected at two or more points, it becomes a conductor"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Grounding in mixed-signal systems demystified, Part 1*, Analog Applications Journal 1Q 2013, SLYT499, section *Analog or digital ground plane, or both?*, https://www.ti.com/lit/pdf/slyt499, read 2026-10-14.
+
+#### GROUND-2. No track runs over a gap in the plane beneath it
+
+- **Applies when:** always.
+- **Asks:** Does every signal track have unbroken ground copper under it along its whole length, so its return current can flow directly beneath it?
+- **Passes:** Under every track, on the adjacent layer, the ground plane is solid. Nothing cuts the plane under a track: no track buried in the ground layer, no slot, and no row of via or hole clearances merging into a slot; where a row of through-hole pins crosses the plane, copper runs between the pins.
+- **Fails, as the views show it:** on a plane's `layer-<copper layer>` read against `net-<net>` for a signal, a track crossing a cut, a slot or a merged row of clearances in the plane beneath it, or a track routed on the ground layer itself dividing the plane in two.
+- **Judged on:** every `layer-<copper layer>` holding ground, `net-<net>` for each critical signal net.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.4 *Signal Return Grounds* and § 2.1.7 *Power Plane Do's and Don'ts for Four-Layer Boards* (Figure 5), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.5 *Reference Planes* and § 4.6 *Routing*, item 4, https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+
+#### GROUND-3. One ground plane is partitioned, not split
+
+- **Applies when:** the schematic carries a sensing front end feeding a converter, alongside digital logic.
+- **Asks:** Is the ground one plane, partitioned by where parts and tracks sit, rather than split into separate analog and digital planes; and where the board does carry a split, does every track crossing it cross at a single bridge joining the two?
+- **Passes:** One ground plane under both the analog sensing and the digital regions, with the regions kept apart by placement and routing (`FLOOR-2`). Where a design reason forces separate planes, they are joined at one place, and every track passing between them crosses at that bridge, over copper.
+- **Fails, as the views show it:** on a ground `layer-<copper layer>` or `net-<net>`, a gap separating an analog ground area from a digital one with a track crossing the gap away from any bridge, or two planes joined only at the supply input.
+- **Judged on:** every `layer-<copper layer>` holding ground, `net-<net>` for each ground net and each net crossing between regions.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 2*, Analog Applications Journal 2Q 2013, SLYT512, the opening passage and Figures 1 to 5 ("It is always preferable to use only one ground plane, partitioning the PCB into analog and digital sections"; "the planes should first be connected at one location to form a bridge for the return current"), https://www.ti.com/lit/pdf/slyt512, read 2026-10-14.
+
+#### GROUND-4. A part's analog and digital ground pins join the same plane at the part
+
+- **Applies when:** the schematic carries a part with separate analog and digital ground pins, such as a converter.
+- **Asks:** Are that part's analog and digital ground pins joined, at the part, to the same low-impedance ground plane by the shortest connections?
+- **Passes:** Each ground pin goes straight to the plane under the part by the shortest connection, the analog and digital ground pins to the same plane.
+- **Fails, as the views show it:** on `crop-<reference>`, the digital ground pin routed away by a track to a distant ground, or the two ground pins joined to different copper areas.
+- **Judged on:** `crop-<reference>`, `net-<net>` for the ground nets.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *Grounding in mixed-signal systems demystified, Part 1*, Analog Applications Journal 1Q 2013, SLYT499, the section on interpreting AGND and DGND pins ("the AGND and DGND pins should be joined together externally to the same low-impedance ground plane with minimum lead lengths"), https://www.ti.com/lit/pdf/slyt499, read 2026-10-14.
+
+### Decoupling and switching loops (DECOUPLE)
+
+#### DECOUPLE-1. Each decoupling capacitor sits at its supply pin, with nothing between them
+
+- **Applies when:** the schematic carries an integrated circuit with a decoupling capacitor on a supply pin.
+- **Asks:** Is each decoupling capacitor next to the supply pin it decouples, the smallest nearest, with the supply reaching the pin through the capacitor's pad and no via between capacitor and pin?
+- **Passes:** Each capacitor sits beside its pin, joined to it by a short, wide track. Where a pin has more than one, the smallest value is closest. The supply arrives at the capacitor first and then goes on to the pin; any via to the supply plane is on the far side of the capacitor from the pin.
+- **Fails, as the views show it:** on `crop-<reference>`, a decoupling capacitor across the part or on the far side of the board from its pin, a via between capacitor and pin, or a supply track reaching the pin before the capacitor; a crop captioned as having no decoupling parts for a part whose schematic gives it some.
+- **Judged on:** `crop-<reference>` for each integrated circuit.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Tim Claycomb, *The basics: How to layout a PCB for an op amp*, Texas Instruments, Precision Hub blog, 8 January 2016, closing list of layout practices ("Place decoupling capacitors as close to the supply pins as possible"; "If using multiple decoupling capacitors, place the smallest decoupling capacitor closest to the supply pin"; "Do not place vias between decoupling capacitors and supply pins"), https://e2e.ti.com/blogs_/archives/b/precisionhub/posts/the-basics-how-to-layout-a-pcb-for-an-op-amp, read 2026-10-14; and Texas Instruments, *ADS8866* data sheet, SBAS614C, March 2019, § 12.1 *Layout Guidelines* ("Avoid placing vias between the supply pin and its decoupling capacitor"), https://www.ti.com/lit/ds/symlink/ads8866.pdf, read 2026-10-14.
+
+#### DECOUPLE-2. The decoupling loop is small, its ground side straight into the plane
+
+- **Applies when:** the schematic carries an integrated circuit with a decoupling capacitor on a supply pin.
+- **Asks:** Is the loop from the supply pin through the capacitor and back to the part's ground pin as small in area and length as it can be, with the capacitor's ground side going straight into the ground plane?
+- **Passes:** The capacitor's ground pad joins the plane at once, through two vias where it changes layer, or through ground copper extended from under the part rather than a track. The supply and ground sides run over or beside each other, so the loop encloses little area seen from above.
+- **Fails, as the views show it:** on `crop-<reference>`, the capacitor's ground pad reaching ground by a long track, or the loop through capacitor and part enclosing a wide area.
+- **Judged on:** `crop-<reference>`, `net-<net>` for the ground net.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.4 *Bypassing and Ferrite Beads* ("Make the bypassing loops as small as possible in area and length"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.6 *Routing*, item 10 (the capacitor's ground side "through two vias to the ground plane"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+
+#### DECOUPLE-3. A switching converter's power parts form tight loops that curl the same way
+
+- **Applies when:** the schematic carries a switching converter, a circuit that switches current through an inductor or a transformer.
+- **Asks:** Are the converter's input capacitor at its input pin, its inductor, output capacitors and switch or diode close together, their grounds joined close together straight into the ground plane, and placed so that the current loop in each switching state turns the same way?
+- **Passes:** The input capacitor sits at the converter's input pin. The inductor, the output capacitors and the diode, where there is one, sit together, so the loops the switching current takes in its on and off states are small. The grounds of the converter, its input capacitors, its output capacitors and its diode join close together, directly to a ground plane. The loop in the on state and the loop in the off state run in the same direction round the parts.
+- **Fails, as the views show it:** on `crop-<reference>` of the converter and on `layer-<copper layer>`, the input capacitor away from the input pin, the inductor separated from the output capacitors by other parts, or the converter's ground and the capacitors' grounds joined only by long tracks.
+- **Judged on:** `crop-<reference>` of the converter, every `layer-<copper layer>`, `assembly-top` or `assembly-bottom`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 3 *Filter Capacitors* and § 5 *Traces and Ground Plane* ("Arrange the components so that the switching current loops curl in the same direction"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
+
+#### DECOUPLE-4. A switching converter's feedback is kept away from its inductor
+
+- **Applies when:** the schematic carries a switching converter with a feedback connection, or with external feedback or compensation parts.
+- **Asks:** Does the feedback trace run as far from the inductor and the noisy power traces as the board allows, with its feedback and compensation parts close to the converter and away from the inductor?
+- **Passes:** The feedback trace runs direct to the feedback pin, away from the inductor, on the side of the board opposite the inductor with a ground plane between them where the layers allow. The feedback and compensation parts sit at the converter's pins, not beside the inductor.
+- **Fails, as the views show it:** on `layer-<copper layer>` and `crop-<reference>`, the feedback trace passing under or beside the inductor, or the compensation parts placed next to it.
+- **Judged on:** `crop-<reference>` of the converter, every `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 2 *Feedback* and § 4 *Compensation*, https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
+
+#### DECOUPLE-5. A snubber sits at the switch it protects
+
+- **Applies when:** the schematic carries a snubber, a resistor and capacitor in series across a switching part such as a triac or phototriac.
+- **Asks:** Is the snubber placed as close to the switching part as it can be?
+- **Passes:** The snubber's resistor and capacitor sit beside the switch, joined to its terminals by short connections.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the snubber's parts placed away from the switch, reached by long tracks.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Vishay Semiconductors, *VO3526 Power Phototriac Design Considerations*, Application Note 33, document 81937, Rev. 1.1, 19 October 2011, section *Snubber Circuit* and Figure 5 ("Locate the snubber circuit as close to the VO3526 as possible"), https://www.vishay.com/docs/81937/appnote.pdf, read 2026-10-14.
+
+### Sensing front ends (SENSE)
+
+#### SENSE-1. A current-sense resistor is read through Kelvin connections
+
+- **Applies when:** the schematic carries a resistor used to measure current, a shunt whose voltage an amplifier or a converter reads.
+- **Asks:** Are the amplifier's inputs joined to the shunt's own pads by their own tracks, separate from the tracks carrying the load current, and for a low-side shunt, does the amplifier's gain resistor return to ground at the shunt's ground pad?
+- **Passes:** Two sense tracks leave the shunt at its own pads and run to the amplifier, separate from the tracks carrying the load current, so no load current flows in them. For a low-side shunt, the gain-setting resistor's ground end is placed as close as it can be to the shunt's ground connection.
+- **Fails, as the views show it:** on `net-<net>` for the sense nets, a sense track leaving the load-current track partway along rather than at the shunt's pad, or the gain resistor's ground joining the plane far from the shunt.
+- **Judged on:** `net-<net>` for the shunt's nets, `layer-<copper layer>`, `crop-<reference>` of the amplifier.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Tim Claycomb, *How to Lay Out a PCB for High-performance, Low-side Current-sensing Designs*, Texas Instruments technical article, SSZT805, February 2018, its two design requirements and closing list ("Use Kelvin connections on the shunt resistor"; "Place RG as close to the shunt resistor ground as possible"), https://www.ti.com/lit/pdf/sszt805, read 2026-10-14.
+
+#### SENSE-2. A converter's input filter and reference capacitor sit at its pins
+
+- **Applies when:** the schematic carries a filter at a converter's analog input, such as a resistor and capacitor, or a capacitor on a converter's reference pin.
+- **Asks:** Are the input filter's parts, and the reference capacitor, placed immediately next to the converter pins they serve, joined by short, wide tracks?
+- **Passes:** The filter capacitor and its resistor sit at the converter's input pin; the reference capacitor sits at the reference pin with its ground going straight into the plane.
+- **Fails, as the views show it:** on `crop-<reference>` of the converter, or on `assembly-top` for a converter inside the controller, the filter or reference capacitor placed some way from its pin with a long track between.
+- **Judged on:** `crop-<reference>` of the converter or controller, `assembly-top`, `assembly-bottom`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *ADS8866* data sheet, SBAS614C, March 2019, § 12.1 *Layout Guidelines* ("The fly-wheel RC filters are placed immediately next to the input pins"; the reference capacitor "within 0.1-inches from the pin"), https://www.ti.com/lit/ds/symlink/ads8866.pdf, read 2026-10-14.
+
+#### SENSE-3. An amplifier's high-impedance input connections are as short as possible
+
+- **Applies when:** the schematic carries an operational or instrumentation amplifier.
+- **Asks:** Are the connections to the amplifier's inverting input, a high-impedance node, as short as they can be, with its feedback and gain resistors placed at that pin?
+- **Passes:** The feedback and gain resistors sit next to the inverting pin, joined to it by the shortest tracks, with no track on that node wandering across the board.
+- **Fails, as the views show it:** on `crop-<reference>` of the amplifier, a feedback or gain resistor placed away from the inverting pin, reached by a long track.
+- **Judged on:** `crop-<reference>` of the amplifier.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Tim Claycomb, *The basics: How to layout a PCB for an op amp*, Texas Instruments, Precision Hub blog, 8 January 2016 ("Make the connections to the inverting pin as short as possible"), https://e2e.ti.com/blogs_/archives/b/precisionhub/posts/the-basics-how-to-layout-a-pcb-for-an-op-amp, read 2026-10-14.
+
+#### SENSE-4. Sensing signals keep away from noise sources
+
+- **Applies when:** the schematic carries a sensing front end.
+- **Asks:** Do the sensing inputs and the converter's reference run away from noise sources: switching nodes, power tracks, relays and their drivers, the oscillator, and connectors carrying other signals?
+- **Passes:** Each sensing net runs within the analog sensing region, kept apart from switching converters, load switches, relay coils and their drivers, the crystal and other connectors' signal tracks, and runs as far from supply lines as the board allows.
+- **Fails, as the views show it:** on `net-<net>` for a sensing net, or on `classes`, a sensing track running alongside a power or switching track or past a relay, its driver or the crystal.
+- **Judged on:** `net-<net>` for each sensing net, `classes`, every `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *ADS8866* data sheet, SBAS614C, March 2019, § 12.1 *Layout Guidelines* ("keep the analog input signals and the reference input signals away from noise sources"), https://www.ti.com/lit/ds/symlink/ads8866.pdf, read 2026-10-14; and Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.4.1 *Capacitive and Inductive Crosstalk* ("Keep non-noisy traces away from areas on the board were they could pick up noise, such as connectors, oscillator circuits, relays, and relay drivers"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *TLV333, TLV2333, TLV4333* data sheet, SBOS751, December 2015, § 11.2 *Layout Example* ("Run the input traces as far away from the supply lines as possible"), https://www.ti.com/lit/ds/symlink/tlv333.pdf, read 2026-10-14.
+
+#### SENSE-5. Precision sensing parts are kept away from heat sources
+
+- **Applies when:** the schematic carries a sensing front end.
+- **Asks:** Are the sensing front end's amplifier, its input parts and the converter's reference placed away from the board's heat sources, with the two sides of each differential input at the same temperature?
+- **Passes:** Regulators, power resistors, load switches and other parts that dissipate heat sit outside and away from the analog sensing region. The parts on the two sides of a differential input sit together, symmetrically, so no heat source warms one side more than the other.
+- **Fails, as the views show it:** on `assembly-top`, `assembly-bottom` or `3d-angled`, a regulator or power part placed beside a sensing amplifier or its input parts, or a heat source nearer one input's parts than the other's.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *TLV333, TLV2333, TLV4333* data sheet, SBOS751, December 2015, § 11.1.1 *General Layout Guidelines* ("Avoid temperature gradients that create thermoelectric (Seebeck) effects"; "Thermally isolate components from power supplies or other heat sources"), https://www.ti.com/lit/ds/symlink/tlv333.pdf, read 2026-10-14.
+
+### Clocks (CLOCK)
+
+#### CLOCK-1. The crystal and its load capacitors sit at the oscillator pins
+
+- **Applies when:** the schematic carries a crystal or a ceramic resonator.
+- **Asks:** Are the crystal and its load capacitors close to the oscillator pins, the input pin's capacitor placed first and closest, the two load capacitors close to each other, and the input and output tracks short and kept apart from each other?
+- **Passes:** The crystal sits at the controller's oscillator pins, its tracks short and direct. The load capacitor on the oscillator input sits closest to that pin and to ground; the two capacitors sit side by side. The input and output tracks are routed apart rather than side by side.
+- **Fails, as the views show it:** on `crop-<reference>` of the controller, the crystal placed away from its pins with long tracks, the load capacitors apart from each other, or the input and output tracks running in parallel.
+- **Judged on:** `crop-<reference>` of the controller, `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Microchip Technology (Atmel), *AVR186: Best Practices for the PCB Layout of Oscillators*, Atmel-8128B, September 2016, § 2 *Design Guides*, https://ww1.microchip.com/downloads/en/AppNotes/Atmel-8128-Best-Practices-for-the-PCB-layout-of-Oscillators_ApplicationNote_AVR186.pdf, read 2026-10-14.
+
+#### CLOCK-2. The oscillator has its own ground area, kept clear of other return currents
+
+- **Applies when:** the schematic carries a crystal or a ceramic resonator.
+- **Asks:** Is there a ground area under the oscillator parts joined to the oscillator's ground, with the load capacitors and the crystal's case grounded to it by short connections that no other circuit's return current runs through?
+- **Passes:** Ground copper under the crystal and its capacitors, joined to the controller's oscillator ground and to the plane. The capacitors' ground connections are short. No return current of a communication line, a load drive, a pulse-width output or a power path runs through that ground area. On a board with one copper layer, a guard ring round the oscillator parts joined to the oscillator ground pin.
+- **Fails, as the views show it:** on a `layer-<copper layer>` under the oscillator, no ground copper under the crystal, or a power or drive track's return crossing the oscillator's ground area; on `net-<net>` for ground, the load capacitors reaching ground by long tracks.
+- **Judged on:** `crop-<reference>` of the controller, every `layer-<copper layer>`, `net-<net>` for ground.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Microchip Technology (Atmel), *AVR186: Best Practices for the PCB Layout of Oscillators*, Atmel-8128B, September 2016, § 2 *Design Guides* ("A ground area should be placed under the crystal oscillator area. This ground land should be connected to the oscillator ground"; "The ground connection for the load capacitors should be short and avoid the return currents from USB, RS232, LIN, PWM,… and power lines"), https://ww1.microchip.com/downloads/en/AppNotes/Atmel-8128-Best-Practices-for-the-PCB-layout-of-Oscillators_ApplicationNote_AVR186.pdf, read 2026-10-14.
+
+#### CLOCK-3. Other parts and signals keep away from the oscillator
+
+- **Applies when:** the schematic carries a crystal or a ceramic resonator.
+- **Asks:** Is the oscillator kept away from unrelated parts, from digital and clock lines, and from analog circuits, low-speed signals and connectors?
+- **Passes:** No part unrelated to the oscillator sits within 25 mm (one inch) of the crystal. No digital or clock line runs near the crystal's tracks. The oscillator is away from the analog sensing region and from every connector.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the caption's board coordinates, an unrelated part within 25 mm of the crystal, or the crystal beside a connector or the analog sensing region; on `layer-<copper layer>`, a digital track running beside the crystal's tracks.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("It is especially important that oscillator tank loops be located away from analog circuits, low-speed signals, and connectors") and § 2.4.1 *Capacitive and Inductive Crosstalk* ("No unrelated components should be closer than 1 inch to the crystal"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Microchip Technology (Atmel), *AVR186: Best Practices for the PCB Layout of Oscillators*, Atmel-8128B, September 2016, § 2 *Design Guides* ("Keep other digital signal lines, especially clock lines and frequently switching signal lines, as far away from the crystal connections as possible"), https://ww1.microchip.com/downloads/en/AppNotes/Atmel-8128-Best-Practices-for-the-PCB-layout-of-Oscillators_ApplicationNote_AVR186.pdf, read 2026-10-14.
+
+### Separation of mains from low voltage (MAINS)
+
+#### MAINS-1. Mains is separated from low voltage by the signed figures
+
+- **Applies when:** the schematic carries a mains-referenced net, so the board declares `MAINS` `present`.
+- **Asks:** Do the board's rules hold the separation between mains and low-voltage copper to the clearance and creepage its signed separation basis record states, in the single form the rules step fixes?
+- **Passes:** The board's rules file holds the one `Mains separation` rule exactly as step 2 of [Rules before routing](#rules-before-routing) writes it, its condition `A.hasNetclass('Mains') && !B.hasNetclass('Mains')`, with a `clearance` and a `creepage` constraint no less than the separation basis record's mains-to-low-voltage figures, and the pre-order check passes the board. This item adds no rule of its own: it is that rule, and those figures are the signed ones the record holds.
+- **Fails, as the views show it:** the pre-order check reports a `clearance` or `creepage` violation, or a `separation_rule`, `separation_basis`, `local_clearance_override` or `mains_net_tie` failure.
+- **Judged on:** the pre-order check's report.
+- **Kind:** rule. **Severity:** safety.
+- **Source:** Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.3 *Creepage Distance* ("An adequate creepage distance protects against tracking"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+
+#### MAINS-2. Mains copper stays in the mains region, and low-voltage copper stays out of it
+
+- **Applies when:** the schematic carries a mains-referenced net.
+- **Asks:** Does all `Mains`-class copper lie within the floorplan's mains region, on every layer, with no low-voltage track, via, pad or zone inside that region?
+- **Passes:** On every layer, the `Mains` class's copper lies within the mains region's bounds in `layout-plan.md`, and nothing outside the class lies there. The only parts with pins on both sides of the region's boundary are the parts that bridge the barrier, such as an optocoupler, an isolator, a relay or a transformer.
+- **Fails, as the views show it:** on `classes`, `Mains`-class copper outside the mains region, or another class's copper inside it; on a `layer-<copper layer>`, a low-voltage track or zone running into the mains region.
+- **Judged on:** `classes`, every `layer-<copper layer>`, `assembly-top`, `assembly-bottom`.
+- **Kind:** judgement. **Severity:** safety.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* (like functions placed in the same area, not mixed together), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.2 *Layer Stack*, Figure 4-1 (the space between the two sides kept "free from planes, traces, pads, and vias"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+
+#### MAINS-3. Nothing crosses under a part that bridges the barrier
+
+- **Applies when:** the schematic carries a part with pins on both a mains-referenced net and a net outside the `Mains` class, such as an optocoupler, an isolator, a relay or a transformer.
+- **Asks:** Is the space under each such part, between its mains side and its low-voltage side, kept free of tracks, vias, pads and zones on every layer?
+- **Passes:** Under each barrier-bridging part, on every copper layer, no copper lies between the row of pins on its mains side and the row on its low-voltage side.
+- **Fails, as the views show it:** on any `layer-<copper layer>`, a track, via or zone passing under the part between its two sides, inner layers included.
+- **Judged on:** every `layer-<copper layer>`, `classes`, `crop-<reference>` where the part is an integrated circuit.
+- **Kind:** judgement. **Severity:** safety.
+- **Source:** Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.3 *Creepage Distance* ("on all layers keep the space under the isolator free from traces, vias, and pads to maintain maximum creepage distance"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+
+#### MAINS-4. A slot cut to lengthen creepage is wide enough to count
+
+- **Applies when:** the schematic carries a part with pins on both a mains-referenced net and a net outside the `Mains` class whose own spacing between its two sides, read from its datasheet, is less than the creepage the separation basis record states, so the layout makes up the difference with a slot or groove.
+- **Asks:** Is each slot or groove that the creepage relies on wider than 1 mm, does the creepage counted across it rely only on its width and twice its depth, and does it leave the board strong enough?
+- **Passes:** The slot is drawn on the board outline layer, wider than 1 mm along its whole length, and spans the full distance between the part's two sides. The creepage across a groove, the surface distance plus the groove's width plus twice its depth, is no less than the separation basis record's creepage. A slot cut through the board leaves no surface path across it, so its creepage is the shortest path along the surface round its ends, which is no less than that figure. It leaves enough board on either side that the board does not flex at it.
+- **Fails, as the views show it:** on `layer-Edge.Cuts` and on `crop-<reference>` or `assembly-top`, no slot where the part's spacing needs one, a slot 1 mm wide or narrower, or a slot that stops short of the part's ends so a surface path runs round it.
+- **Judged on:** `layer-Edge.Cuts`, `assembly-top`, `assembly-bottom`, `crop-<reference>`.
+- **Kind:** judgement. **Severity:** safety.
+- **Source:** Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.3 *Creepage Distance*, Figure 4-2 ("For a groove (>1 mm wide), the only depth requirement is that the existing creepage distance plus the width of the groove and twice the depth of the groove must equal or exceed the required creepage distance. The groove must not weaken the substrate"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
+
+### Connectors and mechanical fit (CONN)
+
+#### CONN-1. A transient suppressor sits at its connector, on the line's path
+
+- **Applies when:** the schematic carries a transient-voltage or electrostatic-discharge suppressor on a line that leaves the board at a connector.
+- **Asks:** Is the suppressor as close to the connector as the rules allow, with the line running straight from the connector pin to the suppressor's pin, with no via and no stub, then on to what it protects, and with no unprotected track alongside it between the connector and the suppressor?
+- **Passes:** The suppressor sits at the connector, and the protected circuit sits much further from it. The line runs from the connector pin to the suppressor's pin in a straight track, curved or at 45° where it must turn, then on. The suppressor's ground goes straight into the plane by the shortest path. No unprotected track runs in the area between connector and suppressor.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the suppressor placed by the part it protects rather than by the connector; on `layer-<copper layer>`, the line reaching the suppressor through a stub or a via, a right-angled turn, or another track running beside it between connector and suppressor.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *ESD Protection Layout Guide*, SLVA680A, revised April 2022, § 2.1 *Optimizing Impedance for Dissipating ESD*, § 2.2 *Limiting EMI from ESD* and § 2.3 *Routing with VIAs*, https://www.ti.com/lit/pdf/slva680, read 2026-10-14.
+
+#### CONN-2. Thin leadless packages keep away from where the board bends
+
+- **Applies when:** the schematic carries a leadless package, such as a QFN or SON.
+- **Asks:** Is each leadless package placed away from the regions of the board that bend most in manufacture and use, such as beside connectors that take mating force, mounting holes and the board's edges where it is handled?
+- **Passes:** Each leadless package sits away from connectors, mounting holes and board edges, in a part of the board held flat.
+- **Fails, as the views show it:** on `assembly-top`, `assembly-bottom` or `3d-angled`, a QFN or SON beside a connector, at a mounting hole or at the board's edge.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *QFN and SON PCB Attachment*, SLUA271C, revised December 2023, § 3.7 *Board Layout Considerations* ("Location of the thinner format QFN packages should be carefully considered when laying out the board design to avoid regions of extreme deflection"), https://www.ti.com/lit/pdf/slua271, read 2026-10-14.
+
+#### CONN-3. No cable folds over the oscillator or the controller
+
+- **Applies when:** the schematic carries a connector for a cable, and a controller or a crystal.
+- **Asks:** Is each cable connector placed so that its cable, once fitted, cannot lie over the oscillator or the controller?
+- **Passes:** Each cable connector sits at the board edge `layout-plan.md` gives it, facing off the board, so its cable leaves without crossing the controller or the crystal.
+- **Fails, as the views show it:** on `3d-angled`, `3d-top` or `assembly-top`, a cable connector facing inward across the controller or the crystal, or placed so its cable must pass over them.
+- **Judged on:** `3d-angled`, `3d-top`, `3d-bottom`, `assembly-top`, `assembly-bottom`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("Do not design in cable assemblies that fold over the oscillator or the microcomputer after final assembly"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+### Test access and bring-up (TEST)
+
+#### TEST-1. Every test point can be reached by a probe
+
+- **Applies when:** the schematic carries a test point, which every board does ([Designing for bring-up and a second spin](#designing-for-bring-up-and-a-second-spin)).
+- **Asks:** Is every test point a pad a probe can land on and stay on: a dedicated pad, a through-hole lead or a small via, never a surface-mount part's land, of a usable size, spaced from its neighbours and from part bodies?
+- **Passes:** Each test point is a dedicated pad, a through-hole lead or a via with a hole of 0.36 mm or less, never a surface-mount land. Its pad is 1.0 mm across, or 0.9 mm at least. Test points are at least 2.5 mm apart centre to centre, at least 1.0 mm from any part's body edge to edge, and at least 2.0 mm from a part taller than 2.6 mm.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, a test point crowded against a part, under a part's outline, or closer than 2.5 mm to another; on `layer-F.Cu` or `layer-B.Cu`, a test point that is a surface-mount part's land or a pad smaller than 0.9 mm.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-F.Cu`, `layer-B.Cu`, `3d-angled`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level*, https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14.
+
+#### TEST-2. Test points are on one side, with tall parts on the other
+
+- **Applies when:** the schematic carries a test point.
+- **Asks:** Are the test points on one side of the board, the side with the fewest parts, with the tall parts on the other side?
+- **Passes:** Every test point sits on the same side of the board, and parts taller than 6.4 mm sit on the other side or at least 5.0 mm from any test point.
+- **Fails, as the views show it:** on `assembly-top` and `assembly-bottom`, test points on both sides, or among tall parts.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level* ("try to put all test points on one side of the board, usually the bottom or the side with the least circuit complexity"; "Keep tall components on the side that is not probed"), https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14.
+
+#### TEST-3. A low-resistance part has two test pads on each side for four-wire measurement
+
+- **Applies when:** the schematic carries a resistor used to measure current, or another part whose resistance is too low to read with two probes.
+- **Asks:** Does each such part have two test pads on each of its nets, so its resistance can be measured four-wire?
+- **Passes:** Each of the part's two nets carries two test pads, one for the current and one for the voltage, near the part.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, a shunt with one test pad, or none, on a side.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `net-<net>` for the part's nets.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level* ("Provide two pads on nets tied to critical low impedance devices (four-wire Kelvin testing)"), https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14.
+
+### Manufacture and assembly (MFG)
+
+#### MFG-1. The board-wide minimums are the manufacturer's stated limits
+
+- **Applies when:** always.
+- **Asks:** Is every board-wide minimum in Board Setup's constraints set to the value the board manufacturer's stated limits give for the board's layer count and copper weight?
+- **Passes:** Each board-wide minimum the rules step lists, minimum clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge and the silkscreen minimums, is set in Board Setup's constraints to the value the manufacturer recommends where it states one, and otherwise to its stated minimum, never smaller, each with its row in the board's rules table naming this item and the manufacturer's stated limits as its source, and the pre-order check reports none of them broken.
+- **Fails, as the views show it:** the pre-order check reports a violation of a board-wide minimum, or a minimum in Board Setup is smaller than the manufacturer's stated limit, or has no row naming its source.
+- **Judged on:** the pre-order check's report.
+- **Kind:** rule. **Severity:** function.
+- **Source:** KiCad, *PCB Editor* manual, version 10.0, section *Board setup*, *Configuring design rules*, *Constraints* ("Constraints in this section apply to the entire board and should be set to the values recommended by your board manufacturer"), https://docs.kicad.org/10.0/en/pcbnew/pcbnew.html, read 2026-10-14.
+
+#### MFG-2. An exposed pad's paste covers half to seven tenths of it
+
+- **Applies when:** the schematic carries a part with an exposed pad on its underside.
+- **Asks:** Is the solder paste on each exposed pad divided into openings covering about 50 % to 70 % of the pad, rather than one opening the size of the pad?
+- **Passes:** On the paste layer, each exposed pad's paste is a set of smaller openings, together about 50 % to 70 % of the pad's area, or the part's datasheet's own stencil pattern where it gives one.
+- **Fails, as the views show it:** on `layer-F.Paste` or `layer-B.Paste`, an exposed pad's paste as one opening the full size of the pad.
+- **Judged on:** `layer-F.Paste`, `layer-B.Paste`.
+- **Kind:** judgement. **Severity:** function.
+- **Source:** Texas Instruments, *QFN and SON PCB Attachment*, SLUA271C, revised December 2023, § 4.4 *Exposed-Pad Stencil Design* ("Typically, the solder-paste coverage is approximately 50% to 70% of the pad area"; a 1:1 aperture "results in excessive metal volume that can "float" the part"), https://www.ti.com/lit/pdf/slua271, read 2026-10-14.
+
+#### MFG-3. Vias in a soldered pad do not draw the solder away
+
+- **Applies when:** the schematic carries a part with an exposed pad, and the board places vias in its land.
+- **Asks:** Is each via in the land small enough, or capped on the part's side, that it does not draw solder away from the joint?
+- **Passes:** Each via in the land has a drill of 0.33 mm or smaller, or is capped with solder mask on the part's side, the cap at least 0.1 mm larger than the via's diameter.
+- **Fails, as the views show it:** on `layer-F.Mask` (or `layer-B.Mask` for a part on the bottom), large open vias in an exposed pad's land; on `crop-<reference>`, vias in the land larger than the rest of the board's.
+- **Judged on:** `layer-F.Mask`, `layer-B.Mask`, `crop-<reference>`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PowerPAD Thermally Enhanced Package*, SLMA002H, revised July 2018, § 2.4 *Thermal Vias* ("a via drill diameter of 0.33 mm (13 mils) or smaller works well"; "a solder mask material should be used to cap the vias on the component side with a dimension equal to the via diameter + 0.1 mm minimum"), https://www.ti.com/lit/pdf/slma002, read 2026-10-14.
+
+### Emissions (EMI)
+
+#### EMI-1. Power and its ground run over each other
+
+- **Applies when:** always.
+- **Asks:** Does each supply path to a part run directly over or beside its ground return, so the loop between them encloses little area?
+- **Passes:** Each supply track or pour has ground running directly beneath it on the next layer, or beside it, all the way from its source to the part. On a two-layer board, ground is routed under power wherever it can be.
+- **Fails, as the views show it:** on `classes`, a supply path and its ground taking different routes across the board, enclosing an area between them.
+- **Judged on:** `classes`, `net-<net>` for each supply and ground net.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.1.1 *Inductance* ("Power and ground should be run directly over each other, which reduces impedance and minimizes loop area") and § 2.1.2 *Two-Layer vs Four-Layer Boards*, https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+#### EMI-2. No noisy track runs along the board edge
+
+- **Applies when:** the schematic carries a clock, a switching converter, or an output switching at more than 50 kHz.
+- **Asks:** Are noisy tracks, clocks, switching nodes and fast-switching outputs, kept away from the outside edge of the board?
+- **Passes:** No noisy track runs along the board's outside edge; where several noisy tracks run together, ground tracks surround the group.
+- **Fails, as the views show it:** on a `layer-<copper layer>` or `net-<net>`, a clock or switching track running along the board edge.
+- **Judged on:** every `layer-<copper layer>`, `net-<net>` for each critical net.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 1.3 *Static Pins vs Active Pins vs Inputs* (signals switching faster than 50 kHz) and § 2.4.1 *Capacitive and Inductive Crosstalk* ("Never run noisy traces on the outside edge of the board"; "If possible, group a number of noisy traces together surrounded by ground traces"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+#### EMI-3. Lines leaving the board are filtered at the connector into a wide ground
+
+- **Applies when:** the schematic carries a capacitor from a line that leaves the board at a connector to ground.
+- **Asks:** Does each such capacitor sit at the connector, with its ground joined to a large ground area by a short, wide connection?
+- **Passes:** The filter capacitors sit at the connector's pins. Their ground side joins a large ground area on both sides of the board, by connections no longer than three times their width.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the filter capacitors away from the connector; on `layer-<copper layer>`, their ground reached by a narrow track.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.5.4 *I/O Recommendations for Off-PCB Signals* and § 3.3 *Cables and Bypassing to the Shield*, Figure 13 ("The connection to the chassis is an RF path requiring 3:1 length to width"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+#### EMI-4. A supply ferrite bead sits nearest the noise source, with its capacitor inside it
+
+- **Applies when:** the schematic carries a ferrite bead in a supply to an integrated circuit.
+- **Asks:** Is the bead placed at the part it isolates, in the supply only and not the ground, with the part's bypass capacitor between the bead and the part?
+- **Passes:** The bead sits next to the part it serves, in the supply line; the bypass capacitor sits between bead and part, so the part's switching current flows in the small loop inside the bead.
+- **Fails, as the views show it:** on `crop-<reference>` or `assembly-top`, the bead at the far end of the supply, or the bypass capacitor on the supply side of the bead.
+- **Judged on:** `crop-<reference>`, `assembly-top`, `assembly-bottom`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.4 *Bypassing and Ferrite Beads*, Figure 9 ("placing the capacitors inside the ferrite bead"; "The ferrite bead is used only on +V, not on ground"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+#### EMI-5. Series resistors on the controller's outputs sit at the controller
+
+- **Applies when:** the schematic carries a resistor in series with a controller's output or input pin.
+- **Asks:** Is each series resistor placed as close to the controller's pin as it can be?
+- **Passes:** Each series resistor sits at its controller pin, over the controller's ground area where it can.
+- **Fails, as the views show it:** on `crop-<reference>` of the controller or on `assembly-top`, a series resistor placed at the far end of its line.
+- **Judged on:** `crop-<reference>` of the controller, `assembly-top`, `assembly-bottom`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.5 *Keeping Noise Close to the Chip* ("Place the resistor as close as possible to the microcomputer, overlapping the microcomputer ground if possible"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+Out of scope for this section: the review step that applies the catalogue to a finished layout, and producing the views it is judged on.
