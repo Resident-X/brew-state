@@ -15,6 +15,10 @@ links:
     type: depends-on
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C4
     type: targets
+brief_confirmation:
+  confirmer: claude-opus-5-5
+  fingerprint: 35234b72ccbe9c714b23f77ba8e50ff4207314de0f4a9977ae8270cb52fc106c
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C1
     class: new-condition
@@ -30,7 +34,6 @@ design_question_answers:
     class: consumer-self-sufficiency
 interfaces:
   - the method's written design rules and its rules step
-  - the method's layout review step, which uses the catalogue as its baseline checklist
 locus:
   - marking: created
     ref: 'the board design method, docs/board-design-method.md: its layout practice catalogue and a floorplan-and-plan step before placement'

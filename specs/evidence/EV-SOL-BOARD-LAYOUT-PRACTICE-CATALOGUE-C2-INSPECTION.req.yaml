@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T01:02:05.79987Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md#3-commit-the-floorplan-and-plan-before-placement: the yes-row cross-check now requires each row marked yes to name at least one region, part or net it binds, each one the floorplan or netlist holds, matching C2''s ''naming the regions, parts or nets it binds''; the rules step''s carried-rules clause unchanged and still requiring each applicable rule-kind item with its identifier and record as source'
+  artifact_version: b7a9b2c5006d8ebecbd7ae5d630e39e17d09c798
+attested_by: crun-109155f0023cdfe4
+links:
+  - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE.C2
+    type: satisfies
