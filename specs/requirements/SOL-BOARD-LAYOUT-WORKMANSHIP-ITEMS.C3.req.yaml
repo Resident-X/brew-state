@@ -2,11 +2,11 @@ id: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C3
 type: criterion
 title: The clean proof design meets every workmanship item
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Tidy the layout review's committed throwaway proof design, the one the seeded layout-review proof seeds, and update its floorplan and plan, so that it meets every workmanship item that applies to it, including the defects it was found to carry: square corners, the supply route running the long way round, the signal route looping to its partner, and the jogs and stubs beside two parts. The tidied design passes the pre-order check with the workmanship measures in force, and its layout review closes with every workmanship item passing. It is the clean baseline the seeded workmanship defects are placed against. Out of scope: the pre-order check's own proof design, which the measuring criterion handles, and any real board.
+  Before tidying it, review the layout review's committed throwaway proof design, the one the seeded layout-review proof seeds, by the method's review step against the workmanship area, and commit that round's review record in the design's folder. That record states the workmanship defects the design carries, among them square corners, the supply route running the long way round, the signal route looping to its partner, and the jogs and stubs beside two parts, and it is the review that a workmanship item no free published document states cites. Then tidy the design, and update its floorplan, plan and rules table, so that it meets every workmanship item that applies to it. The tidied design passes the pre-order check with the workmanship rules in force, a further round of its review record closes with every workmanship item passing, and the seeded layout-review proof's existing seeds are re-anchored to the tidied copper. It is the clean baseline the seeded workmanship defects are placed against. Out of scope: the pre-order check's own proof design, which the measuring criterion handles, and any real board.
 links:
   - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
     type: criterion-of
