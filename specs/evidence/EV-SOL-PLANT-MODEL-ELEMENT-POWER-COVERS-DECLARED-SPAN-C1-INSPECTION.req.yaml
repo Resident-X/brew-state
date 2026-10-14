@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T06:39:46.603156Z"
+artifact:
+  kind: external
+  reference: 'firmware/params/thermoblock.params and firmware/params/thermoblock.md element-power accounts checked clause by clause: low side (216/230)^2 x 0.98 = 0.864, high side (253/230)^2 = 1.210 governs, fraction 0.21 for both; steam parallel-path allowance 0.79/0.864 = 0.914 (a little over 8%) against the old 0.85/0.98 = 0.867 (about 13%); docs/sunbeam-em7000/reference-machine.md restatements corrected (44 ohm for 1200 W at 230 V; 993/1126/1362 W across the span)'
+  artifact_version: 95e3336d7e5214b3e39b1ed7ae541eecfb736fb7
+attested_by: crun-f8dea4d64c5ea550
+links:
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+    type: satisfies

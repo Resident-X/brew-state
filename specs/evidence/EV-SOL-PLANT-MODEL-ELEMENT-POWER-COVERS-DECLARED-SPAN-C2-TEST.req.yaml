@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN-C2-TEST
+type: evidence
+title: test evidence for SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T06:39:47.097052Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::test_the_committed_record_states_the_span_the_description_declares,test_the_span_is_read_from_the_accounts_and_never_supplied,test_the_statement_never_vouches_for_the_declared_errors
+  artifact_version: 95e3336d7e5214b3e39b1ed7ae541eecfb736fb7
+attested_by: crun-f8dea4d64c5ea550
+links:
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2
+    type: satisfies

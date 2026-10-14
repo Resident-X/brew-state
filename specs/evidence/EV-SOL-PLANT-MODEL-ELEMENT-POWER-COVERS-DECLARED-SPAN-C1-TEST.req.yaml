@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN-C1-TEST
+type: evidence
+title: test evidence for SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T06:39:45.504555Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_stability.py::test_the_prose_facts_these_tables_encode_are_what_the_description_still_says
+  artifact_version: 95e3336d7e5214b3e39b1ed7ae541eecfb736fb7
+attested_by: crun-f8dea4d64c5ea550
+links:
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C1
+    type: satisfies
