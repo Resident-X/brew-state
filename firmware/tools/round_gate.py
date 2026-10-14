@@ -87,6 +87,8 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 
+import task_gate
+
 
 #: The remote whose main a round is measured against, and the branch on it that
 #: is main.
@@ -393,8 +395,11 @@ def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
     )
 
 
+LABEL = "round gate"
+
+
 def _say(line: str = "") -> None:
-    print(line, flush=True)
+    task_gate.say(line)
 
 
 def _statement(heading: str, chosen: Scope) -> None:
@@ -403,21 +408,8 @@ def _statement(heading: str, chosen: Scope) -> None:
         _say(f"    {path}")
 
 
-def _invoke(
-    task: str, name: str, repo: str, arguments: tuple[str, ...] = (), env: dict | None = None
-) -> int:
-    try:
-        return subprocess.run([task, name, *arguments], cwd=repo, check=False, env=env).returncode
-    except OSError as error:
-        _say(f"round gate: {name} could not be started ({error})")
-        return 127
-
-
 def _run(task: str, name: str, tier: str, repo: str) -> int:
-    _say(f"round gate: running {name} ({tier} tier)")
-    status = _invoke(task, name, repo)
-    _say(f"round gate: {name} {'passed' if status == 0 else f'FAILED with exit status {status}'}")
-    return status
+    return task_gate.run(task, name, repo, LABEL, f"{tier} tier")
 
 
 #: What the sweep's restricted mode writes back for the round to read: the
@@ -591,8 +583,8 @@ def sweep_step(task: str, name: str, repo: str, change: Change) -> Sweep:
         # arguments: the arguments reach the sweep only if its task forwards
         # them, and the environment reaches it regardless, so a restriction lost
         # on the way is refused by the sweep rather than run as the full sweep.
-        status = _invoke(
-            task, name, repo,
+        status = task_gate.invoke(
+            task, name, repo, LABEL,
             ("--", "--changed-lines", changed_lines, "--changed-lines-result", account_path),
             env={**os.environ, ROUND_ACCOUNT_VARIABLE: account_path},
         )

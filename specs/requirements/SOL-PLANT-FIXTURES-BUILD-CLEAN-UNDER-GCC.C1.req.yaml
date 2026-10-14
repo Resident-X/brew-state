@@ -1,0 +1,12 @@
+id: SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C1
+type: criterion
+title: The host tier compiles without warnings under both GCC and clang
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Every source of this project's own that the host tier compiles, the fixture plant structures included, compiles with no warning under the project's existing strict warning settings, a conversion treated as a failure, with GCC and with clang, the compilers a Linux host and a macOS host each default to. Every site where an integer expression is narrowed into a heated-mass identifier or any other narrow identifier type is corrected, not only the two the nightly run reported, and the strict settings themselves stay as they are. Out of scope: third-party sources, which keep the relaxed settings they already have, the target cross-compiler, and compilers other than these two.
+links:
+  - target: SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC
+    type: criterion-of

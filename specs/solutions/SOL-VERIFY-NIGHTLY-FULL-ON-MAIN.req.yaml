@@ -3,9 +3,13 @@ type: deliverable
 category: solution
 title: The full verification, mutation sweep included, runs nightly against main on hosted runners
 status: active
-version: 1
+version: 2
 text: |
   The full verification runs nightly against main on hosted runners. A task-runner command runs every gate the round can skip, the emulation tier unconditionally and the full mutation sweep, each to completion even after another fails, and reports every failure. A scheduled workflow runs it against main each night, and can be started by hand. Its run history is the record of what main last verified.
+
+  Placement. The existing `fw:verify` task stays the single declaration of the complete verification and is extended, not duplicated: its gate list stops being a plain sequence that halts at the first failure and becomes the ordered list a driver runs, a sibling of the round gate's driver in the firmware tools that reuses its way of invoking a task and reporting the result. No second task holds a copy of the list; a gate added later (the board check) is added to that one list. Rejected: a separate daily task, which would be a third copy of the gate list beside `fw:verify` and `check:round`; listing the gates as workflow steps, which drifts from the declaration the first time a gate is added; and running the whole sweep in one hosted job, which takes the sum of every shard's time the sharded form exists to avoid.
+
+  The hosted nightly runs the same declaration with the sweep left out by name and runs the sweep as the existing sharded sweep workflow, called from the nightly workflow so its shards belong to the same run and decide its result. The nightly workflow is `.github/workflows/nightly-verify.yml`, named "Nightly verification"; the daily-status reader finds main's latest result by that workflow. Its first real run is the demonstration: a failure caused by this workflow's own provisioning or wiring is fixed in this solution, and a genuine defect a gate finds in main is recorded as its own maintenance item rather than fixed here.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
@@ -15,3 +19,7 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C7
     type: targets
+brief_confirmation:
+  confirmer: claude-opus-5-5-brief-reviewer
+  fingerprint: 433c6e4e2632a553a2be5e8b1c63a49d52a5785973873d1f91a698d693a1f5cf
+  gating_profile: ""

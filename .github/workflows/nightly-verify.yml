@@ -1,0 +1,101 @@
+# The complete verification, run against main every night on hosted runners.
+#
+# A build round's gate is targeted: it runs the host tier in full but the
+# emulation tier only when a branch touches what the emulation reads, and the
+# mutation sweep only over the plant lines a branch changes. This is where
+# everything the round can skip runs anyway -- the emulation tier
+# unconditionally and the sweep over its whole population -- so its run history
+# is the record of what main last verified.
+#
+# The gates are not listed here. `task fw:verify` is the single declaration of
+# the complete verification, and this runs that declaration with the sweep left
+# out by name, so a gate added to it later runs here without a line here
+# changing. The sweep is left out of that job because run in one job it takes
+# the sum of every shard's time; it runs instead as the sharded sweep workflow,
+# called from here so its shards belong to this run and decide its result. The
+# night fails if any gate, any shard, or the judging of the combined population
+# fails.
+#
+# It also runs on manual dispatch, against whichever ref it is started on.
+
+name: Nightly verification
+
+on:
+  schedule:
+    # Off the hour, when scheduled runs are least likely to be delayed.
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Each run is its own group, so no run -- scheduled or dispatched -- waits on or
+# cancels another. A night cancelled by a later one would leave that night with
+# no result, and the run history is only a record if every night has one.
+concurrency:
+  group: nightly-verify-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  gates:
+    name: Every gate but the sweep
+    runs-on: ubuntu-24.04
+    # The first observed runs took about twenty minutes, most of it the
+    # emulation tier, but stopped short of building and running every host
+    # environment; the budget stays wide until a run that does has been timed.
+    timeout-minutes: 120
+    steps:
+      # Actions are pinned to the commit a release points at rather than to the
+      # tag, for the reason the sweep workflow gives beside its own pins.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the task runner
+        env:
+          # renovate: datasource=github-releases depName=go-task/task
+          TASK_VERSION: "3.54.0"
+          # The digest the release publishes for this archive. Not an
+          # independent choice: it changes with the version and only with it.
+          TASK_SHA256: "680859dbb4d881a9c72d4d9a8f510825450849af8567deacd7302c01124416fb"
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/task.tar.gz \
+            "https://github.com/go-task/task/releases/download/v${TASK_VERSION}/task_linux_amd64.tar.gz"
+          echo "${TASK_SHA256}  /tmp/task.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/task.tar.gz -C /tmp task
+          sudo install -m 0755 /tmp/task /usr/local/bin/task
+
+      - name: Install PlatformIO
+        env:
+          # renovate: datasource=pypi depName=platformio
+          PLATFORMIO_VERSION: "6.1.19"
+        run: python3 -m pip install "platformio==${PLATFORMIO_VERSION}"
+
+      # The emulation tier's emulator and register description, fetched and
+      # checked against their pinned digests before any gate runs, so a fetch
+      # that fails is reported as provisioning rather than as the tier failing.
+      #
+      # The emulator's scripting layer loads the dynamic-loading library by its
+      # unversioned name, which this distribution installs only under its
+      # versioned one; without the unversioned name every scripted peripheral
+      # fails to load and the closed-loop runs never start.
+      - name: Provision the emulation tier
+        run: |
+          set -euo pipefail
+          libraries=/usr/lib/x86_64-linux-gnu
+          if [ ! -e "${libraries}/libdl.so" ]; then
+            sudo ln -s libdl.so.2 "${libraries}/libdl.so"
+          fi
+          task fw:emulate:provision
+
+      - name: Run the complete verification, the sweep left out for its own jobs
+        run: |
+          set -euo pipefail
+          PIO="$(command -v pio)"
+          export PIO
+          task fw:verify -- --leave-out fw:sweep
+
+  sweep:
+    name: The full mutation sweep
+    uses: $/.github/workflows/mutation-sweep.yml

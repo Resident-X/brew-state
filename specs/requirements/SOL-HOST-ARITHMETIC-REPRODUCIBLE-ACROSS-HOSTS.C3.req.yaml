@@ -1,0 +1,12 @@
+id: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3
+type: criterion
+title: No committed record figure turns on a sub-rounding difference in the arithmetic
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  Each record figure that differed between the two hosts by more than a rounding difference, the stability record's brew thermal mass and water heat capacity corners and the protection-margin record's corner 20 among them, is traced to the step that amplifies a one-unit difference and is either shown to be well conditioned, with the analysis bounding how far a one-unit perturbation of its inputs can move it, or has its computation corrected so it no longer turns on such a difference. Out of scope: figures that agreed between the hosts to the precision recorded.
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS
+    type: criterion-of

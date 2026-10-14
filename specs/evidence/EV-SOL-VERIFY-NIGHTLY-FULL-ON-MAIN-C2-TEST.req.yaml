@@ -1,0 +1,16 @@
+id: EV-SOL-VERIFY-NIGHTLY-FULL-ON-MAIN-C2-TEST
+type: evidence
+title: test evidence for SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T09:39:02.105027Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_verify_gate.py::test_the_nightly_runs_the_declaration_leaving_out_only_the_sweep_and_calls_the_shards,test_the_nightly_is_scheduled_and_dispatchable_and_never_cancels_a_run,test_no_night_waits_on_or_cancels_another_night_or_its_own_sweep,test_no_gate_or_shard_in_the_night_can_fail_or_be_skipped_without_failing_it,test_a_step_in_a_form_the_workflow_reader_cannot_read_is_refused,test_every_action_is_pinned_to_a_full_commit_and_permissions_are_read_only,test_a_broad_or_writing_grant_anywhere_is_seen
+  artifact_version: 13b0816a739ea65d42619cffae7f121d77b7d551
+attested_by: crun-26eeda07a6bb2ae2
+links:
+  - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2
+    type: satisfies
