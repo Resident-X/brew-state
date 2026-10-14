@@ -319,6 +319,9 @@ class EveryDeclaredErrorIsRunToItsCornersAndCheckedForSettling(unittest.TestCase
     # are now the same, both sized to the declared 216-253 V supply span -- so the
     # sag is each element's own declared error, and both sides have a
     # like-for-like comparison against the joint corner.
+    #
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: Simulation results resting on element
+    # power are re-obtained at the re-sized uncertainty.
     def test_the_prose_facts_these_tables_encode_are_what_the_description_still_says(self):
         pinned = {
             "pump.pressure_bar": (15.0, 0.4),
@@ -1194,6 +1197,9 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
     # elements declare the same error, so its run cannot tell the smaller from
     # either; that is put to the sag with the two declaring different errors,
     # each way round.
+    #
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: Simulation results resting on element
+    # power are re-obtained at the re-sized uncertainty.
     def test_the_sag_is_the_largest_equal_fractional_movement_both_declared_errors_admit(self):
         declared = dict((name, fraction) for name, _, fraction in _covered())
         fractions = [declared[name] for name in stability.MAINS_COUPLED]
@@ -1361,6 +1367,9 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
     # declare the same error, so the steam element's own low corner is at the
     # joint corner's sag and the steam side is compared like for like: re-run
     # here through its own draw, as the coffee side is through its own.
+    #
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: Simulation results resting on element
+    # power are re-obtained at the re-sized uncertainty.
     def test_what_the_joint_corner_reproduces_is_established_from_the_runs(self):
         joint = FINDINGS["joint"]
         same, differing, incomparable = stability.joint_against_the_independent_corners(FINDINGS)
@@ -1461,6 +1470,9 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
     # a table of figures would show it up. So that case is put to the record
     # writer too, with the steam element's own corner moved further than the
     # joint corner's sag.
+    #
+    # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: Simulation results resting on element
+    # power are re-obtained at the re-sized uncertainty.
     def test_the_record_reports_what_each_side_comparison_found_and_claims_no_coupling(self):
         record = _committed_record()
         section = record.split(stability.JOINT_HEADING, 1)[1].split("\n## ", 1)[0]
