@@ -1532,7 +1532,7 @@ class TheRulesFileHoldsTheWorkmanshipRules(unittest.TestCase):
     """
 
     def rules(self, text: str):
-        return [form for form in sexpr.parse(text, comments=True) if sexpr.head(form) == "rule"]
+        return board_check.rule_forms(text)
 
     def found(self, text: str):
         return [(v.rule, v.message.split(":")[0]) for v in board_check.workmanship_rules(DESIGN, self.rules(text))]
@@ -1566,6 +1566,52 @@ class TheRulesFileHoldsTheWorkmanshipRules(unittest.TestCase):
         both = WORKMANSHIP + '(rule "Power corners"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_angle (min 150)))\n'
         self.assertEqual(self.found(both), [])
 
+    def test_a_narrowed_rule_at_the_boards_own_figure_passes(self):
+        same = WORKMANSHIP + '(rule "Power jogs"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_segment_length (min 0.5mm)))\n'
+        self.assertEqual(self.found(same), [])
+
+    def test_a_later_narrowed_rule_looser_than_the_boards_figure_fails_naming_it_its_line_and_both_figures(self):
+        # A later rule wins wherever it matches, so square corners or short jogs on Power tracks would pass KiCad's check.
+        for loose, item, location, figures in (
+                ('(rule "Power corners"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_angle (min 90)))\n',
+                 "WORK-4 (corner) is loosened", "a/a.kicad_dru rule 'Power corners' at line 5",
+                 ("track_angle (min 90), looser than the board's figure of 135 degrees in rule 'Corners' at line 1",)),
+                ('(rule "Power jogs"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_segment_length (min 0.1mm)))\n',
+                 "WORK-5 (jog) is loosened", "a/a.kicad_dru rule 'Power jogs' at line 5",
+                 ("track_segment_length (min 0.1mm), looser than the board's figure of 0.5mm in rule 'Jogs' at line 3",))):
+            with self.subTest(rule=loose):
+                found = board_check.workmanship_rules(DESIGN, self.rules(WORKMANSHIP + loose))
+                self.assertEqual([(v.rule, v.message.split(":")[0], v.location) for v in found],
+                                 [("workmanship_rule", item, location)])
+                for words in figures:
+                    self.assertIn(words, found[0].message)
+
+    def test_a_looser_rule_before_the_one_in_force_fails(self):
+        for before in ('(rule "Old corners"\n\t(constraint track_angle (min 90)))\n',
+                       '(rule "Power corners"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_angle (min 120)))\n'):
+            with self.subTest(rule=before):
+                found = board_check.workmanship_rules(DESIGN, self.rules(before + WORKMANSHIP))
+                self.assertEqual([(v.rule, v.message.split(":")[0]) for v in found],
+                                 [("workmanship_rule", "WORK-4 (corner) is loosened")])
+                self.assertTrue(found[0].location.endswith("at line 1"), found[0].location)
+                self.assertIn("the board's figure of 135 degrees in rule 'Corners' at line", found[0].message)
+
+    def test_a_later_wider_rule_makes_the_earlier_one_looser_than_the_boards_figure(self):
+        later = WORKMANSHIP + '(rule "Wider corners"\n\t(constraint track_angle (min 150)))\n'
+        found = board_check.workmanship_rules(DESIGN, self.rules(later))
+        self.assertEqual([(v.message.split(":")[0], v.location) for v in found],
+                         [("WORK-4 (corner) is loosened", "a/a.kicad_dru rule 'Corners' at line 1")])
+        self.assertIn("figure of 150 degrees in rule 'Wider corners' at line 5", found[0].message)
+
+    def test_a_narrowed_rule_whose_minimum_cannot_be_read_fails_beside_one_in_force(self):
+        for odd in ("(min 20mil)", "(max 2mm)", "(min 0.1mm) (opt 2mm)"):
+            loose = f'(rule "Power jogs"\n\t(condition "A.hasNetclass(\'Power\')")\n\t(constraint track_segment_length {odd}))\n'
+            with self.subTest(rule=loose):
+                found = board_check.workmanship_rules(DESIGN, self.rules(WORKMANSHIP + loose))
+                self.assertEqual([(v.message.split(":")[0], v.location) for v in found],
+                                 [("WORK-5 (jog) is loosened", "a/a.kicad_dru rule 'Power jogs' at line 5")])
+                self.assertIn("cannot be shown to be no looser than the board's figure of 0.5mm", found[0].message)
+
     def test_the_corner_minimum_is_read_from_the_last_corner_rule_in_force(self):
         self.assertEqual(board_check.corner_minimum(self.rules(WORKMANSHIP)), 135.0)
         later = WORKMANSHIP + '(rule "Wider corners"\n\t(constraint track_angle (min 150)))\n'
@@ -1576,6 +1622,25 @@ class TheRulesFileHoldsTheWorkmanshipRules(unittest.TestCase):
             with self.subTest(rules=none):
                 self.assertIsNone(board_check.corner_minimum(self.rules(none)))
         self.assertIsNone(board_check.corner_minimum(None))
+
+
+class ALoosenedRuleIsNamedAtItsLineInTheRulesFile(Tree):
+    # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2: The pre-order check measures every rule-kind workmanship item and fails a board that breaks one
+    """The rules the check reads from a design's file carry the line each
+    starts on, comments and blank lines counted, so a loosened rule is named
+    where a builder will find it.
+    """
+
+    def test_the_loosened_rule_read_from_the_file_is_named_at_its_line(self):
+        self.write("a/a.kicad_dru", "(version 1)\n# Corners and jogs.\n\n" + WORKMANSHIP
+                   + "# Power is held looser.\n(rule \"Power corners\"\n\t(condition \"A.hasNetclass('Power')\")\n"
+                   "\t(constraint track_angle (min 90)))\n")
+        rules, hidden = board_check.read_rules(self.root, DESIGN, self.everything())
+        self.assertEqual(hidden, [])
+        found = board_check.workmanship_rules(DESIGN, rules)
+        self.assertEqual([(v.rule, v.location) for v in found],
+                         [("workmanship_rule", "a/a.kicad_dru rule 'Power corners' at line 9")])
+        self.assertIn("in rule 'Corners' at line 4", found[0].message)
 
 
 class TracksMeetingAtAPadAreMeasured(unittest.TestCase):

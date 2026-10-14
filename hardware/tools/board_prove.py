@@ -587,6 +587,10 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a rules file without the corner rule", "workmanship: the rules file holds every workmanship rule", "workmanship_rule", "WORK-4 (corner) has no rule", drop_rule("Corners")),
     ("a jog rule narrowed to some tracks", "workmanship: the rules file's workmanship rules hold on every track", "workmanship_rule", "WORK-5 (jog) is not in force on every track",
      mains_rule('(rule "Jogs"', '(rule "Jogs"\n\t(condition "A.hasNetclass(\'Mains\')")')),
+    ("a later corner rule looser on some tracks", "workmanship: no rule in the rules file loosens a workmanship rule's figure", "workmanship_rule",
+     "WORK-4 (corner) is loosened: rule 'Mains corners' at line",
+     lambda seed: seed.write(".kicad_dru", seed.read(".kicad_dru") + '(rule "Mains corners"\n\t(condition "A.hasNetclass(\'Mains\')")\n'
+                             "\t(constraint track_angle (min 90)))\n")),
     ("a corner rule written with a unit KiCad does not take", "workmanship: a rules file KiCad drops for a unit is named", "custom_rules", "rule 'Corners'",
      mains_rule("(min 135)", "(min 135deg)")),
     ("a measured rule with no figure", "workmanship: each measured rule's figure is set", "workmanship_figure", "WORK-2 (route length) has no figure",

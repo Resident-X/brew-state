@@ -756,6 +756,31 @@ def rule_name(rule: list) -> str:
     return str(rule[1]) if len(rule) > 1 and not isinstance(rule[1], list) else "(unnamed)"
 
 
+class Rule(list):
+    """One custom rule as parsed, with the line of the rules file it starts on (0 when not read from a file)."""
+
+    line = 0
+
+
+def rule_forms(text: str) -> List[Rule]:
+    """Every (rule ...) form of a custom rules file's text, in order, each with its line."""
+    spans: List[Tuple[int, int, int]] = []
+    forms = sexpr.parse(text, comments=True, spans=spans)
+    rules = []
+    for form, (_, _, line) in zip(forms, spans):
+        if sexpr.head(form) == "rule":
+            rule = Rule(form)
+            rule.line = line
+            rules.append(rule)
+    return rules
+
+
+def rule_at(rule: list) -> str:
+    """A rule as the report names it: its name, and its line when it was read from a file."""
+    line = getattr(rule, "line", 0)
+    return f"rule '{rule_name(rule)}'" + (f" at line {line}" if line else "")
+
+
 #: The clauses KiCad takes once in a rule yet loads a rule holding twice, keeping
 #: only one of them; a rule holding any other clause twice KiCad declines to
 #: load at all, which the check finds through KiCad itself.
@@ -775,12 +800,11 @@ def read_rules(root: str, design: Design, repository: Repository) -> Tuple[Optio
         return None, []
     try:
         with open(path, encoding="utf-8") as handle:
-            forms = sexpr.parse(handle.read(), comments=True)
+            rules: List[list] = list(rule_forms(handle.read()))
     except (OSError, sexpr.SexprError) as error:
         return [], [Violation(design.project, "custom_rules", design.rules,
                               f"the custom rules file cannot be read ({error}); KiCad drops a rules file it cannot "
                               "parse without saying so, so none of its rules would be checked")]
-    rules = [form for form in forms if sexpr.head(form) == "rule"]
     found = []
     names: Dict[str, int] = {}
     for rule in rules:
@@ -1123,29 +1147,67 @@ def workmanship_figures(design: Design, variables: dict) -> Tuple[Dict[str, floa
     return figures, found
 
 
+def written_minimum(rule: list, constraint: str, form: str) -> Optional[str]:
+    """The minimum a rule writes for a workmanship constraint, as written, or None when it writes it in no other form than
+    one (constraint <constraint> (min <figure>)) with the figure in `form`."""
+    holding = [node for node in sexpr.children(rule, "constraint") if len(node) > 1 and str(node[1]) == constraint]
+    minimum = holding[0][2] if len(holding) == 1 and len(holding[0]) == 3 else None
+    if (sexpr.head(minimum) == "min" and len(minimum) == 2 and not isinstance(minimum[1], (list, sexpr.Quoted))
+            and re.fullmatch(form, str(minimum[1]))):
+        return str(minimum[1])
+    return None
+
+
 def held(rules: Optional[List[list]], constraint: str, form: str) -> Tuple[List[list], List[Tuple[list, str]]]:
     """Every rule holding a workmanship constraint, and those of them in force on every track, each with the minimum it writes."""
     candidates, good = [], []
     for rule in rules or []:
-        holding = [node for node in sexpr.children(rule, "constraint") if len(node) > 1 and str(node[1]) == constraint]
-        if not holding:
+        if not any(len(node) > 1 and str(node[1]) == constraint for node in sexpr.children(rule, "constraint")):
             continue
         candidates.append(rule)
         conditions = tuple(str(condition[1]) if len(condition) > 1 else "" for condition in sexpr.children(rule, "condition"))
-        minimum = holding[0][2] if len(holding[0]) == 3 else None
-        if (len(holding) == 1 and sexpr.head(minimum) == "min" and len(minimum) == 2
-                and not isinstance(minimum[1], (list, sexpr.Quoted)) and re.fullmatch(form, str(minimum[1]))
-                and conditions in ((), EVERY_TRACK) and sexpr.child(rule, "layer") is None):
-            good.append((rule, str(minimum[1])))
+        minimum = written_minimum(rule, constraint, form)
+        if minimum is not None and conditions in ((), EVERY_TRACK) and sexpr.child(rule, "layer") is None:
+            good.append((rule, minimum))
     return candidates, good
 
 
+def figure_of(minimum: str) -> float:
+    """A workmanship rule's minimum as a number, in degrees or mm."""
+    return float(minimum[:-2] if minimum.endswith("mm") else minimum)
+
+
 def workmanship_rules(design: Design, rules: Optional[List[list]]) -> List[Violation]:
-    """Every workmanship custom rule the design's rules file lacks, or does not hold on every track."""
+    """Every workmanship custom rule the design's rules file lacks, does not hold on every track, or loosens.
+
+    The rule in force on every track is the last one with no condition, or
+    the every-track condition, and no layer, since KiCad applies the last rule
+    that matches; its minimum is the board's figure. Any other rule holding the
+    constraint, before or after it, with or without a condition, fails unless
+    it writes a minimum no looser than that figure: a later one would loosen the
+    item wherever it matches, and an earlier one would state a figure the board
+    is not held to.
+    """
     found = []
     for item, what, constraint, form, written in WORKMANSHIP_RULES:
         candidates, good = held(rules, constraint, form)
         if good:
+            in_force, figure = good[-1]
+            unit = "mm" if figure.endswith("mm") else " degrees"
+            for rule in candidates:
+                if rule is in_force:
+                    continue
+                minimum = written_minimum(rule, constraint, form)
+                if minimum is not None and figure_of(minimum) >= figure_of(figure):
+                    continue
+                writes = (f"writes {constraint} (min {minimum}), looser than" if minimum is not None
+                          else f"writes {constraint} in no other form than (min ...) as {written}, so it cannot be "
+                               "shown to be no looser than")
+                found.append(Violation(design.project, "workmanship_rule", f"{design.rules} {rule_at(rule)}",
+                                       f"{item} ({what}) is loosened: {rule_at(rule)} {writes} the board's figure of "
+                                       f"{figure_of(figure):g}{unit} in {rule_at(in_force)}, so the tracks it matches "
+                                       f"could break the item while KiCad's check passes; remove the rule, or write its "
+                                       f"minimum as {written} at {figure_of(figure):g}{unit} or tighter"))
             continue
         if candidates:
             names = ", ".join(f"'{rule_name(rule)}'" for rule in candidates)
