@@ -2,11 +2,11 @@ id: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C2
 type: criterion
 title: The figures record derives the proof-of-life interval from the peak and ends its pending mark
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  The controller boards' figures record replaces its pending proof-of-life removal interval with the interval derived from each thermoblock's peak casting temperature under control, its trip point, its element power at the top of the declared supply span and the lower bound of its thermal mass, showing the arithmetic and naming the shorter of the two heaters as the one that sets it. Out of scope: the interlock's design.
+  The controller boards' figures record replaces its pending proof-of-life removal interval with the interval derived from each thermoblock's peak casting temperature under control as the generated record gives it, its trip point, its element power at the top of the declared supply span and the lower bound of its thermal mass, showing the arithmetic and naming the shorter of the two heaters as the one that sets it. Out of scope: the interlock's design.
 links:
   - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED
     type: criterion-of
