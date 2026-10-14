@@ -234,6 +234,18 @@ class TheSeeds(unittest.TestCase):
                            ("a short jog", "track_segment_length"), ("a corner a few degrees off 45", "track_angle")):
             self.assertEqual(faults.get(name), rule, name)
 
+    def test_seeds_taking_a_nets_copper_areas_away_leave_the_boards_rule_areas(self):
+        # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
+        tree = sexpr.parse_one('(kicad_pcb (zone (net "/GND") (layer "F.Cu")) (zone (net "/MAINS_L") (layer "F.Cu")) '
+                               '(zone (name "R3 ground return") (layer "F.Cu") (keepout (copperpour not_allowed))))')
+        self.assertEqual([sexpr.child(zone, "net")[1] for zone in review_seed.zones(tree, review_seed.GND)], ["/GND"])
+        for item in ("GROUND-1", "POWER-5"):
+            edit = next(seed[5] for seed in review_seed.SEEDS if seed[1] == item)
+            with self.subTest(item=item), tempfile.TemporaryDirectory() as scratch:
+                seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+                edit(seed)
+                self.assertIn('(name "R3 ground return")', seed.read(".kicad_pcb"))
+
     def test_each_kicad_check_seed_takes_out_its_row_and_leaves_the_others(self):
         # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
         for item, row in (("WORK-6", "| Stubs |"), ("WORK-7", "| Unconnected vias |")):

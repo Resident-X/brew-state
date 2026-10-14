@@ -178,7 +178,9 @@ def path(tree: list, net: str, layer: str, width: float, points: List[Tuple[floa
 
 
 def zones(tree: list, net: str) -> List[list]:
-    return [item for item in sexpr.children(tree, "zone") if sexpr.child(item, "net")[1] == net]
+    """Every zone filled with `net`'s copper; a rule area, which carries no net, is none of them."""
+    return [item for item in sexpr.children(tree, "zone")
+            if sexpr.child(item, "net") is not None and sexpr.child(item, "net")[1] == net]
 
 
 def move(tree: list, reference: str, x: float, y: float) -> None:
