@@ -45,6 +45,24 @@ accepted_by: maintainer
 accepted_on: 2026-10-01
 """
 
+#: The figure of every measured workmanship rule, as a design sets them in its project text variables.
+FIGURES = {"WORK_DETOUR_RATIO": "1.5", "WORK_STUB_MM": "0", "WORK_NECK_MM": "1", "WORK_ANGLE_TOLERANCE_DEG": "0.1",
+           "WORK_PAD_ENTRY_RATIO": "2"}
+
+#: The workmanship custom rules every design's rules file holds.
+WORKMANSHIP = """\
+(rule "Corners"
+	(constraint track_angle (min 135)))
+(rule "Jogs"
+	(constraint track_segment_length (min 0.5mm)))
+"""
+
+
+def none_project(**more) -> str:
+    """A project file declaring no mains, carrying every workmanship figure."""
+    return json.dumps({"text_variables": {"MAINS": "none", **FIGURES, **more}})
+
+
 MAINS_RULE = """\
 (version 1)
 (rule "Mains separation"
@@ -760,10 +778,10 @@ else:
 json.dump(report, open(out, "w"))
 """)
             os.chmod(fake, 0o755)
-            for path, text in (("a/a.kicad_pro", '{"text_variables": {"MAINS": "none"}}'), ("a/a.kicad_sch", schematic()),
-                               ("a/a.kicad_pcb", "(kicad_pcb)")):
+            for path, text in (("a/a.kicad_pro", none_project()), ("a/a.kicad_sch", schematic()),
+                               ("a/a.kicad_pcb", "(kicad_pcb)"), ("a/a.kicad_dru", "(version 1)\n" + WORKMANSHIP)):
                 write(root, path, text)
-            repository = board_check.Repository(root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb"])
+            repository = board_check.Repository(root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb", "a/a.kicad_dru"])
             design = board_check.Design("a/a.kicad_pro")
             runs = [board_check.check_design(design, repository, fake, board_check.require_yaml(), TODAY, [])
                     for _ in range(2)]
@@ -1395,10 +1413,10 @@ else:
 json.dump(report, open(out, "w"))
 """)
             os.chmod(fake, 0o755)
-            for path, text in (("a/a.kicad_pro", '{"text_variables": {"MAINS": "none"}}'), ("a/a.kicad_sch", schematic()),
+            for path, text in (("a/a.kicad_pro", none_project()), ("a/a.kicad_sch", schematic()),
                                ("a/a.kicad_pcb", "(kicad_pcb)"),
                                ("a/a.kicad_dru", '(version 1)\n(rule "every track"\n\t(condition "A.Type == \'Track\'")\n'
-                                                 '\t(constraint assertion "false"))\n')):
+                                                 '\t(constraint assertion "false"))\n' + WORKMANSHIP)):
                 write(root, path, text)
             repository = board_check.Repository(root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb", "a/a.kicad_dru"])
             return board_check.check_design(board_check.Design("a/a.kicad_pro"), repository, fake,

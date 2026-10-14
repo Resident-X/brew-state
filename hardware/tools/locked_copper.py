@@ -66,6 +66,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import board_check  # noqa: E402
 import sexpr  # noqa: E402
+from board_geometry import Unreadable, item_net, net_table  # noqa: E402,F401
 from board_check import UNWRITABLE, CannotRun, clean  # noqa: E402
 
 #: What a record says it is, so a file of any other kind is not read as one.
@@ -80,10 +81,6 @@ KINDS = {
     "zone": ("zone", ("net", "layers", "outline")),
 }
 KIND_OF = {keyword: kind for kind, (keyword, _) in KINDS.items()}
-
-
-class Unreadable(Exception):
-    """A board, project file or record that cannot be read in the form KiCad or this check writes it."""
 
 
 # --- Reading the layout ---------------------------------------------------------
@@ -152,23 +149,6 @@ def outline(zone: list, what: str) -> List[list]:
                 raise Unreadable(f"{what} outline holds {sexpr.dump(node)}, where KiCad writes (xy ...) or (arc ...)")
         shape.append(corners)
     return shape
-
-
-def net_table(layout: list) -> Dict[str, str]:
-    """The numbered net table an older layout file carries at its top level, number -> name; empty in KiCad 10's form."""
-    return {str(node[1]): str(node[2]) for node in sexpr.children(layout, "net") if len(node) == 3}
-
-
-def item_net(node: list, table: Dict[str, str], what: str) -> str:
-    nets = sexpr.children(node, "net")
-    if len(nets) > 1:
-        raise Unreadable(f"{what} names its net {len(nets)} times")
-    if not nets:
-        return ""
-    if len(nets[0]) != 2 or isinstance(nets[0][1], list):
-        raise Unreadable(f"{what} names its net as {sexpr.dump(nets[0])}, where KiCad writes (net \"name\")")
-    raw = str(nets[0][1])
-    return table.get(raw, raw) if table and not isinstance(nets[0][1], sexpr.Quoted) else raw
 
 
 def read_item(node: list, table: Dict[str, str]) -> dict:

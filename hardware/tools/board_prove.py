@@ -434,6 +434,74 @@ def unfilled_pour_by_mains(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
 
 
+def track_at(tree: list, a: Tuple[float, float], b: Tuple[float, float]) -> list:
+    """The proof layout's track from `a` to `b`, either way round."""
+    for item in sexpr.children(tree, "segment"):
+        ends = [tuple(float(value) for value in sexpr.child(item, key)[1:3]) for key in ("start", "end")]
+        if sorted(ends) == sorted([a, b]):
+            return item
+    raise AssertionError(f"the proof layout has no track from {a} to {b}; the fault cannot be seeded")
+
+
+#: Where the proof layout's /LV_A track runs, from J2's pad 1 to R2's pad 1, and
+#: /LV_B's 45-degree run into R2's pad 2.
+LV_A_ENDS = ((40.0, 10.0), (45.0, 10.0))
+LV_B_RUN = ((40.0, 12.54), (52.62, 12.54))
+LV_B_BEND = ((52.62, 12.54), (55.16, 10.0))
+
+
+def reroute(net: str, removed, points, widths: Optional[Tuple[float, ...]] = None):
+    """The tracks running between each pair of `removed` ends replaced by tracks through `points` in turn, each
+    0.25 mm wide or as `widths` gives."""
+    def seed_it(seed: Seed) -> None:
+        def edit(tree: list) -> None:
+            for ends in removed:
+                tree.remove(track_at(tree, *ends))
+            for index, (a, b) in enumerate(zip(points, points[1:])):
+                item = segment(net, *a, *b, f"0b0e5c1a-0000-4000-8000-0000000001{index:02d}")
+                if widths:
+                    sexpr.child(item, "width")[1] = f"{widths[index]:g}"
+                tree.insert(len(tree) - 1, item)
+        seed.layout(edit)
+    return seed_it
+
+
+def stub(seed: Seed) -> None:
+    """A /LV_A track leaving R2's pad 1 and ending 1.5 mm away in free space."""
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, segment("/LV_A", 45, 10, 45, 8.5, "0b0e5c1a-0000-4000-8000-000000000201")))
+
+
+def unneeded_via(seed: Seed) -> None:
+    """A via on /LV_A where its track runs on, on the one layer, joining nothing to anything."""
+    Q = sexpr.Quoted
+    def edit(tree: list) -> None:
+        tree.remove(track_at(tree, *LV_A_ENDS))
+        for index, (a, b) in enumerate((((40, 10), (42, 10)), ((42, 10), (45, 10)))):
+            tree.insert(len(tree) - 1, segment("/LV_A", *a, *b, f"0b0e5c1a-0000-4000-8000-00000000030{index}"))
+        tree.insert(len(tree) - 1, ["via", ["at", "42", "10"], ["size", "0.9"], ["drill", "0.4"],
+                                    ["layers", Q("F.Cu"), Q("B.Cu")], ["net", Q("/LV_A")],
+                                    ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000302")]])
+    seed.layout(edit)
+
+
+def long_pad(seed: Seed) -> None:
+    """R2's pad 1, which /LV_A enters from the side, made an oval 3.6 mm tall and 1.6 mm wide."""
+    def edit(tree: list) -> None:
+        item = pad(tree, "R2", "1")
+        item[3] = "oval"
+        sexpr.child(item, "size")[1:3] = ["1.6", "3.6"]
+    seed.layout(edit)
+
+
+def drop_rule(name: str):
+    def seed_it(seed: Seed) -> None:
+        text = seed.read(".kicad_dru")
+        start = text.index(f'(rule "{name}"')
+        end = text.index("\n(rule", start + 1) + 1 if "\n(rule" in text[start + 1:] else len(text)
+        seed.write(".kicad_dru", text[:start] + text[end:])
+    return seed_it
+
+
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
@@ -489,6 +557,37 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
     ("a project file whose net class assignments are not an object", "rule checks: the project file is read only in the form KiCad writes", "project_file", "netclass_assignments is", lambda seed: seed.project(lambda data: data["net_settings"].update(netclass_assignments=["/LV_A"]))),
     ("a project text variable that is not a string", "rule checks: the project file is read only in the form KiCad writes", "project_file", "text variable MAINS is true", lambda seed: seed.project(lambda data: data["text_variables"].update(MAINS=True))),
     ("a stale fill hiding a creepage violation beside a mains pad", "rule checks: zones are refilled before they are judged", "creepage", f"rule '{board_check.SIGNED_RULE}' creepage", unfilled_pour_by_mains),
+    # Workmanship
+    ("a right-angled corner", "workmanship: KiCad measures each corner against the rules file's corner rule", "track_angle", "workmanship item WORK-4",
+     reroute("/LV_B", (LV_B_RUN, LV_B_BEND), [(40, 12.54), (55.16, 12.54), (55.16, 10)])),
+    ("a corner a few degrees off 45", "workmanship: KiCad measures each corner against the rules file's corner rule", "track_angle", "actual 132.6",
+     reroute("/LV_B", (LV_B_RUN, LV_B_BEND), [(40, 12.54), (52.82, 12.54), (55.16, 10)])),
+    ("a short jog", "workmanship: KiCad measures each straight run against the rules file's jog rule", "track_segment_length", "workmanship item WORK-5",
+     reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (42, 10), (42.3, 10.3), (45, 10.3)])),
+    ("an unneeded via", "workmanship: KiCad reports a via a route does not need, unaided", "via_dangling", "workmanship item WORK-7", unneeded_via),
+    ("a short stub", "workmanship: a track ending free is measured against its figure", "workmanship_stub", "free-ended run is 1.500 mm long where WORK_STUB_MM allows 0 mm", stub),
+    ("a route wandering the long way round", "workmanship: a net's track length is measured against the tree joining its pads", "workmanship_detour", "where WORK_DETOUR_RATIO allows 1.3 times",
+     reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (40, 6), (41, 5), (44, 5), (45, 6), (45, 10)])),
+    ("a track off the board's edges and the 45 degrees to them", "workmanship: each track's direction is measured against the board's edges", "workmanship_direction", "3.43 degrees off",
+     reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (45, 10.3)])),
+    ("a track entering a long pad from its side", "workmanship: the way a track enters a long pad is measured against the pad's axis", "workmanship_pad_entry", "enters it 90.00 degrees off its long axis", long_pad),
+    ("a route narrowed partway along", "workmanship: a track narrower than its class is measured against its figure", "workmanship_width", "0.15 mm wide, narrower than its net class's 0.25 mm",
+     reroute("/LV_A", (LV_A_ENDS,), [(40, 10), (42.5, 10), (45, 10)], (0.25, 0.15))),
+    ("a rules file without the corner rule", "workmanship: the rules file holds every workmanship rule", "workmanship_rule", "WORK-4 (corner) has no rule", drop_rule("Corners")),
+    ("a jog rule narrowed to some tracks", "workmanship: the rules file's workmanship rules hold on every track", "workmanship_rule", "WORK-5 (jog) is not in force on every track",
+     mains_rule('(rule "Jogs"', '(rule "Jogs"\n\t(condition "A.hasNetclass(\'Mains\')")')),
+    ("a corner rule written with a unit KiCad does not take", "workmanship: a rules file KiCad drops for a unit is named", "custom_rules", "rule 'Corners'",
+     mains_rule("(min 135)", "(min 135deg)")),
+    ("a measured rule with no figure", "workmanship: each measured rule's figure is set", "workmanship_figure", "WORK-2 (route length) has no figure",
+     variables(lambda v: v.pop("WORK_DETOUR_RATIO"))),
+    ("a measured rule's figure written with a unit", "workmanship: each measured rule's figure is a plain number", "workmanship_figure", "WORK_STUB_MM is '0mm'",
+     variables(lambda v: v.update(WORK_STUB_MM="0mm"))),
+    ("a measured rule's figure out of its range", "workmanship: each measured rule's figure is within its range", "workmanship_figure", "WORK_DETOUR_RATIO is '0.5'",
+     variables(lambda v: v.update(WORK_DETOUR_RATIO="0.5"))),
+    ("a project file whose net classes are not a list", "rule checks: the project file is read only in the form KiCad writes", "project_file", "net_settings.classes is",
+     lambda seed: seed.project(lambda data: data["net_settings"].update(classes={"Default": {}}))),
+    ("a net class whose track width is not a number", "workmanship: each net class's width is read", "project_file", "the net class Default gives no track width",
+     lambda seed: seed.project(lambda data: data["net_settings"]["classes"][0].update(track_width="wide"))),
     # Separation
     ("a declared clearance below the signed figure", "separation: a declared figure is compared with the record", "separation_rule", "clearance of 2 mm, below the signed 3 mm", mains_rule("(constraint clearance (min 3mm))", "(constraint clearance (min 2mm))")),
     ("a declared creepage below the signed figure", "separation: a declared figure is compared with the record", "separation_rule", "creepage of 3.5 mm, below the signed 4 mm", mains_rule("(constraint creepage (min 4mm))", "(constraint creepage (min 3.5mm))")),
