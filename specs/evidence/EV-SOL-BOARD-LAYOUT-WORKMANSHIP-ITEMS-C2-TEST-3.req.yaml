@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS-C2-TEST-3
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T21:26:47.309101Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_the_contact_rule_joins_a_track_to_a_pad_exactly_when_kicad_does,test_every_workmanship_rule_fails_on_its_seeded_fault,test_each_kicad_finding_and_measured_failure_names_the_item,test_a_stub_off_a_pad_off_a_track_or_lying_loose_is_reported_and_fails_the_design,test_a_branch_at_a_pad_passes_and_one_off_a_track_or_a_via_fails
+  artifact_version: 346b17e3ed806f2977c21f216bfc54a42d66b8cc
+attested_by: crun-ab54253324446b3a
+links:
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2
+    type: satisfies

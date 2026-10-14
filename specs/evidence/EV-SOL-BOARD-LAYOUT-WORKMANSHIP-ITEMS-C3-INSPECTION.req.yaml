@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T21:26:47.36793Z"
+artifact:
+  kind: external
+  reference: 'hardware/proof/review-proof/ at 346b17e, design files unchanged since 8b31396: layout-review.md rounds 1 to 6 (round 1 states the defects the design carried, round 6 closes with every workmanship item passing). task hw:verify at 346b17e passes both committed designs with route length measured over all a net''s pads (review-proof''s worst: +3V3 at 1.217 and AMP_OUT at 1.200 against 1.3, as layout-plan.md states), arcs held by their ends and edges read at their true sides, so no board change was needed.'
+  artifact_version: 346b17e3ed806f2977c21f216bfc54a42d66b8cc
+attested_by: crun-ab54253324446b3a
+links:
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C3
+    type: satisfies

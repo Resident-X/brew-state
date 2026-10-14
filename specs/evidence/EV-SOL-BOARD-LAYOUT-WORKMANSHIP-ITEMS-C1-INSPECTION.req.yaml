@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-14T21:26:47.133742Z"
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md#workmanship-work at 346b17e: WORK-1 to WORK-10 read against the item form. The area''s opening now states KiCad''s contact reading (a track joins a pad wherever its copper reaches the pad''s, by an end cap or running over it off its centre), WORK-2 measures route length against the tree joining all a net''s pads with no zone entering it, WORK-3''s sentence on WORK-2 matches, and WORK-9 holds an arc by its two ends and reads the edges at their true shape. Sources and review-record citations are unchanged from the round checked at f7c37b3.'
+  artifact_version: 346b17e3ed806f2977c21f216bfc54a42d66b8cc
+attested_by: crun-ab54253324446b3a
+links:
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C1
+    type: satisfies

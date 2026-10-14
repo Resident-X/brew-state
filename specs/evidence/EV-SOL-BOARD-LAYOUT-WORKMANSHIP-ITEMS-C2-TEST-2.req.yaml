@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS-C2-TEST-2
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-14T21:26:47.252182Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_geometry.py::test_an_end_short_of_the_pad_reaches_it_by_its_cap,test_a_line_reaches_a_pad_where_its_copper_overlaps_the_pads,test_kicad_joins_a_track_wherever_its_copper_reaches_the_pads,test_a_pad_whose_copper_is_not_a_shape_sized_here_raises_naming_it_rather_than_being_guessed,test_a_nets_pad_tree_is_measured_between_pad_centres
+  artifact_version: 346b17e3ed806f2977c21f216bfc54a42d66b8cc
+attested_by: crun-ab54253324446b3a
+links:
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C2
+    type: satisfies
