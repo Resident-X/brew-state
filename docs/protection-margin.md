@@ -14,12 +14,12 @@ Nothing here is a measurement. The trip point is a figure read off a parts list,
 
 | What | File | sha256 |
 |---|---|---|
-| The machine's coefficients | `firmware/params/thermoblock.params` | `2ecf3153856014ee4071d8013e3bc73c0558155972200d9f9f97447a2744284e` |
+| The machine's coefficients | `firmware/params/thermoblock.params` | `05492d4ba05da02591dd5c8437ed131ce452a41521c09bb51ab80673fa1fd814` |
 | What a reading off it may be | `firmware/params/thermoblock.limits` | `d71d41f4ea5ef907696cfec6059e4b2b00a76fdb2f937d40781ec91910ce26a1` |
 | The bands a delivery is held to | `firmware/params/tolerance.declaration` | `c5bb5a51a4a9ad71496ac8405dee688736a6635e0f2df06433168055aefdec17` |
 | The steam side's design figures | `firmware/params/steam_control.declaration` | `4ee5f3b38c7404536ebdc5d8e42e7710c214f53a223521cf60be0ad54c8a2dda` |
 
-The supply this was run against is the declared 216–253 V span the description's accounts state: the element ratings' declared errors are sized to the delivered power that span moves them over, so what follows was run across that supply rather than only at its nominal.
+The supply this was run against is the declared 216–253 V span about the 230 V nominal, as the description's accounts state it. How each element rating's declared error was derived from that supply is set out in the description's account beside the rating; this record does not check that derivation.
 
 A replacement model is read by naming it: `--description`, `--limits`, `--tolerance` and `--steam-declaration` each point the same method at another file, and nothing about how the mapping is read or how a corner is delivered against changes with them.
 

@@ -526,9 +526,9 @@ class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
     # record stale rather than naming the old one.
     def test_the_committed_record_states_the_span_the_description_declares(self):
         statement = sweep.supply_span_statement(FINDINGS["description"])
-        self.assertIn("declared 216–253 V span", statement,
+        self.assertIn("declared 216–253 V span about the 230 V nominal", statement,
                       "the reference description's accounts no longer state the declared "
-                      "216-253 V supply span its element ratings are sized to")
+                      "216-253 V supply span about the 230 V nominal it is run against")
         self.assertIn(statement, _committed_record(),
                       "%s does not state the supply span the description it was run against "
                       "declares. Re-run its tool" % margin.REPORT_PATH)

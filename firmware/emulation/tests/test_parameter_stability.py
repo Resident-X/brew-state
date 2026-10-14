@@ -1468,7 +1468,7 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
     # different errors produces one: a sentence claiming the two sides are
     # coupled would read as a finding, contradict the description, and nothing in
     # a table of figures would show it up. So that case is put to the record
-    # writer too, with the steam element's own corner moved further than the
+    # writer too, with each element's own corner in turn moved further than the
     # joint corner's sag.
     #
     # SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: Simulation results resting on element
@@ -1496,28 +1496,39 @@ class TheOneDependenceTheDescriptionStatesIsRunAsAJointCorner(unittest.TestCase)
             "two elements moved together, and no side did")
         self.assertIn("carry no coupling between the two sides at all", section)
 
-        steam = stability.MAINS_COUPLED_BY_SIDE[sweep.STEAM_SIDE]
-        doctored = dict(FINDINGS)
-        doctored["corners"] = [
-            dict(record, fraction=FINDINGS["joint"]["fraction"] * 1.5)
-            if not record["joint"] and record["coefficient"] == steam else record
-            for record in FINDINGS["corners"]]
-        _, differing, incomparable = stability.joint_against_the_independent_corners(doctored)
-        self.assertEqual(incomparable, [sweep.STEAM_SIDE],
-                         "a steam element corner moved further than the joint corner's sag was "
-                         "still compared against it")
-        self.assertEqual(differing, [])
-        written = stability.report_text(doctored)
-        section = written.split(stability.JOINT_HEADING, 1)[1].split("\n## ", 1)[0]
-        self.assertIn("On the %s side there is no like-for-like comparison" % sweep.STEAM_SIDE,
-                      section)
-        self.assertIn("`%s` declares the wider error" % steam, section)
-        self.assertNotIn(
-            "That is what a description carrying a coupling between the two sides produces.",
-            section,
-            "the record states that a coupling between the two sides was found on the side it "
-            "could not compare")
-        self.assertNotIn("does not reproduce that side's own element corner", section)
+        # Each way round: the reference description's two elements declare the
+        # same error, so which one is wider has to be put to the writer rather
+        # than read off the run, and a writer that took the steam side to be the
+        # wider one by position would pass the steam case alone.
+        for wide_side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+            wide = stability.MAINS_COUPLED_BY_SIDE[wide_side]
+            other = stability.MAINS_COUPLED_BY_SIDE[
+                sweep.STEAM_SIDE if wide_side == sweep.BREW_SIDE else sweep.BREW_SIDE]
+            with self.subTest(wider=wide):
+                doctored = dict(FINDINGS)
+                doctored["corners"] = [
+                    dict(record, fraction=FINDINGS["joint"]["fraction"] * 1.5)
+                    if not record["joint"] and record["coefficient"] == wide else record
+                    for record in FINDINGS["corners"]]
+                _, differing, incomparable = stability.joint_against_the_independent_corners(
+                    doctored)
+                self.assertEqual(incomparable, [wide_side],
+                                 "an element corner moved further than the joint corner's sag "
+                                 "was still compared against it")
+                self.assertEqual(differing, [])
+                written = stability.report_text(doctored)
+                section = written.split(stability.JOINT_HEADING, 1)[1].split("\n## ", 1)[0]
+                self.assertIn("On the %s side there is no like-for-like comparison" % wide_side,
+                              section)
+                self.assertIn("`%s` declares the wider error" % wide, section)
+                self.assertNotIn("`%s` declares the wider error" % other, section)
+                self.assertNotIn(
+                    "That is what a description carrying a coupling between the two sides "
+                    "produces.",
+                    section,
+                    "the record states that a coupling between the two sides was found on the "
+                    "side it could not compare")
+                self.assertNotIn("does not reproduce that side's own element corner", section)
 
 class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
     """SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN.C2: The simulation's
@@ -1531,9 +1542,9 @@ class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
     # record stale rather than naming the old one.
     def test_the_committed_record_states_the_span_the_description_declares(self):
         statement = sweep.supply_span_statement(FINDINGS["description"])
-        self.assertIn("declared 216–253 V span", statement,
+        self.assertIn("declared 216–253 V span about the 230 V nominal", statement,
                       "the reference description's accounts no longer state the declared "
-                      "216-253 V supply span its element ratings are sized to")
+                      "216-253 V supply span about the 230 V nominal it is run against")
         self.assertIn(statement, _committed_record(),
                       "%s does not state the supply span the description it was run against "
                       "declares. Re-run its tool" % stability.REPORT_PATH)
