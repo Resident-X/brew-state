@@ -361,7 +361,7 @@
     "MAINS": "present",
     "NOT_FOR_MANUFACTURE": "true",
     "WORK_ANGLE_TOLERANCE_DEG": "0.1",
-    "WORK_DETOUR_RATIO": "1.2",
+    "WORK_DETOUR_RATIO": "1.3",
     "WORK_NECK_MM": "1",
     "WORK_PAD_ENTRY_RATIO": "2",
     "WORK_STUB_MM": "0"

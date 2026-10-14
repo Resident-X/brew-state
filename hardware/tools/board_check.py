@@ -1407,28 +1407,65 @@ def directions(design: Design, layout: Layout, tolerance: float) -> List[Violati
     return found
 
 
+def crossed(layout: Layout, copper: Copper) -> List[Tuple[Tuple[float, float], board_geometry.Pad]]:
+    """Each pad of its net a straight track runs across with neither end on it, with the point of the track nearest its centre."""
+    found = []
+    if copper.mid is not None:
+        return found
+    for pad in layout.pads_of(copper.net, copper.layer):
+        if pad.contains(copper.start) or pad.contains(copper.end):
+            continue
+        dx, dy = copper.end[0] - copper.start[0], copper.end[1] - copper.start[1]
+        size = dx * dx + dy * dy
+        t = 0.0 if size == 0 else max(0.0, min(1.0, ((pad.centre[0] - copper.start[0]) * dx
+                                                    + (pad.centre[1] - copper.start[1]) * dy) / size))
+        nearest = (copper.start[0] + t * dx, copper.start[1] + t * dy)
+        if pad.contains(nearest):
+            found.append((nearest, pad))
+    return found
+
+
 def pad_entries(design: Design, layout: Layout, ratio: float, tolerance: float) -> List[Violation]:
-    """WORK-10: every track entering a pad at least `ratio` times as long as it is wide other than along its long axis."""
+    """WORK-10: every track entering, or running across, a pad at least `ratio` times as long as it is wide other than along its long axis."""
     found = []
     for copper in layout.copper:
+        meetings = []
         for end, other_end in ((copper.start, copper.end), (copper.end, copper.start)):
             pad = layout.on_pad(copper.net, copper.layer, end)
-            if pad is None or pad.contains(other_end):
-                continue
+            if pad is not None and not pad.contains(other_end):
+                meetings.append((end, pad, "enters it"))
+        meetings += [(point, pad, "runs across it") for point, pad in crossed(layout, copper)]
+        for end, pad, how in meetings:
             axis = pad.long_axis()
             if axis is None or max(pad.size) < ratio * min(pad.size) - 1e-9:
                 continue
             off = off_axis(copper.heading(end), axis)
             if off > tolerance + 1e-9:
                 found.append(Violation(design.project, "workmanship_pad_entry",
-                                       f"net {copper.net}: {copper.place()}, entering {pad.name()} at "
+                                       f"net {copper.net}: {copper.place()}, "
+                                       f"{'entering' if how == 'enters it' else 'running across'} {pad.name()} at "
                                        f"({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm",
                                        f"WORK-10 tracks enter a pad along its long axis from its end: {pad.name()} is "
                                        f"{max(pad.size):g} by {min(pad.size):g} mm, at least the {ratio:g} times as long "
-                                       f"as wide WORK_PAD_ENTRY_RATIO sets, and the {copper.kind()} enters it {off:.2f} "
+                                       f"as wide WORK_PAD_ENTRY_RATIO sets, and the {copper.kind()} {how} {off:.2f} "
                                        f"degrees off its long axis, where WORK_ANGLE_TOLERANCE_DEG allows "
                                        f"{tolerance:g} degrees; bring the track straight into the pad's end"))
     return found
+
+
+def off_pads(layout: Layout, copper: Copper, steps: int = 200) -> float:
+    """How much of a track's length lies off the copper of its net's pads on its layer."""
+    line = copper.points()
+    pads_ = layout.pads_of(copper.net, copper.layer)
+    off = 0.0
+    for a, b in zip(line, line[1:]):
+        piece = math.dist(a, b) / steps
+        for i in range(steps):
+            t = (i + 0.5) / steps
+            point = (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+            if not any(pad.contains(point) for pad in pads_):
+                off += piece
+    return off
 
 
 def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, float]) -> List[Violation]:
@@ -1436,7 +1473,7 @@ def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, fl
 
     `widths` is each net's class track width. A track narrower than that is
     allowed only as part of a run of such tracks that reaches a pad of its net
-    and is no longer than `neck` in all. A track wider than its class's width,
+    and runs no more than `neck` in all off the copper of its net's pads. A track wider than its class's width,
     a power path widened where there is room, is never a narrowing.
     """
     narrow = [copper for copper in layout.copper if copper.net in widths and copper.width < widths[copper.net] - 1e-6]
@@ -1450,7 +1487,7 @@ def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, fl
         groups = [group for group in groups if group not in joined] + [merged]
     found = []
     for group in groups:
-        length = sum(copper.length for copper in group)
+        length = sum(off_pads(layout, copper) for copper in group)
         at_pad = any(layout.on_pad(copper.net, copper.layer, end) for copper in group for end in (copper.start, copper.end))
         if at_pad and length <= neck + 1e-6:
             continue
@@ -1459,7 +1496,7 @@ def narrowings(design: Design, layout: Layout, neck: float, widths: Dict[str, fl
         found.append(Violation(design.project, "workmanship_width", f"net {copper.net}: {copper.place()}",
                                f"WORK-8 one track width for each net class along a route: the track is "
                                f"{min(item.width for item in group):g} mm wide, narrower than its net class's "
-                               f"{width:g} mm, along {length:.2f} mm of route "
+                               f"{width:g} mm, along {length:.2f} mm of route off its pads "
                                + ("that reaches no pad" if not at_pad else "from the pad it enters")
                                + f", where WORK_NECK_MM allows a narrower track only within {neck:g} mm of a pad; "
                                  "draw it at its class's width"))

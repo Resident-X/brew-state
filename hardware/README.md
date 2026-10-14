@@ -120,9 +120,9 @@ For each design the check runs KiCad's own electrical rule check on the schemati
   |---|---|---|
   | `WORK_DETOUR_RATIO` | `WORK-2` | Each net with tracks and two or more pads and no copper zone: the length of all its tracks and arcs, against this many times the minimum spanning tree of its pad centres in straight lines (`workmanship_detour`) |
   | `WORK_STUB_MM` | `WORK-6` | Each track end touching no pad, via, zone outline or other copper of its net: the run of track from it back to where it joins anything, against this many mm (`workmanship_stub`) |
-  | `WORK_NECK_MM` | `WORK-8` | Each run of track narrower than its net class's track width (from the project file, the class KiCad ranks first for a net in several): passes only when it reaches a pad of its net and is no longer than this many mm; a track wider than its class's width never fails (`workmanship_width`) |
+  | `WORK_NECK_MM` | `WORK-8` | Each run of track narrower than its net class's track width (from the project file, the class KiCad ranks first for a net in several): passes only when it reaches a pad of its net and runs no more than this many mm off its net's pads' copper; a track wider than its class's width never fails (`workmanship_width`) |
   | `WORK_ANGLE_TOLERANCE_DEG` | `WORK-9`, `WORK-10` | Each straight track's direction, against a multiple of 45 degrees from the board's edges, taken from the longest straight side of the outline (`workmanship_direction`), and the angle at which a track enters a long pad, against the pad's long axis |
-  | `WORK_PAD_ENTRY_RATIO` | `WORK-10` | Each track with one end on the copper of a pad at least this many times as long as it is wide and the other end off it: its direction there, against the pad's long axis (`workmanship_pad_entry`) |
+  | `WORK_PAD_ENTRY_RATIO` | `WORK-10` | Each track with one end on the copper of a pad at least this many times as long as it is wide and the other end off it, or running across such a pad with both ends off it: its direction there, against the pad's long axis (`workmanship_pad_entry`) |
 
   A variable that is missing, or not a plain decimal number within its range, fails as `workmanship_figure`, naming it. The report states, under each design's verdict line, the figure it read for each measured rule.
 
@@ -165,7 +165,7 @@ The report has one verdict line per design, one line under it for each measured 
 
 ```
 DESIGN | hardware/proof/gate-proof/gate-proof.kicad_pro | PASS
-FIGURE | hardware/proof/gate-proof/gate-proof.kicad_pro | WORK-2 route length | WORK_DETOUR_RATIO | 1.2 times the shortest straight-line tree joining the net's pads
+FIGURE | hardware/proof/gate-proof/gate-proof.kicad_pro | WORK-2 route length | WORK_DETOUR_RATIO | 1.3 times the shortest straight-line tree joining the net's pads
 DESIGN | hardware/m/board/board.kicad_pro | FAIL | 1 violation
 VIOLATION | hardware/m/board/board.kicad_pro | clearance | Track [/LV_A] on F.Cu, length 2.0000 mm @ (28.085, 9) mm; PTH pad 2 [/MAINS_N] of R1 @ (25.16, 10) mm | Clearance violation (rule 'pre-order check: signed separation basis' clearance 3.0000 mm; actual 2.0000 mm)
 RESULT | FAIL | 1 of 2 designs failed

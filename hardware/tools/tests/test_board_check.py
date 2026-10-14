@@ -1709,6 +1709,15 @@ class LongPadsAreEnteredAlongTheirAxis(unittest.TestCase):
         self.assertEqual(board_check.pad_entries(DESIGN, board(chip, seg("/A", (10, 10), (15, 10))), 2, 0.1), [])
         self.assertEqual(len(board_check.pad_entries(DESIGN, board(chip, seg("/A", (10, 10), (15, 10))), 1.5, 0.1)), 1)
 
+    def test_a_track_running_across_a_long_pad_from_side_to_side_fails_and_one_along_it_passes(self):
+        found = board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10, 8), (10, 12))), 2, 0.1)
+        self.assertEqual([v.rule for v in found], ["workmanship_pad_entry"])
+        self.assertIn("runs across it 90.00 degrees off its long axis", found[0].message)
+        self.assertIn("running across pad 1 of U1 at (10, 10) mm", found[0].location)
+        self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (8, 10), (12, 10))), 2, 0.1), [])
+        self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (8, 12), (12, 12))), 2, 0.1), [],
+                         "a track passing beside the pad does not cross it")
+
     def test_a_track_wholly_on_the_pad_or_of_another_net_is_not_judged(self):
         self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/A", (10, 10), (10, 10.1))), 2, 0.1), [])
         self.assertEqual(board_check.pad_entries(DESIGN, board(self.LEAD, seg("/B", (10, 10), (10, 15))), 2, 0.1), [])
@@ -1743,8 +1752,16 @@ class NarrowingIsMeasuredAgainstTheClassWidth(unittest.TestCase):
     def test_a_neck_longer_than_the_figure_fails(self):
         found = self.found(seg("/A", (10, 10), (12, 10), 0.2), seg("/A", (12, 10), (20, 10), 0.4))
         self.assertEqual([v.rule for v in found], ["workmanship_width"])
-        self.assertIn("0.2 mm wide, narrower than its net class's 0.4 mm, along 2.00 mm of route from the pad it enters", found[0].message)
-        self.assertEqual(self.found(seg("/A", (10, 10), (12, 10), 0.2), seg("/A", (12, 10), (20, 10), 0.4), neck=2), [])
+        # The run is 2 mm long, 0.5 mm of it on R1's pad: 1.5 mm runs off the pad.
+        self.assertIn("0.2 mm wide, narrower than its net class's 0.4 mm, along 1.50 mm of route off its pads from the pad it enters",
+                      found[0].message)
+        self.assertEqual(self.found(seg("/A", (10, 10), (12, 10), 0.2), seg("/A", (12, 10), (20, 10), 0.4), neck=1.5), [])
+
+    def test_a_narrow_track_between_two_pads_close_together_passes_counting_only_what_lies_off_them(self):
+        close = (part("U1", "10 10", ("1", "/A", 0, 0, "roundrect", 0.3, 1.2)), part("U2", "10 11.8", ("1", "/A", 0, 0, "rect", 2, 2)))
+        layout = board(*close, seg("/A", (10, 10), (10, 11.8), 0.25))
+        self.assertEqual(board_check.narrowings(DESIGN, layout, 1, {"/A": 0.5}), [], "0.2 mm of the 1.8 mm track lies off the pads")
+        self.assertEqual(len(board_check.narrowings(DESIGN, layout, 0.1, {"/A": 0.5})), 1)
 
     def test_a_route_narrowed_partway_along_fails_however_short_the_narrowing(self):
         found = self.found(seg("/A", (10, 10), (14, 10), 0.4), seg("/A", (14, 10), (14.5, 10), 0.2), seg("/A", (14.5, 10), (20, 10), 0.4))
