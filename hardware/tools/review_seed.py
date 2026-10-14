@@ -237,7 +237,7 @@ def drop_via(tree: list, *at: Tuple[float, float]) -> None:
 #: each run of 0.5 mm tracks joins the next point in turn, from the supply
 #: connector's ground pin to every ground via of the seeded copy.
 GROUND_TRACES = [
-    [(39.5, 3.5), (39.5, 6), (51, 6), (66.8, 6), (71.35, 6), (75.6, 6), (88.8, 6), (88.8, 21), (88.8, 41.9),
+    [(39.5, 3.5), (39.5, 6), (51, 6), (66.8, 6), (71.35, 6), (75.6, 6), (88.8, 6), (88.8, 19), (88.8, 41.9),
      (88.8, 55.5), (69.5, 55.5), (66.5, 55.5), (63.6625, 55.5), (63.6625, 54)],
     [(39.5, 6), (39.5, 11.7), (38.9, 11.7), (33.85, 11.7), (33.85, 16.3), (33.85, 28), (33.85, 38.1)],
     [(33.85, 28), (40.3, 28)],
@@ -305,15 +305,15 @@ def sense_off_the_load_track(seed: board_prove.Seed) -> None:
 
 
 def load_capacitor_away(seed: board_prove.Seed) -> None:
-    """The crystal's XTAL1 load capacitor C5 moved from beside its partner at U4 to beyond the crystal, by the board's edge."""
+    """The crystal's XTAL1 load capacitor C5 moved from beside its partner at U4 to beyond the crystal, off its pad 1."""
     def edit(tree: list) -> None:
         drop(tree, ((75.6, 16.05), (75.6, 17.4)))
         drop_via(tree, (75.6, 17.4))
         turn(tree, "C5", 0)
-        move(tree, "C5", 86.3, 21)
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(81, 14.5), (82.5, 14.5), (85.525, 17.525), (85.525, 21)])
-        path(tree, GND, "F.Cu", 0.5, [(87.075, 21), (88.8, 21)])
-        append(tree, new_via(GND, (88.8, 21)))
+        move(tree, "C5", 84.175, 19)
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(79.2, 15.6), (81.5, 15.6), (83.4, 17.5), (83.4, 19)])
+        path(tree, GND, "F.Cu", 0.5, [(84.95, 19), (88.8, 19)])
+        append(tree, new_via(GND, (88.8, 19)))
     seed.layout(edit)
 
 
@@ -368,11 +368,9 @@ def parts_apart(seed: board_prove.Seed) -> None:
 def needless_layer_change(seed: board_prove.Seed) -> None:
     """XTAL1 dropped to B.Cu and straight back up, through two vias, on its run from U4 to the crystal."""
     def edit(tree: list) -> None:
-        drop(tree, ((75.6, 14.5), (79, 14.5)))
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(75.6, 14.5), (76.6, 14.5)])
-        path(tree, "/XTAL1", "B.Cu", 0.25, [(76.6, 14.5), (77.6, 14.5)])
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(77.6, 14.5), (79, 14.5)])
-        append(tree, new_via("/XTAL1", (76.6, 14.5)), new_via("/XTAL1", (77.6, 14.5)))
+        drop(tree, ((76.6, 14.5), (77.7, 15.6)))
+        path(tree, "/XTAL1", "B.Cu", 0.25, [(76.6, 14.5), (77.7, 15.6)])
+        append(tree, new_via("/XTAL1", (76.6, 14.5)), new_via("/XTAL1", (77.7, 15.6)))
     seed.layout(edit)
 
 
@@ -473,9 +471,9 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S6", "SENSE-1", "F.Cu", (53.8, 52),
      "a sense connection off the load-current track: the amplifier's LOAD_RTN sense track tapped off the load track "
      "beside J4, 6 mm short of R1's pad", sense_off_the_load_track),
-    ("S7", "CLOCK-1", "F.Cu", (86.3, 21),
+    ("S7", "CLOCK-1", "F.Cu", (84.175, 19),
      "a load capacitor away from its oscillator pin and its partner: C5 moved from beside C6 at U4 to beyond the crystal, "
-     "by the board's edge, 14 mm from C6", load_capacitor_away),
+     "11 mm from C6", load_capacitor_away),
     ("S8", "CONN-1", "F.Cu", (38.05, 28),
      "a suppressor away from its connector: D1 moved 24 mm from J2, onto the +5V trunk at y 28 mm", suppressor_away),
     ("S9", "TEST-2", "F.Cu", (66.5, 55.5),
@@ -489,7 +487,7 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S12", "WORK-1", "F.Cu", (33.85, 36),
      "a part set apart from the part it serves: R4 moved 15 mm south of U1's pin 2, its connection running down to it",
      parts_apart),
-    ("S13", "WORK-3", "F.Cu, B.Cu", (77.1, 14.5),
+    ("S13", "WORK-3", "F.Cu, B.Cu", (77.15, 15.05),
      "a needless change of layer: XTAL1 dropped to B.Cu and straight back up through two vias on its run to the crystal",
      needless_layer_change),
     ("S14", "WORK-2", "design-rules.md, project text variables, F.Cu", (58.5, 9.5),

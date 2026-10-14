@@ -5822,7 +5822,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Crystal:Crystal_SMD_HC49-SD"
+		(property "Footprint" "Crystal:Crystal_SMD_5032-2Pin_5.0x3.2mm"
 			(at 271.78 40.64 0)
 			(hide yes)
 			(effects
