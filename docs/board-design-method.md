@@ -370,7 +370,7 @@ Commit `layout-plan.md` before the first commit that places a footprint on the b
 - every connector, terminal or header in the netlist, test points aside, has exactly one row in the connector table, with an edge and a position, and the table names no other part;
 - the plan table has exactly one row for every item of the catalogue as it stood in that commit, and names no other;
 - each row marked `no` gives a reason against the item's *Applies when* that the schematic bears out, so no item whose condition the schematic meets is marked `no`;
-- each row marked `yes` says how the layout meets the item, and each region, part and net it names is one the floorplan or the netlist holds.
+- each row marked `yes` says how the layout meets the item, names at least one region, part or net it binds, and each region, part and net it names is one the floorplan or the netlist holds.
 
 A plan that is missing, incomplete or uncommitted in that checkout, or that fails a cross-check above, fails this step, however complete it is now. A part added to the schematic after placement is planned for, by amending the floorplan and every row whose item it bears on, and that change is committed before the part is placed.
 
@@ -629,7 +629,7 @@ Every item carries the same fields:
 - **Asks** is the question the item asks of a board.
 - **Passes** is the pattern that passes.
 - **Fails, as the views show it** is what a failing board looks like in the [layout review views](#layout-review-views).
-- **Judged on** names the views it is judged on: an image of one layer, `layer-<layer>`, such as `layer-F.Cu`; a critical net against the board, `net-<net>`; the critical classes against each other, `classes`; an integrated circuit with its decoupling, `crop-<reference>`; a side as assembled, `assembly-top` or `assembly-bottom`; the assembled board in three dimensions, `3d-top`, `3d-bottom` or `3d-angled`; or the fact table, `facts.txt`, which gives every net's track width range, via count, zones and classes. A rule-kind item is judged on the pre-order check's report.
+- **Judged on** names the views it is judged on: an image of one layer, `layer-<layer>`, such as `layer-F.Cu`; a critical net against the board, `net-<net>`; the critical classes against each other, `classes`; an integrated circuit with its decoupling, `crop-<reference>`; a side as assembled, `assembly-top` or `assembly-bottom`; the assembled board in three dimensions, `3d-top`, `3d-bottom` or `3d-angled`; or the fact table, `facts.txt`, which gives every net's track width range, via count, zones and classes. A rule-kind item is judged on the pre-order check's report and on the board's rules table, `design-rules.md`: the check holds the board to whatever figure its rules state, so a figure smaller than the item's source requires passes the check, and only the rules table, its figure read against the item, shows it. Its *Fails* names what such an undersized figure looks like in that table.
 - **Kind** is one of two. A **rule-kind** item is enforced by the automated pre-order check, through the board's rules: it gives its rule in the form the rules step uses for its kind, a board-wide minimum, a net class's figure or a custom rule, with its figure and source. A net class it names by its role, such as `<power class>`, is replaced by the board's own name for that class; only the `Mains` class is named literally, since its name is fixed. A **judgement-kind** item is judged on the rendered views. A practice only partly expressible as a rule is two items, one of each kind, so every item has a single kind.
 - **Severity** is one of four:
   - **safety**: the item bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing, or on insulation;
@@ -687,8 +687,8 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
   ```
 
   `<width>` is 0.381 mm times the highest continuous current, in amperes, that any net of the class carries, read from the machine's constraints record or a requirement the board serves. The source gives 0.381 mm (15 mils) per ampere as the absolute minimum for a standard board. Where the circuit-proof record also holds a track width on the class, write one rule with the larger of the two figures and name both sources in its row: KiCad applies only the last of two rules whose conditions match the same track (KiCad, *PCB Editor* manual, version 10.0, *Custom rule syntax*).
-- **Fails, as the views show it:** the pre-order check reports a `track_width` violation on a track of the class, or the board's rules table has no row for this rule on a class the plan says it applies to.
-- **Judged on:** the pre-order check's report.
+- **Fails, as the views show it:** the pre-order check reports a `track_width` violation on a track of the class; or, in `design-rules.md`, a class the plan says the item applies to has no row for this rule, or the row's figure is less than 0.381 mm times the highest continuous current the record it names gives for the class's nets, or the row names no record the current was read from.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
 - **Kind:** rule. **Severity:** function.
 - **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 5 *Traces and Ground Plane* ("make the traces an absolute minimum of 15 mils (0.381mm) per Ampere"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
 
@@ -733,6 +733,8 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Source:** Vishay Semiconductors, *VO3526 Power Phototriac Design Considerations*, Application Note 33, document 81937, Rev. 1.1, 19 October 2011, section *PCB Design Considerations* ("The size of the pads and copper area on both top and bottom sides should be as big as possible while keeping a minimum safe distance between input and output pins"), https://www.vishay.com/docs/81937/appnote.pdf, read 2026-10-14.
 
 ### Grounding and return paths (GROUND)
+
+The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the board's low-voltage copper only: the ground they ask for, and the signal and supply tracks they hold over it, stop at the mains region's bounds, which `MAINS-2` keeps clear of low-voltage copper.
 
 #### GROUND-1. Ground is a plane, not a set of tracks
 
@@ -917,8 +919,8 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Applies when:** the schematic carries a mains-referenced net, so the board declares `MAINS` `present`.
 - **Asks:** Do the board's rules hold the separation between mains and low-voltage copper to the clearance and creepage its signed separation basis record states, in the single form the rules step fixes?
 - **Passes:** The board's rules file holds the one `Mains separation` rule exactly as step 2 of [Rules before routing](#rules-before-routing) writes it, its condition `A.hasNetclass('Mains') && !B.hasNetclass('Mains')`, with a `clearance` and a `creepage` constraint no less than the separation basis record's mains-to-low-voltage figures, and the pre-order check passes the board. This item adds no rule of its own: it is that rule, and those figures are the signed ones the record holds.
-- **Fails, as the views show it:** the pre-order check reports a `clearance` or `creepage` violation, or a `mains_declaration`, `separation_rule`, `separation_basis`, `local_clearance_override` or `mains_net_tie` failure.
-- **Judged on:** the pre-order check's report.
+- **Fails, as the views show it:** the pre-order check reports a `clearance` or `creepage` violation, or a `mains_declaration`, `separation_rule`, `separation_basis`, `local_clearance_override` or `mains_net_tie` failure; or, in `design-rules.md`, the `Mains separation` rule's clearance or creepage has no row, or its row gives a figure less than the separation basis record's `mains_to_low_voltage` figure, or names a source other than `MAINS-1` and that record.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
 - **Kind:** rule. **Severity:** safety.
 - **Source:** Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.3 *Creepage Distance* ("An adequate creepage distance protects against tracking"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
 
@@ -1023,8 +1025,8 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Applies when:** always.
 - **Asks:** Is every board-wide minimum in Board Setup's constraints set to the value the board manufacturer's stated limits give for the board's layer count and copper weight?
 - **Passes:** Each board-wide minimum the rules step lists, minimum clearance, track width, via diameter and drill, hole size, annular ring, hole-to-hole, copper-to-edge and the silkscreen minimums, is set in Board Setup's constraints to the value the manufacturer recommends where it states one, and otherwise to its stated minimum, never smaller, each with its row in the board's rules table naming this item and the manufacturer's stated limits as its source, and the pre-order check reports none of them broken.
-- **Fails, as the views show it:** the pre-order check reports a violation of a board-wide minimum, or a minimum in Board Setup is smaller than the manufacturer's stated limit, or has no row naming its source.
-- **Judged on:** the pre-order check's report.
+- **Fails, as the views show it:** the pre-order check reports a violation of a board-wide minimum; or, in `design-rules.md`, a board-wide minimum has no row, or its row's figure is smaller than the value the manufacturer's capability page it names gives for the board's layer count and copper weight, the recommended value where the page states one, or the row names no manufacturer and dated capability page.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
 - **Kind:** rule. **Severity:** function.
 - **Source:** KiCad, *PCB Editor* manual, version 10.0, section *Board setup*, *Configuring design rules*, *Constraints* ("Constraints in this section apply to the entire board and should be set to the values recommended by your board manufacturer"), https://docs.kicad.org/10.0/en/pcbnew/pcbnew.html, read 2026-10-14.
 
