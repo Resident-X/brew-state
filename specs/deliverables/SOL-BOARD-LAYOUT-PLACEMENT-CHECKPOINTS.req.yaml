@@ -1,0 +1,31 @@
+id: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+type: deliverable
+category: solution
+title: The method checks a board's layout at placement and after critical routing, before the work that builds on each
+status: active
+version: 1
+text: |
+  Why this exists. Boards for this project are to be laid out the way an experienced electrical engineer lays them out, and the way such an engineer gets a neat board is not by tidying tracks at the end. Neat routing follows from good placement: the engineer spends most of the effort placing parts, judges a placement by the unrouted connections it leaves, short, parallel and seldom crossing, and when routing comes out ugly treats it as a placement fault, moving parts rather than patching tracks. The method today places parts, routes critical nets, routes the rest automatically and only then reviews the board, so a poor placement is first seen when everything has been built on it, and the cheapest fix is by then the most expensive. The practice board that passed every check while looking beginner-drawn showed this: its supply ran the long way round and a signal looped across the board because of where the parts sat, and its plan recorded that route as meeting the power-path item, judged against the placement it was given. Commercial layout optimisers point the same way: they score many placements against measured objectives before routing, and their makers report that a better placement gives cleaner routes with fewer vias.
+
+  What it adds. Two checkpoints in the method, placed where a change is still cheap, each judged against the workmanship and electrical items of the catalogue. At placement, before any track, the designer, usually an agent, produces more than one placement by a written procedure, sees each with its unrouted connections drawn, measures each, and chooses one on the record. After the critical nets are routed by hand and locked, and before automated routing fills in the rest, those routes are checked, because everything else is routed around them. And when the final review finds a workmanship failure that the placement caused, the fix goes back to placement rather than patching copper. An agent is good at following a procedure, generating alternatives and reading measurements, and judges overall form well when told what to look for; these checkpoints put those strengths where they decide the outcome.
+
+  What it does not do. The workmanship items themselves, their measures in the pre-order check and their seeded proof belong to the solution that carries them; the final layout review stays the method's existing review step.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C9
+    type: derives-from
+  - target: DEL-HW-DESIGN-METHOD.C2
+    type: derives-from
+  - target: DEL-HW-DESIGN-METHOD.C3
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
+    type: depends-on
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS
+    type: depends-on
+  - target: SOL-BOARD-RULES-AND-LOCKED-CRITICAL-ROUTING
+    type: depends-on
+  - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
+    type: depends-on

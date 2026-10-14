@@ -1,0 +1,39 @@
+id: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
+type: deliverable
+category: solution
+title: The practice catalogue carries sourced workmanship items, measured where the board's files allow and judged on the views where they do not
+status: active
+version: 1
+text: |
+  Why this exists. Boards for this project are to be laid out the way an experienced electrical engineer lays them out: neat, tidy and direct, not only electrically correct. That was asked for when the controller hardware was planned, but it was never written down, so the practice catalogue grew only electrical and manufacturing items and nothing asked a reviewer to look at workmanship. The result was a practice board that passed its pre-order check and four blind reviews against the whole catalogue while its copper looked beginner-drawn: square corners everywhere, the 5 V supply taking a long way down one edge beside the mains boundary, parts placed loosely so a signal looped across the board to reach its partner, and small jogs and stubs left beside two parts. No reviewer flagged any of it because no item asked. This solution closes that gap, so that every later board is planned and reviewed for workmanship as it already is for grounding or separation, and is not ordered until it meets it.
+
+  What it adds. A workmanship area in the method's layout practice catalogue, written in the same item form as every other area, each item citing a free published source, so workmanship is judged against practice and not against a reviewer's taste. Because the area lives in the catalogue, it reaches the design-time plan and the layout review with no new step: each board plans how it meets the items before placement, and the review judges every item.
+
+  Why two kinds of item. A reviewing model judges the overall look of a board well when it is told what an experienced engineer expects to see, so the qualities that are a matter of overall form, such as whether parts are grouped by what they connect to and whether the routing reads cleanly, are judgement items stated as a style guide: what good looks like, and what a failing board looks like in the views. But a corner angle, a jog of a fraction of a millimetre or a route twice as long as it needs to be is a few pixels on an image and easily missed, while it is exact in the board's file. So every quality that can be measured from the board's files is a rule item, measured by the pre-order check, and fails the board automatically. The blind proof then shows whether the split is right: a seeded workmanship defect the visual review misses becomes a measured rule.
+
+  What it does not do. Choosing and checking a placement before routing, and checking critical routing before automated routing, are the method's in-progress checkpoints and belong to the solution for them; this solution supplies the items those checkpoints judge against.
+links:
+  - target: DEL-HW-DESIGN-METHOD.C9
+    type: derives-from
+  - target: DEL-HW-DESIGN-METHOD.C3
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C3
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-PRACTICE-CATALOGUE
+    type: depends-on
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
+  - target: SOL-BOARD-REVIEW-RENDER-VIEWS
+    type: depends-on
+  - target: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF
+    type: depends-on
+  - target: DEL-HW-DESIGN-VERIFICATION.C3
+    type: derives-from
+  - target: DEL-HW-DESIGN-VERIFICATION.C5
+    type: derives-from

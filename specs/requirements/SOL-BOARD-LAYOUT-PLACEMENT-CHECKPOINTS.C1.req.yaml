@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1
+type: criterion
+title: One command draws a placement's unrouted connections and measures them
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Add a command among the repository's hardware tasks that, from a placed but unrouted or partly routed board's files, renders an image of the board's parts with every unrouted connection drawn as a straight line between the pads it joins, in the form, resolution and captioning the layout review views already use, and writes beside it the placement's measures: the total length of the unrouted connections, the number of places where two of them cross, and every part lying outside the floorplan regions the board's plan assigns it. KiCad's command-line plotter does not draw unrouted connections, so the command draws them from the board's connectivity itself. The command reads the part-to-region assignment from the floorplan, which the placement criterion makes machine-readable; a part assigned to more than one region, such as an isolator whose pins lie either side of the mains boundary, is outside only when its footprint leaves all the regions it is assigned. Tests on a throwaway design built outside the repository show that each connection is drawn between the right pads, that the measures are right for a known placement, including a part assigned to two regions, and that a worse placement of the same parts measures worse. Out of scope: choosing between placements, and routing.
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3
+type: criterion
+title: Critical routing is checked against the catalogue before automated routing runs
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Amend the method's routing step so that, after the critical nets are routed and locked and before the automated router runs, the board's views are rendered and every catalogue item bearing on those nets, workmanship items included, is judged on them, with each verdict recorded in a critical routing section of the board's layout plan, in the form the layout review records its verdicts, and committed before the router runs; a failing item is put right before the router runs. Out of scope: judging the routes the router adds, which the final review does.
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: criterion-of

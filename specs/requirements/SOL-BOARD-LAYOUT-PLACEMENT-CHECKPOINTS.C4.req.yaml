@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4
+type: criterion
+title: A workmanship failure caused by placement is corrected at the placement
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Amend the method's layout review step so that a finding against a workmanship item whose cause is where parts sit, such as a route made long or looping by the distance between the parts it joins, is closed by changing the placement and re-routing what the change affects, then repeating the placement measures, not by reshaping the route around the parts as they stand; the finding's record names the placement change. Out of scope: findings whose cause is the route alone, which are corrected in the copper.
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: criterion-of

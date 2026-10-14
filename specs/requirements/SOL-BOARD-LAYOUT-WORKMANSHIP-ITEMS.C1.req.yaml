@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C1
+type: criterion
+title: The catalogue carries a workmanship area whose every item cites a free published source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write a workmanship area into the method's layout practice catalogue, after the existing areas and in the same item form, with an identifier, condition, question, passing pattern, failing appearance, views, kind, severity and source for each item, and add it to the catalogue's list of areas. Its items cover at least: parts placed by what they connect to, so connected parts sit together and their connections run short and uncrossed; routes that run direct, with no detour or loop beyond what the placement forces; corners turned at 45 degrees or as arcs, with no right-angled and no acute corner; no stub, no jog and no via a route does not need; one track width for each net class along a route, changing only where a pad or a rule requires it, stated so that a power path widened where there is room, as the power-path item asks, does not fail it; routing that runs parallel to the board's edges or at 45 degrees to them; and tracks that enter a pad along the pad's long axis from its end. Each item that can be measured from the board's files is of rule kind, its figure named by its role and set in each board's rules with its source; each that cannot is of judgement kind and states, as a style guide, what an experienced electrical engineer expects to see and what a failing board looks like in the views. Items whose failure costs margin, reliability, manufacture or ease of inspection are of quality severity; items whose failure costs only appearance are cosmetic. Every source is a document any reader can obtain without charge, checked against the document itself; where no such document states an item, the item cites the recorded layout review that adds it, as the catalogue's source rule already allows. Out of scope: the measuring check itself, the placement and critical-routing checkpoints, and the seeded proof.
+links:
+  - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
+    type: criterion-of

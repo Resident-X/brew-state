@@ -98,3 +98,5 @@ links:
     type: targets
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C4
     type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
