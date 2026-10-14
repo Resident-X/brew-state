@@ -69,7 +69,7 @@ U1 stands for a power phototriac, Vishay VO3526, a six-pin DIP with pin 5 remove
 | WORK-1 | yes | Each part beside the parts it connects to, in the order the circuit runs: R2 beside U3's pins 4 and 1, R3 on R2's pad 2, C3 and FB1 above U3's supply pin 5, C4 at U4's supply pin, C1 on the `+5V` trunk at U2's input, C5 and C6 at Y1's far ends, R1 beside J4 with its load pad nearest it and its sense track to U3. |
 | WORK-2 | yes | `WORK_DETOUR_RATIO` 1.3 in `design-rules.md`; every net in tracks within it, the longest `AMP_OUT` at 1.27 times its tree, round U3 to R2. |
 | WORK-3 | yes | Each route the direct way, turning at 45 degrees and never back on itself; `AMP_OUT` and `LED_DRV` change to B.Cu only to pass under the `+3V3` trunk and U3. |
-| WORK-4 | yes | Rule `Corners` and `WORK_PAD_ANGLE_DEG` 90 in `design-rules.md`; every turn at 45 degrees, every branch at a pad and square to the route: `+5V` at C1's pad, `+3V3` at C2's pad. |
+| WORK-4 | yes | Rule `Corners` and `WORK_PAD_ANGLE_DEG` 90 in `design-rules.md`; every turn at 45 degrees, every branch at a pad and square to the route, `+5V` at C1's pad and `+3V3` at C2's pad, but `AMP_OUT`'s, at the via (73.225, 43.45) where it changes layer, its two B.Cu tracks there turning at 45 degrees. |
 | WORK-5 | yes | Rule `Jogs` in `design-rules.md`; every straight run 1 mm or longer, from each pad or via to its first turn. |
 | WORK-6 | yes | `WORK_STUB_MM` 0 in `design-rules.md`; every track ends on a pad, a via or another track of its net. |
 | WORK-7 | yes | KiCad's `via_dangling` check in `design-rules.md`; every via joins copper on two or more layers. |
