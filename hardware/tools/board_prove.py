@@ -48,11 +48,16 @@ NAME = "gate-proof"
 
 
 class Seed:
-    """A copy of the proof design in a temporary git work tree, and the edits a fault makes to it."""
+    """A copy of a proof design in a temporary git work tree, and the edits a fault makes to it.
 
-    def __init__(self, root: str):
+    The design is gate-proof unless another is named, by its folder from the
+    repository's root and the name its project, schematic and layout share.
+    """
+
+    def __init__(self, root: str, design: str = DESIGN, name: str = NAME):
         self.root = root
-        self.design = os.path.join(root, DESIGN)
+        self.name = name
+        self.design = os.path.join(root, design)
         #: Edits made after the seeded copy is committed, for faults that are
         #: about what the commit does not hold.
         self.after: List[Callable[["Seed"], None]] = []
@@ -63,7 +68,7 @@ class Seed:
         self.kicad_cli = "kicad-cli"
 
     def path(self, suffix: str) -> str:
-        return os.path.join(self.design, NAME + suffix) if suffix.startswith(".") else os.path.join(self.design, suffix)
+        return os.path.join(self.design, self.name + suffix) if suffix.startswith(".") else os.path.join(self.design, suffix)
 
     def read(self, suffix: str) -> str:
         with open(self.path(suffix), encoding="utf-8") as handle:
@@ -535,11 +540,25 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
 ]
 
 
-def prepare(scratch: str) -> Seed:
+def prepare(scratch: str, design: str = DESIGN, name: str = NAME) -> Seed:
+    """A fresh copy of the design at `design`, from the repository's root, in its own git work tree under `scratch`.
+
+    Only the files git tracks in the design's folder are copied, so the copy is
+    the design as the repository holds it, not whatever else lies beside it.
+    """
     root = os.path.join(scratch, "repository")
-    shutil.copytree(PROOF, os.path.join(root, DESIGN))
+    source = os.path.join(os.path.dirname(os.path.dirname(TOOLS)), design)
+    listed = subprocess.run(["git", "-C", source, "ls-files", "-z", "--", "."], capture_output=True)
+    tracked = [path for path in listed.stdout.decode("utf-8", errors="replace").split("\0") if path]
+    if listed.returncode != 0 or not tracked:
+        shutil.copytree(source, os.path.join(root, design))
+    else:
+        for path in tracked:
+            target = os.path.join(root, design, path)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy2(os.path.join(source, path), target)
     subprocess.run(["git", "init", "-q", root], check=True)
-    return Seed(root)
+    return Seed(root, design, name)
 
 
 def check(seed: Seed, kicad_cli: str) -> Tuple[int, List[str], str]:
