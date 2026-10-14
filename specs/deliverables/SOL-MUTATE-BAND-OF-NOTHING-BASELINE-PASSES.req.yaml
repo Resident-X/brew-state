@@ -1,0 +1,17 @@
+id: SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES
+type: deliverable
+category: solution
+title: The seeded band-of-nothing defect runs its check as the build does, so its baseline passes
+status: active
+version: 1
+text: |
+  One of the hand-written seeded defects in firmware/tools/mutate.py, the one that declares a band of nothing in the tolerance declaration, can no longer show that anything catches it. Before mutating, mutate.py runs the defect's own check against the unmutated tree and requires it to pass. That check is the control declaration check, and the command the defect carries for it lists fewer source headers than the build-time check in Taskfile.yml passes: the steam control and pump trim declaration headers are missing. Without them the check finds two figures the control declaration accounts for and cannot find defined anywhere, and fails on the clean tree. mutate.py then reports that the command fails before anything was mutated and stops, so a full run of the seeded defects fails on this one entry and the defect it names goes unexercised.
+
+  The two headers were added to the build-time check after this defect's command was written, and the command was not brought along. Nothing ties a seeded defect's command to the check it stands for, so the same drift can happen again to any entry whose check gains an argument.
+
+  Found while re-running the seeded defects for the element-power span work, against a tree whose change does not touch the tolerance declaration or the control declaration check.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets

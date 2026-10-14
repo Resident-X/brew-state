@@ -1,0 +1,12 @@
+id: SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES.C1
+type: criterion
+title: The seeded band-of-nothing defect is shown caught against the unmutated tree's passing check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded defect that declares a band of nothing in the tolerance declaration runs its check with the same arguments the build-time control declaration check is run with, so the check passes on the unmutated tree and fails once the defect is applied. A full run of the seeded defects reports this one as caught rather than stopping before it is mutated. Out of scope: changing what the control declaration check itself enforces, and any seeded defect other than this one.
+links:
+  - target: SOL-MUTATE-BAND-OF-NOTHING-BASELINE-PASSES
+    type: criterion-of
