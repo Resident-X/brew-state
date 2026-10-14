@@ -43,7 +43,7 @@ Every tool is free. The check stops with an error naming any tool that is missin
 - `task hw:views` renders every view the layout review judges one board on (below). It needs the same tools as `hw:verify`, and resvg.
 - `task hw:rules-confirm`, `task hw:copper-lock`, `task hw:copper-record` and `task hw:copper-compare` run the locked-copper check (below) on one board, before routing and around the routing round trip. They need the same tools as `hw:verify`, and read the paths given after `--` from the folder they are run in.
 
-How a board is designed so that it passes the check and works once built, from proving its value-critical circuits, providing for its bring-up and planning its layout against the method's layout practice catalogue before placement, to its rules and its routing, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
+How a board is designed so that it passes the check and works once built, from proving its value-critical circuits, providing for its bring-up and planning its layout against the method's layout practice catalogue before placement, to its rules, its routing and the review of its finished layout, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
 
 ## The locked-copper check
 
