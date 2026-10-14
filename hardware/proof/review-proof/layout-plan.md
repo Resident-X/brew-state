@@ -24,7 +24,7 @@ U1 stands for a power phototriac, Vishay VO3526, a six-pin DIP with pin 5 remove
 | Item | Applies | How the layout meets it, or why it does not apply |
 |---|---|---|
 | FLOOR-1 | yes | Each part within its region above. U3 and its parts in analog sensing, at the far end of the board from U4 and Y1 and from the switching part U1; U4 beside U2, which feeds it. |
-| FLOOR-2 | yes | U3's output `AMP_OUT` is the one analog signal that reaches the digital region, at U4's converter input pin 14; it runs on B.Cu straight up x 68.25 mm from U3 to U4. The only digital track leaving the digital region, `LED_DRV`, runs on B.Cu west along y 13 mm and at 45 degrees to U1, outside the analog sensing region. |
+| FLOOR-2 | yes | U3's output `AMP_OUT` is the one analog signal that reaches the digital region, at U4's converter input pin 14; it runs on B.Cu straight up x 68.25 mm from U3's pin 1 to U4. The only digital track leaving the digital region, `LED_DRV`, runs on B.Cu west along y 13 mm and at 45 degrees to U1, outside the analog sensing region. |
 | FLOOR-3 | yes | J2 at the top edge, U2 at (44, 14), 13 mm from it, and U4 at (72, 14), 28 mm from U2 along the `+3V3` trunk at y 14 mm, with the ground planes on In1.Cu and In2.Cu spanning all three. The analog supply `+3V3A` is taken from `+3V3` through FB1 at U3. |
 | POWER-1 | yes | Custom rules `Power track width` (0.4 mm), `Ground track width` (0.4 mm), `Supply track width` (0.2 mm) and `Mains track width` (0.2 mm) in `design-rules.md`, each read from `constraints.md`'s currents. |
 | POWER-2 | yes | `+5V` a straight 0.8 mm trunk from J2 down x 37 mm through D1's pad and C1's pad, then at 45 degrees to J4, with U2's input taken from C1's pad; `LOAD_RTN` 0.8 mm from J4's pin 2 into the near end of R1's pad 1; `MAINS_L` and `MAINS_SW` 1.0 mm straight from J1 to U1. |
@@ -40,14 +40,14 @@ U1 stands for a power phototriac, Vishay VO3526, a six-pin DIP with pin 5 remove
 | DECOUPLE-3 | no | No switching converter in the schematic: U2 is a linear regulator. |
 | DECOUPLE-4 | no | No switching converter in the schematic. |
 | DECOUPLE-5 | no | No snubber in the schematic. |
-| SENSE-1 | yes | The load current from J4 enters R1's pad 1 at its lower end, nearest J4, and the sense track to U3's input leaves the same pad at its upper end, apart from it; the load current leaves R1's ground pad 2 at its lower end to its via, and R3, the gain resistor, returns to the same pad at its upper end by its own track. |
+| SENSE-1 | yes | The load current from J4 enters R1's pad 1 at its lower end, nearest J4, and the sense track to U3's input leaves the same pad at its upper end, apart from it; the load current leaves R1's ground pad 2 at its lower end to its via, and R3, the gain resistor, returns to the same pad at its upper end by its own track, which a rule area keeps out of the F.Cu ground pour from R3's pad to R1's, so R3 joins ground only at the shunt's ground pad. |
 | SENSE-2 | no | No filter at a converter input and no reference capacitor in the schematic: `AMP_OUT` goes straight to U4's pin 14, and U4 uses its supply as reference. |
-| SENSE-3 | yes | R2, the feedback resistor, beside U3's inverting input, pin 4, by a 2.4 mm track; R3, the gain resistor, by a further 2.85 mm track from R2's pad 2. No track on pin 4's net leaves U3's corner of the analog sensing region. |
-| SENSE-4 | yes | The sensing nets `AMP_FB` and `AMP_OUT` and the sense part of `LOAD_RTN` within the analog sensing region, away from the crystal, U1 and the mains region; `AMP_OUT` leaves it only to reach U4. |
+| SENSE-3 | yes | R2, the feedback resistor, just below and beside U3's inverting input, pin 4, by a 3.0 mm track; R3, the gain resistor, by a further 1.5 mm track from R2's pad 2. No track on pin 4's net leaves U3's corner of the analog sensing region. |
+| SENSE-4 | yes | The sensing nets `AMP_FB` and `AMP_OUT` and the sense part of `LOAD_RTN` within the analog sensing region, away from the crystal, U1 and the mains region; `AMP_OUT` leaves it only to reach U4, crossing the `+3V3` route to FB1 once, at 45 degrees, with the In1.Cu and In2.Cu planes between, and running away from it on either side of the crossing. |
 | SENSE-5 | yes | U3, R1, R2 and R3 in the analog sensing region; U2, the regulator, and U1, the switching part, in the low-voltage region more than 20 mm away. |
-| CLOCK-1 | yes | Y1 at U4's oscillator pins 2 and 5, tracks under 10 mm, each entering Y1's pad along its length; C5 at the far end of Y1's pad 1 (`XTAL1`, the input), C6 at the far end of Y1's pad 2; `XTAL1` and `XTAL2` routed apart, on opposite sides of U4's pins 3 and 4. |
-| CLOCK-2 | yes | The F.Cu ground pour under Y1, C5 and C6, joined to the planes by the capacitors' ground vias at (80, 24.3) and (80, 3.7); no other circuit's current passes there. |
-| CLOCK-3 | yes | Y1 at (80, 14); no part but U4 and its own C4, C5 and C6 within 25 mm of it, and every connector more than 40 mm away. |
+| CLOCK-1 | yes | C5 (`XTAL1`, the input) and C6 (`XTAL2`) side by side beside U4's oscillator pins 2 and 5, each on its own pin's track 1.7 mm from the pin, before the crystal; Y1 beyond them with its pads along x, `XTAL1` running straight on into pad 1's end and `XTAL2` turning away at 45 degrees from C6 to pad 2's far end, so the two tracks run side by side only for the 2.7 mm from the pins past the capacitors; each track entering Y1's pad along its length. |
+| CLOCK-2 | yes | The F.Cu ground pour under Y1, C5 and C6, joined to the planes by the capacitors' ground vias at (75.6, 17.4) and (75.6, 10.1), each 1.35 mm from its capacitor's pad; no other circuit's current passes there. |
+| CLOCK-3 | yes | Y1 at (84, 14.5); no part but U4 and its own C4, C5 and C6 within 25 mm of its body, the nearest other being FB1 at 20.0 mm, C3 at 24.0 mm and C2 at 25.3 mm, and every connector more than 34 mm away. |
 | MAINS-1 | yes | The `Mains separation` rule of `design-rules.md`, at the separation basis record's 3 mm clearance and 4 mm creepage. |
 | MAINS-2 | yes | All `Mains` copper within the mains region, x below 28 mm, on every layer, and no low-voltage copper below x 28 mm. U1, the part that bridges the barrier, straddles x 28 mm, its mains pins at x 24.19 mm and its low-voltage pins at x 31.81 mm. The ground planes and pours start at x 32.8 mm. |
 | MAINS-3 | yes | No copper on any layer between U1's mains pins (x 24.19 mm) and its low-voltage pins (x 31.81 mm). |
@@ -62,20 +62,20 @@ U1 stands for a power phototriac, Vishay VO3526, a six-pin DIP with pin 5 remove
 | MFG-2 | yes | U4's exposed pad pasted through the footprint's four openings, together about 65 % of the pad. |
 | MFG-3 | yes | The four vias in U4's exposed pad land drilled 0.3 mm, within 0.33 mm. |
 | EMI-1 | yes | Every supply track on F.Cu runs over the In1.Cu ground plane, every B.Cu track over In2.Cu, from source to part. |
-| EMI-2 | yes | The nets switching faster than 50 kHz are `XTAL1` and `XTAL2`, running only between U4, Y1, C5 and C6, more than 5.5 mm from every board edge. |
+| EMI-2 | yes | The nets switching faster than 50 kHz are `XTAL1` and `XTAL2`, running only between U4, Y1, C5 and C6, their tracks at least 5.5 mm from every board edge; no track runs along an edge, Y1's pad 2 ending 1.5 mm from the right edge. |
 | EMI-3 | yes | C1 on `+5V`, the line J2 brings onto the board, is U2's input capacitor, placed at U2's input pin as `DECOUPLE-1` requires; its ground joins the F.Cu pour and the planes through its via. |
 | EMI-4 | yes | FB1 in `+3V3` beside U3, C3 between FB1 and U3's supply pin 5, the bead in the supply only. |
 | EMI-5 | no | No resistor in series with a controller pin: U4's pin 11 drives U1's LED directly, and R4 is in the LED's return to ground at U1. |
-| WORK-1 | yes | Each part beside the parts it connects to, in the order the circuit runs: R2 beside U3's pins 4 and 1, R3 on R2's pad 2, C3 and FB1 above U3's supply pin 5, C4 at U4's supply pin, C1 on the `+5V` trunk at U2's input, C5 and C6 at Y1's far ends, R1 beside J4 with its load pad nearest it and its sense track to U3. |
-| WORK-2 | yes | `WORK_DETOUR_RATIO` 1.3 in `design-rules.md`; every net in tracks within it, the longest `AMP_OUT` at 1.27 times its tree, round U3 to R2. |
+| WORK-1 | yes | Each part beside the parts it connects to, in the order the circuit runs: R2 just below U3's pin 4, R3 on R2's pad 2, C3 and FB1 above U3's supply pin 5, C4 at U4's supply pin, C5 and C6 at U4's oscillator pins with Y1 beyond them, C1 on the `+5V` trunk at U2's input, R1 beside J4 with its load pad nearest it and its sense track to U3. |
+| WORK-2 | yes | `WORK_DETOUR_RATIO` 1.3 in `design-rules.md`; every net in tracks within it, the longest `+3V3` at 1.22 times its tree and `AMP_OUT` at 1.20, round U3 to R2. |
 | WORK-3 | yes | Each route the direct way, turning at 45 degrees and never back on itself; `AMP_OUT` and `LED_DRV` change to B.Cu only to pass under the `+3V3` trunk and U3. |
-| WORK-4 | yes | Rule `Corners` and `WORK_PAD_ANGLE_DEG` 90 in `design-rules.md`; every turn at 45 degrees, every branch at a pad and square to the route, `+5V` at C1's pad and `+3V3` at C2's pad, but `AMP_OUT`'s, at the via (73.225, 43.45) where it changes layer, its two B.Cu tracks there turning at 45 degrees. |
+| WORK-4 | yes | Rule `Corners` and `WORK_PAD_ANGLE_DEG` 90 in `design-rules.md`; every turn at 45 degrees, in open copper, at a via or through a pad, every branch at a pad and square to the route, `+5V` at C1's pad and `+3V3` at C2's pad, but `AMP_OUT`'s, at the via (65.3, 43.05) by U3's pin 1 where it changes layer, its two B.Cu tracks there turning at 45 degrees. |
 | WORK-5 | yes | Rule `Jogs` in `design-rules.md`; every straight run 1 mm or longer, from each pad or via to its first turn. |
-| WORK-6 | yes | `WORK_STUB_MM` 0 in `design-rules.md`; every track ends on a pad, a via or another track of its net. |
+| WORK-6 | yes | KiCad's `track_dangling` check in `design-rules.md`; every track ends on a pad, a via or another track of its net. |
 | WORK-7 | yes | KiCad's `via_dangling` check in `design-rules.md`; every via joins copper on two or more layers. |
 | WORK-8 | yes | `WORK_NECK_MM` 1 in `design-rules.md`; every track at its class's width, `+3V3` necking to 0.25 mm only for its last 0.6 mm into U4's pin 15 and `GND` to 0.4 mm only between U4's pin 8 and its exposed pad. |
 | WORK-9 | yes | `WORK_ANGLE_TOLERANCE_DEG` 0.1 in `design-rules.md`; every track along x or y or at 45 degrees. |
-| WORK-10 | yes | `WORK_PAD_ENTRY_RATIO` 2 in `design-rules.md`; every track into U4's and U3's leads, R1's pads and Y1's pads runs along their long axes from their ends. |
+| WORK-10 | yes | `WORK_PAD_ENTRY_RATIO` 2 in `design-rules.md`; every track into U4's and U3's leads, R1's pads and Y1's pads, each more than twice as long as it is wide, runs along their long axes from their ends. |
 
 ### The board's own items
 

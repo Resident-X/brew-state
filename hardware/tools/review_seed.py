@@ -235,14 +235,14 @@ def drop_via(tree: list, *at: Tuple[float, float]) -> None:
 #: each run of 0.5 mm tracks joins the next point in turn, from the supply
 #: connector's ground pin to every ground via of the seeded copy.
 GROUND_TRACES = [
-    [(39.5, 3.5), (39.5, 6), (51, 6), (66.8, 6), (71.35, 6), (80, 6), (88.8, 6), (88.8, 23), (88.8, 41.9),
+    [(39.5, 3.5), (39.5, 6), (51, 6), (66.8, 6), (71.35, 6), (75.6, 6), (88.8, 6), (88.8, 21), (88.8, 41.9),
      (88.8, 55.5), (69.5, 55.5), (66.5, 55.5), (63.6625, 55.5), (63.6625, 54)],
     [(39.5, 6), (39.5, 11.7), (38.9, 11.7), (33.85, 11.7), (33.85, 16.3), (33.85, 28), (33.85, 38.1)],
     [(33.85, 28), (40.3, 28)],
     [(51, 6), (51, 10.6)],
     [(66.8, 6), (66.8, 21.55)],
     [(71.35, 6), (71.35, 13.35), (72.65, 13.35), (72.65, 14.65), (71.35, 14.65)],
-    [(80, 6), (80, 3.7)],
+    [(75.6, 6), (75.6, 10.1)],
     [(88.8, 41.9), (74.6, 41.9), (63.5, 41.9), (63.5, 44)],
 ]
 
@@ -303,15 +303,15 @@ def sense_off_the_load_track(seed: board_prove.Seed) -> None:
 
 
 def load_capacitor_away(seed: board_prove.Seed) -> None:
-    """The crystal's XTAL1 load capacitor C5 moved away from the crystal and its partner, reached by a long track."""
+    """The crystal's XTAL1 load capacitor C5 moved from beside its partner at U4 to beyond the crystal, by the board's edge."""
     def edit(tree: list) -> None:
-        drop(tree, ((80, 18.25), (80, 21.525)), ((80, 23.075), (80, 24.3)))
-        drop_via(tree, (80, 24.3))
+        drop(tree, ((75.6, 16.05), (75.6, 17.4)))
+        drop_via(tree, (75.6, 17.4))
         turn(tree, "C5", 0)
-        move(tree, "C5", 86.8, 23)
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(80, 18.25), (80, 22), (81, 23), (86.025, 23)])
-        path(tree, GND, "F.Cu", 0.5, [(87.575, 23), (88.8, 23)])
-        append(tree, new_via(GND, (88.8, 23)))
+        move(tree, "C5", 86.3, 21)
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(81, 14.5), (82.5, 14.5), (85.525, 17.525), (85.525, 21)])
+        path(tree, GND, "F.Cu", 0.5, [(87.075, 21), (88.8, 21)])
+        append(tree, new_via(GND, (88.8, 21)))
     seed.layout(edit)
 
 
@@ -366,11 +366,11 @@ def parts_apart(seed: board_prove.Seed) -> None:
 def needless_layer_change(seed: board_prove.Seed) -> None:
     """XTAL1 dropped to B.Cu and straight back up, through two vias, on its run from U4 to the crystal."""
     def edit(tree: list) -> None:
-        drop(tree, ((73.925, 14.5), (79.2, 14.5)))
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(73.925, 14.5), (75.4, 14.5)])
-        path(tree, "/XTAL1", "B.Cu", 0.25, [(75.4, 14.5), (77.6, 14.5)])
-        path(tree, "/XTAL1", "F.Cu", 0.25, [(77.6, 14.5), (79.2, 14.5)])
-        append(tree, new_via("/XTAL1", (75.4, 14.5)), new_via("/XTAL1", (77.6, 14.5)))
+        drop(tree, ((75.6, 14.5), (79, 14.5)))
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(75.6, 14.5), (76.6, 14.5)])
+        path(tree, "/XTAL1", "B.Cu", 0.25, [(76.6, 14.5), (77.6, 14.5)])
+        path(tree, "/XTAL1", "F.Cu", 0.25, [(77.6, 14.5), (79, 14.5)])
+        append(tree, new_via("/XTAL1", (76.6, 14.5)), new_via("/XTAL1", (77.6, 14.5)))
     seed.layout(edit)
 
 
@@ -408,12 +408,12 @@ def square_corners(seed: board_prove.Seed) -> None:
 
 
 def jogs(seed: board_prove.Seed) -> None:
-    """The shortest straight run lowered to 0.3 mm, and a 0.4 mm offset jogged into the feedback track to R3."""
+    """The shortest straight run lowered to 0.3 mm, and a 0.4 mm offset jogged into the feedback track from R2 to R3."""
     figure("Jogs", "| 1 mm |", "| 0.3 mm |", rules=("(constraint track_segment_length (min 1mm))",
                                                    "(constraint track_segment_length (min 0.3mm))"))(seed)
     def edit(tree: list) -> None:
-        drop(tree, ((71.575, 44.95), (71.575, 47.8)))
-        path(tree, "/AMP_FB", "F.Cu", 0.25, [(71.575, 44.95), (71.575, 46), (71.975, 46.4), (71.975, 47.4), (71.575, 47.8)])
+        drop(tree, ((71.575, 46.375), (71.575, 47.9)))
+        path(tree, "/AMP_FB", "F.Cu", 0.25, [(71.575, 46.375), (71.975, 46.775), (71.975, 47.5), (71.575, 47.9)])
     seed.layout(edit)
 
 
@@ -445,16 +445,12 @@ def side_entry(seed: board_prove.Seed) -> None:
     seed.replace("design-rules.md", "WORK_PAD_ENTRY_RATIO | 2 times", "WORK_PAD_ENTRY_RATIO | 10 times")
 
 
-def stubs_admitted(seed: board_prove.Seed) -> None:
-    """The stub figure raised to 2 mm, in the rules table and the project. KiCad's own check still reports any stub, so none is drawn."""
-    figure("Stubs", "| 0 mm |", "| 2 mm |", "WORK_STUB_MM", "2")(seed)
-    seed.replace("design-rules.md", "WORK_STUB_MM | 0 mm of track", "WORK_STUB_MM | 2 mm of track")
-
-
-def via_check_unrecorded(seed: board_prove.Seed) -> None:
-    """The rules table's row for KiCad's unconnected-via check taken out."""
-    line = next(item for item in seed.read("design-rules.md").splitlines() if item.startswith("| Unconnected vias |"))
-    seed.replace("design-rules.md", line + "\n", "")
+def row_taken_out(row: str):
+    """A rules table row taken out: for an item KiCad's own check reports unaided, the row that names the check."""
+    def seed_it(seed: board_prove.Seed) -> None:
+        line = next(item for item in seed.read("design-rules.md").splitlines() if item.startswith(f"| {row} |"))
+        seed.replace("design-rules.md", line + "\n", "")
+    return seed_it
 
 
 #: (identifier, the catalogue item that covers it, layer, board position in mm, what it is, the edit)
@@ -475,8 +471,9 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S6", "SENSE-1", "F.Cu", (53.8, 52),
      "a sense connection off the load-current track: the amplifier's LOAD_RTN sense track tapped off the load track "
      "beside J4, 6 mm short of R1's pad", sense_off_the_load_track),
-    ("S7", "CLOCK-1", "F.Cu", (86.8, 23),
-     "a load capacitor away from the crystal: C5 moved 6 mm from Y1's pad, beside the board's edge", load_capacitor_away),
+    ("S7", "CLOCK-1", "F.Cu", (86.3, 21),
+     "a load capacitor away from its oscillator pin and its partner: C5 moved from beside C6 at U4 to beyond the crystal, "
+     "by the board's edge, 14 mm from C6", load_capacitor_away),
     ("S8", "CONN-1", "F.Cu", (38.05, 28),
      "a suppressor away from its connector: D1 moved 24 mm from J2, onto the +5V trunk at y 28 mm", suppressor_away),
     ("S9", "TEST-2", "F.Cu", (66.5, 55.5),
@@ -490,7 +487,7 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S12", "WORK-1", "F.Cu", (33.85, 36),
      "a part set apart from the part it serves: R4 moved 15 mm south of U1's pin 2, its connection running down to it",
      parts_apart),
-    ("S13", "WORK-3", "F.Cu, B.Cu", (76.5, 14.5),
+    ("S13", "WORK-3", "F.Cu, B.Cu", (77.1, 14.5),
      "a needless change of layer: XTAL1 dropped to B.Cu and straight back up through two vias on its run to the crystal",
      needless_layer_change),
     ("S14", "WORK-2", "design-rules.md, project text variables, F.Cu", (58.5, 9.5),
@@ -499,7 +496,7 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S15", "WORK-4", "design-rules.md, rules file, F.Cu", (69.1375, 41.9),
      "a corner figure looser than its item's and a square corner: the Corners rule at 90 where the item gives 135, and "
      "U3's supply turning square into pin 5", square_corners),
-    ("S16", "WORK-5", "design-rules.md, rules file, F.Cu", (71.775, 46.2),
+    ("S16", "WORK-5", "design-rules.md, rules file, F.Cu", (71.975, 47.1),
      "a jog figure looser than its item's and a jog: the Jogs rule at 0.3 mm where the item gives 1 mm, and a 0.4 mm "
      "offset in the feedback track from R2 to R3", jogs),
     ("S17", "WORK-8", "design-rules.md, project text variables, F.Cu", (67, 16),
@@ -511,10 +508,10 @@ SEEDS: List[Tuple[str, str, str, Tuple[float, float], str, Callable[[board_prove
     ("S19", "WORK-10", "design-rules.md, project text variables, F.Cu", (69.1375, 42.5),
      "a pad-entry ratio looser than its item's and a track entering a long pad from its side: WORK_PAD_ENTRY_RATIO 10 "
      "where the item gives 2, so U3's pin 5, entered from its side by S15's corner, passes", side_entry),
-    ("S20", "WORK-6", "design-rules.md, project text variables", (0, 0),
-     "a stub figure looser than its item's: WORK_STUB_MM 2 mm where the item gives 0", stubs_admitted),
+    ("S20", "WORK-6", "design-rules.md", (0, 0),
+     "the rules table's row for KiCad's unconnected-track-end check taken out", row_taken_out("Stubs")),
     ("S21", "WORK-7", "design-rules.md", (0, 0),
-     "the rules table's row for KiCad's unconnected-via check taken out", via_check_unrecorded),
+     "the rules table's row for KiCad's unconnected-via check taken out", row_taken_out("Unconnected vias")),
 ]
 
 

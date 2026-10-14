@@ -230,26 +230,31 @@ class TheSeeds(unittest.TestCase):
         self.assertEqual(set(work) - {seed[1] for seed in review_seed.SEEDS}, set())
         # A copy holding any of these fails the check, so the check's own seeded faults prove them, not the review.
         faults = {fault[0]: fault[2] for fault in board_prove.FAULTS}
-        for name, rule in (("a short stub", "workmanship_stub"), ("an unneeded via", "via_dangling"),
+        for name, rule in (("a short stub", "track_dangling"), ("an unneeded via", "via_dangling"),
                            ("a short jog", "track_segment_length"), ("a corner a few degrees off 45", "track_angle")):
             self.assertEqual(faults.get(name), rule, name)
 
-    def test_the_via_seed_takes_out_its_row_and_leaves_the_others(self):
+    def test_each_kicad_check_seed_takes_out_its_row_and_leaves_the_others(self):
         # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
-        edit = next(seed[5] for seed in review_seed.SEEDS if seed[1] == "WORK-7")
-        with tempfile.TemporaryDirectory() as scratch:
-            seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
-            before = seed.read("design-rules.md").splitlines()
-            edit(seed)
-            after = seed.read("design-rules.md").splitlines()
-        self.assertEqual([line for line in before if line not in after], [next(line for line in before if line.startswith("| Unconnected vias |"))])
-        self.assertEqual(len(after), len(before) - 1)
+        for item, row in (("WORK-6", "| Stubs |"), ("WORK-7", "| Unconnected vias |")):
+            edit = next(seed[5] for seed in review_seed.SEEDS if seed[1] == item)
+            with self.subTest(item=item), tempfile.TemporaryDirectory() as scratch:
+                seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
+                before = seed.read("design-rules.md").splitlines()
+                project, layout = seed.read(".kicad_pro"), seed.read(".kicad_pcb")
+                edit(seed)
+                after = seed.read("design-rules.md").splitlines()
+                self.assertEqual([line for line in before if line not in after], [next(line for line in before if line.startswith(row))])
+                self.assertIn("KiCad's", next(line for line in before if line.startswith(row)), "the row names KiCad's own check")
+                self.assertEqual(len(after), len(before) - 1)
+                self.assertEqual((seed.read(".kicad_pro"), seed.read(".kicad_pcb")), (project, layout),
+                                 "a KiCad check's seed changes nothing but its row, since KiCad reports its defect unaided")
 
     def test_each_rule_kind_workmanship_seed_loosens_its_figure_in_the_rules_table_and_where_the_board_sets_it(self):
         # SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS.C4: Following the review step blind on a seeded copy reports every seeded workmanship defect
         rule_kind = {"WORK-2": ("WORK_DETOUR_RATIO", "2"), "WORK-4": (None, "(min 90)"), "WORK-5": (None, "(min 0.3mm)"),
                      "WORK-8": ("WORK_NECK_MM", "8"), "WORK-9": ("WORK_ANGLE_TOLERANCE_DEG", "15"),
-                     "WORK-10": ("WORK_PAD_ENTRY_RATIO", "10"), "WORK-6": ("WORK_STUB_MM", "2")}
+                     "WORK-10": ("WORK_PAD_ENTRY_RATIO", "10")}
         for ident, item, _, _, _, edit in review_seed.SEEDS:
             if item not in rule_kind:
                 continue
