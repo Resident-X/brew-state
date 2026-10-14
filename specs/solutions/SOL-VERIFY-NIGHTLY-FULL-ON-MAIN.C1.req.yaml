@@ -6,7 +6,7 @@ version: 2
 measurement_type: binary
 verification: test
 text: |
-  A task-runner command for the daily verification runs every gate the complete verification declares, including the emulation tier and the full mutation sweep, with no result reused from an earlier run. Each gate runs to completion even after an earlier one fails, and the command exits non-zero naming every gate that failed. It is the command a single machine runs for the whole verification. It can be told to leave out a named gate, and refuses a name that is not one of its declared gates; the hosted nightly leaves out the mutation sweep this way and runs the same remaining gates, with the sweep in its sharded form. Out of scope: deciding which failures matter; every failure is reported.
+  A task-runner command for the daily verification runs every gate the complete verification declares, including the emulation tier and the full mutation sweep, with no gate's verdict reused from an earlier run (build and toolchain caches are not verdicts). Each gate runs to completion even after an earlier one fails, and the command exits non-zero naming every gate that failed; its closing account names every gate that ran and every gate left out, so a run with a gate left out never reads as the complete verification passing. It is the command a single machine runs for the whole verification. It can be told to leave out a named gate, and refuses a name that is not one of its declared gates; the hosted nightly leaves out the mutation sweep this way and runs the same remaining gates, with the sweep in its sharded form. Out of scope: deciding which failures matter; every failure is reported.
 links:
   - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
     type: criterion-of
