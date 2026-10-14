@@ -3,9 +3,13 @@ type: deliverable
 category: solution
 title: Each thermoblock's peak casting temperature under control is derived from the plant model
 status: active
-version: 1
+version: 2
 text: |
   The proof-of-life removal interval starts from the hottest each heater's casting can be while the controller is holding it. The commanded figure does not bound that: the coffee loop controls the water leaving the block and the steam loop controls pressure during a draw, and in both the casting runs hotter than the commanded figure by an amount that is not fixed. The plant model already represents the casting and is run across its declared corners, so the peak casting temperature under control is derived from it rather than assumed, and the figures record's pending interval is then derived from that peak.
+
+  The work extends the existing analysis-record tooling rather than adding a mode to the control path. The closed-loop coffee and steam runs already report the casting temperature every interval, with the machine at a corner and the control path at its shipped description, and the protection-margin record already takes its corners from the control path's own enumeration and pins the inputs it was generated from. The casting peak is a sibling record built the same way, taking the maximum casting temperature over each run; folding it into the protection-margin record was rejected because that record answers a different question, the gap a commanded target leaves to the trip point, and an idealised controller was rejected because the peak is the one reached while the shipped controller holds the heater. The corners combine by the worst single corner, never by a sum.
+
+  The peak waits on the plant model's element-power uncertainty covering the declared supply span. Taken before that, the corners would stop short of the top of the span, and the peak, which grows with the power the controller has to overshoot with, would be understated in a safety figure.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C2
     type: derives-from
@@ -15,3 +19,11 @@ links:
     type: justified-by
   - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
     type: depends-on
+  - target: SOL-PLANT-MODEL-ELEMENT-POWER-COVERS-DECLARED-SPAN
+    type: depends-on
+  - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-opus-5-5
+  fingerprint: 1a5112d754cacd670cfc035cc1314d5c688e45340ffb94e30cb5d72b1626e016
+  gating_profile: ""
