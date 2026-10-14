@@ -42,7 +42,7 @@ U1 stands for a power phototriac, Vishay VO3526, a six-pin DIP with pin 5 remove
 | DECOUPLE-5 | no | No snubber in the schematic. |
 | SENSE-1 | yes | The sense track `LOAD_RTN` to U3's input leaves R1's pad 1 at its own top end, apart from the load-current track entering the pad from the left; R3, the gain resistor, returns to R1's ground pad 2 by its own track. |
 | SENSE-2 | no | No filter at a converter input and no reference capacitor in the schematic: `AMP_OUT` goes straight to U4's pin 14, and U4 uses its supply as reference. |
-| SENSE-3 | yes | R2, the feedback resistor, and R3, the gain resistor, beside U3's inverting input, pin 4, by tracks of 3 mm and less. |
+| SENSE-3 | yes | R2, the feedback resistor, beside U3's inverting input, pin 4, by a 3 mm track; R3, the gain resistor, by a 6.4 mm track from pin 4, placed so its ground end sits at R1's ground pad as `SENSE-1` asks. No track on pin 4's net leaves U3's corner of the analog sensing region. |
 | SENSE-4 | yes | The sensing nets `AMP_FB` and `AMP_OUT` and the sense part of `LOAD_RTN` within the analog sensing region, away from the crystal, U1 and the mains region; `AMP_OUT` leaves it only to reach U4. |
 | SENSE-5 | yes | U3, R1, R2 and R3 in the analog sensing region; U2, the regulator, and U1, the switching part, in the low-voltage region more than 20 mm away. |
 | CLOCK-1 | yes | Y1 at U4's oscillator pins 2 and 5, tracks under 10 mm; C5 at Y1's pad 1 (`XTAL1`, the input), C6 at Y1's pad 2; `XTAL1` and `XTAL2` routed apart, on opposite sides of U4's pins 3 and 4. |
