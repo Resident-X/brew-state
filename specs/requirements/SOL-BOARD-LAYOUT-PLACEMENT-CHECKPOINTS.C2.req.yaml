@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2
+type: criterion
+title: A board's placement is chosen from several candidates, each measured and judged before any track is drawn
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Write into the method, between planning the layout and the rules before routing, a placement step that an agent can follow from its text alone, and amend the planning step so the floorplan lists, for each region, the parts it holds by reference, in a form the unrouted-connection command reads, a part spanning two regions listed in each. The placement step places the parts that cannot move first, connectors, mounting holes and the mains region, then the rest by signal flow and current loop within the floorplan, the main integrated circuit before the parts that serve it, each part turned so its pins face the pins they join. It produces at least two candidate placements, renders and measures each with the unrouted-connection command, judges each against the catalogue items about placement, and records, in a placement section of the board's layout plan, each candidate's measures, the command that renders its view, and the reason the chosen one was chosen, committed before any track is drawn, so the order is checkable from the repository's history; the images themselves are not committed, as the review views are not, since the command regenerates them. A candidate that leaves a part outside its floorplan regions is not chosen. Out of scope: the command itself, and routing.
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: criterion-of
