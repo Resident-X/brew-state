@@ -29,8 +29,8 @@ links:
   - target: SOL-HW-BOARD-CLASS-READ-ANY-SIZE
     type: depends-on
 brief_confirmation:
-  confirmer: claude-opus-5-5 (independent brief reviewer, run crun-c619d948b8711651)
-  fingerprint: 43430029e0d9b821ff3b5d6752cbc80870e074396cbd33246f7521fb1b67665d
+  confirmer: claude-opus-5-5 (independent brief reviewer, crun-772a7cd551c3571e)
+  fingerprint: 4608c252bf32e8769db2469d58736af8e6fc7a8a122a41be89486e4550a101f2
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1
