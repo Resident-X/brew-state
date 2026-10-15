@@ -29,3 +29,7 @@ links:
     type: justified-by
   - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 0d74f8699f6b9ad2766f2717f09df3aa1474fefbf0210ea96f50d27d81a65cf3
+  gating_profile: ""
