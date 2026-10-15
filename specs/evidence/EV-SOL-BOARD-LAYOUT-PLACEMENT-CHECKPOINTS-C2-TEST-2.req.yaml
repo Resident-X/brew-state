@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS-C2-TEST-2
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T10:42:34.569167Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_review_seed.py::test_the_folder_holds_only_what_the_review_step_gives_a_reviewer,test_the_prompt_names_nothing_seeded
+  artifact_version: 1ed588c8dbb6261765958dc5036effe16bd2a8c5
+attested_by: crun-61f3fd1cff953fd2
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2
+    type: satisfies
