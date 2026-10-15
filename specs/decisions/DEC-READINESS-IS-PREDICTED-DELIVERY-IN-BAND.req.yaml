@@ -1,0 +1,30 @@
+id: DEC-READINESS-IS-PREDICTED-DELIVERY-IN-BAND
+type: decision
+title: Readiness for a purpose is the predicted delivery from the current estimated state being in band, with a bounded wait
+status: active
+version: 1
+rationale: |
+  Context: Readiness had been stated as the machine having settled at the state a delivery requires, and the shipped behaviour reads that as a temperature or pressure setpoint held for a while. The owner's intent is different: ready for a purpose means the delivery the machine would make from its present estimated state is inside the band that delivery is held to, so coffee is ready when the first millilitre would be in band and steam is ready when it would be dry from the first millilitre. The estimate already exists, since the machine reconstructs the states it cannot measure, and a prediction run forward from it costs nothing the machine does not already carry.
+
+  Trade-offs: A setpoint test is simple and wrong in both directions: it declares a machine ready that sits at the number with a cold bore or a wet steam block, and it withholds readiness from one that would already deliver in band. A fixed timer is worse, because it encodes one thermal history and fails on every other. Prediction answers the question the operator is actually asking. It depends on the estimate being right, so a failed estimate must not hold the machine unready indefinitely: the wait is bounded, and when the bound is reached the machine says what it could not establish rather than waiting or declaring ready.
+
+  Reversibility: Reversible in the control law, with no hardware consequence. The definition of readiness and the decision move together, since the definition now states the predictive meaning.
+
+  Consequences: Anything that tests readiness against a threshold is a proxy for this and has to be read as one: the steam feed gate that withholds feed below a ready pressure, the readiness timing requirement whose band is the one the delivery requires, and the overshoot bound while approaching readiness. The estimator's error budget becomes part of the readiness test, because a prediction is only as good as the state it starts from. The bound on the wait is a declared figure the owner has not yet set.
+options_considered:
+  - option: Predict the delivery from the estimated state and call the machine ready when it is in band, with a bounded maximum wait
+    reason_rejected: ""
+  - option: Ready when the regulated setpoint is reached
+    reason_rejected: A state at its setpoint can still deliver out of band, and a machine can deliver in band before reaching it, so the test is wrong in both directions
+  - option: Ready after a fixed time from power-on
+    reason_rejected: It encodes one thermal history and fails on every other starting state, which the readiness timing requirement explicitly covers
+  - option: Predict with no bound on the wait
+    reason_rejected: A failed estimate would hold the machine unready indefinitely and leave the user with nothing to act on
+chosen: Predict the delivery from the estimated state and call the machine ready when it is in band, with a bounded maximum wait
+links:
+  - target: REQ-READINESS-TIMELINESS-001.C3
+    type: addresses
+  - target: REQ-READINESS-TIMELINESS-001.C1
+    type: addresses
+  - target: DEF-READINESS
+    type: uses-term

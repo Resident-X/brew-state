@@ -1,0 +1,32 @@
+id: DEC-BREW-RELIEF-VALVE-IS-SAFETY-ONLY
+type: decision
+title: The brew relief valve is for safety only, set above the coffee working range and seeing the block's pressure
+status: active
+version: 1
+rationale: |
+  Context: The brew pump has a pulsation damper and no pressure relief as the machine was found. The owner intends the controller to hold pressure tightly at the puck and to add a relief valve for safety only, set above anything coffee runs at, so that in service nothing is diverted and the suction-line flow meter reads the same quantity the group delivers. The requirement that pressure be contained or released without power, sensing or command cannot be met by a software clamp, and a restriction between a heated mass and a relief leaves a trapped volume on the wrong side of it, so the relief has to see the pressure of the block.
+
+  Trade-offs: A relief that is also the working pressure cap would be active in ordinary service, diverting water and making the suction-line meter over-read delivery, and its setting would sit inside the range coffee is pulled at, trading shot pressure against safety. A relief above the working range is never active in service, so the tight pressure control stays the controller's job and the meter stays a faithful measure of delivery. Setting it below the pump's own maximum still limits the worst case. A relief fitted inside the pump protects the pump and leaves with it, and a software clamp is not independent of what it guards. Strength alone is a candidate for the coffee side where the pump dominates, and stays open as a form; what this decision fixes is that no relief is part of the working pressure control.
+
+  Reversibility: Reversible by removing or resetting the valve. The earlier decision that a profile commands flow and caps pressure mechanically described the cap as the working limit; this decision separates the safety relief from any working limit, and that earlier decision is revised when the control architecture is settled, not here. Fitting a relief is a change to the as-built plumbing but does not re-route any water path.
+
+  Consequences: The relief setting is a figure the owner has to set above the highest profile pressure and below what the solenoid valves and block are rated for. The brew pressure sensor is read under the relief's setting. The inspection of the valve and block ratings is a precondition of choosing the setting.
+options_considered:
+  - option: Fit a relief valve for safety only, set above the coffee working range, on the cold side where it sees the block's pressure
+    reason_rejected: ""
+  - option: Use the relief valve as the working pressure cap
+    reason_rejected: It would be active in service, diverting water so the suction-line meter over-reads delivery, and its setting would trade shot pressure against safety
+  - option: Clamp pressure in software and fit no relief
+    reason_rejected: A software clamp depends on power, sensing and command, which the requirement excludes
+  - option: Rely on the relief inside the pump
+    reason_rejected: It protects the pump and not the heated mass, and leaves with the pump if it is substituted
+chosen: Fit a relief valve for safety only, set above the coffee working range, on the cold side where it sees the block's pressure
+links:
+  - target: REQ-SAFETY-CHAIN-001.C5
+    type: addresses
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C5
+    type: addresses
+  - target: DEC-PROFILE-COMMANDS-FLOW
+    type: addresses
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
+    type: addresses
