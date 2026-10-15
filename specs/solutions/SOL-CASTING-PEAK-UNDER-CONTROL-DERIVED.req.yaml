@@ -3,13 +3,15 @@ type: deliverable
 category: solution
 title: Each thermoblock's peak casting temperature under control is derived from the plant model
 status: active
-version: 2
+version: 3
 text: |
   The proof-of-life removal interval starts from the hottest each heater's casting can be while the controller is holding it. The commanded figure does not bound that: the coffee loop controls the water leaving the block and the steam loop controls pressure during a draw, and in both the casting runs hotter than the commanded figure by an amount that is not fixed. The plant model already represents the casting and is run across its declared corners, so the peak casting temperature under control is derived from it rather than assumed, and the figures record's pending interval is then derived from that peak.
 
   The work extends the existing analysis-record tooling rather than adding a mode to the control path. The closed-loop coffee and steam runs already report the casting temperature every interval, with the machine at a corner and the control path at its shipped description, and the protection-margin record already takes its corners from the control path's own enumeration and pins the inputs it was generated from. The casting peak is a sibling record built the same way, taking the maximum casting temperature over each run; folding it into the protection-margin record was rejected because that record answers a different question, the gap a commanded target leaves to the trip point, and an idealised controller was rejected because the peak is the one reached while the shipped controller holds the heater. The corners combine by the worst single corner, never by a sum.
 
   The peak waits on the plant model's element-power uncertainty covering the declared supply span. Taken before that, the corners would stop short of the top of the span, and the peak, which grows with the power the controller has to overshoot with, would be understated in a safety figure.
+
+  Placement. The generator is a sibling of the protection-margin tool in the emulation tools folder, reusing its reading of the control path's corner enumeration and its construction of each corner machine, and the host artefact's existing per-interval casting-temperature report; no new mode is added to the C control path. The generated record sits beside the protection-margin record in the documentation folder, which is where its siblings sit; the figures record is a derived view whose quoted peak is checked against it. The declared sensing error of each loop is added to the reported casting temperature as a simultaneous degradation, as the commanded-margin work already does for its own figure, because the runs feed the controller the plant's true values and a sensor reading low holds the casting hotter. Because the round gate selects the emulation tier by the paths it reads, the new record and the figures record join that list so a change to either runs the staleness and agreement tests.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C2
     type: derives-from
