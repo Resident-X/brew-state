@@ -3,9 +3,13 @@ type: deliverable
 category: solution
 title: Every purchase made before a board design is verified names the property it settles
 status: active
-version: 1
-text: |-
+version: 2
+text: |
   Records each sample or instrument bought ahead of design verification with the property the verification could not establish without it, so early buying stays limited to what verification needs.
+
+  The record is a new section, Purchases ahead of verification, in the controller boards' design-constraints record in the machine's record folder, placed after the carried-forward module properties. The existing record is extended rather than a new file started, so the pending-marks aggregation and the evidence grades stay in one place. Each entry gives the item, the date, the property it settles, the source and the evidence grade.
+
+  On 2026-10-15 the owner stated that nothing has been bought ahead of verification. The section records that as a dated owner statement and cites the existing owner statement that none of the earlier design's parts were bought, rather than restating it. The owner also stated that the non-functioning three-way valve is to be replaced, most likely like for like, and has not been bought; the section lists it as a planned replacement so it gets an entry when it is bought. The section states that a purchase ahead of verification gets an entry when it is made. The stale statement in the earlier design's open items that valve purchase status is not recorded is updated to point at the section.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C5
     type: derives-from
