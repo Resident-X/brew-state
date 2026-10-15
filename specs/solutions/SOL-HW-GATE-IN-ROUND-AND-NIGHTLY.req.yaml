@@ -28,6 +28,6 @@ links:
   - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5, independent brief reviewer for crun-55aedc208f2d6c62
-  fingerprint: 158e8ecf143c11f657379b73c07f79ab74581ea0ead79401ae5993513962057a
+  confirmer: claude-sonnet-5-5 acting as independent brief reviewer
+  fingerprint: 820979ab095027f01ab44423eca7b44c0491ed790ee866411cfd028697aa212f
   gating_profile: ""
