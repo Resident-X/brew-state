@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC-C2-TEST-2
+type: evidence
+title: test evidence for SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T10:40:57.488859Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_verify_gate.py::test_the_macos_job_ends_on_the_bare_build_task_that_builds_every_host_environment
+  artifact_version: 3a9a436a2ad5865e44c42b5ed6b0fa5cf78e19ab
+attested_by: crun-edbdc07b3683ca4a
+links:
+  - target: SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2
+    type: satisfies
