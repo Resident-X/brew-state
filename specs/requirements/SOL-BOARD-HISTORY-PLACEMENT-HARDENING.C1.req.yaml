@@ -1,0 +1,12 @@
+id: SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1
+type: criterion
+title: The history command fails the three orderings it was found to pass
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Change the history command so that it fails two candidates whose parts sit identically, judged by each part's reference, position, angle and side rather than by the board file's bytes; fails a placement section judged against a floorplan whose region bounds differ from the floorplan in the parent of the earliest recorded candidate's commit, the floorplan the planning step judged, the only allowed difference being the method's amendment for a part added to the schematic after placement, committed before that part is placed; and counts a copper pour as the first copper when it lands before any track, arc or via. Tests in throwaway repositories built outside this one show each of the three fails on a history that commits it and that a history keeping the order still passes. Out of scope: the review step's record history.
+links:
+  - target: SOL-BOARD-HISTORY-PLACEMENT-HARDENING
+    type: criterion-of

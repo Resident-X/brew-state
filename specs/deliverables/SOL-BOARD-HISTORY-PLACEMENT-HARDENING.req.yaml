@@ -1,0 +1,21 @@
+id: SOL-BOARD-HISTORY-PLACEMENT-HARDENING
+type: deliverable
+category: solution
+title: The placement history check fails the orderings a final review found it passing
+status: active
+version: 1
+text: |
+  Why this exists. The placement checkpoints put the order of a board's placement and critical routing records into a command that reads the repository's history and fails on every ordering those records forbid. After its review loop closed, a final blind review found three more ways a producer can satisfy the command without keeping the order the method asks for, and two places where the method's text leaves a designer to guess. Two candidate placements are told apart by the bytes of the board file, so one placement saved twice, differing only in a text label or an identifier, passes as two. Each candidate is measured against the floorplan as the placement section's judged commit holds it, but that floorplan is never compared with the one the planning step judged before placement, so widening a region in the commit that records the section lets a part outside its region pass. The first copper the command looks for is a track, arc or via, so a board whose first copper is a hand-drawn pour can have its placement section recorded after copper went down. The planning step requires every part on the schematic to be listed in a floorplan region, while the placement command stops on a listed part that is not on the board, so a part the schematic keeps off the board cannot satisfy both. And the routing step's instruction to repeat from step 2 after a failed compare, before any router commit, does not say that the first pass is rewritten then rather than a second appended, which the command fails.
+
+  What it does. Tells candidates apart by their placements, holds the floorplan a section is judged against to the floorplan the planning step judged, counts a copper pour as first copper, and settles the two method wordings.
+
+  Out of scope: judging whether a recorded verdict is right.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: depends-on

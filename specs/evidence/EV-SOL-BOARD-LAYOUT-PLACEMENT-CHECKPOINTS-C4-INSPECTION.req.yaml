@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-15T10:42:34.857294Z"
+artifact:
+  kind: external
+  reference: docs/board-design-method.md, Layout review step 7 paragraph 'A workmanship finding caused by placement is closed at the placement' (re-route judged as the next appended `### Pass <n>`, router copper removed not edited, critical re-route committed only once locked, task hw:history --routed after the router's commit and what its FAILs mean) and the step's 'Every closure is one the method allows' cross-check, read clause by clause against the criterion text
+  artifact_version: 1ed588c8dbb6261765958dc5036effe16bd2a8c5
+attested_by: crun-61f3fd1cff953fd2
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4
+    type: satisfies

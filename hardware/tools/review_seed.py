@@ -17,8 +17,9 @@ reviewer: the seeded copy's KiCad files at its path from the repository's root,
 with the floorplan, plan and rules records that travel with it, and nothing else
 of its folder, so never the design's own review record; the method as written;
 the hardware readme the method points to for the views' index and per-net
-facts; every layout review view rendered from the copy; and the pre-order
-check's report on it. Nothing in the folder names the repository or the seeds,
+facts; every layout review view rendered from the copy; the placement view and
+its measures rendered from the copy, in a folder of their own; and the
+pre-order check's report on it. Nothing in the folder names the repository or the seeds,
 and nothing in it tells a seeded item or file from an unseeded one but the
 defect itself: every item a seed adds takes a fresh random identifier of the
 form the design's own items carry, KiCad itself refills and saves the seeded
@@ -75,6 +76,7 @@ RECORDS = ("layout-plan.md", "design-rules.md", "constraints.md", "separation-ba
 #: The endings of KiCad's own files of a design: its project, schematic, layout, rules and library files.
 KICAD_FILES = (".kicad_pro", ".kicad_sch", ".kicad_pcb", ".kicad_dru", ".kicad_sym", ".kicad_mod")
 VIEWS = "views"
+PLACEMENT = "placement"
 REPORT = "check-report.txt"
 
 PROMPT = """You are reviewing a finished printed circuit board layout. You did not design it, and you have \
@@ -89,10 +91,14 @@ What the review step's round 1 would have you produce has been prepared for you:
 - the layout review views, already rendered from the board's files by the views command, are in views/; \
 views/index.txt lists every image with its caption fields, and views/facts.txt gives every net's track widths, \
 via count, zones and classes (hardware/README.md, section "The layout review views", describes them);
+- the placement view, already rendered from the board's files by the placement command, is in placement/; \
+placement/index.txt lists its images with their caption fields, and placement/measures.txt gives the \
+placement's measures, its connections' lengths, their crossings and every part outside its floorplan regions \
+(hardware/README.md, section "The placement view", describes them);
 - the pre-order check's report on the board is in check-report.txt.
 
-You cannot run commands, render further views or commit anything. The views in views/ are the full set the \
-views command makes; where an item would need a view that is not among them, give it the verdict the method \
+You cannot run commands, render further views or commit anything. The views in views/ and placement/ are the \
+full set the views command and the placement command make; where an item would need a view that is not among them, give it the verdict the method \
 gives for that case and say which view it needs. Write "the design files in this folder" where the method asks \
 for the commit the round judges.
 
@@ -626,7 +632,8 @@ def documents() -> Dict[str, bytes]:
 
 
 def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str, resvg: str) -> Tuple[bool, str]:
-    """The review folder written from the seeded copy; whether the views were rendered, and their report.
+    """The review folder written from the seeded copy; whether the views and the placement view were rendered, and
+    their reports.
 
     Only the committed design's files the review step gives a reviewer are copied,
     by content alone, and once the folder is complete every file and folder in it
@@ -650,13 +657,20 @@ def assemble(seed: board_prove.Seed, out: str, report: List[str], kicad_cli: str
         command += ["--class", name]
     command += ["--out", os.path.join(out, VIEWS)]
     result = subprocess.run(command, cwd=os.path.join(out, DESIGN), capture_output=True, text=True)
+    said = (result.stdout + result.stderr).strip()
+    if result.returncode == 0:
+        result = subprocess.run([sys.executable, os.path.join(TOOLS, "board_placement.py"), "--kicad-cli", kicad_cli,
+                                 "--resvg", resvg, "--board", f"{NAME}.kicad_pcb", "--project", f"{NAME}.kicad_pro",
+                                 "--out", os.path.join(out, PLACEMENT)],
+                                cwd=os.path.join(out, DESIGN), capture_output=True, text=True)
+        said = (said + "\n" + (result.stdout + result.stderr).strip()).strip()
     leftovers(os.path.join(out, DESIGN), files, remove=True)
     stamp = time.time()
     for directory, _, names in os.walk(out, topdown=False):
         for name in names:
             os.utime(os.path.join(directory, name), (stamp, stamp))
         os.utime(directory, (stamp, stamp))
-    return result.returncode == 0, (result.stdout + result.stderr).strip()
+    return result.returncode == 0, said
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -714,13 +728,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         rendered, said = assemble(seed, out, report, args.kicad_cli, args.resvg)
         if not rendered:
             shutil.rmtree(out, ignore_errors=True)
-            print(f"CANNOT RUN | the views could not be rendered from the seeded copy: {board_check.clean(said)}",
-                  file=sys.stderr)
+            print(f"CANNOT RUN | the views or the placement view could not be rendered from the seeded copy: "
+                  f"{board_check.clean(said)}", file=sys.stderr)
             return 2
     with open(seeds, "w", encoding="utf-8") as handle:
         json.dump(seed_list(SEEDS), handle, indent=2)
         handle.write("\n")
-    print(f"VIEWS | {said.splitlines()[-1] if said else 'rendered'}")
+    for kind, line in zip(("VIEWS", "PLACEMENT"), [line for line in said.splitlines() if line.startswith("RESULT | ")]):
+        print(f"{kind} | {line}")
     print(f"SEEDS | {len(SEEDS)} seeds | {seeds}")
     print(f"RESULT | WRITTEN | {out}")
     return 0

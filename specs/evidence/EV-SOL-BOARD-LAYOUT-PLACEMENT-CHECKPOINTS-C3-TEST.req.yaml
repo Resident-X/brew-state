@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS-C3-TEST
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T10:42:34.683441Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_placement.py::test_critical_routing_is_checked_against_the_catalogue_before_the_router
+  artifact_version: 1ed588c8dbb6261765958dc5036effe16bd2a8c5
+attested_by: crun-61f3fd1cff953fd2
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3
+    type: satisfies

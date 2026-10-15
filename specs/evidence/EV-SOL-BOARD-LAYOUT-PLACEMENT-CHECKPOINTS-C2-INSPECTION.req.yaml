@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-15T10:42:34.627485Z"
+artifact:
+  kind: external
+  reference: docs/board-design-method.md sections Planning the layout (step 1 Parts column and the every-footprint-is-a-schematic-part sentence, step 3 cross-check), Placement (steps 1-6; step 6's record shape - Commit, Renders, Measures in a fenced block, verdict table, Chosen - and its run of task hw:history before the first track with what each FAIL means, the no-rewrite merge statement and what the command does not judge), Rules before routing step 1, Layout review (steps 1-2 and cross-check), Layout review views (Resolution naming placement step 1), Layout practice catalogue intro (five uses), How an item is read and the 22 Judged on lines; hardware/README.md 'The placement and critical routing history'; hardware/proof/review-proof/layout-plan.md floorplan table; hardware/tools/review_seed.py PROMPT and assemble - each read clause by clause against the criterion text
+  artifact_version: 1ed588c8dbb6261765958dc5036effe16bd2a8c5
+attested_by: crun-61f3fd1cff953fd2
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2
+    type: satisfies

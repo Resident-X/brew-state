@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS-C2-TEST
+type: evidence
+title: test evidence for SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T10:42:34.512342Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_placement.py::test_the_catalogue_names_the_placement_view_on_exactly_the_items_judged_at_placement,test_the_placement_step_sits_between_planning_and_the_rules_and_says_how_to_choose,test_the_minimums_move_before_placement_and_the_floorplan_lists_each_regions_parts,test_the_review_judges_on_the_placement_view_and_the_seeded_review_is_given_it,test_the_floorplan_says_every_footprint_is_a_part_on_the_schematic_and_the_catalogue_names_each_use
+  artifact_version: 1ed588c8dbb6261765958dc5036effe16bd2a8c5
+attested_by: crun-61f3fd1cff953fd2
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2
+    type: satisfies
