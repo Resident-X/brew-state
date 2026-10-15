@@ -1,0 +1,13 @@
+id: DEL-SENSOR-NECESSITY-PROVEN.C6
+type: criterion
+title: A sensor found redundant in a phase is named with its bound as an input to the cost decisions
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The finding does not remove a channel. It is recorded so that a decision to keep or drop the channel can cite it.
+links:
+  - target: DEL-SENSOR-NECESSITY-PROVEN
+    type: criterion-of

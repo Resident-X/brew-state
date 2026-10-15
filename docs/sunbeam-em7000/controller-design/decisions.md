@@ -48,7 +48,7 @@ Mirrors `open-items.md` section C.
 
 - **Mains chain rating margin.** Resolved by `DEC-INLET-CHAIN-RATED-ABOVE-ITS-FUSE`: filter FN9222-15-06 (15 A at 50 C; coupler rating unverified), trunk at least 1.5 mm2 (WB1568), T10A unchanged, one shared TR5 fuse on the valve branches; upstream breaker declared up to 20 A.
 - **Heater switching cadence.** Whole-cycle (20 ms) bursts or half-cycle; the files disagree.
-- **Steam heater with the knob shut.** The firmware's 125 C ready temperature heats against a closed knob, against F10 and the open trapped-pressure case; options are an S8 interlock, a hot-side relief valve, or both.
+- **Steam heater with the knob shut.** The firmware's 125 C ready temperature heats against a closed knob, as the OEM does (F10, as superseded 2026-10-15), and that is the open trapped-pressure case; options are an S8 interlock, a hot-side relief valve, or both.
 - **SSR mounting.** Direct to the metal side wall is proposed, not decided, and conflicts thermally with the IRM-10-5's derating.
 - PCB go or no-go (D21); whether the BL0942 current reading replaces the mains-presence confirm (D20); whether to copy the OEM `Q7` and `Q8` stages (D18); the steam pump drive (D4); whether to fit the optional vent-branch test tee.
 
@@ -65,7 +65,7 @@ Mirrors `open-items.md` section C.
 | F7 | If no check valve lies between the steam OPV and the block, the OPV caps the block pressure at its setting; otherwise the block pressure is the saturation pressure at the block temperature (about 15.5 bar absolute at the 200 C thermostat trip) | Owner reasoning; to be inspected |
 | F8 | The brew pump has a damper and no OPV | Owner statement; a forum post says "no OPV in the 7000" (low confidence) |
 | F9 | Both pumps contain check valves; no discrete check valve is visible, so any others would be inside the thermoblocks | Owner statement |
-| F10 | The steam block heater is off when no steam is drawn | Owner statement |
+| F10 | The OEM holds the steam block hot (ready) from power-on with the wand knob shut; the block holds no standing water, which enters only when the knob is open. This supersedes the earlier statement that the steam heater is off when no steam is drawn | Owner statement, 2026-10-15 (supersedes the 2026-10-11 statement) |
 | F11 | The coffee pump is an Ulka EP5 (15 bar, 48 W; outlet G1/8), the steam pump a JYPC-4 (22 W) | Parts list; outlet thread Published, unverified |
 | F12 | Thermostats: coffee block 110 C, steam block 200 C, pump 110 C; steam block thermal fuse 240 C | Parts list; fuse rating Published, unverified |
 | F13 | The NTCs are 100 kOhm at 25 C with 10 kOhm 1% dividers on the OEM board; B is not established | Schematic |

@@ -1,0 +1,13 @@
+id: DEL-SENSOR-NECESSITY-PROVEN.C2
+type: criterion
+title: The supply voltage's necessity is established by the same computation
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+closes_by: cascade
+text: |
+  The result states how much of the uncertainty in heat and water delivered the voltage reading removes, and the accuracy it must be known to for that, against the declared figure for it.
+links:
+  - target: DEL-SENSOR-NECESSITY-PROVEN
+    type: criterion-of

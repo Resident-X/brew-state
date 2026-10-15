@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C4
+type: criterion
+title: A profile the machine can never deliver is refused before the delivery begins, judged in each segment's primary variable
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Refusal compares each segment's commanded value and limit with what the machine can ever achieve in that variable, and a case that is merely not achievable yet is deferred rather than refused. The refusal and the deferral are each reported in both the text and the JSON form.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

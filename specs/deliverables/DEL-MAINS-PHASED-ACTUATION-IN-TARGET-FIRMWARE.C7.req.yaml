@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C7
+type: criterion
+title: The nominal supply frequency is declared, and everything that depends on the supply's timing reads that timing live
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A supply of a different nominal frequency, or one moving within its band, is followed and not assumed. The phase offset between a true crossing and a detected edge is declared data once established, and the firmware reads it as data.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of

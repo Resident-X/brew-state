@@ -1,0 +1,13 @@
+id: DEL-BREW-PLANT-FIDELITY.C3
+type: criterion
+title: The flow the plant reports is the flow delivered to the puck and not the flow commanded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A commanded level and the rate that crosses the puck are separate quantities in the model, and they differ whenever the damper, the line compliance or the puck resistance makes them differ.
+links:
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: criterion-of

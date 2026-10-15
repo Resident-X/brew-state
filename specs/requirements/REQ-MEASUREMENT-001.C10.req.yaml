@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C10
+type: criterion
+title: The supply voltage that sets heater and pump delivery is known to the control to a declared accuracy
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Heater power goes as the square of the supply voltage, and a vibratory pump's force and delivery curve move with it too. Across the span the machine declares, that single unknown is the largest part of the uncertainty in how much heat and how much water a command delivers, so a controller that carries the span instead of the value carries an error it could have removed.
+
+  The accuracy is a declared figure, declared with the other sensing figures, so that it can be checked and so that a different supply is held to its own span rather than to this machine's.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

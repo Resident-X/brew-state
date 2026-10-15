@@ -1,0 +1,13 @@
+id: DEL-HW-DESIGN-CONSTRAINTS.C6
+type: criterion
+title: The relief, protection and pressure-sensing facts the safety and sensing choices rest on are established on the machine as found
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The facts the protection and sensing choices rest on are established by inspecting this machine, not recalled or read from a family datasheet, and each is recorded with how it was established. They are: whether a check valve lies between the steam side's relief valve and the steam block, and the pressure that relief valve opens at; whether a check valve lies between the brew pump's outlet and the brew block or inside the block, which decides whether a relief or a pressure tap fitted on the brew pump's outlet side sees the block's pressure or only the pump's; the pressure the steam pressure transducer withstands, set against the saturation pressure at the steam block's thermostat trip point; which variant of the steam pump is fitted, and so its rated pressure; whether each thermostat resets itself or must be reset by hand; and the rating and location of the thermal fuse.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-STEAM-PATH-FLASH-GENERATOR.C4
+type: criterion
+title: A claim that steam is dry rests on superheat above saturation at the measured pressure
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Superheat is the only proof of dryness the machine takes, and the report states that droplet carry-over is not excluded without a calorimetric test. The claim and the caveat are reported in both the text and the JSON form.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: criterion-of

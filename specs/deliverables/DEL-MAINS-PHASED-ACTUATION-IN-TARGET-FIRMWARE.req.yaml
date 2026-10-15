@@ -1,0 +1,40 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+type: deliverable
+category: task
+title: The target firmware's actuation layer delivers heaters and pumps by per-half-cycle decisions against a both-crossings supply reference
+status: active
+level: task
+version: 1
+text: |
+  The target firmware's actuation layer implements the committed mains-phased actuation. Below the hardware seam, each heater channel and each pump channel turns the level the control law commands into one energise-or-idle decision per supply half-cycle, carrying forward the residual a level leaves between whole half-cycles so the delivered average tracks the commanded level. The control period stays derived from the controller's own crystal and does not move when the supply's period does.
+
+  The supply's timing is read as an input: its period is measured, an edge outside a plausible window or absent is reported as a supply fault with a defined effect on the delivery in progress, and the reference presents both crossings of each cycle. The form the pump is driven in, and whether stroke-level coil current is measured, follow from the ripple simulation of the coffee plant-fidelity task and are not decided before it.
+rationale: |
+  The decision to phase actuation below the seam is committed, but no deliverable implements it on the target. The requirements it addresses on supply timing, supply frequency and ordering between concurrent contexts had no delivery-side targeter at all, and the roadmap's on-target implementation criterion has no task beneath it for actuation. This task owns the implementation.
+
+  Placement: a task directly under the roadmap's criterion for the implementation verified on the target, because that criterion is where the on-target implementation work belongs, and not under the controller-hardware epic, whose scope is the boards. It depends on the coffee plant-fidelity task because the pump drive form is decided only after the ripple simulation there, and on the component specification because the switching devices and the detection front end are bought parts selected there.
+
+  Left to later by design of the decision, and stated in the criteria as data to be declared, not invented: the phase offset between a true crossing and a detected edge, for which no declared figure exists, and whether modulating the pump by whole cycles is fine enough, which is a measurement. Phase modulation of the pump is neither adopted nor forbidden.
+
+  What this replaces: nothing sealed. The existing target channel map (SOL-TARGET-ACTUATION-CHANNEL-MAP-COMPLETE) maps each channel to an output and is the surface this layer sits beneath.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C4
+    type: derives-from
+  - target: DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM
+    type: justified-by
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C5
+    type: targets
+  - target: REQ-TIMING-FAULT-RESPONSE-001.C6
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C4
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C9
+    type: targets
+  - target: OBL-REALTIME-DISCIPLINE-001.C3
+    type: targets
+  - target: OBL-REALTIME-DISCIPLINE-001.C5
+    type: targets
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: depends-on
+  - target: DEL-COMPONENT-SPECIFICATION
+    type: depends-on

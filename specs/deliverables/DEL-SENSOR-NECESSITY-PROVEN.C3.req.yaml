@@ -1,0 +1,13 @@
+id: DEL-SENSOR-NECESSITY-PROVEN.C3
+type: criterion
+title: The necessity of the temperature of the water leaving each heated mass is established, with the error left if it is reconstructed instead
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+closes_by: cascade
+text: |
+  The comparison covers water moving and water at rest, and states the accuracy reached by reconstruction against the accuracy the delivery is held to.
+links:
+  - target: DEL-SENSOR-NECESSITY-PROVEN
+    type: criterion-of

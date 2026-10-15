@@ -1,0 +1,13 @@
+id: DEL-READINESS-PREDICTED-IN-BAND.C1
+type: criterion
+title: Coffee is ready when the delivery predicted from the estimated state is inside its band from the first millilitre
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The prediction runs the plant relations forward from the estimated state under the delivery's own command, and the band is the one the delivery is held to. The readiness verdict and the predicted first-millilitre values are reported in both the text and the JSON form.
+links:
+  - target: DEL-READINESS-PREDICTED-IN-BAND
+    type: criterion-of

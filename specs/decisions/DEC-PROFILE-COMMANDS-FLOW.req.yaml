@@ -1,7 +1,7 @@
 id: DEC-PROFILE-COMMANDS-FLOW
 type: decision
 title: A delivery profile commands flow, and pressure is capped mechanically
-status: active
+status: deprecated
 version: 2
 decided_by: david
 rationale: |

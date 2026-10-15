@@ -1,0 +1,14 @@
+id: REQ-ROBUST-CONTROL-001.C6
+type: criterion
+title: Each heated mass's casting temperature stays below its protection trip point by a declared margin in every operating phase
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  What the control regulates is not what the protection acts on. A loop that holds the temperature of the water leaving a heated mass, or the pressure of the steam leaving it, can drive the casting itself far past that figure while the regulated quantity is still catching up, and the protection trip point is a limit on the casting.
+
+  The margin holds in every phase the machine passes through, not only the ones it is tuned for: heating from cold, recovery after a draw, and a steam draw of any length, including one long enough that the casting keeps rising while the operator is still drawing. A margin that holds at one thermal mass and fails at a lower one is not held.
+links:
+  - target: REQ-ROBUST-CONTROL-001
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-SENSOR-NECESSITY-PROVEN.C1
+type: criterion
+title: Each sensor's necessity is computed per operating phase as rank, conditioning and a lower bound on the estimate error without it
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+closes_by: cascade
+text: |
+  The result for every sensor and phase pairing is reported in both the text and the JSON form, with the stated error bounds, and the analysis inputs are pinned by digest so the record goes stale when the model changes.
+links:
+  - target: DEL-SENSOR-NECESSITY-PROVEN
+    type: criterion-of
