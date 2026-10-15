@@ -338,7 +338,7 @@ The floorplan divides the board into regions and places its connectors. Give it 
 - **Region** is one of `mains`, `low voltage`, `analog sensing` and `digital`. The mains region holds every mains-referenced part and its copper; low voltage holds the low-voltage supplies, their regulators and the load drive stages; analog sensing holds every sensing front end, and any converter of its own part that the front ends feed; digital holds the controller and the logic it drives.
 - **Bounds** gives the region's extent in board coordinates, in millimetres, as the rectangles `(x1, y1)–(x2, y2)` that make it up, corner to opposite corner, separated by commas. Board coordinates are those KiCad's board editor shows and the layout review views state in their captions. Regions do not overlap.
 - **What it holds** names the blocks of the schematic placed in the region, for example `load drive stages, Q3–Q6, R20–R27`.
-- **Parts** lists the reference designator of every part the region holds, comma-separated and without ranges, for example `Q3, Q4, Q5, Q6, R20, R21`. A part that spans two regions, such as an isolator whose pins lie either side of the mains boundary, is listed in both. Every part on the schematic is listed in at least one region, its connectors, test points and mounting holes among them, so a mounting hole is drawn on the schematic as a part of its own. The [placement](#placement) command reads each region's bounds and parts from this column, and measures every part against the regions that list it.
+- **Parts** lists the reference designator of every part the region holds, comma-separated and without ranges, for example `Q3, Q4, Q5, Q6, R20, R21`. A part that spans two regions, such as an isolator whose pins lie either side of the mains boundary, is listed in both. Every part on the schematic is listed in at least one region, its connectors, test points and mounting holes among them, and every footprint on the board, mounting holes, fiducials and logos among them, is a part drawn on the schematic, as the pre-order check's schematic parity already requires of a board ([Designing for bring-up and a second spin](#designing-for-bring-up-and-a-second-spin)). KiCad's parity check passes over a footprint marked board-only, so the placement command's report is what catches one: a footprint the schematic does not carry is listed in no region, and the command reports it outside, which no chosen placement may hold. The [placement](#placement) command reads each region's bounds and parts from this column, and measures every part against the regions that list it.
 
 A board that carries no mains records its mains region as `none`: a board whose schematic carries no mains-referenced net, which the rules section therefore declares `MAINS` `none` (step 2 there), writes `none: the board carries no mains` in Bounds. A board whose schematic carries no circuit of one of the other three kinds writes `none` in Bounds with what the schematic lacks, for example `none: the schematic carries no sensing front end`. A region recorded as `none` holds no part, and writes `none` in Parts.
 
@@ -457,17 +457,42 @@ Record the placement in `layout-plan.md`, below the board's own items, in a sect
 
 End the section with **Chosen**: the chosen candidate's number, and why it was chosen over each other candidate, citing the verdicts and the measures that decided it.
 
-If the chosen candidate is not the last committed, restore its layout with the board closed, `git checkout <commit> -- <board folder>/<board>.kicad_pcb`. Commit the section, with the board's design files as the chosen candidate holds them, before any track is drawn.
+If the chosen candidate is not the last committed, restore its layout with the board closed, `git checkout <commit> -- <board folder>/<board>.kicad_pcb`. Commit the section, whole, with the board's design files as the chosen candidate holds them, before any track is drawn. What this step judges is the section as it stood in the commit before the first commit carrying a track, as step 4 of [Proving value-critical circuits before layout](#proving-value-critical-circuits-before-layout) judges its record in the commit before placement, and the section is not changed after it: a section committed empty, or in part, and filled in after the first track does not pass.
 
-Judge the record against the board and the repository rather than taking its word:
+Judge the record against the board and the repository rather than taking its word, on the branch as pushed, fetched afresh and checked out. From the repository's root, find the first commit carrying a track, `<T>`, a track being a straight track, an arc or a via, and check out the commit before it into a folder of its own, outside the repository:
+
+```
+git log --reverse --format=%H -G '^[[:space:]]*[(](segment|arc|via)$' -- <board folder>/<board>.kicad_pcb | head -1
+git worktree add --detach <work folder>/before-track <T>^
+```
+
+The first prints `<T>`. While no commit carries a track it prints nothing, and the section is judged as it stands, in the board's own folder, by the same checks, with the board's current layout in place of `<T>`'s. The second exits with a non-zero status when there is no commit before `<T>`, and then nothing was committed before the first track and the step fails. Otherwise `<work folder>/before-track` holds the repository as it stood before the first track. Judge there:
 
 - **Two candidates or more.** The section has at least two candidates, each with a commit holding the board's design files, and no two of them hold the same layout: `git diff --quiet <commit> <other commit> -- <board folder>/<board>.kicad_pcb` exits with status 1 for every two.
 - **Each candidate as it measured.** Each candidate's recorded commands, run again, write a `measures.txt` whose totals and `OUTSIDE` lines are the ones the section records for it.
-- **Every placement item judged.** Each candidate's verdict table has exactly one row for every placement item, every catalogue item whose *Judged on* names `placement` in the commit that records the section and every one of the board's own items whose *Judged on* names it, and names no other; each `not applicable` is a `no` row of the plan table.
-- **The chosen placement is whole, and is the board's.** The chosen candidate has no `OUTSIDE` line naming a part, and the layout in the section's first commit is the chosen candidate's: `git diff --quiet <chosen commit> <section commit> -- <board folder>/<board>.kicad_pcb` exits with status 0.
-- **The placement came before the first track.** The section's first commit, the first that `git log --reverse --format=%H -G '^## Placement$' -- <board folder>/layout-plan.md` lists, and every candidate's commit come before the first commit carrying a track, the first that `git log --reverse --format=%H -G '^[[:space:]]*[(](segment|arc|via)$' -- <board folder>/<board>.kicad_pcb` lists, a track being a straight track, an arc or a via: each is an ancestor of it, `git merge-base --is-ancestor <commit> <first track commit>` exiting with status 0, and none is it. While no commit carries a track yet, this holds.
+- **Every placement item judged.** Each candidate's verdict table has exactly one row for every placement item, every catalogue item whose *Judged on* names `placement` in the checkout's own copy of this document, `docs/board-design-method.md`, and every one of the board's own items whose *Judged on* names it in the checkout's `layout-plan.md`, and names no other; each `not applicable` is a `no` row of the plan table.
+- **The chosen placement is whole, and is the board's.** The chosen candidate has no `OUTSIDE` line naming a part, and every footprint at the first track is where the chosen candidate put it: each footprint's reference, position, angle and side in `<T>` are those in the chosen candidate's commit. Routing moves no footprint, so a part moved after the section was recorded, or in the commit that draws the first track, shows here. From the repository's root, list them, sorted, from both commits and compare the two lists:
 
-A placement with fewer than two candidates, a placement item left without a verdict, a chosen candidate with a part outside its regions, or a section committed after the first track fails this step, and so does a record that fails a cross-check above.
+  ```
+  for c in <chosen commit> <T>; do
+    git show "$c:<board folder>/<board>.kicad_pcb" > <work folder>/at-$c.kicad_pcb
+    python3 -c "import sys; sys.path.insert(0, 'hardware/tools'); import board_geometry as g, locked_copper as l, sexpr as s; [print(r) for r in sorted('%s %s %s' % (g.reference(f), ' '.join('%g' % v for v in g.placement(f, 'the footprint')), s.child(f, 'layer')[1]) for f in s.children(l.read_layout(sys.argv[1]), 'footprint'))]" <work folder>/at-$c.kicad_pcb > <work folder>/parts-$c.txt
+  done
+  diff <work folder>/parts-<chosen commit>.txt <work folder>/parts-<T>.txt
+  ```
+
+  `diff` exits with status 0. While no commit carries a track, compare the chosen candidate's commit with the board's current layout instead, the file in the board's own folder in place of `<T>`'s.
+- **The section came whole before the first track.** The section is in `<T>^` as it is now: extracted from `<T>^`'s `layout-plan.md` and from the current one, the two are the same, and the one from `<T>^` holds a `### Candidate` heading. Extract it with `awk`, which keeps the section's own lines up to the next heading of its level, whatever follows it, and leaves out its blank lines, so the blank line that comes to end the section once another is written below it is no difference:
+
+  ```
+  git show <T>^:<board folder>/layout-plan.md | awk '/^## /{p=($0=="## Placement")} p && NF' > <work folder>/placement-then.md
+  awk '/^## /{p=($0=="## Placement")} p && NF' <board folder>/layout-plan.md > <work folder>/placement-now.md
+  cmp <work folder>/placement-then.md <work folder>/placement-now.md
+  ```
+
+  `cmp` exits with status 0. Every candidate's commit comes before `<T>`: each is an ancestor of it, `git merge-base --is-ancestor <commit> <T>` exiting with status 0, and none is it. While no commit carries a track yet, this holds.
+
+A placement with fewer than two candidates, a placement item left without a verdict, a chosen candidate with a part outside its regions or a footprint the first track's commit does not hold where it placed it, or a section that, in the commit before the first track, is missing, or differs from the section now, fails this step, and so does a record that fails a cross-check above.
 
 Out of scope for this section: the placement command itself, which [`hardware/README.md`](../hardware/README.md#the-placement-view) describes, and routing.
 
@@ -599,29 +624,39 @@ A locked item is changed only by a deliberate re-route: remove it, route it agai
 
 ### 4. Check the critical routing against the catalogue, before the router runs
 
-The router routes everything else around the critical nets, so their routes are judged now, while changing one costs only that net's re-route. With the board still closed, render its views as [Layout review views](#layout-review-views) describes, naming the classes step 3 locked, into a working folder of their own, never committed.
+The router routes everything else around the critical nets, so their routes are judged now, while changing one costs only that net's re-route. With the board still closed, render the review views with `task hw:views`, as [Layout review views](#layout-review-views) describes, naming the classes step 3 locked, into a working folder of their own, never committed. The placement view is not rendered here, since this checkpoint judges routing, not where the parts sit: render it too, with `task hw:placement` into a folder of its own beside them as that section describes, only when an item that bears on the critical nets names `placement` in its *Judged on*.
 
 Then judge every item of the [layout review](#layout-review)'s checklist that bears on the critical nets, workmanship items included. An item bears on them when what its *Asks* asks of the board is decided, wholly or in part, by copper a net in a critical class carries: its tracks, arcs, vias or zones, or the way its routes run. Judge each over the critical nets' copper only, since the rest is not yet routed:
 
 - a **judgement-kind** item on the views its *Judged on* names, as step 2 of the layout review judges one;
 - a **rule-kind** item on its rows in the rules table alone, `design-rules.md`: the row of every rule the item gives, each present with a figure the item's own figure and source bear out. The pre-order check fails a board that is not fully routed, so it is not run here, and the verdict's Why says that the item's measured half is judged by the pre-order check that step 8 runs after the router.
 
-Record the verdicts in `layout-plan.md`, below the placement section, in a section headed `## Critical routing`, in the form the layout review records its verdicts (step 1 and step 2 of [Layout review](#layout-review)): its opening lines, **Board judged**, the commit holding the board with its critical nets routed and locked, and **Views**, the `task hw:views` command as it was run; then the verdict table, `| Item | Kind | Severity | Verdict | Rests on | Why |`, with one row for every item that bears on the critical nets; and below the table every other item of the checklist, each with the reason it bears on no critical net.
+Record the verdicts in `layout-plan.md`, below the placement section, in a section headed `## Critical routing`, in the form the layout review records its verdicts (step 1 and step 2 of [Layout review](#layout-review)): its opening lines, **Board judged**, the commit holding the board with its critical nets routed and locked, whose layout holds at least one track, arc or via and every one of them locked, and **Views**, the `task hw:views` command as it was run, and the `task hw:placement` command as it was run when an item that bears on the critical nets names `placement` and so the placement view was rendered, or else that the placement view was not rendered; then the verdict table, `| Item | Kind | Severity | Verdict | Rests on | Why |`, with one row for every item that bears on the critical nets; and below the table every other item of the checklist, each with the reason it bears on no critical net.
 
 A `fail` is put right before the router runs: re-route the net as step 3 says, lock it again and only then commit, render the views again and judge the item again, writing the verdict reached in the same row, after the `fail`, with the commit that put it right. A `cannot judge` is resolved the same way the layout review resolves one. Commit the section before the router runs (step 6).
 
-Judge the record against the repository rather than taking its word, once the board carrying the router's tracks is committed. Every critical item is locked in step 3, and nothing the router adds is locked, so the first commit carrying the router's tracks is the first, after one whose tracks are all locked, whose layout holds a track, arc or via that is not locked. From the repository's root, this lists every commit that changes the layout, oldest first, with how many tracks, arcs and vias its layout holds and how many of them are not locked:
+Judge the record against the repository rather than taking its word, once the board carrying the router's tracks is committed, on the branch as pushed, fetched afresh and checked out. Every critical item is locked in step 3, a re-route after the Board judged commit is locked before it is committed, and nothing the router adds is locked, so the router's commit, `<R>`, is the first commit on the line of history from the Board judged commit, `<B>`, whose layout holds a track, arc or via that is not locked. A net routed by hand and committed before it was locked is in a commit before `<B>`, so it is never taken for the router's. From the repository's root, this lists `<B>` and then every commit after it on that line that changes the layout, oldest first, with how many tracks, arcs and vias its layout holds and how many of them are not locked:
 
 ```
-for c in $(git rev-list --reverse HEAD -- <board folder>/<board>.kicad_pcb); do
+for c in <B> $(git rev-list --reverse --ancestry-path <B>..HEAD -- <board folder>/<board>.kicad_pcb); do
   git show "$c:<board folder>/<board>.kicad_pcb" > <work folder>/at.kicad_pcb
   python3 -c "import sys; sys.path.insert(0, 'hardware/tools'); import locked_copper as l; t = [i for i in l.copper(l.read_layout(sys.argv[1]), sys.argv[1]) if i['kind'] != 'zone']; print(sys.argv[2], len(t), sum(1 for i in t if not i['locked']))" <work folder>/at.kicad_pcb "$c"
 done
 ```
 
-The section's first commit, the first that `git log --reverse --format=%H -G '^## Critical routing$' -- <board folder>/layout-plan.md` lists, is an ancestor of that first commit carrying the router's tracks, `git merge-base --is-ancestor <section commit> <router commit>` exiting with status 0, and is not it. Each item that bears on the critical nets has one row, each rule-kind row rests on the rules table's rows and says its measured half is judged after the router, and each `fail` has the verdict reached after it.
+`<B>`'s line counts at least one track, arc or via, and none of them not locked: a Board judged commit holding no copper, or copper not locked, fails, and so does one named after the router ran, since the router's copper is not locked. `<R>` is the first line after it whose second count is not 0. While no line after `<B>` has one, the router has not run, and the section is judged as it stands.
 
-A section committed after the router's tracks, an item that bears on the critical nets left without a verdict, or a `fail` not put right before the router runs fails this step.
+What this step judges is the section as it stood in `<R>^`, the commit before the router's, and the section is not changed after it. Extract it from `<R>^`'s `layout-plan.md` and from the current one with `awk`, which keeps the section's own lines up to the next heading of its level and leaves out its blank lines, as for the placement section, and compare the two:
+
+```
+git show <R>^:<board folder>/layout-plan.md | awk '/^## /{p=($0=="## Critical routing")} p && NF' > <work folder>/critical-then.md
+awk '/^## /{p=($0=="## Critical routing")} p && NF' <board folder>/layout-plan.md > <work folder>/critical-now.md
+cmp <work folder>/critical-then.md <work folder>/critical-now.md
+```
+
+`cmp` exits with status 0, and the section from `<R>^` holds its verdict table. In the section as it stood there, each item that bears on the critical nets has one row, each rule-kind row rests on the rules table's rows and says its measured half is judged after the router, and each `fail` has the verdict reached after it.
+
+A section that, in the commit before the router's, is missing, or differs from the section now, a Board judged commit whose layout holds no track, arc or via, or one not locked, an item that bears on the critical nets left without a verdict, or a `fail` not put right before the router runs fails this step.
 
 ### 5. Record the critical-class copper, immediately before export
 
@@ -829,7 +864,7 @@ Name every critical class, as in routing step 3. Each output folder is a working
 
     pixels per millimetre = 3 / (the smaller of the board's minimum track width and minimum clearance, in millimetres)
 
-so the smallest track and the smallest gap each span at least three pixels. Both minimums are read from the board's design rules, Board Setup's minimum track width and minimum clearance, whose figures and sources the board's rules table already carries (step 1 of [Rules before routing](#rules-before-routing)). The method itself therefore carries no manufacturer's figure. A board whose rules state either minimum as none, zero or less fails the command, naming the missing figure.
+so the smallest track and the smallest gap each span at least three pixels. Both minimums are read from the board's design rules, Board Setup's minimum track width and minimum clearance, whose figures and sources the board's rules table already carries, from step 1 of [Placement](#placement), where they are set before the first candidate is rendered. The method itself therefore carries no manufacturer's figure. A board whose rules state either minimum as none, zero or less fails the command, naming the missing figure.
 
 **Image size limit.** Every image is kept within a long edge of 1568 pixels, and within 1568 visual patches of 28 by 28 pixels. An image costs ⌈width / 28⌉ × ⌈height / 28⌉ patches. This is the standard tier of the model vendor's published limits, the tier for all models other than its high-resolution ones. An image over either limit is downscaled to the largest size that fits, keeping its aspect ratio, so an image within both is read at the resolution it was drawn at. The source is the "Resolution and token cost" section of https://platform.claude.com/docs/en/build-with-claude/vision, read on 2026-10-13. That section also gives a high-resolution tier, a long edge of 2576 pixels and 4784 patches, for the vendor's newer models. The views keep to the standard tier, so every reviewing model reads them whole. Every two-dimensional view larger than the limit, a crop included, is cut into tiles. Each three-dimensional view is one image within it.
 
@@ -853,7 +888,7 @@ Out of scope for this section: judging the images, which is the [layout review](
 
 ## Layout practice catalogue
 
-This is the one statement of what a well laid-out board looks like. It is used three times on every board: the board is planned against it before placement ([Planning the layout](#planning-the-layout)), every rule-kind item that applies to it is written into its rules before routing ([Rules before routing](#rules-before-routing), step 1), and the [layout review](#layout-review) uses it as the baseline checklist a finished layout is judged item by item against, adding to it every finding that can be written as a rule or that holds for any board. It holds no figure, part or board shape of any one machine. A figure that depends on the machine is named here by its role, such as the highest continuous current a class carries, and its number lives in that machine's records and its board's rules.
+This is the one statement of what a well laid-out board looks like. It is used five times on every board: the board is planned against it before placement ([Planning the layout](#planning-the-layout)), each candidate placement is judged against the items whose *Judged on* names `placement` ([Placement](#placement), step 5), every rule-kind item that applies to it is written into its rules before routing ([Rules before routing](#rules-before-routing), step 1), the critical nets' routes are judged against every item that bears on them before the router runs ([Routing](#routing-critical-nets-by-hand-and-locked-then-the-rest), step 4), and the [layout review](#layout-review) uses it as the baseline checklist a finished layout is judged item by item against, adding to it every finding that can be written as a rule or that holds for any board. It holds no figure, part or board shape of any one machine. A figure that depends on the machine is named here by its role, such as the highest continuous current a class carries, and its number lives in that machine's records and its board's rules.
 
 ### How an item is read
 
