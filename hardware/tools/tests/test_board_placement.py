@@ -652,11 +652,20 @@ class Method(unittest.TestCase):
                       "the first commit whose board holds a footprint, `<P>`, from the history alone and never from the "
                       "section", "The one difference allowed is a reference appended to a region's parts, with no bound "
                       "changed and no reference removed or moved between regions",
-                      "the same commit not counting as before", "place every part alike",
+                      "in a commit after `<P>^`: a reference listed once, dropped, placed and listed again fails", "place every part alike",
                       "however their board files differ in a text label or an identifier",
                       "with the references the plan appended left out where that commit's board does not hold them"):
             with self.subTest(step6=words):
                 self.assertIn(words, placement)
+        for words in ("Once a footprint is on the board the floorplan can only gain appended parts, so a floorplan error "
+                      "found during placement, a bound that is wrong, a part in the wrong region or a region missing, "
+                      "has no in-place fix: the work restarts from a fresh branch, with the floorplan corrected and "
+                      "committed before any footprint is placed",
+                      "A part added after the choice means recording a new candidate that includes it and recording "
+                      "the placement section again", "committed before its footprint first appears on the board and "
+                      "kept in the plan until then"):
+            with self.subTest(planning=words):
+                self.assertIn(words, planning)
 
     def test_the_minimums_move_before_placement_and_the_floorplan_lists_each_regions_parts(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The floorplan table gains a Parts column, the planning cross-checks every part is listed, the minimums move before placement, and the proof design's plan is migrated.

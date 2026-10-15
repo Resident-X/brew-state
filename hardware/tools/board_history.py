@@ -9,9 +9,10 @@ moments in the history of the board file itself, reading every version of it
 reachable from HEAD, and judges each section as it stood in the commit before:
 
 - The first track, a commit whose board carries a straight track, an arc, a
-  via or a copper pour while no commit before it does. A pour is a zone that
-  is not a rule area, an unfilled outline included; a rule area, a zone
-  carrying a keepout, carries no net and is no copper. Copper in the root
+  via or a copper pour while no commit before it does. A pour is a zone on a
+  copper layer that is not a rule area, an unfilled outline included; a rule
+  area, a zone carrying a keepout, carries no net and is no copper, and a zone
+  on a layer that is no copper is no pour. Copper in the root
   commit, first appearing on two separate lines of history, and first
   appearing in a merge commit, fail. While no commit carries any, the
   placement section is judged as it stands at HEAD.
@@ -25,9 +26,9 @@ reachable from HEAD, and judges each section as it stood in the commit before:
   held to the floorplan in the commit before the first placement: the same
   regions, the same bounds for each and the same parts in each, the only
   difference allowed being a reference appended to a region's parts, with no
-  bound changed and no reference removed or moved between regions, whose
-  first listing is in a commit that is a strict ancestor of the first commit
-  whose board holds that footprint.
+  bound changed and no reference removed or moved between regions, which the
+  floorplan lists in each commit just before its footprint first appears on
+  the board, that commit coming after the commit before the first placement.
 - The placement section, in the commit before the first track, holding at
   least two candidates and as it is now. Each candidate's commit is in the
   history, comes before the first track, holds the board, places its parts
@@ -201,10 +202,21 @@ def tracks(items: List[dict]) -> List[dict]:
     return [item for item in items if item["kind"] in TRACKS]
 
 
+def on_copper(node: list) -> bool:
+    """Whether the zone is drawn on a copper layer, one whose name ends in `.Cu`, as `(layer ...)` or `(layers ...)`."""
+    names = []
+    for key in ("layer", "layers"):
+        found = sexpr.child(node, key)
+        names += [str(name) for name in found[1:]] if found else []
+    return any(name.endswith(".Cu") for name in names)
+
+
 def pours(layout: list) -> List[list]:
-    """The zones the board carries at its top level that are copper: every zone but a rule area, a zone carrying a
-    keepout, which carries no net. An unfilled outline is a pour too, since the outline is what a designer draws."""
-    return [node for node in layout[1:] if sexpr.head(node) == "zone" and sexpr.child(node, "keepout") is None]
+    """The zones the board carries at its top level that are copper: every zone on a copper layer but a rule area, a
+    zone carrying a keepout, which carries no net. A zone on a layer that is no copper, silkscreen or mask for one, is
+    no pour. An unfilled outline is a pour too, since the outline is what a designer draws."""
+    return [node for node in layout[1:] if sexpr.head(node) == "zone" and sexpr.child(node, "keepout") is None
+            and on_copper(node)]
 
 
 def references(layout: list) -> set:
@@ -519,6 +531,16 @@ def first_commits(history: History, path: str, holds_in) -> List[str]:
     return first_holding(history, history.order, holds)
 
 
+def amended_in(history: History, plan: str, anchor: str, commit: str, part: str) -> bool:
+    """Whether `commit` comes after `anchor` and the floorplan it holds lists `part` in a region."""
+    if commit == anchor or not history.is_ancestor(anchor, commit):
+        return False
+    try:
+        return any(part in region["parts"] for region in read_plan(history, commit, plan))
+    except Unreadable:
+        return False
+
+
 def judge_plan(history: History, board: str, plan: str, anchor: Optional[str], at: str, where: str,
                regions: Optional[List[dict]], unread: Optional[Unreadable], report: Report) -> Dict[str, List[str]]:
     """The floorplan in the commit the placement section is judged in, held to the one in the commit before the first
@@ -541,13 +563,16 @@ def judge_plan(history: History, board: str, plan: str, anchor: Optional[str], a
         for part in sorted(appended):
             holders = first_commits(history, board, lambda commit, part=part: part in references(
                 history.layout(commit, board)))
-            listers = first_commits(history, plan, lambda commit, part=part: any(
-                part in region["parts"] for region in read_plan(history, commit, plan)))
             for holder in holders:
-                if not any(lister != holder and history.is_ancestor(lister, holder) for lister in listers):
+                parents = history.parents[holder]
+                unlisted = [parent for parent in parents if not amended_in(history, plan, anchor, parent, part)]
+                if unlisted or not parents:
                     faults.append(f"{part} is appended to the parts of {', '.join(repr(n) for n in appended[part])} "
-                                  f"and its footprint first appears on the board at {short(holder)}, which no commit "
-                                  "that lists it comes before: the amendment is committed before the part is placed")
+                                  f"and its footprint first appears on the board at {short(holder)}, but the plan "
+                                  f"does not list it, after the commit before the first placement ({short(anchor)}), "
+                                  f"in {', '.join(short(parent) for parent in unlisted) or 'a commit before it'}: the "
+                                  "amendment is committed after that commit and before the part is placed, and the "
+                                  "plan keeps it until then")
     report.add("plan before placement", faults,
                f"the floorplan in {where} is the one in the commit before the first placement ({short(anchor)})"
                + (f", with {', '.join(sorted(appended))} appended to its parts, each committed before its footprint "
@@ -767,11 +792,11 @@ def judge_critical(history: History, board: str, plan: str, tracked: bool, route
     if lines is None:
         if tracked:
             report.add("critical routing section", [
-                f"the board carries tracks and {plan} holds no `## {CRITICAL}` section; the critical routing is "
+                f"the board carries copper, a track, arc, via or pour, and {plan} holds no `## {CRITICAL}` section; the critical routing is "
                 "judged and recorded before the router runs"], "")
         elif routed:
             report.add("critical routing section", [
-                f"--routed says the router has run, and no commit carries a track and {plan} holds no "
+                f"--routed says the router has run, and no commit carries a track, arc, via or pour and {plan} holds no "
                 f"`## {CRITICAL}` section"], "")
         return
     before, passes, other = subsections(lines, PASS)
