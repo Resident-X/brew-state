@@ -138,8 +138,8 @@ or against that.
 ## Repo etiquette
 
 - **Skills are installed, not tracked.** `task sc:init` (or `sc:update`) installs the upstream skills into
-  `.claude/skills/` at the pinned `STAIRCASE_REF`; git ignores them. A skill this repository owns is
-  named `repo-*` — the sync leaves those alone and git tracks them. Bump the pin deliberately.
+  `.claude/skills/` at `STAIRCASE_REF` (floats on upstream `main`); git ignores them. A skill this repository owns is
+  named `repo-*` — the sync leaves those alone and git tracks them. Run `task sc:update` to move to the current upstream `main`.
 - Branch: `req/{REQ-ID}/{short-slug}`. **NEVER push to `main`** — PRs only. The tracked
   `.githooks/pre-push` hook refuses it, but treat that as a catch for the mistake rather than as
   enforcement: it is inert until `task repo:hooks` points `core.hooksPath` at that directory

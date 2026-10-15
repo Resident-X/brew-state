@@ -5,14 +5,15 @@ version: "3"
 # Resident-X/staircase repo — this Taskfile owns fetching and refreshing
 # them so brew-state needs no local checkout of Staircase.
 #
-# STAIRCASE_REF is pinned to one upstream commit, so the binary, the skills and
-# the seeded schema always come from the same Staircase revision. Bump it
-# deliberately (to a later commit SHA), then run `task sc:update`.
+# STAIRCASE_REF floats on upstream main, so `task sc:update` moves the binary,
+# the skills and (on first seeding) the schema to whatever main is at that
+# moment, all in one run. To hold a known revision instead, override it with a
+# commit SHA: `task sc:update STAIRCASE_REF=<sha>`.
 
 vars:
   STAIRCASE_MODULE: github.com/Resident-X/staircase/engine/cmd/staircase
   STAIRCASE_REPO: git@github.com:Resident-X/staircase.git
-  STAIRCASE_REF: f1fe0a769cce5f508437afeb982dda92bacc3a6a
+  STAIRCASE_REF: main
   # Upstream skills this repository replaces with its own copy of the same
   # name. The sync never installs or removes them, and .gitignore tracks them.
   # start-work is here because its targets are this project's epics, not the
@@ -55,7 +56,7 @@ tasks:
       - |
         set -euo pipefail
         tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-        # Fetch by commit: `git clone --branch` cannot take a SHA, and the ref is pinned to one.
+        # Fetch by ref: the ref may be a branch or a commit SHA, which `git clone --branch` cannot take.
         git init -q "$tmp"
         git -C "$tmp" remote add origin {{.STAIRCASE_REPO}}
         git -C "$tmp" fetch -q --depth 1 --filter=blob:none origin {{.STAIRCASE_REF}}
