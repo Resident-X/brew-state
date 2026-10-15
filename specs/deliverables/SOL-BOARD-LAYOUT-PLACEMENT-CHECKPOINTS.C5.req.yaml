@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: demonstration
 text: |
-  Repeat the method's seeded blind layout review once this solution's changes to the catalogue, the review's views and the review step are in their final form, as the method requires after any such change: a fresh session given only the method follows the review step on the seeded copy of the proof design, and every seeded defect is reported; a seed not reported is a gap closed in the catalogue, the views or the step, and the blind review is repeated in a new session until none is missed. The run's record names the commit it was made at, the seeds, and each seed's finding. Out of scope: new seeds, and changes to the proof design itself.
+  Repeat the method's seeded blind layout review once this solution's changes to the catalogue, the review's views and the review step are in their final form, as the method requires after any such change: a fresh session given only the method follows the review step on the seeded copy of the proof design, and every seeded defect is reported; a seed not reported is a gap closed in the catalogue, the views or the step, and the blind review is repeated in a new session until none is missed. The run's record names the commit it was made at, the seeds, and each seed's finding. Out of scope: new seeds, and changes to the proof design itself; migrating its layout plan's floorplan table to the parts-per-region form is not counted as one.
 links:
   - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
     type: criterion-of
