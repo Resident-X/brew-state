@@ -1,0 +1,16 @@
+id: EV-SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED-C1-TEST-7
+type: evidence
+title: test evidence for SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T19:59:00.701876Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_the_steam_peak_climbs_when_the_draw_is_held_longer, test_the_committed_draw_length_table_is_the_one_this_method_presently_produces
+  artifact_version: cccb0e2a9dfa2b218b85cca46a2ff91132c69463
+attested_by: crun-76fa82388389a9dc
+links:
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+    type: satisfies

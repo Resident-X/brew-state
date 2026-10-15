@@ -1,0 +1,16 @@
+id: EV-SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED-C1-TEST-6
+type: evidence
+title: test evidence for SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T19:59:00.591653Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_the_committed_record_says_it_is_generated_and_carries_every_section, test_the_committed_record_prints_the_digest_of_each_input_as_it_stands, test_a_changed_input_makes_the_record_stale, test_the_committed_figures_are_the_ones_this_method_presently_produces, test_the_committed_corner_table_is_the_one_this_method_presently_produces, test_the_committed_record_gives_the_hottest_of_every_phase_for_each_thermoblock, test_the_record_a_run_writes_names_the_files_it_was_given
+  artifact_version: cccb0e2a9dfa2b218b85cca46a2ff91132c69463
+attested_by: crun-76fa82388389a9dc
+links:
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+    type: satisfies
