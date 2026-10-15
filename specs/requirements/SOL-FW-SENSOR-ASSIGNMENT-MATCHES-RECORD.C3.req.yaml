@@ -1,0 +1,12 @@
+id: SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD.C3
+type: criterion
+title: Each sensor comparison fault is shown to fail the check on a seeded synthetic table
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  The tests introduce, into a synthetic firmware sensor table checked against a synthetic map and record, a channel on another pin, a channel missing from the firmware, a channel missing from the record, an input missing from the map, a channel named twice, a record entry naming a pin for a channel the firmware states as wired to no input, an unreadable map and an empty record, and require the check to fail on each and to name it. The unmodified synthetic set passes. Out of scope: wiring the check to a machine's real record.
+links:
+  - target: SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD
+    type: criterion-of

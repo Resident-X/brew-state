@@ -1,0 +1,16 @@
+id: EV-SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD-C3-TEST
+type: evidence
+title: test evidence for SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T23:06:24.268956Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_pin_assignment_checks.py::test_the_pair_each_fault_is_seeded_into_passes, test_a_channel_on_another_pin_is_caught_and_named, test_a_channel_missing_from_the_firmware_is_caught_and_named, test_a_channel_missing_from_the_record_is_caught_and_named, test_a_channel_named_twice_is_caught_and_named, test_two_channels_on_one_pin_are_caught_and_named, test_an_entry_missing_its_controller_pin_is_caught_and_named, test_an_empty_record_is_caught, test_a_firmware_source_with_no_pin_table_is_caught, test_a_run_without_pyyaml_reports_it_could_not_inspect_rather_than_passing
+  artifact_version: 6812dd8f669738276b15152211069d7cf1e5112b
+attested_by: crun-c7c7aafc8edf7b52
+links:
+  - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C3
+    type: satisfies
