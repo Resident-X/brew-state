@@ -1,0 +1,58 @@
+id: EV-SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS-C5-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C5
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-15T10:42:34.91322Z"
+artifact:
+  kind: inline
+attested_by: crun-61f3fd1cff953fd2
+text: |
+  # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C5: the seeded blind layout review repeated on the changed method
+
+  **Verified commit:** `b4a8e0125b3c03b2889afe4c02d433ce363a3ad3` (branch `req/SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS/placement-checkpoints`). The commits after it on the branch change only the graph (`specs/`), never the design, the documents or the tools the seeding command reads.
+
+  **Result:** 21 seeds, 21 reported against the catalogue item that covers them, none missed, in one blind run made in a new session after the catalogue's Judged on lines, the review's views (the placement view added beside them) and the review step (step 7's placement-caused closure) reached their final form on this branch.
+
+  **How it was run.** `task hw:review-seed -- --seeds <tmp>/seeds.json --out <tmp>/review` at the verified commit, into a new folder outside the repository. It printed `CHECK | RESULT | PASS | all 1 designs passed`, `VIEWS | RESULT | WRITTEN | 119 images…`, `PLACEMENT | RESULT | WRITTEN | 4 images, their index and the placement's measures` and `SEEDS | 21 seeds`. A fresh headless session (`claude -p --model claude-opus-5-5`, tools Read, Grep and Glob only, started in the review folder) was given the fixed prompt `task hw:review-seed -- --print-prompt` prints, and nothing else. The seed list stayed outside the folder.
+
+  **Folder.** Seed list sha256 `db531c6dcd2526ad59d373e40f873edd09d2490fc0ded9a20c6aa7c930760ce7`; `check-report.txt` sha256 `785def1989f08137f6e9c20b49ca221498f864cc7d8b0bec18040693b18407c0`; seeded `review-proof.kicad_pcb` sha256 `9f927fb964bbd9aa226ed98907ddeec83e5d3646aad79d42489a91fb4ed401a3` (its seeded items take fresh identifiers on each seeding).
+
+  ## Run
+
+  | Run | Commit | Session | Turns, time | Permission denials | Seeds reported against their item |
+  |---|---|---|---|---|---|
+  | 1 | `b4a8e0125b3c03b2889afe4c02d433ce363a3ad3` | `f7c9bb0d-cb22-4b88-9513-3c0878d38952` | 112 turns, 935 s, ended `success` | none | 21 of 21 |
+
+  Scoring: a separate fresh session given only the seed list and the run's output matched each seed to the review's finding on the seed's own catalogue item at its place, strictly (a generic fail on the item not describing the defect did not count). Two seeds had a second part the review described under a neighbouring item as well as reporting the seed against its own: S14 (WORK-2's figure in 1.26; the +3V3 loop it also seeds described in 1.27 under WORK-3) and S15 (WORK-4's figure in 1.28; U3 pin 5's square entry described in 1.34 under WORK-10).
+
+  ## Seeds
+
+  | Seed | Item | Layer | Position (mm) | What it is | Review's finding |
+  |---|---|---|---|---|---|
+  | S1 | GROUND-1 | F.Cu, In1.Cu, In2.Cu, B.Cu | (61, 30) | ground drawn as thin traces: the four ground planes and pours removed and ground carried by 0.5 mm tracks on In1.Cu | 1.8 |
+  | S2 | DECOUPLE-1 | F.Cu | (68.05, 20.775) | a decoupling capacitor routed the long way round to its pin: C4 moved 4 mm south of U4's supply pin, the supply reaching the pin before it | 1.11 |
+  | S3 | POWER-5 | F.Cu, B.Cu | (24.19, 21.46) | a high-current pad without the copper it needs: the copper areas round U1's load-side pads removed on both sides | 1.7 |
+  | S4 | MAINS-2 | F.Cu | (22, 48.5) | low-voltage copper inside the mains region: the +5V trunk looped through the mains region at x 22 mm | 1.18 |
+  | S5 | FLOOR-2 | B.Cu | (60, 32) | a digital track through the analog sensing region: LED_DRV rerouted down x 60 mm and along y 36 mm | 1.2 |
+  | S6 | SENSE-1 | F.Cu | (53.8, 52) | a sense connection off the load-current track: the amplifier's LOAD_RTN sense track tapped off the load track beside J4, 6 mm short of R1's pad | 1.13 |
+  | S7 | CLOCK-1 | F.Cu | (84.175, 19) | a load capacitor away from its oscillator pin and its partner: C5 moved from beside C6 at U4 to beyond the crystal, 11 mm from C6 | 1.15 |
+  | S8 | CONN-1 | F.Cu | (38.05, 28) | a suppressor away from its connector: D1 moved 24 mm from J2, onto the +5V trunk at y 28 mm | 1.19 |
+  | S9 | TEST-2 | F.Cu | (66.5, 55.5) | test points on both sides: TP5 moved to the top side | 1.20 |
+  | S10 | MFG-1 | design-rules.md, Board Setup | (0, 0) | a board-wide minimum below its source: copper-to-edge set to 0.2 mm where the row's source recommends more than 0.3 mm | 1.21 |
+  | S11 | EMI-4 | F.Cu | (51, 17.4) | a supply ferrite bead at the far end of the supply: FB1 moved from U3 to the start of its supply at C2, 30 mm from U3 | 1.24 |
+  | S12 | WORK-1 | F.Cu | (33.85, 36) | a part set apart from the part it serves: R4 moved 15 mm south of U1's pin 2, its connection running down to it | 1.25 |
+  | S13 | WORK-3 | F.Cu, B.Cu | (77.15, 15.05) | a needless change of layer: XTAL1 dropped to B.Cu and straight back up through two vias on its run to the crystal | 1.27 |
+  | S14 | WORK-2 | design-rules.md, project text variables, F.Cu | (58.5, 9.5) | a route-length figure looser than its item's and a supply route the long way round: WORK_DETOUR_RATIO 2 where the item gives 1.3, and the +3V3 trunk to U4 taken north round a loop from x 53 to 64 mm | 1.26 (figure); the +3V3 loop described in 1.27 |
+  | S15 | WORK-4 | design-rules.md, rules file, F.Cu | (69.1375, 41.9) | a corner figure looser than its item's and a square corner: the Corners rule at 90 where the item gives 135, and U3's supply turning square into pin 5 | 1.28 (figure); U3 pin 5's entry described in 1.34 |
+  | S16 | WORK-5 | design-rules.md, rules file, F.Cu | (71.975, 47.1) | a jog figure looser than its item's and a jog: the Jogs rule at 0.3 mm where the item gives 1 mm, and a 0.4 mm offset in the feedback track from R2 to R3 | 1.29 |
+  | S17 | WORK-8 | design-rules.md, project text variables, F.Cu | (67, 16) | a neck figure looser than its item's and a narrowed route: WORK_NECK_MM 8 where the item gives 1, and the +3V3 trunk narrowed to 0.2 mm for its last 4 mm into U4 | 1.32 |
+  | S18 | WORK-9 | design-rules.md, project text variables, F.Cu | (63.3, 52.5) | a direction tolerance looser than its item's and a track at an odd angle: WORK_ANGLE_TOLERANCE_DEG 15 where the item gives 0.1, and R1's ground track to its via running 13 degrees off the board's edges | 1.33 |
+  | S19 | WORK-10 | design-rules.md, project text variables, F.Cu | (69.1375, 42.5) | a pad-entry ratio looser than its item's and a track entering a long pad from its side: WORK_PAD_ENTRY_RATIO 10 where the item gives 2, so U3's pin 5, entered from its side by S15's corner, passes | 1.34 |
+  | S20 | WORK-6 | design-rules.md | (0, 0) | the rules table's row for KiCad's unconnected-track-end check taken out | 1.30 |
+  | S21 | WORK-7 | design-rules.md | (0, 0) | the rules table's row for KiCad's unconnected-via check taken out | 1.31 |
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C5
+    type: satisfies

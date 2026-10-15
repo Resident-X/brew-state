@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-15T10:42:34.742001Z"
+artifact:
+  kind: external
+  reference: docs/board-design-method.md, Routing step 4 'Check the critical routing against the catalogue, before the router runs' (review views rendered, the placement view only when a bearing item names it; the `## Critical routing` section as append-only `### Pass <n>` subsections with Board judged, Views, verdict table and the no-critical-net list; `fail, then pass at <commit>`; task hw:history run once the section is committed, how it finds <R>, the router-leaves-its-copper-unlocked assumption, what each FAIL means) and step 8's deciding run after the router's commit, given --routed so a last pass with no router commit fails rather than resting on a prose rule about the result line, read clause by clause against the criterion text; task hw:history run on this repository's review-proof history (reads all 641 commits in 0.4 s and fails it, as that board predates the sections)
+  artifact_version: 1ed588c8dbb6261765958dc5036effe16bd2a8c5
+attested_by: crun-61f3fd1cff953fd2
+links:
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3
+    type: satisfies
