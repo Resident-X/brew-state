@@ -22,7 +22,6 @@ to work.
 from __future__ import annotations
 
 import contextlib
-import copy
 import io
 import json
 import math
@@ -37,23 +36,24 @@ import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import board_check  # noqa: E402
+import board_fixtures  # noqa: E402
 import board_views  # noqa: E402
+from board_fixtures import LAYER_TABLE, MINIMUM_MM, OUTLINE, footprint, hex_rgb, model, pad, project, uuid  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
 RESVG = os.environ.get("RESVG") or "resvg"
-PROOF_PROJECT = os.path.join(REPO, "hardware", "proof", "gate-proof", "gate-proof.kicad_pro")
+PROOF_PROJECT = board_fixtures.PROOF_PROJECT
 
 #: The critical classes the proof board's views are rendered with: +3V3 is in both Power and Sense.
 CRITICAL = ("Power", "Ground", "Sense")
 
-#: The proof board's minimum track width and minimum clearance, and so its resolution.
-MINIMUM_MM = 0.1
+#: The proof board's resolution, from its minimum track width and minimum clearance.
 SCALE = 3 / MINIMUM_MM
 
-_SCRATCH = []
 _RENDERED = {}
 
 
@@ -63,47 +63,10 @@ def setUpModule():
 
 
 def tearDownModule():
-    for scratch in _SCRATCH:
-        scratch.cleanup()
+    board_fixtures.cleanup()
 
 
 # --- The proof board -------------------------------------------------------------------
-
-_UUID = [0]
-
-
-def uuid() -> str:
-    _UUID[0] += 1
-    return f'"00000000-0000-4000-8000-{_UUID[0]:012d}"'
-
-
-def pad(number, x, y, net, pintype):
-    return (f'(pad "{number}" smd roundrect (at {x} {y}) (size 1 0.6) (layers "F.Cu" "F.Mask" "F.Paste") '
-            f'(roundrect_rratio 0.25) (net "{net}") (pintype "{pintype}") (uuid {uuid()}))')
-
-
-def model(path, height=1, hidden=False):
-    return (f'(model "{path}"{" (hide yes)" if hidden else ""} (offset (xyz 0 0 0)) (scale (xyz 1 1 {height})) '
-            '(rotate (xyz 0 0 0)))')
-
-
-def footprint(reference, x, y, pads, models=(), attributes=""):
-    return (f'(footprint "proof:Part" (layer "F.Cu") (uuid {uuid()}) (at {x} {y}) {attributes}'
-            f'(property "Reference" "{reference}" (at 0 -3 0) (layer "F.SilkS") (uuid {uuid()}) '
-            '(effects (font (size 1 1) (thickness 0.15)))) '
-            f'(fp_rect (start -2.5 -2.5) (end 2.5 2.5) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd") '
-            f'(uuid {uuid()})) '
-            f'(fp_rect (start -2 -2) (end 2 2) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab") '
-            f'(uuid {uuid()})) ' + " ".join(list(pads) + list(models)) + ")")
-
-
-LAYER_TABLE = ['(0 "F.Cu" signal)', '(2 "B.Cu" signal)', '(13 "F.Paste" user)', '(15 "B.Paste" user)',
-               '(5 "F.SilkS" user "F.Silkscreen")', '(7 "B.SilkS" user "B.Silkscreen")', '(1 "F.Mask" user)',
-               '(3 "B.Mask" user)', '(17 "Dwgs.User" user "User.Drawings")', '(19 "Cmts.User" user "User.Comments")',
-               '(25 "Edge.Cuts" user)', '(31 "F.CrtYd" user "F.Courtyard")', '(29 "B.CrtYd" user "B.Courtyard")',
-               '(35 "F.Fab" user)', '(33 "B.Fab" user)']
-
-OUTLINE = '(gr_rect (start 0 0) (end 60 40) (stroke (width 0.05) (type default)) (fill no) (layer "Edge.Cuts") (uuid "00000000-0000-4000-8000-0000000000e0"))'
 
 #: A model the design keeps in its own folder: a red box 2 by 2 by 2 in VRML's units of 2.54 mm, which a model's
 #: scale stretches upward.
@@ -184,48 +147,16 @@ ITEMS = [
 
 
 def layout(items=None, layers=None, outline=OUTLINE) -> str:
-    table = "\n".join(f"\t\t{entry}" for entry in (LAYER_TABLE if layers is None else layers))
-    body = "".join(f"\t{item}\n" for item in ([outline] if outline else []) + (ITEMS if items is None else items))
-    return ('(kicad_pcb\n\t(version 20260206)\n\t(generator "pcbnew")\n\t(generator_version "10.0")\n'
-            f'\t(general (thickness 1.6))\n\t(paper "A4")\n\t(layers\n{table}\n\t)\n' + body + ")\n")
+    return board_fixtures.layout(ITEMS if items is None else items, layers, outline)
 
 
-def project(classes=("Power", "Ground"), assignments=None, mains="none", rules="default", patterns=()) -> str:
-    """A project file defining `classes` beside Default, declaring MAINS as `mains`, with design rules `rules`, and
-    assigning nets to classes by name and by `patterns` as well."""
-    with open(PROOF_PROJECT, encoding="utf-8") as handle:
-        data = json.load(handle)
-    settings = data["net_settings"]
-    default, template = settings["classes"][0], settings["classes"][1]
-    settings["classes"] = [default] + [dict(copy.deepcopy(template), name=name, priority=index)
-                                       for index, name in enumerate(classes)]
-    settings["netclass_assignments"] = {"+3V3": "Power", "GND": "Ground"} if assignments is None else assignments
-    settings["netclass_patterns"] = [{"netclass": netclass, "pattern": pattern} for netclass, pattern in patterns]
-    data["text_variables"] = {"MAINS": mains}
-    data["board"]["design_settings"]["rules"] = (
-        {"min_track_width": MINIMUM_MM, "min_clearance": MINIMUM_MM} if rules == "default" else rules)
-    return json.dumps(data, indent=1)
-
-
-class Design:
+class Design(board_fixtures.Design):
     """The proof board and its project in their own folder, with a working folder outside it."""
 
     def __init__(self, board_text=None, project_text=None):
-        scratch = tempfile.TemporaryDirectory(prefix="board-views-test-")
-        _SCRATCH.append(scratch)
-        self.root = scratch.name
-        self.folder = os.path.join(self.root, "design")
-        os.makedirs(self.folder)
-        self.board = os.path.join(self.folder, "proof.kicad_pcb")
-        self.project = os.path.join(self.folder, "proof.kicad_pro")
-        self.out = os.path.join(self.root, "views")
-        with open(self.board, "w", encoding="utf-8") as handle:
-            handle.write(layout() if board_text is None else board_text)
-        with open(self.project, "w", encoding="utf-8") as handle:
-            handle.write(project() if project_text is None else project_text)
-        os.makedirs(os.path.join(self.folder, "models"))
-        with open(os.path.join(self.folder, "models", "box.wrl"), "w", encoding="utf-8") as handle:
-            handle.write(MODEL)
+        super().__init__(layout() if board_text is None else board_text,
+                         project() if project_text is None else project_text, prefix="board-views-test-")
+        self.write(os.path.join("models", "box.wrl"), MODEL)
 
     def args(self, classes=("Power", "Ground"), out=None):
         found = ["--board", self.board, "--project", self.project, "--out", out or self.out]
@@ -258,10 +189,6 @@ def rendered():
 
 
 # --- Reading the images -------------------------------------------------------------------
-
-
-def hex_rgb(colour: str):
-    return tuple(int(colour[i:i + 2], 16) for i in (1, 3, 5))
 
 
 BACKGROUND = hex_rgb(board_views.BACKGROUND)
@@ -328,12 +255,7 @@ class Views(unittest.TestCase):
         return any(self.partly(self.colour_at(images, x + dx, y + dy), colour) for dx in steps for dy in steps)
 
     def partly(self, found, colour):
-        """Whether a pixel is the colour over the background, at least half covered: a thin line's antialiased
-        pixels carry the colour in proportion to how much of them it covers."""
-        target = hex_rgb(colour)
-        spread = [t - b for t, b in zip(target, BACKGROUND)]
-        cover = max((f - b) / s for f, b, s in zip(found, BACKGROUND, spread) if abs(s) > 60)
-        return cover >= 0.5 and all(abs(f - (b + cover * s)) <= 16 for f, b, s in zip(found, BACKGROUND, spread))
+        return board_fixtures.partly(found, colour, board_views.BACKGROUND)
 
     def near(self, found, colour, tolerance=40):
         return all(abs(a - b) <= tolerance for a, b in zip(found, hex_rgb(colour)))

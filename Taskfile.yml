@@ -464,8 +464,15 @@ tasks:
     cmds:
       - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_views.py" --kicad-cli "{{.KICAD_CLI}}" --resvg "{{.RESVG}}" {{.CLI_ARGS}}
 
+  hw:placement:
+    desc: Render the placement view of a placed board, routed or not, from its design files and the floorplan table of the layout-plan.md beside it, into a new or empty folder outside every design's folder — the board's parts with each net's connections drawn straight between the pads they join (the minimum spanning tree over the net's pad centres, any copper laid left out) and the floorplan's regions drawn and named, in the layout review views' form, a PNG named placement on a dark background with its caption drawn in, at three pixels across the smaller of the board's minimum track width and minimum clearance, tiled to stay within the size a reviewing model reads without downsampling — with its index and the placement's measures (the connections' total length and each net's length, their crossings in total and by net, and every part outside its regions), each as text and JSON. Refuses a board open in an editor, a board stating no minimum track width or clearance, and an output folder inside a design's folder or already holding files; stops on a missing floorplan, a region row it cannot read, a part listed in a region recorded as none, and a listed part not on the board. Pass the layout, its own project file and the output folder after --, for example task hw:placement -- --board b.kicad_pcb --project b.kicad_pro --out /tmp/b-placement. Needs the same tools as hw:views, resvg 0.47 or newer among them (set RESVG=/path/to/resvg when resvg is not on PATH)
+    # Run from where it is called, so the paths given are read as the caller wrote them.
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_placement.py" --kicad-cli "{{.KICAD_CLI}}" --resvg "{{.RESVG}}" {{.CLI_ARGS}}
+
   hw:test:
-    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views and the layout review proof's seeding command), against the real kicad-cli and resvg. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
+    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view and the layout review proof's seeding command), against the real kicad-cli and resvg. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"

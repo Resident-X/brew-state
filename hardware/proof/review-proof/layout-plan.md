@@ -6,12 +6,12 @@ U1 stands for a power phototriac, Vishay VO3526, a six-pin DIP with pin 5 remove
 
 ## Floorplan
 
-| Region | Bounds | What it holds |
-|---|---|---|
-| mains | (0, 0)–(28, 60) | J1, the mains input and switched-load terminal; U1's load side, pins 4 and 6; the `MAINS_L` and `MAINS_SW` tracks and copper areas |
-| low voltage | (28, 0)–(56, 60) | J2, the 5 V supply input, and D1, its suppressor; U2, the 3.3 V regulator, with C1 and C2; J4, the load connector; U1's LED side, pins 1 to 3, with R4; the `+5V` trunk; TP1 and TP2; TP3 on the load return |
-| analog sensing | (56, 28)–(92, 60) | R1, the load-current shunt; U3, its amplifier, with R2, R3, FB1 and C3; TP4, TP5 and TP6 |
-| digital | (56, 0)–(92, 28) | U4, the controller, with C4; Y1, its crystal, with C5 and C6 |
+| Region | Bounds | What it holds | Parts |
+|---|---|---|---|
+| mains | (0, 0)–(28, 60) | J1, the mains input and switched-load terminal; U1's load side, pins 4 and 6; the `MAINS_L` and `MAINS_SW` tracks and copper areas | J1, U1 |
+| low voltage | (28, 0)–(56, 60) | J2, the 5 V supply input, and D1, its suppressor; U2, the 3.3 V regulator, with C1 and C2; J4, the load connector; U1's LED side, pins 1 to 3, with R4; the `+5V` trunk; TP1 and TP2; TP3 on the load return | J2, D1, U2, C1, C2, J4, U1, R4, TP1, TP2, TP3 |
+| analog sensing | (56, 28)–(92, 60) | R1, the load-current shunt; U3, its amplifier, with R2, R3, FB1 and C3; TP4, TP5 and TP6 | R1, U3, R2, R3, FB1, C3, TP4, TP5, TP6 |
+| digital | (56, 0)–(92, 28) | U4, the controller, with C4; Y1, its crystal, with C5 and C6 | U4, C4, Y1, C5, C6 |
 
 | Connector | Edge | Position |
 |---|---|---|

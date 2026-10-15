@@ -1,0 +1,539 @@
+#!/usr/bin/env python3
+"""The placement view and its measures, rendered from a throwaway board against the real kicad-cli and resvg.
+
+The board is written from text in a temporary folder outside the repository,
+with a layout plan beside it whose floorplan table gives each region's
+rectangles and parts. Every connection, length and crossing it should measure
+is worked out by hand below, from the pad centres the parts are placed at, so
+the tests hold the command to a placement known in advance rather than to its
+own arithmetic. The view is rendered once through the shipped task; the stops,
+the refusals, a routed copy and a worse placement are driven through the
+command itself. Nothing is skipped when a tool is absent: a command that cannot
+be exercised has not been shown to work.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import io
+import json
+import math
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+
+TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, TOOLS)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import board_check  # noqa: E402
+import board_fixtures  # noqa: E402
+import board_placement  # noqa: E402
+import board_views  # noqa: E402
+from board_fixtures import MINIMUM_MM, footprint, pad, project, uuid  # noqa: E402
+
+REPO = board_fixtures.REPO
+KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
+RESVG = os.environ.get("RESVG") or "resvg"
+REVIEW_PROOF = os.path.join(REPO, "hardware", "proof", "review-proof")
+
+_RENDERED = {}
+
+
+def setUpModule():
+    board_check.require_kicad(KICAD_CLI)
+    board_views.require_resvg(RESVG)
+
+
+def tearDownModule():
+    board_fixtures.cleanup()
+
+
+# --- The throwaway placement --------------------------------------------------------------
+
+
+def part(reference, x, y, pads, angle=0, courtyard=(-2.5, -2.5, 2.5, 2.5)):
+    """A part whose pads are (number, x, y, net) of its own, turned with it."""
+    return footprint(reference, x, y, [pad(number, px, py, net, "passive", angle) for number, px, py, net in pads],
+                     angle=angle, courtyard=courtyard)
+
+
+def parts(r1_turned=False):
+    """The board's parts. With `r1_turned`, R1 is turned half round, so its pads face away from the pads they join."""
+    return [
+        part("J1", 5, 10, [(1, 0, -1, "A"), (2, 0, 1, "GND")]),
+        part("R1", 20, 10, [(1, 0, -1, "A"), (2, 0, 1, "GND")], angle=180 if r1_turned else 0),
+        part("U3", 40, 10, [(1, -2, -1, "S"), (2, -2, 1, "GND"), (3, 2, -1, "T")]),
+        part("D1", 48, 10, [(1, -2, -1, "S"), (2, 2, 1, "NC1")]),
+        part("C2", 45, 34, [(1, 0, -1, "T"), (2, 0, 1, "NC6")]),
+        part("Q1", 10, 30, [(1, 2, 0, "H"), (2, 0, 2, "NC2")]),
+        part("Q2", 17, 22, [(1, 0, 2, "V"), (2, 2, 0, "NC3")]),
+        part("Q3", 24, 30, [(1, -2, 0, "H")]),
+        part("Q4", 17, 38.5, [(1, 0, -2, "V")], courtyard=None),
+        part("U1", 30, 30, [(1, -2, 0, "NC4"), (2, 2, 0, "W")]),
+        part("U2", 52, 30, [(1, -2, 0, "W"), (2, 2, 0, "NC5")]),
+    ]
+
+
+#: Every connection the placement leaves, worked out by hand: each net's shortest tree over its pad centres, as
+#: pairs of pad centres. GND's three pads lie on one line, so its tree runs J1 to R1 to U3, its two segments
+#: meeting at R1's pad.
+CONNECTIONS = {
+    "A": [((5, 9), (20, 9))],
+    "GND": [((5, 11), (20, 11)), ((20, 11), (38, 11))],
+    "H": [((12, 30), (22, 30))],
+    "S": [((38, 9), (46, 9))],
+    "T": [((42, 9), (45, 33))],
+    "V": [((17, 24), (17, 36.5))],
+    "W": [((32, 30), (50, 30))],
+}
+#: The crossings: H and V cross at (17, 30); S runs through T's pad centre at (42, 9), where T's connection begins;
+#: T crosses W at (44.625, 30). GND's two segments touch at R1's pad and are never counted against each other.
+CROSSINGS = {"A": 0, "GND": 0, "H": 1, "S": 1, "T": 2, "V": 1, "W": 1}
+#: The parts outside their regions: C2 is listed in digital and placed in analog sensing, and D1 is listed in none.
+#: U1 straddles low voltage and analog sensing, listed in both, and Q4, which has no courtyard, is held to its pad.
+OUTSIDE = {"C2": ["digital"], "D1": []}
+
+PLAN = """# Layout plan
+
+## Floorplan
+
+| Region | Bounds | What it holds | Parts |
+|---|---|---|---|
+| mains | none: the board carries no mains | nothing | none |
+| low voltage | (0, 0)–(30, 40) | the connector, its resistor and the crossing pair | {low} |
+| analog sensing | (30, 20)–(45, 40), (45, 20)–(60, 40) | the two-sided part and its partner | U1, U2 |
+| digital | (30, 0)–(60, 20) | the controller and its capacitor | U3, C2 |
+
+| Connector | Edge | Position |
+|---|---|---|
+| J1 | left | (5, 9) |
+"""
+LOW = "J1, R1, Q1, Q2, Q3, Q4, U1"
+
+
+def plan(low=LOW, **replace):
+    text = PLAN.replace("{low}", low)
+    for old, new in replace.items():
+        text = text.replace(old, new)
+    return text
+
+
+#: Copper a routed copy of the board carries: a track of each two-pad net and of GND, a via and a ground zone.
+ROUTING = [
+    f'(segment (start 5 9) (end 20 9) (width 0.25) (layer "F.Cu") (net "A") (uuid {uuid()}))',
+    f'(segment (start 5 11) (end 38 11) (width 0.25) (layer "F.Cu") (net "GND") (uuid {uuid()}))',
+    f'(segment (start 12 30) (end 22 30) (width 0.25) (layer "F.Cu") (net "H") (uuid {uuid()}))',
+    f'(segment (start 17 24) (end 17 28) (width 0.25) (layer "F.Cu") (net "V") (uuid {uuid()}))',
+    f'(via (at 17 28) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "V") (uuid {uuid()}))',
+    f'(segment (start 17 28) (end 17 36.5) (width 0.25) (layer "B.Cu") (net "V") (uuid {uuid()}))',
+    f'(arc (start 32 30) (mid 41 25) (end 50 30) (width 0.25) (layer "F.Cu") (net "W") (uuid {uuid()}))',
+    f'(zone (net "GND") (layer "B.Cu") (uuid {uuid()}) (hatch edge 0.5) (connect_pads (clearance 0.5)) '
+    '(min_thickness 0.25) (filled_areas_thickness no) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
+    '(polygon (pts (xy 2 2) (xy 58 2) (xy 58 18) (xy 2 18))))',
+]
+
+
+class Placed(board_fixtures.Design):
+    """The throwaway board, its project and its layout plan, with a working folder for the placement view."""
+
+    def __init__(self, items=None, plan_text=None, project_text=None):
+        super().__init__(board_fixtures.layout(parts() if items is None else items),
+                         project(assignments={}) if project_text is None else project_text,
+                         prefix="board-placement-test-", out="placement")
+        if plan_text is not False:
+            self.write("layout-plan.md", plan() if plan_text is None else plan_text)
+
+    def args(self, out=None):
+        return ["--board", self.board, "--project", self.project, "--out", out or self.out]
+
+    def run(self, out=None, kicad_cli=KICAD_CLI, resvg=RESVG):
+        stream, errors = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            status = board_placement.main(["--kicad-cli", kicad_cli, "--resvg", resvg, *self.args(out)], out=stream)
+        return status, stream.getvalue().splitlines(), errors.getvalue()
+
+    def read(self, name, out=None):
+        with open(os.path.join(out or self.out, name), encoding="utf-8") as handle:
+            return json.load(handle) if name.endswith(".json") else handle.read()
+
+
+def rendered():
+    """The placement, rendered once through the shipped task: (design, task result, index, measures)."""
+    if not _RENDERED:
+        design = Placed()
+        result = subprocess.run(["task", "hw:placement", f"KICAD_CLI={KICAD_CLI}", f"RESVG={RESVG}", "--",
+                                 *design.args()], cwd=REPO, capture_output=True, text=True, timeout=900)
+        index = measures = None
+        if result.returncode == 0:
+            index, measures = design.read("index.json"), design.read("measures.json")
+        _RENDERED.update(design=design, result=result, index=index, measures=measures, pixels={})
+    return _RENDERED
+
+
+def by_net(measures):
+    return {net["net"]: net for net in measures["nets"]}
+
+
+class Placement(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: One command draws a placement's unrouted connections and measures them."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.placed = rendered()
+
+    def setUp(self):
+        result = self.placed["result"]
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.design, self.index, self.measures = self.placed["design"], self.placed["index"], self.placed["measures"]
+
+    def pixels(self, image):
+        cache = self.placed["pixels"]
+        if image["file"] not in cache:
+            cache[image["file"]] = board_views.read_png(os.path.join(self.design.out, image["file"]))
+        return cache[image["file"]]
+
+    def colour_at(self, x, y):
+        for image in self.index["images"]:
+            box, scale = image["region_mm"], image["scale_px_per_mm"]
+            if box["x0"] <= x < box["x1"] and box["y0"] <= y < box["y1"]:
+                return self.pixels(image)[2][int((y - box["y0"]) * scale)][int((x - box["x0"]) * scale)][:3]
+        self.fail(f"no image covers ({x}, {y}) mm")
+
+    def seen(self, x, y, colour, reach=0.1):
+        """Whether the colour is drawn anywhere within `reach` millimetres of the board point (x, y)."""
+        steps = [step / 30 for step in range(-round(reach * 30), round(reach * 30) + 1)]
+        return any(board_fixtures.partly(self.colour_at(x + dx, y + dy), colour, board_views.BACKGROUND)
+                   for dx in steps for dy in steps)
+
+    def test_each_connection_is_drawn_straight_between_the_pads_it_joins_and_no_other(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: One command renders an image of the board's parts with each net's connections drawn as straight lines between the pads they join, the minimum spanning tree over its pad centres.
+        green = board_placement.CONNECTION[0]
+        for net, edges in CONNECTIONS.items():
+            for (ax, ay), (bx, by) in edges:
+                for share in (0.2, 0.5, 0.8):
+                    at = (ax + share * (bx - ax), ay + share * (by - ay))
+                    with self.subTest(net=net, at=at):
+                        self.assertTrue(self.seen(*at, green), f"{net}'s connection is not drawn at {at}")
+        # Pads of different nets, and pads one part carries on two nets, are never joined, and a connection stops at
+        # the pads it joins: A's runs no further than R1's pad at x = 20 mm towards U3's pad on S at x = 38 mm.
+        for at in ((14.5, 27), (5, 10), (19.5, 33.25), (30, 30), (21.5, 9)):
+            with self.subTest(between=at):
+                self.assertFalse(self.seen(*at, green), f"a connection is drawn at {at}, between pads it does not join")
+
+    def test_the_regions_are_drawn_and_named_and_a_region_recorded_as_none_is_read(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The floorplan's region rectangles are drawn and named on it; a region whose bounds are recorded as none is read as a region with no rectangle.
+        cyan = board_placement.REGION[0]
+        edge = [self.seen(30, y / 2, cyan, reach=0.05) for y in range(2, 38)]
+        self.assertGreater(sum(edge), len(edge) / 2, "the boundary at x = 30 mm between regions is not drawn")
+        self.assertTrue(any(board_fixtures.partly(self.colour_at(x / 20, y / 20), cyan, board_views.BACKGROUND)
+                            for x in range(4, 60) for y in range(3, 12)), "the low voltage region is not named on it")
+        for image in self.index["images"]:
+            self.assertIn("floorplan regions as cyan dashed outlines, each named: mains none, low voltage (0, 0)–(30, "
+                          "40), analog sensing (30, 20)–(45, 40), (45, 20)–(60, 40), digital (30, 0)–(60, 20)",
+                          image["caption"])
+        self.assertEqual(self.measures["regions"], [
+            {"name": "mains", "bounds": "none", "parts": []},
+            {"name": "low voltage", "bounds": "(0, 0)–(30, 40)", "parts": LOW.split(", ")},
+            {"name": "analog sensing", "bounds": "(30, 20)–(45, 40), (45, 20)–(60, 40)", "parts": ["U1", "U2"]},
+            {"name": "digital", "bounds": "(30, 0)–(60, 20)", "parts": ["U3", "C2"]}])
+
+    def test_the_measures_are_those_of_the_known_placement(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The measures are the total length of the connections and each net's length, the crossings in total and by net, and every part outside its regions, a part listed in two regions outside only when it leaves both and a part listed in none outside.
+        lengths = {net: sum(math.dist(a, b) for a, b in edges) for net, edges in CONNECTIONS.items()}
+        self.assertEqual([net["net"] for net in self.measures["nets"]], list(CONNECTIONS))
+        for net, measured in by_net(self.measures).items():
+            with self.subTest(net=net):
+                self.assertAlmostEqual(measured["length_mm"], lengths[net], places=3)
+                self.assertEqual(measured["crossings"], CROSSINGS[net])
+                self.assertEqual(measured["pads"], len({pad for edge in CONNECTIONS[net] for pad in edge}))
+        self.assertAlmostEqual(self.measures["total_length_mm"], sum(lengths.values()), places=3)
+        self.assertEqual(self.measures["crossings"], sum(CROSSINGS.values()) // 2)
+        self.assertEqual({part["reference"]: part["regions"] for part in self.measures["outside"]}, OUTSIDE)
+        c2 = next(part for part in self.measures["outside"] if part["reference"] == "C2")
+        self.assertEqual(c2["extent_mm"], {"x0": 42.5, "y0": 31.5, "x1": 47.5, "y1": 36.5}, "C2's extent is its courtyard")
+        report = self.placed["result"].stdout
+        self.assertIn("OUTSIDE | C2 | listed in digital", report)
+        self.assertIn("OUTSIDE | D1 | listed in no region of the floorplan", report)
+        self.assertIn(f"MEASURES | length {board_views.mm_text(sum(lengths.values()))} mm | 3 crossings | 2 parts "
+                      "outside their regions", report)
+
+    def test_the_text_and_json_measures_agree(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The measures are written as text and as JSON, and the two agree.
+        lines = self.design.read("measures.txt").splitlines()
+        fields = [line.split(" | ") for line in lines]
+        self.assertEqual(fields[0], ["BOARD", self.measures["board"]])
+        self.assertIn(["LENGTH", "total", f"{board_views.mm_text(self.measures['total_length_mm'])} mm"], fields)
+        self.assertIn(["CROSSINGS", "total", str(self.measures["crossings"])], fields)
+        self.assertIn(["OUTSIDE", "total", str(len(self.measures["outside"]))], fields)
+        nets = [row for row in fields if row[0] == "NET"]
+        self.assertEqual(len(nets), len(self.measures["nets"]))
+        for row, net in zip(nets, self.measures["nets"]):
+            self.assertEqual(row, ["NET", net["net"], f"{net['pads']} pads", f"length {board_views.mm_text(net['length_mm'])} mm",
+                                   f"{net['crossings']} crossings"])
+        outside = [row[1] for row in fields if row[0] == "OUTSIDE" and row[1] != "total"]
+        self.assertEqual(outside, [part["reference"] for part in self.measures["outside"]])
+        regions = [row for row in fields if row[0] == "REGION"]
+        self.assertEqual(regions, [["REGION", region["name"], region["bounds"], ", ".join(region["parts"]) or "none"]
+                                   for region in self.measures["regions"]])
+
+    def test_the_view_takes_the_review_views_form_and_its_index_names_it_placement(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The command writes into an output folder of its own under its own index as text and JSON naming the image placement, on a dark background, with a caption drawn into the image, at the resolution the board-wide minimums give, in tiles within the views' size limits.
+        written = sorted(os.listdir(self.design.out))
+        images = self.index["images"]
+        self.assertEqual(written, sorted(["index.txt", "index.json", "measures.txt", "measures.json"]
+                                         + [image["file"] for image in images]))
+        self.assertGreater(len(images), 1, "a 60 mm board at 30 px/mm is wider than the limit, so it is tiled")
+        self.assertEqual({image["view"] for image in images}, {"placement"})
+        for image in images:
+            self.assertRegex(image["file"], r"^placement-r\d+c\d+\.png$")
+            self.assertIn(f"IMAGE | {image['file']} | {image['caption']}", self.design.read("index.txt"))
+        self.assertEqual(self.index["resolution"]["px_per_mm"], 3 / MINIMUM_MM)
+        self.assertEqual(self.index["measures"], {"text": "measures.txt", "json": "measures.json"})
+        background = board_fixtures.hex_rgb(board_views.BACKGROUND)
+        for image in images:
+            with self.subTest(image=image["file"]):
+                width, height, rows = self.pixels(image)
+                self.assertEqual((width, height), (image["size_px"]["width"], image["size_px"]["height"]))
+                self.assertTrue(board_views.fits(width, height), "a tile is over the size limit")
+                self.assertEqual(rows[height - 1][0][:3], background)
+                caption = rows[image["content_px"]["height"] + 2:]
+                self.assertTrue(any(sum(pixel[:3]) > 500 for row in caption for pixel in row), "no caption drawn in")
+                self.assertIn("30 px/mm", image["caption"])
+                self.assertIn("connections in bright green", image["caption"])
+        top, bottom = min(image["region_mm"]["y0"] for image in images), max(image["region_mm"]["y1"] for image in images)
+        left, right = min(image["region_mm"]["x0"] for image in images), max(image["region_mm"]["x1"] for image in images)
+        self.assertTrue(left <= 0 and top <= 0 and right >= 60 and bottom >= 40, "the tiles do not cover the board")
+
+    def test_the_design_folder_is_left_untouched(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The command writes into an output folder of its own.
+        self.assertEqual(sorted(os.listdir(self.design.folder)), ["layout-plan.md", "proof.kicad_pcb", "proof.kicad_pro"])
+
+
+class Placements(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: One command draws a placement's unrouted connections and measures them."""
+
+    def written(self, design):
+        status, lines, errors = design.run()
+        self.assertEqual(status, 0, lines + [errors])
+        return design.read("measures.json")
+
+    def test_a_routed_copy_measures_and_draws_the_same_as_the_unrouted_original(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: Copper already laid is ignored, so a routed copy of a board measures the same as the unrouted original.
+        original, routed = Placed(), Placed(items=parts() + ROUTING)
+        before, after = self.written(original), self.written(routed)
+        self.assertNotEqual(before.pop("board"), after.pop("board"))
+        self.assertEqual(after, before)
+        first, second = original.read("index.json"), routed.read("index.json")
+        self.assertEqual([image["file"] for image in first["images"]], [image["file"] for image in second["images"]])
+        for image in first["images"]:
+            self.assertEqual(board_views.read_png(os.path.join(original.out, image["file"])),
+                             board_views.read_png(os.path.join(routed.out, image["file"])),
+                             f"{image['file']} draws the routed copy's copper")
+
+    def test_a_worse_placement_of_the_same_parts_measures_worse(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A worse placement of the same parts measures worse.
+        good, worse = self.written(Placed()), self.written(Placed(items=parts(r1_turned=True)))
+        # R1 turned half round brings A to its far pad and GND to its near one, so the two connections cross.
+        self.assertGreater(worse["total_length_mm"], good["total_length_mm"])
+        self.assertEqual(worse["crossings"], good["crossings"] + 1)
+        self.assertEqual((by_net(worse)["A"]["crossings"], by_net(worse)["GND"]["crossings"]), (1, 1))
+        self.assertAlmostEqual(by_net(worse)["A"]["length_mm"], math.dist((5, 9), (20, 11)), places=3)
+        self.assertAlmostEqual(by_net(worse)["GND"]["length_mm"], math.dist((5, 11), (20, 9)) + math.dist((20, 9), (38, 11)),
+                               places=3)
+
+    def test_the_repositorys_review_proof_design_is_measured_with_every_part_in_its_regions(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The command reads each region's rectangle and the parts it holds from the floorplan table in the board's layout plan.
+        with tempfile.TemporaryDirectory(prefix="board-placement-review-proof-") as root:
+            folder = os.path.join(root, "review-proof")
+            os.makedirs(folder)
+            for name in ("review-proof.kicad_pcb", "review-proof.kicad_pro", "review-proof.kicad_dru", "layout-plan.md"):
+                shutil.copy2(os.path.join(REVIEW_PROOF, name), folder)
+            out = os.path.join(root, "placement")
+            stream = io.StringIO()
+            status = board_placement.main(["--kicad-cli", KICAD_CLI, "--resvg", RESVG, "--board",
+                                           os.path.join(folder, "review-proof.kicad_pcb"), "--project",
+                                           os.path.join(folder, "review-proof.kicad_pro"), "--out", out], out=stream)
+            lines = stream.getvalue().splitlines()
+            self.assertEqual(status, 0, lines)
+            with open(os.path.join(out, "measures.json"), encoding="utf-8") as handle:
+                measured = json.load(handle)
+            self.assertEqual(measured["outside"], [], "a part of the clean proof design is outside its regions")
+            listed = {name for region in measured["regions"] for name in region["parts"]}
+            self.assertEqual(listed, set(board_placement.footprints(
+                board_views.locked_copper.read_layout(os.path.join(folder, "review-proof.kicad_pcb")))))
+
+
+class Geometry(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: One command draws a placement's unrouted connections and measures them."""
+
+    def test_segments_meet_when_they_cross_touch_or_overlap_and_not_otherwise(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A crossing is two segments of different nets that intersect, touch or overlap.
+        meet = board_placement.meet
+        self.assertTrue(meet((0, 0), (10, 0), (5, -5), (5, 5)), "a crossing")
+        self.assertTrue(meet((0, 0), (10, 0), (5, 0), (5, 5)), "one ends on the other")
+        self.assertTrue(meet((0, 0), (10, 0), (10, 0), (12, 3)), "end to end")
+        self.assertTrue(meet((0, 0), (10, 0), (4, 0), (14, 0)), "overlapping along one line")
+        self.assertFalse(meet((0, 0), (10, 0), (11, 0), (14, 0)), "apart along one line")
+        self.assertFalse(meet((0, 0), (10, 0), (0, 1), (10, 1)), "side by side")
+        self.assertFalse(meet((0, 0), (10, 10), (6, 4), (10, 0)), "short of the other")
+
+    def test_a_box_is_covered_only_by_the_union_of_the_rectangles_holding_all_of_it(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A part is outside when its extent is not covered by the union of the rectangles of the regions it is listed in.
+        covered = board_placement.covered
+        halves = [(0, 0, 10, 10), (10, 0, 20, 10)]
+        self.assertTrue(covered((8, 2, 12, 8), halves), "across the seam of two rectangles")
+        self.assertFalse(covered((8, 2, 12, 8), halves[:1]), "past the edge of one")
+        self.assertFalse(covered((8, 8, 12, 12), halves), "past the edge of both")
+        self.assertFalse(covered((1, 1, 19, 9), [(0, 0, 9, 10), (11, 0, 20, 10)]), "over a gap between them")
+        self.assertTrue(covered((0, 0, 10, 10), halves[:1]), "exactly on its edges")
+        self.assertFalse(covered((1, 1, 2, 2), []), "by no rectangle")
+
+
+class Stops(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: One command draws a placement's unrouted connections and measures them."""
+
+    def assertStopped(self, design, named):
+        status, lines, _ = design.run()
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith("UNREADABLE | ") and all(words in lines[0] for words in named), lines)
+        self.assertEqual(lines[-1], "RESULT | FAIL | the input cannot be read, so no placement view was written")
+        self.assertFalse(os.path.exists(design.out), "the output folder was made")
+        return lines
+
+    def test_a_missing_floorplan_stops_the_command_naming_it(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A missing floorplan stops the command with a message naming it.
+        design = Placed(plan_text=False)
+        self.assertStopped(design, [os.path.join(design.folder, "layout-plan.md"), "is missing"])
+        self.assertStopped(Placed(plan_text="# Layout plan\n\nNo table.\n"), ["holds no floorplan table"])
+        no_parts = ("# Layout plan\n\n| Region | Bounds | What it holds |\n|---|---|---|\n"
+                    "| mains | none: the board carries no mains | nothing |\n| low voltage | (0, 0)–(60, 40) | all |\n")
+        self.assertStopped(Placed(plan_text=no_parts), ["has no Parts column"])
+
+    def test_a_region_row_that_cannot_be_read_stops_the_command_naming_it(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A region row that cannot be read stops the command with a message naming it.
+        cases = (
+            ({"(30, 0)–(60, 20)": "(30, 0) to (60, 20)"}, ["region row 'digital'", "(30, 0) to (60, 20)"]),
+            ({"(30, 0)–(60, 20)": "(30, 0)–(60, 20) and the rest"}, ["region row 'digital'"]),
+            ({"(30, 0)–(60, 20)": "(30, 0)–(30, 20)"}, ["region row 'digital'", "has no area"]),
+            ({"| U3, C2 |": "| U3 C2 |"}, ["region row 'digital'", "'U3 C2'", "without ranges"]),
+            ({"| U1, U2 |": "| U1, U2 | extra |"}, ["region row 'analog sensing'", "5 cells where its header has 4"]),
+        )
+        for replace, named in cases:
+            with self.subTest(replace=replace):
+                self.assertStopped(Placed(plan_text=plan(**replace)), named)
+        for listed in ("Q1–Q4, J1, R1, U1", "Q1-Q4, J1, R1, U1"):
+            with self.subTest(listed=listed):
+                self.assertStopped(Placed(plan_text=plan(low=listed)), ["region row 'low voltage'", listed.split(",")[0],
+                                                                       "without ranges"])
+
+    def test_a_part_listed_in_a_region_recorded_as_none_stops_the_command(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A part listed in a region recorded as none stops the command with a message naming it.
+        self.assertStopped(Placed(plan_text=plan(**{"| nothing | none |": "| nothing | J1 |"})),
+                           ["region row 'mains'", "records the region as none and lists parts in it: J1"])
+
+    def test_a_listed_part_not_on_the_board_stops_the_command(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A listed part that is not on the board stops the command with a message naming it.
+        self.assertStopped(Placed(plan_text=plan(low=LOW + ", R9")), ["lists R9 in the region 'low voltage'",
+                                                                     "no part on the board"])
+
+
+class Refusals(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: One command draws a placement's unrouted connections and measures them."""
+
+    def assertRefused(self, design, named, out=None):
+        status, lines, _ = design.run(out)
+        self.assertEqual(status, 1, lines)
+        self.assertEqual(lines[-1], "RESULT | REFUSED | no placement view was written", lines)
+        self.assertTrue(any(line.startswith("REFUSED | ") and named in line for line in lines), lines)
+        return lines
+
+    def test_a_board_open_in_an_editor_is_refused(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The command takes the views' refusal of a board open in an editor.
+        design = Placed()
+        lock = design.write("~proof.kicad_pcb.lck", "{}")
+        self.assertRefused(design, f"REFUSED | {lock} | KiCad's lock file shows {design.board} open in an editor")
+        self.assertFalse(os.path.exists(design.out))
+
+    def test_a_board_stating_no_minimum_or_a_zero_one_is_refused_naming_the_figure(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The command takes the views' refusal of an unset minimum, its resolution coming from the board-wide minimum track width and clearance.
+        for rules, named in (({}, ["min_track_width", "min_clearance"]), ({"min_track_width": 0.1}, ["min_clearance"]),
+                             ({"min_track_width": 0, "min_clearance": 0.1}, ["min_track_width"])):
+            with self.subTest(rules=rules):
+                design = Placed(project_text=project(assignments={}, rules=rules))
+                lines = self.assertRefused(design, "board.design_settings.rules.")
+                self.assertEqual(sorted(line.split(" | ")[1].rsplit(".", 1)[1] for line in lines if line.startswith("REFUSED | ")),
+                                 sorted(named))
+                self.assertFalse(os.path.exists(design.out))
+
+    def test_an_output_folder_inside_a_design_folder_holding_files_or_a_file_is_refused(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The command writes into an output folder of its own, never one the views command writes, and takes the views' refusals of an output folder inside a design's folder or already holding files.
+        design = Placed()
+        inside = os.path.join(design.folder, "placement")
+        self.assertRefused(design, "never kept in a design's folder", out=inside)
+        self.assertFalse(os.path.exists(inside))
+        views = os.path.join(design.root, "views")
+        os.makedirs(views)
+        with open(os.path.join(views, "index.txt"), "w", encoding="utf-8") as handle:
+            handle.write("the views' own index\n")
+        self.assertRefused(design, "already holds files", out=views)
+        self.assertEqual(os.listdir(views), ["index.txt"])
+        afile = os.path.join(design.root, "a-file")
+        with open(afile, "w", encoding="utf-8") as handle:
+            handle.write("x")
+        self.assertRefused(design, "the output folder is a file", out=afile)
+
+    def test_a_project_file_not_the_boards_own_is_refused(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The command takes the views' refusals.
+        design = Placed()
+        stray = os.path.join(design.root, "stray.kicad_pro")
+        shutil.copy2(design.project, stray)
+        design.project = stray
+        self.assertRefused(design, "give the board's own project file")
+
+    def test_a_missing_rasteriser_stops_the_command_naming_it(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The hardware tools' guide names the tools the command needs.
+        design = Placed()
+        status, lines, errors = design.run(resvg="/nonexistent/resvg")
+        self.assertEqual((status, lines), (2, []))
+        self.assertIn("CANNOT RUN | resvg was not found", errors)
+        self.assertFalse(os.path.exists(design.out))
+
+
+class Documentation(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: One command draws a placement's unrouted connections and measures them."""
+
+    def read(self, *path):
+        with open(os.path.join(REPO, *path), encoding="utf-8") as handle:
+            return handle.read()
+
+    def test_the_guide_describes_the_command_as_it_describes_the_views_command(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The hardware tools' guide describes the command as it describes the views command: its task, its outputs and their names, its measures, its refusals and stops, and the tools it needs.
+        readme = self.read("hardware", "README.md")
+        section = readme[readme.index("## The placement view"):]
+        section = section[:section.index("\n## ")]
+        for words in ("task hw:placement -- --board <board>.kicad_pcb --project <board>.kicad_pro --out <folder>",
+                      "`placement`", "`index.txt`", "`index.json`", "`measures.txt`", "`measures.json`",
+                      "minimum spanning tree", "Copper already laid is ignored", "total length", "each net's length",
+                      "crossing", "intersect, touch or overlap", "outside", "courtyard", "listed in no region",
+                      "a board KiCad's lock file shows open in an editor", "no minimum track width",
+                      "an output folder inside any design's folder", "already holds files", "is missing",
+                      "cannot be read", "recorded as `none`", "not on the board", "resvg", "KiCad", "`CANNOT RUN`",
+                      "`UNREADABLE`", "`REFUSED`", "-r<row>c<column>"):
+            with self.subTest(words=words):
+                self.assertIn(words, section)
+        taskfile = self.read("Taskfile.yml")
+        task = taskfile[taskfile.index("  hw:placement:"):]
+        task = task[:task.index("\n\n")]
+        for words in ("board_placement.py", "RESVG", "KICAD_CLI", "resvg 0.47 or newer", "layout-plan.md"):
+            self.assertIn(words, task)
+        test = taskfile[taskfile.index("  hw:test:"):]
+        self.assertIn("the placement view", test.splitlines()[1], "hw:test's description names the tools it tests")
+        self.assertIn("`task hw:placement`", readme[:readme.index("## The locked-copper check")])
+
+
+if __name__ == "__main__":
+    unittest.main()

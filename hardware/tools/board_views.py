@@ -1279,26 +1279,28 @@ class Renderer:
         self.images.append(dict(entry, file=name, caption=caption, size_px={"width": width, "height": height}))
 
     def flat(self, wanted: str, layers: Sequence[str], entry: dict, describe: Sequence[str], paint=None,
-             around=None, beneath: bool = False, coloured: bool = True) -> None:
+             around=None, beneath: bool = False, coloured: bool = True, overlay: str = "") -> None:
         """Queue a two-dimensional view of `layers`, listed in the order they are drawn, the lowest first.
 
         Each layer is drawn by `paint`, by default the layer as KiCad plotted it in
         its own colour; a view whose colours mean something other than layers, such
         as classes, is not `coloured` by layer. A view `around` a part's bounds is a
         crop; every other view shows the whole board's frame. A view `beneath` which
-        the whole board is drawn faint shows its copper and edge in faint grey.
+        the whole board is drawn faint shows its copper and edge in faint grey. An
+        `overlay`, drawing in board coordinates that KiCad does not plot, is drawn
+        over the layers and beneath the rule areas, and `describe` names it.
         """
         self.queued.append(lambda: self.compose(wanted, list(layers), entry, list(describe), paint, around, beneath,
-                                                coloured))
+                                                coloured, overlay))
 
-    def compose(self, wanted, layers, entry, describe, paint, around, beneath, coloured) -> None:
+    def compose(self, wanted, layers, entry, describe, paint, around, beneath, coloured, overlay="") -> None:
         region = self.frame if around is None else grown(around, CROP_MARGIN_MM)
         shown_layers, missing = side_layers(layers, self.plotted)
         under = list(reversed(self.copper)) + ["Edge.Cuts"] if beneath else []
         here = on_stack(self.areas, shown_layers + under, shown(region, self.scale))
         paint = paint or (lambda layer: drawing(self.plotted[layer], self.colours[layer][0]))
         drawings = ("".join(drawing(self.plotted[layer], FAINT[0], FAINT[2]) for layer in under)
-                    + "".join(paint(layer) for layer in shown_layers) + rule_area_drawing(here, self.scale))
+                    + "".join(paint(layer) for layer in shown_layers) + overlay + rule_area_drawing(here, self.scale))
         listed = [(layer, self.colours[layer][1]) for layer in shown_layers]
         fields = describe + [f"layers {colour_list(listed) if coloured else ', '.join(shown_layers)}"]
         fields += [f"over the whole board's copper and edge in {FAINT[1]}"] if beneath else []
@@ -1426,8 +1428,9 @@ def framing(kicad_cli: str, work: str, board_file: str, how: List[str], aspect: 
 # --- The command --------------------------------------------------------------------
 
 
-def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli: str, resvg: str, stream) -> int:
-    """Render every view of the board into `out`; the exit status."""
+def working_refusals(board: str, project: str, out: str) -> List[Tuple[str, str]]:
+    """Why views of `board` are not to be written into `out`: an output folder inside a design's folder, a file or
+    one already holding files, a project file not the board's own, or the board open in an editor."""
     refusals = []
     folder = locked_copper.design_folder(out, board)
     if folder is not None:
@@ -1448,6 +1451,12 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
                                    "drawn from the saved file, would not show; close the board in every editor, and if "
                                    "no KiCad process is running the lock file is stale, left by a KiCad that did not "
                                    "close the board, so delete it"))
+    return refusals
+
+
+def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli: str, resvg: str, stream) -> int:
+    """Render every view of the board into `out`; the exit status."""
+    refusals = working_refusals(board, project, out)
     if refusals:
         return locked_copper.refused(refusals, "REFUSED | no views were written", stream)
     layout, refusals = locked_copper.named_classes(board, project, classes)
