@@ -1,0 +1,13 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C4
+type: criterion
+title: The margin holds at the lowest thermal mass the machine can be in and across the declared model error
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  A margin that holds at nominal and fails at a lower thermal mass is not held. The corners of the declared error are combined by worst case.
+links:
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: criterion-of

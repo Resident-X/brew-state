@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C3
+type: criterion
+title: The reference presents both crossings of each supply cycle to the actuation layer
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A scheme resolving half-cycles is timed against a reference that reports every crossing, and the count of crossings received is checked against the measured period.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of

@@ -1,0 +1,44 @@
+id: DEL-READINESS-PREDICTED-IN-BAND
+type: deliverable
+category: task
+title: A purpose is ready when the delivery predicted from the estimated state is in band, with the wait bounded and its failure reported
+status: active
+level: task
+version: 1
+text: |
+  A purpose is ready when the delivery the machine would make from its present estimated state is inside the band that delivery is held to. For coffee that is the first millilitre in band, and for steam it is steam that is dry from the first millilitre. Readiness is not a setpoint reached or a time elapsed: a state that sits at its setpoint and would still deliver out of band is not ready, and a state that would deliver in band before reaching its setpoint is not held back.
+
+  The prediction starts from the estimated state and carries the estimator's declared error, so it is only as good as that state. Waiting is bounded by a declared limit for each purpose. At the limit the machine reports which purpose it could not predict readiness for and what it could not establish, instead of waiting without end or declaring itself ready.
+rationale: |
+  The owner's intent is that ready means the delivery would be in band, as recorded in the decision and in the definition of readiness. The shipped steam behaviour is a gate that withholds feed below a ready pressure, which is a setpoint test and a proxy for this. Coffee readiness has no prediction at all. The timeliness requirement was amended to state the predictive meaning and to require the bounded wait and its report; nothing in the graph owned bringing the finished work to that definition, so this task owns it.
+
+  Placement: a task directly under the roadmap's simulation phase criterion, beside the steam-loop and brew-loop tasks it revises. It depends on the steam flash-generator task and on the coffee plant-fidelity task because a prediction is only as faithful as the plant relations it runs forward.
+
+  What this replaces, read in this session: the steam readiness gate that withholds feed until measured pressure reaches the ready threshold (SOL-SIM-STEAM-READINESS-GATE, criteria C1 to C4, finished under DEL-SIM-STEAM-LOOP). The steam-loop criterion that delivery is prevented until the side can sustain it (DEL-SIM-STEAM-LOOP.C2) remains true and is met by the new definition: an early draw is starved because it is predicted wet, not because a pressure number is unreached. Criteria on sealed solutions cannot be superseded one by one, so the criteria below state the replaced behaviour in full and the slicing session supersedes the owning solution.
+
+  Owner-pending: the limit on the wait for each purpose is a declared figure the owner has not yet set, declared with the other timing figures. No number is invented here.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEC-READINESS-IS-PREDICTED-DELIVERY-IN-BAND
+    type: justified-by
+  - target: DEF-READINESS
+    type: uses-term
+  - target: REQ-READINESS-TIMELINESS-001.C1
+    type: targets
+  - target: REQ-READINESS-TIMELINESS-001.C3
+    type: targets
+  - target: REQ-READINESS-TIMELINESS-001.C8
+    type: targets
+  - target: REQ-READINESS-TIMELINESS-001.C9
+    type: targets
+  - target: REQ-STEAM-DELIVERY-001.C2
+    type: targets
+  - target: DEL-SIM-STEAM-LOOP
+    type: depends-on
+  - target: DEL-SIM-ESTIMATOR
+    type: depends-on
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: depends-on
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: depends-on

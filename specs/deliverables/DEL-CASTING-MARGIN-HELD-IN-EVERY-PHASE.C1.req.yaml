@@ -1,0 +1,13 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C1
+type: criterion
+title: The casting stays below its protection trip point by the declared margin while heating from cold
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The margin is a declared figure per heated mass. The peak casting temperature reached in the phase and the margin left at that peak are reported per run in both the text and the JSON form.
+links:
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: criterion-of

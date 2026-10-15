@@ -1,0 +1,13 @@
+id: DEL-STEAM-PATH-FLASH-GENERATOR.C5
+type: criterion
+title: The thermoblock structure's steam side no longer derives pressure from block temperature alone while water is fed
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The affine saturation relation applies only to the trapped-liquid case, and the stepped form of the structure stays admissible with a draw open. A structure for a different architecture keeps whatever relation its own steam side physically has.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: criterion-of

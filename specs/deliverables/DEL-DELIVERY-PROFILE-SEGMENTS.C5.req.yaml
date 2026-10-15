@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C5
+type: criterion
+title: Departure from the commanded course is reported in the segment's primary variable while the delivery runs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The report states, per segment, the variable commanded, the value commanded and the value measured, in both the text and the JSON form. A machine that lacks the measurement for a segment's primary variable reports that it has no account for that segment rather than perfect agreement.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-BREW-PLANT-FIDELITY.C4
+type: criterion
+title: The brew hydraulics are a discrete-stroke pump working through the damper, line compliance and a puck resistance
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Each stroke is delivered as a discrete event into the damper, through the line, across the puck. The compliance and resistance are described coefficients with declared error spans, and the puck resistance spans the range grind, dose, distribution and age produce.
+links:
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: criterion-of

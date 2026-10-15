@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C8
+type: criterion
+title: The ordering between the half-cycle decision context and the control context over shared state is defined
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  State shared between the context that makes half-cycle decisions and the context that commands levels has a stated access ordering, and a test exercises both contexts concurrently on the target build.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of

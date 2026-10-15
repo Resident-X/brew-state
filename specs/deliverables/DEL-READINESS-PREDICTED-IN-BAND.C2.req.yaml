@@ -1,0 +1,13 @@
+id: DEL-READINESS-PREDICTED-IN-BAND.C2
+type: criterion
+title: Steam is ready when the delivery predicted from the estimated state is dry from the first millilitre
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A draw begun before that point is starved rather than delivered wet, and the verdict rests on the prediction and not on a pressure or temperature setpoint being reached.
+links:
+  - target: DEL-READINESS-PREDICTED-IN-BAND
+    type: criterion-of

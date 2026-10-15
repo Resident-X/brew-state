@@ -1,0 +1,13 @@
+id: DEL-STEAM-PATH-FLASH-GENERATOR.C7
+type: criterion
+title: The committed analysis records name the steam model as it now stands
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The records that pin the plant description's inputs are regenerated against the flash-generator relations in the same change, and the margin, dominance, stability and identifiability results are reported against them.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: criterion-of

@@ -1,0 +1,13 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C2
+type: criterion
+title: The casting stays below its protection trip point by the declared margin while recovering after a draw
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Recovery after a coffee delivery and after a hot water draw are each held to the margin, from the thermal state the preceding demand left behind.
+links:
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: criterion-of
