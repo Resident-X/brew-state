@@ -140,6 +140,7 @@ or against that.
 - **Skills are installed, not tracked.** `task sc:init` (or `sc:update`) installs the upstream skills into
   `.claude/skills/` at `STAIRCASE_REF` (floats on upstream `main`); git ignores them. A skill this repository owns is
   named `repo-*` — the sync leaves those alone and git tracks them. Run `task sc:update` to move to the current upstream `main`.
+- **Agent tier is chosen here, not by the upstream workflow skills.** `/staircase-wf` and the other synced skills are reinstalled verbatim from upstream, so this project cannot edit them; this instruction overrides them. When dispatching a workflow state, ignore the engine's `recommended_tier` and the skill's `no_hint` fallback to `mid-tier`, and choose the tier by the work: `small-fast` for graph discovery, simple tasks and quick fixes that need no reasoning; `mid-tier` for most work; `reasoning-tier` only when the state explicitly needs complex reasoning. Where a skill says the tier must come from the engine, this rule wins. The skill's tier→model table still binds each tier to a model.
 - Branch: `req/{REQ-ID}/{short-slug}`. **NEVER push to `main`** — PRs only. The tracked
   `.githooks/pre-push` hook refuses it, but treat that as a catch for the mistake rather than as
   enforcement: it is inert until `task repo:hooks` points `core.hooksPath` at that directory
@@ -178,5 +179,3 @@ or against that.
   So requirement-to-physical-component allocation, the mechanism `OBL-PHYSICAL-CONFIGURATION-001`
   would naturally use, cannot currently be wired. No workaround: pointing at a definition or
   requirement node fails the `valid_targets` check instead.
-
-- **Agent Tier.** Staircase workflows do not allow project specific agent guidance. Use `small-fast` for graph discovery and simple tasks, quick easy fixes, things that don't need reasoning. Use `mid-tier` for most work and only use `reasoning-tier` when explicit complex reasoning is required. Do not blindly follow the staircase recommendations in workflows.
