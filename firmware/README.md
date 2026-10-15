@@ -527,6 +527,28 @@ task runner. Six of them also run automatically inside every `pio run`.
 | `check_robustness_declaration.py` | A behaviour the design commits to carries no class, carries two, or carries a word the vocabulary does not declare; a behaviour is declared twice; a class has nothing in it, which is a declaration that drew no line; or the artefact is absent or empty. Reads the classes out of `plant_robustness.h` rather than restating them. |
 | `check_machine_claim.py` | A structure declares nothing about whether its equations describe a machine, declares it more than once, or declares something outside the vocabulary. Also fails a vocabulary that has grown a distinction beyond that one, and a tree in which no structure describes a machine at all, since the mutation sweep would then draw its mutants from an empty population. Runs inside every build, over every structure in the tree rather than the one the build selected. |
 | `check_support_status.py` | A structure declares no support status, declares one outside the vocabulary, claims hardware verification without citing it, or is documented with a status its own header does not claim. Also fails a vocabulary that has grown a distinction beyond whether hardware has verified the structure. Runs inside every build, over every structure in the tree rather than the one the build selected. |
+| `check_pin_assignment.py` | The firmware's channel-to-pin assignment differs from a pin allocation record: a channel the firmware assigns that no record entry names, a record entry naming a channel the firmware does not assign, a channel on a different pin than the record names, a channel named twice, or two channels on one pin; a record that cannot be parsed, repeats a key, names no channel, or has an entry naming a channel without a usable `controller_pin`; or firmware in which no pin table is found. Not run by `fw:check` yet, since no machine's record exists to give it; its tests run in `fw:test`. |
+
+`check_pin_assignment.py` compares the firmware with whichever pin allocation
+record it is given, so a board and the code that drives it cannot disagree about
+which output is which:
+
+```
+python3 tools/check_pin_assignment.py --firmware <source> --include-dir <dir> --record <pin-allocation.yaml>
+```
+
+It reads the output pin table out of the
+firmware source, the positional array of pins in the order of the channel
+vocabulary's enumerators, and the port the table's pins are initialised on from
+the `HAL_GPIO_Init` call that consumes it, and writes each pin as the port
+letter then number, as in `PC6`. It matches each channel to the record entry
+whose `firmware_channel` names it, and takes no part in the rest of the record,
+which the board check holds. Each failure names the channel and both pins where
+both exist. It covers the output channels; comparing sensor channels is
+separate work. It needs PyYAML (`pip install pyyaml`, or the `python3-yaml`
+package), as the mutation sweep does: without it the check exits 2 and says it
+could not inspect, which is not a pass, and its tests require PyYAML rather than
+skip. Its tests use synthetic firmware, vocabulary and records only.
 
 The plant model's invariants are additionally exercised across the range each
 coefficient declares admissible, rather than at the one nominal value. The
