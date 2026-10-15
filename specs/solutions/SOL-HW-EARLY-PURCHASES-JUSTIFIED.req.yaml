@@ -17,7 +17,7 @@ links:
     type: targets
 brief_confirmation:
   confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: 97b8fff3cc6b0306b5732e35d0cff1ccb425616996ce4936de037bf56f251663
+  fingerprint: 23daa8e5b5e5e4b86ec721b98580511ae98ac833902e04213428a78cc0090e32
   gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C1
