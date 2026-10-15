@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: An operator session reads main's latest nightly result before offering work
 status: active
-version: 1
+version: 2
 text: |
-  An operator session reads main's latest nightly result before it offers any work. A task-runner command reads the nightly workflow's run history and states the latest completed run's conclusion, the commit it verified and a link to it. The operator session launcher shows that result first, and when it is red, offers fixing it as the first choice.
+  An operator session reads main's latest nightly result before it offers any work. A task-runner command named daily:status reads the nightly workflow's run history through the GitHub command-line tool and states the latest completed run's conclusion, the commit it verified and a link to it. The command's first output line is a fixed verdict word: green, red, none or unknown. It exits zero whenever it read a result, whether green, red or none, and non-zero only for unknown, so a caller can tell a red result from one it could not read. A missing or unauthenticated GitHub tool is an unknown result that names the tool. The operator session launcher shows the result first, and when it is red, offers fixing it as the first choice; an unknown or none result is shown above the list and adds no option and never blocks the target question.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
