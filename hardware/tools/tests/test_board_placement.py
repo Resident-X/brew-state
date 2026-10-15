@@ -19,6 +19,7 @@ import io
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -533,6 +534,124 @@ class Documentation(unittest.TestCase):
         test = taskfile[taskfile.index("  hw:test:"):]
         self.assertIn("the placement view", test.splitlines()[1], "hw:test's description names the tools it tests")
         self.assertIn("`task hw:placement`", readme[:readme.index("## The locked-copper check")])
+
+
+#: The items C2 names as judged at placement: those whose Asks question asks where a part sits, and MAINS-2.
+PLACEMENT_ITEMS = {"FLOOR-1", "FLOOR-3", "POWER-2", "DECOUPLE-1", "DECOUPLE-3", "DECOUPLE-4", "DECOUPLE-5", "SENSE-2",
+                   "SENSE-3", "SENSE-5", "CLOCK-1", "CLOCK-3", "MAINS-2", "CONN-1", "CONN-2", "CONN-3", "TEST-2",
+                   "EMI-3", "EMI-4", "EMI-5", "TEST-1", "WORK-1"}
+
+
+def section(text, heading, level="## "):
+    """The text of the section headed `heading`, up to the next heading of its level."""
+    start = text.index(f"{level}{heading}\n")
+    after = text.find(f"\n{level}", start + len(level))
+    return text[start:after if after >= 0 else len(text)]
+
+
+class Method(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: A board's placement is chosen from several candidates, each measured and judged before any track is drawn."""
+
+    def setUp(self):
+        with open(os.path.join(REPO, "docs", "board-design-method.md"), encoding="utf-8") as handle:
+            self.method = handle.read()
+
+    def test_the_catalogue_names_the_placement_view_on_exactly_the_items_judged_at_placement(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The catalogue marks the items judged at placement by naming the placement view in their Judged on line.
+        items = re.findall(r"^#### ([A-Z]+-\d+)\. .*?^- \*\*Judged on:\*\* (.*?)$", self.method, re.M | re.S)
+        self.assertEqual(len(items), len(re.findall(r"^#### [A-Z]+-\d+\. ", self.method, re.M)))
+        self.assertEqual({item for item, line in items if "`placement`" in line}, PLACEMENT_ITEMS)
+        test_1 = dict(items)["TEST-1"]
+        self.assertIn("`placement`, for its spacing from part bodies", test_1)
+        read = section(self.method, "How an item is read", "### ")
+        self.assertIn("the placement view, `placement`", read)
+        self.assertIn("is judged at [placement](#placement) too", read)
+
+    def test_the_placement_step_sits_between_planning_and_the_rules_and_says_how_to_choose(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: A placement step between planning the layout and the rules places the fixed parts first, produces at least two candidates each committed before it is rendered, measures and judges each, and records the choice before any track.
+        order = [self.method.index(f"\n## {name}\n") for name in ("Planning the layout", "Placement", "Rules before routing")]
+        self.assertEqual(order, sorted(order))
+        placement = section(self.method, "Placement")
+        steps = re.findall(r"^### (\d+)\. ", placement, re.M)
+        self.assertEqual(steps, ["1", "2", "3", "4", "5", "6"])
+        for words in ("min_track_width", "`MFG-1`", "`design-rules.md`", "each connector, terminal and header",
+                      "each mounting hole, and the mains region's parts", "the main integrated circuit of each block "
+                      "before the parts that serve it", "turned so its pins face the pins they join",
+                      "at least two candidate", "committed in a commit of its own before it is rendered",
+                      "task hw:placement -- --board <board>.kicad_pcb --project <board>.kicad_pro --out",
+                      "git worktree add --detach", "Never commit it", "| Item | Verdict | Rests on | Why |",
+                      "is not chosen", "never a fixed weighting of the measures", "`## Placement`", "**Commit**",
+                      "**Renders**", "**Measures**", "**Chosen**", "before any track is drawn",
+                      "git log --reverse --format=%H -G '^## Placement$' -- <board folder>/layout-plan.md",
+                      "git log --reverse --format=%H -G '^[[:space:]]*[(](segment|arc|via)$' -- "
+                      "<board folder>/<board>.kicad_pcb", "git merge-base --is-ancestor"):
+            with self.subTest(words=words):
+                self.assertIn(words, placement)
+
+    def test_the_minimums_move_before_placement_and_the_floorplan_lists_each_regions_parts(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The floorplan table gains a Parts column, the planning cross-checks every part is listed, the minimums move before placement, and the proof design's plan is migrated.
+        planning = section(self.method, "Planning the layout")
+        self.assertIn("| Region | Bounds | What it holds | Parts |", planning)
+        self.assertIn("comma-separated and without ranges", planning)
+        self.assertIn("is listed in both", planning)
+        self.assertIn("every part in the netlist is listed in the Parts column of at least one region, and every "
+                      "reference that column lists is a part in the netlist", planning)
+        rules = section(self.method, "1. Write every rule and net class down, with its figure and source", "### ")
+        self.assertIn("were written before placement ([Placement](#placement), step 1)", rules)
+        with open(os.path.join(REVIEW_PROOF, "layout-plan.md"), encoding="utf-8") as handle:
+            plan_text = handle.read()
+        regions = board_placement.floorplan(os.path.join(REVIEW_PROOF, "layout-plan.md"))
+        self.assertEqual([region["name"] for region in regions], ["mains", "low voltage", "analog sensing", "digital"])
+        self.assertIn("| Region | Bounds | What it holds | Parts |", plan_text)
+        self.assertEqual([name for region in regions for name in region["parts"] if name == "U1"], ["U1", "U1"],
+                         "U1 spans the mains boundary, so both regions list it")
+
+    def test_the_review_judges_on_the_placement_view_and_the_seeded_review_is_given_it(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The layout review's list of views gains the placement view, its rendering step and cross-check run the placement command into its own uncommitted folder, and a verdict cites it by its index name.
+        views = section(self.method, "Layout review views")
+        self.assertIn("(`placement`)", views)
+        self.assertIn("task hw:placement -- --board <board>.kicad_pcb --project <board>.kicad_pro --out "
+                      "<work folder>/<board>-placement", views)
+        self.assertIn("the placement view's is its own, beside the views' and never the same. Never commit either.", views)
+        review = section(self.method, "Layout review")
+        self.assertIn("render its placement view into a folder of its own beside them", review)
+        self.assertIn("the `task hw:views` command and the `task hw:placement` command as they were run", review)
+        self.assertIn("or for the placement view the name the placement command's index gives it", review)
+        self.assertIn("Render the placement view again from the round's commit with the round's `task hw:placement` "
+                      "command", review)
+        self.assertIn("its placement view and measures in a folder of their own", review)
+
+    def test_critical_routing_is_checked_against_the_catalogue_before_the_router(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: After the critical nets are routed and locked and before the router runs, the views are rendered and every catalogue item bearing on those nets is judged and recorded in a critical routing section committed before the router, with a history cross-check; a rule-kind item is judged on its rules table rows alone.
+        routing = section(self.method, "Routing: critical nets by hand and locked, then the rest")
+        steps = re.findall(r"^### (\d+)\. (.*)$", routing, re.M)
+        self.assertEqual([title.split(",")[0] for _, title in steps][2:6],
+                         ["Close the board", "Check the critical routing against the catalogue",
+                          "Record the critical-class copper", "Export"])
+        self.assertEqual([number for number, _ in steps], [str(n) for n in range(1, 9)])
+        check = section(routing, "4. Check the critical routing against the catalogue, before the router runs", "### ")
+        for words in ("render its views", "workmanship items included", "`## Critical routing`",
+                      "| Item | Kind | Severity | Verdict | Rests on | Why |", "on its rows in the rules table alone",
+                      "measured half is judged by the pre-order check that step 8 runs after the router",
+                      "A `fail` is put right before the router runs", "Commit the section before the router runs",
+                      "git log --reverse --format=%H -G '^## Critical routing$' -- <board folder>/layout-plan.md",
+                      "git merge-base --is-ancestor <section commit> <router commit>", "locked_copper"):
+            with self.subTest(words=words):
+                self.assertIn(words, check)
+        self.assertNotRegex(self.method, r"step [4-7] of routing does|\(step 7 of routing\)")
+
+    def test_a_placement_caused_workmanship_finding_is_closed_at_the_placement(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4: A finding against a workmanship item caused by where parts sit is closed by changing the placement, re-routing what it affects and repeating the placement measures, and its record names the change and the measures before and after.
+        close = section(self.method, "7. Close every finding", "### ")
+        for words in ("A workmanship finding caused by placement is closed at the placement",
+                      "never by reshaping the route around the parts as they stand", "re-route what the change affects",
+                      "render the placement view and its measures again", "the placement's measures before and after it",
+                      "A finding whose cause is the route alone is corrected in the copper"):
+            with self.subTest(words=words):
+                self.assertIn(words, close)
+        review = section(self.method, "Layout review")
+        self.assertIn("is closed by a change to the placement, naming each part moved or turned and the measures before "
+                      "and after it", review)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ This is how a controller board is designed in KiCad so that it passes the pre-or
 
 A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
 
-The sections after the tools, up to and including the layout review, are carried out in the order they appear. The first three, proving value-critical circuits, designing for bring-up and planning the layout, are finished and committed before any footprint is placed on the board; the rules and the routing follow, and the layout review judges the finished layout before the board is ordered. A board that fails any section's step is not ordered. The pre-order check does not read the records the first three sections keep, or the layout review's, so passing it does not stand in for them. The last two sections, [Layout review views](#layout-review-views) and [Layout practice catalogue](#layout-practice-catalogue), are not steps carried out in order: they are reference lists the steps use. The catalogue cites only documents any reader can obtain without charge.
+The sections after the tools, up to and including the layout review, are carried out in the order they appear. The first three, proving value-critical circuits, designing for bring-up and planning the layout, are finished and committed before any footprint is placed on the board; the placement, chosen from more than one and recorded before any track is drawn, follows, then the rules and the routing, and the layout review judges the finished layout before the board is ordered. A board that fails any section's step is not ordered. The pre-order check does not read the records the first three sections keep, or the layout review's, so passing it does not stand in for them. The last two sections, [Layout review views](#layout-review-views) and [Layout practice catalogue](#layout-practice-catalogue), are not steps carried out in order: they are reference lists the steps use. The catalogue cites only documents any reader can obtain without charge.
 
 ## Tools
 
@@ -58,7 +58,7 @@ While an editor holds a board open, KiCad keeps a lock file beside it, `~<board>
 
 Delete the project's lock file too, even though the board tooling looks only at the board's: a board editor reopening the board over a stale lock file with its own user and host name was measured to open it without asking and take over the board's lock file, but to leave the stale project lock file in place after it quit.
 
-Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers, and `task hw:views` renders every view the layout review judges a board on ([Layout review views](#layout-review-views)). What to look for is the [layout review](#layout-review) step's.
+Where a judgement is visual, the agent looks at a rendered view of the board, never at the editor window: Konnect's export toolset and `kicad-cli pcb export svg` both render the board's layers, `task hw:views` renders every view the layout review judges a board on ([Layout review views](#layout-review-views)), and `task hw:placement` renders a placed board's parts with their unrouted connections and measures them ([Placement](#placement)). What to look for is the [layout review](#layout-review) step's.
 
 ## Proving value-critical circuits before layout
 
@@ -332,14 +332,15 @@ Keep the floorplan and the plan in a file named `layout-plan.md` in the board's 
 
 The floorplan divides the board into regions and places its connectors. Give it a region table with exactly these four rows:
 
-| Region | Bounds | What it holds |
-|---|---|---|
+| Region | Bounds | What it holds | Parts |
+|---|---|---|---|
 
 - **Region** is one of `mains`, `low voltage`, `analog sensing` and `digital`. The mains region holds every mains-referenced part and its copper; low voltage holds the low-voltage supplies, their regulators and the load drive stages; analog sensing holds every sensing front end, and any converter of its own part that the front ends feed; digital holds the controller and the logic it drives.
-- **Bounds** gives the region's extent in board coordinates, in millimetres, as the rectangles `(x1, y1)–(x2, y2)` that make it up, corner to opposite corner. Board coordinates are those KiCad's board editor shows and the layout review views state in their captions. Regions do not overlap.
+- **Bounds** gives the region's extent in board coordinates, in millimetres, as the rectangles `(x1, y1)–(x2, y2)` that make it up, corner to opposite corner, separated by commas. Board coordinates are those KiCad's board editor shows and the layout review views state in their captions. Regions do not overlap.
 - **What it holds** names the blocks of the schematic placed in the region, for example `load drive stages, Q3–Q6, R20–R27`.
+- **Parts** lists the reference designator of every part the region holds, comma-separated and without ranges, for example `Q3, Q4, Q5, Q6, R20, R21`. A part that spans two regions, such as an isolator whose pins lie either side of the mains boundary, is listed in both. Every part on the schematic is listed in at least one region, its connectors, test points and mounting holes among them, so a mounting hole is drawn on the schematic as a part of its own. The [placement](#placement) command reads each region's bounds and parts from this column, and measures every part against the regions that list it.
 
-A board that carries no mains records its mains region as `none`: a board whose schematic carries no mains-referenced net, which the rules section therefore declares `MAINS` `none` (step 2 there), writes `none: the board carries no mains` in Bounds. A board whose schematic carries no circuit of one of the other three kinds writes `none` in Bounds with what the schematic lacks, for example `none: the schematic carries no sensing front end`.
+A board that carries no mains records its mains region as `none`: a board whose schematic carries no mains-referenced net, which the rules section therefore declares `MAINS` `none` (step 2 there), writes `none: the board carries no mains` in Bounds. A board whose schematic carries no circuit of one of the other three kinds writes `none` in Bounds with what the schematic lacks, for example `none: the schematic carries no sensing front end`. A region recorded as `none` holds no part, and writes `none` in Parts.
 
 Below it, keep a connector table with one row for every connector, terminal or header of the schematic, test points aside:
 
@@ -378,6 +379,7 @@ A board with no items of its own writes `none` in the Item column of the table's
 Commit `layout-plan.md` before the first commit that places a footprint on the board. It is judged as it stood in the commit before placement, on the branch as pushed and in the checkout step 4 of [Proving value-critical circuits before layout](#proving-value-critical-circuits-before-layout) makes, found the same way, with `layout-plan.md` in place of `circuit-proof.md`. There, export the schematic's netlist in KiCad's own format, `kicad-cli sch export netlist --output <work folder>/check.net <board>.kicad_sch`, and cross-check the plan against it, the schematic and the catalogue in the checkout's own copy of this document, `docs/board-design-method.md`, rather than taking its word:
 
 - the region table has its four rows, each with bounds or a `none` the schematic bears out: the mains region is `none` exactly when the schematic carries no mains-referenced net, and no two regions' rectangles overlap;
+- every part in the netlist is listed in the Parts column of at least one region, and every reference that column lists is a part in the netlist, written once in its region, comma-separated, with no range; a region recorded as `none` lists none;
 - every connector, terminal or header in the netlist, test points aside, has exactly one row in the connector table, with an edge and a position, and the table names no other part;
 - the plan table has exactly one row for every item of the catalogue as it stood in that commit, and names no other;
 - each row marked `no` gives a reason against the item's *Applies when* that the schematic bears out, so no item whose condition the schematic meets is marked `no`;
@@ -390,6 +392,85 @@ A plan item the finished layout does not meet is a finding at the [layout review
 
 Out of scope for this section: the layout review itself, which [Layout review](#layout-review) describes, and producing the views it judges a board on, which [Layout review views](#layout-review-views) describes.
 
+## Placement
+
+Do this once the floorplan and plan are committed, and before any track is drawn. Its purpose is that the board's placement is chosen rather than arrived at. Neat routing follows from good placement: parts placed together leave connections that run short, side by side and seldom crossing, and a placement that leaves them long or crossing makes routing long and crossing however carefully it is drawn. So the board is placed more than one way, each placement is seen with its unrouted connections drawn and measured, each is judged against the catalogue items placement decides, and one is chosen on the record, while moving a part still costs only the move.
+
+The **placement items** are the catalogue items whose *Judged on* names `placement`, and those of the board's own items in `layout-plan.md` whose *Judged on* names it: the items whose question is where a part sits, and `MAINS-2`, whose mains copper includes the pads placement puts down.
+
+The **placement view** is what `task hw:placement` renders from the board's files: an image of the board's parts with each net's connections drawn straight between the pads they join, the shortest straight-line tree over the net's pad centres, and the floorplan's regions drawn and named over them, with the placement's measures written beside it as text and JSON: the connections' total length and each net's, the crossings between different nets' connections, and every part outside its regions. Its file names, its measures and what it refuses are in [`hardware/README.md`](../hardware/README.md#the-placement-view). It needs the same tools as the [layout review views](#layout-review-views).
+
+### 1. Set the board-wide minimum track width and clearance
+
+The placement view takes its resolution from the board's minimum track width and minimum clearance, as the layout review views do, so these two are set before placement; the rest of the rules wait for [Rules before routing](#rules-before-routing). With the board closed in every editor, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, write both into the project file, as `board.design_settings.rules.min_track_width` and `.min_clearance` in millimetres, each at the board manufacturer's stated limit, as catalogue item `MFG-1` asks. Write their two rows into the board's rules table, `design-rules.md`, laid out as step 1 of [Rules before routing](#rules-before-routing) gives it: each a board-wide minimum, set in Board Setup, its source the manufacturer's stated limits with the date of the capability page it was read from and `MFG-1`, and its Confirmed in effect the words step 1 gives a board-wide minimum. Commit the project file and the table.
+
+### 2. Place the parts
+
+Reopen the board, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, and place every footprint with Konnect's tools, in this order:
+
+1. the parts that cannot move: each connector, terminal and header at the edge and position the connector table gives, each mounting hole, and the mains region's parts;
+2. then the rest, within the floorplan, by the way signals flow from part to part and around each current loop: each part inside a region whose Parts lists it, the main integrated circuit of each block before the parts that serve it, and a part that serves one pin, such as a decoupling capacitor or a pull-up, beside that pin;
+3. each part turned so its pins face the pins they join.
+
+Save the board, with Konnect's `save_project`, and close it in every editor.
+
+### 3. Make at least two candidate placements, each in its own commit
+
+A **candidate** is one placement of every part, committed in a commit of its own before it is rendered. Commit the placement from step 2 as candidate 1, naming it in the commit message, for example `<board>: placement candidate 1`. Then reopen the board, place it another way, close it and commit it as candidate 2: another arrangement of a block, a part moved or turned to shorten or uncross its connections, or two blocks' places swapped within the floorplan. Make as many more as the judgement in step 5 calls for. No two candidates' layouts are the same. A candidate may start from an earlier one: with the board closed, restore that one's layout with `git checkout <commit> -- <board folder>/<board>.kicad_pcb`.
+
+### 4. Render and measure each candidate from its commit
+
+Render each candidate from its own commit, in a checkout of that commit outside the repository's working tree, so its view and measures are the commit's and nothing uncommitted reaches them. From the repository's root, with `<n>` the candidate's number:
+
+```
+git worktree add --detach <work folder>/<board>-candidate-<n> <commit>
+(cd <work folder>/<board>-candidate-<n>/<board folder> && task hw:placement -- --board <board>.kicad_pcb --project <board>.kicad_pro --out <work folder>/<board>-placement-<n>)
+git worktree remove <work folder>/<board>-candidate-<n>
+```
+
+The output folder is a working folder: it must be new or empty, and outside every design's folder. Never commit it: the images and measures are not committed, as the review views are not, since these commands render them again from the candidate's commit. Open every image the folder's `index.txt` lists, and read its `measures.txt`.
+
+### 5. Judge each candidate against the placement items
+
+For each candidate, give every placement item one verdict in a verdict table:
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+
+- **Item** is the item's identifier.
+- **Verdict** is one of `pass`, `fail` or `not applicable`. An item is `not applicable` exactly when the plan table marks it `no`.
+- **Rests on** cites each image of the placement view the verdict rests on, by the name the candidate's `index.txt` gives it, a tile's included, with the place on the board in the board coordinates its caption states, or `whole board`; and each line of `measures.txt` it cites.
+- **Why**: for `fail`, what the view or the measures show wrong, and where; for `not applicable`, the plan row's reason.
+
+At placement an item is judged on what placement decides: where each part sits, on which side, and which way it is turned. Where an item's Passes or Fails speaks of a track or a route, judge the connection the placement view draws in its place, the straight line between the pads the track will join. So a decoupling capacitor whose connection to its pin runs long, or crosses another net's, fails `DECOUPLE-1`, and `WORK-1` fails where connections run across the board, or cross, where moving, turning or swapping parts would keep them short and apart. A part the measures list as outside its regions fails `FLOOR-1`. `TEST-1` is judged here for its spacing from part bodies only, and at the layout review in full.
+
+### 6. Choose one, and record the placement before any track
+
+A candidate that leaves a part outside its floorplan regions, an `OUTSIDE` line naming a part in its `measures.txt`, is not chosen: make another that does not. Among the rest, the choice is a judgement on the item verdicts, with the measures cited as its grounds, and never a fixed weighting of the measures: a candidate that passes an item another fails is the better on that item, and its measures say by how much, for example a capacitor's connection to its pin 3 mm shorter, or two crossings fewer.
+
+Record the placement in `layout-plan.md`, below the board's own items, in a section headed `## Placement`. Give each candidate a heading of its own, `### Candidate <n>`, and under it:
+
+- **Commit**: the commit that holds it;
+- **Renders**: the commands of step 4 that render its view from that commit, as they were run;
+- **Measures**: the `LENGTH`, `CROSSINGS` and `OUTSIDE` lines of its `measures.txt` that give the totals, and every `OUTSIDE` line naming a part;
+- its verdict table from step 5.
+
+End the section with **Chosen**: the chosen candidate's number, and why it was chosen over each other candidate, citing the verdicts and the measures that decided it.
+
+If the chosen candidate is not the last committed, restore its layout with the board closed, `git checkout <commit> -- <board folder>/<board>.kicad_pcb`. Commit the section, with the board's design files as the chosen candidate holds them, before any track is drawn.
+
+Judge the record against the board and the repository rather than taking its word:
+
+- **Two candidates or more.** The section has at least two candidates, each with a commit holding the board's design files, and no two of them hold the same layout: `git diff --quiet <commit> <other commit> -- <board folder>/<board>.kicad_pcb` exits with status 1 for every two.
+- **Each candidate as it measured.** Each candidate's recorded commands, run again, write a `measures.txt` whose totals and `OUTSIDE` lines are the ones the section records for it.
+- **Every placement item judged.** Each candidate's verdict table has exactly one row for every placement item, every catalogue item whose *Judged on* names `placement` in the commit that records the section and every one of the board's own items whose *Judged on* names it, and names no other; each `not applicable` is a `no` row of the plan table.
+- **The chosen placement is whole, and is the board's.** The chosen candidate has no `OUTSIDE` line naming a part, and the layout in the section's first commit is the chosen candidate's: `git diff --quiet <chosen commit> <section commit> -- <board folder>/<board>.kicad_pcb` exits with status 0.
+- **The placement came before the first track.** The section's first commit, the first that `git log --reverse --format=%H -G '^## Placement$' -- <board folder>/layout-plan.md` lists, and every candidate's commit come before the first commit carrying a track, the first that `git log --reverse --format=%H -G '^[[:space:]]*[(](segment|arc|via)$' -- <board folder>/<board>.kicad_pcb` lists, a track being a straight track, an arc or a via: each is an ancestor of it, `git merge-base --is-ancestor <commit> <first track commit>` exiting with status 0, and none is it. While no commit carries a track yet, this holds.
+
+A placement with fewer than two candidates, a placement item left without a verdict, a chosen candidate with a part outside its regions, or a section committed after the first track fails this step, and so does a record that fails a cross-check above.
+
+Out of scope for this section: the placement command itself, which [`hardware/README.md`](../hardware/README.md#the-placement-view) describes, and routing.
+
 ## Rules before routing
 
 Do this before any track is routed. Its purpose is that every rule the board is routed and checked against is written down, traceable to where its figure comes from, and that the table says which of them KiCad confirms on the board itself, which KiCad's rule check enforces before the board is ordered, which the pre-order check measures itself, and which, a net class's track width and via sizes, are only the defaults routing starts from.
@@ -398,7 +479,7 @@ Close the board in every editor before writing anything in this section, as [The
 
 ### 1. Write every rule and net class down, with its figure and source
 
-Keep a table in a file named `design-rules.md` in the board's own folder, beside its KiCad project. Give it one row for every design rule and every net class the board uses:
+Keep a table in a file named `design-rules.md` in the board's own folder, beside its KiCad project. Give it one row for every design rule and every net class the board uses. The board-wide minimum track width and minimum clearance, and their two rows, were written before placement ([Placement](#placement), step 1), because the placement view takes its resolution from them; every other row is written here:
 
 | Rule or net class | Figure | Where it is set in KiCad | Source of the figure | Confirmed in effect |
 |---|---|---|---|---|
@@ -412,7 +493,7 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
   - a **measured rule**: the pre-order check's `FIGURE` line for it, which states the figure the check read from the project file, quoted from the check's report;
   - **KiCad's own check**, named in place of a rule: `reported unaided by the layout rule check in the pre-order check`;
   - a **net class**: the nets step 3 lists for it;
-  - a **board-wide minimum**, and a **net class's own clearance**, set in Board Setup: `not confirmed by step 3; enforced by the layout rule check in the pre-order check`. Step 3 cannot read these figures, so they are never marked confirmed. They stand on the figure and source written in the row. KiCad's layout rule check reports copper, holes and silkscreen that break any of them, as an error, or as a warning for silkscreen clipped by the board edge, and the pre-order check (step 7 of routing) fails the board on either;
+  - a **board-wide minimum**, and a **net class's own clearance**, set in Board Setup: `not confirmed by step 3; enforced by the layout rule check in the pre-order check`. Step 3 cannot read these figures, so they are never marked confirmed. They stand on the figure and source written in the row. KiCad's layout rule check reports copper, holes and silkscreen that break any of them, as an error, or as a warning for silkscreen clipped by the board edge, and the pre-order check (step 8 of routing) fails the board on either;
   - a **net class's own track width and via sizes**: `routing default only; not enforced`. KiCad starts a track or via on the class's nets at these sizes, but its layout rule check does not hold copper to them: a narrower track or a smaller via on such a net raises no violation of the class's figure. The class's track width is also the width the measured rule of `WORK-8` holds every track of the class to away from its pads, which the row of that rule's figure records; it is not a minimum KiCad enforces. A track width or via size the board relies on, such as a mains or power track's width, is therefore also written as a custom rule in the board's rules file, conditioned on the class, one constraint per rule:
 
     ```
@@ -486,7 +567,7 @@ Out of scope for this section: the figures themselves, which come from the machi
 
 ## Routing: critical nets by hand and locked, then the rest
 
-The nets that decide whether a board works are never left to an automatic router. They are routed deliberately to their stated rules and locked. Automated routing is then run only one way: KiCad's exporter, the external router from its command line, then KiCad's importer (step 5). It places only what is left unrouted, and may not move a locked item. Locking is done by the board tooling's lock command on the closed board file (step 3). A check in the board tooling, never a comparison by hand and never the router's own report, confirms afterwards that nothing locked was moved and nothing was added to a critical net. Only the board's own tracks, arcs, vias and zones are locked and recorded; a copper zone inside a footprint is not covered.
+The nets that decide whether a board works are never left to an automatic router. They are routed deliberately to their stated rules and locked. Automated routing is then run only one way: KiCad's exporter, the external router from its command line, then KiCad's importer (step 6). It places only what is left unrouted, and may not move a locked item. Locking is done by the board tooling's lock command on the closed board file (step 3). A check in the board tooling, never a comparison by hand and never the router's own report, confirms afterwards that nothing locked was moved and nothing was added to a critical net. Only the board's own tracks, arcs, vias and zones are locked and recorded; a copper zone inside a footprint is not covered.
 
 ### 1. Put every critical net in a named critical class
 
@@ -516,7 +597,33 @@ Name every critical class with its own `--class`. This marks every track, arc, v
 
 A locked item is changed only by a deliberate re-route: remove it, route it again on the reopened board, then close the board and lock again. A re-route after recording needs a fresh record.
 
-### 4. Record the critical-class copper, immediately before export
+### 4. Check the critical routing against the catalogue, before the router runs
+
+The router routes everything else around the critical nets, so their routes are judged now, while changing one costs only that net's re-route. With the board still closed, render its views as [Layout review views](#layout-review-views) describes, naming the classes step 3 locked, into a working folder of their own, never committed.
+
+Then judge every item of the [layout review](#layout-review)'s checklist that bears on the critical nets, workmanship items included. An item bears on them when what its *Asks* asks of the board is decided, wholly or in part, by copper a net in a critical class carries: its tracks, arcs, vias or zones, or the way its routes run. Judge each over the critical nets' copper only, since the rest is not yet routed:
+
+- a **judgement-kind** item on the views its *Judged on* names, as step 2 of the layout review judges one;
+- a **rule-kind** item on its rows in the rules table alone, `design-rules.md`: the row of every rule the item gives, each present with a figure the item's own figure and source bear out. The pre-order check fails a board that is not fully routed, so it is not run here, and the verdict's Why says that the item's measured half is judged by the pre-order check that step 8 runs after the router.
+
+Record the verdicts in `layout-plan.md`, below the placement section, in a section headed `## Critical routing`, in the form the layout review records its verdicts (step 1 and step 2 of [Layout review](#layout-review)): its opening lines, **Board judged**, the commit holding the board with its critical nets routed and locked, and **Views**, the `task hw:views` command as it was run; then the verdict table, `| Item | Kind | Severity | Verdict | Rests on | Why |`, with one row for every item that bears on the critical nets; and below the table every other item of the checklist, each with the reason it bears on no critical net.
+
+A `fail` is put right before the router runs: re-route the net as step 3 says, lock it again and only then commit, render the views again and judge the item again, writing the verdict reached in the same row, after the `fail`, with the commit that put it right. A `cannot judge` is resolved the same way the layout review resolves one. Commit the section before the router runs (step 6).
+
+Judge the record against the repository rather than taking its word, once the board carrying the router's tracks is committed. Every critical item is locked in step 3, and nothing the router adds is locked, so the first commit carrying the router's tracks is the first, after one whose tracks are all locked, whose layout holds a track, arc or via that is not locked. From the repository's root, this lists every commit that changes the layout, oldest first, with how many tracks, arcs and vias its layout holds and how many of them are not locked:
+
+```
+for c in $(git rev-list --reverse HEAD -- <board folder>/<board>.kicad_pcb); do
+  git show "$c:<board folder>/<board>.kicad_pcb" > <work folder>/at.kicad_pcb
+  python3 -c "import sys; sys.path.insert(0, 'hardware/tools'); import locked_copper as l; t = [i for i in l.copper(l.read_layout(sys.argv[1]), sys.argv[1]) if i['kind'] != 'zone']; print(sys.argv[2], len(t), sum(1 for i in t if not i['locked']))" <work folder>/at.kicad_pcb "$c"
+done
+```
+
+The section's first commit, the first that `git log --reverse --format=%H -G '^## Critical routing$' -- <board folder>/layout-plan.md` lists, is an ancestor of that first commit carrying the router's tracks, `git merge-base --is-ancestor <section commit> <router commit>` exiting with status 0, and is not it. Each item that bears on the critical nets has one row, each rule-kind row rests on the rules table's rows and says its measured half is judged after the router, and each `fail` has the verdict reached after it.
+
+A section committed after the router's tracks, an item that bears on the critical nets left without a verdict, or a `fail` not put right before the router runs fails this step.
+
+### 5. Record the critical-class copper, immediately before export
 
 With the board still closed, from the board's folder, run:
 
@@ -533,9 +640,9 @@ The command refuses, and writes no record, in each case step 3 refuses, and when
 - the record cannot be written where it was asked to go;
 - any critical-class item is not locked. It names each one; lock again (step 3) and record again.
 
-### 5. Export, route the rest externally, import
+### 6. Export, route the rest externally, import
 
-Before exporting, keep copies of the board file and the project file as they stand, so the board can be restored if step 6 fails: in the work folder, under names that do not end in `.kicad_pcb` or `.kicad_pro` (for example `<board>.kicad_pro.before`), since a folder holding a project file is a design's folder, where the record is refused. Or commit both.
+Before exporting, keep copies of the board file and the project file as they stand, so the board can be restored if step 7 fails: in the work folder, under names that do not end in `.kicad_pcb` or `.kicad_pro` (for example `<board>.kicad_pro.before`), since a folder holding a project file is a design's folder, where the record is refused. Or commit both.
 
 KiCad 10's `kicad-cli` has no Specctra command. The exporter and importer are reached through KiCad's bundled Python, with these commands run from the board's folder. Do not substitute another tool's Specctra export: Konnect's own routing export, for one, refuses boards with rounded-rectangle pads.
 
@@ -563,7 +670,7 @@ Saving this way also rewrites the project file, with KiCad's defaults filled in 
 
 The router's own report, for example `0 unrouted and 0 violations`, is not evidence of anything. Neither the router nor the importer is relied on to leave locked copper alone.
 
-### 6. Compare the imported board with the record
+### 7. Compare the imported board with the record
 
 From the board's folder, run:
 
@@ -571,7 +678,7 @@ From the board's folder, run:
 task hw:copper-compare -- --board <board>.kicad_pcb --project <board>.kicad_pro --record <work folder>/<board>.record.json
 ```
 
-With the board still closed, give the same board, its own project file, and the record taken of that board in step 4. This fails, naming each item, when:
+With the board still closed, give the same board, its own project file, and the record taken of that board in step 5. This fails, naming each item, when:
 - a recorded item is missing;
 - a recorded item is no longer locked;
 - a recorded item is changed in any recorded property, with each changed property given as old → new;
@@ -583,7 +690,7 @@ The critical nets at comparison are every net the record names and every net the
 
 A board on which any critical-class net was placed by the router fails this step.
 
-### 7. Run the board's own rule checks, then reopen the board
+### 8. Run the board's own rule checks, then reopen the board
 
 Run the pre-order check, which runs KiCad's own electrical and layout rule checks with zones refilled:
 
@@ -591,7 +698,7 @@ Run the pre-order check, which runs KiCad's own electrical and layout rule check
 task hw:verify
 ```
 
-It checks only designs git tracks (`git add` is enough), as `hardware/README.md` explains. It must pass. A router's or editor's "no violations" is never accepted in its place. Reopen the board in the editor, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, only after this check and the comparison in step 6 have run, and only to continue work on it.
+It checks only designs git tracks (`git add` is enough), as `hardware/README.md` explains. It must pass. A router's or editor's "no violations" is never accepted in its place. Reopen the board in the editor, as [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) describes, only after this check and the comparison in step 7 have run, and only to continue work on it.
 
 Out of scope for this step: judging the quality of the layout, which is the [layout review](#layout-review) that follows.
 
@@ -601,16 +708,16 @@ Do this once routing is finished and the pre-order check passes the board, and b
 
 The **checklist** is every item of the catalogue together with the board's own items in `layout-plan.md` (step 2 of [Planning the layout](#planning-the-layout)). Its baseline is that file as committed before placement, which step 3 there judges.
 
-The **reviewer** is an agent session, or a person, that did not design the board. It works from these alone: the board's design files, the checklist, the [layout review views](#layout-review-views) rendered from the board, the pre-order check's report, and the board's committed `layout-plan.md`. It never works from the designer's reasoning, session or notes.
+The **reviewer** is an agent session, or a person, that did not design the board. It works from these alone: the board's design files, the checklist, the [layout review views](#layout-review-views) rendered from the board, the placement view among them, the pre-order check's report, and the board's committed `layout-plan.md`. It never works from the designer's reasoning, session or notes.
 
 Keep the review in one file named `layout-review.md` in the board's own folder, beside its KiCad project. It holds every round of the review, the first and every repeat, each under its own heading, `Round <n>`, numbered from 1, with its full set of verdicts, its findings and their closures. Commit the record at the end of each round, once its verdicts and findings are written and before any change to the board they call for, never part-way through a round, and again with every change that closes a finding. What a round recorded at its end, its opening lines, its verdict table and each finding's number, Raised by, Severity and What and where, is never changed afterwards; only Rule, Added as, Planning shortfall and Closed by are filled in later, as steps 5 to 7 complete them. So round 1 stays the board's first full review. A review is cited, wherever an item, a rule or a commit names it, by the record's path from the repository's root and the round, and a finding by its number as well, for example `<board folder>/layout-review.md, round 1, finding 1.3`.
 
 ### 1. Start a round: commit the board, render its views, run the pre-order check
 
-Commit the board's design files as they are to be judged. With the board closed in every editor, render its views as [Layout review views](#layout-review-views) describes, naming every critical class, the classes step 3 of routing locked, and run the pre-order check, `task hw:verify`, as step 7 of routing does. Begin the round with:
+Commit the board's design files as they are to be judged. With the board closed in every editor, render its views as [Layout review views](#layout-review-views) describes, naming every critical class, the classes step 3 of routing locked, render its placement view into a folder of its own beside them, as that section describes, and run the pre-order check, `task hw:verify`, as step 8 of routing does. Begin the round with:
 
 - **Board judged**: the commit holding the design files the round judges;
-- **Views**: the `task hw:views` command as it was run, and any further view rendered in the round (step 2), with the command that rendered it;
+- **Views**: the `task hw:views` command and the `task hw:placement` command as they were run, and any further view rendered in the round (step 2), with the command that rendered it;
 - **Pre-order check**: the board's `DESIGN` line from the report, and every `FIGURE` and `VIOLATION` line under it.
 
 A round judges the board only as that commit holds it, and only on those views.
@@ -624,7 +731,7 @@ Go through the checklist in order, the catalogue's items as the round's commit h
 
 - **Item**, **Kind** and **Severity** are the item's identifier, kind and severity.
 - **Verdict** is one of `pass`, `fail`, `not applicable` or `cannot judge`.
-- **Rests on** cites each view the verdict rests on, by the name the views' index gives it, a tile's included, and the place on the board, in the board coordinates the view's caption states, or `whole board` for an item judged over all of it. Judge each item on every view its *Judged on* names. Where a view is cut into tiles, judge it on every tile whose board coordinates reach the place judged, and cite each: an item judged over a floorplan region on every tile the region's bounds in `layout-plan.md` reach, and an item judged over the whole board on every tile. A tile not looked at is a part of the board the verdict does not rest on.
+- **Rests on** cites each view the verdict rests on, by the name the views' index gives it, or for the placement view the name the placement command's index gives it, a tile's included, and the place on the board, in the board coordinates the view's caption states, or `whole board` for an item judged over all of it. Judge each item on every view its *Judged on* names. Where a view is cut into tiles, judge it on every tile whose board coordinates reach the place judged, and cite each: an item judged over a floorplan region on every tile the region's bounds in `layout-plan.md` reach, and an item judged over the whole board on every tile. A tile not looked at is a part of the board the verdict does not rest on.
 - **Why**: for `not applicable`, the reason against the item's *Applies when*, stating what the schematic lacks, which the schematic must bear out: an item whose condition the schematic meets applies, and cannot be judged not applicable. For `fail`, the number of the finding it raises (step 4), or of the finding an earlier round raised against it and closed by a reason (step 7). For `cannot judge`, the view the item needs and why the views rendered do not show it.
 
 A **rule-kind item**'s verdict rests on two things, and Rests on cites both: the pre-order check's report, the board's `DESIGN` line with no `VIOLATION` line under it of a rule the item gives, and for a measured rule its `FIGURE` line, giving the figure the check read; and the board's rules table, `design-rules.md`, by the row of every rule the item gives, each rule present there with a figure the item's own figure and source bear out, read from the record its role names where the item names its figure by its role. Both are needed because the check holds the board only to the figure its rules state, the figure in its rules file, its Board Setup or its project text variable: a figure looser than the item requires passes the check, and only the rules table, read against the item, shows it. Either one falling short is a `fail`.
@@ -676,6 +783,8 @@ A finding stays open until one of these closes it, written in Closed by:
 
 Never a judgement that the finding is unimportant.
 
+**A workmanship finding caused by placement is closed at the placement.** A finding against a workmanship item (`WORK-`) whose cause is where parts sit, such as a route made long or looping by the distance between the parts it joins, is closed by a change to the placement, never by reshaping the route around the parts as they stand. Judge the cause on the placement view of the round's commit: the cause is where parts sit when the connection the view draws for the finding's net shows the fault the route shows, running long because the pads it joins are far apart, crossing another net's because of where the parts sit, or reaching a partner placed beyond another part; the cause is the route alone when that connection runs short and direct where the route does not. Move or turn the parts the finding names, re-route what the change affects, the critical nets as steps 2 to 4 of routing route and lock them and the rest through the router (steps 5 to 8), and render the placement view and its measures again from the change's commit. Closed by names the change's commit, each part moved or turned and how, and the placement's measures before and after it: the `LENGTH` and `CROSSINGS` totals of each `measures.txt`, and the `NET` line of each net the finding names, from the round's commit and from the change's. A finding whose cause is the route alone is corrected in the copper.
+
 A finding of safety severity closes only by a change to the board, or by a named person's acceptance of one of those reasons, and never by the agent that designed or reviewed the board. The acceptance is recorded beside the board, in the review record, in the same form as the signature on the board's separation basis record: after the reason, Closed by gives `accepted_by:` with the person's name and `accepted_on:` with the date they accepted it, written `YYYY-MM-DD`, and the record is committed with them. The name is a person's, never an agent session's, and never a placeholder such as `unsigned`, `tbd`, `todo`, `none`, `placeholder` or anything in angle brackets; the date is no later than the day of the commit that adds it. That commit is the acceptance's audit trail; no cryptographic signature is involved.
 
 ### 8. After any change, review the whole board again
@@ -689,31 +798,32 @@ Before the first order of any board that carries mains, a review by an experienc
 Judge the record against the board and the repository rather than taking its word:
 
 - **Every round judged the whole checklist.** Each round's verdict table has exactly one row for every item of the catalogue in the round's commit and every row of the board's own items table in that commit, and names no other. Every verdict is one of the four, and no `cannot judge` is left without a verdict after it.
-- **Every view was rendered.** Render the views again from the round's commit with the round's command: its classes are the critical classes routing locked; the index holds a `layer-` view of every copper, mask, paste, silkscreen and edge layer the board carries and a `net-` view of every net the critical classes hold; and every view a verdict cites is in it, or is a further view the round names with its command.
+- **Every view was rendered.** Render the views again from the round's commit with the round's command: its classes are the critical classes routing locked; the index holds a `layer-` view of every copper, mask, paste, silkscreen and edge layer the board carries and a `net-` view of every net the critical classes hold; and every view a verdict cites is in it, or is a further view the round names with its command. Render the placement view again from the round's commit with the round's `task hw:placement` command, into its own folder: every placement view a verdict cites is in its index.
 - **Every verdict rests where it says.** Each `not applicable` gives a reason the schematic bears out. Each rule-kind verdict cites the report's line and the rules table's rows, and a `pass` has no `VIOLATION` line of a rule the item gives under the board's `DESIGN` line, a measured rule's `FIGURE` line giving the figure its row gives, and every rule the item gives in the table with a figure its source bears out.
 - **Every finding was judged as a rule, and added.** Each finding has a Rule entry. Each `no` gives why none of the four forms can state the finding, and a `no` whose finding one of them can state, as step 1 of [Rules before routing](#rules-before-routing) defines them, fails, as a `not applicable` the schematic does not bear out does. One judged `yes` names in Added as a rule-kind item of the catalogue, as committed, that states it: a new one whose Source names the review, or one that already stated it. One judged `no` names a judgement-kind item of the catalogue or one of the board's own items that states it, new with its Source naming the review, or already there.
 - **The baseline came first.** Every row of the board's own items table in the commit before placement is in each round's commit, with the same fields from Applies when to Source, so no baseline item is removed, narrowed, loosened or lowered after the layout began. Every row of the board's own items table that the commit before placement lacks names, in its Source, the review that added it. That commit is the one step 3 of [Planning the layout](#planning-the-layout) finds.
 - **Each round stands as it was first recorded.** For each round, the first commit that `git log --reverse --format=%H -G '^#+ Round <n>$' -- <board folder>/layout-review.md` lists is that round's end-of-round commit. In it, the round's opening lines and verdict table are as the record now gives them, and so are its findings, none removed or added, each with the same number, Raised by, Severity and What and where. That commit comes before every commit after the round's Board judged commit that changes the board's design files: it is an ancestor of each, `git merge-base --is-ancestor <record commit> <change commit>` exiting with status 0, and is none of them. The planning shortfall check below therefore reads round 1 as it was first recorded.
 - **Every severity is the one this step gives.** Each row of each verdict table gives the item's own kind and severity, as the round's commit holds the item. Each finding's Severity is the severity of the item that raised it, or of the item whose plan row it departs from, read from the catalogue or the board's own items table in the round's commit; for a departure from the floorplan's region or connector table, and for a free-pass finding, it is the severity the catalogue's definitions give what its What and where says is wrong. And whatever raised it, a finding whose What and where bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing or on insulation has safety severity. The two checks below key on the severity a finding records, so a finding recorded below its severity fails here rather than closing by a reason with no acceptance or escaping its planning shortfall.
 - **Every planning shortfall has its amendment.** Each finding of safety or function severity in round 1 raised against a catalogue item whose plan row was `yes`, or one of the board's own items in the baseline, names an item or a step and a commit. That commit changes this document at that item or step. An amended item's Source names the review and the finding; an amended step's text ends with the note step 6 gives naming them, and the commit's message names them too.
-- **Every closure is one the method allows.** Each Closed by is a change naming a commit that changes the board's design files, or a reason of one of the three kinds. A safety finding's is a change, or a reason carrying an `accepted_by` and `accepted_on` as step 7 states.
+- **Every closure is one the method allows.** Each Closed by is a change naming a commit that changes the board's design files, or a reason of one of the three kinds. A safety finding's is a change, or a reason carrying an `accepted_by` and `accepted_on` as step 7 states. A workmanship finding whose cause the placement view shows to be where parts sit is closed by a change to the placement, naming each part moved or turned and the measures before and after it, as step 7 states, and never by a change to its route alone.
 - **The closing round judged the board as it stands.** None of the board's design files has changed since the closing round's commit: `git diff --quiet <commit> -- <file> ...`, naming the board's project, schematic and its sheets, layout and rules file, exits with status 0.
 
 A review with an item left without a verdict, a `cannot judge` verdict unresolved, a view not rendered, or a baseline checklist committed after the layout began fails this step, and so does a record that fails a cross-check above. A baseline is committed after the layout began when step 3 of [Planning the layout](#planning-the-layout) fails it.
 
-**This step is shown to find what it checks for** on `hardware/proof/review-proof`, a clean proof design carrying at least one part for every area of the [Layout practice catalogue](#layout-practice-catalogue), never ordered. `task hw:review-seed -- --seeds <file> --out <folder>` copies it outside the repository, places one or more known layout defects in the copy for every catalogue area, refuses the copy unless the pre-order check passes it, and writes a review folder holding only what this step gives a reviewer: the copy's design files with its floorplan, plan and rules records but never its own review record, this document, `hardware/README.md`, every view of the copy and the pre-order check's report on it. The seed list goes to `<file>`, apart from the folder. A session that did not design the board and has no record of the seeds then follows this step on the folder alone, started with the command's fixed prompt (`task hw:review-seed -- --print-prompt`), and its findings are compared with the seed list afterwards. Every seed must be reported as a finding against the catalogue item that covers it. A seed not reported is a gap in the catalogue, the views or this step and what it gives a reviewer, closed where it lies, and the blind review is repeated in a new session before this step is relied on. Repeat the proof after changing the catalogue, the views or this step. `hardware/README.md` describes the proof design and the command.
+**This step is shown to find what it checks for** on `hardware/proof/review-proof`, a clean proof design carrying at least one part for every area of the [Layout practice catalogue](#layout-practice-catalogue), never ordered. `task hw:review-seed -- --seeds <file> --out <folder>` copies it outside the repository, places one or more known layout defects in the copy for every catalogue area, refuses the copy unless the pre-order check passes it, and writes a review folder holding only what this step gives a reviewer: the copy's design files with its floorplan, plan and rules records but never its own review record, this document, `hardware/README.md`, every view of the copy, its placement view and measures in a folder of their own, and the pre-order check's report on it. The seed list goes to `<file>`, apart from the folder. A session that did not design the board and has no record of the seeds then follows this step on the folder alone, started with the command's fixed prompt (`task hw:review-seed -- --print-prompt`), and its findings are compared with the seed list afterwards. Every seed must be reported as a finding against the catalogue item that covers it. A seed not reported is a gap in the catalogue, the views or this step and what it gives a reviewer, closed where it lies, and the blind review is repeated in a new session before this step is relied on. Repeat the proof after changing the catalogue, the views or this step. `hardware/README.md` describes the proof design and the command.
 
 Out of scope for this section: the pre-order check itself, which [`hardware/README.md`](../hardware/README.md) describes; the content of the catalogue; producing the views, which [Layout review views](#layout-review-views) describes; the content of any particular board's findings; and who the electrical engineer is.
 
 ## Layout review views
 
-An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track. The layout review therefore judges a board on an image of each layer (`layer-<layer>`) and on views that show each critical net against the board (`net-<net>`), the critical classes against each other (`classes`), each integrated circuit framed with its own decoupling parts (`crop-<reference>`), each side as it is assembled (`assembly-top`, `assembly-bottom`), and the assembled board in three dimensions (`3d-top`, `3d-bottom`, `3d-angled`). It also uses a table of the facts a picture cannot carry. With the board closed in every editor, render them from the board's folder:
+An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track. The layout review therefore judges a board on an image of each layer (`layer-<layer>`) and on views that show each critical net against the board (`net-<net>`), the critical classes against each other (`classes`), each integrated circuit framed with its own decoupling parts (`crop-<reference>`), each side as it is assembled (`assembly-top`, `assembly-bottom`), the assembled board in three dimensions (`3d-top`, `3d-bottom`, `3d-angled`), and the board's parts with their unrouted connections and floorplan regions (`placement`), the [placement](#placement) view. It also uses a table of the facts a picture cannot carry, and the placement's measures. With the board closed in every editor, render them from the board's folder:
 
 ```
 task hw:views -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <critical class> [--class <critical class> ...] --out <work folder>/<board>-views
+task hw:placement -- --board <board>.kicad_pcb --project <board>.kicad_pro --out <work folder>/<board>-placement
 ```
 
-Name every critical class, as in routing step 3. The output folder is a working folder: it must be new or empty, and outside every design's folder. Never commit it. The views, their names, the index and the per-net fact table, and what the command refuses, are listed in [`hardware/README.md`](../hardware/README.md#the-layout-review-views). The command needs KiCad's command-line tool, resvg and a monospaced font for the captions (see [Tools](#tools)).
+Name every critical class, as in routing step 3. Each output folder is a working folder: it must be new or empty, and outside every design's folder, and the placement view's is its own, beside the views' and never the same. Never commit either. The placement view's images are named `placement`, as its own index names them, and its measures are in that folder's `measures.txt`, as [`hardware/README.md`](../hardware/README.md#the-placement-view) describes. The views, their names, the index and the per-net fact table, and what the command refuses, are listed in [`hardware/README.md`](../hardware/README.md#the-layout-review-views). The command needs KiCad's command-line tool, resvg and a monospaced font for the captions (see [Tools](#tools)).
 
 **Resolution.** The views are drawn at
 
@@ -754,7 +864,7 @@ Every item carries the same fields:
 - **Asks** is the question the item asks of a board.
 - **Passes** is the pattern that passes.
 - **Fails, as the views show it** is what a failing board looks like in the [layout review views](#layout-review-views).
-- **Judged on** names the views it is judged on: an image of one layer, `layer-<layer>`, such as `layer-F.Cu`; a critical net against the board, `net-<net>`; the critical classes against each other, `classes`; an integrated circuit with its decoupling, `crop-<reference>`; a side as assembled, `assembly-top` or `assembly-bottom`; the assembled board in three dimensions, `3d-top`, `3d-bottom` or `3d-angled`; or the fact table, `facts.txt`, which gives every net's track width range, via count, zones and classes. A rule-kind item is judged on the pre-order check's report and on the board's rules table, `design-rules.md`: the check holds the board to whatever figure its rules state, so a figure smaller than the item's source requires passes the check, and only the rules table, its figure read against the item, shows it. Its *Fails* names what such an undersized figure looks like in that table.
+- **Judged on** names the views it is judged on: an image of one layer, `layer-<layer>`, such as `layer-F.Cu`; a critical net against the board, `net-<net>`; the critical classes against each other, `classes`; an integrated circuit with its decoupling, `crop-<reference>`; a side as assembled, `assembly-top` or `assembly-bottom`; the assembled board in three dimensions, `3d-top`, `3d-bottom` or `3d-angled`; the fact table, `facts.txt`, which gives every net's track width range, via count, zones and classes; or the placement view, `placement`, the board's parts with their unrouted connections and floorplan regions, with its measures. An item whose *Judged on* names `placement` is judged at [placement](#placement) too, on each candidate before any track is drawn, as well as at the layout review. A rule-kind item is judged on the pre-order check's report and on the board's rules table, `design-rules.md`: the check holds the board to whatever figure its rules state, so a figure smaller than the item's source requires passes the check, and only the rules table, its figure read against the item, shows it. Its *Fails* names what such an undersized figure looks like in that table.
 - **Kind** is one of two. A **rule-kind** item is enforced by the automated pre-order check, through the board's rules: it gives its rule in one of the four forms the rules step uses, with its figure and source. Three of them KiCad's own layout rule check enforces: a board-wide minimum, a net class's figure, and a custom rule in the board's rules file (an item whose quality KiCad reports unaided, such as a via left unconnected, gives no rule and names KiCad's check). The fourth is a **measured rule**, a quality KiCad does not measure, such as how much longer a route is than its pads' places need: the pre-order check measures it itself from the board's files, against a figure the board sets as a project text variable, and the check's report states the figure it read. A net class it names by its role, such as `<power class>`, is replaced by the board's own name for that class; only the `Mains` class is named literally, since its name is fixed. A **judgement-kind** item is judged on the rendered views. A practice only partly expressible as a rule is two items, one of each kind, so every item has a single kind.
 - **Severity** is one of four:
   - **safety**: the item bears on separation between mains and anything a person or a low-voltage circuit can reach, on fusing, on protective earthing, or on insulation;
@@ -773,7 +883,7 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Asks:** Does every part sit in the region of the floorplan that holds its function, with like functions together rather than mixed?
 - **Passes:** Each part lies within the bounds `layout-plan.md` gives the region holding its block: mains, low voltage, analog sensing or digital. Fast logic, the controller among it, sits close to the low-voltage supply that feeds it; analog sensing sits farthest from fast logic and from switching stages.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the board coordinates in the caption, a sensing front end's parts scattered among the controller's or a switching stage's parts, or any part outside its region's bounds.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `classes`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `classes`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning*, https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
@@ -793,7 +903,7 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Asks:** Do the supply input, the regulator it feeds and the controller sit next to one another, joined by a wide ground, with any analog supply filtered or regulated from the digital one rather than taken from the far side of the board?
 - **Passes:** The supply input's connector, the regulator and the controller are adjacent, with a solid or gridded ground spanning all three. Power reaches the digital circuits first and is filtered or regulated before it feeds the analog sensing region.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the regulator far from the supply input or from the controller, so that the supply crosses the board; on a ground `net-<net>`, the three joined only by thin tracks; on `classes`, the analog supply's copper running direct from the supply input past the digital region.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `net-<net>` for the ground and supply nets, `classes`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `net-<net>` for the ground and supply nets, `classes`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("Locate the microcomputer next to the voltage regulator, and the voltage regulator next to where VBatt enters the board"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Grounding in mixed-signal systems demystified, Part 2*, Analog Applications Journal 2Q 2013, SLYT512, section *Grounding when multiple data converters are used on a single board* ("The power should enter the board in the digital partition and be fed directly to the digital circuitry, then filtered or regulated to feed the analog circuitry"), https://www.ti.com/lit/pdf/slyt512, read 2026-10-14.
 
@@ -823,7 +933,7 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Asks:** Is every path carrying supply or load current as short, direct and wide as the board allows, between parts placed close together?
 - **Passes:** Each power net runs the shortest practical way between the parts it joins, at a width well above the minimum `POWER-1` sets wherever there is room, with no detour and no neck narrower than the rest of the path. The parts a high current flows through in turn sit next to one another.
 - **Fails, as the views show it:** on `net-<net>` for a power net, a track wandering around the board, or a wide track narrowing to a thin one partway along; in `facts.txt`, a power net whose track width range reaches down to the board's minimum.
-- **Judged on:** `net-<net>` for each power-class net, `facts.txt`, `classes`.
+- **Judged on:** `net-<net>` for each power-class net, `facts.txt`, `classes`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 5 *Traces and Ground Plane* ("Make all of the power (high current) traces as short, direct, and thick as possible"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
 
@@ -909,7 +1019,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is each decoupling capacitor next to the supply pin it decouples, the smallest nearest, with the supply reaching the pin through the capacitor's pad and no via between capacitor and pin?
 - **Passes:** Each capacitor sits beside its pin, joined to it by a short, wide track. Where a pin has more than one, the smallest value is closest. The supply arrives at the capacitor first and then goes on to the pin; any via to the supply plane is on the far side of the capacitor from the pin.
 - **Fails, as the views show it:** on `crop-<reference>`, a decoupling capacitor across the part or on the far side of the board from its pin, a via between capacitor and pin, or a supply track reaching the pin before the capacitor; a crop captioned as having no decoupling parts for a part whose schematic gives it some.
-- **Judged on:** `crop-<reference>` for each integrated circuit.
+- **Judged on:** `crop-<reference>` for each integrated circuit, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Tim Claycomb, *The basics: How to layout a PCB for an op amp*, Texas Instruments, Precision Hub blog, 8 January 2016, closing list of layout practices ("Place decoupling capacitors as close to the supply pins as possible"; "If using multiple decoupling capacitors, place the smallest decoupling capacitor closest to the supply pin"; "Do not place vias between decoupling capacitors and supply pins"), https://e2e.ti.com/blogs_/archives/b/precisionhub/posts/the-basics-how-to-layout-a-pcb-for-an-op-amp, read 2026-10-14; and Texas Instruments, *ADS8866* data sheet, SBAS614C, March 2019, § 12.1 *Layout Guidelines* ("Avoid placing vias between the supply pin and its decoupling capacitor"), https://www.ti.com/lit/ds/symlink/ads8866.pdf, read 2026-10-14.
 
@@ -929,7 +1039,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Are the converter's input capacitor at its input pin, its inductor, output capacitors and switch or diode close together, their grounds joined close together straight into the ground plane, and placed so that the current loop in each switching state turns the same way?
 - **Passes:** The input capacitor sits at the converter's input pin. The inductor, the output capacitors and the diode, where there is one, sit together, so the loops the switching current takes in its on and off states are small. The grounds of the converter, its input capacitors, its output capacitors and its diode join close together, directly to a ground plane. The loop in the on state and the loop in the off state run in the same direction round the parts.
 - **Fails, as the views show it:** on `crop-<reference>` of the converter and on `layer-<copper layer>`, the input capacitor away from the input pin, the inductor separated from the output capacitors by other parts, or the converter's ground and the capacitors' grounds joined only by long tracks.
-- **Judged on:** `crop-<reference>` of the converter, every `layer-<copper layer>`, `assembly-top` or `assembly-bottom`.
+- **Judged on:** `crop-<reference>` of the converter, every `layer-<copper layer>`, `assembly-top` or `assembly-bottom`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 3 *Filter Capacitors* and § 5 *Traces and Ground Plane* ("Arrange the components so that the switching current loops curl in the same direction"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
 
@@ -939,7 +1049,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Does the feedback trace run as far from the inductor and the noisy power traces as the board allows, with its feedback and compensation parts close to the converter and away from the inductor?
 - **Passes:** The feedback trace runs direct to the feedback pin, away from the inductor, on the side of the board opposite the inductor with a ground plane between them where the layers allow. The feedback and compensation parts sit at the converter's pins, not beside the inductor.
 - **Fails, as the views show it:** on `layer-<copper layer>` and `crop-<reference>`, the feedback trace passing under or beside the inductor, or the compensation parts placed next to it.
-- **Judged on:** `crop-<reference>` of the converter, every `layer-<copper layer>`.
+- **Judged on:** `crop-<reference>` of the converter, every `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 2 *Feedback* and § 4 *Compensation*, https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
 
@@ -949,7 +1059,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is the snubber placed as close to the switching part as it can be?
 - **Passes:** The snubber's resistor and capacitor sit beside the switch, joined to its terminals by short connections.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the snubber's parts placed away from the switch, reached by long tracks.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-<copper layer>`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Vishay Semiconductors, *VO3526 Power Phototriac Design Considerations*, Application Note 33, document 81937, Rev. 1.1, 19 October 2011, section *Snubber Circuit* and Figure 5 ("Locate the snubber circuit as close to the VO3526 as possible"), https://www.vishay.com/docs/81937/appnote.pdf, read 2026-10-14.
 
@@ -971,7 +1081,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Are the input filter's parts, and the reference capacitor, placed immediately next to the converter pins they serve, joined by short, wide tracks?
 - **Passes:** The filter capacitor and its resistor sit at the converter's input pin; the reference capacitor sits at the reference pin with its ground going straight into the plane.
 - **Fails, as the views show it:** on `crop-<reference>` of the converter, or on `assembly-top` for a converter inside the controller, the filter or reference capacitor placed some way from its pin with a long track between.
-- **Judged on:** `crop-<reference>` of the converter or controller, `assembly-top`, `assembly-bottom`.
+- **Judged on:** `crop-<reference>` of the converter or controller, `assembly-top`, `assembly-bottom`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *ADS8866* data sheet, SBAS614C, March 2019, § 12.1 *Layout Guidelines* ("The fly-wheel RC filters are placed immediately next to the input pins"; the reference capacitor "within 0.1-inches from the pin"), https://www.ti.com/lit/ds/symlink/ads8866.pdf, read 2026-10-14.
 
@@ -981,7 +1091,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Are the connections to the amplifier's inverting input, a high-impedance node, as short as they can be, with its feedback and gain resistors placed at that pin?
 - **Passes:** The feedback and gain resistors sit next to the inverting pin, joined to it by the shortest tracks, with no track on that node wandering across the board.
 - **Fails, as the views show it:** on `crop-<reference>` of the amplifier, a feedback or gain resistor placed away from the inverting pin, reached by a long track.
-- **Judged on:** `crop-<reference>` of the amplifier.
+- **Judged on:** `crop-<reference>` of the amplifier, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Tim Claycomb, *The basics: How to layout a PCB for an op amp*, Texas Instruments, Precision Hub blog, 8 January 2016 ("Make the connections to the inverting pin as short as possible"), https://e2e.ti.com/blogs_/archives/b/precisionhub/posts/the-basics-how-to-layout-a-pcb-for-an-op-amp, read 2026-10-14.
 
@@ -1001,7 +1111,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Are the sensing front end's amplifier, its input parts and the converter's reference placed away from the board's heat sources, with the two sides of each differential input at the same temperature?
 - **Passes:** Regulators, power resistors, load switches and other parts that dissipate heat sit outside and away from the analog sensing region. The parts on the two sides of a differential input sit together, symmetrically, so no heat source warms one side more than the other.
 - **Fails, as the views show it:** on `assembly-top`, `assembly-bottom` or `3d-angled`, a regulator or power part placed beside a sensing amplifier or its input parts, or a heat source nearer one input's parts than the other's.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *TLV333, TLV2333, TLV4333* data sheet, SBOS751, December 2015, § 11.1.1 *General Layout Guidelines* ("Avoid temperature gradients that create thermoelectric (Seebeck) effects"; "Thermally isolate components from power supplies or other heat sources"), https://www.ti.com/lit/ds/symlink/tlv333.pdf, read 2026-10-14.
 
@@ -1013,7 +1123,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Are the crystal and its load capacitors close to the oscillator pins, the input pin's capacitor placed first and closest, the two load capacitors close to each other, and the input and output tracks short and kept apart from each other?
 - **Passes:** The crystal sits at the controller's oscillator pins, its tracks short and direct. The load capacitor on the oscillator input sits closest to that pin and to ground; the two capacitors sit side by side. The input and output tracks are routed apart rather than side by side.
 - **Fails, as the views show it:** on `crop-<reference>` of the controller, the crystal placed away from its pins with long tracks, the load capacitors apart from each other, or the input and output tracks running in parallel.
-- **Judged on:** `crop-<reference>` of the controller, `layer-<copper layer>`.
+- **Judged on:** `crop-<reference>` of the controller, `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Microchip Technology (Atmel), *AVR186: Best Practices for the PCB Layout of Oscillators*, Atmel-8128B, September 2016, § 2 *Design Guides*, https://ww1.microchip.com/downloads/en/AppNotes/Atmel-8128-Best-Practices-for-the-PCB-layout-of-Oscillators_ApplicationNote_AVR186.pdf, read 2026-10-14.
 
@@ -1033,7 +1143,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is the oscillator kept away from unrelated parts, from digital and clock lines, and from analog circuits, low-speed signals and connectors?
 - **Passes:** No part unrelated to the oscillator sits within 25 mm (one inch) of the crystal. No digital or clock line runs near the crystal's tracks. The oscillator is away from the analog sensing region and from every connector.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the caption's board coordinates, an unrelated part within 25 mm of the crystal, or the crystal beside a connector or the analog sensing region; on `layer-<copper layer>`, a digital track running beside the crystal's tracks.
-- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("It is especially important that oscillator tank loops be located away from analog circuits, low-speed signals, and connectors") and § 2.4.1 *Capacitive and Inductive Crosstalk* ("No unrelated components should be closer than 1 inch to the crystal"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Microchip Technology (Atmel), *AVR186: Best Practices for the PCB Layout of Oscillators*, Atmel-8128B, September 2016, § 2 *Design Guides* ("Keep other digital signal lines, especially clock lines and frequently switching signal lines, as far away from the crystal connections as possible"), https://ww1.microchip.com/downloads/en/AppNotes/Atmel-8128-Best-Practices-for-the-PCB-layout-of-Oscillators_ApplicationNote_AVR186.pdf, read 2026-10-14.
 
@@ -1055,7 +1165,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Does all `Mains`-class copper lie within the floorplan's mains region, on every layer, with no low-voltage track, via, pad or zone inside that region?
 - **Passes:** On every layer, the `Mains` class's copper lies within the mains region's bounds in `layout-plan.md`, and nothing outside the class lies there. The only parts with pins on both sides of the region's boundary are the parts that bridge the barrier, such as an optocoupler, an isolator, a relay or a transformer.
 - **Fails, as the views show it:** on `classes`, `Mains`-class copper outside the mains region, or another class's copper inside it; on a `layer-<copper layer>`, a low-voltage track or zone running into the mains region.
-- **Judged on:** `classes`, every `layer-<copper layer>`, `assembly-top`, `assembly-bottom`.
+- **Judged on:** `classes`, every `layer-<copper layer>`, `assembly-top`, `assembly-bottom`, `placement`.
 - **Kind:** judgement. **Severity:** safety.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* (like functions placed in the same area, not mixed together), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.2 *Layer Stack*, Figure 4-1 (the space between the two sides kept "free from planes, traces, pads, and vias"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
 
@@ -1087,7 +1197,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is the suppressor as close to the connector as the rules allow, with the line running straight from the connector pin to the suppressor's pin, with no via and no stub, then on to what it protects, and with no unprotected track alongside it between the connector and the suppressor?
 - **Passes:** The suppressor sits at the connector, and the protected circuit sits much further from it. The line runs from the connector pin to the suppressor's pin in a straight track, curved or at 45° where it must turn, then on. The suppressor's ground goes straight into the plane by the shortest path. No unprotected track runs in the area between connector and suppressor.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the suppressor placed by the part it protects rather than by the connector; on `layer-<copper layer>`, the line reaching the suppressor through a stub or a via, a right-angled turn, or another track running beside it between connector and suppressor.
-- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Texas Instruments, *ESD Protection Layout Guide*, SLVA680A, revised April 2022, § 2.1 *Optimizing Impedance for Dissipating ESD*, § 2.2 *Limiting EMI from ESD* and § 2.3 *Routing with VIAs*, https://www.ti.com/lit/pdf/slva680, read 2026-10-14.
 
@@ -1097,7 +1207,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is each leadless package placed away from the regions of the board that bend most in manufacture and use, such as beside connectors that take mating force, mounting holes and the board's edges where it is handled?
 - **Passes:** Each leadless package sits away from connectors, mounting holes and board edges, in a part of the board held flat.
 - **Fails, as the views show it:** on `assembly-top`, `assembly-bottom` or `3d-angled`, a QFN or SON beside a connector, at a mounting hole or at the board's edge.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *QFN and SON PCB Attachment*, SLUA271C, revised December 2023, § 3.7 *Board Layout Considerations* ("Location of the thinner format QFN packages should be carefully considered when laying out the board design to avoid regions of extreme deflection"), https://www.ti.com/lit/pdf/slua271, read 2026-10-14.
 
@@ -1107,7 +1217,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is each cable connector placed so that its cable, once fitted, cannot lie over the oscillator or the controller?
 - **Passes:** Each cable connector sits at the board edge `layout-plan.md` gives it, facing off the board, so its cable leaves without crossing the controller or the crystal.
 - **Fails, as the views show it:** on `3d-angled`, `3d-top` or `assembly-top`, a cable connector facing inward across the controller or the crystal, or placed so its cable must pass over them.
-- **Judged on:** `3d-angled`, `3d-top`, `3d-bottom`, `assembly-top`, `assembly-bottom`.
+- **Judged on:** `3d-angled`, `3d-top`, `3d-bottom`, `assembly-top`, `assembly-bottom`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("Do not design in cable assemblies that fold over the oscillator or the microcomputer after final assembly"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
@@ -1119,7 +1229,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is every test point a pad a probe can land on and stay on: a dedicated pad, a through-hole lead or a small via, never a surface-mount part's land, of a usable size, spaced from its neighbours and from part bodies?
 - **Passes:** Each test point is a dedicated pad, a through-hole lead or a via with a hole of 0.36 mm or less, never a surface-mount land. Its pad is 1.0 mm across, or 0.9 mm at least. Test points are at least 2.5 mm apart centre to centre, at least 1.0 mm from any part's body edge to edge, and at least 2.0 mm from a part taller than 2.6 mm.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, a test point crowded against a part, under a part's outline, or closer than 2.5 mm to another; on `layer-F.Cu` or `layer-B.Cu`, a test point that is a surface-mount part's land or a pad smaller than 0.9 mm.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-F.Cu`, `layer-B.Cu`, `3d-angled`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `layer-F.Cu`, `layer-B.Cu`, `3d-angled`, `placement`, for its spacing from part bodies.
 - **Kind:** judgement. **Severity:** function.
 - **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level*, https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14.
 
@@ -1129,7 +1239,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Are the test points on one side of the board, the side with the fewest parts, with the tall parts on the other side?
 - **Passes:** Every test point sits on the same side of the board, and parts taller than 6.4 mm sit on the other side or at least 5.0 mm from any test point.
 - **Fails, as the views show it:** on `assembly-top` and `assembly-bottom`, test points on both sides, or among tall parts.
-- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `3d-angled`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level* ("try to put all test points on one side of the board, usually the bottom or the side with the least circuit complexity"; "Keep tall components on the side that is not probed"), https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14.
 
@@ -1203,7 +1313,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Does each such capacitor sit at the connector, with its ground joined to a large ground area by a short, wide connection?
 - **Passes:** The filter capacitors sit at the connector's pins. Their ground side joins a large ground area on both sides of the board, by connections no longer than three times their width.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, the filter capacitors away from the connector; on `layer-<copper layer>`, their ground reached by a narrow track.
-- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.5.4 *I/O Recommendations for Off-PCB Signals* and § 3.3 *Cables and Bypassing to the Shield*, Figure 13 ("The connection to the chassis is an RF path requiring 3:1 length to width"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
@@ -1213,7 +1323,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is the bead placed at the part it isolates, in the supply only and not the ground, with the part's bypass capacitor between the bead and the part?
 - **Passes:** The bead sits next to the part it serves, in the supply line; the bypass capacitor sits between bead and part, so the part's switching current flows in the small loop inside the bead.
 - **Fails, as the views show it:** on `crop-<reference>` or `assembly-top`, the bead at the far end of the supply, or the bypass capacitor on the supply side of the bead.
-- **Judged on:** `crop-<reference>`, `assembly-top`, `assembly-bottom`.
+- **Judged on:** `crop-<reference>`, `assembly-top`, `assembly-bottom`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.4 *Bypassing and Ferrite Beads*, Figure 9 ("placing the capacitors inside the ferrite bead"; "The ferrite bead is used only on +V, not on ground"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
@@ -1223,7 +1333,7 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Asks:** Is each series resistor placed as close to the controller's pin as it can be?
 - **Passes:** Each series resistor sits at its controller pin, over the controller's ground area where it can.
 - **Fails, as the views show it:** on `crop-<reference>` of the controller or on `assembly-top`, a series resistor placed at the far end of its line.
-- **Judged on:** `crop-<reference>` of the controller, `assembly-top`, `assembly-bottom`.
+- **Judged on:** `crop-<reference>` of the controller, `assembly-top`, `assembly-bottom`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.2.5 *Keeping Noise Close to the Chip* ("Place the resistor as close as possible to the microcomputer, overlapping the microcomputer ground if possible"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
 
@@ -1241,7 +1351,7 @@ Wherever a rule item asks whether a track meets a pad, the pre-order check judge
 - **Asks:** Is each part placed next to the parts it connects to, in the order its connections run, so that every connection is short and none crosses another on the way?
 - **Passes:** Parts joined by a connection sit close together, in the order the circuit runs from part to part, each turned so that its pads face the pads they join. The tracks between them are short and run side by side rather than across one another, and a track crosses to another layer only to pass a track it cannot go round. A part that serves one pin, such as a resistor or a capacitor on it, sits beside that pin.
 - **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, a part set well apart from every part it connects to, or turned so that its pads face away from them; on a `layer-<copper layer>` or `net-<net>`, a track running across the board, or looping round other parts, to reach a partner that could have been placed beside it, or tracks crossing one another between layers where turning or swapping two parts would have kept them apart.
-- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`, `net-<net>` for each critical net.
+- **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`, `net-<net>` for each critical net, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 4 *Summary* ("a careful positioning of the integrated circuits is essential to achieve short interconnect lines") and § 1.4.1 *Proportionality of Loops and Dipoles* ("Loops and dipoles are antennas"; "the larger the laid-out area of the loop, the stronger the radiation"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and `hardware/proof/review-proof/layout-review.md`, round 1, findings 1.8 and 1.9, which record parts placed loosely enough that a signal loops round its amplifier to reach its partner and the load return runs 22 mm across that board to its shunt.
 
