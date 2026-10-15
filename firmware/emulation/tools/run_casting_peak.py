@@ -70,6 +70,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import struct
 import sys
 
@@ -192,6 +193,14 @@ STEAM_READY_MACRO = "STEAM_CONTROL_DECLARATION_READY_TEMPERATURE_WORD"
 #: and derives the interval from them, as the heading it is written under.
 FIGURES_RECORD_SECTION = "### Proof-of-life removal interval"
 
+#: The files a run is generated from, as the words the record's table names them
+#: under and the key of the findings each is held at, in the order the record
+#: lists them. The run, the record and the staleness check all read this one list.
+INPUTS = (("The machine's coefficients", "description"),
+          ("What a reading off it may be", "limits"),
+          ("The bands a delivery is held to", "tolerance"),
+          ("The steam side's design figures", "declaration"))
+
 #: The headings the record carries, as constants so the readers below and the
 #: tests that keep the record honest find the sections this writes.
 FIGURES_HEADING = "## The peak under control"
@@ -199,7 +208,6 @@ PHASES_HEADING = "## The hottest each phase reached"
 CORNERS_HEADING = "## What each corner reached"
 RUNS_HEADING = "## What was run"
 STEAM_LENGTH_HEADING = "## How the steam peak depends on how long the wand is held open"
-REFUSED_HEADING = "## What could not be run"
 
 
 class CastingError(RuntimeError):
@@ -377,6 +385,36 @@ def analyse(series, windows, band=SETTLED_BAND_C, tail=SETTLED_TAIL_STEPS):
     return phases, problems, hold_c
 
 
+def held_against_reported(found, channel, intervals, start=0):
+    """The hottest casting a draw reported from `start` on, with the interval it
+    was at, taken from the series and refused unless it agrees with what the
+    artefact printed.
+
+    Every run that sets a figure goes through here. The series is the parsed
+    trajectory; the printed lines are read again, separately, by
+    `reported_castings`. A series that is not one reading per control interval
+    of the course -- a trimmed trajectory, a channel that was not the casting --
+    or a peak below any casting temperature the artefact printed, is refused
+    rather than reported, because a peak taken over less than was reported
+    understates a safety figure.
+    """
+    series = found["channels"][channel]
+    reported = reported_castings(found["stdout"], channel)
+    if len(series) != intervals:
+        raise CastingError("the draw reported %d intervals of a course of %d"
+                           % (len(series), intervals))
+    if len(reported) != intervals:
+        raise CastingError("the artefact printed %d %s readings for a course of %d intervals"
+                           % (len(reported), channel, intervals))
+    peak_c, peak_at = peak_of(series, start, intervals)
+    printed_c = max(reported[start:])
+    if peak_c < printed_c:
+        raise CastingError("the peak taken from the %s series, %s C, is below the %s C the "
+                           "artefact printed" % (channel, _temperature(peak_c),
+                                                 _temperature(printed_c)))
+    return peak_c, peak_at, printed_c
+
+
 def run_phased(draw, levels, hold, delivery, recovery, channel):
     """One run of the course, lengthened until every window that has to settle
     has, and the phases found in it.
@@ -385,22 +423,20 @@ def run_phased(draw, levels, hold, delivery, recovery, channel):
     the series of those findings the casting is read from. A run that has not
     settled at the longest length is refused: reporting a peak over a recovery
     that had not finished would be reporting part of the recovery, and leaving
-    the corner out would understate a safety figure.
+    the corner out would understate a safety figure. So is a run whose series
+    does not agree with what the artefact printed.
     """
     problems = []
     for factor in LENGTHENINGS:
         steps, windows = course_of(levels, hold * factor, delivery, recovery * factor)
         found = draw([(sweep.INTERVAL_MS, level) for level in steps])
+        peak_c, peak_at, printed_c = held_against_reported(found, channel, len(steps))
         series = found["channels"][channel]
-        if len(series) != len(steps):
-            raise CastingError("the draw reported %d intervals of a course of %d"
-                               % (len(series), len(steps)))
         phases, problems, hold_c = analyse(series, windows)
         if not problems:
-            peak_c, peak_at = peak_of(series)
             return {"series": series, "phases": phases, "hold_c": hold_c, "peak_c": peak_c,
                     "peak_at": peak_at, "lengthened": factor, "intervals": len(steps),
-                    "stdout": found["stdout"]}
+                    "printed_peak_c": printed_c}
     raise CastingError("a run still had not settled when its phases were %d times their "
                        "starting length: %s" % (LENGTHENINGS[-1], "; ".join(problems)))
 
@@ -414,6 +450,21 @@ def phase_at(phases, interval):
 
 
 # --- The whole analysis ----------------------------------------------------
+
+
+def require_ran(side, corner):
+    """Refuse to go on when a corner of the enumeration produced no machine.
+
+    The figure is the worst over every corner the enumeration covers; a record
+    written with a corner left out would be the worst over fewer than it says,
+    and would understate a safety figure without saying so.
+    """
+    if not corner["ran"]:
+        raise CastingError("the %s enumeration's corner %s (%s, %s end) produced no machine: the "
+                           "structure admits none there, or the description declares no error to "
+                           "take it to. No peak is written over fewer corners than the "
+                           "enumeration covers"
+                           % (side, corner["which"], _coefficient(corner), corner["end"]))
 
 
 def corner_nominal(corner, nominal):
@@ -441,6 +492,7 @@ def a_run(side, kind, corner, target_c, result, levels):
         "peak_level": peak_phase["level"],
         "lengthened": result["lengthened"],
         "intervals": result["intervals"],
+        "printed_peak_c": result["printed_peak_c"],
     }
 
 
@@ -474,14 +526,10 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
                            % (description, ambient))
 
     runs = []
-    refused = []
 
     machines = [(None, description, nominal)]
     for corner in shipped["corners"]:
-        if not corner["ran"]:
-            refused.append((COFFEE, corner, "the structure admits no machine at this corner, or "
-                            "the description declares no error to take it to"))
-            continue
+        require_ran(COFFEE, corner)
         written = margin.corner_description(corner, nominal, description,
                                             os.path.join(workspace, COFFEE))
         machines.append((corner, written, corner_nominal(corner, nominal)))
@@ -508,10 +556,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
     # report a peak for a command nobody gives.
     steam_machines = [(None, description, nominal, shipped)]
     for corner in shipped["steam_corners"]:
-        if not corner["ran"]:
-            refused.append((STEAM, corner, "the structure admits no machine at this corner, or "
-                            "the description declares no error to take it to"))
-            continue
+        require_ran(STEAM, corner)
         written = margin.corner_description(corner, nominal, description,
                                             os.path.join(workspace, STEAM))
         steam_machines.append((corner, written, corner_nominal(corner, nominal),
@@ -546,7 +591,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
                   + [(sweep.INTERVAL_MS, STEAM_LEVELS[0])] * drawn)
         found = sweep.steam_draw(executable, description, limits, nominal_ready,
                                  nominal[ambient], course, "casting-peak-steam-length-%d" % seconds)
-        peak_c, _ = peak_of(found["channels"]["steam-c"], STEAM_HOLD_STEPS, len(course))
+        peak_c, _, _ = held_against_reported(found, "steam-c", len(course), STEAM_HOLD_STEPS)
         steam_lengths.append((seconds, peak_c))
 
     sensing = {COFFEE: shipped["margin"]["sensing_error_c"],
@@ -561,7 +606,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
             "figure_c": worst["peak_c"] + sensing[side],
         }
 
-    return {
+    findings = {
         "description": description,
         "limits": limits,
         "tolerance": tolerance,
@@ -575,10 +620,9 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
         "runs": runs,
         "figures": figures,
         "steam_lengths": steam_lengths,
-        "refused": refused,
-        "digests": {path: sweep.digest_of(path)
-                    for path in (description, limits, tolerance, declaration)},
     }
+    findings["digests"] = {path: sweep.digest_of(path) for path in input_paths(findings)}
+    return findings
 
 
 def worst_run(runs):
@@ -634,10 +678,11 @@ def _coefficient(corner):
 
 #: The statement at the head of the record about what its peaks are and are not.
 BANNER = ("> **Diagnostic, not a board input.** These peaks are those of the control as it "
-          "shipped. This record is not an input to any board until the control task's "
-          "regeneration criterion has run and the record has been regenerated from the "
-          "corrected control. The steam peak is bounded by the course's draw length: it is "
-          "the peak of a draw of that length, and a longer draw climbs higher.")
+          "shipped. This record is not an input to any board until the regeneration "
+          "criterion of DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE has run and the record has been "
+          "regenerated from the corrected control. The steam peak is bounded by the course's draw length: it is "
+          "the peak of a draw of that length, and a longer draw can climb higher, as the "
+          "draw-length table below shows.")
 
 
 def report_text(findings):
@@ -690,10 +735,8 @@ def report_text(findings):
     write("")
     write("| What | File | sha256 |")
     write("|---|---|---|")
-    for what, path in (("The machine's coefficients", findings["description"]),
-                       ("What a reading off it may be", findings["limits"]),
-                       ("The bands a delivery is held to", findings["tolerance"]),
-                       ("The steam side's design figures", findings["declaration"])):
+    for what, key in INPUTS:
+        path = findings[key]
         write("| %s | `%s` | `%s` |" % (what, _relative(path), findings["digests"][path]))
     write("")
     write(sweep.supply_span_statement(findings["description"]))
@@ -799,7 +842,8 @@ def report_text(findings):
     write("Every corner run, with the hottest casting it reached in any phase. A corner at the "
           "end `params/thermoblock.md` calls one-sided is run too and carries `not-claimed`: "
           "the description stands behind no machine there, and the peak is included all the "
-          "same because it can only raise a safety figure.")
+          "same because it can only raise a safety figure. Every corner the enumeration "
+          "covers is run: the tool refuses to write this record when one produces no machine.")
     write("")
     write("| Thermoblock | Served | Target (C) | Corner | Coefficient | End | Written at | "
           "Claimed | Hold (C) | Peak (C) | Phase |")
@@ -820,9 +864,9 @@ def report_text(findings):
     write("")
     write("The steam courses above hold the wand open for %d seconds, about what a jug of milk "
           "takes. A draw has no end of its own, and the model's casting does not settle under "
-          "one held longer than the feed can replace: after the excursion every draw begins "
-          "with, it climbs for as long as the wand stays open. The steam figure above is "
-          "therefore the figure for a draw of that length and for no longer one. The hottest "
+          "one held longer than the feed can replace, so a longer draw can climb higher. The "
+          "steam figure above is therefore the figure for a draw of that length and for no "
+          "longer one; the table shows where a longer draw does and does not rise. The hottest "
           "casting temperature over the draw, at the machine's declared coefficients with the "
           "ready temperature at %s C, by how long the wand is held:" % (
               STEAM_DRAW_SECONDS[0], _temperature(findings["steam_ready_c"])))
@@ -831,18 +875,6 @@ def report_text(findings):
     write("|---|---|")
     for seconds, peak_c in findings["steam_lengths"]:
         write("| %d | %s |" % (seconds, _temperature(peak_c)))
-    write("")
-
-    write(REFUSED_HEADING)
-    write("")
-    if not findings["refused"]:
-        write("Nothing. Every corner the enumeration covers produced a machine and a course.")
-    else:
-        write("| Thermoblock | Corner | Coefficient | End | Why |")
-        write("|---|---|---|---|---|")
-        for side, corner, why in findings["refused"]:
-            write("| %s | %d | %s | %s | %s |" % (
-                side, corner["which"], margin._coefficient_cell(corner), corner["end"], why))
     write("")
 
     write("## What this does not settle")
@@ -867,18 +899,42 @@ def report_text(findings):
 
 def input_paths(findings):
     """The files a run was generated from, in the order the record lists them."""
-    return [findings["description"], findings["limits"], findings["tolerance"],
-            findings["declaration"]]
+    return [findings[key] for _, key in INPUTS]
+
+
+def default_inputs():
+    """The files the method reads when it is not pointed at others, without
+    running it."""
+    description, limits = cross_tier.carried_declarations()
+    return input_paths({"description": description, "limits": limits,
+                        "tolerance": sweep.TOLERANCE_DECLARATION,
+                        "declaration": sweep.STEAM_CONTROL_DECLARATION})
+
+
+def recorded_inputs(text):
+    """The files a committed record says it was generated from, as
+    (path, sha256) in the order its 'What was run' table lists them."""
+    return [(row[1].strip("`"), row[2].strip("`")) for row in _table_rows(text, RUNS_HEADING)
+            if len(row) == 3 and re.fullmatch(r"`[0-9a-f]{64}`", row[2])]
 
 
 def stale_inputs(text, paths):
-    """The inputs whose present content the record does not carry the digest of.
+    """What keeps a committed record from describing the files it would be
+    generated from now.
 
-    A record is out of date when any file it was generated from has changed
-    since, comment or not, and the digest it prints beside each file is what
-    says so.
+    Each file is held to its own row of the record's table, by path and by
+    digest, so a digest printed in prose or against another file's row does not
+    count. A file with no row, or a row whose digest is not the file's present
+    one, is returned as the path; a row for a file the generator does not read
+    is returned as the path the record names. An empty result is a record that
+    lists exactly the inputs read, each at its present content, comment or not.
     """
-    return [path for path in paths if sweep.digest_of(path) not in text]
+    recorded = recorded_inputs(text)
+    wanted = [(_relative(path), path) for path in paths]
+    stale = [path for relative, path in wanted
+             if (relative, sweep.digest_of(path)) not in recorded]
+    known = {relative for relative, _ in wanted}
+    return stale + [relative for relative, _ in recorded if relative not in known]
 
 
 def reported_castings(output, channel):
@@ -935,6 +991,19 @@ def corner_rows(text):
             if len(row) == 11 and row[0] not in ("Thermoblock", "---")]
 
 
+def _figures_record_rows(text):
+    """Every table row under the figures record's proof-of-life interval section."""
+    section = []
+    within = False
+    for line in text.splitlines():
+        if line.startswith("### "):
+            within = line.strip() == FIGURES_RECORD_SECTION
+            continue
+        if within and line.startswith("| "):
+            section.append([cell.strip() for cell in line.strip().strip("|").split("|")])
+    return section
+
+
 def quoted_peaks(text, labels=(("Coffee thermoblock", COFFEE), ("Steam thermoblock", STEAM))):
     """The peak each thermoblock's row of the controller boards' figures record
     quotes, as the text it is written as, keyed by side.
@@ -944,20 +1013,21 @@ def quoted_peaks(text, labels=(("Coffee thermoblock", COFFEE), ("Steam thermoblo
     record gives: the peak itself, and the declared sensing error and sum
     beside it.
     """
-    section = []
-    within = False
-    for line in text.splitlines():
-        if line.startswith("### "):
-            within = line.strip() == FIGURES_RECORD_SECTION
-            continue
-        if within and line.startswith("| "):
-            section.append([cell.strip() for cell in line.strip().strip("|").split("|")])
+    section = _figures_record_rows(text)
     quoted = {}
     for row in section:
         for label, side in labels:
             if row and row[0] == label and len(row) >= 4:
                 quoted[side] = tuple(row[1:4])
     return quoted
+
+
+def quoted_origins(text, labels=(("Coffee thermoblock", COFFEE), ("Steam thermoblock", STEAM))):
+    """The 'where it comes from' cell each thermoblock's row of the controller
+    boards' figures record gives, keyed by side."""
+    section = _figures_record_rows(text)
+    return {side: row[4] for row in section for label, side in labels
+            if row and row[0] == label and len(row) >= 5}
 
 
 def main(argv):

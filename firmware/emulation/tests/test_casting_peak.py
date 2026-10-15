@@ -14,6 +14,7 @@ does run it once, on first use, and share the run.
 """
 
 import copy
+from unittest import mock
 import os
 import re
 import shutil
@@ -64,11 +65,20 @@ def _committed_record():
     return _text(casting.REPORT_PATH)
 
 
-def _inputs():
-    """The files the committed record was generated from, as the method reads
-    them by default, without running it."""
-    description, limits = cross_tier.carried_declarations()
-    return [description, limits, sweep.TOLERANCE_DECLARATION, sweep.STEAM_CONTROL_DECLARATION]
+def _printed(channel, series, kind="HOST trajectory"):
+    """The lines an artefact prints for a casting series, one per control interval."""
+    return "\n".join("%s interval=%d %s=%r" % (kind, at, channel, value)
+                     for at, value in enumerate(series)) + "\n"
+
+
+def _draw_of(channel, series_of, printed_channel=None, trim=0):
+    """A synthetic draw that returns `series_of(course)` and prints it, or
+    prints it as `printed_channel`, or prints fewer intervals than it parsed."""
+    def draw(course):
+        series = series_of(course)
+        return {"channels": {channel: series},
+                "stdout": _printed(printed_channel or channel, series[:len(series) - trim])}
+    return draw
 
 
 def _runs(side):
@@ -136,20 +146,41 @@ class ThePeakIsFoundAcrossEveryPhaseAndEveryCorner(unittest.TestCase):
         for side, enumerated in ((casting.COFFEE, found["shipped"]["corners"]),
                                  (casting.STEAM, found["shipped"]["steam_corners"])):
             ran = {corner["which"] for corner in enumerated if corner["ran"]}
-            refused = {corner["which"] for refused_side, corner, _ in found["refused"]
-                       if refused_side == side}
             self.assertEqual(ran, {run["corner"]["which"] for run in _runs(side)
                                    if run["corner"] is not None},
                              "a corner the enumeration covers was not run, or one it does not "
                              "cover was")
-            self.assertEqual({corner["which"] for corner in enumerated} - ran, refused,
-                             "a corner that was not run is not accounted for as refused")
+            self.assertEqual({corner["which"] for corner in enumerated}, ran,
+                             "a corner the enumeration covers produced no machine, and the "
+                             "record was written all the same")
             self.assertTrue(any(corner["joint"] for corner in enumerated),
                             "the enumeration carries no joint corner to run")
             self.assertEqual(len({run["kind"] for run in _runs(side)}),
                              len([run for run in _runs(side) if run["corner"] is None]),
                              "the machine at the declared coefficients is run once for each "
                              "delivery it serves, and not otherwise")
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the corners are the control path's own enumeration: a
+    # corner that produced no machine stops the analysis, naming the corner,
+    # rather than leaving the figure the worst over fewer corners than the
+    # enumeration covers. Driven through run() with an enumeration holding one.
+    def test_a_corner_that_cannot_run_stops_the_analysis_and_names_it(self):
+        corner = {"which": 7, "ran": False, "joint": False, "end": "high",
+                  "writes": ["brew.thermal_mass_j_per_k"], "factor": 1.1}
+        shipped = {"target_c": 99.9, "steam_highest_c": 186.0, "corners": [corner],
+                   "steam_corners": []}
+        with mock.patch.object(casting.margin, "margin_record", return_value=shipped):
+            with tempfile.TemporaryDirectory() as directory:
+                with self.assertRaises(casting.CastingError) as caught:
+                    casting.run(executable="unused", workspace=directory)
+        self.assertIn("corner 7", str(caught.exception))
+        self.assertIn("brew.thermal_mass_j_per_k", str(caught.exception))
+        self.assertIn(casting.COFFEE, str(caught.exception))
+        with self.assertRaises(casting.CastingError) as caught:
+            casting.require_ran(casting.STEAM, corner)
+        self.assertIn("steam", str(caught.exception))
+        self.assertIn("corner 7", str(caught.exception))
+        casting.require_ran(casting.STEAM, dict(corner, ran=True))
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the corners are run as machines,
     # not as labels. The coffee casting's thermal mass at its low end heats
@@ -418,6 +449,78 @@ class ThePeakIsTakenOverEveryReportedCastingTemperature(unittest.TestCase):
         with self.assertRaises(casting.CastingError):
             casting.peak_of([])
 
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the peak of every run that sets a figure was held,
+    # by the generator, against what the artefact printed for that run: the
+    # count of readings is the course's, and the peak is the hottest printed.
+    def test_every_run_that_sets_a_figure_was_held_against_what_the_artefact_printed(self):
+        found = _findings()
+        for run in found["runs"]:
+            with self.subTest(side=run["side"], kind=run["kind"],
+                              corner=run["corner"] and run["corner"]["which"]):
+                self.assertEqual(run["peak_c"], run["printed_peak_c"])
+                self.assertGreater(run["intervals"], 0)
+        for side in (casting.COFFEE, casting.STEAM):
+            self.assertGreaterEqual(found["figures"][side]["peak_c"],
+                                    max(run["printed_peak_c"] for run in _runs(side)))
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: a producer that reads the wrong channel, or whose
+    # parsed series is trimmed, is refused by the generator's own run path and
+    # not reported; the same producer unbroken is accepted.
+    def test_a_run_whose_series_disagrees_with_what_was_printed_is_refused(self):
+        def rising(course):
+            return [20.0 + 0.001 * at for at in range(len(course))]
+
+        def settled(course):
+            return [100.0] * len(course)
+
+        def run_of(draw):
+            return casting.run_phased(draw, (300,), 1500, 200, 1200, "x")
+
+        self.assertEqual(100.0, run_of(_draw_of("x", settled))["printed_peak_c"])
+        broken = {
+            "printed as another channel": _draw_of("x", settled, printed_channel="y"),
+            "printed trimmed": _draw_of("x", settled, trim=1),
+        }
+
+        def hotter_than_parsed(course):
+            series = settled(course)
+            return {"channels": {"x": series},
+                    "stdout": _printed("x", series[:-1] + [130.0])}
+
+        def parsed_trimmed(course):
+            series = settled(course)
+            return {"channels": {"x": series[:-1]}, "stdout": _printed("x", series)}
+
+        broken["parsed from another series"] = hotter_than_parsed
+        broken["parsed trimmed"] = parsed_trimmed
+        for name, draw in broken.items():
+            with self.subTest(name):
+                with self.assertRaises(casting.CastingError):
+                    run_of(draw)
+        with self.assertRaises(casting.CastingError) as caught:
+            run_of(hotter_than_parsed)
+        self.assertIn("below", str(caught.exception))
+        self.assertEqual(100.0, run_of(_draw_of("x", settled))["peak_c"])
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the steam draw-length figures are held against what
+    # the artefact printed too, over the window they are taken from.
+    def test_a_draw_length_peak_is_held_against_what_was_printed(self):
+        series = [20.0] * 10
+        series[3] = 50.0
+        good = {"channels": {"s": series}, "stdout": _printed("s", series, "HOST steam-trajectory")}
+        self.assertEqual((50.0, 3, 50.0), casting.held_against_reported(good, "s", 10, 2))
+        hot_before = list(series)
+        hot_before[1] = 80.0
+        before = {"channels": {"s": series},
+                  "stdout": _printed("s", hot_before, "HOST steam-trajectory")}
+        self.assertEqual(50.0, casting.held_against_reported(before, "s", 10, 2)[0])
+        hot_in = list(series)
+        hot_in[5] = 80.0
+        inside = {"channels": {"s": series},
+                  "stdout": _printed("s", hot_in, "HOST steam-trajectory")}
+        with self.assertRaises(casting.CastingError):
+            casting.held_against_reported(inside, "s", 10, 2)
+
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: every run's peak is the highest
     # of its phases', and the thermoblock's is the highest of its runs'.
     def test_a_runs_peak_is_the_highest_of_its_phases(self):
@@ -577,8 +680,8 @@ class ASettledWindowIsOneThatHasComeToRest(unittest.TestCase):
 
         def never_settles(course):
             calls.append(len(course))
-            return {"channels": {"x": [20.0 + 0.01 * at for at in range(len(course))]},
-                    "stdout": ""}
+            series = [20.0 + 0.01 * at for at in range(len(course))]
+            return {"channels": {"x": series}, "stdout": _printed("x", series)}
         with self.assertRaises(casting.CastingError):
             casting.run_phased(never_settles, (300,), 1500, 200, 1200, "x")
         self.assertEqual(len(casting.LENGTHENINGS), len(calls))
@@ -589,9 +692,10 @@ class ASettledWindowIsOneThatHasComeToRest(unittest.TestCase):
         def settles_when_long(course):
             length = len(course)
             if length < second:
-                return {"channels": {"x": [20.0 + 0.01 * at for at in range(length)]},
-                        "stdout": ""}
-            return {"channels": {"x": [100.0] * length}, "stdout": ""}
+                series = [20.0 + 0.01 * at for at in range(length)]
+            else:
+                series = [100.0] * length
+            return {"channels": {"x": series}, "stdout": _printed("x", series)}
         result = casting.run_phased(settles_when_long, (300,), 1500, 200, 1200, "x")
         self.assertEqual(2, result["lengthened"])
         self.assertEqual(100.0, result["peak_c"])
@@ -614,7 +718,7 @@ class TheGeneratedRecordIsCommittedAndKeptCurrent(unittest.TestCase):
         self.assertIn("Do not edit by hand", record)
         self.assertIn(casting.REGENERATE_COMMAND, record)
         for heading in (casting.RUNS_HEADING, casting.FIGURES_HEADING, casting.PHASES_HEADING,
-                        casting.CORNERS_HEADING, casting.REFUSED_HEADING):
+                        casting.CORNERS_HEADING):
             self.assertIn(heading, record)
         self.assertIn("inferred", record)
         rows = casting.figure_rows(record)
@@ -628,26 +732,74 @@ class TheGeneratedRecordIsCommittedAndKeptCurrent(unittest.TestCase):
     # changed, a comment included.
     def test_the_committed_record_prints_the_digest_of_each_input_as_it_stands(self):
         record = _committed_record()
-        for path in _inputs():
+        for path in casting.default_inputs():
             with self.subTest(path=path):
                 self.assertIn(casting._relative(path), record)
                 self.assertIn(sweep.digest_of(path), record,
                               "%s has changed since the record was taken. Re-run %s"
                               % (path, casting.REGENERATE_COMMAND))
-        self.assertEqual([], casting.stale_inputs(record, _inputs()))
+        self.assertEqual([], casting.stale_inputs(record, casting.default_inputs()))
 
-    def test_a_changed_input_makes_the_record_stale(self):
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the committed record's table lists exactly the files
+    # the method reads by default, each beside its own digest.
+    def test_the_committed_record_lists_exactly_the_inputs_the_method_reads(self):
         record = _committed_record()
+        self.assertEqual([(casting._relative(path), sweep.digest_of(path))
+                          for path in casting.default_inputs()], casting.recorded_inputs(record))
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the record is stale when any input has changed, a
+    # comment included; each file is held to its own row of the record's table,
+    # so the right digest in prose, or on another file's row, or a table listing
+    # a different set of files than the method reads, is stale too.
+    def test_a_stale_record_is_refused_however_the_digest_is_misplaced(self):
         with tempfile.TemporaryDirectory() as directory:
-            for path in _inputs():
+            paths = []
+            for name in ("a.params", "b.limits", "c.declaration"):
+                paths.append(os.path.join(directory, name))
+                with open(paths[-1], "w", encoding="utf-8") as handle:
+                    handle.write("# %s\n" % name)
+
+            def record_of(rows, prose=""):
+                lines = [prose, casting.RUNS_HEADING, "", "| What | File | sha256 |", "|---|---|---|"]
+                lines += ["| x | `%s` | `%s` |" % row for row in rows]
+                lines += ["", "| Served | Target (C) | Where |", "|---|---|---|",
+                          "| coffee | 99.9 | read |"]
+                return "\n".join(lines) + "\n"
+
+            def rows_of(chosen):
+                return [(casting._relative(path), sweep.digest_of(path)) for path in chosen]
+
+            self.assertEqual([], casting.stale_inputs(record_of(rows_of(paths)), paths))
+
+            in_prose = record_of([(rel, "0" * 64) for rel, _ in rows_of(paths)],
+                                 " ".join(sweep.digest_of(path) for path in paths))
+            self.assertEqual(paths, casting.stale_inputs(in_prose, paths))
+
+            swapped = rows_of(paths)
+            swapped[0], swapped[1] = (swapped[0][0], swapped[1][1]), (swapped[1][0], swapped[0][1])
+            self.assertEqual(paths[:2], casting.stale_inputs(record_of(swapped), paths))
+
+            fewer = record_of(rows_of(paths[:2]))
+            self.assertEqual(paths[2:], casting.stale_inputs(fewer, paths),
+                             "an input the method reads that the record does not list is stale")
+
+            extra = os.path.join(directory, "d.params")
+            with open(extra, "w", encoding="utf-8") as handle:
+                handle.write("# extra\n")
+            more = record_of(rows_of(paths + [extra]))
+            self.assertEqual([casting._relative(extra)], casting.stale_inputs(more, paths),
+                             "a record listing a file the method does not read is stale")
+
+            record = record_of(rows_of(paths))
+            for path in paths:
                 with self.subTest(path=os.path.basename(path)):
-                    copied = os.path.join(directory, os.path.basename(path))
-                    shutil.copyfile(path, copied)
-                    record_of_copy = record.replace(sweep.digest_of(path), sweep.digest_of(copied))
-                    self.assertEqual([], casting.stale_inputs(record_of_copy, [copied]))
-                    with open(copied, "a", encoding="utf-8") as handle:
+                    with open(path, "a", encoding="utf-8") as handle:
                         handle.write("# a comment changes nothing a run reads, and still\n")
-                    self.assertEqual([copied], casting.stale_inputs(record_of_copy, [copied]))
+                    self.assertEqual([path], casting.stale_inputs(record, paths))
+                    os.truncate(path, 0)
+                    with open(path, "w", encoding="utf-8") as handle:
+                        handle.write("# %s\n" % os.path.basename(path))
+                    self.assertEqual([], casting.stale_inputs(record, paths))
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the committed record is the one
     # this method presently produces: the figure, the phase and corner that
@@ -725,19 +877,44 @@ class TheGeneratedRecordIsCommittedAndKeptCurrent(unittest.TestCase):
             self.assertNotIn(sweep.digest_of(found["description"]), text)
 
 
+#: How the figures record words each phase the peak can be reached in.
+PHASE_WORDS = {casting.WARM_UP: "Warm-up", casting.HOLD: "Hold", casting.DELIVERY: "draw",
+               casting.RECOVERY: "Recovery", casting.BACK_TO_BACK: "Back-to-back",
+               casting.RECOVERY_AFTER_BACK_TO_BACK: "Recovery after back-to-back"}
+
+
 def _disagreements(figures_text, record_text):
-    """Every thermoblock whose peak the figures record quotes differently from
-    the generated record's."""
+    """Every thermoblock whose peak, or the phase, corner, target and coefficient
+    it comes from, the figures record quotes differently from the generated
+    record's."""
     quoted = casting.quoted_peaks(figures_text)
+    origins = casting.quoted_origins(figures_text)
     generated = {row[0]: row for row in casting.figure_rows(record_text)}
+    corners = casting.corner_rows(record_text)
     differing = []
     for side, label in ((casting.COFFEE, "Coffee thermoblock"),
                         (casting.STEAM, "Steam thermoblock")):
         if side not in quoted:
             differing.append((side, "the figures record quotes no peak"))
-        elif quoted[side] != tuple(generated[label][1:4]):
+            continue
+        row = generated[label]
+        if quoted[side] != tuple(row[1:4]):
             differing.append((side, "quotes %s where the record gives %s"
-                              % (quoted[side], tuple(generated[label][1:4]))))
+                              % (quoted[side], tuple(row[1:4]))))
+            continue
+        origin = origins.get(side, "")
+        phase, corner, served, coefficient, end = row[4:9]
+        target = next((found[2] for found in corners
+                       if found[0] == label.split()[0] and found[1] == served
+                       and found[3] == corner), None)
+        expected = [PHASE_WORDS[phase], "%s °C" % target,
+                    "at the machine's declared coefficients" if corner == "nominal"
+                    else "corner %s of the enumeration" % corner]
+        if corner != "nominal":
+            expected += ["`%s` at its %s end" % (coefficient, end)]
+        missing = [word for word in expected if word not in origin]
+        if missing:
+            differing.append((side, "does not say %s where it comes from" % missing))
     return differing
 
 
@@ -775,6 +952,32 @@ class TheFiguresRecordQuotesThePeakTheGeneratedRecordGives(unittest.TestCase):
                                                                     + 1.0), 1)
         self.assertNotEqual(record, moved)
         self.assertEqual([casting.COFFEE], [found[0] for found in _disagreements(figures, moved)])
+
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: and a worst corner that has moved while the peak
+    # stayed put is noticed: the phase, the corner, the target served at and the
+    # coefficient and end the figures record names are each held to the record's.
+    def test_a_moved_origin_with_an_unchanged_peak_is_noticed(self):
+        figures = _text(FIGURES_RECORD)
+        record = _committed_record()
+        origins = casting.quoted_origins(figures)
+        generated = {row[0]: row for row in casting.figure_rows(record)}
+        for side, label in ((casting.COFFEE, "Coffee thermoblock"),
+                            (casting.STEAM, "Steam thermoblock")):
+            row = generated[label]
+            origin = origins[side]
+            drifts = {
+                "phase": origin.replace(PHASE_WORDS[row[4]], "Recovery", 1),
+                "corner": origin.replace("corner %s " % row[5], "corner 999 ", 1),
+                "target": re.sub(r"\d+\.\d °C", "1.5 °C", origin, count=1),
+                "end": origin.replace(" end)", " sideways end)", 1).replace(
+                    "at its %s end" % row[8], "at its middle end", 1),
+            }
+            for what, drifted in drifts.items():
+                with self.subTest(side=side, drift=what):
+                    self.assertNotEqual(origin, drifted)
+                    moved = figures.replace(origin, drifted, 1)
+                    self.assertEqual([side], [found[0] for found in _disagreements(moved, record)])
 
 
 SIBLING = "SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK"
@@ -867,6 +1070,13 @@ class TheFiguresRecordKeepsTheIntervalPendingWhileTheCastingExceedsItsTrip(unitt
         self.assertIn("DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE", finding)
         self.assertIn("20-second", finding)
         self.assertIn("Nothing in this finding is a board figure", finding)
+        self.assertIn("can climb higher", finding)
+        for seconds, peak in casting.length_rows(record):
+            if seconds in ("20", "300"):
+                self.assertIn("%s °C" % peak, finding)
+        steam_row = next(line for line in figures.splitlines()
+                         if line.startswith("| Steam thermoblock | " + generated["Steam thermoblock"][1]))
+        self.assertIn("20-second steam draw", steam_row)
 
         drifted = finding.replace("%s °C" % generated["Steam thermoblock"][1],
                                   "%.1f °C" % (float(generated["Steam thermoblock"][1]) + 0.1), 1)
@@ -887,6 +1097,9 @@ class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
         self.assertIn("control as it shipped", head)
         self.assertIn("not a board input", head)
         self.assertIn("draw length", head)
+        self.assertIn("DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE", head)
+        self.assertIn("can climb higher", head)
+        self.assertNotIn("climbs higher", head)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the banner comes from the
     # generator's template for any findings, so a regeneration cannot drop it.
