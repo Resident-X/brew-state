@@ -30,7 +30,9 @@ reachable from HEAD, and judges each section as it stood in the commit before:
   floorplan lists in each commit just before its footprint first appears on
   the board, that commit coming after the commit before the first placement.
   The floorplan is read as the commit before the first copper holds it, so a
-  part appended after that copper is not compared.
+  part appended only after that copper is not compared, while one appended
+  before it and placed after it is still held to the plan in each commit
+  just before its footprint first appears.
 - The placement section, in the commit before the first track, holding at
   least two candidates and as it is now. Each candidate's commit is in the
   history, comes before the first track, holds the board, places its parts

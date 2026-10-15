@@ -654,8 +654,10 @@ class Method(unittest.TestCase):
                       "changed and no reference removed or moved between regions",
                       "in a commit after `<P>^`: a reference listed once, dropped, placed and listed again fails",
                       "A part added after placement began and before the first track, pour, arc or via is committed is "
-                      "amended into the plan before it is placed", "A part added after that first copper is not "
-                      "compared: it is planned and placed, and the section is left as it is", "place every part alike",
+                      "amended into the plan before it is placed", "A part appended to the plan only after that "
+                      "first copper is not compared: it is planned and placed, and the section is left as it is. A part "
+                      "appended before that first copper and placed after it is compared still, by the same rule: the "
+                      "plan in the commit before the one that places it must list it", "place every part alike",
                       "however their board files differ in a text label or an identifier",
                       "with the references the plan appended left out where that commit's board does not hold them"):
             with self.subTest(step6=words):
@@ -666,9 +668,12 @@ class Method(unittest.TestCase):
                       "from a fresh branch, with the floorplan corrected and committed before any footprint is placed",
                       "A part added after the choice and before the first track, pour, arc or via is committed means "
                       "recording a new candidate that includes it and recording the placement section again",
-                      "After the first track, pour, arc or via is committed the recorded section is frozen and the "
-                      "command compares nothing further of the floorplan, so a part added then is only planned, by "
-                      "amending the floorplan as above, and placed, and the recorded section is left as it is",
+                      "After the first track, pour, arc or via is committed the recorded section is frozen, and the "
+                      "floorplan is held to the commit before the first placement only as it stood in the commit "
+                      "before that first copper, so a part appended to it after that copper is not compared: it is "
+                      "only planned, by amending the floorplan as above, and placed, and the recorded section is left "
+                      "as it is. A part appended before that first copper and placed after it is compared still: the "
+                      "plan in the commit before the one that places it must list it",
                       "committed before its footprint first appears on the board and kept in the plan until then"):
             with self.subTest(planning=words):
                 self.assertIn(words, planning)

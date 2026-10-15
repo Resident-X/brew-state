@@ -799,7 +799,7 @@ class PlanAndCopperFails(Base):
         self.assertIn("CHECK | distinct candidates | PASS | no two candidates place their parts alike", "\n".join(lines))
 
     def test_candidates_holding_different_sets_of_parts_are_distinct_though_one_part_sits_alike(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: a differing set of references makes them distinct
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails two candidates whose parts sit identically
         self.repo.planned()
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         self.repo.replan(WITH_R2)
@@ -810,7 +810,7 @@ class PlanAndCopperFails(Base):
         self.assertIn("CHECK | distinct candidates | PASS", "\n".join(lines))
 
     def test_candidates_differing_only_by_the_side_their_parts_sit_on_are_distinct(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: judged by each part's reference, position, angle and side, so a candidate differing from another only by side is a different placement
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: judged by each part's reference, position, angle and side rather than by the board file's bytes
         self.repo.planned()
         front = board(PLACES[1])
         back = front.replace('(footprint "proof:Part" (layer "F.Cu")', '(footprint "proof:Part" (layer "B.Cu")')
@@ -860,7 +860,7 @@ class PlanAndCopperFails(Base):
                       "the hand route, not the rule area, is the first copper")
 
     def test_a_zone_on_a_layer_that_is_no_copper_is_no_pour_and_one_on_the_back_copper_is(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: counts a copper pour as the first copper, a zone on a layer that is no copper being none
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: counts a copper pour as the first copper when it lands before any track, arc or via, a pour being a zone on a copper layer
         def zone_on(layers):
             return pour().replace('(layer "F.Cu")', layers)
         for name, drawn, copper in (("silkscreen", zone_on('(layer "F.SilkS")'), False),
@@ -881,7 +881,7 @@ class PlanAndCopperFails(Base):
                                   "\n".join(lines))
 
     def test_an_unlocked_pour_between_the_board_judged_commit_and_the_router_is_not_the_routers_commit(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: Only the first-copper test changes: the set of copper kinds the router's commit search shares is not widened
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: counts a copper pour as the first copper when it lands before any track, arc or via
         self.repo.placed()
         judged = self.repo.routed()
         self.repo.commit(board(copper=[LOCKED, pour()]), "b: an unlocked ground pour, after the critical routing")
@@ -905,7 +905,7 @@ class PlanAndCopperFails(Base):
         self.assertOnly(failed, "plan before placement")
 
     def test_a_region_widened_after_an_unrecorded_placement_and_before_the_first_candidate_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: The anchor comes from history alone and never from the producer's own placement section
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint, the commit the method judges the plan in
         self.repo.planned()
         self.repo.commit(board(PLACES[2]), "b: a placement no section records")
         self.repo.replan(WIDE)
@@ -941,7 +941,7 @@ class PlanAndCopperFails(Base):
                 self.assertFails(words, check="plan before placement")
 
     def test_a_part_appended_to_a_region_before_its_footprint_first_appears_passes(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each committed before its footprint first appears on the board
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         self.repo.planned()
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1, without R2")
         self.repo.replan(WITH_R2)
@@ -956,7 +956,7 @@ class PlanAndCopperFails(Base):
         self.assertIn("CHECK | candidate 1 measures | PASS", text, "candidate 1 is measured without R2, which it lacks")
 
     def test_a_part_appended_in_the_commit_that_places_it_or_after_it_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: each committed before its footprint first appears on the board
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         for name in ("in the same commit", "after"):
             with self.subTest(appended=name):
                 self.repo = Repo(self)
@@ -976,7 +976,7 @@ class PlanAndCopperFails(Base):
                                  check="plan before placement")
 
     def test_a_part_listed_once_dropped_before_placement_and_listed_again_after_it_is_placed_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: each committed before its footprint first appears on the board, taking a listing before the commit before the first placement, or one the plan no longer holds when the part is placed, as none
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         self.repo.replan(WITH_R2)
         self.repo.commit(message="b: R2 listed with the floorplan")
         self.repo.replan(PLAN)
@@ -993,7 +993,7 @@ class PlanAndCopperFails(Base):
         self.assertOnly(failed, "plan before placement")
 
     def test_a_part_placed_in_the_first_placement_commit_and_listed_only_afterwards_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: a part placed in the first placement commit and missing from the plan in the commit before it cannot have been amended in between, there being no commit between
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         self.repo.planned()
         placed = board(PLACES[1], r2=(30, 25))
         one = self.repo.commit(placed, "b: the first placement holds R2, which the plan does not list")
@@ -1019,7 +1019,7 @@ class PlanAndCopperFails(Base):
         self.assertPasses()
 
     def test_a_part_first_placed_in_a_merge_commit_fails_unless_every_parent_lists_it(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: each committed before its footprint first appears on the board, taking a listing before the commit before the first placement, or one the plan no longer holds when the part is placed, as none
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         for name, every_parent in (("every parent lists it", True), ("only one parent lists it", False)):
             with self.subTest(merge_of=name):
                 self.repo = Repo(self)
@@ -1061,8 +1061,33 @@ class PlanAndCopperFails(Base):
                          placement=placement([candidate(1, one), candidate(2, two)], 2))
         self.assertFails("section now differs from the one in", check="placement section")
 
+    def test_a_part_appended_before_the_first_copper_is_held_to_the_plan_when_it_is_placed_after_it(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
+        for name, kept in (("the plan regenerated without it", False), ("the plan keeping it", True)):
+            with self.subTest(plan=name):
+                self.repo = Repo(self)
+                self.repo.planned()
+                one, two = self.candidates_two(board(PLACES[1]), board(PLACES[2]))
+                self.repo.replan(WITH_R2)
+                self.repo.commit(message="b: R2 appended before the first copper, not placed")
+                self.record(one, two, board(PLACES[1]))
+                self.repo.commit(board(PLACES[1], copper=[HAND]), "b: the first route")
+                judged = self.repo.commit(board(PLACES[1], copper=[LOCKED]), "b: lock the route")
+                self.repo.through_router(judged)
+                self.repo.replan(WITH_R2 if kept else PLAN)
+                self.repo.commit(message="b: the plan regenerated")
+                self.repo.commit(board(PLACES[1], copper=[LOCKED, ROUTED], r2=(30, 25)),
+                                 "b: R2 placed after the first copper")
+                if kept:
+                    self.assertPasses("--routed")
+                else:
+                    failed = self.assertFails("R2 is appended to the parts of 'low voltage'", "but the plan does not "
+                                              "list it, after the commit before the first placement",
+                                              check="plan before placement", args=("--routed",))
+                    self.assertOnly(failed, "plan before placement")
+
     def test_a_part_dropped_from_the_plan_when_it_is_placed_fails_though_listed_earlier_after_the_first_placement(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the plan keeps the amendment until the part is placed
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         self.repo.planned()
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1, without R2")
         self.repo.replan(WITH_R2)
@@ -1077,7 +1102,7 @@ class PlanAndCopperFails(Base):
                          check="plan before placement")
 
     def test_a_part_appended_and_placed_after_the_chosen_candidate_still_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the chosen candidate must still equal the first-track board, so a part added and placed after the choice still fails
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
         self.repo.planned()
         one, two = self.candidates_two(board(PLACES[1]), board(PLACES[2]))
         self.repo.replan(WITH_R2)
@@ -1088,7 +1113,7 @@ class PlanAndCopperFails(Base):
     # --- The commit the plan is judged in comes from the history alone -------------------------------
 
     def test_a_plan_committed_with_the_first_placement_or_after_it_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails when that commit is the root, ... and when no plan is readable in it
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails when that commit is the root, is a merge, or is one of several first appearances on separate lines of history, and when no plan is readable in it
         def root():
             self.repo.commit(board(PLACES[1]), "b: plan and first placement together")
             return "the root commit", "first placement"
@@ -1131,7 +1156,7 @@ class PlanAndCopperFails(Base):
                 self.assertFails(words, check=check)
 
     def test_footprints_first_appearing_in_a_merge_or_on_two_lines_of_history_fail(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails when that commit is ... a merge, or is one of several first appearances on separate lines of history
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails when that commit is the root, is a merge, or is one of several first appearances on separate lines of history, and when no plan is readable in it
         self.repo.planned()
         self.repo.git("checkout", "-q", "-b", "other")
         self.repo.write("README.md", "one line\n")
@@ -1152,7 +1177,7 @@ class PlanAndCopperFails(Base):
                          short_of(here), check="first placement")
 
     def test_a_first_placement_that_does_not_come_before_the_sections_commit_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the commit the method judges the plan in comes before the commit the section is judged in
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint, the commit the method judges the plan in
         self.repo.planned()
         self.repo.git("checkout", "-q", "-b", "side")
         self.repo.write("README.md", "side\n")
@@ -1165,13 +1190,13 @@ class PlanAndCopperFails(Base):
                          check="first placement")
 
     def test_a_board_that_never_holds_a_footprint_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails when no plan is readable ... there being no commit before the first placement to read it in
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails when that commit is the root, is a merge, or is one of several first appearances on separate lines of history, and when no plan is readable in it
         self.repo.planned()
         self.repo.commit(board_fixtures.layout([]), "b: an empty board")
         self.assertFails("no commit's board holds a footprint", check="first placement")
 
     def test_a_plan_committed_alone_before_the_first_placement_passes(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: Tests in throwaway repositories built outside this one show ... that a history keeping the order still passes
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: Tests in throwaway repositories built outside this one show each of the fails on a history that commits it and that a history keeping the order still passes
         self.repo.placed()
         planned = self.repo.git("rev-parse", "HEAD~3")
         lines, _ = self.assertPasses()
@@ -1310,6 +1335,9 @@ class Documentation(unittest.TestCase):
                       "between regions", "so a reference listed once, dropped, placed and listed again fails, as does one "
                       "listed in the commit that places it or after", "not by the board file's bytes",
                       "when no commit carries copper yet, a track, an arc, a via or a pour",
+                      "the floorplan is read as the commit before the first copper holds it, so a reference appended "
+                      "only after that copper is not compared, while one appended before it and placed after it is "
+                      "still held to the plan in the commit before the one that places it",
                       "a zone on a copper layer, one whose name ends in `.Cu`",
                       "a zone on a layer that is no copper, silkscreen or mask for one, is no pour",
                       "two files differing only in a text label or an identifier are one placement",
@@ -1317,6 +1345,7 @@ class Documentation(unittest.TestCase):
             with self.subTest(words=words):
                 self.assertIn(words, section)
         self.assertNotIn("a straight track, an arc or a via", section)
+        self.assertNotIn("compares nothing", " ".join(readme.split()))
         taskfile = self.read("Taskfile.yml")
         task = taskfile[taskfile.index("  hw:history:"):]
         task = task[:task.index("\n\n")]
@@ -1331,7 +1360,9 @@ class Documentation(unittest.TestCase):
         for words in ("a copper pour", "a rule area, a zone", "carrying a keepout", "The first placement, the first "
                       "commit whose board holds a footprint", "never from the placement section", "The plan, the "
                       "floorplan in the commit the placement section is judged in", "the only difference allowed being "
-                      "a reference appended to a region's parts", "by reference, position, angle and side and not "
+                      "a reference appended to a region's parts", "so a part appended only after that copper is not "
+                      "compared, while one appended before it and placed after it is still held to the plan in each "
+                      "commit just before its footprint first appears", "by reference, position, angle and side and not "
                       "by the bytes of the board file"):
             with self.subTest(docstring=words):
                 self.assertIn(words, doc)
@@ -1347,7 +1378,7 @@ class Documentation(unittest.TestCase):
                       "hw:test's description names the tools it tests")
 
     def test_nothing_the_command_prints_or_the_guides_say_calls_the_first_copper_a_track_only(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: none of them contradicts the command on what counts as first copper, so no sentence about whether the board has been copper-drawn yet names tracks alone
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: none of them contradicts the command on what counts as first copper
         readme = self.read("hardware", "README.md")
         readme = readme[readme.index("## The placement and critical routing history"):]
         readme = readme[:readme.index("\n## ")]
