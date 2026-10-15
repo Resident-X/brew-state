@@ -298,13 +298,13 @@ chosen; it is not predicted here.
 |---|---|
 | Channels specified | 18 |
 | Channels whose part is decided | 0 |
-| Bought to date | 0 |
+| Bought to date | See `controller-board-design-constraints.md` § Purchases ahead of verification |
 | Reused to date | 0 |
 | Salvaged to date | 0 |
 | **Declared spend** | **250** |
 | **Remaining** | **250** |
 
-Nothing has been decided, so nothing has been spent and no departure from the reused-or-commodity
+Nothing has been decided, so nothing has been spent (purchases made ahead of verification are recorded in `controller-board-design-constraints.md` § Purchases ahead of verification, which states none) and no departure from the reused-or-commodity
 default is yet owed a justification under `REQ-COST-DISCIPLINE-001.C2`. The total is kept running as
 rows close because `REQ-COST-DISCIPLINE-001.C6` judges a channel decided late against what is left,
 not against the headroom the first channel enjoyed.
