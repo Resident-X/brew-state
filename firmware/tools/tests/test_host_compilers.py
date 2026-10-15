@@ -9,10 +9,11 @@ file declares for them, with every compiler of each family found on the host
 running these tests -- the GCC a Linux host defaults to and the clang a macOS
 host defaults to.
 
-What a host has is what it has. A family with no compiler on this host is
-reported as skipped, with the reason, and never as a pass: the hosted nightly
-runs the build on a host of each kind, which is where the family this host lacks
-gets its turn.
+What a host has is what it has. Run locally, a family with no compiler on this
+host is reported as skipped, with the reason, and never as a pass. On a hosted CI
+run the host's own default family is not optional: a Linux host without a GCC, or
+a macOS host without a clang, fails these tests, because the job that was meant
+to carry that half no longer does and a skip would read as a pass.
 
 Each source is compiled under the flags its environment resolves to rather than
 under a list kept here, so a source added, a structure added or a flag changed
@@ -25,6 +26,7 @@ from __future__ import annotations
 import concurrent.futures
 import glob
 import os
+import platform
 import re
 import shlex
 import stat
@@ -32,6 +34,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIRMWARE = os.path.dirname(TOOLS)
@@ -103,6 +106,36 @@ def find_compilers(path_directories: list[str]) -> dict[str, list[str]]:
 
 def host_compilers() -> dict[str, list[str]]:
     return find_compilers([d for d in os.environ.get("PATH", "").split(os.pathsep) if d])
+
+
+#: The family each kind of host defaults to, which a hosted run must therefore have.
+DEFAULT_FAMILY_OF_HOST = {"Linux": GCC, "Darwin": CLANG}
+
+
+def absence_is_failure(family: str, system: str, environ: dict[str, str]) -> bool:
+    """Whether a missing compiler of this family fails the run rather than skips it.
+
+    On a hosted CI run the family a host's own default compiler belongs to has to
+    be present: a job without it has stopped carrying its half of the check, and
+    a skip is indistinguishable from a pass there.
+    """
+    return environ.get("GITHUB_ACTIONS") == "true" and DEFAULT_FAMILY_OF_HOST.get(system) == family
+
+
+def compilers_of(case: unittest.TestCase, family: str) -> list[str]:
+    """The compilers of a family on this host, or the failure or skip their absence is."""
+    compilers = host_compilers()
+    if not any(compilers.values()):
+        case.fail("no C compiler of either family is on this host's path, and the host build needs one")
+    if not compilers[family]:
+        reason = (
+            f"no {family} compiler is on this host's path, so the {family} half of the host "
+            "tier's check did not run here"
+        )
+        if absence_is_failure(family, platform.system(), os.environ):
+            case.fail(f"{reason}, and a hosted run on this kind of host is where it has to")
+        case.skipTest(f"{reason}; the hosted nightly runs it on a host whose default compiler is {family}")
+    return compilers[family]
 
 
 def covered_environments() -> list[build_environments.Environment]:
@@ -212,6 +245,61 @@ class TheHostCompilersAreFoundByTheirBanner(unittest.TestCase):
         self.assertEqual({GCC: [], CLANG: []}, find_compilers([]))
 
 
+class AMissingDefaultCompilerFailsAHostedRunAndSkipsALocalOne(unittest.TestCase):
+    ONLY = {GCC: [], CLANG: ["/usr/bin/clang"]}
+    NEITHER = {GCC: [], CLANG: []}
+
+    def outcome(self, family, system, ci, found):
+        environ = {"GITHUB_ACTIONS": "true"} if ci else {}
+        with mock.patch.object(sys.modules[__name__], "host_compilers", return_value=found), \
+                mock.patch("platform.system", return_value=system), \
+                mock.patch.dict(os.environ, environ, clear=True):
+            try:
+                return compilers_of(unittest.TestCase(), family)
+            except unittest.SkipTest:
+                return "skipped"
+            except AssertionError:
+                return "failed"
+
+    def test_a_linux_host_under_ci_without_gcc_fails(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertEqual("failed", self.outcome(GCC, "Linux", True, {GCC: [], CLANG: ["/usr/bin/clang"]}))
+
+    def test_a_macos_host_under_ci_without_clang_fails(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertEqual("failed", self.outcome(CLANG, "Darwin", True, {GCC: ["/usr/bin/gcc"], CLANG: []}))
+
+    def test_the_same_absence_off_ci_skips(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertEqual("skipped", self.outcome(GCC, "Linux", False, self.ONLY))
+        self.assertEqual("skipped", self.outcome(CLANG, "Darwin", False, {GCC: ["/usr/bin/gcc"], CLANG: []}))
+
+    def test_a_family_that_is_not_the_hosts_default_skips_even_under_ci(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertEqual("skipped", self.outcome(CLANG, "Linux", True, {GCC: ["/usr/bin/gcc"], CLANG: []}))
+        self.assertEqual("skipped", self.outcome(GCC, "Darwin", True, self.ONLY))
+
+    def test_a_host_of_another_kind_under_ci_skips(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertEqual("skipped", self.outcome(GCC, "Windows", True, self.ONLY))
+
+    def test_a_ci_variable_that_is_not_true_is_not_ci(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertFalse(absence_is_failure(GCC, "Linux", {"GITHUB_ACTIONS": "false"}))
+        self.assertFalse(absence_is_failure(GCC, "Linux", {}))
+        self.assertTrue(absence_is_failure(GCC, "Linux", {"GITHUB_ACTIONS": "true"}))
+
+    def test_a_host_with_no_compiler_at_all_fails_everywhere(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertEqual("failed", self.outcome(GCC, "Linux", False, self.NEITHER))
+
+    def test_a_present_family_returns_its_compilers_under_ci(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A narrowing reintroduced into a plant structure, built under the compiler that rejects it, fails that run
+        self.assertEqual(
+            ["/usr/bin/gcc"], self.outcome(GCC, "Linux", True, {GCC: ["/usr/bin/gcc"], CLANG: []})
+        )
+
+
 class TheStrictSettingsAreTheOnesTheBuildDeclares(unittest.TestCase):
     def test_every_covered_environment_still_carries_every_strict_setting(self):
         # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C1: The host tier compiles without warnings under both GCC and clang
@@ -251,16 +339,7 @@ class TheStrictSettingsAreTheOnesTheBuildDeclares(unittest.TestCase):
 
 class EveryOwnSourceCompilesWithoutAWarning(unittest.TestCase):
     def check_family(self, family: str) -> None:
-        compilers = host_compilers()
-        if not any(compilers.values()):
-            self.fail("no C compiler of either family is on this host's path, and the host build needs one")
-        if not compilers[family]:
-            self.skipTest(
-                f"no {family} compiler is on this host's path, so the {family} half of the host "
-                "tier's warning check did not run here; the hosted nightly builds the host tier "
-                f"on a host whose default compiler is {family}"
-            )
-        for compiler in compilers[family]:
+        for compiler in compilers_of(self, family):
             with self.subTest(compiler=compiler):
                 self.assertEqual([], compile_everything(compiler))
 
@@ -301,13 +380,7 @@ class AReintroducedNarrowingIsCaught(unittest.TestCase):
         return flags_of(environment) + ["-I", os.path.dirname(self.FIXTURE)]
 
     def rejected_by(self, family: str, replacement: str) -> None:
-        compilers = host_compilers()[family]
-        if not compilers:
-            self.skipTest(
-                f"no {family} compiler is on this host's path, so whether {family} rejects this "
-                "seeded narrowing was not checked here"
-            )
-        for compiler in compilers:
+        for compiler in compilers_of(self, family):
             with self.subTest(compiler=compiler), tempfile.TemporaryDirectory() as directory:
                 source = self.seeded(directory, replacement)
                 status, output = compile_source(compiler, self.flags(), source)
@@ -351,10 +424,10 @@ class AReintroducedNarrowingIsCaught(unittest.TestCase):
 class TheNarrowIdentifierSitesAreNotWrittenAsPlainUnsignedConditionals(unittest.TestCase):
     def test_no_plant_structure_assigns_a_bare_unsigned_conditional_to_a_heated_mass_identifier(self):
         # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C1: The host tier compiles without warnings under both GCC and clang
-        # The compile above is the authority where a GCC is present. This is
-        # the part that holds on a host without one: the pattern that stopped
-        # the nightly, searched for in every structure, so a host with no GCC
-        # still fails when it is written again.
+        # The compile tests are the authority. This is only a text heuristic: it
+        # matches a literal numeric conditional assigned to a mass identifier,
+        # the one form that stopped the nightly, and nothing else. A narrowing
+        # written any other way is caught by the compile tests alone.
         pattern = re.compile(r"\*\w*mass\w*\s*=\s*[^;]*\?\s*\d+u?\s*:\s*\d+u?\s*;")
         structures = glob.glob(os.path.join(FIRMWARE, "src", "plant", "*", "plant_structure.c"))
         self.assertGreaterEqual(len(structures), 6)
