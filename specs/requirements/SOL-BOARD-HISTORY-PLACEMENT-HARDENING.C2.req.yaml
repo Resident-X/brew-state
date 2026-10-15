@@ -1,0 +1,12 @@
+id: SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C2
+type: criterion
+title: The method says how an off-board schematic part is listed and that a failed compare before the router rewrites the first pass
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Amend the method's planning step so it states how a part the schematic keeps off the board is treated in the floorplan's parts listing, consistent with the placement command's stop on a listed part that is not on the board, and amend the routing step's instruction to repeat from step 2 after a failed compare so that it says the first critical routing pass is rewritten, not a second appended, while no router commit exists. Out of scope: any other wording of those steps.
+links:
+  - target: SOL-BOARD-HISTORY-PLACEMENT-HARDENING
+    type: criterion-of
