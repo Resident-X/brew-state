@@ -1447,12 +1447,21 @@ class Documentation(unittest.TestCase):
                  "method": (self.read("docs", "board-design-method.md").splitlines(), 3),
                  "docstring": (re.split(r"\n- ", board_history.__doc__), 1)}
         describing = ("holds the floorplan", "held to the floorplan", "held to the plan", "differs from the one in",
-                      "agrees with the one in")
+                      "agrees with the one in", "compared with", "compares", "the floorplan in")
+
+        def describes(unit):
+            if any(words in unit for words in describing[:5]):
+                return True
+            # The wider phrases name no plan themselves: a unit using one describes the plan compare when it speaks of
+            # the plan, and not when it speaks of what a candidate is measured against.
+            return (any(words in unit for words in describing[5:]) and "measure" not in unit
+                    and re.search(r"\bplan\b|floorplan", unit) is not None)
+
         false = ("region row", "must be the same", "the same regions", "the same bounds", "the same parts",
                  "compares nothing further", "in the table is the same")
         for name, (units, expected) in sites.items():
             units = [flat(unit) for unit in units]
-            described = [unit for unit in units if any(words in unit for words in describing)]
+            described = [unit for unit in units if describes(unit)]
             with self.subTest(site=name):
                 self.assertEqual(len([unit for unit in units if canonical in unit]), expected,
                                  f"the {name} states the compare in the one sentence, {expected} time(s)")
