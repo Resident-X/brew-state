@@ -182,6 +182,63 @@ class ThePeakIsFoundAcrossEveryPhaseAndEveryCorner(unittest.TestCase):
         self.assertIn("corner 7", str(caught.exception))
         casting.require_ran(casting.STEAM, dict(corner, ran=True))
 
+    def _run_with_stubbed_draws(self, shipped, workspace):
+        """run() end to end with the margin reading supplied and every draw
+        stubbed, returning the channels the casting was read from."""
+        channels = []
+
+        def phased(draw, levels, hold, delivery, recovery, channel):
+            channels.append(channel)
+            return {"series": [], "phases": [{"phase": casting.WARM_UP, "level": 0, "start": 0,
+                                               "end": 10}], "hold_c": 90.0, "peak_c": 95.0,
+                    "peak_at": 0, "lengthened": 1, "intervals": 10, "printed_peak_c": 95.0}
+
+        def steam(*arguments):
+            course = arguments[5]
+            series = [100.0] * len(course)
+            return {"channels": {"steam-c": series}, "stdout": _printed(
+                "steam-c", series, "HOST steam-trajectory")}
+
+        base = {"target_c": 99.9, "steam_highest_c": 186.0, "steam_ready_c": 186.0,
+                "margin": {"sensing_error_c": 2.0}, "steam_margin": {"sensing_error_c": 2.0},
+                "corners": [], "steam_corners": []}
+        base.update(shipped)
+        with mock.patch.object(casting.margin, "margin_record", return_value=base), \
+                mock.patch.object(casting, "run_phased", side_effect=phased), \
+                mock.patch.object(casting.sweep, "steam_draw", side_effect=steam):
+            return channels, casting.run(executable="unused", workspace=workspace)
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: each side reads its own casting channel: the coffee
+    # path the brew channel and the steam path the steam one, derived from the
+    # side and not passed as a free string at the call site; and the draw-length
+    # runs read the steam channel too, or the stubbed draw has no such series.
+    def test_each_side_reads_its_own_casting_channel(self):
+        self.assertEqual({"coffee": "brew-c", "steam": "steam-c"}, casting.CASTING_CHANNEL)
+        with tempfile.TemporaryDirectory() as directory:
+            channels, found = self._run_with_stubbed_draws({}, directory)
+        self.assertEqual(["brew-c", "brew-c", "steam-c"], channels)
+        self.assertEqual(len(casting.STEAM_DRAW_SECONDS), len(found["steam_lengths"]))
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the digests run() prints are exactly the inputs the
+    # record lists, so a file read and not listed cannot go unpinned.
+    def test_run_digests_exactly_the_listed_inputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            _, found = self._run_with_stubbed_draws({}, directory)
+        self.assertEqual(set(casting.input_paths(found)), set(found["digests"]))
+        self.assertEqual([key for _, key in casting.INPUTS],
+                         [key for _, key in casting.INPUTS if found[key] in found["digests"]])
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: an unrun corner in the steam enumeration stops run()
+    # at the steam call site, naming the steam side.
+    def test_an_unrun_steam_corner_stops_run(self):
+        corner = {"which": 9, "ran": False, "joint": False, "end": "low",
+                  "writes": ["steam.heater_power_w"], "factor": 0.9}
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(casting.CastingError) as caught:
+                self._run_with_stubbed_draws({"steam_corners": [corner]}, directory)
+        self.assertIn("steam", str(caught.exception))
+        self.assertIn("corner 9", str(caught.exception))
+
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the corners are run as machines,
     # not as labels. The coffee casting's thermal mass at its low end heats
     # faster under the same heater and runs further past the target; a run whose

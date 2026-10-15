@@ -104,6 +104,10 @@ COFFEE = "coffee"
 HOT_WATER = "hot water"
 STEAM = "steam"
 
+#: The channel of a draw's findings each side's casting temperature is read
+#: from, so that a call site names a side and not a free string.
+CASTING_CHANNEL = {COFFEE: "brew-c", STEAM: "steam-c"}
+
 #: How a temperature is written into the record. One decimal, because the
 #: figure is subtracted from a trip point a few kelvin above it on the coffee
 #: side and a whole-degree figure would move the interval by a quarter of a
@@ -542,7 +546,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
                 return sweep.brew_draw(executable, written, limits, course, scale, name,
                                        control_description=description, target_c=target_c)
             result = run_phased(draw, COFFEE_LEVELS, HOLD_STEPS, DELIVERY_STEPS, RECOVERY_STEPS,
-                                "brew-c")
+                                CASTING_CHANNEL[COFFEE])
             runs.append(a_run(COFFEE, kind, corner, target_c, result, COFFEE_LEVELS))
 
     # The steam draw builds the loop from the description it is given -- there
@@ -573,7 +577,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
             return sweep.steam_draw(executable, written, limits, ready, values[ambient], course,
                                     name)
         result = run_phased(steam, STEAM_LEVELS, STEAM_HOLD_STEPS, STEAM_DELIVERY_STEPS,
-                            STEAM_RECOVERY_STEPS, "steam-c")
+                            STEAM_RECOVERY_STEPS, CASTING_CHANNEL[STEAM])
         runs.append(a_run(STEAM, STEAM, corner, ready_c, result, STEAM_LEVELS))
 
     # How the steam peak depends on how long the wand is held open, at the
@@ -591,7 +595,8 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
                   + [(sweep.INTERVAL_MS, STEAM_LEVELS[0])] * drawn)
         found = sweep.steam_draw(executable, description, limits, nominal_ready,
                                  nominal[ambient], course, "casting-peak-steam-length-%d" % seconds)
-        peak_c, _, _ = held_against_reported(found, "steam-c", len(course), STEAM_HOLD_STEPS)
+        peak_c, _, _ = held_against_reported(
+            found, CASTING_CHANNEL[STEAM], len(course), STEAM_HOLD_STEPS)
         steam_lengths.append((seconds, peak_c))
 
     sensing = {COFFEE: shipped["margin"]["sensing_error_c"],
