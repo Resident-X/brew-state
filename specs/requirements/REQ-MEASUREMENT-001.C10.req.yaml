@@ -3,7 +3,7 @@ type: criterion
 title: The supply voltage that sets heater and pump delivery is known to the control to a declared accuracy
 status: active
 version: 1
-measurement_type: binary
+measurement_type: threshold
 verification: test
 text: |
   Heater power goes as the square of the supply voltage, and a vibratory pump's force and delivery curve move with it too. Across the span the machine declares, that single unknown is the largest part of the uncertainty in how much heat and how much water a command delivers, so a controller that carries the span instead of the value carries an error it could have removed.
