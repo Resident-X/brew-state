@@ -10,16 +10,16 @@ artifact:
   kind: inline
 attested_by: crun-c47e83eb427dc32b
 text: |
-  Verified at commit 366f25b7a159237d913ea024671f2c9726fe2769.
+  Verified at commit de0f1d90e07888eba614d28c91695ce9d837ff99.
 
   Inspection of .claude/skills/start-work/SKILL.md, step 1, against each clause of SOL-VERIFY-DAILY-STATUS-READ-FIRST.C2:
-  - One read of the daily status is the session's first act: step 1 opens "the session's very first action is one read of task daily:status", with no condition on the task existing.
+  - One read of the daily status is the session's first act: step 1 opens "the session's very first action is one read of task check:daily", with no condition on the task existing.
   - Shown above the target list: the result is printed above the list; a red result adds option 0 above it.
   - Red adds a first option to fix the failure, carrying the run link, and nothing else: option 0 "fix the nightly failure" carries the run's link; the step forbids log reads and run views before the operator picks.
   - Unknown or none adds no option and does not delay the target question: the step shows the reason above the list and asks the target question at once.
   - The corrective work goes through the maintenance lane: investigation happens only on the option-0 pick, targeting a corrective solution under DEL-MAINTENANCE.
 
-  Shown against a real nightly result: task daily:status read the repository's actual run history of the Nightly verification workflow for main and printed, exiting zero:
+  Shown against a real nightly result: task check:daily read the repository's actual run history of the Nightly verification workflow for main and printed, exiting zero:
 
   red
   conclusion: failure
