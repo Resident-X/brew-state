@@ -1,0 +1,12 @@
+id: SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C2
+type: criterion
+title: The seam direct-call check passes on the hosted Linux runner against the repository's own linked executables
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  The nightly verification's check task, run on a GitHub-hosted Ubuntu runner, passes the seam direct-call check for the hardware interface and the plant-model interface against every host build environment the repository links, shown by the check task's lines in a nightly run on that runner. Out of scope: any other gate in that run.
+links:
+  - target: SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY
+    type: criterion-of

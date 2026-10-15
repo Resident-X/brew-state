@@ -1,0 +1,12 @@
+id: SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1
+type: criterion
+title: The seam direct-call check recognises the call forms each supported host's disassembler prints and still fails what it exists to refuse
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The check that proves calls through the hardware interface and the plant-model interface are direct reads the disassembly of the linked host executable on macOS arm64 with Apple clang and on Linux x86-64 with GCC. On Linux that disassembly prints a call or tail jump with a bare hexadecimal address and, in a position-independent executable, a procedure-linkage suffix on the symbol, and the check recognises both as direct calls to the interface symbol. It continues to fail when a call through either interface is indirect and when an interface operation the consumers reference is reached by no direct call at all. Tests feed it disassembly text in each host's form for a direct call, a direct tail jump, a suffixed symbol, an indirect call through a register, an indirect call through memory and an operation with no call, and each result is asserted in text and in JSON output. Out of scope: the other checks in the same task, and host platforms beyond these two.
+links:
+  - target: SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY
+    type: criterion-of

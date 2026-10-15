@@ -1,0 +1,12 @@
+id: SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C1
+type: criterion
+title: The board design check passes the repository's tracked designs on the hosted runner's KiCad installation
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  The board design check, run by the nightly verification on a GitHub-hosted Ubuntu runner with the KiCad that workflow installs, passes every design the repository tracks, including the review proof design, which today reports library-configuration violations there for the standard symbol and footprint libraries. The workflow installs whatever the check needs from a free, named source at a pinned version, so no library comes from state present only on the author's machine. Out of scope: layout defects in a design, which the board-review-proof baseline owns.
+links:
+  - target: SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER
+    type: criterion-of

@@ -1,0 +1,15 @@
+id: SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER
+type: deliverable
+category: solution
+title: The board gates pass on the hosted runner's KiCad installation
+status: active
+version: 1
+text: |
+  The nightly full verification of main fails its board gates on the hosted Linux runner, where KiCad is installed by the workflow from a named source. The board design check reports 81 violations on the review proof design, each one that the configuration does not include a standard symbol or footprint library; the likely cause is that the install omits recommended packages, so the standard libraries are absent. The board tooling's tests fail as well: every view-renderer test reports the three-dimensional export as unreadable, because the runner's command-line tool exits non-zero when a model is missing while still writing its output, which the renderer treats as failure; the seeded review folder's tests fail on a missing board file, probably downstream of the same missing libraries, and the check task's whole-repository test fails on the same 81 violations. The hosted-runner install is the part of the nightly that SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2 names but whose passing no criterion requires, so a nightly that reports these gates red has satisfied it. This solution makes the board gates pass on the runner. The build confirms each likely cause against the runner before changing the install or the tooling.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C1
+    type: targets
