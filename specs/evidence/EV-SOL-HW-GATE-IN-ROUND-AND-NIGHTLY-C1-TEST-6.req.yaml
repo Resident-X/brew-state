@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C1-TEST-6
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:49.617776Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py::test_a_line_a_task_writes_to_standard_error_is_noted_by_its_marker
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+    type: satisfies

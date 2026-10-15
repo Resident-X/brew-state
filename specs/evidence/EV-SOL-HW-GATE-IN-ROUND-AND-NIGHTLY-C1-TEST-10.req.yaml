@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C1-TEST-10
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:50.210247Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_missing_kicad_stops_every_module_naming_it, test_a_missing_rasteriser_stops_the_modules_that_draw_naming_it, test_a_rasteriser_that_finds_no_font_stops_the_modules_that_draw_naming_the_font
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+    type: satisfies

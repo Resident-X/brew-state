@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C1-TEST-9
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:50.065948Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_designs_folder_sheets_libraries_and_record_are_listed_and_nothing_else, test_a_record_not_yet_committed_that_is_nearer_than_a_committed_one_is_listed, test_a_design_in_the_top_folder_reads_the_whole_repository, test_a_repository_with_no_design_lists_nothing_and_succeeds, test_a_design_git_does_not_track_is_not_listed, test_a_folder_that_is_not_a_git_work_tree_cannot_be_listed, test_every_file_the_check_reads_of_the_designs_in_this_repository_is_listed
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+    type: satisfies

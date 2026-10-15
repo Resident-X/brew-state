@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C1-TEST-4
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:49.304899Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py::test_a_failing_board_check_stops_the_round_and_the_sweep_is_not_reached, test_failing_tooling_tests_stop_the_round_after_the_check_passed, test_a_missing_kicad_stops_the_round_naming_it_rather_than_skipping_the_tier, test_a_missing_rasteriser_or_font_stops_the_round_after_the_check_passed, test_a_host_failure_says_the_board_tier_was_not_reached_and_what_it_would_have_done, test_an_emulation_failure_says_the_board_tier_was_not_reached, test_a_sweep_finding_still_names_the_board_tier_that_ran
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+    type: satisfies
