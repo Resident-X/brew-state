@@ -4,7 +4,7 @@ category: functional
 title: The controller holds its guarantees across the declared range of model error
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The plant model will be wrong, and the useful question is not by how much but what still holds when it is. A controller correct only at nominal parameters is not a design.
 

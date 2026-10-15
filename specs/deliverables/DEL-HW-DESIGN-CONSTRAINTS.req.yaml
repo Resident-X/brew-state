@@ -4,7 +4,7 @@ category: task
 title: The constraints the controller boards are designed against are fixed with their sources
 status: active
 level: task
-version: 1
+version: 2
 text: |
   Before any board is designed, everything it must satisfy is written down with where it came from. Three sources feed it: the machine as found, inspected rather than remembered; this graph's requirements, reduced to the figures a board designer works to; and the chosen manufacturer, whose limits, stock and prices bound what can be built and what it costs. A fourth input is the set of properties each bought module in the earlier design provided without being asked, since replacing a module with a circuit loses those silently unless they are stated.
 rationale: |
@@ -28,3 +28,7 @@ links:
     type: targets
   - target: DEC-BOARD-MANUFACTURER-JLCPCB
     type: justified-by
+  - target: REQ-MACHINE-CONFIGURATION-001.C2
+    type: targets
+  - target: REQ-MACHINE-CONFIGURATION-001.C3
+    type: targets

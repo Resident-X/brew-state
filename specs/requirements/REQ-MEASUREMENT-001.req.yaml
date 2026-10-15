@@ -4,7 +4,7 @@ category: constraint
 title: Measurement is accurate enough to hold target against the protection margin
 status: active
 priority: must
-version: 1
+version: 2
 text: |
   The coffee side runs close to its protection trip point. The gap between the temperature the controller is aiming for and the temperature at which hardware protection removes power is small, and measurement error eats directly into it.
 
