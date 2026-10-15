@@ -63,7 +63,7 @@ Each finding is one line, `<FINDING> | <item> | <detail>`, where the finding is 
 
 ## The layout review views
 
-`task hw:views -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <name> [--class <name> ...] --out <folder>` renders, from the board's own files, every view the layout review judges the board on. It reads the paths given after `--` from the folder it is run in. Name every critical class with its own `--class`. `<folder>` must be new or empty, and outside every design's folder.
+`task hw:views -- --board <board>.kicad_pcb --project <board>.kicad_pro --class <name> [--class <name> ...] --out <folder>` renders, from the board's own files, every view the layout review judges the board on. It reads the paths given after `--` from the folder it is run in. Name every critical class with its own `--class`. `<folder>` must be new or empty, and outside every design's folder. The review judges the board on its [placement view](#the-placement-view) too, which `task hw:placement` renders into a folder of its own.
 
 It writes these PNG images, each on a dark background:
 
