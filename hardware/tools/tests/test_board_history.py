@@ -866,6 +866,27 @@ class PlanAndCopperFails(Base):
         self.assertNotEqual(board_history.turn_text(180), board_history.turn_text(360))
         self.assertEqual(board_history.turn_text(-0.5), "359.5")
 
+    def test_positions_equal_to_six_significant_digits_fail_as_one_placement_and_a_sixth_digit_apart_stay_distinct(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: a position or angle read to six significant digits
+        plain = board(PLACES[1])
+        self.repo.planned()
+        nudged = plain.replace("(at 20 10)", "(at 20.0000001 10.00000001)")
+        self.assertNotEqual(plain, nudged, "the two files differ in their bytes")
+        one, two = self.candidates_two(plain, nudged)
+        self.record(one, two, plain, measures={2: MEASURES[1]})
+        failed = self.assertFails("candidates 1 and 2 place every part alike", check="distinct candidates")
+        self.assertOnly(failed, "distinct candidates")
+        with tempfile.TemporaryDirectory() as directory:
+            placed = {}
+            for name, x in (("whole", "20"), ("seventh digit", "20.00001"), ("sixth digit", "20.0001")):
+                path = os.path.join(directory, name.replace(" ", "_") + ".kicad_pcb")
+                with open(path, "w") as handle:
+                    handle.write(board_fixtures.layout([footprint("R1", 0, 0, [pad(1, 0, -1, "A", "passive")]).replace(
+                        "(at 0 0)", f"(at {x} 5)", 1)]))
+                placed[name] = board_history.parts_placed(board_history.locked_copper.read_layout(path))
+        self.assertEqual(placed["whole"], placed["seventh digit"])
+        self.assertNotEqual(placed["whole"], placed["sixth digit"])
+
     def test_a_half_turn_stays_distinct_from_a_full_turn(self):
         # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails two candidates whose parts sit identically, judged by each part's reference, position, angle and side
         self.repo.planned()
@@ -951,7 +972,7 @@ class PlanAndCopperFails(Base):
     # --- The plan is held to the plan committed before placement --------------------------------------
 
     def test_a_region_widened_in_the_commit_that_records_the_section_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose set of region names, region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint
         self.repo.planned()
         one, two = self.candidates_two(board((50, 10)), board(PLACES[2]))
         self.repo.replan(WIDE)
@@ -962,7 +983,7 @@ class PlanAndCopperFails(Base):
         self.assertOnly(failed, "plan before placement")
 
     def test_a_region_widened_after_an_unrecorded_placement_and_before_the_first_candidate_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint, the commit the method judges the plan in
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose set of region names, region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint, the commit the method judges the plan in
         self.repo.planned()
         self.repo.commit(board(PLACES[2]), "b: a placement no section records")
         self.repo.replan(WIDE)
@@ -972,7 +993,7 @@ class PlanAndCopperFails(Base):
         self.assertFails("the region 'low voltage' has the bounds (0, 0)–(60, 40)", check="plan before placement")
 
     def test_a_part_removed_moved_or_a_region_added_in_the_plan_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose set of region names, region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint
         changes = {
             "a part removed": (PLAN, PLAN.replace("J1, R1 |", "J1 |"),
                                "R1 is listed in the region 'low voltage' in the plan before placement and not now"),
@@ -1114,7 +1135,7 @@ class PlanAndCopperFails(Base):
                     self.assertOnly(failed, "plan before placement")
 
     def test_a_plan_text_the_compare_does_not_cover_may_change_and_the_report_says_what_it_covers(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: a region's description, a reason given for no bounds and the order of rows not being compared
         reordered = PLAN.replace("| mains | none: the board carries no mains | nothing | none |\n", "").replace(
             "| digital |", "| mains | none: the board carries no mains | nothing | none |\n| digital |")
         changes = {"a What it holds cell rewritten": PLAN.replace("the connector and its resistor", "something else"),
@@ -1282,7 +1303,7 @@ class PlanAndCopperFails(Base):
                          short_of(here), check="first placement")
 
     def test_a_first_placement_that_does_not_come_before_the_sections_commit_fails(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint, the commit the method judges the plan in
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose set of region names, region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint, the commit the method judges the plan in
         self.repo.planned()
         self.repo.git("checkout", "-q", "-b", "side")
         self.repo.write("README.md", "side\n")
