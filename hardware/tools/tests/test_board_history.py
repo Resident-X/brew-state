@@ -17,6 +17,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -927,7 +928,7 @@ class PlanAndCopperFails(Base):
                               "the region 'analog sensing' has the bounds (35, 0)–(60, 40) where the plan before "
                               "placement gives (40, 0)–(60, 40)"),
             "a region row added": (PLAN, PLAN.replace("\n\n## Plan", "\n| extra | none | nothing | none |\n\n## Plan"),
-                                   "the floorplan's region rows are"),
+                                   "the floorplan's set of region names is"),
         }
         for name, (then, now, words) in changes.items():
             with self.subTest(change=name):
@@ -1020,33 +1021,81 @@ class PlanAndCopperFails(Base):
 
     def test_a_part_first_placed_in_a_merge_commit_fails_unless_every_parent_lists_it(self):
         # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the only allowed difference being references appended to a region's parts, each listed in the plan of every parent of the commit where its footprint first appears, each such parent coming after the commit before the first placement
-        for name, every_parent in (("every parent lists it", True), ("only one parent lists it", False)):
+        for name, main_lists, side_lists in (("every parent lists it", True, True),
+                                             ("only the side branch lists it", False, True),
+                                             ("only the main line lists it", True, False)):
             with self.subTest(merge_of=name):
                 self.repo = Repo(self)
                 self.repo.planned()
                 one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1, without R2")
                 self.repo.git("checkout", "-q", "-b", "side")
-                self.repo.replan(WITH_R2)
-                self.repo.commit(message="side: R2 listed")
+                if side_lists:
+                    self.repo.replan(WITH_R2)
+                    self.repo.commit(message="side: R2 listed")
+                else:
+                    self.repo.write("README.md", "one line\n")
+                    self.repo.commit(message="side: a change that leaves R2 unlisted")
+                side = self.repo.git("rev-parse", "HEAD")
                 self.repo.git("checkout", "-q", "main")
-                if every_parent:
+                if main_lists:
                     self.repo.replan(WITH_R2)
                     self.repo.commit(message="main: R2 listed")
                 else:
                     self.repo.write("README.md", "one line\n")
                     self.repo.commit(message="main: a change that leaves R2 unlisted")
-                unlisted = self.repo.git("rev-parse", "HEAD")
+                main = self.repo.git("rev-parse", "HEAD")
                 two = self.repo.merge("side", board(PLACES[2], r2=(30, 25)), "b: candidate 2, with R2, in a merge")
                 self.repo.replan(WITH_R2)
                 self.repo.commit(message="b: R2 listed in the plan the section is judged in")
                 self.record(one, two, board(PLACES[2], r2=(30, 25)), chosen=2)
-                if every_parent:
+                if main_lists and side_lists:
                     self.assertPasses()
                 else:
+                    unlisted = side if main_lists else main
                     failed = self.assertFails("R2 is appended to the parts of 'low voltage' and its footprint first "
                                               f"appears on the board at {short_of(two)}",
                                               f"in {short_of(unlisted)}: the amendment", check="plan before placement")
                     self.assertOnly(failed, "plan before placement")
+
+    def test_a_plan_text_the_compare_does_not_cover_may_change_and_the_report_says_what_it_covers(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails a placement section judged against a floorplan whose region bounds or parts differ from the floorplan in the commit before the first commit whose board holds a footprint
+        reordered = PLAN.replace("| mains | none: the board carries no mains | nothing | none |\n", "").replace(
+            "| digital |", "| mains | none: the board carries no mains | nothing | none |\n| digital |")
+        changes = {"a What it holds cell rewritten": PLAN.replace("the connector and its resistor", "something else"),
+                   "a reason given for none reworded": PLAN.replace("none: the board carries no mains", "none: no mains"),
+                   "the rows reordered": reordered}
+        for name, now in changes.items():
+            with self.subTest(change=name):
+                self.assertNotEqual(PLAN, now, "the change was made to the plan")
+                self.repo = Repo(self)
+                self.repo.planned()
+                one, two = self.candidates_two(board(PLACES[1]), board(PLACES[2]))
+                self.repo.replan(now)
+                self.record(one, two, board(PLACES[1]))
+                lines, _ = self.assertPasses()
+                self.assertIn(f"in {board_history.PLAN_COMPARED}", "\n".join(lines))
+
+    def test_the_pass_says_none_placed_yet_for_an_appended_part_no_footprint_has_reached(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: each listed in the plan of every parent of the commit where its footprint first appears
+        both = PLAN.replace("J1, R1 |", "J1, R1, R2, R3 |")
+        for name, plan, placed, words in (
+                ("none placed", WITH_R2, None,
+                 "with R2 appended to its parts, none placed yet"),
+                ("one of two placed", both, (30, 25),
+                 "with R2, R3 appended to its parts, R2 committed before its footprint first appears on the board "
+                 "and R3 not placed yet")):
+            with self.subTest(appended=name):
+                self.repo = Repo(self)
+                self.repo.planned()
+                one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1, without the appended parts")
+                self.repo.replan(plan)
+                self.repo.commit(message="b: parts appended to low voltage")
+                two = self.repo.commit(board(PLACES[2], r2=placed), "b: placement candidate 2")
+                self.record(one, two, board(PLACES[2], r2=placed), chosen=2)
+                lines, _ = self.assertPasses()
+                text = "\n".join(line for line in lines if line.startswith("CHECK | plan before placement"))
+                self.assertIn(words, text)
+                self.assertNotIn("each committed before its footprint", text)
 
     def test_a_part_appended_and_placed_after_the_first_copper_passes_with_the_section_left_as_it_is(self):
         # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: Tests in throwaway repositories built outside this one show each of the fails on a history that commits it and that a history keeping the order still passes
@@ -1330,7 +1379,6 @@ class Documentation(unittest.TestCase):
                       "footprint", "from the history alone and never from the placement section",
                       "a commit before the first placement that holds no readable floorplan",
                       "held to the floorplan in the commit before the first placement",
-                      "The region rows, each region's bounds and each region's parts must be the same",
                       "a reference appended to a region's parts, with no bound changed and no reference removed or moved "
                       "between regions", "so a reference listed once, dropped, placed and listed again fails, as does one "
                       "listed in the commit that places it or after", "not by the board file's bytes",
@@ -1376,6 +1424,46 @@ class Documentation(unittest.TestCase):
         test = taskfile[taskfile.index("  hw:test:"):]
         self.assertIn("the placement and critical routing history check", test.splitlines()[1],
                       "hw:test's description names the tools it tests")
+
+    def test_every_site_describing_the_plan_compare_carries_the_one_sentence_and_none_a_falsehood(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: The hardware tools' guide, the task's description and the command's own description state each changed behaviour, so none of them contradicts the command on what counts as first copper, what makes candidates distinct, or what the plan is compared with.
+        canonical = ("the set of region names, each region's bounds and each region's parts; no other text in the "
+                     "table is compared")
+        self.assertEqual(board_history.PLAN_COMPARED, canonical)
+
+        def flat(text):
+            return " ".join(text.split())
+
+        readme = self.read("hardware", "README.md")
+        readme = readme[readme.index("## The placement and critical routing history"):]
+        readme = readme[:readme.index("\n## ")]
+        taskfile = self.read("Taskfile.yml")
+        task = taskfile[taskfile.index("  hw:history:"):]
+        task = task[:task.index("\n\n")]
+        # Each site, split into the units that each state a whole sentence's worth of what the command does: a line of
+        # the guides, a bullet of the docstring, the one description of the task. A unit that says the floorplan is
+        # held to another, or differs from it, is describing the compare and carries the sentence.
+        sites = {"guide": (readme.splitlines(), 1), "task": ([task], 1),
+                 "method": (self.read("docs", "board-design-method.md").splitlines(), 3),
+                 "docstring": (re.split(r"\n- ", board_history.__doc__), 1)}
+        describing = ("holds the floorplan", "held to the floorplan", "held to the plan", "differs from the one in",
+                      "agrees with the one in")
+        false = ("region row", "must be the same", "the same regions", "the same bounds", "the same parts",
+                 "compares nothing further", "in the table is the same")
+        for name, (units, expected) in sites.items():
+            units = [flat(unit) for unit in units]
+            described = [unit for unit in units if any(words in unit for words in describing)]
+            with self.subTest(site=name):
+                self.assertEqual(len([unit for unit in units if canonical in unit]), expected,
+                                 f"the {name} states the compare in the one sentence, {expected} time(s)")
+                for unit in described:
+                    self.assertIn(canonical, unit, f"a unit of the {name} describes the compare without the sentence")
+                    for words in false:
+                        self.assertNotIn(words, unit)
+        source = flat(self.read("hardware", "tools", "board_history.py"))
+        for words in false:
+            with self.subTest(source=words):
+                self.assertNotIn(words, source)
 
     def test_nothing_the_command_prints_or_the_guides_say_calls_the_first_copper_a_track_only(self):
         # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: none of them contradicts the command on what counts as first copper

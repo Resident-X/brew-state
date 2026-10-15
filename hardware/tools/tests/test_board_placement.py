@@ -659,7 +659,9 @@ class Method(unittest.TestCase):
                       "appended before that first copper and placed after it is compared still, by the same rule: the "
                       "plan in the commit before the one that places it must list it", "place every part alike",
                       "however their board files differ in a text label or an identifier",
-                      "with the references the plan appended left out where that commit's board does not hold them"):
+                      "with the references the plan appended left out where that commit's board does not hold them",
+                      "before any track, arc, via or copper pour is drawn",
+                      "and before any track, arc, via or pour is drawn, run it"):
             with self.subTest(step6=words):
                 self.assertIn(words, placement)
         for words in ("Between the first footprint on the board and the first track, pour, arc or via committed, the "

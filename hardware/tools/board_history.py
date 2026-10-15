@@ -23,10 +23,11 @@ reachable from HEAD, and judges each section as it stood in the commit before:
   placement that does not come before the commit the placement section is
   judged in, and no readable floorplan in the commit before it, fail.
 - The plan, the floorplan in the commit the placement section is judged in,
-  held to the floorplan in the commit before the first placement: the same
-  regions, the same bounds for each and the same parts in each, the only
-  difference allowed being a reference appended to a region's parts, with no
-  bound changed and no reference removed or moved between regions, which the
+  held to the floorplan in the commit before the first placement, comparing
+  the set of region names, each region's bounds and each region's parts; no
+  other text in the table is compared, the only difference allowed being a
+  reference appended to a region's parts, with no bound changed and no
+  reference removed or moved between regions, which the
   floorplan lists in each commit just before its footprint first appears on
   the board, that commit coming after the commit before the first placement.
   The floorplan is read as the commit before the first copper holds it, so a
@@ -108,6 +109,9 @@ METHOD = "docs/board-design-method.md"
 #: pour would be read as the router's commit.
 TRACKS = ("track", "arc", "via")
 
+#: What the plan compare covers, in these words wherever the compare is described: the guide, the task, the method and
+#: this command's own report.
+PLAN_COMPARED = "the set of region names, each region's bounds and each region's parts; no other text in the table is compared"
 PLACEMENT = "Placement"
 CRITICAL = "Critical routing"
 CANDIDATE = re.compile(r"### Candidate (\d+)")
@@ -492,7 +496,7 @@ def plan_changes(then: List[dict], now: List[dict]) -> Tuple[List[str], Dict[str
     faults, appended = [], {}
     names_then, names_now = [region["name"] for region in then], [region["name"] for region in now]
     if sorted(names_then) != sorted(names_now):
-        faults.append(f"the floorplan's region rows are {', '.join(names_now) or 'none'} where the plan before "
+        faults.append(f"the floorplan's set of region names is {', '.join(names_now) or 'none'} where the plan before "
                       f"placement has {', '.join(names_then) or 'none'}")
     before = {region["name"]: region for region in then}
     listed = {part for region in then for part in region["parts"]}
@@ -552,7 +556,7 @@ def judge_plan(history: History, board: str, plan: str, anchor: Optional[str], a
     first placement there is nothing to hold it to and no reference is taken as appended."""
     if anchor is None:
         return {}
-    faults, appended = [], {}
+    faults, appended, placed = [], {}, []
     try:
         then = read_plan(history, anchor, plan)
     except Unreadable as error:
@@ -567,6 +571,8 @@ def judge_plan(history: History, board: str, plan: str, anchor: Optional[str], a
         for part in sorted(appended):
             holders = first_commits(history, board, lambda commit, part=part: part in references(
                 history.layout(commit, board)))
+            if holders:
+                placed.append(part)
             for holder in holders:
                 parents = history.parents[holder]
                 unlisted = [parent for parent in parents if not amended_in(history, plan, anchor, parent, part)]
@@ -577,10 +583,20 @@ def judge_plan(history: History, board: str, plan: str, anchor: Optional[str], a
                                   f"in {', '.join(short(parent) for parent in unlisted) or 'a commit before it'}: the "
                                   "amendment is committed after that commit and before the part is placed, and the "
                                   "plan keeps it until then")
+    waiting = sorted(set(appended) - set(placed))
+    if not appended:
+        added = ""
+    elif not waiting:
+        added = f", with {', '.join(sorted(appended))} appended to its parts, each committed before its footprint first " \
+                "appears on the board"
+    elif not placed:
+        added = f", with {', '.join(sorted(appended))} appended to its parts, none placed yet"
+    else:
+        added = f", with {', '.join(sorted(appended))} appended to its parts, {', '.join(sorted(placed))} committed " \
+                f"before its footprint first appears on the board and {', '.join(waiting)} not placed yet"
     report.add("plan before placement", faults,
-               f"the floorplan in {where} is the one in the commit before the first placement ({short(anchor)})"
-               + (f", with {', '.join(sorted(appended))} appended to its parts, each committed before its footprint "
-                  "first appears on the board" if appended else ""))
+               f"the floorplan in {where} agrees with the one in the commit before the first placement "
+               f"({short(anchor)}) in {PLAN_COMPARED}{added}")
     return appended
 
 
