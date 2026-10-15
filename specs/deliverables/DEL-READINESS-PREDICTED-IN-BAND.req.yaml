@@ -12,11 +12,14 @@ text: |
 rationale: |
   The owner's intent is that ready means the delivery would be in band, as recorded in the decision and in the definition of readiness. The shipped steam behaviour is a gate that withholds feed below a ready pressure, which is a setpoint test and a proxy for this. Coffee readiness has no prediction at all. The timeliness requirement was amended to state the predictive meaning and to require the bounded wait and its report; nothing in the graph owned bringing the finished work to that definition, so this task owns it.
 
-  Placement: a task directly under the roadmap's simulation phase criterion, beside the steam-loop and brew-loop tasks it revises. It depends on the steam flash-generator task and on the coffee plant-fidelity task because a prediction is only as faithful as the plant relations it runs forward.
+  Placement: a task directly under the roadmap's simulation phase criterion, beside the steam-loop and brew-loop tasks it revises. It depends on the steam flash-generator task because a steam prediction is only as faithful as the flash relations it runs forward.
 
   What this replaces, read in this session: the steam readiness gate that withholds feed until measured pressure reaches the ready threshold (SOL-SIM-STEAM-READINESS-GATE, criteria C1 to C4, finished under DEL-SIM-STEAM-LOOP). The steam-loop criterion that delivery is prevented until the side can sustain it (DEL-SIM-STEAM-LOOP.C2) remains true and is met by the new definition: an early draw is starved because it is predicted wet, not because a pressure number is unreached. Criteria on sealed solutions cannot be superseded one by one, so the criteria below state the replaced behaviour in full and the slicing session supersedes the owning solution.
 
   Owner-pending: the limit on the wait for each purpose is a declared figure the owner has not yet set, declared with the other timing figures. No number is invented here.
+
+
+  The coffee half of the prediction depends on the brew plant-fidelity work, because a coffee prediction runs the sensor and element lag, heat-exchanger effectiveness and delivered flow forward. That dependency is not held on this task, so steam readiness is not held behind brew hydraulics and pump-ripple simulation. Slicing must wire it on the coffee solution only.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from
@@ -39,6 +42,4 @@ links:
   - target: DEL-SIM-ESTIMATOR
     type: depends-on
   - target: DEL-STEAM-PATH-FLASH-GENERATOR
-    type: depends-on
-  - target: DEL-BREW-PLANT-FIDELITY
     type: depends-on

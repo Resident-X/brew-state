@@ -17,6 +17,9 @@ rationale: |
   Dependency direction: the existing derivation of each thermoblock's peak casting temperature under control (SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED) consumes the peak this control produces, since the energy-based warm-up and recovery change the peak. It therefore depends on this task and not the other way round, and that edge is wired alongside this task. That derivation also waits on the plant model's element-power uncertainty covering the declared supply span.
 
   What this replaces: the warm-up and recovery behaviour of the finished loops where it is driven by temperature error, which is read here from the requirement text and not from a sealed criterion, so slicing must read the loop solutions before naming what it supersedes. The margin itself is a declared figure that the owner has not given in this task, and none is invented here.
+
+
+  The consumer of the peak this control produces is regenerated as part of this task (the last criterion), so the proof-of-life interval is not left standing on a record generated against the controller that preceded the correction.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from

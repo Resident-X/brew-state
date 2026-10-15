@@ -19,6 +19,9 @@ rationale: |
   Not edited from here: criteria on sealed solutions cannot be superseded one by one, because supersession is an operation on a deliverable. The criteria below therefore state the replaced behaviour in full, so the slicing session can supersede the owning solutions and re-anchor their contributions.
 
   Pressure measured in the brew path is now load-bearing for control and not only for the pressure map, so the requirement for it stays open until the sensor is fitted and read. A segment's pressure limit is a control limit below the safety relief and never the relief itself. The relief setting is a figure the owner has not yet set.
+
+
+  Also read in this session and left unchanged. SOL-BREW-RECOVERS-AFTER-DRAW describes a draw as a commanded course of flow through the pump channel, and SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3 states duty under a drinking target as following the same relation to commanded flow as a brew target. Neither depends on flow being the only commandable variable: a segment that commands flow remains a valid case under the new command surface, so both stand as delivered and are not in the replaced list. DEL-BENCH-FLOW-INSTRUMENTATION and SOL-FLOW-SENSED-CHANNEL concern the flow the machine senses and not the flow it commands, and are unaffected.
 links:
   - target: DEL-BREW-STATE-DELIVERY.C1
     type: derives-from

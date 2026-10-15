@@ -1,0 +1,13 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C7
+type: criterion
+title: The peak casting record and the proof-of-life interval are regenerated against the corrected control
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The peak casting temperature under control and the proof-of-life removal interval derived from it (SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED) are regenerated against the control as it then stands, with the generated record's pinned inputs refreshed, so the safety figure reflects the corrected controller and not the one that preceded it. A record generated before this task's control changes is stale and is not accepted as the figure.
+links:
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: criterion-of

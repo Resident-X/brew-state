@@ -1,13 +1,13 @@
 id: DEL-STEAM-PATH-FLASH-GENERATOR.C3
 type: criterion
-title: The steam loop drives the feed to hold pressure and quantity, and drives the heater to hold dryness
+title: Steam pressure and dryness each hold under their own actuator's control
 status: active
 version: 1
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  No pressure loop drives the heater. Dryness is the balance of heater power, the sensible heat of the water fed and the latent heat carried out, and the loop holds it with heater power.
+  The feed is the actuator for pressure and quantity and heater power is the actuator for dryness, as DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR sets out. No pressure loop drives the heater. Dryness is the balance of heater power, the sensible heat of the water fed and the latent heat carried out, and the loop holds it with heater power.
 links:
   - target: DEL-STEAM-PATH-FLASH-GENERATOR
     type: criterion-of

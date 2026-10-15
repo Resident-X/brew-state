@@ -1,13 +1,13 @@
 id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C1
 type: criterion
-title: A heater channel's commanded level is delivered as one energise-or-idle decision per supply half-cycle
+title: A heater channel's delivered average power tracks its commanded level
 status: active
 version: 1
 measurement_type: threshold
 verification: test
 closes_by: cascade
 text: |
-  The residual a level leaves between whole half-cycles is carried forward, so over any run the energy delivered differs from the energy commanded by less than one half-cycle. The half-cycles delivered per channel are counted and reported in both the text and the JSON form.
+  Each heater channel's commanded level is delivered as one energise-or-idle decision per supply half-cycle, as DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM commits. The residual a level leaves between whole half-cycles is carried forward, so over any run the energy delivered differs from the energy commanded by less than one half-cycle. The half-cycles delivered per channel are counted and reported in both the text and the JSON form.
 links:
   - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
     type: criterion-of
