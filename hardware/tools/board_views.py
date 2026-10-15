@@ -1505,10 +1505,7 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
             if layer in carried and layer not in plotted:
                 plotted[layer] = plot(kicad_cli, work, copy, layer, f"extra-{layer}.svg", board, fonts)
         areas = rule_areas(refilled, carried)
-        reach = [outline] + [box for box in (drawn_extent(path) for path in plotted.values()) if box is not None]
-        reach += [(area["bounds_mm"]["x0"], area["bounds_mm"]["y0"], area["bounds_mm"]["x1"], area["bounds_mm"]["y1"])
-                  for area in areas]
-        frame = grown(union(reach), BOARD_MARGIN_MM)
+        frame = board_frame(outline, plotted, areas)
         names = Names()
         outputs = output_files(names)
         renderer = Renderer(resvg, work, ready, scale, frame, plotted, colours, copper, areas, fonts, names)
@@ -1593,17 +1590,7 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
         header = {
             "board": os.path.realpath(board),
             "critical_classes": {name: sorted(membership[name], key=natural) for name in classes},
-            "resolution": {
-                "px_per_mm": scale, "pixels_per_feature": PIXELS_PER_FEATURE,
-                "min_track_width_mm": figures[0], "min_clearance_mm": figures[1],
-                "rule": "pixels per millimetre = pixels per feature / the smaller of the minimum track width and "
-                        "the minimum clearance",
-            },
-            "image_limit": {"long_edge_px": LONG_EDGE_PX, "patches": PATCHES, "patch_px": PATCH_PX},
-            "background": BACKGROUND,
-            "fonts_substituted": [{"font": font, "drawn_in": instead} for font, instead in sorted(fonts.items())],
-            "layers_not_carried": absent,
-            "rule_areas": rule_area_entries(areas),
+            **index_fields(scale, figures, fonts, absent, areas),
             "not_in_3d": unseen,
         }
         write_outputs(ready, outputs, header, renderer.images, facts)
@@ -1611,17 +1598,11 @@ def views(board: str, project: str, classes: Sequence[str], out: str, kicad_cli:
         for name in sorted(os.listdir(ready)):
             shutil.move(os.path.join(ready, name), os.path.join(out, name))
     locked_copper.class_lines(classes, membership, stream)
-    for font, instead in sorted(fonts.items()):
-        print(f"FONT | {font} | KiCad cannot find this font and drew its text in {instead}; the captions and the "
-              "index name it", file=stream)
-    for layer in absent:
-        print(f"LAYER | {layer} | the board does not carry this layer, so the views that show it leave it out; the "
-              "captions and the index name it", file=stream)
+    report_substitutions(fonts, absent, True, stream)
     for part in unseen:
         print(f"MODEL | {part['reference']} | {part['detail']}; the three-dimensional views' captions and the index "
               "name it", file=stream)
-    print(f"RESOLUTION | {scale_text(scale)} | {PIXELS_PER_FEATURE} px across the smaller of the minimum track width "
-          f"{mm_text(figures[0])} mm and the minimum clearance {mm_text(figures[1])} mm", file=stream)
+    report_resolution(scale, figures, stream)
     print(f"RESULT | WRITTEN | {len(renderer.images)} images, their index and the per-net fact table | {clean(out)}",
           file=stream)
     return 0
@@ -1651,30 +1632,90 @@ def fact_line(fact: dict) -> str:
                        f"{fact['vias']} via{'s' if fact['vias'] != 1 else ''}", zones])
 
 
-def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List[dict], facts: List[dict]) -> None:
-    """The index and the fact table, each as text and JSON, into `folder` under the names `files` gives them."""
+def board_frame(outline: Optional[Tuple[float, float, float, float]], plotted: Dict[str, str], areas: List[dict],
+                more: Sequence[Tuple[float, float, float, float]] = ()) -> Optional[Tuple[float, float, float, float]]:
+    """The frame of a whole-board view: everything KiCad drew on the plotted layers, united with the outline, the
+    rule areas and the boxes `more`, with a millimetre to spare; None when there is nothing to frame."""
+    reach = [box for box in [outline] + [drawn_extent(path) for path in plotted.values()] if box is not None]
+    reach += [(area["bounds_mm"]["x0"], area["bounds_mm"]["y0"], area["bounds_mm"]["x1"], area["bounds_mm"]["y1"])
+              for area in areas]
+    reach += list(more)
+    return grown(union(reach), BOARD_MARGIN_MM) if reach else None
+
+
+def index_fields(scale: float, figures: Sequence[float], fonts: Dict[str, str], absent: List[str],
+                 areas: List[dict]) -> dict:
+    """The fields of an index's JSON every rendering of a board states alike: its resolution and the minimums it
+    comes from, the image size limit, the background, and what the images leave out or draw that KiCad did not."""
+    return {
+        "resolution": {
+            "px_per_mm": scale, "pixels_per_feature": PIXELS_PER_FEATURE,
+            "min_track_width_mm": figures[0], "min_clearance_mm": figures[1],
+            "rule": "pixels per millimetre = pixels per feature / the smaller of the minimum track width and "
+                    "the minimum clearance",
+        },
+        "image_limit": {"long_edge_px": LONG_EDGE_PX, "patches": PATCHES, "patch_px": PATCH_PX},
+        "background": BACKGROUND,
+        "fonts_substituted": [{"font": font, "drawn_in": instead} for font, instead in sorted(fonts.items())],
+        "layers_not_carried": absent,
+        "rule_areas": rule_area_entries(areas),
+    }
+
+
+def write_index(folder: str, files: Dict[str, str], header: dict, images: List[dict], many: bool,
+                after_limit: Sequence[str] = (), before_images: Sequence[str] = ()) -> None:
+    """An index, as text and JSON, into `folder` under the names `files` gives it: the board, its resolution and
+    the image limit, the lines `after_limit`, each substituted font, layer not carried and rule area, the lines
+    `before_images`, then each image. `many` says whether the index lists many views or the one view."""
     resolution = header["resolution"]
+    leaves, draws = ("the views that show it leave it out", "the views draw") if many else \
+        ("the view leaves it out", "the view draws")
     lines = [f"BOARD | {header['board']}",
              f"RESOLUTION | {scale_text(resolution['px_per_mm'])} | {resolution['pixels_per_feature']} px across the "
              f"smaller of the minimum track width {mm_text(resolution['min_track_width_mm'])} mm and the minimum "
              f"clearance {mm_text(resolution['min_clearance_mm'])} mm",
              f"LIMIT | every image within a long edge of {LONG_EDGE_PX} px and {PATCHES} patches of {PATCH_PX} by "
              f"{PATCH_PX} px"]
-    lines += [f"CLASS | {name} | {', '.join(nets)}" for name, nets in header["critical_classes"].items()]
+    lines += list(after_limit)
     lines += [f"FONT | {font['font']} | not found, so KiCad drew its text in {font['drawn_in']}"
               for font in header["fonts_substituted"]]
-    lines += [f"LAYER | {layer} | not carried by the board, so the views that show it leave it out"
-              for layer in header["layers_not_carried"]]
+    lines += [f"LAYER | {layer} | not carried by the board, so {leaves}" for layer in header["layers_not_carried"]]
     lines += [f"RULE AREA | {area['name']} | on {', '.join(area['layers'])}, {'; '.join(area['rules'])}; KiCad does "
-              f"not plot it, so the views draw it as a {RULE_AREA[1]} dashed hatched outline"
+              f"not plot it, so {draws} it as a {RULE_AREA[1]} dashed hatched outline"
               for area in header["rule_areas"]]
-    lines += [f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]]
+    lines += list(before_images)
     lines += [f"IMAGE | {image['file']} | {image['caption']}" for image in images]
     with open(os.path.join(folder, files["index_text"]), "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
     with open(os.path.join(folder, files["index_json"]), "w", encoding="utf-8") as handle:
         json.dump(dict(header, images=images), handle, indent=1)
         handle.write("\n")
+
+
+def report_substitutions(fonts: Dict[str, str], absent: List[str], many: bool, stream) -> None:
+    """A report line for each font KiCad substituted and each layer the board does not carry; `many` says whether
+    the command renders many views or the one view."""
+    captions, leaves = ("captions", "the views that show it leave it out") if many else \
+        ("caption", "the view leaves it out")
+    for font, instead in sorted(fonts.items()):
+        print(f"FONT | {font} | KiCad cannot find this font and drew its text in {instead}; the {captions} and the "
+              "index name it", file=stream)
+    for layer in absent:
+        print(f"LAYER | {layer} | the board does not carry this layer, so {leaves}; the {captions} and the index "
+              "name it", file=stream)
+
+
+def report_resolution(scale: float, figures: Sequence[float], stream) -> None:
+    """The report line stating the resolution the images are drawn at and the minimums it comes from."""
+    print(f"RESOLUTION | {scale_text(scale)} | {PIXELS_PER_FEATURE} px across the smaller of the minimum track width "
+          f"{mm_text(figures[0])} mm and the minimum clearance {mm_text(figures[1])} mm", file=stream)
+
+
+def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List[dict], facts: List[dict]) -> None:
+    """The index and the fact table, each as text and JSON, into `folder` under the names `files` gives them."""
+    write_index(folder, files, header, images, True,
+                after_limit=[f"CLASS | {name} | {', '.join(nets)}" for name, nets in header["critical_classes"].items()],
+                before_images=[f"NOT IN 3D | {part['reference']} | {part['detail']}" for part in header["not_in_3d"]])
     with open(os.path.join(folder, files["facts_text"]), "w", encoding="utf-8") as handle:
         handle.write("".join(fact_line(fact) + "\n" for fact in facts))
     with open(os.path.join(folder, files["facts_json"]), "w", encoding="utf-8") as handle:

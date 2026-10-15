@@ -1169,6 +1169,75 @@ class Transforms(unittest.TestCase):
                     self.extent(body)
 
 
+#: An index header carrying one of every line the index writes, as the views command builds it.
+FULL_HEADER = {
+    "board": "/boards/proof.kicad_pcb",
+    "critical_classes": {"Power": ["+3V3", "+5V"], "Ground": ["GND"]},
+    "resolution": {"px_per_mm": 30.0, "pixels_per_feature": 3, "min_track_width_mm": 0.1, "min_clearance_mm": 0.125,
+                   "rule": "pixels per millimetre = pixels per feature / the smaller of the minimum track width and "
+                           "the minimum clearance"},
+    "image_limit": {"long_edge_px": 1568, "patches": 1568, "patch_px": 28},
+    "background": "#000000",
+    "fonts_substituted": [{"font": "Proof Face", "drawn_in": "KiCad Font"}],
+    "layers_not_carried": ["B.Fab", "F.CrtYd"],
+    "rule_areas": [{"name": "KO1", "layers": ["F.Cu", "Dwgs.User"], "rules": ["no tracks", "no vias"],
+                    "bounds_mm": {"x0": 1, "y0": 2, "x1": 3, "y1": 4}}],
+    "not_in_3d": [{"reference": "U2", "reason": "no model", "detail": "declares no model"}],
+}
+FULL_IMAGES = [{"file": "layer-F.Cu.png", "caption": "layer view | F.Cu"},
+               {"file": "net-GND-r1c1.png", "caption": "net GND | class Ground"}]
+#: The index text the views command writes for FULL_HEADER and FULL_IMAGES, line for line.
+FULL_INDEX = """BOARD | /boards/proof.kicad_pcb
+RESOLUTION | 30 px/mm | 3 px across the smaller of the minimum track width 0.1 mm and the minimum clearance 0.125 mm
+LIMIT | every image within a long edge of 1568 px and 1568 patches of 28 by 28 px
+CLASS | Power | +3V3, +5V
+CLASS | Ground | GND
+FONT | Proof Face | not found, so KiCad drew its text in KiCad Font
+LAYER | B.Fab | not carried by the board, so the views that show it leave it out
+LAYER | F.CrtYd | not carried by the board, so the views that show it leave it out
+RULE AREA | KO1 | on F.Cu, Dwgs.User, no tracks; no vias; KiCad does not plot it, so the views draw it as a bright orange dashed hatched outline
+NOT IN 3D | U2 | declares no model
+IMAGE | layer-F.Cu.png | layer view | F.Cu
+IMAGE | net-GND-r1c1.png | net GND | class Ground
+"""
+
+
+class SharedIndex(unittest.TestCase):
+    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The placement view's form, resolution and captioning are taken from the views tool rather than copied."""
+
+    def test_the_views_index_and_report_lines_are_unchanged_by_the_placement_view_sharing_them(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: The placement view's form, resolution and captioning are taken from the views tool rather than copied, so sharing them leaves the views' own index and report as they were, byte for byte.
+        with tempfile.TemporaryDirectory(prefix="board-views-index-") as out:
+            files = board_views.output_files(board_views.Names())
+            board_views.write_outputs(out, files, FULL_HEADER, FULL_IMAGES, [])
+            with open(os.path.join(out, "index.txt"), encoding="utf-8") as handle:
+                self.assertEqual(handle.read(), FULL_INDEX)
+            with open(os.path.join(out, "index.json"), encoding="utf-8") as handle:
+                self.assertEqual(handle.read(), json.dumps(dict(FULL_HEADER, images=FULL_IMAGES), indent=1) + "\n")
+        stream = io.StringIO()
+        board_views.report_substitutions({"Proof Face": "KiCad Font"}, ["B.Fab"], True, stream)
+        board_views.report_resolution(30.0, (0.1, 0.125), stream)
+        self.assertEqual(stream.getvalue().splitlines(), [
+            "FONT | Proof Face | KiCad cannot find this font and drew its text in KiCad Font; the captions and the "
+            "index name it",
+            "LAYER | B.Fab | the board does not carry this layer, so the views that show it leave it out; the captions "
+            "and the index name it",
+            "RESOLUTION | 30 px/mm | 3 px across the smaller of the minimum track width 0.1 mm and the minimum "
+            "clearance 0.125 mm"])
+        fields = board_views.index_fields(30.0, (0.1, 0.125), {"Proof Face": "KiCad Font"}, ["B.Fab", "F.CrtYd"],
+                                          [dict(FULL_HEADER["rule_areas"][0], extra="dropped")])
+        self.assertEqual(list(fields), ["resolution", "image_limit", "background", "fonts_substituted",
+                                        "layers_not_carried", "rule_areas"])
+        for key, value in fields.items():
+            if key not in ("layers_not_carried", "background"):
+                self.assertEqual(value, FULL_HEADER[key], key)
+        self.assertEqual(fields["background"], board_views.BACKGROUND)
+        self.assertEqual(fields["layers_not_carried"], ["B.Fab", "F.CrtYd"])
+        frame = board_views.board_frame((0, 0, 10, 8), {}, FULL_HEADER["rule_areas"], [(-4, 2, 1, 3)])
+        self.assertEqual(frame, board_views.grown((-4, 0, 10, 8), board_views.BOARD_MARGIN_MM))
+        self.assertIsNone(board_views.board_frame(None, {}, [], []))
+
+
 class OutputNames(unittest.TestCase):
     """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
 
