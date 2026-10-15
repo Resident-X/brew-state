@@ -256,8 +256,8 @@ first build; after that both build offline.
 Everything runs from the repository root through the task runner:
 
 ```sh
-task check:round   # a build round's gate: the host tier in full, the emulation tier only if the branch changes what it reads, the sweep of the changed plant lines
-task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the arithmetic sweep
+task check:round   # a build round's gate: the host tier in full, the emulation tier only if the branch changes what it reads, the board tier only if it changes a board design or what one reads, the sweep of the changed plant lines
+task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the board check and its tooling tests, the arithmetic sweep
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
 task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
@@ -290,6 +290,25 @@ branch does not change, changes no line the sweep below is restricted to, so
 what that does to the sweep is looked at only by the nightly. Its statements name the base and `HEAD`
 commits it measured between.
 
+After emulation the round runs the board tier, which holds every board design
+the repository tracks to KiCad's own rule checks (`task hw:verify`) and runs the
+tests of the board tooling without those that run the check's seeded-fault proof
+(`task hw:test:round`). It runs only when the branch changes a tracked KiCad file
+anywhere, anything under `hardware/`, anything a board design reads, the round
+gate's own code, or `Taskfile.yml` taken whole, as the emulation tier takes it,
+so a firmware branch that edits that file also runs the board tier. That
+decision is declared as `BOARD_READS` in [`tools/round_gate.py`](tools/round_gate.py),
+with the files the designs read listed by `task hw:reads`. It is judged on the
+changed paths alone: it runs when they cannot be told or when that listing
+fails, and not on unknown changed lines, which emulation also runs on. A branch
+that changes none of those paths, a firmware-only branch that leaves
+`Taskfile.yml` alone included, skips the tier and needs no KiCad, rasteriser or
+font. A KiCad design file in the working tree that git does not track fails the
+round, naming it, because the check finds only tracked designs. A missing or
+too-old KiCad, rasteriser or monospaced font stops the round naming the tool
+rather than skipping the tier. [`../hardware/README.md`](../hardware/README.md)
+gives the tier's whole account, the proof's place and the tools' sources.
+
 After those tiers the round runs the mutation sweep restricted to the mutants
 on the lines the branch changes in the sweep's population, and never the full
 sweep. A changed line is a line on the new side of a zero-context diff from the
@@ -318,17 +337,18 @@ sweep instead. A file whose own lines alone cannot be read fails the round that
 way only when it is in the sweep's population; a document no sweep draws from
 going unread does not.
 
-It stops at the first failing tier and says what was not reached, the sweep
-included, and whether the emulation tier would have run; otherwise its last
-lines, printed after the sweep, state the whole round's verdict: which tiers ran
-and, for a skipped one, why and which changed paths it judged by, and whether
+It stops at the first failing tier and says what was not reached, the board tier
+and the sweep included, and whether the emulation and board tiers would have
+run; otherwise its last lines, printed after the sweep, state the whole round's
+verdict: which tiers ran and, for a skipped one, why and which changed paths it
+judged by, and whether
 the sweep ran, was skipped because no changed line is in its population, or
 could not run, with how many changed lines it covered and whether it found a
 problem or could not look. Its exit status is the verdict.
 
 The complete verification, `fw:verify`, runs nightly against `main`: every tier
-the round can skip, the emulation tier unconditionally, and the full sweep of
-the plant model's arithmetic. It stays the single declaration of every gate, and
+the round can skip, the emulation tier and the board check and its tooling tests
+unconditionally, and the full sweep of the plant model's arithmetic. It stays the single declaration of every gate, and
 the round hands the task runner the same tasks rather than copies of their
 commands. Unlike the round it does not stop at a failure: every gate runs to
 completion, the run fails naming every gate that failed, and its closing lines
@@ -340,7 +360,8 @@ task fw:verify -- --leave-out fw:sweep   # every gate but the sweep; the closing
 ```
 
 `.github/workflows/nightly-verify.yml` runs it on hosted runners every night
-and on manual dispatch, leaving the sweep out of that job and running it as the
+and on manual dispatch, installing KiCad, the rasteriser and a monospaced font
+first for the board gates, and leaving the sweep out of that job and running it as the
 sharded sweep workflow in the same run instead. The night fails if any gate or
 any shard does, and its run history is the record of what `main` last verified.
 
@@ -370,8 +391,10 @@ job that wants the download in its own step. What the tier establishes, how the
 peripheral models are written, and why a run is only evidence about the artefact
 the target build wrote are all in [`emulation/README.md`](emulation/README.md).
 
-One more runs on demand, in neither the round gate nor the nightly complete
-verification:
+Two more run on demand, in neither the round gate nor the nightly complete
+verification: the board check's seeded-fault proof, `task hw:prove`, with the
+tests that need it in the full `task hw:test`
+([`../hardware/README.md`](../hardware/README.md)), and the property breaks:
 
 ```sh
 task fw:mutate                    # break each guarded property, require its check to notice

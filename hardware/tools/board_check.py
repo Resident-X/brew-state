@@ -30,6 +30,10 @@ Every finding is printed on one line of a fixed shape,
 
 after a verdict line for its design, and the exit status is the verdict: 0 when
 every design passes, 1 when any fails, 2 when the check cannot run at all.
+
+With --list-reads it runs no check and needs no KiCad and no PyYAML: it lists,
+one per line, every file the designs git tracks read, so a build round can tell
+whether a changed path reaches a board design.
 """
 
 from __future__ import annotations
@@ -2427,6 +2431,41 @@ def run(root: str, kicad_cli: str, git: str = "git", out=sys.stdout,
             KICAD_ENVIRONMENT = None
 
 
+#: How the listing of what the designs read writes a folder read whole at the
+#: top of the repository, which a bare slash would leave empty.
+WHOLE_REPOSITORY = "./"
+
+
+def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
+    """Every file, and every folder read whole, that a board design the repository tracks reads.
+
+    For each design that is its own folder, written with a trailing slash so a
+    file deleted from it is still one the design read, every file its folder,
+    its sheets and its libraries hold, and the separation basis record it is held
+    to, whether or not that record is committed. A design in the top folder reads
+    the whole repository, written as WHOLE_REPOSITORY.
+    """
+    repository = Repository(top, files, git)
+    designs, _, _ = discover(top, files)
+    reads: Set[str] = set()
+    for design in designs:
+        reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
+        reads.update(design_files(design, repository)[0])
+        record = find_record(top, design.directory, repository.tracked)
+        if record:
+            reads.add(record)
+    return sorted(reads)
+
+
+def list_reads(root: str, git: str = "git", out=None) -> int:
+    """Print what the designs read, one entry per line, to `out` or standard output; the exit status."""
+    require_python()
+    top = require_git(git, root)
+    for entry in design_reads(top, tracked_files(git, top), git):
+        print(entry, file=out)
+    return 0
+
+
 def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.date, yaml, out) -> int:
     """Check every design under `top` and print the report; the exit status."""
     files = tracked_files(git, top)
@@ -2472,8 +2511,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--root", default=".", help="any folder inside the repository to check (default: here)")
     parser.add_argument("--kicad-cli", default="kicad-cli", help="KiCad's command-line tool (default: kicad-cli on the search path)")
     parser.add_argument("--git", default="git", help="git (default: git on the search path)")
+    parser.add_argument("--list-reads", action="store_true",
+                        help="list every file the board designs read, one per line, without running the check or needing KiCad")
     args = parser.parse_args(argv)
     try:
+        if args.list_reads:
+            return list_reads(args.root, args.git)
         return run(args.root, args.kicad_cli, args.git)
     except CannotRun as error:
         print(f"CANNOT RUN | {clean(str(error))}", file=sys.stderr)

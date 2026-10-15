@@ -3,11 +3,13 @@
 
 The complete verification is what a single machine runs to establish that main
 holds: every build, every check, every test, every host executable, the target
-artefact under emulation, and the full sweep of the plant model's arithmetic. It
-runs nightly, and nobody is watching it when it does, so a gate that fails early
-must not hide what the gates after it would have found. Every gate runs, in the
-order declared, whether or not an earlier one failed, and the run fails naming
-each gate that did.
+artefact under emulation, every board design checked with KiCad's own rule
+checks, the tests of the board tooling without those that run the seeded-fault
+proof (which stays on demand), and the full sweep of the plant model's
+arithmetic. It runs nightly, and nobody is watching it when it does, so a gate
+that fails early must not hide what the gates after it would have found. Every
+gate runs, in the order declared, whether or not an earlier one failed, and the
+run fails naming each gate that did.
 
 The gates are named by the task runner, which hands them to this script, so the
 list exists in one place and a gate added later is added there. The task runner

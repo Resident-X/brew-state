@@ -1,16 +1,22 @@
 # The complete verification, run against main every night on hosted runners.
 #
 # A build round's gate is targeted: it runs the host tier in full but the
-# emulation tier only when a branch touches what the emulation reads, and the
-# mutation sweep only over the plant lines a branch changes. This is where
-# everything the round can skip runs anyway -- the emulation tier
-# unconditionally and the sweep over its whole population -- so its run history
-# is the record of what main last verified.
+# emulation tier only when a branch touches what the emulation reads, the board
+# tier only when a branch touches a board design, what one reads or the board
+# tooling, and the mutation sweep only over the plant lines a branch changes.
+# This is where everything the round can skip runs anyway -- the emulation tier
+# and the board tier unconditionally and the sweep over its whole population --
+# so its run history is the record of what main last verified.
 #
 # The gates are not listed here. `task fw:verify` is the single declaration of
 # the complete verification, and this runs that declaration with the sweep left
 # out by name, so a gate added to it later runs here without a line here
-# changing. The sweep is left out of that job because run in one job it takes
+# changing. The board gates are among them: they check every board design the
+# repository tracks and run the tests of the board tooling, without the tests
+# that run the seeded-fault proof, which stays on demand. They need KiCad, the
+# rasteriser the tooling tests draw with and a monospaced font, so the gates job
+# installs them, from sources named and held to a version and a digest or
+# fingerprint below. The sweep is left out of that job because run in one job it takes
 # the sum of every shard's time; it runs instead as the sharded sweep workflow,
 # called from here so its shards belong to this run and decide its result. The
 # night fails if any gate, any shard, or the judging of the combined population
@@ -98,6 +104,61 @@ jobs:
             sudo ln -s libdl.so.2 "${libraries}/libdl.so"
           fi
           task fw:emulate:provision
+
+      # The tools the board gates need, installed and held to what was read when
+      # they were chosen. KiCad comes from the project's own package archive for
+      # its 10.0 releases, at the version the board files need or newer: the
+      # archive's signing key is fetched and its fingerprint compared with the
+      # one the archive publishes before it is trusted, and the package is
+      # named at an exact version. The rasteriser is the release the project
+      # publishes, checked against the digest that release lists for the archive
+      # and again after download. The font and the YAML reader are the
+      # distribution's own packages at the versions its release carries. A tool
+      # that fails to install fails this step, so it is reported as provisioning
+      # rather than as a board gate failing. Which of these installs completes
+      # on a hosted runner is what the first nightly run demonstrates.
+      - name: Install KiCad, a monospaced font and the YAML reader
+        env:
+          KICAD_PPA: "kicad/kicad-10.0-releases"
+          # The fingerprint the archive's owner publishes for its signing key.
+          KICAD_PPA_KEY: "FDA854F61C4D0D9572BB95E5245D5502FAD7A805"
+          KICAD_VERSION: "10.0.7~ubuntu24.04.1"
+          FONT_VERSION: "2.37-8"
+          YAML_VERSION: "6.0.1-2build2"
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/kicad-ppa.asc \
+            "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${KICAD_PPA_KEY}"
+          found="$(gpg --show-keys --with-colons /tmp/kicad-ppa.asc \
+            | awk -F: '$1 == "pub" { primary = 1; next } $1 == "fpr" && primary { print $10; primary = 0 }')"
+          if [ "${found}" != "${KICAD_PPA_KEY}" ]; then
+            echo "the signing key fetched for ${KICAD_PPA} is ${found:-none}, not ${KICAD_PPA_KEY}" >&2
+            exit 1
+          fi
+          sudo install -d -m 0755 /etc/apt/keyrings
+          gpg --dearmor < /tmp/kicad-ppa.asc | sudo tee /etc/apt/keyrings/kicad-ppa.gpg > /dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/kicad-ppa.gpg] https://ppa.launchpadcontent.net/${KICAD_PPA}/ubuntu noble main" \
+            | sudo tee /etc/apt/sources.list.d/kicad-ppa.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            "kicad=${KICAD_VERSION}" "fonts-dejavu-core=${FONT_VERSION}" "python3-yaml=${YAML_VERSION}"
+          kicad-cli version
+
+      - name: Install the rasteriser
+        env:
+          # renovate: datasource=github-releases depName=linebender/resvg
+          RESVG_VERSION: "0.47.0"
+          # The digest the release publishes for this archive. Not an
+          # independent choice: it changes with the version and only with it.
+          RESVG_SHA256: "5c84dcbcd032fe7e8d96e616fd6807a2f9df6561d2e6582b37e91e63c6cb4fe7"
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/resvg.tar.gz \
+            "https://github.com/linebender/resvg/releases/download/v${RESVG_VERSION}/resvg-linux-x86_64.tar.gz"
+          echo "${RESVG_SHA256}  /tmp/resvg.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/resvg.tar.gz -C /tmp resvg
+          sudo install -m 0755 /tmp/resvg /usr/local/bin/resvg
+          resvg --version
 
       - name: Run the complete verification, the sweep left out for its own jobs
         run: |

@@ -26,6 +26,7 @@ TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
+import board_fixtures  # noqa: E402
 import locked_copper  # noqa: E402
 import sexpr  # noqa: E402
 
@@ -35,7 +36,7 @@ PROOF_PROJECT = os.path.join(REPO, "hardware", "proof", "gate-proof", "gate-proo
 
 
 def setUpModule():
-    board_check.require_kicad(KICAD_CLI)
+    board_fixtures.require_tools(KICAD_CLI)
 
 
 #: The base board's items, by name, as KiCad 10 writes them. /PWR is in Power by

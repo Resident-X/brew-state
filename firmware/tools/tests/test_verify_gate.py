@@ -33,6 +33,11 @@ import workflow_declarations  # noqa: E402
 
 GATES = ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "fw:sweep"]
 
+#: What the Taskfile's declaration of the complete verification lists, in order.
+DECLARED = [
+    "fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "hw:verify", "hw:test:round", "fw:sweep",
+]
+
 
 class FakeTaskRunner:
     """Logs each task it is asked for and exits with the status it is told to for each."""
@@ -256,7 +261,7 @@ class OnlyAGateLeftOutMayBePassedOn(unittest.TestCase):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
         result, asked, _ = self.run_declared(["--leave-out", "fw:sweep"], {"fw:check": 1})
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(GATES[:-1], asked)
+        self.assertEqual(DECLARED[:-1], asked)
         account = closing(result)
         self.assertIn("failed: fw:check (exit status 1).", account)
         self.assertIn("Gates left out: fw:sweep.", account)
@@ -265,7 +270,7 @@ class OnlyAGateLeftOutMayBePassedOn(unittest.TestCase):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
         result, asked, _ = self.run_declared([])
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(GATES, asked)
+        self.assertEqual(DECLARED, asked)
         self.assertIn("COMPLETE VERIFICATION PASSED", closing(result))
 
     def test_an_undeclared_name_left_out_through_the_declaration_is_refused(self):
@@ -308,7 +313,7 @@ class TheTaskRunnerDeclaresTheCompleteVerification(unittest.TestCase):
         # else, so it cannot reach the driver's other options.
         self.assertTrue(command.endswith(" -- {{.CLI_ARGS}}"), command)
         self.assertEqual(1, command.count("{{.CLI_ARGS}}"), command)
-        self.assertEqual(GATES, declared_gates(self.taskfile))
+        self.assertEqual(DECLARED, declared_gates(self.taskfile))
 
     def test_every_declared_gate_is_a_task_that_always_runs_afresh(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
@@ -358,6 +363,107 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         )
         self.assertRegex(self.sweep, r"(?m)^  workflow_call:")
         self.assertRegex(self.sweep, r"(?m)^  workflow_dispatch:")
+
+    def board_tools_step(self) -> str:
+        """The gates job's steps that install the board tools, as text: from the first of them
+        to the step that runs the verification."""
+        job = self.job_text("gates")
+        return job[job.index("      - name: Install KiCad"): job.index("      - name: Run the complete verification")]
+
+    def minimum(self, source: str, name: str) -> tuple[int, int]:
+        """A tool's minimum version, read from the board tooling's own source."""
+        match = re.search(rf"(?m)^{name} = \((\d+), (\d+)\)", read(source))
+        self.assertIsNotNone(match, f"{source} states no {name}")
+        return int(match.group(1)), int(match.group(2))
+
+    def pinned(self, name: str) -> str:
+        match = re.search(rf'(?m)^\s+{name}: "([^"]+)"', self.job_text("gates"))
+        self.assertIsNotNone(match, f"the gates job does not pin {name}")
+        return match.group(1)
+
+    def test_the_nightly_leaves_out_no_board_gate_so_the_declaration_runs_them_on_main(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
+        gates = declared_gates(read("Taskfile.yml"))
+        self.assertEqual(["hw:verify", "hw:test:round"], [name for name in gates if name.startswith("hw:")])
+        self.assertNotIn("hw:prove", gates)
+        self.assertNotIn("hw:test", gates)
+        (script,) = [
+            [line for line in script if line.strip()]
+            for script in workflow_declarations.scripts(self.nightly)
+            if any("fw:verify" in line for line in script)
+        ]
+        # Only the sweep is left out, so every other declared gate, the board gates among them, runs.
+        self.assertEqual(["fw:sweep"], re.findall(r"--leave-out (\S+)", " ".join(script)))
+        self.assertNotIn("hw:", " ".join(script))
+
+    def test_the_hosted_runner_installs_the_board_tools_before_it_runs_the_verification(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
+        job = self.job_text("gates")
+        names = re.findall(r"(?m)^      - name: (.*)$", job)
+        verify = next(i for i, name in enumerate(names) if name.startswith("Run the complete verification"))
+        for step in ("Install KiCad, a monospaced font and the YAML reader", "Install the rasteriser"):
+            self.assertIn(step, names)
+            self.assertLess(names.index(step), verify, f"{step} comes after the verification runs")
+        installing = self.board_tools_step()
+        self.assertIn("kicad-cli version", installing)
+        self.assertIn("resvg --version", installing)
+        for script in workflow_declarations.scripts(installing):
+            self.assertEqual("set -euo pipefail", script[0].strip())
+
+    def test_kicad_comes_from_the_projects_own_archive_at_a_version_the_check_accepts_with_its_key_checked(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
+        archive, version = self.pinned("KICAD_PPA"), self.pinned("KICAD_VERSION")
+        self.assertEqual("kicad/kicad-10.0-releases", archive)
+        found = re.match(r"(\d+)\.(\d+)\.\d+~ubuntu24\.04\.\d+$", version)
+        self.assertIsNotNone(found, f"the KiCad package version {version!r} is not one of the archive's for this runner")
+        self.assertGreaterEqual((int(found.group(1)), int(found.group(2))), self.minimum("hardware/tools/board_check.py", "MIN_KICAD"))
+        # The archive's key is a full fingerprint, compared with what is fetched before it is trusted,
+        # and the package is named at that exact version.
+        self.assertRegex(self.pinned("KICAD_PPA_KEY"), r"^[0-9A-F]{40}$")
+        installing = re.sub(r"\\\n\s*", " ", self.board_tools_step())
+        self.assertIn('[ "${found}" != "${KICAD_PPA_KEY}" ]', installing)
+        self.assertIn("exit 1", installing)
+        self.assertIn("signed-by=", installing)
+        self.assertRegex(installing, r'apt-get install -y --no-install-recommends\s+"kicad=\$\{KICAD_VERSION\}"')
+        self.assertLess(installing.index("KICAD_PPA_KEY}\" ]"), installing.index("apt-get install"))
+
+    def test_the_rasteriser_is_the_release_at_or_above_the_minimum_checked_against_its_digest(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
+        version = self.pinned("RESVG_VERSION")
+        found = re.match(r"(\d+)\.(\d+)\.\d+$", version)
+        self.assertIsNotNone(found, version)
+        self.assertGreaterEqual((int(found.group(1)), int(found.group(2))), self.minimum("hardware/tools/board_views.py", "MIN_RESVG"))
+        self.assertRegex(self.pinned("RESVG_SHA256"), r"^[0-9a-f]{64}$")
+        installing = self.board_tools_step()
+        self.assertIn("resvg-linux-x86_64.tar.gz", installing)
+        self.assertIn('echo "${RESVG_SHA256}  /tmp/resvg.tar.gz" | sha256sum -c -', installing)
+        # The digest is checked after the download and before the archive is unpacked.
+        self.assertLess(installing.index("sha256sum -c -", installing.index("RESVG_SHA256}")), installing.index("tar -xzf /tmp/resvg.tar.gz"))
+
+    def test_the_font_installed_is_one_the_layout_review_views_draw_with_and_the_yaml_reader_is_present(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
+        views = read("hardware/tools/board_views.py")
+        family = re.search(r'(?m)^FONT_FAMILY = "([^"]+)"', views).group(1)
+        # DejaVu Sans Mono ships in the distribution's fonts-dejavu-core package.
+        self.assertIn("DejaVu Sans Mono", family)
+        installing = re.sub(r"\\\n\s*", " ", self.board_tools_step())
+        self.assertIn('"fonts-dejavu-core=${FONT_VERSION}"', installing)
+        self.assertIn('"python3-yaml=${YAML_VERSION}"', installing)
+        for name in ("FONT_VERSION", "YAML_VERSION"):
+            self.assertRegex(self.pinned(name), r"^\d")
+        floor = self.minimum("hardware/tools/board_check.py", "MIN_PYYAML")
+        self.assertRegex(self.pinned("YAML_VERSION"), r"^\d+\.\d+")
+        found = re.match(r"(\d+)\.(\d+)", self.pinned("YAML_VERSION"))
+        self.assertGreaterEqual((int(found.group(1)), int(found.group(2))), floor)
+
+    def test_the_board_tools_are_installed_from_named_sources_only(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
+        installing = self.board_tools_step()
+        for url in re.findall(r"https?://[^\s\"')]+", installing):
+            with self.subTest(url=url):
+                self.assertRegex(url, r"^https://(keyserver\.ubuntu\.com|ppa\.launchpadcontent\.net|github\.com/(go-task/task|linebender/resvg))/")
+        # No unpinned fetch piped into a shell.
+        self.assertNotRegex(installing, r"\|\s*(sudo\s+)?(ba)?sh\b")
 
     def test_the_nightly_is_scheduled_and_dispatchable_and_never_cancels_a_run(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
@@ -467,20 +573,26 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         # Each job builds with what its host defaults to. A compiler injected
         # through a setting, or installed beside the default, would be a
         # compiler a contributor on that platform does not run.
+        # An install is read as one command whatever lines it is written over,
+        # and it is a compiler installed that is refused: the gates job also
+        # installs the board tools, which are not compilers.
         selecting = re.compile(
             r"\b(CC|CXX|CFLAGS|CPPFLAGS|DEVELOPER_DIR|PLATFORMIO_BUILD_FLAGS|PLATFORMIO_BUILD_SRC_FLAGS)\b"
-            r"|apt(-get)? +install|brew +install|update-alternatives|xcode-select|--toolchain"
+            r"|apt(-get)? +install\b[^\n]*\b(gcc|g\+\+|clang|llvm|build-essential|cc|c\+\+|binutils)\b"
+            r"|brew +install|update-alternatives|xcode-select|--toolchain"
         )
         for job in ("gates", "host-build-macos"):
-            text = "\n".join(
+            text = re.sub(r"\\\n\s*", " ", "\n".join(
                 line for line in self.job_text(job).splitlines() if not line.lstrip().startswith("#")
-            )
+            ))
             with self.subTest(job=job):
                 self.assertTrue(text.strip())
                 self.assertIsNone(selecting.search(text), selecting.search(text))
         # The pattern would pass a job selecting a compiler if it never matched.
         self.assertIsNotNone(selecting.search("export CC=clang"))
         self.assertIsNotNone(selecting.search("sudo apt-get install -y clang"))
+        self.assertIsNotNone(selecting.search(re.sub(r"\\\n\s*", " ", "sudo apt-get install -y \\\n  clang")))
+        self.assertIsNone(selecting.search("sudo apt-get install -y --no-install-recommends kicad"))
 
     def test_the_macos_job_pins_its_tools_as_the_linux_job_does_with_its_own_digest(self):
         # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A verification run builds the host tier with each supported host's default compiler
