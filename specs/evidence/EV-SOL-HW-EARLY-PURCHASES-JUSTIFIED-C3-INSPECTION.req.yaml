@@ -1,0 +1,16 @@
+id: EV-SOL-HW-EARLY-PURCHASES-JUSTIFIED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-EARLY-PURCHASES-JUSTIFIED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-15T11:55:05.914Z"
+artifact:
+  kind: external
+  reference: 'Search of docs/ for purchase-status statements: docs/sunbeam-em7000/component-specification.md and docs/sunbeam-em7000/controller-design/component-specification.md ''Bought to date'' rows now only point at § Purchases ahead of verification; the controller-design/component-specification.md channel-table lead-in points at the section without restating its content; docs/sunbeam-em7000/controller-design/open-items.md valve line records the owner''s statement as living in the section and keeps the open question for the other valve; no § Pending marks row remains for the purchase; the earlier design''s candidate parts (control-system-bom.csv, module-interconnect.csv) and the carried-forward record are out of scope'
+  artifact_version: 864b34c3c91cc08dd7a677b7233c74b55c9cc9ca
+attested_by: crun-7188703c18bce3da
+links:
+  - target: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C3
+    type: satisfies

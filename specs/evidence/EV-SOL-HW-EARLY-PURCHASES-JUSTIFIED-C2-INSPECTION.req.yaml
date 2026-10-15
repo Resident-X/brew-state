@@ -1,0 +1,16 @@
+id: EV-SOL-HW-EARLY-PURCHASES-JUSTIFIED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-EARLY-PURCHASES-JUSTIFIED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-15T11:55:05.855031Z"
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/reference-machine.md § Protection, the dated 2026-10-15 owner statement beside the three-way valve's role, which carries only the condition (the valve does not function); checked against the planned-replacement row in docs/sunbeam-em7000/controller-board-design-constraints.md, which carries the plan (to be replaced, most likely like for like, not bought) and cites the condition rather than restating it; a search of docs/ finds the condition declared in that one place and the plan in that one place; the replacement's own properties are not recorded
+  artifact_version: 864b34c3c91cc08dd7a677b7233c74b55c9cc9ca
+attested_by: crun-7188703c18bce3da
+links:
+  - target: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C2
+    type: satisfies
