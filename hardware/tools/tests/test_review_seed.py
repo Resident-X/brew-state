@@ -101,9 +101,10 @@ class TheSeededReviewFolder(unittest.TestCase):
 
     def test_the_folder_holds_only_what_the_review_step_gives_a_reviewer(self):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The review is given only the copy's design files, the checklist, the rendered views, the pre-order check's report on the copy, and the committed floorplan and plan.
-        self.assertEqual(sorted(os.listdir(self.out)), ["check-report.txt", "docs", "hardware", "views"])
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The seeded blind review's folder builder renders the placement view and its measures into a folder of their own beside the views it hands the reviewer.
+        self.assertEqual(sorted(os.listdir(self.out)), ["check-report.txt", "docs", "hardware", "placement", "views"])
         files = files_under(self.out)
-        others = [path for path in files if not path.startswith(("views/", review_seed.DESIGN + "/"))]
+        others = [path for path in files if not path.startswith(("views/", "placement/", review_seed.DESIGN + "/"))]
         self.assertEqual(others, ["check-report.txt", "docs/board-design-method.md", "hardware/README.md"])
         design = [path for path in files if path.startswith(review_seed.DESIGN + "/")]
         self.assertEqual(design, sorted(f"{review_seed.DESIGN}/{name}" for name in (
@@ -117,6 +118,18 @@ class TheSeededReviewFolder(unittest.TestCase):
         for view in ("layer-F.Cu", "layer-In1.Cu", "layer-B.Cu", "classes", "assembly-top", "crop-U4", "net-_GND", "3d-angled"):
             self.assertIn(view, index)
         self.assertTrue(os.path.exists(os.path.join(self.out, "views", "facts.txt")))
+        placement = sorted(os.listdir(os.path.join(self.out, review_seed.PLACEMENT)))
+        self.assertLessEqual({"index.txt", "index.json", "measures.txt", "measures.json"}, set(placement))
+        with open(os.path.join(self.out, review_seed.PLACEMENT, "index.json"), encoding="utf-8") as handle:
+            images = json.load(handle)["images"]
+        self.assertTrue(images)
+        self.assertEqual(sorted(name for name in placement if name.endswith(".png")), sorted(image["file"] for image in images))
+        self.assertTrue(all(image["view"] == "placement" and image["file"].startswith("placement") for image in images))
+        with open(os.path.join(self.out, review_seed.PLACEMENT, "measures.json"), encoding="utf-8") as handle:
+            measured = json.load(handle)
+        self.assertEqual([region["name"] for region in measured["regions"]],
+                         ["mains", "low voltage", "analog sensing", "digital"])
+        self.assertTrue(measured["nets"] and measured["total_length_mm"] > 0)
 
     def test_the_copy_carries_the_seeds_and_the_committed_design_does_not(self):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The seeding script writes a copy of the clean proof design outside the tracked tree carrying deliberately placed layout defects.
@@ -318,12 +331,17 @@ class TheSeeds(unittest.TestCase):
 
     def test_the_prompt_names_nothing_seeded(self):
         # SOL-BOARD-LAYOUT-REVIEW-SEEDED-PROOF.C1: The reviewing session has no record of what was seeded or where, and follows the method's review step as written.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The seeded blind review's fixed reviewer prompt names the placement view and its measures among what it is given.
         status, lines = run(["--print-prompt"])
         self.assertEqual(status, 0)
         prompt = "\n".join(lines)
         self.assertIn('"Layout review" section of docs/board-design-method.md', prompt)
         self.assertIn("views/index.txt", prompt)
         self.assertIn("check-report.txt", prompt)
+        self.assertIn("placement/index.txt", prompt)
+        self.assertIn("placement/measures.txt", prompt)
+        self.assertIn('section "The placement view"', prompt)
+        self.assertIn("The views in views/ and placement/ are the full set", prompt)
         for ident, item, _, _, description, _ in review_seed.SEEDS:
             self.assertNotIn(item, prompt)
             self.assertNotIn(description, prompt)
