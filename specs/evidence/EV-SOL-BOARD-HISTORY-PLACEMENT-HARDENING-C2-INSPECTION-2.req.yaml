@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-HISTORY-PLACEMENT-HARDENING-C2-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-15T18:30:14.894217Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_placement.py::test_the_placement_step_sits_between_planning_and_the_rules_and_says_how_to_choose
+  artifact_version: 92337570e419fec63b081ad97c34a97558cee77b
+attested_by: crun-7824b788e5914159
+links:
+  - target: SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C2
+    type: satisfies
