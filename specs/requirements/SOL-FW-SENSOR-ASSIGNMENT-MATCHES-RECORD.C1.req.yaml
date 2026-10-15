@@ -2,11 +2,11 @@ id: SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD.C1
 type: criterion
 title: A sensor channel on a different pin than the record names fails the check
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The check fails when the converter input the firmware assigns a sensor channel resolves, through the controller's input map, to a controller pin other than the one the pin allocation record names for it, naming the channel and both pins. A channel the firmware states as wired to no input is not an assignment, so a record entry naming a pin for it fails. A firmware assignment that matches the record on every channel passes. A channel or converter input named twice fails. Out of scope: the connector and net, which the board check holds to the same record, and the output channels, which the output pin check holds.
+  The check fails when the converter input the firmware assigns a sensor channel resolves, through the controller's input map, to a controller pin other than the one the pin allocation record names for it, matching the channel to the record entry whose firmware_sensor names it, naming the channel and both pins. A channel the firmware states as wired to no input is not an assignment, so a record entry naming a pin for it fails. A firmware assignment that matches the record on every channel passes. A channel or converter input named twice fails. Out of scope: the connector and net, which the board check holds to the same record, and the output channels, which the output pin check holds.
 links:
   - target: SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD
     type: criterion-of
