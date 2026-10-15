@@ -1,0 +1,16 @@
+id: EV-SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD-C2-TEST
+type: evidence
+title: test evidence for SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T23:06:24.12021Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_pin_assignment_checks.py::test_a_record_entry_without_a_firmware_channel_takes_no_part, test_a_firmware_channel_no_record_entry_names_fails, test_a_record_entry_for_a_channel_the_firmware_does_not_assign_fails, test_a_record_entry_for_a_channel_outside_the_vocabulary_fails, test_a_firmware_table_longer_than_the_vocabulary_fails, test_every_one_sided_channel_is_named_in_the_one_run, test_a_record_that_is_not_yaml_fails, test_a_record_repeating_a_key_fails, test_a_record_using_a_merge_key_fails, test_a_record_with_no_channels_list_fails, test_an_empty_channels_list_fails_rather_than_passing_any_firmware, test_a_record_whose_entries_name_no_channel_fails, test_an_entry_missing_its_controller_pin_fails, test_an_entry_whose_firmware_channel_is_empty_fails, test_an_entry_that_is_not_a_mapping_fails, test_firmware_with_no_pin_table_fails, test_a_table_only_inside_a_comment_is_not_a_table, test_an_empty_pin_table_fails, test_a_table_declared_twice_fails, test_a_missing_record_file_is_reported_as_not_inspected, test_a_missing_firmware_file_is_reported_as_not_inspected, test_a_missing_vocabulary_is_reported_as_not_inspected
+  artifact_version: 6812dd8f669738276b15152211069d7cf1e5112b
+attested_by: crun-c7c7aafc8edf7b52
+links:
+  - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C2
+    type: satisfies
