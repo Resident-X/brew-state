@@ -2,11 +2,11 @@ id: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3
 type: criterion
 title: The project instructions and the hardware notes say when the board check runs
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: inspection
-text: |
-  The project instructions, which name the build-round gate, and the hardware notes beside the check both state that the board check runs in the round for changes to board designs, to anything they read, to the check or to the task-runner definition file, judged on changed paths, and nightly on main, and that its seeded-fault proof runs on demand. The hardware notes also state that the rasteriser and a monospaced font are required by the tooling tests the round runs, not only by the layout review views. Out of scope: any cadence the verification-cadence decision does not set.
+text: |-
+  The project instructions, which name the build-round gate, the hardware notes beside the check, and the firmware documentation's account of the round gate and the nightly verification (firmware/README.md and firmware/emulation/README.md) all state that the board check runs in the round for changes to board designs, to anything they read, to the check, to the round gate's own code or to the task-runner definition file, judged on changed paths, and nightly on main, and that its seeded-fault proof runs on demand. The hardware notes also state that the rasteriser and a monospaced font are required by the tooling tests the round runs, not only by the layout review views. Out of scope: any cadence the verification-cadence decision does not set.
 links:
   - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
     type: criterion-of
