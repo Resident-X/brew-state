@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C1-TEST
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:48.807065Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py::test_a_path_that_reaches_a_board_by_its_name_runs_the_tier_and_is_named, test_a_committed_change_to_a_path_a_board_reads_runs_the_tier, test_a_path_only_the_board_tooling_lists_as_read_runs_the_tier, test_a_design_folder_listed_as_read_whole_covers_a_file_deleted_from_it, test_a_design_in_the_top_folder_makes_every_changed_path_one_a_board_reads, test_a_deleted_or_moved_file_counts_by_the_name_it_had
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+    type: satisfies

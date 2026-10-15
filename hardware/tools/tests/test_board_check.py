@@ -14,7 +14,9 @@ test_board_check_kicad.py.
 
 from __future__ import annotations
 
+import contextlib
 import datetime
+import inspect
 import io
 import json
 import math
@@ -2116,6 +2118,261 @@ class EachViolationIsOneLine(unittest.TestCase):
         self.assertNotIn("\n", line)
         self.assertEqual(line.split(" | "),
                          ["VIOLATION", "a/a.kicad_pro", "clearance", "pad 1 / of R1 @ (1, 2)", "Clearance violation (rule 'x/y')"])
+
+
+# --- What the build round and the nightly run of the board tooling ----------------------
+
+
+class TheDesignsReadingsAreListedWithoutKiCad(Tree):
+    """A build round asks which files the designs read to tell whether a changed path reaches one, on a host that may lack KiCad."""
+
+    def setUp(self):
+        super().setUp()
+        self.git("init", "-q")
+
+    def commit(self):
+        self.git("add", "-A")
+
+    def listing(self, *arguments):
+        out, error = io.StringIO(), io.StringIO()
+        with mock.patch.object(board_check, "require_kicad", side_effect=AssertionError("KiCad is not needed to list")), \
+                mock.patch.object(board_check, "require_yaml", side_effect=AssertionError("PyYAML is not needed to list")), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(error):
+            status = board_check.main(["--root", self.root, "--list-reads", *arguments])
+        return status, out.getvalue().splitlines(), error.getvalue()
+
+    def design(self, folder: str, *sheets: str):
+        self.write(f"{folder}/board.kicad_pro")
+        self.write(f"{folder}/board.kicad_pcb")
+        self.write(f"{folder}/board.kicad_sch", schematic(*sheets))
+
+    def test_a_designs_folder_sheets_libraries_and_record_are_listed_and_nothing_else(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.design("hw/m/board", "../power.kicad_sch")
+        self.write("hw/m/board/notes.txt")
+        self.write("hw/m/power.kicad_sch", schematic())
+        self.write("hw/m/shared.pretty/R.kicad_mod")
+        self.write("hw/m/shared.kicad_sym")
+        self.write("hw/m/board/fp-lib-table", library_table("fp_lib_table", ("shared", "${KIPRJMOD}/../shared.pretty")))
+        self.write("hw/m/board/sym-lib-table", library_table("sym_lib_table", ("syms", "${KIPRJMOD}/../shared.kicad_sym")))
+        self.write("hw/m/separation-basis.yaml", SIGNED_RECORD)
+        self.write("hw/m/other.txt")
+        self.write("docs/unrelated.md")
+        self.commit()
+        status, lines, error = self.listing()
+        self.assertEqual((status, error), (0, ""))
+        self.assertEqual(lines, [
+            "hw/m/board/", "hw/m/board/board.kicad_pcb", "hw/m/board/board.kicad_pro", "hw/m/board/board.kicad_sch",
+            "hw/m/board/fp-lib-table", "hw/m/board/notes.txt", "hw/m/board/sym-lib-table", "hw/m/power.kicad_sch",
+            "hw/m/separation-basis.yaml", "hw/m/shared.kicad_sym", "hw/m/shared.pretty/R.kicad_mod"])
+
+    def test_a_record_not_yet_committed_that_is_nearer_than_a_committed_one_is_listed(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.design("hw/m/board")
+        self.write("hw/separation-basis.yaml", SIGNED_RECORD)
+        self.commit()
+        self.write("hw/m/separation-basis.yaml", SIGNED_RECORD)
+        _, lines, _ = self.listing()
+        self.assertIn("hw/m/separation-basis.yaml", lines)
+        self.assertNotIn("hw/separation-basis.yaml", lines)
+
+    def test_a_design_in_the_top_folder_reads_the_whole_repository(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.design(".")
+        self.write("docs/unrelated.md")
+        self.commit()
+        _, lines, _ = self.listing()
+        self.assertIn(board_check.WHOLE_REPOSITORY, lines)
+        self.assertIn("docs/unrelated.md", lines)
+
+    def test_a_repository_with_no_design_lists_nothing_and_succeeds(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.write("docs/unrelated.md")
+        self.commit()
+        self.assertEqual(self.listing(), (0, [], ""))
+
+    def test_a_design_git_does_not_track_is_not_listed(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.design("hw/tracked")
+        self.commit()
+        self.design("hw/loose")
+        _, lines, _ = self.listing()
+        self.assertIn("hw/tracked/", lines)
+        self.assertFalse([line for line in lines if line.startswith("hw/loose")], lines)
+
+    def test_a_folder_that_is_not_a_git_work_tree_cannot_be_listed(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        with tempfile.TemporaryDirectory() as outside:
+            out, error = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(error):
+                status = board_check.main(["--root", outside, "--list-reads"])
+        self.assertEqual(status, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertTrue(error.getvalue().startswith("CANNOT RUN | "), error.getvalue())
+        self.assertIn("not inside a git work tree", error.getvalue())
+
+    def test_every_file_the_check_reads_of_the_designs_in_this_repository_is_listed(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        files = board_check.tracked_files("git", REPO)
+        reads = set(board_check.design_reads(REPO, files))
+        designs, _, _ = board_check.discover(REPO, files)
+        self.assertTrue(designs)
+        repository = board_check.Repository(REPO, files)
+        for design in designs:
+            with self.subTest(design=design.project):
+                self.assertIn(design.directory + "/", reads)
+                read, _ = board_check.design_files(design, repository)
+                self.assertEqual(set(read) - reads, set())
+                record = board_check.find_record(REPO, design.directory, repository.tracked)
+                self.assertIn(record, reads)
+
+
+class AMissingToolIsNamedByEveryModuleOfBoardTests(Tree):
+    """A module of board tests that cannot find KiCad or the rasteriser stops with a line naming it, as every board command does."""
+
+    TESTS = os.path.dirname(os.path.abspath(__file__))
+    KICAD_ONLY = ("test_board_check_kicad", "test_locked_copper", "test_review_seed")
+    WITH_RASTERISER = ("test_board_views", "test_board_placement")
+
+    def run_module(self, module: str, **environment):
+        return subprocess.run([sys.executable, "-m", "unittest", module], cwd=self.TESTS, capture_output=True, text=True,
+                              env={**os.environ, **environment}, timeout=300)
+
+    def test_a_missing_kicad_stops_every_module_naming_it(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for module in self.KICAD_ONLY + self.WITH_RASTERISER:
+            with self.subTest(module=module):
+                result = self.run_module(module, KICAD_CLI=os.path.join(self.root, "no-such-kicad-cli"))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertRegex(result.stderr, r"(?m)^CANNOT RUN \| kicad-cli was not found")
+                self.assertIn("KICAD_CLI=/path/to/kicad-cli", result.stderr)
+
+    def test_a_missing_rasteriser_stops_the_modules_that_draw_naming_it(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        kicad = fake_tool(os.path.join(self.root, "kicad-cli"), 'echo "10.0.7"')
+        for module in self.WITH_RASTERISER:
+            with self.subTest(module=module):
+                result = self.run_module(module, KICAD_CLI=kicad, RESVG=os.path.join(self.root, "no-such-resvg"))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertRegex(result.stderr, r"(?m)^CANNOT RUN \| resvg was not found")
+                self.assertIn("RESVG=/path/to/resvg", result.stderr)
+
+    def test_a_rasteriser_that_finds_no_font_stops_the_modules_that_draw_naming_the_font(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        kicad = fake_tool(os.path.join(self.root, "kicad-cli"), 'echo "10.0.7"')
+        # A rasteriser that reports its version and draws a blank image, as one finding no font does.
+        resvg = fake_tool(os.path.join(self.root, "resvg"), f"""
+if [ "$1" = "--version" ]; then echo "resvg 0.47.0"; exit 0; fi
+exec "{sys.executable}" -c '
+import struct, sys, zlib
+w, h = 120, 30
+raw = b"".join(b"\\x00" + bytes([16, 16, 16]) * w for _ in range(h))
+def chunk(kind, data):
+    body = kind + data
+    return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body))
+png = b"\\x89PNG\\r\\n\\x1a\\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+open(sys.argv[-1], "wb").write(png)
+' "$@"
+""")
+        for module in self.WITH_RASTERISER:
+            with self.subTest(module=module):
+                result = self.run_module(module, KICAD_CLI=kicad, RESVG=resvg)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertRegex(result.stderr, r"(?m)^CANNOT RUN \| resvg at .* found no font")
+                self.assertIn("monospaced font", result.stderr)
+
+
+class TheRoundRunsTheToolingTestsWithoutTheSeededFaultProof(unittest.TestCase):
+    """The proof stays on demand, so what the round and the nightly run of the tooling tests leaves out is exactly
+    what needs it: every check-behaviour test that can run without the pooled proof stays in."""
+
+    def setUp(self):
+        import test_board_check_kicad as module
+        self.module = module
+
+    def loaded(self, without_proof: bool):
+        environment = {self.module.WITHOUT_PROOF: "1"} if without_proof else {}
+        with mock.patch.dict(os.environ, environment):
+            if not without_proof:
+                os.environ.pop(self.module.WITHOUT_PROOF, None)
+            suite = unittest.TestLoader().loadTestsFromModule(self.module)
+        return list(self.module.tests_of(suite))
+
+    @staticmethod
+    def needs_the_proof(test) -> bool:
+        """Whether a test's own source asks the pooled proof's outcomes or runs the proof."""
+        source = inspect.getsource(getattr(type(test), test._testMethodName))
+        return any(call in source for call in ("assertCaught(", "outcomes(", "board_prove.main("))
+
+    def test_the_subset_leaves_out_exactly_the_tests_that_need_the_proof(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        everything, subset = self.loaded(False), self.loaded(True)
+        left_out = {test.id() for test in everything} - {test.id() for test in subset}
+        needing = {test.id() for test in everything if self.needs_the_proof(test)}
+        self.assertTrue(needing)
+        # None that needs the proof is in the subset, and none is left out that does not need it.
+        self.assertEqual(left_out, needing)
+        self.assertEqual({test.id() for test in subset} & needing, set())
+        self.assertTrue(all(isinstance(test, self.module.Proved) for test in everything if test.id() in left_out))
+
+    def test_the_subset_keeps_every_check_behaviour_test_that_runs_without_the_pooled_proof(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        kept = {type(test).__name__ for test in self.loaded(True)}
+        for name in ("AForgedRuleIsReported", "TheProofDesignAndItsFaults", "OnlyWhatTheRepositoryHoldsIsChecked",
+                     "TheRejectedRuleIsNamed", "ZonesAreRefilled", "TheSignedFigurePrevails", "OneCommand",
+                     "NothingFromTheMachineRunningTheCheck", "TheReport", "AClassIsReadWholeOnABoardOfAnySize"):
+            self.assertIn(name, kept)
+        for name in ("Discovery", "RuleChecks", "Separation", "TheWorkmanshipRules", "TheSeededFaultProof"):
+            self.assertNotIn(name, kept)
+
+    def test_the_full_suite_stays_runnable_with_the_proof_in_it(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        everything = {test.id() for test in self.loaded(False)}
+        subset = {test.id() for test in self.loaded(True)}
+        self.assertLess(subset, everything)
+        self.assertIn(f"{self.module.__name__}.TheSeededFaultProof.test_the_clean_design_passes_and_every_fault_is_caught_without_touching_the_tree", everything)
+
+    def test_a_test_pulling_the_pooled_proof_in_is_seen_whatever_it_derives_from(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        class Pulls(unittest.TestCase):
+            def test_asks(self):
+                self.assertCaught("a fault")
+
+            def test_runs(self):
+                outcomes()
+
+            def test_proves(self):
+                board_prove.main([])
+
+            def test_does_not(self):
+                self.assertTrue(True)
+
+        outcomes = board_prove = None
+        found = {name: self.needs_the_proof(Pulls(name)) for name in ("test_asks", "test_runs", "test_proves", "test_does_not")}
+        self.assertEqual(found, {"test_asks": True, "test_runs": True, "test_proves": True, "test_does_not": False})
+
+    def task_block(self, name: str) -> str:
+        with open(os.path.join(REPO, "Taskfile.yml"), encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+        start = lines.index(f"  {name}:")
+        block = []
+        for line in lines[start + 1:]:
+            if line.strip() and len(line) - len(line.lstrip(" ")) <= 2:
+                break
+            block.append(line)
+        return "\n".join(block)
+
+    def test_the_round_task_sets_the_variable_and_the_on_demand_task_does_not(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        round_task, full_task = self.task_block("hw:test:round"), self.task_block("hw:test")
+        self.assertIn(f'      {self.module.WITHOUT_PROOF}: "1"', round_task)
+        self.assertNotIn(self.module.WITHOUT_PROOF, full_task)
+        discovery = "python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}"
+        self.assertIn(discovery, round_task)
+        self.assertIn(discovery, full_task)
+        for text in (round_task, full_task):
+            self.assertIn('KICAD_CLI: "{{.KICAD_CLI}}"', text)
+            self.assertIn('RESVG: "{{.RESVG}}"', text)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C1-TEST-8
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:49.915798Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_the_subset_leaves_out_exactly_the_tests_that_need_the_proof, test_the_subset_keeps_every_check_behaviour_test_that_runs_without_the_pooled_proof, test_the_full_suite_stays_runnable_with_the_proof_in_it, test_a_test_pulling_the_pooled_proof_in_is_seen_whatever_it_derives_from, test_the_round_task_sets_the_variable_and_the_on_demand_task_does_not
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+    type: satisfies

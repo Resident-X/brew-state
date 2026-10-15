@@ -2,9 +2,9 @@
 """The build round's gate decides what to run from what the branch changed.
 
 Every case is driven against a synthetic repository: a handful of files laid out
-where the firmware tree, the analysis records and the task runner's declaration
-sit, a remote-tracking main pointed at the main they were committed to, and a
-branch changed from that main.
+where the firmware tree, the analysis records, the task runner's declaration
+and a board design sit, a remote-tracking main pointed at the main they were
+committed to, and a branch changed from that main.
 The task runner is a shell script that records which tasks it was asked for and
 fails the ones it is told to, so the gate's ordering, stopping and verdict are
 observed without a build behind them. Asked for the sweep, it keeps the changed
@@ -19,6 +19,9 @@ from __future__ import annotations
 import ast
 import json
 import os
+import re
+import shlex
+import shutil
 import stat
 import subprocess
 import sys
@@ -31,9 +34,15 @@ REPOSITORY = os.path.dirname(os.path.dirname(TOOLS))
 sys.path.insert(0, TOOLS)
 
 import round_gate  # noqa: E402
+import task_gate  # noqa: E402
 
 HOST = ["fw:build", "fw:check", "fw:test", "fw:run"]
 EMULATION = ["fw:emulate"]
+BOARD = ["hw:verify", "hw:test:round"]
+BOARD_READS = "hw:reads"
+#: What the gate asks the task runner for before anything else when no changed path is
+#: one the board tier reads by its name: which files the board designs read.
+READS_ASKED = [BOARD_READS]
 SWEEP = "fw:sweep"
 
 #: Git told nothing about the user running the tests: no global or system
@@ -64,6 +73,16 @@ BASELINE = {
     "docs/parameter-stability.md": "# stability\n",
     "docs/machine/notes.md": "# notes\n",
     "specs/example.req.yaml": "id: REQ-TEST-001\n",
+    "hardware/tools/board_check.py": "print('check')\n",
+    "hardware/m/board/board.kicad_pro": "{}\n",
+    "hardware/m/board/board.kicad_sch": "(kicad_sch)\n",
+    "hardware/m/board/board.kicad_pcb": "(kicad_pcb)\n",
+    "hardware/m/separation-basis.yaml": "standard: synthetic\n",
+    "shared/lib/part.kicad_sym": "(kicad_symbol_lib)\n",
+    "shared/lib/part.pretty/license.txt": "licence\n",
+    "shared/parts/notes.txt": "a note\n",
+    "firmware/tools/round_gate.py": "print('gate')\n",
+    "firmware/tools/task_gate.py": "print('task')\n",
     "Taskfile.yml": "version: '3'\n",
     ".gitignore": "firmware/.pio/\n",
 }
@@ -132,18 +151,33 @@ class FakeTaskRunner:
     SKIPPED = {"state": "skipped", "outcome": "skipped", "files": 0, "lines": 0,
                "detail": "none of the changed path(s) is a source the sweep draws mutants from."}
 
+    #: What the board tooling lists a design as reading in the synthetic repository.
+    READS = ["hardware/m/board/", "hardware/m/board/board.kicad_pro", "boards/x/",
+             "shared/lib/part.pretty/", "shared/lib/part.kicad_sym"]
+
     def __init__(
         self,
         directory: str,
         failing: tuple[str, ...] = (),
         sweep_status: int = 0,
         sweep_account: dict | None = SKIPPED,
+        reads: list[str] | None = None,
+        missing_tool: dict[str, str] | None = None,
     ):
         self.directory = directory
         self.log = os.path.join(directory, "asked.log")
         failures = os.path.join(directory, "failing")
         with open(failures, "w", encoding="utf-8") as handle:
             handle.write("".join(f"{name}\n" for name in failing))
+        listing = os.path.join(directory, "reads.txt")
+        with open(listing, "w", encoding="utf-8") as handle:
+            handle.write("".join(f"{entry}\n" for entry in (self.READS if reads is None else reads)))
+        # A board task that cannot find a tool says so as the board tools do, on
+        # standard error, and fails.
+        said = "".join(
+            f'if [ "$1" = "{name}" ]; then echo {shlex.quote("CANNOT RUN | " + message)} >&2; exit 3; fi\n'
+            for name, message in (missing_tool or {}).items()
+        )
         account = os.path.join(directory, "account.json")
         if sweep_account is not None:
             with open(account, "w", encoding="utf-8") as handle:
@@ -173,7 +207,9 @@ class FakeTaskRunner:
                 '  echo "the sweep reporting on its own"\n'
                 f'  exit {sweep_status}\n'
                 'fi\n'
+                f"{said}"
                 f'if grep -qx "$1" "{failures}"; then exit 3; fi\n'
+                f'if [ "$1" = "{BOARD_READS}" ]; then cat "{listing}"; fi\n'
                 "exit 0\n"
             )
         os.chmod(self.path, os.stat(self.path).st_mode | stat.S_IEXEC)
@@ -219,7 +255,9 @@ def run_gate(
         arguments += ["--host", name]
     for name in EMULATION:
         arguments += ["--emulation", name]
-    arguments += ["--sweep", SWEEP]
+    for name in BOARD:
+        arguments += ["--board", name]
+    arguments += ["--board-reads", BOARD_READS, "--sweep", SWEEP]
     result = subprocess.run(
         arguments, cwd=repository.root, capture_output=True, text=True, check=False,
         env=GIT_ENVIRONMENT,
@@ -243,7 +281,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.repository.change_and_commit("docs/machine/notes.md")
         result, asked = run_gate(self.repository)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + [SWEEP], asked)
+        self.assertEqual(READS_ASKED + HOST + [SWEEP], asked)
         self.assertIn("ROUND GATE PASSED", result.stdout)
         self.assertIn("emulation tier was correctly SKIPPED", result.stdout)
         # The skip names the paths it was judged by, so the reader can check it.
@@ -254,7 +292,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.repository.change_and_commit("firmware/src/control/loop.c")
         result, asked = run_gate(self.repository)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
+        self.assertEqual(READS_ASKED + HOST + EMULATION + [SWEEP], asked)
         self.assertIn("emulation tier WILL RUN", result.stdout)
         self.assertIn("    firmware/src/control/loop.c", result.stdout)
         self.assertIn("both ran and passed", result.stdout)
@@ -264,7 +302,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.repository.change_and_commit("firmware/src/control/loop.c")
         result, asked = run_gate(self.repository, failing=("fw:check",))
         self.assertNotEqual(0, result.returncode)
-        self.assertEqual(["fw:build", "fw:check"], asked)
+        self.assertEqual(READS_ASKED + ["fw:build", "fw:check"], asked)
         self.assertIn("ROUND GATE FAILED: the host tier failed at fw:check", result.stdout)
         closing = result.stdout.split("ROUND GATE FAILED")[1]
         self.assertIn("emulation tier was NOT REACHED", closing)
@@ -277,7 +315,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.repository.change_and_commit("docs/machine/notes.md")
         result, asked = run_gate(self.repository, failing=("fw:run",))
         self.assertNotEqual(0, result.returncode)
-        self.assertEqual(HOST, asked)
+        self.assertEqual(READS_ASKED + HOST, asked)
         self.assertIn("host tier failed at fw:run", result.stdout)
         # Both facts reach the closing lines: emulation was not reached, and it
         # would have been skipped, judged by the paths named.
@@ -314,7 +352,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         self.repository.change_and_commit("firmware/src/control/loop.c")
         result, asked = run_gate(self.repository, failing=("fw:emulate",))
         self.assertNotEqual(0, result.returncode)
-        self.assertEqual(HOST + EMULATION, asked)
+        self.assertEqual(READS_ASKED + HOST + EMULATION, asked)
         self.assertIn("ROUND GATE FAILED: the emulation tier failed at fw:emulate", result.stdout)
 
     def test_an_unresolvable_base_runs_emulation_and_says_why(self):
@@ -326,7 +364,7 @@ class TheGateRunsTheHostTierAlwaysAndEmulationWhenItCanMatter(unittest.TestCase)
         # Emulation runs; the round then fails at the sweep step, which cannot
         # clear an unmeasured change as touching no plant line.
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + EMULATION, asked)
+        self.assertEqual(HOST + EMULATION + BOARD, asked)
         self.assertIn("could not tell what changed", result.stdout)
         self.assertIn("there is no remote-tracking origin/main", result.stdout)
         self.assertIn(f"HEAD {repository.head()}", result.stdout)
@@ -880,7 +918,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         base = self.repository.head()
         result, asked, runner = self.gate()
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
+        self.assertEqual(READS_ASKED + HOST + EMULATION + [SWEEP], asked)
         handed = runner.handed_lines()
         self.assertEqual({PLANT: [2]}, handed["files"])
         self.assertEqual(self.repository.root, os.path.realpath(handed["root"]))
@@ -897,7 +935,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.repository.change_and_commit("docs/machine/notes.md")
         result, asked, runner = self.gate()
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(HOST + [SWEEP], asked)
+        self.assertEqual(READS_ASKED + HOST + [SWEEP], asked)
         self.assertEqual({"docs/machine/notes.md": [2]}, runner.handed_lines()["files"])
 
     def test_a_branch_changing_no_population_line_passes_and_says_the_sweep_was_skipped(self):
@@ -938,7 +976,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
             detail="1 unreviewed survivor(s).",
         ))
         self.assertEqual(1, result.returncode, result.stdout)
-        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
+        self.assertEqual(READS_ASKED + HOST + EMULATION + [SWEEP], asked)
         closing = self.closing(result)
         self.assertIn(
             "ROUND GATE FAILED: the mutation sweep of the 1 changed plant line(s) in 1 file(s) "
@@ -1026,7 +1064,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
         result, asked, runner = self.gate(failing=("fw:test",))
         self.assertEqual(1, result.returncode)
-        self.assertEqual(["fw:build", "fw:check", "fw:test"], asked)
+        self.assertEqual(READS_ASKED + ["fw:build", "fw:check", "fw:test"], asked)
         self.assertIsNone(runner.handed_lines())
         self.assertIn("The mutation sweep was NOT REACHED", self.closing(result))
 
@@ -1035,7 +1073,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.repository.write(PLANT, "one\nTWO\nthree\nfour\nfive\n")
         result, asked, runner = self.gate(failing=("fw:emulate",))
         self.assertEqual(1, result.returncode)
-        self.assertEqual(HOST + EMULATION, asked)
+        self.assertEqual(READS_ASKED + HOST + EMULATION, asked)
         self.assertIsNone(runner.handed_lines())
         closing = self.closing(result)
         self.assertIn("the emulation tier failed at fw:emulate", closing)
@@ -1051,7 +1089,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.assertEqual(1, result.returncode, result.stdout)
         # Host and emulation run as they do for any change the gate cannot
         # measure; the sweep runs neither restricted nor in full.
-        self.assertEqual(HOST + EMULATION, asked)
+        self.assertEqual(HOST + EMULATION + BOARD, asked)
         self.assertIsNone(runner.handed_lines())
         closing = self.closing(result)
         self.assertIn(
@@ -1062,7 +1100,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.assertIn("there is no remote-tracking origin/main", closing)
         self.assertIn("git fetch origin main", closing)
         self.assertIn("neither a restricted nor the full sweep", closing)
-        self.assertIn("both ran and passed", closing)
+        self.assertIn("all ran and passed", closing)
 
     def lock(self, path: str) -> None:
         if os.geteuid() == 0:
@@ -1077,7 +1115,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         # whose lines are untold may be in the population, so emulation runs as
         # it does for any change the gate cannot tell; the sweep, whose
         # population it is, is handed the source as unread and fails the round.
-        locked = "hardware/tools/locked.c"
+        locked = "tools/locked.c"
         self.repository.write(locked, "a\n")
         self.lock(locked)
         result, asked, runner = self.gate(sweep_status=TASK_FAILED, sweep_account=account(
@@ -1086,7 +1124,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
             "of those files one git can read and diff, and run the round again.",
         ))
         self.assertEqual(1, result.returncode, result.stdout)
-        self.assertEqual(HOST + EMULATION + [SWEEP], asked)
+        self.assertEqual(READS_ASKED + HOST + EMULATION + [SWEEP], asked)
         handed = runner.handed_lines()
         self.assertEqual({}, handed["files"])
         self.assertEqual([locked], list(handed["unreadable"]))
@@ -1111,7 +1149,7 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.lock(locked)
         result, asked, runner = self.gate()
         self.assertEqual(0, result.returncode, result.stdout)
-        self.assertEqual(HOST + [SWEEP], asked)
+        self.assertEqual(READS_ASKED + HOST + [SWEEP], asked)
         self.assertEqual([locked], list(runner.handed_lines()["unreadable"]))
         self.assertIn("ROUND GATE PASSED", self.closing(result))
 
@@ -1151,6 +1189,636 @@ class TheRoundSweepsTheChangedLinesAfterTheTiers(unittest.TestCase):
         self.assertIn("did not forward --changed-lines", closing)
         self.assertNotIn("FOUND A PROBLEM", closing)
         self.assertIn("did not forward --changed-lines", result.stderr)
+
+
+# --- The board tier ------------------------------------------------------------
+
+
+#: Paths that reach a board by their name or place alone, each as the branch changes it.
+RUNS_BY_NAME = (
+    ("a design's layout", "hardware/m/board/board.kicad_pcb"),
+    ("the board tooling", "hardware/tools/board_check.py"),
+    ("a new file anywhere under the hardware tree", "hardware/notes/new.md"),
+    ("a project file outside the hardware tree", "elsewhere/other.kicad_pro"),
+    ("a schematic outside the hardware tree", "elsewhere/other.kicad_sch"),
+    ("a rules file outside the hardware tree", "elsewhere/other.kicad_dru"),
+    ("a symbol library outside the hardware tree", "shared/lib/part.kicad_sym"),
+    ("a footprint outside the hardware tree", "elsewhere/lib.pretty/foot.kicad_mod"),
+    ("a symbol library table", "elsewhere/sym-lib-table"),
+    ("a footprint library table", "elsewhere/fp-lib-table"),
+    ("a separation basis record outside the hardware tree", "elsewhere/separation-basis.yaml"),
+    ("the round gate's own code", "firmware/tools/round_gate.py"),
+    ("the code the round gate shares with the complete verification", "firmware/tools/task_gate.py"),
+    ("the task runner's definition file", "Taskfile.yml"),
+)
+
+#: Paths a design reads that carry no KiCad name and sit outside the hardware tree: they reach a
+#: board only because the board tooling lists them.
+RUNS_BY_LISTING = (
+    ("a file in a design's folder outside the hardware tree", "boards/x/layout-plan.md"),
+    ("a file in a library folder a table names", "shared/lib/part.pretty/license.txt"),
+)
+
+#: Paths no board reads, which the round does not need KiCad for.
+SKIPPED = (
+    ("a document", "docs/machine/notes.md"),
+    ("firmware source", "firmware/src/control/loop.c"),
+    ("a firmware tool", "firmware/tools/check_example.py"),
+    ("a requirement node", "specs/example.req.yaml"),
+    ("a file beside a library but not in one a design reads", "shared/parts/notes.txt"),
+    ("a tree whose name only starts like the hardware tree's", "hardware-notes/readme.md"),
+    ("a file whose name only starts like the round gate's", "firmware/tools/round_gate.py.orig"),
+    ("a file whose name only starts like the task definition file's", "Taskfile.yml.orig"),
+    ("a KiCad backup, which KiCad does not read", "elsewhere/other.kicad_pcb-bak"),
+)
+
+
+class TheBoardTierIsJudgedOnChangedPathsAlone(unittest.TestCase):
+    def setUp(self):
+        self.repository = SyntheticRepository()
+        self.addCleanup(self.repository.cleanup)
+
+    def scope(self, listed=FakeTaskRunner.READS, problem: str = "") -> round_gate.BoardScope:
+        """The board tier's decision for the branch as it stands, the listing being what the tooling prints."""
+        return round_gate.board_scope(
+            round_gate.changed(self.repository.root),
+            lambda: (None if problem else listed, problem),
+        )
+
+    def restore(self) -> None:
+        """Put the branch back to main, working tree and index included."""
+        self.repository.git("reset", "-q", "--hard", "origin/main")
+        self.repository.git("clean", "-fdq")
+
+    def test_a_path_that_reaches_a_board_by_its_name_runs_the_tier_and_is_named(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for what, path in RUNS_BY_NAME:
+            with self.subTest(change=what):
+                self.repository.write(path, "changed\n")
+                self.repository.git("add", "-A")
+                chosen = self.scope()
+                self.assertTrue(chosen.run, chosen.reason)
+                self.assertEqual([path], chosen.judged)
+                self.assertEqual([], chosen.untracked)
+                self.restore()
+
+    def test_a_committed_change_to_a_path_a_board_reads_runs_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for what, path in RUNS_BY_NAME:
+            if path not in BASELINE:
+                continue
+            with self.subTest(change=what):
+                self.repository.change_and_commit(path)
+                chosen = self.scope()
+                self.assertTrue(chosen.run, chosen.reason)
+                self.assertIn(path, chosen.judged)
+                self.restore()
+
+    def test_a_path_only_the_board_tooling_lists_as_read_runs_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for what, path in RUNS_BY_LISTING:
+            with self.subTest(change=what):
+                self.repository.write(path, "changed\n")
+                chosen = self.scope()
+                self.assertTrue(chosen.run, chosen.reason)
+                self.assertEqual([path], chosen.judged)
+                self.assertIn("a board design reads", chosen.reason)
+                # Without the listing the same path is not one the tier reads.
+                self.assertFalse(self.scope(listed=[]).run)
+                self.restore()
+
+    def test_a_design_folder_listed_as_read_whole_covers_a_file_deleted_from_it(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.git("rm", "-q", "shared/lib/part.pretty/license.txt")
+        chosen = self.scope(listed=["shared/lib/part.pretty/"])
+        self.assertTrue(chosen.run, chosen.reason)
+        self.assertEqual(["shared/lib/part.pretty/license.txt"], chosen.judged)
+
+    def test_a_design_in_the_top_folder_makes_every_changed_path_one_a_board_reads(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("docs/machine/notes.md", "changed\n")
+        self.assertTrue(self.scope(listed=["./"]).run)
+        self.assertFalse(self.scope(listed=[]).run)
+
+    def test_a_deleted_or_moved_file_counts_by_the_name_it_had(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.git("rm", "-q", "hardware/m/board/board.kicad_sch")
+        self.assertTrue(self.scope().run)
+        self.restore()
+        self.repository.git("mv", "shared/lib/part.kicad_sym", "elsewhere-moved.txt")
+        chosen = self.scope(listed=[])
+        self.assertTrue(chosen.run, chosen.reason)
+        self.assertIn("shared/lib/part.kicad_sym", chosen.judged)
+        self.restore()
+        os.makedirs(os.path.join(self.repository.root, "tools"))
+        self.repository.git("mv", "hardware/tools/board_check.py", "tools/board_check.py")
+        self.assertIn("hardware/tools/board_check.py", self.scope().judged)
+
+    def test_a_branch_changing_none_of_these_skips_the_tier_and_names_what_it_judged(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for what, path in SKIPPED:
+            with self.subTest(change=what):
+                self.repository.write(path, "changed\n")
+                chosen = self.scope()
+                self.assertFalse(chosen.run, chosen.reason)
+                self.assertEqual([path], chosen.judged)
+                self.assertIn("none of the 1 changed path(s) is one the board tier reads", chosen.reason)
+                self.assertIn(f"merge-base {self.repository.head()} with origin/main", chosen.reason)
+                self.restore()
+
+    def test_an_empty_change_skips_the_tier_without_listing_anything(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        listed = []
+        chosen = round_gate.board_scope(
+            round_gate.changed(self.repository.root), lambda: listed.append("asked") or ([], "")
+        )
+        self.assertFalse(chosen.run)
+        self.assertIn("the branch changes nothing", chosen.reason)
+        self.assertEqual([], listed)
+
+    def test_the_listing_is_not_asked_for_when_a_changed_path_already_runs_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/m/board/board.kicad_pcb", "changed\n")
+        asked = []
+        chosen = round_gate.board_scope(
+            round_gate.changed(self.repository.root), lambda: asked.append("asked") or ([], "")
+        )
+        self.assertTrue(chosen.run)
+        self.assertEqual([], asked)
+
+    def test_paths_that_cannot_be_told_run_the_tier_and_say_why(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        repository.write("docs/machine/notes.md", "changed\n")
+        chosen = round_gate.board_scope(round_gate.changed(repository.root), lambda: ([], ""))
+        self.assertTrue(chosen.run)
+        self.assertIn("could not tell what changed", chosen.reason)
+        self.assertIn("there is no remote-tracking origin/main", chosen.reason)
+        self.assertIn("Running the board tier rather than skipping it", chosen.reason)
+
+    def test_changed_lines_that_cannot_be_told_do_not_run_the_tier_though_they_run_emulation(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        # The paths are known and none is one a board reads; only the lines are not known.
+        change = round_gate.Change(
+            "head", "base", ["docs/machine/notes.md"], lines=None, lines_problem="the diff failed"
+        )
+        self.assertTrue(round_gate.scope(change).run_emulation)
+        chosen = round_gate.board_scope(change, lambda: ([], ""))
+        self.assertFalse(chosen.run, chosen.reason)
+
+    def test_a_listing_that_cannot_be_read_runs_the_tier_and_says_so(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("docs/machine/notes.md", "changed\n")
+        chosen = self.scope(problem="hw:reads exited with status 3")
+        self.assertTrue(chosen.run)
+        self.assertIn("could not list the files the board designs read", chosen.reason)
+        self.assertIn("hw:reads exited with status 3", chosen.reason)
+        self.assertIn("Running the board tier rather than skipping it", chosen.reason)
+
+    def test_the_listing_is_read_as_one_entry_a_line_ignoring_blank_lines(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        with tempfile.TemporaryDirectory() as directory:
+            runner = FakeTaskRunner(directory, reads=["", "  boards/x/  ", "", "shared/lib/part.kicad_sym"])
+            self.assertEqual(
+                (["boards/x/", "shared/lib/part.kicad_sym"], ""),
+                round_gate.list_reads(runner.path, BOARD_READS, self.repository.root),
+            )
+            failing = FakeTaskRunner(directory, failing=(BOARD_READS,))
+            listed, problem = round_gate.list_reads(failing.path, BOARD_READS, self.repository.root)
+            self.assertIsNone(listed)
+            self.assertIn("hw:reads exited with status 3", problem)
+        listed, problem = round_gate.list_reads(
+            os.path.join(self.repository.root, "no-such-task-runner"), BOARD_READS, self.repository.root
+        )
+        self.assertIsNone(listed)
+        self.assertIn("exited with status 127", problem)
+
+
+class TheBoardTierRunsAfterTheOtherTiersAndBeforeTheSweep(unittest.TestCase):
+    def setUp(self):
+        self.repository = SyntheticRepository()
+        self.addCleanup(self.repository.cleanup)
+        self.scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(self.scratch.cleanup)
+
+    def gate(self, failing=(), **runner_options):
+        directory = tempfile.mkdtemp(dir=self.scratch.name)
+        runner = FakeTaskRunner(directory, failing, **runner_options)
+        result, asked = run_gate(self.repository, runner=runner)
+        return result, asked, runner
+
+    def closing(self, result) -> str:
+        """Everything from the verdict line on, which must be the last thing printed."""
+        verdicts = [line for line in result.stdout.splitlines() if line.startswith("ROUND GATE ")]
+        self.assertEqual(1, len(verdicts), result.stdout)
+        return result.stdout[result.stdout.index(verdicts[0]):]
+
+    def test_a_board_change_runs_the_board_tasks_in_order_after_the_host_tier_and_before_the_sweep(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.change_and_commit("hardware/m/board/board.kicad_pcb")
+        result, asked, _ = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + BOARD + [SWEEP], asked)
+        closing = self.closing(result)
+        self.assertIn(
+            "ROUND GATE PASSED: the host tier (fw:build, fw:check, fw:test, fw:run) and the board "
+            "tier (hw:verify, hw:test:round) both ran and passed",
+            closing,
+        )
+        self.assertIn("The board tier ran because the branch changes 1 path(s) the board tier reads", closing)
+        self.assertIn("    hardware/m/board/board.kicad_pcb", closing)
+        self.assertIn(f"merge-base {self.repository.git('rev-parse', 'origin/main').strip()}", closing)
+        self.assertIn("The emulation tier was correctly SKIPPED", closing)
+
+    def test_a_change_both_tiers_read_runs_the_host_emulation_board_tiers_then_the_sweep(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.change_and_commit("firmware/src/control/loop.c")
+        self.repository.change_and_commit("hardware/tools/board_check.py")
+        result, asked, _ = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + EMULATION + BOARD + [SWEEP], asked)
+        self.assertIn(
+            "the host tier (fw:build, fw:check, fw:test, fw:run), the emulation tier (fw:emulate) "
+            "and the board tier (hw:verify, hw:test:round) all ran and passed",
+            self.closing(result),
+        )
+
+    def test_a_firmware_only_branch_skips_the_tier_says_why_and_needs_no_board_tool(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.change_and_commit("firmware/src/control/loop.c")
+        # Every board tool is missing; a tier that is skipped never asks for one.
+        result, asked, _ = self.gate(missing_tool={
+            "hw:verify": "kicad-cli was not found", "hw:test:round": "resvg was not found",
+        })
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(READS_ASKED + HOST + EMULATION + [SWEEP], asked)
+        closing = self.closing(result)
+        self.assertIn("ROUND GATE PASSED", closing)
+        self.assertIn("The board tier was correctly SKIPPED, because none of the 1 changed path(s) "
+                      "is one the board tier reads", closing)
+        self.assertIn("    firmware/src/control/loop.c", closing.split("The board tier was correctly SKIPPED")[1])
+        self.assertNotIn("CANNOT RUN", result.stdout + result.stderr)
+        # The opening statement says so too, before any tier runs.
+        self.assertIn("board tier WILL BE SKIPPED, because", result.stdout.split("running fw:build")[0])
+
+    def test_a_firmware_branch_editing_the_task_definition_file_runs_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.change_and_commit("firmware/src/control/loop.c")
+        self.repository.change_and_commit("Taskfile.yml")
+        result, asked, _ = self.gate()
+        self.assertEqual(HOST + EMULATION + BOARD + [SWEEP], asked)
+        self.assertIn("    Taskfile.yml", self.closing(result).split("The board tier ran because")[1])
+
+    def test_a_change_to_the_round_gate_itself_runs_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.change_and_commit("firmware/tools/round_gate.py")
+        result, asked, _ = self.gate()
+        self.assertEqual(HOST + EMULATION + BOARD + [SWEEP], asked)
+        self.assertEqual(0, result.returncode, result.stdout)
+
+    def test_a_listed_read_runs_the_tier_after_the_listing_is_asked_for(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.change_and_commit("boards/x/layout-plan.md")
+        result, asked, _ = self.gate()
+        self.assertEqual(READS_ASKED + HOST + BOARD + [SWEEP], asked)
+        self.assertIn("board tier WILL RUN, because the branch changes 1 path(s) a board design reads",
+                      result.stdout)
+
+    def test_paths_that_cannot_be_told_run_every_tier_and_the_closing_lines_say_why(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        repository.write("docs/machine/notes.md", "changed\n")
+        result, asked = run_gate(repository, runner=FakeTaskRunner(self.scratch.name))
+        # The sweep step then fails the round for the same cause, after the tiers have run.
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(HOST + EMULATION + BOARD, asked)
+        closing = self.closing(result)
+        self.assertIn("The board tier ran because could not tell what changed", closing)
+        self.assertIn("there is no remote-tracking origin/main", closing)
+
+    def test_a_listing_that_fails_runs_the_tier_rather_than_skipping_it(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.change_and_commit("docs/machine/notes.md")
+        result, asked, _ = self.gate(failing=(BOARD_READS,))
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(READS_ASKED + HOST + BOARD + [SWEEP], asked)
+        self.assertIn("The board tier ran because could not list the files the board designs read",
+                      self.closing(result))
+
+    def test_a_failing_board_check_stops_the_round_and_the_sweep_is_not_reached(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/m/board/board.kicad_pcb", "changed\n")
+        result, asked, runner = self.gate(failing=("hw:verify",))
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(HOST + ["hw:verify"], asked)
+        self.assertIsNone(runner.handed_lines())
+        closing = self.closing(result)
+        self.assertIn("ROUND GATE FAILED: the board tier failed at hw:verify (exit status 3)", closing)
+        self.assertIn("This is a finding, not a failure to look", closing)
+        self.assertIn("The host tier ran and passed (fw:build, fw:check, fw:test, fw:run).", closing)
+        self.assertIn("The emulation tier was correctly SKIPPED", closing)
+        self.assertIn("The board tier ran because", closing)
+        self.assertIn("The mutation sweep was NOT REACHED", closing)
+        self.assertNotIn("PASSED", result.stdout)
+
+    def test_failing_tooling_tests_stop_the_round_after_the_check_passed(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/tools/board_check.py", "changed\n")
+        result, asked, runner = self.gate(failing=("hw:test:round",))
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(HOST + BOARD, asked)
+        self.assertIsNone(runner.handed_lines())
+        self.assertIn("the board tier failed at hw:test:round (exit status 3)", self.closing(result))
+        self.assertIn("hw:verify passed", result.stdout)
+
+    def test_a_missing_kicad_stops_the_round_naming_it_rather_than_skipping_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/m/board/board.kicad_pcb", "changed\n")
+        message = "kicad-cli was not found or could not be run at 'kicad-cli'. Install KiCad 10.0 or newer"
+        result, asked, runner = self.gate(missing_tool={"hw:verify": message})
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(HOST + ["hw:verify"], asked)
+        self.assertIsNone(runner.handed_lines())
+        closing = self.closing(result)
+        self.assertIn("ROUND GATE FAILED: the board tier COULD NOT RUN at hw:verify (exit status 3), "
+                      "because a tool it needs is missing or too old", closing)
+        self.assertIn(f"    CANNOT RUN | {message}", closing)
+        self.assertIn("Install the tool named above, then run the round again.", closing)
+        self.assertIn("the tier neither passed nor found a problem", closing)
+        self.assertNotIn("finding, not a failure to look", closing)
+        self.assertNotIn("board tier was correctly SKIPPED", closing)
+        self.assertNotIn("PASSED", result.stdout)
+        # The task's own account reaches the reader as it was written.
+        self.assertIn(f"CANNOT RUN | {message}", result.stderr)
+
+    def test_a_missing_rasteriser_or_font_stops_the_round_after_the_check_passed(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/m/board/board.kicad_pcb", "changed\n")
+        message = "resvg at 'resvg' found no font to draw the captions with. Install a monospaced font"
+        result, asked, _ = self.gate(missing_tool={"hw:test:round": message})
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(HOST + BOARD, asked)
+        closing = self.closing(result)
+        self.assertIn("the board tier COULD NOT RUN at hw:test:round", closing)
+        self.assertIn(f"    CANNOT RUN | {message}", closing)
+        self.assertIn("The mutation sweep was NOT REACHED", closing)
+
+    def test_a_host_failure_says_the_board_tier_was_not_reached_and_what_it_would_have_done(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for change, would in (
+            ("hardware/m/board/board.kicad_pcb", "it would have run, because"),
+            ("docs/machine/notes.md", "it would have been skipped, because"),
+        ):
+            with self.subTest(change=change):
+                self.repository.write(change, "changed\n")
+                result, asked, _ = self.gate(failing=("fw:check",))
+                self.assertEqual(1, result.returncode)
+                self.assertNotIn("hw:verify", asked)
+                closing = self.closing(result)
+                self.assertIn("The board tier was NOT REACHED, so it neither passed nor failed", closing)
+                self.assertIn(would, closing.split("The board tier was NOT REACHED")[1])
+                self.assertIn(f"    {change}", closing.split("The board tier was NOT REACHED")[1])
+                self.repository.git("clean", "-fdq")
+                self.repository.git("checkout", "-q", "--", ".")
+
+    def test_an_emulation_failure_says_the_board_tier_was_not_reached(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("firmware/src/control/loop.c", "changed\n")
+        self.repository.write("hardware/tools/board_check.py", "changed\n")
+        result, asked, _ = self.gate(failing=("fw:emulate",))
+        self.assertEqual(HOST + EMULATION, asked)
+        closing = self.closing(result)
+        self.assertIn("the emulation tier failed at fw:emulate", closing)
+        self.assertIn("The board tier was NOT REACHED, so it neither passed nor failed", closing)
+        self.assertIn("it would have run, because", closing)
+
+    def test_a_sweep_finding_still_names_the_board_tier_that_ran(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/tools/board_check.py", "changed\n")
+        result, asked, _ = self.gate(
+            sweep_status=1,
+            sweep_account=account("ran", "found-a-problem", files=1, lines=2, detail="a survivor."),
+        )
+        self.assertEqual(1, result.returncode)
+        self.assertEqual(HOST + BOARD + [SWEEP], asked)
+        closing = self.closing(result)
+        self.assertIn("FOUND A PROBLEM", closing)
+        self.assertIn("the board tier (hw:verify, hw:test:round) both ran and passed", closing)
+
+
+class AKiCadDesignGitDoesNotTrackFailsTheRound(unittest.TestCase):
+    def setUp(self):
+        self.repository = SyntheticRepository()
+        self.addCleanup(self.repository.cleanup)
+        self.scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(self.scratch.cleanup)
+
+    def gate(self, failing=()):
+        runner = FakeTaskRunner(tempfile.mkdtemp(dir=self.scratch.name), failing)
+        result, asked = run_gate(self.repository, runner=runner)
+        return result, asked, runner
+
+    def test_each_kind_of_design_file_untracked_anywhere_fails_the_round_naming_it(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for path in ("hardware/m/new/new.kicad_pcb", "elsewhere/new.kicad_pro", "deep/er/new.kicad_sch"):
+            with self.subTest(path=path):
+                self.repository.write(path, "new\n")
+                result, asked, runner = self.gate()
+                self.assertEqual(1, result.returncode)
+                # The host tier ran as it always does; no board task ran, and the sweep was not reached.
+                self.assertEqual(HOST, asked)
+                self.assertNotIn("hw:verify", asked)
+                self.assertNotIn("hw:test:round", asked)
+                self.assertIsNone(runner.handed_lines())
+                self.assertIn("board tier WILL FAIL THE ROUND, because", result.stdout)
+                closing = result.stdout[result.stdout.index("ROUND GATE FAILED"):]
+                self.assertIn("ROUND GATE FAILED: the board tier did not run the board check, because "
+                              "the working tree holds 1 KiCad design file(s) that git does not track", closing)
+                self.assertIn(f"    {path}", closing)
+                self.assertIn("Track each file named below with git add, then run the round again", closing)
+                self.assertIn("The mutation sweep was NOT REACHED", closing)
+                self.assertNotIn("PASSED", result.stdout)
+                self.repository.git("clean", "-fdq")
+
+    def test_every_untracked_design_file_is_named_and_the_others_are_not(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/m/new/new.kicad_pcb", "new\n")
+        self.repository.write("hardware/m/new/new.kicad_pro", "new\n")
+        self.repository.write("hardware/m/new/new.kicad_dru", "new\n")
+        result, _, _ = self.gate()
+        closing = result.stdout[result.stdout.index("ROUND GATE FAILED"):]
+        self.assertIn("holds 2 KiCad design file(s)", closing)
+        self.assertIn("    hardware/m/new/new.kicad_pcb", closing)
+        self.assertIn("    hardware/m/new/new.kicad_pro", closing)
+        self.assertNotIn("new.kicad_dru", closing)
+
+    def test_the_failure_comes_after_the_host_and_emulation_tiers_and_names_what_passed(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("firmware/src/control/loop.c", "changed\n")
+        self.repository.write("hardware/m/new/new.kicad_pcb", "new\n")
+        result, asked, _ = self.gate()
+        self.assertEqual(HOST + EMULATION, asked)
+        closing = result.stdout[result.stdout.index("ROUND GATE FAILED"):]
+        self.assertIn("The host tier (fw:build, fw:check, fw:test, fw:run) and the emulation tier "
+                      "(fw:emulate) both ran and passed.", closing)
+
+    def test_a_host_failure_comes_first_and_says_the_board_tier_would_have_failed_the_round(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/m/new/new.kicad_pcb", "new\n")
+        result, asked, _ = self.gate(failing=("fw:build",))
+        self.assertEqual(["fw:build"], asked)
+        self.assertIn("it would have failed the round, because", result.stdout)
+        self.assertIn("    hardware/m/new/new.kicad_pcb", result.stdout)
+
+    def test_a_design_that_is_staged_is_tracked_and_the_tier_runs(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        for kind in ("pro", "sch", "pcb"):
+            self.repository.write(f"hardware/m/new/new.kicad_{kind}", "new\n")
+        self.repository.git("add", "-A")
+        result, asked, _ = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + BOARD + [SWEEP], asked)
+
+    def test_an_untracked_kicad_file_that_is_not_a_design_runs_the_tier_without_failing_the_round(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write("hardware/m/board/board.kicad_prl", "{}\n")
+        result, asked, _ = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(HOST + BOARD + [SWEEP], asked)
+
+    def test_an_untracked_design_file_the_repository_ignores_is_not_a_change(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        self.repository.write(".gitignore", "firmware/.pio/\nscratch/\n")
+        self.repository.commit("ignore scratch")
+        self.repository.track("HEAD")
+        self.repository.write("scratch/new.kicad_pcb", "new\n")
+        result, asked, _ = self.gate()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertNotIn("hw:verify", asked)
+
+
+class AnUntrackedDesignFailsTheRoundWhateverElseCannotBeTold(unittest.TestCase):
+    """The refusal does not depend on the measurement from the merge-base."""
+
+    DESIGN = "hardware/m/new/new.kicad_pcb"
+
+    def judge(self, repository):
+        change = round_gate.changed(repository.root)
+        return change, round_gate.board_scope(change, lambda: ([], ""))
+
+    def assert_refused(self, repository, cause):
+        change, chosen = self.judge(repository)
+        self.assertIsNone(change.paths)
+        self.assertIn(cause, change.problem)
+        self.assertEqual([self.DESIGN], chosen.untracked)
+        self.assertTrue(chosen.run)
+        self.assertEqual("failed the round", chosen.would)
+        self.assertIn(self.DESIGN, chosen.judged)
+        self.assertIn(cause, chosen.reason)
+
+    def test_without_a_remote_tracking_main_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        repository.write(self.DESIGN, "new\n")
+        self.assert_refused(repository, "no remote-tracking origin/main")
+
+    def test_without_a_merge_base_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository()
+        self.addCleanup(repository.cleanup)
+        repository.git("checkout", "-q", "--orphan", "unrelated")
+        repository.write("other.txt", "x\n")
+        repository.commit("unrelated history")
+        repository.track("HEAD")
+        repository.git("checkout", "-q", "feature")
+        repository.write(self.DESIGN, "new\n")
+        self.assert_refused(repository, "merge-base")
+
+    def test_with_no_commit_at_all_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = os.path.realpath(directory.name)
+        subprocess.run(["git", "-C", root, "init", "-q", "-b", "main"], check=True, env=GIT_ENVIRONMENT)
+        full = os.path.join(root, self.DESIGN)
+        os.makedirs(os.path.dirname(full))
+        with open(full, "w", encoding="utf-8") as handle:
+            handle.write("new\n")
+        change = round_gate.changed(root)
+        chosen = round_gate.board_scope(change, lambda: ([], ""))
+        self.assertIsNone(change.paths)
+        self.assertIn("HEAD could not be resolved", change.problem)
+        self.assertEqual([self.DESIGN], chosen.untracked)
+        self.assertIn("HEAD could not be resolved", chosen.reason)
+
+    def test_when_the_diff_cannot_be_read_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository()
+        self.addCleanup(repository.cleanup)
+        repository.write(self.DESIGN, "new\n")
+        real = round_gate._git
+
+        def failing_diff(repo, *arguments, **keywords):
+            if arguments and arguments[0] == "diff":
+                return subprocess.CompletedProcess(arguments, 128, "", "diff broke")
+            return real(repo, *arguments, **keywords)
+
+        with mock.patch.object(round_gate, "_git", failing_diff):
+            self.assert_refused(repository, "diff broke")
+
+    def test_the_round_fails_naming_the_design_when_what_changed_cannot_be_told(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        repository.write(self.DESIGN, "new\n")
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        runner = FakeTaskRunner(tempfile.mkdtemp(dir=scratch.name), ())
+        result, asked = run_gate(repository, runner=runner)
+        self.assertEqual(1, result.returncode)
+        self.assertNotIn("hw:verify", asked)
+        self.assertIn("board tier WILL FAIL THE ROUND, because", result.stdout)
+        closing = result.stdout[result.stdout.index("ROUND GATE FAILED"):]
+        self.assertIn(f"    {self.DESIGN}", closing)
+        self.assertIn("The mutation sweep was NOT REACHED", closing)
+
+    def test_without_an_untracked_design_the_unknown_change_still_runs_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        change, chosen = self.judge(repository)
+        self.assertIsNone(change.paths)
+        self.assertTrue(chosen.run)
+        self.assertEqual([], chosen.untracked)
+        self.assertIn("Running the board tier rather than skipping it", chosen.reason)
+
+
+@unittest.skipUnless(shutil.which("task"), "the real task runner is not installed")
+class TheRealTaskRunnerLetsTheMissingToolLineReachTheGate(unittest.TestCase):
+    def test_a_line_a_task_writes_to_standard_error_is_noted_by_its_marker(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        with open(os.path.join(directory.name, "Taskfile.yml"), "w", encoding="utf-8") as handle:
+            handle.write(
+                'version: "3"\n'
+                "tasks:\n"
+                "  needs-tool:\n"
+                "    cmds:\n"
+                "      - echo 'some progress' >&2\n"
+                "      - echo 'CANNOT RUN | a tool the task needs is missing' >&2\n"
+                "      - exit 2\n"
+            )
+        with mock.patch("sys.stderr"), mock.patch("builtins.print"):
+            status, noted = task_gate.run_noting(
+                shutil.which("task"), "needs-tool", directory.name, "round gate", "board tier",
+                round_gate.MISSING_TOOL,
+            )
+        self.assertNotEqual(0, status)
+        self.assertEqual(["CANNOT RUN | a tool the task needs is missing"], noted)
 
 
 # --- The declaration the task runner carries --------------------------------
@@ -1200,10 +1868,46 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
         self.assertIn("tools/round_gate.py", " ".join(self.round_arguments()))
         self.assertEqual(
-            [name for name in self.verify if name not in ("fw:emulate", "fw:sweep")],
+            [name for name in self.verify if name not in ("fw:emulate", "fw:sweep") + tuple(BOARD)],
             self.tasks_given("--host"),
         )
         self.assertEqual(["fw:emulate"], self.tasks_given("--emulation"))
+
+    def test_the_round_hands_over_the_board_gates_the_complete_verification_declares(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        # The same two tasks, in the same order, and the tooling tests are the
+        # ones without the seeded-fault proof, which neither hands over.
+        self.assertEqual(BOARD, self.tasks_given("--board"))
+        self.assertEqual([name for name in self.verify if name.startswith("hw:")], self.tasks_given("--board"))
+        self.assertEqual([BOARD_READS], self.tasks_given("--board-reads"))
+        self.assertNotIn("hw:prove", self.round_arguments() + self.verify)
+        self.assertNotIn("hw:test", self.round_arguments() + self.verify)
+        self.assertEqual(self.verify.index("fw:emulate") + 1, self.verify.index(BOARD[0]))
+        self.assertEqual(self.verify.index(SWEEP) - 1, self.verify.index(BOARD[-1]))
+        self.assertNotIn(BOARD_READS, self.verify)
+
+    def test_the_task_descriptions_say_when_the_board_tier_runs(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3: The project instructions and the hardware notes say when the board check runs
+        with open(os.path.join(REPOSITORY, "Taskfile.yml"), encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+
+        def description(name: str) -> str:
+            start = lines.index(f"  {name}:")
+            return next(line for line in lines[start + 1:] if line.strip().startswith("desc:"))
+
+        round_description = description("check:round")
+        for words in (
+            "board tier (hw:verify", "hw:test:round", "tracked KiCad file anywhere", "hardware tree",
+            "this task definition file", "judged on the changed paths alone",
+            "a KiCad design file git does not track fails the round naming it",
+            "a missing or too-old tool stops the round naming it rather than skipping the tier",
+        ):
+            self.assertIn(words, round_description)
+        verify_description = description("fw:verify")
+        for words in ("every board design", "without those that run the seeded-fault proof", "stays on demand"):
+            self.assertIn(words, verify_description)
+        self.assertIn("on demand", description("hw:prove"))
+        self.assertIn("hw:test:round", description("hw:test"))
 
     def test_the_round_hands_over_the_sweep_only_as_its_sweep_step(self):
         # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
@@ -1232,8 +1936,92 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
     def test_the_complete_verification_keeps_its_declaration_of_every_gate(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C1: The round gate runs the host tier in full and the emulation tier only for changes it exercises
         self.assertEqual(
-            ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "fw:sweep"], self.verify
+            ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "hw:verify", "hw:test:round", "fw:sweep"],
+            self.verify,
         )
+
+
+class TheDocumentsSayWhenTheBoardCheckRuns(unittest.TestCase):
+    """The project instructions, the hardware notes and the firmware documentation each
+    state the board check's cadences, so a reader of any of them is not left to find the
+    gate's code to learn them."""
+
+    #: What each document must say, as patterns over its text with whitespace collapsed.
+    EVERY_DOCUMENT = (
+        ("the check runs in the round", r"board (tier|check)"),
+        ("for a board design", r"board design"),
+        ("for what a design reads", r"(anything|any file|files?) a board design reads"),
+        ("for the board tooling", r"board (check's )?tooling"),
+        ("for the round gate's own code", r"round gate's own code"),
+        ("for the task definition file", r"Taskfile\.yml"),
+        ("judged on changed paths", r"changed paths alone"),
+        ("nightly", r"nightly"),
+        ("the proof on demand", r"seeded-fault proof[^.]*(on demand|stays on demand)|on demand[^.]*seeded-fault proof"),
+    )
+
+    DOCUMENTS = (
+        "CLAUDE.md",
+        "hardware/README.md",
+        "firmware/README.md",
+        "firmware/emulation/README.md",
+    )
+
+    def read(self, path: str) -> str:
+        with open(os.path.join(REPOSITORY, path), encoding="utf-8") as handle:
+            return " ".join(handle.read().split())
+
+    def test_each_document_states_when_the_board_check_runs_and_that_its_proof_is_on_demand(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3: The project instructions and the hardware notes say when the board check runs
+        for path in self.DOCUMENTS:
+            text = self.read(path)
+            for what, pattern in self.EVERY_DOCUMENT:
+                with self.subTest(document=path, says=what):
+                    self.assertRegex(text, pattern)
+
+    def test_the_project_instructions_name_the_gates_the_tier_runs_and_the_nightly_declares(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3: The project instructions and the hardware notes say when the board check runs
+        text = self.read("CLAUDE.md")
+        gates = text[text.index("**Gates.**"): text.index("**Generated records pin their inputs.**")]
+        round_part, nightly_part = gates.split("**Nightly.**")
+        for name in ("hw:verify", "hw:test:round", "BOARD_READS", "task hw:reads"):
+            self.assertIn(name, round_part)
+        for name in ("hw:verify", "hw:test:round", "task hw:prove", "on demand"):
+            self.assertIn(name, nightly_part)
+        for words in (
+            "anything under `hardware/`", "a tracked KiCad file anywhere", "or `Taskfile.yml`",
+            "firmware-only branch that leaves `Taskfile.yml` alone", "fails the round, naming it",
+            "stops the round naming the tool rather than skipping the tier",
+            "when the changed paths cannot be told", "not on unknown changed lines alone",
+        ):
+            self.assertIn(words, round_part)
+
+    def test_the_hardware_notes_say_the_rasteriser_and_font_are_needed_by_the_tests_the_round_runs(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3: The project instructions and the hardware notes say when the board check runs
+        text = self.read("hardware/README.md")
+        needs = text[text.index("## What you need"): text.index("## The commands")]
+        for tool in ("resvg", "A monospaced font"):
+            row = next(row for row in needs.split("| ") if row.startswith(tool))
+            self.assertIn("for the layout review views and for the tooling tests the build round runs", row)
+        self.assertNotIn("for the layout review views only", needs)
+        self.assertNotIn("The pre-order check does not need it", needs)
+        section = text[text.index("## When the board check runs"): text.index("## The locked-copper check")]
+        for words in (
+            "tooling tests", "the rasteriser", "monospaced font", "`task hw:test:round`", "`task hw:verify`",
+            "`BOARD_TESTS_WITHOUT_PROOF`", "`Proved`", "test_board_check_kicad.py", "`task hw:reads`",
+            "first nightly run demonstrates",
+        ):
+            self.assertIn(words, section)
+
+    def test_the_hardware_notes_name_the_variable_and_base_class_the_split_is_made_with(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3: The project instructions and the hardware notes say when the board check runs
+        # What the notes say names what the code has, so a rename in one is seen in the other.
+        notes = self.read("hardware/README.md")
+        with open(os.path.join(REPOSITORY, "hardware", "tools", "tests", "test_board_check_kicad.py"), encoding="utf-8") as handle:
+            tests = handle.read()
+        variable = re.search(r'(?m)^WITHOUT_PROOF = "([A-Z_]+)"', tests).group(1)
+        self.assertIn(f"`{variable}`", notes)
+        self.assertRegex(tests, r"(?m)^class Proved\(unittest\.TestCase\):")
+        self.assertIn("derives from `Proved`", notes)
 
 
 class TheRoundNeedsOnlyTheStandardLibrary(unittest.TestCase):

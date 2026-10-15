@@ -58,8 +58,7 @@ _RENDERED = {}
 
 
 def setUpModule():
-    board_check.require_kicad(KICAD_CLI)
-    board_views.require_resvg(RESVG)
+    board_fixtures.require_tools(KICAD_CLI, RESVG)
 
 
 def tearDownModule():

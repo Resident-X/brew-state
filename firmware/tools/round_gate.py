@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The build round's gate: the host tier every time, emulation when it can matter,
-and the mutants on the plant lines the branch changes.
+"""The build round's gate: the host tier every time, emulation and the board tier when
+they can matter, and the mutants on the plant lines the branch changes.
 
 A build round runs one gate, and it is the only verification a change gets
 before it merges. The complete verification takes far longer than most changes
@@ -10,6 +10,21 @@ build, every build-time check, every host test and every host executable under
 the sanitizers, the only tier that catches memory and undefined-behaviour
 defects -- and runs the emulation tier only when the branch touches something
 the emulation reads.
+
+The board tier runs the pre-order board check and the tests of the board tooling
+without the tests that run the seeded-fault proof, which stays on demand. It
+runs only when the branch changes a board design, anything a board design
+reads, the board tooling, the round gate's own code or the task runner's
+definition file, and a branch that changes none of those does not need KiCad,
+the rasteriser or the font the tooling tests draw with. It is judged on the
+changed paths alone: it runs when those cannot be told, or when the files the
+designs read cannot be listed, and not on unknown changed lines, which only
+emulation also runs on. A KiCad design file in the working tree that git does
+not track counts as a change to a board design, and fails the round naming it,
+since the check finds only the designs git tracks and must not pass one it
+cannot see. A missing or too-old tool stops the round naming the tool, rather
+than skipping the tier. The tier runs after the host and emulation tiers and
+before the sweep.
 
 After those, the round runs the mutation sweep restricted to the mutants on the
 lines the branch changes in the sweep's population, so new plant arithmetic
@@ -25,7 +40,10 @@ earlier tier fails.
 What the round runs is named by the task runner, which hands the tasks to this
 script, so the commands behind each tier exist in one place and the round and
 the complete verification cannot drift apart. What decides whether emulation
-runs is declared here, once: EMULATION_READS.
+runs is declared here, once: EMULATION_READS. So is what decides whether the
+board tier runs on a path alone: BOARD_READS, the kinds of KiCad file and the
+files a board design is listed as reading, which the board tooling lists
+through a task of its own.
 
 What changed is measured from the branch's merge-base with the remote-tracking
 main, against the working tree, so uncommitted edits and new files not yet
@@ -73,6 +91,7 @@ The exit status is the verdict.
 
 Usage: round_gate.py --task <executable> --host <task> [--host <task> ...]
                      --emulation <task> [--emulation <task> ...]
+                     --board <task> [--board <task> ...] --board-reads <task>
                      --sweep <task> [--repo <dir>]
 """
 
@@ -86,6 +105,7 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass, field
+from typing import Callable
 
 import task_gate
 
@@ -117,11 +137,65 @@ EMULATION_READS = (
 )
 
 
+#: Every path the board tier reads that is not a KiCad file wherever it sits: the
+#: hardware tree, which holds the designs and the tooling that checks them, the
+#: round gate's own code, and the task runner's definition file, taken whole as
+#: the emulation tier takes it. The board tooling's own files are under the
+#: hardware tree, so they need no entry of their own.
+BOARD_READS = (
+    "hardware/",
+    "firmware/tools/round_gate.py",
+    "firmware/tools/task_gate.py",
+    "Taskfile.yml",
+)
+
+#: A file KiCad writes, wherever it sits: a project, a schematic, a layout, a
+#: rules file, a symbol library, a footprint file and the like. A deleted one is
+#: caught by its name as much as an added one.
+KICAD_FILE = re.compile(r"\.kicad_[a-z]+$")
+
+#: The files beside a design that are not KiCad's by name but that a design is
+#: held to or reads its libraries from.
+BOARD_FILE_NAMES = ("sym-lib-table", "fp-lib-table", "separation-basis.yaml")
+
+#: The three files that make a board design. One of these in the working tree
+#: that git does not track is a design the check would not see.
+DESIGN_SUFFIXES = (".kicad_pro", ".kicad_sch", ".kicad_pcb")
+
+#: What the board tooling prints for a folder it lists as read whole, written
+#: at the top of the repository.
+WHOLE_REPOSITORY = "./"
+
+
 def reads(path: str, triggers: tuple[str, ...] = EMULATION_READS) -> bool:
     """Whether the emulation tier reads the path, a repository-relative one."""
     return any(
         path.startswith(entry) if entry.endswith("/") else path == entry
         for entry in triggers
+    )
+
+
+def reads_board(path: str) -> bool:
+    """Whether the board tier reads the path on its name alone, a repository-relative one."""
+    name = path.rsplit("/", 1)[-1]
+    return (
+        reads(path, BOARD_READS)
+        or KICAD_FILE.search(name) is not None
+        or name in BOARD_FILE_NAMES
+    )
+
+
+def reads_listed(path: str, listed: list[str]) -> bool:
+    """Whether a path is one the board tooling lists a board design as reading.
+
+    An entry ending in "/" is a folder read whole, the repository's top level
+    written as WHOLE_REPOSITORY; any other entry is one file.
+    """
+    return any(
+        True if entry == WHOLE_REPOSITORY
+        else path.startswith(entry) if entry.endswith("/")
+        else path == entry
+        for entry in listed
     )
 
 
@@ -142,7 +216,8 @@ class Change:
     lines alone could not be read to why: whether that leaves a line of the
     sweep's population untold is the sweep's to say, since the population is
     its derivation. `root` is the repository's top level the paths are relative
-    to.
+    to. `untracked` is the files git does not track, known whether or not the changed
+    paths could be told.
     """
 
     head: str | None
@@ -153,6 +228,7 @@ class Change:
     lines_problem: str = ""
     root: str | None = None
     unreadable: dict[str, str] = field(default_factory=dict)
+    untracked: list[str] = field(default_factory=list)
 
     @property
     def lines_unknown_because(self) -> str:
@@ -169,6 +245,27 @@ class Scope:
     run_emulation: bool
     reason: str
     judged: list[str] = field(default_factory=list)
+
+
+@dataclass
+class BoardScope:
+    """Whether the board tier runs, and the statement of why.
+
+    `untracked` is the KiCad design files git does not track, which fail the
+    round instead of the tier running.
+    """
+
+    run: bool
+    reason: str
+    judged: list[str] = field(default_factory=list)
+    untracked: list[str] = field(default_factory=list)
+
+    @property
+    def would(self) -> str:
+        """What the tier would have done had the round reached it, as a verb phrase."""
+        if self.untracked:
+            return "failed the round"
+        return "run" if self.run else "been skipped"
 
 
 #: What every diff the change is measured by asks git for, so the paths come out
@@ -224,26 +321,48 @@ def changed(repo: str, remote: str = REMOTE, main: str = MAIN) -> Change:
         return Change(None, None, None, f"git could not be run ({error})")
 
 
+def _untracked(repo: str) -> tuple[list[str], str]:
+    """The files git does not track and is not told to ignore, and "" or why they could not be listed.
+
+    This is read on its own, ahead of any measurement from a merge-base, so that
+    a change the gate cannot tell still has its untracked files known.
+    """
+    try:
+        listed = _git(
+            repo, "ls-files", "--others", "--exclude-standard", "--full-name", "-z", "--", ":/"
+        )
+    except OSError as error:
+        return [], f"git could not be run ({error})"
+    if listed.returncode != 0:
+        return [], listed.stderr.strip() or "git ls-files failed"
+    return sorted(set(_split(listed.stdout))), ""
+
+
 def _measure(repo: str, remote: str, main: str) -> Change:
     tracking = f"refs/remotes/{remote}/{main}"
     named = f"{remote}/{main}"
 
+    new, new_problem = _untracked(repo)
     resolved = _git(repo, "rev-parse", "--verify", "--quiet", "HEAD^{commit}")
     if resolved.returncode != 0:
-        return Change(None, None, None, "HEAD could not be resolved to a commit")
+        return Change(
+            None, None, None, "HEAD could not be resolved to a commit", untracked=new
+        )
     head = resolved.stdout.strip()
 
     if _git(repo, "rev-parse", "--verify", "--quiet", f"{tracking}^{{commit}}").returncode != 0:
         return Change(
             head, None, None,
             f"there is no remote-tracking {named} ({tracking}) to measure from",
+            untracked=new,
         )
 
     merge_base = _git(repo, "merge-base", head, tracking)
     if merge_base.returncode != 0:
         detail = merge_base.stderr.strip() or "no common ancestor"
         return Change(
-            head, None, None, f"the merge-base of HEAD with {named} could not be resolved ({detail})"
+            head, None, None, f"the merge-base of HEAD with {named} could not be resolved ({detail})",
+            untracked=new,
         )
     base = merge_base.stdout.strip()
 
@@ -252,18 +371,15 @@ def _measure(repo: str, remote: str, main: str) -> Change:
         return Change(
             head, base, None,
             f"the paths changed since {base} could not be read ({diff.stderr.strip()})",
+            untracked=new,
         )
-    untracked = _git(
-        repo, "ls-files", "--others", "--exclude-standard", "--full-name", "-z", "--", ":/"
-    )
-    if untracked.returncode != 0:
+    if new_problem:
         return Change(
             head, base, None,
-            f"the files not yet committed could not be read ({untracked.stderr.strip()})",
+            f"the files not yet committed could not be read ({new_problem})",
         )
     tracked = _split(diff.stdout)
-    new = _split(untracked.stdout)
-    change = Change(head, base, sorted(set(tracked) | set(new)))
+    change = Change(head, base, sorted(set(tracked) | set(new)), untracked=sorted(set(new)))
     try:
         change.root, change.lines, change.unreadable = _lines(repo, base, tracked, new)
     except LinesUnknown as error:
@@ -395,6 +511,75 @@ def scope(change: Change, base_ref: str = BASE_REF) -> Scope:
     )
 
 
+def board_scope(
+    change: Change,
+    listing: Callable[[], tuple[list[str] | None, str]],
+    base_ref: str = BASE_REF,
+) -> BoardScope:
+    """Whether the board tier runs for the change, and why.
+
+    The tier is judged on the changed paths alone, so unknown changed lines do
+    not make it run; unknown changed paths do. The files the designs read are
+    listed only when no changed path is already one the tier reads by its name,
+    and when that listing fails the tier runs rather than being skipped on a
+    guess. `listing` returns the entries and "" or None and why it failed.
+    """
+    at = f"HEAD {change.head}" if change.head else "HEAD"
+    untracked = [path for path in change.untracked if path.endswith(DESIGN_SUFFIXES)]
+    if untracked:
+        measured = (
+            f"measured from merge-base {change.base} with {base_ref} to {at} and the working tree"
+            if change.paths is not None
+            else f"whether or not what changed can be told ({change.problem})"
+        )
+        return BoardScope(
+            True,
+            f"the working tree holds {len(untracked)} KiCad design file(s) that git does not "
+            f"track, {measured}. The board check finds only the designs git tracks, so it would "
+            "pass without seeing them:",
+            untracked,
+            untracked,
+        )
+    if change.paths is None:
+        return BoardScope(
+            True,
+            f"could not tell what changed at {at}: {change.problem}. "
+            "Running the board tier rather than skipping it.",
+        )
+    against = (
+        f"measured from merge-base {change.base} with {base_ref} "
+        f"to {at} and the working tree"
+    )
+    read = [path for path in change.paths if reads_board(path)]
+    if read:
+        return BoardScope(
+            True, f"the branch changes {len(read)} path(s) the board tier reads, {against}:", read
+        )
+    if not change.paths:
+        return BoardScope(False, f"the branch changes nothing, {against}.")
+    listed, problem = listing()
+    if listed is None:
+        return BoardScope(
+            True,
+            f"could not list the files the board designs read at {at} ({problem}), so whether a "
+            "changed path is one of them cannot be told. Running the board tier rather than "
+            "skipping it.",
+        )
+    read = [path for path in change.paths if reads_listed(path, listed)]
+    if read:
+        return BoardScope(
+            True,
+            f"the branch changes {len(read)} path(s) a board design reads, {against}:",
+            read,
+        )
+    return BoardScope(
+        False,
+        f"none of the {len(change.paths)} changed path(s) is one the board tier reads, "
+        f"{against}. Changed paths judged:",
+        list(change.paths),
+    )
+
+
 LABEL = "round gate"
 
 
@@ -410,6 +595,39 @@ def _statement(heading: str, chosen: Scope) -> None:
 
 def _run(task: str, name: str, tier: str, repo: str) -> int:
     return task_gate.run(task, name, repo, LABEL, f"{tier} tier")
+
+
+#: What every board tool writes, first on a line of its standard error, when a
+#: tool it needs is missing or too old, followed by the tool and where to get it.
+MISSING_TOOL = "CANNOT RUN |"
+
+
+def list_reads(task: str, name: str, repo: str) -> tuple[list[str] | None, str]:
+    """The files the board designs read, as the board tooling lists them, or why it could not.
+
+    The listing is one entry per line of the task's standard output. A task that
+    fails, or cannot be started, leaves the files unlisted.
+    """
+    status, output = task_gate.capture(task, name, repo, LABEL)
+    if status != 0:
+        return None, f"{name} exited with status {status}"
+    return [line.strip() for line in output.splitlines() if line.strip()], ""
+
+
+def _tiers(host: list[str], emulation: list[str], ran_emulation: bool,
+           board: list[str], ran_board: bool) -> str:
+    """The clause saying which tiers ran and passed, and the tasks each ran."""
+    parts = [("host", host)]
+    if ran_emulation:
+        parts.append(("emulation", emulation))
+    if ran_board:
+        parts.append(("board", board))
+    if len(parts) == 1:
+        return f"the host tier ran and passed ({', '.join(host)})"
+    named = [f"the {kind} tier ({', '.join(tasks)})" for kind, tasks in parts]
+    if len(named) == 2:
+        return f"{named[0]} and {named[1]} both ran and passed"
+    return f"{', '.join(named[:-1])} and {named[-1]} all ran and passed"
 
 
 #: What the sweep's restricted mode writes back for the round to read: the
@@ -593,19 +811,30 @@ def sweep_step(task: str, name: str, repo: str, change: Change) -> Sweep:
     return concluded(status, account)
 
 
-def gate(task: str, host: list[str], emulation: list[str], sweep: str, repo: str) -> int:
+def gate(
+    task: str, host: list[str], emulation: list[str], board: list[str], board_reads: str,
+    sweep: str, repo: str,
+) -> int:
     """Run the round, print what it did and why, and return its exit status."""
     change = changed(repo)
     chosen = scope(change)
+    chosen_board = board_scope(change, lambda: list_reads(task, board_reads, repo))
     _say(
         "round gate: the host tier always runs; the emulation tier runs only for a change it "
-        "reads; then the mutation sweep runs over the mutants on the plant lines the branch "
-        "changes, and never over the full population."
+        "reads; the board tier runs only for a change to a board design, anything one reads, the "
+        "board check or the round gate itself; then the mutation sweep runs over the mutants on "
+        "the plant lines the branch changes, and never over the full population."
     )
     _statement(
         "round gate: emulation tier WILL RUN, because" if chosen.run_emulation
         else "round gate: emulation tier WILL BE SKIPPED, because",
         chosen,
+    )
+    _statement(
+        "round gate: board tier WILL FAIL THE ROUND, because" if chosen_board.untracked
+        else "round gate: board tier WILL RUN, because" if chosen_board.run
+        else "round gate: board tier WILL BE SKIPPED, because",
+        chosen_board,
     )
     if change.lines_unknown_because:
         _say(
@@ -631,6 +860,11 @@ def gate(task: str, host: list[str], emulation: list[str], sweep: str, repo: str
                 + ("run, because" if chosen.run_emulation else "been skipped, because"),
                 chosen,
             )
+            _statement(
+                "The board tier was NOT REACHED, so it neither passed nor failed. Had the host "
+                f"tier passed, it would have {chosen_board.would}, because",
+                chosen_board,
+            )
             _say(NOT_REACHED)
             return 1
 
@@ -643,19 +877,66 @@ def gate(task: str, host: list[str], emulation: list[str], sweep: str, repo: str
                     f"ROUND GATE FAILED: the emulation tier failed at {name} (exit status {status})."
                 )
                 _say(f"The host tier ran and passed ({', '.join(host)}).")
+                _statement(
+                    "The board tier was NOT REACHED, so it neither passed nor failed. Had the "
+                    f"emulation tier passed, it would have {chosen_board.would}, because",
+                    chosen_board,
+                )
+                _say(NOT_REACHED)
+                return 1
+
+    if chosen_board.untracked:
+        before = _tiers(host, emulation, chosen.run_emulation, board, False)
+        _say()
+        _say(
+            f"ROUND GATE FAILED: the board tier did not run the board check, because the working "
+            f"tree holds {len(chosen_board.untracked)} KiCad design file(s) that git does not track."
+        )
+        _say(
+            "The board check finds only the designs git tracks, so it would have passed without "
+            "seeing them. Track each file named below with git add, then run the round again:"
+        )
+        for path in chosen_board.untracked:
+            _say(f"    {path}")
+        _say(before[0].upper() + before[1:] + ".")
+        _say(NOT_REACHED)
+        return 1
+
+    if chosen_board.run:
+        for name in board:
+            status, missing = task_gate.run_noting(
+                task, name, repo, LABEL, "board tier", MISSING_TOOL
+            )
+            if status != 0:
+                before = _tiers(host, emulation, chosen.run_emulation, board, False)
+                _say()
+                if missing:
+                    _say(
+                        f"ROUND GATE FAILED: the board tier COULD NOT RUN at {name} (exit status "
+                        f"{status}), because a tool it needs is missing or too old. The round does "
+                        "not skip the tier for that, and the tier neither passed nor found a "
+                        "problem. The tool, as the task named it:"
+                    )
+                    for line in missing:
+                        _say(f"    {line}")
+                    _say("Install the tool named above, then run the round again.")
+                else:
+                    _say(
+                        f"ROUND GATE FAILED: the board tier failed at {name} (exit status "
+                        f"{status}). This is a finding, not a failure to look: the task's output "
+                        "above names each violation or failing test."
+                    )
+                _say(before[0].upper() + before[1:] + ".")
+                if not chosen.run_emulation:
+                    _statement("The emulation tier was correctly SKIPPED, because", chosen)
+                _statement("The board tier ran because", chosen_board)
                 _say(NOT_REACHED)
                 return 1
 
     outcome = sweep_step(task, sweep, repo, change)
 
     _say()
-    if chosen.run_emulation:
-        tiers = (
-            f"the host tier ({', '.join(host)}) and the emulation tier ({', '.join(emulation)}) "
-            "both ran and passed"
-        )
-    else:
-        tiers = f"the host tier ran and passed ({', '.join(host)})"
+    tiers = _tiers(host, emulation, chosen.run_emulation, board, chosen_board.run)
     if outcome.failed:
         _say(f"ROUND GATE FAILED: {outcome.verdict}.")
         _say(tiers[0].upper() + tiers[1:] + ".")
@@ -665,6 +946,10 @@ def gate(task: str, host: list[str], emulation: list[str], sweep: str, repo: str
         _statement("The emulation tier ran because", chosen)
     else:
         _statement("The emulation tier was correctly SKIPPED, because", chosen)
+    if chosen_board.run:
+        _statement("The board tier ran because", chosen_board)
+    else:
+        _statement("The board tier was correctly SKIPPED, because", chosen_board)
     _say(outcome.detail)
     return 1 if outcome.failed else 0
 
@@ -675,12 +960,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--host", action="append", required=True, help="a host-tier task, in order")
     parser.add_argument("--emulation", action="append", required=True, help="an emulation-tier task, in order")
     parser.add_argument(
+        "--board", action="append", required=True,
+        help="a board-tier task, in order: the board check, then the tests of the board tooling",
+    )
+    parser.add_argument(
+        "--board-reads", required=True,
+        help="the task that lists, one per line, the files the board designs read",
+    )
+    parser.add_argument(
         "--sweep", required=True,
         help="the mutation sweep's task, run restricted to the lines the branch changes",
     )
     parser.add_argument("--repo", default=os.getcwd(), help="the repository root (default: here)")
     arguments = parser.parse_args(argv)
-    return gate(arguments.task, arguments.host, arguments.emulation, arguments.sweep, arguments.repo)
+    return gate(
+        arguments.task, arguments.host, arguments.emulation, arguments.board,
+        arguments.board_reads, arguments.sweep, arguments.repo,
+    )
 
 
 if __name__ == "__main__":

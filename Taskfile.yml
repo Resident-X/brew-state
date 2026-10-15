@@ -362,7 +362,7 @@ tasks:
       - python3 tools/mull_sweep.py --project . --plant-root src/plant --include-dir include --pio {{.PIO}} {{.CLI_ARGS}}
 
   fw:verify:
-    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, sweep the plant model's arithmetic. Every gate runs to completion even after an earlier one fails, and the run fails naming every gate that did. Leave a gate out by name with task fw:verify -- --leave-out GATE (a name that is not a gate here, or named twice, is refused, and nothing else may be passed on); the closing lines then say it was left out, so the run never reads as the complete verification passing
+    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, check every board design the repository tracks with KiCad's own rule checks, run the tests of the board tooling without those that run the seeded-fault proof (which stays on demand), sweep the plant model's arithmetic. The board gates need KiCad 10.0 or newer, resvg 0.47 or newer and a monospaced font. Every gate runs to completion even after an earlier one fails, and the run fails naming every gate that did. Leave a gate out by name with task fw:verify -- --leave-out GATE (a name that is not a gate here, or named twice, is refused, and nothing else may be passed on); the closing lines then say it was left out, so the run never reads as the complete verification passing
     dir: "{{.ROOT_DIR}}"
     cmds:
       # The gates are handed over in order rather than run as a plain list, so
@@ -379,6 +379,14 @@ tasks:
       # peripheral, or none -- is invisible to every gate above it, which all sit
       # above the addressing.
       #
+      # Then the board gates, which hold every board design the repository
+      # tracks to KiCad's own rule checks and run the tests of the board tooling
+      # that does it, without the tests that run the seeded-fault proof, which
+      # stays on demand. A build round runs them only for a change that can
+      # matter to a board; here they run unconditionally. They need KiCad, the
+      # rasteriser and a monospaced font, and a host lacking one fails the gate
+      # naming it rather than passing quietly.
+      #
       # Last the sweep, because it is the longest and because it asks the
       # hardest question: not whether the checks pass, but whether the tests
       # would notice the model being wrong. It needs an LLVM toolchain matching
@@ -389,7 +397,7 @@ tasks:
       # The '--' ends the declaration. What is passed on from the command line
       # comes after it, where the driver accepts only a gate left out, so it
       # can never name another task runner or add a gate.
-      - python3 {{.FW_DIR}}/tools/verify_gate.py --task "{{.TASK_EXE}}" --gate fw:build --gate fw:check --gate fw:test --gate fw:run --gate fw:emulate --gate fw:sweep -- {{.CLI_ARGS}}
+      - python3 {{.FW_DIR}}/tools/verify_gate.py --task "{{.TASK_EXE}}" --gate fw:build --gate fw:check --gate fw:test --gate fw:run --gate fw:emulate --gate hw:verify --gate hw:test:round --gate fw:sweep -- {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
   # Cadences. A build round runs check:round once, and it is the only
@@ -399,16 +407,20 @@ tasks:
   # ---------------------------------------------------------------------------
 
   check:round:
-    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with the local remote-tracking origin/main and counting uncommitted edits and new files (a stale origin/main can mis-measure a branch, so branch from a freshly fetched main); runs emulation anyway when it cannot tell what changed, including when there is no remote-tracking origin/main. Then runs the changed-lines mutation sweep (fw:sweep restricted to the mutants on the plant lines the branch changes, as the sweep derives its population) and never the full one; a branch changing no such line runs no sweep and needs no mutation toolchain, a branch that does needs LLVM 19 and the matching Mull package and fails without them, and a change whose lines cannot be told fails the round after the host and emulation tiers run. Stops at the first failing tier, so the sweep is not reached after one; its closing lines say which tiers ran, why one was skipped, whether the sweep ran, was skipped, was not reached or could not run, and how many changed lines it covered. Its exit status is the verdict
+    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with the local remote-tracking origin/main and counting uncommitted edits and new files (a stale origin/main can mis-measure a branch, so branch from a freshly fetched main); runs emulation anyway when it cannot tell what changed, including when there is no remote-tracking origin/main. Then runs the board tier (hw:verify, the pre-order check of every board design, and hw:test:round, the tests of the board tooling without those that run the seeded-fault proof) only when the branch changes a tracked KiCad file anywhere, anything under the hardware tree, anything a board design reads, the board tooling, the round gate's own code or this task definition file, judged on the changed paths alone and run anyway when they cannot be told or the files the designs read cannot be listed; a KiCad design file git does not track fails the round naming it, a branch changing none of those paths needs no KiCad, rasteriser or font, and a missing or too-old tool stops the round naming it rather than skipping the tier. Then runs the changed-lines mutation sweep (fw:sweep restricted to the mutants on the plant lines the branch changes, as the sweep derives its population) and never the full one; a branch changing no such line runs no sweep and needs no mutation toolchain, a branch that does needs LLVM 19 and the matching Mull package and fails without them, and a change whose lines cannot be told fails the round after the host and emulation tiers run. Stops at the first failing tier, so the sweep is not reached after one; its closing lines say which tiers ran, why one was skipped or was not reached, whether the sweep ran, was skipped, was not reached or could not run, and how many changed lines it covered. Its exit status is the verdict
     dir: "{{.ROOT_DIR}}"
     cmds:
       # The tasks are handed over rather than their commands copied, so the
       # round and fw:verify run the same thing. The paths that trigger the
       # emulation tier are declared once, as EMULATION_READS in round_gate.py.
-      # A further round-scoped check is added here, beside the tiers. The sweep
-      # is handed over as the same task fw:verify runs, and the gate restricts
-      # it to the changed lines through the task's own arguments.
-      - python3 {{.FW_DIR}}/tools/round_gate.py --task "{{.TASK_EXE}}" --host fw:build --host fw:check --host fw:test --host fw:run --emulation fw:emulate --sweep fw:sweep
+      # The board tier is handed over the same way, as the board check and the
+      # tooling tests fw:verify declares, and the task that lists what the board
+      # designs read is how the gate learns which changed paths reach one. Which
+      # paths run the tier by name are declared once, as BOARD_READS in
+      # round_gate.py. A further round-scoped check is added here, beside the
+      # tiers. The sweep is handed over as the same task fw:verify runs, and the
+      # gate restricts it to the changed lines through the task's own arguments.
+      - python3 {{.FW_DIR}}/tools/round_gate.py --task "{{.TASK_EXE}}" --host fw:build --host fw:check --host fw:test --host fw:run --emulation fw:emulate --board hw:verify --board hw:test:round --board-reads hw:reads --sweep fw:sweep
 
   hw:verify:
     desc: The pre-order check — every board design in the repository through KiCad's own electrical, layout, schematic-parity and separation checks. Needs KiCad 10.0 or newer (set KICAD_CLI=/path/to/kicad-cli when kicad-cli is not on PATH), Python 3.9 or newer with PyYAML 5.1 or newer, and git 2.11 or newer
@@ -418,8 +430,14 @@ tasks:
       # because it exists rather than because a line here names it.
       - python3 {{.HW_DIR}}/tools/board_check.py --root . --kicad-cli "{{.KICAD_CLI}}"
 
+  hw:reads:
+    desc: List every file the board designs the repository tracks read, one per line, a folder read whole ending in a slash and the repository's top level written ./ — each design's own folder, every sheet its schematic reaches, every library its tables name and the separation basis record it is held to. Runs no check and needs no KiCad, and is how the build round's gate learns which changed paths reach a board design. Needs Python 3.9 or newer and git 2.11 or newer only
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - python3 {{.HW_DIR}}/tools/board_check.py --root . --list-reads
+
   hw:prove:
-    desc: Seed every fault the pre-order check guards against into a throwaway copy of the proof design and require the check to catch each — on demand, not part of the gate. Needs the same tools as hw:verify
+    desc: Seed every fault the pre-order check guards against into a throwaway copy of the proof design and require the check to catch each — on demand, in neither the build round's gate nor the nightly complete verification. Needs the same tools as hw:verify
     dir: "{{.ROOT_DIR}}"
     cmds:
       - python3 {{.HW_DIR}}/tools/board_prove.py --kicad-cli "{{.KICAD_CLI}}" {{.CLI_ARGS}}
@@ -479,10 +497,20 @@ tasks:
       - python3 "{{.ROOT_DIR}}/{{.HW_DIR}}/tools/board_history.py" {{.CLI_ARGS}}
 
   hw:test:
-    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check and the layout review proof's seeding command), against the real kicad-cli and resvg. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
+    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check and the layout review proof's seeding command), against the real kicad-cli and resvg, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), and Task
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
       RESVG: "{{.RESVG}}"
+    cmds:
+      - python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}
+
+  hw:test:round:
+    desc: Run the tests covering the board tooling as hw:test does, without the tests that need the seeded-fault proof, which stays on demand (hw:test runs the whole suite) — the part the build round's gate runs for a change that can matter to a board and the nightly complete verification runs every night. Against the real kicad-cli and resvg, so it needs the tools hw:test does, KiCad 10.0 or newer, resvg 0.47 or newer and a monospaced font for the layout review views' captions, which the tests need as well as the views, and a missing one stops the run with a CANNOT RUN line naming it
+    dir: "{{.ROOT_DIR}}"
+    env:
+      KICAD_CLI: "{{.KICAD_CLI}}"
+      RESVG: "{{.RESVG}}"
+      BOARD_TESTS_WITHOUT_PROOF: "1"
     cmds:
       - python3 -m unittest discover -s {{.HW_DIR}}/tools/tests {{.CLI_ARGS}}

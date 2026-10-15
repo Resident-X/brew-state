@@ -30,6 +30,7 @@ TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
+import board_fixtures  # noqa: E402
 import board_prove  # noqa: E402
 import review_seed  # noqa: E402
 import sexpr  # noqa: E402
@@ -41,7 +42,7 @@ METHOD = os.path.join(REPO, "docs", "board-design-method.md")
 
 
 def setUpModule():
-    board_check.require_kicad(KICAD_CLI)
+    board_fixtures.require_tools(KICAD_CLI)
 
 
 def run(argv):

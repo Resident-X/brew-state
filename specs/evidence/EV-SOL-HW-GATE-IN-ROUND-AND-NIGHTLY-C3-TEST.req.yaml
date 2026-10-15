@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C3-TEST
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:50.831594Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py::test_each_document_states_when_the_board_check_runs_and_that_its_proof_is_on_demand, test_the_project_instructions_name_the_gates_the_tier_runs_and_the_nightly_declares, test_the_hardware_notes_say_the_rasteriser_and_font_are_needed_by_the_tests_the_round_runs, test_the_hardware_notes_name_the_variable_and_base_class_the_split_is_made_with, test_the_task_descriptions_say_when_the_board_tier_runs
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C3
+    type: satisfies

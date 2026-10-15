@@ -44,7 +44,13 @@ build wrote, exercises every channel, runs the closed-loop check, and asserts
 both. It is also part of `task fw:verify`, the complete verification run
 nightly against main, which runs it unconditionally. A build round's gate,
 `task check:round`, runs it only when the branch changes a path it reads, as
-declared in [`../tools/round_gate.py`](../tools/round_gate.py).
+declared in [`../tools/round_gate.py`](../tools/round_gate.py). The same gate
+runs the board check and the tests of the board tooling after it, as a tier of
+their own, only when the branch changes a board design, anything a board design
+reads, the board tooling, the round gate's own code or `Taskfile.yml`, judged on
+the changed paths alone; the nightly run runs them unconditionally. Neither
+runs the check's seeded-fault proof, which stays on demand
+([`../../hardware/README.md`](../../hardware/README.md)).
 
 To re-run a single exercise by hand without the suite, each run leaves a
 complete emulator script beside the artefact:

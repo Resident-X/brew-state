@@ -12,6 +12,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import sys
 import tempfile
 
 TESTS = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +23,26 @@ PROOF_PROJECT = os.path.join(REPO, "hardware", "proof", "gate-proof", "gate-proo
 MINIMUM_MM = 0.1
 
 _SCRATCH = []
+
+
+def require_tools(kicad_cli: str, resvg: str = "") -> None:
+    """Stop a module of tests that needs KiCad, and the rasteriser when one is named, if either is missing.
+
+    The module stops with the tool's own account of what is missing and where to get
+    it, and a line written as every board command writes it, `CANNOT RUN | ...`, so
+    whoever reads the run, a build round's gate included, can tell a missing tool
+    from a failing test.
+    """
+    import board_check
+    import board_views
+
+    try:
+        board_check.require_kicad(kicad_cli)
+        if resvg:
+            board_views.require_resvg(resvg)
+    except board_check.CannotRun as error:
+        print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr, flush=True)
+        raise
 
 
 def cleanup():

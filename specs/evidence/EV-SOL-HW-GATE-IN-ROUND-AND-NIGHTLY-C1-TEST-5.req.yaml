@@ -1,0 +1,16 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C1-TEST-5
+type: evidence
+title: test evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:49.462269Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py::test_each_kind_of_design_file_untracked_anywhere_fails_the_round_naming_it, test_every_untracked_design_file_is_named_and_the_others_are_not, test_the_failure_comes_after_the_host_and_emulation_tiers_and_names_what_passed, test_a_host_failure_comes_first_and_says_the_board_tier_would_have_failed_the_round, test_a_design_that_is_staged_is_tracked_and_the_tier_runs, test_an_untracked_kicad_file_that_is_not_a_design_runs_the_tier_without_failing_the_round, test_an_untracked_design_file_the_repository_ignores_is_not_a_change, test_without_a_remote_tracking_main_the_design_is_still_refused, test_without_a_merge_base_the_design_is_still_refused, test_with_no_commit_at_all_the_design_is_still_refused, test_when_the_diff_cannot_be_read_the_design_is_still_refused, test_the_round_fails_naming_the_design_when_what_changed_cannot_be_told, test_without_an_untracked_design_the_unknown_change_still_runs_the_tier
+  artifact_version: 76df666416cc8378c9e9ac3fa9df10cafc761235
+attested_by: crun-ebe7bade7de7a3e2
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1
+    type: satisfies
