@@ -13,3 +13,5 @@ links:
     type: targets
   - target: OBL-OPEN-SOURCE-MAINTAINABILITY-001.C1
     type: targets
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2
+    type: derives-from
