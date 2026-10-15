@@ -23,8 +23,11 @@ import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPOSITORY = os.path.dirname(os.path.dirname(TOOLS))
+FIRMWARE = os.path.dirname(TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, TOOLS)
 
+import build_environments  # noqa: E402
 from test_round_gate import declared_gates, task_commands  # noqa: E402
 import workflow_declarations  # noqa: E402
 
@@ -411,7 +414,104 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
                 with self.subTest(workflow=workflow, key=key):
                     self.assertNotIn(key, ("continue-on-error", "if"),
                                      f"{workflow} declares {key}: {value}")
-        self.assertEqual(["gates", "sweep"], workflow_declarations.keys(self.nightly, "jobs"))
+        self.assertEqual(
+            ["gates", "host-build-macos", "sweep"], workflow_declarations.keys(self.nightly, "jobs")
+        )
+
+    def job_text(self, name: str) -> str:
+        """One job's lines of the nightly, from its key to the next job's."""
+        match = re.search(rf"(?ms)^  {re.escape(name)}:\n(.*?)(?=^  [\w-]+:\n|\Z)", self.nightly)
+        self.assertIsNotNone(match, f"the nightly declares no job {name}")
+        return match.group(1)
+
+    def test_the_nightly_builds_the_host_tier_on_a_linux_host_and_a_macos_arm64_host(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A verification run builds the host tier with each supported host's default compiler
+        # Which compiler a job builds with is which host it runs on, so the
+        # hosts are what has to be right: Ubuntu for GCC and an arm64 macOS
+        # image for Apple clang. A floating label, or an Intel image, would
+        # change which compiler the job builds with without a line changing.
+        gates, _ = workflow_declarations.find(self.nightly, "jobs", "gates", "runs-on")
+        self.assertRegex(gates, r"ubuntu-\d+\.\d+$")
+        macos, _ = workflow_declarations.find(self.nightly, "jobs", "host-build-macos", "runs-on")
+        match = re.fullmatch(r"macos-(\d+)", macos)
+        self.assertIsNotNone(match, f"the macOS job's runner is not a fixed, plain image: {macos!r}")
+        self.assertGreaterEqual(int(match.group(1)), 14, "the first macOS image on arm64 is 14")
+
+    def test_the_macos_job_ends_on_the_bare_build_task_that_builds_every_host_environment(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A verification run builds the host tier with each supported host's default compiler
+        # The step's result is the build task's result: nothing follows the
+        # invocation on its line or after it. And the task is the declaration
+        # of the host builds, so an environment added later is built here
+        # without a line here changing.
+        scripts = [
+            [line for line in script if line.strip()]
+            for script in workflow_declarations.scripts(self.job_text("host-build-macos"))
+            if any("fw:build" in line for line in script)
+        ]
+        self.assertEqual(1, len(scripts), scripts)
+        self.assertEqual("task fw:build", scripts[0][-1])
+        self.assertEqual(1, sum("fw:build" in line for line in scripts[0]))
+        built = {
+            name
+            for line in task_commands(read("Taskfile.yml"), "fw:build")
+            for name in re.findall(r"run -e (\w+)", line)
+        }
+        environments = build_environments.load(FIRMWARE)
+        host = {e.name for e in build_environments.artefact_environments(environments)}
+        machine = {e.name for e in build_environments.machine_environments(environments)}
+        self.assertTrue(host)
+        self.assertEqual(host | machine, built)
+
+    def test_neither_host_job_selects_a_compiler_or_installs_one(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A verification run builds the host tier with each supported host's default compiler
+        # Each job builds with what its host defaults to. A compiler injected
+        # through a setting, or installed beside the default, would be a
+        # compiler a contributor on that platform does not run.
+        selecting = re.compile(
+            r"\b(CC|CXX|CFLAGS|CPPFLAGS|DEVELOPER_DIR|PLATFORMIO_BUILD_FLAGS|PLATFORMIO_BUILD_SRC_FLAGS)\b"
+            r"|apt(-get)? +install|brew +install|update-alternatives|xcode-select|--toolchain"
+        )
+        for job in ("gates", "host-build-macos"):
+            text = "\n".join(
+                line for line in self.job_text(job).splitlines() if not line.lstrip().startswith("#")
+            )
+            with self.subTest(job=job):
+                self.assertTrue(text.strip())
+                self.assertIsNone(selecting.search(text), selecting.search(text))
+        # The pattern would pass a job selecting a compiler if it never matched.
+        self.assertIsNotNone(selecting.search("export CC=clang"))
+        self.assertIsNotNone(selecting.search("sudo apt-get install -y clang"))
+
+    def test_the_macos_job_pins_its_tools_as_the_linux_job_does_with_its_own_digest(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A verification run builds the host tier with each supported host's default compiler
+        def declared(job: str, name: str) -> str:
+            match = re.search(rf'(?m)^\s+{name}: "([^"]+)"', self.job_text(job))
+            self.assertIsNotNone(match, f"{job} does not pin {name}")
+            return match.group(1)
+
+        linux_digest = declared("gates", "TASK_SHA256")
+        macos_digest = declared("host-build-macos", "TASK_SHA256")
+        self.assertRegex(macos_digest, r"[0-9a-f]{64}")
+        # An archive for one platform checked against another's digest would
+        # fail every night, so the two must be told apart.
+        self.assertNotEqual(linux_digest, macos_digest)
+        for name in ("TASK_VERSION", "PLATFORMIO_VERSION"):
+            self.assertEqual(declared("gates", name), declared("host-build-macos", name))
+        job = self.job_text("host-build-macos")
+        self.assertIn("task_darwin_arm64.tar.gz", job)
+        self.assertNotIn("task_linux", job)
+        self.assertIn('shasum -a 256 -c -', job)
+        for script in workflow_declarations.scripts(job):
+            self.assertEqual("set -euo pipefail", script[0].strip())
+
+    def test_the_header_and_the_firmware_documentation_say_which_compiler_each_job_builds_with(self):
+        # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A verification run builds the host tier with each supported host's default compiler
+        header = re.sub(r"\s*\n#\s*", " ", self.nightly.split("\nname:", 1)[0])
+        self.assertRegex(header, r"(?s)Ubuntu.*GCC")
+        self.assertRegex(header, r"(?s)macOS.*Apple\s+clang")
+        readme = read("firmware/README.md")
+        readme = re.sub(r"\s+", " ", readme)
+        self.assertRegex(readme, r"nightly.{0,600}GCC.{0,600}Apple clang|nightly.{0,600}Apple clang.{0,600}GCC")
 
     def test_a_step_in_a_form_the_workflow_reader_cannot_read_is_refused(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C2: A scheduled workflow runs the daily verification against main on hosted runners
@@ -459,7 +559,9 @@ class TheVerificationNeedsOnlyTheStandardLibrary(unittest.TestCase):
 
     def test_the_driver_and_its_tests_import_only_the_standard_library(self):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
-        local = ("__future__", "task_gate", "test_round_gate", "workflow_declarations")
+        local = (
+            "__future__", "build_environments", "task_gate", "test_round_gate", "workflow_declarations"
+        )
         for path in (
             os.path.join(TOOLS, "verify_gate.py"), os.path.join(TOOLS, "task_gate.py"),
             os.path.abspath(__file__), os.path.abspath(workflow_declarations.__file__),

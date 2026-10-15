@@ -74,7 +74,8 @@ bool plant_structure_delivery_point_mass(plant_delivery_point_t point,
         return false;
     }
 
-    *mass = (point == PLANT_DELIVERY_POINT_GROUP) ? 0u : 1u;
+    *mass = (point == PLANT_DELIVERY_POINT_GROUP) ? (plant_heated_mass_id_t)0u
+                                                  : (plant_heated_mass_id_t)1u;
     return true;
 }
 
