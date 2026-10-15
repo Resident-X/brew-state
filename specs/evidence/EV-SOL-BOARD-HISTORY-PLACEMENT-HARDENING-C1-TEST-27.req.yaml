@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-HISTORY-PLACEMENT-HARDENING-C1-TEST-27
+type: evidence
+title: test evidence for SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T15:41:28.493167Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_history.py::test_a_part_placed_in_the_first_placement_commit_and_listed_only_afterwards_fails
+  artifact_version: 267622a09d6162f95492b2432d3e3cb35cea9668
+attested_by: crun-3560065967319539
+links:
+  - target: SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1
+    type: satisfies
