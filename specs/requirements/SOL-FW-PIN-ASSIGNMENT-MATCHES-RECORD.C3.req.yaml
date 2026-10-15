@@ -2,11 +2,11 @@ id: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C3
 type: criterion
 title: Each comparison fault is shown to fail the check on a seeded synthetic firmware table
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  The tests introduce, into a synthetic firmware table checked against a synthetic record, a channel on another pin, a channel missing from the firmware, a channel missing from the record and an empty record, and require the check to fail on each and to name it. The unmodified synthetic pair passes. Out of scope: wiring the check to a machine's real record.
+  The tests introduce, into a synthetic firmware table checked against a synthetic record, a channel on another pin, a channel missing from the firmware, a channel missing from the record, a channel named twice, two channels on one pin, an entry missing its controller pin, an empty record and a firmware source with no pin table, and require the check to fail on each and to name it. A run without PyYAML reports that it could not inspect rather than passing. The unmodified synthetic pair passes. Out of scope: wiring the check to a machine's real record.
 links:
   - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD
     type: criterion-of
