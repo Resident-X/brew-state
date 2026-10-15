@@ -186,7 +186,7 @@ Every output the boards drive fails into the safe state: not heating, not pumpin
 
 ### Pending marks
 
-Every pending mark in this file, with the work that ends it: those in this section, those in § Carried-forward module properties and those in § Manufacturer stock and price, per channel, both below.
+Every pending mark in this file, with the work that ends it: those in this section, those in § Carried-forward module properties and those in § Manufacturer stock and price, per channel, all below.
 
 | Pending figure | Settled by | Node |
 |---|---|---|
@@ -391,13 +391,36 @@ The Schaffner FN9222-15-06, an appliance inlet with an EMI filter and no fuse ho
 
 **Removing heater power when the controller stops.** No module the earlier design specified provides it. *Held off undriven* covers a controller that is absent, not one that has hung: a hung controller can hold a drive input driven, and a heater switch's ordinary failure is a short. The design deferred the master relay and watchdog that would have been its answer, and recorded the watchdog's timeout as coarse (`controller-design/control-system-bom.csv`, *Master relay [DEFERRED]* and *Watchdog module [DEFERRED]*, the latter giving the timeout). The requirement stands without it (`OBL-ELECTRICAL-THERMAL-SAFETY-001.C2`, `REQ-SAFETY-CHAIN-001.C2`, `.C3`). The interlock that provides it is built into the first controller hardware (`DEC-PROOF-OF-LIFE-INTERLOCK-IN-FIRST-HARDWARE`), and the interval within which it must act is pending in § Proof-of-life removal interval. No property is carried forward from the deferred rows.
 
+## Purchases ahead of verification
+
+Every sample or instrument bought for the boards before their design is verified, with the property the verification could not establish without it. A sample or instrument bought to settle a property that cannot be established otherwise is admissible; anything else waits for the design it belongs to. A purchase ahead of verification that names no such property is not left out: it is listed with that absence shown in its *Property it settles* column, so the departure is visible. Purchases made after a design passes its verification are not recorded here, and neither is any weighing of spend against the declared figure.
+
+**A purchase ahead of verification gets an entry when it is made.** Each entry gives the item, the date it was bought, the property it settles, a source and an evidence grade (§ Evidence grades). The source is one a reader holding only this repository can follow: the order record or receipt, cited by the vendor, the order date and the item's listing address, without anything that identifies a person.
+
+### Bought
+
+**Nothing has been bought ahead of verification.** Owner statement, 2026-10-15: no sample or instrument has been bought for the boards ahead of their design's verification, including any bought before this record existed. Grade: owner statement. The earlier design's parts are covered by the statement already held in § Carried-forward module properties, *None of its parts were bought* (owner statement, 2026-10-13), which this section cites and does not repeat.
+
+A purchase's source is its order record or receipt, and its *Bought* date is the date on that record. A purchase made before this record existed is dated by its receipt, not by the 2026-10-15 statement above, which says only that there is none. The *Property it settles* cell is never blank: an entry that settles no property says *names no property* there. The table has no rows until the first purchase; adding the first row replaces the *Nothing has been bought* statement above rather than sitting beside it.
+
+| Item | Bought | Property it settles | Source | Grade |
+|---|---|---|---|---|
+
+### Planned replacement, not yet bought
+
+| Item | Stated | Property it settles | Source | Grade |
+|---|---|---|---|---|
+| The three-way solenoid valve, to be replaced, most likely like for like. Not bought. Why it is replaced is declared in `reference-machine.md` § Protection, cited here rather than restated | 2026-10-15 | None named yet. The owner's statement gives none | The plan: owner statement, 2026-10-15. The part's condition: `reference-machine.md` § Protection | owner statement |
+
+This is a plan, not a purchase. When the replacement is bought it gets an entry under § Bought with the date on its order record or receipt, that source, and the property it settles, or with *names no property* shown if it settles none.
+
 ## Manufacturer stock and price, per channel
 
 What the board manufacturer's catalogue offers for each channel this machine needs, with stock, library class and price, read on one day so a later reader can tell when it has gone stale (`DEL-HW-DESIGN-CONSTRAINTS.C3`). The manufacturer is JLCPCB (`DEC-BOARD-MANUFACTURER-JLCPCB`). What it can make and assemble, its order and assembly charges, its library classes and their fees, and which parts it fits by hand hold for any machine, and are recorded once in `docs/board-manufacturer-jlcpcb.md`, cited below by section. This section holds only what is specific to this machine: which parts its channels might use, and what shipping a board order to its builder costs.
 
 **The channels are the component specification's, and it governs.** Each subsection below cites a row of `docs/sunbeam-em7000/component-specification.md` § What each channel requires by its channel name, and that row's *Must satisfy* and *Capability floor already achieved* columns are the specification each candidate is weighed against; they are cited, not restated. Nothing here fills that table's *Part chosen*, *Provenance* or *Cost* columns: a candidate is not a choice. Choosing the part each channel carries, and estimating each board's cost against the declared spend, are the partition and feasibility task's (`DEL-HW-PARTITION-AND-FEASIBILITY.C1`, `.C6`).
 
-**The defaults candidates are weighed against.** The parts the machine already carries that can serve a channel are the ones the specification's *Capability floor already achieved* column names for it; each subsection names them, citing that column. They cost nothing and have shown they survive this machine (`REQ-COST-DISCIPLINE-001.C1`; `component-specification.md` § Provenance classes, *Reused*); whether a particular part is still fit is not judged here. No part has been bought ahead of verification: this record states none at the time of reading (§ Carried-forward module properties, *None of its parts were bought*, owner statement 2026-10-13), so none is named as a default.
+**The defaults candidates are weighed against.** The parts the machine already carries that can serve a channel are the ones the specification's *Capability floor already achieved* column names for it; each subsection names them, citing that column. They cost nothing and have shown they survive this machine (`REQ-COST-DISCIPLINE-001.C1`; `component-specification.md` § Provenance classes, *Reused*); whether a particular part is still fit is not judged here. No part has been bought ahead of verification: this record states none at the time of reading (§ Purchases ahead of verification, *Bought*, owner statement 2026-10-15; § Carried-forward module properties, *None of its parts were bought*, owner statement 2026-10-13), so none is named as a default.
 
 **How each candidate was read.** Each row's stock, library class and price are as JLCPCB's parts library (https://jlcpcb.com/parts) gave them on 2026-10-13, read at about 09:42 UTC through the library's own search, and its assembly type as the part's own page gave it the same day. The part's page, at the address in the row's *Source* column, shows the same live figures. The rows for contact and triac suppression, the triacs rated to turn off an inductive load without a snubber, the heatsink and the parts of a designed isolated converter were read later the same day, at about 11:50 UTC, through the search service the library's search page uses (https://jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), with in-stock results only, and their assembly type from each part's page. Every such reading is graded **published unverified, read at source**, with the meaning § Evidence grades and § Carried-forward module properties, *What published unverified means here*, give it: the figure is the manufacturer's published claim, read at its source on 2026-10-13, and established on no part in hand. Stock moves by the hour and price between orders; a later reader re-reads a row at its address and replaces it with its new date.
 

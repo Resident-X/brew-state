@@ -74,7 +74,7 @@ Each node must be read with `show` before linking, and existing coverage checked
 - Heater switching cadence is stated as half-cycle burst-fire in the BOM and as whole-cycle granularity in the pin allocation; reconcile against `heater-drive-and-supply-timing.md`.
 - PC6 is both the S8 switch input and the optional USART6 TX; it only matters if the BL0942 meters need a transmit line.
 - Whether the gauge step clocks need timer outputs (the allocation assigns plain GPIO).
-- Whether the OEM valves are kept or the BOM's valve rows are replacements; purchase status is not recorded, and the BOM is in AUD against a declared 250 USD figure, so no total is given.
+- Whether the OEM valves are kept or the BOM's valve rows are replacements; the owner's statement on the three-way valve (a planned replacement, nothing bought) is recorded in `../controller-board-design-constraints.md` § Purchases ahead of verification, and the question stands for the other valve; the BOM is in AUD against a declared 250 USD figure, so no total is given.
 - Whether the graph has changed since the old text on `DEC-PREHARDWARE-TARGET-FAMILY`, the zero-cross enumeration row and `SOL-CHANNEL-ENUMERATION-CORRECTED.C4`.
 
 - Harness connector types are unidentified; panel and gauge parts are not specified.

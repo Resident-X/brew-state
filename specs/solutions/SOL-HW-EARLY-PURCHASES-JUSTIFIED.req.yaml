@@ -3,14 +3,22 @@ type: deliverable
 category: solution
 title: Every purchase made before a board design is verified names the property it settles
 status: active
-version: 1
-text: |-
+version: 2
+text: |
   Records each sample or instrument bought ahead of design verification with the property the verification could not establish without it, so early buying stays limited to what verification needs.
+
+  The record is a new section, Purchases ahead of verification, in the controller boards' design-constraints record in the machine's record folder, placed after the carried-forward module properties. The existing record is extended rather than a new file started, so the pending-marks aggregation and the evidence grades stay in one place. Each entry gives the item, the date, the property it settles, the source and the evidence grade.
+
+  On 2026-10-15 the owner stated that nothing has been bought ahead of verification. The section records that as a dated owner statement and cites the existing owner statement that none of the earlier design's parts were bought, rather than restating it. The owner also stated that the non-functioning three-way valve is to be replaced, most likely like for like, and has not been bought; the section lists it as a planned replacement so it gets an entry when it is bought. The valve's condition is an as-found fact of the machine, so it is declared once, as a dated owner statement beside the valve's role in the machine's declared configuration, and the planned-replacement entry cites it rather than declaring it. The section states that a purchase ahead of verification gets an entry when it is made. The stale statement in the earlier design's open items that valve purchase status is not recorded is updated to point at the section.
 links:
   - target: DEL-HW-DESIGN-CONSTRAINTS.C5
     type: derives-from
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C2
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 23daa8e5b5e5e4b86ec721b98580511ae98ac833902e04213428a78cc0090e32
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C1
     class: served-statement
@@ -24,6 +32,8 @@ interfaces: []
 locus:
   - marking: created
     ref: the controller boards' design-constraints record in the machine's record folder, purchases ahead of verification
+  - marking: created
+    ref: the machine's declared configuration in the machine's own record folder, an owner statement on the three-way valve's condition beside its existing role statement
 plan_provenance:
   approved_plan_id: PLAN-DEL-HW-DESIGN-CONSTRAINTS-001
   target: DEL-HW-DESIGN-CONSTRAINTS

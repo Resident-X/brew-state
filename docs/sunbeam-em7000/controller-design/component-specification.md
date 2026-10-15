@@ -168,7 +168,7 @@ Three, and they differ on more than price. The class is recorded per channel whe
 
 ### What each channel requires, and what is selected
 
-Prices are AUD each from `control-system-bom.csv`; "est." means the BOM says the price is an estimate or not looked up. Whether a part has actually been bought is not recorded in the inputs and is **to confirm**.
+Prices are AUD each from `control-system-bom.csv`; "est." means the BOM says the price is an estimate or not looked up. Whether a part has actually been bought is recorded in `../controller-board-design-constraints.md` § Purchases ahead of verification.
 
 | Channel | Must satisfy | Selected part | Class | Cost (AUD) | Meets / open |
 |---|---|---|---|---|---|
@@ -204,7 +204,7 @@ Prices are AUD each from `control-system-bom.csv`; "est." means the BOM says the
 |---|---|
 | Channels specified | 25 (the earlier 18 plus brew pressure, outlet-water probe, commissioning probes, heater metering, pressure containment, switches/tank level, mains inlet protection) |
 | Channels with a part selected | 24; the heater mains-presence confirm is undecided (D20) |
-| Bought to date | **To confirm** — not recorded in the inputs |
+| Bought to date | See `../controller-board-design-constraints.md` § Purchases ahead of verification |
 | Reused to date | Not recorded as a count; retained parts are listed in the BOM at zero cost |
 | Salvaged to date | None recorded; the BOM rows for the valves leave open whether the OEM valves are kept |
 | **Declared spend** | **250 USD** |
