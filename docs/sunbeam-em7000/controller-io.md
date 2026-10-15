@@ -270,7 +270,7 @@ absence from the tables above for an oversight:
 
 | Channel | Status | Source |
 |---|---|---|
-| Brew-path pressure transducer | Not fitted, and no decision has added one. `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred from pump drive and remains open — no `addresses`, `derives-from` or `justified-by` link reaches it in the graph. `DEC-PROFILE-COMMANDS-FLOW`'s rationale previously stated as a consequence that "pressure is still measured, on both paths"; that overclaim is corrected (`SOL-BREW-PRESSURE-RATIONALE-CORRECTED`) and is not resolved by inventing a row here | `reference-machine.md` § Already fitted ("Not fitted: pressure transducer on either path"); `DEC-STEAM-PRESSURE-SENSOR-ADDED` covers the steam side only |
+| Brew-path pressure transducer | Not fitted on the machine as found; `DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT` adds one. `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred from pump drive and stays open until the sensor is fitted and read. An earlier overclaim that "pressure is still measured, on both paths" was corrected (`SOL-BREW-PRESSURE-RATIONALE-CORRECTED`) | `reference-machine.md` § Already fitted ("Not fitted: pressure transducer on either path"); `DEC-STEAM-PRESSURE-SENSOR-ADDED` covers the steam side only |
 | Current sensing | Not fitted, no decision has added it | `reference-machine.md` § Already fitted |
 | Real-time clock | Not fitted, no decision has added it | `reference-machine.md` § Already fitted |
 
