@@ -1,7 +1,7 @@
 id: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C2
 type: criterion
 title: The figures record derives the proof-of-life interval from the peak and ends its pending mark
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: analysis
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED
     type: criterion-of
+attributes:
+  deprecation_reason: The proof-of-life interval cannot be derived under the shipped control, where the coffee casting exceeds its trip point; the derivation is re-homed in SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK.C1
