@@ -1,0 +1,12 @@
+id: SOL-HW-CONNECTIVITY-CHECK.C5
+type: criterion
+title: Every tracked design passes the connectivity check, and a change to a pin allocation record re-runs the board tier in the build round
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every board design the repository tracks, both throwaway designs included, carries synthetic records in the forms the design-records decision sets and passes the connectivity check, and the round gate runs its board tier on a change to any pin allocation record. Out of scope: the content of a real board's records, which that board's design task authors.
+links:
+  - target: SOL-HW-CONNECTIVITY-CHECK
+    type: criterion-of

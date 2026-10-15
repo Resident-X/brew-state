@@ -1,0 +1,12 @@
+id: SOL-HW-CONNECTIVITY-CHECK.C1
+type: criterion
+title: A channel whose net does not reach the pin and connector its record entry names fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each channel the pin allocation record lists, the check fails the design when the channel's net does not reach the controller pin the entry names or does not reach the connector pin the entry names. The failure names the channel, the net, the pin the record names and the pin the net reached. A channel the record says stays on the board with no connector is held to its controller pin only. Out of scope: comparing the firmware's assignment, which the firmware-tier check does.
+links:
+  - target: SOL-HW-CONNECTIVITY-CHECK
+    type: criterion-of

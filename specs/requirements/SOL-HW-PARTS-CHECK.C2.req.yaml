@@ -1,0 +1,12 @@
+id: SOL-HW-PARTS-CHECK.C2
+type: criterion
+title: A part the catalogue extract does not show in stock fails the check, and so does an extract past its age limit
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A part whose catalogue number is absent from the catalogue extract, or whose extract entry shows no stock, fails the check, and so does an extract older than the maximum age it states for itself. The check compares only with the committed extract and never fetches the catalogue. Out of scope: how a board's design task reads the extract from the manufacturer's catalogue and records its date.
+links:
+  - target: SOL-HW-PARTS-CHECK
+    type: criterion-of

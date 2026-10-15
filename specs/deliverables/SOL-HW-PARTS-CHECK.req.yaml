@@ -1,0 +1,29 @@
+id: SOL-HW-PARTS-CHECK
+type: deliverable
+category: solution
+title: A board's parts are checked against its specification record and the dated catalogue extract, each fault proven on a throwaway design
+status: active
+version: 1
+text: |
+  The board check gains a parts check that holds each design to its parts specification record and to the manufacturer's catalogue extract, in the forms the design-records decision sets. For every position the design places, it requires the position to appear in the specification record, the part's stated value, package and rating to equal what the record states for it, and the part's LCSC symbol field to equal the record's. It then requires that catalogue number to appear in the catalogue extract with stock, and the extract to be no older than its own stated maximum age. It fails a placed position the record omits, and each failure names the position, the property or number that differed, the record's value and the design's value. A design with no specification record or no catalogue extract to be held to, an unparseable one, one missing a required key and one that lists nothing each fail; a synthetic record or extract satisfies only a design marked not for manufacture. The check never fetches the catalogue.
+
+  Placement, settled before build. The check is more named rules in the existing board check in hardware/tools/, reported with the rest, so the one task-runner command, the round's board tier and the nightly run it with no new gate. The specification record and the catalogue extract join what the round reads for a design. The throwaway design in hardware/proof/ gains a synthetic specification record and a synthetic catalogue extract that its committed state satisfies, and the seeded-fault proof, on demand like the other proofs, introduces each fault into a copy of it outside the repository. The check reads files only.
+
+  Applying the check to a real board needs that board's specification record and a current extract, which its design task authors; this solution builds and proves the check and does not wait for either.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION.C2
+    type: derives-from
+  - target: DEL-HW-DESIGN-VERIFICATION.C5
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on

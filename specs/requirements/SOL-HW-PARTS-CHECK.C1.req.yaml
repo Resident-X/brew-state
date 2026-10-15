@@ -1,0 +1,12 @@
+id: SOL-HW-PARTS-CHECK.C1
+type: criterion
+title: A part whose stated properties or catalogue number differ from the specification record fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For each position the design places, the check fails the design when the position is absent from the specification record, when the part's value, package or rating differs from what the record states for it, or when the part's LCSC symbol field is absent or differs from the record's. The design's value is read from the symbol's Value field, its package from the footprint's library item name and its rating from the symbol field named Rating; a part with no Rating field fails any record that states a rating for it. A property the record leaves unstated is not compared. Each failure names the position, the property, the record's value and the design's value. Out of scope: the catalogue extract, which the next criterion covers, and the choice of which properties a real board's record states.
+links:
+  - target: SOL-HW-PARTS-CHECK
+    type: criterion-of

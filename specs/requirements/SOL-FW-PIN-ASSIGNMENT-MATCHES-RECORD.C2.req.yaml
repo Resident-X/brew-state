@@ -1,0 +1,12 @@
+id: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C2
+type: criterion
+title: A channel present in only one of the firmware assignment and the record fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A channel the firmware assigns that the record does not list fails the check, and so does a channel the record lists that the firmware does not assign, each naming the channel. A record that cannot be parsed, is missing a required key or lists no channel fails, since an empty record would otherwise pass any firmware. Out of scope: wiring the check to a machine's real record, which that board's design task does.
+links:
+  - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C1
+type: criterion
+title: A channel assigned to a different controller pin than the record names fails the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The check fails when the firmware assigns a channel to a controller pin other than the one the pin allocation record names for it, naming the channel and both pins. A firmware assignment that matches the record on every channel passes. Out of scope: the connector and net, which the board check holds to the same record.
+links:
+  - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD
+    type: criterion-of

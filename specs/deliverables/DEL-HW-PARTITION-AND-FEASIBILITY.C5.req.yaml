@@ -2,7 +2,7 @@ id: DEL-HW-PARTITION-AND-FEASIBILITY.C5
 type: criterion
 title: Each board the division produces has a design task carrying the interlock or headroom allotted to that board
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: inspection
 closes_by: cascade
@@ -10,6 +10,8 @@ text: |
   Each such task delivers, for its board, the epic's proof before order, separation and held-off criteria and its layout review, with the design method applied to that board rather than only written. Each covers ordering and receiving its board, checks the manufacturer's production files against its assembly preview before payment, records the quoted order cost against the running total of the declared spend before ordering, and is a prerequisite of bring-up, so none of the epic's criteria can close on the gate or the method alone without a board having been designed, proven and made.
 
   Each such task also records, with its source, every figure the controller boards' constraints record holds pending against the design of its board, such as a rail's budget, a branch fuse's rating, or the time a protective device takes to clear and the energy it lets through at the declared fault current, ending those marks.
+
+  Each such task also authors, for its board, the pin allocation record and the parts specification record, and keeps the catalogue extract current, in the forms the design-records decision sets, so the connectivity and parts checks have a record to hold the board to before it is ordered, and it points the firmware's pin assignment check at that board's pin allocation record.
 links:
   - target: DEL-HW-PARTITION-AND-FEASIBILITY
     type: criterion-of
