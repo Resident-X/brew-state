@@ -216,7 +216,8 @@ class Change:
     lines alone could not be read to why: whether that leaves a line of the
     sweep's population untold is the sweep's to say, since the population is
     its derivation. `root` is the repository's top level the paths are relative
-    to. `untracked` is the changed paths that are new files git does not track.
+    to. `untracked` is the files git does not track, known whether or not the changed
+    paths could be told.
     """
 
     head: str | None
@@ -320,26 +321,48 @@ def changed(repo: str, remote: str = REMOTE, main: str = MAIN) -> Change:
         return Change(None, None, None, f"git could not be run ({error})")
 
 
+def _untracked(repo: str) -> tuple[list[str], str]:
+    """The files git does not track and is not told to ignore, and "" or why they could not be listed.
+
+    This is read on its own, ahead of any measurement from a merge-base, so that
+    a change the gate cannot tell still has its untracked files known.
+    """
+    try:
+        listed = _git(
+            repo, "ls-files", "--others", "--exclude-standard", "--full-name", "-z", "--", ":/"
+        )
+    except OSError as error:
+        return [], f"git could not be run ({error})"
+    if listed.returncode != 0:
+        return [], listed.stderr.strip() or "git ls-files failed"
+    return sorted(set(_split(listed.stdout))), ""
+
+
 def _measure(repo: str, remote: str, main: str) -> Change:
     tracking = f"refs/remotes/{remote}/{main}"
     named = f"{remote}/{main}"
 
+    new, new_problem = _untracked(repo)
     resolved = _git(repo, "rev-parse", "--verify", "--quiet", "HEAD^{commit}")
     if resolved.returncode != 0:
-        return Change(None, None, None, "HEAD could not be resolved to a commit")
+        return Change(
+            None, None, None, "HEAD could not be resolved to a commit", untracked=new
+        )
     head = resolved.stdout.strip()
 
     if _git(repo, "rev-parse", "--verify", "--quiet", f"{tracking}^{{commit}}").returncode != 0:
         return Change(
             head, None, None,
             f"there is no remote-tracking {named} ({tracking}) to measure from",
+            untracked=new,
         )
 
     merge_base = _git(repo, "merge-base", head, tracking)
     if merge_base.returncode != 0:
         detail = merge_base.stderr.strip() or "no common ancestor"
         return Change(
-            head, None, None, f"the merge-base of HEAD with {named} could not be resolved ({detail})"
+            head, None, None, f"the merge-base of HEAD with {named} could not be resolved ({detail})",
+            untracked=new,
         )
     base = merge_base.stdout.strip()
 
@@ -348,17 +371,14 @@ def _measure(repo: str, remote: str, main: str) -> Change:
         return Change(
             head, base, None,
             f"the paths changed since {base} could not be read ({diff.stderr.strip()})",
+            untracked=new,
         )
-    untracked = _git(
-        repo, "ls-files", "--others", "--exclude-standard", "--full-name", "-z", "--", ":/"
-    )
-    if untracked.returncode != 0:
+    if new_problem:
         return Change(
             head, base, None,
-            f"the files not yet committed could not be read ({untracked.stderr.strip()})",
+            f"the files not yet committed could not be read ({new_problem})",
         )
     tracked = _split(diff.stdout)
-    new = _split(untracked.stdout)
     change = Change(head, base, sorted(set(tracked) | set(new)), untracked=sorted(set(new)))
     try:
         change.root, change.lines, change.unreadable = _lines(repo, base, tracked, new)
@@ -505,6 +525,21 @@ def board_scope(
     guess. `listing` returns the entries and "" or None and why it failed.
     """
     at = f"HEAD {change.head}" if change.head else "HEAD"
+    untracked = [path for path in change.untracked if path.endswith(DESIGN_SUFFIXES)]
+    if untracked:
+        measured = (
+            f"measured from merge-base {change.base} with {base_ref} to {at} and the working tree"
+            if change.paths is not None
+            else f"whether or not what changed can be told ({change.problem})"
+        )
+        return BoardScope(
+            True,
+            f"the working tree holds {len(untracked)} KiCad design file(s) that git does not "
+            f"track, {measured}. The board check finds only the designs git tracks, so it would "
+            "pass without seeing them:",
+            untracked,
+            untracked,
+        )
     if change.paths is None:
         return BoardScope(
             True,
@@ -515,16 +550,6 @@ def board_scope(
         f"measured from merge-base {change.base} with {base_ref} "
         f"to {at} and the working tree"
     )
-    untracked = [path for path in change.untracked if path.endswith(DESIGN_SUFFIXES)]
-    if untracked:
-        return BoardScope(
-            True,
-            f"the working tree holds {len(untracked)} KiCad design file(s) that git does not "
-            f"track, {against}. The board check finds only the designs git tracks, so it would "
-            "pass without seeing them:",
-            untracked,
-            untracked,
-        )
     read = [path for path in change.paths if reads_board(path)]
     if read:
         return BoardScope(

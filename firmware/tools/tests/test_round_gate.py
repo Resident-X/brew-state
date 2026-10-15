@@ -21,6 +21,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import stat
 import subprocess
 import sys
@@ -33,6 +34,7 @@ REPOSITORY = os.path.dirname(os.path.dirname(TOOLS))
 sys.path.insert(0, TOOLS)
 
 import round_gate  # noqa: E402
+import task_gate  # noqa: E402
 
 HOST = ["fw:build", "fw:check", "fw:test", "fw:run"]
 EMULATION = ["fw:emulate"]
@@ -1695,6 +1697,128 @@ class AKiCadDesignGitDoesNotTrackFailsTheRound(unittest.TestCase):
         result, asked, _ = self.gate()
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertNotIn("hw:verify", asked)
+
+
+class AnUntrackedDesignFailsTheRoundWhateverElseCannotBeTold(unittest.TestCase):
+    """The refusal does not depend on the measurement from the merge-base."""
+
+    DESIGN = "hardware/m/new/new.kicad_pcb"
+
+    def judge(self, repository):
+        change = round_gate.changed(repository.root)
+        return change, round_gate.board_scope(change, lambda: ([], ""))
+
+    def assert_refused(self, repository, cause):
+        change, chosen = self.judge(repository)
+        self.assertIsNone(change.paths)
+        self.assertIn(cause, change.problem)
+        self.assertEqual([self.DESIGN], chosen.untracked)
+        self.assertTrue(chosen.run)
+        self.assertEqual("failed the round", chosen.would)
+        self.assertIn(self.DESIGN, chosen.judged)
+        self.assertIn(cause, chosen.reason)
+
+    def test_without_a_remote_tracking_main_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        repository.write(self.DESIGN, "new\n")
+        self.assert_refused(repository, "no remote-tracking origin/main")
+
+    def test_without_a_merge_base_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository()
+        self.addCleanup(repository.cleanup)
+        repository.git("checkout", "-q", "--orphan", "unrelated")
+        repository.write("other.txt", "x\n")
+        repository.commit("unrelated history")
+        repository.track("HEAD")
+        repository.git("checkout", "-q", "feature")
+        repository.write(self.DESIGN, "new\n")
+        self.assert_refused(repository, "merge-base")
+
+    def test_with_no_commit_at_all_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = os.path.realpath(directory.name)
+        subprocess.run(["git", "-C", root, "init", "-q", "-b", "main"], check=True, env=GIT_ENVIRONMENT)
+        full = os.path.join(root, self.DESIGN)
+        os.makedirs(os.path.dirname(full))
+        with open(full, "w", encoding="utf-8") as handle:
+            handle.write("new\n")
+        change = round_gate.changed(root)
+        chosen = round_gate.board_scope(change, lambda: ([], ""))
+        self.assertIsNone(change.paths)
+        self.assertIn("HEAD could not be resolved", change.problem)
+        self.assertEqual([self.DESIGN], chosen.untracked)
+        self.assertIn("HEAD could not be resolved", chosen.reason)
+
+    def test_when_the_diff_cannot_be_read_the_design_is_still_refused(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository()
+        self.addCleanup(repository.cleanup)
+        repository.write(self.DESIGN, "new\n")
+        real = round_gate._git
+
+        def failing_diff(repo, *arguments, **keywords):
+            if arguments and arguments[0] == "diff":
+                return subprocess.CompletedProcess(arguments, 128, "", "diff broke")
+            return real(repo, *arguments, **keywords)
+
+        with mock.patch.object(round_gate, "_git", failing_diff):
+            self.assert_refused(repository, "diff broke")
+
+    def test_the_round_fails_naming_the_design_when_what_changed_cannot_be_told(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        repository.write(self.DESIGN, "new\n")
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        runner = FakeTaskRunner(tempfile.mkdtemp(dir=scratch.name), ())
+        result, asked = run_gate(repository, runner=runner)
+        self.assertEqual(1, result.returncode)
+        self.assertNotIn("hw:verify", asked)
+        self.assertIn("board tier WILL FAIL THE ROUND, because", result.stdout)
+        closing = result.stdout[result.stdout.index("ROUND GATE FAILED"):]
+        self.assertIn(f"    {self.DESIGN}", closing)
+        self.assertIn("The mutation sweep was NOT REACHED", closing)
+
+    def test_without_an_untracked_design_the_unknown_change_still_runs_the_tier(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        repository = SyntheticRepository(with_tracking=False)
+        self.addCleanup(repository.cleanup)
+        change, chosen = self.judge(repository)
+        self.assertIsNone(change.paths)
+        self.assertTrue(chosen.run)
+        self.assertEqual([], chosen.untracked)
+        self.assertIn("Running the board tier rather than skipping it", chosen.reason)
+
+
+@unittest.skipUnless(shutil.which("task"), "the real task runner is not installed")
+class TheRealTaskRunnerLetsTheMissingToolLineReachTheGate(unittest.TestCase):
+    def test_a_line_a_task_writes_to_standard_error_is_noted_by_its_marker(self):
+        # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        with open(os.path.join(directory.name, "Taskfile.yml"), "w", encoding="utf-8") as handle:
+            handle.write(
+                'version: "3"\n'
+                "tasks:\n"
+                "  needs-tool:\n"
+                "    cmds:\n"
+                "      - echo 'some progress' >&2\n"
+                "      - echo 'CANNOT RUN | a tool the task needs is missing' >&2\n"
+                "      - exit 2\n"
+            )
+        with mock.patch("sys.stderr"), mock.patch("builtins.print"):
+            status, noted = task_gate.run_noting(
+                shutil.which("task"), "needs-tool", directory.name, "round gate", "board tier",
+                round_gate.MISSING_TOOL,
+            )
+        self.assertNotEqual(0, status)
+        self.assertEqual(["CANNOT RUN | a tool the task needs is missing"], noted)
 
 
 # --- The declaration the task runner carries --------------------------------
