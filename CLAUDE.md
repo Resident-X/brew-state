@@ -140,7 +140,12 @@ or against that.
 - **Skills are installed, not tracked.** `task sc:init` (or `sc:update`) installs the upstream skills into
   `.claude/skills/` at `STAIRCASE_REF` (floats on upstream `main`); git ignores them. A skill this repository owns is
   named `repo-*` — the sync leaves those alone and git tracks them. Run `task sc:update` to move to the current upstream `main`.
-- **Agent tier is chosen here, not by the upstream workflow skills.** `/staircase-wf` and the other synced skills are reinstalled verbatim from upstream, so this project cannot edit them; this instruction overrides them. When dispatching a workflow state, ignore the engine's `recommended_tier` and the skill's `no_hint` fallback to `mid-tier`, and choose the tier by the work: `small-fast` for graph discovery, simple tasks and quick fixes that need no reasoning; `mid-tier` for most work; `reasoning-tier` only when the state explicitly needs complex reasoning. Where a skill says the tier must come from the engine, this rule wins. The skill's tier→model table still binds each tier to a model.
+- **Agent tier is chosen here, not by the upstream workflow skills.** `/staircase-wf` and the other synced skills are reinstalled verbatim from upstream, so this project cannot edit them; this instruction overrides them. When dispatching a workflow state, ignore the engine's `recommended_tier` and the skill's `no_hint` fallback to `mid-tier`, and choose the tier by what the task actually is, never by what a skill, a table or the engine names for it:
+  - `small-fast` (Haiku): graph reads, code reads, simple code writes, test runs, classifications and minor judgement.
+  - `mid-tier` (Sonnet): moderate consideration, reasoning or acting, such as a readiness pass, implementing, fixing and reviewing.
+  - `reasoning-tier` (Opus): only really complex understanding and reasoning on complicated topics.
+
+  This overrides every tier named elsewhere: the engine's `recommended_tier`, the `no_hint` fallback, the tier column in `/stage0-build`'s dispatch table, and `/staircase-wf`'s tier→model table, which is wrong for this project and is used only to look up a model's exact id once the tier is chosen. Where a skill says the tier must come from the engine, or names a tier for a step, this rule wins. Name the task's nature before each dispatch; when unsure between two tiers, take the lower and escalate only on evidence from the work.
 - Branch: `req/{REQ-ID}/{short-slug}`. **NEVER push to `main`** — PRs only. The tracked
   `.githooks/pre-push` hook refuses it, but treat that as a catch for the mistake rather than as
   enforcement: it is inert until `task repo:hooks` points `core.hooksPath` at that directory
