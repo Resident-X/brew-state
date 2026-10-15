@@ -99,12 +99,12 @@ The interval within which loss of the controller's proof of life must remove hea
 
 That starting temperature cannot yet be taken from a control that holds the casting, so the interval is pending.
 
-**Finding: no interval can be derived from the casting as the control stands.** The generated peak record, `docs/casting-peak.md`, which `python3 firmware/emulation/tools/run_casting_peak.py` regenerates, shows that under the control as shipped the coffee casting reaches 156.8 °C, plus 2.0 °C of declared sensing error, 158.8 °C, against the 107 °C coffee-thermostat trip, and the steam casting 192.2 °C, plus 2.0 °C, 194.2 °C, in a 20-second wand draw (a longer draw climbs higher). A time to a trip point that starts from a casting already past it is not a figure, and the steam peak understates a longer draw, so no proof-of-life interval can be derived from them. The work that bounds the casting is `DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE`. Nothing in this finding is a board figure. The peaks as the record gives them, graded inferred from the plant model (the casting has not been measured):
+**Finding: no interval can be derived from the casting as the control stands.** The generated peak record, `docs/casting-peak.md`, which `python3 firmware/emulation/tools/run_casting_peak.py` regenerates, shows that under the control as shipped the coffee casting reaches 156.8 °C, plus 2.0 °C of declared sensing error, 158.8 °C, against the 107 °C coffee-thermostat trip, and the steam casting 192.2 °C, plus 2.0 °C, 194.2 °C, in a 20-second wand draw (a longer draw can climb higher: the record's draw-length table holds 191.0 °C at 20, 60 and 120 seconds and reaches 216.1 °C at 300). A time to a trip point that starts from a casting already past it is not a figure, and the steam peak understates a longer draw, so no proof-of-life interval can be derived from them. The work that bounds the casting is `DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE`. Nothing in this finding is a board figure. The peaks as the record gives them, graded inferred from the plant model (the casting has not been measured):
 
 | Thermoblock | Peak casting temperature under control (°C) | Declared sensing error (°C) | Peak plus sensing error (°C) | Where it comes from |
 |---|---|---|---|---|
 | Coffee thermoblock | 156.8 | 2.0 | 158.8 | Warm-up with no draw, served at 100.0 °C, at corner 2 of the enumeration (`brew.thermal_mass_j_per_k` at its low end) |
-| Steam thermoblock | 192.2 | 2.0 | 194.2 | A steam draw, with the ready temperature at 186.0 °C, at corner 15 of the enumeration (`steam.heater_power_w` at its high end) |
+| Steam thermoblock | 192.2 | 2.0 | 194.2 | A 20-second steam draw, with the ready temperature at 186.0 °C, at corner 15 of the enumeration (`steam.heater_power_w` at its high end) |
 
 | Figure | Value | Grade | Derivation | From |
 |---|---|---|---|---|
