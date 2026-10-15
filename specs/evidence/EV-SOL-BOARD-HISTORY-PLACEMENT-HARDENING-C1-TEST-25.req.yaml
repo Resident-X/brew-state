@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-HISTORY-PLACEMENT-HARDENING-C1-TEST-25
+type: evidence
+title: test evidence for SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T18:30:13.400314Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_history.py::test_a_zone_on_a_layer_that_is_no_copper_is_no_pour_and_one_on_the_back_copper_is
+  artifact_version: 92337570e419fec63b081ad97c34a97558cee77b
+attested_by: crun-7824b788e5914159
+links:
+  - target: SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1
+    type: satisfies
