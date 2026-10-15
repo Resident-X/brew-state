@@ -304,6 +304,34 @@ def measures(layout: list, regions: List[dict]) -> dict:
     }
 
 
+def measured_placement(board: str, plan: str, layout: list, regions: List[dict]) -> dict:
+    """The placement's measures as its measures files give them, with the board and each region as read; a part the
+    floorplan at `plan` lists that is not on the board stops the command."""
+    placed = footprints(layout)
+    for region in regions:
+        for name in region["parts"]:
+            if name not in placed:
+                raise Unreadable(f"the floorplan table of {plan} lists {name} in the region '{region['name']}', and "
+                                 f"no part on the board {board} has that reference")
+    return dict(board=os.path.realpath(board), **measures(layout, regions),
+                regions=[{"name": region["name"], "bounds": bounds_text(region), "parts": region["parts"]}
+                         for region in regions])
+
+
+def measure_lines(measured: dict) -> List[str]:
+    """The lines of measures.txt, each field cleaned so nothing in it can break its line."""
+    text = [f"BOARD | {measured['board']}",
+            f"LENGTH | total | {board_views.mm_text(measured['total_length_mm'])} mm",
+            f"CROSSINGS | total | {measured['crossings']}",
+            f"OUTSIDE | total | {len(measured['outside'])}"]
+    text += [f"NET | {net['net']} | {net['pads']} pads | length {board_views.mm_text(net['length_mm'])} mm | "
+             f"{net['crossings']} crossings" for net in measured["nets"]]
+    text += [f"OUTSIDE | {part['reference']} | {outside_detail(part)}" for part in measured["outside"]]
+    text += [f"REGION | {region['name']} | {region['bounds']} | {', '.join(region['parts']) or 'none'}"
+             for region in measured["regions"]]
+    return [clean_line(line) for line in text]
+
+
 # --- The view ----------------------------------------------------------------------------
 
 
@@ -350,15 +378,8 @@ def placement(board: str, project: str, out: str, kicad_cli: str, resvg: str, st
         return locked_copper.refused(refusals, "REFUSED | no placement view was written", stream)
     plan = os.path.join(os.path.dirname(os.path.abspath(board)), PLAN)
     regions = floorplan(plan)
+    measured = measured_placement(board, plan, layout, regions)
     placed = footprints(layout)
-    for region in regions:
-        for name in region["parts"]:
-            if name not in placed:
-                raise Unreadable(f"the floorplan table of {plan} lists {name} in the region '{region['name']}', and "
-                                 f"no part on the board {board} has that reference")
-    measured = dict(board=os.path.realpath(board), **measures(layout, regions),
-                    regions=[{"name": region["name"], "bounds": bounds_text(region), "parts": region["parts"]}
-                             for region in regions])
 
     scale = board_views.PIXELS_PER_FEATURE / min(figures)
     carried = board_views.layer_table(layout)
@@ -427,17 +448,8 @@ def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List
     """The index and the measures, each as text and JSON, into `folder` under the names `files` gives them."""
     board_views.write_index(folder, files, header, images, False,
                             after_limit=[f"MEASURES | {files['measures_text']} | {files['measures_json']}"])
-    text = [f"BOARD | {measured['board']}",
-            f"LENGTH | total | {board_views.mm_text(measured['total_length_mm'])} mm",
-            f"CROSSINGS | total | {measured['crossings']}",
-            f"OUTSIDE | total | {len(measured['outside'])}"]
-    text += [f"NET | {net['net']} | {net['pads']} pads | length {board_views.mm_text(net['length_mm'])} mm | "
-             f"{net['crossings']} crossings" for net in measured["nets"]]
-    text += [f"OUTSIDE | {part['reference']} | {outside_detail(part)}" for part in measured["outside"]]
-    text += [f"REGION | {region['name']} | {region['bounds']} | {', '.join(region['parts']) or 'none'}"
-             for region in measured["regions"]]
     with open(os.path.join(folder, files["measures_text"]), "w", encoding="utf-8") as handle:
-        handle.write("\n".join(clean_line(line) for line in text) + "\n")
+        handle.write("\n".join(measure_lines(measured)) + "\n")
     with open(os.path.join(folder, files["measures_json"]), "w", encoding="utf-8") as handle:
         json.dump(measured, handle, indent=1)
         handle.write("\n")
