@@ -236,16 +236,21 @@ class Base(unittest.TestCase):
         status, lines, document = self.repo.run(*args)
         self.assertEqual(status, 1, "\n".join(lines))
         self.assertEqual(document["result"], "FAIL")
+        self.assertTrue(lines[-1].startswith("RESULT | FAIL |"), lines[-1])
         failed = checks(document)
+        printed = [line for line in lines if line.startswith("CHECK | ") and line.split(" | ")[2] == "FAIL"]
         for word in words:
             self.assertTrue(any(word in line and (check is None or line.startswith(check + ":")) for line in failed),
                             f"no failed check{' ' + check if check else ''} says '{word}':\n" + "\n".join(failed))
+            self.assertTrue(any(board_history.clean(word) in line
+                                and (check is None or line.startswith(f"CHECK | {check} | FAIL | ")) for line in printed),
+                            f"no printed failed check{' ' + check if check else ''} says '{word}':\n" + "\n".join(lines))
         return failed
 
 
 class Passes(Base):
     def test_a_compliant_placement_before_any_track_passes_judged_at_head(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass on a history that keeps the order
         self.repo.placed()
         lines, document = self.assertPasses()
         self.assertIn("before first track", lines[-1])
@@ -255,7 +260,7 @@ class Passes(Base):
                          "no critical routing is judged before the first track")
 
     def test_a_compliant_history_after_the_router_passes_and_a_hand_route_before_locking_is_not_the_routers(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass on a history that keeps the order
         self.repo.placed()
         judged = self.repo.routed()
         router = self.repo.through_router(judged)
@@ -269,14 +274,14 @@ class Passes(Base):
         self.assertNotIn("router not yet run", lines[-1])
 
     def test_a_compliant_history_after_the_router_passes_with_routed(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass on a history that keeps the order
         self.repo.placed()
         self.repo.through_router(self.repo.routed())
         lines, _ = self.assertPasses("--routed")
         self.assertNotIn("router not yet run", lines[-1])
 
     def test_a_pass_recorded_before_the_router_runs_is_judged_at_head_and_says_so(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass on a history that keeps the order
         self.repo.placed()
         judged = self.repo.routed()
         self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
@@ -284,7 +289,7 @@ class Passes(Base):
         self.assertIn("router not yet run", lines[-1])
 
     def test_a_second_pass_appended_after_a_placement_change_passes(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4: A finding against a workmanship item caused by where parts sit is closed by changing the placement, re-routing what it affects and repeating the placement measures, and its record names the change and the measures before and after.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: The critical routing section is a series of numbered passes, only ever appended, so that a re-route made to close a placement-caused finding records its own pass
         self.repo.placed()
         judged = self.repo.routed()
         first = self.repo.through_router(judged)
@@ -302,7 +307,7 @@ class Passes(Base):
                       f"{router[:12]}", text)
 
     def test_a_branch_merged_without_fast_forward_passes_checked_on_main(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass on a history that keeps the order, including one merged into another branch without rewriting
         self.repo.git("commit", "-q", "--allow-empty", "-m", "main: root")
         self.repo.git("checkout", "-q", "-b", "board")
         self.repo.placed()
@@ -318,7 +323,7 @@ class Passes(Base):
 
 class PlacementFails(Base):
     def test_an_empty_heading_committed_before_the_first_track_and_filled_in_after_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: On placement it fails: a placement section missing, empty or holding fewer than two candidates in the commit before the first commit carrying a track, arc or via, or differing from the section as it now stands
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
         self.repo.commit(board(PLACES[1]), "b: placement heading", placement="## Placement\n")
@@ -329,14 +334,14 @@ class PlacementFails(Base):
                          "track", check="placement section")
 
     def test_a_part_moved_in_the_first_tracks_commit_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a part whose reference, position, angle or side differs between the chosen commit and the first track's commit
         self.repo.placed()
         self.repo.commit(board(r1_angle=180, copper=[HAND]), "b: route A, R1 turned")
         self.assertFails("R1 is at (20, 10) at 0 degrees on F.Cu in the chosen candidate, and at (20, 10) at 180 "
                          "degrees on F.Cu", check="parts at first track")
 
     def test_a_candidate_off_heads_line_of_history_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a candidate commit missing from the history, not an ancestor of the first track's commit, or holding the same placement as another
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         self.repo.git("checkout", "-q", "-b", "elsewhere")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2, on a side branch")
@@ -347,7 +352,7 @@ class PlacementFails(Base):
                          check="candidate 2 commit")
 
     def test_a_candidate_merged_in_only_after_the_first_track_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a candidate commit missing from the history, not an ancestor of the first track's commit, or holding the same placement as another
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         self.repo.git("checkout", "-q", "-b", "later")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2, on a branch merged after the track")
@@ -359,7 +364,7 @@ class PlacementFails(Base):
                          check="candidate 2 commit")
 
     def test_two_candidates_holding_the_same_board_fail(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a candidate commit missing from the history, not an ancestor of the first track's commit, or holding the same placement as another
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         two = self.repo.commit(message="b: placement candidate 2, the same layout")
         self.repo.commit(message="b: placement",
@@ -367,7 +372,7 @@ class PlacementFails(Base):
         self.assertFails("candidates 1 and 2 hold the same board", check="distinct candidates")
 
     def test_a_recorded_measure_the_candidates_commit_does_not_measure_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: recorded measures that differ from the measures recomputed from the candidate's commit against the floorplan the section is judged against
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
         wrong = ["LENGTH | total | 35 mm", "CROSSINGS | total | 0", "OUTSIDE | total | 0"]
@@ -377,7 +382,7 @@ class PlacementFails(Base):
                          "candidate 2 records 'LENGTH | total | 35 mm'", check="candidate 2 measures")
 
     def test_a_verdict_table_missing_a_placement_items_row_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a placement item without exactly one verdict
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
         self.repo.commit(board(PLACES[1]), "b: placement",
@@ -386,7 +391,7 @@ class PlacementFails(Base):
                          check="candidate 2 verdicts")
 
     def test_a_verdict_outside_the_three_or_a_not_applicable_the_plan_does_not_mark_no_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a placement item without exactly one verdict
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
         rows = ["| FLOOR-1 | not applicable | | |", "| WORK-1 | fine | | |"]
@@ -396,7 +401,7 @@ class PlacementFails(Base):
                          "gives WORK-1 the verdict 'fine'", check="candidate 2 verdicts")
 
     def test_tracks_first_appearing_on_two_lines_of_history_fail(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a track in the first commit, or the first tracks arriving on two lines of history or by a merge
         self.repo.placed()
         self.repo.git("checkout", "-q", "-b", "other")
         self.repo.commit(board(copper=[track((5, 11), (20, 11), "GND", False)]), "b: GND on one line")
@@ -409,7 +414,7 @@ class PlacementFails(Base):
         self.assertFails("tracks first appear on 2 separate lines of history", check="first track")
 
     def test_a_candidate_measured_against_a_floorplan_widened_in_its_own_commit_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: recorded measures that differ from the measures recomputed from the candidate's commit against the floorplan the section is judged against; a chosen candidate that is not recorded or leaves a part outside its regions
         self.repo.write("b/layout-plan.md", PLAN.replace("(0, 0)–(40, 40)", "(0, 0)–(60, 40)"))
         one = self.repo.commit(board((50, 10)), "b: placement candidate 1, R1 off the region, the region widened")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
@@ -421,7 +426,7 @@ class PlacementFails(Base):
         self.assertIn("chosen: the chosen candidate 1 leaves R1 outside its regions", failed)
 
     def test_tracks_first_appearing_in_a_merge_commit_fail(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a track in the first commit, or the first tracks arriving on two lines of history or by a merge
         self.repo.placed()
         self.repo.git("checkout", "-q", "-b", "other")
         self.repo.write("README.md", "one line\n")
@@ -431,12 +436,12 @@ class PlacementFails(Base):
         self.assertFails(f"tracks first appear in the merge commit {merge[:12]}", check="first track")
 
     def test_a_track_in_the_root_commit_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a track in the first commit, or the first tracks arriving on two lines of history or by a merge
         self.repo.commit(board(copper=[HAND]), "b: everything at once")
         self.assertFails("the root commit", check="first track")
 
     def test_one_candidate_a_renders_not_naming_its_commit_and_a_chosen_part_outside_fail(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: On placement it fails: a placement section missing, empty or holding fewer than two candidates in the commit before the first commit carrying a track, arc or via, or differing from the section as it now stands; a chosen candidate that is not recorded or leaves a part outside its regions
         outside = self.repo.commit(board((50, 10)), "b: placement candidate 1, R1 off the region")
         self.repo.commit(message="b: placement", placement=placement([candidate(
             1, outside, renders="0123456789abcdef", measures=[
@@ -449,14 +454,57 @@ class PlacementFails(Base):
         self.assertIn("chosen: the chosen candidate 1 leaves R1 outside its regions", failed)
 
     def test_a_missing_placement_section_fails_rather_than_passing(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: On placement it fails: a placement section missing, empty or holding fewer than two candidates in the commit before the first commit carrying a track, arc or via, or differing from the section as it now stands
         self.repo.commit(board(PLACES[1]), "b: placed, nothing recorded")
         self.assertFails("holds no `## Placement` section", check="placement section")
+
+    def test_a_placement_item_given_two_verdicts_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a placement item without exactly one verdict
+        one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
+        two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
+        rows = PLACEMENT_ROWS + ["| WORK-1 | fail | placement; LENGTH | runs long |"]
+        self.repo.commit(board(PLACES[1]), "b: placement",
+                         placement=placement([candidate(1, one), candidate(2, two, rows=rows)]))
+        self.assertFails("candidate 2's verdict table has 2 rows for WORK-1", check="candidate 2 verdicts")
+
+    def test_a_chosen_candidate_the_section_does_not_record_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a chosen candidate that is not recorded or leaves a part outside its regions
+        one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
+        two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
+        self.repo.commit(board(PLACES[1]), "b: placement, a third candidate chosen",
+                         placement=placement([candidate(1, one), candidate(2, two)], chosen=3))
+        self.assertFails("the chosen candidate, 3, is not one the section records", check="chosen")
+        self.assertFails("the chosen candidate has no commit holding the board to compare the parts with",
+                         check="parts at HEAD")
+
+    def test_a_placement_with_no_chosen_field_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a chosen candidate that is not recorded or leaves a part outside its regions
+        one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
+        two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
+        self.repo.commit(board(PLACES[1]), "b: placement, none chosen",
+                         placement="## Placement\n\n" + "\n".join([candidate(1, one), candidate(2, two)]))
+        self.assertFails("the section names no chosen candidate in a **Chosen** field", check="chosen")
+        self.assertFails("no candidate is chosen, so no placement is shown to be the board's", check="parts at HEAD")
+
+    def test_cited_commits_not_in_the_repository_fail(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a candidate commit missing from the history; Every commit it cites must lie on the last commit's line of history, so a branch whose history was rewritten by a squash or rebase fails rather than passes.
+        ghost = "0badc0de" * 5
+        one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
+        self.repo.commit(board(PLACES[1]), "b: placement, candidate 2 citing a commit the repository lacks",
+                         placement=placement([candidate(1, one), candidate(2, ghost, measures=MEASURES[2])]))
+        self.repo.routed()
+        rows = [f"| WORK-1 | judgement | quality | fail, then pass at {ghost} | net-A | runs long |", CRITICAL_ROWS[1]]
+        self.repo.commit(message="b: pass 1, citing commits the repository lacks",
+                         critical=critical([critical_pass(1, ghost, rows)]))
+        self.assertFails(f"candidate 2's commit {ghost} is not in this repository", check="candidate 2 commit")
+        self.assertFails(f"pass 1's Board judged commit {ghost} is not in this repository", check="pass 1 board judged")
+        self.assertFails(f"pass 1 cites {ghost} for WORK-1, which is not in this repository's history from HEAD",
+                         check="pass 1 verdicts")
 
 
 class CriticalRoutingFails(Base):
     def test_a_board_judged_commit_on_a_side_branch_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: for each pass it fails: a board judged commit that is not an ancestor of the last commit
         self.repo.placed()
         self.repo.commit(board(copper=[HAND]), "b: route A by hand")
         self.repo.git("checkout", "-q", "-b", "elsewhere")
@@ -468,7 +516,7 @@ class CriticalRoutingFails(Base):
                          check="pass 1 board judged")
 
     def test_a_first_pass_edited_after_the_second_was_appended_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4: A finding against a workmanship item caused by where parts sit is closed by changing the placement, re-routing what it affects and repeating the placement measures, and its record names the change and the measures before and after.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass that differs from how it stood in the commit before its router commit
         self.repo.placed()
         judged = self.repo.routed()
         self.repo.through_router(judged)
@@ -484,7 +532,7 @@ class CriticalRoutingFails(Base):
                          check="pass 1 before router")
 
     def test_a_router_commit_between_the_first_router_and_the_second_passs_board_judged_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4: A finding against a workmanship item caused by where parts sit is closed by changing the placement, re-routing what it affects and repeating the placement measures, and its record names the change and the measures before and after.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: for a later pass, a board judged commit that does not follow the previous pass's router commit, or unlocked copper added or changed between that router commit and it, the router's copper the re-route does not affect being left in place
         self.repo.placed()
         judged = self.repo.routed()
         self.repo.through_router(judged)
@@ -495,7 +543,7 @@ class CriticalRoutingFails(Base):
                          "changes 1 unlocked tracks", check="pass 2 board judged")
 
     def test_a_fail_with_no_commit_putting_it_right_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: an item bearing on the critical nets without exactly one verdict, or a failing verdict not put right before the router ran
         self.repo.placed()
         judged = self.repo.routed()
         rows = ["| WORK-1 | judgement | quality | fail | net-A | runs long |", CRITICAL_ROWS[1]]
@@ -505,7 +553,7 @@ class CriticalRoutingFails(Base):
                          check="pass 1 verdicts")
 
     def test_a_fail_put_right_before_the_router_passes_and_one_put_right_after_it_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: an item bearing on the critical nets without exactly one verdict, or a failing verdict not put right before the router ran
         self.repo.placed()
         judged = self.repo.routed()
         fixed = self.repo.commit(board(copper=[track((5, 9), (20, 9.0), "A", True)]), "b: re-route A, locked")
@@ -519,7 +567,7 @@ class CriticalRoutingFails(Base):
                          check="pass 1 verdicts")
 
     def test_a_checklist_item_neither_judged_nor_listed_or_given_twice_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: an item bearing on the critical nets without exactly one verdict, or a failing verdict not put right before the router ran
         self.repo.placed()
         judged = self.repo.routed()
         rows = ["| WORK-1 | judgement | quality | pass | net-A | |", "| FLOOR-1 | judgement | function | pass | | |"]
@@ -528,21 +576,47 @@ class CriticalRoutingFails(Base):
                          check="pass 1 verdicts")
 
     def test_a_board_judged_commit_holding_unlocked_copper_or_none_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: for the first pass, a board judged commit that holds no track or holds an unlocked one
         self.repo.placed()
+        placed = self.repo.git("rev-parse", "HEAD")
         unlocked = self.repo.commit(board(copper=[HAND]), "b: route A by hand, not locked")
         self.repo.commit(message="b: pass 1", critical=critical([critical_pass(1, unlocked)]))
         self.assertFails("holds 1 unlocked tracks, arcs or vias", check="pass 1 board judged")
+        self.repo.commit(message="b: pass 1 judged on the placement", critical=critical([critical_pass(1, placed)]))
+        self.assertFails(f"pass 1's Board judged commit {placed[:12]} holds no track, arc or via",
+                         check="pass 1 board judged")
+
+    def test_a_later_pass_judged_before_the_previous_passs_router_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: for a later pass, a board judged commit that does not follow the previous pass's router commit
+        self.repo.placed()
+        judged = self.repo.routed()
+        router = self.repo.through_router(judged)
+        self.repo.commit(message="b: pass 2, judged on the board before the router",
+                         critical=critical([critical_pass(1, judged), critical_pass(2, judged)]))
+        self.assertFails(f"pass 2's Board judged commit {judged[:12]} does not follow pass 1's router commit "
+                         f"{router[:12]}", check="pass 2 board judged")
+
+    def test_locked_router_copper_in_the_board_judged_commit_fails_with_routed(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: when it is told the router has run, a last pass with no router commit
+        self.repo.placed()
+        self.repo.commit(board(copper=[HAND]), "b: route A by hand")
+        judged = self.repo.commit(board(copper=[LOCKED, track((5, 11), (20, 11), "GND", True)]),
+                                  "b: lock A, the router's GND copper committed locked with it")
+        self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
+        lines, _ = self.assertPasses()
+        self.assertIn("router not yet run", lines[-1], "locked copper on any net reads as critical routing")
+        self.assertFails("--routed says the router has run", "the router's copper is not committed, or is locked",
+                         check="pass 1 before router", args=("--routed",))
 
     def test_tracks_with_no_critical_routing_section_fail(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: Add a second command among the repository's hardware tasks that, from a board's folder, reads its layout plan and the repository's history and judges the order the placement and critical routing sections require, so the cross-checks C2 and C3 ask of the method are made by running it.
         self.repo.placed()
         self.repo.routed()
         self.repo.commit(board(copper=[LOCKED, ROUTED]), "b: router, nothing recorded")
         self.assertFails("holds no `## Critical routing` section", check="critical routing section")
 
     def test_locked_router_copper_reads_as_router_not_yet_run_and_fails_with_routed(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: when it is told the router has run, a last pass with no router commit
         self.repo.placed()
         judged = self.repo.routed()
         self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
@@ -553,14 +627,14 @@ class CriticalRoutingFails(Base):
                          check="pass 1 before router", args=("--routed",))
 
     def test_no_tracks_and_no_critical_routing_section_fail_with_routed(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: when it is told the router has run, a last pass with no router commit
         self.repo.placed()
         self.assertPasses()
         self.assertFails("--routed says the router has run, and no commit carries a track",
                          check="critical routing section", args=("--routed",))
 
     def test_a_router_commit_that_is_a_merge_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass that differs from how it stood in the commit before its router commit
         self.repo.placed()
         self.repo.commit(board(copper=[HAND]), "b: route A by hand")
         self.repo.git("checkout", "-q", "-b", "router")
@@ -572,7 +646,7 @@ class CriticalRoutingFails(Base):
         self.assertFails(f"in the merge commit {merge[:12]}, joining 2 lines of history", check="pass 1 before router")
 
     def test_router_copper_on_two_lines_after_the_board_judged_commit_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: a pass that differs from how it stood in the commit before its router commit
         self.repo.placed()
         judged = self.repo.routed()
         self.repo.git("checkout", "-q", "-b", "router")
@@ -585,7 +659,7 @@ class CriticalRoutingFails(Base):
                          check="pass 1 before router")
 
     def test_unlocked_copper_merged_in_from_another_line_between_the_passes_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4: A finding against a workmanship item caused by where parts sit is closed by changing the placement, re-routing what it affects and repeating the placement measures, and its record names the change and the measures before and after.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: for a later pass, a board judged commit that does not follow the previous pass's router commit, or unlocked copper added or changed between that router commit and it, the router's copper the re-route does not affect being left in place
         self.repo.placed()
         self.repo.commit(board(copper=[HAND]), "b: route A by hand")
         stray = track((5, 11), (20, 11.5), "GND", False)
@@ -604,7 +678,7 @@ class CriticalRoutingFails(Base):
                          "changes 1 unlocked tracks", check="pass 2 board judged")
 
     def test_a_checklist_item_dropped_in_the_board_judged_commit_and_restored_before_the_router_fails(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: an item bearing on the critical nets without exactly one verdict, or a failing verdict not put right before the router ran
         self.repo.placed()
         self.repo.commit(board(copper=[HAND]), "b: route A by hand")
         self.repo.write("docs/board-design-method.md", METHOD[:METHOD.index("#### GROUND-1")])
@@ -616,7 +690,7 @@ class CriticalRoutingFails(Base):
         self.assertFails("pass 1 neither judges GROUND-1 nor lists it", check="pass 1 verdicts")
 
     def test_a_squash_merged_copy_of_a_compliant_branch_fails_closed(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: Every commit it cites must lie on the last commit's line of history, so a branch whose history was rewritten by a squash or rebase fails rather than passes.
         self.repo.git("commit", "-q", "--allow-empty", "-m", "main: root")
         self.repo.git("checkout", "-q", "-b", "board")
         self.repo.placed()
@@ -638,9 +712,12 @@ class Refusals(Base):
         self.assertTrue(lines[-1].startswith("RESULT | REFUSED |"), lines[-1])
         for word in words:
             self.assertTrue(any(word in line for line in lines if line.startswith("REFUSED |")), "\n".join(lines))
+            self.assertTrue(any(word in refusal["what"] or word in refusal["why"] for refusal in document["refusals"]),
+                            document["refusals"])
+        return document
 
     def test_a_shallow_clone_is_refused(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: It refuses, without judging, a folder outside a git work tree, a shallow clone, a board or plan that is untracked or differs from the last commit, and a board that cannot be read.
         self.repo.placed()
         self.repo.through_router(self.repo.routed())
         shallow = os.path.join(self.repo.root, "shallow")
@@ -650,7 +727,7 @@ class Refusals(Base):
                            board=os.path.join(shallow, "b", "b.kicad_pcb"))
 
     def test_a_board_or_plan_differing_from_head_is_refused(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: It refuses, without judging, a folder outside a git work tree, a shallow clone, a board or plan that is untracked or differs from the last commit, and a board that cannot be read.
         self.repo.placed()
         self.repo.write("b/b.kicad_pcb", board((22, 10)))
         self.assertRefused("has changes that are not committed")
@@ -659,7 +736,7 @@ class Refusals(Base):
         self.assertRefused("b/layout-plan.md")
 
     def test_a_board_outside_a_git_work_tree_or_unreadable_is_refused(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: It refuses, without judging, a folder outside a git work tree, a shallow clone, a board or plan that is untracked or differs from the last commit, and a board that cannot be read.
         loose = os.path.join(self.repo.root, "loose")
         os.makedirs(loose)
         with open(os.path.join(loose, "b.kicad_pcb"), "w", encoding="utf-8") as handle:
@@ -668,10 +745,22 @@ class Refusals(Base):
         self.repo.commit("(not_a_board)\n", "b: not a board")
         self.assertRefused("is not a KiCad layout")
 
+    def test_an_untracked_board_or_plan_is_refused(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: It refuses, without judging, a folder outside a git work tree, a shallow clone, a board or plan that is untracked or differs from the last commit, and a board that cannot be read.
+        self.repo.placed()
+        for name in ("b/b.kicad_pcb", "b/layout-plan.md"):
+            with self.subTest(untracked=name):
+                self.repo.git("rm", "-q", "--cached", name)
+                self.repo.git("commit", "-q", "-m", f"stop tracking {name}")
+                document = self.assertRefused("is not tracked in the repository")
+                self.assertEqual([refusal["what"] for refusal in document["refusals"]], [name])
+                self.repo.git("add", name)
+                self.repo.git("commit", "-q", "-m", f"track {name} again")
+
 
 class Output(Base):
     def test_the_text_and_json_outputs_give_the_same_verdicts(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: It writes its verdicts as text and as JSON and exits differently for a pass, a failure and a refusal; the hardware tools' guide describes it as it describes the other hardware commands.
         one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
         two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
         self.repo.commit(board(PLACES[1]), "b: placement",
@@ -688,7 +777,7 @@ class Output(Base):
         self.assertEqual(len(lines), len(from_text) + 1, "every line but the result is a check")
 
     def test_the_task_runs_the_command_from_the_repositorys_taskfile(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: Add a second command among the repository's hardware tasks that, from a board's folder, reads its layout plan and the repository's history and judges the order the placement and critical routing sections require, so the cross-checks C2 and C3 ask of the method are made by running it.
         self.repo.placed()
         judged = self.repo.routed()
         self.repo.through_router(judged)
@@ -711,7 +800,7 @@ class Documentation(unittest.TestCase):
             return handle.read()
 
     def test_the_guide_and_the_task_describe_the_command(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6: It writes its verdicts as text and as JSON and exits differently for a pass, a failure and a refusal; the hardware tools' guide describes it as it describes the other hardware commands.
         readme = self.read("hardware", "README.md")
         section = readme[readme.index("## The placement and critical routing history"):]
         section = section[:section.index("\n## ")]
