@@ -1,5 +1,5 @@
 """How hot each thermoblock's casting gets while the controller holds its heater,
-and what the controller boards' figures record derives from it.
+and what the controller boards' figures record quotes of it.
 
 The analysis itself is in emulation/tools/run_casting_peak.py, which runs the
 shipped control path through warm-up, the hold, each delivery, the recovery
@@ -1157,6 +1157,16 @@ class TheGeneratedRecordSaysWhatItsPeaksAre(unittest.TestCase):
         self.assertIn("DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE", head)
         self.assertIn("can climb higher", head)
         self.assertNotIn("climbs higher", head)
+
+    # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the section on what the record
+    # does not settle names the sibling solution that derives the interval from
+    # the peak, and does not claim the figures record derives it.
+    def test_the_record_names_where_the_interval_is_derived(self):
+        for text in (_committed_record(), casting.report_text(_findings())):
+            section = text.split("## What this does not settle", 1)[1]
+            self.assertIn("SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK", section)
+            self.assertIn("keeps the interval pending", section)
+            self.assertNotIn("is derived from it in the", section)
 
     # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: the banner comes from the
     # generator's template for any findings, so a regeneration cannot drop it.

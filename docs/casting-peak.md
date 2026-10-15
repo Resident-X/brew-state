@@ -210,4 +210,4 @@ Whether the casting is where the model says it is. No casting on this machine ha
 
 How long a steam draw lasts. The steam figure is for the draw the courses above open the wand for. The table above shows what a longer one does in the model, and nothing in this record says how long a draw the controller may be asked to hold.
 
-The trip points. This record stops at the hottest casting; the time a heater takes to climb from it to its protection's trip point is derived from it in the controller boards' figures record, which quotes this record's figures.
+The trip points. This record stops at the hottest casting; the time a heater takes to climb from it to its protection's trip point is not derived here or in the controller boards' figures record, which only quotes this record's figures and keeps the interval pending. It is derived from this record's peak by SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK, once the control holds the casting below its trip point.

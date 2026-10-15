@@ -194,7 +194,7 @@ DRINKING_CEILING_MACRO = "DELIVERY_TOLERANCE_DRINKING_CEILING_WORD"
 STEAM_READY_MACRO = "STEAM_CONTROL_DECLARATION_READY_TEMPERATURE_WORD"
 
 #: The section of the controller boards' figures record that quotes the peaks
-#: and derives the interval from them, as the heading it is written under.
+#: and keeps the interval pending against them, as the heading it is written under.
 FIGURES_RECORD_SECTION = "### Proof-of-life removal interval"
 
 #: The files a run is generated from, as the words the record's table names them
@@ -894,8 +894,11 @@ def report_text(findings):
           "nothing in this record says how long a draw the controller may be asked to hold.")
     write("")
     write("The trip points. This record stops at the hottest casting; the time a heater takes "
-          "to climb from it to its protection's trip point is derived from it in the "
-          "controller boards' figures record, which quotes this record's figures.")
+          "to climb from it to its protection's trip point is not derived here or in the "
+          "controller boards' figures record, which only quotes this record's figures and "
+          "keeps the interval pending. It is derived from this record's peak by "
+          "SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK, once the control holds "
+          "the casting below its trip point.")
     return "\n".join(lines) + "\n"
 
 
