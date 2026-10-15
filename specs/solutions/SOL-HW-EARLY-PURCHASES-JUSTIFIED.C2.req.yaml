@@ -1,0 +1,12 @@
+id: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C2
+type: criterion
+title: A planned replacement's reason is declared once at its source
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The condition of a fitted part that a planned replacement entry gives as its reason is declared once, as a dated owner statement beside that part's role in the machine's declared configuration, and the entry cites that statement rather than declaring the condition itself. The three-way valve's not functioning is the case in point. Out of scope: the replacement's own properties, which its entry records when it is bought.
+links:
+  - target: SOL-HW-EARLY-PURCHASES-JUSTIFIED
+    type: criterion-of

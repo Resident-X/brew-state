@@ -1,0 +1,12 @@
+id: SOL-HW-EARLY-PURCHASES-JUSTIFIED.C3
+type: criterion
+title: Purchase-status statements elsewhere agree with the purchases section
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every statement elsewhere in the machine's records about whether a purchase has been made agrees with the purchases section and points at it. The earlier design's open items statement that valve purchase status is not recorded is the case in point. Out of scope: the earlier design's own candidate parts, which are not purchases.
+links:
+  - target: SOL-HW-EARLY-PURCHASES-JUSTIFIED
+    type: criterion-of
