@@ -28,3 +28,7 @@ links:
     type: addresses
   - target: DEF-READINESS
     type: uses-term
+  - target: REQ-READINESS-TIMELINESS-001.C8
+    type: addresses
+  - target: REQ-READINESS-TIMELINESS-001.C9
+    type: addresses

@@ -1,0 +1,12 @@
+id: REQ-READINESS-TIMELINESS-001.C8
+type: criterion
+title: The wait before a purpose is available is bounded by a declared limit
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  Prediction can fail, and a machine that waits for a prediction that never comes leaves the user waiting on something that cannot tell them when it will be ready. The limit is a declared figure for each purpose, declared with the other timing figures, so a machine with a longer floor is held to its own limit rather than to this machine's.
+links:
+  - target: REQ-READINESS-TIMELINESS-001
+    type: criterion-of

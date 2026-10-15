@@ -1,12 +1,12 @@
 id: REQ-READINESS-TIMELINESS-001.C3
 type: criterion
-title: Readiness is timed to settling inside the band rather than to first reaching target
+title: Readiness is timed to the delivery being inside its band rather than to first reaching target
 status: active
-version: 1
+version: 2
 measurement_type: threshold
 verification: test
 text: |
-  A controller that arrives quickly and then rings around target is not ready when it first touches the number, and timing to arrival would rank it above one that approaches calmly and stays.
+  A controller that arrives quickly and then rings around target is not ready when it first touches the number, because the delivery it would make from that state is still out of band. Timing runs to the point the delivery the machine would make from its present state is inside the band, and stays there, rather than to arrival at a setpoint, so a state that sits at its setpoint and still delivers out of band is not counted as ready, and one that would deliver in band before the setpoint is not held back.
 
   The band is the one the delivery requires, so a purpose with a tighter band is timed against its own.
 links:
