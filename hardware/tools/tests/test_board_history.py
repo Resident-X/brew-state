@@ -1018,6 +1018,49 @@ class PlanAndCopperFails(Base):
         self.record(one, two, board(PLACES[2], r2=(30, 25)), chosen=2)
         self.assertPasses()
 
+    def test_a_part_first_placed_in_a_merge_commit_fails_unless_every_parent_lists_it(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: each committed before its footprint first appears on the board, taking a listing before the commit before the first placement, or one the plan no longer holds when the part is placed, as none
+        for name, every_parent in (("every parent lists it", True), ("only one parent lists it", False)):
+            with self.subTest(merge_of=name):
+                self.repo = Repo(self)
+                self.repo.planned()
+                one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1, without R2")
+                self.repo.git("checkout", "-q", "-b", "side")
+                self.repo.replan(WITH_R2)
+                self.repo.commit(message="side: R2 listed")
+                self.repo.git("checkout", "-q", "main")
+                if every_parent:
+                    self.repo.replan(WITH_R2)
+                    self.repo.commit(message="main: R2 listed")
+                else:
+                    self.repo.write("README.md", "one line\n")
+                    self.repo.commit(message="main: a change that leaves R2 unlisted")
+                unlisted = self.repo.git("rev-parse", "HEAD")
+                two = self.repo.merge("side", board(PLACES[2], r2=(30, 25)), "b: candidate 2, with R2, in a merge")
+                self.repo.replan(WITH_R2)
+                self.repo.commit(message="b: R2 listed in the plan the section is judged in")
+                self.record(one, two, board(PLACES[2], r2=(30, 25)), chosen=2)
+                if every_parent:
+                    self.assertPasses()
+                else:
+                    failed = self.assertFails("R2 is appended to the parts of 'low voltage' and its footprint first "
+                                              f"appears on the board at {short_of(two)}",
+                                              f"in {short_of(unlisted)}: the amendment", check="plan before placement")
+                    self.assertOnly(failed, "plan before placement")
+
+    def test_a_part_appended_and_placed_after_the_first_copper_passes_with_the_section_left_as_it_is(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: Tests in throwaway repositories built outside this one show each of the fails on a history that commits it and that a history keeping the order still passes
+        one, two = self.repo.placed()
+        self.repo.through_router(self.repo.routed())
+        self.repo.replan(WITH_R2)
+        self.repo.commit(message="b: R2 added to the plan after the router")
+        self.repo.commit(board(copper=[LOCKED, ROUTED], r2=(30, 25)), "b: R2 placed after the router")
+        lines, _ = self.assertPasses("--routed")
+        self.assertNotIn("appended", "\n".join(line for line in lines if line.startswith("CHECK | plan before placement")))
+        self.repo.commit(message="b: the placement section recorded again after the first copper",
+                         placement=placement([candidate(1, one), candidate(2, two)], 2))
+        self.assertFails("section now differs from the one in", check="placement section")
+
     def test_a_part_dropped_from_the_plan_when_it_is_placed_fails_though_listed_earlier_after_the_first_placement(self):
         # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: the plan keeps the amendment until the part is placed
         self.repo.planned()

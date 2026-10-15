@@ -29,6 +29,8 @@ reachable from HEAD, and judges each section as it stood in the commit before:
   bound changed and no reference removed or moved between regions, which the
   floorplan lists in each commit just before its footprint first appears on
   the board, that commit coming after the commit before the first placement.
+  The floorplan is read as the commit before the first copper holds it, so a
+  part appended after that copper is not compared.
 - The placement section, in the commit before the first track, holding at
   least two candidates and as it is now. Each candidate's commit is in the
   history, comes before the first track, holds the board, places its parts
@@ -532,8 +534,8 @@ def first_commits(history: History, path: str, holds_in) -> List[str]:
 
 
 def amended_in(history: History, plan: str, anchor: str, commit: str, part: str) -> bool:
-    """Whether `commit` comes after `anchor` and the floorplan it holds lists `part` in a region."""
-    if commit == anchor or not history.is_ancestor(anchor, commit):
+    """Whether `commit` descends from `anchor` and the floorplan it holds lists `part` in a region."""
+    if not history.is_ancestor(anchor, commit):
         return False
     try:
         return any(part in region["parts"] for region in read_plan(history, commit, plan))
@@ -792,8 +794,8 @@ def judge_critical(history: History, board: str, plan: str, tracked: bool, route
     if lines is None:
         if tracked:
             report.add("critical routing section", [
-                f"the board carries copper, a track, arc, via or pour, and {plan} holds no `## {CRITICAL}` section; the critical routing is "
-                "judged and recorded before the router runs"], "")
+                f"the board carries copper, a track, arc, via or pour, and {plan} holds no `## {CRITICAL}` section; "
+                "the critical routing is judged and recorded before the router runs"], "")
         elif routed:
             report.add("critical routing section", [
                 f"--routed says the router has run, and no commit carries a track, arc, via or pour and {plan} holds no "
