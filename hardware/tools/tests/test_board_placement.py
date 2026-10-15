@@ -431,6 +431,30 @@ class Stops(unittest.TestCase):
                 self.assertStopped(Placed(plan_text=plan(low=listed)), ["region row 'low voltage'", listed.split(",")[0],
                                                                        "without ranges"])
 
+    def test_a_floorplan_table_without_its_separator_row_stops_the_command_rather_than_losing_a_region(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A region row that cannot be read stops the command with a message naming it, so a table whose first region row would be taken for its separator row stops rather than losing that region.
+        for separator in ("", "|---|---|---|\n", "| a | b | c | d |\n"):
+            with self.subTest(separator=separator):
+                self.assertStopped(Placed(plan_text=plan(**{"|---|---|---|---|\n": separator})),
+                                   ["has no separator row", "under its header"])
+        self.assertStopped(Placed(plan_text=plan().split("|---|---|---|---|")[0].rstrip() + "\n"),
+                           ["has no separator row"])
+        aligned = Placed(plan_text=plan(**{"|---|---|---|---|": "|:---|---:|:---:|---|"}))
+        regions = board_placement.floorplan(os.path.join(aligned.folder, "layout-plan.md"))
+        self.assertEqual([region["name"] for region in regions], ["mains", "low voltage", "analog sensing", "digital"])
+
+    def test_a_footprint_without_a_reference_or_sharing_one_stops_the_command_naming_each(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A board that cannot be read stops the command with a message naming it: footprints with no reference, or sharing one, cannot be measured against the floorplan's parts, so each such reference is named with how many footprints carry it rather than merged.
+        twin = part("R1", 25, 5, [(1, 0, -1, "NC7")])
+        blank = part("", 25, 15, [(1, 0, -1, "NC8")])
+        lines = self.assertStopped(Placed(items=parts() + [twin, blank, part("  ", 26, 15, [(1, 0, 0, "NC9")])]),
+                                   ["2 footprints with no reference", "R1 on 2 footprints",
+                                    "give every footprint a reference of its own"])
+        self.assertNotIn("Q1", lines[0])
+        self.assertStopped(Placed(items=parts() + [blank]), ["1 footprint with no reference"])
+        self.assertStopped(Placed(items=parts() + [twin, part("Q1", 25, 25, [(1, 0, 0, "NC9")])]),
+                           ["Q1 on 2 footprints; R1 on 2 footprints"])
+
     def test_a_part_listed_in_a_region_recorded_as_none_stops_the_command(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C1: A part listed in a region recorded as none stops the command with a message naming it.
         self.assertStopped(Placed(plan_text=plan(**{"| nothing | none |": "| nothing | J1 |"})),

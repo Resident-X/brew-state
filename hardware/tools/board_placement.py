@@ -112,6 +112,10 @@ def floorplan(path: str) -> List[dict]:
         raise Unreadable(f"the floorplan table of {path} has no Parts column listing the reference designators of "
                          "the parts each region holds")
     column = header.index("Parts")
+    separator = cells(lines[start + 1]) if start + 1 < len(lines) and lines[start + 1].strip().startswith("|") else []
+    if len(separator) != len(header) or not all(re.fullmatch(r":?-+:?", cell) for cell in separator):
+        raise Unreadable(f"the floorplan table of {path} has no separator row of dashes, |---|, under its header, so "
+                         "its first region row cannot be told from a heading")
     regions = []
     for line in lines[start + 2:]:
         if not line.strip().startswith("|"):
@@ -162,8 +166,22 @@ def parts(text: str, what: str) -> List[str]:
 
 
 def footprints(layout: list) -> Dict[str, list]:
-    """Each footprint on the board, by its reference."""
-    return {board_geometry.reference(node) or "?": node for node in sexpr.children(layout, "footprint")}
+    """Each footprint on the board, by its reference; a footprint with no reference, or two sharing one, cannot be
+    measured against the floorplan, which lists parts by reference, and stops the command."""
+    found: Dict[str, list] = {}
+    counts: Dict[str, int] = {}
+    for node in sexpr.children(layout, "footprint"):
+        name = board_geometry.reference(node).strip()
+        counts[name] = counts.get(name, 0) + 1
+        found[name] = node
+    faults = ([f"{counts['']} footprint{'s' if counts[''] != 1 else ''} with no reference"] if "" in counts else [])
+    faults += [f"{name} on {count} footprints" for name, count in sorted(counts.items(), key=lambda item:
+                                                                         board_views.natural(item[0]))
+               if name and count > 1]
+    if faults:
+        raise Unreadable(f"the board's footprints cannot be told apart by reference, and the floorplan lists each part "
+                         f"by its own: {'; '.join(faults)}; give every footprint a reference of its own")
+    return found
 
 
 def connections(layout: list) -> Dict[str, List[Tuple[board_geometry.Pad, board_geometry.Pad]]]:
@@ -357,15 +375,11 @@ def placement(board: str, project: str, out: str, kicad_cli: str, resvg: str, st
                    for index, layer in enumerate(LAYERS) if layer in carried}
         areas = board_views.rule_areas(layout, carried)
         outline = board_views.outline_bounds(layout) if "Edge.Cuts" in carried else None
-        reach = [box for box in [outline] + [board_views.drawn_extent(path) for path in plotted.values()]
-                 if box is not None]
-        reach += [rect for region in regions for rect in region["bounds"] or []]
-        reach += [(area["bounds_mm"]["x0"], area["bounds_mm"]["y0"], area["bounds_mm"]["x1"], area["bounds_mm"]["y1"])
-                  for area in areas]
-        reach += [extent(node) for node in placed.values()]
-        if not reach:
+        frame = board_views.board_frame(outline, plotted, areas,
+                                        [rect for region in regions for rect in region["bounds"] or []]
+                                        + [extent(node) for node in placed.values()])
+        if frame is None:
             raise Unreadable(f"the board {board} holds nothing to draw: no outline, part or region")
-        frame = board_views.grown(board_views.union(reach), board_views.BOARD_MARGIN_MM)
         names = board_views.Names()
         files = dict(zip(("index_text", "index_json"), names.claim("index", [".txt", ".json"])))
         files.update(zip(("measures_text", "measures_json"), names.claim("measures", [".txt", ".json"])))
@@ -383,37 +397,19 @@ def placement(board: str, project: str, out: str, kicad_cli: str, resvg: str, st
         renderer.write()
         header = {
             "board": measured["board"],
-            "resolution": {
-                "px_per_mm": scale, "pixels_per_feature": board_views.PIXELS_PER_FEATURE,
-                "min_track_width_mm": figures[0], "min_clearance_mm": figures[1],
-                "rule": "pixels per millimetre = pixels per feature / the smaller of the minimum track width and "
-                        "the minimum clearance",
-            },
-            "image_limit": {"long_edge_px": board_views.LONG_EDGE_PX, "patches": board_views.PATCHES,
-                            "patch_px": board_views.PATCH_PX},
-            "background": board_views.BACKGROUND,
-            "fonts_substituted": [{"font": font, "drawn_in": instead} for font, instead in sorted(fonts.items())],
-            "layers_not_carried": renderer.absent,
-            "rule_areas": board_views.rule_area_entries(areas),
+            **board_views.index_fields(scale, figures, fonts, renderer.absent, areas),
             "measures": {"text": files["measures_text"], "json": files["measures_json"]},
         }
         write_outputs(ready, files, header, renderer.images, measured)
         os.makedirs(out, exist_ok=True)
         for name in sorted(os.listdir(ready)):
             shutil.move(os.path.join(ready, name), os.path.join(out, name))
-    for font, instead in sorted(fonts.items()):
-        print(f"FONT | {font} | KiCad cannot find this font and drew its text in {instead}; the caption and the index "
-              "name it", file=stream)
-    for layer in renderer.absent:
-        print(f"LAYER | {layer} | the board does not carry this layer, so the view leaves it out; the caption and the "
-              "index name it", file=stream)
+    board_views.report_substitutions(fonts, renderer.absent, False, stream)
     for part in measured["outside"]:
         print(f"OUTSIDE | {part['reference']} | {outside_detail(part)}", file=stream)
     print(f"MEASURES | length {board_views.mm_text(measured['total_length_mm'])} mm | {measured['crossings']} "
           f"crossings | {len(measured['outside'])} parts outside their regions", file=stream)
-    print(f"RESOLUTION | {board_views.scale_text(scale)} | {board_views.PIXELS_PER_FEATURE} px across the smaller of "
-          f"the minimum track width {board_views.mm_text(figures[0])} mm and the minimum clearance "
-          f"{board_views.mm_text(figures[1])} mm", file=stream)
+    board_views.report_resolution(scale, figures, stream)
     print(f"RESULT | WRITTEN | {len(renderer.images)} images, their index and the placement's measures | {clean(out)}",
           file=stream)
     return 0
@@ -429,27 +425,8 @@ def outside_detail(part: dict) -> str:
 
 def write_outputs(folder: str, files: Dict[str, str], header: dict, images: List[dict], measured: dict) -> None:
     """The index and the measures, each as text and JSON, into `folder` under the names `files` gives them."""
-    resolution = header["resolution"]
-    lines = [f"BOARD | {header['board']}",
-             f"RESOLUTION | {board_views.scale_text(resolution['px_per_mm'])} | {resolution['pixels_per_feature']} px "
-             f"across the smaller of the minimum track width {board_views.mm_text(resolution['min_track_width_mm'])} "
-             f"mm and the minimum clearance {board_views.mm_text(resolution['min_clearance_mm'])} mm",
-             f"LIMIT | every image within a long edge of {board_views.LONG_EDGE_PX} px and {board_views.PATCHES} "
-             f"patches of {board_views.PATCH_PX} by {board_views.PATCH_PX} px",
-             f"MEASURES | {files['measures_text']} | {files['measures_json']}"]
-    lines += [f"FONT | {font['font']} | not found, so KiCad drew its text in {font['drawn_in']}"
-              for font in header["fonts_substituted"]]
-    lines += [f"LAYER | {layer} | not carried by the board, so the view leaves it out"
-              for layer in header["layers_not_carried"]]
-    lines += [f"RULE AREA | {area['name']} | on {', '.join(area['layers'])}, {'; '.join(area['rules'])}; KiCad does "
-              f"not plot it, so the view draws it as a {board_views.RULE_AREA[1]} dashed hatched outline"
-              for area in header["rule_areas"]]
-    lines += [f"IMAGE | {image['file']} | {image['caption']}" for image in images]
-    with open(os.path.join(folder, files["index_text"]), "w", encoding="utf-8") as handle:
-        handle.write("\n".join(lines) + "\n")
-    with open(os.path.join(folder, files["index_json"]), "w", encoding="utf-8") as handle:
-        json.dump(dict(header, images=images), handle, indent=1)
-        handle.write("\n")
+    board_views.write_index(folder, files, header, images, False,
+                            after_limit=[f"MEASURES | {files['measures_text']} | {files['measures_json']}"])
     text = [f"BOARD | {measured['board']}",
             f"LENGTH | total | {board_views.mm_text(measured['total_length_mm'])} mm",
             f"CROSSINGS | total | {measured['crossings']}",
