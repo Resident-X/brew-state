@@ -1,12 +1,12 @@
 id: SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C2
 type: criterion
-title: The method says how an off-board schematic part is listed and that a failed compare before the router rewrites the first pass
+title: The method says an excluded symbol is no floorplan part and that a failed compare before the router rewrites the pass without a router commit
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  Amend the method's planning step so it states how a part the schematic keeps off the board is treated in the floorplan's parts listing, consistent with the placement command's stop on a listed part that is not on the board, and amend the routing step's instruction to repeat from step 2 after a failed compare so that it says the first critical routing pass is rewritten, not a second appended, while no router commit exists. Out of scope: any other wording of those steps.
+  Amend the method's planning step so it states that a symbol marked excluded from the board is absent from the netlist in the schematic tool's native format, is not a part for the floorplan and is listed in no region, so the plan's cross-check and the placement command's stop on a listed part that is not on the board agree, and so that the amendment for a part added after placement appends the part to its region's parts and changes no bound. Amend the routing step's instruction to repeat from step 2 after a failed compare so that it says the pass with no router commit is rewritten in place, not a further pass appended, since only the last pass may have none and a pass the router has run after is never changed. Amend the method's step 6 description of the history command so it states each behaviour the command now has, with its check labels. Out of scope: any wording of the method not describing these checks.
 links:
   - target: SOL-BOARD-HISTORY-PLACEMENT-HARDENING
     type: criterion-of

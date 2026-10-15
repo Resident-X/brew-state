@@ -126,9 +126,13 @@ BASE_REF = f"{REMOTE}/{MAIN}"
 #: a change that reaches emulated behaviour without touching a source still
 #: meets the tier. The records under docs/ are here because the emulation suite
 #: fails when one goes stale against the inputs it pins, and the Taskfile
-#: because it is what runs the suite.
+#: because it is what runs the suite. The controller boards' figures record is
+#: here beside the casting-peak record it quotes, because the suite fails when
+#: the peaks it quotes differ from that record's.
 EMULATION_READS = (
     "firmware/",
+    "docs/casting-peak.md",
+    "docs/sunbeam-em7000/controller-board-design-constraints.md",
     "docs/protection-margin.md",
     "docs/parameter-dominance.md",
     "docs/parameter-identifiability.md",

@@ -1,0 +1,16 @@
+id: EV-SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED-C1-TEST-9
+type: evidence
+title: test evidence for SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T19:59:00.929128Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py::test_the_casting_peak_record_and_the_figures_record_are_declared_as_read
+  artifact_version: cccb0e2a9dfa2b218b85cca46a2ff91132c69463
+attested_by: crun-76fa82388389a9dc
+links:
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+    type: satisfies

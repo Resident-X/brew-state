@@ -68,6 +68,8 @@ BASELINE = {
     "firmware/tools/check_example.py": "print('check')\n",
     "firmware/emulation/tests/test_example.py": "pass\n",
     "docs/protection-margin.md": "# margin\n",
+    "docs/casting-peak.md": "# casting peak\n",
+    "docs/sunbeam-em7000/controller-board-design-constraints.md": "# figures\n",
     "docs/parameter-dominance.md": "# dominance\n",
     "docs/parameter-identifiability.md": "# identifiability\n",
     "docs/parameter-stability.md": "# stability\n",
@@ -510,6 +512,8 @@ class ThePathSelection(unittest.TestCase):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed
         for record in (
             "docs/protection-margin.md",
+            "docs/casting-peak.md",
+            "docs/sunbeam-em7000/controller-board-design-constraints.md",
             "docs/parameter-dominance.md",
             "docs/parameter-identifiability.md",
             "docs/parameter-stability.md",
@@ -521,6 +525,21 @@ class ThePathSelection(unittest.TestCase):
                 chosen = repository.scope()
                 self.assertTrue(chosen.run_emulation, chosen.reason)
                 self.assertEqual([record], chosen.judged)
+
+    def test_the_casting_peak_record_and_the_figures_record_are_declared_as_read(self):
+        # SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1: The round gate selects the emulation tier whenever the branch changes the generated record or the figures record, and a test fails if either is absent from the paths the emulation is declared to read
+        for record in (
+            "docs/casting-peak.md",
+            "docs/sunbeam-em7000/controller-board-design-constraints.md",
+        ):
+            with self.subTest(record=record):
+                self.assertIn(record, round_gate.EMULATION_READS)
+                self.assertTrue(round_gate.reads(record))
+                self.assertFalse(
+                    round_gate.reads(record, tuple(
+                        entry for entry in round_gate.EMULATION_READS if entry != record)),
+                    "the record is read through another entry, so removing its own would "
+                    "not be noticed by the gate")
 
     def test_a_new_firmware_file_not_yet_committed_runs_it(self):
         # SOL-VERIFY-ROUND-GATE-TARGETED.C2: The round gate runs everything when it cannot tell what changed

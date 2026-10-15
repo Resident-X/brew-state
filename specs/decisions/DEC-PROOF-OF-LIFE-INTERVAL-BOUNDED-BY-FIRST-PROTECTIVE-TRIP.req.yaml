@@ -3,7 +3,7 @@ type: decision
 category: tactical
 title: The proof-of-life removal interval is bounded by the time to the first protective trip
 status: active
-version: 1
+version: 2
 text: |
   The interval within which loss of the controller's proof of life must remove heater power is derived from the time a heater takes to reach its retained protection's trip point when left fully on, and the shorter of the machine's two heaters sets it.
 
@@ -17,7 +17,7 @@ rationale: |+
 
   Reversibility: The basis is cheap to change before the interlock's timing is fixed in hardware. Once the thermal masses are measured at commissioning, or the casting's peak is measured rather than modelled, the figure tightens or loosens without the basis changing. A different basis after the boards are built may mean a component change in the interlock's timing.
 
-  Consequences: The figures record carries the interval as pending against SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED, which derives each casting's peak under control from the plant model and then the interval itself, graded inferred, citing the casting peaks, the declared trip points, the element power at the top of the declared supply span and the estimated thermal masses. Until then the record shows the times taken from the commanded temperatures only as upper limits the interval will not exceed. The interlock's design works to the derived interval. A later measurement of either thermoblock's thermal mass or casting peak re-derives it.
+  Consequences: The figures record carries the interval as pending against SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK. SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED derives each casting's peak under control from the plant model, graded inferred; the sibling derives the interval from that peak once the control holds the casting, citing the casting peaks, the declared trip points, the element power at the top of the declared supply span and the estimated thermal masses. Until then the record shows the times taken from the commanded temperatures only as upper limits the interval will not exceed. The interlock's design works to the derived interval. A later measurement of either thermoblock's thermal mass or casting peak re-derives it.
 
   Amendment: the first statement of this decision started from the highest temperature the controller commands. Review of the derived figure showed that bounds the commanded variable, not the casting, so it is not the worst case the decision requires: with 7 K between the coffee block's commanded ceiling and its trip point, each kelvin the casting stands above the commanded figure removes about a sixth of a second from the interval. The basis is the casting's peak under control instead.
 

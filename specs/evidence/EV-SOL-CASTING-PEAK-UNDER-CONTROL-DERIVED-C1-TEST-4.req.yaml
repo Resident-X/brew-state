@@ -1,0 +1,16 @@
+id: EV-SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED-C1-TEST-4
+type: evidence
+title: test evidence for SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T19:59:00.379411Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_the_extraction_is_not_lower_than_any_casting_temperature_reported, test_an_extraction_that_drops_an_end_of_the_series_is_caught, test_a_single_hot_interval_is_found_wherever_it_falls, test_a_runs_peak_is_the_highest_of_its_phases
+  artifact_version: cccb0e2a9dfa2b218b85cca46a2ff91132c69463
+attested_by: crun-76fa82388389a9dc
+links:
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+    type: satisfies
