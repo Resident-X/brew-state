@@ -1,0 +1,12 @@
+id: SOL-HW-CONNECTIVITY-CHECK.C2
+type: criterion
+title: A channel the record lists and the design lacks, and a net on a pin the record omits, each fail the check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A channel listed in the record whose net is absent from the design fails the check, and any net on a connector pin or controller pin that the record does not list fails it. Each failure names the channel or the net and the pin. A design whose channels all land where the record says and which connects nothing else passes. Out of scope: the electrical rule checks, which the rule-check solution owns.
+links:
+  - target: SOL-HW-CONNECTIVITY-CHECK
+    type: criterion-of

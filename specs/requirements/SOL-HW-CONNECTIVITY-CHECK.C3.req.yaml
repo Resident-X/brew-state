@@ -1,0 +1,12 @@
+id: SOL-HW-CONNECTIVITY-CHECK.C3
+type: criterion
+title: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A design with no pin allocation record at or above its folder, one that cannot be parsed, one missing a required key and one that lists no channel each fail, since an empty record would otherwise pass any design. A record marked synthetic satisfies only a design marked not for manufacture, so a proof record can never let an orderable board pass. Out of scope: the content of a real board's record, which that board's design task authors.
+links:
+  - target: SOL-HW-CONNECTIVITY-CHECK
+    type: criterion-of

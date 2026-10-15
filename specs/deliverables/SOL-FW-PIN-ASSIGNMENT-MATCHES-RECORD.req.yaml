@@ -1,0 +1,19 @@
+id: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD
+type: deliverable
+category: solution
+title: The firmware's channel-to-pin assignment is checked against a pin allocation record, each fault proven on synthetic input
+status: active
+version: 1
+text: |
+  The firmware's host check tier gains a check that compares the firmware's own assignment of channels to controller pins with a pin allocation record, in the form the design-records decision sets, so a board and the code that drives it cannot disagree about which output is which. It fails a channel the firmware assigns that the record does not list, a channel the record lists that the firmware does not assign, and a channel assigned to a different controller pin, and each failure names the channel and both pins. A record that cannot be parsed, is missing a required key or lists no channel fails.
+
+  Placement, settled before build. The check lives in the firmware's check tooling and its tests in the firmware's test tier, so it runs with the rest of the host tier and the board tool never reads firmware source. It compares the firmware with whichever record it is given. Its tests use synthetic firmware tables and synthetic records, and it is proven on seeded faults in those. This solution does not point the check at a machine's real record: that record does not exist until the board it describes is designed, and the design task that authors the record also wires this check to it.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by

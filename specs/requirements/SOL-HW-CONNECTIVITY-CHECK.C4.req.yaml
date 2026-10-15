@@ -1,0 +1,12 @@
+id: SOL-HW-CONNECTIVITY-CHECK.C4
+type: criterion
+title: Each connectivity fault is shown to fail the check on a seeded copy of the throwaway design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The on-demand seeded-fault proof introduces, into a copy of the throwaway design outside the repository, a channel's net moved to another pin, a listed channel removed from the design, an extra connection on a pin the record omits, and a channel on the wrong connector, and requires the check to fail on each and to name it. The unmodified throwaway design passes. Out of scope: faults in the parts or the firmware.
+links:
+  - target: SOL-HW-CONNECTIVITY-CHECK
+    type: criterion-of

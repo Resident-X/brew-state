@@ -1,0 +1,12 @@
+id: SOL-HW-CONNECTIVITY-CHECK.C5
+type: criterion
+title: A change to a pin allocation record re-runs the board tier in the build round
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A branch that changes a pin allocation record is one the round gate runs its board tier for, the same as a change to the design the record governs. The set of files a design reads includes its record. Out of scope: the nightly run, which runs the board check on every design regardless of what changed.
+links:
+  - target: SOL-HW-CONNECTIVITY-CHECK
+    type: criterion-of

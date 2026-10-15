@@ -1,0 +1,12 @@
+id: SOL-HW-PARTS-CHECK.C5
+type: criterion
+title: A change to a specification record or catalogue extract re-runs the board tier in the build round
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A branch that changes a specification record or a catalogue extract is one the round gate runs its board tier for, the same as a change to the design they govern. The set of files a design reads includes both. Out of scope: the nightly run, which runs the board check on every design regardless of what changed.
+links:
+  - target: SOL-HW-PARTS-CHECK
+    type: criterion-of

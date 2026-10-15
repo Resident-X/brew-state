@@ -1,0 +1,45 @@
+id: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+type: decision
+category: tactical
+title: Board design records are YAML files in the machine's hardware folder that the connectivity and parts checks compare a design against
+status: active
+version: 1
+text: |
+  The three records a board design is checked against are YAML files in the machine's hardware folder, hardware/<machine>/, found the way the separation basis record is found: a design is held to the record in the nearest folder at or above its own, and a proof design carries its own records marked synthetic: true. A record marked synthetic satisfies only a design marked not for manufacture. A record that cannot be parsed, or lacks a required key, fails like a missing one, and a design with no record to be held to fails rather than passes.
+
+  The pin allocation record, pin-allocation.yaml, holds a list under the key channels. Each entry names the channel exactly as the channel enumeration names it, the schematic net that carries it, the controller pin, the connector reference and the connector pin. A channel that stays on the board with no connector states no connector. The connectivity check fails a channel whose net does not reach the stated controller pin and connector pin, a channel the record lists that the design lacks, and any net on a connector pin or controller pin that the record does not list.
+
+  The parts specification record, parts-specification.yaml, holds a list under the key positions. Each entry names a position by its reference designator and states what the part there must satisfy as keys: value, package and rating, each optional, and the LCSC number of the part chosen. The design carries each part's manufacturer catalogue number in a symbol field named LCSC. The parts check fails a placed part whose stated value, package or rating differs from the record, a part whose LCSC field is absent or differs, and a position the design places that the record does not list.
+
+  The catalogue extract, catalogue-extract.yaml, is a committed reading of the manufacturer's public catalogue. It states the date it was read, its source, a max_age_days beyond which the check refuses it, and a list under entries of LCSC number, library class, stock and unit price. The parts check never fetches the catalogue: it fails a part whose LCSC number is absent from the extract, a part the extract shows out of stock, and an extract older than its own max_age_days.
+
+  The firmware's channel-to-pin assignment is compared with the pin allocation record by a separate check in the firmware verification tier, so the board tool never reads firmware source and the firmware tier never reads a board.
+
+  These records are the contract between the checks and whoever produces the pin allocation and parts for a board. The checks are built and proven on synthetic records beside the proof designs, so they exist before any real board is drawn; applying them to a real board is the work of that board's design task.
+rationale: |
+  Context: the connectivity and parts checks compare a board with a record, but no record of either exists in a form a tool can compare. The channel enumeration and the component specification are prose tables, the only pin allocation is a working document of the earlier bought-module direction, and the manufacturer's stock and prices are a dated reading in a prose table. Whatever form the first checks pick becomes the contract for the partition work and for every board's design task, so it is settled here once, ahead of the checks, as the separation basis record was.
+
+  Trade-offs: YAML in the machine's hardware folder reuses the form and the discovery rule the separation basis already uses, so a builder learns one convention and the tooling already has a strict reader for it. Parsing the existing prose tables was rejected because they carry free-text cells such as undecided and a stated capability floor, and a tool that guesses at prose passes what it misreads. Reading the connectivity from a KiCad parts-list export alone was rejected because the export carries no channel names, so it could not say which channel lands where. A live catalogue lookup was rejected because it makes the round and the nightly depend on a third party's site, and because a reader without an account could not repeat it; a dated extract is checkable offline and its age is itself checked. Reading the firmware's pin table from the board tool was rejected because it would tie the hardware tool to the firmware's source layout and make the board tier trigger on firmware edits.
+
+  Reversibility: moderate. Key names are read by the checks and written by whoever produces each record, so renaming one is a sweep across both, caught by the check failing on the old form rather than passing silently. Moving a record between folders costs nothing because designs are found by the nearest-folder rule.
+
+  Consequences: the checks and their seeded-fault proofs are built against synthetic records now. The partition and each board's design task author the real pin allocation and parts specification in these forms, and the manufacturer stock record is kept as a catalogue extract in this form. A board's order is blocked by a failure of either check exactly as it is by a failed rule check.
+options_considered:
+  - option: Three YAML records in the machine's hardware folder, with the catalogue as a committed dated extract and the firmware compared in its own tier
+    reason_rejected: ""
+  - option: Parse the existing prose tables
+    reason_rejected: free-text cells such as undecided make a parser guess, and a guess passes what it misreads
+  - option: Read connectivity from a KiCad parts-list export alone
+    reason_rejected: the export carries no channel names, so it cannot say which channel lands where
+  - option: Look the catalogue up live at check time
+    reason_rejected: it makes the round and nightly depend on a third-party site and an account-free reader cannot repeat it
+  - option: Board tool reads the firmware pin table
+    reason_rejected: it ties the hardware tool to firmware source layout and makes the board tier trigger on firmware edits
+chosen: Three YAML records in the machine's hardware folder, with the catalogue as a committed dated extract and the firmware compared in its own tier
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION.C1
+    type: addresses
+  - target: DEL-HW-DESIGN-VERIFICATION.C2
+    type: addresses
+  - target: DEL-CONTROLLER-HARDWARE.C3
+    type: addresses

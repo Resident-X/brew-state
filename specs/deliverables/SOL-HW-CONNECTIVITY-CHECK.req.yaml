@@ -1,0 +1,27 @@
+id: SOL-HW-CONNECTIVITY-CHECK
+type: deliverable
+category: solution
+title: A board's connectivity is checked against its pin allocation record, each fault proven on a throwaway design
+status: active
+version: 1
+text: |
+  The board check gains a connectivity check that holds each design to its pin allocation record, in the form the design-records decision sets. For every channel the record lists, it reads the schematic netlist the check already exports and requires the channel's net to reach the controller pin and the connector pin the record names. It fails a listed channel the design lacks and any net on a connector pin or controller pin the record does not list, and each failure names the channel, the net, the pin the record names and the pin the net reached, so a builder can act on it without reading the check. A design with no pin allocation record to be held to, an unparseable record, a record missing a required key and a record that lists no channel each fail; a synthetic record satisfies only a design marked not for manufacture.
+
+  Placement, settled before build. The check is more named rules in the existing board check in hardware/tools/, reported with the rest, so the one task-runner command, the round's board tier and the nightly run it with no new gate. The pin allocation record joins what the round reads for a design, so a change to a record re-runs the board tier. The throwaway design in hardware/proof/ gains a synthetic pin allocation record that its committed state satisfies. The seeded-fault proof, on demand like the other proofs, introduces each fault into a copy of that design outside the repository. The check reads files only; it reads no firmware, no manufacturer data and no open editor session.
+
+  Applying the check to a real board needs that board's own record, which its design task authors; this solution builds and proves the check and does not wait for either.
+links:
+  - target: DEL-HW-DESIGN-VERIFICATION.C1
+    type: derives-from
+  - target: DEL-HW-DESIGN-VERIFICATION.C5
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-HW-BOARD-RULE-CHECK-GATE
+    type: depends-on
