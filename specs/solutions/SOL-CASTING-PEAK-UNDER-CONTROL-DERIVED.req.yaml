@@ -23,8 +23,6 @@ links:
     type: depends-on
   - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
     type: justified-by
-  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
-    type: depends-on
 brief_confirmation:
   confirmer: claude-opus-5-5
   fingerprint: 1a5112d754cacd670cfc035cc1314d5c688e45340ffb94e30cb5d72b1626e016
