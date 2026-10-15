@@ -30,6 +30,6 @@ links:
   - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 independent brief reviewer
-  fingerprint: 66d20248cea51faf73ef567ffc09ef0adaaf32c287b5e64377a5ecd49e0bbb4b
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: e04d200a126bc02918fe0e6d0f2f1a997a722767d020f7e6fde510040c79a1fe
   gating_profile: ""
