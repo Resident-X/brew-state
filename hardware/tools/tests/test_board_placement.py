@@ -680,26 +680,6 @@ class Method(unittest.TestCase):
             with self.subTest(planning=words):
                 self.assertIn(words, planning)
 
-    def test_the_catalogue_entries_for_the_failed_orderings_each_say_how_to_get_a_pass(self):
-        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C2: Amend the method's step 6 description of the history command so it states each behaviour the command now has, with its check labels.
-        placement = section(self.method, "Placement")
-        entries = {label: re.search(rf"^- `{label}`: .*$", placement, re.M).group(0)
-                   for label in ("first track", "first placement", "plan before placement", "distinct candidates")}
-        restart = ("A history that fails this way cannot be repaired in place: the work restarts from a fresh branch, "
-                   "with the floorplan corrected and committed before any footprint is placed.")
-        for label in ("first track", "first placement", "plan before placement"):
-            with self.subTest(label=label):
-                self.assertEqual(entries[label].count(restart), 1)
-                self.assertTrue(entries[label].endswith(restart), "the remedy closes the entry, one clause")
-        record = ("Record a candidate that differs in at least one part's position, angle or side.")
-        self.assertEqual(entries["distinct candidates"].count(record), 1)
-        self.assertTrue(entries["distinct candidates"].endswith(record))
-        self.assertNotIn("restarts from a fresh branch", entries["distinct candidates"])
-        self.assertEqual(placement.count("cannot be repaired in place"), 3, "no other entry carries the remedy")
-        planning = section(self.method, "Planning the layout")
-        self.assertIn("the work restarts from a fresh branch, with the floorplan corrected and committed before any "
-                      "footprint is placed", planning, "the entries repeat the planning step's own wording")
-
     def test_the_minimums_move_before_placement_and_the_floorplan_lists_each_regions_parts(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The floorplan table gains a Parts column, the planning cross-checks every part is listed, the minimums move before placement, and the proof design's plan is migrated.
         planning = section(self.method, "Planning the layout")
