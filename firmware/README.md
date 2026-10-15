@@ -248,9 +248,10 @@ curl -fsSL -o get-platformio.py \
 python3 get-platformio.py
 ```
 
-The host environment needs only a system C compiler. The target environment
-downloads the ARM GCC toolchain and the STM32Cube framework on its first build;
-after that both build offline.
+The host environment needs only a system C compiler: GCC or clang, whichever the
+host defaults to, and the strict warning settings hold under both. The target
+environment downloads the ARM GCC toolchain and the STM32Cube framework on its
+first build; after that both build offline.
 
 Everything runs from the repository root through the task runner:
 
@@ -342,6 +343,18 @@ task fw:verify -- --leave-out fw:sweep   # every gate but the sweep; the closing
 and on manual dispatch, leaving the sweep out of that job and running it as the
 sharded sweep workflow in the same run instead. The night fails if any gate or
 any shard does, and its run history is the record of what `main` last verified.
+
+The nightly builds the host tier with each compiler a supported host defaults
+to, chosen by no setting: the job running the gates is on Ubuntu and builds with
+GCC, and a second job on a macOS arm64 image runs `task fw:build` alone and
+builds with Apple clang. The strict warning settings in `platformio.ini` treat a
+conversion as a failure, and the two compilers do not reject the same ones, so a
+narrowing one accepts fails that night instead of reaching a contributor on the
+other platform. A build round compiles with whatever the machine it runs on
+provides, so it needs no second compiler installed. The host-tier unit tests
+also compile every source of the project's own under those settings with each
+GCC and each clang found on the machine running them, and report a family the
+machine lacks as skipped, with the reason, not as passed.
 
 The emulation tier needs an emulator and the vendor's register description,
 neither of which is committed. They are fetched, pinned by digest, into

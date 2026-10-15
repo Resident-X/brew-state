@@ -16,6 +16,16 @@
 # night fails if any gate, any shard, or the judging of the combined population
 # fails.
 #
+# The compiler a job builds the host tier with is the one its host defaults to,
+# chosen by no setting here: the gates job runs on Ubuntu and so builds with
+# GCC, and the host-build job runs on macOS arm64 and so builds with Apple
+# clang. A conversion the strict warning settings reject under one compiler and
+# the other accepts therefore fails a night instead of reaching a contributor on
+# the other platform. The second job runs only the host-tier build, not every
+# gate under both compilers: what a second compiler adds is the warnings only
+# its build reports, and a build round never needs a second compiler installed
+# on the machine it runs on.
+#
 # It also runs on manual dispatch, against whichever ref it is started on.
 
 name: Nightly verification
@@ -95,6 +105,53 @@ jobs:
           PIO="$(command -v pio)"
           export PIO
           task fw:verify -- --leave-out fw:sweep
+
+  host-build-macos:
+    name: The host build under Apple clang
+    runs-on: macos-15
+    # Builds every environment, the target's included, and nothing else: no
+    # test or emulator runs here.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the task runner
+        env:
+          # renovate: datasource=github-releases depName=go-task/task
+          TASK_VERSION: "3.54.0"
+          # The digest the release publishes for this archive, which is not the
+          # one the Ubuntu job checks: each platform's archive has its own, and
+          # each changes with the version and only with it.
+          TASK_SHA256: "12a69fcf37bb8d5bc9150c44f9a936775b73e59ff044c2c245232f198c135637"
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "${RUNNER_TEMP}/task.tar.gz" \
+            "https://github.com/go-task/task/releases/download/v${TASK_VERSION}/task_darwin_arm64.tar.gz"
+          echo "${TASK_SHA256}  ${RUNNER_TEMP}/task.tar.gz" | shasum -a 256 -c -
+          mkdir -p "${RUNNER_TEMP}/bin"
+          tar -xzf "${RUNNER_TEMP}/task.tar.gz" -C "${RUNNER_TEMP}/bin" task
+          echo "${RUNNER_TEMP}/bin" >> "${GITHUB_PATH}"
+
+      # In a virtual environment of its own, because this runner's Python is
+      # managed by its package manager and refuses an install into itself.
+      - name: Install PlatformIO
+        env:
+          # renovate: datasource=pypi depName=platformio
+          PLATFORMIO_VERSION: "6.1.19"
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/platformio"
+          "${RUNNER_TEMP}/platformio/bin/python" -m pip install "platformio==${PLATFORMIO_VERSION}"
+          echo "${RUNNER_TEMP}/platformio/bin" >> "${GITHUB_PATH}"
+
+      - name: Build every environment with this host's own compiler
+        run: |
+          set -euo pipefail
+          PIO="$(command -v pio)"
+          export PIO
+          task fw:build
 
   sweep:
     name: The full mutation sweep

@@ -1,0 +1,16 @@
+id: EV-SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC-C1-TEST
+type: evidence
+title: test evidence for SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T10:40:57.121628Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_host_compilers.py::test_under_gcc
+  artifact_version: 3a9a436a2ad5865e44c42b5ed6b0fa5cf78e19ab
+attested_by: crun-edbdc07b3683ca4a
+links:
+  - target: SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C1
+    type: satisfies
