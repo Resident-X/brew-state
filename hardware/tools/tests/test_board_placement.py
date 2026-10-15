@@ -573,100 +573,6 @@ def section(text, heading, level="## "):
     return text[start:after if after >= 0 else len(text)]
 
 
-def code_blocks(text):
-    """Each fenced code block of `text`, its indent removed."""
-    return [re.sub(r"^" + indent, "", body, flags=re.M)
-            for indent, body in re.findall(r"^( *)```\n(.*?)^\1```", text, re.M | re.S)]
-
-
-def track(start, end, net, locked):
-    """A straight track in the form KiCad writes it, its head on a line of its own."""
-    return (f'(segment\n\t\t(start {start[0]} {start[1]})\n\t\t(end {end[0]} {end[1]})\n\t\t(width 0.25)\n'
-            f'\t\t(layer "F.Cu")\n' + ("\t\t(locked yes)\n" if locked else "") + f'\t\t(net "{net}")\n'
-            f'\t\t(uuid {uuid()})\n\t)')
-
-
-class History(unittest.TestCase):
-    """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: A board's placement is chosen from several candidates, each measured and judged before any track is drawn."""
-
-    def setUp(self):
-        with open(os.path.join(REPO, "docs", "board-design-method.md"), encoding="utf-8") as handle:
-            method = handle.read()
-        self.placement = code_blocks(section(method, "6. Choose one, and record the placement before any track", "### "))
-        self.routing = code_blocks(section(method, "4. Check the critical routing against the catalogue, before the "
-                                                   "router runs", "### "))
-        self.root = tempfile.mkdtemp(prefix="board-placement-history-")
-        self.addCleanup(shutil.rmtree, self.root, True)
-        self.repo, self.work = os.path.join(self.root, "repo"), os.path.join(self.root, "work")
-        os.makedirs(os.path.join(self.repo, "b"))
-        os.makedirs(self.work)
-        self.git("init", "-q")
-        self.git("config", "user.email", "test@example.invalid")
-        self.git("config", "user.name", "Test")
-
-    def git(self, *args):
-        return subprocess.run(["git", *args], cwd=self.repo, capture_output=True, text=True, check=True).stdout.strip()
-
-    def commit(self, board=None, plan_text=None):
-        for name, text in (("b/b.kicad_pcb", board), ("b/layout-plan.md", plan_text)):
-            if text is not None:
-                with open(os.path.join(self.repo, name), "w", encoding="utf-8") as handle:
-                    handle.write(text)
-        self.git("add", "-A")
-        self.git("commit", "-q", "-m", "step")
-        return self.git("rev-parse", "HEAD")
-
-    def shell(self, block, **values):
-        """Run a block of the method's commands from the repository's root, its placeholders filled; its result."""
-        values = dict({"board folder": "b", "board": "b", "work folder": self.work}, **values)
-        for name, value in values.items():
-            block = block.replace(f"<{name}>", value)
-        block = block.replace("'hardware/tools'", repr(TOOLS))
-        return subprocess.run(["sh", "-c", block], cwd=self.repo, capture_output=True, text=True)
-
-    def test_the_section_is_judged_as_it_stood_before_the_first_track_and_the_parts_as_the_chosen_commit_put_them(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
-        find, listing, extract = self.placement
-        self.assertIn("git log", find)
-        whole = "## Placement\n\n### Candidate 1\n\n- **Commit**: c1\n\n**Chosen**: 1\n"
-        self.commit(board_fixtures.layout(parts()), "# Layout plan\n\n## Placement\n")
-        chosen = self.commit(plan_text="# Layout plan\n\n" + whole)
-        first = self.commit(board_fixtures.layout(parts() + [track((5, 9), (20, 9), "A", False)]))
-        self.assertEqual(self.shell(find.splitlines()[0]).stdout.strip(), first)
-        with open(os.path.join(self.repo, "b", "layout-plan.md"), "a", encoding="utf-8") as handle:
-            handle.write("\n## Critical routing\n\nBoard judged: x\n")
-        self.assertEqual(self.shell(extract, T=first).returncode, 0,
-                         "a section followed by a later section now reads as it stood before the first track")
-        self.assertNotEqual(self.shell(extract, T=chosen).returncode, 0,
-                            "an empty heading committed before the first track and filled in later passed")
-        self.assertEqual(self.shell(listing, **{"chosen commit": chosen, "T": first}).returncode, 0)
-        moved = self.commit(board_fixtures.layout(parts(r1_turned=True) + [track((5, 9), (20, 9), "A", False)]))
-        result = self.shell(listing, **{"chosen commit": chosen, "T": moved})
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("R1 20 10 180 F.Cu", result.stdout)
-
-    def test_the_routers_commit_is_found_from_board_judged_and_a_hand_route_before_locking_is_not_taken_for_it(self):
-        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
-        listing, extract = self.routing
-        self.commit(board_fixtures.layout(parts()), "# Layout plan\n")
-        self.commit(board_fixtures.layout(parts() + [track((5, 9), (20, 9), "A", False)]))
-        judged = self.commit(board_fixtures.layout(parts() + [track((5, 9), (20, 9), "A", True)]))
-        section_text = "## Critical routing\n\n**Board judged**: x\n\n| Item | Kind | Severity | Verdict | Rests on | Why |\n"
-        recorded = self.commit(plan_text="# Layout plan\n\n" + section_text)
-        router = self.commit(board_fixtures.layout(parts() + [track((5, 9), (20, 9), "A", True),
-                                                              track((5, 11), (20, 11), "GND", False)]))
-        result = self.shell(listing, B=judged)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        rows = [line.split() for line in result.stdout.splitlines()]
-        self.assertEqual(rows[0], [judged, "1", "0"], "Board judged holds its locked copper and none unlocked")
-        self.assertEqual(next(commit for commit, _, unlocked in rows[1:] if unlocked != "0"), router)
-        self.assertEqual(self.shell(extract, R=router).returncode, 0)
-        with open(os.path.join(self.repo, "b", "layout-plan.md"), "a", encoding="utf-8") as handle:
-            handle.write("| WORK-1 | judgement | major | pass | added after the router | |\n")
-        self.assertNotEqual(self.shell(extract, R=router).returncode, 0, "a row added after the router passed")
-        self.assertNotEqual(self.shell(extract, R=recorded).returncode, 0)
-
-
 class Method(unittest.TestCase):
     """SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: A board's placement is chosen from several candidates, each measured and judged before any track is drawn."""
 
@@ -700,19 +606,20 @@ class Method(unittest.TestCase):
                       "git worktree add --detach", "Never commit it", "| Item | Verdict | Rests on | Why |",
                       "is not chosen", "never a fixed weighting of the measures", "`## Placement`", "**Commit**",
                       "**Renders**", "**Measures**", "**Chosen**", "before any track is drawn",
-                      "git log --reverse --format=%H -G '^[[:space:]]*[(](segment|arc|via)$' -- "
-                      "<board folder>/<board>.kicad_pcb | head -1",
-                      "git worktree add --detach <work folder>/before-track <T>^",
+                      "in a fenced code block below the field",
                       "a section committed empty, or in part, and filled in after the first track does not pass",
-                      "awk '/^## /{p=($0==\"## Placement\")} p && NF'", "cmp <work folder>/placement-then.md",
-                      "each footprint's reference, position, angle and side in `<T>` are those in the chosen "
-                      "candidate's commit", "git merge-base --is-ancestor <commit> <T>",
-                      "in the checkout's own copy of this document",
-                      "in the commit before the first track, is missing, or differs from the section now"):
+                      "task hw:history -- --board <board>.kicad_pcb", "`before first track`", "`RESULT | PASS`",
+                      "- `first track`:", "- `placement section`:", "- `placement items`:", "- `candidates`:",
+                      "- `candidate <n> commit`:", "- `candidate <n> measures`:", "- `candidate <n> verdicts`:",
+                      "- `distinct candidates`:", "- `chosen`:", "- `parts at first track`, or `parts at HEAD`",
+                      "merges into the main line without rewriting that history",
+                      "never squashed, rebased or force-pushed", "The command judges the record's shape and order"):
             with self.subTest(words=words):
                 self.assertIn(words, placement)
-        self.assertNotIn("-G '^## Placement$'", placement, "the section's first commit is no anchor: an empty heading "
-                         "committed before the first track would pass")
+        for words in ("git log --reverse", "git worktree add --detach <work folder>/before-track", "awk '/^## /",
+                      "cmp <work folder>", "python3 -c", "git merge-base --is-ancestor"):
+            with self.subTest(gone=words):
+                self.assertNotIn(words, placement, "the history cross-checks are the command's, not prose recipes")
 
     def test_the_minimums_move_before_placement_and_the_floorplan_lists_each_regions_parts(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The floorplan table gains a Parts column, the planning cross-checks every part is listed, the minimums move before placement, and the proof design's plan is migrated.
@@ -759,20 +666,31 @@ class Method(unittest.TestCase):
         for words in ("render the review views with `task hw:views`", "The placement view is not rendered here",
                       "only when an item that bears on the critical nets names `placement` in its *Judged on*",
                       "or else that the placement view was not rendered", "workmanship items included",
-                      "`## Critical routing`",
+                      "`## Critical routing`", "under the heading `### Pass 1`", "only ever appended",
+                      "a pass the router has run after is never changed",
                       "| Item | Kind | Severity | Verdict | Rests on | Why |", "on its rows in the rules table alone",
                       "measured half is judged by the pre-order check that step 8 runs after the router",
-                      "A `fail` is put right before the router runs", "Commit the section before the router runs",
+                      "A `fail` is put right before the router runs", "`fail, then pass at <commit>`",
+                      "Commit the section before the router runs", "task hw:history -- --board <board>.kicad_pcb",
                       "whose layout holds at least one track, arc or via and every one of them locked",
-                      "git rev-list --reverse --ancestry-path <B>..HEAD", "awk '/^## /{p=($0==\"## Critical routing\")} p && NF'",
-                      "cmp <work folder>/critical-then.md", "In the section as it stood there",
-                      "in the commit before the router's, is missing, or differs from the section now", "locked_copper"):
+                      "`router not yet run`", "the router leaves its copper unlocked",
+                      "A router, or any step, that locked its own copper would read as the router not having run",
+                      "A net routed by hand and committed before it was locked comes before `<B>`",
+                      "- `critical routing section`:", "- `pass <k> board judged`:", "- `pass <k> before router`:",
+                      "- `pass <k> verdicts`:", "Removing the router's copper between them passes",
+                      "so the branch merges without rewriting it"):
             with self.subTest(words=words):
                 self.assertIn(words, check)
-        for words in ("-G '^## Critical routing$'", "<section commit>", "after one whose tracks are all locked"):
+        for words in ("-G '^## Critical routing$'", "<section commit>", "after one whose tracks are all locked",
+                      "git rev-list", "awk '/^## /", "cmp <work folder>", "python3 -c"):
             with self.subTest(gone=words):
                 self.assertNotIn(words, check)
         self.assertNotRegex(self.method, r"step [4-7] of routing does|\(step 7 of routing\)")
+        final = section(routing, "8. Run the board's own rule checks, then reopen the board", "### ")
+        for words in ("this is the router's commit", "task hw:history -- --board <board>.kicad_pcb",
+                      "decides both the placement section", "must not say `router not yet run`"):
+            with self.subTest(final=words):
+                self.assertIn(words, final)
 
     def test_the_floorplan_says_every_footprint_is_a_part_on_the_schematic_and_the_catalogue_names_each_use(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The floorplan lists every part against the schematic, and a part listed in no region is outside, so a footprint the schematic does not carry is reported outside and no chosen placement holds one; the minimums the views' resolution reads are written at placement.
@@ -800,7 +718,12 @@ class Method(unittest.TestCase):
         for words in ("A workmanship finding caused by placement is closed at the placement",
                       "never by reshaping the route around the parts as they stand", "re-route what the change affects",
                       "render the placement view and its measures again", "the placement's measures before and after it",
-                      "A finding whose cause is the route alone is corrected in the copper"):
+                      "A finding whose cause is the route alone is corrected in the copper",
+                      "Remove the router's copper the change affects rather than editing it",
+                      "commit a critical re-route only once it is locked", "appended below the earlier passes, which "
+                      "stay as they are", "run `task hw:history -- --board <board>.kicad_pcb` as step 8 of routing does",
+                      "a `FAIL` on `pass <n> board judged` means", "on `pass <n> before router`, that an earlier pass "
+                      "was changed"):
             with self.subTest(words=words):
                 self.assertIn(words, close)
         review = section(self.method, "Layout review")
