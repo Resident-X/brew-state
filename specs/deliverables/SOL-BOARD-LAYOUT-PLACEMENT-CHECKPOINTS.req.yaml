@@ -31,3 +31,7 @@ links:
     type: depends-on
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: depends-on
+brief_confirmation:
+  confirmer: claude-opus-5-5 (independent brief reviewer, fresh context)
+  fingerprint: 301e9323d373d435e90319d11bb76b82719202e0cc54d36b2d90054312335c83
+  gating_profile: ""
