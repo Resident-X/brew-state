@@ -19,3 +19,7 @@ links:
     type: targets
   - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: cafd140b4b2b48dc0563d663c73cd48138c2194e7b45eae051af5cb5796ef26c
+  gating_profile: ""
