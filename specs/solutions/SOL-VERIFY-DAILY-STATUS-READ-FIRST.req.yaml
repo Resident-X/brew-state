@@ -15,3 +15,7 @@ links:
     type: targets
   - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: b496aeb726c6a2976e3ee4c75475d29126734b32f64f553a8e79cdd42540859e
+  gating_profile: ""
