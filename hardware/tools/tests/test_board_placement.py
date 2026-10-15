@@ -604,7 +604,8 @@ class Method(unittest.TestCase):
                       "task hw:placement -- --board <board>.kicad_pcb --project <board>.kicad_pro --out",
                       "git worktree add --detach", "Never commit it", "| Item | Verdict | Rests on | Why |",
                       "is not chosen", "never a fixed weighting of the measures", "`## Placement`", "**Commit**",
-                      "**Renders**", "**Measures**", "**Chosen**", "before any track is drawn",
+                      "**Renders**", "**Measures**", "**Chosen**", "and before any track, arc, via or pour is drawn. Its purpose",
+                      "### 6. Choose one, and record the placement before any track, arc, via or pour\n",
                       "in a fenced code block below the field",
                       "a section committed empty, or in part, and filled in after the first track does not pass",
                       "task hw:history -- --board <board>.kicad_pcb", "`before first track`", "`RESULT | PASS`",
@@ -641,12 +642,15 @@ class Method(unittest.TestCase):
         compare = section(routing, "7. Compare the imported board with the record", "### ")
         for words in ("correct the cause, and repeat from step 2. The repeat rewrites in place the pass that has no "
                       "router commit, the last, and appends no further pass",
-                      "only the last pass may have no router commit, so a pass appended after it fails `pass <k> before "
-                      "router`, and a pass the router has run after is never changed"):
+                      "only the last pass may have no router commit, so a pass appended after one that has no router commit "
+                      "fails `pass <k> before router`, where <k> is that earlier pass, the one with no router commit, and a "
+                      "pass the router has run after is never changed"):
             with self.subTest(words=words):
                 self.assertIn(words, compare)
         record = section(routing, "4. Check the critical routing against the catalogue, before the router runs", "### ")
         self.assertIn("the pass that has no router commit is then rewritten in place", record)
+        self.assertIn("step 7 of this section sends the work back to step 2 when a comparison fails", record)
+        self.assertNotIn("; step 7 sends the work back", record, "a bare step 7 reads as the layout review's")
         placement = section(self.method, "Placement")
         for words in ("a copper pour, `<T>`", "a rule area, a zone carrying a keepout, carries no net and is no copper",
                       "the first commit whose board holds a footprint, `<P>`, from the history alone and never from the "

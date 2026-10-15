@@ -822,6 +822,62 @@ class PlanAndCopperFails(Base):
         self.assertIn("CHECK | distinct candidates | PASS | no two candidates place their parts alike",
                       "\n".join(lines))
 
+    def test_one_turn_written_two_ways_fails_as_one_placement(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails two candidates whose parts sit identically, judged by each part's reference, position, angle and side
+        plain = board(PLACES[1])
+        r1 = "(at 20 10)"
+        self.assertEqual(plain.count(r1), 1)
+        for name, first, second, measures in (("0 and 360", "0", "360", MEASURES[1]),
+                                              ("0 and -0", "0", "-0", MEASURES[1]),
+                                              ("-90 and 270", "-90", "270", None)):
+            with self.subTest(turns=name):
+                self.repo = Repo(self)
+                self.repo.planned()
+                one = plain.replace(r1, f"(at 20 10 {first})" if first != "0" else r1)
+                two = plain.replace(r1, f"(at 20 10 {second})")
+                self.assertNotEqual(one, two, "the two files differ in their bytes")
+                if measures is None:
+                    # R1 turned to 270 puts its pads at (21, 10) on A and (19, 10) on GND: 16.0312 mm and 14.0357 mm.
+                    measures = ["LENGTH | total | 30.0669 mm", "CROSSINGS | total | 0", "OUTSIDE | total | 0"]
+                first_commit, second_commit = self.candidates_two(one, two)
+                self.record(first_commit, second_commit, one, measures={1: measures, 2: measures})
+                failed = self.assertFails("candidates 1 and 2 place every part alike", check="distinct candidates")
+                self.assertOnly(failed, "distinct candidates")
+
+    def test_a_negative_zero_in_a_position_reads_as_zero(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails two candidates whose parts sit identically, judged by each part's reference, position, angle and side
+        with tempfile.TemporaryDirectory() as directory:
+            placed = {}
+            for name, at in (("zero", "0 0 0"), ("negative", "-0 -0.0 -0")):
+                path = os.path.join(directory, name + ".kicad_pcb")
+                with open(path, "w") as handle:
+                    handle.write(board_fixtures.layout([footprint("R1", 0, 0, [pad(1, 0, -1, "A", "passive")]).replace(
+                        "(at 0 0)", f"(at {at})", 1)]))
+                placed[name] = board_history.parts_placed(board_history.locked_copper.read_layout(path))
+        self.assertEqual(placed["zero"], placed["negative"])
+        self.assertEqual(placed["zero"]["R1"][0], "(0, 0) at 0 degrees")
+
+    def test_turns_a_full_circle_apart_or_a_tiny_step_under_one_stay_whole(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: judged by each part's reference, position, angle and side rather than by the board file's bytes
+        self.assertEqual({board_history.turn_text(angle) for angle in (0, 360, -360, 720, -0.0)}, {"0"})
+        self.assertEqual(board_history.turn_text(-1e-20), "0")
+        self.assertEqual({board_history.turn_text(angle) for angle in (-90, 270, 630)}, {"270"})
+        self.assertEqual(board_history.turn_text(180), "180")
+        self.assertNotEqual(board_history.turn_text(180), board_history.turn_text(360))
+        self.assertEqual(board_history.turn_text(-0.5), "359.5")
+
+    def test_a_half_turn_stays_distinct_from_a_full_turn(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C1: fails two candidates whose parts sit identically, judged by each part's reference, position, angle and side
+        self.repo.planned()
+        plain = board(PLACES[1])
+        full = plain.replace("(at 20 10)", "(at 20 10 360)")
+        half = plain.replace("(at 20 10)", "(at 20 10 180)")
+        one, two = self.candidates_two(full, half)
+        turned = ["LENGTH | total | 30.2655 mm", "CROSSINGS | total | 1", "OUTSIDE | total | 0"]
+        self.record(one, two, full, measures={1: MEASURES[1], 2: turned})
+        lines, _ = self.assertPasses()
+        self.assertIn("CHECK | distinct candidates | PASS", "\n".join(lines))
+
     # --- A pour is the first copper ------------------------------------------------------------------
 
     def test_a_pour_drawn_before_the_placement_section_is_recorded_is_the_first_track(self):

@@ -600,13 +600,25 @@ def judge_plan(history: History, board: str, plan: str, anchor: Optional[str], a
     return appended
 
 
+def turn_text(angle: float) -> str:
+    """A turn as text, taken into [0, 360) degrees so that a turn and the same turn written another way read alike."""
+    turned = angle % 360
+    return f"{0.0 if turned >= 360 else turned:g}"
+
+
+def coordinate_text(value: float) -> str:
+    """A coordinate as text, with negative zero read as zero."""
+    return f"{value + 0.0:g}"
+
+
 def parts_placed(layout: list) -> Dict[str, Tuple[str, str]]:
     """Each footprint's reference, with its position, angle and side as text."""
     found = {}
     for name, node in board_placement.footprints(layout).items():
         x, y, angle = board_geometry.placement(node, f"the footprint {name}")
         side = sexpr.child(node, "layer")
-        found[name] = (f"({x:g}, {y:g}) at {angle:g} degrees", str(side[1]) if side and len(side) > 1 else "?")
+        found[name] = (f"({coordinate_text(x)}, {coordinate_text(y)}) at {turn_text(angle)} degrees",
+                       str(side[1]) if side and len(side) > 1 else "?")
     return found
 
 
