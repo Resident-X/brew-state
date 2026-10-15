@@ -9,14 +9,16 @@ moments in the history of the board file itself, reading every version of it
 reachable from HEAD, and judges each section as it stood in the commit before:
 
 - The first track, a commit whose board carries a straight track, an arc or a
-  via while no commit before it does. A track in the root commit, or tracks
-  first appearing on two separate lines of history, fail. While no commit
-  carries one, the placement section is judged as it stands at HEAD.
+  via while no commit before it does. A track in the root commit, tracks
+  first appearing on two separate lines of history, and tracks first
+  appearing in a merge commit, fail. While no commit carries one, the
+  placement section is judged as it stands at HEAD.
 - The placement section, in the commit before the first track, holding at
   least two candidates and as it is now. Each candidate's commit is in the
   history, comes before the first track, holds the board, differs from every
   other candidate's and is named by its Renders; its recorded totals and parts
-  outside are the measures recomputed from that commit with the placement
+  outside are the measures recomputed from that commit's board, against the
+  floorplan of the commit the section is judged in, with the placement
   view's own arithmetic (board_placement.py); its verdict table has one row
   for every placement item, each verdict pass, fail or not applicable, a not
   applicable only for an item the plan marks no; and the chosen candidate has
@@ -25,14 +27,17 @@ reachable from HEAD, and judges each section as it stood in the commit before:
   appended. Each pass's Board judged commit is on HEAD's line of history, the
   first holding critical copper and all of it locked, a later one following
   the previous pass's router commit with no unlocked copper added or changed
-  between. A pass's router commit is the first after its Board judged commit
-  that adds or changes an unlocked track, arc or via, since the router's
-  copper is never locked and every critical item is; the pass is judged as it
-  stood in the commit before it, and only the last pass may have none, when
-  it is judged at HEAD. Every checklist item appears in a pass exactly once,
-  as a verdict row or in its list of items bearing on no critical net, and
-  every fail has a later verdict with a commit putting it right before the
-  router ran.
+  between, a merge bringing it from another line among them. A pass's router
+  commit is the first after its Board judged commit that adds or changes an
+  unlocked track, arc or via, since the router's copper is never locked and
+  every critical item is; that copper first appearing on two lines of
+  history, or in a merge commit, fails. The pass is judged as it stood in the
+  commit before the router's, and only the last pass may have none, when it
+  is judged at HEAD; with --routed the router has run, and a last pass with
+  none fails too. Every checklist item of the commit the pass is judged in
+  appears in it exactly once, as a verdict row or in its list of items
+  bearing on no critical net, and every fail has a later verdict with a
+  commit putting it right before the router ran.
 
 A commit a record cites that a squash, rebase or force-push left out of the
 history is reported as not in it, so the check fails closed on a rewritten
@@ -40,12 +45,15 @@ branch. It needs git and Python only. It reads the board and its layout plan as
 HEAD holds them, and refuses a board or plan that differs from HEAD, a shallow
 clone, and a board it cannot read.
 
-    board_history.py --board B.kicad_pcb [--json]
+    board_history.py --board B.kicad_pcb [--routed] [--json]
 
 Every check is one line, CHECK | <check> | PASS or FAIL | <detail>, a result
 line comes last, and the exit status is the verdict: 0 when every check
 passes, 1 when any fails, 2 when the command is refused. With --json the same
-verdicts are printed as one JSON document.
+verdicts are printed as one JSON document. With --routed, a board on which
+the router has not been shown to run, with no critical routing section or a
+last pass with no router commit, fails rather than passing as router not yet
+run.
 """
 
 from __future__ import annotations
@@ -321,13 +329,27 @@ class Report:
         return sum(1 for check in self.checks if check["verdict"] == "FAIL")
 
 
+def first_holding(history: History, commits: List[str], holds) -> List[str]:
+    """The commits of `commits`, oldest first, for which `holds` is true while it is for none of their parents among
+    them: where it first appears on each line of history."""
+    ever: Dict[str, bool] = {}
+    firsts = []
+    for commit in commits:
+        here = holds(commit)
+        before = any(ever.get(parent, False) for parent in history.parents[commit])
+        ever[commit] = here or before
+        if here and not before:
+            firsts.append(commit)
+    return firsts
+
+
 def first_track(history: History, board: str, report: Report) -> Tuple[bool, Optional[str]]:
     """Whether any commit's board carries a track, and the first commit to carry one when it can be told."""
     blobs = history.blobs(history.order, board)
     carries: Dict[str, bool] = {}
-    ever: Dict[str, bool] = {}
-    firsts, faults = [], []
-    for commit in history.order:
+    faults = []
+
+    def holds(commit: str) -> bool:
         blob = blobs[commit]
         if blob is not None and blob not in carries:
             try:
@@ -336,15 +358,17 @@ def first_track(history: History, board: str, report: Report) -> Tuple[bool, Opt
                 faults.append(f"the board at {short(commit)} cannot be read, so whether it carries a track cannot be "
                               f"told: {error}")
                 carries[blob] = False
-        here = blob is not None and carries[blob]
-        before = any(ever.get(parent, False) for parent in history.parents[commit])
-        ever[commit] = here or before
-        if here and not before:
-            firsts.append(commit)
+        return blob is not None and carries[blob]
+
+    firsts = first_holding(history, history.order, holds)
     for commit in firsts:
         if not history.parents[commit]:
             faults.append(f"the root commit {short(commit)} carries a track, so nothing was committed before the "
                           "first track")
+        elif len(history.parents[commit]) > 1:
+            faults.append(f"tracks first appear in the merge commit {short(commit)}, which none of its "
+                          f"{len(history.parents[commit])} parents carries, so there is no one commit before the first "
+                          "track")
     if len(firsts) > 1:
         faults.append(f"tracks first appear on {len(firsts)} separate lines of history, at "
                       f"{', '.join(short(commit) for commit in firsts)}, so there is no one first track before which "
@@ -410,6 +434,10 @@ def judge_placement(history: History, board: str, plan: str, first: Optional[str
     faults += [f"candidate {number} is recorded {count} times" for number, count in Counter(numbers).items() if count > 1]
     report.add("candidates", faults, f"{len(candidates)} candidates")
 
+    try:
+        regions, unread = board_placement.floorplan(history.file(at, plan)), None
+    except Unreadable as error:
+        regions, unread = None, error
     blobs, outside = {}, {}
     for number, lines in candidates:
         name = f"candidate {number}"
@@ -459,22 +487,23 @@ def judge_placement(history: History, board: str, plan: str, first: Optional[str
                     recorded.append(board_placement.clean_line(text))
         if number in blobs:
             try:
-                local_plan = history.file(resolved, plan)
-                if local_plan is None:
-                    raise Unreadable(f"{commit} holds no {plan}")
-                measured = board_placement.measured_placement(
-                    board, plan, history.layout(resolved, board), board_placement.floorplan(local_plan))
+                if regions is None:
+                    raise Unreadable(f"the floorplan of {plan} in {where} cannot be read: {unread}")
+                measured = board_placement.measured_placement(board, plan, history.layout(resolved, board), regions)
                 outside[number] = measured["outside"]
                 expected = [line for line in board_placement.measure_lines(measured) if line.startswith(MEASURED)]
                 missing = sorted((Counter(expected) - Counter(recorded)).elements())
                 extra = sorted((Counter(recorded) - Counter(expected)).elements())
-                faults += [f"{name} does not record '{line}', which its commit measures" for line in missing]
-                faults += [f"{name} records '{line}', which its commit does not measure" for line in extra]
+                faults += [f"{name} does not record '{line}', which its commit measures against the floorplan in "
+                           f"{where}" for line in missing]
+                faults += [f"{name} records '{line}', which its commit does not measure against the floorplan in "
+                           f"{where}" for line in extra]
             except Unreadable as error:
                 faults.append(f"{name} cannot be measured from its commit: {error}")
         elif "Measures" in given:
             faults.append(f"{name}'s measures cannot be recomputed without a commit holding the board")
-        report.add(f"{name} measures", faults, f"its totals and parts outside are those its commit measures")
+        report.add(f"{name} measures", faults, f"its totals and parts outside are those its commit measures against "
+                                               f"the floorplan in {where}")
 
         _, rows, faults = table(lines, PLACEMENT_TABLE)
         faults = [f"{name}: {fault}" for fault in faults]
@@ -551,7 +580,7 @@ def difference(old: List[str], new: List[str]) -> str:
     return longer[min(len(old), len(new))] if len(old) != len(new) else ""
 
 
-def judge_critical(history: History, board: str, plan: str, tracked: bool, report: Report) -> None:
+def judge_critical(history: History, board: str, plan: str, tracked: bool, routed: bool, report: Report) -> None:
     head = history.order[-1]
     lines = section(history.text(head, plan), CRITICAL)
     if lines is None:
@@ -559,6 +588,10 @@ def judge_critical(history: History, board: str, plan: str, tracked: bool, repor
             report.add("critical routing section", [
                 f"the board carries tracks and {plan} holds no `## {CRITICAL}` section; the critical routing is "
                 "judged and recorded before the router runs"], "")
+        elif routed:
+            report.add("critical routing section", [
+                f"--routed says the router has run, and no commit carries a track and {plan} holds no "
+                f"`## {CRITICAL}` section"], "")
         return
     before, passes, other = subsections(lines, PASS)
     faults = [f"the section holds '{clean(line)}' before its first `### Pass` heading" for line in before]
@@ -612,9 +645,12 @@ def judge_critical(history: History, board: str, plan: str, tracked: bool, repor
                               f"commit {short(router)}")
             else:
                 try:
-                    for commit in history.ancestry(router, judged):
+                    between = history.ancestry(router, judged)
+                    line = set(between) | {router}
+                    for commit in between:
                         added = unlocked(history.copper(commit, board)) - sum(
-                            (unlocked(history.copper(parent, board)) for parent in history.parents[commit]), Counter())
+                            (unlocked(history.copper(parent, board)) for parent in history.parents[commit]
+                             if parent in line), Counter())
                         if added:
                             faults.append(f"{short(commit)}, between pass {number - 1}'s router commit and {name}'s "
                                           f"Board judged commit, adds or changes {sum(added.values())} unlocked "
@@ -626,24 +662,39 @@ def judge_critical(history: History, board: str, plan: str, tracked: bool, repor
                                                       "and follows the previous pass's router commit with no unlocked "
                                                       "copper added between"))
         router = None
-        faults = []
+        faults, routers = [], []
         if judged is not None:
             try:
                 base = unlocked(history.copper(judged, board))
-                router = next((commit for commit in history.ancestry(judged, head)
-                               if unlocked(history.copper(commit, board)) - base), None)
+                routers = first_holding(history, history.ancestry(judged, head),
+                                        lambda commit: bool(unlocked(history.copper(commit, board)) - base))
             except Unreadable as error:
                 faults.append(f"the board after {name}'s Board judged commit cannot be read: {error}")
-        if router is None and not faults and judged is not None:
-            if last:
+        if len(routers) > 1:
+            faults.append(f"the router's copper first appears on {len(routers)} separate lines of history after "
+                          f"{name}'s Board judged commit, at {', '.join(short(commit) for commit in routers)}, so there "
+                          "is no one router commit before which the pass was recorded")
+        elif routers:
+            router = routers[0]
+            if len(history.parents[router]) > 1:
+                faults.append(f"the router's copper first appears after {name}'s Board judged commit in the merge "
+                              f"commit {short(router)}, joining {len(history.parents[router])} lines of history, so "
+                              "there is no one commit before the router's to judge the pass in")
+        stood = history.parents[router][0] if router is not None and not faults else head
+        if not routers and not faults and judged is not None:
+            if last and not routed:
                 report.notes.append("router not yet run")
                 report.add(f"{name} before router", [], "router not yet run: no commit after the Board judged commit "
                                                         "adds unlocked copper, so the pass is judged as it stands at HEAD")
+            elif last:
+                report.add(f"{name} before router", [f"--routed says the router has run, and no commit after {name}'s "
+                                                     "Board judged commit adds unlocked copper: the router's copper is "
+                                                     "not committed, or is locked"], "")
             else:
                 report.add(f"{name} before router", [f"{name} has no router commit after its Board judged commit, and "
                                                      "only the last pass may have none"], "")
-        elif router is not None:
-            then = dict(subsections(section(history.text(history.parents[router][0], plan), CRITICAL) or [""], PASS)[1])
+        elif router is not None and not faults:
+            then = dict(subsections(section(history.text(stood, plan), CRITICAL) or [""], PASS)[1])
             if number not in then:
                 faults.append(f"{name} is not in {plan} in the commit before the router's, {short(router)}^, so it "
                               "was not recorded before the router ran")
@@ -655,19 +706,18 @@ def judge_critical(history: History, board: str, plan: str, tracked: bool, repor
         else:
             report.add(f"{name} before router", faults or [f"{name}'s router commit cannot be found without its Board "
                                                            "judged commit"], "")
-        judge_verdicts(history, plan, name, text, judged, router, report)
+        judge_verdicts(history, plan, name, text, judged, router, stood, report)
 
 
 def judge_verdicts(history: History, plan: str, name: str, text: List[str], judged: Optional[str],
-                   router: Optional[str], report: Report) -> None:
+                   router: Optional[str], stood: str, report: Report) -> None:
     head = history.order[-1]
     _, rows, faults = table(text, CRITICAL_TABLE)
     faults = [f"{name}: {fault}" for fault in faults]
-    at = judged or head
-    checklist = set(catalogue(history.text(at, METHOD))) | set(own_items(history.text(at, plan)))
+    checklist = set(catalogue(history.text(stood, METHOD))) | set(own_items(history.text(stood, plan)))
     if not checklist:
-        faults.append(f"{METHOD} and {plan} at {short(at)} name no checklist item, so the pass has nothing to be judged "
-                      "against")
+        faults.append(f"{METHOD} and {plan} at {short(stood)} name no checklist item, so the pass has nothing to be "
+                      "judged against")
     counted = Counter(row[0].strip("`") for row in rows)
     counted.update(match.group(1) for match in (LISTED.match(line.strip()) for line in text) if match)
     faults += [f"{name} neither judges {item} nor lists it as bearing on no critical net"
@@ -698,8 +748,8 @@ def judge_verdicts(history: History, plan: str, name: str, text: List[str], judg
             elif router is not None and (resolved == router or not history.is_ancestor(resolved, router)):
                 faults.append(f"{name} cites {commit} for {row[0]}, which does not come before the router's commit "
                               f"{short(router)}")
-    report.add(f"{name} verdicts", faults, f"every one of the {len(checklist)} checklist items judged or listed once, "
-                                           "every fail put right before the router")
+    report.add(f"{name} verdicts", faults, f"every one of the {len(checklist)} checklist items at {short(stood)} judged "
+                                           "or listed once, every fail put right before the router")
 
 
 # --- Running it -----------------------------------------------------------------------------
@@ -735,7 +785,7 @@ def refusals(git: str, board: str) -> Tuple[Optional[str], List[Tuple[str, str]]
     return root, found
 
 
-def judge(git: str, board: str) -> Tuple[str, Report, List[Tuple[str, str]]]:
+def judge(git: str, board: str, routed: bool = False) -> Tuple[str, Report, List[Tuple[str, str]]]:
     """The board's path from the repository's root, the verdicts, and every refusal."""
     if not os.path.isfile(board):
         return board, Report(), [(board, "there is no board file here to judge")]
@@ -754,7 +804,7 @@ def judge(git: str, board: str) -> Tuple[str, Report, List[Tuple[str, str]]]:
             if not tracked:
                 report.notes.append("before first track")
             judge_placement(history, rel, plan, first, report)
-            judge_critical(history, rel, plan, tracked, report)
+            judge_critical(history, rel, plan, tracked, routed, report)
         except CannotRun as error:
             return rel, Report(), [(root, str(error))]
         except Unreadable as error:
@@ -766,9 +816,12 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--git", default="git", help="git (default: git on the search path)")
     parser.add_argument("--board", required=True, help="the layout file (.kicad_pcb), with its layout-plan.md beside it")
+    parser.add_argument("--routed", action="store_true",
+                        help="the router has run: a last pass with no router commit, or no critical routing section, "
+                             "fails")
     parser.add_argument("--json", action="store_true", help="print the verdicts as one JSON document")
     args = parser.parse_args(argv)
-    board, report, refused = judge(args.git, args.board)
+    board, report, refused = judge(args.git, args.board, args.routed)
     if refused:
         result, status, detail = "REFUSED", 2, "the history was not judged"
     elif report.failed():

@@ -206,6 +206,11 @@ class Repo:
         self.commit(board(copper=[HAND]), "b: route A by hand")
         return self.commit(board(copper=[LOCKED]), "b: lock A")
 
+    def merge(self, branch, board_text, message):
+        """`branch` merged into the checked-out one as a merge commit holding `board_text`; the merge's commit."""
+        self.git("merge", "-q", "--no-ff", "--no-commit", "-s", "ours", branch)
+        return self.commit(board_text, message)
+
     def through_router(self, judged):
         """Pass 1 recorded and committed, then the router's commit; the router's commit."""
         self.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
@@ -227,8 +232,8 @@ class Base(unittest.TestCase):
         self.assertTrue(lines[-1].startswith("RESULT | PASS |"), lines[-1])
         return lines, document
 
-    def assertFails(self, *words, check=None):
-        status, lines, document = self.repo.run()
+    def assertFails(self, *words, check=None, args=()):
+        status, lines, document = self.repo.run(*args)
         self.assertEqual(status, 1, "\n".join(lines))
         self.assertEqual(document["result"], "FAIL")
         failed = checks(document)
@@ -261,6 +266,13 @@ class Passes(Base):
                       "the hand route committed before locking is the first track")
         self.assertIn(f"CHECK | pass 1 before router | PASS | the pass is as it stood before the router's commit "
                       f"{router[:12]}", text, "the router's commit, not the unlocked hand route, is the router's")
+        self.assertNotIn("router not yet run", lines[-1])
+
+    def test_a_compliant_history_after_the_router_passes_with_routed(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        self.repo.placed()
+        self.repo.through_router(self.repo.routed())
+        lines, _ = self.assertPasses("--routed")
         self.assertNotIn("router not yet run", lines[-1])
 
     def test_a_pass_recorded_before_the_router_runs_is_judged_at_head_and_says_so(self):
@@ -396,6 +408,28 @@ class PlacementFails(Base):
         self.repo.git("commit", "-q", "-m", "merge both lines")
         self.assertFails("tracks first appear on 2 separate lines of history", check="first track")
 
+    def test_a_candidate_measured_against_a_floorplan_widened_in_its_own_commit_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        self.repo.write("b/layout-plan.md", PLAN.replace("(0, 0)–(40, 40)", "(0, 0)–(60, 40)"))
+        one = self.repo.commit(board((50, 10)), "b: placement candidate 1, R1 off the region, the region widened")
+        two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
+        wide = ["LENGTH | total | 90 mm", "CROSSINGS | total | 0", "OUTSIDE | total | 0"]
+        self.repo.commit(board((50, 10)), "b: placement, the region restored",
+                         placement=placement([candidate(1, one, measures=wide), candidate(2, two)]))
+        failed = self.assertFails("candidate 1 does not record 'OUTSIDE | total | 1'",
+                                  "candidate 1 records 'OUTSIDE | total | 0'", check="candidate 1 measures")
+        self.assertIn("chosen: the chosen candidate 1 leaves R1 outside its regions", failed)
+
+    def test_tracks_first_appearing_in_a_merge_commit_fail(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
+        self.repo.placed()
+        self.repo.git("checkout", "-q", "-b", "other")
+        self.repo.write("README.md", "one line\n")
+        self.repo.commit(message="other: a change")
+        self.repo.git("checkout", "-q", "main")
+        merge = self.repo.merge("other", board(copper=[HAND]), "merge, A routed in the merge")
+        self.assertFails(f"tracks first appear in the merge commit {merge[:12]}", check="first track")
+
     def test_a_track_in_the_root_commit_fails(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The placement is recorded in the layout plan, and its cross-check confirms from the history that the placement section and every candidate's commit came before the first commit carrying a track.
         self.repo.commit(board(copper=[HAND]), "b: everything at once")
@@ -507,6 +541,80 @@ class CriticalRoutingFails(Base):
         self.repo.commit(board(copper=[LOCKED, ROUTED]), "b: router, nothing recorded")
         self.assertFails("holds no `## Critical routing` section", check="critical routing section")
 
+    def test_locked_router_copper_reads_as_router_not_yet_run_and_fails_with_routed(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        self.repo.placed()
+        judged = self.repo.routed()
+        self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
+        self.repo.commit(board(copper=[LOCKED, track((5, 11), (20, 11), "GND", True)]), "b: router, its copper locked")
+        lines, _ = self.assertPasses()
+        self.assertIn("router not yet run", lines[-1], "without --routed, locked router copper is not the router's")
+        self.assertFails("--routed says the router has run", "the router's copper is not committed, or is locked",
+                         check="pass 1 before router", args=("--routed",))
+
+    def test_no_tracks_and_no_critical_routing_section_fail_with_routed(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        self.repo.placed()
+        self.assertPasses()
+        self.assertFails("--routed says the router has run, and no commit carries a track",
+                         check="critical routing section", args=("--routed",))
+
+    def test_a_router_commit_that_is_a_merge_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        self.repo.placed()
+        self.repo.commit(board(copper=[HAND]), "b: route A by hand")
+        self.repo.git("checkout", "-q", "-b", "router")
+        self.repo.commit(board(copper=[HAND, ROUTED]), "b: router, before any pass is recorded")
+        self.repo.git("checkout", "-q", "main")
+        judged = self.repo.commit(board(copper=[LOCKED]), "b: lock A")
+        self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
+        merge = self.repo.merge("router", board(copper=[LOCKED, ROUTED]), "merge the router's copper")
+        self.assertFails(f"in the merge commit {merge[:12]}, joining 2 lines of history", check="pass 1 before router")
+
+    def test_router_copper_on_two_lines_after_the_board_judged_commit_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        self.repo.placed()
+        judged = self.repo.routed()
+        self.repo.git("checkout", "-q", "-b", "router")
+        early = self.repo.commit(board(copper=[LOCKED, ROUTED]), "b: router, before the pass is recorded")
+        self.repo.git("checkout", "-q", "main")
+        self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
+        late = self.repo.commit(board(copper=[LOCKED, track((5, 11), (20, 11.5), "GND", False)]), "b: router")
+        self.repo.merge("router", board(copper=[LOCKED, ROUTED]), "merge both routers")
+        self.assertFails("the router's copper first appears on 2 separate lines of history", early[:12], late[:12],
+                         check="pass 1 before router")
+
+    def test_unlocked_copper_merged_in_from_another_line_between_the_passes_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C4: A finding against a workmanship item caused by where parts sit is closed by changing the placement, re-routing what it affects and repeating the placement measures, and its record names the change and the measures before and after.
+        self.repo.placed()
+        self.repo.commit(board(copper=[HAND]), "b: route A by hand")
+        stray = track((5, 11), (20, 11.5), "GND", False)
+        self.repo.git("checkout", "-q", "-b", "elsewhere")
+        self.repo.commit(board(copper=[HAND, stray]), "b: the router run on another line")
+        self.repo.git("checkout", "-q", "main")
+        judged = self.repo.commit(board(copper=[LOCKED]), "b: lock A")
+        self.repo.through_router(judged)
+        merge = self.repo.merge("elsewhere", board(copper=[LOCKED, ROUTED, stray]), "merge the other line's copper")
+        relocked = track((5, 9), (20, 9), "A", True)
+        self.repo.commit(board(copper=[LOCKED]), "b: remove the router's copper")
+        second = self.repo.commit(board(copper=[relocked]), "b: re-route A, locked")
+        self.repo.commit(message="b: pass 2", critical=critical([critical_pass(1, judged), critical_pass(2, second)]))
+        self.repo.commit(board(copper=[relocked, track((5, 11), (20, 11), "GND", False)]), "b: router again")
+        self.assertFails(f"{merge[:12]}, between pass 1's router commit and pass 2's Board judged commit, adds or "
+                         "changes 1 unlocked tracks", check="pass 2 board judged")
+
+    def test_a_checklist_item_dropped_in_the_board_judged_commit_and_restored_before_the_router_fails(self):
+        # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
+        self.repo.placed()
+        self.repo.commit(board(copper=[HAND]), "b: route A by hand")
+        self.repo.write("docs/board-design-method.md", METHOD[:METHOD.index("#### GROUND-1")])
+        judged = self.repo.commit(board(copper=[LOCKED]), "b: lock A, GROUND-1 dropped from the method")
+        self.repo.commit(message="b: pass 1", critical=critical([critical_pass(1, judged, CRITICAL_ROWS[:1])]))
+        self.repo.write("docs/board-design-method.md", METHOD)
+        self.repo.commit(message="docs: GROUND-1 restored")
+        self.repo.commit(board(copper=[LOCKED, ROUTED]), "b: router")
+        self.assertFails("pass 1 neither judges GROUND-1 nor lists it", check="pass 1 verdicts")
+
     def test_a_squash_merged_copy_of_a_compliant_branch_fails_closed(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C3: The critical routing section is committed before the router runs, with a cross-check that the history shows that section before the first commit carrying the router's tracks.
         self.repo.git("commit", "-q", "--allow-empty", "-m", "main: root")
@@ -612,14 +720,15 @@ class Documentation(unittest.TestCase):
                       "`CHECK | <check> | PASS | <detail>`", "`RESULT | REFUSED`", "`before first track`",
                       "`router not yet run`", "`--json`", "never squashed, rebased or force-pushed", "shallow clone",
                       "differs from the checked-out commit", "0 when every check passes, 1 when any fails, and 2 when "
-                      "the command is refused"):
+                      "the command is refused", "`--routed`", "rather than reading as `router not yet run`",
+                      "against the floorplan in the commit the section is judged in", "in a merge commit"):
             with self.subTest(words=words):
                 self.assertIn(words, section)
         self.assertIn("`task hw:history`", readme[:readme.index("## The locked-copper check")])
         taskfile = self.read("Taskfile.yml")
         task = taskfile[taskfile.index("  hw:history:"):]
         task = task[:task.index("\n\n")]
-        for words in ("board_history.py", "layout-plan.md", "git and Python"):
+        for words in ("board_history.py", "layout-plan.md", "git and Python", "--routed"):
             self.assertIn(words, task)
         self.assertLess(taskfile.index("  hw:placement:"), taskfile.index("  hw:history:"))
         test = taskfile[taskfile.index("  hw:test:"):]

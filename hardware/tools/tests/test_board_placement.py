@@ -613,7 +613,9 @@ class Method(unittest.TestCase):
                       "- `candidate <n> commit`:", "- `candidate <n> measures`:", "- `candidate <n> verdicts`:",
                       "- `distinct candidates`:", "- `chosen`:", "- `parts at first track`, or `parts at HEAD`",
                       "merges into the main line without rewriting that history",
-                      "never squashed, rebased or force-pushed", "The command judges the record's shape and order"):
+                      "never squashed, rebased or force-pushed", "The command judges the record's shape and order",
+                      "from that commit's board against the floorplan as `<T>^` holds it",
+                      "as one whose commit widens a region is, fails", "or in a merge commit none of whose parents"):
             with self.subTest(words=words):
                 self.assertIn(words, placement)
         for words in ("git log --reverse", "git worktree add --detach <work folder>/before-track", "awk '/^## /",
@@ -674,6 +676,11 @@ class Method(unittest.TestCase):
                       "Commit the section before the router runs", "task hw:history -- --board <board>.kicad_pcb",
                       "whose layout holds at least one track, arc or via and every one of them locked",
                       "`router not yet run`", "the router leaves its copper unlocked",
+                      "Step 8 runs the command again once the router's commit is made, with `--routed`",
+                      "or in a merge commit, so no one commit is `<R>`",
+                      "with `--routed`, the last pass has none, so the router's copper is not committed, or is locked",
+                      "as `<R>^` holds the catalogue and the board's own items",
+                      "as a merge bringing such copper in from another line of history does",
                       "A router, or any step, that locked its own copper would read as the router not having run",
                       "A net routed by hand and committed before it was locked comes before `<B>`",
                       "- `critical routing section`:", "- `pass <k> board judged`:", "- `pass <k> before router`:",
@@ -687,10 +694,12 @@ class Method(unittest.TestCase):
                 self.assertNotIn(words, check)
         self.assertNotRegex(self.method, r"step [4-7] of routing does|\(step 7 of routing\)")
         final = section(routing, "8. Run the board's own rule checks, then reopen the board", "### ")
-        for words in ("this is the router's commit", "task hw:history -- --board <board>.kicad_pcb",
-                      "decides both the placement section", "must not say `router not yet run`"):
+        for words in ("this is the router's commit", "task hw:history -- --board <board>.kicad_pcb --routed",
+                      "decides both the placement section",
+                      "fails `pass <k> before router` rather than passing as `router not yet run`"):
             with self.subTest(final=words):
                 self.assertIn(words, final)
+        self.assertNotIn("must not say", final, "the router having run is held by --routed, not by the reader")
 
     def test_the_floorplan_says_every_footprint_is_a_part_on_the_schematic_and_the_catalogue_names_each_use(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The floorplan lists every part against the schematic, and a part listed in no region is outside, so a footprint the schematic does not carry is reported outside and no chosen placement holds one; the minimums the views' resolution reads are written at placement.
@@ -721,7 +730,8 @@ class Method(unittest.TestCase):
                       "A finding whose cause is the route alone is corrected in the copper",
                       "Remove the router's copper the change affects rather than editing it",
                       "commit a critical re-route only once it is locked", "appended below the earlier passes, which "
-                      "stay as they are", "run `task hw:history -- --board <board>.kicad_pcb` as step 8 of routing does",
+                      "stay as they are", "run `task hw:history -- --board <board>.kicad_pcb --routed` as step 8 of routing does",
+                      "or the router's copper is not committed, or is locked",
                       "a `FAIL` on `pass <n> board judged` means", "on `pass <n> before router`, that an earlier pass "
                       "was changed"):
             with self.subTest(words=words):
