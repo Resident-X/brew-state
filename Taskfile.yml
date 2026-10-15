@@ -422,7 +422,7 @@ tasks:
       # gate restricts it to the changed lines through the task's own arguments.
       - python3 {{.FW_DIR}}/tools/round_gate.py --task "{{.TASK_EXE}}" --host fw:build --host fw:check --host fw:test --host fw:run --emulation fw:emulate --board hw:verify --board hw:test:round --board-reads hw:reads --sweep fw:sweep
 
-  daily:status:
+  check:daily:
     desc: The latest nightly verification of main, read first by an operator session — the first output line is green, red, none (no run has completed) or unknown (the history could not be read), then the conclusion, the commit it verified and a link to the run. Cancelled, skipped and neutral runs and runs still in progress are passed over for an older completed run. Exits zero whenever a result was read, red included, and non-zero only for unknown. Needs the GitHub command-line tool (gh), signed in, and Python 3.9 or newer; a missing or signed-out gh reads as unknown and names it
     dir: "{{.ROOT_DIR}}"
     cmds:

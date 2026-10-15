@@ -260,8 +260,8 @@ class TheTaskAsksForTheWorkflowTheNightlyDeclares(unittest.TestCase):
     def test_the_workflow_name_the_task_passes_equals_the_name_the_nightly_declares(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: A test also holds the workflow name the command asks for equal to the name the nightly workflow declares
         with open(os.path.join(REPOSITORY, "Taskfile.yml"), encoding="utf-8") as handle:
-            commands = task_commands(handle.read(), "daily:status")
-        self.assertEqual(len(commands), 1, "task daily:status must declare exactly one command (renamed or split?)")
+            commands = task_commands(handle.read(), "check:daily")
+        self.assertEqual(len(commands), 1, "task check:daily must declare exactly one command (renamed or split?)")
         (command,) = commands
         words = shlex.split(command)
         self.assertIn("daily_status.py", " ".join(words))

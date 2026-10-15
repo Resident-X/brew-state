@@ -2,7 +2,7 @@ id: SOL-VERIFY-DAILY-STATUS-READ-FIRST.C2
 type: criterion
 title: The operator session launcher reads the daily status first and offers a red result as the first choice
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: inspection
 text: |

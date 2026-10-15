@@ -257,7 +257,7 @@ Everything runs from the repository root through the task runner:
 
 ```sh
 task check:round   # a build round's gate: the host tier in full, the emulation tier only if the branch changes what it reads, the board tier only if it changes a board design or what one reads, the sweep of the changed plant lines
-task daily:status  # the latest nightly verification of main: green, red, none or unknown, then the commit and the run's link (needs gh, signed in)
+task check:daily  # the latest nightly verification of main: green, red, none or unknown, then the commit and the run's link (needs gh, signed in)
 task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the board check and its tooling tests, the arithmetic sweep
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
