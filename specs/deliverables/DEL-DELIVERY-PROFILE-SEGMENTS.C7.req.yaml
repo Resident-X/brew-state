@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C7
+type: criterion
+title: Each segment's water temperature target is a command into the brew temperature loop, held to the delivery's declared band
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The brew loop follows the temperature each segment states from the segment's start to its end, and the heater is driven ahead of the effect of a pressure segment from the flow that segment is predicted to produce, as it is for a flow segment from the flow commanded.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

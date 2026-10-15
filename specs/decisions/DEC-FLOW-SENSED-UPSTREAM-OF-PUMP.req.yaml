@@ -2,10 +2,10 @@ id: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
 type: decision
 title: Flow is read on the low-pressure side, from the meter the machine already carries
 status: active
-version: 2
+version: 3
 decided_by: david
 rationale: |
-  Context: A delivery profile commands flow, and several requirements rest on flow being observed
+  Context: A flow segment of a delivery profile commands flow, a pressure segment commands pressure, and several requirements rest on flow being observed
   rather than inferred: acting on demand before its effect appears, confirming that a commanded pump
   actually moved water, ending a delivery on a quantity the machine measures, and showing the
   operator what a delivery is doing while it runs. The reference machine already carries a flow meter

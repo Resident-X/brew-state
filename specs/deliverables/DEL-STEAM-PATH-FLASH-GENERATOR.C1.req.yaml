@@ -1,0 +1,13 @@
+id: DEL-STEAM-PATH-FLASH-GENERATOR.C1
+type: criterion
+title: While the wand is open, steam pressure in the plant model follows the feed through the restriction and not the casting temperature
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The pressure is set by the steam mass flow through the tube, valve and tip. Varying the casting temperature at a fixed feed and opening does not move it by the saturation relation, and varying the feed at a fixed casting temperature does.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: criterion-of

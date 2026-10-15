@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C6
+type: criterion
+title: The plant model's drawn-water term, reported flow and confirmation of pumping follow the segment's primary variable
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  In a pressure segment the water drawn and the flow reported are the result of the commanded pressure acting on the puck and not a commanded flow, and in a flow segment they are the commanded flow. The confirmation that commanded pumping moved water is judged against the measured quantity the segment commands. No place in the control or the plant model reads the command as flow alone.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

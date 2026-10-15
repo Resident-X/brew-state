@@ -1,0 +1,13 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C5
+type: criterion
+title: The approach to temperature stays within the margin without being slowed
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  Warm-up and recovery are commanded from the energy the heated mass and its water need. The command does not rely on temperature error alone, so the overshoot while approaching readiness stays within the margin to the trip point and the approach is not slowed where the margin can carry it. The approach time and the overshoot are reported per run in both the text and the JSON form.
+links:
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: criterion-of

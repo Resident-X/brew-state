@@ -1,0 +1,27 @@
+id: SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK
+type: deliverable
+category: solution
+title: The proof-of-life removal interval is derived from the peak casting temperature the corrected control produces
+status: active
+version: 1
+text: |
+  The proof-of-life removal interval is derived from the hottest each heater's casting reaches while the controller is holding it. That peak is produced by the control as it stands once each casting is held below its trip point by the declared margin in every phase, so the interval stays pending in the controller boards' figures record until the held control has produced the peak.
+
+  Under the shipped control the coffee casting exceeds its trip point, so no interval can honestly be derived from it: a time to the trip point starting from a casting already past the trip point is not a figure, and starting from the commanded temperature would understate the hazard. This is why the interval waits on the control that holds the margin, on the regenerated peak casting record, and on the figures record the interval is written into.
+
+  The work is analysis over the regenerated peak record and the figures record: it takes the peak as the generated record gives it, with the trip points, the element power at the top of the declared supply span and the lower bound of the thermal mass the figures record already carries, and combines the heaters by the shorter time. The corners come from the peak record and combine by the worst single corner, not by a sum.
+links:
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C2
+    type: derives-from
+  - target: REQ-SAFETY-CHAIN-001.C3
+    type: targets
+  - target: DEC-PROOF-OF-LIFE-INTERVAL-BOUNDED-BY-FIRST-PROTECTIVE-TRIP
+    type: justified-by
+  - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
+    type: justified-by
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: depends-on
+  - target: SOL-HW-REQUIREMENT-FIGURES-SOURCED
+    type: depends-on
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED
+    type: depends-on

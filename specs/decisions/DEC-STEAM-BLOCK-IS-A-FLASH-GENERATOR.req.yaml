@@ -1,0 +1,36 @@
+id: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+type: decision
+title: The steam block is a flash generator, with feed setting its pressure, heater power setting its dryness and a casting ceiling bounding trapped vapour
+status: active
+version: 1
+rationale: |
+  Context: The steam block holds no standing water. The factory controller holds the block hot from power-on with the wand knob shut, and water enters only when the knob is open. The plant model treats the block as a boiler whose pressure follows its temperature, which is wrong in the case that matters: with water fed and the wand open, block pressure is set by the steam mass flow through the tube, knob valve and tip, not by the casting temperature, and with the knob shut and liquid left in the closed block the pressure is saturation at the casting temperature. From steam tables, the gauge saturation pressures of water are about 1.3 bar at 125 C, 2.6 at 140 C, 3.8 at 150 C, 5.2 at 160 C and 14.5 at 200 C, the last being the steam thermostat's nominal trip point. These are properties of water, not results of this project's analysis.
+
+  Trade-offs: Treating the feed pump as the pressure and quantity actuator and heater power as the dryness actuator matches the physics: dryness is the balance between heater power, the sensible heat of the water fed and the latent heat carried out, and superheat appears only once the quality passes one. Driving the heater to control pressure, as the boiler model does, regulates the wrong quantity. A casting ceiling near 150 C bounds the trapped-vapour case, by saturation, to under about 4 bar gauge where the thermostat's own trip point would allow 14.5 bar. The ceiling is a control limit, so it cannot by itself satisfy the requirement that pressure be contained or released without power, sensing or command. That requirement (REQ-SAFETY-CHAIN-001.C5) already imposes an independent hardware layer beside the ceiling, and this decision does not choose its form. The form depends on facts that are established by inspection of the machine and owned by DEL-HW-DESIGN-CONSTRAINTS.C6: whether a check valve lies between the steam side's relief valve and the block, where that relief opens, and what pressure the steam pressure transducer withstands against saturation at the thermostat trip point. The engine offers no form for a pending decision, so that inspection criterion is the single owner of the open question and no decision here stands in for it. The outlet temperature probe is the only proof of dryness, since superheat above saturation at the measured pressure shows no liquid reaches it, but it cannot exclude droplet carry-over without a calorimetric test.
+
+  Reversibility: The control allocation is reversible in firmware and the plant model. The hardware layer is not decided here and nothing in this decision forecloses a relief on the block, a hot-side rating, or both.
+
+  Consequences: The plant model's steam block has to be rewritten as a flash generator with feed-set pressure, and its pressure loop has to drive the feed rather than the heater. The casting ceiling becomes a limit the steam loop respects in every phase, including a draw of any length. The steam readiness gate is a proxy for the predictive readiness decision. The trapped-pressure case recorded as open for the machine stays open until the inspections close and the hardware layer is chosen.
+options_considered:
+  - option: 'Model and control the block as a flash generator: feed sets pressure and quantity, heater power sets dryness, and a casting ceiling bounds trapped-vapour pressure by saturation'
+    reason_rejected: ""
+  - option: Treat the block as a boiler whose pressure follows temperature, driven by the heater
+    reason_rejected: It regulates the wrong quantity; with the wand open the pressure is set by the steam flow, not by the casting temperature
+  - option: Rely on an electrical interlock on the wand switch and the casting ceiling alone
+    reason_rejected: Both are controller or electrical actions, so neither can meet the requirement that pressure be contained or released without power, sensing or command
+  - option: Rely on the cold-side relief valve on the steam pump
+    reason_rejected: It is not established that a check valve does not lie between it and the block, in which case it never sees block pressure
+  - option: Contain by strength with no relief
+    reason_rejected: Saturation at the 200 C trip is 14.5 bar gauge, and the pressure transducer's withstand pressure against that is not established
+chosen: 'Model and control the block as a flash generator: feed sets pressure and quantity, heater power sets dryness, and a casting ceiling bounds trapped-vapour pressure by saturation'
+links:
+  - target: REQ-SAFETY-CHAIN-001.C5
+    type: addresses
+  - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C5
+    type: addresses
+  - target: REQ-ROBUST-CONTROL-001.C6
+    type: addresses
+  - target: REQ-MEASUREMENT-001.C8
+    type: addresses
+  - target: DEL-HW-DESIGN-CONSTRAINTS.C6
+    type: addresses

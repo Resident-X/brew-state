@@ -1,0 +1,14 @@
+id: REQ-MEASUREMENT-001.C9
+type: criterion
+title: The temperature of the water leaving each heated mass is known to the control to the accuracy its delivery is held to
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  The temperature the coffee and the cup are judged by is the temperature of the water, and the casting is only the nearest place a sensor can sit. Between the two lies a lag the machine does not measure, and a loop that regulates the casting, or a reconstruction of the water that is only as good as that lag, is held no tighter than the lag allows.
+
+  The accuracy is the one the delivery the water goes to is already held to, taken from the tolerance declarations rather than restated here. How the value is obtained, measured or reconstructed, is open; what is required is that it is known to that accuracy while water is moving and while it is not.
+links:
+  - target: REQ-MEASUREMENT-001
+    type: criterion-of

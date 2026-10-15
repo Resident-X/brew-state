@@ -1,0 +1,13 @@
+id: DEL-READINESS-PREDICTED-IN-BAND.C6
+type: criterion
+title: Readiness that cannot be predicted within the limit is reported rather than waited on or declared
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  At the limit the machine reports for which purpose readiness could not be predicted and what it could not establish, such as an estimate that has not converged, in both the text and the JSON form. It neither keeps waiting without saying so nor reports ready.
+links:
+  - target: DEL-READINESS-PREDICTED-IN-BAND
+    type: criterion-of

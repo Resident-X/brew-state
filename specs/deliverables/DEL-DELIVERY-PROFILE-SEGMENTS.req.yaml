@@ -1,0 +1,51 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS
+type: deliverable
+category: task
+title: A brew delivery is commanded as segments that each command pressure or flow, and everything that treated the command as flow alone follows
+status: active
+level: task
+version: 1
+text: |
+  A brew delivery is commanded as an ordered list of segments. Each segment commands one of pressure or flow and holds the other as a limit, and states the shape of the transition into it, the condition on which it ends and the water temperature the brew loop holds through it. The choice of primary variable belongs to the segment, not to the machine, so a profile can fill and wet a puck on flow and hold the extraction on pressure.
+
+  Everything that treated the command as flow alone follows the segment's primary variable instead: the trim that corrects the pump toward the command, the report of departure from the commanded course, the plant model's flow term and the confirmation that commanded pumping moved water. Quantities the machine only reports, namely the volume delivered, the puck resistance derived from pressure and flow together, and the supply voltage, are neither commanded nor limited by a segment.
+rationale: |
+  The owner decided that the choice of pressure or flow belongs to each segment, and the decision recording it supersedes the earlier decision that a profile commands flow and caps pressure mechanically. Work built under the earlier decision is sealed or finished, so nothing in the graph owned bringing it up to the new command surface; this task owns it.
+
+  Placement: a task directly under the roadmap's simulation phase criterion, as the other simulation tasks are. The brew-loop epic's criteria are sealed as delivered, so a task that changes what was delivered cannot hang beneath them. Slicing into solutions is a later step.
+
+  What this replaces, each read in this session. Sealed or finished work that states the command as flow alone, to be superseded or brought current when this task is sliced: the profile surface that commands a course of flow with an elapsed-time end condition (SOL-DELIVERY-COMMANDED-AS-A-PROFILE, criterion C1 and its test evidence); the plant model's flow term and the reported rate that follows the pump's commanded level (DEL-SIM-FLOW-TERM, SOL-PLANT-FLOW-ENERGY-BALANCE, SOL-PLANT-FLOW-REPORTED criterion C3); the brew loop's feedforward from the commanded flow (SOL-BREW-TEMPERATURE-TRACKED-AT-GROUP-OUTLET criterion C4 and its test evidence); the pump trim toward the commanded flow and its departure account (SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW, DEC-CORRECTION-KEEPS-THE-ACCOUNT); the departure report and its decision (SOL-DELIVERY-PROFILE-DEPARTURE-REPORTED, DEC-DEPARTURE-OBSERVED-NOT-MODELLED). The attestations that read the profile as a course of flow (EVD-REQ-DELIVERY-PROFILE-001.C1-ATTEST, EVD-REQ-SEQUENCE-CONSISTENCY-001.C2-ATTEST) are historical evidence and are not edited. SOL-BREW-PRESSURE-RATIONALE-CORRECTED corrected the rationale of the deprecated decision and is historical.
+
+  Not edited from here: criteria on sealed solutions cannot be superseded one by one, because supersession is an operation on a deliverable. The criteria below therefore state the replaced behaviour in full, so the slicing session can supersede the owning solutions and re-anchor their contributions.
+
+  Pressure measured in the brew path is now load-bearing for control and not only for the pressure map, so the requirement for it stays open until the sensor is fitted and read. A segment's pressure limit is a control limit below the safety relief and never the relief itself. The relief setting is a figure the owner has not yet set.
+
+
+  Also read in this session and left unchanged. SOL-BREW-RECOVERS-AFTER-DRAW describes a draw as a commanded course of flow through the pump channel, and SOL-HOT-WATER-BAND-HOLDS-RATE-YIELDS.C3 states duty under a drinking target as following the same relation to commanded flow as a brew target. Neither depends on flow being the only commandable variable: a segment that commands flow remains a valid case under the new command surface, so both stand as delivered and are not in the replaced list. DEL-BENCH-FLOW-INSTRUMENTATION and SOL-FLOW-SENSED-CHANNEL concern the flow the machine senses and not the flow it commands, and are unaffected.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEC-PROFILE-SEGMENTS-COMMAND-PRESSURE-OR-FLOW
+    type: justified-by
+  - target: REQ-DELIVERY-PROFILE-001.C1
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C2
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C3
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C4
+    type: targets
+  - target: REQ-DELIVERY-PROFILE-001.C5
+    type: targets
+  - target: REQ-MEASUREMENT-001.C7
+    type: targets
+  - target: REQ-BREW-TEMP-001.C1
+    type: targets
+  - target: REQ-LIVE-DELIVERY-VIEW-001.C1
+    type: targets
+  - target: DEL-SIM-BREW-LOOP
+    type: depends-on
+  - target: DEL-SIM-FLOW-TERM
+    type: depends-on
+  - target: DEL-SIM-FLOW-SENSED
+    type: depends-on

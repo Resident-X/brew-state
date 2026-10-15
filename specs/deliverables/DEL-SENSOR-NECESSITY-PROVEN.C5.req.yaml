@@ -1,0 +1,13 @@
+id: DEL-SENSOR-NECESSITY-PROVEN.C5
+type: criterion
+title: The brew pressure and the flow meter together make the puck resistance observable where neither does alone
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+closes_by: cascade
+text: |
+  The result shows the information each adds on its own and together, at the pressure sampling rate the channel record declares, and states the lower bound on the error in the resistance estimate from each alone.
+links:
+  - target: DEL-SENSOR-NECESSITY-PROVEN
+    type: criterion-of

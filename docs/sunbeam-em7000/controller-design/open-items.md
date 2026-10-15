@@ -13,7 +13,7 @@ These settle most of the hydraulic unknowns and should be done before any plumbi
 5. Lift an NTC clamp bracket to confirm how the NTC is mounted (an inference from photos so far).
 6. Panel and gauge: with a meter on the OEM main-board connector, a pressed key should read about 1 kOhm plus 47 Ohm to ground (fact F14); measure the anode-rail voltage and the indicator element currents; identify the buzzer type (resistance, then a bench supply through a series resistor to find polarity, voltage and current); find pin 1 on both harness connectors.
 7. Flow meter: output type (open-collector, Hall, push-pull) and level into the controller.
-8. Observe whether the OEM preheats the steam block with the knob shut (fact F10 against `reference-machine.md`).
+8. Observe whether the OEM preheats the steam block with the knob shut. Settled by owner statement, 2026-10-15: it does (fact F10, as superseded); confirm on the machine.
 9. Observe how much the idle block drains between shots (fact F3).
 
 ## B. Bench tests and datasheet checks

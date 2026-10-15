@@ -1,0 +1,13 @@
+id: DEL-READINESS-PREDICTED-IN-BAND.C3
+type: criterion
+title: Readiness is neither withheld from a state that would deliver in band nor granted to one that would deliver out of band
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  A state at its setpoint whose predicted delivery is out of band is reported not ready, and a state short of its setpoint whose predicted delivery is in band is reported ready. Both cases are exercised for coffee and for steam.
+links:
+  - target: DEL-READINESS-PREDICTED-IN-BAND
+    type: criterion-of

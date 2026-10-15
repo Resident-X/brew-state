@@ -1,0 +1,40 @@
+id: DEL-BREW-PLANT-FIDELITY
+type: deliverable
+category: task
+title: The coffee plant model carries sensor and element lag, heat-exchanger effectiveness, delivered flow and the pump-to-puck hydraulics
+status: active
+level: task
+version: 1
+text: |
+  The coffee plant model carries what separates the temperature a sensor reads from the temperature of the water the coffee receives: the lag of the sensor, the lag of the element, and the effectiveness with which the casting heats the water passing through it. The outlet is not the casting at any flow.
+
+  The flow the model reports is the flow delivered to the puck and not the flow commanded. The brew hydraulics are a pump that delivers in discrete strokes, working through the damper, line compliance and a puck resistance, so that the pressure and flow ripple at the puck can be simulated for phase-dimmed and for cycle-skipped drive, and so that the compliance the suction-line flow meter sees can be simulated alongside it.
+rationale: |
+  The measurement requirement states that the casting is only the nearest place a sensor can sit, with a lag between it and the water that the machine does not measure. The mains-phased actuation decision leaves open whether whole-cycle modulation of the pump is fine enough, and says phase modulation is neither adopted nor forbidden until a measurement says so. Neither can be settled without a model that carries the ripple at the puck, and the plant model as built reports commanded flow and has no puck.
+
+  Placement: a task directly under the roadmap's simulation phase criterion, beside the flow-term task whose work it extends. That task is sealed, so extending it from beneath is not possible.
+
+  What this replaces, read in this session. The reported rate that follows the pump's commanded level, with the puck, the pump's flow-versus-pressure characteristic and the pressure cap stated as omissions (SOL-PLANT-FLOW-REPORTED criterion C3). The statement that the plant description gains no resistance term (SOL-PUMP-TRIMMED-TO-COMMANDED-FLOW criterion C4): it scoped the trim only, but a puck resistance term is exactly what this task adds, so the slicing session must reconcile the two. The outlet relation that relaxes toward the casting with no effectiveness and no sensor or element lag (SOL-PLANT-FLOW-ENERGY-BALANCE), and the omission note that the outlet lag mixes the held water (SOL-PLANT-OUTLET-MIXING-OMISSION-STATED), which remain true statements of what the description leaves out until this task closes them. Criteria on sealed solutions cannot be superseded one by one, so the criteria below state the replaced behaviour in full.
+
+  Owner-pending: the allowed ripple at the puck is a requirement-style figure the owner has not set. The criteria require that it is declared and that every simulated drive form is checked against it, and they invent no number. The bench measurement of the flow-averaging window (SOL-PUMP-CYCLE-MODULATION-FLOW-WINDOW) is blocked behind bench instrumentation and informs, but does not gate, the simulation.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM
+    type: justified-by
+  - target: DEC-FLOW-SENSED-UPSTREAM-OF-PUMP
+    type: justified-by
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: REQ-MEASUREMENT-001.C9
+    type: targets
+  - target: REQ-MEASUREMENT-001.C5
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: depends-on
+  - target: DEL-SIM-FLOW-TERM
+    type: depends-on
+  - target: DEL-SIM-UNCERTAINTY-BUDGET
+    type: depends-on

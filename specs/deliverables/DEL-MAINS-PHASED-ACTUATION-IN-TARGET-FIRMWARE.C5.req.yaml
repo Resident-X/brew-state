@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C5
+type: criterion
+title: Supply timing that has become implausible is detected and reported as a supply fault
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The supply period is measured live, and an edge outside a plausible window, or an edge that does not arrive, is reported as a supply fault in both the text and the JSON form. The window is declared data with its origin.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of

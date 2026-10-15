@@ -1,0 +1,13 @@
+id: DEL-SENSOR-NECESSITY-PROVEN.C4
+type: criterion
+title: Steam superheat is shown to be the only observation that separates dry steam from wet, with what it cannot exclude stated
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The result states that droplet carry-over cannot be excluded without a calorimetric test, and states which other observations were tried and found unable to separate the cases.
+links:
+  - target: DEL-SENSOR-NECESSITY-PROVEN
+    type: criterion-of

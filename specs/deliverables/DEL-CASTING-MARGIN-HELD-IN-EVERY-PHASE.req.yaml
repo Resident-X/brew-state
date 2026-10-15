@@ -1,0 +1,38 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+type: deliverable
+category: task
+title: Each thermoblock's casting stays below its trip point by the declared margin in every phase, with warm-up and recovery commanded from energy
+status: active
+level: task
+version: 1
+text: |
+  Each thermoblock's casting stays below its protection trip point by the declared margin in every phase the machine passes through: heating from cold, recovery after a draw, and a steam draw of any length, including one long enough that the casting keeps rising while the operator is still drawing. The margin holds at the lowest thermal mass the machine can be in as well as at nominal.
+
+  Warm-up and recovery are commanded from the energy the heated mass and its water need, not from temperature error alone, so the approach to readiness is fast without driving the casting through the margin. What the loops regulate, the water leaving a block or the steam pressure, is not what protection acts on, and the casting is held to its margin whatever the regulated quantity is doing.
+rationale: |
+  The robust-control requirement was amended to require the margin on the casting, not on the regulated quantity, in every phase, and the timeliness requirement bounds overshoot on approach to readiness by that same margin. The finished loops regulate the leaving water and the steam pressure and bound the commanded target against the trip point; nothing in the graph owned holding the casting itself to the margin, including through a long steam draw, so this task owns it.
+
+  Placement: a task directly under the roadmap's simulation phase criterion, beside the loop and robustness tasks whose guarantees it extends. Both loops are sealed as delivered, so the extension cannot be added beneath them. It depends on the steam flash-generator task because a steam draw of any length is only meaningful against the flash relations.
+
+  Dependency direction: the derivation of each thermoblock's peak casting temperature under control (SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED) is built against the control as it ships, and the energy-based warm-up and recovery change the peak, so the record it generates is stale once this task's control changes land. This task therefore owns regenerating that peak record (the last criterion). The proof-of-life interval is not derived here: the shipped control lets the coffee casting exceed its trip point, so no interval can honestly be derived until this task has held it, and the interval is owned by a separate solution that depends on this task. The peak derivation also waits on the plant model's element-power uncertainty covering the declared supply span.
+
+  What this replaces: the warm-up and recovery behaviour of the finished loops where it is driven by temperature error, which is read here from the requirement text and not from a sealed criterion, so slicing must read the loop solutions before naming what it supersedes. The margin itself is a declared figure that the owner has not given in this task, and none is invented here.
+
+  The peak casting record is regenerated as part of this task (the last criterion), so the record is not left standing on a controller that preceded the correction. The proof-of-life interval derived from the corrected peak is owned by SOL-PROOF-OF-LIFE-INTERVAL-DERIVED-FROM-HELD-CASTING-PEAK, which depends on this task.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by
+  - target: REQ-ROBUST-CONTROL-001.C6
+    type: targets
+  - target: REQ-READINESS-TIMELINESS-001.C4
+    type: targets
+  - target: DEL-SIM-BREW-LOOP
+    type: depends-on
+  - target: DEL-SIM-STEAM-LOOP
+    type: depends-on
+  - target: DEL-SIM-ROBUSTNESS-VERIFICATION
+    type: depends-on
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: depends-on

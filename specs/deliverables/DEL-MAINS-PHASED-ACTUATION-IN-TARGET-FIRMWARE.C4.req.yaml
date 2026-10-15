@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C4
+type: criterion
+title: The control period does not move when the supply's period does
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The control period is derived from the controller's own crystal. Moving the supply period across a wide span in the emulation tier leaves the control period unchanged and changes only the half-cycle decisions.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of
