@@ -47,13 +47,14 @@ class Reader:
         self.directory = directory
         self.argv_log = os.path.join(directory, "argv.log")
 
-    def gh(self, stdout: str = "", status: int = 0, stderr: str = "") -> str:
+    def gh(self, stdout: str = "", status: int = 0, stderr: str = "", delay: int = 0) -> str:
         path = os.path.join(self.directory, "gh")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write(
                 "#!/bin/sh\n"
                 f'echo "$@" > {shlex.quote(self.argv_log)}\n'
-                f"printf '%s' {shlex.quote(stdout)}\n"
+                + (f"exec sleep {delay}\n" if delay else "")  # exec: no orphan keeps the pipes open after the kill
+                + f"printf '%s' {shlex.quote(stdout)}\n"
                 f"printf '%s' {shlex.quote(stderr)} >&2\n"
                 f"exit {status}\n"
             )
@@ -82,11 +83,38 @@ class TheReaderStatesTheLatestNightlyResult(unittest.TestCase):
     def as_json(self, outcome: subprocess.CompletedProcess) -> dict:
         return json.loads(outcome.stdout)
 
-    def assertUnknown(self, outcome: subprocess.CompletedProcess, mention: str = ""):
-        self.assertEqual(self.lines(outcome)[0], "unknown")
-        self.assertNotEqual(outcome.returncode, 0)
-        self.assertIn(mention, outcome.stdout)
-        self.assertNotIn("green", outcome.stdout.replace("unknown", ""))
+    def assertUnknown(self, gh: str, mention: str = "", *flags: str):
+        """Unknown in text and in JSON, each with a non-empty reason and a non-zero exit."""
+        text = self.reader.read(gh, *flags)
+        lines = self.lines(text)
+        self.assertEqual(lines[0], "unknown")
+        self.assertNotEqual(text.returncode, 0)
+        self.assertEqual(len(lines), 2)
+        self.assertTrue(lines[1].startswith("reason: ") and lines[1][len("reason: "):].strip(), lines)
+        self.assertIn(mention, lines[1])
+        self.assertNotIn("green", text.stdout.replace("unknown", ""))
+        structured = self.reader.read(gh, *flags, "--json")
+        self.assertNotEqual(structured.returncode, 0)
+        result = self.as_json(structured)
+        self.assertEqual(result["verdict"], "unknown")
+        self.assertTrue(result["reason"].strip())
+        self.assertIn(mention, result["reason"])
+        self.assertNotIn("commit", result)
+
+    def assertRead(self, history: list[dict], verdict: str, commit: str | None = None):
+        """A read verdict in text and in JSON, both exiting zero."""
+        text = self.reader.history(history)
+        self.assertEqual((text.returncode, self.lines(text)[0]), (0, verdict))
+        structured = self.reader.history(history, "--json")
+        self.assertEqual(structured.returncode, 0)
+        result = self.as_json(structured)
+        self.assertEqual(result["verdict"], verdict)
+        if commit is not None:
+            self.assertIn(f"commit: {commit}", text.stdout)
+            self.assertEqual(result["commit"], commit)
+        else:
+            self.assertEqual(self.lines(text)[1], f"reason: {result['reason']}")
+            self.assertEqual(result["reason"], "no run of the workflow has completed")
 
     def test_a_passing_run_is_green_with_its_commit_and_link(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
@@ -117,37 +145,27 @@ class TheReaderStatesTheLatestNightlyResult(unittest.TestCase):
             with self.subTest(conclusion=conclusion):
                 history = [done("new", conclusion, "2026-10-15T02:00:00Z"),
                            done("old", "success", "2026-10-14T02:00:00Z")]
-                outcome = self.reader.history(history)
-                self.assertEqual(outcome.returncode, 0)
-                self.assertEqual(self.lines(outcome)[0], "red")
-                self.assertIn(f"conclusion: {conclusion}", outcome.stdout)
-                self.assertEqual(self.as_json(self.reader.history(history, "--json"))["verdict"], "red")
+                self.assertRead(history, "red", "new")
+                self.assertIn(f"conclusion: {conclusion}", self.reader.history(history).stdout)
+                self.assertEqual(self.as_json(self.reader.history(history, "--json"))["conclusion"], conclusion)
 
     def test_no_runs_reads_as_none_and_exits_zero(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
-        outcome = self.reader.history([])
-        self.assertEqual(outcome.returncode, 0)
-        self.assertEqual(self.lines(outcome)[0], "none")
-        as_json = self.as_json(self.reader.history([], "--json"))
-        self.assertEqual(as_json["verdict"], "none")
-        self.assertNotIn("commit", as_json)
+        self.assertRead([], "none")
+        self.assertNotIn("commit", self.as_json(self.reader.history([], "--json")))
 
     def test_only_in_progress_runs_read_as_none(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
         history = [run("p1", None, "in_progress", "2026-10-15T02:00:00Z"),
                    run("p2", None, "queued", "2026-10-14T02:00:00Z")]
-        outcome = self.reader.history(history)
-        self.assertEqual((outcome.returncode, self.lines(outcome)[0]), (0, "none"))
-        self.assertEqual(self.as_json(self.reader.history(history, "--json"))["verdict"], "none")
+        self.assertRead(history, "none")
 
     def test_only_passed_over_runs_read_as_none(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
         history = [done("c1", "cancelled", "2026-10-15T02:00:00Z"),
                    done("c2", "skipped", "2026-10-14T02:00:00Z"),
                    done("c3", "neutral", "2026-10-13T02:00:00Z")]
-        outcome = self.reader.history(history)
-        self.assertEqual((outcome.returncode, self.lines(outcome)[0]), (0, "none"))
-        self.assertEqual(self.as_json(self.reader.history(history, "--json"))["verdict"], "none")
+        self.assertRead(history, "none")
 
     def test_a_newer_unfinished_or_passed_over_run_yields_to_an_older_completed_one(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
@@ -159,19 +177,13 @@ class TheReaderStatesTheLatestNightlyResult(unittest.TestCase):
                 with self.subTest(newer=newer["conclusion"] or newer["status"], older=older):
                     # The order the tool lists them in does not decide: createdAt does.
                     history = [done("old", older, "2026-10-15T02:00:00Z"), newer]
-                    outcome = self.reader.history(history)
-                    self.assertEqual(self.lines(outcome)[0], verdict)
-                    self.assertIn("commit: old", outcome.stdout)
-                    as_json = self.as_json(self.reader.history(history, "--json"))
-                    self.assertEqual((as_json["verdict"], as_json["commit"]), (verdict, "old"))
+                    self.assertRead(history, verdict, "old")
 
     def test_the_newest_completed_run_decides_over_an_older_one(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
         history = [done("old", "success", "2026-10-14T02:00:00Z"),
                    done("new", "failure", "2026-10-15T02:00:00Z")]
-        outcome = self.reader.history(history)
-        self.assertEqual(self.lines(outcome)[0], "red")
-        self.assertIn("commit: new", outcome.stdout)
+        self.assertRead(history, "red", "new")
 
     def test_the_tool_is_asked_for_main_and_the_named_workflow_only(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
@@ -184,18 +196,12 @@ class TheReaderStatesTheLatestNightlyResult(unittest.TestCase):
     def test_a_failing_call_is_unknown_with_its_reason(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
         gh = self.reader.gh(status=4, stderr="gh: To use GitHub CLI, run: gh auth login")
-        outcome = self.reader.read(gh)
-        self.assertUnknown(outcome, "gh auth login")
-        self.assertEqual(self.as_json(self.reader.read(gh, "--json"))["verdict"], "unknown")
-        self.assertIn("gh auth login", self.as_json(self.reader.read(gh, "--json"))["reason"])
-        self.assertNotEqual(self.reader.read(gh, "--json").returncode, 0)
+        self.assertUnknown(gh, "gh auth login")
 
     def test_a_missing_workflow_is_unknown_not_none(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
         gh = self.reader.gh(status=1, stderr="could not find any workflows named Nightly verification")
-        outcome = self.reader.read(gh)
-        self.assertUnknown(outcome, "could not find any workflows")
-        self.assertNotEqual(self.lines(outcome)[0], "none")
+        self.assertUnknown(gh, "could not find any workflows")
 
     def test_malformed_output_is_unknown(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
@@ -203,27 +209,53 @@ class TheReaderStatesTheLatestNightlyResult(unittest.TestCase):
                      json.dumps([done("x", "", "2026-10-15T02:00:00Z")]),
                      json.dumps([{"status": "completed", "conclusion": "success", "createdAt": "2026-10-15T02:00:00Z"}])):
             with self.subTest(text=text):
-                gh = self.reader.gh(stdout=text)
-                self.assertUnknown(self.reader.read(gh))
-                as_json = self.as_json(self.reader.read(gh, "--json"))
-                self.assertEqual(as_json["verdict"], "unknown")
-                self.assertTrue(as_json["reason"])
+                self.assertUnknown(self.reader.gh(stdout=text))
 
     def test_a_missing_tool_is_unknown_and_named(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
         absent = os.path.join(self._directory.name, "no-such-gh")
-        self.assertUnknown(self.reader.read(absent), absent)
-        as_json = self.as_json(self.reader.read(absent, "--json"))
-        self.assertEqual(as_json["verdict"], "unknown")
-        self.assertIn(absent, as_json["reason"])
-        self.assertNotEqual(self.reader.read(absent, "--json").returncode, 0)
+        self.assertUnknown(absent, absent)
+
+    def test_a_tool_that_cannot_be_executed_is_unknown_and_named(self):
+        # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
+        gh = self.reader.gh(stdout="[]")
+        os.chmod(gh, 0o644)
+        self.assertUnknown(gh, "could not be started")
+
+    def test_a_tool_that_does_not_answer_in_time_is_unknown_and_names_the_wait(self):
+        # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
+        gh = self.reader.gh(stdout="[]", delay=30)
+        self.assertUnknown(gh, "did not answer within 0.5 seconds", "--timeout", "0.5")
+
+    def test_a_run_of_the_wrong_shape_is_unknown_never_read_as_none_or_an_older_green(self):
+        # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
+        older = done("old", "success", "2026-10-14T02:00:00Z")
+        no_created = done("new", "failure", "2026-10-15T02:00:00Z")
+        del no_created["createdAt"]
+        no_status = done("new", "failure", "2026-10-15T02:00:00Z")
+        del no_status["status"]
+        cases = {
+            "empty run": ([{}], "status"),
+            "no createdAt on the newest, older green present": ([no_created, older], "createdAt"),
+            "null createdAt": ([dict(no_created, createdAt=None), older], "createdAt"),
+            "numeric createdAt": ([dict(no_created, createdAt=5), older], "createdAt"),
+            "no status": ([no_status, older], "status"),
+            "null status": ([run("new", "failure", None, "2026-10-15T02:00:00Z"), older], "status"),
+            "completed with null conclusion": (
+                [run("new", None, "completed", "2026-10-15T02:00:00Z"), older], "conclusion"),
+        }
+        for name, (history, field) in cases.items():
+            with self.subTest(case=name):
+                self.assertUnknown(self.reader.gh(stdout=json.dumps(history)), field)
 
 
 class TheTaskAsksForTheWorkflowTheNightlyDeclares(unittest.TestCase):
     def test_the_workflow_name_the_task_passes_equals_the_name_the_nightly_declares(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: A test also holds the workflow name the command asks for equal to the name the nightly workflow declares
         with open(os.path.join(REPOSITORY, "Taskfile.yml"), encoding="utf-8") as handle:
-            (command,) = task_commands(handle.read(), "daily:status")
+            commands = task_commands(handle.read(), "daily:status")
+        self.assertEqual(len(commands), 1, "task daily:status must declare exactly one command (renamed or split?)")
+        (command,) = commands
         words = shlex.split(command)
         self.assertIn("daily_status.py", " ".join(words))
         asked = words[words.index("--workflow") + 1]

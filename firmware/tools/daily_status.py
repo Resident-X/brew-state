@@ -41,20 +41,20 @@ class Unreadable(Exception):
     """The run history could not be read; the message is the reason."""
 
 
-def read_runs(gh: str, workflow: str, branch: str) -> list[dict]:
+def read_runs(gh: str, workflow: str, branch: str, timeout: float = TIMEOUT_SECONDS) -> list[dict]:
     command = [gh, "run", "list", "--workflow", workflow, "--branch", branch,
                "--limit", HISTORY, "--json", FIELDS]
     try:
         done = subprocess.run(
             command, check=False, capture_output=True, text=True, errors="replace",
-            timeout=TIMEOUT_SECONDS,
+            timeout=timeout,
         )
     except FileNotFoundError:
         raise Unreadable(f"the GitHub command-line tool '{gh}' is not installed or not on PATH") from None
     except OSError as error:
         raise Unreadable(f"the GitHub command-line tool '{gh}' could not be started ({error})") from None
     except subprocess.TimeoutExpired:
-        raise Unreadable(f"'{gh} run list' did not answer within {TIMEOUT_SECONDS} seconds") from None
+        raise Unreadable(f"'{gh} run list' did not answer within {timeout:g} seconds") from None
     if done.returncode != 0:
         detail = " ".join(done.stderr.split()) or "no message"
         raise Unreadable(
@@ -72,7 +72,12 @@ def read_runs(gh: str, workflow: str, branch: str) -> list[dict]:
 
 def classify(runs: list[dict]) -> dict:
     """The verdict for a run history, newest first by creation time."""
-    ordered = sorted(runs, key=lambda run: str(run.get("createdAt") or ""), reverse=True)
+    for index, run in enumerate(runs):
+        for field in ("status", "createdAt"):
+            value = run.get(field)
+            if not isinstance(value, str) or not value:
+                raise Unreadable(f"run {index} carries no usable '{field}'")
+    ordered = sorted(runs, key=lambda run: run["createdAt"], reverse=True)
     for run in ordered:
         if run.get("status") != "completed":
             continue
@@ -109,10 +114,12 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--workflow", required=True, help="the name the nightly workflow declares")
     parser.add_argument("--branch", required=True, help="the branch whose runs are read")
     parser.add_argument("--gh", default="gh", help="the GitHub command-line tool (default: gh)")
+    parser.add_argument("--timeout", type=float, default=TIMEOUT_SECONDS,
+                        help=f"seconds to wait for the tool to answer (default: {TIMEOUT_SECONDS})")
     parser.add_argument("--json", action="store_true", help="print one JSON object instead of text")
     arguments = parser.parse_args(argv)
     try:
-        result = classify(read_runs(arguments.gh, arguments.workflow, arguments.branch))
+        result = classify(read_runs(arguments.gh, arguments.workflow, arguments.branch, arguments.timeout))
     except Unreadable as reason:
         report({"verdict": "unknown", "reason": str(reason)}, arguments.json)
         return 1
