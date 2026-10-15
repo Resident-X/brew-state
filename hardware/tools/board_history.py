@@ -8,21 +8,39 @@ before the router ran. Neither is taken on its word. This command finds those
 moments in the history of the board file itself, reading every version of it
 reachable from HEAD, and judges each section as it stood in the commit before:
 
-- The first track, a commit whose board carries a straight track, an arc or a
-  via while no commit before it does. A track in the root commit, tracks
-  first appearing on two separate lines of history, and tracks first
-  appearing in a merge commit, fail. While no commit carries one, the
+- The first track, a commit whose board carries a straight track, an arc, a
+  via or a copper pour while no commit before it does. A pour is a zone that
+  is not a rule area, an unfilled outline included; a rule area, a zone
+  carrying a keepout, carries no net and is no copper. Copper in the root
+  commit, first appearing on two separate lines of history, and first
+  appearing in a merge commit, fail. While no commit carries any, the
   placement section is judged as it stands at HEAD.
+- The first placement, the first commit whose board holds a footprint, found
+  from the history alone and never from the placement section, and the plan
+  in the commit before it. A footprint in the root commit, footprints first
+  appearing on two separate lines of history or in a merge commit, a first
+  placement that does not come before the commit the placement section is
+  judged in, and no readable floorplan in the commit before it, fail.
+- The plan, the floorplan in the commit the placement section is judged in,
+  held to the floorplan in the commit before the first placement: the same
+  regions, the same bounds for each and the same parts in each, the only
+  difference allowed being a reference appended to a region's parts, with no
+  bound changed and no reference removed or moved between regions, whose
+  first listing is in a commit that is a strict ancestor of the first commit
+  whose board holds that footprint.
 - The placement section, in the commit before the first track, holding at
   least two candidates and as it is now. Each candidate's commit is in the
-  history, comes before the first track, holds the board, differs from every
-  other candidate's and is named by its Renders; its recorded totals and parts
-  outside are the measures recomputed from that commit's board, against the
-  floorplan of the commit the section is judged in, with the placement
-  view's own arithmetic (board_placement.py); its verdict table has one row
-  for every placement item, each verdict pass, fail or not applicable, a not
-  applicable only for an item the plan marks no; and the chosen candidate has
-  no part outside and every footprint where the first track's commit holds it.
+  history, comes before the first track, holds the board, places its parts
+  differently from every other candidate, by reference, position, angle and
+  side and not by the bytes of the board file, and is named by its Renders;
+  its recorded totals and parts outside are the measures recomputed from that
+  commit's board, against the floorplan of the commit the section is judged in
+  with the references the plan appended removed where the candidate's board
+  does not hold them, with the placement view's own arithmetic
+  (board_placement.py); its verdict table has one row for every placement
+  item, each verdict pass, fail or not applicable, a not applicable only for
+  an item the plan marks no; and the chosen candidate has no part outside and
+  every footprint where the first track's commit holds it.
 - The critical routing section's passes, numbered from 1 and only ever
   appended. Each pass's Board judged commit is on HEAD's line of history, the
   first holding critical copper and all of it locked, a later one following
@@ -80,7 +98,9 @@ from board_geometry import Unreadable  # noqa: E402
 
 #: The design method, from the repository's root, whose catalogue gives the checklist.
 METHOD = "docs/board-design-method.md"
-#: The kinds of copper whose first appearance is the first track; a zone is not one.
+#: The kinds of copper a pass holds locked and whose unlocked appearance is the router's commit; a zone is not one.
+#: The first-copper search also counts a pour (carries_copper), which this set must not, or an unlocked non-critical
+#: pour would be read as the router's commit.
 TRACKS = ("track", "arc", "via")
 
 PLACEMENT = "Placement"
@@ -179,6 +199,17 @@ class History:
 
 def tracks(items: List[dict]) -> List[dict]:
     return [item for item in items if item["kind"] in TRACKS]
+
+
+def pours(layout: list) -> List[list]:
+    """The zones the board carries at its top level that are copper: every zone but a rule area, a zone carrying a
+    keepout, which carries no net. An unfilled outline is a pour too, since the outline is what a designer draws."""
+    return [node for node in layout[1:] if sexpr.head(node) == "zone" and sexpr.child(node, "keepout") is None]
+
+
+def references(layout: list) -> set:
+    """The reference of every footprint on the board."""
+    return {board_geometry.reference(node).strip() for node in sexpr.children(layout, "footprint")}
 
 
 def unlocked(items: List[dict]) -> Counter:
@@ -344,7 +375,8 @@ def first_holding(history: History, commits: List[str], holds) -> List[str]:
 
 
 def first_track(history: History, board: str, report: Report) -> Tuple[bool, Optional[str]]:
-    """Whether any commit's board carries a track, and the first commit to carry one when it can be told."""
+    """Whether any commit's board carries copper, a track, arc, via or pour, and the first commit to carry it when it
+    can be told."""
     blobs = history.blobs(history.order, board)
     carries: Dict[str, bool] = {}
     faults = []
@@ -353,9 +385,10 @@ def first_track(history: History, board: str, report: Report) -> Tuple[bool, Opt
         blob = blobs[commit]
         if blob is not None and blob not in carries:
             try:
-                carries[blob] = bool(tracks(history.copper(commit, board)))
+                layout = history.layout(commit, board)
+                carries[blob] = bool(tracks(locked_copper.copper(layout, f"{board} at {commit}")) or pours(layout))
             except Unreadable as error:
-                faults.append(f"the board at {short(commit)} cannot be read, so whether it carries a track cannot be "
+                faults.append(f"the board at {short(commit)} cannot be read, so whether it carries copper cannot be "
                               f"told: {error}")
                 carries[blob] = False
         return blob is not None and carries[blob]
@@ -363,24 +396,163 @@ def first_track(history: History, board: str, report: Report) -> Tuple[bool, Opt
     firsts = first_holding(history, history.order, holds)
     for commit in firsts:
         if not history.parents[commit]:
-            faults.append(f"the root commit {short(commit)} carries a track, so nothing was committed before the "
-                          "first track")
+            faults.append(f"the root commit {short(commit)} carries a track, arc, via or pour, so nothing was "
+                          "committed before the first track")
         elif len(history.parents[commit]) > 1:
-            faults.append(f"tracks first appear in the merge commit {short(commit)}, which none of its "
-                          f"{len(history.parents[commit])} parents carries, so there is no one commit before the first "
-                          "track")
+            faults.append(f"a track, arc, via or pour first appears in the merge commit {short(commit)}, which none of "
+                          f"its {len(history.parents[commit])} parents carries, so there is no one commit before the "
+                          "first track")
     if len(firsts) > 1:
-        faults.append(f"tracks first appear on {len(firsts)} separate lines of history, at "
+        faults.append(f"a track, arc, via or pour first appears on {len(firsts)} separate lines of history, at "
                       f"{', '.join(short(commit) for commit in firsts)}, so there is no one first track before which "
                       "the placement was recorded")
     if not firsts:
-        report.add("first track", faults, "no commit carries a track, arc or via yet, so the placement section is "
+        report.add("first track", faults, "no commit carries a track, arc, via or pour yet, so the placement section is "
                                           "judged as it stands at HEAD")
         return False, None
-    if report.add("first track", faults, f"{short(firsts[0])} is the first commit carrying a track, arc or via, and "
-                                         "the placement section is judged as it stood in the commit before it"):
+    if report.add("first track", faults, f"{short(firsts[0])} is the first commit carrying a track, arc, via or pour, "
+                                         "and the placement section is judged as it stood in the commit before it"):
         return True, firsts[0]
     return True, None
+
+
+def first_placement(history: History, board: str, at: str, report: Report) -> Optional[str]:
+    """The commit before the first commit whose board holds a footprint, the commit the plan is judged in, found from
+    the history alone; None, with the reasons reported, when there is no one such commit."""
+    blobs = history.blobs(history.order, board)
+    held: Dict[str, bool] = {}
+
+    def holds(commit: str) -> bool:
+        blob = blobs[commit]
+        if blob is not None and blob not in held:
+            try:
+                held[blob] = bool(sexpr.children(history.layout(commit, board), "footprint"))
+            except Unreadable:
+                held[blob] = False  # first track has already reported a board version that cannot be read
+        return blob is not None and held[blob]
+
+    firsts = first_holding(history, history.order, holds)
+    faults = []
+    for commit in firsts:
+        if not history.parents[commit]:
+            faults.append(f"the root commit {short(commit)} already holds a footprint, so no plan was committed before "
+                          "the first placement")
+        elif len(history.parents[commit]) > 1:
+            faults.append(f"a footprint first appears in the merge commit {short(commit)}, which none of its "
+                          f"{len(history.parents[commit])} parents holds, so there is no one commit before the first "
+                          "placement to judge the plan in")
+    if len(firsts) > 1:
+        faults.append(f"a footprint first appears on {len(firsts)} separate lines of history, at "
+                      f"{', '.join(short(commit) for commit in firsts)}, so there is no one first placement before "
+                      "which the plan was committed")
+    if not firsts:
+        faults.append("no commit's board holds a footprint, so there is no placement for the plan to have come before")
+    anchor = history.parents[firsts[0]][0] if len(firsts) == 1 and len(history.parents[firsts[0]]) == 1 else None
+    if anchor is not None and not history.is_ancestor(anchor, at):
+        faults.append(f"the commit before the first placement, {short(anchor)}, is not an ancestor of {short(at)}, the "
+                      "commit the placement section is judged in, so the plan was not committed before it")
+    if report.add("first placement", faults, f"{short(firsts[0]) if firsts else '?'} is the first commit whose board "
+                                             "holds a footprint, and the plan is judged as it stood in the commit "
+                                             "before it" + (f", {short(anchor)}" if anchor else "")):
+        return anchor
+    return None
+
+
+def read_plan(history: History, commit: str, plan: str) -> List[dict]:
+    """The floorplan of the layout plan as `commit` holds it; Unreadable when it holds none or it cannot be read."""
+    local = history.file(commit, plan)
+    if local is None:
+        raise Unreadable(f"{plan} is not in the commit {short(commit)}")
+    return board_placement.floorplan(local)
+
+
+def bounds_key(region: dict):
+    return None if region["bounds"] is None else sorted(tuple(rectangle) for rectangle in region["bounds"])
+
+
+def plan_changes(then: List[dict], now: List[dict]) -> Tuple[List[str], Dict[str, List[str]]]:
+    """How the floorplan `now` differs from `then` other than by references appended to a region's parts: every such
+    difference, and the references it appends, each with the regions it is appended to."""
+    faults, appended = [], {}
+    names_then, names_now = [region["name"] for region in then], [region["name"] for region in now]
+    if sorted(names_then) != sorted(names_now):
+        faults.append(f"the floorplan's region rows are {', '.join(names_now) or 'none'} where the plan before "
+                      f"placement has {', '.join(names_then) or 'none'}")
+    before = {region["name"]: region for region in then}
+    listed = {part for region in then for part in region["parts"]}
+    for region in now:
+        was = before.get(region["name"])
+        if was is None:
+            continue
+        if bounds_key(was) != bounds_key(region):
+            faults.append(f"the region '{region['name']}' has the bounds {board_placement.bounds_text(region)} where "
+                          f"the plan before placement gives {board_placement.bounds_text(was)}")
+        faults += [f"{part} is listed in the region '{region['name']}' in the plan before placement and not now"
+                   for part in was["parts"] if part not in region["parts"]]
+        for part in region["parts"]:
+            if part in was["parts"]:
+                continue
+            if part in listed:
+                holders = [other["name"] for other in then if part in other["parts"]]
+                faults.append(f"{part} is listed in the region '{region['name']}', where the plan before placement "
+                              f"lists it only in {', '.join(repr(name) for name in holders)}: a reference is not moved "
+                              "between regions")
+            else:
+                appended.setdefault(part, []).append(region["name"])
+    return faults, appended
+
+
+def first_commits(history: History, path: str, holds_in) -> List[str]:
+    """Where `holds_in`, true of the file `path` as a commit holds it, first becomes true on each line of history."""
+    blobs = history.blobs(history.order, path)
+    seen: Dict[str, bool] = {}
+
+    def holds(commit: str) -> bool:
+        blob = blobs[commit]
+        if blob is not None and blob not in seen:
+            try:
+                seen[blob] = holds_in(commit)
+            except Unreadable:
+                seen[blob] = False  # a version that cannot be read lists and holds nothing
+        return blob is not None and seen[blob]
+
+    return first_holding(history, history.order, holds)
+
+
+def judge_plan(history: History, board: str, plan: str, anchor: Optional[str], at: str, where: str,
+               regions: Optional[List[dict]], unread: Optional[Unreadable], report: Report) -> Dict[str, List[str]]:
+    """The floorplan in the commit the placement section is judged in, held to the one in the commit before the first
+    placement; the references it appends to a region's parts, each with its regions. Without the commit before the
+    first placement there is nothing to hold it to and no reference is taken as appended."""
+    if anchor is None:
+        return {}
+    faults, appended = [], {}
+    try:
+        then = read_plan(history, anchor, plan)
+    except Unreadable as error:
+        then = None
+        faults.append(f"{plan} in the commit before the first placement ({short(anchor)}) holds no readable floorplan, "
+                      f"so the plan was not committed before placement: {error}")
+    if regions is None:
+        faults.append(f"the floorplan in {where} cannot be read, so it cannot be held to the plan before placement: "
+                      f"{unread}")
+    if then is not None and regions is not None:
+        faults, appended = plan_changes(then, regions)
+        for part in sorted(appended):
+            holders = first_commits(history, board, lambda commit, part=part: part in references(
+                history.layout(commit, board)))
+            listers = first_commits(history, plan, lambda commit, part=part: any(
+                part in region["parts"] for region in read_plan(history, commit, plan)))
+            for holder in holders:
+                if not any(lister != holder and history.is_ancestor(lister, holder) for lister in listers):
+                    faults.append(f"{part} is appended to the parts of {', '.join(repr(n) for n in appended[part])} "
+                                  f"and its footprint first appears on the board at {short(holder)}, which no commit "
+                                  "that lists it comes before: the amendment is committed before the part is placed")
+    report.add("plan before placement", faults,
+               f"the floorplan in {where} is the one in the commit before the first placement ({short(anchor)})"
+               + (f", with {', '.join(sorted(appended))} appended to its parts, each committed before its footprint "
+                  "first appears on the board" if appended else ""))
+    return appended
 
 
 def parts_placed(layout: list) -> Dict[str, Tuple[str, str]]:
@@ -396,6 +568,12 @@ def parts_placed(layout: list) -> Dict[str, Tuple[str, str]]:
 def judge_placement(history: History, board: str, plan: str, first: Optional[str], report: Report) -> None:
     at = history.parents[first][0] if first else history.order[-1]
     where = f"the commit before the first track ({short(at)})" if first else f"HEAD ({short(at)})"
+    try:
+        regions, unread = read_plan(history, at, plan), None
+    except Unreadable as error:
+        regions, unread = None, error
+    appended = judge_plan(history, board, plan, first_placement(history, board, at, report), at, where, regions, unread,
+                          report)
     then = section(history.text(at, plan), PLACEMENT)
     now = section(history.text(history.order[-1], plan), PLACEMENT)
     faults = []
@@ -434,11 +612,7 @@ def judge_placement(history: History, board: str, plan: str, first: Optional[str
     faults += [f"candidate {number} is recorded {count} times" for number, count in Counter(numbers).items() if count > 1]
     report.add("candidates", faults, f"{len(candidates)} candidates")
 
-    try:
-        regions, unread = board_placement.floorplan(history.file(at, plan)), None
-    except Unreadable as error:
-        regions, unread = None, error
-    blobs, outside = {}, {}
+    blobs, outside, placements = {}, {}, {}
     for number, lines in candidates:
         name = f"candidate {number}"
         given = fields(lines, ["Commit", "Renders", "Measures"])
@@ -489,7 +663,12 @@ def judge_placement(history: History, board: str, plan: str, first: Optional[str
             try:
                 if regions is None:
                     raise Unreadable(f"the floorplan of {plan} in {where} cannot be read: {unread}")
-                measured = board_placement.measured_placement(board, plan, history.layout(resolved, board), regions)
+                layout = history.layout(resolved, board)
+                held = references(layout)
+                measured = board_placement.measured_placement(board, plan, layout, [
+                    dict(region, parts=[part for part in region["parts"] if part in held or part not in appended])
+                    for region in regions])
+                placements[number] = parts_placed(layout)
                 outside[number] = measured["outside"]
                 expected = [line for line in board_placement.measure_lines(measured) if line.startswith(MEASURED)]
                 missing = sorted((Counter(expected) - Counter(recorded)).elements())
@@ -520,13 +699,15 @@ def judge_placement(history: History, board: str, plan: str, first: Optional[str
                 faults.append(f"{name} gives {row[0]} not applicable, and the plan table does not mark it no")
         report.add(f"{name} verdicts", faults, f"one verdict for each of the {len(items)} placement items")
 
-    seen: Dict[str, int] = {}
+    seen: Dict[tuple, int] = {}
     faults = []
-    for number, blob in blobs.items():
-        if blob in seen:
-            faults.append(f"candidates {seen[blob]} and {number} hold the same board, so they are one placement")
-        seen.setdefault(blob, number)
-    report.add("distinct candidates", faults, "no two candidates hold the same board")
+    for number, placed in placements.items():
+        key = tuple(sorted(placed.items()))
+        if key in seen:
+            faults.append(f"candidates {seen[key]} and {number} place every part alike, by reference, position, angle "
+                          "and side, so they are one placement")
+        seen.setdefault(key, number)
+    report.add("distinct candidates", faults, "no two candidates place their parts alike")
 
     chosen_field = fields(then, ["Chosen"]).get("Chosen")
     chosen = re.match(r"`?(?:candidate\s+)?(\d+)", chosen_field[1], re.I) if chosen_field else None

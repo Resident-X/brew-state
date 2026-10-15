@@ -611,6 +611,7 @@ class Method(unittest.TestCase):
                       "- `first track`:", "- `placement section`:", "- `placement items`:", "- `candidates`:",
                       "- `candidate <n> commit`:", "- `candidate <n> measures`:", "- `candidate <n> verdicts`:",
                       "- `distinct candidates`:", "- `chosen`:", "- `parts at first track`, or `parts at HEAD`",
+                      "- `first placement`:", "- `plan before placement`:",
                       "merges into the main line without rewriting that history",
                       "never squashed, rebased or force-pushed", "The command judges the record's shape and order",
                       "from that commit's board against the floorplan as `<T>^` holds it",
@@ -621,6 +622,41 @@ class Method(unittest.TestCase):
                       "cmp <work folder>", "python3 -c", "git merge-base --is-ancestor"):
             with self.subTest(gone=words):
                 self.assertNotIn(words, placement, "the history cross-checks are the command's, not prose recipes")
+
+    def test_the_method_says_an_excluded_symbol_is_no_floorplan_part_and_a_failed_compare_rewrites_the_pass(self):
+        # SOL-BOARD-HISTORY-PLACEMENT-HARDENING.C2: Amend the method's planning step so it states that a symbol marked excluded from the board is absent from the netlist in the schematic tool's native format, is not a part for the floorplan and is listed in no region, so the plan's cross-check and the placement command's stop on a listed part that is not on the board agree, and so that the amendment for a part added after placement appends the part to its region's parts and changes no bound. Amend the routing step's instruction to repeat from step 2 after a failed compare so that it says the pass with no router commit is rewritten in place, not a further pass appended, since only the last pass may have none and a pass the router has run after is never changed. Amend the method's step 6 description of the history command so it states each behaviour the command now has, with its check labels.
+        planning = section(self.method, "Planning the layout")
+        for words in ("Every part in the schematic's netlist is listed in at least one region",
+                      "A symbol marked excluded from the board is absent from the netlist in the schematic tool's native "
+                      "format", "it is not a part for the floorplan and is listed in no region, and listing it fails the "
+                      "second cross-check below", "a symbol marked excluded from the board is not in the netlist, so a "
+                      "region that lists one fails this cross-check, and the placement command's stop on a listed part "
+                      "that is not on the board never meets one",
+                      "by amending the floorplan, which appends the part to its region's Parts and changes no bound, no "
+                      "other part and no other region", "and that change is committed before the part is placed"):
+            with self.subTest(words=words):
+                self.assertIn(words, planning)
+        self.assertNotIn("Every part on the schematic", planning, "the loose wording is replaced by the netlist's")
+        routing = section(self.method, "Routing: critical nets by hand and locked, then the rest")
+        compare = section(routing, "7. Compare the imported board with the record", "### ")
+        for words in ("correct the cause, and repeat from step 2. The repeat rewrites in place the pass that has no "
+                      "router commit, the last, and appends no further pass",
+                      "only the last pass may have no router commit, so a pass appended after it fails `pass <k> before "
+                      "router`, and a pass the router has run after is never changed"):
+            with self.subTest(words=words):
+                self.assertIn(words, compare)
+        record = section(routing, "4. Check the critical routing against the catalogue, before the router runs", "### ")
+        self.assertIn("the pass that has no router commit is then rewritten in place", record)
+        placement = section(self.method, "Placement")
+        for words in ("a copper pour, `<T>`", "a rule area, a zone carrying a keepout, carries no net and is no copper",
+                      "the first commit whose board holds a footprint, `<P>`, from the history alone and never from the "
+                      "section", "The one difference allowed is a reference appended to a region's parts, with no bound "
+                      "changed and no reference removed or moved between regions",
+                      "the same commit not counting as before", "place every part alike",
+                      "however their board files differ in a text label or an identifier",
+                      "with the references the plan appended left out where that commit's board does not hold them"):
+            with self.subTest(step6=words):
+                self.assertIn(words, placement)
 
     def test_the_minimums_move_before_placement_and_the_floorplan_lists_each_regions_parts(self):
         # SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C2: The floorplan table gains a Parts column, the planning cross-checks every part is listed, the minimums move before placement, and the proof design's plan is migrated.
