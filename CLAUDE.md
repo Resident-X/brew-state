@@ -178,3 +178,5 @@ or against that.
   So requirement-to-physical-component allocation, the mechanism `OBL-PHYSICAL-CONFIGURATION-001`
   would naturally use, cannot currently be wired. No workaround: pointing at a definition or
   requirement node fails the `valid_targets` check instead.
+
+- **Agent Tier.** Staircase workflows do not allow project specific agent guidance. Use `small-fast` for graph discovery and simple tasks, quick easy fixes, things that don't need reasoning. Use `mid-tier` for most work and only use `reasoning-tier` when explicit complex reasoning is required. Do not blindly follow the staircase recommendations in workflows.
