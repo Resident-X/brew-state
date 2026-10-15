@@ -4,9 +4,11 @@ category: solution
 title: The board design method is followable by a fresh designer or agent and carries nothing specific to this machine
 status: active
 priority: must
-version: 2
+version: 3
 text: |
   The method as a whole is written to be followed without its author, entered by agents through a project operator skill, named with the repository's repo- prefix so it is tracked and survives the skills sync, that wraps Konnect's bundled KiCad skills unedited, holds no figure, part choice or board shape of this machine, and is demonstrated by a fresh agent session following it to a throwaway design, never ordered, that passes the pre-order gate.
+
+  Settled before the build. The demonstration runs only after the three maintenance solutions this one depends on have merged, since each changes the method text it follows. The fresh session has no auto-memory and only the method and the operator skill, which is a thin entry point: every instruction lives in the method, and the method governs where a bundled Konnect skill conflicts with it, as routing goes through KiCad's exporter, Freerouting and KiCad's importer. The throwaway design lives under hardware/proof/, carries a synthetic separation basis with NOT_FOR_MANUFACTURE set, is judged by the existing board rule-check task, and merges by merge commit so the history check can read it. The Tools table gains a Konnect row stating that it needs an agent client that speaks MCP. The Konnect gaps found so far (deleting vias, editing rule areas, moving footprint text fields, swapping a placed footprint, done with KiCad scripting) belong in the method. Machine-freeness is an inspection of the existing text clause by clause, not a rewrite.
 links:
   - target: DEL-HW-DESIGN-METHOD.C5
     type: derives-from
@@ -36,6 +38,12 @@ links:
     type: depends-on
   - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
     type: depends-on
+  - target: SOL-BOARD-HISTORY-PLACEMENT-HARDENING
+    type: depends-on
+  - target: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK
+    type: depends-on
+  - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN
+    type: depends-on
 design_question_answers:
   - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
     class: served-statement
@@ -49,7 +57,7 @@ interfaces:
   - Konnect's bundled KiCad skills, used as they ship
   - KiCad's command-line electrical and layout rule checks
 locus:
-  - marking: created
+  - marking: modified
     ref: the board design method, docs/board-design-method.md, as a whole
   - marking: created
     ref: the project operator skill through which an agent enters the board design method, wrapping Konnect's bundled KiCad skills
