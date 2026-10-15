@@ -227,6 +227,13 @@ class TheReaderStatesTheLatestNightlyResult(unittest.TestCase):
         gh = self.reader.gh(stdout="[]", delay=30)
         self.assertUnknown(gh, "did not answer within 0.5 seconds", "--timeout", "0.5")
 
+    def test_a_wait_that_is_not_a_positive_finite_number_is_unknown_with_a_verdict(self):
+        # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
+        gh = self.reader.gh(stdout="[]")
+        for value in ("nan", "inf", "-inf", "1e999", "0", "-1"):
+            with self.subTest(timeout=value):
+                self.assertUnknown(gh, "finite number of seconds above zero", f"--timeout={value}")
+
     def test_a_run_of_the_wrong_shape_is_unknown_never_read_as_none_or_an_older_green(self):
         # SOL-VERIFY-DAILY-STATUS-READ-FIRST.C1: The daily status reader states main's latest nightly result and never reports a result it could not read
         older = done("old", "success", "2026-10-14T02:00:00Z")

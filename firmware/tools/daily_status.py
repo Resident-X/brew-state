@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 
@@ -42,6 +43,8 @@ class Unreadable(Exception):
 
 
 def read_runs(gh: str, workflow: str, branch: str, timeout: float = TIMEOUT_SECONDS) -> list[dict]:
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise Unreadable(f"the wait for '{gh}' must be a finite number of seconds above zero, not {timeout:g}")
     command = [gh, "run", "list", "--workflow", workflow, "--branch", branch,
                "--limit", HISTORY, "--json", FIELDS]
     try:
