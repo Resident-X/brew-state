@@ -26,6 +26,6 @@ links:
   - target: DEC-MARGIN-COMBINES-DECLARED-ERROR-BY-WORST-CASE
     type: justified-by
 brief_confirmation:
-  confirmer: claude-opus-5-5
-  fingerprint: 1a5112d754cacd670cfc035cc1314d5c688e45340ffb94e30cb5d72b1626e016
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 8e574528c4a421474a0fd2c4c3b0396b7748d14c40a2863575322203babfcc23
   gating_profile: ""
