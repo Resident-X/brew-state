@@ -20,6 +20,8 @@ occurrences rather than a list of spellings.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import os
 import re
 import subprocess
@@ -250,7 +252,7 @@ class CompileCommands(unittest.TestCase):
     def test_a_command_that_ends_with_the_pin_and_relaxes_nothing_is_accepted(self):
         self.assertEqual([], self.findings(CLEAN_COMMAND))
         self.assertEqual([], self.findings("cc -ffp-contract=fast -ffp-contract=off -O2 -c x.c"))
-        self.assertEqual([], self.findings("cc -ffp-contract=off -fno-fast-math -ffp-model=precise -c x.c"))
+        self.assertEqual([], self.findings("cc -ffp-contract=off -fno-fast-math -c x.c"))
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
     def test_a_later_setting_that_undoes_the_pin_is_refused_in_whatever_form(self):
@@ -272,6 +274,14 @@ class CompileCommands(unittest.TestCase):
             with self.subTest(flag=flag):
                 found = self.findings(f"cc -ffp-contract=off {flag} -c x.c")
                 self.assertEqual(1, len(found))
+                self.assertIn(flag, found[0])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_any_fp_model_setting_is_refused_because_precise_after_the_pin_fuses_again(self):
+        for flag in ("-ffp-model=precise", "-ffp-model=strict", "-ffp-model=fast"):
+            with self.subTest(flag=flag):
+                found = self.findings(f"cc -ffp-contract=off {flag} -c x.c")
+                self.assertEqual(1, len(found), found)
                 self.assertIn(flag, found[0])
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
@@ -330,6 +340,14 @@ class FusedInstructions(unittest.TestCase):
                 self.assertEqual(len(expected), len(found), found)
                 for mnemonic, line in zip(expected, found):
                     self.assertIn(mnemonic, line)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_the_alternating_fused_forms_are_found_on_x86(self):
+        text = "  1:\tvfmaddsub231ps %ymm1,%ymm2,%ymm0\n  2:\tvfmsubadd132pd %xmm1,%xmm2,%xmm0\n"
+
+        found, _ = check.fused_findings("obj", text, "x86-64")
+
+        self.assertEqual(2, len(found), found)
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
     def test_a_name_that_contains_a_fused_mnemonic_is_not_an_instruction(self):
@@ -437,6 +455,27 @@ class OneEnvironmentEndToEnd(unittest.TestCase):
         self.assertEqual([], notes)
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_the_flags_of_an_environment_with_no_objects_are_judged_and_its_objects_are_not_demanded(self):
+        with tempfile.TemporaryDirectory() as project:
+            environment = build_environments.Environment("native_test", {"platform": "native"})
+            dropped = self.database(project, "cc -std=c11 -c x.c")
+            with mock.patch.object(check_sanitizers, "compile_commands", return_value=dropped):
+                problems, blockers, notes = check.check_environment(
+                    project, environment, "pio", "arm64", judge_objects=False
+                )
+            clean = self.database(project, CLEAN_COMMAND)
+            with mock.patch.object(check_sanitizers, "compile_commands", return_value=clean):
+                clean_problems, clean_blockers, clean_notes = check.check_environment(
+                    project, environment, "pio", "arm64", judge_objects=False
+                )
+
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("contraction", problems[0])
+        self.assertEqual([], blockers)
+        self.assertEqual(([], []), (clean_problems, clean_blockers))
+        self.assertIn("built by fw:test", clean_notes[0])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
     def test_a_compile_database_that_cannot_be_made_is_a_blocker(self):
         with tempfile.TemporaryDirectory() as project:
             environment = build_environments.Environment("native", {"platform": "native"})
@@ -445,6 +484,90 @@ class OneEnvironmentEndToEnd(unittest.TestCase):
                 problems, blockers, _ = check.check_environment(project, environment, "pio", "arm64")
 
         self.assertEqual(([], 1), (problems, len(blockers)))
+
+
+class WhichEnvironmentsNeedObjects(unittest.TestCase):
+    """The whole check over the real declaration, with no objects built anywhere."""
+
+    def run_main(self, database_for, flags_only=False):
+        def compile_commands(project, name, pio):
+            return database_for(project, name)
+
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.object(check_sanitizers, "compile_commands", side_effect=compile_commands), \
+                mock.patch.object(check, "objects_in", return_value=[]), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = check.main(["--project", FIRMWARE] + (["--flags-only"] if flags_only else []))
+        return code, out.getvalue(), err.getvalue()
+
+    @staticmethod
+    def clean(project, name):
+        return [{"directory": project, "file": "src/plant/common/plant_maths.c", "command": CLEAN_COMMAND}]
+
+    def environments(self):
+        covered = check.covered(build_environments.load(FIRMWARE))
+        return covered, check.built_environments(covered)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_the_environments_whose_objects_are_demanded_are_those_fw_build_builds(self):
+        covered, built = self.environments()
+        with open(os.path.join(FIRMWARE, "..", "Taskfile.yml")) as taskfile:
+            text = taskfile.read()
+        build_task = text.split("  fw:build:", 1)[1].split("\n  fw:test:", 1)[0]
+        taskfile_builds = set(re.findall(r"run -e (\w+)", build_task))
+
+        self.assertEqual(taskfile_builds & {e.name for e in covered}, {e.name for e in built})
+        self.assertTrue(any(e.runs_tests for e in covered))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_a_built_environment_with_no_objects_is_a_blocker_and_a_test_environment_is_not(self):
+        covered, built = self.environments()
+
+        code, _, err = self.run_main(self.clean)
+
+        self.assertEqual(2, code, err)
+        for environment in built:
+            self.assertIn(f"{environment.name}: no plant object", err)
+        for environment in covered:
+            if environment.runs_tests:
+                self.assertNotIn(f"{environment.name}: no plant object", err)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_a_dropped_pin_in_a_test_environment_is_a_flag_finding_not_a_blocker(self):
+        covered, _ = self.environments()
+        test_name = next(e.name for e in covered if e.runs_tests)
+
+        def database(project, name):
+            command = "cc -std=c11 -c x.c" if name == test_name else CLEAN_COMMAND
+            return [{"directory": project, "file": "src/plant/common/plant_maths.c", "command": command}]
+
+        code, _, err = self.run_main(database)
+
+        self.assertEqual(1, code, err)
+        self.assertIn(f"{test_name}: src/plant/common/plant_maths.c: the last contraction setting", err)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_flags_only_runs_on_a_tree_with_no_objects_and_stops_on_the_flag_finding(self):
+        code, out, err = self.run_main(self.clean, flags_only=True)
+        self.assertEqual(0, code, err)
+        self.assertNotIn("no fused instruction", out)
+
+        def dropped(project, name):
+            return [{"directory": project, "file": "src/plant/common/plant_maths.c", "command": "cc -c x.c"}]
+
+        code, _, err = self.run_main(dropped, flags_only=True)
+        self.assertEqual(1, code)
+        self.assertIn("the last contraction setting is absent", err)
+        self.assertNotIn("not built", err)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_the_mutation_of_the_dropped_pin_is_caught_by_the_flags_only_check(self):
+        import mutate
+
+        entry = next(m for m in mutate.MUTATIONS if m["name"] == "the-contraction-pin-is-dropped-from-every-build")
+
+        self.assertEqual(mutate.PLANT_FLAGS, entry["command"])
+        self.assertIn("--flags-only", entry["command"])
 
 
 class Construction:

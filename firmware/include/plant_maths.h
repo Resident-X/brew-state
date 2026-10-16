@@ -70,8 +70,9 @@ float plant_expm1f(float x);
  * the rate it approaches it is at most c * V / M, and the decay is at least half
  * the approach rate times the step. At the worst corner of the declared errors
  * of the shipped description, c * V / M = (4.15 * 1.03) * (4.0 * 1.6) /
- * (320 * 0.6) = 0.142, so the turn is at most 0.75 times the decay and no more
- * than 66 radians wherever the decay is 87 or less, against a domain of 6000.
+ * (320 * 0.6) = 0.142, so the turn is at most 0.76 times the decay (exactly
+ * 2 * sqrt(0.1425) = 0.755) and no more than 66 radians wherever the decay is
+ * 87 or less (0.76 * 87 = 66, as before), against a domain of 6000.
  * A step long enough to carry the turn past the domain has a decay far past 87,
  * where the sine is zero and so is the factor it multiplies. The sine's
  * divisor, the turn itself, is a square root of a positive number there.

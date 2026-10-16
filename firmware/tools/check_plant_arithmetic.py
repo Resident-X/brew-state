@@ -20,13 +20,25 @@ build produced rather than on how the sources and the build file spell it:
     calls, there is no instruction to fuse, and the scan finds nothing to look
     at; it says so rather than reporting a clean result it did not earn.
 
+The two parts need different things. The flags need only the compile database,
+which PlatformIO writes without building, so they are read for every covered
+environment. The undefined symbols and the fused instructions need objects, so
+they are judged for the environments `task fw:build` builds, and for those a
+missing object is a blocker, never a skip. The test environments are built by
+`fw:test`, after this check, and compile the same plant sources under the same
+base flags: their flags prove their pin, and the objects of the built
+environments prove its effect, so their objects are not demanded here.
+
 Covered are the environments whose source filter includes the plant, except
 those declared to be refused or built for the mutation sweep. The mutation
 sweep's own build is compiled only by the sweep, through a toolchain this check
 does not require; the flags it adds are held by a test of the script that adds
 them.
 
-Usage: check_plant_arithmetic.py --project <dir>
+With `--flags-only` only the flags are judged, for every covered environment, so
+a defect in the flags is caught by the flag finding and by nothing else.
+
+Usage: check_plant_arithmetic.py --project <dir> [--flags-only]
 """
 
 from __future__ import annotations
@@ -77,6 +89,10 @@ RELAXING_FLAGS = frozenset(
     }
 )
 
+#: Any `-ffp-model=` setting is refused: on clang `-ffp-model=precise` after the
+#: pin turns contraction back on, and the plant needs none of them.
+FP_MODEL_PREFIX = "-ffp-model="
+
 PIN = "-ffp-contract=off"
 CONTRACTION_PREFIX = "-ffp-contract="
 
@@ -89,7 +105,7 @@ ARCHITECTURES = {
         re.compile(r"(?<![\w.<])(?:fadd|fsub|fmul|fdiv)(?!\w)"),
     ),
     "x86-64": (
-        re.compile(r"(?<![\w.<])vf(?:n?m)(?:add|sub)\d*(?:ss|sd|ps|pd)(?![\w.])"),
+        re.compile(r"(?<![\w.<])v(?:f(?:n?m)(?:add|sub)\d*|fmaddsub\d*|fmsubadd\d*)(?:ss|sd|ps|pd)(?![\w.])"),
         re.compile(r"(?<![\w.<])v?(?:add|sub|mul|div)(?:ss|sd)(?![\w.])"),
     ),
     "cortex-m4": (
@@ -119,6 +135,18 @@ def covered(declared: list[build_environments.Environment]) -> list[build_enviro
     ]
 
 
+def built_environments(
+    subjects: list[build_environments.Environment],
+) -> list[build_environments.Environment]:
+    """The covered environments whose plant objects `fw:build` leaves behind.
+
+    The test environments are the ones it does not build: `fw:test` does, after
+    this check. Which they are is read from the declaration, so a new one is
+    sorted by what it declares rather than by a name written here.
+    """
+    return [environment for environment in subjects if not environment.runs_tests]
+
+
 def is_allowed(symbol: str, leading_underscore: bool) -> bool:
     """Whether an undefined symbol is one of the routines every host computes alike."""
     name = symbol[1:] if leading_underscore and symbol.startswith("_") else symbol
@@ -141,6 +169,8 @@ def flag_findings(source: str, arguments: list[str]) -> list[str]:
     """What is wrong with the flags one plant translation unit is really compiled with."""
     findings = [f"{source}: compiled with {flag}, which licenses rearranging arithmetic"
                 for flag in arguments if flag in RELAXING_FLAGS]
+    findings += [f"{source}: compiled with {flag}, which can set contraction again after the pin"
+                 for flag in arguments if flag.startswith(FP_MODEL_PREFIX) and flag not in RELAXING_FLAGS]
     settings = [flag for flag in arguments if flag.startswith(CONTRACTION_PREFIX)]
     if not settings or settings[-1] != PIN:
         findings.append(
@@ -221,15 +251,28 @@ def scan_note(environment: str, architecture: str, arithmetic: int) -> str:
 
 
 def check_environment(
-    project: str, environment: build_environments.Environment, pio: str, machine: str
+    project: str,
+    environment: build_environments.Environment,
+    pio: str,
+    machine: str,
+    judge_objects: bool = True,
 ) -> tuple[list[str], list[str], list[str]]:
-    """The problems found in one environment, what could not be looked at, and notes."""
+    """The problems found in one environment, what could not be looked at, and notes.
+
+    The flags are always judged. The objects are judged only when `judge_objects`
+    is set, and then an environment with none is a blocker.
+    """
     try:
         database = check_sanitizers.compile_commands(project, environment.name, pio)
     except check_sanitizers.CannotInspect as error:
         return [], [f"{environment.name}: {error}"], []
 
     problems = plant_flag_findings(database, project, environment.name)
+    if not judge_objects:
+        return problems, [], [
+            f"{environment.name}: flags judged from its compile commands; its objects are built by "
+            "fw:test after this check, and the built environments' objects show what the pin does"
+        ]
 
     build_directory = os.path.join(environment.build_directory(project), "src")
     plant_objects = objects_in(os.path.join(build_directory, PLANT_DIRECTORY))
@@ -278,6 +321,7 @@ def main(argv: list[str]) -> int:
         default=os.environ.get("PIO", os.path.expanduser("~/.platformio/penv/bin/pio")),
         help="the PlatformIO executable",
     )
+    parser.add_argument("--flags-only", action="store_true", help="judge the compile commands' flags and no object")
     args = parser.parse_args(argv)
 
     project = os.path.realpath(args.project)
@@ -299,8 +343,11 @@ def main(argv: list[str]) -> int:
     problems: list[str] = []
     blockers: list[str] = []
     notes: list[str] = []
+    objects_judged = [] if args.flags_only else built_environments(subjects)
     for environment in subjects:
-        found, blocked, noted = check_environment(project, environment, args.pio, platform.machine())
+        found, blocked, noted = check_environment(
+            project, environment, args.pio, platform.machine(), environment in objects_judged
+        )
         problems += found
         blockers += blocked
         notes += noted
@@ -320,9 +367,13 @@ def main(argv: list[str]) -> int:
         print(f"check_plant_arithmetic: {note}")
     print(
         f"check_plant_arithmetic: {', '.join(e.name for e in subjects)} compile the plant with "
-        f"{PIN} last, no flag that rearranges arithmetic, no fused instruction and no undefined "
-        "symbol outside the exact list"
+        f"{PIN} last and no flag that rearranges arithmetic"
     )
+    if objects_judged:
+        print(
+            f"check_plant_arithmetic: {', '.join(e.name for e in objects_judged)} hold no fused "
+            "instruction and no undefined symbol outside the exact list"
+        )
     return 0
 
 

@@ -168,6 +168,7 @@ ANALYSIS = [
 PLANT_ARITHMETIC = [
     sys.executable, "tools/check_plant_arithmetic.py", "--project", ".",
 ]
+PLANT_FLAGS = PLANT_ARITHMETIC + ["--flags-only"]
 MACHINE_SETTINGS = [
     sys.executable, "tools/check_machine_build_settings.py", "--project", ".",
     "--plant-root", "src/plant",
@@ -220,6 +221,7 @@ LABELS = {
     tuple(CONTROL_TESTS): "the control law's tests",
     tuple(ANALYSIS): "the host tier's analysis check",
     tuple(PLANT_ARITHMETIC): "the check on the plant's compiled arithmetic",
+    tuple(PLANT_FLAGS): "the check on the flags the plant is compiled with",
     tuple(MACHINE_SETTINGS): "the check that a machine build keeps its warning settings",
     tuple(MACHINE_STRUCTURE): "the check that a machine build carries a machine's equations",
     tuple(EMBEDDED_DESCRIPTION): "the check that a machine carries the verified description",
@@ -550,12 +552,12 @@ MUTATIONS = (
                "the plant is compiled to whatever the host's compiler does by default -- fused "
                "on Apple's Clang for arm64 and not on GCC for x86-64, which moves the last bit "
                "of every figure the plant produces on one host and not the other. The objects "
-               "are made again with the flag gone, so the check meets both what the compile "
-               "commands say and the fused instructions that result",
+               "are made again with the flag gone, and the flags-only check has to stop on the "
+               "compile commands' own finding rather than on a missing object",
         "file": "platformio.ini",
         "find": "base_flags = -std=c11 -ffp-contract=off -Wall -Wextra",
         "replace": "base_flags = -std=c11 -Wall -Wextra",
-        "command": PLANT_ARITHMETIC,
+        "command": PLANT_FLAGS,
         "remake": True,
     },
     {
