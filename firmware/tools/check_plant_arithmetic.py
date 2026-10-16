@@ -78,6 +78,11 @@ EXACT_SYMBOLS = frozenset(
     }
 )
 
+#: The checked forms glibc's fortification substitutes for a byte-copy routine
+#: when a build defines `_FORTIFY_SOURCE`, which Ubuntu's GCC does by default:
+#: `__memcpy_chk` is `memcpy` with a bounds test in front of it.
+FORTIFIED_ROUTINES = frozenset({"memcpy", "memset"})
+
 #: Flags that let the compiler rearrange arithmetic, so one expression stops
 #: giving one answer. A closed set the compilers document.
 RELAXING_FLAGS = frozenset(
@@ -150,7 +155,12 @@ def built_environments(
 def is_allowed(symbol: str, leading_underscore: bool) -> bool:
     """Whether an undefined symbol is one of the routines every host computes alike."""
     name = symbol[1:] if leading_underscore and symbol.startswith("_") else symbol
-    return name in EXACT_SYMBOLS or name.startswith(EXACT_PREFIXES)
+    fortified = (
+        name.startswith("__")
+        and name.endswith("_chk")
+        and name[2:-4] in FORTIFIED_ROUTINES
+    )
+    return name in EXACT_SYMBOLS or name.startswith(EXACT_PREFIXES) or fortified
 
 
 def undefined_findings(

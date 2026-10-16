@@ -225,6 +225,15 @@ class UndefinedSymbols(unittest.TestCase):
                 self.assertEqual(1, len(self.findings(f"          U {symbol}\n")))
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
+    def test_a_fortified_byte_copy_is_exact_and_a_fortified_maths_routine_is_not(self):
+        for symbol in ("__memcpy_chk", "__memset_chk"):
+            with self.subTest(symbol=symbol):
+                self.assertEqual([], self.findings(f"          U {symbol}\n"))
+        for symbol in ("__sinf_chk", "__expf_chk", "__memcpy_chk_x", "__strtof_chk"):
+            with self.subTest(symbol=symbol):
+                self.assertEqual(1, len(self.findings(f"          U {symbol}\n")))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every build that compiles the plant computes with the same pinned arithmetic
     def test_a_symbol_another_project_object_defines_is_not_the_hosts(self):
         self.assertEqual([], self.findings("          U plant_expf\n", {"plant_expf"}))
         self.assertEqual(1, len(self.findings("          U plant_expf\n", set())))
