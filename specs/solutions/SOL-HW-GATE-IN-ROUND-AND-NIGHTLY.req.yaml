@@ -28,6 +28,6 @@ links:
   - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 acting as independent brief reviewer
-  fingerprint: 820979ab095027f01ab44423eca7b44c0491ed790ee866411cfd028697aa212f
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 30e7fb9ae306b561a77a619f66f2bd6961ed06f17a8d596ae9ac37c024af1c83
   gating_profile: ""
