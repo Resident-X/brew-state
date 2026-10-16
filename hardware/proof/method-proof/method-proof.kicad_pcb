@@ -801,7 +801,7 @@
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "2a6b3cd3-3f7f-4b96-a8e6-5c7649124e7f")
-		(at 110 103.5)
+		(at 113 103.5)
 		(property "Reference" "JP1"
 			(at 0 -2.38 0)
 			(unlocked yes)
@@ -1134,7 +1134,7 @@
 		(uuid "48f3da62-bf56-4c81-84d3-1dd66aed80a1")
 		(at 112 111 -90)
 		(property "Reference" "C1"
-			(at 0 -2.35 -90)
+			(at 0 -2.35 270)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "33df30a6-81e0-4164-9be8-d0a308e76971")
@@ -1146,7 +1146,7 @@
 			)
 		)
 		(property "Value" "47uF"
-			(at 0 2.35 -90)
+			(at 0 2.35 270)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1159,7 +1159,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e4893ddd-351f-4075-b34e-81659cbb8eef")
@@ -1170,7 +1170,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a019a0fe-59fe-43e1-9819-942c4da58eda")
@@ -1274,7 +1274,7 @@
 			(uuid "53855545-719e-4597-9474-b6b79ecbfcf4")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(uuid "3982df97-10ac-49f8-a0dc-501f55320e6b")
@@ -1306,7 +1306,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "6ca6effe-6815-457d-a490-30c0d3d70819")
-		(at 116 108.5 180)
+		(at 116 109.5 180)
 		(property "Reference" "U1"
 			(at 0 -2.4 180)
 			(unlocked yes)
@@ -1651,9 +1651,9 @@
 	(footprint "Capacitor_Tantalum_SMD:CP_EIA-3528-21_Kemet-B"
 		(layer "F.Cu")
 		(uuid "6f08a492-2df5-4fb8-a43d-32274f74b62f")
-		(at 115.5 103.5 180)
+		(at 116.5 104 90)
 		(property "Reference" "C2"
-			(at 0 -2.35 180)
+			(at 0 -2.35 90)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "57674a7a-253d-4834-87fc-c5a2e9425148")
@@ -1665,7 +1665,7 @@
 			)
 		)
 		(property "Value" "150uF"
-			(at 0 2.35 180)
+			(at 0 2.35 90)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1678,7 +1678,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 180)
+			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "83e7d7c1-5e97-4bf1-8cb0-3549dab18c8f")
@@ -1689,7 +1689,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 180)
+			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ab664cf6-c092-4d19-8a20-82656ee52b4d")
@@ -1712,16 +1712,6 @@
 			(uuid "1603ace0-6784-4c6c-9540-a74e7de5ceab")
 		)
 		(fp_line
-			(start -2.470001 1.51)
-			(end 1.75 1.51)
-			(stroke
-				(width 0.12)
-				(type default)
-			)
-			(layer "F.SilkS")
-			(uuid "62bdac35-568f-49cf-a140-0be63b711c95")
-		)
-		(fp_line
 			(start -2.470001 -1.51)
 			(end -2.470001 1.51)
 			(stroke
@@ -1730,6 +1720,16 @@
 			)
 			(layer "F.SilkS")
 			(uuid "7c2d253d-b173-4b4f-9af6-1c740bf66478")
+		)
+		(fp_line
+			(start -2.470001 1.51)
+			(end 1.75 1.51)
+			(stroke
+				(width 0.12)
+				(type default)
+			)
+			(layer "F.SilkS")
+			(uuid "62bdac35-568f-49cf-a140-0be63b711c95")
 		)
 		(fp_rect
 			(start -2.46 -1.65)
@@ -1741,16 +1741,6 @@
 			(fill no)
 			(layer "F.CrtYd")
 			(uuid "65e231ad-8445-4457-90a8-9391dc6b9f2d")
-		)
-		(fp_line
-			(start 1.75 1.4)
-			(end 1.75 -1.4)
-			(stroke
-				(width 0.1)
-				(type default)
-			)
-			(layer "F.Fab")
-			(uuid "40df9652-7553-437b-9629-9938be6e9b3d")
 		)
 		(fp_line
 			(start 1.75 -1.4)
@@ -1773,16 +1763,6 @@
 			(uuid "f02faf2a-9b00-4bf9-b890-84330152a575")
 		)
 		(fp_line
-			(start -1.75 1.4)
-			(end 1.75 1.4)
-			(stroke
-				(width 0.1)
-				(type default)
-			)
-			(layer "F.Fab")
-			(uuid "b7ceaf7a-d882-487c-b9fd-3c896dee1c6a")
-		)
-		(fp_line
 			(start -1.75 -0.7)
 			(end -1.75 1.4)
 			(stroke
@@ -1792,8 +1772,28 @@
 			(layer "F.Fab")
 			(uuid "3f658ee6-edf6-4e54-957b-be8b244131ba")
 		)
+		(fp_line
+			(start 1.75 1.4)
+			(end 1.75 -1.4)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(layer "F.Fab")
+			(uuid "40df9652-7553-437b-9629-9938be6e9b3d")
+		)
+		(fp_line
+			(start -1.75 1.4)
+			(end 1.75 1.4)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(layer "F.Fab")
+			(uuid "b7ceaf7a-d882-487c-b9fd-3c896dee1c6a")
+		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 180)
+			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
 			(uuid "5cbd7d7d-f318-4c07-aa96-8b7b7fec1f4c")
@@ -1805,7 +1805,7 @@
 			)
 		)
 		(pad "1" smd roundrect
-			(at -1.54 0 180)
+			(at -1.54 0 90)
 			(size 1.34 2.39)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.186567)
@@ -1813,7 +1813,7 @@
 			(uuid "c197f47e-148c-4b15-ae41-afbdf8e3f45c")
 		)
 		(pad "2" smd roundrect
-			(at 1.539999 0 180)
+			(at 1.539999 0 90)
 			(size 1.34 2.39)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.186567)
@@ -2213,7 +2213,7 @@
 		(uuid "c3be4f05-f0ba-4c9b-8e16-d6619872fb6f")
 		(at 128.6 118.2 -90)
 		(property "Reference" "D1"
-			(at 0 -1.43 -90)
+			(at 0 -1.43 270)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "0a14de67-61f7-4241-aac8-3ad85cc34513")
@@ -2225,7 +2225,7 @@
 			)
 		)
 		(property "Value" "VLMG1300-GS08"
-			(at 0 1.43 -90)
+			(at 0 1.43 270)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -2238,7 +2238,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "5c329875-2ce5-4bef-8449-20d5dcefb6fa")
@@ -2249,7 +2249,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d778a701-b151-4fb5-a12b-518b59316dd7")
@@ -2353,7 +2353,7 @@
 			(uuid "d3bdaa99-54f1-4eac-91e8-6e4a3adc27ab")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(uuid "8d26235e-f056-42e0-a0d2-ca0a3a942133")
@@ -3357,7 +3357,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
 		(layer "B.Cu")
 		(uuid "55f6756a-6e0b-4a8b-9a8b-933ae955e6e4")
-		(at 107.5 107)
+		(at 109 105)
 		(property "Reference" "TP1"
 			(at 0 1.448 180)
 			(unlocked yes)
@@ -3559,7 +3559,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
 		(layer "B.Cu")
 		(uuid "c65ae1f7-e9bc-445c-82f0-1db825f6805d")
-		(at 113.5 118)
+		(at 112.5 118)
 		(property "Reference" "TP2"
 			(at 0 1.448 180)
 			(unlocked yes)
