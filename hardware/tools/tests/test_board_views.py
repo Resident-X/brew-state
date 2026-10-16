@@ -68,11 +68,12 @@ def tearDownModule():
 
 # --- The proof board -------------------------------------------------------------------
 
-#: A model the design keeps in its own folder: a red box 2 by 2 by 2 in VRML's units of 2.54 mm, which a model's
-#: scale stretches upward.
-MODEL = """#VRML V2.0 utf8
-Shape { appearance Appearance { material Material { diffuseColor 0.9 0.05 0.05 } } geometry Box { size 2 2 2 } }
-"""
+#: A model the design keeps in its own folder: a red box 5.08 mm on each side, in the STEP file beside this one, which a
+#: model's scale stretches upward. It is STEP rather than VRML because KiCad's packages for Linux write nothing for a
+#: VRML model to the three-dimensional export, the one the views draw from, where the author's build draws it.
+MODEL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "box.step")
+with open(MODEL_FILE, encoding="utf-8") as _handle:
+    MODEL = _handle.read()
 MODEL_COLOUR = (230, 13, 13)
 
 #: The font one silkscreen text asks for, which no machine has, so KiCad substitutes another.
@@ -94,16 +95,16 @@ NO_SUCH_FONT = "Board Views Proof Face"
 ITEMS = [
     footprint("U1", 20, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
                              pad(3, 2, -1, "SIG_A", "input"), pad(4, 2, 1, "SIG_B", "output")],
-              [model("${KIPRJMOD}/models/box.wrl")]),
+              [model("${KIPRJMOD}/models/box.step")]),
     footprint("C1", 4, 20, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")]),
     footprint("C2", 56, 20, [pad(1, 0, -1, "+3V3", "passive"), pad(2, 0, 1, "GND", "passive")],
               [model("${KIPRJMOD}/models/missing.step")]),
     footprint("R1", 30, 12, [pad(1, 0, -1, "SIG_A", "passive"), pad(2, 0, 1, "+3V3", "passive")],
-              [model("${KIPRJMOD}/models/box.wrl", hidden=True)]),
+              [model("${KIPRJMOD}/models/box.step", hidden=True)]),
     footprint("U2", 45, 8, [pad(1, -1, 0, "SIG_A", "input"), pad(2, 1, 0, "SIG_B", "output")],
-              [model("models/box.wrl", height=12)]),
+              [model("models/box.step", height=12)]),
     footprint("D1", 8, 8, [pad(1, -1, 0, "SIG_A", "passive"), pad(2, 1, 0, "SIG_B", "passive")],
-              [model("${KIPRJMOD}/models/box.wrl")], "(attr smd dnp)"),
+              [model("${KIPRJMOD}/models/box.step")], "(attr smd dnp)"),
     footprint("U3", 48, 20, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
                              pad(3, 2, -1, "SIG_A", "input")]),
     footprint("U4", 38, 12, [pad(1, -2, -1, "+3V3", "power_in"), pad(2, -2, 1, "GND", "power_in"),
@@ -156,7 +157,7 @@ class Design(board_fixtures.Design):
     def __init__(self, board_text=None, project_text=None):
         super().__init__(layout() if board_text is None else board_text,
                          project() if project_text is None else project_text, prefix="board-views-test-")
-        self.write(os.path.join("models", "box.wrl"), MODEL)
+        self.write(os.path.join("models", "box.step"), MODEL)
 
     def args(self, classes=("Power", "Ground"), out=None):
         found = ["--board", self.board, "--project", self.project, "--out", out or self.out]
@@ -804,7 +805,7 @@ class Pieces(unittest.TestCase):
 
     def test_the_copy_keeps_the_designs_names_and_finds_its_models_as_the_design_does_in_place(self):
         """SOL-BOARD-REVIEW-RENDER-VIEWS.C1: One task-runner command renders every layout review view of a board from its design files."""
-        paths = ["${KIPRJMOD}/models/box.wrl", "$(KIPRJMOD)/models/box.wrl", "models/box.wrl", "models/nowhere.step",
+        paths = ["${KIPRJMOD}/models/box.step", "$(KIPRJMOD)/models/box.step", "models/box.step", "models/nowhere.step",
                  "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step", "/elsewhere/part.step",
                  "kicad-embed://part.step"]
         parts = [footprint(f"P{index}", 5 + 5 * index, 30, [], [model(path)]) for index, path in enumerate(paths)]
@@ -819,7 +820,7 @@ class Pieces(unittest.TestCase):
             copied = board_views.locked_copper.read_layout(staged)
         found = [board_views.unquoted(board_views.sexpr.child(node, "model")[1])
                  for node in copied[1:] if board_views.sexpr.head(node) == "footprint"]
-        box = os.path.join(os.path.abspath(design.folder), "models", "box.wrl")
+        box = os.path.join(os.path.abspath(design.folder), "models", "box.step")
         self.assertEqual(found, [box, box, box] + paths[3:])
         self.assertEqual(set(written), {box})
         self.assertIn(written[box], paths[:3])
@@ -1652,14 +1653,16 @@ class ExportStatusThroughTheCommand(unittest.TestCase):
     def command(self, how: str) -> str:
         """A stand-in for KiCad's command-line tool that passes every command to the real one except the
         three-dimensional export, which it ends as `how` says: "real" writes the real export, "none" writes
-        nothing, "empty" an empty file, "corrupt" text, each saying STAND_IN_CAUSE and exiting 1."""
+        nothing, "empty" an empty file, "corrupt" text, each saying STAND_IN_CAUSE and exiting 1; "zero" writes the
+        real export and exits 0 saying nothing, whatever status the real tool gave it."""
         real = shutil.which(KICAD_CLI) or KICAD_CLI
         writes = {"real": f"'{real}' \"$@\" >/dev/null 2>&1", "none": ":", "empty": ': > "$out"',
-                  "corrupt": 'echo "not a model" > "$out"'}[how]
+                  "corrupt": 'echo "not a model" > "$out"', "zero": f"'{real}' \"$@\" >/dev/null 2>&1"}[how]
+        ending = "exit 0" if how == "zero" else f"echo '{STAND_IN_CAUSE}' >&2; exit 1"
         folder = tempfile.mkdtemp(prefix="board-views-stand-in-")
         self.addCleanup(shutil.rmtree, folder, True)
         script = (FIND_OUTPUT + 'case " $* " in\n'
-                  f" *' pcb export glb '*) {writes}; echo '{STAND_IN_CAUSE}' >&2; exit 1 ;;\n"
+                  f" *' pcb export glb '*) {writes}; {ending} ;;\n"
                   f" *) exec '{real}' \"$@\" ;;\nesac")
         return tool(folder, "kicad-cli", script)
 
@@ -1701,12 +1704,15 @@ class ExportStatusThroughTheCommand(unittest.TestCase):
 
     def test_a_zero_status_export_adds_no_export_line_or_field_to_the_report_or_the_index(self):
         # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2: where its command-line tool reports a non-zero status while still writing the artefact asked for, the tooling decides from what it actually wrote and reports the cause; an export that ended with status zero has no status to report
-        shown = rendered()
-        self.assertEqual(shown["result"].returncode, 0, shown["result"].stdout + shown["result"].stderr)
-        self.assertNotIn("3D EXPORT", shown["result"].stdout)
-        self.assertNotIn("three_dimensional_export", shown["index"])
-        with open(os.path.join(shown["design"].out, "index.txt"), encoding="utf-8") as handle:
+        design, status, lines, errors = self.run_views("zero")
+        self.assertEqual(status, 0, lines + [errors])
+        self.assertFalse([line for line in lines if "3D EXPORT" in line], lines)
+        with open(os.path.join(design.out, "index.txt"), encoding="utf-8") as handle:
             self.assertNotIn("3D EXPORT", handle.read())
+        with open(os.path.join(design.out, "index.json"), encoding="utf-8") as handle:
+            index = json.load(handle)
+        self.assertNotIn("three_dimensional_export", index)
+        self.assertEqual({part["reference"]: part["reason"] for part in index["not_in_3d"]}["C2"], "model not found")
 
 
 class Documentation(unittest.TestCase):
