@@ -1,0 +1,16 @@
+id: EV-SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH-C2-TEST
+type: evidence
+title: test evidence for SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T00:59:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_round_gate.py (40 tests carrying the criterion's trace comment); the round gate passed on this commit
+  artifact_version: c0a839b346f1dd75fbfb8ebbc1a2c48fb2eda86f
+links:
+  - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C2
+    type: satisfies

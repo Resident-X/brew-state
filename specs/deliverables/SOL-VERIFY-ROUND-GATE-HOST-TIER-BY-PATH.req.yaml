@@ -21,3 +21,5 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C1
     type: targets
+  - target: SOL-VERIFY-ROUND-GATE-TARGETED
+    type: supersedes

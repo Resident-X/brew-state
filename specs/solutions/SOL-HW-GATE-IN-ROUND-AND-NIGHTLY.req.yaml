@@ -23,9 +23,9 @@ links:
     type: justified-by
   - target: SOL-HW-BOARD-RULE-CHECK-GATE
     type: depends-on
-  - target: SOL-VERIFY-ROUND-GATE-TARGETED
-    type: depends-on
   - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
+    type: depends-on
+  - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 acting as independent brief reviewer

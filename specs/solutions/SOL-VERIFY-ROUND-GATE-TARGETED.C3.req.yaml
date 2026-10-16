@@ -1,7 +1,7 @@
 id: SOL-VERIFY-ROUND-GATE-TARGETED.C3
 type: criterion
 title: The project's instructions and the firmware documentation name the round gate as the build round's verification
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: inspection

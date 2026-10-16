@@ -25,3 +25,5 @@ links:
     type: depends-on
   - target: SOL-SWEEP-TIME-ACCOUNTED
     type: depends-on
+  - target: SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND
+    type: supersedes

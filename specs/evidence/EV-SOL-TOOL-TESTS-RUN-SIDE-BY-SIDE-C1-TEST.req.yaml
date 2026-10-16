@@ -1,0 +1,16 @@
+id: EV-SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE-C1-TEST
+type: evidence
+title: test evidence for SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T00:59:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_run_tool_tests.py::test_passing_modules_pass_and_their_tests_are_counted_across_modules,firmware/tools/tests/test_run_tool_tests.py::test_one_worker_gives_the_same_verdict_as_several,firmware/tools/tests/test_run_tool_tests.py::test_modules_run_in_separate_processes,firmware/tools/tests/test_run_tool_tests.py::test_each_module_that_passes_alone_also_passes_together,firmware/tools/tests/test_run_tool_tests.py::test_the_worker_count_asked_for_is_the_one_reported,firmware/tools/tests/test_run_tool_tests.py::test_without_a_worker_count_the_cpu_count_is_used_up_to_six,firmware/tools/tests/test_run_tool_tests.py::test_the_task_passes_the_callers_arguments_to_the_runner
+  artifact_version: c0a839b346f1dd75fbfb8ebbc1a2c48fb2eda86f
+links:
+  - target: SOL-TOOL-TESTS-RUN-SIDE-BY-SIDE.C1
+    type: satisfies

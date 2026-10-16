@@ -1,7 +1,7 @@
 id: SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1
 type: criterion
 title: The round gate sweeps the mutants drawn from the plant lines the branch changes
-status: active
+status: deprecated
 version: 3
 measurement_type: binary
 verification: test

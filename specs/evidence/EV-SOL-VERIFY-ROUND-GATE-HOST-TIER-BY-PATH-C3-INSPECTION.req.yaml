@@ -1,0 +1,16 @@
+id: EV-SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-16T00:59:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'Inspection of CLAUDE.md (Gates: Round and Nightly bullets, and the Host tier statement), firmware/README.md (the check:round line and the cadence account), the check:round and fw:host-closure descriptions in Taskfile.yml and the header of .github/workflows/nightly-verify.yml: each says the round runs the host tier only for a change to something it reads (HOST_READS in firmware/tools/round_gate.py) and always when it cannot tell, the mutation sweep is not said to run in every gate, and the round gate is named as the only verification before a merge. Guarded by the TheDocumentsSayWhenTheHostTierRuns tests in firmware/tools/tests/test_round_gate.py.'
+  artifact_version: c0a839b346f1dd75fbfb8ebbc1a2c48fb2eda86f
+links:
+  - target: SOL-VERIFY-ROUND-GATE-HOST-TIER-BY-PATH.C3
+    type: satisfies
