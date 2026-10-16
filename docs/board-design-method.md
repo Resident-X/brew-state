@@ -2,7 +2,7 @@
 
 This is how a controller board is designed in KiCad so that it passes the pre-order check and works once built. The method works for any machine. A machine's own figures come from its own records, and this document names each record only by the role it plays: the machine's constraints record, its separation basis record, the requirements a board serves, the board manufacturer's stated limits, and the datasheets of the parts on the board. A physical constant or a property of a material is stated in this document, with where it was published, wherever a step uses one, so no standard that must be bought is needed to carry a step out.
 
-A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md).
+A board is designed by an agent, with no person at the editor, and each step can be carried out by an agent session from its own text. The pre-order check that later holds a board to the rules KiCad's layout rule check enforces, and how to run it, are described in [`hardware/README.md`](../hardware/README.md). This method designs controller boards: the pre-order check requires a pin allocation record listing at least one channel from a controller pin, named as a port letter then a number, so a board with no controller cannot pass it. Besides the board, the check holds it to four records, each read from the nearest folder at or above the board: the separation basis record, the pin allocation record (`pin-allocation.yaml`), the parts specification (`parts-specification.yaml`) and the catalogue extract (`catalogue-extract.yaml`), whose forms `hardware/README.md` gives. A throwaway board made to demonstrate this method carries synthetic records, each marked `synthetic: true`, and has its project text variable `NOT_FOR_MANUFACTURE` set to `true`; a synthetic record passes only a board so marked.
 
 The sections after the tools, up to and including the layout review, are carried out in the order they appear. The first three, proving value-critical circuits, designing for bring-up and planning the layout, are finished and committed before any footprint is placed on the board; the placement, chosen from more than one and recorded before any track, arc, via or pour is drawn, follows, then the rules and the routing, and the layout review judges the finished layout before the board is ordered. A board that fails any section's step is not ordered. The pre-order check does not read the records the first three sections keep, or the layout review's, so passing it does not stand in for them. The last two sections, [Layout review views](#layout-review-views) and [Layout practice catalogue](#layout-practice-catalogue), are not steps carried out in order: they are reference lists the steps use. The catalogue cites only documents any reader can obtain without charge.
 
@@ -72,9 +72,12 @@ In Konnect 0.13.0, with KiCad 10.0.7, these were found to be beyond its tools:
 - deleting a via;
 - creating or editing a rule area (a zone carrying a keepout);
 - moving a footprint's text fields, such as its reference or value;
-- swapping a placed footprint for another while keeping its link to its schematic symbol.
+- swapping a placed footprint for another while keeping its link to its schematic symbol;
+- setting a placed footprint's library description, attributes, 3D model and schematic fields, which footprints Konnect places lack, and clearing the `in_bom` attribute Konnect writes on a mounting-hole footprint (a footprint's attribute is set in the same way).
 
 Each is done with KiCad's scripting, on the board closed in every editor (the closing steps above), run with `KICAD_PYTHON`: load the board with `pcbnew.LoadBoard`, make the change, refill the zones, and save. Refill every time, whether or not the edit touches a zone, so the saved board always carries current fills and the comparison below is made between two refilled saves. To show the save is stable, refill and save a second time and compare the two files byte for byte, with `cmp` or on Windows `fc /b`; they must be identical. An edit that touches a critical-class item repeats the locking and the record of [Routing](#routing-critical-nets-by-hand-and-locked-then-the-rest), steps 3 and 5, before the board is exported. KiCad leaves a `.history/` folder and a `<board>.kicad_prl` file beside the board: delete both before committing. This is the one use of `pcbnew` besides the router's export and import; the reason for keeping it narrow is given above, so use it to make those edits only, and read the result back with KiCad's own checks.
+
+Konnect also has no tool for the project file's text variables, its ERC and DRC severities or its board minimums. Konnect's skill forbids editing the project file directly, and this method governs: with the board closed in every editor, read the project file as JSON, change the entry and write the whole object back, keeping every other key, and read the result back with the checks the step names.
 
 Two further limits of Konnect bear on the steps. Net classes written to the project file are not seen by a board that is open until it is reopened, so confirm them by asking KiCad, as [Rules before routing](#rules-before-routing) step 3 does, and reopen the board before routing, as its step 4 says. Konnect's placement score reports full marks when it cannot match decoupling capacitors to their integrated circuit, so a full score with any unmatched capacitor is unresolved, never a pass.
 
@@ -105,6 +108,8 @@ Keep a table in a file named `circuit-proof.md` in the board's own folder, besid
 - **Circuit** names the circuit and the reference designators of the parts whose values matter, for example `Input filter, R12 C7`.
 - **Figure** is the value the circuit must meet for the board to do its job, with its unit and which side of it passes, for example "settles to within one count of its final reading in at most" a stated time, or "withstands at least" a stated energy.
 - **Source of the figure** is one of two things: the machine's constraints record (name the figure in it), or the datasheet of the part the figure belongs to (name the part, its manufacturer, the datasheet's revision or date, and the table or graph the figure is read from). A value marked typical, with no minimum or maximum, is not a source, nor is a value a tool fills in by default, nor one estimated for this record.
+
+Obtain a datasheet from the part manufacturer's own site, and cite it by that address and the date it was read. A distributor's copy is allowed only when it is the manufacturer's own document, and is cited as such.
 
 A figure its source does not yet bound, because the constraints record marks it pending or gives no value, or because the datasheet gives it only as typical, fails this step until the source is amended to give one. Never write into this record a figure the source does not hold: the remedy is to amend the source, and the board waits for it.
 
@@ -279,6 +284,8 @@ A **supply input** is any pin through which power can enter the board from any s
 - **ground or return**, a pin on a ground or return net;
 - a **signal**, any other pin.
 
+The two pins of an isolating link (step 2) are classed signal: power reaches them only through the supply input upstream of the link, and none enters the board by them.
+
 A pin that might be a supply input is classed one. A supply-input or power-leaving pin's row says, in a few words, what it powers or what it feeds, so the class can be checked against the schematic.
 
 A **key signal** is a signal bring-up must observe to tell whether a block of the board works. It includes each sensing front end's output, each drive stage's control input, the controller's reset, clock and programming interface, and any safety interlock's signal. The clock may be observed at a buffered clock output rather than at a pad on the crystal's nets, which would load the oscillator. Which signals of a particular board are key is that board's own design work; the test is whether, without probing the signal, bring-up could not tell whether its block works.
@@ -405,6 +412,8 @@ Commit `layout-plan.md` before the first commit that places a footprint on the b
 - each row marked `no` gives a reason against the item's *Applies when* that the schematic bears out, so no item whose condition the schematic meets is marked `no`;
 - each row marked `yes` says how the layout meets the item, names at least one region, part or net it binds, and each region, part and net it names is one the floorplan or the netlist holds;
 - the board's own items table is there, either with its one `none` row or with a row for each item, each identifier `BOARD-<n>` used once, every column filled as step 2 says, each *Applies when* one the schematic meets, and each How the layout meets it naming at least one region, part or net, each one the floorplan or the netlist holds.
+
+Until the first commit that places a footprint, a plan row may be amended in a commit of its own. The floorplan changes only by appending a part, as below.
 
 A plan that is missing, incomplete or uncommitted in that checkout, or that fails a cross-check above, fails this step, however complete it is now. A part added to the schematic after placement is planned for, by amending the floorplan, which appends the part to its region's Parts and changes no bound, no other part and no other region, and every row whose item it bears on, and that change is committed before the part is placed. The history command that step 6 of [Placement](#placement) runs holds the floorplan the placement section is judged against to the floorplan in the commit before the first commit whose board holds a footprint, comparing the set of region names, each region's bounds and each region's parts; no other text in the table is compared, and allows no other difference than such an appended part, committed before its footprint first appears on the board and kept in the plan until then. Between the first footprint on the board and the first track, pour, arc or via committed, the floorplan can only gain appended parts, so a floorplan error found during placement, a bound that is wrong, a part in the wrong region or a region missing, has no in-place fix: the work restarts from a fresh branch, with the floorplan corrected and committed before any footprint is placed. A part added after the choice and before the first track, pour, arc or via is committed means recording a new candidate that includes it and recording the placement section again. After the first track, pour, arc or via is committed the recorded section is frozen, and the floorplan is held to the commit before the first placement only as it stood in the commit before that first copper, so a part appended to it after that copper is not compared: it is only planned, by amending the floorplan as above, and placed, and the recorded section is left as it is. A part appended before that first copper and placed after it is compared still: the plan in the commit before the one that places it must list it.
 
@@ -549,6 +558,10 @@ Keep a table in a file named `design-rules.md` in the board's own folder, beside
 
     `hole_size` holds every hole on the class's nets, pad holes as well as vias. Each such rule has its own row, with its figure and source, confirmed by step 3 like any custom rule and enforced by the layout rule check in the pre-order check. A width or a via's hole that a conductor's withstand calculation in the circuit-proof record assumed is written this way, on a net class holding that conductor's nets, with the record's row as its source and a figure no smaller than the row assumed. A copper pour's narrowest neck is written the same way, as a `connection_width` constraint, which KiCad's layout rule check holds a zone's fill to; KiCad 10.0.7 was confirmed by step 3 to load a rule written `(constraint connection_width (min 1.5mm))`.
 
+The pre-order check requires the figure of every measured rule on every board, whether or not that rule's catalogue item applies to it, so `BARRIER_COPPER_MM2` is set on a board that declares no mains. Where `MAINS-5` does not apply, set it to `0`, which the check accepts, and say in the row's source that `MAINS-5` does not apply to the board.
+
+Set every ERC and DRC check in the project file's severities to `error` or `warning`: the pre-order check fails a check set to `ignore`, even where `ignore` is KiCad's own default for it ([`hardware/README.md`](../hardware/README.md), *What a design must satisfy*).
+
 A rule with no stated source fails this step. Give it a source or remove it.
 
 ### 2. Declare whether the board carries mains
@@ -638,7 +651,7 @@ A locked item is changed only by a deliberate re-route: remove it, route it agai
 
 ### 4. Check the critical routing against the catalogue, before the router runs
 
-The router routes everything else around the critical nets, so their routes are judged now, while changing one costs only that net's re-route. With the board still closed, render the review views with `task hw:views`, as [Layout review views](#layout-review-views) describes, naming the classes step 3 locked, into a working folder of their own, never committed. The placement view is not rendered here, since this checkpoint judges routing, not where the parts sit: render it too, with `task hw:placement` into a folder of its own beside them as that section describes, only when an item that bears on the critical nets names `placement` in its *Judged on*.
+The router routes everything else around the critical nets, so their routes are judged now, while changing one costs only that net's re-route. With the board still closed, render the review views with `task hw:views`, as [Layout review views](#layout-review-views) describes, naming the classes step 3 locked, into a working folder of their own, never committed, outside every folder that holds a KiCad project file, as step 5 requires of the record. The placement view is not rendered here, since this checkpoint judges routing, not where the parts sit: render it too, with `task hw:placement` into a folder of its own beside them as that section describes, only when an item that bears on the critical nets names `placement` in its *Judged on*.
 
 Then judge every item of the [layout review](#layout-review)'s checklist that bears on the critical nets, workmanship items included. An item bears on them when what its *Asks* asks of the board is decided, wholly or in part, by copper a net in a critical class carries: its tracks, arcs, vias or zones, or the way its routes run. Judge each over the critical nets' copper only, since the rest is not yet routed:
 
@@ -698,13 +711,15 @@ Before exporting, keep copies of the board file and the project file as they sta
 
 KiCad 10's `kicad-cli` has no Specctra command. The exporter and importer are reached through KiCad's bundled Python, with these commands run from the board's folder. Do not substitute another tool's Specctra export: Konnect's own routing export, for one, refuses boards with rounded-rectangle pads.
 
-Export the board for the router:
+The exporter writes every rule area, whatever its keepout flags, as a keepout on each of its layers, and a router cannot route inside one. `FLOOR-4` requires a rule area at the bounds of each floorplan region, so on a board of one region a rule area covers the whole board, and the router has nowhere to route (measured with Freerouting 2.5.0: with that rule area exported it added no track). So export the board with its rule areas removed in memory, saving nothing:
 
 ```
-"$KICAD_PYTHON" -c "import pcbnew; b = pcbnew.LoadBoard('<board>.kicad_pcb'); assert pcbnew.ExportSpecctraDSN(b, '<work folder>/<board>.dsn')"
+"$KICAD_PYTHON" -c "import pcbnew; b = pcbnew.LoadBoard('<board>.kicad_pcb'); [b.Remove(z) for z in [z for z in b.Zones() if z.GetIsRuleArea()]]; assert pcbnew.ExportSpecctraDSN(b, '<work folder>/<board>.dsn')"
 ```
 
-Locked items are exported as fixed (`(type fix)` in the `.dsn` file).
+Only the exported copy lacks the rule areas: the import below loads the board file itself, with them, and the router's session adds tracks only, so the pre-order check still holds the routed board to every rule area.
+
+Locked items are exported as fixed (`(type fix)` in the `.dsn` file). A copper zone is exported as a `(plane …)`, which the router connects to and does not treat as an obstacle.
 
 Run the router from its command line, with no window:
 
@@ -719,6 +734,8 @@ Import the router's session into the board and save it:
 ```
 
 Saving this way also rewrites the project file, with KiCad's defaults filled in for settings it did not hold before. Review that change against the copy kept before export, as you would any other.
+
+If nets stay unrouted, read the `.dsn` before changing the board: a `(keepout …)` block is an area the router cannot enter, while `(type fix)` items and `(plane …)` conductors are not. Count them with `grep -c '(keepout' <work folder>/<board>.dsn`; a keepout shaped as a circle, inside a part's `(image …)`, is the part's own hole, and a polygon keepout in the `(structure …)` section is a rule area. Judge the result by KiCad's own unconnected-item check on the imported board, not by the router's report: the router can report an unrouted connection that a locked track already joins.
 
 The router's own report, for example `0 unrouted and 0 violations`, is not evidence of anything. Neither the router nor the importer is relied on to leave locked copper alone.
 
