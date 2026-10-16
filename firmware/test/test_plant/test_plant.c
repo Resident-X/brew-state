@@ -7435,6 +7435,90 @@ static void test_the_two_routes_of_the_exponential_less_one_meet_where_they_hand
     TEST_ASSERT_TRUE(bits_of(plant_expf(0.5f) - 1.0f) != bits_of(plant_expm1f(0.5f)));
 }
 
+/*
+ * A step far longer than the sine's domain, at the corner of the shipped
+ * description's declared errors where the coupled pair turns furthest for its
+ * decay: the largest heat capacity, the largest held volume and the smallest
+ * casting mass, with the casting's loss set so that the pair's two rates meet and
+ * the turn is as large as it can be. The step is as long as the interval type
+ * allows, so the turn is far past 6000 radians, and the decay is far past the 87
+ * at which the exponential factor the turn is multiplied by is exactly zero. The
+ * result must be finite and must be the one the damped pair has with no
+ * oscillation in it, which is what the closed form below gives for it.
+ */
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: with its accuracy bound
+/// against a double-precision reference stated beside it and checked by a test
+static void test_a_step_that_carries_the_turn_past_the_sines_domain_is_the_damped_answer(void)
+{
+    const double capacity = 4.15 * 1.03;
+    const double held_volume = 4.0 * 1.6;
+    const double mass = 320.0 * 0.6;
+    const double tau_outlet = 15.0;
+    const uint32_t interval_ms = UINT32_MAX;
+    const plant_actuation_t drawing = {{0u, 0u, ACTUATION_FULL_SCALE, 0u}};
+
+    double values[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        values[i] = NOMINAL[i].value;
+    }
+    const double flow = values[I_PUMP_FLOW];
+    const double approach = flow / held_volume + 1.0 / tau_outlet;
+    values[I_BREW_MASS] = mass;
+    values[I_BREW_HELD_VOLUME] = held_volume;
+    values[I_BREW_CONDUCTION_TAU] = tau_outlet;
+    values[I_BREW_LOSS] = mass * approach;
+    values[I_WATER_HEAT_CAPACITY] = capacity;
+
+    const size_t used = describe_values(values, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+    const double casting = (double)heated_mass(&model);
+    const double water = (double)outlet(&model);
+    const double seconds = (double)interval_ms / 1000.0;
+    const double to_ambient = values[I_BREW_LOSS] / mass;
+    const double to_water = flow * capacity / mass;
+    const double casting_rate = (-values[I_BREW_LOSS] * (casting - values[I_AMBIENT]) -
+                                 flow * capacity * (water - values[I_WATER_FEED])) /
+                                mass;
+    const double water_rate = approach * (casting - water);
+    const double casting_curvature = -to_ambient * casting_rate - to_water * water_rate;
+    const double water_curvature = approach * (casting_rate - water_rate);
+    const double decay = (to_ambient + approach) * 0.5 * seconds;
+    const double turn = sqrt(approach * to_water) * seconds;
+
+    /* The step really is outside what the sine answers and what the factor it
+     * meets lets through, and the ratio of the two is the bounded one. */
+    TEST_ASSERT_TRUE(turn > 6000.0);
+    TEST_ASSERT_TRUE(decay > 87.0);
+    TEST_ASSERT_TRUE(turn / decay < 0.75);
+
+    /* The pair with its oscillating term multiplied by an exponential that is
+     * exactly nothing: the weights are what is left of the damped pair. */
+    const double second_order = 1.0 / (decay * decay + turn * turn);
+    const double kappa = seconds * (decay + decay) * second_order;
+    const double sigma = seconds * seconds * second_order;
+    const double casting_expected = casting + kappa * casting_rate + sigma * casting_curvature;
+    const double water_expected = water + kappa * water_rate + sigma * water_curvature;
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &drawing, 0.0f, interval_ms));
+
+    const double casting_got = (double)heated_mass(&model);
+    const double water_got = (double)outlet(&model);
+    TEST_ASSERT_TRUE(isfinite(casting_got));
+    TEST_ASSERT_TRUE(isfinite(water_got));
+    TEST_ASSERT_TRUE_MESSAGE(fabs(casting_got - casting_expected) < 1.0e-3,
+                             "the casting is not the damped pair's answer");
+    TEST_ASSERT_TRUE_MESSAGE(fabs(water_got - water_expected) < 1.0e-3,
+                             "the water is not the damped pair's answer");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -7448,6 +7532,7 @@ int main(void)
     RUN_TEST(test_the_functions_hold_at_the_edges_of_their_domains);
     RUN_TEST(test_the_functions_saturate_at_infinity_and_pass_a_denormal_through);
     RUN_TEST(test_the_sine_reduction_holds_on_the_quarter_turns_across_its_domain);
+    RUN_TEST(test_a_step_that_carries_the_turn_past_the_sines_domain_is_the_damped_answer);
     RUN_TEST(test_the_functions_agree_with_the_identities_they_must_obey);
     RUN_TEST(test_the_two_routes_of_the_exponential_less_one_meet_where_they_hand_over);
     RUN_TEST(test_the_actuation_channels_are_one_enumerated_set);

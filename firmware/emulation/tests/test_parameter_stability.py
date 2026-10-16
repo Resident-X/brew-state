@@ -1616,7 +1616,7 @@ class OneUnitInTheLastPlaceIsMeasuredAgainstEveryFigure(unittest.TestCase):
                     [record], FINDINGS["executable"], FINDINGS["description"], FINDINGS["limits"],
                     FINDINGS["declaration"], FINDINGS["steam_ready_c"], FINDINGS["converter_scale"],
                     FINDINGS["courses"], FINDINGS["reference"], windows, tails, FINDINGS["bands"],
-                    FINDINGS["floors"], scratch)
+                    FINDINGS["floors"], scratch, FINDINGS["reading"])
         finally:
             sweep.float32_neighbour = original
 
@@ -1637,6 +1637,43 @@ class OneUnitInTheLastPlaceIsMeasuredAgainstEveryFigure(unittest.TestCase):
         self.assertIn("**1 verdict changed with one unit in the last place**", section)
         self.assertIn("brew side, `pump.flow_ml_per_s` low corner, moved above", section)
         self.assertNotIn("No verdict changed", section)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_each_sides_largest_mover_is_traced_to_the_tick_where_a_whole_number_first_differs(self):
+        section = _committed_record().split(stability.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
+
+        for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+            account = FINDINGS["sensitivity"][side]
+            with self.subTest(side=side):
+                self.assertIsNotNone(account["flip"])
+                self.assertIn(sweep.describe_whole_number_difference(account["flip"]), section)
+                self.assertTrue(account["flip"]["below_one_unit"])
+                self.assertEqual(FINDINGS["reading"], account["flip"]["rounding_unit"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_the_record_names_the_tick_it_is_given_and_says_so_when_none_differed(self):
+        flip = {"tick": 42, "name": "feed_permille", "was": 410, "now": 411,
+                "departure_before": 1.0e-5, "rounding_unit": 0.05, "below_one_unit": True}
+        for account, expected in ((flip, "control tick 42 (410 against 411)"),
+                                  (None, "No whole-number quantity differed at any control tick")):
+            doctored = dict(FINDINGS)
+            doctored["sensitivity"] = {
+                side: dict(FINDINGS["sensitivity"][side], flip=account)
+                for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE)
+            }
+            section = stability.report_text(doctored).split(
+                stability.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
+            self.assertIn(expected, section)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2: The committed analysis records regenerate to the same figures on every supported host
+    def test_the_record_claims_the_pin_and_the_staleness_check_and_not_an_outcome_on_every_host(self):
+        record = _committed_record()
+
+        self.assertIn("The arithmetic behind these figures is pinned to be the same on every "
+                      "supported host, and the record-staleness check fails if regenerating this "
+                      "record changes a byte; it runs on macOS arm64 in the build round and on "
+                      "Linux x86-64 in the nightly verification of main.", record)
+        self.assertNotIn("regenerate byte for byte on every supported host", record)
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
     def test_a_figure_that_did_not_move_at_all_is_reported_as_not_having_moved(self):

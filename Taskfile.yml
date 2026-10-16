@@ -306,6 +306,9 @@ tasks:
       # The analysis the host tier runs everything of ours under, over every
       # environment the build declares for the host.
       - python3 tools/check_sanitizers.py --project .
+      # What the plant's objects really carry: the flags of the compile commands the
+      # build runs, the symbols left undefined, and any fused multiply-add.
+      - python3 tools/check_plant_arithmetic.py --project .
 
   fw:run:
     desc: Run every host executable the build declares through its control-logic and plant-model entry paths under the sanitizers

@@ -109,23 +109,47 @@ def collect_objects(roots: list[str]) -> list[str]:
     return sorted(objects)
 
 
-def symbols_of(objects: list[str]) -> tuple[set[str], set[str]]:
-    """Functions the objects define, and symbols they leave for the linker."""
+#: The `nm` type letters of a symbol an object defines, whatever section it sits in.
+ANY_DEFINITION = tuple("TtDdBbRrSsGgCcWVIi")
+
+
+def parse_nm(
+    text: str, definitions: tuple[str, ...] = ("T", "t")
+) -> tuple[set[str], set[str]]:
+    """The symbols one `nm` listing defines, of the given kinds, and those it leaves undefined."""
+    defined: set[str] = set()
+    undefined: set[str] = set()
+
+    for line in text.splitlines():
+        fields = line.split()
+        if len(fields) == 2 and fields[0] == "U":
+            undefined.add(fields[1])
+        elif len(fields) == 3 and fields[1] in definitions:
+            # Compiler-generated module constructors are not control logic.
+            if not fields[2].startswith(("_asan.", "_ubsan.", "ltmp")):
+                defined.add(fields[2])
+
+    return defined, undefined
+
+
+def symbols_of(
+    objects: list[str], nm: str = "nm", definitions: tuple[str, ...] = ("T", "t")
+) -> tuple[set[str], set[str]]:
+    """Functions the objects define, and symbols they leave for the linker.
+
+    `nm` names the tool that reads them, so an object built for another
+    architecture is read by that toolchain's own.
+    """
     defined: set[str] = set()
     undefined: set[str] = set()
 
     for obj in objects:
-        result = subprocess.run(["nm", obj], capture_output=True, text=True, check=False)
+        result = subprocess.run([nm, obj], capture_output=True, text=True, check=False)
         if result.returncode != 0:
             raise SystemExit(f"check_direct_calls: nm failed on {obj}: {result.stderr.strip()}")
-        for line in result.stdout.splitlines():
-            fields = line.split()
-            if len(fields) == 2 and fields[0] == "U":
-                undefined.add(fields[1])
-            elif len(fields) == 3 and fields[1] in ("T", "t"):
-                # Compiler-generated module constructors are not control logic.
-                if not fields[2].startswith(("_asan.", "_ubsan.", "ltmp")):
-                    defined.add(fields[2])
+        found_defined, found_undefined = parse_nm(result.stdout, definitions)
+        defined |= found_defined
+        undefined |= found_undefined
 
     return defined, undefined
 

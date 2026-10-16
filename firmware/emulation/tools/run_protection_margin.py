@@ -571,7 +571,7 @@ def _moved_by_one_unit(corner, nominal, description, workspace, direction):
 
 def _one_unit_sensitivity(verdicts, steam_verdicts, nominal, description, limits, declaration,
                           executable, course, scale, target_c, window, steam_course, steam_ready_c,
-                          steam_floor, steam_ceiling, workspace):
+                          steam_floor, steam_ceiling, workspace, rounding_unit):
     """How far moving a corner's coefficient by one unit in the last place moves
     the figure its verdict is taken from.
 
@@ -582,9 +582,15 @@ def _one_unit_sensitivity(verdicts, steam_verdicts, nominal, description, limits
     commands are whole numbers, so a difference that small can part two runs by one
     step of a command and move it by far more than the difference was. What is
     measured is the most it moves, and whether any verdict moved with it.
+
+    For the run that moved a figure furthest on each side, the first control tick
+    at which a whole-number quantity parted from the corner's own run is named,
+    with how far the sensed quantities had departed before it against one count
+    of the converter (`rounding_unit`): that is the step that turned a difference
+    of one unit into the movement reported.
     """
     coffee = {"compared": 0, "largest": 0.0, "where": None, "before": None, "after": None,
-              "verdict_changes": []}
+              "flip": None, "verdict_changes": []}
     for verdict in verdicts:
         corner = verdict["corner"]
         for direction in ("above", "below"):
@@ -599,12 +605,14 @@ def _one_unit_sensitivity(verdicts, steam_verdicts, nominal, description, limits
             apart = abs(now - verdict["worst_departure_c"])
             if apart > coffee["largest"]:
                 coffee.update(largest=apart, before=verdict["worst_departure_c"], after=now,
-                              where=(corner["which"], direction))
+                              where=(corner["which"], direction),
+                              flip=sweep.first_whole_number_difference(
+                                  verdict["trajectory"], drawn["trajectory"], rounding_unit))
             if (now <= verdict["band_c"]) != verdict["within_band"]:
                 coffee["verdict_changes"].append((corner["which"], direction))
 
     steam = {"compared": 0, "largest": 0.0, "where": None, "before": None, "after": None,
-             "verdict_changes": []}
+             "flip": None, "verdict_changes": []}
     for verdict in steam_verdicts:
         corner = verdict["corner"]
         for direction in ("above", "below"):
@@ -620,7 +628,9 @@ def _one_unit_sensitivity(verdicts, steam_verdicts, nominal, description, limits
             apart = abs(worst - verdict["worst_milli_bar"])
             if apart > steam["largest"]:
                 steam.update(largest=apart, before=verdict["worst_milli_bar"], after=worst,
-                             where=(corner["which"], direction))
+                             where=(corner["which"], direction),
+                             flip=sweep.first_whole_number_difference(
+                                 verdict["trajectory"], drawn["trajectory"], rounding_unit))
             if held != verdict["within_band"]:
                 steam["verdict_changes"].append((corner["which"], direction))
     return {"coffee": coffee, "steam": steam}
@@ -690,6 +700,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
             "within_band": departure <= band_c,
             "band_c": band_c,
             "description": written,
+            "trajectory": drawn["trajectory"],
         })
 
     # The steam side's own corners, run to the same standard. Its loop is built
@@ -722,12 +733,13 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
             "worst_milli_bar": worst,
             "within_band": held,
             "description": written,
+            "trajectory": drawn["trajectory"],
         })
 
     sensitivity = _one_unit_sensitivity(
         verdicts, steam_verdicts, nominal, description, limits, declaration, executable, course,
         scale, target_c, window, steam_course, steam_ready_c, steam_floor, steam_ceiling,
-        workspace)
+        workspace, scale[1] / scale[0] / 1000.0)
 
     return {
         "sensitivity": sensitivity,
@@ -795,6 +807,14 @@ def _coefficient_cell(corner):
     if corner["joint"]:
         return "%s (joint mains droop)" % " + ".join(corner["writes"])
     return corner["writes"][0] if corner["writes"] else NOTHING
+
+
+def _flip_sentence(account):
+    """Where the run that moved a figure furthest first parted from its corner's own."""
+    if account["flip"] is None:
+        return ("No whole-number quantity differed at any control tick of that run, so the "
+                "movement is in the continuous state alone.")
+    return sweep.describe_whole_number_difference(account["flip"])
 
 
 def report_text(findings):
@@ -1069,6 +1089,7 @@ def report_text(findings):
                  "%.6g" % account["before"], "%.6g" % account["after"], direction,
                  "%.2g%%" % (100.0 * account["largest"] / findings["band_c"]),
                  FIGURE_FORMAT % findings["band_c"]))
+        write("  " + _flip_sentence(account))
     account = findings["sensitivity"]["steam"]
     steam_span = findings["steam_band_milli_bar"][1] - findings["steam_band_milli_bar"][0]
     if account["where"] is None:
@@ -1081,6 +1102,7 @@ def report_text(findings):
               % (account["compared"], account["largest"], which, account["before"],
                  account["after"], direction,
                  "%.2g%%" % (100.0 * account["largest"] / steam_span), steam_span))
+        write("  " + _flip_sentence(account))
     write("")
     changed = (["coffee side corner %d moved %s" % change
                 for change in findings["sensitivity"]["coffee"]["verdict_changes"]]
@@ -1092,8 +1114,11 @@ def report_text(findings):
               "stand behind."
               % (len(changed), "" if len(changed) == 1 else "s", "; ".join(changed)))
     else:
-        write("**No verdict changed with one unit in the last place.** The figures above regenerate "
-              "byte for byte on every supported host, and they move by the amounts above when a "
+        write("**No verdict changed with one unit in the last place.** The arithmetic behind "
+              "these figures is pinned to be the same on every supported host, and the "
+              "record-staleness check fails if regenerating this record changes a byte; it runs "
+              "on macOS arm64 in the build round and on Linux x86-64 in the nightly verification "
+              "of main. The figures move by the amounts above when a "
               "coefficient moves by one unit. What is measured is a coefficient moved to its "
               "neighbouring single-precision number, which is not the same as moving a library "
               "result inside a step of the loop; the arithmetic is now identical across hosts, so "

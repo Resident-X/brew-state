@@ -55,6 +55,11 @@ def setUpModule():
     FINDINGS = margin.run_once()
 
 
+def _converter_count():
+    counts, milli = cross_tier.converter_scale()
+    return milli / counts / 1000.0
+
+
 def _committed_record():
     with open(margin.REPORT_PATH, encoding="utf-8") as handle:
         return handle.read()
@@ -595,13 +600,49 @@ class OneUnitInTheLastPlaceIsMeasuredAgainstEveryFigure(unittest.TestCase):
                     FINDINGS["declaration"], FINDINGS["executable"], course,
                     cross_tier.converter_scale(), FINDINGS["target_c"],
                     margin.judged_window(course), sweep.steam_course(),
-                    FINDINGS["shipped"]["steam_ready_c"], floor, ceiling, scratch)
+                    FINDINGS["shipped"]["steam_ready_c"], floor, ceiling, scratch,
+                    _converter_count())
         finally:
             sweep.float32_neighbour = original
 
         self.assertEqual(2, moved["coffee"]["compared"])
         self.assertGreater(moved["coffee"]["largest"],
                            10.0 * FINDINGS["sensitivity"]["coffee"]["largest"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_the_largest_mover_is_traced_to_the_tick_where_a_whole_number_first_differs(self):
+        section = _committed_record().split(margin.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
+        flip = FINDINGS["sensitivity"]["coffee"]["flip"]
+
+        self.assertIsNotNone(flip, "the coffee side's largest mover parted from its corner somewhere")
+        self.assertIn(sweep.describe_whole_number_difference(flip), section)
+        self.assertTrue(flip["below_one_unit"])
+        self.assertEqual(_converter_count(), flip["rounding_unit"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_the_record_names_the_tick_it_is_given_and_says_so_when_none_differed(self):
+        flip = {"tick": 42, "name": "heater_permille", "was": 410, "now": 411,
+                "departure_before": 1.0e-5, "rounding_unit": 0.05, "below_one_unit": True}
+        for account, expected in ((flip, "control tick 42 (410 against 411)"),
+                                  (None, "No whole-number quantity differed at any control tick")):
+            doctored = dict(FINDINGS)
+            doctored["sensitivity"] = {
+                "coffee": dict(FINDINGS["sensitivity"]["coffee"], flip=account),
+                "steam": FINDINGS["sensitivity"]["steam"],
+            }
+            section = margin.report_text(doctored).split(
+                margin.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
+            self.assertIn(expected, section)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2: The committed analysis records regenerate to the same figures on every supported host
+    def test_the_record_claims_the_pin_and_the_staleness_check_and_not_an_outcome_on_every_host(self):
+        record = _committed_record()
+
+        self.assertIn("The arithmetic behind these figures is pinned to be the same on every "
+                      "supported host, and the record-staleness check fails if regenerating this "
+                      "record changes a byte; it runs on macOS arm64 in the build round and on "
+                      "Linux x86-64 in the nightly verification of main.", record)
+        self.assertNotIn("regenerate byte for byte on every supported host", record)
 
     # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
     def test_a_verdict_that_turns_on_one_unit_is_named_in_the_record(self):
