@@ -2359,7 +2359,7 @@ class TheDocumentsSayWhenTheBoardCheckRuns(unittest.TestCase):
             "anything under `hardware/`", "a tracked KiCad file anywhere", "or `Taskfile.yml`",
             "firmware-only branch that leaves `Taskfile.yml` alone", "fails the round, naming it",
             "stops the round naming the tool rather than skipping the tier",
-            "when the changed paths cannot be told", "not on unknown changed lines alone",
+            "when the changed paths or the files the designs read cannot be listed", "not on unknown changed lines alone",
         ):
             self.assertIn(words, round_part)
 
@@ -2422,7 +2422,7 @@ class TheDocumentsSayWhenTheHostTierRuns(unittest.TestCase):
             "only when the branch", "changes a path the host tier reads (`HOST_READS` in `firmware/tools/round_gate.py`",
             "`firmware/`, `Taskfile.yml`, `.github/workflows/` and the few other files its tests open",
             "`CLAUDE.md`, `.gitattributes` and four named files under `hardware/`, never the board designs",
-            "it runs the host tier and emulation anyway",
+            "the host tier runs anyway",
             "is the only verification a change gets before it merges",
         ):
             self.assertIn(words, round_part)
