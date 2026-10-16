@@ -213,7 +213,7 @@
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x01_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "23328420-6edf-4ba0-9198-d685c4d8c5e6")
-		(at 137 118)
+		(at 137 113)
 		(property "Reference" "J3"
 			(at 0 -2.38 0)
 			(unlocked yes)
@@ -410,7 +410,7 @@
 	(footprint "Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm"
 		(layer "F.Cu")
 		(uuid "24e948d2-fda6-48a0-9cd5-36e5536ca9d5")
-		(at 125 116.5)
+		(at 125.8 112.5)
 		(property "Reference" "U2"
 			(at 0 -4.2 0)
 			(unlocked yes)
@@ -1007,7 +1007,7 @@
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "47d7696d-f7a9-4dd7-8c4a-deddc995eda4")
-		(at 127.8 125 90)
+		(at 128.6 121.6 90)
 		(property "Reference" "R1"
 			(at 0 -1.43 90)
 			(unlocked yes)
@@ -1132,9 +1132,9 @@
 	(footprint "Capacitor_Tantalum_SMD:CP_EIA-3528-21_Kemet-B"
 		(layer "F.Cu")
 		(uuid "48f3da62-bf56-4c81-84d3-1dd66aed80a1")
-		(at 112 110 -90)
+		(at 112 111 -90)
 		(property "Reference" "C1"
-			(at 0 -2.35 270)
+			(at 0 -2.35 -90)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "33df30a6-81e0-4164-9be8-d0a308e76971")
@@ -1146,7 +1146,7 @@
 			)
 		)
 		(property "Value" "47uF"
-			(at 0 2.35 270)
+			(at 0 2.35 -90)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1159,7 +1159,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 270)
+			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e4893ddd-351f-4075-b34e-81659cbb8eef")
@@ -1170,7 +1170,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 270)
+			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a019a0fe-59fe-43e1-9819-942c4da58eda")
@@ -1274,7 +1274,7 @@
 			(uuid "53855545-719e-4597-9474-b6b79ecbfcf4")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 270)
+			(at 0 0 -90)
 			(unlocked yes)
 			(layer "F.Fab")
 			(uuid "3982df97-10ac-49f8-a0dc-501f55320e6b")
@@ -2086,7 +2086,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "80115f3f-ef80-4830-bd51-fc87da862a1a")
-		(at 120.2 118.7 90)
+		(at 120.2 114.7 90)
 		(property "Reference" "C3"
 			(at 0 -1.68 90)
 			(unlocked yes)
@@ -2211,7 +2211,7 @@
 	(footprint "LED_SMD:LED_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "c3be4f05-f0ba-4c9b-8e16-d6619872fb6f")
-		(at 127.8 122.2 -90)
+		(at 128.6 118.2 -90)
 		(property "Reference" "D1"
 			(at 0 -1.43 -90)
 			(unlocked yes)
@@ -3256,7 +3256,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
 		(layer "B.Cu")
 		(uuid "13139cb8-5e4d-4ae6-b1e3-6c69089510de")
-		(at 120.5 113.5)
+		(at 120.5 110.5)
 		(property "Reference" "TP3"
 			(at 0 1.448 180)
 			(unlocked yes)
@@ -3458,7 +3458,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
 		(layer "B.Cu")
 		(uuid "97d25c7e-4771-4312-8184-0cf8b3add2fa")
-		(at 131.5 122.5)
+		(at 132.199999 118.5)
 		(property "Reference" "TP4"
 			(at 0 1.448 180)
 			(unlocked yes)
