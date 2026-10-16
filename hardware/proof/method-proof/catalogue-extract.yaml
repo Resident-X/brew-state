@@ -1,0 +1,62 @@
+# NOT FOR MANUFACTURE. A synthetic catalogue extract, made only to prove the parts
+# check against the throwaway design beside it. Its entries are not read from any
+# catalogue and must never be used for a board that is ordered: being marked
+# synthetic, the check accepts it only for a design marked not for manufacture.
+# Its age limit is far beyond any real one so the committed proof never goes stale.
+synthetic: true
+source: none -- synthetic entries chosen to exercise the check, not read from a catalogue
+read_on: 2026-10-17
+max_age_days: 36500
+entries:
+  - lcsc: C9100001
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100002
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100003
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100004
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100005
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100006
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100007
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100008
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100009
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100010
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100011
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100012
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
+  - lcsc: C9100013
+    library_class: basic
+    stock: 1000
+    unit_price: 0.01
