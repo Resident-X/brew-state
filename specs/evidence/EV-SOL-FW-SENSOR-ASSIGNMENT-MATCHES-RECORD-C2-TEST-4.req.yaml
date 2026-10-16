@@ -1,0 +1,16 @@
+id: EV-SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD-C2-TEST-4
+type: evidence
+title: test evidence for SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T08:21:04.840134Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_sensor_assignment_checks.py::UnusableInputs.test_a_firmware_source_with_bytes_that_are_not_text_cannot_be_inspected
+  artifact_version: 0eb881c338825aac21a9c86ddadea35fe9a02903
+attested_by: crun-769bb6ae2f1ef398
+links:
+  - target: SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD.C2
+    type: satisfies
