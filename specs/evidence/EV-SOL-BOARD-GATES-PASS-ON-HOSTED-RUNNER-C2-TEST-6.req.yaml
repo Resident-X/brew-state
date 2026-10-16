@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER-C2-TEST-6
+type: evidence
+title: test evidence for SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T08:57:17.199518Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_views.py::ExportStatusThroughTheCommand.test_a_non_zero_export_that_wrote_a_readable_file_still_renders_and_states_the_cause_in_text_and_json
+  artifact_version: 8372a4ddd3d5428755e200a0626e37b256d409ac
+attested_by: crun-301b30926d2e3595
+links:
+  - target: SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2
+    type: satisfies
