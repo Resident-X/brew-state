@@ -256,7 +256,7 @@ first build; after that both build offline.
 Everything runs from the repository root through the task runner:
 
 ```sh
-task check:round   # a build round's gate: the host tier in full, the emulation tier only if the branch changes what it reads, the board tier only if it changes a board design or what one reads, the sweep of the changed plant lines
+task check:round   # a build round's gate: the host tier only if the branch changes what it reads, the emulation tier only if it changes what it reads, the board tier only if it changes a board design or what one reads, the sweep of the changed plant lines
 task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the board check and its tooling tests, the arithmetic sweep
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
@@ -267,9 +267,24 @@ task fw:emulate    # the target build's own artefact, executed against models of
 
 Verification runs at two cadences. A build round runs `check:round` once, and
 it is the only verification a change gets before it merges. It runs the host
-tier in full every time — every build, every build-time check, every host test
-and every host executable under the sanitizers — because that tier is the only
-one that catches memory and undefined-behaviour defects. It runs the emulation
+tier in full — every build, every build-time check, every host test and every
+host executable under the sanitizers, because that tier is the only one that
+catches memory and undefined-behaviour defects — but only when the branch
+changes something the host tier reads: anything under `firmware/`, the
+`Taskfile.yml` that runs it, the workflow declarations under
+`.github/workflows/` that the firmware tooling's tests check, or one of the few
+other files those tests open (`CLAUDE.md`, `.gitattributes`,
+`hardware/README.md`, `hardware/tools/board_check.py`,
+`hardware/tools/board_views.py` and
+`hardware/tools/tests/test_board_check_kicad.py`; no board design among them). That set of paths
+is declared once, as `HOST_READS` in [`tools/round_gate.py`](tools/round_gate.py),
+and the complete verification holds it to being the whole of what the tier
+reads: `task fw:host-closure` runs the tier in a git repository holding only the
+tracked files under those paths (`--include-untracked` to the tool also takes new
+files not yet committed, for a probe before commit), so a test that starts reading anything else fails at
+night rather than slipping past the round's selection. A branch that changes
+only documents, the requirement graph or a board design runs neither the host
+tier nor the emulation tier. The round runs the emulation
 tier only when the branch changes something the emulation reads: anything under
 `firmware/`, the analysis records under `docs/` the emulation suite checks
 against, or the `Taskfile.yml` that runs it. What changed is measured from the
@@ -281,7 +296,8 @@ That set of paths is declared once, as
 `EMULATION_READS` in [`tools/round_gate.py`](tools/round_gate.py). When there is
 no remote-tracking `origin/main`, the base cannot be resolved, the changed
 paths or lines cannot be read, or the lines of a changed C source or header
-cannot, the gate runs emulation rather than skipping it. The
+cannot, the gate runs emulation rather than skipping it; the host tier runs
+whenever the paths cannot be told. The
 selection saves time; it is not a trust boundary against whoever controls the
 tree it runs in, and a change that escapes it meets the reviews before it
 merges and the nightly complete verification after. A branch that edits only

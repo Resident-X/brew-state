@@ -189,7 +189,10 @@ tasks:
       # covering the check tools is named because it is one fixed thing rather
       # than a set that grows with the tree.
       - cd {{.FW_DIR}} && python3 tools/run_host_tests.py --project . --pio {{.PIO}} --plant-root src/plant --include-dir include
-      - python3 -m unittest discover -s {{.FW_DIR}}/tools/tests
+      # Each test module runs in a process of its own, side by side; the runner
+      # fails when it finds no module or runs no test. Arguments after -- reach
+      # it, so `task fw:test -- --workers 1` sets the worker count.
+      - python3 {{.FW_DIR}}/tools/run_tool_tests.py {{.CLI_ARGS}}
 
   fw:check:
     desc: Run every build-time check the seams' criteria are verified by
@@ -313,6 +316,15 @@ tasks:
       # analysed for nothing.
       - python3 tools/run_host_artefacts.py --project . --plant-root src/plant --include-dir include --params-dir params
 
+  fw:host-closure:
+    desc: Run the host tier (fw:build, fw:check, fw:test, fw:run) in a git repository holding only the files git tracks under the paths the build round declares it reads (HOST_READS in round_gate.py), so a host test that reads anything else fails here rather than slipping past the round's selection; fails when those paths select no tracked file. Part of the complete verification, never of the build round
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      # The tasks are handed over, as the round and fw:verify hand them over,
+      # and the paths are not: they are taken from round_gate.py so they are
+      # declared once.
+      - python3 {{.FW_DIR}}/tools/host_closure.py --task "{{.TASK_EXE}}" --host fw:build --host fw:check --host fw:test --host fw:run
+
   fw:emulate:provision:
     desc: Fetch the emulator and the register description the emulation tier runs against, pinned by digest, into .tooling (ignored by git), sharing the fetch across worktrees via a machine-global cache
     cmds:
@@ -362,7 +374,7 @@ tasks:
       - python3 tools/mull_sweep.py --project . --plant-root src/plant --include-dir include --pio {{.PIO}} {{.CLI_ARGS}}
 
   fw:verify:
-    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the target artefact under emulation against modelled peripherals, check every board design the repository tracks with KiCad's own rule checks, run the tests of the board tooling without those that run the seeded-fault proof (which stays on demand), sweep the plant model's arithmetic. The board gates need KiCad 10.0 or newer, resvg 0.47 or newer and a monospaced font. Every gate runs to completion even after an earlier one fails, and the run fails naming every gate that did. Leave a gate out by name with task fw:verify -- --leave-out GATE (a name that is not a gate here, or named twice, is refused, and nothing else may be passed on); the closing lines then say it was left out, so the run never reads as the complete verification passing
+    desc: The complete verification, run nightly against main rather than in a build round — build every environment, run every check, run the tests, run the host executables, run the whole host tier again in a tree holding only the files git tracks under the paths the build round declares it reads, run the target artefact under emulation against modelled peripherals, check every board design the repository tracks with KiCad's own rule checks, run the tests of the board tooling without those that run the seeded-fault proof (which stays on demand), sweep the plant model's arithmetic. The board gates need KiCad 10.0 or newer, resvg 0.47 or newer and a monospaced font. Every gate runs to completion even after an earlier one fails, and the run fails naming every gate that did. Leave a gate out by name with task fw:verify -- --leave-out GATE (a name that is not a gate here, or named twice, is refused, and nothing else may be passed on); the closing lines then say it was left out, so the run never reads as the complete verification passing
     dir: "{{.ROOT_DIR}}"
     cmds:
       # The gates are handed over in order rather than run as a plain list, so
@@ -372,6 +384,11 @@ tasks:
       #
       # The host tier: every environment, every build-time check, the tests and
       # the host executables under the sanitizers.
+      #
+      # Then the host tier once more in a tree holding only the files the build
+      # round declares it reads (HOST_READS in round_gate.py), because the round
+      # skips the tier for a change outside those paths and that is safe only
+      # while they are the whole of what the tier reads. The round never runs it.
       #
       # Then the tier below it: the artefact itself, executed, against models of
       # the peripherals it drives. It is here rather than left to be remembered
@@ -397,7 +414,7 @@ tasks:
       # The '--' ends the declaration. What is passed on from the command line
       # comes after it, where the driver accepts only a gate left out, so it
       # can never name another task runner or add a gate.
-      - python3 {{.FW_DIR}}/tools/verify_gate.py --task "{{.TASK_EXE}}" --gate fw:build --gate fw:check --gate fw:test --gate fw:run --gate fw:emulate --gate hw:verify --gate hw:test:round --gate fw:sweep -- {{.CLI_ARGS}}
+      - python3 {{.FW_DIR}}/tools/verify_gate.py --task "{{.TASK_EXE}}" --gate fw:build --gate fw:check --gate fw:test --gate fw:run --gate fw:host-closure --gate fw:emulate --gate hw:verify --gate hw:test:round --gate fw:sweep -- {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
   # Cadences. A build round runs check:round once, and it is the only
@@ -407,12 +424,13 @@ tasks:
   # ---------------------------------------------------------------------------
 
   check:round:
-    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) every time, and the emulation tier (fw:emulate) only when the branch changes a path the emulation reads, measured from its merge-base with the local remote-tracking origin/main and counting uncommitted edits and new files (a stale origin/main can mis-measure a branch, so branch from a freshly fetched main); runs emulation anyway when it cannot tell what changed, including when there is no remote-tracking origin/main. Then runs the board tier (hw:verify, the pre-order check of every board design, and hw:test:round, the tests of the board tooling without those that run the seeded-fault proof) only when the branch changes a tracked KiCad file anywhere, anything under the hardware tree, anything a board design reads, the board tooling, the round gate's own code or this task definition file, judged on the changed paths alone and run anyway when they cannot be told or the files the designs read cannot be listed; a KiCad design file git does not track fails the round naming it, a branch changing none of those paths needs no KiCad, rasteriser or font, and a missing or too-old tool stops the round naming it rather than skipping the tier. Then runs the changed-lines mutation sweep (fw:sweep restricted to the mutants on the plant lines the branch changes, as the sweep derives its population) and never the full one; a branch changing no such line runs no sweep and needs no mutation toolchain, a branch that does needs LLVM 19 and the matching Mull package and fails without them, and a change whose lines cannot be told fails the round after the host and emulation tiers run. Stops at the first failing tier, so the sweep is not reached after one; its closing lines say which tiers ran, why one was skipped or was not reached, whether the sweep ran, was skipped, was not reached or could not run, and how many changed lines it covered. Its exit status is the verdict
+    desc: The build round's gate, and the only verification before a merge — runs the host tier in full (fw:build, fw:check, fw:test, fw:run) only when the branch changes a path the host tier reads (the firmware tree, this task definition file, the workflow declarations and the few other files its tests open, declared in HOST_READS), and the emulation tier (fw:emulate) only when it changes a path the emulation reads, both measured from its merge-base with the local remote-tracking origin/main and counting uncommitted edits and new files (a stale origin/main can mis-measure a branch, so branch from a freshly fetched main); runs the host tier and emulation anyway when it cannot tell what changed, including when there is no remote-tracking origin/main; a branch changing only documents, the requirement graph or a board design runs neither. Then runs the board tier (hw:verify, the pre-order check of every board design, and hw:test:round, the tests of the board tooling without those that run the seeded-fault proof) only when the branch changes a tracked KiCad file anywhere, anything under the hardware tree, anything a board design reads, the board tooling, the round gate's own code or this task definition file, judged on the changed paths alone and run anyway when they cannot be told or the files the designs read cannot be listed; a KiCad design file git does not track fails the round naming it, a branch changing none of those paths needs no KiCad, rasteriser or font, and a missing or too-old tool stops the round naming it rather than skipping the tier. Then runs the changed-lines mutation sweep (fw:sweep restricted to the mutants on the plant lines the branch changes, as the sweep derives its population) and never the full one; a branch changing no such line runs no sweep and needs no mutation toolchain, a branch that does needs LLVM 19 and the matching Mull package and fails without them, and a change whose lines cannot be told fails the round after the host (when it ran), emulation and board tiers. Stops at the first failing tier, so the sweep is not reached after one; its closing lines say which tiers ran, why one was skipped or was not reached, whether the sweep ran, was skipped, was not reached or could not run, and how many changed lines it covered. Its exit status is the verdict
     dir: "{{.ROOT_DIR}}"
     cmds:
       # The tasks are handed over rather than their commands copied, so the
       # round and fw:verify run the same thing. The paths that trigger the
-      # emulation tier are declared once, as EMULATION_READS in round_gate.py.
+      # host tier are declared once, as HOST_READS in round_gate.py, and those
+      # that trigger the emulation tier as EMULATION_READS beside it.
       # The board tier is handed over the same way, as the board check and the
       # tooling tests fw:verify declares, and the task that lists what the board
       # designs read is how the gate learns which changed paths reach one. Which

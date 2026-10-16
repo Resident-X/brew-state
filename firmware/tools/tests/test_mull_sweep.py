@@ -1331,6 +1331,23 @@ class TheShardsAreDerivedFromTheSameTreeEveryOtherModeReads(unittest.TestCase):
             check=False,
         )
 
+    def sweep_here(self, *extra):
+        """The same run without a process of its own, for the many that only need its answer."""
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            status = mull_sweep.main(
+                [
+                    "--project",
+                    self.tree.root,
+                    "--plant-root",
+                    os.path.relpath(self.tree.plant, self.tree.root),
+                    "--include-dir",
+                    os.path.relpath(self.tree.include, self.tree.root),
+                    *extra,
+                ]
+            )
+        return subprocess.CompletedProcess([], status, out.getvalue(), err.getvalue())
+
     def test_the_one_declared_pair_is_split_by_every_directory_in_the_population(self):
         result = self.sweep("--list-shards")
         self.assertEqual(0, result.returncode, result.stderr)
@@ -1417,10 +1434,11 @@ class TheShardsAreDerivedFromTheSameTreeEveryOtherModeReads(unittest.TestCase):
         # A second round trip: --list-shards' environment and directory fields
         # have to be exactly what --list-mutators-in accepts, since that is how
         # the discover-mutators job is meant to be driven from the same list.
-        listed = json.loads(self.sweep("--list-shards").stdout)
+        listed = json.loads(self.sweep_here("--list-shards").stdout)
         pairs = {(shard["environment"], shard["directory"]) for shard in listed}
+        self.assertTrue(pairs, "the listing named no pair, so nothing was round-tripped")
         for environment, directory in pairs:
-            result = self.sweep("--list-mutators-in", f"{environment}:{directory}")
+            result = self.sweep_here("--list-mutators-in", f"{environment}:{directory}")
             self.assertNotIn("names no environment or no directory", result.stderr, (environment, directory))
 
     def test_list_mutators_out_is_still_refused_the_same_way_without_a_compiler(self):
@@ -1443,9 +1461,10 @@ class TheShardsAreDerivedFromTheSameTreeEveryOtherModeReads(unittest.TestCase):
         # that is how the workflow carries one to the other. Refused past the
         # directory check (no real toolchain here) is still evidence the
         # refusal above is not this test's failure mode.
-        listed = json.loads(self.sweep("--list-shards").stdout)
+        listed = json.loads(self.sweep_here("--list-shards").stdout)
+        self.assertTrue(listed, "the listing named no shard, so nothing was round-tripped")
         for shard in listed:
-            result = self.sweep(
+            result = self.sweep_here(
                 "--shard",
                 f"{shard['environment']}:{shard['suite']}",
                 "--shard-report",
@@ -2856,7 +2875,7 @@ class ChangedLinesHarness(unittest.TestCase):
 
 class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
     def test_a_seeded_surviving_mutant_on_a_changed_line_fails_the_round(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; } /* survives */")
         status, output, account = self.restricted()
         self.assertEqual(mull_sweep.FOUND_THE_PROBLEM, status, output)
@@ -2868,7 +2887,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         )
 
     def test_a_killed_mutant_on_a_changed_line_passes(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
         status, output, account = self.restricted()
         self.assertEqual(0, status, output)
@@ -2876,7 +2895,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertIn("1 mutant(s) on the changed lines, 1 killed by the tests, 0 survived", output)
 
     def test_an_unchanged_lines_mutants_are_not_drawn(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Line 5's survivor nobody has judged would fail the full sweep. The
         # branch changes line 2 only, so it is not drawn -- and the unchanged
         # file's mutants are not even built.
@@ -2889,7 +2908,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual(1, account["mutants"])
 
     def test_only_the_mutants_on_changed_lines_are_run(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The file carries four mutants and every suite of every environment
         # building it would run all four were the run filtered after the fact;
         # one line changes, so each run executes the one mutant on it.
@@ -2904,7 +2923,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertIn("only those on changed lines were run", output)
 
     def test_a_partly_changed_file_runs_through_the_changed_lines_mode_from_the_base(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         scopes = self.scopes_built()
         base = self.git("rev-parse", "HEAD").strip()
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
@@ -2925,7 +2944,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual(2, account["mutants"])
 
     def test_a_mutant_owed_that_the_changed_lines_mode_did_not_run_could_not_be_looked_at(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The tool's own measure of the change leaving out a line the round
         # measured would make the run smaller than the population it owes.
         self.tools.diff_misses = {(STRUCTURE, 2)}
@@ -2938,7 +2957,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertNotIn("have not been reviewed", output)
 
     def test_the_restricted_population_is_the_full_population_filtered_to_the_changed_lines(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.edit(STRUCTURE, 1, "float a(float x) { return x + 1.5f; } /* survives */")
         self.edit(STRUCTURE, 5, "float e(float x) { return x + 5.5f; } /* survives */")
         self.write("src/plant/alpha/added.c", "float f(float x) { return x + 6.0f; } /* survives */\n")
@@ -2957,7 +2976,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual(3, len(expected))
 
     def test_every_line_of_a_new_file_not_yet_committed_is_drawn(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.write(
             "src/plant/alpha/added.c",
             "float f(float x) { return x + 6.0f; }\nfloat g(float x) { return x + 7.0f; } /* survives */\n",
@@ -2968,7 +2987,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual((1, 2, 2), (account["files"], account["lines"], account["mutants"]))
 
     def test_a_judgement_outside_the_changed_files_is_not_reported_stale(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # A judgement about a mutant the shared file no longer carries would be
         # stale to the full sweep; the branch does not touch that file.
         gone = mutant(SHARED, 9, 1)
@@ -2980,7 +2999,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertNotIn("judgement(s) in", output)
 
     def test_a_judgement_stranded_by_lines_moving_in_a_changed_file_fails_the_round(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Deleting the first line moves the judged survivor from line 3 to 2,
         # and leaves line 3 carrying no mutant. The branch changes no line that
         # is left -- the hunk only deletes -- and the judgement no longer names
@@ -2997,14 +3016,14 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual((1, 0, 0), (account["files"], account["lines"], account["mutants"]))
 
     def test_a_judgement_on_an_unchanged_line_of_a_changed_file_still_holds(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.edit(STRUCTURE, 1, "float a(float x) { return x + 1.5f; }")
         status, output, _ = self.restricted()
         self.assertEqual(0, status, output)
         self.assertNotIn(JUDGED_STRUCTURE, output)
 
     def test_a_deleted_file_strands_every_judgement_about_it_without_building(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         extra = "src/plant/alpha/extra.c"
         self.write(extra, "float h(float x) { return x + 8.0f; } /* survives */\n")
         self.judge({
@@ -3024,7 +3043,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual((1, 0), (account["files"], account["lines"]))
 
     def test_deleting_the_last_source_of_a_shared_directory_strands_its_judgements(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The directory leaves the population with its last source, so the
         # file is no longer one the sweep derives -- and its judgement is still
         # stranded, as the full sweep would find.
@@ -3036,7 +3055,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual("ran", account["state"])
 
     def test_a_branch_changing_no_population_line_runs_no_sweep_and_needs_no_toolchain(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.toolchain_error = "no toolchain on this host"
         self.write("src/control/loop.c", "int loop(void) { return 1 + 1; }\n")
         self.write("README.md", "notes\n")
@@ -3049,7 +3068,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual([], self.resolved)
 
     def test_a_population_change_without_the_toolchain_fails_saying_it_is_missing(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.toolchain_error = "no clang-19 was found"
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
         status, output, account = self.restricted()
@@ -3060,7 +3079,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual([], self.tools.commands)
 
     def test_a_scope_that_did_not_reach_the_compiler_is_refused(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # A scope that never reached the compiler leaves the run unable to say
         # what the changed files carry: that is a sweep that could not look,
         # and it is worded and recorded as one, not as a finding.
@@ -3087,7 +3106,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         return scopes
 
     def test_the_build_is_handed_a_scope_naming_only_the_changed_files(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         scopes = self.scopes_built()
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
         status, output, _ = self.restricted()
@@ -3105,7 +3124,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual([".*/test/.*"], running["excludePaths"])
 
     def test_the_restricted_run_reports_its_time_through_the_same_record(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
         status, output, _ = self.restricted(self.summary)
         self.assertEqual(0, status, output)
@@ -3122,7 +3141,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertLess(output.index("time per unit"), output.index("mutant(s) on the changed lines"))
 
     def test_a_changed_source_no_mutation_build_compiles_could_not_be_looked_at(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Its directory's other file came back, so the scope reached the
         # compiler; this one carries arithmetic and came back with nothing,
         # because nothing built it. Its population is missing, not empty.
@@ -3136,7 +3155,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertNotIn("lie on the changed lines", output)
 
     def test_a_changed_source_carrying_no_operator_passes_where_its_directory_yields_mutants(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The directory's other file came back, so the scope reached the
         # compiler there; this one was compiled and carries no operator.
         self.write("src/plant/alpha/added.c", "float f(float x) { return x; }\n")
@@ -3145,14 +3164,14 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual(("ran", "passed", 0), (account["state"], account["outcome"], account["mutants"]))
 
     def test_a_changed_header_carrying_no_operator_passes(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.write("src/plant/alpha/extra.h", "#define EXTRA 1\n")
         status, output, account = self.restricted()
         self.assertEqual(0, status, output)
         self.assertEqual(("ran", "passed"), (account["state"], account["outcome"]))
 
     def test_a_changed_directory_no_mutant_came_back_from_could_not_be_looked_at(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Nothing in the directory was compiled, so even a changed header
         # there, which carries no mutant of its own, cannot be told apart from
         # one the scope never reached.
@@ -3164,7 +3183,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertIn("no mutant came back from src/plant/alpha", account["detail"])
 
     def test_a_changed_directory_the_scope_matches_nothing_in_could_not_be_looked_at_though_it_compiles(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The build compiles the changed source and leaves its object, but the
         # scope instruments nothing in it, so its arithmetic comes back as no
         # mutant at all. An object compiled is not a source instrumented.
@@ -3182,7 +3201,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertNotIn("lie on the changed lines", output)
 
     def test_a_changed_directory_whose_compiled_sources_carry_no_operator_could_not_be_looked_at(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Nothing comes back from the directory, and its source was compiled.
         # That is what a scope matching nothing looks like too, so the run
         # cannot tell empty from missing and says so, as the full sweep does.
@@ -3197,7 +3216,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertIn("no mutant came back from src/plant/alpha", account["detail"])
 
     def test_a_mutant_one_environment_owes_and_only_another_ran_could_not_be_looked_at(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Both environments build the changed file; the second's run leaves
         # out the changed line. The first ran that mutant, but against its own
         # tests, so the second's tests never met it.
@@ -3216,7 +3235,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertNotIn("in native_alpha_mutation", account["detail"])
 
     def test_lines_the_mutation_tools_own_diff_widens_to_are_run_but_not_drawn(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The repository joins hunks with context. The changed-lines mode reads
         # that setting and runs line 5 between the two changed lines too, where
         # a survivor nobody has judged sits; the round's own measure does not,
@@ -3232,7 +3251,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertNotIn(mutant(STRUCTURE, 5, COLUMN), output)
 
     def test_a_population_file_whose_lines_could_not_be_read_runs_nothing(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The mutants this run owes cannot be told, so it draws none rather
         # than too few, and does not look for the toolchain.
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
@@ -3252,7 +3271,7 @@ class TheRoundSweepsTheMutantsOnTheChangedLines(ChangedLinesHarness):
         self.assertEqual([], self.resolved)
 
     def test_a_path_outside_the_population_whose_lines_could_not_be_read_is_no_obstacle(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
         status, output, account = self.with_unreadable({
             "README.md": "the new file README.md could not be read (permission denied)",
@@ -3294,7 +3313,7 @@ class TheChangedLinesAreReadOnlyAsTheGateWritesThem(ChangedLinesHarness):
             return status, output, json.load(handle)
 
     def test_a_document_that_is_not_the_gates_cannot_be_looked_at(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         for document in (
             "not json",
             [1, 2],
@@ -3316,13 +3335,13 @@ class TheChangedLinesAreReadOnlyAsTheGateWritesThem(ChangedLinesHarness):
                 self.assertEqual([], self.tools.commands)
 
     def test_a_result_path_without_changed_lines_is_refused(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         status, output = self.run_sweep("--changed-lines-result", os.path.join(self.scratch.name, "x"))
         self.assertEqual(mull_sweep.COULD_NOT_LOOK, status)
         self.assertIn("--changed-lines-result needs --changed-lines", output)
 
     def test_a_run_unable_to_draw_the_population_leaves_an_account_that_could_not_look(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         os.remove(os.path.join(self.tree.include, "plant_machine_claim.h"))
         status, output, account = self.account_after({"root": self.project, "base": BASE, "files": {STRUCTURE: [2]}})
         self.assertEqual(mull_sweep.COULD_NOT_LOOK, status, output)
@@ -3330,14 +3349,14 @@ class TheChangedLinesAreReadOnlyAsTheGateWritesThem(ChangedLinesHarness):
         self.assertIn("stopped before it could tell", account["detail"])
 
     def test_a_population_problem_found_before_sweeping_leaves_an_account_of_a_finding(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.tree.describe("beta", None)
         status, output, account = self.account_after({"root": self.project, "base": BASE, "files": {STRUCTURE: [2]}})
         self.assertEqual(mull_sweep.FOUND_THE_PROBLEM, status, output)
         self.assertEqual(("could-not-run", "found-a-problem"), (account["state"], account["outcome"]))
 
     def test_a_run_ended_by_an_error_nothing_anticipated_leaves_an_account_that_could_not_look(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
         lines = self.changed_lines()
         account = os.path.join(self.scratch.name, "account.json")
@@ -3358,7 +3377,7 @@ class TheChangedLinesAreReadOnlyAsTheGateWritesThem(ChangedLinesHarness):
 
 class TheRoundNeverRunsTheFullSweepInPlaceOfTheRestrictedOne(ChangedLinesHarness):
     def test_asked_for_by_the_round_without_the_changed_lines_it_refuses_before_anything(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The round names its account in the environment as well as the
         # arguments, so a task dropping the arguments is refused here rather
         # than left to run the full sweep.
@@ -3378,7 +3397,7 @@ class TheRoundNeverRunsTheFullSweepInPlaceOfTheRestrictedOne(ChangedLinesHarness
         self.assertIn("CLI_ARGS", written["detail"])
 
     def test_asked_for_by_the_round_with_the_changed_lines_it_sweeps_them(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         os.environ[mull_sweep.ROUND_ACCOUNT_VARIABLE] = os.path.join(self.scratch.name, "unused.json")
         self.addCleanup(os.environ.pop, mull_sweep.ROUND_ACCOUNT_VARIABLE, None)
         self.edit(STRUCTURE, 2, "float b(float x) { return x + 2.5f; }")
@@ -3387,7 +3406,7 @@ class TheRoundNeverRunsTheFullSweepInPlaceOfTheRestrictedOne(ChangedLinesHarness
         self.assertEqual(("ran", "passed"), (account["state"], account["outcome"]))
 
     def test_the_full_sweeps_own_flags_beside_the_changed_lines_are_refused(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # Forwarded beside the changed lines, --survivors-only would list the
         # survivors without judging them and report a pass; every flag of the
         # full sweep's own is refused alike, before anything is built.
@@ -3418,7 +3437,7 @@ class TheRoundNeverRunsTheFullSweepInPlaceOfTheRestrictedOne(ChangedLinesHarness
                 self.assertEqual([], self.resolved)
 
     def test_the_sweeps_task_forwards_its_arguments_to_the_sweep(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         with open(os.path.join(os.path.dirname(PROJECT), "Taskfile.yml"), encoding="utf-8") as handle:
             lines = handle.read().splitlines()
         start = lines.index("  fw:sweep:")
@@ -3450,7 +3469,7 @@ class OnlyTheDerivedPopulationsFilesAreChanged(unittest.TestCase):
         return mull_sweep.changed_population(self.project, root, files, self.includes, [".*/test/.*"])
 
     def test_only_sources_inside_the_project_and_its_population_are_kept(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.assertEqual(
             {"src/plant/alpha/a.c": [1], "src/plant/common/b.h": [2, 3]},
             self.population(self.project, {
@@ -3464,7 +3483,7 @@ class OnlyTheDerivedPopulationsFilesAreChanged(unittest.TestCase):
         )
 
     def test_a_like_named_tree_outside_the_project_is_not_the_population(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         parent = os.path.dirname(self.project)
         name = os.path.basename(self.project)
         self.assertEqual(
@@ -3476,18 +3495,18 @@ class OnlyTheDerivedPopulationsFilesAreChanged(unittest.TestCase):
         )
 
     def test_the_round_gate_takes_the_same_kinds_of_file_as_sources(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         # The gate runs emulation when a file of a kind the sweep draws from
         # goes unread; a kind it disagreed about would go unread unnoticed.
         self.assertEqual(round_gate.SWEPT_SUFFIXES, mull_sweep.SOURCE_SUFFIXES)
 
     def test_a_triage_key_names_its_source(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.assertEqual(STRUCTURE, mull_sweep.judged_source(mutant(STRUCTURE, 3, COLUMN)))
         self.assertEqual("", mull_sweep.judged_source("not-a-key"))
 
     def test_line_numbers_are_printed_as_the_runs_they_form(self):
-        # SOL-SWEEP-CHANGED-PLANT-LINES-IN-ROUND.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
+        # SOL-SWEEP-CHANGED-LINES-WITH-PATH-SELECTED-TIERS.C1: The round gate sweeps the mutants drawn from the plant lines the branch changes
         self.assertEqual("1-3, 5, 7-8", mull_sweep.spans([1, 2, 3, 5, 7, 8]))
         self.assertEqual("", mull_sweep.spans([]))
 
