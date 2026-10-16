@@ -1,7 +1,7 @@
 id: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT.C1
 type: criterion
 title: The golden-trajectory test passes cleanly under both env:native_test and env:native_mutation
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

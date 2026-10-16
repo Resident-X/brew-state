@@ -21,6 +21,8 @@ links:
     type: targets
   - target: OBL-VERIFICATION-DISCIPLINE-001.C2
     type: targets
+  - target: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT
+    type: supersedes
 brief_confirmation:
   confirmer: claude-sonnet-5-5 brief reviewer
   fingerprint: f3ed33ee9a5e030d768fdf8d17c2fc3a298bf59c5034b886bdba9909ae523e70
