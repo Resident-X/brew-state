@@ -40,12 +40,13 @@ Every tool is free. The check stops with an error naming any tool that is missin
 - `task hw:verify` runs the pre-order check on every board design in the repository. It exits 0 only when every design passes. A build round runs it for a change that can matter to a board, and the nightly run of `main` runs it every night ([When the board check runs](#when-the-board-check-runs)).
 - `task hw:prove` seeds each fault the check guards against into a throwaway copy of `hardware/proof/gate-proof` as the last commit holds it, in a temporary directory outside the repository, so an uncommitted edit to the proof design is not what it proves. It requires the check to catch each fault. This command is on demand: neither the build round nor the nightly runs it.
 - `task hw:review-seed -- --seeds <file> --out <folder>` seeds known layout defects into a throwaway copy of `hardware/proof/review-proof` and writes a folder to review it blind, with the seed list apart (see [The proof designs](#the-proof-designs)). This command is on demand and is not part of the gate. It needs the same tools as `hw:views`.
-- `task hw:test` runs the tests of the check itself, of the locked-copper check's four commands, of the layout review views, of the placement view, of the placement and critical routing history check and of the layout review proof's seeding command, against the real `kicad-cli` and `resvg`. It includes the tests that run the seeded-fault proof, so it is the whole suite, on demand.
+- `task hw:test` runs the tests of the check itself, of the locked-copper check's four commands, of the layout review views, of the placement view, of the placement and critical routing history check, of the layout review record history check and of the layout review proof's seeding command, against the real `kicad-cli` and `resvg`. It includes the tests that run the seeded-fault proof, so it is the whole suite, on demand.
 - `task hw:test:round` runs the same tests without those that need the seeded-fault proof. It is the tooling-test part of the build round's board tier and of the nightly run ([When the board check runs](#when-the-board-check-runs)). It needs the same tools as `hw:test`: KiCad, resvg and a monospaced font.
 - `task hw:reads` lists, one per line, every file the board designs git tracks read: each design's folder (with a trailing slash), its sheets, its libraries and the separation basis record it is held to. It runs no check and needs only git and Python, no KiCad. The build round asks it which changed paths reach a board design.
 - `task hw:views` renders every view the layout review judges one board on (below). It needs the same tools as `hw:verify`, and resvg.
 - `task hw:placement` renders one placed board's placement view and writes its measures (below). It needs the same tools as `hw:views`.
 - `task hw:history` judges one board's placement and critical routing sections of its `layout-plan.md` against the repository's history (below). It needs git and Python only.
+- `task hw:review-history` judges one board's layout review record, `layout-review.md`, against the repository's history (below). It needs git and Python only.
 - `task hw:rules-confirm`, `task hw:copper-lock`, `task hw:copper-record` and `task hw:copper-compare` run the locked-copper check (below) on one board, before routing and around the routing round trip. They need the same tools as `hw:verify`, and read the paths given after `--` from the folder they are run in.
 
 How a board is designed so that it passes the check and works once built, from proving its value-critical circuits, providing for its bring-up and planning its layout against the method's layout practice catalogue before placement, to its rules, its routing and the review of its finished layout, is in [`docs/board-design-method.md`](../docs/board-design-method.md).
@@ -166,6 +167,26 @@ Each check is one line, `CHECK | <check> | PASS | <detail>` or `CHECK | <check> 
 A commit a record cites that is not in the repository, or not in the checked-out commit's history, fails as not in it. So a branch whose board is judged this way merges without rewriting its history, by a merge commit, never squashed, rebased or force-pushed: the records cite its commits.
 
 It refuses, judging nothing, with a `REFUSED` line naming the cause: a board that is not in a git work tree, or git older than it needs; a shallow clone, which lacks the commits the records cite; a board or `layout-plan.md` that git does not track or that differs from the checked-out commit; and a board that cannot be read. The exit status is 0 when every check passes, 1 when any fails, and 2 when the command is refused.
+
+## The layout review record history
+
+`task hw:review-history -- --folder <board folder>` judges the `layout-review.md` in the board's folder against the repository's history, as the completion checks of the [Layout review](../docs/board-design-method.md#layout-review) step's "Judge the record" list run it. It reads the record and the board's design files from git, as each commit holds them. It needs git and Python only, no KiCad. It writes nothing: what it reports can be judged again from the history at any time.
+
+The board's design files are the files KiCad reads for it: everything tracked in the board's folder, the sheets its schematic reaches and the libraries its library tables name, less the folder's own records, its markdown and YAML files, the review record among them. So a record's own commits, and a finding's closure, never count as a design change. The folder must track exactly one KiCad project.
+
+It reads every version of the record reachable from the checked-out commit, and judges:
+
+- the round headings: a round heading that is not exactly `## Round <n>` (n a positive integer, no leading zero), a round given twice, or a code fence left open, in the record or any earlier version of it, fails, since the command cannot guard such a round;
+- the rounds kept: a `## Round <n>` heading in any earlier version of the record that the record now lacks fails, and so does a record holding no round;
+- each round as first recorded: the round's end-of-round commit is the first commit, oldest first, whose record holds its heading. In that commit the round's opening lines, those up to its first subheading, its `### Verdicts` table, and its `### Findings` table's findings, none removed or added, each with its number, Raised by, Severity and What and where, must be as the record now gives them. The Closed by column is the one field that changes after a round is recorded, so it is never compared, and nor are the findings' other columns;
+- each round's order: the round's end-of-round commit must be an ancestor of, and not, every commit after the round's Board judged commit that changes the board's design files;
+- the closing round, the highest-numbered round now, judged on design files unchanged since its end-of-round commit.
+
+Each check is one line, `CHECK | <check> | PASS | <detail>` or `CHECK | <check> | FAIL | <detail>`, one line for each thing a check finds wrong, and a `RESULT | PASS`, `RESULT | FAIL` or `RESULT | REFUSED` line comes last. A failing line names the board's folder, the round and what differs. With `--json` the same checks and result are printed as one JSON document, with `board`, `result`, `detail`, `checks` (each with `check`, `verdict` and `detail`) and `refusals`.
+
+A commit the record's rounds were first recorded in must be in the repository, so a branch whose record is judged this way merges without rewriting its history, by a merge commit, never squashed, rebased or force-pushed.
+
+It refuses, judging nothing, with a `REFUSED` line naming the cause: a folder that is not in a git work tree, or git older than it needs; a shallow clone, which lacks the commits the rounds were first recorded in; a folder that does not track exactly one KiCad project; and a record or design file that git does not track or that differs from the checked-out commit. The exit status is 0 when every check passes, 1 when any fails, and 2 when the command is refused.
 
 ## What a design must satisfy
 
