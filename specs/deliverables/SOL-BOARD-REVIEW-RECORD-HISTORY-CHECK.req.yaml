@@ -21,3 +21,7 @@ links:
     type: justified-by
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 4552916b162748941b0ebf83b83dae47831bb8c2e7a2387b061234e4b1968001
+  gating_profile: ""
