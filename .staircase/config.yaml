@@ -57,9 +57,9 @@ default_actor: david
 # Executor assignments: the model and reasoning effort each abstract tier runs
 # at, served by `staircase executor resolve <tier>`. The invocation carries only
 # the two placeholders the router fills ({prompt_file}, {tools}); the prompt
-# arrives on stdin so a variadic --allowedTools cannot swallow it. This project
-# defaults to mid-tier: reasoning-tier is for work that is genuinely complex or
-# whose misses cannot be caught, small-fast for reads and mechanical runs.
+# arrives on stdin so a variadic --allowedTools cannot swallow it. The record
+# sets no default tier; the project's choice of tier per task (mid-tier unless
+# the work is genuinely complex or its misses cannot be caught) is in CLAUDE.md.
 executor_assignments:
   - tier: small-fast
     provider: anthropic
