@@ -437,6 +437,7 @@ class Stops(unittest.TestCase):
             ("an identical row", digital + "\n" + digital, "digital"),
             ("a row with other bounds and no parts", digital + "\n| digital | none | nothing | none |", "digital"),
             ("the first region repeated by a later row", digital + "\n| mains | none | nothing | none |", "mains"),
+            ("a name differing only by edge whitespace", digital + "\n|   digital   | none | nothing | none |", "digital"),
         )
         for case, rows, repeated in cases:
             with self.subTest(case=case):
