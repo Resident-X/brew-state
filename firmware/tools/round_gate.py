@@ -195,7 +195,8 @@ KICAD_FILE = re.compile(r"\.kicad_[a-z]+$")
 
 #: The files beside a design that are not KiCad's by name but that a design is
 #: held to or reads its libraries from.
-BOARD_FILE_NAMES = ("sym-lib-table", "fp-lib-table", "separation-basis.yaml", "pin-allocation.yaml")
+BOARD_FILE_NAMES = ("sym-lib-table", "fp-lib-table", "separation-basis.yaml", "pin-allocation.yaml",
+                    "parts-specification.yaml", "catalogue-extract.yaml")
 
 #: The three files that make a board design. One of these in the working tree
 #: that git does not track is a design the check would not see.

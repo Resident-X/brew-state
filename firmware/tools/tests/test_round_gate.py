@@ -1513,6 +1513,8 @@ RUNS_BY_NAME = (
     ("a symbol library table", "elsewhere/sym-lib-table"),
     ("a footprint library table", "elsewhere/fp-lib-table"),
     ("a separation basis record outside the hardware tree", "elsewhere/separation-basis.yaml"),
+    ("a parts specification record outside the hardware tree", "elsewhere/parts-specification.yaml"),
+    ("a catalogue extract outside the hardware tree", "elsewhere/catalogue-extract.yaml"),
     ("the round gate's own code", "firmware/tools/round_gate.py"),
     ("the code the round gate shares with the complete verification", "firmware/tools/task_gate.py"),
     ("the task runner's definition file", "Taskfile.yml"),

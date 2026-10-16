@@ -578,6 +578,15 @@
 				)
 			)
 		)
+		(property "LCSC" "C9000001"
+			(at 50.8 50.8 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Datasheet" ""
 			(at 50.8 50.8 0)
 			(hide yes)
@@ -639,6 +648,24 @@
 			)
 		)
 		(property "Footprint" "proof:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
+			(at 63.5 52.07 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C9000002"
+			(at 63.5 52.07 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "0.25W"
 			(at 63.5 52.07 0)
 			(hide yes)
 			(effects
@@ -716,6 +743,15 @@
 				)
 			)
 		)
+		(property "LCSC" "C9000003"
+			(at 50.8 76.2 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Datasheet" ""
 			(at 50.8 76.2 0)
 			(hide yes)
@@ -777,6 +813,24 @@
 			)
 		)
 		(property "Footprint" "proof:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"
+			(at 63.5 77.47 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C9000004"
+			(at 63.5 77.47 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "0.25W"
 			(at 63.5 77.47 0)
 			(hide yes)
 			(effects
@@ -866,6 +920,15 @@
 			)
 		)
 		(property "Footprint" "proof:Controller_1x02"
+			(at 101.6 76.2 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C9000005"
 			(at 101.6 76.2 0)
 			(hide yes)
 			(effects
