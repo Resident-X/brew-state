@@ -101,12 +101,13 @@
 		(property "Reference" "C5"
 			(at 0 -1.43 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "b10cf299-7905-4e7c-921d-18c94b95227c")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -120,10 +121,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://content.kemet.com/datasheets/KEM_C1002_X7R_SMD.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -134,7 +136,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -154,6 +156,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "b8124be0-9664-46a6-b883-cd95f665dbab")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "C0603C104K4RACTU"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "48a4f3a2-094c-45d3-b86a-7a4a12885437")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100015"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "9e38cf5f-d38b-4405-b29c-c29f42464908")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "16V"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "802efa3c-1d81-4fb5-91d6-a2c1fcaba62c")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -253,12 +303,13 @@
 		(property "Reference" "J3"
 			(at 0 -2.38 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "d6a2edbc-2c80-4e42-acb1-3fed0dcd9394")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -272,10 +323,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://suddendocs.samtec.com/catalog_english/tsw_th.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -286,7 +338,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -306,6 +358,42 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Samtec"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "2a2d2a45-a0a7-4c1c-855d-369842a9f1c3")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "TSW-101-07-T-S"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "9fd36c09-b781-4dba-9a03-091c3c9c101d")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100003"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "71e56734-7e6a-497c-9019-a942b8dc7c60")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -477,12 +565,13 @@
 		(property "Reference" "U2"
 			(at 0 -4.2 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "252561c3-7a22-4812-89d8-2a3163b657d7")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -496,10 +585,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/mspm0c1104.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -530,6 +620,42 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Texas Instruments"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "18bcbe69-c15b-4359-950a-c37e9b747941")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "MSPS003F4SPW20R"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "19c8b3e0-1730-4fc1-ad50-a71261e09d1b")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100007"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "a784ce46-b36c-4ba9-be6b-2a5002fd28e2")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -895,12 +1021,13 @@
 		(property "Reference" "JP1"
 			(at 0 -2.38 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "ee181c70-3b3d-4442-a24b-1c6aaaa1f63a")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -914,10 +1041,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://suddendocs.samtec.com/catalog_english/tsw_th.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -928,7 +1056,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -948,6 +1076,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Samtec"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "e0e8d64e-5a14-4e4b-8453-9d2722a93dae")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "TSW-102-07-T-S"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "54c6d03d-8888-4476-a4de-acfa6f3c42a5")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100004"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "5c66792d-b175-4a26-8661-75dd46a682fd")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Shunt" "Samtec SNT-100-BK-T fitted in service"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "ebcc07d2-9cfe-4109-a8f4-e16e8f2bb6d5")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -1128,12 +1304,13 @@
 		(property "Reference" "R1"
 			(at 0 -1.43 90)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "5bb50394-a3ca-44e3-bc09-910dfbf3ae47")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -1147,10 +1324,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -1161,7 +1339,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -1181,6 +1359,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Vishay"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "db7bc7e3-b084-43b0-b319-d4368de2c880")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "CRCW06031K20FKEA"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "757b2de2-0771-460a-ac7c-d2f4eae2c2a0")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100010"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "c7d51419-b340-429e-8a44-3f6f362a095a")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "0.1W"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "b25e2fd0-4c14-4839-b59c-28dab50266f7")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -1280,12 +1506,13 @@
 		(property "Reference" "C1"
 			(at 0 -2.35 270)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "33df30a6-81e0-4164-9be8-d0a308e76971")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -1299,10 +1526,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://search.kemet.com/download/specsheet/T520B476M010ATE035"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -1313,7 +1541,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -1333,6 +1561,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "84553448-25ae-495f-add2-41af32367339")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "T520B476M010ATE035"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "b81b1e57-d7d3-4750-99de-5eff35a5b409")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100008"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "b4e81d26-5d53-410a-8845-814ea42facdc")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "10V"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "f35bb308-bd64-4561-acbe-7a1a42fbef1a")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -1481,12 +1757,13 @@
 		(property "Reference" "U1"
 			(at 0 -2.4 180)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "77c2272e-7698-4030-85a0-adb0ffa1d8dd")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -1500,10 +1777,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP1700-Low-Quiescent-Current-LDO-20001826E.pdf"
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
@@ -1514,7 +1792,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "250mA Low Quiscent Current LDO, 3.3V output, SOT-23"
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
@@ -1534,6 +1812,42 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Microchip"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "1f7645e0-bbc8-4b91-a356-cf10c09b5522")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "MCP1700T-3302E/TT"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "6a7cc925-14d8-4a86-99c8-f2fd4e2c0f40")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100006"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "7b9355d9-30db-4de4-9bda-b3cd5627e107")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -1853,12 +2167,13 @@
 		(property "Reference" "C2"
 			(at 0 -2.35 90)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "57674a7a-253d-4834-87fc-c5a2e9425148")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -1872,10 +2187,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://search.kemet.com/download/specsheet/T520B157M006ATE025"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -1886,7 +2202,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -1906,6 +2222,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "ef26fe85-2d96-43b1-b039-9a8715baf63b")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "T520B157M006ATE025"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "c331f0fb-c002-4e44-a15f-72bf507986c6")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100014"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "91fb280b-79aa-498f-9868-66aabc551797")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "6.3V"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "4788ceda-fa2f-4845-92f8-48aa288e70e7")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -2054,12 +2418,13 @@
 		(property "Reference" "J2"
 			(at 2.5 -3.55 270)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "9f528ed0-0e0c-4457-b2ae-81450b80323e")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2073,10 +2438,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.jst-mfg.com/product/pdf/eng/eXH.pdf"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -2087,7 +2453,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -2107,6 +2473,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "98f4295c-9818-4d75-8349-e88ddbf10470")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "B3B-XH-A(LF)(SN)"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "db538a2b-c91d-4010-8993-86c38bf50b70")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100002"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "9b9a620e-4186-40b7-a3f8-77ed72c8ca1a")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "3A"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "ae860210-882c-4db1-8cd5-85cab55fae75")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -2342,12 +2756,13 @@
 		(property "Reference" "C3"
 			(at 0 -1.68 90)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "5d93bb75-0e89-4bb1-ab38-fb72aee6d76e")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2361,10 +2776,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://content.kemet.com/datasheets/KEM_C1002_X7R_SMD.pdf"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -2375,7 +2791,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -2395,6 +2811,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "d9d28640-1a7c-4a3d-b5fe-8dd111ff96e5")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "C0805C106K8RACTU"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "10796709-5386-4c4a-8797-2ab3abe2bc5c")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100009"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "98032782-7729-478a-aba9-9161b480b622")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "10V"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "960ea1f0-6cb8-454f-81ef-f78af6e87cd7")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -2494,12 +2958,13 @@
 		(property "Reference" "D1"
 			(at 0 -1.43 270)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "0a14de67-61f7-4241-aac8-3ad85cc34513")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2513,10 +2978,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.vishay.com/docs/82437/vlmo1300.pdf"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -2527,7 +2993,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Light emitting diode"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -2547,6 +3013,42 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Vishay"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "48719022-591c-4c95-891a-3ae017b34f91")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "VLMG1300-GS08"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "3122d40b-65cc-4caf-a6ad-e56cb0677642")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100011"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "9b409cd9-2137-4cf8-a1d9-f1d48515edec")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -2695,12 +3197,13 @@
 		(property "Reference" "H2"
 			(at 0 -3.15 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "c50f447e-5a1c-4f8f-8376-387ae48cb7ad")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2714,6 +3217,7 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2728,7 +3232,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Mounting Hole without connection"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -2752,8 +3256,20 @@
 				)
 			)
 		)
+		(property "LCSC" "C9100013"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "b38034da-d990-4d05-b481-00910b7507bb")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/3b91713e-c90d-4de1-a6c6-1285a4708c90")
-		(attr exclude_from_pos_files exclude_from_bom)
+		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -2807,12 +3323,13 @@
 		(property "Reference" "H1"
 			(at 0 -3.15 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "b1521cfc-d35d-49b9-8f0d-e2989d2c66d8")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2826,6 +3343,7 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2840,7 +3358,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Mounting Hole without connection"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -2864,8 +3382,20 @@
 				)
 			)
 		)
+		(property "LCSC" "C9100013"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "717cca7e-5b89-45f5-9e18-f4eccb29d0eb")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/d37f2be3-84d3-409c-8aef-d2934b3b065e")
-		(attr exclude_from_pos_files exclude_from_bom)
+		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -2919,12 +3449,13 @@
 		(property "Reference" "H3"
 			(at 0 -3.15 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "0f0c98a8-1505-43f5-be81-95f78f79e161")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2938,6 +3469,7 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2952,7 +3484,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Mounting Hole without connection"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -2976,8 +3508,20 @@
 				)
 			)
 		)
+		(property "LCSC" "C9100013"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "82ea9484-6cb0-475e-8769-b22b4ee5d098")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/272586b5-cfcf-4767-82a7-9003f2913bba")
-		(attr exclude_from_pos_files exclude_from_bom)
+		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -3031,12 +3575,13 @@
 		(property "Reference" "C4"
 			(at 0 -1.43 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "81cb0477-0497-4705-9601-096d68bcfa52")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -3050,10 +3595,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://content.kemet.com/datasheets/KEM_C1002_X7R_SMD.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -3064,7 +3610,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -3084,6 +3630,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "31e0fa97-a83b-4478-88c3-3d4056127640")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "C0603C104K4RACTU"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "5444b6c7-e969-4f27-9b2a-6958e372e1cf")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100015"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "7d7c3324-cef6-4eac-915f-4a1b45188d39")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "16V"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "f311e61c-5b5c-4aaf-9ac3-ee2e302dc37b")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -3183,12 +3777,13 @@
 		(property "Reference" "J1"
 			(at 1.25 -3.55 270)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "aaddd29c-2ff6-4c4a-8bad-4d644fe40fff")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -3202,10 +3797,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.jst-mfg.com/product/pdf/eng/eXH.pdf"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -3216,7 +3812,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -3236,6 +3832,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "7a4b8db2-d885-4f6c-a5ba-7ba98d4a80eb")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "B2B-XH-A(LF)(SN)"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "a419af8e-60e8-4a67-ad6d-3469844e3a71")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100001"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "53bbac43-f715-4850-a4b6-c8bf7f27d918")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Rating" "3A"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "8cf58197-10b8-4623-8a17-35e3b1b32325")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -3462,12 +4106,13 @@
 		(property "Reference" "JP2"
 			(at 0 -2.38 0)
 			(unlocked yes)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "0a041842-8b12-4424-81df-4b7bf1358572")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -3481,10 +4126,11 @@
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://suddendocs.samtec.com/catalog_english/tsw_th.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -3495,7 +4141,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -3515,6 +4161,54 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Samtec"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "7b2007ff-9bba-4a0d-b351-b7fd173b94d6")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "TSW-102-07-T-S"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "1eecabfa-b77d-4732-9648-4a1217168f77")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C9100005"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "17a10943-40c3-4ef5-adef-b423ffa9f2c1")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Shunt" "Samtec SNT-100-BK-T fitted in service"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "1c155db6-0728-4214-b09a-c5f37fd2e54b")
+			(effects
+				(font
+					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -3686,336 +4380,37 @@
 			)
 		)
 	)
-	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
+	(footprint "method-proof:TestPoint_Pad_D1.0mm"
 		(layer "B.Cu")
-		(uuid "13139cb8-5e4d-4ae6-b1e3-6c69089510de")
-		(at 120.5 110.5)
-		(property "Reference" "TP3"
-			(at 0 1.448 180)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "a2e93db3-6aa1-459a-8656-968f978f0b53")
-			(effects
-				(font
-					(size 1 1)
-					(line_spacing 0)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "+3V3"
-			(at 0 -1.550001 180)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "6b8aa748-5aef-4c64-a240-d80fa60c791a")
-			(effects
-				(font
-					(size 1 1)
-					(line_spacing 0)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 180)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "23b53ecf-2aba-4dce-8c31-4bfc0a40cc0d")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" ""
-			(at 0 0 180)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "54292854-5ce3-4fc1-90db-45784124b64f")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/bb87ebb8-c04b-4eed-818c-30bbfd2f9cf0")
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.7 0)
-			(stroke
-				(width 0.12)
-				(type default)
-			)
-			(fill no)
-			(layer "B.SilkS")
-			(uuid "971b489c-6e2d-4df5-b667-40e8b03dcd9e")
-		)
-		(fp_circle
-			(center 0 0)
-			(end 1 0)
-			(stroke
-				(width 0.05)
-				(type default)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "bc3b52d9-0acc-4064-b16d-d3cf686943a5")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.449999 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(uuid "5ba5518c-1dc3-425b-89c9-a9c48accc344")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "+3V3")
-			(uuid "d2843bdb-536f-4f26-a2ba-631ea637c614")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
-		(layer "B.Cu")
-		(uuid "55f6756a-6e0b-4a8b-9a8b-933ae955e6e4")
-		(at 109 105)
-		(property "Reference" "TP1"
-			(at 0 1.448 180)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "10d7de63-1ceb-46e5-a803-3d3ad9fe48da")
-			(effects
-				(font
-					(size 1 1)
-					(line_spacing 0)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "+5V_IN"
-			(at 0 -1.55 180)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "7853b37c-fc87-4c3a-8080-3b16608a5068")
-			(effects
-				(font
-					(size 1 1)
-					(line_spacing 0)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 180)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "17c839cd-f648-4ed2-9249-4e901b269fd3")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" ""
-			(at 0 0 180)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "5af08dbb-1381-40e1-ab55-8acd6d91b1d5")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/05eea4fc-3a35-4c61-91b5-292ddfd89349")
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.7 0)
-			(stroke
-				(width 0.12)
-				(type default)
-			)
-			(fill no)
-			(layer "B.SilkS")
-			(uuid "f98ad2ed-46c3-48e1-92b6-7c6f73f2f09f")
-		)
-		(fp_circle
-			(center 0 0)
-			(end 1 0)
-			(stroke
-				(width 0.05)
-				(type default)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "25df8ed8-339f-488d-a595-8a788cb3c8ac")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.45 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(uuid "18ad5a99-7b3e-4b72-b57e-aed5ef513d97")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/+5V_IN")
-			(uuid "1df0be16-5cd5-422e-a4fc-345a91618fe5")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
-		(layer "B.Cu")
-		(uuid "97d25c7e-4771-4312-8184-0cf8b3add2fa")
-		(at 132.199999 118.5)
-		(property "Reference" "TP4"
-			(at 0 1.448 180)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "5b642ced-7b99-43ae-908c-460710d5192e")
-			(effects
-				(font
-					(size 1 1)
-					(line_spacing 0)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Value" "LED_K"
-			(at 0 -1.55 180)
-			(unlocked yes)
-			(layer "B.SilkS")
-			(hide yes)
-			(uuid "4d729934-67ef-4c4e-aa56-74b750b2c0a1")
-			(effects
-				(font
-					(size 1 1)
-					(line_spacing 0)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 180)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "60c85192-cb75-4f70-a205-4981173ee8ed")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Description" ""
-			(at 0 0 180)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "5c772649-7613-4886-a1ff-1cc476816383")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify mirror)
-			)
-		)
-		(path "/971e02ad-db51-4b4f-9f92-983c93ff46ac")
-		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.7 0)
-			(stroke
-				(width 0.12)
-				(type default)
-			)
-			(fill no)
-			(layer "B.SilkS")
-			(uuid "2ad3d05d-e6c8-4492-bab8-36b4547a42be")
-		)
-		(fp_circle
-			(center 0 0)
-			(end 1 0)
-			(stroke
-				(width 0.05)
-				(type default)
-			)
-			(fill no)
-			(layer "B.CrtYd")
-			(uuid "a0e43fa6-d856-4165-b469-724f33841748")
-		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.45 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(uuid "3cf98114-2bc6-4754-aaf3-6dba3aad7781")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(pad "1" smd circle
-			(at 0 0)
-			(size 1 1)
-			(layers "B.Cu" "B.Mask")
-			(net "/LED_K")
-			(uuid "c8e9dd7a-40f8-422b-89dc-ece13f114b9e")
-		)
-		(embedded_fonts no)
-	)
-	(footprint "TestPoint:TestPoint_Pad_D1.0mm"
-		(layer "B.Cu")
-		(uuid "c65ae1f7-e9bc-445c-82f0-1db825f6805d")
+		(uuid "116fce09-0e8a-4590-ba85-769eb24e40b4")
 		(at 112.5 118)
+		(descr "SMD pad as test point, diameter 1.0mm, no paste (method-proof's own copy: it is in the bill of materials as its symbol is)")
+		(tags "test point SMD pad")
 		(property "Reference" "TP2"
-			(at 0 1.448 180)
+			(at 0 1 180)
 			(unlocked yes)
-			(layer "B.SilkS")
-			(uuid "4c5a86b2-2a75-4ed9-afc7-7f189dc83989")
+			(layer "B.Fab")
+			(uuid "57f470a2-8096-4ddf-a417-59ed04d38c45")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
 		)
 		(property "Value" "+3V3_REG"
-			(at 0 -1.55 180)
+			(at 0 -1 180)
 			(unlocked yes)
 			(layer "B.SilkS")
 			(hide yes)
-			(uuid "092080f6-453f-464c-9e68-89b6724b1baf")
+			(uuid "27648174-a304-492d-8ecd-fa05859a03c9")
 			(effects
 				(font
 					(size 1 1)
 					(line_spacing 0)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -4024,7 +4419,7 @@
 			(at 0 0 180)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "879de0a2-e8e8-44be-afd5-46b49b667b50")
+			(uuid "40c8df88-600f-4cc4-8222-ecbc9c3fbb13")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4032,11 +4427,11 @@
 				(justify mirror)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "test point"
 			(at 0 0 180)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e9989b1f-9126-4ded-a9ca-29306ca539ab")
+			(uuid "efe5fb7c-617d-44d3-aab9-4bd7741b121a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4044,49 +4439,456 @@
 				(justify mirror)
 			)
 		)
+		(property "LCSC" "C9100012"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "f74ec13b-4beb-4a8c-8cad-4554ee5780d6")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/3ebef65e-ee1f-44d8-bb99-70ce6edc1076")
+		(attr smd exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
-		(fp_circle
-			(center 0 0)
-			(end 0.7 0)
+		(fp_rect
+			(start -0.65 -0.65)
+			(end 0.65 0.65)
 			(stroke
 				(width 0.12)
 				(type default)
 			)
 			(fill no)
 			(layer "B.SilkS")
-			(uuid "6533e8c8-48a0-4249-b8e5-c4802a12c9a2")
+			(uuid "51080eaa-df35-4b5a-8d5d-2814c8b99e16")
 		)
 		(fp_circle
-			(center 0 0)
-			(end 1 0)
+			(center 1.05 0)
+			(end 1.2 0)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill yes)
+			(layer "B.SilkS")
+			(uuid "2f00d153-a802-4bba-b74e-afd9cab6e9ca")
+		)
+		(fp_rect
+			(start -0.65 -0.65)
+			(end 0.65 0.65)
 			(stroke
 				(width 0.05)
 				(type default)
 			)
 			(fill no)
 			(layer "B.CrtYd")
-			(uuid "9f8d767c-b895-4e01-8b6f-7ceeef0452cd")
+			(uuid "08f45931-9c0b-4cce-8280-f07e49afb7d8")
 		)
-		(fp_text user "${REFERENCE}"
-			(at 0 1.45 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(uuid "eac53cc9-bb78-4f58-b8a0-61abe81cc779")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
+		(fp_poly
+			(pts
+				(xy -0.5 0.2) (xy -0.2 0.5) (xy 0.5 0.5) (xy 0.5 -0.5) (xy -0.5 -0.5)
 			)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "B.Fab")
+			(uuid "ae11728d-6053-48dd-8db4-f8fc3c62640d")
 		)
 		(pad "1" smd circle
 			(at 0 0)
 			(size 1 1)
 			(layers "B.Cu" "B.Mask")
 			(net "/+3V3_REG")
-			(uuid "538493dc-8430-48d1-982c-96ee19f90bcc")
+			(uuid "d21368a7-d822-4796-b06c-3e7f516fd056")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "method-proof:TestPoint_Pad_D1.0mm"
+		(layer "B.Cu")
+		(uuid "4b1a6744-df77-42a2-a9ab-e7279a4c5f02")
+		(at 109 105)
+		(descr "SMD pad as test point, diameter 1.0mm, no paste (method-proof's own copy: it is in the bill of materials as its symbol is)")
+		(tags "test point SMD pad")
+		(property "Reference" "TP1"
+			(at 0 1 180)
+			(unlocked yes)
+			(layer "B.Fab")
+			(uuid "f25b00e9-dadf-4e14-a0d3-39185bbb3237")
+			(effects
+				(font
+					(size 1 1)
+					(line_spacing 0)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Value" "+5V_IN"
+			(at 0 -1 180)
+			(unlocked yes)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "00b99b9c-649b-4f2c-9bb6-8eae292e2bcf")
+			(effects
+				(font
+					(size 1 1)
+					(line_spacing 0)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 180)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "07c4c7be-534e-46fb-b581-986f8b3c3c70")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 180)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "2cc9da1b-37d9-48f3-95b3-fa53396135a8")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "LCSC" "C9100012"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "ab1104e3-c73b-447f-bda1-b2997a7c7ff7")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(path "/05eea4fc-3a35-4c61-91b5-292ddfd89349")
+		(attr smd exclude_from_pos_files)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_rect
+			(start -0.65 -0.65)
+			(end 0.65 0.65)
+			(stroke
+				(width 0.12)
+				(type default)
+			)
+			(fill no)
+			(layer "B.SilkS")
+			(uuid "74c8b67f-1b90-4b14-beb1-8b80496e2c7b")
+		)
+		(fp_circle
+			(center 1.05 0)
+			(end 1.2 0)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill yes)
+			(layer "B.SilkS")
+			(uuid "32ea43db-1e12-41be-8176-de9d6cb00365")
+		)
+		(fp_rect
+			(start -0.65 -0.65)
+			(end 0.65 0.65)
+			(stroke
+				(width 0.05)
+				(type default)
+			)
+			(fill no)
+			(layer "B.CrtYd")
+			(uuid "b9060b1c-1c4a-4863-a176-7621ca2c732e")
+		)
+		(fp_poly
+			(pts
+				(xy -0.5 0.2) (xy -0.2 0.5) (xy 0.5 0.5) (xy 0.5 -0.5) (xy -0.5 -0.5)
+			)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "B.Fab")
+			(uuid "d1f020e9-5e62-4fb6-8ba1-a0fa8277e95f")
+		)
+		(pad "1" smd circle
+			(at 0 0)
+			(size 1 1)
+			(layers "B.Cu" "B.Mask")
+			(net "/+5V_IN")
+			(uuid "4442c1f8-c584-4877-bc86-bca8e9efe751")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "method-proof:TestPoint_Pad_D1.0mm"
+		(layer "B.Cu")
+		(uuid "88efe524-7ad6-42ad-b628-723b2d92e5dd")
+		(at 132.199999 118.5)
+		(descr "SMD pad as test point, diameter 1.0mm, no paste (method-proof's own copy: it is in the bill of materials as its symbol is)")
+		(tags "test point SMD pad")
+		(property "Reference" "TP4"
+			(at 0 1 180)
+			(unlocked yes)
+			(layer "B.Fab")
+			(uuid "e55a8c2d-ec6f-4ae6-9647-00ee14a9adcd")
+			(effects
+				(font
+					(size 1 1)
+					(line_spacing 0)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Value" "LED_K"
+			(at 0 -1 180)
+			(unlocked yes)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "661b4f3d-2d92-4633-a275-4dc2bf09b5f3")
+			(effects
+				(font
+					(size 1 1)
+					(line_spacing 0)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 180)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "a5d401eb-8b9e-4557-9e07-22ad94a5be65")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 180)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "19bf08a8-1b65-4cac-bf7a-32c256849430")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "LCSC" "C9100012"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "12aa5ae4-dd19-4d14-833e-b475435ee85f")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(path "/971e02ad-db51-4b4f-9f92-983c93ff46ac")
+		(attr smd exclude_from_pos_files)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_rect
+			(start -0.650001 -0.65)
+			(end 0.65 0.65)
+			(stroke
+				(width 0.12)
+				(type default)
+			)
+			(fill no)
+			(layer "B.SilkS")
+			(uuid "64df74ee-58d4-4af8-978d-9a75b2bf1508")
+		)
+		(fp_circle
+			(center 1.05 0)
+			(end 1.2 0)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill yes)
+			(layer "B.SilkS")
+			(uuid "39baa512-d09b-48ea-ac59-e4825a6de059")
+		)
+		(fp_rect
+			(start -0.650001 -0.65)
+			(end 0.65 0.65)
+			(stroke
+				(width 0.05)
+				(type default)
+			)
+			(fill no)
+			(layer "B.CrtYd")
+			(uuid "86bd0f57-fb11-4b1c-92a7-e34793209b97")
+		)
+		(fp_poly
+			(pts
+				(xy -0.500001 0.2) (xy -0.2 0.5) (xy 0.499999 0.5) (xy 0.499999 -0.5) (xy -0.500001 -0.5)
+			)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "B.Fab")
+			(uuid "0d3081f5-956f-40f7-bd99-40968efe084b")
+		)
+		(pad "1" smd circle
+			(at -0.000001 0)
+			(size 1 1)
+			(layers "B.Cu" "B.Mask")
+			(net "/LED_K")
+			(uuid "515dfd34-4ffe-4eeb-946c-7bd76dd8274b")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "method-proof:TestPoint_Pad_D1.0mm"
+		(layer "B.Cu")
+		(uuid "ac1a70c2-c225-43bd-b8a7-25f25d005cca")
+		(at 120.5 110.5)
+		(descr "SMD pad as test point, diameter 1.0mm, no paste (method-proof's own copy: it is in the bill of materials as its symbol is)")
+		(tags "test point SMD pad")
+		(property "Reference" "TP3"
+			(at 0 1 180)
+			(unlocked yes)
+			(layer "B.Fab")
+			(uuid "f5adda10-87e5-43e1-b3aa-21ed6a3b5ee8")
+			(effects
+				(font
+					(size 1 1)
+					(line_spacing 0)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 0 -1 180)
+			(unlocked yes)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "4678270c-aaec-4ea2-9f7e-e1286f232f3e")
+			(effects
+				(font
+					(size 1 1)
+					(line_spacing 0)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 180)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "6b22320a-822c-4f72-8ec1-af2d6f09fa19")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 180)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "72f2cfa2-267f-4d58-a0b0-70d3910f5910")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify mirror)
+			)
+		)
+		(property "LCSC" "C9100012"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "8cc36e3d-9d48-41c8-8ac0-78bd83573811")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(path "/bb87ebb8-c04b-4eed-818c-30bbfd2f9cf0")
+		(attr smd exclude_from_pos_files)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_rect
+			(start -0.65 -0.65)
+			(end 0.65 0.65)
+			(stroke
+				(width 0.12)
+				(type default)
+			)
+			(fill no)
+			(layer "B.SilkS")
+			(uuid "4b4c1ef4-bb2f-4d51-8238-2e09e70ac260")
+		)
+		(fp_circle
+			(center 1.05 0)
+			(end 1.2 0)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill yes)
+			(layer "B.SilkS")
+			(uuid "a6d3ac39-6ef6-44cd-a4e3-f462a63e6e3d")
+		)
+		(fp_rect
+			(start -0.65 -0.65)
+			(end 0.65 0.65)
+			(stroke
+				(width 0.05)
+				(type default)
+			)
+			(fill no)
+			(layer "B.CrtYd")
+			(uuid "77670e06-7f9b-48ef-8e1b-f2e1da7d15cc")
+		)
+		(fp_poly
+			(pts
+				(xy -0.5 0.2) (xy -0.2 0.5) (xy 0.5 0.5) (xy 0.5 -0.5) (xy -0.5 -0.5)
+			)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "B.Fab")
+			(uuid "e39fb7ee-65f9-415d-bb03-76bae6209d0b")
+		)
+		(pad "1" smd circle
+			(at 0 0)
+			(size 1 1)
+			(layers "B.Cu" "B.Mask")
+			(net "+3V3")
+			(uuid "2f8a37bf-3680-4f28-a7d8-19e4aee788c2")
 		)
 		(embedded_fonts no)
 	)

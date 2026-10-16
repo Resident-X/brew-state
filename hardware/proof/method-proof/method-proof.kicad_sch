@@ -3619,7 +3619,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
+		(property "Footprint" "method-proof:TestPoint_Pad_D1.0mm"
 			(at 50.8 31.75 0)
 			(hide yes)
 			(effects
@@ -3972,7 +3972,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
+		(property "Footprint" "method-proof:TestPoint_Pad_D1.0mm"
 			(at 139.7 31.75 0)
 			(hide yes)
 			(effects
@@ -4322,7 +4322,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
+		(property "Footprint" "method-proof:TestPoint_Pad_D1.0mm"
 			(at 200.66 31.75 0)
 			(hide yes)
 			(effects
@@ -4574,7 +4574,7 @@
 				)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
+		(property "Footprint" "method-proof:TestPoint_Pad_D1.0mm"
 			(at 96.52 135.89 0)
 			(hide yes)
 			(effects
