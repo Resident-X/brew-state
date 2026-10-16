@@ -66,17 +66,12 @@ CONFIG = os.environ.get("MULL_CONFIG") or os.path.join(
     PROJECT_DIR, mull_toolchain.CONFIG_NAME
 )
 
-#: Told to the sources being compiled, not just to the compiler: a byte-exact
-#: comparison test can legitimately see a different bit pattern out of the same
-#: floating-point expression once the compiler and optimisation level compiling
-#: it are both different from the build its golden values were recorded under,
-#: which is exactly what this environment does on purpose. A test carrying such
-#: a comparison reads this to select the literal this toolchain actually
-#: produces, rather than the sweep's own baseline check failing on a difference
-#: no mutant made.
-MUTATION_TOOLCHAIN_DEFINE = "-DPLANT_TEST_MUTATION_TOOLCHAIN=1"
-
-MUTATION_FLAGS = toolchain["compile_flags"] + ["-O0", MUTATION_TOOLCHAIN_DEFINE]
+#: Fusing a multiply with an add is refused here as in every other build that
+#: compiles the plant model, named outright rather than left to the flags the
+#: environment carries: the arithmetic the mutants are drawn from has to be the
+#: arithmetic the ordinary build runs, or a mutant is measured against a program
+#: nobody ships.
+MUTATION_FLAGS = toolchain["compile_flags"] + ["-O0", "-ffp-contract=off"]
 
 
 def without_optimisation(flags):

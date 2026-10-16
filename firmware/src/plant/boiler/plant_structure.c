@@ -13,6 +13,7 @@
  * conversions the interface's units imply and the constants of the integration
  * itself, neither of which is a property of a machine.
  */
+#include "plant_maths.h"
 #include "plant_model.h"
 
 #include <math.h>
@@ -139,7 +140,7 @@ static float steam_pressure_at(const plant_parameters_t *parameters, float vesse
  * How far a first-order relaxation travels towards its settling value in `x`
  * time constants: 1 - exp(-x).
  *
- * Written with the library's expm1 rather than as `1 - exp(-x)`. For a short
+ * Written with the exponential-less-one rather than as `1 - exp(-x)`. For a short
  * step the exponential is just under one, and subtracting it from one throws
  * away the leading digits of an answer that is itself small -- the error is
  * absolute in the exponential and so grows without bound relative to the
@@ -147,7 +148,7 @@ static float steam_pressure_at(const plant_parameters_t *parameters, float vesse
  */
 static float settled_fraction(float x)
 {
-    return -expm1f(-x);
+    return -plant_expm1f(-x);
 }
 
 /*

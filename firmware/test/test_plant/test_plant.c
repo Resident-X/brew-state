@@ -18,6 +18,8 @@
  * perturbing one coefficient is changing one number rather than editing a
  * string by hand.
  */
+#include <float.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -25,6 +27,7 @@
 
 #include <unity.h>
 
+#include "plant_maths.h"
 #include "plant_model.h"
 #include "plant_robustness.h"
 
@@ -1727,6 +1730,11 @@ static void test_a_steam_demand_and_a_steam_feed_command_are_both_accepted(void)
     TEST_ASSERT_EQUAL(PLANT_STEP_OK, refusal.fault);
 }
 
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C1: The plant model's
+/// golden-trajectory test passes on unmodified, correct code on macOS arm64
+/// with Apple clang, on Linux x86-64 with GCC, and under the mutation build,
+/// against one recorded literal that serves all of them, with no literal keyed
+/// to toolchain or architecture.
 /// SOL-PLANT-ACTUATION-CHANNEL-DECLARATION.C7: The structures and the control
 /// logic behave identically after the vocabulary is unified.
 /// SOL-PLANT-STEAM-DRAW-CHANNELS.C2: The demand input defaults to zero and
@@ -1845,39 +1853,19 @@ static void test_the_trajectory_is_what_it_was_before_the_vocabulary_was_unified
      * enough that the hand-computed balance says what the row is for, and not so
      * close that the two are the same number.
      *
-     * The last row's brew column carries a second recording alongside the one
-     * above, read on an x86_64 host built under `PLANT_TEST_MUTATION_TOOLCHAIN`:
-     * 0x1.50bfb8p+6 rather than 0x1.50bfb6p+6, one unit in the last place
-     * higher. This is not a retaking -- the equations this row exercises did
-     * not change -- but the mutation sweep's own build compiles this file with
-     * a different compiler and with optimisation off, deliberately, so that a
-     * mutant is not credited to a line the optimiser would have removed. Both
-     * are legitimate reasons for the same single-precision expression to round
-     * its last bit differently, the same way the HEATING row above already did
-     * once from a source change rather than a toolchain one.
-     *
-     * The architecture is named alongside the toolchain flag rather than the
-     * flag alone, because it turns out to matter as much as the compiler does:
-     * built by the same flag on an arm64 host, this row comes back
-     * 0x1.50bfb6p+6 -- the ordinary value, not the one recorded here. The
-     * project's own mutation-toolchain build runs on GitHub's ubuntu-24.04
-     * runners, which are x86_64, so that is what this alternate is scoped to;
-     * an arm64 host asking for the mutation build still gets the ordinary
-     * literal, correctly, because that is the value it actually produces.
+     * The recorded bits are the same on every host and under every build that
+     * compiles the plant: the exponential and the sine it uses are the project's
+     * own (plant_maths.c), and no build fuses a multiply with an add. A value
+     * that came out differently on one of them would be a defect to find and
+     * not a second recording to key to a toolchain.
      */
-#if defined(PLANT_TEST_MUTATION_TOOLCHAIN) && defined(__x86_64__)
-#define TRAJECTORY_LAST_ROW_BREW 0x1.50bfb8p+6f
-#else
-#define TRAJECTORY_LAST_ROW_BREW 0x1.50bfb6p+6f
-#endif
     static const float EXPECTED[][PLANT_QUANTITY_COUNT] = {
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.4p+4f, 0x1.4p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.c8692p+4f, 0x1.8a64c2p+4f, 0x0p+0f, 0x0p+0f, 0x0p+0f},
         {0x1.5108f2p+5f, 0x1.0ec6eap+5f, 0x1.1fd73ap+2f, 0x0p+0f, 0x1p+2f},
-        {TRAJECTORY_LAST_ROW_BREW, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
+        {0x1.50bfb8p+6f, 0x1.693cd6p+7f, 0x1.1ffff8p+2f, 0x1.692c1cp+1f, 0x1p+2f},
     };
-#undef TRAJECTORY_LAST_ROW_BREW
     static const int STEPS[] = {0, 10, 30, 60, 1100};
     static const plant_actuation_t *const UNDER[] = {&AT_REST, &AT_REST, &HEATING, &WORKING,
                                                      &WORKING};
@@ -7084,9 +7072,469 @@ static void test_the_delivery_queries_refuse_null_output_arguments(void)
         PLANT_DELIVERY_POINT_GROUP, PLANT_DELIVERY_POINT_HOT_WATER_SPOUT, NULL));
 }
 
+
+/* --- The project's own exponential and sine --------------------------------- */
+
+static uint32_t bits_of(float value)
+{
+    uint32_t bits;
+
+    memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+/*
+ * The relative error of a float against the double the same function gives, as
+ * a double. The reference is the host's own double-precision function, which is
+ * what the stated bound is stated against.
+ */
+static double relative_error(float got, double reference)
+{
+    return fabs(((double)got - reference) / reference);
+}
+
+/*
+ * What a function returned over a fixed set of arguments, folded into one
+ * number: every result's bit pattern, in order, through FNV-1a. A result that
+ * differs in a single bit anywhere in the set changes it, which is what makes
+ * it a recording of the arithmetic and not a bound on it.
+ */
+typedef struct {
+    uint64_t hash;
+} bit_digest_t;
+
+static void digest_start(bit_digest_t *digest)
+{
+    digest->hash = 14695981039346656037ull;
+}
+
+static void digest_add(bit_digest_t *digest, float value)
+{
+    uint32_t bits = bits_of(value);
+
+    for (int byte = 0; byte < 4; byte++) {
+        digest->hash ^= (uint64_t)(bits & 0xffu);
+        digest->hash *= 1099511628211ull;
+        bits >>= 8;
+    }
+}
+
+/*
+ * The arguments each function is driven over. Stepped by a float addition, so
+ * the arguments are themselves the same on every host, and chosen so that the
+ * steps are not commensurate with any of the reductions the functions make --
+ * a step that landed on every multiple of ln 2 would never visit the middle of
+ * an interval.
+ */
+#define EXP_STEP 0.0731f
+#define EXPM1_NEAR_STEP 0.00173f
+#define EXPM1_FAR_STEP 0.5f
+#define SIN_NEAR_STEP 0.0371f
+#define SIN_FAR_STEP 7.3f
+
+/* Arguments that sit on a decision the functions make, visited exactly. */
+static const float EXP_EDGES[] = {-87.0f, -86.99999f, -87.00001f, 88.0f, 87.99999f, 88.00001f,
+                                  0.0f,   -0.0f,      1.0f,       -1.0f, 0.34657f, -0.34657f,
+                                  0.34658f, -0.34658f, 0.5f,      -0.5f};
+static const float EXPM1_EDGES[] = {0.5f, -0.5f, 0.50000006f, -0.50000006f, 0.49999997f,
+                                    -0.49999997f, 1e-30f, -1e-30f, 1e-8f, -1e-8f, 1.0f,
+                                    -1.0f, -87.0f, 88.0f, -90.0f};
+static const float SIN_EDGES[] = {0.0f,     -0.0f,    0.78539f,  -0.78539f, 0.78540f,
+                                  -0.78540f, 1.5707963f, 3.1415927f, 4.712389f, 6.2831855f,
+                                  6000.0f,  -6000.0f, 1e-30f,    5999.9995f};
+
+static uint64_t exp_digest(void)
+{
+    bit_digest_t digest;
+
+    digest_start(&digest);
+    for (float x = -86.9f; x < 87.9f; x += EXP_STEP) {
+        digest_add(&digest, plant_expf(x));
+    }
+    for (size_t i = 0u; i < sizeof(EXP_EDGES) / sizeof(EXP_EDGES[0]); i++) {
+        digest_add(&digest, plant_expf(EXP_EDGES[i]));
+    }
+    return digest.hash;
+}
+
+static uint64_t expm1_digest(void)
+{
+    bit_digest_t digest;
+
+    digest_start(&digest);
+    for (float x = -2.0f; x < 2.0f; x += EXPM1_NEAR_STEP) {
+        digest_add(&digest, plant_expm1f(x));
+    }
+    for (float x = -86.9f; x < 87.9f; x += EXPM1_FAR_STEP) {
+        digest_add(&digest, plant_expm1f(x));
+    }
+    for (size_t i = 0u; i < sizeof(EXPM1_EDGES) / sizeof(EXPM1_EDGES[0]); i++) {
+        digest_add(&digest, plant_expm1f(EXPM1_EDGES[i]));
+    }
+    return digest.hash;
+}
+
+static uint64_t sin_digest(void)
+{
+    bit_digest_t digest;
+
+    digest_start(&digest);
+    for (float x = -100.0f; x < 100.0f; x += SIN_NEAR_STEP) {
+        digest_add(&digest, plant_sinf(x));
+    }
+    for (float x = -5990.0f; x < 5990.0f; x += SIN_FAR_STEP) {
+        digest_add(&digest, plant_sinf(x));
+    }
+    for (size_t i = 0u; i < sizeof(SIN_EDGES) / sizeof(SIN_EDGES[0]); i++) {
+        digest_add(&digest, plant_sinf(SIN_EDGES[i]));
+    }
+    return digest.hash;
+}
+
+static void assert_digest(uint64_t expected, uint64_t actual, const char *what)
+{
+    char message[96];
+
+    (void)snprintf(message, sizeof(message), "%s digest is 0x%016llx", what,
+                   (unsigned long long)actual);
+    TEST_ASSERT_TRUE_MESSAGE(expected == actual, message);
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: the single-precision
+/// exponential, exponential-minus-one and sine the plant calls are one
+/// project-owned implementation in the plant's shared sources, compiled into
+/// each of those builds in place of the host's maths library
+///
+/// Recorded as bits and not compared within a tolerance: the figure that
+/// matters is that every host returns this answer, so a tolerance would pass
+/// exactly the last-bit disagreement between hosts this exists to refuse.
+/// Recorded from the build, the same way the trajectory table is.
+static void test_the_projects_exponential_returns_the_bits_recorded_for_it(void)
+{
+    assert_digest(0x6e91af6e698c598aull, exp_digest(), "plant_expf");
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: the single-precision
+/// exponential, exponential-minus-one and sine the plant calls are one
+/// project-owned implementation in the plant's shared sources, compiled into
+/// each of those builds in place of the host's maths library
+static void test_the_projects_exponential_less_one_returns_the_bits_recorded_for_it(void)
+{
+    assert_digest(0xa7f692c0b96542b3ull, expm1_digest(), "plant_expm1f");
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: the single-precision
+/// exponential, exponential-minus-one and sine the plant calls are one
+/// project-owned implementation in the plant's shared sources, compiled into
+/// each of those builds in place of the host's maths library
+static void test_the_projects_sine_returns_the_bits_recorded_for_it(void)
+{
+    assert_digest(0x03d0f9174b7b4f35ull, sin_digest(), "plant_sinf");
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: with its accuracy bound
+/// against a double-precision reference stated beside it and checked by a test
+static void test_the_exponential_stays_within_its_stated_accuracy(void)
+{
+    double worst = 0.0;
+
+    for (float x = -86.9f; x < 87.9f; x += EXP_STEP) {
+        const double error = relative_error(plant_expf(x), exp((double)x));
+        worst = error > worst ? error : worst;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(worst <= 1.2e-7, "plant_expf exceeds its stated relative error");
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: with its accuracy bound
+/// against a double-precision reference stated beside it and checked by a test
+static void test_the_exponential_less_one_stays_within_its_stated_accuracy(void)
+{
+    double worst_near = 0.0;
+    double worst_far = 0.0;
+
+    for (float x = -0.5f; x <= 0.5f; x += EXPM1_NEAR_STEP) {
+        if (x == 0.0f) {
+            continue;
+        }
+        const double error = relative_error(plant_expm1f(x), expm1((double)x));
+        worst_near = error > worst_near ? error : worst_near;
+    }
+    for (float x = -86.9f; x < 87.9f; x += EXPM1_FAR_STEP / 7.0f) {
+        if (fabsf(x) <= 0.5f) {
+            continue;
+        }
+        const double error = relative_error(plant_expm1f(x), expm1((double)x));
+        worst_far = error > worst_far ? error : worst_far;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(worst_near <= 1.2e-7, "near zero, plant_expm1f exceeds its bound");
+    TEST_ASSERT_TRUE_MESSAGE(worst_far <= 2.0e-7, "away from zero, plant_expm1f exceeds its bound");
+}
+
+/*
+ * The reason the exponential less one is a function of its own is that it
+ * keeps the leading digits of a small answer. A tiny argument has to come back
+ * as itself to the last digit, where `exp(x) - 1` would return nothing at all.
+ */
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: with its accuracy bound
+/// against a double-precision reference stated beside it and checked by a test
+static void test_the_exponential_less_one_keeps_the_digits_of_a_small_answer(void)
+{
+    static const float SMALL[] = {1e-30f, -1e-30f, 1e-12f, -1e-12f, 1e-7f, -3e-9f};
+
+    for (size_t i = 0u; i < sizeof(SMALL) / sizeof(SMALL[0]); i++) {
+        const double error = relative_error(plant_expm1f(SMALL[i]), expm1((double)SMALL[i]));
+        TEST_ASSERT_TRUE(error <= 1.2e-7);
+    }
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, plant_expm1f(0.0f));
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: with its accuracy bound
+/// against a double-precision reference stated beside it and checked by a test
+static void test_the_sine_stays_within_its_stated_accuracy(void)
+{
+    double worst = 0.0;
+
+    for (float x = -100.0f; x < 100.0f; x += SIN_NEAR_STEP) {
+        const double error = fabs((double)plant_sinf(x) - sin((double)x));
+        worst = error > worst ? error : worst;
+    }
+    for (float x = -5990.0f; x < 5990.0f; x += SIN_FAR_STEP) {
+        const double error = fabs((double)plant_sinf(x) - sin((double)x));
+        worst = error > worst ? error : worst;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(worst <= 1.2e-7, "plant_sinf exceeds its stated absolute error");
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: the single-precision
+/// exponential, exponential-minus-one and sine the plant calls are one
+/// project-owned implementation
+static void test_the_functions_hold_at_the_edges_of_their_domains(void)
+{
+    /*
+     * Exact where the mathematics is exact, so a drifting series is seen at
+     * once. The sine of either zero is plus zero, which is the one place the
+     * function is not odd and is stated in its header.
+     */
+    TEST_ASSERT_EQUAL_HEX32(bits_of(1.0f), bits_of(plant_expf(0.0f)));
+    TEST_ASSERT_EQUAL_HEX32(bits_of(1.0f), bits_of(plant_expf(-0.0f)));
+    TEST_ASSERT_EQUAL_HEX32(0x00000000u, bits_of(plant_expm1f(0.0f)));
+    TEST_ASSERT_EQUAL_HEX32(0x00000000u, bits_of(plant_sinf(0.0f)));
+    TEST_ASSERT_EQUAL_HEX32(0x00000000u, bits_of(plant_sinf(-0.0f)));
+
+    /* The last argument inside each domain is answered; the first beyond the edge saturates. */
+    TEST_ASSERT_TRUE(plant_expf(-87.0f) > 0.0f);
+    TEST_ASSERT_TRUE(relative_error(plant_expf(-87.0f), exp(-87.0)) <= 1.2e-7);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, plant_expf(-87.00001f));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, plant_expf(-1000.0f));
+    TEST_ASSERT_TRUE(relative_error(plant_expf(88.0f), exp(88.0)) <= 1.2e-7);
+    TEST_ASSERT_EQUAL_FLOAT(FLT_MAX, plant_expf(88.00001f));
+    TEST_ASSERT_EQUAL_FLOAT(FLT_MAX, plant_expf(1000.0f));
+
+    TEST_ASSERT_EQUAL_FLOAT(-1.0f, plant_expm1f(-1000.0f));
+    TEST_ASSERT_EQUAL_FLOAT(FLT_MAX, plant_expm1f(1000.0f));
+    TEST_ASSERT_TRUE(relative_error(plant_expm1f(-87.0f), expm1(-87.0)) <= 2.0e-7);
+
+    TEST_ASSERT_TRUE(fabs((double)plant_sinf(6000.0f) - sin(6000.0)) <= 1.2e-7);
+    TEST_ASSERT_TRUE(fabs((double)plant_sinf(-6000.0f) - sin(-6000.0)) <= 1.2e-7);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, plant_sinf(6000.001f));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, plant_sinf(-6000.001f));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, plant_sinf(1e30f));
+
+    /* An argument that is not a number is returned as one rather than converted. */
+    TEST_ASSERT_TRUE(isnan(plant_expf(NAN)));
+    TEST_ASSERT_TRUE(isnan(plant_expm1f(NAN)));
+    TEST_ASSERT_TRUE(isnan(plant_sinf(NAN)));
+}
+
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: the single-precision
+/// exponential, exponential-minus-one and sine the plant calls are one
+/// project-owned implementation
+static void test_the_functions_saturate_at_infinity_and_pass_a_denormal_through(void)
+{
+    TEST_ASSERT_EQUAL_HEX32(0x00000000u, bits_of(plant_expf(-INFINITY)));
+    TEST_ASSERT_EQUAL_HEX32(bits_of(FLT_MAX), bits_of(plant_expf(INFINITY)));
+    TEST_ASSERT_EQUAL_HEX32(bits_of(-1.0f), bits_of(plant_expm1f(-INFINITY)));
+    TEST_ASSERT_EQUAL_HEX32(bits_of(FLT_MAX), bits_of(plant_expm1f(INFINITY)));
+    TEST_ASSERT_EQUAL_HEX32(0x00000000u, bits_of(plant_sinf(INFINITY)));
+    TEST_ASSERT_EQUAL_HEX32(0x00000000u, bits_of(plant_sinf(-INFINITY)));
+
+    /* A denormal is far below the first term of any series, so the small answers are the argument. */
+    const float denormal = 1.0e-40f;
+    TEST_ASSERT_EQUAL_HEX32(bits_of(denormal), bits_of(plant_expm1f(denormal)));
+    TEST_ASSERT_EQUAL_HEX32(bits_of(denormal), bits_of(plant_sinf(denormal)));
+    TEST_ASSERT_EQUAL_HEX32(bits_of(-denormal), bits_of(plant_sinf(-denormal)));
+    TEST_ASSERT_EQUAL_HEX32(bits_of(1.0f), bits_of(plant_expf(denormal)));
+}
+
+/*
+ * The half pi the sine reduces by is held in three parts. Each part matters
+ * only at a large multiple: a wrong digit in the third part moves a result by
+ * the multiple times that digit, which is invisible near zero and large by
+ * the last quarter turns the domain holds. These arguments sit on the quarter
+ * turns across the domain, where the reduced remainder is nearly nothing, so
+ * the answer is the reduction's alone.
+ */
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: with its accuracy bound
+/// against a double-precision reference stated beside it and checked by a test
+static void test_the_sine_reduction_holds_on_the_quarter_turns_across_its_domain(void)
+{
+    static const int QUARTERS[] = {1, 2, 3, 4, 5, 63, 64, 1000, 1001, 2047, 2048, 3819};
+
+    for (size_t i = 0u; i < sizeof(QUARTERS) / sizeof(QUARTERS[0]); i++) {
+        const float x = (float)(QUARTERS[i] * 1.5707963267948966);
+        TEST_ASSERT_TRUE_MESSAGE(fabs((double)plant_sinf(x) - sin((double)x)) <= 1.2e-7,
+                                 "plant_sinf strays on a quarter turn");
+        TEST_ASSERT_TRUE_MESSAGE(fabs((double)plant_sinf(-x) - sin(-(double)x)) <= 1.2e-7,
+                                 "plant_sinf strays on a negative quarter turn");
+    }
+}
+
+/*
+ * The sine is odd and the exponential-less-one and exponential agree with each
+ * other where both are used, and neither is a property a changed sign or a
+ * dropped term in one branch would keep.
+ */
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: the single-precision
+/// exponential, exponential-minus-one and sine the plant calls are one
+/// project-owned implementation
+static void test_the_functions_agree_with_the_identities_they_must_obey(void)
+{
+    for (float x = 0.01f; x < 6000.0f; x *= 1.37f) {
+        TEST_ASSERT_EQUAL_HEX32(bits_of(-plant_sinf(x)), bits_of(plant_sinf(-x)));
+    }
+    for (float x = -80.0f; x < 80.0f; x += 0.913f) {
+        /* e^x less one, taken the long way, is the same number to within one bit lost. */
+        const double long_way = (double)plant_expf(x) - 1.0;
+        const double short_way = (double)plant_expm1f(x);
+        TEST_ASSERT_TRUE(fabs(long_way - short_way) <= 3.0e-7 * fabs(long_way) + 1e-9);
+    }
+    /* Whole turns come back to zero and quarter turns to plus or minus one. */
+    static const float TURNS[] = {6.2831855f, 1.5707964f, 4.712389f, -1.5707964f, 12.566371f};
+    for (size_t i = 0u; i < sizeof(TURNS) / sizeof(TURNS[0]); i++) {
+        TEST_ASSERT_TRUE(fabs((double)plant_sinf(TURNS[i]) - sin((double)TURNS[i])) <= 1.2e-7);
+    }
+}
+
+/*
+ * Where the exponential less one hands over from its own series to the
+ * exponential taken less one, at minus a half, the two routes return the same
+ * bits. The handover is therefore not a step in the function there, which is
+ * what the judgement of the mutant that moves the edge of the series by one
+ * point rests on -- and this is what keeps that judgement checked rather than
+ * argued. The other edge, at plus a half, is not like this, and the digest
+ * above is what says so.
+ */
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: Every mutant the mutation
+/// sweep draws from that implementation is killed by a test or carries a
+/// judgement in the triage record
+static void test_the_two_routes_of_the_exponential_less_one_meet_where_they_hand_over(void)
+{
+    const float edge = -0.5f;
+
+    TEST_ASSERT_EQUAL_HEX32(bits_of(plant_expf(edge) - 1.0f), bits_of(plant_expm1f(edge)));
+    TEST_ASSERT_TRUE(bits_of(plant_expf(0.5f) - 1.0f) != bits_of(plant_expm1f(0.5f)));
+}
+
+/*
+ * A step far longer than the sine's domain, at the corner of the shipped
+ * description's declared errors where the coupled pair turns furthest for its
+ * decay: the largest heat capacity, the largest held volume and the smallest
+ * casting mass, with the casting's loss set so that the pair's two rates meet and
+ * the turn is as large as it can be. The step is as long as the interval type
+ * allows, so the turn is far past 6000 radians, and the decay is far past the 87
+ * at which the exponential factor the turn is multiplied by is exactly zero. The
+ * result must be finite and must be the one the damped pair has with no
+ * oscillation in it, which is what the closed form below gives for it.
+ */
+/// SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C5: with its accuracy bound
+/// against a double-precision reference stated beside it and checked by a test
+static void test_a_step_that_carries_the_turn_past_the_sines_domain_is_the_damped_answer(void)
+{
+    const double capacity = 4.15 * 1.03;
+    const double held_volume = 4.0 * 1.6;
+    const double mass = 320.0 * 0.6;
+    const double tau_outlet = 15.0;
+    const uint32_t interval_ms = UINT32_MAX;
+    const plant_actuation_t drawing = {{0u, 0u, ACTUATION_FULL_SCALE, 0u}};
+
+    double values[COEFFICIENT_COUNT];
+    char text[DESCRIPTION_MAX];
+    plant_parameters_t loaded;
+    plant_parameter_error_t fault;
+    plant_model_t model;
+
+    for (size_t i = 0u; i < COEFFICIENT_COUNT; i++) {
+        values[i] = NOMINAL[i].value;
+    }
+    const double flow = values[I_PUMP_FLOW];
+    const double approach = flow / held_volume + 1.0 / tau_outlet;
+    values[I_BREW_MASS] = mass;
+    values[I_BREW_HELD_VOLUME] = held_volume;
+    values[I_BREW_CONDUCTION_TAU] = tau_outlet;
+    values[I_BREW_LOSS] = mass * approach;
+    values[I_WATER_HEAT_CAPACITY] = capacity;
+
+    const size_t used = describe_values(values, text, sizeof(text));
+    memset(&fault, 0, sizeof(fault));
+    TEST_ASSERT_TRUE(plant_parameters_load(text, used, &loaded, &fault));
+    TEST_ASSERT_TRUE(plant_model_init(&model, &loaded));
+
+    const double casting = (double)heated_mass(&model);
+    const double water = (double)outlet(&model);
+    const double seconds = (double)interval_ms / 1000.0;
+    const double to_ambient = values[I_BREW_LOSS] / mass;
+    const double to_water = flow * capacity / mass;
+    const double casting_rate = (-values[I_BREW_LOSS] * (casting - values[I_AMBIENT]) -
+                                 flow * capacity * (water - values[I_WATER_FEED])) /
+                                mass;
+    const double water_rate = approach * (casting - water);
+    const double casting_curvature = -to_ambient * casting_rate - to_water * water_rate;
+    const double water_curvature = approach * (casting_rate - water_rate);
+    const double decay = (to_ambient + approach) * 0.5 * seconds;
+    const double turn = sqrt(approach * to_water) * seconds;
+
+    /* The step really is outside what the sine answers and what the factor it
+     * meets lets through, and the ratio of the two is the bounded one. */
+    TEST_ASSERT_TRUE(turn > 6000.0);
+    TEST_ASSERT_TRUE(decay > 87.0);
+    TEST_ASSERT_TRUE(turn / decay < 0.75);
+
+    /* The pair with its oscillating term multiplied by an exponential that is
+     * exactly nothing: the weights are what is left of the damped pair. */
+    const double second_order = 1.0 / (decay * decay + turn * turn);
+    const double kappa = seconds * (decay + decay) * second_order;
+    const double sigma = seconds * seconds * second_order;
+    const double casting_expected = casting + kappa * casting_rate + sigma * casting_curvature;
+    const double water_expected = water + kappa * water_rate + sigma * water_curvature;
+
+    TEST_ASSERT_TRUE(plant_model_step(&model, &drawing, 0.0f, interval_ms));
+
+    const double casting_got = (double)heated_mass(&model);
+    const double water_got = (double)outlet(&model);
+    TEST_ASSERT_TRUE(isfinite(casting_got));
+    TEST_ASSERT_TRUE(isfinite(water_got));
+    TEST_ASSERT_TRUE_MESSAGE(fabs(casting_got - casting_expected) < 1.0e-3,
+                             "the casting is not the damped pair's answer");
+    TEST_ASSERT_TRUE_MESSAGE(fabs(water_got - water_expected) < 1.0e-3,
+                             "the water is not the damped pair's answer");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_the_projects_exponential_returns_the_bits_recorded_for_it);
+    RUN_TEST(test_the_projects_exponential_less_one_returns_the_bits_recorded_for_it);
+    RUN_TEST(test_the_projects_sine_returns_the_bits_recorded_for_it);
+    RUN_TEST(test_the_exponential_stays_within_its_stated_accuracy);
+    RUN_TEST(test_the_exponential_less_one_stays_within_its_stated_accuracy);
+    RUN_TEST(test_the_exponential_less_one_keeps_the_digits_of_a_small_answer);
+    RUN_TEST(test_the_sine_stays_within_its_stated_accuracy);
+    RUN_TEST(test_the_functions_hold_at_the_edges_of_their_domains);
+    RUN_TEST(test_the_functions_saturate_at_infinity_and_pass_a_denormal_through);
+    RUN_TEST(test_the_sine_reduction_holds_on_the_quarter_turns_across_its_domain);
+    RUN_TEST(test_a_step_that_carries_the_turn_past_the_sines_domain_is_the_damped_answer);
+    RUN_TEST(test_the_functions_agree_with_the_identities_they_must_obey);
+    RUN_TEST(test_the_two_routes_of_the_exponential_less_one_meet_where_they_hand_over);
     RUN_TEST(test_the_actuation_channels_are_one_enumerated_set);
     RUN_TEST(test_the_structure_states_which_channels_it_answers);
     RUN_TEST(test_a_steam_demand_and_a_steam_feed_command_are_both_accepted);

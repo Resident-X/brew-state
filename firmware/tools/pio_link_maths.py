@@ -3,8 +3,10 @@
 On a Mac the maths functions are part of the standard library and asking for
 them separately is a no-op. On the GNU systems this is meant to build on just as
 readily they live in a library of their own, and leaving it unnamed fails at the
-link with the model's own equations undefined -- `expm1f` from the thermal
-relaxation, `exp` and `nextafterf` from the tests that check it.
+link with the model's own arithmetic undefined -- `sqrtf` from the coupled step,
+`exp` and `nextafterf` from the tests that check it. The exponential, its
+exponential-less-one form and the sine are not among them: the plant carries its
+own, so that they return the same bits on every host.
 
 So it is named rather than inherited from whichever host the build happened to
 run on. A dependency that is satisfied by accident on the machine the author

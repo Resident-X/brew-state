@@ -2,11 +2,11 @@ id: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C1
 type: criterion
 title: The golden-trajectory test passes on correct code on every supported host
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  The plant model's golden-trajectory test passes on unmodified, correct code on macOS arm64 with Apple clang, on Linux x86-64 with GCC, and under the mutation build, and on each of them still fails when the trajectory drifts in the way it exists to refuse, shown by altering the plant's arithmetic and observing the failure on each host. Out of scope: other tests in the plant suite whose comparisons do not depend on host arithmetic, and host platforms beyond these.
+text: |
+  The plant model's golden-trajectory test passes on unmodified, correct code on macOS arm64 with Apple clang, on Linux x86-64 with GCC, and under the mutation build, against one recorded literal that serves all of them, with no literal keyed to toolchain or architecture. It still fails when the trajectory drifts in the way it exists to refuse, shown by altering the plant's arithmetic and observing the failure on each host. Every other committed bit-exact value in the plant suite is recorded again on the same change and passes on each of these hosts. Out of scope: comparisons in the plant suite that already carry a stated tolerance, and host platforms beyond these.
 links:
   - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS
     type: criterion-of

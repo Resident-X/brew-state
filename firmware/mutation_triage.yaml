@@ -344,7 +344,7 @@ survivors:
       sanitized, aborts each with SIGABRT in exactly those tests, where the
       unsanitized sweep records the mutant as surviving.
 
-  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:149:31:
+  cxx_gt_to_ge:src/plant/thermoblock/plant_structure.c:150:31:
     verdict: equivalent
     reason: >-
       Steam pressure, `above_saturation_k > 0.0f` widened to `>=`. The two
@@ -354,7 +354,7 @@ survivors:
       product is a zero, and a zero of either sign compares equal to the literal
       and behaves identically in everything downstream.
 
-  cxx_eq_to_ne:src/plant/boiler/plant_structure.c:82:14:
+  cxx_eq_to_ne:src/plant/boiler/plant_structure.c:83:14:
     verdict: equivalent
     reason: >-
       The null-output guard in `plant_structure_delivery_point_mass`,
@@ -365,7 +365,7 @@ survivors:
       admissible argument, null or not, distinguishes the two forms while this
       structure serves no delivery point.
 
-  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:134:31:
+  cxx_gt_to_ge:src/plant/boiler/plant_structure.c:135:31:
     verdict: equivalent
     reason: >-
       Steam pressure in the single-boiler structure, `above_saturation_k > 0.0f`
@@ -418,3 +418,53 @@ survivors:
       _is_read now offers a final annotated line with no newline and a non-blank
       byte behind it, which is the nearest any test comes; it carries an account,
       so the scan stops on the blank before it rather than on the bound.
+
+# The three structure judgements above were re-made at a new line rather than
+# carried forward: each of the two structure files gained one `#include` line
+# above them when the exponential and the sine moved into the project's own
+# maths, and nothing else about the code each is about changed. Each was checked
+# against the line now carrying the mutant before its key was moved.
+
+# The project's own exponential, exponential less one and sine
+# (src/plant/common/plant_maths.c). Every mutant of them that the tests can tell
+# apart from the original is killed: the three functions' results are recorded as
+# bits over arguments chosen to land on every reduction and every edge they have,
+# so a change to a coefficient, a sign, an operator or a constant moves a bit
+# somewhere in the set. What is left is a comparison at an argument where both
+# sides of it give the same bits.
+
+  cxx_lt_to_le:src/plant/common/plant_maths.c:89:41:
+    verdict: equivalent
+    reason: >-
+      The choice of which half to add when rounding the exponential's multiple of
+      ln 2, `x < 0.0f` widened to `<=`. The two differ only at x equal to zero,
+      where the original adds a half and the mutant subtracts one. In both the
+      product with the logarithm's reciprocal is a zero, a half either side of
+      zero truncates to the whole number zero, and so the multiple is zero and
+      everything after it is the same.
+
+  cxx_ge_to_gt:src/plant/common/plant_maths.c:111:11:
+    verdict: equivalent
+    reason: >-
+      The lower edge of the exponential-less-one's own series, `x >= -0.5f`
+      narrowed to `>`. The two differ only at x equal to minus a half, where the
+      original takes the series and the mutant takes the exponential less one.
+      Those two routes return the same bits at that argument, and
+      test_the_two_routes_of_the_exponential_less_one_meet_where_they_hand_over
+      asserts that they do, so the judgement is checked and not argued: were a
+      change to either route to make them differ there, that test and the
+      recorded digest would both fail and this mutant would be killed. The upper
+      edge, at plus a half, is not like this and its mutant is killed.
+
+  cxx_lt_to_le:src/plant/common/plant_maths.c:149:31:
+    verdict: equivalent
+    reason: >-
+      The sine's magnitude, `x < 0.0f ? -x : x` widened to `<=`. The two differ
+      only at x equal to zero, where the mutant takes the negation: minus zero for
+      plus zero, plus zero for minus zero. Either way the reduction leaves a
+      remainder that is a zero, and the series evaluated at a zero of either sign
+      returns plus zero, because the term it adds to the remainder is a product of
+      that remainder with its own square and a negative coefficient. The sign put
+      back afterwards is taken from x, which for a zero is not negative.
+      test_the_functions_hold_at_the_edges_of_their_domains asserts that both
+      zeros return plus zero, so a change that gave either one a sign is seen.

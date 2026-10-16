@@ -6,6 +6,7 @@
  * conversions the interface's units imply and the constants of the integration
  * itself, neither of which is a property of a machine.
  */
+#include "plant_maths.h"
 #include "plant_model.h"
 
 #include <math.h>
@@ -154,7 +155,7 @@ static float steam_pressure_at(const plant_parameters_t *parameters, float steam
  * How far a first-order relaxation travels towards its settling value in `x`
  * time constants: 1 - exp(-x).
  *
- * Written with the library's expm1 rather than as `1 - exp(-x)`. For a short
+ * Written with the exponential-less-one rather than as `1 - exp(-x)`. For a short
  * step the exponential is just under one, and subtracting it from one throws
  * away the leading digits of an answer that is itself small -- the error is
  * absolute in the exponential and so grows without bound relative to the
@@ -164,7 +165,7 @@ static float steam_pressure_at(const plant_parameters_t *parameters, float steam
  */
 static float settled_fraction(float x)
 {
-    return -expm1f(-x);
+    return -plant_expm1f(-x);
 }
 
 /*
@@ -414,7 +415,7 @@ static void coupled_step_weights(float mean_rate, float discriminant, float prod
          * separation's sine is not: on a stiff pair the two would overflow and
          * cancel back to a number well inside the range.
          */
-        carried = expf(-slow) * relaxation_factor(separation + separation);
+        carried = plant_expf(-slow) * relaxation_factor(separation + separation);
         second_order = (relaxation_factor(slow) - carried) / fast;
     } else {
         /*
@@ -423,9 +424,9 @@ static void coupled_step_weights(float mean_rate, float discriminant, float prod
          * across however many turns it contains.
          */
         const float turn = sqrtf(-separation_squared);
-        const float half_turn = sinf(turn * 0.5f);
-        const float decayed = expf(-decay);
-        carried = decayed * (sinf(turn) / turn);
+        const float half_turn = plant_sinf(turn * 0.5f);
+        const float decayed = plant_expf(-decay);
+        carried = decayed * (plant_sinf(turn) / turn);
         second_order = (settled_fraction(decay) + (decayed + decayed) * half_turn * half_turn -
                         decay * carried) /
                        (decay * decay + turn * turn);

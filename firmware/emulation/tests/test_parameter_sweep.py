@@ -64,15 +64,16 @@ REPLACEMENT_VALUE = "1200.0"
 # pressure fails this suite instead of quietly emptying it.
 UNWEIGHABLE_COEFFICIENTS = ("pump.pressure_bar", "brew.pressure_time_constant_s")
 
-# How far a regenerated figure may sit from the committed one before the
-# committed record is out of date rather than merely rounded differently.
+# How far apart two figures may be and still count as the same figure.
 #
-# The sweep is deterministic on one host: running it twice writes the same
-# bytes. Across hosts it need not be, because the plant model's arithmetic
-# reaches the platform's own maths library, and a difference in the last place
-# of an exponential accumulated over seven thousand intervals can move a
-# reported figure in its third significant digit. A per-cent is far inside any
-# change to the ranking that would matter and far outside that.
+# The sweep is deterministic: running it twice, on any supported host, writes the
+# same bytes, because the plant model's arithmetic is the project's own and no
+# build fuses a multiply with an add. The byte-for-byte comparison of the committed
+# record is what refuses a stale one. This tolerance is used where a test compares
+# one figure with another -- a committed row with the row now produced, or a
+# shipped machine's figure with a replacement machine's -- and decides whether
+# they differ. Beside the exact comparison it is the check that names the figure
+# that moved, so a reader is shown the number and not a diff of a table.
 FIGURE_TOLERANCE = 0.01
 
 # The full heater scale, at or above which the brew loop has nothing further to
@@ -922,6 +923,156 @@ def _supply_statement_of(text, at):
         with open(path, "w", encoding="utf-8") as handle:
             handle.write(text)
         return sweep.supply_span_statement(path)
+
+
+class TheCommittedRecordIsWhatTheToolWrites(unittest.TestCase):
+    """The staleness comparison is exact. The plant's arithmetic is the project's own and
+    no build fuses a multiply with an add, so the tool writes the same bytes on every
+    supported host, and a record that differs from them in any digit is stale."""
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2: The committed analysis records regenerate to the same figures on every supported host
+    def test_the_committed_record_is_byte_for_byte_what_the_tool_presently_writes(self):
+        committed = _committed_record()
+        produced = sweep.report_text(FINDINGS)
+        if committed != produced:
+            was, now = committed.splitlines(), produced.splitlines()
+            at = next((i for i, pair in enumerate(zip(was, now)) if pair[0] != pair[1]),
+                      min(len(was), len(now)))
+            self.fail("the committed record is not the record this method now writes; the "
+                      "first line that differs is %d:\ncommitted: %s\nwritten:   %s\nRe-run "
+                      "firmware/emulation/tools/run_parameter_sweep.py"
+                      % (at + 1, was[at] if at < len(was) else "(ends)",
+                         now[at] if at < len(now) else "(ends)"))
+
+
+class TheNeighbourOfACoefficientIsTheNextFloat(unittest.TestCase):
+    """What "one unit in the last place" means to the analyses that move a coefficient by it."""
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_the_neighbours_of_one_are_the_adjacent_single_precision_numbers(self):
+        self.assertEqual(1.0000001192092896, sweep.float32_neighbour(1.0, True))
+        self.assertEqual(0.9999999403953552, sweep.float32_neighbour(1.0, False))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_above_and_below_swap_their_sense_for_a_negative_number(self):
+        self.assertEqual(-0.9999999403953552, sweep.float32_neighbour(-1.0, True))
+        self.assertEqual(-1.0000001192092896, sweep.float32_neighbour(-1.0, False))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_moving_up_and_back_down_returns_the_number_and_never_skips_one(self):
+        import struct
+        for value in (448.0, 0.0254, 1214.84, 4.0255, 1e-7, 3.5e9):
+            single = struct.unpack("<f", struct.pack("<f", value))[0]
+            above = sweep.float32_neighbour(value, True)
+            below = sweep.float32_neighbour(value, False)
+            self.assertGreater(above, single)
+            self.assertLess(below, single)
+            self.assertEqual(single, sweep.float32_neighbour(above, False))
+            self.assertEqual(single, sweep.float32_neighbour(below, True))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_zero_has_no_neighbour_to_move_a_coefficient_to(self):
+        with self.assertRaises(sweep.SweepError):
+            sweep.float32_neighbour(0.0, True)
+
+
+def _tick(at, heater=400, converter=(1000, 2000, 3000, 4000), quantities=(1.0, 2.0, 3.0, 4.0),
+          outlet=90.0, drawing=True):
+    return {"interval": at, "result": 0, "heater_permille": heater, "plant_steps": 10,
+            "drawing": drawing, "converter_milli": list(converter),
+            "quantities": list(quantities), "outlet_c": outlet}
+
+
+def _runs(length, flip_at, change, drift=1.0e-6):
+    """A reference run and one that drifts by `drift` from the first tick and has
+    `change` applied to its tick `flip_at`."""
+    reference = [_tick(at) for at in range(length)]
+    perturbed = [_tick(at, quantities=(1.0 + drift, 2.0, 3.0, 4.0), outlet=90.0 + drift)
+                 for at in range(length)]
+    perturbed[flip_at].update(change)
+    return reference, perturbed
+
+
+class TheFirstWholeNumberToDiffer(unittest.TestCase):
+    """Where two runs of the loop first part in a quantity that is a whole number."""
+
+    UNIT = 0.0488
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_command_that_steps_at_a_known_tick_is_found_there_with_the_drift_before_it(self):
+        reference, perturbed = _runs(12, 7, {"heater_permille": 401})
+
+        flip = sweep.first_whole_number_difference(reference, perturbed, self.UNIT)
+
+        self.assertEqual(7, flip["tick"])
+        self.assertEqual("heater_permille", flip["name"])
+        self.assertEqual((400, 401), (flip["was"], flip["now"]))
+        self.assertAlmostEqual(1.0e-6, flip["departure_before"], places=9)
+        self.assertTrue(flip["below_one_unit"])
+        self.assertEqual(self.UNIT, flip["rounding_unit"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_drift_of_a_full_unit_before_the_tick_is_reported_as_not_below_it(self):
+        reference, perturbed = _runs(12, 7, {"heater_permille": 401}, drift=0.06)
+
+        flip = sweep.first_whole_number_difference(reference, perturbed, self.UNIT)
+
+        self.assertEqual(7, flip["tick"])
+        self.assertFalse(flip["below_one_unit"])
+        self.assertIn("NOT below", sweep.describe_whole_number_difference(flip))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_converter_count_is_named_by_the_quantity_it_reads(self):
+        reference, perturbed = _runs(9, 4, {"converter_milli": [1000, 2000, 3049, 4000]})
+
+        flip = sweep.first_whole_number_difference(reference, perturbed, self.UNIT)
+
+        self.assertEqual((4, "converter_milli[2]", 3000, 3049),
+                         (flip["tick"], flip["name"], flip["was"], flip["now"]))
+        self.assertIn("converter's reading of brew-bar", sweep.describe_whole_number_difference(flip))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_flag_that_flips_is_a_whole_number_too(self):
+        reference, perturbed = _runs(6, 3, {"drawing": False})
+
+        self.assertEqual("drawing",
+                         sweep.first_whole_number_difference(reference, perturbed, self.UNIT)["name"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_the_first_of_several_later_steps_is_the_one_named(self):
+        reference, perturbed = _runs(14, 5, {"heater_permille": 401})
+        perturbed[9]["result"] = 3
+        perturbed[11]["converter_milli"] = [1, 2, 3, 4]
+
+        self.assertEqual(5, sweep.first_whole_number_difference(reference, perturbed, self.UNIT)["tick"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_step_at_the_first_tick_has_no_drift_before_it_and_says_so(self):
+        reference, perturbed = _runs(5, 0, {"heater_permille": 399})
+
+        flip = sweep.first_whole_number_difference(reference, perturbed, self.UNIT)
+
+        self.assertEqual((0, 0.0), (flip["tick"], flip["departure_before"]))
+        self.assertIn("no tick before it", sweep.describe_whole_number_difference(flip))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_runs_that_differ_only_in_continuous_state_or_tick_numbering_have_no_such_tick(self):
+        reference, perturbed = _runs(8, 3, {"interval": 99})
+
+        self.assertIsNone(sweep.first_whole_number_difference(reference, perturbed, self.UNIT))
+        self.assertIsNone(sweep.first_whole_number_difference([], [], self.UNIT))
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_structure_that_keeps_no_outlet_temperature_is_compared_on_the_sensed_quantities(self):
+        reference, perturbed = _runs(8, 5, {"heater_permille": 401})
+        for run in (reference, perturbed):
+            for tick in run:
+                tick["outlet_c"] = None
+
+        flip = sweep.first_whole_number_difference(reference, perturbed, self.UNIT)
+
+        self.assertEqual(5, flip["tick"])
+        self.assertAlmostEqual(1.0e-6, flip["departure_before"], places=9)
 
 
 if __name__ == "__main__":

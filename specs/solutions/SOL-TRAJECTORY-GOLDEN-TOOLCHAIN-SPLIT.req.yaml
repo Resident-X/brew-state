@@ -2,7 +2,7 @@ id: SOL-TRAJECTORY-GOLDEN-TOOLCHAIN-SPLIT
 type: deliverable
 category: solution
 title: The golden-trajectory test passes under both the ordinary and mutation-build toolchains
-status: active
+status: deprecated
 version: 1
 text: |
   Dispatching the project's `Mutation sweep` workflow against the current tree fails
