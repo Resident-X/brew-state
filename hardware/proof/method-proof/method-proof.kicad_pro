@@ -70,6 +70,10 @@
         "via_dangling": "warning",
         "zone_has_empty_net": "error",
         "zones_intersect": "error"
+      },
+      "rules": {
+        "min_track_width": 0.09,
+        "min_clearance": 0.09
       }
     }
   },
