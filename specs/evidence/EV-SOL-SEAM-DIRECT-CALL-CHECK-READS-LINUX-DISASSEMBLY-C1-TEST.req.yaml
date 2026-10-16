@@ -1,0 +1,20 @@
+id: EV-SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY-C1-TEST
+type: evidence
+title: Seam direct-call check unit tests over each host's disassembly (SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T09:33:05Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_checks.py::DirectCallCheck
+  artifact_version: 1603f35
+text: |
+  Verified commit 1603f35 (the firmware sources are unchanged through the commit that carries this node). `python3 -m unittest test_checks.DirectCallCheck` in firmware/tools/tests ran 16 tests, all passing. Eight of them verify this criterion: each host's direct call, tail jump and suffixed-symbol forms pass; each host's register, memory and no-track-call forms fail with the symbol and instruction named; an operation reached by no call fails; a bnd-prefixed direct call is recognised; a jump-table dispatch is not refused while an unmarked indirect jump is; an intra-function jump is not taken for a call. Every case runs the check's main() over canned disassembly text in the macOS and the GNU objdump form and asserts the exit status and the printed line. The jump-table test fails against the check as it stood before the jump-table fix.
+
+  What this rests on, and what it does not: it is the unit tests and the hosted-runner probe recorded in the C2 evidence. The project's round gate was not run on this commit (it passed on the first version of the change, before the jump-table fix).
+links:
+  - target: SOL-SEAM-DIRECT-CALL-CHECK-READS-LINUX-DISASSEMBLY.C1
+    type: satisfies
