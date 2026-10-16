@@ -3,13 +3,15 @@ type: deliverable
 category: solution
 title: A floorplan with a repeated region name is refused, not misjudged
 status: active
-version: 1
+version: 2
 text: |
   Why this exists. The floorplan reader accepts a plan in which two rows carry the same region name. The placement history command compares the plan before placement with the plan the section is judged in by indexing regions by name, so with a duplicated name it collapses the two rows into one: an unchanged plan fails against an identical copy of itself, and a change to one of the two rows can be hidden behind the other. A final review of the placement history hardening found it with a throwaway history; it is older than that change and was left alone because it is a fault in the reader, not in the ordering checks.
 
   What it does. Makes the floorplan reader refuse a plan with a repeated region name, naming the region, so every command that reads a plan sees the stop and none judges it.
 
   Out of scope: any other reading of the floorplan table.
+
+  Settled. Two rows carry the same region name when their names are equal as exact strings, the comparison the history command's plan compare already makes, so a case or whitespace variant is a different region and is not refused. The stop lives in the one floorplan reader (hardware/tools/board_placement.py, the region-row loop of floorplan()), raised as the reader's existing unreadable-input stop naming the floorplan table's file and the repeated region row, so the placement command and the history command both stop through their existing handling of an unreadable plan with no per-command code. The placement command has no JSON output; the history command's JSON carries the reader's failure text in its checks unchanged.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
