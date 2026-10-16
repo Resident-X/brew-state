@@ -1,0 +1,16 @@
+id: EV-SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD-C1-TEST
+type: evidence
+title: test evidence for SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T08:21:03.918282Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_sensor_assignment_checks.py::PinDisagreement.test_a_channel_on_a_different_pin_than_the_record_fails
+  artifact_version: 0eb881c338825aac21a9c86ddadea35fe9a02903
+attested_by: crun-769bb6ae2f1ef398
+links:
+  - target: SOL-FW-SENSOR-ASSIGNMENT-MATCHES-RECORD.C1
+    type: satisfies

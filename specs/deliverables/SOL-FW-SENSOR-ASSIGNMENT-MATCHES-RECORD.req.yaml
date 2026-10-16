@@ -3,11 +3,13 @@ type: deliverable
 category: solution
 title: The firmware's sensor-channel-to-pin assignment is checked against a pin allocation record, each fault proven on synthetic input
 status: active
-version: 2
+version: 3
 text: |
   The firmware tier gains the sensor half of the firmware-to-record comparison: a check that compares the firmware's assignment of sensor channels to converter inputs with a pin allocation record, in the form the design-records decision sets, so a board and the code that reads it cannot disagree about which sensor is which. A sensor channel is held on a converter input, which names a controller pin only through a controller-specific map, so the check takes the controller's converter-input map, in the form the design-records decision sets, as a second input file beside the record and the firmware, and compares the pin the map gives for each channel's converter input with the controller pin the record names, taking part only the record entries that carry a firmware_sensor key and leaving every other entry to the checks that own it. A channel the firmware states as wired to no input is not an assignment, so a record entry naming a pin for it fails. It fails a channel on a different pin, a channel in only one of the firmware and the record, a converter input the map does not list, a channel or input named twice, and a map, record or firmware it cannot read.
 
   The check reuses the output pin check's tool, strict record reader and exit convention rather than a second copy, and its tests use synthetic firmware tables, maps and records and are proven on seeded faults in those. This solution does not point the check at a machine's real record or map: those do not exist until the board and controller they describe are chosen, and the design task that authors the record also wires this check to it.
+
+  Placement: a new tool and test module beside the output pin check, importing that tool's record reader, unreadable-input error and pin form. The sensor table is read from the target's converter-channel table, which is positional in the channel enumeration's order, and the converter-input map is read under the keys the design-records decision sets. Exit statuses are the pin check's: 0 when the assignment matches, 1 on a mismatch, 2 when an input cannot be read. A map entry whose pin is not written as the record writes a pin is an input that cannot be read.
 links:
   - target: DEL-HW-DESIGN-VERIFICATION.C1
     type: derives-from
@@ -19,3 +21,7 @@ links:
     type: justified-by
   - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: dbb4284f7ab4e899d0d08b99efaec237457e47cdc028bbe8d17099eb293bb084
+  gating_profile: ""

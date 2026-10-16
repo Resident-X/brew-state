@@ -47,7 +47,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from check_support_status import Uninspectable, definitions  # noqa: E402
+from check_support_status import Uninspectable, definitions, read_input  # noqa: E402
 from structure_symbols import discover  # noqa: E402
 from vendor_symbols import strip_comments_and_strings  # noqa: E402
 
@@ -90,8 +90,7 @@ def vocabulary(path: str) -> list[str]:
     if not os.path.isfile(path):
         raise Uninspectable(f"no vocabulary header at {path}")
 
-    with open(path, "r", encoding="utf-8") as handle:
-        cleaned = strip_comments_and_strings(handle.read())
+    cleaned = strip_comments_and_strings(read_input(path, "vocabulary header"))
 
     body = _ENUM_BODY.search(cleaned)
     if body is None:
