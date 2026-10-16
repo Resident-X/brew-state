@@ -3,6 +3,8 @@ type: deliverable
 category: task
 title: A board design is checked against the design record automatically before it can be ordered
 status: active
+seal_state: sealed
+seal_outcome: complete
 level: task
 version: 4
 text: |
