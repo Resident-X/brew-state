@@ -232,8 +232,8 @@ MUTATIONS = (
         "why": "the settled fraction is computed as one minus the exponential, which throws "
                "away its leading digits for a short step",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "    return -expm1f(-x);",
-        "replace": "    return 1.0f - expf(-x);",
+        "find": "    return -plant_expm1f(-x);",
+        "replace": "    return 1.0f - plant_expf(-x);",
         "command": PLANT_TESTS,
     },
     {
@@ -252,8 +252,8 @@ MUTATIONS = (
                "travelled rather than by that fraction per time constant elapsed, which is the "
                "same confusion between the two expressions the single-mass step avoids",
         "file": "src/plant/thermoblock/plant_structure.c",
-        "find": "        carried = expf(-slow) * relaxation_factor(separation + separation);",
-        "replace": "        carried = expf(-slow) * settled_fraction(separation + separation);",
+        "find": "        carried = plant_expf(-slow) * relaxation_factor(separation + separation);",
+        "replace": "        carried = plant_expf(-slow) * settled_fraction(separation + separation);",
         "command": PLANT_TESTS,
     },
     {

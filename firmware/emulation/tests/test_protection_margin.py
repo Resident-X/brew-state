@@ -14,6 +14,7 @@ the figures are what a verdict can be argued with from.
 
 import os
 import sys
+import tempfile
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -40,9 +41,9 @@ REPLACEMENT_VALUE = "1200.0"
 #: committed record is out of date rather than merely rounded differently.
 #:
 #: The relative part is the one the suites beside this use, and for the reason
-#: they give: the analysis is deterministic on one host and need not be across
-#: hosts, because the plant model's arithmetic reaches the platform's own maths
-#: library. The absolute floor is a hundredth of the band a delivery is held to,
+#: they give: the byte-for-byte comparison of the committed record is what refuses
+#: a stale one, and this tolerance only decides which figures a failed comparison
+#: names as having moved. The absolute floor is a hundredth of the band a delivery is held to,
 #: which is the coarsest thing a verdict here can turn on -- a figure agreeing
 #: to that cannot move one.
 FIGURE_TOLERANCE = 0.01
@@ -532,6 +533,99 @@ class TheRecordStatesTheSupplyItWasRunAgainst(unittest.TestCase):
         self.assertIn(statement, _committed_record(),
                       "%s does not state the supply span the description it was run against "
                       "declares. Re-run its tool" % margin.REPORT_PATH)
+
+
+class TheCommittedRecordIsWhatTheToolWrites(unittest.TestCase):
+    """The staleness comparison is exact. The plant's arithmetic is the project's own and
+    no build fuses a multiply with an add, so the tool writes the same bytes on every
+    supported host, and a record that differs from them in any digit is stale."""
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2: The committed analysis records regenerate to the same figures on every supported host
+    def test_the_committed_record_is_byte_for_byte_what_the_tool_presently_writes(self):
+        committed = _committed_record()
+        produced = _produced_record()
+        if committed != produced:
+            was, now = committed.splitlines(), produced.splitlines()
+            at = next((i for i, pair in enumerate(zip(was, now)) if pair[0] != pair[1]),
+                      min(len(was), len(now)))
+            self.fail("the committed record is not the record this method now writes; the "
+                      "first line that differs is %d:\ncommitted: %s\nwritten:   %s\nRe-run "
+                      "firmware/emulation/tools/run_protection_margin.py"
+                      % (at + 1, was[at] if at < len(was) else "(ends)",
+                         now[at] if at < len(now) else "(ends)"))
+
+
+class OneUnitInTheLastPlaceIsMeasuredAgainstEveryFigure(unittest.TestCase):
+    """The record says how far one unit in the last place moves the figures it reports."""
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_each_single_coefficient_corner_was_compared_once_above_and_once_below(self):
+        coffee = [v for v in FINDINGS["verdicts"] if len(v["corner"]["writes"]) == 1]
+        steam = [v for v in FINDINGS["steam_verdicts"] if len(v["corner"]["writes"]) == 1]
+        self.assertTrue(coffee)
+        self.assertEqual(2 * len(coffee), FINDINGS["sensitivity"]["coffee"]["compared"])
+        self.assertEqual(2 * len(steam), FINDINGS["sensitivity"]["steam"]["compared"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_the_committed_record_carries_the_figures_the_measurement_produced(self):
+        section = _committed_record().split(margin.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
+        coffee = FINDINGS["sensitivity"]["coffee"]
+        self.assertIn("**Coffee side**: %d comparisons" % coffee["compared"], section)
+        self.assertIn("The most any worst departure moved was %s C"
+                      % (margin.FIGURE_FORMAT % coffee["largest"]), section)
+        steam = FINDINGS["sensitivity"]["steam"]
+        self.assertIn("**Steam side**: %d comparisons" % steam["compared"], section)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_movement_the_size_of_a_real_difference_is_seen_by_the_measurement(self):
+        # The measurement has to be capable of reporting a figure that moves a
+        # lot, or "it moved this little" says nothing.
+        verdict = next(v for v in FINDINGS["verdicts"] if v["corner"]["which"] == 5)
+        vocabulary, marker = sweep._vocabularies()
+        nominal = sweep.nominal_values(FINDINGS["description"], vocabulary, marker)
+        course = margin.margin_course(nominal)
+        floor, ceiling = FINDINGS["steam_band_milli_bar"]
+        original = sweep.float32_neighbour
+        sweep.float32_neighbour = lambda value, above: value * (1.3 if above else 1.0 / 1.3)
+        try:
+            with tempfile.TemporaryDirectory() as scratch:
+                moved = margin._one_unit_sensitivity(
+                    [verdict], [], nominal, FINDINGS["description"], FINDINGS["limits"],
+                    FINDINGS["declaration"], FINDINGS["executable"], course,
+                    cross_tier.converter_scale(), FINDINGS["target_c"],
+                    margin.judged_window(course), sweep.steam_course(),
+                    FINDINGS["shipped"]["steam_ready_c"], floor, ceiling, scratch)
+        finally:
+            sweep.float32_neighbour = original
+
+        self.assertEqual(2, moved["coffee"]["compared"])
+        self.assertGreater(moved["coffee"]["largest"],
+                           10.0 * FINDINGS["sensitivity"]["coffee"]["largest"])
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_verdict_that_turns_on_one_unit_is_named_in_the_record(self):
+        doctored = dict(FINDINGS)
+        doctored["sensitivity"] = {
+            "coffee": dict(FINDINGS["sensitivity"]["coffee"], verdict_changes=[(20, "below")]),
+            "steam": FINDINGS["sensitivity"]["steam"],
+        }
+        section = margin.report_text(doctored).split(
+            margin.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
+
+        self.assertIn("**1 verdict changed with one unit in the last place**", section)
+        self.assertIn("coffee side corner 20 moved below", section)
+        self.assertNotIn("No verdict changed", section)
+
+    # SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3: No committed record figure turns on a sub-rounding difference in the arithmetic
+    def test_a_figure_that_did_not_move_at_all_is_reported_as_not_having_moved(self):
+        doctored = dict(FINDINGS)
+        still = {"compared": 4, "largest": 0.0, "where": None, "before": None, "after": None,
+                 "verdict_changes": []}
+        doctored["sensitivity"] = {"coffee": still, "steam": still}
+        section = margin.report_text(doctored).split(
+            margin.SENSITIVITY_HEADING, 1)[1].split("\n## ", 1)[0]
+
+        self.assertEqual(2, section.count("4 comparisons, and no figure moved at all"))
 
 
 if __name__ == "__main__":

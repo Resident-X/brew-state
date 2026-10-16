@@ -156,6 +156,7 @@ VERDICT_HEADING = "## What each corner's delivery did"
 STEAM_MAPPING_HEADING = "## What each declared error contributes to the steam side's margin"
 STEAM_VERDICT_HEADING = "## What each corner's steam draw did"
 REFUSED_HEADING = "## What could not be delivered against"
+SENSITIVITY_HEADING = "## How far one unit in the last place moves these figures"
 
 
 class MarginError(RuntimeError):
@@ -551,6 +552,80 @@ def steam_verdict(findings, course, floor, ceiling):
     return (not outside), worst, (judged[0], judged[-1])
 
 
+def _moved_by_one_unit(corner, nominal, description, workspace, direction):
+    """The description of one single-coefficient corner with its coefficient moved
+    to the single-precision number next above it or next below it.
+
+    None for the joint corner, which writes more than one coefficient and so has
+    no one neighbour to move to.
+    """
+    if len(corner["writes"]) != 1:
+        return None
+    name = corner["writes"][0]
+    neighbour = sweep.float32_neighbour(nominal[name] * corner["factor"], direction == "above")
+    return cross_tier.description_with(
+        name, sweep.VALUE_FORMAT % neighbour,
+        os.path.join(workspace, "one-unit-%d-%s.params" % (corner["which"], direction)),
+        source=description)
+
+
+def _one_unit_sensitivity(verdicts, steam_verdicts, nominal, description, limits, declaration,
+                          executable, course, scale, target_c, window, steam_course, steam_ready_c,
+                          steam_floor, steam_ceiling, workspace):
+    """How far moving a corner's coefficient by one unit in the last place moves
+    the figure its verdict is taken from.
+
+    Each single-coefficient corner is delivered against twice more, with its
+    coefficient one unit above and one unit below what the corner wrote, and the
+    worst departure (or worst pressure) that comes back is held against the
+    corner's own. The figure is the worst of a series of readings of a loop whose
+    commands are whole numbers, so a difference that small can part two runs by one
+    step of a command and move it by far more than the difference was. What is
+    measured is the most it moves, and whether any verdict moved with it.
+    """
+    coffee = {"compared": 0, "largest": 0.0, "where": None, "before": None, "after": None,
+              "verdict_changes": []}
+    for verdict in verdicts:
+        corner = verdict["corner"]
+        for direction in ("above", "below"):
+            written = _moved_by_one_unit(corner, nominal, description, workspace, direction)
+            if written is None:
+                continue
+            drawn = sweep.brew_draw(executable, written, limits, course, scale,
+                                    "margin-one-unit-%d-%s" % (corner["which"], direction),
+                                    control_description=description, target_c=target_c)
+            now = worst_departure(drawn["delivered"], target_c, window)
+            coffee["compared"] += 1
+            apart = abs(now - verdict["worst_departure_c"])
+            if apart > coffee["largest"]:
+                coffee.update(largest=apart, before=verdict["worst_departure_c"], after=now,
+                              where=(corner["which"], direction))
+            if (now <= verdict["band_c"]) != verdict["within_band"]:
+                coffee["verdict_changes"].append((corner["which"], direction))
+
+    steam = {"compared": 0, "largest": 0.0, "where": None, "before": None, "after": None,
+             "verdict_changes": []}
+    for verdict in steam_verdicts:
+        corner = verdict["corner"]
+        for direction in ("above", "below"):
+            written = _moved_by_one_unit(corner, nominal, description,
+                                         os.path.join(workspace, "steam"), direction)
+            if written is None:
+                continue
+            drawn = sweep.steam_draw(executable, written, limits, declaration, steam_ready_c,
+                                     steam_course,
+                                     "steam-margin-one-unit-%d-%s" % (corner["which"], direction))
+            held, worst, _ = steam_verdict(drawn, steam_course, steam_floor, steam_ceiling)
+            steam["compared"] += 1
+            apart = abs(worst - verdict["worst_milli_bar"])
+            if apart > steam["largest"]:
+                steam.update(largest=apart, before=verdict["worst_milli_bar"], after=worst,
+                             where=(corner["which"], direction))
+            if held != verdict["within_band"]:
+                steam["verdict_changes"].append((corner["which"], direction))
+    return {"coffee": coffee, "steam": steam}
+
+
 def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
         declaration=sweep.STEAM_CONTROL_DECLARATION,
         pio=base.DEFAULT_PIO, executable=None, workspace=BUILD_DIR):
@@ -613,6 +688,7 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
             "claimed": claimed,
             "worst_departure_c": departure,
             "within_band": departure <= band_c,
+            "band_c": band_c,
             "description": written,
         })
 
@@ -648,7 +724,13 @@ def run(description=None, limits=None, tolerance=sweep.TOLERANCE_DECLARATION,
             "description": written,
         })
 
+    sensitivity = _one_unit_sensitivity(
+        verdicts, steam_verdicts, nominal, description, limits, declaration, executable, course,
+        scale, target_c, window, steam_course, steam_ready_c, steam_floor, steam_ceiling,
+        workspace)
+
     return {
+        "sensitivity": sensitivity,
         "description": description,
         "limits": limits,
         "tolerance": tolerance,
@@ -961,6 +1043,62 @@ def report_text(findings):
         for corner, why in findings["refused"]:
             write("| %d | %s | %s | %s |" % (corner["which"], _coefficient_cell(corner),
                                              corner["end"], why))
+    write("")
+
+    write(SENSITIVITY_HEADING)
+    write("")
+    write("Every single-coefficient corner above was delivered against twice more, with its "
+          "coefficient moved to the single-precision number next above it and next below it and "
+          "nothing else changed. That is the smallest difference the arithmetic can tell apart, "
+          "and it is asked here because each figure is the worst of a series of readings of a "
+          "loop whose commands are whole numbers: two machines a hair apart command the same "
+          "duties for long stretches and then part by one permille, so the last digits of a "
+          "figure belong to where that step fell and not to the machine. The joint corner "
+          "writes more than one coefficient and has no one neighbour to move to, so it is not "
+          "among them.")
+    write("")
+    account = findings["sensitivity"]["coffee"]
+    if account["where"] is None:
+        write("- **Coffee side**: %d comparisons, and no figure moved at all." % account["compared"])
+    else:
+        which, direction = account["where"]
+        write("- **Coffee side**: %d comparisons. The most any worst departure moved was %s C, "
+              "corner %d going from %s to %s with its coefficient moved one unit %s. That is "
+              "%s of the %s C band."
+              % (account["compared"], FIGURE_FORMAT % account["largest"], which,
+                 "%.6g" % account["before"], "%.6g" % account["after"], direction,
+                 "%.2g%%" % (100.0 * account["largest"] / findings["band_c"]),
+                 FIGURE_FORMAT % findings["band_c"]))
+    account = findings["sensitivity"]["steam"]
+    steam_span = findings["steam_band_milli_bar"][1] - findings["steam_band_milli_bar"][0]
+    if account["where"] is None:
+        write("- **Steam side**: %d comparisons, and no figure moved at all." % account["compared"])
+    else:
+        which, direction = account["where"]
+        write("- **Steam side**: %d comparisons. The most any worst pressure moved was %d "
+              "milli-bar, corner %d going from %d to %d with its coefficient moved one unit %s. "
+              "That is %s of the %d milli-bar the band spans."
+              % (account["compared"], account["largest"], which, account["before"],
+                 account["after"], direction,
+                 "%.2g%%" % (100.0 * account["largest"] / steam_span), steam_span))
+    write("")
+    changed = (["coffee side corner %d moved %s" % change
+                for change in findings["sensitivity"]["coffee"]["verdict_changes"]]
+               + ["steam side corner %d moved %s" % change
+                  for change in findings["sensitivity"]["steam"]["verdict_changes"]])
+    if changed:
+        write("**%d verdict%s changed with one unit in the last place**, and each is named: %s. "
+              "A verdict that turns on a difference that small is not one this record can "
+              "stand behind."
+              % (len(changed), "" if len(changed) == 1 else "s", "; ".join(changed)))
+    else:
+        write("**No verdict changed with one unit in the last place.** The figures above are "
+              "not reproducible to the digits printed and are not claimed to be: a figure can "
+              "move by a step of the loop's command, and that step is what the amounts above "
+              "measure. What is claimed is that this is as far as one unit moved any of them "
+              "at these corners, that it is a small part of the band each is judged against, "
+              "and that no verdict turned on it. It is measured at one unit and at these "
+              "corners and is not a proof for every perturbation.")
     write("")
 
     write("## What this does not settle")

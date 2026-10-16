@@ -94,7 +94,7 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 | Corner | Coefficient | End | Written at | Worst departure (C) | Verdict |
 |---|---|---|---|---|---|
 | 0 | ambient_temperature_c | low | 0.75 | 0.0253 | within-band |
-| 1 | ambient_temperature_c | high | 1.25 | 0.0254 | within-band |
+| 1 | ambient_temperature_c | high | 1.25 | 0.0253 | within-band |
 | 2 | brew.thermal_mass_j_per_k | low | 0.6 | 0.0249 | within-band |
 | 3 | brew.thermal_mass_j_per_k | high | 1.4 | 0.0255 | within-band |
 | 4 | brew.heater_power_w | low | 0.79 | 0.0234 | within-band |
@@ -105,32 +105,32 @@ Both ends of every coefficient are run, including the ends `params/thermoblock.m
 | 9 | brew.outlet_held_volume_ml | high | 1.6 | 0.0259 | within-band |
 | 10 | brew.outlet_conduction_time_constant_s | low | 0.2 | 0.0248 | within-band |
 | 11 | brew.outlet_conduction_time_constant_s | high | 1.8 | 0.0255 | within-band |
-| 12 | steam.thermal_mass_j_per_k | low | 0.6 | 0.0253 | within-band |
-| 13 | steam.thermal_mass_j_per_k | high | 1.4 | 0.0253 | within-band |
-| 14 | steam.heater_power_w | low | 0.79 | 0.0253 | within-band |
-| 15 | steam.heater_power_w | high | 1.21 | 0.0253 | within-band |
-| 16 | steam.loss_w_per_k | low | 0.4 | 0.0253 | within-band |
-| 17 | steam.loss_w_per_k | high | 1.6 | 0.0253 | within-band |
-| 18 | pump.pressure_bar | low | 0.6 | 0.0253 | within-band |
-| 19 | pump.pressure_bar | high | 1.4 | 0.0253 | not-claimed |
-| 20 | pump.flow_ml_per_s | low | 0.4 | 0.0558 | within-band |
+| 12 | steam.thermal_mass_j_per_k | low | 0.6 | 0.0254 | within-band |
+| 13 | steam.thermal_mass_j_per_k | high | 1.4 | 0.0254 | within-band |
+| 14 | steam.heater_power_w | low | 0.79 | 0.0254 | within-band |
+| 15 | steam.heater_power_w | high | 1.21 | 0.0254 | within-band |
+| 16 | steam.loss_w_per_k | low | 0.4 | 0.0254 | within-band |
+| 17 | steam.loss_w_per_k | high | 1.6 | 0.0254 | within-band |
+| 18 | pump.pressure_bar | low | 0.6 | 0.0254 | within-band |
+| 19 | pump.pressure_bar | high | 1.4 | 0.0254 | not-claimed |
+| 20 | pump.flow_ml_per_s | low | 0.4 | 0.0529 | within-band |
 | 21 | pump.flow_ml_per_s | high | 1.6 | 0.0241 | not-claimed |
-| 22 | brew.pressure_time_constant_s | low | 0.5 | 0.0253 | within-band |
-| 23 | brew.pressure_time_constant_s | high | 1.5 | 0.0253 | within-band |
+| 22 | brew.pressure_time_constant_s | low | 0.5 | 0.0254 | within-band |
+| 23 | brew.pressure_time_constant_s | high | 1.5 | 0.0254 | within-band |
 | 24 | water.feed_temperature_c | low | 0.5 | 0.0245 | within-band |
 | 25 | water.feed_temperature_c | high | 1.5 | 0.0253 | within-band |
 | 26 | water.heat_capacity_j_per_ml_k | low | 0.97 | 0.0254 | within-band |
 | 27 | water.heat_capacity_j_per_ml_k | high | 1.03 | 0.0253 | within-band |
-| 28 | water.latent_heat_j_per_ml | low | 0.95 | 0.0253 | within-band |
-| 29 | water.latent_heat_j_per_ml | high | 1.05 | 0.0253 | within-band |
-| 30 | steam.saturation_temperature_c | low | 0.98 | 0.0253 | within-band |
-| 31 | steam.saturation_temperature_c | high | 1.02 | 0.0253 | within-band |
-| 32 | steam.pressure_bar_per_k | low | 0.7 | 0.0253 | within-band |
-| 33 | steam.pressure_bar_per_k | high | 1.3 | 0.0253 | within-band |
-| 34 | steam.pressure_fall_bar_per_ml | low | 0.3 | 0.0253 | within-band |
-| 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | 0.0253 | within-band |
-| 36 | steam.feed_flow_ml_per_s | low | 0.3 | 0.0253 | within-band |
-| 37 | steam.feed_flow_ml_per_s | high | 1.7 | 0.0253 | not-claimed |
+| 28 | water.latent_heat_j_per_ml | low | 0.95 | 0.0254 | within-band |
+| 29 | water.latent_heat_j_per_ml | high | 1.05 | 0.0254 | within-band |
+| 30 | steam.saturation_temperature_c | low | 0.98 | 0.0254 | within-band |
+| 31 | steam.saturation_temperature_c | high | 1.02 | 0.0254 | within-band |
+| 32 | steam.pressure_bar_per_k | low | 0.7 | 0.0254 | within-band |
+| 33 | steam.pressure_bar_per_k | high | 1.3 | 0.0254 | within-band |
+| 34 | steam.pressure_fall_bar_per_ml | low | 0.3 | 0.0254 | within-band |
+| 35 | steam.pressure_fall_bar_per_ml | high | 1.7 | 0.0254 | within-band |
+| 36 | steam.feed_flow_ml_per_s | low | 0.3 | 0.0254 | within-band |
+| 37 | steam.feed_flow_ml_per_s | high | 1.7 | 0.0254 | not-claimed |
 | 38 | brew.heater_power_w + steam.heater_power_w (joint mains droop) | low | 0.79 | 0.0234 | within-band |
 
 ## What each declared error contributes to the steam side's margin
@@ -234,6 +234,15 @@ The verdict is the pressure the draw came to rest at, taken over intervals 4400 
 ## What could not be delivered against
 
 Nothing. Every corner the enumeration covers produced a machine and a delivery.
+
+## How far one unit in the last place moves these figures
+
+Every single-coefficient corner above was delivered against twice more, with its coefficient moved to the single-precision number next above it and next below it and nothing else changed. That is the smallest difference the arithmetic can tell apart, and it is asked here because each figure is the worst of a series of readings of a loop whose commands are whole numbers: two machines a hair apart command the same duties for long stretches and then part by one permille, so the last digits of a figure belong to where that step fell and not to the machine. The joint corner writes more than one coefficient and has no one neighbour to move to, so it is not among them.
+
+- **Coffee side**: 76 comparisons. The most any worst departure moved was 0.00275 C, corner 20 going from 0.0528796 to 0.0556256 with its coefficient moved one unit above. That is 0.27% of the 1 C band.
+- **Steam side**: 76 comparisons, and no figure moved at all.
+
+**No verdict changed with one unit in the last place.** The figures above are not reproducible to the digits printed and are not claimed to be: a figure can move by a step of the loop's command, and that step is what the amounts above measure. What is claimed is that this is as far as one unit moved any of them at these corners, that it is a small part of the band each is judged against, and that no verdict turned on it. It is measured at one unit and at these corners and is not a proof for every perturbation.
 
 ## What this does not settle
 

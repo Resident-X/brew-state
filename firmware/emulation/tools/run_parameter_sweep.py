@@ -279,6 +279,24 @@ class SweepError(RuntimeError):
     """The sweep could not be run, or could not be run over everything it covers."""
 
 
+def float32_neighbour(value, above):
+    """The single-precision number next to `value`, above it or below it.
+
+    One unit in the last place of the number a coefficient is loaded into, which
+    is the smallest difference between two machines the model's arithmetic can
+    tell apart. Worked out on the bit pattern, so it is the same number on every
+    host and needs no maths library to say what the next float is.
+    """
+    import struct
+
+    if value == 0.0:
+        raise SweepError("zero has no neighbour of the same sign to move a coefficient to")
+    bits = struct.unpack("<I", struct.pack("<f", value))[0]
+    away_from_zero = above == (value > 0.0)
+    bits = bits + 1 if away_from_zero else bits - 1
+    return struct.unpack("<f", struct.pack("<I", bits))[0]
+
+
 # --- Reading what the description says it may be wrong about ---------------
 
 

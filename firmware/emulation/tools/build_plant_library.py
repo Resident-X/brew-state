@@ -32,6 +32,7 @@ INCLUDE_DIR = os.path.join(FIRMWARE_DIR, "include")
 
 SOURCES = [
     os.path.join(PLANT_COMMON, "plant_delivery.c"),
+    os.path.join(PLANT_COMMON, "plant_maths.c"),
     os.path.join(PLANT_COMMON, "plant_parameters.c"),
     os.path.join(PLANT_COMMON, "plant_step.c"),
     os.path.join(PLANT_STRUCTURE, "plant_structure.c"),
@@ -76,7 +77,7 @@ def build(build_dir, cc=None):
     os.makedirs(build_dir, exist_ok=True)
     command = [
         cc, "-std=c11", "-Wall", "-Wextra", "-Werror",
-        "-shared", "-fPIC", "-O1", "-g",
+        "-shared", "-fPIC", "-O1", "-g", "-ffp-contract=off",
         "-I", INCLUDE_DIR, "-I", PLANT_STRUCTURE,
         "-o", library,
     ] + SOURCES
