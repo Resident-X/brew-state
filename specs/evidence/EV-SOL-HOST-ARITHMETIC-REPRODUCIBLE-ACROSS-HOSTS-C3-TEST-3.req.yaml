@@ -1,0 +1,16 @@
+id: EV-SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS-C3-TEST-3
+type: evidence
+title: test evidence for SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T23:13:25.70292Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_sweep.py::test_the_neighbours_of_one_are_the_adjacent_single_precision_numbers
+  artifact_version: 1ad5255de0cf21719c63c111543a076d99d7cf35
+attested_by: crun-9402d815d11fac9f
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C3
+    type: satisfies

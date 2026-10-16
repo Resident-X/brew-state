@@ -1,0 +1,16 @@
+id: EV-SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS-C2-TEST-7
+type: evidence
+title: test evidence for SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T23:13:30.159719Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_parameter_stability.py::test_the_record_claims_the_pin_and_the_staleness_check_and_not_an_outcome_on_every_host
+  artifact_version: 1ad5255de0cf21719c63c111543a076d99d7cf35
+attested_by: crun-9402d815d11fac9f
+links:
+  - target: SOL-HOST-ARITHMETIC-REPRODUCIBLE-ACROSS-HOSTS.C2
+    type: satisfies
