@@ -15,6 +15,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -169,7 +170,7 @@ class Passes(Base):
         lines, document = self.assertPasses()
         self.assertEqual(document["board"], "b")
         self.assertEqual([c["check"] for c in document["checks"]],
-                         ["rounds kept", "round headings"] + [f"round {n} {what}" for n in (1, 2, 3)
+                         ["rounds kept", "round structure"] + [f"round {n} {what}" for n in (1, 2, 3)
                                             for what in ("as first recorded", "order")] + ["closing round"])
         self.assertIn("CHECK | closing round | PASS |", "\n".join(lines))
 
@@ -222,6 +223,16 @@ class Passes(Base):
         judged = self.repo.redesign()
         self.repo.record_round(1, judged[:12], findings=[])
         self.assertPasses()
+
+    def test_a_round_stating_it_raises_no_finding_passes_but_any_other_text_in_its_place_fails(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: It passes a record whose rounds only ever grew.
+        judged = self.repo.redesign()
+        self.repo.record({1: round_text(1, judged[:12], findings=[]) + "### Findings\n\nThis round raises no finding.\n"})
+        self.repo.commit("b: round 1 raises no finding")
+        self.assertPasses()
+        self.repo.record({1: self.repo.rounds[1].replace("This round raises no finding.", "Finding 1.1 is open.")})
+        self.repo.commit("b: prose in its place")
+        self.assertFails("its Findings table: it holds no table", check="round structure")
 
     def test_a_record_at_the_repository_root_passes_from_the_root(self):
         # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: given a board's folder
@@ -421,12 +432,13 @@ class Fails(Base):
         broken = round_text(1, judged[:12]).replace("| Finding | Raised by |", "| Number | Raised by |")
         self.repo.record({1: broken})
         self.repo.commit("b: findings table without a Finding column")
-        self.assertFails("round 1 as first recorded", "its Findings table has no Finding column",
-                         check="round 1 as first recorded")
+        self.assertFails("round 1 of the record at HEAD", "its Findings table has no Finding column",
+                         check="round structure")
 
 
 class Headings(Base):
-    """A round written in any form but `## Round <n>` is one the command cannot guard, so it fails the record."""
+    """A round, or a part of one, written in a form the command cannot read is one it cannot guard, so it fails the
+    record."""
 
     def recorded(self, edit):
         """Round 1 recorded with its heading line edited, and no design change after it."""
@@ -441,7 +453,7 @@ class Headings(Base):
             with self.subTest(form=form):
                 self.recorded(lambda n: form.format(n))
                 document = self.assertFails("line 3 of the record at HEAD reads", "which mentions a round heading that is not exactly '## Round <n>'",
-                                            check="round headings")
+                                            check="round structure")
                 self.repo.git("reset", "-q", "--hard", "HEAD~2")
                 self.repo.rounds = {}
 
@@ -454,7 +466,7 @@ class Headings(Base):
         self.repo.rounds[1] = self.repo.rounds[1].replace("## Round 1 - first\n", "## Round 1\n")
         self.repo.record()
         self.repo.commit("b: put it right")
-        self.assertFails(f"the version of the record at {bad[:12]} reads '## Round 1 - first'", check="round headings")
+        self.assertFails(f"the version of the record at {bad[:12]} reads '## Round 1 - first'", check="round structure")
 
     def test_a_heading_inside_a_code_fence_is_not_a_round_heading(self):
         # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: It passes a record whose rounds only ever grew.
@@ -469,7 +481,7 @@ class Headings(Base):
         judged = self.repo.redesign()
         self.repo.record({1: round_text(1, judged[:12]).replace("### Verdicts", "```\n### Verdicts", 1)})
         self.repo.commit("b: record round 1 with a fence left open")
-        self.assertFails("a code fence opened at line", "of the record at HEAD is never closed", check="round headings")
+        self.assertFails("a code fence opened at line", "of the record at HEAD is never closed", check="round structure")
         self.repo.git("reset", "-q", "--hard", "HEAD~1")
         self.repo.rounds = {}
         made = self.repo.built(1)
@@ -479,14 +491,14 @@ class Headings(Base):
         self.repo.rounds[1] = self.repo.rounds[1].replace("~~~\n### Verdicts", "### Verdicts", 1)
         self.repo.record()
         self.repo.commit("b: close it up")
-        self.assertFails(f"of the version of the record at {bad[:12]} is never closed", check="round headings")
+        self.assertFails(f"of the version of the record at {bad[:12]} is never closed", check="round structure")
 
     def test_a_code_fence_closed_by_the_other_character_stays_open(self):
         # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when a round recorded in an earlier commit is missing, naming the board, the round and what differs.
         judged = self.repo.redesign()
         self.repo.record({1: round_text(1, judged[:12]).replace("### Verdicts", "```\n~~~\n### Round 9\n### Verdicts", 1)})
         self.repo.commit("b: a fence closed by the wrong mark")
-        self.assertFails("is never closed", check="round headings")
+        self.assertFails("is never closed", check="round structure")
 
     def test_fenced_content_with_round_like_lines_passes_when_the_fence_closes(self):
         # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: It passes a record whose rounds only ever grew.
@@ -501,13 +513,168 @@ class Headings(Base):
         judged = self.repo.redesign()
         self.repo.record({1: round_text(1, judged[:12]) + "\n" + round_text(1, judged[:12])})
         self.repo.commit("b: round 1 twice")
-        self.assertFails("holds round 1 more than once", check="round headings")
+        self.assertFails("holds round 1 more than once", check="round structure")
 
-    def test_a_conforming_record_passes_the_round_headings(self):
+    def structured(self, edit, first=1):
+        """Round 1 recorded, then its text edited and recorded again in a second commit; the text the edit gave."""
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12])
+        edited = edit(self.repo.rounds[1])
+        self.repo.record({1: edited})
+        self.repo.commit("b: edit round 1")
+        return edited
+
+    def test_a_findings_subheading_renamed_with_a_finding_rewritten_fails(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        for name in ("Findings and closures", "Finding", "findings", "Findings:"):
+            with self.subTest(name=name):
+                self.repo = Repo(self)
+                self.structured(lambda text: text.replace("### Findings", f"### {name}").replace(
+                    "U1 sits far from U2.", "TOTALLY CHANGED"))
+                self.assertFails("line 15 reads", f"'### {name}', a heading the command cannot read",
+                                 check="round structure")
+
+    def test_a_subheading_at_another_level_fails_the_structure(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        for form in ("#### Findings", "## Findings", "# Findings", "###Findings", " ### Findings", "<h3>Findings</h3>",
+                     "Findings\n--------"):
+            with self.subTest(form=form):
+                self.repo = Repo(self)
+                self.structured(lambda text: text.replace("### Findings", form).replace("U1 sits far", "U1 sits near"))
+                self.assertFails("a heading the command cannot read", check="round structure")
+
+    def test_a_fenced_level_two_line_before_the_findings_table_does_not_cut_the_round(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        fenced = lambda text: text.replace("- **Views**", "```\n## x\n```\n\n- **Views**", 1)
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12])
+        self.repo.rounds[1] = fenced(self.repo.rounds[1])
+        self.repo.record()
+        self.repo.commit("b: quote a level-two line in round 1")
+        self.assertFails("its opening lines differ", check="round 1 as first recorded")
+        self.repo.git("reset", "-q", "--hard", "HEAD~1")
+        self.repo.rounds = {}
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12])
+        self.repo.rounds[1] = fenced(self.repo.rounds[1])
+        self.repo.record()
+        self.repo.commit("b: quote it")
+        self.repo.rounds[1] = self.repo.rounds[1].replace("U1 sits far from U2.", "TOTALLY CHANGED")
+        self.repo.record()
+        self.repo.commit("b: rewrite a finding")
+        self.assertFails("finding 1.1's What and where now reads 'TOTALLY CHANGED'", check="round 1 as first recorded")
+
+    def test_a_fenced_level_two_line_inside_a_round_passes_when_the_round_is_otherwise_whole(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: It passes a record whose rounds only ever grew.
+        judged = self.repo.redesign()
+        self.repo.record({1: round_text(1, judged[:12], plan=True).replace(
+            "### Findings", "```\n## x\n### Findings\n#### y\n```\n\n### Findings", 1)})
+        self.repo.record_round(2, judged[:12])
+        self.assertPasses()
+
+    def test_a_level_two_heading_that_is_not_a_round_inside_a_round_fails(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        self.structured(lambda text: text.replace("### Findings", "## Notes\n\n### Findings"))
+        self.assertFails("round 1 of the record at HEAD: line", "'## Notes', a heading the command cannot read",
+                         check="round structure")
+
+    def test_a_part_given_twice_or_a_missing_verdicts_part_fails(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        judged = self.repo.redesign()
+        self.repo.record({1: round_text(1, judged[:12], plan=True) + "\n### Plan and free pass\n\nAgain.\n"})
+        self.repo.commit("b: a part twice")
+        self.assertFails("gives its '### Plan and free pass' part a second time", check="round structure")
+        self.repo.git("reset", "-q", "--hard", "HEAD~1")
+        self.repo.rounds = {}
+        judged = self.repo.redesign()
+        self.repo.record({1: round_text(1, judged[:12]).replace("### Findings", "### Findings\n\nx\n\n### Findings", 1)})
+        self.repo.commit("b: findings twice")
+        self.assertFails("gives its '### Findings' part a second time", check="round structure")
+        self.repo.git("reset", "-q", "--hard", "HEAD~1")
+        self.repo.rounds = {}
+        judged = self.repo.redesign()
+        self.repo.record({1: round_text(1, judged[:12]).replace("### Verdicts", "### Verdict", 1)})
+        self.repo.commit("b: no verdicts part")
+        self.assertFails("round 1 of the record at HEAD: it has no '### Verdicts' part", check="round structure")
+
+    def test_a_findings_or_verdicts_part_the_command_cannot_read_fails(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        header = "| Finding | Raised by | Severity | What and where | Rule | Added as | Planning shortfall | Closed by |"
+        cases = {
+            "its Findings table: it holds no table": lambda t: t[:t.index(header)] + "Finding: none\n",
+            "its Findings table: its verdict table has no separator row of dashes": lambda t: t.replace(
+                "|---|---|---|---|---|---|---|---|\n", ""),
+            "its Findings table has no Raised by column": lambda t: t.replace("Raised by", "Raised"),
+            "its Findings table gives finding 1.1 more than once": lambda t: t + finding("1.1", what="again") + "\n",
+            "which is not part of its one table": lambda t: t + "\nSee also finding 1.1.\n",
+            "its Findings table: line": lambda t: t + "\n" + header + "\n|---|---|---|---|---|---|---|---|\n",
+            "its Verdicts table is headed 'Item | Kind | Severity | Result | Rests on | Why'": lambda t: t.replace(
+                "| Verdict |", "| Result |"),
+            "its Verdicts table: it holds no table": lambda t: re.sub(r"(?m)^\|.*\n", "", t[:t.index("### Findings")]) +
+            t[t.index("### Findings"):],
+        }
+        for expected, edit in cases.items():
+            with self.subTest(expected=expected):
+                self.repo = Repo(self)
+                self.structured(edit)
+                self.assertFails(expected, check="round structure")
+
+    def test_an_unreadable_part_in_an_older_version_only_fails_naming_that_commit(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        self.repo.built(1)
+        good = self.repo.rounds[1]
+        self.repo.rounds[1] = good.replace("### Findings", "### Findings and closures")
+        self.repo.record()
+        bad = self.repo.commit("b: rename")
+        self.repo.rounds[1] = good
+        self.repo.record()
+        self.repo.commit("b: restore")
+        self.assertFails(f"round 1 of the version of the record at {bad[:12]}: line", check="round structure")
+
+    def test_a_backtick_line_with_a_backtick_in_its_info_string_is_no_fence_so_the_round_after_it_is_seen(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when any round's opening lines, verdict table or findings differ from that round's end-of-round commit, naming the board, the round and what differs.
+        judged = self.repo.redesign()
+        self.repo.record_round(1, judged[:12], plan=True)
+        attack = self.repo.rounds[1] + "\n```x```\n" + round_text(2, judged[:12]) + "```\n"
+        self.repo.write("b/layout-review.md", "# Layout review\n\n" + attack)
+        self.repo.commit("b: hide a round behind a line that is no fence")
+        # round 2 is seen as a round, and the trailing fence it cannot close fails the structure
+        self.assertFails("a code fence opened at line", "is never closed", check="round structure")
+        statuses = [c["check"] for c in self.repo.run()[2]["checks"]]
+        self.assertIn("round 2 as first recorded", statuses)
+
+    def test_a_fence_follows_the_commonmark_rule(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: It passes a record whose rounds only ever grew.
+        quoted = "````\n```\n## Round 9\n```\n## Round 8\n````\n\n### Verdicts"
+        judged = self.repo.redesign()
+        self.repo.record({1: round_text(1, judged[:12]).replace("### Verdicts", quoted, 1)})
+        self.repo.commit("b: a four-backtick fence holding a three-backtick block")
+        self.assertPasses()
+        lines, _ = board_review_history.record_lines(quoted)
+        self.assertEqual([line for _, line, fenced in lines if line.startswith("## Round")], ["## Round 9", "## Round 8"])
+        self.assertTrue(all(fenced for _, line, fenced in lines[:6]))
+        self.assertFalse(lines[-1][2])
+        for form in ("   ```", "~~~~ info", "```py"):
+            self.assertTrue(board_review_history.record_lines(form)[0][0][2], form)
+        for form in ("    ```", "```x```", "~~", "`` `", "x ```"):
+            self.assertFalse(board_review_history.record_lines(form)[0][0][2], form)
+
+    def test_a_closer_shorter_than_its_opener_or_with_text_after_it_leaves_the_fence_open(self):
+        # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: fails when a round recorded in an earlier commit is missing, naming the board, the round and what differs.
+        for opener, closer in (("````", "```"), ("```", "``` x"), ("~~~~", "~~~"), ("```", "    ```")):
+            with self.subTest(opener=opener, closer=closer):
+                self.repo = Repo(self)
+                judged = self.repo.redesign()
+                self.repo.record({1: round_text(1, judged[:12]).replace(
+                    "### Verdicts", f"{opener}\n{closer}\n### Verdicts", 1)})
+                self.repo.commit("b: a fence the closer does not close")
+                self.assertFails("is never closed", check="round structure")
+
+    def test_a_conforming_record_passes_the_round_structure(self):
         # SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK.C1: It passes a record whose rounds only ever grew.
         self.repo.built(2)
         _, document = self.assertPasses()
-        self.assertEqual([c["verdict"] for c in document["checks"] if c["check"] == "round headings"], ["PASS"])
+        self.assertEqual([c["verdict"] for c in document["checks"] if c["check"] == "round structure"], ["PASS"])
 
 
 class Proof(unittest.TestCase):
@@ -658,6 +825,11 @@ class Documentation(unittest.TestCase):
         for words in ("task hw:review-history -- --folder", "layout review record", "refuses", "needs git and Python only",
                       "2 when the command is refused"):
             self.assertIn(words, notes)
+        for words in ("the round structure", "`### Plan and free pass`", "This round raises no finding.",
+                      "the separation basis record among them"):
+            self.assertIn(words, notes)
+        self.assertIn("`round structure`", self.read("docs", "board-design-method.md"))
+        self.assertIn("each round only the parts the command reads", task)
 
 
 if __name__ == "__main__":

@@ -7,11 +7,18 @@ has the closing round judge the board as it stands. Neither is taken on the
 record's word. This command reads every version of the record reachable from
 HEAD and judges:
 
-- The round headings. A line of any version of the record that mentions a round
-  heading, outside a code fence, in any way but exactly `## Round <n>` (`n` a
-  positive integer, no leading zero), a `## Round <n>` heading given twice in
-  one version, or a code fence left open at the end of a version, fails, since a
-  round so written is one the command cannot guard.
+- The round structure. A round must be fully accounted for by the parts the command reads, in the record at HEAD and in
+  every earlier version of it. A line, outside a code fence, that mentions a round heading in any way but exactly
+  `## Round <n>` (`n` a positive integer, no leading zero), a `## Round <n>` heading given twice in one version, or a code
+  fence left open at the end of a version, fails. So does a round holding, outside a code fence, any heading line, a line
+  that begins with `#`, an HTML heading or a line of only dashes or equals signs, other than exactly `### Verdicts`,
+  `### Findings` or `### Plan and free pass`; a round with no Verdicts part, or with one of those parts twice; a Verdicts or
+  Findings part holding anything but one table, or whose table the command cannot read (a Verdicts table headed
+  Item, Kind, Severity, Verdict, Rests on and Why; a Findings table with Finding, Raised by, Severity and What and where
+  columns, each finding numbered once). A round runs from its heading to the next `## Round <n>` heading, a line
+  beginning `## ` in a code fence neither ending it nor counting as a heading. A round with no findings may leave the
+  Findings part out or give it only the line `This round raises no finding.`, but not hold one it cannot read. The Plan and free pass part is prose the method does not have
+  compared.
 - The rounds kept. A `## Round <n>` heading in any earlier version of the
   record that the record at HEAD lacks fails, and so does a record holding no
   round.
@@ -65,7 +72,7 @@ import board_check  # noqa: E402
 from board_check import CannotRun, clean  # noqa: E402
 from board_placement import cells  # noqa: E402
 from board_geometry import Unreadable  # noqa: E402
-from board_history import History, Report, cited, difference, fields, section, short, table  # noqa: E402
+from board_history import History, Report, cited, difference, fields, short, table  # noqa: E402
 
 #: The review record, in the board's own folder.
 RECORD = "layout-review.md"
@@ -76,82 +83,162 @@ ROUND = re.compile(r"## Round ([1-9][0-9]*)[ \t]*")
 #: Any line that mentions a round's heading in any way, whatever its depth, case, emphasis, spacing or indent, that must
 #: be the one form or be refused.
 HEADING = re.compile(r"\s*(#+\s*)?[*_`]*\s*round\s*\d", re.IGNORECASE)
-FENCE = ("```", "~~~")
+#: A line that may open a code fence, and a line that may close one.
+FENCE_OPEN = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
+FENCE_CLOSE = re.compile(r" {0,3}(`{3,}|~{3,})[ \t]*")
+#: The only subheadings a round holds, each in exactly this form.
+PART = re.compile(r"### (Verdicts|Findings|Plan and free pass)[ \t]*")
+#: Any line that is, or may be read as, a heading of some other kind: one beginning `#`, an HTML heading, or the underline
+#: of a heading written over it. In a round, outside a code fence, it must be one of the PART forms.
+OTHER_HEADING = re.compile(r"\s*(#|<h[1-6]\b|=+\s*$|-{2,}\s*$)", re.IGNORECASE)
+#: The columns of the verdict table, in the order the method gives them.
+VERDICT_COLUMNS = ["Item", "Kind", "Severity", "Verdict", "Rests on", "Why"]
 #: The columns of a finding that are compared: the Closed by column, and the rest, are not.
 COMPARED = ["Raised by", "Severity", "What and where"]
 NUMBER = "Finding"
+#: The one line a Findings part holds, in place of its table, when the round raises no finding.
+NO_FINDINGS = "This round raises no finding."
+
+#: A line of a record: its number, its text and whether it is a code fence's mark or inside a code fence.
+Line = Tuple[int, str, bool]
+
+
+def record_lines(text: Optional[str]) -> Tuple[List[Line], Optional[int]]:
+    """Every line of a record, and the line a code fence was opened at and never closed, if one was. Lines are split on
+    newlines alone, so a trailing carriage return is part of the line. Fences follow the CommonMark rule: an opener is
+    up to three spaces, then a run of three or more backticks or tildes, and for backticks an info string holding no
+    backtick; a fence closes only on a line of up to three spaces, a run of the same character at least as long as the
+    opener's, and nothing after it but spaces or tabs. A line indented four spaces or more opens nothing."""
+    lines: List[Line] = []
+    opener: Optional[Tuple[str, int]] = None
+    opened = 0
+    for index, line in enumerate((text or "").split("\n"), 1):
+        if opener is None:
+            mark = FENCE_OPEN.fullmatch(line)
+            if mark and not (mark.group(1)[0] == "`" and "`" in mark.group(2)):
+                opener, opened = (mark.group(1)[0], len(mark.group(1))), index
+                lines.append((index, line, True))
+                continue
+        else:
+            mark = FENCE_CLOSE.fullmatch(line)
+            if mark and mark.group(1)[0] == opener[0] and len(mark.group(1)) >= opener[1]:
+                opener = None
+            lines.append((index, line, True))
+            continue
+        lines.append((index, line, False))
+    return lines, opened if opener is not None else None
 
 
 def round_headings(text: Optional[str]) -> Tuple[List[int], List[Tuple[int, str]], Optional[int]]:
-    """The round numbers a record's `## Round <n>` headings give, in order, every other line that mentions a round's
-    heading, as (line number, line), and the line a code fence was opened at and never closed, if one was. Lines are
-    split on newlines alone, so a trailing carriage return is part of the line. The lines inside a code fence are not
-    headings, and a fence closes only with the character that opened it."""
+    """The round numbers a record's `## Round <n>` headings give, in order, every other line outside a code fence that
+    mentions a round's heading, as (line number, line), and the line a code fence was opened at and never closed."""
     numbers: List[int] = []
     malformed: List[Tuple[int, str]] = []
-    opener: Optional[str] = None
-    opened = 0
-    for index, line in enumerate((text or "").split("\n"), 1):
-        marks = line.lstrip()[:3]
-        if marks in FENCE:
-            if opener is None:
-                opener, opened = marks[0], index
-            elif marks[0] == opener:
-                opener = None
-            continue
-        if opener is not None:
+    lines, unclosed = record_lines(text)
+    for index, line, fenced in lines:
+        if fenced:
             continue
         mark = ROUND.fullmatch(line)
         if mark:
             numbers.append(int(mark.group(1)))
         elif HEADING.match(line):
             malformed.append((index, line))
-    return numbers, malformed, opened if opener is not None else None
+    return numbers, malformed, unclosed
 
 
 def round_numbers(text: Optional[str]) -> List[int]:
     return round_headings(text)[0]
 
 
+def round_bodies(text: Optional[str]) -> Dict[int, List[Line]]:
+    """The lines of each round, by number, from after its `## Round <n>` heading to the next such heading or the end of
+    the record. A line in a code fence neither ends a round nor is a heading. A round given twice brings both."""
+    bodies: Dict[int, List[Line]] = {}
+    current: Optional[int] = None
+    for index, line, fenced in record_lines(text)[0]:
+        mark = None if fenced else ROUND.fullmatch(line)
+        if mark:
+            current = int(mark.group(1))
+            bodies.setdefault(current, [])
+        elif current is not None:
+            bodies[current].append((index, line, fenced))
+    return bodies
+
+
 # --- Reading a round -------------------------------------------------------------------------
 
 
 class Round:
-    """What a round holds that is compared: its opening lines, its verdict table and its findings."""
+    """What a round holds that is compared: its opening lines, its verdict table and its findings. Everything in the
+    round it cannot read, as a fault, since a part of a round it does not read is a part it does not guard."""
 
-    def __init__(self, lines: List[str]):
+    def __init__(self, body: List[Line]):
         self.faults: List[str] = []
-        parts: Dict[str, List[str]] = {"": []}
+        parts: Dict[str, List[Line]] = {"": []}
+        seen: Counter = Counter()
         name = ""
-        for line in lines[1:]:
-            if line.startswith("### "):
-                name = line[4:].strip()
-                parts.setdefault(name, [])
-                continue
-            parts[name].append(line.strip())
-        self.opening = parts[""]
+        for index, line, fenced in body:
+            if not fenced:
+                mark = PART.fullmatch(line)
+                if mark:
+                    name = mark.group(1)
+                    seen[name] += 1
+                    if seen[name] > 1:
+                        self.faults.append(f"line {index} gives its '### {name}' part a second time")
+                    parts.setdefault(name, [])
+                    continue
+                if OTHER_HEADING.match(line) and not HEADING.match(line):
+                    self.faults.append(f"line {index} reads '{line.strip()}', a heading the command cannot read; a round "
+                                       f"holds only the subheadings '### Verdicts', '### Findings' and "
+                                       f"'### Plan and free pass'")
+            parts[name].append((index, line, fenced))
+        self.opening = [line.strip() for _, line, _ in parts[""] if line.strip()]
+        if "Verdicts" not in parts:
+            self.faults.append("it has no '### Verdicts' part")
         self.verdicts = self.read(parts.get("Verdicts"), "its Verdicts table")
-        self.findings = self.read(parts.get("Findings"), "its Findings table")
+        self.findings = self.read(parts.get("Findings"), "its Findings table", NO_FINDINGS)
+        if self.verdicts[0] and self.verdicts[0] != VERDICT_COLUMNS:
+            self.faults.append(f"its Verdicts table is headed '{' | '.join(self.verdicts[0])}' where the method gives "
+                               f"'{' | '.join(VERDICT_COLUMNS)}'")
         self.numbers: List[str] = []
         self.compared: Dict[str, Dict[str, str]] = {}
         header, rows = self.findings
-        if rows and NUMBER not in header:
-            self.faults.append(f"its Findings table has no {NUMBER} column")
-        for column in COMPARED:
-            if rows and column not in header:
-                self.faults.append(f"its Findings table has no {column} column")
-        if not self.faults:
+        columns = [column for column in [NUMBER] + COMPARED if header and column not in header]
+        self.faults += [f"its Findings table has no {column} column" for column in columns]
+        if len(set(header)) != len(header):
+            self.faults.append("its Findings table has a column named twice")
+        elif not columns:
             for row in rows:
                 named = dict(zip(header, row))
+                if named[NUMBER] in self.compared:
+                    self.faults.append(f"its Findings table gives finding {named[NUMBER]} more than once")
+                    continue
                 self.numbers.append(named[NUMBER])
-                self.compared.setdefault(named[NUMBER], {column: named[column] for column in COMPARED})
+                self.compared[named[NUMBER]] = {column: named[column] for column in COMPARED}
 
-    def read(self, lines: Optional[List[str]], what: str) -> Tuple[List[str], List[List[str]]]:
-        """The header and rows of the first table in a subsection; none when the subsection holds none."""
-        header = next((cells(line) for line in lines or [] if line.startswith("|")), None)
-        if header is None:
+    def read(self, lines: Optional[List[Line]], what: str,
+             instead: Optional[str] = None) -> Tuple[List[str], List[List[str]]]:
+        """The header and rows of the one table a part holds, or none when the part holds only the line `instead`. A
+        part holding anything else, a second table, text or a code fence among them, or a table with no readable
+        header, is a fault, and a part the round lacks reads as empty."""
+        if lines is None:
             return [], []
-        _, rows, faults = table(lines or [], header)
+        entries = [(index, line.strip(), fenced) for index, line, fenced in lines]
+        start = next((place for place, (_, line, fenced) in enumerate(entries)
+                      if not fenced and line.startswith("|")), None)
+        if start is None and instead is not None and [(line, fenced) for _, line, fenced in entries if line] == [
+                (instead, False)]:
+            return [], []
+        if start is None:
+            self.faults.append(f"{what}: it holds no table")
+            return [], []
+        end = start
+        while end < len(entries) and not entries[end][2] and entries[end][1].startswith("|"):
+            end += 1
+        self.faults += [f"{what}: line {index} reads '{line}', which is not part of its one table"
+                        for index, line, _ in entries[:start] + entries[end:] if line]
+        header = cells(entries[start][1])
+        _, rows, faults = table([line for _, line, _ in entries[start:end]], header)
         self.faults += [f"{what}: {fault}" for fault in faults]
         return header, rows
 
@@ -203,7 +290,7 @@ def judge_record(history: History, folder: str, record: str, design: set, report
         return path in design or (path.startswith(prefix) and not path.endswith(RECORD_SUFFIXES))
 
     blobs = history.blobs(history.order, record)
-    parsed: Dict[str, Tuple[List[int], List[Tuple[int, str]], Optional[int]]] = {}
+    parsed: Dict[str, Tuple[List[int], List[Tuple[int, str]], Optional[int], Dict[int, Round]]] = {}
     first: Dict[int, str] = {}
     unjudgeable: List[str] = []
     name = folder or "."
@@ -212,8 +299,10 @@ def judge_record(history: History, folder: str, record: str, design: set, report
         if blob is None:
             continue
         if blob not in parsed:
-            parsed[blob] = round_headings(history.text(commit, record))
-            numbers, malformed, unclosed = parsed[blob]
+            text = history.text(commit, record)
+            rounds = {number: Round(body) for number, body in round_bodies(text).items()}
+            parsed[blob] = (*round_headings(text), rounds)
+            numbers, malformed, unclosed, _ = parsed[blob]
             version = "the record at HEAD" if blob == blobs[head] else f"the version of the record at {short(commit)}"
             unjudgeable += [f"{name}: line {line} of {version} reads '{text}', which mentions a round heading that "
                             f"is not exactly '## Round <n>', so is a round the command cannot judge"
@@ -223,6 +312,8 @@ def judge_record(history: History, folder: str, record: str, design: set, report
                                    f"the rounds after it are unguarded")
             unjudgeable += [f"{name}: {version} holds round {number} more than once"
                             for number in sorted(n for n, count in Counter(numbers).items() if count > 1)]
+            unjudgeable += [f"{name}: round {number} of {version}: {fault}"
+                            for number, one in sorted(rounds.items()) for fault in one.faults]
         for number in parsed[blob][0]:
             first.setdefault(number, commit)
     now_text = history.text(head, record)
@@ -232,21 +323,17 @@ def judge_record(history: History, folder: str, record: str, design: set, report
     if not present:
         faults.append(f"{name}: the record at HEAD holds no round, a '## Round <n>' heading")
     report.add("rounds kept", faults, f"every one of the {len(present)} rounds recorded in any version is in the record")
-    report.add("round headings", unjudgeable,
-               "every round heading in every version of the record is '## Round <n>', none is given twice and no "
-               "code fence is left open")
+    report.add("round structure", unjudgeable,
+               "every round heading in every version of the record is '## Round <n>', none is given twice, no "
+               "code fence is left open, and every round is only the parts the command reads, each as it reads them")
     if not present:
         return
     changed = changed_paths(history)
     for number in present:
         end = first[number]
-        then, now = Round(section(history.text(end, record), f"Round {number}") or []), \
-            Round(section(now_text, f"Round {number}") or [])
-        faults = [f"{name}: round {number} as first recorded at {short(end)}: {fault}" for fault in then.faults]
-        faults += [f"{name}: round {number} at HEAD: {fault}" for fault in now.faults]
-        if not faults:
-            faults = [f"{name}: round {number} differs from its end-of-round commit {short(end)}: {fault}"
-                      for fault in differences(then, now)]
+        then, now = parsed[blobs[end]][3][number], parsed[blobs[head]][3][number]
+        faults = [f"{name}: round {number} differs from its end-of-round commit {short(end)}: {fault}"
+                  for fault in differences(then, now)]
         report.add(f"round {number} as first recorded", faults,
                    f"the round's opening lines, verdict table and findings are as {short(end)} first recorded them")
         judged = cited(fields(then.opening, ["Board judged"]).get("Board judged", (0, ""))[1])
