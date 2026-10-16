@@ -1,0 +1,13 @@
+id: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE.C2
+type: criterion
+title: A pump channel's commanded level is delivered by the drive form the ripple simulation shows holds the declared ripple bound
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+closes_by: cascade
+text: |
+  The drive form is chosen from the simulated ripple at the puck and is recorded with that result. Whether stroke-level coil current is measured is decided from the same simulation and recorded with it.
+links:
+  - target: DEL-MAINS-PHASED-ACTUATION-IN-TARGET-FIRMWARE
+    type: criterion-of

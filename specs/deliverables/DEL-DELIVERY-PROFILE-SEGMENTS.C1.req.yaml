@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C1
+type: criterion
+title: A delivery profile is an ordered list of segments, each commanding pressure or flow and limiting the other
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  Each segment declares its primary variable, the limit held on the other, the shape of the transition into it, the condition on which it ends and the water temperature it holds. A profile in which a segment commands both, commands neither or omits any of these is refused before the delivery begins, and the refusal names the segment and the missing or conflicting field in both the text and the JSON report.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

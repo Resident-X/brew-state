@@ -1,0 +1,13 @@
+id: DEL-BREW-PLANT-FIDELITY.C6
+type: criterion
+title: The compliance the suction-line flow meter sees is simulated, so its reading can be related to the flow at the puck
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The simulated meter reading and the simulated puck flow are reported together, with the difference the compliance makes between them.
+links:
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: criterion-of

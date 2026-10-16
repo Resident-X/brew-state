@@ -1,0 +1,13 @@
+id: DEL-BREW-PLANT-FIDELITY.C7
+type: criterion
+title: The allowed ripple at the puck is declared and every simulated drive form is checked against it
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The figure is declared with its origin, which is a decision the owner has yet to make, and the control reads it as data. A drive form whose simulated ripple exceeds it is reported as failing, in both the text and the JSON form.
+links:
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: criterion-of

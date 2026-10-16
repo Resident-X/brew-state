@@ -1,0 +1,13 @@
+id: DEL-BREW-PLANT-FIDELITY.C5
+type: criterion
+title: The pressure and flow ripple at the puck is simulated for phase-dimmed drive and for cycle-skipped drive
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The ripple is reported per drive form and per commanded level, in both the text and the JSON form.
+links:
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: criterion-of

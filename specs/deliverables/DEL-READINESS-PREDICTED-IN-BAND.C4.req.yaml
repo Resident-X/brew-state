@@ -1,0 +1,13 @@
+id: DEL-READINESS-PREDICTED-IN-BAND.C4
+type: criterion
+title: The estimator's declared error is part of the readiness test
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  A purpose is reported ready only when its predicted delivery is inside the band across the estimator's declared error in the starting state, so a state the estimator cannot vouch for does not read as ready.
+links:
+  - target: DEL-READINESS-PREDICTED-IN-BAND
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED-C1-TEST-10
+type: evidence
+title: test evidence for SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T19:59:01.048859Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_the_finding_states_the_peaks_the_generated_record_gives, test_the_interval_is_pending_against_the_sibling_solution, test_the_check_notices_a_derived_interval_or_a_lost_pending_mark, test_the_committed_record_carries_the_generators_banner, test_the_generated_text_carries_the_banner
+  artifact_version: cccb0e2a9dfa2b218b85cca46a2ff91132c69463
+attested_by: crun-76fa82388389a9dc
+links:
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+    type: satisfies

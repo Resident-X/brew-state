@@ -1,0 +1,12 @@
+id: SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C2
+type: criterion
+title: The board tooling's tests pass on the hosted runner's KiCad installation
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The board tooling's tests that the nightly runs, namely the view renderer's tests, the seeded review folder's tests and the check task's whole-repository test, pass on a hosted Ubuntu runner with the KiCad and fonts that workflow installs. The runner's KiCad is a different build from the author's, and where its command-line tool reports a non-zero status while still writing the artefact asked for, the tooling decides from what it actually wrote and reports the cause, rather than failing every render on the status alone, and a non-zero status with no artefact or an unreadable one is still reported as unreadable with its cause. Tests drive that decision with a stand-in for the command-line tool that writes the artefact with a non-zero status and one that writes nothing, in text and in JSON output. Out of scope: runners for other operating systems.
+links:
+  - target: SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER
+    type: criterion-of

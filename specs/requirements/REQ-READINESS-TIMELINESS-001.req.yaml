@@ -4,7 +4,7 @@ category: functional
 title: Readiness is reached in close to the least time the machine's physics allows
 status: active
 priority: must
-version: 3
+version: 4
 text: |
   How accurately the machine holds temperature and how quickly it gets there are separate claims, and only the first has been made. A controller that settles perfectly after forty minutes satisfies every temperature requirement in this graph.
 
@@ -18,7 +18,7 @@ rationale: |-
 
   The bound is expressed against the machine's declared description rather than in minutes, so that it is meaningful on an adopter's hardware and so that a structure with different physics is held to its own floor rather than to the reference machine's. The obvious weakness is that a wrong description moves the floor and lets a controller score well against its own error; that is accepted deliberately, because this is a claim about the controller and the truth of the description is carried separately by the requirements on validating and committing a model.
 
-  Settling rather than arrival is the measured event, or a controller that reaches target quickly and then rings around it would score better than one that arrives calmly and stays.
+  The measured event is the machine being ready as readiness is defined, meaning the delivery it would make from its present state is inside its band, rather than arrival at target, or a controller that reaches target quickly and then rings around it would score better than one that arrives calmly and stays. The wait is also bounded by a declared limit, because a prediction can fail and an unbounded wait would leave the user waiting on a machine that cannot say when it will be ready; at that limit the machine reports what it could not establish.
 
   The overshoot criterion is not about elegance. This machine operates close enough to its protection trip point that the margin is thin, and a time-optimal approach spends exactly that margin. Bounding overshoot against the margin rather than against zero leaves the aggressive approach available where the margin can carry it.
 

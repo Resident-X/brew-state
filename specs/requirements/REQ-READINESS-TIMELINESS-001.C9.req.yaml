@@ -1,0 +1,12 @@
+id: REQ-READINESS-TIMELINESS-001.C9
+type: criterion
+title: Readiness that cannot be predicted within the limit is reported rather than waited on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  At the declared limit the machine neither keeps waiting without saying so nor declares itself ready: it reports for which purpose readiness could not be predicted and what it could not establish, such as an estimate that has not converged. The user is left something to act on instead of a wait with no end.
+links:
+  - target: REQ-READINESS-TIMELINESS-001
+    type: criterion-of

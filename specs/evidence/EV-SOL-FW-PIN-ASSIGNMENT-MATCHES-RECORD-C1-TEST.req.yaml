@@ -1,0 +1,16 @@
+id: EV-SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD-C1-TEST
+type: evidence
+title: test evidence for SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T23:06:23.922734Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_pin_assignment_checks.py::test_the_unmodified_synthetic_pair_passes, test_comment_labels_beside_the_table_are_not_what_names_a_channel, test_the_pin_named_in_a_comment_is_not_read_as_the_table, test_a_channel_on_a_different_pin_than_the_record_fails, test_the_port_is_read_from_the_init_call_and_not_fixed_in_the_check, test_the_same_number_on_another_port_is_a_different_pin, test_a_channel_named_twice_in_the_record_fails, test_two_channels_on_one_pin_in_the_firmware_table_fail, test_two_channels_on_one_pin_in_the_record_fail, test_a_pin_not_written_as_port_letter_then_number_fails, test_a_table_entry_that_is_not_a_plain_pin_constant_fails, test_a_table_no_function_uses_leaves_no_port_to_read_and_fails, test_a_table_used_with_no_recognisable_port_fails, test_a_table_initialised_on_two_ports_fails
+  artifact_version: 6812dd8f669738276b15152211069d7cf1e5112b
+attested_by: crun-c7c7aafc8edf7b52
+links:
+  - target: SOL-FW-PIN-ASSIGNMENT-MATCHES-RECORD.C1
+    type: satisfies

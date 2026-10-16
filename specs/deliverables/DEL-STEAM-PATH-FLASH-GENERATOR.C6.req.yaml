@@ -1,0 +1,13 @@
+id: DEL-STEAM-PATH-FLASH-GENERATOR.C6
+type: criterion
+title: The plant description states the flash-generator relations, their declared error and what they leave out
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The description states what the casting ceiling bounds and what it does not, and that containment of trapped pressure without power, sensing or command is not claimed by the model.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: criterion-of

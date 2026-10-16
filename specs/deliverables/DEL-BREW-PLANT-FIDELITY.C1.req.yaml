@@ -1,0 +1,13 @@
+id: DEL-BREW-PLANT-FIDELITY.C1
+type: criterion
+title: The sensor's lag and the element's lag are carried in the coffee plant model as declared coefficients with their origin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The temperature a sensor reports trails the casting it sits in, and the heat an element delivers trails its command. Both are described coefficients with a declared error, and the estimator and the control run against them.
+links:
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: criterion-of

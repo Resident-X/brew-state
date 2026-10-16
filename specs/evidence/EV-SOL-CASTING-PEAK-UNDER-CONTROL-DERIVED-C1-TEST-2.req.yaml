@@ -1,0 +1,16 @@
+id: EV-SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED-C1-TEST-2
+type: evidence
+title: test evidence for SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-15T19:59:00.167723Z"
+artifact:
+  kind: external
+  reference: firmware/emulation/tests/test_casting_peak.py::test_the_coffee_target_is_the_highest_the_loop_admits_and_nothing_above_it, test_the_hot_water_target_is_read_from_the_declared_drinking_ceiling, test_the_largest_single_precision_number_below_a_figure_is_the_next_one_down, test_the_steam_target_is_the_highest_the_loop_comes_up_at_and_it_refuses_above, test_a_declaration_without_a_ready_temperature_cannot_be_rewritten
+  artifact_version: cccb0e2a9dfa2b218b85cca46a2ff91132c69463
+attested_by: crun-76fa82388389a9dc
+links:
+  - target: SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED.C1
+    type: satisfies

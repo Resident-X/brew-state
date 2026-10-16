@@ -1,0 +1,12 @@
+id: SOL-BOARD-FLOORPLAN-REGION-NAMES-DISTINCT.C1
+type: criterion
+title: The floorplan reader stops on a repeated region name
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Change the floorplan reader so it stops, naming the region, when two rows of the floorplan carry the same region name, so the history command's plan compare never judges a plan against an identical copy of itself as changed and never hides a change to one row behind another. Tests in throwaway repositories show a plan with a repeated region name stops rather than fails as changed, in the history command and in the placement command, and that a plan with distinct names is read as before. Out of scope: any other reading of the floorplan table.
+links:
+  - target: SOL-BOARD-FLOORPLAN-REGION-NAMES-DISTINCT
+    type: criterion-of

@@ -2,9 +2,9 @@ id: DEF-READINESS
 type: definition
 title: readiness
 status: active
-version: 2
+version: 3
 text: |
-  Readiness is the condition in which the machine could begin a delivery immediately if one were asked for, having reached and settled at the state that delivery requires.
+  Readiness is the condition in which the machine could begin a delivery immediately if one were asked for, judged by prediction: the delivery that would result from the machine's current estimated state, were it asked for now, falls inside the band that delivery is held to. For coffee that holds from the first millilitre; for steam, the steam is dry from the first millilitre. It is neither a timer that has run out nor a setpoint that has been reached, because a state can sit at its setpoint and still deliver out of band, and can deliver in band before the setpoint is touched.
 
   It is a per-purpose condition rather than a single machine state: being ready to brew, to steam and to dispense hot water are different conditions with different settling behaviour, and a machine may be in one and not another. What distinguishes reaching readiness from a delivery is that nothing leaves the machine: water may move within it, since moving water through a heated mass is one of the ways a machine redistributes its own heat, but anything the machine sends out of itself is a delivery and carries everything that attaches to one.
 rationale: |

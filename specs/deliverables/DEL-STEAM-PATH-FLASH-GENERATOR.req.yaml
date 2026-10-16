@@ -1,0 +1,38 @@
+id: DEL-STEAM-PATH-FLASH-GENERATOR
+type: deliverable
+category: task
+title: The steam path is a flash generator in the plant model and the control, with feed setting pressure and heater power setting dryness
+status: active
+level: task
+version: 1
+text: |
+  The steam path is a flash generator in the plant model and in the control. Water is fed to a block that holds no standing water, so while the wand is open the pressure is set by the steam flowing out through the tube, valve and tip and is set by the feed, not by the casting temperature. The feed pump is the actuator for pressure and quantity and heater power is the actuator for dryness, which is the balance between the heater, the sensible heat of the water fed and the latent heat carried out.
+
+  With the wand shut and liquid trapped in the closed block, pressure is saturation at the casting temperature, and a casting ceiling bounds that case by saturation. The ceiling is a control limit and is not offered as containment. Superheat above saturation at the measured pressure is the only proof the steam is dry, and the machine does not claim to exclude droplet carry-over.
+rationale: |
+  The owner decided the steam block is a flash generator. The plant model written before that decision treats it as a boiler whose pressure follows its temperature, and the steam loop built on it drives the heater to hold pressure. The decision, which addresses the casting-margin and steam-pressure-measurement criteria, names the consequence: the plant model's steam block is rewritten as a flash generator and the pressure loop drives the feed. Nothing in the graph owned that rewrite.
+
+  Placement: a task directly under the roadmap's simulation phase criterion, as the existing steam plant-term and steam-loop tasks are. Both of those are sealed, so the rewrite cannot be added beneath them.
+
+  What this replaces, read in this session. The plant relation that recomputes steam pressure from block temperature through the affine saturation slope (stated in DEL-SIM-STEAM-DRAW-TERM.C3 and in SOL-PLANT-STEAM-DRAW-ENERGY.C3 and .C4, the latter requiring that pressure revert to the affine relation the instant demand returns to zero). The steam control law that holds temperature at rest and tracks pressure during a draw by driving the heater to its ceiling and engaging feed later (SOL-SIM-STEAM-BAND-SUSTAINED). The feed-withhold-below-ready-pressure behaviour is the readiness task's, not this one's. Criteria on sealed solutions cannot be superseded one by one, so the criteria below state the replaced behaviour in full and the slicing session supersedes the owning solutions.
+
+  Left open on purpose: whether a check valve lies between the steam relief and the block, what the steam transducer withstands, and the hardware layer that contains trapped pressure without power or sensing are owned by the inspection criterion DEL-HW-DESIGN-CONSTRAINTS.C6, and this task does not stand in for them. The casting ceiling is a declared figure; the decision's quoted steam-table values are properties of water, not results of this project.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by
+  - target: REQ-STEAM-DELIVERY-001.C1
+    type: targets
+  - target: REQ-PLANT-DESCRIPTION-001.C1
+    type: targets
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C1
+    type: targets
+  - target: DEL-SIM-STEAM-DRAW-TERM
+    type: depends-on
+  - target: DEL-SIM-STEAM-LOOP
+    type: depends-on
+  - target: DEL-SIM-ESTIMATOR
+    type: depends-on

@@ -1,0 +1,13 @@
+id: DEL-BREW-PLANT-FIDELITY.C2
+type: criterion
+title: The temperature of the water leaving the casting differs from the casting temperature at every flow, by a declared effectiveness
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The effectiveness is a described coefficient with a declared error. At no flow does the model equate the outlet water with the casting, and the difference is reported in both the text and the JSON form.
+links:
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: criterion-of

@@ -1,0 +1,42 @@
+id: DEL-SENSOR-NECESSITY-PROVEN
+type: deliverable
+category: task
+title: Each sensor's necessity per operating phase is proven by the identifiability tooling with stated error bounds
+status: active
+level: task
+version: 1
+text: |
+  Whether each sensor is necessary is computed, not asserted. For every sensor and every operating phase, the identifiability tooling states how much the sensor adds to what the estimate can know, as a rank and conditioning of that information, and a lower bound on the estimate error that follows if the sensor is absent. The answer covers the supply voltage, the temperature of the water leaving a block, steam superheat as the only proof of dryness, and the brew pressure together with the flow meter, where neither alone makes the puck resistance observable.
+
+  A sensor the computation finds redundant in a phase is named, with the bound, as an input to the cost decisions and not as an automatic removal.
+rationale: |
+  The estimation requirement that every parameter a reconstructed state depends on is identifiable is satisfied, but it was shown with the identifiability tooling that existed for the earlier sensor set. Since then the measurement requirement was widened to require the leaving-water temperature and the supply voltage to be known to a declared accuracy, the brew pressure sensor was retained as the complement of the flow meter and not as a redundant copy, and steam superheat was named the only proof of dryness. Each of these is a claim about observability that the graph so far asserts in decision prose. A claim that a sensor is or is not needed has to be proven by the tooling with its error bounds, or the cost discipline rests on it unproven.
+
+  Placement: a task directly under the roadmap's simulation phase criterion, as the existing sensitivity task is. That task is sealed as delivered, so this extends its tooling from a sibling and depends on it. It depends on the steam flash-generator task and the coffee plant-fidelity task because necessity is a property of the model it is computed on, and it is re-run when they change it.
+
+  The rate at which the brew pressure is sampled is a declared figure of the channel record, and this task takes it from there. The task statement that prompted this work called it two kilohertz, which is not asserted anywhere in the graph and is not repeated in the criteria.
+
+  What this extends, read in this session: DEL-SIM-SENSITIVITY and its identifiability solutions (SOL-ESTIMATOR-PARAMETER-IDENTIFIABILITY, SOL-ESTIMATOR-IDENTIFIABILITY-UNDER-DRIFT). They remain true for the model they ran on; they are not edited.
+links:
+  - target: DEL-BREW-STATE-DELIVERY.C1
+    type: derives-from
+  - target: DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT
+    type: justified-by
+  - target: DEC-STEAM-BLOCK-IS-A-FLASH-GENERATOR
+    type: justified-by
+  - target: REQ-STATE-ESTIMATION-001.C6
+    type: targets
+  - target: REQ-PARAMETER-SENSITIVITY-001.C1
+    type: targets
+  - target: REQ-PARAMETER-SENSITIVITY-001.C3
+    type: targets
+  - target: REQ-MEASUREMENT-001.C9
+    type: targets
+  - target: REQ-MEASUREMENT-001.C10
+    type: targets
+  - target: DEL-SIM-SENSITIVITY
+    type: depends-on
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: depends-on
+  - target: DEL-BREW-PLANT-FIDELITY
+    type: depends-on

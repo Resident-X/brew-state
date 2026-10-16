@@ -1,0 +1,13 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C6
+type: criterion
+title: The margin is a declared figure carrying its origin, read by the control as data
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The control holds the casting to the margin the description declares, and a machine with a different trip point or a different margin is held to its own.
+links:
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: criterion-of

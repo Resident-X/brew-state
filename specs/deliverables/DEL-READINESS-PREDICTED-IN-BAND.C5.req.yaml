@@ -1,0 +1,13 @@
+id: DEL-READINESS-PREDICTED-IN-BAND.C5
+type: criterion
+title: The wait before a purpose is available is bounded by a limit declared for that purpose
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The limit is declared with the other timing figures and carries its origin, and a machine with a longer floor is held to its own limit. The control reads the limit as data.
+links:
+  - target: DEL-READINESS-PREDICTED-IN-BAND
+    type: criterion-of

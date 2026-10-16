@@ -1,0 +1,13 @@
+id: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE.C7
+type: criterion
+title: The peak casting record is regenerated against the corrected control
+status: active
+version: 1
+measurement_type: binary
+verification: test
+closes_by: cascade
+text: |
+  The peak casting temperature under control (SOL-CASTING-PEAK-UNDER-CONTROL-DERIVED) is regenerated against the control as it then stands, with the generated record's pinned inputs refreshed, so the record reflects the corrected controller and the result produced by the shipped control is no longer presented as the control's behaviour. A record generated before this task's control changes is stale and is not accepted as the peak.
+links:
+  - target: DEL-CASTING-MARGIN-HELD-IN-EVERY-PHASE
+    type: criterion-of

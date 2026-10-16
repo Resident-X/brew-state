@@ -1,0 +1,13 @@
+id: DEL-DELIVERY-PROFILE-SEGMENTS.C3
+type: criterion
+title: The pump is corrected toward the segment's primary variable while the other stays inside its limit
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  In a flow segment the pump is corrected toward the commanded flow with pressure held to its limit, and in a pressure segment toward the commanded pressure with flow held to its limit. The limit on pressure is a declared control figure that lies below the declared setting of the safety relief, and a profile whose limit does not lie below it is refused before the delivery begins.
+links:
+  - target: DEL-DELIVERY-PROFILE-SEGMENTS
+    type: criterion-of

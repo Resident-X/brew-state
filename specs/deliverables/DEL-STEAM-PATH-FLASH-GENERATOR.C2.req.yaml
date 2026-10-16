@@ -1,0 +1,13 @@
+id: DEL-STEAM-PATH-FLASH-GENERATOR.C2
+type: criterion
+title: With the wand shut and liquid trapped in the block, pressure is saturation at the casting temperature and never exceeds saturation at the casting ceiling
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  The casting ceiling is a declared figure with its origin. The bound is reported per run in both the text and the JSON form, and it is stated as a control limit and not as containment.
+links:
+  - target: DEL-STEAM-PATH-FLASH-GENERATOR
+    type: criterion-of
