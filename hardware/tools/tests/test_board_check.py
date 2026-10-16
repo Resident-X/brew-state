@@ -801,7 +801,8 @@ json.dump(report, open(out, "w"))
         self.assertNotEqual(nonces[0], nonces[1], "two runs used the same name for the marker")
         self.assertTrue(all(len(nonce) >= 16 for nonce in nonces))
         for found in runs:
-            self.assertEqual([(v.rule, v.message) for v in found],
+            # This design holds no pin allocation record; the record's own rules are tested apart.
+            self.assertEqual([(v.rule, v.message) for v in found if v.rule != "pin_allocation"],
                              [("assertion_failure", "Assertion failure (rule 'pre-order check: rules loaded')")])
 
 
@@ -1426,8 +1427,10 @@ json.dump(report, open(out, "w"))
                                                  '\t(constraint assertion "false"))\n' + WORKMANSHIP)):
                 write(root, path, text)
             repository = board_check.Repository(root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb", "a/a.kicad_dru"])
-            return board_check.check_design(board_check.Design("a/a.kicad_pro"), repository, fake,
-                                            board_check.require_yaml(), TODAY, [])
+            found = board_check.check_design(board_check.Design("a/a.kicad_pro"), repository, fake,
+                                             board_check.require_yaml(), TODAY, [])
+            # This design holds no pin allocation record; the record's own rules are tested apart.
+            return [v for v in found if v.rule != "pin_allocation"]
 
     def cut(self, found):
         return [v for v in found if v.rule == "custom_rules" and "KiCad's report was cut short" in v.message]
@@ -2225,6 +2228,334 @@ class TheDesignsReadingsAreListedWithoutKiCad(Tree):
                 self.assertEqual(set(read) - reads, set())
                 record = board_check.find_record(REPO, design.directory, repository.tracked)
                 self.assertIn(record, reads)
+                pin_record = board_check.find_record(REPO, design.directory, repository.tracked, board_check.PIN_RECORD_NAME)
+                self.assertIsNotNone(pin_record, "every tracked design is held to a pin allocation record")
+                self.assertIn(pin_record, reads)
+
+
+# --- The pin allocation record and the connectivity it holds a design to ---------
+
+
+PIN_RECORD = """\
+channels:
+  - channel: heater_drive
+    net: HEATER
+    controller_pin: PA0
+    connector: J2
+    connector_pin: 1
+    firmware_channel: kHeater
+  - channel: pump_drive
+    net: PUMP
+    controller_pin: PA1
+    connector: J2
+    connector_pin: 2
+  - channel: status_led
+    net: LED
+    controller_pin: PB3
+"""
+
+
+class PinRecordTree(Tree):
+    """A pin allocation record beside a design two folders down, read as the check reads it."""
+
+    design = board_check.Design("hardware/m/board/board.kicad_pro")
+
+    def record(self, text: str, not_for_manufacture: bool = False):
+        self.write("hardware/m/pin-allocation.yaml", text)
+        found = board_check.find_record(self.root, self.design.directory, name=board_check.PIN_RECORD_NAME)
+        return board_check.read_pin_record(board_check.require_yaml(), self.root, self.design, found, not_for_manufacture)
+
+    def assertFails(self, text: str, location_end: str, words: str, not_for_manufacture: bool = False):
+        channels, problems = self.record(text, not_for_manufacture)
+        self.assertIsNone(channels)
+        self.assertTrue(any(v.rule == "pin_allocation" and v.location.endswith(location_end) and words in v.message
+                            for v in problems), [(v.location, v.message) for v in problems])
+
+
+class ThePinAllocationRecordMustBeUsable(PinRecordTree):
+    def test_a_complete_record_gives_each_channel_and_ignores_the_firmware_keys(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        channels, problems = self.record(PIN_RECORD)
+        self.assertEqual(problems, [])
+        self.assertEqual([(c.channel, c.net, c.controller_pin, c.connector, c.connector_pin) for c in channels],
+                         [("heater_drive", "HEATER", "PA0", "J2", "1"), ("pump_drive", "PUMP", "PA1", "J2", "2"),
+                          ("status_led", "LED", "PB3", None, None)])
+
+    def test_a_connector_pin_written_as_a_number_is_read_as_the_pin_number(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        channels, _ = self.record(PIN_RECORD.replace("connector_pin: 1", "connector_pin: 1\n    firmware_sensor: kX"))
+        self.assertEqual(channels[0].connector_pin, "1")
+
+    def test_a_record_is_found_by_its_own_name_and_the_nearest_wins(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.write("pin-allocation.yaml", PIN_RECORD)
+        self.write("hardware/m/separation-basis.yaml", SIGNED_RECORD)
+        self.write("hardware/m/board/pin-allocation.yaml", PIN_RECORD)
+        self.assertEqual(board_check.find_record(self.root, self.design.directory, name=board_check.PIN_RECORD_NAME),
+                         "hardware/m/board/pin-allocation.yaml")
+        self.assertEqual(board_check.find_record(self.root, "hardware/m", name=board_check.PIN_RECORD_NAME),
+                         "pin-allocation.yaml", "the separation basis record beside it is not the record asked for")
+        self.assertEqual(board_check.find_record(self.root, "hardware/m"), "hardware/m/separation-basis.yaml")
+
+    def test_a_design_with_no_record_at_or_above_it_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        channels, problems = board_check.read_pin_record(board_check.require_yaml(), self.root, self.design, None, True)
+        self.assertIsNone(channels)
+        self.assertEqual([v.rule for v in problems], ["pin_allocation"])
+        self.assertIn("no pin-allocation.yaml", problems[0].message)
+
+    def test_a_record_that_cannot_be_parsed_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails("channels: [unclosed\n", "pin-allocation.yaml", "cannot be parsed")
+
+    def test_a_record_that_is_not_a_mapping_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails("- just\n- a list\n", "pin-allocation.yaml", "not a mapping")
+        self.assertFails("", "pin-allocation.yaml", "not a mapping")
+
+    def test_a_record_giving_a_key_twice_or_using_a_merge_key_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails(PIN_RECORD.replace("    net: PUMP\n", "    net: PUMP\n    net: LED\n"), "pin-allocation.yaml", "more than once")
+        self.assertFails("base: &b {channel: x}\nchannels:\n  - <<: *b\n    net: N\n    controller_pin: PA0\n",
+                         "pin-allocation.yaml", "merge key")
+
+    def test_a_record_with_no_channels_key_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails("chanels: []\n", "channels", "lacks channels")
+        self.assertFails("channels: not-a-list\n", "channels", "lacks channels")
+
+    def test_a_record_listing_no_channel_fails_since_it_would_hold_a_design_to_nothing(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails("channels: []\n", "channels", "lists no channel")
+        self.assertFails("synthetic: true\nchannels:\n", "channels", "lacks channels", not_for_manufacture=True)
+
+    def test_an_entry_missing_a_required_key_fails_naming_the_key_and_the_channel(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        for key in ("net", "controller_pin"):
+            with self.subTest(key=key):
+                text = PIN_RECORD.replace(f"    {key}: {'HEATER' if key == 'net' else 'PA0'}\n", "", 1)
+                self.assertFails(text, "channel heater_drive", f"lacks {key}")
+        self.assertFails(PIN_RECORD.replace("  - channel: heater_drive\n", "  - net: X\n", 1).replace("    net: HEATER\n", ""), "channels[0]", "lacks channel")
+
+    def test_an_entry_that_is_not_a_mapping_or_holds_a_blank_value_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails("channels:\n  - just-text\n", "channels[0]", "not a mapping")
+        self.assertFails(PIN_RECORD.replace("net: HEATER", "net: ''"), "channel heater_drive", "net is ''")
+        self.assertFails(PIN_RECORD.replace("controller_pin: PA0", "controller_pin: [PA0]"), "channel heater_drive", "controller_pin is")
+
+    def test_a_connector_without_its_pin_or_a_pin_without_its_connector_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails(PIN_RECORD.replace("    connector_pin: 1\n", "", 1), "channel heater_drive", "only one of connector and connector_pin")
+        self.assertFails(PIN_RECORD.replace("    connector: J2\n    connector_pin: 1\n", "    connector_pin: 1\n", 1),
+                         "channel heater_drive", "only one of connector and connector_pin")
+
+    def test_a_channel_net_or_pin_listed_twice_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails(PIN_RECORD.replace("channel: pump_drive", "channel: heater_drive"), "channel heater_drive", "channel heater_drive is listed")
+        self.assertFails(PIN_RECORD.replace("net: PUMP", "net: HEATER"), "channel pump_drive", "net HEATER is listed")
+        self.assertFails(PIN_RECORD.replace("controller_pin: PA1", "controller_pin: PA0"), "channel pump_drive", "controller pin PA0 is listed")
+        self.assertFails(PIN_RECORD.replace("connector_pin: 2", "connector_pin: 1"), "channel pump_drive", "connector pin J2 pin 1 is listed")
+
+    def test_a_synthetic_record_passes_only_a_design_marked_not_for_manufacture(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        synthetic = "synthetic: true\n" + PIN_RECORD
+        self.assertFails(synthetic, "synthetic", "marked synthetic", not_for_manufacture=False)
+        channels, problems = self.record(synthetic, not_for_manufacture=True)
+        self.assertEqual((len(channels), problems), (3, []))
+
+    def test_a_record_not_marked_synthetic_passes_either_kind_of_design(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        for flag in (True, False):
+            for text in (PIN_RECORD, "synthetic: false\n" + PIN_RECORD):
+                channels, problems = self.record(text, flag)
+                self.assertEqual((len(channels), problems), (3, []), (flag, text[:20]))
+
+    def test_a_synthetic_mark_that_is_not_true_or_false_fails(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C3: A design with no usable pin allocation record fails, and a synthetic record passes only a design not for manufacture
+        self.assertFails("synthetic: 'yes'\n" + PIN_RECORD, "synthetic", "synthetic is 'yes'", not_for_manufacture=True)
+
+
+def netlist_text(nets: dict) -> str:
+    """KiCad's netlist of the given nets, each name -> its (reference, pin number, pin name or None) nodes."""
+    parts = []
+    for code, (name, nodes) in enumerate(nets.items(), 1):
+        body = "".join(f'(node (ref "{ref}") (pin "{pin}")' + (f' (pinfunction "{function}")' if function else "") + ' (pintype "passive"))'
+                       for ref, pin, function in nodes)
+        parts.append(f'(net (code "{code}") (name "{name}") (class "Default") {body})')
+    return "(export (version \"E\") (nets " + " ".join(parts) + "))"
+
+
+#: A design that satisfies PIN_RECORD: the controller U1 names its pins as KiCad's netlist writes them, with the pin number appended.
+GOOD_NETS = {
+    "/HEATER": [("J2", "1", "Pin_1_1"), ("U1", "7", "PA0_7"), ("R1", "1", None)],
+    "/PUMP": [("J2", "2", "Pin_2_2"), ("U1", "8", "PA1_8")],
+    "LED": [("U1", "9", "AREF/PB3_9"), ("R2", "1", None)],
+    "/GND": [("U1", "1", "VSS_1"), ("R2", "2", None), ("J3", "1", "Pin_1_1")],
+    "unconnected-(U1-PA5-Pad10)": [("U1", "10", "PA5_10")],
+}
+
+
+class TheDesignIsHeldToTheRecordsChannels(PinRecordTree):
+    def channels(self, text: str = PIN_RECORD):
+        channels, problems = self.record(text)
+        self.assertEqual(problems, [])
+        return channels
+
+    def violations(self, nets: dict, text: str = PIN_RECORD):
+        nodes = board_check.schematic_pin_nodes(sexpr.parse_one(netlist_text(nets)))
+        found = board_check.connectivity(self.design_under_check(), "hardware/m/pin-allocation.yaml", self.channels(text), nodes)
+        self.assertEqual({v.rule for v in found} - {"connectivity"}, set())
+        return [(v.location, v.message) for v in found]
+
+    def design_under_check(self):
+        return board_check.Design("hardware/m/board/board.kicad_pro")
+
+    def test_a_design_whose_channels_all_land_where_the_record_says_and_connects_nothing_else_passes(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C2: A channel the record lists and the design lacks, and a net on a pin the record omits, each fail the check
+        self.assertEqual(self.violations(GOOD_NETS), [])
+
+    def test_the_pin_function_keeps_its_name_without_the_number_kicad_appends(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nodes = board_check.schematic_pin_nodes(sexpr.parse_one(netlist_text(GOOD_NETS)))
+        self.assertEqual([pin.names() for pin in nodes["LED"]], [["AREF", "PB3"], []])
+        self.assertEqual([pin.ports() for pin in nodes["LED"]], [["PB3"], []])
+        self.assertEqual(nodes["/HEATER"][1].describe(), "U1 pin 7")
+
+    def test_a_net_on_the_wrong_controller_pin_fails_naming_the_channel_net_and_both_pins(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nets = dict(GOOD_NETS)
+        nets["/HEATER"] = [("J2", "1", "Pin_1_1"), ("U1", "8", "PA1_8")]
+        nets["/PUMP"] = [("J2", "2", "Pin_2_2"), ("U1", "7", "PA0_7")]
+        found = self.violations(nets)
+        self.assertEqual(len(found), 2, found)
+        location, message = found[0]
+        self.assertEqual(location, "hardware/m/pin-allocation.yaml channel heater_drive")
+        for words in ("heater_drive", "/HEATER", "controller pin PA1", "controller pin PA0"):
+            self.assertIn(words, message)
+
+    def test_a_net_that_reaches_no_controller_pin_fails_saying_so(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nets = dict(GOOD_NETS)
+        nets["/PUMP"] = [("J2", "2", "Pin_2_2")]
+        found = self.violations(nets)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("reaches no controller pin, where the record names controller pin PA1", found[0][1])
+
+    def test_a_net_on_the_wrong_pin_of_its_connector_fails_naming_both_pins(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nets = dict(GOOD_NETS)
+        nets["/HEATER"] = [("J2", "2", "Pin_2_2"), ("U1", "7", "PA0_7")]
+        nets["/PUMP"] = [("J2", "1", "Pin_1_1"), ("U1", "8", "PA1_8")]
+        found = self.violations(nets)
+        self.assertEqual(len(found), 2, found)
+        self.assertIn("channel heater_drive: net /HEATER reaches connector pin J2 pin 2, where the record names connector pin J2 pin 1", found[0][1])
+
+    def test_a_net_on_the_wrong_connector_fails_naming_the_connector_it_reached(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nets = dict(GOOD_NETS)
+        nets["/HEATER"] = [("J3", "1", "Pin_1_1"), ("U1", "7", "PA0_7")]
+        nets["/GND"] = [("U1", "1", "VSS_1")]
+        found = self.violations(nets)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("reaches connector pin J3 pin 1, where the record names connector pin J2 pin 1", found[0][1])
+
+    def test_a_channel_with_no_connector_is_held_to_its_controller_pin_only(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nets = dict(GOOD_NETS)
+        nets["LED"] = [("U1", "9", "AREF/PB3_9"), ("J2", "1", "Pin_1_1")]
+        nets["/HEATER"] = [("U1", "7", "PA0_7")]
+        found = self.violations(nets)
+        self.assertEqual([location for location, _ in found], ["hardware/m/pin-allocation.yaml channel heater_drive"], found)
+        self.assertIn("channel heater_drive", found[0][1])
+        nets["LED"] = [("U1", "4", "PB4_4")]
+        found = self.violations(nets)
+        self.assertTrue(any("channel status_led: net LED reaches controller pin PB4, where the record names controller pin PB3" in m
+                            for _, m in found), found)
+
+    def test_a_net_is_matched_with_or_without_the_slash_of_the_top_sheet(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        self.assertEqual(self.violations(GOOD_NETS, PIN_RECORD.replace("net: HEATER", "net: /HEATER")), [])
+        self.assertEqual(self.violations(GOOD_NETS, PIN_RECORD.replace("net: LED", "net: /LED")), [])
+
+    def test_a_listed_channel_the_design_lacks_fails_naming_the_channel_net_and_pins(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C2: A channel the record lists and the design lacks, and a net on a pin the record omits, each fail the check
+        nets = {name: pins for name, pins in GOOD_NETS.items() if name != "/PUMP"}
+        found = self.violations(nets)
+        pump = [(location, message) for location, message in found if "channel pump_drive" in location]
+        self.assertEqual(len(pump), 1, found)
+        for words in ("channel pump_drive", "net PUMP", "controller pin PA1", "connector pin J2 pin 2"):
+            self.assertIn(words, pump[0][1])
+        self.assertIn("which the design does not have", pump[0][1])
+
+    def test_a_net_on_a_controller_pin_the_record_omits_fails_naming_the_net_and_pin(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C2: A channel the record lists and the design lacks, and a net on a pin the record omits, each fail the check
+        nets = dict(GOOD_NETS)
+        nets["/EXTRA"] = [("U1", "5", "PA4_5"), ("R3", "1", None)]
+        found = self.violations(nets)
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0][0], "hardware/m/board/board.kicad_sch U1 pin 5")
+        self.assertIn("net /EXTRA is on controller pin PA4 (U1 pin 5), which the record does not list", found[0][1])
+
+    def test_a_net_on_a_connector_pin_the_record_omits_fails_naming_the_net_and_pin(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C2: A channel the record lists and the design lacks, and a net on a pin the record omits, each fail the check
+        nets = dict(GOOD_NETS)
+        nets["/SPARE"] = [("J2", "3", "Pin_3_3"), ("R3", "1", None)]
+        found = self.violations(nets)
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0][0], "hardware/m/board/board.kicad_sch J2 pin 3")
+        self.assertIn("net /SPARE is on connector pin J2 pin 3, which the record does not list", found[0][1])
+
+    def test_a_pin_nothing_is_connected_to_is_not_a_net_on_an_omitted_pin(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C2: A channel the record lists and the design lacks, and a net on a pin the record omits, each fail the check
+        self.assertEqual(self.violations(GOOD_NETS), [])
+        nets = dict(GOOD_NETS)
+        nets["unconnected-(J2-Pad3)"] = [("J2", "3", "Pin_3_3")]
+        self.assertEqual(self.violations(nets), [])
+
+    def test_pins_that_are_not_port_pins_or_not_on_a_connector_the_record_names_are_not_judged(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C2: A channel the record lists and the design lacks, and a net on a pin the record omits, each fail the check
+        nets = dict(GOOD_NETS)
+        nets["/RAIL"] = [("U1", "2", "VDD_2"), ("U1", "3", "BOOT0_3"), ("C1", "1", None), ("J3", "2", "Pin_2_2")]
+        self.assertEqual(self.violations(nets), [])
+
+    def test_a_pin_that_answers_to_an_alternate_function_name_is_its_port_pin(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nets = dict(GOOD_NETS)
+        nets["LED"] = [("U1", "9", "TIM2_CH1/PB3_9")]
+        self.assertEqual(self.violations(nets), [])
+
+    def test_a_netlist_node_with_no_pin_name_is_read_as_a_pin_with_none(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C1: A channel whose net does not reach the pin and connector its record entry names fails the check
+        nodes = board_check.schematic_pin_nodes(sexpr.parse_one(netlist_text({"/N": [("R1", "1", None)], "/M": []})))
+        self.assertEqual([(pin.ref, pin.pin, pin.function) for pin in nodes["/N"]], [("R1", "1", "")])
+        self.assertEqual(nodes["/M"], [])
+        self.assertEqual(board_check.schematic_pin_nodes(sexpr.parse_one("(export)")), {})
+
+
+class ThePinAllocationRecordIsAmongWhatADesignReads(Tree):
+    def test_the_record_a_design_is_held_to_is_listed_with_the_separation_basis_record(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C5: Every tracked design passes the connectivity check, and a change to a pin allocation record re-runs the board tier in the build round
+        self.write("hardware/m/board/board.kicad_pro", "{}")
+        self.write("hardware/m/board/board.kicad_sch", "(kicad_sch)")
+        self.write("hardware/m/board/board.kicad_pcb", "(kicad_pcb)")
+        self.write("hardware/m/pin-allocation.yaml", PIN_RECORD)
+        self.write("hardware/m/separation-basis.yaml", SIGNED_RECORD)
+        self.git("init", "-q")
+        self.git("add", "-A")
+        reads = board_check.design_reads(self.root, board_check.tracked_files("git", self.root))
+        self.assertIn("hardware/m/pin-allocation.yaml", reads)
+        self.assertIn("hardware/m/separation-basis.yaml", reads)
+
+    def test_an_uncommitted_record_beside_the_design_is_listed_too(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C5: Every tracked design passes the connectivity check, and a change to a pin allocation record re-runs the board tier in the build round
+        self.write("hardware/m/board/board.kicad_pro", "{}")
+        self.write("hardware/m/board/board.kicad_sch", "(kicad_sch)")
+        self.write("hardware/m/board/board.kicad_pcb", "(kicad_pcb)")
+        self.git("init", "-q")
+        self.git("add", "-A")
+        self.write("hardware/m/board/pin-allocation.yaml", PIN_RECORD)
+        reads = board_check.design_reads(self.root, board_check.tracked_files("git", self.root))
+        self.assertIn("hardware/m/board/pin-allocation.yaml", reads)
 
 
 class AMissingToolIsNamedByEveryModuleOfBoardTests(Tree):

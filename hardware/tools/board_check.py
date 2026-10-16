@@ -69,6 +69,9 @@ MAINS_CONDITION = "A.hasNetclass('Mains') && !B.hasNetclass('Mains')"
 
 RECORD_NAME = "separation-basis.yaml"
 
+#: The record a design's connectivity is held to, found the way RECORD_NAME is.
+PIN_RECORD_NAME = "pin-allocation.yaml"
+
 #: Every rule the check adds to the temporary copy's rules file is named with
 #: this, and a design rule whose name contains it fails, so a line of KiCad's
 #: report naming it can only come from the check.
@@ -569,8 +572,8 @@ def design_files(design: Design, repository: Repository) -> Tuple[List[str], Lis
 # --- The separation basis record ---------------------------------------------
 
 
-def find_record(root: str, directory: str, tracked: Set[str] = frozenset()) -> Optional[str]:
-    """The nearest separation basis record at or above a design's folder, repository-relative.
+def find_record(root: str, directory: str, tracked: Set[str] = frozenset(), name: str = RECORD_NAME) -> Optional[str]:
+    """The nearest record called `name` at or above a design's folder, repository-relative.
 
     One that is on disk or tracked counts, so an uncommitted record nearer the
     design than a committed one is the one found, and fails, rather than being
@@ -578,7 +581,7 @@ def find_record(root: str, directory: str, tracked: Set[str] = frozenset()) -> O
     """
     current = directory
     while True:
-        candidate = (os.path.join(current, RECORD_NAME) if current else RECORD_NAME).replace(os.sep, "/")
+        candidate = (os.path.join(current, name) if current else name).replace(os.sep, "/")
         if candidate in tracked or os.path.lexists(os.path.join(root, candidate)):
             return candidate
         if not current:
@@ -738,6 +741,223 @@ def read_record(yaml, root: str, design: Design, record: Optional[str], not_for_
     if problems:
         return None, problems
     return (figures[0], figures[1]), []
+
+
+# --- The pin allocation record and the connectivity it holds a design to ------
+
+
+class Channel:
+    """One entry of the pin allocation record: where a channel's net must land."""
+
+    def __init__(self, channel: str, net: str, controller_pin: str, connector: Optional[str], connector_pin: Optional[str]):
+        self.channel = channel
+        self.net = net
+        self.controller_pin = controller_pin
+        self.connector = connector
+        self.connector_pin = connector_pin
+
+
+#: A controller pin's own name: port letter, then number, as in PC6.
+PORT_PIN = re.compile(r"P[A-Z][0-9]+")
+
+#: What KiCad names a net no pin joins to anything, which carries no connection.
+UNCONNECTED_NET = "unconnected-("
+
+
+def read_pin_record(yaml, root: str, design: Design, record: Optional[str], not_for_manufacture: bool
+                    ) -> Tuple[Optional[List[Channel]], List[Violation]]:
+    """The channels of the pin allocation record, or what stops it being usable.
+
+    The record holds a list under `channels`; each entry holds `channel`, `net`
+    and `controller_pin`, and `connector` with `connector_pin` unless the channel
+    stays on the board. Keys the check does not read, such as the firmware's
+    own, are ignored.
+    """
+    def fail(location: str, message: str) -> Tuple[None, List[Violation]]:
+        return None, [Violation(design.project, "pin_allocation", location, message)]
+
+    if record is None:
+        return fail(os.path.join(design.directory, PIN_RECORD_NAME),
+                    f"there is no {PIN_RECORD_NAME} in the design's folder or any folder above it, so there is no pin "
+                    "allocation to hold the design's connectivity to; the record must list every channel's net, "
+                    "controller pin, connector and connector pin before the board is ordered")
+    try:
+        with open(os.path.join(root, record), encoding="utf-8") as handle:
+            data = strict_yaml(yaml, handle.read())
+    except RecordForm as error:
+        return fail(record, f"the pin allocation record cannot be parsed as the check reads it: {error}")
+    except Exception as error:  # a YAML error, or a file that cannot be read
+        return fail(record, f"the pin allocation record cannot be parsed ({' '.join(str(error).split())})")
+    if not isinstance(data, dict):
+        return fail(record, "the pin allocation record cannot be parsed: it is not a mapping of keys")
+    entries = data.get("channels")
+    if not isinstance(entries, list):
+        return fail(f"{record} channels", "the record lacks channels, the list of the channels with the net, controller pin, "
+                                           "connector and connector pin of each")
+    if not entries:
+        return fail(f"{record} channels", "the record lists no channel, so it would hold any design to nothing; list "
+                                          "every channel the board carries")
+
+    problems: List[Violation] = []
+    channels: List[Channel] = []
+
+    def text(entry: dict, key: str, where: str, required: bool = True) -> Optional[str]:
+        value = entry.get(key)
+        if isinstance(value, int) and not isinstance(value, bool) and key == "connector_pin":
+            value = str(value)
+        if value is None:
+            if required:
+                problems.append(Violation(design.project, "pin_allocation", where, f"the entry lacks {key}"))
+            return None
+        if not isinstance(value, str) or not value.strip():
+            problems.append(Violation(design.project, "pin_allocation", where,
+                                      f"{key} is {value!r}, where it is the text naming the {key.replace('_', ' ')}"))
+            return None
+        return value.strip()
+
+    for index, entry in enumerate(entries):
+        where = f"{record} channels[{index}]"
+        if not isinstance(entry, dict):
+            problems.append(Violation(design.project, "pin_allocation", where,
+                                      "the entry is not a mapping holding channel, net, controller_pin, connector and connector_pin"))
+            continue
+        name = text(entry, "channel", where)
+        where = f"{record} channel {name}" if name else where
+        net = text(entry, "net", where)
+        controller = text(entry, "controller_pin", where)
+        connector = text(entry, "connector", where, required=False)
+        connector_pin = text(entry, "connector_pin", where, required=False)
+        if (connector is None) != (connector_pin is None):
+            problems.append(Violation(design.project, "pin_allocation", where,
+                                      "the entry gives only one of connector and connector_pin; give both, or neither for a "
+                                      "channel that stays on the board with no connector"))
+        if name and net and controller:
+            channels.append(Channel(name, net, controller, connector, connector_pin))
+
+    for label, key in (("channel", lambda c: c.channel), ("net", lambda c: c.net),
+                       ("controller pin", lambda c: c.controller_pin),
+                       ("connector pin", lambda c: (c.connector, c.connector_pin) if c.connector else None)):
+        seen: Dict[object, Channel] = {}
+        for channel in channels:
+            value = key(channel)
+            if value is None:
+                continue
+            if value in seen:
+                problems.append(Violation(design.project, "pin_allocation", f"{record} channel {channel.channel}",
+                                          f"the {label} {value if isinstance(value, str) else ' pin '.join(value)} is listed for "
+                                          f"channel {seen[value].channel} as well; each {label} is listed once"))
+            seen.setdefault(value, channel)
+
+    synthetic = data.get("synthetic")
+    if "synthetic" in data and not isinstance(synthetic, bool):
+        problems.append(Violation(design.project, "pin_allocation", f"{record} synthetic",
+                                  f"synthetic is {synthetic!r}, where it is true on a record made only to prove the "
+                                  "check and false or absent otherwise; write true or false"))
+    elif synthetic is True and not not_for_manufacture:
+        problems.append(Violation(design.project, "pin_allocation", f"{record} synthetic",
+                                  "the record is marked synthetic, made only to prove the check, and the design is not "
+                                  "marked not for manufacture (NOT_FOR_MANUFACTURE=true), so a proof record cannot let it pass"))
+    if problems:
+        return None, problems
+    return channels, []
+
+
+class PinNode:
+    """One pin a net joins in KiCad's netlist: the part, the pin's number and the pin's own name."""
+
+    def __init__(self, ref: str, pin: str, function: str):
+        self.ref = ref
+        self.pin = pin
+        self.function = function
+
+    def names(self) -> List[str]:
+        """The names the pin answers to: its own name without the pin number KiCad appends, split at each slash."""
+        name = self.function
+        if name.endswith("_" + self.pin):
+            name = name[:-len(self.pin) - 1]
+        return [part for part in name.split("/") if part]
+
+    def ports(self) -> List[str]:
+        return [part for part in self.names() if PORT_PIN.fullmatch(part)]
+
+    def describe(self) -> str:
+        return f"{self.ref} pin {self.pin}"
+
+
+def schematic_pin_nodes(netlist: list) -> Dict[str, List[PinNode]]:
+    """Every net in KiCad's own netlist of the schematic: name -> the pins it joins, each with its pin name."""
+    nets: Dict[str, List[PinNode]] = {}
+    for group in walk(netlist, "nets"):
+        for net in sexpr.children(group, "net"):
+            name = sexpr.child(net, "name")
+            if name is None or len(name) < 2:
+                continue
+            pins = []
+            for node in sexpr.children(net, "node"):
+                ref, pin, function = sexpr.child(node, "ref"), sexpr.child(node, "pin"), sexpr.child(node, "pinfunction")
+                if ref is not None and len(ref) > 1 and pin is not None and len(pin) > 1:
+                    pins.append(PinNode(str(ref[1]), str(pin[1]), str(function[1]) if function is not None and len(function) > 1 else ""))
+            nets[str(name[1])] = pins
+    return nets
+
+
+def connectivity(design: Design, record: str, channels: List[Channel], nets: Dict[str, List[PinNode]]) -> List[Violation]:
+    """The ways the schematic's netlist departs from the channels of the pin allocation record.
+
+    A record names a net as the schematic writes it, or without the leading
+    slash KiCad puts before a net of the top sheet. A controller pin is any pin
+    named as a port pin, such as PC6, on a part the record names no connector
+    for, and a connector pin is any pin of a connector reference the record names.
+    """
+    def fail(location: str, message: str) -> Violation:
+        return Violation(design.project, "connectivity", location, message)
+
+    connectors = {channel.connector for channel in channels if channel.connector}
+    found: List[Violation] = []
+
+    def pins_of(net: str) -> Optional[Tuple[str, List[PinNode]]]:
+        for name in (net, "/" + net, net[1:] if net.startswith("/") else net):
+            if name in nets:
+                return name, nets[name]
+        return None
+
+    for channel in channels:
+        where = f"{record} channel {channel.channel}"
+        wanted = f"controller pin {channel.controller_pin}" + (
+            f" and connector pin {channel.connector} pin {channel.connector_pin}" if channel.connector else "")
+        reached = pins_of(channel.net)
+        if reached is None:
+            found.append(fail(where, f"channel {channel.channel}: the record lists net {channel.net}, which the design does "
+                                     f"not have; the record names {wanted}"))
+            continue
+        name, pins = reached
+        controller = sorted({port for pin in pins if pin.ref not in connectors for port in pin.ports()})
+        if channel.controller_pin not in controller:
+            found.append(fail(where, f"channel {channel.channel}: net {name} reaches "
+                                     f"{'controller pin ' + ', '.join(controller) if controller else 'no controller pin'}, "
+                                     f"where the record names controller pin {channel.controller_pin}"))
+        if channel.connector and not any(pin.ref == channel.connector and pin.pin == channel.connector_pin for pin in pins):
+            landed = sorted(pin.describe() for pin in pins if pin.ref in connectors or re.fullmatch(r"J[0-9]+", pin.ref))
+            found.append(fail(where, f"channel {channel.channel}: net {name} reaches "
+                                     f"{'connector pin ' + ', '.join(landed) if landed else 'no connector pin'}, "
+                                     f"where the record names connector pin {channel.connector} pin {channel.connector_pin}"))
+
+    listed_controller = {channel.controller_pin for channel in channels}
+    listed_connector = {(channel.connector, channel.connector_pin) for channel in channels if channel.connector}
+    for name in sorted(nets):
+        if name.startswith(UNCONNECTED_NET):
+            continue
+        for pin in nets[name]:
+            if pin.ref in connectors:
+                if (pin.ref, pin.pin) not in listed_connector:
+                    found.append(fail(f"{design.schematic} {pin.describe()}",
+                                      f"net {name} is on connector pin {pin.describe()}, which the record does not list; "
+                                      "list the channel it carries, or take the connection off the pin"))
+            elif pin.ports() and not listed_controller.intersection(pin.ports()):
+                found.append(fail(f"{design.schematic} {pin.describe()}",
+                                  f"net {name} is on controller pin {', '.join(pin.ports())} ({pin.describe()}), which the "
+                                  "record does not list; list the channel it carries, or take the connection off the pin"))
+    return found
 
 
 # --- The design's own rules ----------------------------------------------------
@@ -2245,6 +2465,10 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         found += problems
         found += mains_rule(design, rules, signed)
 
+    pin_record = find_record(root, design.directory, repository.tracked, PIN_RECORD_NAME)
+    channels, pin_problems = read_pin_record(yaml, root, design, pin_record, not_for_manufacture)
+    found += pin_problems
+
     if any(v.rule == "design_unreadable" for v in found):
         return found
 
@@ -2303,7 +2527,10 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
             text, why = run_kicad([kicad_cli, "sch", "export", "netlist", "--format", "kicadsexpr", schematic],
                                   copy, "netlist.net")
             try:
-                netlist = schematic_nets(sexpr.parse_one(text)) if text is not None else None
+                parsed = sexpr.parse_one(text) if text is not None else None
+                netlist = schematic_nets(parsed) if parsed is not None else None
+                if parsed is not None and channels is not None:
+                    found += connectivity(design, pin_record, channels, schematic_pin_nodes(parsed))
             except sexpr.SexprError as error:
                 why = f"KiCad's netlist could not be read ({error})"
             if netlist is None:
@@ -2451,9 +2678,10 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
     for design in designs:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
-        record = find_record(top, design.directory, repository.tracked)
-        if record:
-            reads.add(record)
+        for name in (RECORD_NAME, PIN_RECORD_NAME):
+            record = find_record(top, design.directory, repository.tracked, name)
+            if record:
+                reads.add(record)
     return sorted(reads)
 
 

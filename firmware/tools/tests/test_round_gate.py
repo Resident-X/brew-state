@@ -1568,6 +1568,30 @@ class TheBoardTierIsJudgedOnChangedPathsAlone(unittest.TestCase):
                 self.assertEqual([], chosen.untracked)
                 self.restore()
 
+    def test_a_change_to_a_pin_allocation_record_runs_the_tier_wherever_the_record_sits(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C5: Every tracked design passes the connectivity check, and a change to a pin allocation record re-runs the board tier in the build round
+        for what, path in (("a record beside a design", "hardware/m/board/pin-allocation.yaml"),
+                           ("a record in the machine's hardware folder", "hardware/m/pin-allocation.yaml"),
+                           ("a record outside the hardware tree", "elsewhere/pin-allocation.yaml"),
+                           ("a record at the top of the repository", "pin-allocation.yaml")):
+            with self.subTest(change=what):
+                self.repository.write(path, "channels: []\n")
+                self.repository.git("add", "-A")
+                chosen = self.scope()
+                self.assertTrue(chosen.run, chosen.reason)
+                self.assertEqual([path], chosen.judged)
+                self.restore()
+
+    def test_a_file_whose_name_only_resembles_a_pin_allocation_record_does_not_run_the_tier(self):
+        # SOL-HW-CONNECTIVITY-CHECK.C5: Every tracked design passes the connectivity check, and a change to a pin allocation record re-runs the board tier in the build round
+        for path in ("elsewhere/pin-allocation.yaml.orig", "elsewhere/old-pin-allocation.yaml", "elsewhere/pin-allocation.csv"):
+            with self.subTest(path=path):
+                self.repository.write(path, "changed\n")
+                self.repository.git("add", "-A")
+                chosen = self.scope()
+                self.assertFalse(chosen.run, chosen.reason)
+                self.restore()
+
     def test_a_committed_change_to_a_path_a_board_reads_runs_the_tier(self):
         # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C1: The build round runs the board check when the branch changes a board design, anything it reads, or the check
         for what, path in RUNS_BY_NAME:
