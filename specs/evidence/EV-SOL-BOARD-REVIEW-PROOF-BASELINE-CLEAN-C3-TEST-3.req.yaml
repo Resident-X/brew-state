@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN-C3-TEST-3
+type: evidence
+title: test evidence for SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-10-16T11:24:18.86676Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad.py::test_each_rule_fails_on_its_seeded_fault,test_a_missing_or_malformed_figure_of_either_measured_area_fails_by_name,test_the_clean_design_passes_all_three_rules,test_a_part_the_barrier_rule_cannot_measure_and_a_missing_rule_each_fail_by_name
+  artifact_version: 2d2a9e45009d4a2c1e7905b581fdecaf37917d22
+attested_by: crun-7903dbf12b59b736
+links:
+  - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3
+    type: satisfies
