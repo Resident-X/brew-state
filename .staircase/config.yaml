@@ -53,3 +53,23 @@ default_actor: david
 # supplies --profile explicitly (the CLI flag itself already defaults to
 # "solo"). This comment records the project's chosen profile; it is
 # documentation only, not an enforced setting.
+
+# Executor assignments: the model and reasoning effort each abstract tier runs
+# at, served by `staircase executor resolve <tier>`. The invocation carries only
+# the two placeholders the router fills ({prompt_file}, {tools}); the prompt
+# arrives on stdin so a variadic --allowedTools cannot swallow it. This project
+# defaults to mid-tier: reasoning-tier is for work that is genuinely complex or
+# whose misses cannot be caught, small-fast for reads and mechanical runs.
+executor_assignments:
+  - tier: small-fast
+    provider: anthropic
+    model: claude-haiku-5-5
+    invocation: claude -p --model claude-haiku-5-5 --effort low --output-format json --allowedTools "{tools}" < {prompt_file}
+  - tier: mid-tier
+    provider: anthropic
+    model: claude-sonnet-5-5
+    invocation: claude -p --model claude-sonnet-5-5 --effort high --output-format json --allowedTools "{tools}" < {prompt_file}
+  - tier: reasoning-tier
+    provider: anthropic
+    model: claude-opus-5-5
+    invocation: claude -p --model claude-opus-5-5 --effort high --output-format json --allowedTools "{tools}" < {prompt_file}
