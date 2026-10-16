@@ -740,11 +740,15 @@ class ThePoursAreMeasuredOnTheBoardKiCadFilled(Copy):
         for report in (without, saved):
             report.pop("date", None)
             report.pop("source", None)
-            # KiCad lists a violation's two items in no fixed order, so each pair is compared as a set of items
+            # KiCad lists a violation's items in no fixed order, and for a missing connection it names either the pad
+            # or the track ending on the same point from run to run, so a missing connection is compared by where its
+            # items lie and every other violation by its items in full
             for key, entries in report.items():
                 if isinstance(entries, list):
                     for entry in entries:
                         if isinstance(entry, dict) and isinstance(entry.get("items"), list):
+                            if key == "unconnected_items":
+                                entry["items"] = [item["pos"] for item in entry["items"]]
                             entry["items"].sort(key=lambda item: json.dumps(item, sort_keys=True))
                     entries.sort(key=lambda entry: json.dumps(entry, sort_keys=True))
         self.assertEqual(without, saved)
