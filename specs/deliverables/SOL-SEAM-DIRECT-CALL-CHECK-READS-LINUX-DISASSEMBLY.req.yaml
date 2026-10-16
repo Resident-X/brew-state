@@ -20,5 +20,5 @@ links:
     type: targets
 brief_confirmation:
   confirmer: claude-sonnet-5-5
-  fingerprint: 26d31206935da15ea9d593580504bfebc1aabc46b14f84133a498eb28aeb3aa8
+  fingerprint: ff74617467c4f83952f4c1863456a26b0977bfc8e40b8d28029b712657cfc18f
   gating_profile: ""
