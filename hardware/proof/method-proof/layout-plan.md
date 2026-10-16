@@ -94,3 +94,197 @@ The layer-by-layer plan of the nets: `+5V_IN`, `+5V`, `/+3V3_REG` and `+3V3` are
 | Item | Applies when | Asks | Passes | Fails, as the views show it | Judged on | Kind | Severity | Source | How the layout meets it |
 |---|---|---|---|---|---|---|---|---|---|
 | none | | | | | | | | | |
+
+## Placement
+
+### Candidate 1
+
+- **Commit**: dde774a022b491d99912a08fcd8bf60d17c9786e
+- **Renders**: from the repository's root, `git worktree add --detach <work folder>/method-proof-candidate-1 dde774a022b491d99912a08fcd8bf60d17c9786e`, then `(cd <work folder>/method-proof-candidate-1/hardware/proof/method-proof && task hw:placement -- --board method-proof.kicad_pcb --project method-proof.kicad_pro --out <work folder>/method-proof-placement-1)`, then `git worktree remove <work folder>/method-proof-candidate-1`
+- **Measures**:
+
+```
+LENGTH | total | 139.8227 mm
+CROSSINGS | total | 8
+OUTSIDE | total | 0
+```
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+| FLOOR-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the OUTSIDE total, 0 | Every part lies within its region: the measures list no part outside, the supply input, regulator, links and output header at x below 119 mm and the controller, its capacitor, the LED stage and the PA1 header from 119 mm. |
+| FLOOR-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the LENGTH total, 139.8227 mm | J1 at the left edge, U1 about 13 mm from it and U2 about 10 mm from U1, with only C1, C2, JP1 and JP2 between; the supply crosses the board in one run. |
+| POWER-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the NET lines of /+5V_IN and +5V | The 0.5 A path J1, JP1, C1, U1 and C5 is the shortest the part positions allow; the long +5V run to R1 carries the LED current only, 5 mA. |
+| DECOUPLE-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the places of C1, C2 and C3 | C3 sits beside U2's pins 7 and 9 on their side, C1 beside U1's input pin and C2 beside its output pin, each the only capacitor on its pin and its connection a short straight line. |
+| DECOUPLE-3 | not applicable | the plan table's row for DECOUPLE-3 | No switching converter in the schematic: U1 is a linear regulator. |
+| DECOUPLE-4 | not applicable | the plan table's row for DECOUPLE-4 | No switching converter in the schematic. |
+| DECOUPLE-5 | not applicable | the plan table's row for DECOUPLE-5 | No snubber in the schematic. |
+| SENSE-2 | not applicable | the plan table's row for SENSE-2 | No filter at a converter input and no reference capacitor in the schematic. |
+| SENSE-3 | not applicable | the plan table's row for SENSE-3 | No operational or instrumentation amplifier in the schematic. |
+| SENSE-5 | not applicable | the plan table's row for SENSE-5 | No sensing front end in the schematic. |
+| CLOCK-1 | not applicable | the plan table's row for CLOCK-1 | No crystal or ceramic resonator in the schematic. |
+| CLOCK-3 | not applicable | the plan table's row for CLOCK-3 | No crystal or ceramic resonator in the schematic. |
+| MAINS-2 | not applicable | the plan table's row for MAINS-2 | No mains-referenced net in the schematic. |
+| CONN-1 | not applicable | the plan table's row for CONN-1 | No transient-voltage or electrostatic-discharge suppressor in the schematic. |
+| CONN-2 | not applicable | the plan table's row for CONN-2 | No leadless package in the schematic: U1 is a SOT-23 and U2 a TSSOP-20. |
+| CONN-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | J1 and J2 at the left edge and J3 at the right edge, each facing off the board; U2 stands 20 mm or more from J1 and J2 and no connector faces across it. |
+| CONN-4 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | H1 at the left edge below J2, H2 and H3 at the right edge above and below J3: three holes in a triangle, each clear of every courtyard and none beside a leadless package, the board having none. |
+| TEST-1 | fail | `placement-r1c1.png`, TP1 beside J1 and JP1, x 106 to 109 mm, y 105 to 109 mm | TP1 stands about 0.5 mm from J1's body and 0.7 mm from JP1's, both taller than 2.6 mm, short of the 2.0 mm the item asks; TP2 stands 1.7 mm from JP2. |
+| TEST-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the test points in blue and the connectors in white | All four test points on B.Cu and every part taller than 6.4 mm, J1, J2, J3, JP1 and JP2, on F.Cu. |
+| EMI-3 | pass | `placement-r2c1.png`, J2, C4 and C5 at the left edge | C5 and C4 each beside the J2 pin of their rail, within 3 mm of it. |
+| EMI-4 | not applicable | the plan table's row for EMI-4 | No ferrite bead in the schematic. |
+| EMI-5 | pass | `placement-r1c1.png` and `placement-r2c1.png`, U2's pins 11 and 12 and the LED stage under them | R1 and D1 under U2's pin 11 within about 6 mm of it, /LED_K a short straight connection to D1's cathode. |
+| WORK-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the CROSSINGS total, 8, and the LENGTH total, 139.8227 mm | Connected parts stand together in the order the circuit runs and each is turned so its pads face the pads it joins; the 8 crossings are the GND and +5V trees across the regulator cluster, and no arrangement tried, candidates 1 to 5, kept them below 8. |
+
+### Candidate 2
+
+- **Commit**: 976a86b760c2d64dc36f0eaaa36f7b3dd9917ac9
+- **Renders**: from the repository's root, `git worktree add --detach <work folder>/method-proof-candidate-2 976a86b760c2d64dc36f0eaaa36f7b3dd9917ac9`, then `(cd <work folder>/method-proof-candidate-2/hardware/proof/method-proof && task hw:placement -- --board method-proof.kicad_pcb --project method-proof.kicad_pro --out <work folder>/method-proof-placement-2)`, then `git worktree remove <work folder>/method-proof-candidate-2`
+- **Measures**:
+
+```
+LENGTH | total | 141.1616 mm
+CROSSINGS | total | 8
+OUTSIDE | total | 0
+```
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+| FLOOR-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the OUTSIDE total, 0 | Every part lies within its region: the measures list no part outside, the supply input, regulator, links and output header at x below 119 mm and the controller, its capacitor, the LED stage and the PA1 header from 119 mm. |
+| FLOOR-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the LENGTH total, 141.1616 mm | J1 at the left edge, U1 about 13 mm from it and U2 about 10 mm from U1, with only C1, C2, JP1 and JP2 between; the supply crosses the board in one run. |
+| POWER-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the NET lines of /+5V_IN and +5V | The 0.5 A path J1, JP1, C1, U1 and C5 is the shortest the part positions allow; the long +5V run to R1 carries the LED current only, 5 mA. |
+| DECOUPLE-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the places of C1, C2 and C3 | C3 sits beside U2's pins 7 and 9 on their side, C1 beside U1's input pin and C2 beside its output pin, each the only capacitor on its pin and its connection a short straight line. |
+| DECOUPLE-3 | not applicable | the plan table's row for DECOUPLE-3 | No switching converter in the schematic: U1 is a linear regulator. |
+| DECOUPLE-4 | not applicable | the plan table's row for DECOUPLE-4 | No switching converter in the schematic. |
+| DECOUPLE-5 | not applicable | the plan table's row for DECOUPLE-5 | No snubber in the schematic. |
+| SENSE-2 | not applicable | the plan table's row for SENSE-2 | No filter at a converter input and no reference capacitor in the schematic. |
+| SENSE-3 | not applicable | the plan table's row for SENSE-3 | No operational or instrumentation amplifier in the schematic. |
+| SENSE-5 | not applicable | the plan table's row for SENSE-5 | No sensing front end in the schematic. |
+| CLOCK-1 | not applicable | the plan table's row for CLOCK-1 | No crystal or ceramic resonator in the schematic. |
+| CLOCK-3 | not applicable | the plan table's row for CLOCK-3 | No crystal or ceramic resonator in the schematic. |
+| MAINS-2 | not applicable | the plan table's row for MAINS-2 | No mains-referenced net in the schematic. |
+| CONN-1 | not applicable | the plan table's row for CONN-1 | No transient-voltage or electrostatic-discharge suppressor in the schematic. |
+| CONN-2 | not applicable | the plan table's row for CONN-2 | No leadless package in the schematic: U1 is a SOT-23 and U2 a TSSOP-20. |
+| CONN-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | J1 and J2 at the left edge and J3 at the right edge, each facing off the board; U2 stands 20 mm or more from J1 and J2 and no connector faces across it. |
+| CONN-4 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | H1 at the left edge below J2, H2 and H3 at the right edge above and below J3: three holes in a triangle, each clear of every courtyard and none beside a leadless package, the board having none. |
+| TEST-1 | fail | `placement-r1c1.png`, TP1 beside J1 and JP1, x 105 to 109 mm, y 105 to 110 mm | TP1 stands about 0.5 mm from J1's body and 0.7 mm from JP1's, both taller than 2.6 mm, short of the 2.0 mm the item asks. |
+| TEST-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the test points in blue and the connectors in white | All four test points on B.Cu and every part taller than 6.4 mm, J1, J2, J3, JP1 and JP2, on F.Cu. |
+| EMI-3 | pass | `placement-r2c1.png`, J2, C4 and C5 at the left edge | C5 and C4 each beside the J2 pin of their rail, within 3 mm of it. |
+| EMI-4 | not applicable | the plan table's row for EMI-4 | No ferrite bead in the schematic. |
+| EMI-5 | pass | `placement-r1c1.png` and `placement-r2c1.png`, U2's pins 11 and 12 and the LED stage under them | R1 and D1 under U2's pin 11 within about 6 mm of it, /LED_K a short straight connection to D1's cathode. |
+| WORK-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the CROSSINGS total, 8, and the LENGTH total, 141.1616 mm | Connected parts stand together in the order the circuit runs and each is turned so its pads face the pads it joins; the 8 crossings are the GND and +5V trees across the regulator cluster, and no arrangement tried, candidates 1 to 5, kept them below 8. |
+
+### Candidate 3
+
+- **Commit**: 828d8c0d2863b81a39fc374ed65cf20224a0ce01
+- **Renders**: from the repository's root, `git worktree add --detach <work folder>/method-proof-candidate-3 828d8c0d2863b81a39fc374ed65cf20224a0ce01`, then `(cd <work folder>/method-proof-candidate-3/hardware/proof/method-proof && task hw:placement -- --board method-proof.kicad_pcb --project method-proof.kicad_pro --out <work folder>/method-proof-placement-3)`, then `git worktree remove <work folder>/method-proof-candidate-3`
+- **Measures**:
+
+```
+LENGTH | total | 147.5881 mm
+CROSSINGS | total | 10
+OUTSIDE | total | 0
+```
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+| FLOOR-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the OUTSIDE total, 0 | Every part lies within its region: the measures list no part outside, the supply input, regulator, links and output header at x below 119 mm and the controller, its capacitor, the LED stage and the PA1 header from 119 mm. |
+| FLOOR-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the LENGTH total, 147.5881 mm | J1 at the left edge, U1 about 13 mm from it and U2 about 10 mm from U1, with only C1, C2, JP1 and JP2 between; the supply crosses the board in one run. |
+| POWER-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the NET lines of /+5V_IN and +5V | The 0.5 A path J1, JP1, C1, U1 and C5 is the shortest the part positions allow; the long +5V run to R1 carries the LED current only, 5 mA. |
+| DECOUPLE-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the places of C1, C2 and C3 | C3 sits beside U2's pins 7 and 9 on their side, C1 beside U1's input pin and C2 beside its output pin, each the only capacitor on its pin and its connection a short straight line. |
+| DECOUPLE-3 | not applicable | the plan table's row for DECOUPLE-3 | No switching converter in the schematic: U1 is a linear regulator. |
+| DECOUPLE-4 | not applicable | the plan table's row for DECOUPLE-4 | No switching converter in the schematic. |
+| DECOUPLE-5 | not applicable | the plan table's row for DECOUPLE-5 | No snubber in the schematic. |
+| SENSE-2 | not applicable | the plan table's row for SENSE-2 | No filter at a converter input and no reference capacitor in the schematic. |
+| SENSE-3 | not applicable | the plan table's row for SENSE-3 | No operational or instrumentation amplifier in the schematic. |
+| SENSE-5 | not applicable | the plan table's row for SENSE-5 | No sensing front end in the schematic. |
+| CLOCK-1 | not applicable | the plan table's row for CLOCK-1 | No crystal or ceramic resonator in the schematic. |
+| CLOCK-3 | not applicable | the plan table's row for CLOCK-3 | No crystal or ceramic resonator in the schematic. |
+| MAINS-2 | not applicable | the plan table's row for MAINS-2 | No mains-referenced net in the schematic. |
+| CONN-1 | not applicable | the plan table's row for CONN-1 | No transient-voltage or electrostatic-discharge suppressor in the schematic. |
+| CONN-2 | not applicable | the plan table's row for CONN-2 | No leadless package in the schematic: U1 is a SOT-23 and U2 a TSSOP-20. |
+| CONN-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | J1 and J2 at the left edge and J3 at the right edge, each facing off the board; U2 stands 20 mm or more from J1 and J2 and no connector faces across it. |
+| CONN-4 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | H1 at the left edge below J2, H2 and H3 at the right edge above and below J3: three holes in a triangle, each clear of every courtyard and none beside a leadless package, the board having none. |
+| TEST-1 | fail | `placement-r1c1.png`, TP1 beside J1 and JP1, x 106 to 109 mm, y 105 to 109 mm | TP1 stands about 0.5 mm from J1's body and 0.7 mm from JP1's, both taller than 2.6 mm, short of the 2.0 mm the item asks. |
+| TEST-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the test points in blue and the connectors in white | All four test points on B.Cu and every part taller than 6.4 mm, J1, J2, J3, JP1 and JP2, on F.Cu. |
+| EMI-3 | pass | `placement-r2c1.png`, J2, C4 and C5 at the left edge | C5 and C4 each beside the J2 pin of their rail, within 3 mm of it. |
+| EMI-4 | not applicable | the plan table's row for EMI-4 | No ferrite bead in the schematic. |
+| EMI-5 | pass | `placement-r1c1.png` and `placement-r2c1.png`, U2's pins 11 and 12 and the LED stage under them | R1 and D1 under U2's pin 11 within about 6 mm of it, /LED_K a short straight connection to D1's cathode. |
+| WORK-1 | fail | `placement-r1c1.png` and `placement-r2c1.png`, U2 and the LED stage on the second; the CROSSINGS total, 10, and the LENGTH total, 147.5881 mm | Moving U2 and the LED stage 4 mm down lengthens the +5V run to R1 and the GND tree and adds two crossings over candidate 1 (10 against 8), where keeping them up kept the connections short. |
+
+### Candidate 4
+
+- **Commit**: 9b09982c95c8ebc2936f5484b9b5593c6f1be3f6
+- **Renders**: from the repository's root, `git worktree add --detach <work folder>/method-proof-candidate-4 9b09982c95c8ebc2936f5484b9b5593c6f1be3f6`, then `(cd <work folder>/method-proof-candidate-4/hardware/proof/method-proof && task hw:placement -- --board method-proof.kicad_pcb --project method-proof.kicad_pro --out <work folder>/method-proof-placement-4)`, then `git worktree remove <work folder>/method-proof-candidate-4`
+- **Measures**:
+
+```
+LENGTH | total | 143.1642 mm
+CROSSINGS | total | 8
+OUTSIDE | total | 0
+```
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+| FLOOR-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the OUTSIDE total, 0 | Every part lies within its region: the measures list no part outside, the supply input, regulator, links and output header at x below 119 mm and the controller, its capacitor, the LED stage and the PA1 header from 119 mm. |
+| FLOOR-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the LENGTH total, 143.1642 mm | J1 at the left edge, U1 about 13 mm from it and U2 about 10 mm from U1, with only C1, C2, JP1 and JP2 between; the supply crosses the board in one run. |
+| POWER-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the NET lines of /+5V_IN and +5V | The 0.5 A path J1, JP1, C1, U1 and C5 is the shortest the part positions allow; the long +5V run to R1 carries the LED current only, 5 mA. |
+| DECOUPLE-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the places of C1, C2 and C3 | C3 sits beside U2's pins 7 and 9 on their side, C1 beside U1's input pin and C2 beside its output pin, each the only capacitor on its pin and its connection a short straight line. |
+| DECOUPLE-3 | not applicable | the plan table's row for DECOUPLE-3 | No switching converter in the schematic: U1 is a linear regulator. |
+| DECOUPLE-4 | not applicable | the plan table's row for DECOUPLE-4 | No switching converter in the schematic. |
+| DECOUPLE-5 | not applicable | the plan table's row for DECOUPLE-5 | No snubber in the schematic. |
+| SENSE-2 | not applicable | the plan table's row for SENSE-2 | No filter at a converter input and no reference capacitor in the schematic. |
+| SENSE-3 | not applicable | the plan table's row for SENSE-3 | No operational or instrumentation amplifier in the schematic. |
+| SENSE-5 | not applicable | the plan table's row for SENSE-5 | No sensing front end in the schematic. |
+| CLOCK-1 | not applicable | the plan table's row for CLOCK-1 | No crystal or ceramic resonator in the schematic. |
+| CLOCK-3 | not applicable | the plan table's row for CLOCK-3 | No crystal or ceramic resonator in the schematic. |
+| MAINS-2 | not applicable | the plan table's row for MAINS-2 | No mains-referenced net in the schematic. |
+| CONN-1 | not applicable | the plan table's row for CONN-1 | No transient-voltage or electrostatic-discharge suppressor in the schematic. |
+| CONN-2 | not applicable | the plan table's row for CONN-2 | No leadless package in the schematic: U1 is a SOT-23 and U2 a TSSOP-20. |
+| CONN-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | J1 and J2 at the left edge and J3 at the right edge, each facing off the board; U2 stands 20 mm or more from J1 and J2 and no connector faces across it. |
+| CONN-4 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | H1 at the left edge below J2, H2 and H3 at the right edge above and below J3: three holes in a triangle, each clear of every courtyard and none beside a leadless package, the board having none. |
+| TEST-1 | fail | `placement-r1c1.png`, TP1 beside J1 and JP1, x 106 to 109 mm, y 105 to 109 mm | TP1 stands about 0.5 mm from J1's body and 0.7 mm from JP1's, both taller than 2.6 mm, short of the 2.0 mm the item asks; TP2 stands 1.7 mm from JP2. |
+| TEST-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the test points in blue and the connectors in white | All four test points on B.Cu and every part taller than 6.4 mm, J1, J2, J3, JP1 and JP2, on F.Cu. |
+| EMI-3 | pass | `placement-r2c1.png`, J2, C4 and C5 at the left edge | C5 and C4 each beside the J2 pin of their rail, within 3 mm of it. |
+| EMI-4 | not applicable | the plan table's row for EMI-4 | No ferrite bead in the schematic. |
+| EMI-5 | pass | `placement-r1c1.png` and `placement-r2c1.png`, U2's pins 11 and 12 and the LED stage under them | R1 and D1 under U2's pin 11 within about 6 mm of it, /LED_K a short straight connection to D1's cathode. |
+| WORK-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the CROSSINGS total, 8, and the LENGTH total, 143.1642 mm | Connected parts stand together in the order the circuit runs and each is turned so its pads face the pads it joins; the 8 crossings are the GND and +5V trees across the regulator cluster, and no arrangement tried, candidates 1 to 5, kept them below 8. |
+
+### Candidate 5
+
+- **Commit**: dfe9ea3127f015d268407244c3f34e6e175a71e6
+- **Renders**: from the repository's root, `git worktree add --detach <work folder>/method-proof-candidate-5 dfe9ea3127f015d268407244c3f34e6e175a71e6`, then `(cd <work folder>/method-proof-candidate-5/hardware/proof/method-proof && task hw:placement -- --board method-proof.kicad_pcb --project method-proof.kicad_pro --out <work folder>/method-proof-placement-5)`, then `git worktree remove <work folder>/method-proof-candidate-5`
+- **Measures**:
+
+```
+LENGTH | total | 141.0259 mm
+CROSSINGS | total | 9
+OUTSIDE | total | 0
+```
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+| FLOOR-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the OUTSIDE total, 0 | Every part lies within its region: the measures list no part outside, the supply input, regulator, links and output header at x below 119 mm and the controller, its capacitor, the LED stage and the PA1 header from 119 mm. |
+| FLOOR-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the LENGTH total, 141.0259 mm | J1 at the left edge, U1 about 13 mm from it and U2 about 10 mm from U1, with only C1, C2, JP1 and JP2 between; the supply crosses the board in one run. |
+| POWER-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the NET lines of /+5V_IN and +5V | The 0.5 A path J1, JP1, C1, U1 and C5 is the shortest the part positions allow; the long +5V run to R1 carries the LED current only, 5 mA. |
+| DECOUPLE-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the places of C1, C2 and C3 | C3 sits beside U2's pins 7 and 9 on their side, C1 beside U1's input pin and C2 beside its output pin, each the only capacitor on its pin and its connection a short straight line. |
+| DECOUPLE-3 | not applicable | the plan table's row for DECOUPLE-3 | No switching converter in the schematic: U1 is a linear regulator. |
+| DECOUPLE-4 | not applicable | the plan table's row for DECOUPLE-4 | No switching converter in the schematic. |
+| DECOUPLE-5 | not applicable | the plan table's row for DECOUPLE-5 | No snubber in the schematic. |
+| SENSE-2 | not applicable | the plan table's row for SENSE-2 | No filter at a converter input and no reference capacitor in the schematic. |
+| SENSE-3 | not applicable | the plan table's row for SENSE-3 | No operational or instrumentation amplifier in the schematic. |
+| SENSE-5 | not applicable | the plan table's row for SENSE-5 | No sensing front end in the schematic. |
+| CLOCK-1 | not applicable | the plan table's row for CLOCK-1 | No crystal or ceramic resonator in the schematic. |
+| CLOCK-3 | not applicable | the plan table's row for CLOCK-3 | No crystal or ceramic resonator in the schematic. |
+| MAINS-2 | not applicable | the plan table's row for MAINS-2 | No mains-referenced net in the schematic. |
+| CONN-1 | not applicable | the plan table's row for CONN-1 | No transient-voltage or electrostatic-discharge suppressor in the schematic. |
+| CONN-2 | not applicable | the plan table's row for CONN-2 | No leadless package in the schematic: U1 is a SOT-23 and U2 a TSSOP-20. |
+| CONN-3 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | J1 and J2 at the left edge and J3 at the right edge, each facing off the board; U2 stands 20 mm or more from J1 and J2 and no connector faces across it. |
+| CONN-4 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the left and right edges | H1 at the left edge below J2, H2 and H3 at the right edge above and below J3: three holes in a triangle, each clear of every courtyard and none beside a leadless package, the board having none. |
+| TEST-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, TP1 to TP4 in blue | Every test point is a dedicated pad on the back, at least 2.5 mm from the next, at least 1.0 mm from every part body and 2.0 mm or more from J1, JP1 and JP2, the taller parts: TP1 2.0 mm from J1 and 2.1 mm from JP1, TP2 2.6 mm from JP2. |
+| TEST-2 | pass | `placement-r1c1.png` and `placement-r2c1.png`, the test points in blue and the connectors in white | All four test points on B.Cu and every part taller than 6.4 mm, J1, J2, J3, JP1 and JP2, on F.Cu. |
+| EMI-3 | pass | `placement-r2c1.png`, J2, C4 and C5 at the left edge | C5 and C4 each beside the J2 pin of their rail, within 3 mm of it. |
+| EMI-4 | not applicable | the plan table's row for EMI-4 | No ferrite bead in the schematic. |
+| EMI-5 | pass | `placement-r1c1.png` and `placement-r2c1.png`, U2's pins 11 and 12 and the LED stage under them | R1 and D1 under U2's pin 11 within about 6 mm of it, /LED_K a short straight connection to D1's cathode. |
+| WORK-1 | pass | `placement-r1c1.png` and `placement-r2c1.png`, whole board; the CROSSINGS total, 9, and the LENGTH total, 141.0259 mm | Connected parts stand together in the order the circuit runs and each is turned so its pads face the pads it joins; the 9 crossings are the GND and +5V trees across the regulator cluster, and no arrangement tried, candidates 1 to 5, kept them below 8. |
+
+**Chosen**: 5. Candidates 1 to 4 each fail `TEST-1`: TP1 stands about 0.5 mm from J1's body and 0.7 mm from JP1's, both taller than 2.6 mm, where candidate 5, with JP1 moved 3 mm right, passes it (TP1 2.0 mm from J1 and 2.1 mm from JP1, TP2 2.6 mm from JP2). Candidate 5's LENGTH total, 141.0259 mm, is 1.2 mm above candidate 1's 139.8227 mm and 6.6 mm below candidate 3's 147.5881 mm, and its CROSSINGS total, 9, is one above the 8 of candidates 1, 2 and 4, a one-crossing cost no candidate that passes `TEST-1` avoided. `kicad-cli pcb drc` run on each candidate's commit reports `courtyards_overlap` for candidates 1 and 3 (U2 with C3, JP1 with C1, R1 with D1) and for candidate 2 (U2 with C3, R1 with D1), and none for candidates 4 and 5. Candidate 3 also fails `WORK-1`, with 10 crossings and the longest connections. Candidate 5 is chosen.
