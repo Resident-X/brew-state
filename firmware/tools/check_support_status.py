@@ -207,6 +207,20 @@ class Uninspectable(Exception):
     """
 
 
+def read_input(path: str, what: str) -> str:
+    """The text of an input file, or Uninspectable when it cannot be read as text.
+
+    A file that is unreadable, or whose bytes are not valid UTF-8, is the check
+    having established nothing, not a finding: it takes the same exit status as
+    a file that is not there.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            return handle.read()
+    except (OSError, UnicodeDecodeError) as unreadable:
+        raise Uninspectable(f"{what} at {path} cannot be read: {unreadable}") from unreadable
+
+
 def vocabulary(path: str) -> list[str]:
     """The values the vocabulary header declares, in declaration order.
 
