@@ -242,7 +242,7 @@ Every single-coefficient corner above was delivered against twice more, with its
 - **Coffee side**: 76 comparisons. The most any worst departure moved was 0.00275 C, corner 20 going from 0.0528796 to 0.0556256 with its coefficient moved one unit above. That is 0.27% of the 1 C band.
 - **Steam side**: 76 comparisons, and no figure moved at all.
 
-**No verdict changed with one unit in the last place.** The figures above are not reproducible to the digits printed and are not claimed to be: a figure can move by a step of the loop's command, and that step is what the amounts above measure. What is claimed is that this is as far as one unit moved any of them at these corners, that it is a small part of the band each is judged against, and that no verdict turned on it. It is measured at one unit and at these corners and is not a proof for every perturbation.
+**No verdict changed with one unit in the last place.** The figures above regenerate byte for byte on every supported host, and they move by the amounts above when a coefficient moves by one unit. What is measured is a coefficient moved to its neighbouring single-precision number, which is not the same as moving a library result inside a step of the loop; the arithmetic is now identical across hosts, so the latter no longer arises. What is claimed is that this is as far as one unit moved any of them at these corners, that it is a small part of the band each is judged against, and that no verdict turned on it. It is measured at one unit and at these corners and is not a proof for every perturbation.
 
 ## What this does not settle
 

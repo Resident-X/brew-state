@@ -38,11 +38,11 @@ import run_parameter_sweep as sweep  # noqa: E402
 FIGURES_RECORD = os.path.join(REPOSITORY_DIR, "docs", "sunbeam-em7000",
                               "controller-board-design-constraints.md")
 
-#: How far a regenerated figure may sit from the committed one before the
-#: committed record is out of date rather than merely rounded differently. The
-#: byte-for-byte comparison of the committed record is what refuses a stale one,
-#: and this only decides which figures a failed comparison names as having moved;
-#: a tenth of a kelvin is the last digit the record is written to.
+#: How far apart a committed peak and the one now produced may be and still be
+#: the same figure. The byte-for-byte comparison of the committed record is what
+#: refuses a stale one; the row-by-row comparisons that use this run beside it
+#: and name the peak that differs. A tenth of a kelvin is the last digit the
+#: record is written to.
 FIGURE_TOLERANCE_C = 0.15
 
 FINDINGS = None

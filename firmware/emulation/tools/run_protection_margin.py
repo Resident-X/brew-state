@@ -1092,13 +1092,15 @@ def report_text(findings):
               "stand behind."
               % (len(changed), "" if len(changed) == 1 else "s", "; ".join(changed)))
     else:
-        write("**No verdict changed with one unit in the last place.** The figures above are "
-              "not reproducible to the digits printed and are not claimed to be: a figure can "
-              "move by a step of the loop's command, and that step is what the amounts above "
-              "measure. What is claimed is that this is as far as one unit moved any of them "
-              "at these corners, that it is a small part of the band each is judged against, "
-              "and that no verdict turned on it. It is measured at one unit and at these "
-              "corners and is not a proof for every perturbation.")
+        write("**No verdict changed with one unit in the last place.** The figures above regenerate "
+              "byte for byte on every supported host, and they move by the amounts above when a "
+              "coefficient moves by one unit. What is measured is a coefficient moved to its "
+              "neighbouring single-precision number, which is not the same as moving a library "
+              "result inside a step of the loop; the arithmetic is now identical across hosts, so "
+              "the latter no longer arises. What is claimed is that this is as far as one unit "
+              "moved any of them at these corners, that it is a small part of the band each is judged against, and that no "
+              "verdict turned on it. It is measured at one unit and at these corners and is not "
+              "a proof for every perturbation.")
     write("")
 
     write("## What this does not settle")

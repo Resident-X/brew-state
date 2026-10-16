@@ -64,15 +64,16 @@ REPLACEMENT_VALUE = "1200.0"
 # pressure fails this suite instead of quietly emptying it.
 UNWEIGHABLE_COEFFICIENTS = ("pump.pressure_bar", "brew.pressure_time_constant_s")
 
-# How far a regenerated figure may sit from the committed one before the
-# committed record is out of date rather than merely rounded differently.
+# How far apart two figures may be and still count as the same figure.
 #
 # The sweep is deterministic: running it twice, on any supported host, writes the
 # same bytes, because the plant model's arithmetic is the project's own and no
 # build fuses a multiply with an add. The byte-for-byte comparison of the committed
-# record is what refuses a stale one; this tolerance only decides which figures a
-# failed comparison names as having moved, so that a reader is shown the figure
-# and not a diff of a table.
+# record is what refuses a stale one. This tolerance is used where a test compares
+# one figure with another -- a committed row with the row now produced, or a
+# shipped machine's figure with a replacement machine's -- and decides whether
+# they differ. Beside the exact comparison it is the check that names the figure
+# that moved, so a reader is shown the number and not a diff of a table.
 FIGURE_TOLERANCE = 0.01
 
 # The full heater scale, at or above which the brew loop has nothing further to

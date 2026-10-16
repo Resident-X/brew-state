@@ -85,11 +85,12 @@ CROSS_CHECKED_COEFFICIENTS = ("brew.thermal_mass_j_per_k", "water.heat_capacity_
 REPLACEMENT_COEFFICIENT = "brew.heater_power_w"
 REPLACEMENT_VALUE = "1200.0"
 
-# How far a regenerated figure may sit from the committed one before the
-# committed record is out of date rather than merely rounded differently. The
+# How far apart two figures may be and still count as the same figure. The
 # dominance suite's own reasoning applies unchanged: the byte-for-byte comparison
-# of the committed record is what refuses a stale one, and this tolerance only
-# decides which figures a failed comparison names as having moved.
+# of the committed record is what refuses a stale one, and this tolerance is used
+# where a test compares one figure with another -- a committed row with the row
+# now produced, or the shipped machine's with a replacement's -- and names the
+# figure that differs, beside the exact comparison.
 FIGURE_TOLERANCE = 0.01
 
 

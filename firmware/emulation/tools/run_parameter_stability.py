@@ -1960,7 +1960,19 @@ def report_text(findings):
           "joint corner writes two coefficients and has no one neighbour to move to, so it is "
           "not among them.")
     write("")
-    for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE):
+    leading = max(
+        (side for side in (sweep.BREW_SIDE, sweep.STEAM_SIDE)
+         if findings["sensitivity"][side]["where"] is not None),
+        key=lambda side: findings["sensitivity"][side]["largest"] / findings["floors"][side],
+        default=None)
+    if leading is not None:
+        write("Measured against the growth floor, which flatters least because a band is far "
+              "wider than a floor, the largest move is the %s side's: %s of its floor. It is "
+              "listed first below, and the share of the band is given after it for scale only."
+              % (leading, "%.2g%%" % (100.0 * findings["sensitivity"][leading]["largest"]
+                                      / findings["floors"][leading])))
+        write("")
+    for side in sorted((sweep.BREW_SIDE, sweep.STEAM_SIDE), key=lambda side: side != leading):
         account = findings["sensitivity"][side]
         _, unit = sweep.JUDGED[side]
         if account["where"] is None:
@@ -1989,13 +2001,15 @@ def report_text(findings):
                  "; ".join("%s side, `%s` %s corner, moved %s" % (side, name, corner, direction)
                            for side, (name, corner, direction) in changed)))
     else:
-        write("**No verdict changed with one unit in the last place.** The figures above are "
-              "not reproducible to the digits printed and are not claimed to be: a figure can "
-              "move by a step of the loop's command, and that step is what the amounts above "
-              "measure. What is claimed is that this is as far as one unit moved any of them "
-              "at these corners, that it is a small part of what each figure is judged "
-              "against, and that no verdict turned on it. It is measured at one unit and at "
-              "these corners and is not a proof for every perturbation.")
+        write("**No verdict changed with one unit in the last place.** The figures above regenerate "
+              "byte for byte on every supported host, and they move by the amounts above when a "
+              "coefficient moves by one unit. What is measured is a coefficient moved to its "
+              "neighbouring single-precision number, which is not the same as moving a library "
+              "result inside a step of the loop; the arithmetic is now identical across hosts, so "
+              "the latter no longer arises. What is claimed is that this is as far as one unit "
+              "moved any of them at these corners, that it is a small part of what each figure is judged against, and that no "
+              "verdict turned on it. It is measured at one unit and at these corners and is not "
+              "a proof for every perturbation.")
     write("")
 
     write("## What this does not settle")

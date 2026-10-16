@@ -81,13 +81,14 @@ EXCLUDED_UPPER_CORNER = "pump.flow_ml_per_s"
 REPLACEMENT_COEFFICIENT = "brew.heater_power_w"
 REPLACEMENT_VALUE = "1200.0"
 
-# How far a regenerated figure may sit from the committed one before the
-# committed record is out of date rather than merely rounded differently.
+# How far apart two figures may be and still count as the same figure.
 #
-# The relative part is the one the two suites beside this one already use, and
-# for the reason they give: the byte-for-byte comparison of the committed record
-# is what refuses a stale one, and this tolerance only decides which figures a
-# failed comparison names as having moved. What is added here is an absolute floor, because
+# The relative part is the one the two suites beside this one already use: the
+# byte-for-byte comparison of the committed record is what refuses a stale one,
+# and this tolerance is used where a test compares one figure with another -- a
+# committed row with the row now produced, or the shipped machine's with a
+# replacement's. It names the figure that differs, beside the exact comparison.
+# What is added here is an absolute floor, because
 # these figures are separations in a delivery's own unit and run from millionths
 # to several kelvin -- a purely relative tolerance would demand agreement to
 # eight decimal places on a figure that means nothing. The floor is a hundredth

@@ -28,7 +28,7 @@
 #define INVERSE_FACTORIAL_9 (1.0f / 362880.0f)
 #define INVERSE_FACTORIAL_10 (1.0f / 3628800.0f)
 
-/* Where the exponential leaves the range of normal floats on either side. */
+/* Conservative edges, inside the true cuts (about -87.34, 88.72); k stays in [-126, 127]. */
 #define EXP_LOWEST_ARGUMENT (-87.0f)
 #define EXP_HIGHEST_ARGUMENT 88.0f
 
