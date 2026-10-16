@@ -46,6 +46,10 @@ links:
     type: depends-on
   - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5
+  fingerprint: b7ddde0b388267b64f080181edabc998b4304b0d6e17844c4014c839f3477655
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C1
     class: served-statement
