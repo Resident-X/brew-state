@@ -22,6 +22,6 @@ links:
   - target: SOL-BOARD-LAYOUT-REVIEW-FEEDS-RULES
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: 4552916b162748941b0ebf83b83dae47831bb8c2e7a2387b061234e4b1968001
+  confirmer: claude-sonnet-5-5 (fresh-context brief reviewer)
+  fingerprint: c31435fb13f504a970b3308af292d7caabaea82653766d8a0e630593c2fe1f17
   gating_profile: ""
