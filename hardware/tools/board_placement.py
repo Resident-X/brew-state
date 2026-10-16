@@ -125,6 +125,9 @@ def floorplan(path: str) -> List[dict]:
         what = f"the floorplan table of {path}, region row '{name}'"
         if len(row) != len(header):
             raise Unreadable(f"{what} has {len(row)} cells where its header has {len(header)}")
+        if any(region["name"] == name for region in regions):
+            raise Unreadable(f"{what} repeats the name of an earlier region row: each region name must appear on one "
+                             "row only, so rename or merge the rows")
         regions.append({"name": name, "bounds": rectangles(row[1], what), "parts": parts(row[column], what)})
         if regions[-1]["bounds"] is None and regions[-1]["parts"]:
             raise Unreadable(f"{what} records the region as none and lists parts in it: "
