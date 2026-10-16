@@ -358,8 +358,10 @@
   "schematic": {},
   "sheets": [],
   "text_variables": {
+    "BARRIER_COPPER_MM2": "0",
     "MAINS": "present",
     "NOT_FOR_MANUFACTURE": "true",
+    "PASTE_OVER_VIA_MM2": "0",
     "WORK_ANGLE_TOLERANCE_DEG": "0.1",
     "WORK_DETOUR_RATIO": "1.3",
     "WORK_NECK_MM": "1",

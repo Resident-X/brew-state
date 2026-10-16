@@ -598,6 +598,96 @@ def pour_short_of_pad(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
 
 
+def small_part(reference: str, x: float, y: float, uuid: str, *pads) -> list:
+    """A footprint `reference` at (x, y) holding pads given as (number, technology, layers, net, x, y, size)."""
+    Q = sexpr.Quoted
+    body = [["layer", Q("F.Cu")], ["uuid", Q(uuid)], ["at", f"{x:g}", f"{y:g}"],
+            ["property", Q("Reference"), Q(reference), ["at", "0", "-2", "0"], ["layer", Q("F.SilkS")]]]
+    for index, (number, technology, layers, net, dx, dy, size) in enumerate(pads):
+        item = ["pad", Q(number), technology, "circle" if technology == "thru_hole" else "rect", ["at", f"{dx:g}", f"{dy:g}"],
+                ["size", f"{size:g}", f"{size:g}"]]
+        if technology == "thru_hole":
+            item.append(["drill", "0.8"])
+        item += [["layers", *[Q(layer) for layer in layers]], ["net", Q(net)], ["uuid", Q(f"{uuid[:-2]}{index + 1:02d}")]]
+        body.append(item)
+    return ["footprint", Q("proof:Seeded_Part"), *body]
+
+
+def track_under_bridging_part(seed: Seed) -> None:
+    """A part with a pad on Mains-class /MAINS_L and one on /LV_A, 6 mm apart, and a /LV_B track running between them."""
+    thru = ("thru_hole", ["*.Cu", "*.Mask"])
+    part = small_part("X1", 30, 4, "0b0e5c1a-0000-4000-8000-000000000800", ("1", *thru, "/MAINS_L", 0, 0, 1.6),
+                      ("2", *thru, "/LV_A", 6, 0, 1.6))
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, part),
+                              tree.insert(len(tree) - 1, segment("/LV_B", 32, 4, 34, 4, "0b0e5c1a-0000-4000-8000-000000000801"))))
+
+
+def via_under_paste(seed: Seed) -> None:
+    """A surface-mount pad of /LV_A, paste layer and all, with a 0.3 mm /LV_A via drilled through its middle."""
+    Q = sexpr.Quoted
+    part = small_part("X2", 30, 4, "0b0e5c1a-0000-4000-8000-000000000900",
+                      ("1", "smd", ["F.Cu", "F.Paste", "F.Mask"], "/LV_A", 0, 0, 1.5))
+    hole = ["via", ["at", "30", "4"], ["size", "0.6"], ["drill", "0.3"], ["layers", Q("F.Cu"), Q("B.Cu")],
+            ["net", Q("/LV_A")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000901")]]
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, part), tree.insert(len(tree) - 1, hole)))
+
+
+def track_beside_pour(seed: Seed) -> None:
+    """A /LV_A pour 8 mm by 5 mm and, 0.08 mm off its upper edge and parallel to it, a /LV_A track: the fill stops short of
+    the track by less than the 0.15 mm minimum clearance the project states, where KiCad compares no copper of one net."""
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/LV_A")], ["layer", Q("F.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000a00")],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "0.2"]], ["min_thickness", "0.25"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"], ["island_removal_mode", "1"]],
+            ["polygon", ["pts", ["xy", "30", "2"], ["xy", "38", "2"], ["xy", "38", "7"], ["xy", "30", "7"]]]]
+    seed.project(lambda data: data["board"]["design_settings"]["rules"].update(min_clearance=0.15))
+    seed.layout(lambda tree: (tree.insert(len(tree) - 1, zone),
+                              tree.insert(len(tree) - 1, segment("/LV_A", 30, 7.205, 38, 7.205, "0b0e5c1a-0000-4000-8000-000000000a01"))))
+
+
+def barrier_part(seed: Seed, second: Tuple[str, str, float, float]) -> None:
+    """A part with a pad on Mains-class /MAINS_L at its origin and a second pad given as (net, technology, x, y) off it,
+    where a net of "" leaves the pad with none."""
+    thru = ["*.Cu", "*.Mask"]
+    net, _, dx, dy = second
+    part = small_part("X1", 30, 4, "0b0e5c1a-0000-4000-8000-000000000b00", ("1", "thru_hole", thru, "/MAINS_L", 0, 0, 1.6),
+                      ("2", "thru_hole", thru, net or "/LV_A", dx, dy, 1.6))
+    if not net:
+        for item in sexpr.children(part, "pad")[1:]:
+            item.remove(sexpr.child(item, "net"))
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, part))
+
+
+def crystal_part(seed: Seed) -> None:
+    """R2 renamed, in the layout, to a footprint of a crystal's name: a board with a crystal."""
+    seed.layout(lambda tree: footprint(tree, "R2").__setitem__(1, sexpr.Quoted("proof:Crystal_Seeded")))
+
+
+def keep_clear_exempting_all(seed: Seed) -> None:
+    """The crystal keep-clear written for R2 with an exemption for every other footprint of the board."""
+    others = [board_check.board_geometry.reference(item)
+              for item in sexpr.children(sexpr.parse_one(seed.read(".kicad_pcb")), "footprint")]
+    crystal_part(seed)
+    exempt = "".join(f" && B.Reference != '{name}'" for name in others if name != "R2")
+    rule("Crystal keep-clear", f"A.Reference == 'R2'{exempt}", "(constraint courtyard_clearance (min 25mm))")(seed)
+
+
+def ground_class(seed: Seed) -> None:
+    """A Ground net class holding /LV_B, whose pads then want thermal reliefs."""
+    def edit(data: dict) -> None:
+        classes = data["net_settings"]["classes"]
+        classes.append({**copy.deepcopy(classes[0]), "name": "Ground"})
+        data["net_settings"]["netclass_patterns"].append({"netclass": "Ground", "pattern": "/LV_B"})
+    seed.project(edit)
+
+
+def reliefs_exempting_a_plain_pad(seed: Seed) -> None:
+    """The ground pad reliefs written with an exemption for R2's pad 2, an ordinary pad on /LV_B."""
+    ground_class(seed)
+    rule("Ground pad reliefs", "A.Type == 'Pad' && A.hasNetclass('Ground') && !(A.Reference == 'R2' && A.Pad_Number == '2')",
+         "(constraint zone_connection thermal_reliefs)")(seed)
+
+
 def bowed(net: str, start: Tuple[float, float], heading: float, length: float, half_sweep: float, uuid: str) -> list:
     """An arc from `start` along a chord `length` long at `heading` degrees, turning `half_sweep` degrees either side of it."""
     Q = sexpr.Quoted
@@ -882,6 +972,29 @@ FAULTS: List[Tuple[str, str, str, str, Callable[[Seed], None]]] = [
      variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
     ("a synthetic catalogue extract applied to a design not marked not for manufacture", "parts: a synthetic extract cannot pass an orderable board", "parts_record", "the catalogue extract is marked synthetic",
      variables(lambda v: v.pop("NOT_FOR_MANUFACTURE"))),
+    # Barrier, paste and pours
+    ("a barrier rule with no figure", "separation: the barrier rule's figure is set", "workmanship_figure", "MAINS-5 (barrier copper) has no figure",
+     variables(lambda v: v.pop("BARRIER_COPPER_MM2"))),
+    ("a paste rule with a figure written with a unit", "manufacture: the paste rule's figure is a plain number", "workmanship_figure",
+     "PASTE_OVER_VIA_MM2 is '0.1mm2'", variables(lambda v: v.update(PASTE_OVER_VIA_MM2="0.1mm2"))),
+    ("a track under a part that joins mains to low voltage", "separation: no copper lies between the pads of a part that bridges the mains barrier", "mains_barrier",
+     "X1 joins Mains-class /MAINS_L (pad 1) to /LV_A (pad 2), and a track of net /LV_B on F.Cu lies under it", track_under_bridging_part),
+    ("a via drilled through the paste of a pad", "manufacture: solder paste is not printed over a via's hole", "paste_via",
+     "solder paste is printed over the hole of the 0.3 mm via at (30, 4) mm", via_under_paste),
+    ("a pour stopping short of a track of its own net", "manufacture: a pour leaves no narrow gap to copper of its own net", "pour_gap",
+     "stops 0.080 mm short of track from (30, 7.205) to (38, 7.205) mm", track_beside_pour),
+    ("a part whose Mains-class and other pads overlap on both axes", "separation: a part with no strip between its pad rows fails by name", "mains_barrier",
+     "the boxes of its two groups of pads overlap along both axes, so no strip lies between them", lambda seed: barrier_part(seed, ("/LV_A", "", 0.5, 0.5))),
+    ("a part whose only pads off the Mains class have no net", "separation: a part whose bridging cannot be known fails by name", "mains_barrier",
+     "its only pads off the Mains class, pad 2, have no net, so whether it bridges the barrier is not known", lambda seed: barrier_part(seed, ("", "", 6, 0))),
+    ("a crystal on a board whose rules file has no keep-clear", "clock: a board with a crystal holds the keep-clear rule", "crystal_keepclear",
+     "R2 is a crystal, and the rules file holds no rule keeping the parts unrelated", crystal_part),
+    ("a crystal keep-clear that exempts every other part", "clock: the keep-clear exempts no more than the parts related to the oscillator", "crystal_keepclear",
+     "exempts every other part of the layout from the keep-clear of R2", keep_clear_exempting_all),
+    ("a ground class on a board whose rules file has no relief rule", "manufacture: a board with ground pads holds the thermal relief rule", "ground_relief",
+     "the rules file holds no rule giving them thermal reliefs", ground_class),
+    ("a relief rule exempting a pad that is not an exposed pad", "manufacture: the relief rule exempts only an exposed pad", "ground_relief",
+     "exempts R2 pad 2 from the reliefs of net class Ground, but it is not an exposed pad", reliefs_exempting_a_plain_pad),
 ]
 
 

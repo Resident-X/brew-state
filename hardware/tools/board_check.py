@@ -1635,6 +1635,9 @@ MEASURED = (
      "and off a long pad's axis", 0.0, 22.5),
     ("WORK-10", "pad entry", "WORK_PAD_ENTRY_RATIO", "times as long as wide, beyond which a pad is entered only "
      "along its long axis", 1.0, None),
+    ("MAINS-5", "barrier copper", "BARRIER_COPPER_MM2", "mm² of copper at most between the pad rows of a part that "
+     "bridges the barrier", 0.0, None),
+    ("MFG-4", "paste over a via", "PASTE_OVER_VIA_MM2", "mm² at most of a via's hole under a paste opening", 0.0, None),
 )
 
 #: Each custom rule a design's rules file must hold, by the catalogue item it
@@ -1767,6 +1770,144 @@ def workmanship_rules(design: Design, rules: Optional[List[list]]) -> List[Viola
                                    f"(constraint {constraint} ...), so KiCad does not measure it; add a rule holding "
                                    f"(constraint {constraint} {written}) at the figure the board's rules table gives "
                                    f"for {item}"))
+    return found
+
+
+#: The least distance, in mm, the crystal keep-clear holds the parts unrelated to the oscillator from the crystal's courtyard.
+KEEP_CLEAR_MM = 25.0
+
+#: A footprint name that is a crystal or a ceramic resonator, as KiCad's own libraries name them.
+CRYSTAL_FOOTPRINT = re.compile(r"(?i)(crystal|resonator)_")
+
+#: The condition of the crystal keep-clear: the crystal, and each part exempt from it.
+KEEP_CLEAR_CONDITION = re.compile(r"A\.Reference == '([^']+)'((?: && B\.Reference != '[^']+')*)")
+
+#: The condition of the ground pad reliefs: pads of one net class, bar each exposed pad it names.
+RELIEF_PAD = r"\(A\.Reference == '[^']+' && A\.Pad_Number == '[^']+'\)"
+RELIEF_CONDITION = re.compile(r"A\.Type == 'Pad' && A\.hasNetclass\('([^']+)'\)((?: && !" + RELIEF_PAD + ")*)")
+
+
+def sole_rule_form(rule: list) -> Optional[str]:
+    """The text of a rule's one condition where its only other clause is one constraint, else None."""
+    clauses = [node for node in rule[2:] if isinstance(node, list)]
+    conditions = [node for node in clauses if sexpr.head(node) == "condition"]
+    constraints = [node for node in clauses if sexpr.head(node) == "constraint"]
+    if len(clauses) != 2 or len(conditions) != 1 or len(constraints) != 1 or len(conditions[0]) != 2:
+        return None
+    return str(conditions[0][1])
+
+
+def board_footprints(tree: list) -> Dict[str, list]:
+    """Every footprint of a layout by its reference."""
+    return {board_geometry.reference(footprint): footprint for footprint in sexpr.children(tree, "footprint")
+            if board_geometry.reference(footprint)}
+
+
+def crystal_keep_clear(design: Design, rules: Optional[List[list]], tree: list) -> List[Violation]:
+    """Every crystal on the layout the rules file does not hold KiCad to keeping unrelated parts clear of.
+
+    A footprint named for a crystal or a resonator needs a rule holding
+    (constraint courtyard_clearance (min <figure>mm)) with a figure of at least
+    KEEP_CLEAR_MM, whose one condition names it as A and exempts parts from
+    B only by reference, and which leaves at least one other footprint of the
+    layout unexempted: a rule that exempts every part, or is written in any
+    other form, holds nothing. Any other rule holding the constraint that names
+    the crystal is a rule KiCad may apply after it, so it fails too.
+    """
+    footprints = board_footprints(tree)
+    crystals = sorted(reference for reference, footprint in footprints.items()
+                      if CRYSTAL_FOOTPRINT.match(str(footprint[1]).split(":")[-1]))
+    found = []
+    holding = [rule for rule in rules or [] if any(len(node) > 1 and str(node[1]) == "courtyard_clearance"
+                                                  for node in sexpr.children(rule, "constraint"))]
+    for crystal in crystals:
+        others = set(footprints) - {crystal}
+        forms = []
+        for rule in holding:
+            text = sole_rule_form(rule)
+            matched = KEEP_CLEAR_CONDITION.fullmatch(text) if text is not None else None
+            minimum = written_minimum(rule, "courtyard_clearance", r"[0-9]+(?:\.[0-9]+)?mm")
+            if matched and matched.group(1) == crystal and minimum is not None:
+                forms.append((rule, figure_of(minimum), set(re.findall(r"B\.Reference != '([^']+)'", matched.group(2)))))
+        if not forms:
+            found.append(Violation(design.project, "crystal_keepclear", f"{design.rules} crystal {crystal}",
+                                   f"{crystal} is a crystal, and the rules file holds no rule keeping the parts unrelated "
+                                   f"to the oscillator clear of it: add (rule \"Crystal keep-clear\" (condition "
+                                   f"\"A.Reference == '{crystal}' && B.Reference != '<related part>'\") (constraint "
+                                   f"courtyard_clearance (min {KEEP_CLEAR_MM:g}mm))), with one B.Reference != '<part>' "
+                                   "for each part related to the oscillator"))
+            continue
+        for rule, figure, exempt in forms:
+            if figure < KEEP_CLEAR_MM:
+                found.append(Violation(design.project, "crystal_keepclear", f"{design.rules} {rule_at(rule)}",
+                                       f"{rule_at(rule)} keeps parts {figure:g} mm from the courtyard of {crystal}, "
+                                       f"under the {KEEP_CLEAR_MM:g} mm the crystal keep-clear holds; raise its minimum"))
+            elif others and not others - exempt:
+                found.append(Violation(design.project, "crystal_keepclear", f"{design.rules} {rule_at(rule)}",
+                                       f"{rule_at(rule)} exempts every other part of the layout from the keep-clear of "
+                                       f"{crystal}, so it holds nothing; exempt only the parts related to the oscillator"))
+        formed = {id(rule) for rule, _, _ in forms}
+        for rule in holding:
+            if id(rule) in formed or f"'{crystal}'" not in " ".join(str(node[1]) for node in sexpr.children(rule, "condition") if len(node) > 1):
+                continue
+            found.append(Violation(design.project, "crystal_keepclear", f"{design.rules} {rule_at(rule)}",
+                                   f"{rule_at(rule)} holds a courtyard_clearance constraint and names {crystal}, but not "
+                                   "in the one form of the crystal keep-clear, so KiCad may apply it after the keep-clear "
+                                   "and loosen it; remove it, or write it as the keep-clear"))
+    return found
+
+
+def exposed_pad(pads: Sequence[board_geometry.Pad], one: board_geometry.Pad) -> bool:
+    """Whether a pad is its footprint's exposed pad: the footprint has more than two pads and this one is strictly the largest."""
+    area = one.size[0] * one.size[1]
+    return len(pads) > 2 and all(area > other.size[0] * other.size[1] for other in pads if other is not one)
+
+
+def ground_reliefs(design: Design, rules: Optional[List[list]], tree: list, members: Dict[str, Set[str]]
+                   ) -> List[Violation]:
+    """Every ground net class of the board, with pads the relief applies to, that the rules file does not hold to thermal reliefs.
+
+    A net class named ground or gnd in any case is a ground class. Where a
+    pad of the layout on a net of one is not its footprint's exposed pad, the
+    rules file needs a rule holding (constraint zone_connection thermal_reliefs)
+    whose one condition is a pad of that class, bar each exposed pad it names as
+    a reference and a pad number, and every pad it exempts must be an exposed
+    pad on a net of the class, with at least one other pad of the class left
+    under the rule. A rule in any other form holds nothing.
+    """
+    table = board_geometry.net_table(tree)
+    placed = [board_geometry.footprint_pads(footprint, table) for footprint in sexpr.children(tree, "footprint")]
+    found = []
+    for ground in sorted(name for name in members if re.search(r"(?i)ground|gnd", name)):
+        pads = [(pad, exposed_pad(group, pad)) for group in placed for pad in group if pad.net in members[ground]]
+        if not any(not exposed for _, exposed in pads):
+            continue
+        exposed = {(pad.reference, pad.number) for pad, is_exposed in pads if is_exposed}
+        forms = []
+        for rule in rules or []:
+            constraints = [node for node in sexpr.children(rule, "constraint") if len(node) > 1 and str(node[1]) == "zone_connection"]
+            if not constraints:
+                continue
+            text = sole_rule_form(rule)
+            matched = RELIEF_CONDITION.fullmatch(text) if text is not None else None
+            if matched and matched.group(1) == ground and constraints[0][2:] == ["thermal_reliefs"]:
+                forms.append((rule, set(re.findall(r"A\.Reference == '([^']+)' && A\.Pad_Number == '([^']+)'", matched.group(2)))))
+        where = f"{design.rules} ground class {ground}"
+        if not forms:
+            found.append(Violation(design.project, "ground_relief", where,
+                                   f"the pads of net class {ground} are joined to a pour by the zone's own setting alone: "
+                                   f"the rules file holds no rule giving them thermal reliefs; add (rule \"Ground pad "
+                                   f"reliefs\" (condition \"A.Type == 'Pad' && A.hasNetclass('{ground}')\") (constraint "
+                                   "zone_connection thermal_reliefs)), with && !(A.Reference == '<part>' && A.Pad_Number "
+                                   "== '<n>') for each exposed thermal pad that is joined in full"))
+            continue
+        for rule, exempt in forms:
+            stray = sorted(exempt - exposed)
+            if stray:
+                found.append(Violation(design.project, "ground_relief", f"{design.rules} {rule_at(rule)}",
+                                       f"{rule_at(rule)} exempts {', '.join(f'{ref} pad {number}' for ref, number in stray)} "
+                                       f"from the reliefs of net class {ground}, but it is not an exposed pad on a net of "
+                                       "the class; exempt only an exposed thermal pad"))
     return found
 
 
@@ -2241,6 +2382,396 @@ def net_widths(nets: Set[str], members: Dict[str, Set[str]], widths: Dict[str, T
             found[net] = widths[held[0][1]][1]
         elif "Default" in widths:
             found[net] = widths["Default"][1]
+    return found
+
+
+# --- Barriers, paste and pours ---------------------------------------------------
+#
+# Three more rules KiCad does not measure, each read from the layout file as
+# copper on the board. None is held to a figure of the check's own: the barrier
+# and the paste are held to an area the design sets as a project text variable
+# (see MEASURED), and the pour gap to the board's own minimum clearance. The
+# barrier and the pour gap read the fills of the layout as KiCad has just
+# refilled them, never as the file was committed, since a committed fill may be
+# out of date.
+
+
+#: How much more than its figure, in mm squared, an area may be measured to be and still meet it: far under
+#: anything drawn, over the error of an area found by polygons.
+AREA = 1e-6
+
+#: How much a gap may fall short of the board's minimum clearance, in mm, and
+#: still meet it: the nanometre KiCad rounds a coordinate to.
+ROUNDING = 1e-6
+
+
+def zone_fills(tree: list) -> List[Tuple[str, str, List[board_geometry.Point]]]:
+    """Every fill a layout holds, as (the zone's net, the layer it is on, the corners of its outline).
+
+    KiCad writes each fill as one outline per polygon, any holes joined into it
+    by a bridge of no width, so a point is inside it by the even-odd rule. A
+    zone with no net is a rule area and carries no fill. A fill written in any
+    other form raises Unreadable.
+    """
+    table = board_geometry.net_table(tree)
+    found = []
+    for zone in sexpr.children(tree, "zone"):
+        net = board_geometry.item_net(zone, table, "a zone of the layout")
+        if not net:
+            continue
+        for fill in sexpr.children(zone, "filled_polygon"):
+            layer, points = sexpr.child(fill, "layer"), sexpr.child(fill, "pts")
+            what = f"a fill of the zone of {net}"
+            if layer is None or len(layer) < 2 or points is None:
+                raise board_geometry.Unreadable(f"{what} has no layer or no corners where KiCad writes them")
+            if any(sexpr.head(corner) != "xy" for corner in points[1:]) or len(points) < 4:
+                raise board_geometry.Unreadable(f"{what} is {sexpr.dump(points)[:60]}, not a run of (xy ...) corners")
+            found.append((net, str(layer[1]), [board_geometry.xy(corner, what) for corner in points[1:]]))
+    return found
+
+
+def copper_layers(tree: list) -> List[str]:
+    """The copper layers of a layout in the order KiCad stacks them, front to back; the two outer ones where it names none."""
+    named = [str(entry[1]) for entry in (sexpr.child(tree, "layers") or [])[1:]
+             if isinstance(entry, list) and len(entry) > 1 and str(entry[1]).endswith(".Cu")]
+    if not named:
+        return ["F.Cu", "B.Cu"]
+    inner = sorted((name for name in named if name not in ("F.Cu", "B.Cu")), key=lambda name: (len(name), name))
+    return [name for name in ["F.Cu"] if name in named] + inner + [name for name in ["B.Cu"] if name in named]
+
+
+class Via:
+    """One via on the layout: its net, centre, size and drill, and the copper layers its hole joins."""
+
+    def __init__(self, net: str, centre, size: float, drill: float, layers: Sequence[str]):
+        self.net, self.centre, self.size, self.drill, self.layers = net, centre, size, drill, tuple(layers)
+
+    def place(self) -> str:
+        return f"via at ({coordinate(self.centre[0])}, {coordinate(self.centre[1])}) mm"
+
+
+def board_vias(tree: list, stack: Sequence[str]) -> List[Via]:
+    """Every via on the layout, the copper layers of `stack` between the two it names as the ones it joins."""
+    table = board_geometry.net_table(tree)
+    found = []
+    for node in sexpr.children(tree, "via"):
+        what = "a via of the layout"
+        size, drill = sexpr.child(node, "size"), sexpr.child(node, "drill")
+        ends = [stack.index(str(name)) for name in (sexpr.child(node, "layers") or [])[1:] if str(name) in stack]
+        found.append(Via(board_geometry.item_net(node, table, what), board_geometry.xy(sexpr.child(node, "at"), what),
+                         board_geometry.number(size, 1, what) if size is not None else 0.0,
+                         board_geometry.number(drill, 1, what) if drill is not None else 0.0,
+                         stack[min(ends):max(ends) + 1] if ends else stack))
+    return found
+
+
+class Piece:
+    """One piece of copper on the layout: what it is, its net, the layers it is on, and its outline as polygons."""
+
+    def __init__(self, kind: str, net: str, layers: Sequence[str], polygons: List[board_geometry.Polygon]):
+        self.kind, self.net, self.layers, self.polygons = kind, net, tuple(layers), polygons
+        points = [point for polygon in polygons for point in polygon]
+        self.bounds = (min(x for x, _ in points), min(y for _, y in points),
+                       max(x for x, _ in points), max(y for _, y in points)) if points else (0.0, 0.0, 0.0, 0.0)
+
+
+def copper_pieces(tree: list, stack: Sequence[str], pads: Sequence[board_geometry.Pad], fills) -> List[Piece]:
+    """Every track, arc, via, pad and fill of a layout as a piece of copper with its outline on the board."""
+    found = []
+    for copper in Layout(tree).copper:
+        found.append(Piece(copper.kind(), copper.net, [copper.layer], board_geometry.swept(copper.points(), copper.width)))
+    for via in board_vias(tree, stack):
+        found.append(Piece("via", via.net, via.layers, [board_geometry.disc(via.centre, via.size / 2)]))
+    for pad in pads:
+        found.append(Piece("pad", pad.net, [layer for layer in stack if pad.on(layer)], [pad.outline()]))
+    for net, layer, polygon in fills:
+        found.append(Piece("zone fill", net, [layer], [polygon]))
+    return found
+
+
+def barrier_strip(inside: Sequence[board_geometry.Pad], outside: Sequence[board_geometry.Pad]
+                  ) -> Optional[Tuple[float, float, float, float]]:
+    """The rectangle between two groups of pads, as (left, top, right, bottom), or None where their boxes overlap on both axes.
+
+    Each group is the box about its pads' full sizes. Where the groups are
+    apart along x the strip runs from the inner edge of one to the inner edge
+    of the other over the extent of both along y; otherwise, where they are
+    apart along y, the same turned the other way.
+    """
+    first = [pad.box() for pad in inside]
+    second = [pad.box() for pad in outside]
+    a = (min(b[0] for b in first), min(b[1] for b in first), max(b[2] for b in first), max(b[3] for b in first))
+    b = (min(b[0] for b in second), min(b[1] for b in second), max(b[2] for b in second), max(b[3] for b in second))
+    left, top, right, bottom = min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3])
+    if a[2] <= b[0]:
+        return a[2], top, b[0], bottom
+    if b[2] <= a[0]:
+        return b[2], top, a[0], bottom
+    if a[3] <= b[1]:
+        return left, a[3], right, b[1]
+    if b[3] <= a[1]:
+        return left, b[3], right, a[1]
+    return None
+
+
+def pad_numbers(pads: Sequence[board_geometry.Pad]) -> str:
+    numbers = ", ".join(pad.number or "(unnumbered)" for pad in pads)
+    return f"pad{'s' if len(pads) > 1 else ''} {numbers}"
+
+
+def mains_barrier(design: Design, tree: list, fills, mains: Set[str], allowed: float) -> List[Violation]:
+    """Every piece of copper under a part that bridges the barrier between the Mains net class and the rest of the board.
+
+    A part with a pad on a Mains-class net and a pad on another net crosses
+    the barrier the separation rule holds, and under it, between the two
+    groups of pads, no more than `allowed` mm squared of copper may lie, summed
+    over its layers: a track, an arc, a via, a pad or a pour's fill, so no
+    creepage path runs under the part. The strip between the groups is
+    measured as board_check.barrier_strip gives it. A part whose copper in it
+    is more than `allowed` fails once for each kind of copper of one net on one
+    layer that has area in it, naming that area and the part's total. The
+    copper of the pads that define the two groups is the strip's edges and is
+    not in it. A part with Mains-class pads and pads of no Mains class that
+    cannot be measured fails by name: one whose two groups' boxes overlap along
+    both axes, so no strip lies between them, or whose pads off the class have
+    no net, so it is not known to bridge. `fills` are the layout's fills as KiCad
+    has refilled them.
+    """
+    table = board_geometry.net_table(tree)
+    parts = []
+    every = []
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        placed = board_geometry.footprint_pads(footprint, table)
+        every += placed
+        inside = [pad for pad in placed if pad.net in mains]
+        outside = [pad for pad in placed if pad.net and pad.net not in mains]
+        unnetted = [pad for pad in placed if not pad.net]
+        if not inside or not (outside or unnetted):
+            continue
+        reason, strip = "", None
+        if not outside:
+            outside = unnetted
+            reason = (f"its only pads off the Mains class, {pad_numbers(unnetted)}, have no net, so whether it bridges "
+                      "the barrier is not known")
+        else:
+            strip = barrier_strip(inside, outside)
+            if strip is None:
+                reason = "the boxes of its two groups of pads overlap along both axes, so no strip lies between them"
+        if reason:
+            name = board_geometry.reference(footprint) or "?"
+            at = board_geometry.placement(footprint, f"the footprint {name}")
+            found.append(Violation(
+                design.project, "mains_barrier", f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm: barrier not measurable",
+                f"{name} has Mains-class {', '.join(sorted({pad.net for pad in inside}))} ({pad_numbers(inside)}) and other "
+                f"pads ({pad_numbers(outside)}), and the copper between them cannot be measured: {reason}; the barrier "
+                "rule does not support such a part, so use a part whose Mains-class pads lie apart from its other pads "
+                "along one axis, with every pad that is not Mains-class on a net"))
+            continue
+        parts.append((footprint, inside, outside, strip))
+    if not parts:
+        return found
+    stack = copper_layers(tree)
+    pieces = copper_pieces(tree, stack, every, fills)
+    for footprint, inside, outside, strip in parts:
+        name = board_geometry.reference(footprint) or "?"
+        left, top, right, bottom = strip
+        lying: Dict[Tuple[int, str, str, str], Tuple[float, int, Tuple[float, float]]] = {}
+        for piece in pieces:
+            if piece.bounds[2] <= left or piece.bounds[0] >= right or piece.bounds[3] <= top or piece.bounds[1] >= bottom:
+                continue
+            area, where = 0.0, None
+            for polygon in piece.polygons:
+                clipped = board_geometry.clip_to_box(polygon, strip)
+                share = board_geometry.polygon_area(clipped) if len(clipped) > 2 else 0.0
+                if share > 0 and where is None:
+                    where = (sum(x for x, _ in clipped) / len(clipped), sum(y for _, y in clipped) / len(clipped))
+                area += share
+            if area <= AREA:
+                continue
+            for layer in piece.layers:
+                key = (stack.index(layer) if layer in stack else len(stack), layer, piece.net, piece.kind)
+                total, count, first = lying.get(key, (0.0, 0, where))
+                lying[key] = (total + area, count + 1, first)
+        total = sum(area for area, _, _ in lying.values())
+        if total <= allowed + AREA:
+            continue
+        at = board_geometry.placement(footprint, f"the footprint {name}")
+        for (_, layer, net, kind), (area, count, first) in sorted(lying.items()):
+            what = f"{count} {kind}s" if count > 1 else f"a {kind}"
+            found.append(Violation(
+                design.project, "mains_barrier",
+                f"{name} at ({coordinate(at[0])}, {coordinate(at[1])}) mm: {kind} of {net or '(no net)'} on {layer}",
+                f"{name} joins Mains-class {', '.join(sorted({pad.net for pad in inside}))} ({pad_numbers(inside)}) to "
+                f"{', '.join(sorted({pad.net for pad in outside}))} ({pad_numbers(outside)}), and {what} of "
+                f"{('net ' + net) if net else 'no net'} on {layer} {'lie' if count > 1 else 'lies'} under it between them: {area:.3f} square mm inside "
+                f"the strip from ({coordinate(left)}, {coordinate(top)}) to ({coordinate(right)}, {coordinate(bottom)}) mm, "
+                f"near ({coordinate(first[0])}, {coordinate(first[1])}) mm; the part has {total:.3f} square mm of copper "
+                f"between its Mains-class pads and its other pads, over all layers, where BARRIER_COPPER_MM2 allows "
+                f"{allowed:g}, so move the copper, and cut any pour back, clear of that strip"))
+    return found
+
+
+def first_written(*values: Optional[float]) -> float:
+    """The first of the values a layout writes, or 0 where it writes none."""
+    return next((value for value in values if value is not None), 0.0)
+
+
+def written_number(node, keyword: str, what: str) -> Optional[float]:
+    """The number a node writes under `keyword`, or None where it writes none."""
+    found = sexpr.child(node, keyword) if node is not None else None
+    return board_geometry.number(found, 1, what) if found is not None else None
+
+
+def paste_openings(tree: list) -> List[Tuple[board_geometry.Pad, float]]:
+    """Every pad that has solder paste, with how far its paste opening reaches beyond its copper on every side, in mm.
+
+    The reach is the paste margin, the pad's own else its footprint's else the
+    board's, plus the margin ratio, resolved the same way, times the pad's
+    shorter side, as the layout writes them; with neither written it is 0.
+    """
+    table = board_geometry.net_table(tree)
+    setup = sexpr.child(tree, "setup")
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        what = f"a pad of the footprint {board_geometry.reference(footprint) or '?'}"
+        for node, pad in zip(sexpr.children(footprint, "pad"), board_geometry.footprint_pads(footprint, table)):
+            if "F.Paste" not in pad.layers and "B.Paste" not in pad.layers:
+                continue
+            margin = first_written(written_number(node, "solder_paste_margin", what),
+                                   written_number(footprint, "solder_paste_margin", what),
+                                   written_number(setup, "pad_to_paste_clearance", what))
+            ratio = first_written(written_number(node, "solder_paste_margin_ratio", what),
+                                  written_number(footprint, "solder_paste_margin_ratio", what),
+                                  written_number(setup, "pad_to_paste_clearance_ratio", what))
+            found.append((pad, margin + ratio * min(pad.size)))
+    return found
+
+
+def paste_over_vias(design: Design, tree: list, allowed: float) -> List[Violation]:
+    """Every via whose hole a pad's solder paste opening covers more than `allowed` mm squared of, once for each opening.
+
+    Paste printed over a via's hole runs down it and starves the joint, on
+    whichever side the paste is, since the hole goes through. A pad's opening
+    is its copper's shape grown (shrunk, where the reach is negative) on every
+    side by the reach paste_openings gives, never to a negative size, and
+    paste on a pad with no copper counts as it does on any other. The area is
+    that of the hole, a circle, inside the opening. A pad with
+    paste whose shape is not sized here cannot be measured and fails by name
+    wherever the board has a via, rather than being guessed.
+    """
+    vias = [via for via in board_vias(tree, copper_layers(tree)) if via.drill > 0]
+    found = []
+    for pad, reach in paste_openings(tree) if vias else []:
+        side = " and ".join(layer for layer in ("F.Paste", "B.Paste") if layer in pad.layers)
+        where = f"{pad.name()} at ({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm"
+        if pad.unsized:
+            found.append(Violation(design.project, "paste_via", f"net {pad.net or '(no net)'}: {where}",
+                                   f"whether the {side} opening of {pad.name()} reaches a via's hole cannot be measured: "
+                                   f"{pad.unsized}, and the check sizes a paste opening only for a circle, an oval, a "
+                                   f"rectangle or a rounded rectangle; give the pad one of those shapes, or take its paste "
+                                   f"layer off"))
+            continue
+        margin = (f"grown by {reach:g} mm on every side" if reach > 0 else
+                  f"shrunk by {-reach:g} mm on every side" if reach < 0 else "with no paste margin")
+        opening = pad.resized((max(pad.size[0] + 2 * reach, 0.0), max(pad.size[1] + 2 * reach, 0.0)))
+        if min(opening.size) <= 0:
+            continue
+        for via in vias:
+            radius = via.drill / 2
+            if math.dist(pad.centre, via.centre) > math.hypot(*opening.size) / 2 + radius:
+                continue
+            covered = (board_geometry.overlap_area(board_geometry.disc(via.centre, radius, 360), opening.outline(64))
+                       if opening.distance(via.centre) < radius else 0.0)
+            if covered > allowed + AREA:
+                found.append(Violation(
+                    design.project, "paste_via",
+                    f"net {via.net or '(no net)'}: {via.place()}, under the paste of {where}",
+                    f"solder paste is printed over the hole of the {via.drill:g} mm {via.place()} of "
+                    f"{('net ' + via.net) if via.net else 'no net'}: the {side} opening of {pad.name()} at "
+                    f"({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm, the pad's shape "
+                    f"{margin}, covers {covered:.4f} square mm of the hole of {math.pi * radius ** 2:.4f}, where "
+                    f"PASTE_OVER_VIA_MM2 allows {allowed:g}; paste in a via's hole runs through it and starves the joint, "
+                    f"so move the via out from under the opening, or shrink the pad's paste until it clears the hole, or "
+                    f"take the pad's paste layer off"))
+    return found
+
+
+def pour_gap_figure(design: Design, project: dict) -> Tuple[Optional[float], List[Violation]]:
+    """The narrowest gap a pour may leave, the board's minimum clearance from its design rules, or why the project states none."""
+    value = setting(project, "board", "design_settings", "rules", "min_clearance")
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+        said = "states none" if value is None else f"states {json.dumps(value)}"
+        return None, [Violation(design.project, "pour_gap", f"{design.project} board.design_settings.rules.min_clearance",
+                                f"MFG-6 pour gap has no figure: the project's board design rules {said} for min_clearance, "
+                                "so the narrowest gap a pour may leave between its fill and copper of its own net cannot "
+                                "be measured; set the minimum clearance in Board Setup to the manufacturer's figure")]
+    return float(value), []
+
+
+def track_gap(line: Sequence[board_geometry.Point], radius: float):
+    """How far a track's copper, its centre line swept by `radius`, passes from a straight line from a to b."""
+    return lambda a, b: max(min(board_geometry.segment_distance(p, q, a, b) for p, q in zip(line, line[1:])) - radius, 0.0)
+
+
+def via_gap(via: Via):
+    """How far a via's copper passes from a straight line from a to b."""
+    return lambda a, b: max(board_geometry.distance_to_segment(via.centre, a, b) - via.size / 2, 0.0)
+
+
+def pour_gaps(design: Design, tree: list, fills, minimum: float) -> List[Violation]:
+    """Every gap narrower than `minimum` between a pour's fill and copper of the pour's own net that the fill stops short of.
+
+    KiCad's clearance check compares no copper of one net, so a pour whose
+    fill stops a hair short of a track, via or pad of its own net, at the edge
+    of a rule area or the board's outline, leaves a slot it never reports,
+    which can close or leave a sliver when etched. Copper on the fill's net and
+    layer, a via on every layer it joins, is touched by a fill when its centre
+    is inside the outline by the even-odd rule or the nearest its copper comes
+    to the outline is within TOUCH, and passes; otherwise the nearest it comes,
+    its edge to the outline, must be at least `minimum`. A pad whose copper is
+    not sized is taken as the box of its full size.
+    """
+    stack = copper_layers(tree)
+    items = []
+    for copper in Layout(tree).copper:
+        items.append((copper.net, [copper.layer], copper.start, copper.points(), copper.width / 2,
+                      track_gap(copper.points(), copper.width / 2),
+                      f"{copper.kind()} from ({coordinate(copper.start[0])}, {coordinate(copper.start[1])}) to "
+                      f"({coordinate(copper.end[0])}, {coordinate(copper.end[1])}) mm"))
+    for via in board_vias(tree, stack):
+        items.append((via.net, via.layers, via.centre, [via.centre], via.size / 2, via_gap(via), via.place()))
+    for pad in board_geometry.pads(tree):
+        if pad.net:
+            solid = pad if pad.sized() else pad.resized(pad.size, "rect")
+            items.append((pad.net, [layer for layer in stack if pad.on(layer)], pad.centre, solid.outline(), 0.0,
+                          solid.distance_to_line,
+                          f"{pad.name()} at ({coordinate(pad.centre[0])}, {coordinate(pad.centre[1])}) mm"))
+    found = []
+    for net, layer, outline in fills:
+        edges = list(zip(outline, outline[1:] + outline[:1]))
+        reach = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])) for a, b in edges]
+        xs, ys = [point[0] for point in outline], [point[1] for point in outline]
+        island = (f"({coordinate(min(xs))}, {coordinate(min(ys))}) to ({coordinate(max(xs))}, {coordinate(max(ys))}) mm")
+        for item_net, layers, centre, line, radius, gap, place in items:
+            if item_net != net or layer not in layers:
+                continue
+            near = (min(x for x, _ in line) - radius - minimum, min(y for _, y in line) - radius - minimum,
+                    max(x for x, _ in line) + radius + minimum, max(y for _, y in line) + radius + minimum)
+            close = [edge for edge, box in zip(edges, reach)
+                     if box[0] <= near[2] and box[2] >= near[0] and box[1] <= near[3] and box[3] >= near[1]]
+            if not close or board_geometry.within(centre, outline):
+                continue
+            narrowest = min(gap(a, b) for a, b in close)
+            if TOUCH < narrowest < minimum - ROUNDING:
+                found.append(Violation(
+                    design.project, "pour_gap", f"net {net}: {place} on {layer}",
+                    f"MFG-6 pour gap: the pour of {net} on {layer} (a fill spanning {island}) stops {narrowest:.3f} mm "
+                    f"short of {place}, copper of its own net, narrower than the board's {minimum:g} mm minimum clearance; "
+                    "KiCad's clearance check compares no copper of one net, so it never reports a gap this narrow, yet it "
+                    "can close or leave a sliver when etched; draw the copper into the pour, or move it at least "
+                    f"{minimum:g} mm clear of the fill's edge, or let the pour reach it by moving the rule area or the "
+                    "outline edge that holds the fill back"))
     return found
 
 
@@ -2763,6 +3294,10 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     for item, what, name, unit, _, _ in MEASURED:
         if name in figures and read is not None:
             read.append((f"{item} {what}", name, f"{figures[name]:g} {unit}"))
+    pour_minimum, no_minimum = pour_gap_figure(design, project)
+    if pour_minimum is not None and read is not None:
+        read.append(("MFG-6 pour gap", "Board Setup min_clearance", f"{pour_minimum:g} mm, the narrowest gap a pour may "
+                     "leave between its fill and copper of its own net that it stops short of"))
 
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
@@ -2819,11 +3354,14 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         if tree is not None:
             try:
                 copper = Layout(tree)
+                pasted = (paste_over_vias(design, tree, figures["PASTE_OVER_VIA_MM2"])
+                          if "PASTE_OVER_VIA_MM2" in figures else [])
             except board_geometry.Unreadable as unread:
                 found.append(Violation(design.project, "design_unreadable", design.layout,
                                        f"the layout's copper cannot be read for its workmanship rules ({unread})"))
                 return found
             found += measured(design, copper, figures, corner)
+            found += pasted
         rules_copy = os.path.join(copy, os.path.basename(design.rules))
         existing = "(version 1)\n"
         if rules is not None and os.path.exists(rules_copy):
@@ -2856,11 +3394,30 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                        f"the schematic's net classes cannot be read from KiCad's netlist: {why}"))
 
         drc, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm",
-                               "--schematic-parity", "--refill-zones", "--all-track-errors", layout], copy)
+                               "--schematic-parity", "--refill-zones", "--save-board", "--all-track-errors", layout], copy)
         if drc is None:
             found.append(Violation(design.project, "design_unreadable", design.layout,
                                    f"the layout cannot be checked: {why}"))
             return found
+
+        # KiCad saves the board it refilled over the copy, so the fills the
+        # pour rules measure are the ones it has just made, never the committed ones.
+        fills: List[Tuple[str, str, List[board_geometry.Point]]] = []
+        refilled: Optional[list] = None
+        if tree is not None:
+            try:
+                with open(os.path.join(copy, layout), encoding="utf-8") as handle:
+                    refilled = sexpr.parse_one(handle.read())
+                fills = zone_fills(refilled)
+                if fills:
+                    if pour_minimum is None:
+                        found += no_minimum
+                    else:
+                        found += pour_gaps(design, refilled, fills, pour_minimum)
+            except (OSError, sexpr.SexprError, board_geometry.Unreadable) as unread:
+                found.append(Violation(design.project, "design_unreadable", design.layout,
+                                       f"the layout KiCad refilled cannot be read for its pours ({unread})"))
+                return found
 
         markers = fired(drc, marker_rule(nonce))
         own = {id(entry) for entry in markers}
@@ -2952,8 +3509,16 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                "class; set MAINS to present, or take them out of Mains"))
 
     found += net_ties(design, tree, on_layout)
+    found += crystal_keep_clear(design, rules, tree)
+    found += ground_reliefs(design, rules, tree, members)
     if signed is not None:
         found += overrides(design, tree, signed[0], on_layout)
+    try:
+        if "BARRIER_COPPER_MM2" in figures:
+            found += mains_barrier(design, refilled, fills, on_layout, figures["BARRIER_COPPER_MM2"])
+    except board_geometry.Unreadable as unread:
+        found.append(Violation(design.project, "design_unreadable", design.layout,
+                               f"the layout KiCad refilled cannot be read for the barrier under a part ({unread})"))
     return found
 
 

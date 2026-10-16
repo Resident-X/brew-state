@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-10-16T11:24:18.686597Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_placement.py::test_the_catalogue_names_the_placement_view_on_exactly_the_items_judged_at_placement
+  artifact_version: 2d2a9e45009d4a2c1e7905b581fdecaf37917d22
+attested_by: crun-7903dbf12b59b736
+links:
+  - target: SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C2
+    type: satisfies
