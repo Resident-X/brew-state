@@ -35,15 +35,15 @@ positions:
     package: "TSSOP-20_4.4x6.5mm_P0.65mm"
     lcsc: "C9100007"
   - reference: C1
-    value: "4.7uF"
-    package: "C_0805_2012Metric"
-    rating: "16V"
+    value: "47uF"
+    package: "CP_EIA-3528-21_Kemet-B"
+    rating: "10V"
     lcsc: "C9100008"
   - reference: C2
-    value: "4.7uF"
-    package: "C_0805_2012Metric"
-    rating: "16V"
-    lcsc: "C9100008"
+    value: "150uF"
+    package: "CP_EIA-3528-21_Kemet-B"
+    rating: "6.3V"
+    lcsc: "C9100014"
   - reference: C3
     value: "10uF"
     package: "C_0805_2012Metric"
