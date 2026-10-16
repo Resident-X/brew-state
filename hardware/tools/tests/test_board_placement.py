@@ -561,7 +561,7 @@ class Documentation(unittest.TestCase):
 
 #: The items C2 names as judged at placement: those whose Asks question asks where a part sits, and MAINS-2.
 PLACEMENT_ITEMS = {"FLOOR-1", "FLOOR-3", "POWER-2", "DECOUPLE-1", "DECOUPLE-3", "DECOUPLE-4", "DECOUPLE-5", "SENSE-2",
-                   "SENSE-3", "SENSE-5", "CLOCK-1", "CLOCK-3", "MAINS-2", "CONN-1", "CONN-2", "CONN-3", "TEST-2",
+                   "SENSE-3", "SENSE-5", "CLOCK-1", "CLOCK-3", "MAINS-2", "CONN-1", "CONN-2", "CONN-3", "CONN-4", "TEST-2",
                    "EMI-3", "EMI-4", "EMI-5", "TEST-1", "WORK-1"}
 
 

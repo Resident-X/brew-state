@@ -360,7 +360,7 @@ Below the floorplan, keep a plan table with one row for every item of the [Layou
 
 - **Item** is the item's identifier, for example `GROUND-1`.
 - **Applies** is `yes` or `no`, read from the item's *Applies when* against the schematic. An item whose condition the schematic meets is `yes`; it cannot be marked `no`.
-- For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from.
+- For an item that applies, the last column says how the layout will meet it, naming the regions of the floorplan, the parts by reference designator and the nets by name that it binds, closely enough that a failure the layout review finds against the item can be traced either to this row, as a plan the layout did not follow or a plan that was not enough, or to the item itself. A `yes` row meets each clause of the item's *Passes* for every part it binds, not for the first part alone: where the item states how a part is joined or placed, such as where a supply enters a capacitor's pad or that two capacitors sit side by side, the row states it for each part it names, because step 3 checks only that the parts a row names exist. For example, for `DECOUPLE-1`: `C12 and C13 at U4 pins 7 and 20, each within its own crop, C13 (100 nF) nearest pin 20, supply entering through each capacitor's pad; no via between capacitor and pin`. For a rule-kind item, it names the rules it puts in the board's rules table, with the board's own class names and the record each figure will be read from.
 - For an item that does not apply, the last column gives the reason against the item's condition, stating what the schematic lacks, for example `no crystal or ceramic resonator in the schematic` for `CLOCK-1`.
 
 Below the plan table, keep a table of the board's own items: practice this board must meet that no catalogue item states, such as a keep-out a part's datasheet asks for around it. Write each in the catalogue's item form ([How an item is read](#how-an-item-is-read)), one row per item, with how the layout will meet it:
@@ -373,6 +373,8 @@ Below the plan table, keep a table of the board's own items: practice this board
 - **How the layout meets it** is written as a `yes` row of the plan table is, naming the regions, parts and nets it binds.
 
 A board with no items of its own writes `none` in the Item column of the table's one row. The catalogue and these items together are the checklist the [layout review](#layout-review) judges the board against, and the table as committed before placement is that checklist's baseline. After that commit the table is only added to: no baseline row is removed, and none of its fields from Applies when to Source is changed. An item a review of the board adds later is appended below the others, its Source naming that review; it is judged from the review's next round on and is not part of the baseline. An item that is withdrawn keeps its row, marked withdrawn, as a catalogue item does.
+
+Amended after hardware/proof/review-proof/layout-review.md, round 1, finding 1.3.
 
 ### 3. Commit the floorplan and plan before placement
 
@@ -959,6 +961,24 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("Locate the microcomputer next to the voltage regulator, and the voltage regulator next to where VBatt enters the board"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Texas Instruments, *Grounding in mixed-signal systems demystified, Part 2*, Analog Applications Journal 2Q 2013, SLYT512, section *Grounding when multiple data converters are used on a single board* ("The power should enter the board in the digital partition and be fed directly to the digital circuitry, then filtered or regulated to feed the analog circuitry"), https://www.ti.com/lit/pdf/slyt512, read 2026-10-14.
 
+#### FLOOR-4. A part that its floorplan region does not list stays out of that region, by the board's rules
+
+- **Applies when:** always.
+- **Asks:** Does the board's rules file keep every footprint out of each floorplan region that does not list it, so that a part moved across a region's bound fails the pre-order check?
+- **Passes:** For each region that the floorplan of `layout-plan.md` gives, the board carries a rule area named for the region, drawn at the region's bounds on every copper layer, and its rules file holds one custom rule for the region, in this form, with one `A.Reference != '<part>'` for each part the floorplan lists in the region:
+
+  ```
+  (rule "<region> region parts"
+  	(condition "A.Type == 'Footprint' && A.intersectsArea('<region>') && A.Reference != '<part>'")
+  	(constraint disallow footprint))
+  ```
+
+  A part the floorplan lists in two regions, such as one that bridges the barrier, is named in both. The pre-order check reports no `items_not_allowed` violation, and each rule's row in the board's rules table names the region, its bounds and the parts the rule lets in, which are the floorplan's. The regions are the board's own, taken from its plan, so the pre-order check cannot tell a region with no rule, or a rule listing a part its region does not, from a rule that is right; that each region has its rule, listing the floorplan's parts and no others, is judged from `layout-plan.md`, `design-rules.md` and the layout review.
+- **Fails, as the views show it:** the pre-order check reports an `items_not_allowed` violation naming a footprint; or, in `design-rules.md`, a region has no row, or a row's bounds or parts differ from the floorplan's.
+- **Judged on:** the pre-order check's report, `design-rules.md`, `layout-plan.md`.
+- **Kind:** rule. **Severity:** function.
+- **Source:** `hardware/proof/review-proof/layout-review.md`, round 2, finding 2.1, which records a connector whose body crossed out of its region, and for the practice Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning*, https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
 ### Power paths and heat (POWER)
 
 #### POWER-1. Every class carrying supply or load current has a minimum track width for its current
@@ -992,12 +1012,12 @@ The areas, in order: [floorplan and partitioning](#floorplan-and-partitioning-fl
 #### POWER-3. A current that changes layer passes through one via for every 200 mA
 
 - **Applies when:** the schematic carries a supply input or a part that switches a load.
-- **Asks:** Where a path carrying supply or load current changes copper layer, does it pass through at least one via of the board's standard size for every 200 mA of the current it carries?
-- **Passes:** At each place a power path changes layer, the vias sharing its current number at least the path's continuous current divided by 200 mA, rounded up, each of the board's standard via size, the via size its rules give as the board's default. A board of one copper layer, or one whose power paths never change layer, meets it with no such via; its plan row says which, and for a path that will change layer, the number of vias its current needs.
-- **Fails, as the views show it:** on `net-<net>` for a power net, a single via carrying the whole of a path's current from one layer to another; in `facts.txt`, a power net whose via count is lower than its layer changes need.
-- **Judged on:** `net-<net>` for each power-class net, `facts.txt`.
+- **Asks:** Where a path carrying supply or load current changes copper layer, does it pass through at least one via of the board's standard size for every 200 mA of the current it carries, the path out and the path that returns the current alike?
+- **Passes:** At each place a path carrying supply or load current changes layer, the vias sharing its current number at least the path's continuous current divided by 200 mA, rounded up, each of the board's standard via size, the via size its rules give as the board's default. The path is the supply or load current's whole loop, so a return that reaches a ground plane through vias is held to it as much as the supply that left, whatever net class carries it: the figure of such a return is the current its class's `POWER-1` row reads from the constraints record. A board of one copper layer, or one whose power paths never change layer, meets it with no such via; its plan row says which, and for a path that will change layer, the number of vias its current needs.
+- **Fails, as the views show it:** on `net-<net>` for a power net or for the net that returns its current, a single via carrying the whole of a path's current from one layer to another; in `facts.txt`, a power net or a return net whose via count is lower than its layer changes need.
+- **Judged on:** `net-<net>` for each power-class net and for each net that returns a supply or load current, `facts.txt`.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 5 *Traces and Ground Plane* ("use one standard via per 200 mA of current if the trace will need to conduct a significant amount of current from one plane to the other"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14.
+- **Source:** Texas Instruments, *AN-1149 Layout Guidelines for Switching Power Supplies*, SNVA021C, revised April 2013, § 5 *Traces and Ground Plane* ("use one standard via per 200 mA of current if the trace will need to conduct a significant amount of current from one plane to the other"), https://www.ti.com/lit/pdf/snva021, read 2026-10-14; amended after `hardware/proof/review-proof/layout-review.md`, round 1, finding 1.2, which records a load's 1.0 A return reaching the ground planes through one via because the item spoke only of power-class nets.
 
 #### POWER-4. An exposed thermal pad is soldered to a thermal land with solidly connected vias
 
@@ -1193,11 +1213,29 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 
 - **Applies when:** the schematic carries a crystal or a ceramic resonator.
 - **Asks:** Is the oscillator kept away from unrelated parts, from digital and clock lines, and from analog circuits, low-speed signals and connectors?
-- **Passes:** No part unrelated to the oscillator sits within 25 mm (one inch) of the crystal. No digital or clock line runs near the crystal's tracks. The oscillator is away from the analog sensing region and from every connector.
-- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the caption's board coordinates, an unrelated part within 25 mm of the crystal, or the crystal beside a connector or the analog sensing region; on `layer-<copper layer>`, a digital track running beside the crystal's tracks.
+- **Passes:** No part unrelated to the oscillator sits within 25 mm (one inch) of the crystal, measured from the crystal's body to the part's body. A part is related to the oscillator when it is the crystal or ceramic resonator, one of its load capacitors, the controller whose oscillator pins it joins, or a part `FLOOR-3` and `DECOUPLE-1` place beside that controller: its decoupling capacitors, and the regulator that feeds it with the regulator's own capacitors. No digital or clock line runs near the crystal's tracks. The oscillator is away from the analog sensing region and from every connector.
+- **Fails, as the views show it:** on `assembly-top` or `assembly-bottom`, read against the caption's board coordinates, an unrelated part within 25 mm of the crystal, measured body to body, or the crystal beside a connector or the analog sensing region; on `layer-<copper layer>`, a digital track running beside the crystal's tracks.
 - **Judged on:** `assembly-top`, `assembly-bottom`, every `layer-<copper layer>`, `placement`.
 - **Kind:** judgement. **Severity:** function.
-- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("It is especially important that oscillator tank loops be located away from analog circuits, low-speed signals, and connectors") and § 2.4.1 *Capacitive and Inductive Crosstalk* ("No unrelated components should be closer than 1 inch to the crystal"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Microchip Technology (Atmel), *AVR186: Best Practices for the PCB Layout of Oscillators*, Atmel-8128B, September 2016, § 2 *Design Guides* ("Keep other digital signal lines, especially clock lines and frequently switching signal lines, as far away from the crystal connections as possible"), https://ww1.microchip.com/downloads/en/AppNotes/Atmel-8128-Best-Practices-for-the-PCB-layout-of-Oscillators_ApplicationNote_AVR186.pdf, read 2026-10-14.
+- **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("It is especially important that oscillator tank loops be located away from analog circuits, low-speed signals, and connectors") and § 2.4.1 *Capacitive and Inductive Crosstalk* ("No unrelated components should be closer than 1 inch to the crystal"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14; and Microchip Technology (Atmel), *AVR186: Best Practices for the PCB Layout of Oscillators*, Atmel-8128B, September 2016, § 2 *Design Guides* ("Keep other digital signal lines, especially clock lines and frequently switching signal lines, as far away from the crystal connections as possible"), https://ww1.microchip.com/downloads/en/AppNotes/Atmel-8128-Best-Practices-for-the-PCB-layout-of-Oscillators_ApplicationNote_AVR186.pdf, read 2026-10-14; amended after `hardware/proof/review-proof/layout-review.md`, round 1, finding 1.5, which records the 25 mm measured from the crystal's centre by the plan where its source's "closer than 1 inch to the crystal" reads from the crystal itself, and the regulator that the keep-clear and `FLOOR-3` put in conflict.
+
+#### CLOCK-4. Parts unrelated to the oscillator keep 25 mm from the crystal's courtyard, by the board's rules
+
+- **Applies when:** the schematic carries a crystal or a ceramic resonator.
+- **Asks:** Does the board's rules file hold every part unrelated to the oscillator at least 25 mm from the crystal?
+- **Passes:** The board's rules file holds this custom rule, with the crystal's reference designator for `<crystal>` and one `B.Reference != '<part>'` for each part related to the oscillator as `CLOCK-3` defines it, and the pre-order check reports no `courtyards_overlap` violation of it and no `crystal_keepclear` violation, which it reports for a board with a crystal whose rules file lacks the rule in this form, or whose rule exempts every other part:
+
+  ```
+  (rule "Crystal keep-clear"
+  	(condition "A.Reference == '<crystal>' && B.Reference != '<part>'")
+  	(constraint courtyard_clearance (min 25mm)))
+  ```
+
+  The figure is `CLOCK-3`'s 25 mm, and the rule's row in the board's rules table names that item as its source. KiCad measures between courtyards, which lie outside the parts' bodies, so a part clear of the crystal by its courtyard is clear of it by its body; it compares the courtyards of one side of the board only, so a part on the other side is judged by `CLOCK-3` on the views.
+- **Fails, as the views show it:** the pre-order check reports a `courtyards_overlap` or `crystal_keepclear` violation; or, in `design-rules.md`, no row for the rule, a figure below 25 mm, or a part exempt from it that `CLOCK-3` counts unrelated.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** function.
+- **Source:** the source of `CLOCK-3`, and `hardware/proof/review-proof/layout-review.md`, round 1, finding 1.5, which records the parts found within 25 mm of the crystal and the rule that states it.
 
 ### Separation of mains from low voltage (MAINS)
 
@@ -1241,6 +1279,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Kind:** judgement. **Severity:** safety.
 - **Source:** Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.3 *Creepage Distance*, Figure 4-2 ("For a groove (>1 mm wide), the only depth requirement is that the existing creepage distance plus the width of the groove and twice the depth of the groove must equal or exceed the required creepage distance. The groove must not weaken the substrate"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14.
 
+#### MAINS-5. No copper lies between the pad rows of a part that bridges the barrier
+
+- **Applies when:** the schematic carries a part with pins on both a mains-referenced net and a net outside the `Mains` class, such as an optocoupler, an isolator, a relay or a transformer.
+- **Asks:** Is there no copper of any net, on any copper layer, in the strip between the pads on the part's mains side and the pads on its other side?
+- **Passes:** The board's project text variable `BARRIER_COPPER_MM2` is set to 0, with its row in the board's rules table, and the pre-order check reports no `mains_barrier` violation. For each part with pads on a `Mains`-class net and on another net, the check takes the box of the copper of each group of pads, and where the two boxes lie apart along one axis, the strip between their inner edges over the extent of both. It adds up the area of every track, via, pad and filled pour of the board that lies in the strip, on each copper layer, and fails any part whose area exceeds the figure. The check refills the board's pours before it measures, so a pour left unfilled or filled before an edit cannot hide copper. A part whose two groups' boxes overlap along both axes has no strip to measure, and a part whose pads off the `Mains` class have no net is not known to bridge the barrier; the check fails each by name as not measurable, since the barrier rule does not support such a part, and the board uses a part whose `Mains`-class pads lie apart from its other pads along one axis, with every pad that is not `Mains`-class on a net.
+- **Fails, as the views show it:** the pre-order check reports a `mains_barrier` violation; or, in `design-rules.md`, no row for `BARRIER_COPPER_MM2`, or a figure above 0.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** safety.
+- **Source:** Texas Instruments, *Digital Isolator Design Guide*, SLLA284G, revised September 2023, § 4.3 *Creepage Distance* ("on all layers keep the space under the isolator free from traces, vias, and pads to maintain maximum creepage distance"), https://www.ti.com/lit/pdf/slla284, read 2026-10-14; and `hardware/proof/review-proof/layout-review.md`, round 2, finding 2.4, which records mains copper reaching 1.31 mm under an isolator toward its low-voltage pads.
+
 ### Connectors and mechanical fit (CONN)
 
 #### CONN-1. A transient suppressor sits at its connector, on the line's path
@@ -1272,6 +1320,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** `3d-angled`, `3d-top`, `3d-bottom`, `assembly-top`, `assembly-bottom`, `placement`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PCB Design Guidelines For Reduced EMI*, SZZA009, November 1999, § 2.3 *Board Zoning* ("Do not design in cable assemblies that fold over the oscillator or the microcomputer after final assembly"), https://www.ti.com/lit/pdf/szza009, read 2026-10-14.
+
+#### CONN-4. A board is held at mounting holes that keep a cable's force off its parts
+
+- **Applies when:** the schematic carries a connector or a screw terminal for a cable.
+- **Asks:** Does the board have mounting holes that hold it where its connectors take their cables' forces, clear of copper and of every part, and away from leadless packages?
+- **Passes:** At least three mounting holes stand in a spread that holds the board without rocking, each beside a board edge that carries a connector or between connectors, each with copper cleared from it by the board's copper-to-hole minimum, none within a part's courtyard, and none beside a leadless package or a crystal, as `CONN-2` asks. Each hole is a part drawn on the schematic, as every footprint on the board is, and listed in its floorplan region.
+- **Fails, as the views show it:** on `layer-Edge.Cuts` and `assembly-top`, no mounting hole, holes all on one side of the board, or a hole beside a leadless package; on `3d-angled`, a connector that its cable pulls on and no hole near.
+- **Judged on:** `layer-Edge.Cuts`, `assembly-top`, `3d-angled`, `placement`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** `hardware/proof/review-proof/layout-review.md`, round 1, finding 1.51, which records a board whose screw terminal and two cable connectors took their cables' forces with nothing to hold the board. No free published document states the item.
 
 ### Test access and bring-up (TEST)
 
@@ -1305,6 +1363,16 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level* ("Provide two pads on nets tied to critical low impedance devices (four-wire Kelvin testing)"), https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14.
 
+#### TEST-4. A voltage test pad joins the part's own pad by a track of its own
+
+- **Applies when:** the schematic carries a resistor used to measure current, or another part whose resistance is too low to read with two probes.
+- **Asks:** Does the test pad for the voltage across each such part reach the part's own pad by a track that carries no load current, rather than through a plane or from a point on the current's path?
+- **Passes:** The pad for a net's voltage is joined to the part's pad by a track of its own, leaving the pad apart from the track that carries the current, with a via, where it has one, that touches no plane; a ground net's voltage pad therefore reaches the shunt's ground pad through that track alone. The pad for the current may stand anywhere on the current's path.
+- **Fails, as the views show it:** on `net-<net>` for the part's nets, a voltage pad whose via branches from the current track partway along it, or from a plane, so that a reading includes the copper between the pad's point and the part.
+- **Judged on:** `assembly-top`, `assembly-bottom`, `net-<net>` for the part's nets, every `layer-<copper layer>`.
+- **Kind:** judgement. **Severity:** quality.
+- **Source:** Jack Olson, *Circuit Board Design for In-Circuit Testers*, Altium Resources, updated 27 December 2020, section *Testability Checklist at the PCB Layout Level* ("Provide two pads on nets tied to critical low impedance devices (four-wire Kelvin testing)"), https://resources.altium.com/p/circuit-board-design-circuit-testability, read 2026-10-14, for the two pads; and `hardware/proof/review-proof/layout-review.md`, round 1, finding 1.49, which records a shunt's test pads reaching it only through the planes and a shared via. No free published document states how the voltage pad joins the part.
+
 ### Manufacture and assembly (MFG)
 
 #### MFG-1. The board-wide minimums are the manufacturer's stated limits
@@ -1336,6 +1404,44 @@ The ground and return-path items, `GROUND-1` to `GROUND-4` and `EMI-1`, bind the
 - **Judged on:** `layer-F.Mask`, `layer-B.Mask`, `crop-<reference>`.
 - **Kind:** judgement. **Severity:** quality.
 - **Source:** Texas Instruments, *PowerPAD Thermally Enhanced Package*, SLMA002H, revised July 2018, § 2.4 *Thermal Vias* ("a via drill diameter of 0.33 mm (13 mils) or smaller works well"; "a solder mask material should be used to cap the vias on the component side with a dimension equal to the via diameter + 0.1 mm minimum"), https://www.ti.com/lit/pdf/slma002, read 2026-10-14.
+
+#### MFG-4. Solder paste is not printed over a via's hole
+
+- **Applies when:** always.
+- **Asks:** Is no paste opening over the hole of a via, so that paste is not printed straight into a hole and lost through it?
+- **Passes:** The board's project text variable `PASTE_OVER_VIA_MM2` is set to 0, with its row in the board's rules table, and the pre-order check reports no `paste_via` violation. The check takes each paste opening as its pad's shape grown by the pad's paste margin and ratio, the footprint's or the board's where the pad sets none, and measures the area of each via's hole that lies under it, on either side, failing any larger than the figure. A footprint whose paste openings fall over the vias its pad takes is drawn with openings between them, for example one opening each side of a strip that holds the vias.
+- **Fails, as the views show it:** the pre-order check reports a `paste_via` violation; on `layer-F.Paste` or `layer-B.Paste` and `crop-<reference>`, an opening centred on an open via; or, in `design-rules.md`, no row for `PASTE_OVER_VIA_MM2`, or a figure above 0.
+- **Judged on:** the pre-order check's report, `design-rules.md`.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** Texas Instruments, *QFN and SON PCB Attachment*, SLUA271C, revised December 2023, § 3.4.1 *Thermal Pad Via Design* ("a smaller via offers less risk of solder volume loss"; "On applications where solder volume loss through the vias is of concern, plugging or tenting can be used to achieve a repeatable process"), https://www.ti.com/lit/pdf/slua271, read 2026-10-16; and `hardware/proof/review-proof/layout-review.md`, round 1, finding 1.50, which records an exposed pad's four paste openings each centred on an open via.
+
+#### MFG-5. A ground pad joins a pour through thermal reliefs
+
+- **Applies when:** always.
+- **Asks:** Is every pad on a ground-class net, bar an exposed thermal pad, joined to the copper pours and planes it meets through relief spokes rather than in full, so that its joint can reach soldering temperature and a chip part's two ends heat alike?
+- **Passes:** The board's rules file holds this custom rule, with `<ground class>` replaced by the board's name for the class, and one `A.Reference == '<part>' && A.Pad_Number == '<n>'` for each exposed thermal pad that `POWER-4` joins in full, and the pre-order check reports no `starved_thermal` violation and no `ground_relief` violation, which it reports for a board with pads on a net class named for ground whose rules file lacks the rule in this form, or whose rule exempts a pad that is not an exposed pad:
+
+  ```
+  (rule "Ground pad reliefs"
+  	(condition "A.Type == 'Pad' && A.hasNetclass('<ground class>') && !(A.Reference == '<part>' && A.Pad_Number == '<n>')")
+  	(constraint zone_connection thermal_reliefs))
+  ```
+
+  KiCad applies the rule when it fills the zones, whatever connection the zone itself sets, and its layout rule check reports a relief left with fewer spokes than Board Setup's minimum resolved spokes as starved. The reliefs' gap and spoke width are the zones' own.
+- **Fails, as the views show it:** on a `layer-<copper layer>` holding a pour or plane, a ground pad joined in full, with no gap or spoke round it; the pre-order check reports a `starved_thermal` or `ground_relief` violation; or, in `design-rules.md`, no row for the rule.
+- **Judged on:** the pre-order check's report, `design-rules.md`, every `layer-<copper layer>` holding a pour or plane.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** KiCad, *PCB Editor* manual, version 10.0, zone properties, *Pad connection* ("Thermal reliefs will result in small copper spokes connecting the pad to the rest of the copper zone, increasing the thermal resistance between the pad and the rest of the zone. This can be useful for hand soldering."), https://docs.kicad.org/10.0/en/pcbnew/pcbnew.html, read 2026-10-16; and `hardware/proof/review-proof/layout-review.md`, round 1, finding 2.8, which records pads joined in full to 2 oz ground copper, one end of each chip part heating faster than the other.
+
+#### MFG-6. A pour leaves no sliver gap between its fill and copper of its own net
+
+- **Applies when:** always.
+- **Asks:** Does every pour's fill that stops short of a track, via or pad of its own net leave a gap at least the board's minimum clearance, so that no slot can close in etching or leave a sliver?
+- **Passes:** The pre-order check reports no `pour_gap` violation, and its report's `FIGURE` line for `MFG-6` gives the board's minimum clearance, which `MFG-1` holds to the manufacturer's limit. KiCad's layout rule check does not compare copper of one net, and its `physical_clearance` constraint also reports every two pieces that touch (KiCad 10.0.7, measured on a copy of the proof design), so it cannot state this. The check refills the board's pours, then measures, on each copper layer, the gap from each zone's fill to every track, via and pad of the zone's net that the fill does not touch, and fails any narrower than the minimum.
+- **Fails, as the views show it:** the pre-order check reports a `pour_gap` violation; or, on a `layer-<copper layer>` or `net-<net>`, a hair-thin slot parting a pour from a track, via or pad of its own net, such as beside a keep-out's edge.
+- **Judged on:** the pre-order check's report.
+- **Kind:** rule. **Severity:** quality.
+- **Source:** `hardware/proof/review-proof/layout-review.md`, round 4, finding 4.2 and round 5, finding 5.1, which record a pour stopping 0.077 mm and 0.125 mm short of copper of its own net, below the 0.15 mm minimum clearance; for the minimum, `MFG-1`. No free published document states the item.
 
 ### Emissions (EMI)
 

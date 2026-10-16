@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "review-proof")(type "KiCad")(uri "${KIPRJMOD}/review-proof.pretty")(options "")(descr "The exposed-pad footprint of the layout review proof design, its paste openings clear of its thermal vias"))
+)

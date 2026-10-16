@@ -648,6 +648,129 @@ class TheCheckReadsATrackMeetingAPadAsKiCadDoes(Copy):
                 self.assertEqual(ours, kicad, f"the contact rule and KiCad disagree on {what}")
 
 
+# --- Barrier, paste and pours --------------------------------------------------------
+
+
+class TheBarrierPasteAndPourRules(Proved):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """Copper under a part that bridges the mains barrier, solder paste over a
+    via's hole and a pour stopping short of copper of its own net each fail on
+    a fault seeded for it in a throwaway copy of the gate's proof design.
+    """
+
+    def test_each_rule_fails_on_its_seeded_fault(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertCaught("a track under a part that joins mains to low voltage", "a via drilled through the paste of a pad",
+                          "a pour stopping short of a track of its own net")
+        rules = {fault[2] for fault in board_prove.FAULTS if fault[1].startswith(("separation: no copper", "manufacture:"))}
+        self.assertGreaterEqual(rules, {"mains_barrier", "paste_via", "pour_gap"})
+
+    def test_a_missing_or_malformed_figure_of_either_measured_area_fails_by_name(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertCaught("a barrier rule with no figure", "a paste rule with a figure written with a unit")
+
+    def test_a_part_the_barrier_rule_cannot_measure_and_a_missing_rule_each_fail_by_name(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertCaught("a part whose Mains-class and other pads overlap on both axes",
+                          "a part whose only pads off the Mains class have no net",
+                          "a crystal on a board whose rules file has no keep-clear",
+                          "a crystal keep-clear that exempts every other part",
+                          "a ground class on a board whose rules file has no relief rule",
+                          "a relief rule exempting a pad that is not an exposed pad")
+
+    def test_each_failure_names_where_on_the_board_it_is(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = outcomes()
+        for name in ("a track under a part that joins mains to low voltage", "a via drilled through the paste of a pad",
+                     "a pour stopping short of a track of its own net"):
+            with self.subTest(fault=name):
+                caught, line = found[name]
+                self.assertTrue(caught, line)
+                self.assertRegex(line.split(" | ")[3], r"\(\d+(\.\d+)?, \d+(\.\d+)?\) mm")
+
+
+class ThePoursAreMeasuredOnTheBoardKiCadFilled(Copy):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """The pour rules measure the fills the layout check has just refilled and
+    saved over its copy, never the fills as committed, and saving the board
+    changes nothing KiCad reports.
+    """
+
+    def rules(self, lines):
+        return [v for v in self.violations(lines) if v[2] in ("mains_barrier", "paste_via", "pour_gap")]
+
+    def stale(self, outline_top: float, fill_top: float) -> None:
+        """The seeded pour over a track of its own net, its saved fill reaching up to `fill_top` and its outline to `outline_top`."""
+        board_prove.track_beside_pour(self.seed)
+        Q = board_prove.sexpr.Quoted
+
+        def edit(tree: list) -> None:
+            zone = board_prove.sexpr.child(tree, "zone")
+            zone[zone.index(board_prove.sexpr.child(zone, "polygon"))] = [
+                "polygon", ["pts", ["xy", "30", "2"], ["xy", "38", "2"], ["xy", "38", f"{outline_top:g}"], ["xy", "30", f"{outline_top:g}"]]]
+            zone.append(["filled_polygon", ["layer", Q("F.Cu")], ["pts", ["xy", "30", "2"], ["xy", "38", "2"], ["xy", "38", f"{fill_top:g}"],
+                                                                   ["xy", "30", f"{fill_top:g}"]]])
+        self.seed.layout(edit)
+
+    def test_the_clean_design_passes_all_three_rules(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        status, lines = self.check()
+        self.assertEqual(status, 0, lines)
+        self.assertEqual(self.rules(lines), [])
+
+    def test_a_saved_fill_covering_the_track_does_not_hide_the_gap_the_refill_leaves(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.stale(outline_top=7, fill_top=7.5)
+        status, lines = self.check()
+        self.assertEqual(status, 1, lines)
+        self.assertEqual([v[2] for v in self.rules(lines)], ["pour_gap"], lines)
+        self.assertIn("stops 0.080 mm short of track", self.rules(lines)[0][4])
+
+    def test_a_saved_fill_stopping_short_does_not_fail_a_pour_whose_refill_covers_the_track(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.stale(outline_top=8, fill_top=7)
+        status, lines = self.check()
+        self.assertEqual(self.rules(lines), [], lines)
+
+    def test_saving_the_refilled_board_changes_nothing_in_kicads_report(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        board_prove.track_beside_pour(self.seed)
+        without = self.drc("--schematic-parity", "--refill-zones", "--all-track-errors")
+        saved = self.drc("--schematic-parity", "--refill-zones", "--save-board", "--all-track-errors")
+        for report in (without, saved):
+            report.pop("date", None)
+            report.pop("source", None)
+            # KiCad lists a violation's two items in no fixed order, so each pair is compared as a set of items
+            for key, entries in report.items():
+                if isinstance(entries, list):
+                    for entry in entries:
+                        if isinstance(entry, dict) and isinstance(entry.get("items"), list):
+                            entry["items"].sort(key=lambda item: json.dumps(item, sort_keys=True))
+                    entries.sort(key=lambda entry: json.dumps(entry, sort_keys=True))
+        self.assertEqual(without, saved)
+
+    def test_a_pour_round_a_pad_of_another_net_is_read_with_the_pads_hole_and_its_bridge(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        # R2's pad 2 on /LV_B, 1.6 mm round at (55.16, 10), sits inside a /LV_A pour: the fill is cut away round it.
+        Q = board_prove.sexpr.Quoted
+        zone = ["zone", ["net", Q("/LV_A")], ["layer", Q("F.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000b00")],
+                ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "0.2"]], ["min_thickness", "0.25"],
+                ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"], ["island_removal_mode", "1"]],
+                ["polygon", ["pts", ["xy", "50", "5"], ["xy", "59", "5"], ["xy", "59", "15"], ["xy", "50", "15"]]]]
+        self.seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
+        subprocess.run([KICAD_CLI, "pcb", "drc", "--refill-zones", "--save-board", "-o", os.path.join(self.scratch.name, "drc.rpt"),
+                        board_prove.NAME + ".kicad_pcb"], cwd=self.seed.design, check=True, capture_output=True)
+        fills = board_check.zone_fills(sexpr.parse_one(self.seed.read(".kicad_pcb")))
+        self.assertTrue(fills)
+        net, layer, ring = fills[0]
+        self.assertEqual((net, layer), ("/LV_A", "F.Cu"))
+        self.assertTrue(board_geometry.within((58, 14), ring))
+        self.assertFalse(board_geometry.within((55.16, 10), ring), "inside the hole cut round the pad")
+        self.assertGreater(len(ring), 8)
+        edges = list(zip(ring, ring[1:] + ring[:1]))
+        self.assertAlmostEqual(min(board_geometry.distance_to_segment((55.16, 10), a, b) for a, b in edges), 0.8 + 0.2, places=2)
+
+
 # --- C6 -----------------------------------------------------------------------
 
 

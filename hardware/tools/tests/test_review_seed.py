@@ -109,7 +109,8 @@ class TheSeededReviewFolder(unittest.TestCase):
         self.assertEqual(others, ["check-report.txt", "docs/board-design-method.md", "hardware/README.md"])
         design = [path for path in files if path.startswith(review_seed.DESIGN + "/")]
         self.assertEqual(design, sorted(f"{review_seed.DESIGN}/{name}" for name in (
-            "layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml",
+            "layout-plan.md", "design-rules.md", "constraints.md", "separation-basis.yaml", "fp-lib-table",
+            "review-proof.pretty/QFN-20-1EP_4x4mm_P0.5mm_EP2.6x2.6mm.kicad_mod",
             "review-proof.kicad_pro", "review-proof.kicad_sch", "review-proof.kicad_pcb", "review-proof.kicad_dru")))
         method = "docs/board-design-method.md"
         with open(os.path.join(self.out, method), "rb") as given:
@@ -465,7 +466,7 @@ class TheGeneralisedSeed(unittest.TestCase):
             seed = board_prove.prepare(scratch, review_seed.DESIGN, review_seed.NAME)
             before = contents(seed.design)
             review_seed.settle_layout(seed, KICAD_CLI)
-            self.assertEqual(sorted(os.listdir(seed.design)), seed.files)
+            self.assertEqual(files_under(seed.design), seed.files)
             self.assertEqual(contents(seed.design), before, "saving the committed design through KiCad changed it")
 
 

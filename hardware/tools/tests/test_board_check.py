@@ -51,7 +51,7 @@ accepted_on: 2026-10-01
 
 #: The figure of every measured workmanship rule, as a design sets them in its project text variables.
 FIGURES = {"WORK_DETOUR_RATIO": "1.5", "WORK_NECK_MM": "1", "WORK_ANGLE_TOLERANCE_DEG": "0.1",
-           "WORK_PAD_ENTRY_RATIO": "2", "WORK_PAD_ANGLE_DEG": "90"}
+           "WORK_PAD_ENTRY_RATIO": "2", "WORK_PAD_ANGLE_DEG": "90", "BARRIER_COPPER_MM2": "0", "PASTE_OVER_VIA_MM2": "0"}
 
 #: Those figures as the check reads them.
 FIGURES_READ = {name: float(value) for name, value in FIGURES.items()}
@@ -1508,7 +1508,8 @@ class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
         figures, found = board_check.workmanship_figures(DESIGN, FIGURES)
         self.assertEqual(found, [])
         self.assertEqual(figures, {"WORK_DETOUR_RATIO": 1.5, "WORK_NECK_MM": 1.0,
-                                   "WORK_ANGLE_TOLERANCE_DEG": 0.1, "WORK_PAD_ENTRY_RATIO": 2.0, "WORK_PAD_ANGLE_DEG": 90.0})
+                                   "WORK_ANGLE_TOLERANCE_DEG": 0.1, "WORK_PAD_ENTRY_RATIO": 2.0, "WORK_PAD_ANGLE_DEG": 90.0,
+                                   "BARRIER_COPPER_MM2": 0.0, "PASTE_OVER_VIA_MM2": 0.0})
 
     def test_each_missing_figure_fails_naming_its_item_and_variable(self):
         figures, found = board_check.workmanship_figures(DESIGN, {})
@@ -1519,7 +1520,9 @@ class TheWorkmanshipFiguresAreTheDesignsOwn(unittest.TestCase):
 
     def test_a_figure_written_any_way_but_a_plain_number_within_its_range_fails(self):
         for name, value in (("WORK_NECK_MM", "1mm"), ("WORK_NECK_MM", "-1"), ("WORK_NECK_MM", ""), ("WORK_DETOUR_RATIO", "0.9"),
-                            ("WORK_DETOUR_RATIO", "1e1"), ("WORK_ANGLE_TOLERANCE_DEG", "22.5"), ("WORK_PAD_ENTRY_RATIO", "two")):
+                            ("WORK_DETOUR_RATIO", "1e1"), ("WORK_ANGLE_TOLERANCE_DEG", "22.5"), ("WORK_PAD_ENTRY_RATIO", "two"),
+                            ("BARRIER_COPPER_MM2", "0.5mm2"), ("BARRIER_COPPER_MM2", "-0.1"), ("BARRIER_COPPER_MM2", ""),
+                            ("PASTE_OVER_VIA_MM2", "none"), ("PASTE_OVER_VIA_MM2", "-1"), ("PASTE_OVER_VIA_MM2", "1e-3")):
             with self.subTest(name=name, value=value):
                 figures, found = board_check.workmanship_figures(DESIGN, {**FIGURES, name: value})
                 self.assertNotIn(name, figures)
@@ -2070,6 +2073,786 @@ class APadTheCheckCannotSizeFailsByName(unittest.TestCase):
         self.assertEqual(board_check.measured(DESIGN, board(self.CUSTOM), FIGURES_READ, 135), [])
         self.assertEqual(board_check.measured(DESIGN, board(self.CUSTOM, seg("/A", (10, 10), (10, 4), layer="B.Cu")),
                                               FIGURES_READ, 135), [], "a track of its net on a layer the pad is not on")
+
+
+# --- Barrier, paste and pour ---------------------------------------------------------
+
+def tree_of(*items: str, layers: str = "", setup: str = "") -> list:
+    """A layout holding `items`, with the copper layer table and `setup` where given."""
+    return sexpr.parse_one(f"(kicad_pcb (version 20260206) {layers} {setup} " + " ".join(items) + ")")
+
+
+def hole(net: str, at, drill: float = 0.3, size: float = 0.6, layers: str = '"F.Cu" "B.Cu"') -> str:
+    return f'(via (at {at[0]} {at[1]}) (size {size}) (drill {drill}) (layers {layers}) (net "{net}"))'
+
+
+def fill(net: str, layer: str, corners) -> tuple:
+    return net, layer, [(float(x), float(y)) for x, y in corners]
+
+
+def pasted(reference: str, at: str, layers: str = '"F.Cu" "F.Paste" "F.Mask"', shape: str = "rect", size: str = "1 1",
+           angle: str = "", number: str = "1", net: str = "", pad_extra: str = "", part_extra: str = "") -> str:
+    """A footprint `reference` at `at` holding one surface-mount pad at its origin."""
+    return (f'(footprint "lib:p" (layer "F.Cu") (at {at}) (property "Reference" "{reference}" (at 0 0 0)) {part_extra} '
+            f'(pad "{number}" smd {shape} (at 0 0 {angle}) (size {size}) (layers {layers}) (net "{net}") {pad_extra}))')
+
+
+#: U1 at (10, 10) with a pad on Mains-class /MAINS and one on /LV, 6 mm apart: the strip between them runs from
+#: (10.5, 9.5) to (15.5, 10.5) mm.
+BRIDGE = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 1, 1), ("2", "/LV", 6, 0, "rect", 1, 1))
+
+
+class TheFillsAreReadFromTheBoardKiCadRefilled(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """Every fill is read as KiCad writes it: a net, a layer and the corners of
+    one outline, and a form it does not write fails by name.
+    """
+
+    ZONE = ('(zone (net "/G") (layer "F.Cu") (polygon (pts (xy 0 0) (xy 9 0) (xy 9 9))) '
+            '(filled_polygon (layer "F.Cu") (pts (xy 0 0) (xy 5 0) (xy 5 5))) '
+            '(filled_polygon (layer "B.Cu") (pts (xy 1 1) (xy 4 1) (xy 4 4) (xy 1 4))))')
+
+    def test_each_fill_is_read_with_its_zones_net_and_its_own_layer(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(board_check.zone_fills(tree_of(self.ZONE)),
+                         [("/G", "F.Cu", [(0.0, 0.0), (5.0, 0.0), (5.0, 5.0)]),
+                          ("/G", "B.Cu", [(1.0, 1.0), (4.0, 1.0), (4.0, 4.0), (1.0, 4.0)])])
+
+    def test_a_zone_with_no_net_carries_no_fill_and_a_zone_not_filled_has_none(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(board_check.zone_fills(tree_of('(zone (layer "F.Cu") (filled_polygon (layer "F.Cu") (pts (xy 0 0) (xy 5 0) (xy 5 5))))',
+                                                        '(zone (net "/G") (layer "F.Cu") (polygon (pts (xy 0 0) (xy 9 0) (xy 9 9))))')), [])
+
+    def test_a_net_numbered_in_the_older_form_is_read_by_name(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        text = '(net 2 "/G") (zone (net 2) (net_name "/G") (layer "F.Cu") (filled_polygon (layer "F.Cu") (pts (xy 0 0) (xy 5 0) (xy 5 5))))'
+        self.assertEqual(board_check.zone_fills(tree_of(text))[0][:2], ("/G", "F.Cu"))
+
+    def test_a_fill_in_a_form_kicad_does_not_write_fails_by_name(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for what, text in (("no layer", '(zone (net "/G") (filled_polygon (pts (xy 0 0) (xy 5 0) (xy 5 5))))'),
+                           ("no corners", '(zone (net "/G") (filled_polygon (layer "F.Cu")))'),
+                           ("an arc", '(zone (net "/G") (filled_polygon (layer "F.Cu") (pts (xy 0 0) (arc (start 1 0) (mid 2 1) (end 3 0)) (xy 5 5))))'),
+                           ("two corners", '(zone (net "/G") (filled_polygon (layer "F.Cu") (pts (xy 0 0) (xy 5 0))))'),
+                           ("a corner without a position", '(zone (net "/G") (filled_polygon (layer "F.Cu") (pts (xy 0 0) (xy 5 0) (xy 5))))')):
+            with self.subTest(fill=what):
+                with self.assertRaises(board_geometry.Unreadable) as raised:
+                    board_check.zone_fills(tree_of(text))
+                self.assertIn("/G", str(raised.exception))
+
+    def test_the_copper_layers_are_stacked_front_to_back_with_the_two_outer_ones_where_none_are_named(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        layers = '(layers (0 "F.Cu" signal) (4 "In1.Cu" signal) (6 "In10.Cu" signal) (8 "In2.Cu" signal) (2 "B.Cu" signal) (25 "Edge.Cuts" user))'
+        self.assertEqual(board_check.copper_layers(tree_of(layers=layers)), ["F.Cu", "In1.Cu", "In2.Cu", "In10.Cu", "B.Cu"])
+        self.assertEqual(board_check.copper_layers(tree_of()), ["F.Cu", "B.Cu"])
+
+
+class NoCopperLiesUnderAPartThatBridgesTheBarrier(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """A part with a pad in the Mains net class and a pad on another net has no
+    copper of any net, on any layer, in the strip between the two groups of
+    pads: not a track, an arc, a via, another pad, nor a pour's fill.
+    """
+
+    MAINS = {"/MAINS"}
+
+    def found(self, *items, fills=(), mains=None, layers="", allowed=0.0):
+        return board_check.mains_barrier(DESIGN, tree_of(BRIDGE, *items, layers=layers), list(fills),
+                                         self.MAINS if mains is None else mains, allowed)
+
+    def test_a_part_with_nothing_between_its_pads_passes_wherever_the_rest_of_the_board_runs(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/X", (11, 12), (15, 12)), seg("/X", (11, 8), (15, 8), layer="B.Cu"), hole("/X", (13, 12))), [])
+        self.assertEqual(self.found(), [])
+
+    def test_a_track_between_the_pads_fails_naming_the_part_the_layer_the_net_the_strip_and_the_area(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(seg("/X", (11, 10), (15, 10)))
+        self.assertEqual([v.rule for v in found], ["mains_barrier"])
+        self.assertEqual(found[0].location, "U1 at (10, 10) mm: track of /X on F.Cu")
+        for text in ("U1 joins Mains-class /MAINS (pad 1) to /LV (pad 2)", "a track of net /X on F.Cu lies under it",
+                     "1.049 square mm inside the strip from (10.5, 9.5) to (15.5, 10.5) mm", "near (13, 10) mm",
+                     "the part has 1.049 square mm of copper between its Mains-class pads and its other pads, over all layers, "
+                     "where BARRIER_COPPER_MM2 allows 0"):
+            self.assertIn(text, found[0].message)
+
+    def test_copper_touching_the_strip_without_entering_it_passes(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/X", (11, 10.75), (15, 10.75), width=0.5)), [], "a track whose edge lies on the strip's")
+        self.assertEqual(self.found(seg("/X", (10.25, 8), (10.25, 12), width=0.5)), [], "a track whose edge lies on its end")
+        self.assertEqual(self.found(hole("/X", (10.1, 10), size=0.8)), [])
+        self.assertEqual(self.found(fills=[fill("/X", "F.Cu", [(15.5, 5), (20, 5), (20, 15), (15.5, 15)])]), [])
+        self.assertEqual(len(self.found(seg("/X", (11, 10.74), (15, 10.74), width=0.5))), 1, "0.01 mm further in, it is inside")
+
+    def test_a_via_is_copper_on_every_layer_it_joins(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(hole("/X", (13, 10)))
+        self.assertEqual([(v.rule, v.location) for v in found],
+                         [("mains_barrier", "U1 at (10, 10) mm: via of /X on F.Cu"), ("mains_barrier", "U1 at (10, 10) mm: via of /X on B.Cu")])
+        layers = '(layers (0 "F.Cu" signal) (4 "In1.Cu" signal) (6 "In2.Cu" signal) (2 "B.Cu" signal))'
+        for joins, layer_names in (('"F.Cu" "In1.Cu"', ["F.Cu", "In1.Cu"]), ('"In1.Cu" "B.Cu"', ["In1.Cu", "In2.Cu", "B.Cu"]),
+                                   ('"F.Cu" "B.Cu"', ["F.Cu", "In1.Cu", "In2.Cu", "B.Cu"])):
+            with self.subTest(joins=joins):
+                found = self.found(hole("/X", (13, 10), layers=joins), layers=layers)
+                self.assertEqual([v.location.rsplit(" on ", 1)[1] for v in found], layer_names)
+
+    def test_an_arc_is_copper_the_way_a_track_is(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(arc("/X", (11, 9.8), (13, 10.2), (15, 9.8)))
+        self.assertEqual([(v.rule, v.location) for v in found], [("mains_barrier", "U1 at (10, 10) mm: arc of /X on F.Cu")])
+
+    def test_copper_of_one_net_and_layer_and_kind_is_reported_once_with_its_area_summed(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(seg("/X", (11, 10.2), (15, 10.2), width=0.2), seg("/X", (11, 9.8), (15, 9.8), width=0.2),
+                           seg("/Y", (11, 10), (15, 10), width=0.2), seg("/X", (11, 10), (15, 10), width=0.2, layer="B.Cu"))
+        self.assertEqual([v.location.split(": ")[1] for v in found],
+                         ["track of /X on F.Cu", "track of /Y on F.Cu", "track of /X on B.Cu"])
+        self.assertIn("2 tracks of net /X on F.Cu lie under it between them: 1.663 square mm", found[0].message)
+
+    def test_a_pad_of_another_part_or_the_same_part_in_the_strip_fails_on_the_layers_its_copper_is_on(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        through = ('(footprint "lib:t" (layer "F.Cu") (at 13 10) (property "Reference" "J1" (at 0 0 0)) '
+                   '(pad "1" thru_hole circle (at 0 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu" "*.Mask") (net "/X")))')
+        found = self.found(through)
+        self.assertEqual([v.location.split(": ")[1] for v in found], ["pad of /X on F.Cu", "pad of /X on B.Cu"])
+        found = self.found(part("R1", "13 10", ("1", "/Y", 0, 0, "rect", 1, 1)))
+        self.assertEqual([v.location.split(": ")[1] for v in found], ["pad of /Y on F.Cu"])
+        # A pad of the part's own with no net, between its groups, is in the way too; one with paste and no copper is not.
+        middle = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 1, 1), ("2", "/LV", 6, 0, "rect", 1, 1), ("3", "", 3, 0, "rect", 1, 1))
+        found = board_check.mains_barrier(DESIGN, tree_of(middle), [], self.MAINS, 0.0)
+        self.assertEqual([v.location.split(": ")[1] for v in found], ["pad of (no net) on F.Cu"])
+        self.assertIn("a pad of no net on F.Cu lies under it", found[0].message)
+        self.assertEqual(self.found(pasted("U2", "13 10", layers='"F.Paste"')), [])
+
+    def test_a_pour_filling_the_strip_fails_and_one_with_the_strip_cut_out_of_it_passes(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(fills=[fill("/G", "F.Cu", [(5, 5), (20, 5), (20, 15), (5, 15)])])
+        self.assertEqual([v.location.split(": ")[1] for v in found], ["zone fill of /G on F.Cu"])
+        self.assertIn("5.000 square mm inside the strip", found[0].message)
+        found = self.found(fills=[fill("/G", "B.Cu", [(5, 5), (13, 5), (13, 15), (5, 15)]), fill("/G", "B.Cu", [(14, 5), (20, 5), (20, 15), (14, 15)])])
+        self.assertIn("2 zone fills of net /G on B.Cu", found[0].message)
+        self.assertIn("4.000 square mm", found[0].message)
+        # The outline of a pour with a hole joins the hole to it by a bridge of no width; the hole is not copper.
+        holed = [(5, 5), (20, 5), (20, 15), (5, 15), (5, 10), (10, 10), (10, 11), (16, 11), (16, 9), (10, 9), (10, 10), (5, 10)]
+        self.assertEqual(self.found(fills=[fill("/G", "F.Cu", holed)]), [], "a hole 5 mm by 2 mm across the strip leaves nothing in it")
+        self.assertEqual(len(self.found(fills=[fill("/G", "F.Cu", [(5, 5), (20, 5), (20, 15), (5, 15), (5, 10), (10, 10), (10, 10.1), (16, 10.1),
+                                                                  (16, 9.9), (10, 9.9), (10, 10), (5, 10)])])), 1,
+                         "a hole narrower than the strip leaves the rest of it covered")
+
+    def test_a_figure_above_nothing_admits_that_much_copper_in_the_strip_and_no_more(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        track = seg("/X", (11, 10), (15, 10))
+        self.assertEqual(self.found(track, allowed=1.05), [], "the track has 1.049 square mm in the strip")
+        found = self.found(track, allowed=1.0)
+        self.assertEqual(len(found), 1)
+        self.assertIn("1.049 square mm of copper between its Mains-class pads and its other pads, over all layers, "
+                      "where BARRIER_COPPER_MM2 allows 1,", found[0].message)
+
+    def test_the_figure_is_held_to_the_parts_copper_over_all_its_nets_and_layers(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        both = [seg("/X", (11, 10.2), (15, 10.2), width=0.2), seg("/Y", (11, 9.8), (15, 9.8), width=0.2, layer="B.Cu")]
+        self.assertEqual(self.found(*both, allowed=1.7), [], "1.663 square mm in all")
+        found = self.found(*both, allowed=1.6)
+        self.assertEqual([v.location.split(": ")[1] for v in found], ["track of /X on F.Cu", "track of /Y on B.Cu"])
+        self.assertIn("the part has 1.663 square mm", found[1].message)
+
+    def test_a_part_that_does_not_cross_the_barrier_is_not_measured(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        track = seg("/X", (11, 10), (15, 10))
+        for what, pads in (("only Mains-class pads", (("1", "/MAINS", 0, 0), ("2", "/MAINS", 6, 0))),
+                           ("only other pads", (("1", "/LV", 0, 0), ("2", "/LV", 6, 0))),
+                           ("only pads with no net", (("1", "", 0, 0), ("2", "", 6, 0)))):
+            with self.subTest(part=what):
+                layout = tree_of(part("U1", "10 10", *[(n, net, x, y, "rect", 1, 1) for n, net, x, y in pads]), track)
+                self.assertEqual(board_check.mains_barrier(DESIGN, layout, [], self.MAINS, 0.0), [])
+        self.assertEqual(self.found(track, mains=set()), [], "a board with no Mains-class net")
+
+    def test_pads_whose_boxes_overlap_on_both_axes_have_no_strip_and_the_part_fails_as_not_measurable(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        crossed = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 1, 1), ("2", "/LV", 0.5, 0.5, "rect", 1, 1))
+        found = board_check.mains_barrier(DESIGN, tree_of(crossed, seg("/X", (8, 10), (14, 10))), [], self.MAINS, 0.0)
+        self.assertEqual([(v.rule, v.location) for v in found], [("mains_barrier", "U1 at (10, 10) mm: barrier not measurable")])
+        for text in ("U1 has Mains-class /MAINS (pad 1) and other pads (pad 2)", "cannot be measured",
+                     "overlap along both axes, so no strip lies between them", "does not support such a part"):
+            self.assertIn(text, found[0].message)
+        self.assertEqual(len(board_check.mains_barrier(DESIGN, tree_of(crossed), [], self.MAINS, 0.0)), 1,
+                         "it fails whether or not copper lies near it, and whatever figure is allowed")
+        self.assertEqual(len(board_check.mains_barrier(DESIGN, tree_of(crossed), [], self.MAINS, 5.0)), 1)
+        first = [board_geometry.Pad("U", "1", "/M", (0, 0), (2, 2), 0, "rect", ["F.Cu"])]
+        for centre, strip in (((2, 0), (1.0, -1.0, 1.0, 1.0)), ((0, 2), (-1.0, 1.0, 1.0, 1.0)), ((1.5, 1.5), None), ((-3, 0), (-2.0, -1.0, -1.0, 1.0))):
+            second = [board_geometry.Pad("U", "2", "/L", centre, (2, 2), 0, "rect", ["F.Cu"])]
+            self.assertEqual(board_check.barrier_strip(first, second), strip)
+
+    def test_a_part_whose_only_pads_off_the_class_have_no_net_fails_as_not_measurable(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        unnetted = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 1, 1), ("2", "", 6, 0, "rect", 1, 1), ("3", "", 6, 2, "rect", 1, 1))
+        found = board_check.mains_barrier(DESIGN, tree_of(unnetted), [], self.MAINS, 0.0)
+        self.assertEqual([(v.rule, v.location) for v in found], [("mains_barrier", "U1 at (10, 10) mm: barrier not measurable")])
+        self.assertIn("its only pads off the Mains class, pads 2, 3, have no net, so whether it bridges the barrier is not known",
+                      found[0].message)
+        netted = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 1, 1), ("2", "", 6, 0, "rect", 1, 1), ("3", "/LV", 6, 2, "rect", 1, 1))
+        self.assertEqual(board_check.mains_barrier(DESIGN, tree_of(netted), [], self.MAINS, 0.0), [],
+                         "with one pad on another net the part is measured as before, and an unnetted pad is not its edge")
+
+    def test_pads_apart_along_y_leave_a_strip_between_them_along_y(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        upright = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 1, 1), ("2", "/LV", 0, 6, "rect", 1, 1))
+        found = board_check.mains_barrier(DESIGN, tree_of(upright, seg("/X", (10, 11), (10, 15))), [], self.MAINS, 0.0)
+        self.assertIn("inside the strip from (9.5, 10.5) to (10.5, 15.5) mm", found[0].message)
+        self.assertEqual(board_check.mains_barrier(DESIGN, tree_of(upright, seg("/X", (11, 11), (11, 15))), [], self.MAINS, 0.0), [])
+
+    def test_a_pad_turned_on_the_board_is_boxed_as_it_lies(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        # Turned a quarter, a 4 mm by 1 mm pad reaches 4 mm along y and 1 mm along x, so the strip is taller than the pads' extent along y.
+        turned = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 4, 1, 90), ("2", "/LV", 6, 0, "rect", 1, 1))
+        flat = part("U1", "10 10", ("1", "/MAINS", 0, 0, "rect", 4, 1, 0), ("2", "/LV", 6, 0, "rect", 1, 1))
+        track = seg("/X", (11, 8.5), (15, 8.5))
+        self.assertEqual(len(board_check.mains_barrier(DESIGN, tree_of(turned, track), [], self.MAINS, 0.0)), 1)
+        self.assertEqual(board_check.mains_barrier(DESIGN, tree_of(flat, track), [], self.MAINS, 0.0), [])
+        for found, wanted in zip(board_geometry.Pad("U", "1", "", (0, 0), (4, 1), 90, "rect", []).box(), (-0.5, -2.0, 0.5, 2.0)):
+            self.assertAlmostEqual(found, wanted)
+        slanted = board_geometry.Pad("U", "1", "", (0, 0), (4, 2), 45, "rect", []).box()
+        self.assertAlmostEqual(slanted[2], 3 / 2 * math.sqrt(2))
+
+    def test_the_copper_of_a_pad_turned_on_the_board_lies_as_it_is_turned(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        # A 4 mm by 1 mm pad of R1 centred at y 12 lies clear of the strip, which ends at y 10.5, unless it is turned a quarter.
+        flat = part("R1", "13 12", ("1", "/Y", 0, 0, "rect", 4, 1))
+        turned = part("R1", "13 12", ("1", "/Y", 0, 0, "rect", 4, 1, 90))
+        self.assertEqual(self.found(flat), [])
+        found = self.found(turned)
+        self.assertEqual([v.location.split(": ")[1] for v in found], ["pad of /Y on F.Cu"])
+        self.assertIn("0.500 square mm inside the strip", found[0].message)
+
+    def test_a_pad_whose_copper_is_not_sized_is_boxed_at_its_full_size(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        custom = ('(footprint "lib:c" (layer "F.Cu") (at 10 10) (property "Reference" "U1" (at 0 0 0)) '
+                  '(pad "1" smd custom (at 0 0) (size 1 1) (layers "F.Cu") (net "/MAINS") (options (clearance outline) (anchor rect)) '
+                  '(primitives (gr_poly (pts (xy 0 0) (xy 3 0) (xy 0 3)) (width 0) (fill yes)))) '
+                  '(pad "2" smd rect (at 6 0) (size 1 1) (layers "F.Cu") (net "/LV")))')
+        found = board_check.mains_barrier(DESIGN, tree_of(custom, seg("/X", (11, 10), (15, 10))), [], self.MAINS, 0.0)
+        self.assertEqual([v.rule for v in found], ["mains_barrier"])
+        self.assertIn("from (10.5, 9.5) to (15.5, 10.5) mm", found[0].message)
+
+
+class SolderPasteIsNotPrintedOverAViasHole(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """A via whose hole a pad's paste opening reaches into fails, whichever side
+    the paste is on, the opening being the pad's shape grown by its paste
+    margin and ratio as the layout writes them.
+    """
+
+    def found(self, pad: str, *vias: str, setup: str = "", allowed: float = 0.0):
+        return board_check.paste_over_vias(DESIGN, tree_of(pad, *vias, setup=setup), allowed)
+
+    def test_a_via_clear_of_the_opening_or_a_pad_with_no_paste_passes(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(pasted("U4", "10 10"), hole("/G", (12, 10)), hole("/G", (10, 11))), [])
+        self.assertEqual(self.found(pasted("U4", "10 10", layers='"F.Cu" "F.Mask"'), hole("/G", (10, 10))), [])
+        self.assertEqual(self.found(pasted("U4", "10 10", layers='"*.Cu" "*.Mask"'), hole("/G", (10, 10))), [])
+        self.assertEqual(self.found(pasted("U4", "10 10")), [], "a board with no via")
+
+    def test_a_via_drilled_through_the_opening_fails_naming_the_via_the_pad_and_how_far_in_the_opening_reaches(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(pasted("U4", "10 10", net="/G"), hole("/G", (10, 10)))
+        self.assertEqual([(v.rule, v.location) for v in found],
+                         [("paste_via", "net /G: via at (10, 10) mm, under the paste of pad 1 of U4 at (10, 10) mm")])
+        for text in ("solder paste is printed over the hole of the 0.3 mm via at (10, 10) mm of net /G",
+                     "the F.Paste opening of pad 1 of U4 at (10, 10) mm, the pad's shape with no paste margin, covers 0.0707 square mm "
+                     "of the hole of 0.0707, where PASTE_OVER_VIA_MM2 allows 0",
+                     "paste in a via's hole runs through it and starves the joint"):
+            self.assertIn(text, found[0].message)
+
+    def test_a_figure_above_nothing_admits_that_much_of_the_hole_under_the_opening_and_no_more(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        pad, via = pasted("U4", "10 10"), hole("/G", (10.64, 10))
+        self.assertEqual(self.found(pad, via, allowed=0.001), [], "0.0007 square mm of the hole is under the opening")
+        self.assertEqual(len(self.found(pad, via, allowed=0.0005)), 1)
+        centred = hole("/G", (10, 10))
+        self.assertEqual(self.found(pad, centred, allowed=0.0707), [], "the whole 0.0707 square mm of the hole")
+        found = self.found(pad, centred, allowed=0.07)
+        self.assertEqual(len(found), 1)
+        self.assertIn("where PASTE_OVER_VIA_MM2 allows 0.07;", found[0].message)
+
+    def test_one_violation_for_each_via_and_opening_and_a_pad_with_no_number_or_net_is_named_so(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(pasted("U4", "10 10", number=""), hole("/G", (10.2, 10)), hole("", (9.8, 10)))
+        self.assertEqual(len(found), 2)
+        self.assertIn("pad (unnumbered) of U4", found[0].message)
+        self.assertTrue(any("of no net" in v.message and v.location.startswith("net (no net): ") for v in found), found)
+
+    def test_a_via_whose_hole_only_touches_the_opening_passes_and_one_a_little_further_in_fails(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(pasted("U4", "10 10"), hole("/G", (10.65, 10))), [])
+        found = self.found(pasted("U4", "10 10"), hole("/G", (10.64, 10)))
+        self.assertEqual(len(found), 1)
+        self.assertIn("covers 0.0007 square mm of the hole", found[0].message)
+
+    def test_the_opening_is_the_pad_grown_or_shrunk_by_its_paste_margin(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        via = hole("/G", (10.7, 10))
+        self.assertEqual(self.found(pasted("U4", "10 10"), via), [])
+        grown = self.found(pasted("U4", "10 10", pad_extra="(solder_paste_margin 0.1)"), via)
+        self.assertEqual(len(grown), 1)
+        self.assertIn("the pad's shape grown by 0.1 mm on every side, covers 0.0077 square mm", grown[0].message)
+        shrunk = self.found(pasted("U4", "10 10", pad_extra="(solder_paste_margin -0.1)"), hole("/G", (10.6, 10)))
+        self.assertEqual(shrunk, [])
+        self.assertEqual(len(self.found(pasted("U4", "10 10"), hole("/G", (10.6, 10)))), 1)
+
+    def test_the_opening_is_also_grown_by_the_margin_ratio_times_the_pads_shorter_side(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        # 0.1 of a 1 mm by 3 mm pad's shorter side, 1 mm, is 0.1 mm.
+        pad = "(solder_paste_margin_ratio {})"
+        long_pad = dict(size="1 3")
+        self.assertEqual(len(self.found(pasted("U4", "10 10", pad_extra=pad.format(0.1), **long_pad), hole("/G", (10.7, 10)))), 1)
+        self.assertEqual(self.found(pasted("U4", "10 10", pad_extra=pad.format(0.05), **long_pad), hole("/G", (10.7, 10))), [])
+        self.assertEqual(self.found(pasted("U4", "10 10", pad_extra=pad.format(-0.1), **long_pad), hole("/G", (10.6, 10))), [])
+        both = self.found(pasted("U4", "10 10", pad_extra="(solder_paste_margin 0.05) (solder_paste_margin_ratio 0.05)", **long_pad),
+                          hole("/G", (10.7, 10)))
+        self.assertEqual(len(both), 1, "0.05 mm and 0.05 of 1 mm make 0.1 mm")
+
+    def test_a_margin_the_pad_does_not_write_is_its_footprints_and_then_the_boards(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        via = hole("/G", (10.7, 10))
+        board_wide = "(setup (pad_to_paste_clearance 0.1))"
+        self.assertEqual(len(self.found(pasted("U4", "10 10"), via, setup=board_wide)), 1)
+        self.assertEqual(self.found(pasted("U4", "10 10", part_extra="(solder_paste_margin 0)"), via, setup=board_wide), [],
+                         "the footprint's own margin outranks the board's")
+        self.assertEqual(len(self.found(pasted("U4", "10 10", part_extra="(solder_paste_margin -0.2)", pad_extra="(solder_paste_margin 0.1)"),
+                                        via, setup=board_wide)), 1, "the pad's own margin outranks the footprint's")
+        ratio = "(setup (pad_to_paste_clearance_ratio 0.1))"
+        self.assertEqual(len(self.found(pasted("U4", "10 10"), via, setup=ratio)), 1)
+        self.assertEqual(self.found(pasted("U4", "10 10", part_extra="(solder_paste_margin_ratio 0)"), via, setup=ratio), [])
+        self.assertEqual(len(self.found(pasted("U4", "10 10", part_extra="(solder_paste_margin_ratio -0.1)", pad_extra="(solder_paste_margin_ratio 0.1)"),
+                                        via, setup=ratio)), 1)
+
+    def test_an_opening_shrunk_to_nothing_covers_nothing(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for extra in ("(solder_paste_margin -0.5)", "(solder_paste_margin -0.9)", "(solder_paste_margin_ratio -0.5)"):
+            with self.subTest(extra=extra):
+                self.assertEqual(self.found(pasted("U4", "10 10", pad_extra=extra), hole("/G", (10, 10))), [])
+
+    def test_paste_on_either_side_counts_and_a_pad_with_paste_and_no_copper_is_measured(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(pasted("U4", "10 10", layers='"B.Cu" "B.Paste" "B.Mask"'), hole("/G", (10, 10)))
+        self.assertIn("the B.Paste opening of pad 1 of U4", found[0].message)
+        found = self.found(pasted("U4", "10 10", layers='"F.Paste"'), hole("/G", (10, 10), layers='"B.Cu" "B.Cu"'))
+        self.assertEqual(len(found), 1, "paste-only exposed-pad opening over a via on the other side")
+        found = self.found(pasted("U4", "10 10", layers='"F.Paste" "B.Paste"'), hole("/G", (10, 10)))
+        self.assertIn("the F.Paste and B.Paste opening", found[0].message)
+
+    def test_a_pad_turned_on_the_board_is_opened_as_it_lies(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        via = hole("/G", (10, 10.9))
+        self.assertEqual(self.found(pasted("U4", "10 10", shape="oval", size="2 0.5"), via), [])
+        self.assertEqual(len(self.found(pasted("U4", "10 10", shape="oval", size="2 0.5", angle="90"), via)), 1)
+
+    def test_each_shape_is_opened_as_it_is_sized(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        corner = hole("/G", (10.55, 10.55))
+        self.assertEqual(len(self.found(pasted("U4", "10 10"), corner)), 1, "a rectangle covers its corner")
+        self.assertEqual(self.found(pasted("U4", "10 10", shape="roundrect", pad_extra="(roundrect_rratio 0.25)"), corner), [],
+                         "a rounded corner leaves it")
+        self.assertEqual(self.found(pasted("U4", "10 10", shape="circle"), corner), [])
+        self.assertEqual(len(self.found(pasted("U4", "10 10", shape="circle"), hole("/G", (10.4, 10)))), 1)
+        self.assertEqual(self.found(pasted("U4", "10 10", shape="oval", size="2 1"), hole("/G", (11.3, 10.4))), [])
+
+    def test_a_pad_with_paste_whose_copper_is_not_sized_fails_by_name_wherever_the_board_has_a_via(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        custom = pasted("U4", "10 10", shape="custom", pad_extra="(options (clearance outline) (anchor rect)) "
+                                                                 "(primitives (gr_poly (pts (xy 0 0) (xy 3 0) (xy 0 3)) (width 0) (fill yes)))")
+        found = self.found(custom, hole("/G", (30, 30)))
+        self.assertEqual([(v.rule, v.location) for v in found], [("paste_via", "net (no net): pad 1 of U4 at (10, 10) mm")])
+        self.assertIn("whether the F.Paste opening of pad 1 of U4 reaches a via's hole cannot be measured: its shape is custom", found[0].message)
+        self.assertEqual(self.found(custom), [], "nothing to reach")
+        chamfered = pasted("U4", "10 10", pad_extra="(chamfer_ratio 0.2) (chamfer top_left)")
+        self.assertIn("its corners are chamfered", self.found(chamfered, hole("/G", (30, 30)))[0].message)
+
+    def test_a_via_with_no_drill_has_no_hole(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(pasted("U4", "10 10"), '(via (at 10 10) (size 0.6) (layers "F.Cu" "B.Cu") (net "/G"))'), [])
+
+
+class APourStopsNoNarrowerThanTheMinimumClearanceShortOfItsOwnNet(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """KiCad compares no copper of one net, so a gap between a pour's fill and a
+    track, via or pad of its own net that the fill stops short of is measured
+    here against the board's minimum clearance.
+    """
+
+    SQUARE = fill("/A", "F.Cu", [(0, 0), (10, 0), (10, 10), (0, 10)])
+
+    def found(self, *items, fills=None, minimum=0.15, layers=""):
+        return board_check.pour_gaps(DESIGN, tree_of(*items, layers=layers), [self.SQUARE] if fills is None else fills, minimum)
+
+    def test_copper_inside_the_fill_or_crossing_its_edge_or_far_from_it_passes(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/A", (2, 5), (8, 5))), [])
+        self.assertEqual(self.found(seg("/A", (12, 5), (8, 5))), [], "a track running into the fill from outside")
+        self.assertEqual(self.found(seg("/A", (8, 5), (12, 5))), [])
+        self.assertEqual(self.found(seg("/A", (2, 12), (8, 12))), [], "well clear of it")
+        self.assertEqual(self.found(), [])
+
+    def test_a_track_stopping_short_of_the_fill_by_less_than_the_minimum_fails_naming_the_gap(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(seg("/A", (2, 10.13), (8, 10.13), width=0.1))
+        self.assertEqual([(v.rule, v.location) for v in found], [("pour_gap", "net /A: track from (2, 10.13) to (8, 10.13) mm on F.Cu")])
+        for text in ("the pour of /A on F.Cu (a fill spanning (0, 0) to (10, 10) mm) stops 0.080 mm short of track from (2, 10.13) to (8, 10.13) mm",
+                     "narrower than the board's 0.15 mm minimum clearance", "KiCad's clearance check compares no copper of one net"):
+            self.assertIn(text, found[0].message)
+
+    def test_a_gap_exactly_the_minimum_passes_and_a_hair_under_it_fails(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/A", (2, 10.2), (8, 10.2), width=0.1)), [])
+        self.assertEqual(len(self.found(seg("/A", (2, 10.1999), (8, 10.1999), width=0.1))), 1)
+        self.assertEqual(self.found(seg("/A", (2, 10.2), (8, 10.2), width=0.1), minimum=0.1), [])
+
+    def test_the_gap_is_to_the_copper_of_a_tracks_end_cap_as_much_as_its_side(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/A", (10.2, 5), (14, 5), width=0.1)), [])
+        found = self.found(seg("/A", (10.18, 5), (14, 5), width=0.1))
+        self.assertIn("stops 0.130 mm short", found[0].message)
+
+    def test_copper_within_the_touch_distance_of_the_fill_is_touched_and_beyond_it_is_not(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/A", (2, 10.05005), (8, 10.05005), width=0.1)), [])
+        self.assertEqual(len(self.found(seg("/A", (2, 10.0502), (8, 10.0502), width=0.1))), 1)
+
+    def test_copper_wholly_inside_the_fill_is_touched_however_near_the_edge_it_runs(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/A", (2, 9.92), (8, 9.92), width=0.1)), [], "0.03 mm from the edge, inside it")
+        self.assertEqual(self.found(hole("/A", (5, 9.9), size=0.1)), [])
+        self.assertEqual(self.found(part("R1", "9.5 5", ("1", "/A", 0, 0, "rect", 1, 1))), [], "a pad with its edge on the fill's")
+
+    def test_copper_of_another_net_or_on_another_layer_is_not_judged(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(seg("/B", (2, 10.13), (8, 10.13), width=0.1)), [])
+        self.assertEqual(self.found(seg("/A", (2, 10.13), (8, 10.13), width=0.1, layer="B.Cu")), [])
+
+    def test_an_arc_is_judged_by_its_copper_along_its_length(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(arc("/A", (2, 10.2), (5, 10.13), (8, 10.2), width=0.1))
+        self.assertEqual([v.location.split(": ")[1].split(" from")[0] for v in found], ["arc"])
+        self.assertIn("stops 0.080", found[0].message)
+
+    def test_a_via_is_copper_on_every_layer_it_joins(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        under = fill("/A", "B.Cu", [(0, 0), (10, 0), (10, 10), (0, 10)])
+        found = self.found(hole("/A", (5, 10.35), size=0.5), fills=[self.SQUARE, under])
+        self.assertEqual([v.location for v in found], ["net /A: via at (5, 10.35) mm on F.Cu", "net /A: via at (5, 10.35) mm on B.Cu"])
+        self.assertIn("stops 0.100 mm short of via at (5, 10.35) mm", found[0].message)
+        self.assertEqual(self.found(hole("/A", (5, 10.45), size=0.5)), [], "0.2 mm clear")
+        self.assertEqual(self.found(hole("/A", (5, 5))), [], "a via inside the fill")
+
+    def test_a_hole_in_the_fill_is_outside_it(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        ring = [(0, 0), (10, 0), (10, 10), (0, 10), (0, 5), (4.8, 5), (4.8, 5.2), (5.2, 5.2), (5.2, 4.8), (4.8, 4.8), (4.8, 5), (0, 5)]
+        punched = fill("/A", "F.Cu", ring)
+        found = self.found(hole("/A", (5, 5), size=0.2), fills=[punched])
+        self.assertEqual([v.rule for v in found], ["pour_gap"])
+        self.assertIn("stops 0.100 mm short of via", found[0].message)
+        self.assertEqual(self.found(hole("/A", (5, 5), size=0.1), fills=[punched]), [], "0.15 mm clear of the hole's edge")
+
+    def test_a_pad_is_judged_on_the_layers_it_is_on_as_it_is_turned(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(part("R1", "10.65 5", ("1", "/A", 0, 0, "rect", 1, 1))), [])
+        found = self.found(part("R1", "10.6 5", ("1", "/A", 0, 0, "rect", 1, 1)))
+        self.assertEqual([v.location for v in found], ["net /A: pad 1 of R1 at (10.6, 5) mm on F.Cu"])
+        self.assertIn("stops 0.100 mm short of pad 1 of R1 at (10.6, 5) mm", found[0].message)
+        self.assertEqual(len(self.found(part("R1", "11.1 5", ("1", "/A", 0, 0, "rect", 2, 1)))), 1, "2 mm wide, its edge is 0.1 mm off")
+        self.assertEqual(self.found(part("R1", "11.1 5", ("1", "/A", 0, 0, "rect", 2, 1, 90))), [], "turned, it is 1 mm wide along x")
+        under = fill("/A", "B.Cu", [(0, 0), (10, 0), (10, 10), (0, 10)])
+        self.assertEqual(self.found(part("R1", "10.6 5", ("1", "/A", 0, 0, "rect", 1, 1)), fills=[under]), [], "a surface pad on the other layer")
+
+    def test_a_pad_whose_copper_is_not_sized_is_judged_as_the_box_of_its_full_size(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        custom = ('(footprint "lib:c" (layer "F.Cu") (at 10.6 5) (property "Reference" "U9" (at 0 0 0)) '
+                  '(pad "1" smd custom (at 0 0) (size 1 1) (layers "F.Cu") (net "/A") (options (clearance outline) (anchor rect)) '
+                  '(primitives (gr_poly (pts (xy 0 0) (xy 3 0) (xy 0 3)) (width 0) (fill yes)))))')
+        found = self.found(custom)
+        self.assertIn("stops 0.100 mm short of pad 1 of U9", found[0].message)
+
+    def test_each_fill_is_judged_alone_and_a_copper_item_reported_once_for_each_it_falls_short_of(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        second = fill("/A", "F.Cu", [(20, 0), (30, 0), (30, 10), (20, 10)])
+        found = self.found(seg("/A", (2, 10.13), (8, 10.13), width=0.1), seg("/A", (22, 10.13), (28, 10.13), width=0.1), fills=[self.SQUARE, second])
+        self.assertEqual(len(found), 2)
+        self.assertIn("(a fill spanning (0, 0) to (10, 10) mm)", found[0].message)
+        self.assertIn("(a fill spanning (20, 0) to (30, 10) mm)", found[1].message)
+
+    def test_a_fill_of_thousands_of_corners_is_judged_in_one_pass_over_its_edges(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        ring = [(100 + 90 * math.cos(2 * math.pi * i / 4000), 100 + 90 * math.sin(2 * math.pi * i / 4000)) for i in range(4000)]
+        inside = [seg("/A", (100 + index, 100), (100 + index, 120), width=0.1) for index in range(-60, 60)]
+        found = self.found(*inside, hole("/A", (190.2, 100), size=0.2, layers='"F.Cu" "F.Cu"'), fills=[fill("/A", "F.Cu", ring)])
+        self.assertEqual([v.location for v in found], ["net /A: via at (190.2, 100) mm on F.Cu"])
+        self.assertIn("stops 0.100 mm short", found[0].message)
+
+    def test_the_figure_is_the_boards_minimum_clearance_and_a_board_that_states_none_fails(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        project = {"board": {"design_settings": {"rules": {"min_clearance": 0.15}}}}
+        self.assertEqual(board_check.pour_gap_figure(DESIGN, project), (0.15, []))
+        self.assertEqual(board_check.pour_gap_figure(DESIGN, {"board": {"design_settings": {"rules": {"min_clearance": 1}}}})[0], 1.0)
+        for what, project in (("none", {}), ("no rules", {"board": {"design_settings": {}}}), ("null", {"board": {"design_settings": {"rules": {"min_clearance": None}}}}),
+                              ("zero", {"board": {"design_settings": {"rules": {"min_clearance": 0}}}}),
+                              ("negative", {"board": {"design_settings": {"rules": {"min_clearance": -0.1}}}}),
+                              ("text", {"board": {"design_settings": {"rules": {"min_clearance": "0.15mm"}}}}),
+                              ("true", {"board": {"design_settings": {"rules": {"min_clearance": True}}}}),
+                              ("rules not an object", {"board": {"design_settings": {"rules": []}}})):
+            with self.subTest(figure=what):
+                figure, found = board_check.pour_gap_figure(DESIGN, project)
+                self.assertIsNone(figure)
+                self.assertEqual([(v.rule, v.location) for v in found], [("pour_gap", "a/a.kicad_pro board.design_settings.rules.min_clearance")])
+                self.assertIn("MFG-6 pour gap has no figure", found[0].message)
+                self.assertIn("set the minimum clearance in Board Setup", found[0].message)
+        self.assertIn("states \"0.15mm\"", board_check.pour_gap_figure(DESIGN, {"board": {"design_settings": {"rules": {"min_clearance": "0.15mm"}}}})[1][0].message)
+
+
+class ThePourRulesAreMeasuredOnTheBoardKiCadRefilled(Tree):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """The layout check refills the copy it runs on and saves it over the copy,
+    and the pour rules measure that board, never the fills as committed.
+    """
+
+    ZONE = '(zone (net "/A") (layer "F.Cu") (polygon (pts (xy 0 0) (xy 10 0) (xy 10 10) (xy 0 10)))'
+    TRACK = seg("/A", (2, 10.13), (8, 10.13), width=0.1)
+    #: The fill KiCad is made to write: stopping 0.08 mm short of the track, or running to cover it.
+    SHORT = '(filled_polygon (layer "F.Cu") (pts (xy 0 0) (xy 10 0) (xy 10 10) (xy 0 10))))'
+    COVERING = '(filled_polygon (layer "F.Cu") (pts (xy 0 0) (xy 10 0) (xy 10 10.5) (xy 0 10.5))))'
+
+    def check(self, committed: str, refilled: str, minimum=0.15):
+        project = json.dumps({"text_variables": {"MAINS": "none", **FIGURES},
+                              "board": {"design_settings": {"rules": {} if minimum is None else {"min_clearance": minimum}}}})
+        for path, text in (("a/a.kicad_pro", project), ("a/a.kicad_sch", schematic()), ("a/a.kicad_pcb", committed),
+                           ("a/a.kicad_dru", '(version 1)\n' + WORKMANSHIP)):
+            self.write(path, text)
+        record = os.path.join(self.root, "arguments")
+        fake = fake_tool(os.path.join(self.root, "kicad-cli"), f"""
+import glob, json, re, sys
+args = sys.argv[1:]
+out = args[args.index("-o") + 1]
+if args[:2] == ["sch", "erc"]:
+    report = {{"sheets": []}}
+elif args[:3] == ["sch", "export", "netlist"]:
+    open(out, "w").write("(export (nets))"); sys.exit(0)
+else:
+    if "--save-board" in args:
+        open(args[-3], "w").write({refilled!r})
+        open({record!r}, "a").write(" ".join(args) + "\\n")
+    rules = open(glob.glob("*.kicad_dru")[0]).read()
+    found = re.findall(r'rule "(pre-order check [0-9a-f]+: rules loaded)"', rules)
+    entries = [{{"type": "assertion_failure", "description": "Assertion failure (rule '" + found[-1] + "')", "items": []}}] if found else []
+    report = {{"violations": entries}}
+json.dump(report, open(out, "w"))
+""", sys.executable)
+        repository = board_check.Repository(self.root, ["a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb", "a/a.kicad_dru"])
+        read = []
+        found = board_check.check_design(board_check.Design("a/a.kicad_pro"), repository, fake, board_check.require_yaml(), TODAY, [], read)
+        return [v for v in found if v.rule != "pin_allocation"], read, record
+
+    def layout(self, *items: str) -> str:
+        return "(kicad_pcb (version 20260206) " + " ".join(items) + ")"
+
+    def test_the_layout_check_is_told_to_save_the_board_it_refilled(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        _, _, record = self.check(self.layout(), self.layout())
+        with open(record, encoding="utf-8") as handle:
+            arguments = handle.read().split()
+        self.assertEqual(arguments[:2], ["pcb", "drc"])
+        self.assertLess(arguments.index("--refill-zones"), arguments.index("--save-board"))
+
+    def test_a_fill_that_stops_short_in_the_refilled_board_fails_whatever_the_committed_one_covered(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found, _, _ = self.check(self.layout(self.ZONE + self.COVERING, self.TRACK), self.layout(self.ZONE + self.SHORT, self.TRACK))
+        self.assertEqual([v.rule for v in found if v.rule.startswith("pour")], ["pour_gap"])
+        self.assertIn("stops 0.080 mm short of track", [v for v in found if v.rule == "pour_gap"][0].message)
+
+    def test_a_fill_that_covers_the_copper_in_the_refilled_board_passes_whatever_the_committed_one_left_short(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found, _, _ = self.check(self.layout(self.ZONE + self.SHORT, self.TRACK), self.layout(self.ZONE + self.COVERING, self.TRACK))
+        self.assertEqual([v for v in found if v.rule == "pour_gap"], [])
+
+    def test_a_refilled_board_that_cannot_be_read_fails_the_design_by_name(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found, _, _ = self.check(self.layout(self.ZONE + self.SHORT, self.TRACK), "(kicad_pcb (zone")
+        unreadable = [v for v in found if v.rule == "design_unreadable"]
+        self.assertEqual(len(unreadable), 1, found)
+        self.assertEqual(unreadable[0].location, "a/a.kicad_pcb")
+        self.assertIn("the layout KiCad refilled cannot be read for its pours", unreadable[0].message)
+        found, _, _ = self.check(self.layout(self.ZONE + self.SHORT, self.TRACK),
+                                 self.layout('(zone (net "/A") (filled_polygon (pts (xy 0 0) (xy 1 0) (xy 1 1))))'))
+        self.assertIn("has no layer or no corners", [v for v in found if v.rule == "design_unreadable"][0].message)
+
+    def test_a_board_with_fills_and_no_minimum_clearance_fails_naming_it_and_one_without_fills_does_not(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found, read, _ = self.check(self.layout(), self.layout(self.ZONE + self.SHORT, self.TRACK), minimum=None)
+        self.assertEqual([(v.rule, v.location) for v in found if v.rule == "pour_gap"],
+                         [("pour_gap", "a/a.kicad_pro board.design_settings.rules.min_clearance")])
+        self.assertFalse([item for item in read if item[0] == "MFG-6 pour gap"])
+        found, _, _ = self.check(self.layout(), self.layout(self.TRACK), minimum=None)
+        self.assertEqual([v for v in found if v.rule == "pour_gap"], [])
+
+    def test_the_minimum_clearance_is_stated_among_the_figures_read(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        _, read, _ = self.check(self.layout(), self.layout())
+        self.assertIn(("MFG-6 pour gap", "Board Setup min_clearance", "0.15 mm, the narrowest gap a pour may leave between its "
+                       "fill and copper of its own net that it stops short of"), read)
+
+
+def named_part(library_name: str, reference: str, *pads) -> str:
+    """A footprint of the library name `library_name` and reference `reference`, holding pads given as (number, net, width, height)."""
+    body = "".join(f'(pad "{n}" smd rect (at {2 * index} 0) (size {w} {h}) (layers "F.Cu" "F.Mask") (net "{net}"))'
+                   for index, (n, net, w, h) in enumerate(pads))
+    return (f'(footprint "lib:{library_name}" (layer "F.Cu") (at {10 * len(reference)} 10) '
+            f'(property "Reference" "{reference}" (at 0 0 0)) {body})')
+
+
+def rules_of(*texts: str) -> list:
+    return board_check.rule_forms("(version 1)\n" + "\n".join(texts))
+
+
+KEEP_CLEAR = ('(rule "Crystal keep-clear"\n\t(condition "A.Reference == \'Y1\' && B.Reference != \'C1\'")\n'
+              '\t(constraint courtyard_clearance (min 25mm)))')
+
+
+class TheCrystalKeepClearIsInTheRulesFileOfABoardWithACrystal(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """A board with a crystal or a resonator needs the rule keeping unrelated
+    parts 25 mm from its courtyard, in the one form, exempting some parts and
+    not all of them; a board with none needs no rule.
+    """
+
+    BOARD = tree_of(named_part("Crystal_SMD_5032", "Y1", ("1", "/X", 1, 1)), named_part("C_0603", "C1", ("1", "/X", 1, 1)),
+                    named_part("R_0603", "R1", ("1", "/Y", 1, 1)))
+
+    def found(self, *rules, tree=None):
+        return board_check.crystal_keep_clear(DESIGN, rules_of(*rules) if rules else None, tree or self.BOARD)
+
+    def test_the_rule_in_its_form_passes(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(KEEP_CLEAR), [])
+        self.assertEqual(self.found(KEEP_CLEAR.replace("25mm", "30.5mm")), [])
+
+    def test_a_board_with_no_crystal_needs_no_rule(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        plain = tree_of(named_part("C_0603", "C1", ("1", "/X", 1, 1)), named_part("Crystalline_Cap", "C2", ("1", "/X", 1, 1)))
+        self.assertEqual(self.found(tree=plain), [])
+        self.assertEqual([v.rule for v in self.found(tree=tree_of(named_part("Resonator_SMD", "X1", ("1", "/X", 1, 1))))], ["crystal_keepclear"])
+
+    def test_a_board_whose_rules_file_lacks_the_rule_fails_naming_the_crystal(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for what, rules in (("no rules file", ()), ("an unrelated rule", ('(rule "Other"\n\t(constraint clearance (min 1mm)))',))):
+            with self.subTest(what=what):
+                found = self.found(*rules)
+                self.assertEqual([(v.rule, v.location) for v in found], [("crystal_keepclear", f"{DESIGN.rules} crystal Y1")])
+                self.assertIn("Y1 is a crystal, and the rules file holds no rule keeping the parts unrelated", found[0].message)
+
+    def test_a_rule_exempting_every_other_part_holds_nothing_and_fails(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        blanket = KEEP_CLEAR.replace("&& B.Reference != 'C1'", "&& B.Reference != 'C1' && B.Reference != 'R1'")
+        found = self.found(blanket)
+        self.assertEqual([v.rule for v in found], ["crystal_keepclear"])
+        self.assertIn("exempts every other part of the layout from the keep-clear of Y1", found[0].message)
+        self.assertEqual(self.found(blanket.replace("&& B.Reference != 'R1'", "&& B.Reference != 'Z9'")), [],
+                         "an exemption for a part not on the board leaves R1 under the rule")
+
+    def test_a_figure_below_the_keep_clear_fails(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        found = self.found(KEEP_CLEAR.replace("25mm", "24.9mm"))
+        self.assertEqual([v.rule for v in found], ["crystal_keepclear"])
+        self.assertIn("keeps parts 24.9 mm from the courtyard of Y1, under the 25 mm", found[0].message)
+
+    def test_a_rule_in_any_other_form_does_not_hold_the_keep_clear(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for what, rule in (("a layer", KEEP_CLEAR[:-1] + '\n\t(layer "F.Cu"))'),
+                           ("a severity", KEEP_CLEAR[:-1] + '\n\t(severity ignore))'),
+                           ("a looser condition", KEEP_CLEAR.replace("A.Reference == 'Y1' && ", "")),
+                           ("another crystal", KEEP_CLEAR.replace("'Y1'", "'Y2'")),
+                           ("a different constraint", KEEP_CLEAR.replace("courtyard_clearance", "clearance")),
+                           ("no unit", KEEP_CLEAR.replace("25mm", "25"))):
+            with self.subTest(what=what):
+                self.assertEqual([v.rule for v in self.found(rule)], ["crystal_keepclear"])
+
+    def test_a_later_courtyard_rule_naming_the_crystal_that_loosens_it_fails(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        loosening = '(rule "Loose"\n\t(condition "A.Reference == \'Y1\'")\n\t(constraint courtyard_clearance (min 1mm)))'
+        found = self.found(KEEP_CLEAR, loosening)
+        self.assertEqual([v.rule for v in found], ["crystal_keepclear"])
+        self.assertIn("rule 'Loose'", found[0].location)
+        self.assertEqual(self.found(KEEP_CLEAR, '(rule "Else"\n\t(condition "A.Reference == \'J9\'")\n\t(constraint courtyard_clearance (min 1mm)))'), [])
+
+    def test_each_crystal_of_the_board_needs_its_own_rule(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        two = tree_of(named_part("Crystal_A", "Y1", ("1", "/X", 1, 1)), named_part("Crystal_B", "Y2", ("1", "/X", 1, 1)),
+                      named_part("R_0603", "R1", ("1", "/Y", 1, 1)))
+        found = self.found(KEEP_CLEAR, tree=two)
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} crystal Y2"])
+        self.assertEqual(self.found(KEEP_CLEAR, KEEP_CLEAR.replace("'Y1'", "'Y2'"), tree=two), [])
+
+
+class TheGroundPadReliefsAreInTheRulesFileOfABoardWithGroundPads(unittest.TestCase):
+    # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+    """A board with a pad on a ground net class needs the rule giving ground
+    pads thermal reliefs, exempting only an exposed pad; a board with no such
+    pad needs no rule.
+    """
+
+    BOARD = tree_of(named_part("QFN", "U4", ("1", "/G", 0.5, 0.5), ("2", "/S", 0.5, 0.5), ("21", "/G", 2.6, 2.6)),
+                    named_part("R_0603", "R1", ("1", "/G", 1, 1), ("2", "/S", 1, 1)))
+    CLASSES = {"Ground": {"/G"}, "Supply": {"/S"}, "Mains": set()}
+    RELIEF = ('(rule "Ground pad reliefs"\n\t(condition "A.Type == \'Pad\' && A.hasNetclass(\'Ground\') && '
+              '!(A.Reference == \'U4\' && A.Pad_Number == \'21\')")\n\t(constraint zone_connection thermal_reliefs))')
+
+    def found(self, *rules, tree=None, classes=None):
+        return board_check.ground_reliefs(DESIGN, rules_of(*rules) if rules else None, tree or self.BOARD, classes or self.CLASSES)
+
+    def test_the_rule_in_its_form_passes_with_or_without_an_exposed_pad_exemption(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(self.RELIEF), [])
+        plain = self.RELIEF.replace(" && !(A.Reference == 'U4' && A.Pad_Number == '21')", "")
+        self.assertEqual(self.found(plain), [])
+
+    def test_a_board_with_no_ground_pad_needs_no_rule(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        self.assertEqual(self.found(classes={"Supply": {"/S"}, "Ground": set()}), [])
+        only_exposed = tree_of(named_part("QFN", "U4", ("1", "/S", 0.5, 0.5), ("2", "/S", 0.5, 0.5), ("21", "/G", 2.6, 2.6)))
+        self.assertEqual(self.found(tree=only_exposed), [], "the exposed pad is exempt by its nature, so nothing is left to relieve")
+
+    def test_a_board_whose_rules_file_lacks_the_rule_fails_naming_the_class(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for what, rules in (("no rules file", ()), ("an unrelated rule", ('(rule "Other"\n\t(constraint clearance (min 1mm)))',))):
+            with self.subTest(what=what):
+                found = self.found(*rules)
+                self.assertEqual([(v.rule, v.location) for v in found], [("ground_relief", f"{DESIGN.rules} ground class Ground")])
+                self.assertIn("the rules file holds no rule giving them thermal reliefs", found[0].message)
+
+    def test_a_rule_exempting_a_pad_that_is_not_an_exposed_pad_fails(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for what, exempt in (("an ordinary pad", "R1' && A.Pad_Number == '1"), ("a pad the part lacks", "U4' && A.Pad_Number == '7"),
+                             ("a pad of another class", "R1' && A.Pad_Number == '2")):
+            with self.subTest(what=what):
+                found = self.found(self.RELIEF.replace("U4' && A.Pad_Number == '21", exempt))
+                self.assertEqual([v.rule for v in found], ["ground_relief"])
+                self.assertIn("is not an exposed pad on a net of the class", found[0].message)
+
+    def test_a_rule_in_any_other_form_does_not_hold_the_reliefs(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        for what, rule in (("a layer", self.RELIEF[:-1] + '\n\t(layer "F.Cu"))'),
+                           ("a severity", self.RELIEF[:-1] + '\n\t(severity ignore))'),
+                           ("a narrower condition", self.RELIEF.replace("A.Type == 'Pad' && ", "A.Type == 'Pad' && A.Reference == 'R1' && ")),
+                           ("another class", self.RELIEF.replace("hasNetclass('Ground')", "hasNetclass('Supply')")),
+                           ("full connection", self.RELIEF.replace("thermal_reliefs", "solid")),
+                           ("a condition on footprints", self.RELIEF.replace("A.Type == 'Pad'", "A.Type == 'Footprint'"))):
+            with self.subTest(what=what):
+                self.assertEqual([v.rule for v in self.found(rule)], ["ground_relief"])
+
+    def test_each_ground_class_with_pads_needs_its_own_rule(self):
+        # SOL-BOARD-REVIEW-PROOF-BASELINE-CLEAN.C3: Each rule the proof design's review adds fails on a fault seeded for it and passes the clean design
+        two = tree_of(named_part("R_0603", "R1", ("1", "/G", 1, 1), ("2", "/AG", 1, 1)))
+        classes = {"Ground": {"/G"}, "Analog ground": {"/AG"}}
+        plain = self.RELIEF.replace(" && !(A.Reference == 'U4' && A.Pad_Number == '21')", "")
+        found = self.found(plain, tree=two, classes=classes)
+        self.assertEqual([v.location for v in found], [f"{DESIGN.rules} ground class Analog ground"])
 
 
 class KiCadsWorkmanshipFindingsNameTheirItem(unittest.TestCase):
