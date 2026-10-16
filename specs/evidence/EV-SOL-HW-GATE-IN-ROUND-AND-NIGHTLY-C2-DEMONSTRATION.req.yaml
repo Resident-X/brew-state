@@ -1,0 +1,26 @@
+id: EV-SOL-HW-GATE-IN-ROUND-AND-NIGHTLY-C2-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-10-16T11:53:39Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/38881413788
+  artifact_version: 98d80e3504a48289052b8c997e87466f1f793e30
+text: |
+  Observed in GitHub Actions run 38881413788, a workflow_dispatch of the nightly verification against main at commit 98d80e3504a48289052b8c997e87466f1f793e30, job "Every gate but the sweep", started 2026-10-16T09:34:44Z.
+
+  The single declaration fw:verify listed nine gates: fw:build, fw:check, fw:test, fw:run, fw:host-closure, fw:emulate, hw:verify, hw:test:round and fw:sweep, and stated that every gate runs to completion even after another fails.
+
+  The runner installed KiCad 10.0.7 from the named PPA at the pinned version, with the standard symbol and footprint packages, the rasteriser and the monospaced font, and asserted the library-table template present.
+
+  Three firmware gates failed and were reported as "verification: <gate> FAILED with exit status 201" (fw:test, fw:host-closure, fw:emulate). The run then continued: "verification: running hw:verify (gate 7 of 8)" followed by "verification: hw:verify passed", then "verification: running hw:test:round (gate 8 of 8)" followed by "verification: hw:test:round passed".
+
+  So the nightly runs the board check and the tooling tests without the seeded-fault proof against main on a hosted runner, to completion after other gates failed, and reports each gate's result in the same form. The run's overall failure comes from the firmware gates, which this criterion does not own.
+links:
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2
+    type: satisfies
